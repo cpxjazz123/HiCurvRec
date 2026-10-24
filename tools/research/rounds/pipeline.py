@@ -153,6 +153,26 @@ def _source_digest(tree: Path) -> str:
     return digest.hexdigest()
 
 
+NON_BLOCKING_SEVERITIES = frozenset({
+    "minor", "nit", "style", "cosmetic", "suggestion", "advisory", "info",
+    "informational", "non_blocking", "non-blocking", "optional",
+})
+
+
+def _is_blocking(severity) -> bool:
+    """Whether a finding stops the implementation.
+
+    Verifiers are free agents and do not share one vocabulary; a whitelist of
+    "known blocking" words silently dropped the ones they did not happen to
+    use, which turned three NEEDS_FIX verdicts into an approval. Everything
+    that is not explicitly harmless therefore blocks.
+    """
+    text = str(severity or "").strip().lower().replace(" ", "_")
+    if not text:
+        return True
+    return text not in NON_BLOCKING_SEVERITIES
+
+
 def apply_verification(state: dict, implementation_id: str, reports: list) -> dict:
     """Merge the three verdicts of one implementation."""
     record = _implementation(state, implementation_id)
@@ -163,11 +183,22 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
         verdict = str(report.get("verdict", "")).upper()
         if verdict not in ("PASS", "NEEDS_FIX"):
             raise RoundError("a verifier returned an unknown verdict: " + verdict)
+        reported = []
         for check in report.get("checks", []):
             for finding in check.get("findings", []):
-                if str(finding.get("severity", "")).lower() in ("blocker", "correctness", "critical"):
-                    findings.append({"verifier": report.get("verifier", ""),
+                if _is_blocking(finding.get("severity")):
+                    reported.append({"verifier": report.get("verifier", ""),
                                      "check": check.get("name", ""), **finding})
+        if verdict == "NEEDS_FIX" and not reported:
+            # The verifier asked for a correction without naming a blocking
+            # finding. That is still a refusal to approve, so it must not be
+            # recorded as an approval.
+            reported.append({"verifier": report.get("verifier", ""),
+                             "check": "verdict",
+                             "severity": "blocking",
+                             "location": "verification.json",
+                             "detail": "verdict NEEDS_FIX without a stated blocking finding"})
+        findings.extend(reported)
     record["verdicts"] = reports
     # The digest the reviewers saw is the tree's digest now: a stale one would make
     # the admission refuse a tree that was reviewed in exactly this state.

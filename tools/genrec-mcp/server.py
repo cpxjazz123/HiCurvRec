@@ -2526,6 +2526,18 @@ def tool_research_round_launch(round_id: str, parallel: int = 2) -> dict:
         gpu = free_gpus[slot] if slot < len(free_gpus) else None
         if gpu is None and usable:
             break
+        # A trainer that only forks four ranks needs the whole allocation, and
+        # taking it means no other job may run beside it.
+        if not tree_supports_single_gpu(Path(job["tree"])):
+            if len(free_gpus) < 4:
+                queue.fail(job["job_id"],
+                           "this tree's trainer only forks four ranks and fewer than four "
+                           "cards are free, so it cannot be trained here",
+                           evidence={"free_gpus": free_gpus})
+                refused.append({"idea_id": job["idea_id"], "refused": "needs a four-card allocation"})
+                continue
+            gpu = ",".join(str(card) for card in free_gpus[:4])
+            free_gpus = free_gpus[4:]
         previous = os.environ.get("CUDA_VISIBLE_DEVICES")
         if gpu is not None:
             os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)

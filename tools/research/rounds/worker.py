@@ -18,6 +18,7 @@ from ..agents.runner import run_agent
 from ..core.evidence import atomic_json, digest_file, read_json
 from . import agents as agent_contracts
 from . import ideas as ideas_module
+from . import plaintext
 from . import pipeline as pipeline_module
 
 IDEA_MIN = 1
@@ -30,20 +31,20 @@ def _workspace(root: Path, task_id: str) -> Path:
     return Path(root) / "agents" / task_id
 
 
-def _run_agent(root: Path, task_id: str, prompt: str, output_name: str) -> dict:
-    """Run one agent in its own workspace and return its parsed answer."""
+def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser) -> dict:
+    """Run one agent in its own workspace and parse its plain-text answer.
+
+    The agent writes a labelled text file, not JSON: a language model that
+    drops one comma must not lose the whole answer. The parser turns the text
+    into the record the round keeps.
+    """
     # The runner gives the agent a workspace but not a destination; without this
     # the agent answers in prose and writes no file.
     destination = Path(root) / "agents" / task_id / output_name
     # Resumability: an answer that is already on disk is reused, so a round that
     # was interrupted does not pay for the same agents twice.
     if destination.is_file():
-        try:
-            payload = read_json(destination)
-        except Exception:                                  # noqa: BLE001
-            payload = None
-        if isinstance(payload, dict):
-            return payload
+        return parser(destination.read_text(encoding="utf-8", errors="replace"))
     prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
               " (this absolute path). Write nowhere else.")
     run_agent(task_id, prompt, output_name, Path(root),
@@ -61,10 +62,7 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str) -> dict:
         if not matches:
             raise pipeline_module.RoundError("agent " + task_id + " wrote no " + output_name)
         answer = matches[0]
-    payload = read_json(answer)
-    if not isinstance(payload, dict):
-        raise pipeline_module.RoundError("agent " + task_id + " returned no JSON object")
-    return payload
+    return parser(answer.read_text(encoding="utf-8", errors="replace"))
 
 
 def run_ideation(root: Path, objective: str) -> list:
@@ -77,19 +75,20 @@ def run_ideation(root: Path, objective: str) -> list:
                      "item semantic IDs for a generative recommender") +
                      "\nYour answer must be a different set of ideas from the other two "
                      "agents, which you cannot see.")
-        answers.append((task_id, _run_agent(root, task_id, prompt, "ideas.json")))
+        answers.append((task_id, _run_agent(root, task_id, prompt, "ideas.txt",
+                                            plaintext.parse_ideas)))
     return answers
 
 
 def run_scoring(root: Path, ideas: list) -> list:
     """Three independent scorers, each judging every idea."""
-    payload = json.dumps(ideas, ensure_ascii=False, indent=1)
+    payload = plaintext.render_ideas(ideas)
     reports = []
     for index in range(1, SCORERS + 1):
         task_id = "scoring_" + str(index)
         prompt = (agent_contracts.SCORE_PROMPT +
                   "\n\nThe ideas to score, all of them:\n" + payload)
-        report = _run_agent(root, task_id, prompt, "scores.json")
+        report = _run_agent(root, task_id, prompt, "scores.txt", plaintext.parse_scores)
         report.setdefault("scorer", task_id)
         reports.append(report)
     return reports
@@ -100,8 +99,9 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
     tree = Path(tree)
     tree.mkdir(parents=True, exist_ok=True)
     prompt = (agent_contracts.IMPLEMENT_PROMPT.format(
-        idea=json.dumps(idea, ensure_ascii=False, indent=1), tree=str(tree)))
-    report = _run_agent(root, "implementation_" + idea["idea_id"], prompt, "implementation.json")
+        idea=plaintext.render_idea(idea), tree=str(tree)))
+    report = _run_agent(root, "implementation_" + idea["idea_id"], prompt,
+                        "implementation.txt", plaintext.parse_implementation)
     atomic_json(tree / "PROPOSAL.json", idea)
     return report
 
@@ -109,13 +109,14 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
 def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> list:
     """Three independent verifiers of one implementation revision."""
     prompt = (agent_contracts.VERIFY_PROMPT.format(
-        idea=json.dumps(idea, ensure_ascii=False, indent=1), tree=str(tree)))
+        idea=plaintext.render_idea(idea), tree=str(tree)))
     reports = []
     for index in range(1, VERIFIERS + 1):
         # The revision is part of the workspace name: a fresh review after a
         # repair must be a fresh agent, never a replay of the previous answer.
         task_id = "verify_" + idea["idea_id"] + "_r" + str(revision) + "_" + str(index)
-        report = _run_agent(root, task_id, prompt, "verification.json")
+        report = _run_agent(root, task_id, prompt, "verification.txt",
+                            plaintext.parse_verification)
         report.setdefault("verifier", task_id)
         reports.append(report)
     return reports
@@ -125,9 +126,9 @@ def run_repair(root: Path, idea: dict, tree: Path, findings: list,
                revision: int = 0) -> dict:
     """The dedicated repair agent for one implementation revision."""
     prompt = (agent_contracts.REPAIR_PROMPT.format(
-        findings=json.dumps(findings, ensure_ascii=False, indent=1), tree=str(tree)))
+        findings=plaintext.render_findings(findings), tree=str(tree)))
     return _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),
-                      prompt, "repair.json")
+                      prompt, "repair.txt", plaintext.parse_repair)
 
 
 def advance(root: Path, round_id: str, *, log=print) -> dict:

@@ -294,3 +294,149 @@ class CostFeasibilityTests(unittest.TestCase):
         self.assertNotIn("a", [entry["idea_id"] for entry in selection["selected"]])
         reasons = [entry for entry in selection["rejected"] if entry["idea_id"] == "a"][0]["reasons"]
         self.assertTrue(any("declared cost" in reason for reason in reasons))
+
+
+class VerdictSeverityTests(unittest.TestCase):
+    """A review that asks for a correction must never be recorded as approval."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.directory = pipeline_module.new_round(self.root, "round_sev", objective="o")
+        tree = self.root / "tree"
+        tree.mkdir()
+        (tree / "model.py").write_text("x = 1\n")
+        self.state = pipeline_module.load_state(self.directory)
+        self.state["implementations"] = [pipeline_module.implementation_record(
+            {"idea_id": "a"}, {"changed_files": ["model.py"]}, tree)]
+
+    def _verdict(self, severity):
+        return {"verifier": "v1", "verdict": "NEEDS_FIX",
+                "checks": [{"name": "mechanism fidelity", "verdict": "NEEDS_FIX",
+                            "findings": [{"severity": severity, "location": "model.py:1",
+                                          "detail": "no implementation", "reproduction": "look",
+                                          "correction": "write it"}]}]}
+
+    def test_an_unlisted_severity_word_still_blocks(self):
+        for severity in ("blocking", "major", "BLOCKER", "correctness", ""):
+            with self.subTest(severity=severity):
+                state = pipeline_module.apply_verification(
+                    self.state, "a", [self._verdict(severity),
+                                      {"verifier": "v2", "verdict": "PASS", "checks": []},
+                                      {"verifier": "v3", "verdict": "PASS", "checks": []}])
+                self.assertEqual(state["implementations"][0]["status"], "needs_repair")
+
+    def test_a_harmless_severity_does_not_block(self):
+        harmless = {"verifier": "v1", "verdict": "PASS",
+                    "checks": [{"name": "style", "verdict": "PASS",
+                                "findings": [{"severity": "minor", "location": "model.py:1",
+                                              "detail": "naming", "reproduction": "",
+                                              "correction": "rename"}]}]}
+        state = pipeline_module.apply_verification(
+            self.state, "a", [harmless,
+                              {"verifier": "v2", "verdict": "PASS", "checks": []},
+                              {"verifier": "v3", "verdict": "PASS", "checks": []}])
+        self.assertEqual(state["implementations"][0]["status"], "verified")
+
+    def test_a_needs_fix_verdict_blocks_even_when_the_finding_is_harmless(self):
+        state = pipeline_module.apply_verification(
+            self.state, "a", [self._verdict("minor"),
+                              {"verifier": "v2", "verdict": "PASS", "checks": []},
+                              {"verifier": "v3", "verdict": "PASS", "checks": []}])
+        self.assertEqual(state["implementations"][0]["status"], "needs_repair")
+
+    def test_a_needs_fix_verdict_without_a_finding_still_blocks(self):
+        state = pipeline_module.apply_verification(
+            self.state, "a", [{"verifier": "v1", "verdict": "NEEDS_FIX", "checks": []},
+                              {"verifier": "v2", "verdict": "PASS", "checks": []},
+                              {"verifier": "v3", "verdict": "PASS", "checks": []}])
+        self.assertEqual(state["implementations"][0]["status"], "needs_repair")
+        self.assertTrue(state["implementations"][0]["failure_signature"])
+
+
+class PlainTextContractTests(unittest.TestCase):
+    """The agents answer in plain text; the framework reads it back."""
+
+    def test_an_idea_block_is_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = (
+            "IDEA: whitening\nTITLE: Whitened geometry\nMOTIVATION: m\nNOVELTY: n\n"
+            "CHANGE: c\nSPECIFICATION: s\nCOST: cheap\nHYPOTHESIS: h\nRISKS: r\nEND IDEA\n")
+        parsed = plaintext.parse_ideas(answer)
+        self.assertEqual(len(parsed["ideas"]), 1)
+        self.assertEqual(parsed["ideas"][0]["idea_id"], "whitening")
+        self.assertEqual(parsed["ideas"][0]["key_change"], "c")
+        self.assertEqual(parsed["ideas"][0]["risks"], "r")
+
+    def test_two_idea_blocks_are_separated(self):
+        from tools.research.rounds import plaintext
+        answer = ("IDEA: a\nTITLE: first\nEND IDEA\nIDEA: b\nTITLE: second\nEND IDEA\n")
+        parsed = plaintext.parse_ideas(answer)
+        self.assertEqual([idea["idea_id"] for idea in parsed["ideas"]], ["a", "b"])
+        self.assertEqual(parsed["ideas"][1]["title"], "second")
+
+    def test_a_value_may_span_several_lines(self):
+        from tools.research.rounds import plaintext
+        answer = ("IDEA: a\nTITLE: first\nSPECIFICATION: line one\nline two\nEND IDEA\n")
+        parsed = plaintext.parse_ideas(answer)
+        self.assertIn("line two", parsed["ideas"][0]["specification"])
+
+    def test_scores_are_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = ("SCORE: a | novelty=4 | scientific_motivation=3 | feasibility=5 | "
+                  "downstream_impact=2 | experimental_distinctness=1\n"
+                  "RATIONALE: a | it is new\n")
+        parsed = plaintext.parse_scores(answer)
+        self.assertEqual(parsed["scores"][0]["idea_id"], "a")
+        self.assertEqual(parsed["scores"][0]["scores"]["novelty"], 4)
+        self.assertEqual(parsed["scores"][0]["rationale"], "it is new")
+
+    def test_a_verification_is_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = ("VERDICT: NEEDS_FIX\nCHECK: mechanism fidelity\nCHECK VERDICT: NEEDS_FIX\n"
+                  "FINDING SEVERITY: blocking\nFINDING LOCATION: model.py:42\n"
+                  "FINDING DETAIL: wrong path\nFINDING REPRODUCTION: run it\n"
+                  "FINDING CORRECTION: fix it\n")
+        parsed = plaintext.parse_verification(answer)
+        self.assertEqual(parsed["verdict"], "NEEDS_FIX")
+        self.assertEqual(parsed["checks"][0]["name"], "mechanism fidelity")
+        self.assertEqual(parsed["checks"][0]["findings"][0]["severity"], "blocking")
+        self.assertEqual(parsed["checks"][0]["findings"][0]["location"], "model.py:42")
+
+    def test_an_implementation_report_is_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = ("TREE: /tmp/tree\nCHANGED FILE: model.py\nCHANGED FILE: train_rqvae.py\n"
+                  "DEVIATION: the smoke is small | it only has to prove the path\n"
+                  "SMOKE COMMAND: python smoke_test.py\nSMOKE RESULT: ok\n")
+        parsed = plaintext.parse_implementation(answer)
+        self.assertEqual(parsed["changed_files"], ["model.py", "train_rqvae.py"])
+        self.assertEqual(parsed["deviations"][0]["reason"], "it only has to prove the path")
+        self.assertEqual(parsed["smoke"]["result"], "ok")
+
+    def test_a_repair_report_is_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = ("REPAIR: wrong export path | repointed it | the smoke passes\n"
+                  "REMAINING ISSUE: none\n")
+        parsed = plaintext.parse_repair(answer)
+        self.assertEqual(parsed["repairs"][0]["finding"], "wrong export path")
+        self.assertEqual(parsed["repairs"][0]["change"], "repointed it")
+
+    def test_an_agent_answer_without_the_promised_shape_is_refused(self):
+        from tools.research.rounds import plaintext
+        with self.assertRaises(plaintext.PlainTextError):
+            plaintext.parse_ideas("I had a thought but did not write it down.")
+
+    def test_one_malformed_idea_does_not_cost_the_others(self):
+        ideas = ideas_module.collect_ideas([
+            ("agent1", {"ideas": [{"idea_id": "a", "title": "t", "motivation": "m",
+                                   "novelty": "n", "key_change": "c", "specification": "s",
+                                   "cost_estimate": "cost", "falsifiable_hypothesis": "h",
+                                   "risks": "r"},
+                                  {"idea_id": "b", "title": "incomplete"}]}),
+            ("agent2", {"ideas": [_idea("c", title="gamma", change="2")]}),
+            ("agent3", {"ideas": [_idea("d", title="delta", change="3")]}),
+        ])
+        self.assertEqual([idea["idea_id"] for idea in ideas], ["a", "c", "d"])
+        self.assertTrue(ideas[0]["rejected_ideas"])
+        self.assertIn("missing", ideas[0]["rejected_ideas"][0]["reason"])
