@@ -4,7 +4,7 @@
 - 参数全部硬编码为模块常量 (禁 argparse/CLI flag)
 - 加 _launch_via_torchrun 自动 fork 4 卡 DDP (nproc=4, master_port=50202, 避免与 stage3 的 50201 冲突)
 - 加全程 metrics JSONL 收集器 (每个 train/eval/ckpt_saved/train_end 一行)
-- 输出路径硬编码到 results/stage2_RQ-VAE/TIGER_RQ-VAE/
+- 输出路径硬编码到 results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/
 
 2026-10-01 改造 (CLAUDE.md §2):
 - 删除 PATIENCE / stale 计数与 early-stop 分支, 固定跑满 EPOCHS
@@ -50,11 +50,11 @@ EMBEDDING_FILE = Path(
 TRAIN_FILE     = Path(
     "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
 )
-OUTPUT_SID     = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/sids_for_hgrec.npy")
-OUTPUT_JSON    = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json")
-CHECKPOINT     = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth")
-METRICS_PATH   = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE/logs/training_metrics.jsonl")
-LOG_DIR        = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE/logs")
+OUTPUT_SID     = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/sids_for_hgrec.npy")
+OUTPUT_JSON    = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/item_sids.json")
+CHECKPOINT     = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/rqvae_best.pth")
+METRICS_PATH   = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/logs/training_metrics.jsonl")
+LOG_DIR        = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/logs")
 
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===

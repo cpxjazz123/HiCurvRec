@@ -1,0 +1,20 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid",
+  "repairs": [
+    {
+      "finding": "r5_1: distributed codebook initialization could mismatch collectives across ranks and deadlock.",
+      "change": "Ensure all ranks call raw_module.init_codebook(train_embeddings.to(device)) unconditionally, in the same model/layer order; retain the barrier only after initialization completes. The broadcast inside each VQLayer initialization therefore has every rank as a participant.",
+      "verification": "Inspected the rank-independent initialization call immediately before the post-initialization barrier. All ranks follow that common code path; py_compile passed. A multi-GPU torchrun run was not possible in this environment."
+    },
+    {
+      "finding": "r5_3: training inputs, outputs, logs, and torchrun executable were bound to another machine\u2019s absolute paths.",
+      "change": "Set repository-root-based defaults for inputs and outputs, with GENEREC_EMBEDDING_FILE, GENEREC_TRAIN_FILE, GENEREC_OUTPUT_SID, GENEREC_OUTPUT_JSON, GENEREC_CHECKPOINT, GENEREC_LOG_DIR, and GENEREC_METRICS_PATH overrides. Resolve torchrun from the active interpreter using sys.executable -m torch.distributed.run instead of a foreign executable path.",
+      "verification": "Confirmed no /home/wlia0047 paths or foreign executable remain in the trainer; path defaults resolve against this checkout\u2019s repository root. py_compile passed."
+    }
+  ],
+  "remaining_issues": [],
+  "smoke": {
+    "command": "/fs04/scratch2/ar57/wenyu/genrec_env_v2/bin/python - <<'PY' (uncertainty_agreement forward/backward finite-gradient check and py_compile.compile(train_rqvae.py))",
+    "result": "PASS. Output: loss=1.961556 requires_grad=True grad_finite=True grad_norm=11.996874; py_compile completed with no errors."
+  }
+}

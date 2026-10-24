@@ -1,0 +1,29 @@
+{
+  "verifier": "r8_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability/code_stability.py:5-15",
+          "detail": "The purported deterministic seeded perturbations are not identical per item across exports or independent of item row ordering. A single sequential RNG generates a noise tensor in row order, so inserting/reordering rows changes the perturbation assigned to an existing item. This violates the specified item-stable seeded export behavior.",
+          "reproduction": "Call stability_tokens on embeddings [a,b] and then on [b,a] with same seed/train_ids and the same quantizer; outputs associated with each item can differ because the RNG stream is consumed in row order. Likewise append an unused row before a and its sampled noise changes.",
+          "correction": "Generate noise from a deterministic per-item seed/key (or generate a fixed [item_id, draw, dimension] noise table keyed by frozen item id), preserving the same perturbations for each item regardless of batching/order."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

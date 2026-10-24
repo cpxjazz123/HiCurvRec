@@ -1,0 +1,36 @@
+{
+  "verifier": "r7_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:305-310",
+          "detail": "The implementation does not create stochastic views of metadata text as specified. It applies elementwise Bernoulli dropout to the already-precomputed dense item vector. This is a different perturbation mechanism and cannot model token/text metadata dropout; the comments explicitly acknowledge that metadata text is absent from this input path.",
+          "reproduction": "For an item with a fixed embedding, the two views here are formed by independently zeroing/scaling embedding coordinates. No metadata text is read or corrupted anywhere in this training path.",
+          "correction": "Feed the frozen item metadata/text inputs through the existing text encoder with independent training-only metadata dropout, then pass those M encoded views to the RQ-VAE; otherwise explicitly revise the proposed mechanism rather than claiming this implements it."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:415-418",
+          "detail": "Export assigns codes to the single uncorrupted stored embedding, not to the mean of M independently encoded metadata views required by the specification. Training's `view_mean` is only used in the batch reconstruction path and is not used for SID export.",
+          "reproduction": "At export, `get_indices(all_embeddings)` runs once per item; it never constructs M views or averages their encodings. Thus the exported code is Q(f(x)), not Q(mean_m f(x^(m))).",
+          "correction": "At export, generate the specified M metadata views, average their encoder outputs, and quantize that mean; keep output SID format unchanged."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "verifier": "r10_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:235-242",
+          "detail": "The Stage0 train parquet stores one row per training prefix/target, not one row per complete training sequence. Concatenating each row's history and target therefore counts earlier transitions repeatedly. For a sequence [a,b,c], its rows contribute a→b once from target b and a→b plus b→c from target c, so the graph is not the specified once-per-adjacent-pair training-sequence graph. This changes both transition counts and popularity correction and can materially overweight early transitions.",
+          "reproduction": "Use the Stage0 prefix construction at stage0_build_parquet/build_recbole_parquet.py:164-170 with a single user's sequence [a,b,c]. Feeding those rows to denoise_with_train_transitions yields C[a,b]=2 and C[b,c]=1, rather than 1 and 1.",
+          "correction": "Recover one ordered training sequence per user from the frozen train rows (for example, deduplicate by user and reconstruct the observed train prefix through its largest target position), then count each adjacent pair exactly once; alternatively deduplicate the repeated prefix transitions with a rigorously defined per-user edge set/count before applying the stated formula."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

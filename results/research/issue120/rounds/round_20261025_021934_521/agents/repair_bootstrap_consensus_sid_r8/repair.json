@@ -1,0 +1,15 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid",
+  "repairs": [
+    {
+      "finding": "verify_bootstrap_consensus_sid_r8_2 integration blocker: single-GPU launcher referenced missing _LAUNCHER['single_visible_dev'], causing KeyError when CUDA_VISIBLE_DEVICES was unset.",
+      "change": "Removed the missing-key lookup. When the caller has not set CUDA_VISIBLE_DEVICES, the single-GPU child now inherits it as unset and lets CUDA use the host's visible device; an explicitly supplied value is still inherited unchanged.",
+      "verification": "Single-GPU launcher smoke harness exercised _launch_via_torchrun with CUDA_VISIBLE_DEVICES unset: it printed the single-GPU launch banner, returned launcher_exit=0, and confirmed CUDA_VISIBLE_DEVICES was not added to the child environment. python -m py_compile also succeeded."
+    }
+  ],
+  "remaining_issues": [],
+  "smoke": {
+    "command": "AST-isolated Python smoke harness for train_rqvae.py::_launch_via_torchrun with resolve_single_gpu=True, CUDA_VISIBLE_DEVICES unset, and subprocess mocked; followed by python -m py_compile results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py",
+    "result": "[RecBole RQ-VAE] launching single-GPU run (CUDA_VISIBLE_DEVICES=<inherited>, batch=4096)\nlauncher_exit= 0\nsingle_gpu_child_env_unsets_device_override= True\nchild_command= ['/apps/anaconda/2024.02-1/bin/python', '/fs04/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py']\npy_compile: exit 0 (no output)"
+  }
+}

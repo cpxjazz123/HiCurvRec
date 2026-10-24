@@ -1,0 +1,28 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid",
+  "repairs": [
+    {
+      "finding": "Mechanism fidelity: missing five train-only bootstrap replica fits, per-level assignment alignment, consensus targets, and consensus KL in final training.",
+      "change": "Integrated consensus helpers in train_rqvae.py. Before final fitting, it now fits five separately seeded models on N-with-replacement samples of train_embeddings, collects assignment matrices over the training universe, and builds aligned q targets. Final-batch loss adds gamma=0.1 (from {0.01, 0.1}) consensus KL at tau=0.1 alongside baseline reconstruction/RQ loss; export remains ordinary hard assignments.",
+      "verification": "Static inspection confirms the trainer now invokes consensus_targets and consensus_kl, uses five independent replica seeds and N-sized bootstrap indices drawn only from train_embeddings, and retains get_indices for ordinary hard export. Python compilation passed. Runtime training could not be exercised because this environment has no torch package."
+    },
+    {
+      "finding": "Trainability: no consensus gradient reached the encoder/codebooks and no representative optimizer step was validated.",
+      "change": "The final training loop computes encoded vectors through the trainable encoder, stacks live per-level codebook tensors, computes consensus_kl, checks finiteness, adds it before backward, then backpropagates and steps the existing optimizer. Consensus row IDs travel with each training example so shuffled and distributed batches use matching q rows.",
+      "verification": "The connected differentiable loss path is present before loss.backward() and optimizer.step(); py_compile passed. Gradient/parameter-update runtime assertions remain unverified because importing torch fails with ModuleNotFoundError."
+    },
+    {
+      "finding": "Integration/DDP safety: the actual entry point and four-rank launcher previously trained only the baseline model.",
+      "change": "Added the replica stage to main before construction of the final DDP model. Every rank follows the same five-replica ordering and deterministic seeds, with equal-size local replica datasets and consistent batch schedules; final fit keeps the existing DDP path and row-indexed SID export.",
+      "verification": "Source inspection and compilation verify the replica stage precedes final training and existing export/input paths are unchanged. Full four-rank execution and collective behavior cannot be confirmed in this environment without torch/CUDA."
+    }
+  ],
+  "remaining_issues": [
+    "The requested runtime trainability smoke (finite nonzero encoder/codebook gradients and parameter update) and end-to-end four-rank smoke could not run: Python lacks torch (ModuleNotFoundError).",
+    "The training workload now includes five full replica fits plus the final fit as specified; execution time is consequently approximately six baseline fits."
+  ],
+  "smoke": {
+    "command": "python -m py_compile results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/consensus.py; python results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py",
+    "result": "py_compile passed. Trainer smoke exited with code 1 before training: ModuleNotFoundError: No module named 'torch'."
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    {
+      "action": "shell",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "execute",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "edit",
+      "resource": "/fs04/ar57/wenyu/GeneRec/*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/rounds/round_20261025_021934_521/agents/verify_bootstrap_consensus_sid_r7_2/*",
+      "effect": "allow"
+    },
+    {
+      "action": "edit",
+      "resource": "../*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "*/../*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "*..*",
+      "effect": "deny"
+    }
+  ]
+}

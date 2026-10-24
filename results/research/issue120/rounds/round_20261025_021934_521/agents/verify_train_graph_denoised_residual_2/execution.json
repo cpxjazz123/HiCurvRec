@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_train_graph_denoised_residual_2",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792856501.026614,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "e76f71115f47f1d16d16850b4981978dde26109b33ec842297c54a5e7e6008c5",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "verification.json",
+  "output_sha256": "13a938b977dd32653dcbf229c64c421a1330d3bb815529b0b5932b65f76b20b7",
+  "pid": 3427290,
+  "project_marker": ".git",
+  "prompt_sha256": "a7a6f269851ae8b355ab2b24c2a31fa2ac4105ca0c58796fb9dce250125e399a",
+  "session_sha256": "fd27233fd20d5b20e85ca0f3d19f64a73565bc763ecd3d9b916e29f73751cc01",
+  "stderr_present": false,
+  "task_id": "verify_train_graph_denoised_residual_2",
+  "timed_out": false,
+  "verified": true
+}

@@ -1,0 +1,29 @@
+{
+  "verifier": "r7_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "train_rqvae.py:51-52,475-476",
+          "detail": "The run exports to the experiment-tree directory, but the real Stage3 entry point still has CODE_PATH fixed to the frozen baseline item_sids.json at stage3_T5Train/train_HG-Rec.py:157. Its resolver in stage3_T5Train/train_HG-Rec.py:299-310 searches the configured path and conventional stage2 locations, not this experiment-tree output. Therefore a successful run does not make the generated SID artifact available to the normal trainer; Stage3 continues consuming the baseline tokenizer output. Also, the JSON keys are embedding-row indices (enumerate(sid)), whereas the graph input IDs were explicitly remapped from raw parquet IDs via item_ids.json:163-188; the export loses that raw-ID mapping, so simply pointing Stage3 at this JSON is incorrect whenever embedding row order differs from raw IDs.",
+          "reproduction": "Run this trainer with the existing frozen inputs; after export inspect OUTPUT_JSON and then launch the unchanged stage3_T5Train/train_HG-Rec.py. CODE_PATH resolves to /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json, not this tree's OUTPUT_JSON. For a minimal indexing counterexample, use item_ids=[20,10] and embeddings in that row order: export keys are '0','1', while Stage3 interaction IDs are 20,10.",
+          "correction": "Export the JSON at the exact configured/selected Stage3 CODE_PATH (or explicitly update the Stage3 variant configuration to this artifact) and key each SID row by item_ids[row] from the sidecar. Keep the NPY row-indexed only if its consumer explicitly uses the same row mapping."
+        }
+      ]
+    }
+  ]
+}

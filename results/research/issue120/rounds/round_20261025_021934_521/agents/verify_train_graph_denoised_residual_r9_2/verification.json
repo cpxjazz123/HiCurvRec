@@ -1,0 +1,51 @@
+{
+  "verifier": "r9_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:117",
+          "detail": "The implementation hard-codes GRAPH_LAMBDA=0.1 and applies it once at line 333. The proposed mechanism calls for lambda candidates {0.1, 0.3, 0.5}, with selection only under the predeclared validation protocol. No candidate loop or validation-based selector is implemented, so the delivered run cannot carry out that specified comparison/selection.",
+          "reproduction": "Inspect GRAPH_LAMBDA and the only denoise_with_train_transitions call: a normal run always produces only the 0.1 candidate, regardless of validation results.",
+          "correction": "Run the specified three candidates under identical baseline configuration and select solely by the declared validation protocol, or explicitly scope this artifact as one candidate and do not claim it implements the complete selection specification."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:315",
+          "detail": "The real entry point calls _validate_frozen_inputs(), but that function is not defined or imported anywhere in this tree. Execution fails immediately with NameError before data loading or training.",
+          "reproduction": "Run python train_rqvae.py (with input files present); main() raises NameError: name '_validate_frozen_inputs' is not defined at line 315.",
+          "correction": "Define/import the frozen-input validator and ensure it validates these exact paths, or remove the call if validation is not required."
+        },
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:104-110,541-554",
+          "detail": "The four-GPU launcher is broken: _LAUNCHER['torchrun'] is None, so the command list passed to subprocess.call has None as argv[0]. The single-GPU route also references _LAUNCHER['single_visible_dev'], which is absent. Thus neither launcher branch reliably runs as configured.",
+          "reproduction": "With four visible GPUs and no RANK, call _launch_via_torchrun(): subprocess.call receives [None, ...] and raises TypeError. With one GPU and CUDA_VISIBLE_DEVICES unset, the child setup raises KeyError for 'single_visible_dev'.",
+          "correction": "Resolve torchrun to an executable (for example, sys.executable -m torch.distributed.run or shutil.which('torchrun')) and define a valid single_visible_dev value or avoid indexing the missing key."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:48-52",
+          "detail": "SID, checkpoint, and log outputs are pinned to an absolute path under this specific tree. This makes the entry point non-portable and breaks expected integration when the tree is moved or the run is performed from another checkout; it also differs from the script's stated repository-relative frozen-input strategy.",
+          "reproduction": "Move/copy the worktree to a different checkout root and run training: inputs resolve from __file__, but outputs still target /fs04/ar57/wenyu/GeneRec/results/... in the original checkout.",
+          "correction": "Derive outputs from REPO_ROOT or a documented configurable run directory, consistently with the frozen input path policy."
+        }
+      ]
+    }
+  ]
+}

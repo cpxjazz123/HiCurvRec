@@ -1,0 +1,45 @@
+{
+  "verifier": "3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/ (only PROPOSAL.json; specification at PROPOSAL.json:20)",
+          "detail": "The supplied tree contains no implementation files—only the proposal—so there is no code implementing (or constraining changes to) the train-only symmetrized popularity-corrected transition graph, embedding mix, and unchanged tokenizer. Mechanism fidelity cannot be established.",
+          "reproduction": "Inspect the specified tree with find: it contains only PROPOSAL.json. There are no source files to trace or execute.",
+          "correction": "Provide the implementation in this tree, including the graph construction and embedding-mixing path, so it can be reviewed against the specification."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/ (no implementation files)",
+          "detail": "No model/training implementation is present, so a real forward/backward pass, finite-loss/gradient check, intended-parameter gradient reachability, dead-term check, or numerical-stability assessment cannot be performed.",
+          "reproduction": "Attempting to locate a model or trainer under the specified tree finds only PROPOSAL.json; there is no executable training path to run.",
+          "correction": "Include the actual training/model changes and a runnable configuration/data fixture, then verify finite loss and gradients through the intended trainable parameters on a real forward/backward pass."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/ (no trainer, data, export, or launcher files)",
+          "detail": "The tree has no real trainer entry point, frozen data-path configuration, SID export implementation, or distributed launcher changes. Therefore entry-point execution, data-path fidelity, SID validity/indexing, and distributed-launcher compatibility are all unverified; this is an absent implementation rather than evidence those integrations work.",
+          "reproduction": "The tree contains only PROPOSAL.json, so no trainer command or SID artifact can be run or inspected.",
+          "correction": "Provide the implementation changes and run the real trainer entry point using the frozen data path; inspect exported SIDs for valid coverage/indexing and exercise the distributed launcher before approval."
+        }
+      ]
+    }
+  ]
+}

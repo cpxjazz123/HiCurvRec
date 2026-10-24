@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_train_only_demand_signature_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "moderate",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature/demand_signature.py:43-54",
+          "detail": "The rank-based binning assigns different bins to equal metric values, so equal repeat propensity or p values can receive arbitrary, item-order-dependent suffixes. This is not value-based quantile binning and manufactures distinctions unsupported by the specified demand metrics. The same issue affects the frequency deciles at lines 33-37 when equal counts straddle a rank boundary.",
+          "reproduction": "Use 3 training items, each with a single occurrence by a distinct user. They all have count=1, r=0, and p=0. Stable ranking assigns their repeat bins 0, 1, and 2 and their p bins 0 and 1; resulting suffixes differ despite identical statistics. Reordering the input item IDs can change which item receives each suffix.",
+          "correction": "Fit value thresholds/quantiles on training observations and assign equal values consistently (document a tie policy); do not split ties by stable item rank. Apply the same tie-consistent policy to frequency-decile assignment. Keep the fitted boundaries fixed for subsequent data."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

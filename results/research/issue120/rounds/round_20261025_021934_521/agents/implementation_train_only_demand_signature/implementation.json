@@ -1,0 +1,32 @@
+{
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature",
+  "changed_files": [
+    "demand_signature.py",
+    "train_rqvae.py"
+  ],
+  "deviations": [
+    {
+      "item": "The full frozen 3000-epoch run and actual RQ-VAE valid SID export were not executed.",
+      "reason": "The available Python environment has no PyTorch installation, so the baseline trainer cannot import or run. The exporter integration appends the computed suffix after the unchanged baseline code export, but is not runtime-verified here."
+    },
+    {
+      "item": "The required model forward/backward, finite-loss and parameter-gradient smoke was not demonstrated.",
+      "reason": "PyTorch is unavailable. The idea changes only an export-time discrete SID descriptor and introduces no trainable parameters or model loss path; it therefore has no idea-specific parameter to receive gradients."
+    },
+    {
+      "item": "No held-out ranking or predeclared slice evaluation was run.",
+      "reason": "This requires the trained candidate SID and unchanged sequence-model evaluation pipeline; neither can run without the missing training runtime."
+    }
+  ],
+  "assumptions": [
+    "The baseline training parquet has columns named user_id and target; the baseline already uses target as the item identifier.",
+    "Training items with no training interactions receive suffix token 0 because their r and p are both defined as zero by the specification and no within-decile training quantile can be fitted for them.",
+    "Quantile bins are assigned by stable rank within each training frequency decile, with ties resolved by input item order. This avoids ambiguous duplicate quantile edges while retaining the specified 3-bin and 2-bin quantile assignments.",
+    "The baseline collision-extension columns are retained and the demand token is appended as the final SID column, with values 0 through 11; the baseline codebook and model configuration remain unchanged."
+  ],
+  "smoke": {
+    "command": "python - <<'PY'\nimport numpy as np, pandas as pd, sys\nsys.path.insert(0,'results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature')\nfrom demand_signature import fit_demand_suffix\nf=pd.DataFrame({'user_id':[1,1,1,2,2,3,3,3,3,4], 'target':[0,0,1,0,1,1,1,2,2,3]})\nt=fit_demand_suffix(f,5)\nsid=np.column_stack((np.array([[0,1,2]]*5),t))\nassert t.shape==(5,) and np.all((0<=t)&(t<12)) and sid.shape==(5,4)\nprint('PASS: train-only suffix computed; valid 12-token range; SID export shape',sid.shape,'tokens',t.tolist())\nPY",
+    "result": "PASS: train-only suffix computed; valid 12-token range; SID export shape (5, 4) tokens [0, 0, 0, 0, 0]. This verifies the suffix calculation and appended-SID shape only, not the neural forward/backward or full exporter."
+  },
+  "notes": "Copied the frozen TIGER_RQ-VAE tree to the standalone candidate directory. Kept latent dimension 32, three 256-code levels, 3000-epoch budget, optimizer/schedule/batch/seeds/split and baseline exporter logic intact. Added a train-frame-only suffix computation and an export-time append after the existing collision extension. Runtime limitations above mean this is not a complete training-verified Stage 2 candidate. Only the requested implementation.json was written outside the owned candidate tree."
+}

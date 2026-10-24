@@ -1,0 +1,73 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:228-307",
+          "detail": "The real trainer never fits bootstrap replicas or samples with replacement, never aligns assignments or builds consensus targets, and the optimization loss remains only the baseline reconstruction plus quantization loss. consensus.py is an unused helper, so the implementation does not implement the proposed training mechanism.",
+          "reproduction": "Run the trainer entry point and follow main(): it initializes one model at lines 237-240 and, for every batch, calls compute_loss(batch, reconstructed, quant_loss) at lines 302-304. There are no references to consensus_targets or consensus_kl in the trainer. Even a completed run therefore has no consensus contribution.",
+          "correction": "Before the final fit, train the specified five independent-seed replicas on N-item bootstrap resamples drawn only from train_ids; infer their assignments for training items, align each level to replica 0, and build q. During final training add the specified gamma-scaled KL term to the ordinary loss, with the stated temperature and normalization."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/consensus.py:47-49",
+          "detail": "The KL helper averages over items and levels, but omits the required division by L from the specification's gamma/(N*L) sum. Its result is larger by the number of codebook levels than specified. It also accepts arbitrary gamma/tau without enforcing the stated allowed gamma values and fixed tau=0.1.",
+          "reproduction": "For identical per-item, per-level KL values c and L levels, this function returns gamma*c, while the stated formula returns gamma*c/L. With the configured three levels the helper regularizer is three times the specified value.",
+          "correction": "Normalize the summed KL by both the item and level axes (or equivalently divide the current mean-over-items result by L), and use/validate the selected gamma in {0.01, 0.1} and tau=0.1."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:302-310",
+          "detail": "The intended consensus term is dead with respect to training because the trainer never invokes consensus_kl and never adds it to loss. Thus no consensus gradient reaches the encoder or codebooks; only the baseline objective is backpropagated. A finite baseline backward would not establish trainability of the proposed mechanism.",
+          "reproduction": "Inspect the backward path: loss is assigned from raw_module.compute_loss at line 304, then loss.backward() is called at line 307. No consensus helper or consensus target appears on this path. Runtime execution in this environment could not be performed because the available Python lacks torch (ModuleNotFoundError).",
+          "correction": "Wire consensus_kl into the differentiable training loss using encoder outputs and the per-level codebooks, then exercise a real forward/backward and assert finite loss/gradients on the intended encoder/codebook parameters."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/consensus.py:44-46",
+          "detail": "The differentiable distance logits use torch.cdist(...).square() at tau=0.1. For ordinary embedding distances, logits can become extremely negative and softmax can saturate, yielding numerically tiny or zero gradients for non-winning codes; there is no stabilization or gradient test. This is particularly risky in the intended consensus regularizer, though it is not reached by the current trainer.",
+          "reproduction": "A minimal large-distance case is encoded=[[1000,1000]], codebooks with one row near zero and another far away, tau=0.1: squared distances divided by tau have very large magnitude and softmax effectively becomes one-hot. The helper's backward then provides negligible probability gradient for the losing code.",
+          "correction": "When wiring the loss, check finite forward and gradients on representative embedding scales; use numerically stable squared-distance computation/log-softmax and ensure the specified temperature does not produce saturated logits for the actual inputs."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:42-52",
+          "detail": "The real entry point is configured to read fixed absolute paths under /home/wlia0047/ar57/wenyu/GeneRec and write outputs there. Those paths are not the inspected tree's workspace paths, so this tree's trainer is not self-contained/runnable in the current environment and cannot be confirmed to use the frozen data artifact from this tree. The code selects training target IDs from TRAIN_FILE and subsets embeddings at lines 230-236, which is train-only for fitting, but path identity/frozen provenance is not established.",
+          "reproduction": "Invoke this tree's train_rqvae.py in the provided workspace: EMBEDDING_FILE and TRAIN_FILE point to /home/wlia0047/... rather than /fs04/ar57/wenyu/GeneRec/...; absent those external files the first load fails. The required torch runtime is also unavailable in this environment, so an end-to-end invocation was not possible.",
+          "correction": "Point the entry point at the designated frozen embedding and training parquet artifacts for this experiment (or make the harness supply them consistently), and verify those exact inputs are used by replicas and final fit without validation/test items."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:419-445",
+          "detail": "The four-process torchrun launcher is retained in source, but it is hard-coded to a specific external executable and environment, and no successful launcher run can be established here. More importantly, the proposed five replicas and their synchronization are absent, so the distributed trainer does not execute the intended workflow. Do not treat launcher source presence as integration success.",
+          "reproduction": "The launcher builds a command using /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun and fixed four visible devices (lines 83-90, 431-439). That executable/path and four-GPU availability are not present/verified in this workspace; the current Python environment also fails importing torch.",
+          "correction": "Keep the launcher compatible with the experiment's actual runtime and verify a real four-rank launch, including rank-consistent initialization, replica/final training, barriers, and teardown after integrating the consensus workflow."
+        },
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:398-410",
+          "detail": "The export code does create one row per embedding row and keys the JSON by enumerate index, and collision extension enforces unique rows. However, no explicit item-ID mapping is exported or validated against the upstream item index; correctness depends on the frozen embedding row order exactly matching item IDs used downstream. Therefore SID indexing compatibility is assumed rather than verified.",
+          "reproduction": "If embedding rows are not in the same item-ID order as the downstream dataset, the JSON key 'item_id' at line 409 silently assigns each SID to the wrong item despite valid shape and uniqueness.",
+          "correction": "Validate and document the embedding-row/item-ID mapping against the frozen dataset and downstream consumer contract; export using that mapping or assert it is identity before writing SID files."
+        }
+      ]
+    }
+  ]
+}

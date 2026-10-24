@@ -1,0 +1,36 @@
+{
+  "verifier": "r7_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:522-526",
+          "detail": "The single-GPU trainer entry point unconditionally indexes _LAUNCHER['single_visible_dev'], but that key is not defined in either _LAUNCHER dictionary (the second dictionary replaces the first at lines 127-135). With no CUDA device or one visible GPU, resolve_single_gpu() is true and invoking the script raises KeyError before main() or training starts.",
+          "reproduction": "Run the script with CUDA_VISIBLE_DEVICES unset on a host with <=1 visible GPU, or invoke _launch_via_torchrun() with resolve_single_gpu() true: at line 524 it evaluates _LAUNCHER['single_visible_dev'] and raises KeyError.",
+          "correction": "Remove the missing-key lookup and preserve the inherited CUDA_VISIBLE_DEVICES when present; otherwise use a defined device value (or omit setting it). Add/retain the single-visible-device launcher configuration only if it is required."
+        },
+        {
+          "severity": "blocking",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:47-57,128-135",
+          "detail": "The trainer entry point is tied to absolute paths under /home/wlia0047/... and an absolute torchrun executable. In the reviewed checkout at /fs04/ar57/wenyu/GeneRec these are not the checkout's frozen data/artifact paths; the embedding/train inputs and launcher executable therefore are not guaranteed to exist, and the configured launcher script output may be written elsewhere. The in-tree executable is also hardcoded rather than resolved from the active environment.",
+          "reproduction": "From this checkout, inspect the configured EMBEDDING_FILE, TRAIN_FILE and _LAUNCHER['torchrun']; they point under /home/wlia0047, not /fs04/ar57/wenyu/GeneRec. If those locations are absent, main() fails at load_embeddings/read_parquet; with multi-GPU launch, subprocess.call fails to execute the configured torchrun path.",
+          "correction": "Resolve the frozen train parquet and embedding paths relative to the repository/project configuration used by the baseline, and resolve torchrun from the active Python environment (for example sys.executable -m torch.distributed.run). Keep output paths explicit and consistent with the intended experiment directory."
+        }
+      ]
+    }
+  ]
+}

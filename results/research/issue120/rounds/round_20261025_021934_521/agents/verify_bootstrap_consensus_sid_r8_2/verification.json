@@ -1,0 +1,37 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_r8_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:293-299",
+          "detail": "Replica training data are bootstrap-resampled, but each replica's codebooks are initialized from the complete unresampled training set before the bootstrap sample is drawn. Thus replicas are not independently fitted on their specified bootstrap resamples from initialization; this weakens the intended estimator and is an unimplemented part of the proposed procedure. The remaining central mechanism is present: five replica fits, Hungarian per-level alignment, empirical frequencies, and a final KL-regularized fit.",
+          "reproduction": "With a two-item training set and a bootstrap draw [item 0, item 0], replica.init_codebook still receives [item 0, item 1] at line 294, so item 1 can seed the replica despite not appearing in that replica's bootstrap sample.",
+          "correction": "Draw sampled indices before initialization and initialize the replica codebooks from the sampled bootstrap tensor (including repeated rows), consistently with the replica training data."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:522-525",
+          "detail": "The normal single-GPU launcher path indexes _LAUNCHER['single_visible_dev'], but the _LAUNCHER dictionary defined at lines 125-132 has no such key. On a host with one visible GPU (or GENREC_SINGLE_GPU=1) the actual script exits with KeyError before launching main, so the trainer entry point does not run in this supported mode.",
+          "reproduction": "Run the script with CUDA_VISIBLE_DEVICES unset and one CUDA device visible, or set GENREC_SINGLE_GPU=1; resolve_single_gpu() is true and line 524 raises KeyError: 'single_visible_dev'.",
+          "correction": "Define single_visible_dev in _LAUNCHER or remove the missing-key lookup and preserve/use the intended inherited or explicit CUDA_VISIBLE_DEVICES value."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "verifier": "r6_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:522-525",
+          "detail": "The single-GPU launcher references _LAUNCHER['single_visible_dev'], but the final _LAUNCHER definition at lines 127-135 has no such key. On a host with one visible GPU and CUDA_VISIBLE_DEVICES unset, the normal entry point raises KeyError before starting training. This breaks the explicitly supported automatic single-GPU path.",
+          "reproduction": "Run the entry point with torch.cuda.device_count() == 1, no RANK, no GENREC_SINGLE_GPU override, and CUDA_VISIBLE_DEVICES unset; resolve_single_gpu() returns true and line 524 raises KeyError: 'single_visible_dev'.",
+          "correction": "Add a valid single_visible_dev entry to the final _LAUNCHER mapping, or remove the lookup and preserve the already-visible device configuration; then exercise this launcher branch."
+        }
+      ]
+    }
+  ]
+}

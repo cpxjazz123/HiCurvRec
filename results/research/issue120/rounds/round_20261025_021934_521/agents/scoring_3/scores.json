@@ -1,0 +1,65 @@
+{
+  "scorer": "scoring_3",
+  "scores": [
+    {
+      "idea_id": "bootstrap_code_stability",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "A practical way to expose quantization-boundary confidence to a generator without refitting the tokenizer. The uncertainty signal is well motivated for brittle assignments, and the single-pass perturb-and-quantize procedure is implementable at low cost. Its impact depends on whether embedding perturbations represent meaningful uncertainty and whether the generator can use the appended token rather than treating it as a nuisance feature.",
+      "uncertainties": "The variance-scaled Gaussian perturbation and sigma are not calibrated to metadata corruption; agreement may mostly report distance to code boundaries rather than epistemic or semantic uncertainty. The binning specification has overlapping endpoint ambiguity at a_i=0.5, 0.75, and 0.95, and deterministic perturbations need careful reproducibility. No evidence yet that this feature improves recommendation rather than simply encoding item-specific tokenizer geometry."
+    },
+    {
+      "idea_id": "train_only_demand_signature",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 4,
+        "experimental_distinctness": 4
+      },
+      "rationale": "Separating revisit propensity from raw frequency addresses a real limitation of content-only identifiers and yields a simple, interpretable behavioral suffix. It is inexpensive, uses training interactions, and offers direct tests within frequency-matched groups. It is distinct from semantic quantizer changes because it adds a train-only demand descriptor while leaving the content SID intact.",
+      "uncertainties": "Repeat propensity may be poorly estimated for rare items, and the per-decile quantile bins may be degenerate or unstable when deciles have few distinct items. The signal could be redundant with sequence context or act as a popularity proxy; stationarity and cold-item behavior are unestablished. Clarify handling of empty/undersized bins and unseen items."
+    },
+    {
+      "idea_id": "train_graph_denoised_residual",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 4,
+        "downstream_impact": 4,
+        "experimental_distinctness": 4
+      },
+      "rationale": "The proposal uses observed training transitions to make content representations more behaviorally coherent before applying an otherwise unchanged tokenizer. This is a plausible response to semantic-neighbor failures, with a bounded mixing coefficient and a straightforward held-out recommendation test. Sparse aggregation is practical for typical item-transition graphs, and the intervention is experimentally separable from adding behavioral tokens or auxiliary losses.",
+      "uncertainties": "Transition adjacency can reflect navigation, position, or popularity rather than substitutability, so graph smoothing may blur useful distinctions. The degree correction uses out-degrees even though the edge weight is symmetrized; the intended degree definition and treatment of self-edges/zero rows should be explicit. Benefits may depend strongly on graph sparsity, lambda, and sequence construction."
+    },
+    {
+      "idea_id": "bootstrap_consensus_sid",
+      "scores": {
+        "novelty": 4,
+        "scientific_motivation": 4,
+        "feasibility": 3,
+        "downstream_impact": 4,
+        "experimental_distinctness": 5
+      },
+      "rationale": "This directly targets tokenizer estimation variance rather than uncertainty in the embedding or interaction features, and proposes a specific consensus-regularized final fit. It is scientifically motivated by unstable code assignments and is clearly distinct from the other interventions. If it improves both assignment reproducibility and recommendation, it could make learned SIDs more robust across runs and samples.",
+      "uncertainties": "The method is implementable but requires roughly six tokenizer fits, making compute and iteration cost substantial. Hungarian alignment may conceal split/merge structure and force misleading one-to-one correspondences; q targets may be diffuse or inconsistent. The KL direction, handling of codebook-level alignment across residual levels, temperature calibration, and whether replica targets are computed for every item need validation. Reduced assignment disagreement may not translate into ranking gains."
+    },
+    {
+      "idea_id": "uncertainty_aware_sid",
+      "scores": {
+        "novelty": 4,
+        "scientific_motivation": 4,
+        "feasibility": 3,
+        "downstream_impact": 4,
+        "experimental_distinctness": 4
+      },
+      "rationale": "The proposal integrates stochastic-view uncertainty into tokenizer training and aims to produce stable ordinary SIDs, avoiding downstream vocabulary or inference-format changes. It is a meaningful extension beyond measuring stability after quantization because it explicitly regularizes assignments during fitting and weights disagreement by view variance. The connection between stable codes and long-tail recommendation consistency is plausible and testable.",
+      "uncertainties": "Feasibility depends on access to the metadata encoder and a well-defined dropout/corruption mechanism; M-view encoding raises training cost and the loss can be sensitive to lambda and view generation. As written, the variance multiplier may give high-uncertainty items more disagreement penalty, but its scale relative to the baseline loss is unspecified. The notation L_RQ(mu_i,x_i) needs clarification if x_i is text or an embedding target. Dropout variance may not reflect real metadata noise, and improved SID stability may not improve recommendation quality."
+    }
+  ]
+}

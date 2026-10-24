@@ -1,0 +1,36 @@
+{
+  "verifier": "verify_train_only_demand_signature_r1_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature/train_rqvae.py:481-484",
+          "detail": "The single-GPU trainer entry path reads _LAUNCHER['single_visible_dev'], but the effective _LAUNCHER dict defined at lines 123-131 has no such key. On a single-GPU host without CUDA_VISIBLE_DEVICES, the launcher raises KeyError before starting the training child. This is a real entry-point failure in the advertised single-card path.",
+          "reproduction": "Run train_rqvae.py with torch.cuda.device_count() <= 1, GENREC_SINGLE_GPU unset, and CUDA_VISIBLE_DEVICES absent. resolve_single_gpu() is true and line 483 raises KeyError: 'single_visible_dev'.",
+          "correction": "Define single_visible_dev in the effective _LAUNCHER configuration, or avoid indexing an absent key and inherit/use an explicit valid device selection."
+        },
+        {
+          "severity": "blocker",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_only_demand_signature/train_rqvae.py:319-326",
+          "detail": "In a multi-rank run, only rank 0 calls init_codebook(), but VQLayer.init_codebook() performs distributed.broadcast(centers, 0) whenever a process group is initialized (model/layers.py:139-144). All other ranks skip that collective and enter the barrier at line 326, so rank 0 waits forever in broadcast. Thus the 4-rank DDP trainer cannot pass initialization.",
+          "reproduction": "Launch with torchrun --nproc_per_node=4 train_rqvae.py. Rank 0 enters distributed.broadcast at model/layers.py:143 while ranks 1-3 reach dist.barrier at train_rqvae.py:326; execution hangs before the first training batch.",
+          "correction": "Make every rank call init_codebook in the same collective order (with KMeans performed only on rank 0 and centers broadcast), or remove the internal broadcast and explicitly distribute initialized codebook weights from rank 0 before the barrier."
+        }
+      ]
+    }
+  ]
+}

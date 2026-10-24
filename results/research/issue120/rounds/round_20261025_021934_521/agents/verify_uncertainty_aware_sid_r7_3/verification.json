@@ -1,0 +1,44 @@
+{
+  "verifier": "verify_uncertainty_aware_sid_r7_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:305-310",
+          "detail": "The implementation perturbs precomputed embedding coordinates with elementwise Bernoulli dropout, not independently corrupted metadata text passed through the embedding encoder. The proposal explicitly defines uncertainty over metadata views. This changes what uncertainty measures and does not implement its specified view-generation mechanism. In addition, the agreement function's forward value is the specified hard disagreement, but its gradient surrogate is a separate continuous latent-distance penalty, not the specified indicator objective.",
+          "reproduction": "Use two text records whose embedding dimensions differ in scale or meaning: coordinate dropout changes arbitrary embedding coordinates regardless of metadata tokens. `uncertainty_agreement` returns the hard weighted token disagreement, while its gradient is obtained from `(encoded_views[left] - encoded_views[right])^2`; with equal hard code tuples and nonidentical latent vectors, the forward penalty is zero but this surrogate still changes encoder gradients.",
+          "correction": "Generate stochastic views from training-split item metadata and encode each view with the frozen embedding model (or explicitly revise and document the proposal as embedding-coordinate dropout). For hard-code agreement, use a principled differentiable relaxation aligned to code assignments and document it as an optimization approximation; avoid silently substituting generic latent-distance regularization."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:231-247",
+          "detail": "The trainer's input pipeline uses the frozen all-item embedding matrix and the frozen train parquet's `target` IDs to select tokenizer training rows; it does not load item metadata or create metadata views. Thus the path is index-aligned at the embedding-row level and export enumerates all embedding rows, but it cannot execute the proposed training-only metadata-view mechanism. The checkpoint/export path quantizes all stored embeddings rather than an averaged set of encoded metadata views as specified.",
+          "reproduction": "Run the trainer against the repository's frozen `stage1_GeneEmbedding/output/sentence_t5.npy` and `results/stage0_build_parquet/train.parquet`: the only stochastic views are formed from `train_embeddings` by coordinate dropout (lines 305-310), while export calls `get_indices(all_embeddings)` (lines 415-417). No metadata text is read anywhere in the entry point.",
+          "correction": "Keep the frozen train split and item-ID-to-row mapping, but load the corresponding metadata for training IDs, produce and encode independent metadata views, and export each item's SID from the mean of its encoded views. Retain explicit coverage/range checks for item IDs and validate exported shape/index correspondence."
+        },
+        {
+          "severity": "moderate",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:84-92,437-459",
+          "detail": "The launcher unconditionally requests four processes and overwrites CUDA_VISIBLE_DEVICES with `0,1,2,3`; it is not portable to a single-GPU or CPU environment. Consequently the ordinary script entry point cannot run in those environments even though `main()` supports a single-process CPU/GPU path.",
+          "reproduction": "Invoke `python train_rqvae.py` on a host with fewer than four visible GPUs: `_launch_via_torchrun()` still starts four workers with CUDA_VISIBLE_DEVICES set to four device indices, and each worker initializes NCCL and selects a CUDA device.",
+          "correction": "Make launcher process count/device selection follow the available or explicitly configured devices, and retain a direct single-process route when torchrun/NCCL is unavailable."
+        }
+      ]
+    }
+  ]
+}

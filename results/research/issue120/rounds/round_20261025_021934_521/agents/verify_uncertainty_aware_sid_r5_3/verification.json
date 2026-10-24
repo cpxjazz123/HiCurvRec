@@ -1,0 +1,66 @@
+{
+  "verifier": "r5_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:305-310",
+          "detail": "The proposal specifies independent dropout-corrupted metadata text inputs encoded by f. This code instead applies elementwise Bernoulli masking to already-computed item vectors. The in-file comment confirms metadata text is not present. Thus neither the stochastic views nor the estimated uncertainty represent the stated metadata-view mechanism.",
+          "reproduction": "Given a metadata item with two distinct text fields/views but the same precomputed vector, this implementation cannot distinguish them: its only views are random coordinate masks of that fixed vector. Missing/short metadata is likewise not handled as described.",
+          "correction": "Construct each view by applying the specified dropout to the item's available metadata text and run the encoder for each view; retain vector masking only if the proposal is explicitly changed to embedding-coordinate uncertainty."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:78-80, 321-322",
+          "detail": "Agreement strength is fixed at AGREEMENT_LAMBDA=1.0; there is no validation split/selection path for lambda. The specified procedure requires selecting lambda on validation, and the implementation trains only on train target IDs at lines 234-240.",
+          "reproduction": "Run the trainer with any validation data available: no code reads it or evaluates alternative lambda values; changing lambda requires editing the source constant.",
+          "correction": "Add a validation-only lambda selection procedure and record its selected value, while keeping validation records out of optimizer training."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/uncertainty.py:20-33",
+          "detail": "The returned agreement has the correct hard forward value but its gradient is a latent-distance surrogate, not the gradient of the specified hard code-disagreement objective. More importantly, its uncertainty weight is the variance of encoded_views, whereas the proposed uncertainty is variance of the metadata encoder outputs z; here encoded_views are produced by raw_module.encoder(flat_views), so under the current embedding-dropout scheme it measures compounded input-mask and encoder variation. This is trainable, but it is not the specified objective's uncertainty term.",
+          "reproduction": "For a batch with nonzero latent variance but identical token IDs, hard is zero while the returned scalar's forward value stays zero; backward nevertheless yields gradients through (variance * surrogate). This demonstrates the differentiable term changes the optimization despite no code disagreement.",
+          "correction": "Keep the hard disagreement as the measured objective and document/use a deliberate estimator for its gradient (for example, a validated soft assignment disagreement); compute the variance from the intended pre-quantization stochastic metadata embeddings."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:43-53, 87-94",
+          "detail": "The trainer and distributed launcher are tied to a different machine's absolute filesystem and executable paths. In this checkout, the source tree is under /fs04/ar57/wenyu/GeneRec, while the trainer reads /home/wlia0047/ar57/wenyu/GeneRec/... and launches /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun. Therefore the real entry point cannot load its inputs or launch in this environment; the output/log paths are similarly external.",
+          "reproduction": "From this checkout, invoke python on this tree's train_rqvae.py: load_embeddings(EMBEDDING_FILE) attempts the hardcoded /home/.../sentence_t5.npy before training. Invoking the normal launcher also attempts the hardcoded torchrun executable.",
+          "correction": "Resolve paths from a repository/config root and use the active Python environment's torchrun (or sys.executable -m torch.distributed.run); allow the frozen dataset paths to be supplied through the repository's established configuration mechanism."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:234-240",
+          "detail": "Training IDs are inferred from the `target` column of the hardcoded parquet, rather than being joined/validated against the frozen split's item-record mapping. Embedding row identity is assumed to equal target ID (only bounds are checked). If parquet target IDs are not the stage1 embedding row IDs, the trainer silently learns on wrong items while the exporter still writes rows indexed by embedding position.",
+          "reproduction": "A minimal dataset with target IDs [1,2] and an embedding table whose row 1/2 correspond to different item identifiers passes the range check and trains on the wrong vectors; no identity assertion detects it.",
+          "correction": "Use the repository's frozen item-ID-to-embedding-row mapping and assert exact identity/alignment before selecting training items and exporting SIDs."
+        },
+        {
+          "severity": "medium",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:423-428",
+          "detail": "The collision extension and JSON exporter index by implicit row order (`enumerate(sid)`), not by an explicit frozen item-ID map. The SID array is valid and made unique for row indices, but correct downstream item indexing is not established by this code.",
+          "reproduction": "If the embedding file rows are permuted relative to the downstream item-ID convention, the output remains unique and passes the check at line 423 while every item's SID is assigned to the wrong ID.",
+          "correction": "Export using the verified item-ID-to-row mapping and validate the produced array/JSON against the downstream expected item count and ID domain."
+        }
+      ]
+    }
+  ]
+}

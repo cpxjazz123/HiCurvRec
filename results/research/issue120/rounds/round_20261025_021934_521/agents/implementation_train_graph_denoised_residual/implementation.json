@@ -1,0 +1,28 @@
+{
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue120/rounds/round_20261025_021934_521/agents/implementation_train_graph_denoised_residual/tree",
+  "changed_files": ["train_rqvae.py"],
+  "deviations": [
+    {
+      "item": "Only lambda=0.1 is wired as a runnable candidate; lambda=0.3 and 0.5 are not separate exported arms, and validation-based selection was not performed.",
+      "reason": "The frozen Stage 2 baseline contains no downstream recommender/validation-selection protocol. Running three arms and choosing one without that protocol would violate the requirement to select lambda only by the predeclared validation protocol. The strength remains an explicit constant for an external protocol-driven run."
+    },
+    {
+      "item": "The full 3000-epoch training and data-scale SID export were not run.",
+      "reason": "The required environment supports a real forward/backward smoke, but a complete four-GPU 3000-epoch run is a full experiment rather than a minimal smoke and was not launched. Therefore a full-dataset SID export is not claimed. The unchanged baseline exporter and collision extension remain in place."
+    },
+    {
+      "item": "Transition sequences are reconstructed from each training row's history followed by its target, so shared prefix transitions appearing in multiple training rows are counted repeatedly.",
+      "reason": "The frozen training split is a row-wise prefix/target parquet rather than a user-level sequence table; reconstructing unique source sequences is not possible from this input alone. Every edge still comes exclusively from training rows."
+    }
+  ],
+  "assumptions": [
+    "The train parquet history and target columns are the complete allowed training-only source; validation/test files and their statistics are not accessed.",
+    "The symmetrized graph row normalization uses the stated symmetric weights, while the popularity correction degree is the training directed out-degree, accumulated before symmetrization.",
+    "The ordinary tokenizer must be fit on denoised embeddings for all rows included by the frozen baseline, and training targets determine only the training subset used to fit the tokenizer, as in the baseline."
+  ],
+  "smoke": {
+    "command": "cd /fs04/ar57/wenyu/GeneRec/results/research/issue120/rounds/round_20261025_021934_521/agents/implementation_train_graph_denoised_residual/tree && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python - <<'PY' ... PY (synthetic train-only graph; instantiate frozen RQVAE; forward, finite loss, backward; verify nonzero parameter gradient; verify collision-extended SID uniqueness) && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -m py_compile train_rqvae.py",
+    "result": "PASS: synthetic denoised matrix finite; frozen RQVAE forward/backward finite loss=1.4080508 with summed parameter gradient L1=55.3224; baseline collision-extension produced unique SID shape (3,4); Python compilation passed. This verifies the minimal trainable path and export helper, not full-data export."
+  },
+  "notes": "Standalone copy of stage2_RQ-VAE/TIGER_RQ-VAE, with output paths redirected into this candidate tree. The baseline tokenizer configuration, optimizer, scheduler, batch size, seed, split, 3000-epoch constant, and exporter logic are retained. The implementation builds sparse symmetrized transition consensus from training history/target only, L2-normalizes source and neighbor consensus, mixes them at GRAPH_LAMBDA, and then uses the original RQ-VAE pipeline. The requested full-data valid SID artifact and hypothesis evaluation remain unverified pending a full experiment."
+}

@@ -1,0 +1,37 @@
+{
+  "verifier": "r6_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:293-299",
+          "detail": "Replica SGD uses bootstrap-resampled rows, but each replica's codebooks are initialized by KMeans on the entire unresampled training embedding set. Thus the replicas are not fitted solely on their specified bootstrap resamples; their initial quantizers share a full-training-data initialization, weakening the intended independent bootstrap estimator.",
+          "reproduction": "In the replica loop, the call at line 294 passes all train_embeddings to init_codebook before replica_data is constructed from sampled indices at lines 297-299. For any bootstrap draw omitting a training item, that item still influences the replica's initial KMeans centers.",
+          "correction": "Draw sampled indices before initialization and initialize each replica's codebooks from the corresponding bootstrap sample (while retaining the same architecture, hyperparameters, and independent seed)."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:522-525",
+          "detail": "The single-GPU launcher references _LAUNCHER['single_visible_dev'], but the final _LAUNCHER definition at lines 128-135 does not define that key. Since resolve_single_gpu() selects this branch when at most one GPU is visible, the actual entry point raises KeyError before starting training when CUDA_VISIBLE_DEVICES is unset.",
+          "reproduction": "Run the script entry point on a one-GPU host with CUDA_VISIBLE_DEVICES unset (or with no CUDA devices): resolve_single_gpu() returns true and line 524 evaluates the missing dictionary key.",
+          "correction": "Add the intended single_visible_dev value to the effective _LAUNCHER mapping, or avoid assigning CUDA_VISIBLE_DEVICES when it is absent; smoke-test the entry point in single-GPU mode as well as torchrun mode."
+        }
+      ]
+    }
+  ]
+}

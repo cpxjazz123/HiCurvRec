@@ -1,0 +1,21 @@
+{
+  "also_proposed_by": [
+    "ideation_2"
+  ],
+  "cost_estimate": "Approximately 5 baseline tokenizer fits for replicas plus one final fit (about 6x Stage2 training compute); assignment alignment costs O(B*L*K^3), negligible at K=256 relative to fitting.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "Across at least three seeds, consensus training reduces item assignment disagreement between independently fitted tokenizer seeds and improves validation next-item ranking versus the baseline at the same final-fit budget; if disagreement falls but validation ranking does not improve, discard.",
+  "fingerprint": "86aca75ab95c33d9",
+  "idea_id": "bootstrap_consensus_sid",
+  "key_change": "Fit several lightweight tokenizer replicas on bootstrap resamples of training items, align replica code labels to a reference per codebook with Hungarian matching, then use cross-replica assignment frequencies as soft targets for a final standard tokenizer fit.",
+  "motivation": "A small shift in initialization or sampled training items can move borderline products across code boundaries, making their semantic tokens unstable and depriving the generative recommender of repeatable prefix structure.",
+  "novelty": "This targets tokenizer estimation uncertainty rather than adding another semantic modality, geometry, or sequential objective: train-only resampled tokenizer replicas estimate which item/code assignments are reliable, and only unstable assignments are regularized toward consensus.",
+  "origin_agent": "ideation_2",
+  "risks": [
+    "Code labels may not align cleanly where clusters split/merge; consensus can freeze a shared but poor local solution and reduce code utilization. Extra compute is substantial, and replica-derived targets can over-regularize rare items."
+  ],
+  "specification": {
+    "text": "Train B=5 replicas with the baseline architecture and hyperparameters, each sampling N training items with replacement and independent seed. For each level l, align replica code labels to replica 0 by maximum overlap of item assignments (Hungarian algorithm on the KxK overlap matrix). Define q_i,l,k=(1/B)sum_b 1[aligned_code_b(i,l)=k]. In the final tokenizer fit, retain the usual reconstruction/RQ loss and add L_cons=(gamma/(N*L))*sum_{i,l} KL(q_i,l || p_l(.|x_i)), where p is softmax of negative squared distances divided by fixed temperature tau=0.1 and gamma is selected from {0.01,0.1}; export the final model's ordinary hard assignments. All replicas and final fitting use training items only."
+  },
+  "title": "Assign IDs by bootstrap-consensus quantization"
+}

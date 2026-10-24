@@ -1,0 +1,15 @@
+{
+  "ideas": [
+    {
+      "idea_id": "uncertainty_aware_sid",
+      "title": "Quantize stable semantics, not embedding noise",
+      "motivation": "Items with sparse, ambiguous, or noisy metadata can receive brittle semantic IDs; small changes in their input embedding may send them to unrelated code paths, making generated recommendations inconsistent for the long tail.",
+      "novelty": "The repository explores different quantization geometries, transition-aware residuals, and topology preservation, but does not appear to model per-item uncertainty or explicitly optimize the stability of an item's emitted code under plausible embedding perturbations.",
+      "key_change": "Estimate embedding uncertainty from training-only stochastic views of each item's metadata text, then train the existing RQ-VAE to reconstruct the view mean while penalizing code disagreement across views. No changes to the downstream generator or inference-time SID format are needed.",
+      "specification": "For each training item i, encode M independently dropout-corrupted versions of its available metadata: z_i^(m)=f(x_i^(m)); let mu_i=mean_m z_i^(m), and v_i=mean_m ||z_i^(m)-mu_i||_2^2. Quantize each view to code tuple c_i^(m)=Q(z_i^(m)). Optimize L=L_RQ(mu_i,x_i)+lambda * v_i * mean_{m<n} sum_{l=1}^L 1[c_{i,l}^(m) != c_{i,l}^(n)], where L_RQ is the baseline reconstruction plus commitment objective. Use only metadata and item records in the training split; select lambda on validation. At export, assign c_i=Q(mean_m z_i^(m)).",
+      "cost_estimate": "About M-fold encoder computation during tokenizer training (M=2 is a minimal test); code-agreement cost is O(B*M^2*L) scalar comparisons per batch. Inference/export cost is unchanged apart from optional averaging of M embeddings.",
+      "falsifiable_hypothesis": "On items with high view variance v_i, the proposed tokenizer will reduce disagreement between SIDs under repeated metadata dropout by at least 25% versus baseline, while improving or preserving validation next-item Recall@10 for users whose training histories contain such items. Measure SID agreement and Recall@10 by item uncertainty quartile; reject if stability improves without a corresponding held-out recommendation benefit.",
+      "risks": "Dropout views may not reflect real metadata errors; overly large lambda can erase meaningful distinctions between near-neighbor items; short or missing metadata may produce noisy uncertainty estimates; repeated views increase training cost."
+    }
+  ]
+}

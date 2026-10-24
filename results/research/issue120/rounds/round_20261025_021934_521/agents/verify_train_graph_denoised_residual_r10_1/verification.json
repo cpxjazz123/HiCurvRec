@@ -1,0 +1,44 @@
+{
+  "verifier": "r10_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "moderate",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:235-242",
+          "detail": "The graph counts every parquet training row as a complete history-plus-target sequence. If train.parquet stores the usual overlapping prefix/target examples for a user, the same underlying adjacent transition is counted repeatedly, with multiplicity dependent on how many prefixes contain it. This is not the specified one count per adjacent pair in each training sequence, and can materially skew the graph weights. The comment asserts this interpretation but does not establish that parquet rows are unique complete sequences.",
+          "reproduction": "Minimal counterexample: one user's sequence [a,b,c] represented by rows ([a],b) and ([a,b],c) contributes a→b twice and b→c once; a single complete-sequence pass contributes each edge once. Run denoise_with_train_transitions on those rows and compare its counts with the specified sequence counts.",
+          "correction": "Construct/count each underlying training sequence once (using stable user/order information in the frozen train data), or confirm and enforce a data contract that each row is an independent complete sequence; avoid inferring complete sequences from overlapping prefixes."
+        },
+        {
+          "severity": "moderate",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:118",
+          "detail": "The implementation hard-codes lambda=0.1 and labels it a fixed candidate; it does not implement the specified candidate set {0.1, 0.3, 0.5} or the predeclared validation-based selection protocol. This is a mismatch in the requested mechanism/experiment, although a single candidate run could be an explicitly staged first experiment.",
+          "reproduction": "Inspect GRAPH_LAMBDA and its sole use at lines 229-230 and 335: the trainer always uses 0.1, irrespective of validation results, and never evaluates the other two candidates.",
+          "correction": "Run the three specified lambda candidates under identical frozen inputs/configuration and select only using the predeclared validation protocol, or explicitly scope this artifact as the 0.1 candidate and defer selection to an existing downstream protocol."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:190-215, 336-341, 504-516",
+          "detail": "The export uses embedding-row indices as SID keys/array positions, but remap_train_item_ids explicitly maps raw parquet item IDs to embedding rows, and EMBEDDING_IDS_FILE provides the inverse mapping. The export therefore loses the raw item-ID mapping. It is only correctly indexed if every downstream consumer independently treats the embedding row as the item ID; that is not validated here, and the JSON keys are explicitly row enumerations rather than the source item IDs. This can assign SIDs to the wrong items or make non-contiguous IDs inaccessible.",
+          "reproduction": "Use item_ids.json=[20,10] and two embedding rows. remap_train_item_ids maps raw item 20→row 0 and 10→row 1, but export writes JSON keys \"0\" and \"1\" and sid array positions 0 and 1. A consumer looking up raw item 20 cannot retrieve its SID by that ID.",
+          "correction": "Export an explicit raw-item-ID-to-SID mapping using item_ids.json (and arrange the NPY according to the downstream contract), or document and verify that all downstream consumers use embedding-row IDs. Add a validation that every source item maps to the intended exported row."
+        }
+      ]
+    }
+  ]
+}

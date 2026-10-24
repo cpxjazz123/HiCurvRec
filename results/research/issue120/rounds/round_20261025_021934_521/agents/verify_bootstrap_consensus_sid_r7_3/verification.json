@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_r7_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:523-524",
+          "detail": "The single-GPU launcher references _LAUNCHER['single_visible_dev'], but that key is not defined in the active _LAUNCHER dictionary (lines 127-135). The launcher therefore crashes before starting the real trainer when it selects single-GPU mode and CUDA_VISIBLE_DEVICES is absent. The preceding duplicate launcher definition also does not define this key.",
+          "reproduction": "Run the script with one visible CUDA device (or set GENREC_SINGLE_GPU=1), unset CUDA_VISIBLE_DEVICES, and enter _launch_via_torchrun(); line 524 raises KeyError: 'single_visible_dev'.",
+          "correction": "Define single_visible_dev in the active launcher configuration, or remove this lookup and use a valid documented default (for example the existing visible_dev value or the inherited device selection)."
+        }
+      ]
+    }
+  ]
+}

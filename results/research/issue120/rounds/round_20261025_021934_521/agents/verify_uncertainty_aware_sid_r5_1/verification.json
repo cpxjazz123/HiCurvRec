@@ -1,0 +1,51 @@
+{
+  "verifier": "r5_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:305-310",
+          "detail": "The implementation corrupts precomputed dense item embeddings with elementwise feature dropout, not stochastic views of available item metadata encoded by the text encoder. Thus the uncertainty being estimated is vector-coordinate dropout variance, not the specified metadata-view uncertainty. The comment confirms metadata text is absent. This changes the central mechanism rather than merely its implementation detail.",
+          "reproduction": "Inspect the input loading at lines 139-160 and 233-240: it loads sentence_t5.npy rows and never loads text or invokes an encoder f on text; the only corruption is the Bernoulli mask at lines 308-310.",
+          "correction": "Generate M independent dropout-corrupted views from each training item's available metadata and run the intended text encoder on each view; if only cached vectors are in scope, explicitly provide corresponding independently generated metadata-view embeddings rather than feature-mask approximations."
+        },
+        {
+          "severity": "minor",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/uncertainty.py:26-33",
+          "detail": "The specified agreement regularizer is the variance-weighted hard per-level code disagreement. The implementation returns that hard value in the forward pass but adds a latent squared-distance surrogate gradient. This is an additional optimization mechanism: even when the discrete code disagreement is zero, the surrogate drives views' encoded vectors together. It is not the stated objective, though it avoids the zero-gradient problem of a purely discrete penalty.",
+          "reproduction": "For two views with identical token tuples but distinct encoded vectors, `hard` is zero while `soft` is positive; line 33 returns zero forward value with gradient from `soft`.",
+          "correction": "Use a documented differentiable estimator explicitly approved as part of the design, or implement the specified objective and choose a deliberate gradient estimator whose forward and gradient behavior is separately controlled and tested."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:281-288",
+          "detail": "The distributed codebook initialization is mismatched across ranks and deadlocks. Rank 0 enters `raw_module.init_codebook`, whose VQLayer.init_codebook calls `distributed.broadcast` at layers.py:143; nonzero ranks skip initialization and enter `dist.barrier()` instead. These ranks therefore execute different collectives in the same process group.",
+          "reproduction": "Launch the configured 4-rank torchrun path with RANK/LOCAL_RANK set. After rank 0 finishes KMeans it waits in broadcast while ranks 1-3 wait in barrier; none can progress. This occurs before the first training batch.",
+          "correction": "Have every rank enter codebook initialization in the same layer/order so the broadcast has matching participants, or compute centers on rank 0 and broadcast them with all ranks explicitly participating in that same broadcast before any barrier."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:43-53",
+          "detail": "The trainer entry point is bound to absolute paths under `/home/wlia0047/ar57/wenyu/GeneRec`, while this checkout is `/fs04/ar57/wenyu/GeneRec`; consequently the real entry point cannot load its configured training inputs here, and its output paths are outside this tree. The existence/format of the claimed frozen data files at those hardcoded locations is not established by this tree.",
+          "reproduction": "Run `python train_rqvae.py` in the supplied checkout: the first `load_embeddings(EMBEDDING_FILE)` attempts `/home/wlia0047/.../sentence_t5.npy`; that path is not the checkout path. Even if run in the original host, missing either configured file raises immediately.",
+          "correction": "Bind the trainer to the project's canonical frozen-data paths (or a verified configuration mechanism) and validate both input files and item-row mapping before launching training."
+        }
+      ]
+    }
+  ]
+}

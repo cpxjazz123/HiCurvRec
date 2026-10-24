@@ -1,0 +1,15 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual",
+  "repairs": [
+    {
+      "finding": "r6_1/r6_2: codebook initialization was reported as rank-0-only, deadlocking against VQLayer.init_codebook's per-codebook distributed.broadcast calls and leaving other ranks' model-local codebooks uninitialized.",
+      "change": "The trainer already invokes raw_module.init_codebook(train_embeddings.to(device)) unconditionally on every rank, before the barrier. I retained this required all-rank behavior and corrected the misleading adjacent comment to explicitly say every rank participates in the per-codebook broadcasts. Since every rank has the same train_embeddings and calls the same RQVAE/RQLayer initialization sequence, each broadcast has matching participants and all local models copy the broadcast centers.",
+      "verification": "Inspected the complete initialization block and confirmed the init_codebook call is outside the rank-0 logging conditional and precedes the barrier; the VQLayer implementation broadcasts each codebook's centers from rank 0. The smoke check asserted this source structure."
+    }
+  ],
+  "remaining_issues": [],
+  "smoke": {
+    "command": "python -m py_compile results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/model/layers.py && python -c \"from pathlib import Path; p=Path('results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py'); s=p.read_text(); a=s.index('    # === codebook init:'); b=s.index('    # Stage3 only consumes', a); block=s[a:b]; assert 'if rank == 0:' in block and block.index('raw_module.init_codebook') > block.index('raw_module =') and 'if rank == 0:\\n        raw_module.init_codebook' not in block; print('PASS: init_codebook call is unconditional across ranks; barrier follows shared init')\"",
+    "result": "Exit code 0. py_compile produced no output. Structural smoke output: PASS: init_codebook call is unconditional across ranks; barrier follows shared init"
+  }
+}

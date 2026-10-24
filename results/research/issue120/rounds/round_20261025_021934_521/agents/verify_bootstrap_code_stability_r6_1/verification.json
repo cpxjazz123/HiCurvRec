@@ -1,0 +1,37 @@
+{
+  "verifier": "verify_bootstrap_code_stability_r6_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "train_rqvae.py:944-947",
+          "detail": "The training population used to estimate perturbation variance is defined as unique target IDs only. Items occurring in training histories but never as a target are still training items, but are excluded from v. This deviates from the specified training-item embedding population and can give those dimensions an incorrectly narrow (even zero) perturbation scale. The rest of code_stability.py implements the modal complete-tuple agreement and four bins as specified.",
+          "reproduction": "Minimal counterexample: a training row has history=[0] and target=1, with embeddings for IDs 0 and 1 differing in one dimension. train_ids becomes [1], so variance in that dimension is zero; using training items {0,1} yields positive variance and nonzero perturbations. Item 0 nevertheless receives an exported stability token.",
+          "correction": "Build the fit population from the unique item IDs appearing anywhere in the training split (history and target, using the trainer's canonical item-id mapping), validate its bounds, and pass that set to stability_tokens. Keep held-out-only items out of this population."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "train_rqvae.py:944-947",
+          "detail": "SID rows are deliberately exported for all embedding rows and the row-order assertion at 1547-1556 is sound, but the same target-only train_ids issue means the integrated export does not use the required train-only statistics over the actual set of training items. Thus the SID is shape/index aligned but some training-item stability values are computed with a misfit variance population.",
+          "reproduction": "With a history-only item (present in seen_history/history but absent from every target), perturbations are generated for its embedding at export, while the population variance used by those perturbations excludes it entirely. This is reproducible from the one-row example in the mechanism finding.",
+          "correction": "Derive training item IDs from the full training split's histories and targets before model setup/export; use that population for the variance fit. Re-run the actual trainer/export and verify row i still maps to item ID i and the launcher completes on the supported single-GPU and DDP paths."
+        }
+      ]
+    }
+  ]
+}

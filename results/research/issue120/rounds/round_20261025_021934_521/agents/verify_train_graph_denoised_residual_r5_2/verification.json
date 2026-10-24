@@ -1,0 +1,44 @@
+{
+  "verifier": "r5_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "train_rqvae.py:179-199",
+          "detail": "The graph routine indexes embeddings directly by parquet item_id, so it does not correctly implement the specified graph when IDs are the raw item identifiers used by the frozen parquet, rather than dense embedding-row indices. Out-of-range edges are silently discarded (182-183), and output embeddings/SIDs are still in unrelated row order. The stage1 producer explicitly writes item_ids.json to preserve this association.",
+          "reproduction": "For the minimal valid embedding matrix with two rows and train sequence IDs [100, 101], this function drops the edge entirely; main then rejects target 100 at lines 264-266. More generally a sparse/non-zero-based ID set cannot be mapped by positional indexing.",
+          "correction": "Load the stage1 item_ids.json, build item_id-to-row and row-to-item mappings, remap every history/target ID for graph construction and training, and export SIDs keyed/indexed according to the exact downstream item-ID contract. Validate unknown IDs explicitly instead of silently dropping edges."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "train_rqvae.py:42-49, 261-266",
+          "detail": "The real entry point assumes parquet item IDs are dense zero-based embedding row indices and never reads the stage1 item_ids.json sidecar. Stage0's frozen builder casts raw ASIN identifiers to integers (build_recbole_parquet.py:158-162), while stage1 separately records the embedding row order in item_ids.json (generate_item_embedding.py:218-222). For the actual raw-ID data this target range check fails before training; even if it did not, positional SID export would be misindexed.",
+          "reproduction": "With embeddings shaped (N,D) and a frozen train.parquet target containing a raw ID >= N (e.g. the two-row counterexample target 100), running main raises ValueError at train_rqvae.py:266. If IDs happen to fall within range but are permuted relative to item_ids.json, exported SID row k labels the wrong item.",
+          "correction": "Honor item_ids.json and remap all train IDs to embedding row indices before graph construction, train-item selection, and target validation; export an item-ID-to-SID mapping in the format expected by stage3. Then smoke-test the actual frozen inputs and downstream loader."
+        },
+        {
+          "severity": "major",
+          "location": "train_rqvae.py:84-90, 452-473",
+          "detail": "The launcher hardcodes a machine-specific torchrun executable and launches four NCCL ranks unconditionally when invoked directly. This environment-specific path/device assumption prevents a portable real entrypoint run; no successful launcher execution can be inferred merely from its presence.",
+          "reproduction": "On a host without /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun, direct execution fails in subprocess.call with FileNotFoundError before any training. On a host with fewer than four visible CUDA devices, the forced four-rank NCCL launch also fails.",
+          "correction": "Use the configured runtime's torchrun/PATH and validate available CUDA device count, or make launcher selection derive from the established project launcher while preserving its distributed configuration."
+        }
+      ]
+    }
+  ]
+}

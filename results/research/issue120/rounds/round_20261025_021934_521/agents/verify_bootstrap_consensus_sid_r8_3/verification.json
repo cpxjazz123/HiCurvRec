@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_r8_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:523-526",
+          "detail": "The single-GPU launcher accesses _LAUNCHER['single_visible_dev'], but that key is never defined in either _LAUNCHER declaration (lines 109-116 and 127-135). With one GPU and CUDA_VISIBLE_DEVICES unset, the real script launcher raises KeyError before main() and training cannot start. The four-GPU torchrun branch itself is configured and is not affected by this missing key.",
+          "reproduction": "Run the entry script with torch.cuda.device_count() == 1, no RANK, no GENREC_STAGE2_LAUNCHED, and CUDA_VISIBLE_DEVICES unset (or directly call _launch_via_torchrun under those conditions): resolve_single_gpu() is true and evaluating _LAUNCHER['single_visible_dev'] raises KeyError.",
+          "correction": "Define single_visible_dev in the active _LAUNCHER configuration (or remove that lookup and preserve/infer the visible device safely); then smoke-test both the single-GPU re-exec and four-rank torchrun entry paths."
+        }
+      ]
+    }
+  ]
+}

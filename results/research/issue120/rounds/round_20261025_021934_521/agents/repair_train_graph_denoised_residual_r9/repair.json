@@ -1,0 +1,22 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual",
+  "repairs": [
+    {
+      "finding": "r9_1/r9_3: main() calls undefined _validate_frozen_inputs(), blocking all trainer runs.",
+      "change": "Added _validate_frozen_inputs() to require the declared Stage1 embedding matrix, Stage1 item-ID list, and Stage0 training parquet to exist as files. It reads/checks paths only and does not alter the frozen data paths.",
+      "verification": "Static smoke parsed the trainer and confirmed the helper is defined; py_compile completed successfully. A runtime import/test could not run because this Python environment lacks PyTorch (ModuleNotFoundError: No module named torch)."
+    },
+    {
+      "finding": "r9_1/r9_3: launcher has a None torchrun executable and the single-GPU branch references a missing single_visible_dev key.",
+      "change": "Configured torchrun as [sys.executable, \"-m\", \"torch.distributed.run\"], added single_visible_dev=\"0\", and constructs the multi-GPU command by expanding that executable prefix.",
+      "verification": "Static smoke confirmed both launcher configurations and syntax validity. Mocked subprocess branch execution could not run because importing the trainer requires unavailable PyTorch."
+    }
+  ],
+  "remaining_issues": [
+    "Full runtime and mocked launcher-branch smoke remain unverified in this environment because PyTorch is not installed."
+  ],
+  "smoke": {
+    "command": "python importlib-based launcher smoke (mock subprocess.call for single and multi-GPU branches); additionally python -m py_compile train_rqvae.py",
+    "result": "Launcher smoke failed before execution: ModuleNotFoundError: No module named 'torch'. Separate static smoke passed: \"STATIC SMOKE PASS: trainer parses; frozen-input validator and both launcher configurations are present.\" py_compile completed successfully."
+  }
+}

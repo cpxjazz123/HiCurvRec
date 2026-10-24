@@ -1,0 +1,28 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid",
+  "repairs": [
+    {
+      "finding": "The trainer used one deterministic embedding per training target and did not train on multiple views, a view mean, or an agreement term.",
+      "change": "Added two independently feature-dropped views per training batch, reconstructs the original baseline embedding target from the view mean, and adds the weighted agreement regularizer. Validation/evaluation rows remain outside the training-view dataset.",
+      "verification": "Inspected the updated training loop: it forms [M,B,D] views, runs quantization for view codes, computes the mean-view baseline RQ loss, and adds uncertainty_agreement before backward. Full training was not run."
+    },
+    {
+      "finding": "The agreement helper's detached variance and discrete-only code mismatch had no gradient path.",
+      "change": "Kept hard variance-weighted code disagreement as the forward objective while using a variance-weighted pairwise latent-distance straight-through surrogate for gradients to the encoder outputs.",
+      "verification": "The gradient smoke test produced a finite loss with requires_grad=True and finite nonzero input gradient norm (13.066496); py_compile passed for train_rqvae.py and uncertainty.py."
+    },
+    {
+      "finding": "The proposal requires metadata-text dropout views; available tree inputs contain only precomputed embedding vectors, and no validation lambda-selection path/data is available.",
+      "change": "Used independent embedding-feature dropout only, preserving the available input contract. Did not invent metadata or validation records.",
+      "verification": "The tree has no dataset files under dataset/, and the trainer's configured source is sentence_t5.npy plus the training parquet. This requirement remains only partially implemented."
+    }
+  ],
+  "remaining_issues": [
+    "Metadata text is not supplied in this tree, so stochastic views are embedding-feature dropout rather than corrupted metadata text.",
+    "Lambda is currently a fixed constant; no validation-based lambda selection was implemented because no validation data/split is supplied by the existing trainer."
+  ],
+  "smoke": {
+    "command": "/fs04/scratch2/ar57/wenyu/genrec_env_v2/bin/python - <<'PY' ... uncertainty_agreement on encoded_views=torch.randn(2,3,4,requires_grad=True), then backward; followed by python -m py_compile train_rqvae.py uncertainty.py",
+    "result": "PASS. Output: loss=1.202000 requires_grad=True grad_finite=True grad_norm=13.066496. py_compile completed with no errors."
+  }
+}

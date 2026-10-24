@@ -1,0 +1,44 @@
+{
+  "verifier": "r8_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:324-340",
+          "detail": "This does not implement the specified metadata-view mechanism: it applies Bernoulli feature dropout to already-precomputed embedding vectors, with no metadata text encoder or corrupted metadata inputs. It also reconstructs by encoding the arithmetic mean of input embeddings (`model(view_mean)`), rather than reconstructing from the mean of the independently encoded views, and export quantizes the unperturbed embedding rather than Q(mean_m z_i^(m)). The differentiable latent-distance surrogate in uncertainty.py is also an additional objective not present in the stated hard code-disagreement loss.",
+          "reproduction": "For a nonlinear encoder f, in general f(mean_m x_m) != mean_m f(x_m); the current `view_mean` path computes the former. At export, lines 435-437 call `get_indices(all_embeddings)` with no view averaging/dropout. A text-only metadata input cannot be supplied to this training path at all.",
+          "correction": "Generate independent stochastic metadata views and encode each through f; use mean_m z_i as the RQ-VAE reconstruction input and at export quantize that same mean. If the repository has only fixed embeddings, explicitly revise the proposed mechanism/specification to embedding-feature dropout rather than claiming metadata-text views. Keep any differentiable surrogate separate or justify it as part of the intended objective."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:103-110,456-488",
+          "detail": "The configured trainer launcher is broken in both launch modes. `_LAUNCHER['torchrun']` is None, so the 4-GPU branch builds a subprocess command whose executable is None. In single-GPU mode, `_LAUNCHER['single_visible_dev']` is absent, so an environment without CUDA_VISIBLE_DEVICES raises KeyError before starting the child. The checked-in training log does not make these current source paths valid.",
+          "reproduction": "With no RANK/GENEREC_STAGE2_LAUNCHED and at least two visible GPUs, call `_launch_via_torchrun()`; subprocess.call receives `[None, ...]`. With one visible GPU and CUDA_VISIBLE_DEVICES unset, call it; line 476 indexes the missing `single_visible_dev` key.",
+          "correction": "Resolve the torchrun executable (for example via `sys.executable -m torch.distributed.run` or shutil.which) and define/use a valid single-GPU visibility value, then exercise both branches with controlled environment/device-count tests."
+        },
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:41-51,248-256",
+          "detail": "The selected training examples are target IDs from the default `results/stage0_build_parquet/train.parquet`, but this code does not establish that this is the required frozen split or assert its provenance. Environment overrides can silently substitute another split. Thus the data path is not demonstrably pinned to the frozen training-only records, although only target IDs from the chosen file enter training.",
+          "reproduction": "Set GENEREC_TRAIN_FILE to a parquet containing a held-out item as target: that item is added to train_ids and used in train_embeddings with no guard. The same override can change embeddings and SID output without a frozen-split check.",
+          "correction": "Bind the path to the project's frozen training split (or validate the override against a recorded frozen manifest/hash and split IDs); fail closed if provenance or IDs disagree."
+        }
+      ]
+    }
+  ]
+}

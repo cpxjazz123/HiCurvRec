@@ -1,0 +1,28 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual",
+  "repairs": [
+    {
+      "finding": "mechanism fidelity: proposal-only tree had no code implementing train-only symmetrized, degree-corrected transition aggregation, normalization, lambda mixing, or tokenizer invocation",
+      "change": "Added train_rqvae.py plus the frozen baseline model package. The trainer reads only train.parquet history/target to count adjacent transitions; computes directed out-degrees, symmetric weights (Cij+Cji)/sqrt((deg_i+1)(deg_j+1)), normalizes each row, L2-normalizes item and neighbor vectors, and applies normalized residual mixing at GRAPH_LAMBDA=0.1 before the unchanged RQVAE tokenizer. Trainer/export paths point inside this tree.",
+      "verification": "Inspected implementation and ran the actual denoising function on synthetic train-only rows at lambda 0.1, 0.3, and 0.5; all outputs were finite, including an isolated zero-vector item. Python compilation passed."
+    },
+    {
+      "finding": "trainability: no runnable forward/backward path, finite loss/gradient or edge-case check",
+      "change": "Added the baseline RQVAE model and a runnable trainer entry point, with the denoised embeddings passed into the ordinary training pipeline. The graph code uses epsilon-protected normalization and retains self embeddings for no-neighbor items.",
+      "verification": "Synthetic RQVAE forward/backward passed with finite loss=1.1437382 and summed parameter gradient L1=50.2095. The smoke checked all three specified lambda values and a zero-norm isolated item."
+    },
+    {
+      "finding": "integration: no trainer, frozen data-path use, SID export or distributed launcher to inspect/run",
+      "change": "Added the complete baseline trainer integration, preserving its training configuration and four-process torchrun launcher; the trainer reads the frozen training parquet, applies denoising before RQVAE fit/export, and retains baseline SID collision extension and JSON/NumPy export, with outputs redirected into this tree.",
+      "verification": "Code inspection confirms train-only parquet input and trainer-to-denoised-embedding-to-tokenizer-to-SID export flow. Synthetic export helper check produced SID shape (3,4) with 3 unique rows. Full frozen-data training, distributed launch, and complete item-index SID export were not run, so those runtime outcomes are not claimed."
+    }
+  ],
+  "remaining_issues": [
+    "The full 3000-epoch frozen-data-path trainer and distributed launcher were not executed; full-dataset SID coverage/mapping and validation-protocol lambda selection remain unverified.",
+    "Training sequences are reconstructed as each train row's history followed by target, so overlapping prefix transitions in multiple rows are counted repeatedly; all graph evidence remains training-only."
+  ],
+  "smoke": {
+    "command": "cd results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python (synthetic train graph at lambda 0.1/0.3/0.5; RQVAE forward/backward and SID uniqueness assertions) && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python -m py_compile train_rqvae.py model/*.py",
+    "result": "PASS: lambda=0.1,0.3,0.5 finite including isolated zero-vector item; loss=1.1437382; grad_l1=50.2095; SID_shape=(3, 4); SID_unique=3. Python compilation passed (exit 0)."
+  }
+}

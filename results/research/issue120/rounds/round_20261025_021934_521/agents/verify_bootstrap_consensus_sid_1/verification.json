@@ -1,0 +1,37 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:215-260",
+          "detail": "The trainer does not implement the specified consensus procedure: there are no five independently seeded bootstrap-resampled replica fits, no replica assignment collection/alignment, no consensus-target construction, and no consensus KL term in the training loss. consensus.py contains helper functions only and is never imported or called by the trainer. The executed loop at train_rqvae.py:299-311 optimizes only the baseline reconstruction plus quantization loss. Thus this is effectively the baseline tokenizer, not the proposed mechanism.",
+          "reproduction": "Run or inspect the trainer entry point: main() creates one RQVAE and one optimizer, and each batch computes model(batch) followed by raw_module.compute_loss(...); searching the trainer finds no reference to consensus.py, replicas, bootstrap sampling, or consensus_kl.",
+          "correction": "Before the final fit, train exactly five replicas on N-with-replacement samples of train_embeddings using independent seeds; get assignments for the training-item universe, align each replica per level to replica 0, and construct q. In the final batch loss, add consensus_kl(encoded, codebooks, matching q rows, gamma, tau=0.1) with gamma selected from {0.01, 0.1}, while retaining the ordinary RQ loss and exporting ordinary hard assignments."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:299-311",
+          "detail": "The requested consensus term is dead with respect to real training because the trainer never calls it. Consequently there is no forward/backward evidence for consensus gradients reaching the encoder/codebooks; only baseline gradients are exercised. The helper's differentiable expression at consensus.py:41-49 cannot satisfy this requirement while disconnected from the optimizer loss.",
+          "reproduction": "In the real batch loop, loss comes exclusively from raw_module.compute_loss(batch, reconstructed, quant_loss); loss.backward() immediately follows. No consensus loss is added before backward, so changing gamma or targets has no effect on any parameter update.",
+          "correction": "Wire the consensus term into the actual loss before backward and validate one representative real-model step: assert finite total/consensus losses and finite nonzero gradients on intended encoder and codebook parameters (plus baseline decoder/RQ paths), then perform an optimizer step and confirm parameters update."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

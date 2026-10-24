@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_bootstrap_code_stability_r8_2",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "blocking-verification",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability/train_rqvae.py:918-976",
+          "detail": "A real forward/backward check could not be run in this environment: importing the trainer fails immediately because PyTorch is unavailable (ModuleNotFoundError: No module named 'torch'). The stability feature itself is intentionally export-only and uses no trainable parameters; static inspection therefore cannot establish the requested finite-loss/gradient behavior of the actual trainer path.",
+          "reproduction": "Run `python -c 'import torch'` in the current environment; it raises ModuleNotFoundError. The attempted synthetic RQVAE forward/backward check fails at `from train_rqvae import ...` for the same reason.",
+          "correction": "Run the real synthetic forward/backward and a short trainer smoke test in the project's configured PyTorch environment, confirming finite loss/gradients and nonzero gradients on the intended baseline encoder/codebook parameters. No code correction is identified from this environment-only blocker."
+        }
+      ]
+    },
+    {
+      "name": "integration",
+      "verdict": "PASS",
+      "findings": []
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "verifier": "r8_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:214-220",
+          "detail": "The graph pass treats every prefix-target training row as an independent sequence by concatenating history and target. Stage0 train.parquet is prefix-expanded: a user's rows successively contain [], [i0], [i0,i1], etc. Consequently, an observed transition is counted repeatedly in later prefixes (for a sequence of length n, early edges are counted more often than late edges), contrary to counting each adjacent pair once per training sequence. This alters C and the resulting graph beyond the specified method.",
+          "reproduction": "The checked-in train.parquet has rows for user 0 beginning history=[] target=12836, history=[12836] target=12580, history=[12836,12580] target=12344. The transition 12836->12580 is counted in both the second row and the third row, although it occurs only once in the underlying sequence.",
+          "correction": "Construct one deduplicated chronological sequence per user from the frozen training split (or count only the newly observed last-history-item to target edge per prefix row), then count each adjacent transition once. Do not use validation/test rows or statistics."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/train_rqvae.py:48-52",
+          "detail": "The trainer writes the SID JSON/NPY into this experiment tree, but the real Stage3 trainer is configured to consume results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json (stage3_T5Train/train_HG-Rec.py:157, 290-306). Its resolver does not search this issue120 tree, so the produced SIDs are not picked up by the normal Stage3 entry point; it silently falls back to the baseline TIGER codes. The arrays/JSON are internally row-indexed, but the experiment is not integrated into the downstream SID path.",
+          "reproduction": "Run the candidate trainer to completion and then run stage3_T5Train/train_HG-Rec.py with its normal CODE_PATH: the candidate file at results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual/item_sids.json is not a configured resolver candidate, whereas results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json is.",
+          "correction": "Make the experiment output path configurable/registered and explicitly pass this candidate JSON to Stage3, or write to a unique Stage3-resolvable candidate path and verify the resolved file is this candidate (without overwriting baseline outputs)."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability",
+  "repairs": [
+    {
+      "finding": "The designated tree held only PROPOSAL.json; the neighboring trainer/helper were outside it.",
+      "change": "Placed the trainer and its implementation/config helper Python sources in the designated tree, including code_stability.py and the trainer's local mechanism modules.",
+      "verification": "The designated tree now contains train_rqvae.py and code_stability.py as source entry points; both compile successfully with py_compile."
+    },
+    {
+      "finding": "Stability was not calculated or appended to exported SIDs.",
+      "change": "Wired the final rank-0 export to calculate seeded B=8 perturbation agreement using train-target-only variance and frozen get_indices quantization, then append the four-bin token after baseline collision extension. The quantizer/training objective is unchanged.",
+      "verification": "Inspected export path: stability_tokens is called with seed SEED, sigma 1.0 and draws 8; output is concatenated as the final SID column and checked for range, finite agreement, row shape and preservation of baseline columns."
+    },
+    {
+      "finding": "No demonstrated row-to-item alignment and no SID output consistency checks.",
+      "change": "The computation consumes embeddings in frozen row order and fits variance only on train_ids; export validates item row count/token shape, token range, uniqueness and baseline SID preservation before writing matching NPY/JSON rows keyed by enumerated item IDs.",
+      "verification": "Static validation is in the actual export path. Runtime row/JSON/NPY validation could not be exercised because PyTorch is unavailable in this environment."
+    },
+    {
+      "finding": "Actual trainer/distributed launcher operation could not be verified.",
+      "change": "Kept the trainer entry point and launcher with the feature integrated in its final export path.",
+      "verification": "Compilation passed, but a trainer or distributed smoke run is blocked: importing torch raises ModuleNotFoundError."
+    }
+  ],
+  "remaining_issues": [
+    "Cannot execute the actual trainer or distributed launcher without a supported PyTorch environment; exported artifact validation is therefore not runtime-demonstrated."
+  ],
+  "smoke": {
+    "command": "python -m py_compile results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability/train_rqvae.py results/research/issue120/trees/round_20261025_021934_521/bootstrap_code_stability/code_stability.py",
+    "result": "PASS (exit 0; no output). Trainer runtime smoke attempted with `python -c 'import torch'` and failed: ModuleNotFoundError: No module named 'torch'."
+  }
+}

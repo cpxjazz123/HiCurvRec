@@ -1,0 +1,44 @@
+{
+  "verifier": "r6_3",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:305-310",
+          "detail": "The proposed views are Bernoulli feature masking of precomputed embedding coordinates, rather than independently dropout-corrupted versions of the item's metadata text encoded by the text encoder. This changes the uncertainty being estimated and the intervention being optimized; the code itself acknowledges that metadata text is absent.",
+          "reproduction": "For an item with text metadata and its precomputed vector batch, execute the view construction at lines 308-310: the text encoder is never called and only embedding dimensions are masked. Thus changing metadata while holding the stored embedding fixed has no effect on the views or agreement loss.",
+          "correction": "Construct M independent text-level metadata dropout views using the frozen text encoder during training and compute mu/variance from those encodings, or explicitly revise the requested mechanism/specification to embedding-coordinate dropout."
+        }
+      ]
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "critical",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/model/layers.py:140",
+          "detail": "The real trainer's codebook initialization calls scikit-learn KMeans with n_init='auto'. On scikit-learn versions whose KMeans.fit does not accept/resolve this newer parameter, trainer startup fails before the first training step. The included migrated training log reports this exact failure (TypeError comparing n_init string with integer).",
+          "reproduction": "Run the trainer in an environment with scikit-learn 1.1.x: main reaches raw_module.init_codebook at train_rqvae.py:286, then KMeans(..., n_init='auto').fit(...) raises TypeError: '<=' not supported between instances of 'str' and 'int'.",
+          "correction": "Use a compatible integer n_init (for example n_init=10), or pin and enforce a scikit-learn version that supports n_init='auto'; then rerun the actual trainer entry point."
+        },
+        {
+          "severity": "major",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid/train_rqvae.py:43-45",
+          "detail": "The trainer defaults to the full stage1 embedding matrix and selects training items using only unique target IDs from train.parquet. That is not demonstrably a frozen train-only metadata/item-record data path: full-catalog embeddings are used for codebook initialization only on train_ids but also for validation collision measurement and final SID export. The required available training metadata views are absent from this path.",
+          "reproduction": "Inspect a run with a held-out item ID: it is included in all_embeddings and gets an exported SID at lines 415-427 despite not appearing in train_ids. No train-split metadata text is loaded anywhere in the trainer.",
+          "correction": "Keep held-out/catalog-wide rows out of training and uncertainty-view generation, document/verify the frozen split and row-to-item mapping, and use the frozen metadata source for training views. Full-catalog SID export may remain after fitting, provided it is inference-only and index-aligned."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "verifier": "verify_bootstrap_consensus_sid_r5_1",
+  "verdict": "NEEDS_FIX",
+  "checks": [
+    {
+      "name": "mechanism fidelity",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "trainability",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "integration",
+      "verdict": "NEEDS_FIX",
+      "findings": [
+        {
+          "severity": "high",
+          "location": "results/research/issue120/trees/round_20261025_021934_521/bootstrap_consensus_sid/train_rqvae.py:47-57, 234-240, 451-454",
+          "detail": "The entry point reads and writes hard-coded paths outside the designated tree (and does not consume Stage1's item_ids.json sidecar). It assumes parquet target IDs are dense embedding-row indices and exports SIDs keyed by embedding row number. This only works if the frozen Stage0 IDs exactly match Stage1 embedding order; no validation establishes that. Stage3's SID loader requires zero-based dense keys (stage3_T5Train/data/dataset.py:92-103), but the proper mapping from external item IDs to those indices is omitted, so valid-looking exported rows can label the wrong catalog items. The launcher itself is configured for four ranks and the captured log reaches four-rank training, so the DDP launcher wiring is present; however, that does not repair input/output provenance or SID identity.",
+          "reproduction": "Run the tree's entry point with the configured paths. It loads /home/wlia0047/.../sentence_t5.npy and /home/wlia0047/.../train.parquet rather than artifacts under this checkout. For a minimal identity counterexample, use two embedding rows representing source item IDs [41, 7] and a Stage0 target ID 7: the current train_ids indexing treats row 7 as the item (or rejects it when N=2), while export writes JSON key \"0\" for source item 41. Stage3 accepts the dense keys but interprets them as its own dense item IDs.",
+          "correction": "Use the frozen artifact locations explicitly for this tree and load/validate the Stage1 item_ids.json row-to-item mapping. Remap Stage0 history/target IDs into embedding row indices before training, then export rows/keys according to the exact mapping contract expected by the frozen Stage3 loader. Add checks for unique IDs, complete references, and output row count. Keep launcher paths configurable or verify the configured torchrun executable and visible devices before launch."
+        }
+      ]
+    }
+  ]
+}

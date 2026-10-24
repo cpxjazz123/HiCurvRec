@@ -1,0 +1,65 @@
+{
+  "scorer": "scoring_1",
+  "scores": [
+    {
+      "idea_id": "bootstrap_code_stability",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 3,
+        "experimental_distinctness": 4
+      },
+      "rationale": "The idea makes per-item quantization robustness observable to the generator through an explicit low-cardinality SID token, a relatively uncommon intervention compared with modifying quantizer geometry. The motivation is sound for borderline or noisy embeddings, and the specification is straightforward to implement with frozen codebooks and fixed-model evaluation. Potential benefits are targeted to uncertain items rather than necessarily broad ranking gains.",
+      "uncertainties": "Gaussian perturbations based on embedding variance may not correspond to realistic metadata or representation uncertainty. Results may depend strongly on sigma and binning, and the token could act as a nuisance or correlate with item popularity rather than provide useful confidence information."
+    },
+    {
+      "idea_id": "train_only_demand_signature",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 5,
+        "downstream_impact": 4,
+        "experimental_distinctness": 4
+      },
+      "rationale": "Separating repeat propensity and per-user occurrence intensity from raw frequency addresses a plausible mismatch between content similarity and behavioral role. It is highly implementable using training interactions alone and yields a clear test of whether behavioral regimes add information beyond popularity. The compact suffix could affect multiple ranking slices, though it may be redundant with sequence context.",
+      "uncertainties": "Repeat estimates for rare items can be noisy, and the proposed within-decile quantiles may be unstable in small datasets. It is uncertain whether the suffix encodes behavior beyond frequency or user-history context, and whether training-derived demand regimes generalize over time or to cold items."
+    },
+    {
+      "idea_id": "train_graph_denoised_residual",
+      "scores": {
+        "novelty": 3,
+        "scientific_motivation": 4,
+        "feasibility": 4,
+        "downstream_impact": 4,
+        "experimental_distinctness": 4
+      },
+      "rationale": "The proposal uses training-only transition consensus to adjust item representations before applying an otherwise unchanged tokenizer. This is a plausible way to reconcile content semantics with observed sequential substitutability, with a bounded mixing coefficient and a clear ablation. Sparse graph aggregation is practical at typical recommender scales, and improved representations could benefit the downstream generator broadly.",
+      "uncertainties": "Transition proximity may reflect navigation or co-consumption rather than semantic substitutability; popular nodes and sparse histories may distort the aggregate. The outcome may depend on graph construction, normalization, lambda, and whether the transition graph adds information beyond the sequence model itself."
+    },
+    {
+      "idea_id": "bootstrap_consensus_sid",
+      "scores": {
+        "novelty": 4,
+        "scientific_motivation": 4,
+        "feasibility": 3,
+        "downstream_impact": 3,
+        "experimental_distinctness": 5
+      },
+      "rationale": "This directly targets tokenizer estimation uncertainty across resampled training sets and uses aligned assignment frequencies as a training signal, which is experimentally distinct from per-item perturbation tokens or behavioral augmentation. The method is implementable with standard clustering alignment and a specified consistency loss, but entails substantial repeated tokenizer training. More stable assignments are valuable only if the resulting code structure also helps recommendation.",
+      "uncertainties": "Hungarian matching may not resolve split/merge differences across replicas, particularly at deeper codebook levels. The consensus targets may preserve an arbitrary shared solution, harm code utilization, or over-regularize rare items; the sizeable compute cost makes adequate seed replication and tuning harder."
+    },
+    {
+      "idea_id": "uncertainty_aware_sid",
+      "scores": {
+        "novelty": 4,
+        "scientific_motivation": 4,
+        "feasibility": 3,
+        "downstream_impact": 4,
+        "experimental_distinctness": 4
+      },
+      "rationale": "The idea brings stochastic metadata-view uncertainty into tokenizer training and seeks stable codes without changing the inference-time SID format, directly addressing robustness in the representation rather than exposing uncertainty as another token. It has a measurable stability target and a downstream ranking test. The approach is implementable, although encoder-view generation and the coupled agreement objective add training complexity.",
+      "uncertainties": "Metadata dropout may be a poor proxy for actual ambiguity or input corruption, and the variance-weighted disagreement term could suppress meaningful distinctions. The formula's interaction between uncertainty magnitude, pairwise code disagreement, and reconstruction objective may require careful scaling; recommendation gains on high-uncertainty histories are not assured."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/uncertainty_aware_sid",
+  "repairs": [
+    {
+      "finding": "r6_3 integration critical: KMeans(n_init='auto') fails with scikit-learn 1.1.x during trainer codebook initialization.",
+      "change": "Changed model/layers.py VQLayer.init_codebook to pass integer n_init=10, preserving KMeans initialization behavior while supporting older scikit-learn versions.",
+      "verification": "Invoked the real VQLayer.init_codebook method on a small CPU tensor with the project's genrec_env_v2 Python; KMeans completed, returned residuals with the expected shape, and initialized a (3, 2) codebook. Runtime scikit-learn was 1.6.1."
+    }
+  ],
+  "remaining_issues": [],
+  "smoke": {
+    "command": "/fs04/scratch2/ar57/wenyu/genrec_env_v2/bin/python - <<'PY'\nimport torch\nfrom model.layers import VQLayer\nlayer = VQLayer(codebook_size=3, codebook_dim=2)\nx = torch.tensor([[0., 0.], [0.1, 0.], [0., 0.1], [5., 5.], [5.1, 5.], [5., 5.1]])\nresidual = layer.init_codebook(x, torch.device('cpu'))\nassert layer.get_code_embs().shape == (3, 2)\nassert residual.shape == x.shape\nprint('SMOKE_OK n_init=10 sklearn=' + __import__('sklearn').__version__ + ' centers=' + str(tuple(layer.get_code_embs().shape)))\nPY",
+    "result": "exit code 0; stdout: SMOKE_OK n_init=10 sklearn=1.6.1 centers=(3, 2)"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "tree": "results/research/issue120/trees/round_20261025_021934_521/train_graph_denoised_residual",
+  "repairs": [
+    {
+      "finding": "r5_2 integration: train_rqvae.py treated raw parquet item IDs as dense embedding row indices, did not use stage1 item_ids.json, and exported positional SIDs without the correct Stage3 item mapping.",
+      "change": "Added EMBEDDING_IDS_FILE and remap_train_item_ids. The sidecar is validated for row count and unique integer IDs; every history item and target is translated from its raw ID to the corresponding embedding row before graph denoising, train-item selection, and target range validation. SID export remains keyed by dense zero-based embedding row IDs in item_sids.json, the object-key format required by Stage3, and its rows are generated from embeddings in that same sidecar order.",
+      "verification": "Smoke-tested the actual frozen sentence_t5.npy, item_ids.json, and train.parquet. All 396,958 train rows remapped; targets covered embedding rows 0..24,586, every history ID was in range, graph denoising completed with output shape (24,587, 768), and the actual Stage3 JSON loader accepted dense-key SID JSON."
+    }
+  ],
+  "remaining_issues": [],
+  "smoke": {
+    "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python - <<'PY' [smoke script importing train_rqvae, loading the frozen Stage1 embeddings/sidecar and Stage0 train.parquet, remapping and denoising, then calling Stage3 data/dataset.py::_load_sid_rows on a temporary Stage3-format SID JSON] PY",
+    "result": "PASS: embeddings=(24587, 768); train_rows=396958; remapped_target_range=0..24586; transitions_graph_ok=True; stage3_loader_rows=2"
+  }
+}
