@@ -98,7 +98,7 @@ class AdmissionTests(unittest.TestCase):
         }), encoding="utf-8")
         for pos, role in enumerate(A.AGENT_ROLES):
             session = self.evidence / "runs" / self.run_id / "agents" / (cid + "_" + role)
-            session.mkdir()
+            session.mkdir(parents=True)
             output = session / (role + ".json")
             content = {"candidate_id": cid, "source_sha256": code_sha}
             if role == "review":
