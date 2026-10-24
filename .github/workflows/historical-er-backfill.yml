@@ -1,0 +1,31 @@
+name: Read-only historical ER backfill
+on:
+  push:
+    branches:
+      - analysis/complete-frozen-er-20261024
+  workflow_dispatch:
+jobs:
+  frozen-er-backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full Git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: false
+      - name: Configure Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check frozen validation metadata and calculate all historical SID ER
+        run: python tools/research/integrations/historical_er_backfill.py
+      - name: Attach reproducible audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-frozen-er-audit
+          path: results/research/historical_er_backfill/
+          if-no-files-found: warn
