@@ -1,0 +1,21 @@
+{
+  "also_proposed_by": [
+    "ideation_2"
+  ],
+  "cost_estimate": "One training-sequence pass plus sparse graph aggregation O(E*d); memory O(E). Typically <5% additional Stage2 wall time, excluding unchanged tokenizer fitting.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "At least one lambda improves held-out next-item Recall@K/NDCG@K for a recommender trained on the resulting SIDs over baseline SIDs, while increasing train-only graph-neighbor embedding similarity of same-user transitions; otherwise reject.",
+  "fingerprint": "83af40eefa605540",
+  "idea_id": "train_graph_denoised_residual",
+  "key_change": "Build a symmetrized, popularity-corrected item transition graph from training sequences and mix each item embedding with a normalized average of its graph neighbors before the ordinary RQ-VAE fit/export.",
+  "motivation": "Text or pretrained item embeddings can place substitutes far apart and near-duplicates together despite repeated user transitions; SIDs then fail to share useful prefixes for next-item generation.",
+  "novelty": "Rather than feeding interaction samples into a quantizer or changing its geometry, this first constructs a bounded, item-level denoised embedding using only training sequences, then applies the existing SID tokenizer unchanged.",
+  "origin_agent": "ideation_2",
+  "risks": [
+    "Popular hubs can cause oversmoothing; transition edges may encode navigational rather than semantic relations; sparse/short histories yield noisy estimates. Popularity correction and small lambda may not fully prevent these effects."
+  ],
+  "specification": {
+    "text": "For each adjacent pair (i,j) in each training sequence increment C[i,j]. Let w_ij=(C[i,j]+C[j,i]) / ((deg_out(i)+1)^a (deg_out(j)+1)^a), with a=0.5; set P_ij=w_ij/sum_k w_ik. For each item with positive row sum, g_i=sum_j P_ij x_j, otherwise g_i=x_i. L2-normalize x_i and g_i, then x'_i=normalize((1-lambda)x_i+lambda*g_i), lambda in {0.1,0.3,0.5}. Fit and export the baseline tokenizer on x'_i; use no validation/test edges or item statistics. Compare with identical baseline configuration and select lambda only by the predeclared validation protocol."
+  },
+  "title": "Denoise item semantics with train-only transition consensus"
+}
