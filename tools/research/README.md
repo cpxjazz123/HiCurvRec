@@ -138,3 +138,44 @@ fails if any class escapes.
 `integrations/backfill_failures.py` records the defects #117 actually hit, each
 with the commit that fixed it and the regression that now proves it, so the
 registry starts as a ledger instead of an empty counter.
+
+## Multi-agent rounds (Issue #120)
+
+A round replaces the single-proposal/single-review bottleneck with an
+experiment-first pipeline:
+
+```text
+3 ideation agents (1-3 ideas each, 3-9 total)
+  -> 3 independent scorers, each judging EVERY idea (full matrix, medians, disagreement)
+  -> explicit, configurable rule selects several ideas (no veto, rejections logged)
+  -> one implementation agent per selected idea, in its own tree
+  -> 3 independent verifiers per implementation
+     -> any correctness blocker: a dedicated repair agent, then the three reviews again
+     -> no progress after the revision budget: BLOCKED with evidence, other ideas continue
+  -> verified implementations enter the Stage 2 queue (resource-aware, deterministic)
+  -> every Stage 2 that exports a technically valid SID hands over to Stage 3 automatically
+```
+
+`rounds/` holds it: `ideas.py` (idea contract, cross-agent duplicates with
+provenance), `scoring.py` (matrix, aggregate, disagreement, multi-select rule),
+`pipeline.py` (durable round state machine with every event, rejection, revision
+and failure signature), `worker.py` (the agent stages), `jobs.py` (Stage 2 /
+Stage 3 queue). The research package never trains: it prepares and verifies the
+candidates, and the MCP owns the GPU boundary.
+
+Round state lives in `results/research/issue120/rounds/<round_id>/` (`state.json`,
+`jobs.json`, `agents/<role>/`), implementations live in
+`results/research/issue120/trees/<round_id>/<idea_id>/`, so two candidates can
+never overwrite each other.
+
+MCP tools: `research_round_start`, `research_round_status`,
+`research_round_results`, `research_round_collect`. A Stage 2 launch for a round
+candidate uses the verification id `round:<round_id>:<idea_id>`, whose evidence is
+three verifier verdicts, no unresolved blocker, the source digest they reviewed
+and a real smoke result.
+
+**Admission is technical validity only.** ER, level-two prefix counts, L3
+collision, code usage and redundancy are measured and reported as diagnostics; a
+Stage 2 run with poor numbers still proceeds to Stage 3, and every Stage 3 result
+- including the low ones - stays in the registry. There is no quality floor and
+no best-only selection.

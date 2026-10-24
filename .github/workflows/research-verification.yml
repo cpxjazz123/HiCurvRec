@@ -42,6 +42,8 @@ jobs:
         run: python -m unittest discover -s tools/research/tests -v
       - name: Fail-closed verification and fault-injection regression
         run: python -m unittest discover -s tools/research/verification/tests -v
+      - name: Issue #120 multi-agent round regressions
+        run: python -m unittest discover -s tools/research/tests -p "test_rounds.py" -v
       - name: Replay every known defect against the preflight
         run: |
           python -m tools.research.integrations.defect_report
