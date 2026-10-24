@@ -8,8 +8,8 @@ server stay exactly where they are, unmodified.
 ## Directory tree (one clear owner per concern)
 
     tools/
-    ├── cgv/                         EXISTING verification G1..G6; unchanged
-    ├── genrec-mcp/server.py         EXISTING authenticated training service; unchanged
+    ├── cgv/                         RETIRED for new training admission; not restored
+    ├── genrec-mcp/server.py         CURRENT training service; verification_id only
     ├── stage2_stability_probe.py    EXISTING diagnostic; unchanged
     └── research/                    NEW sole Issue116 research orchestration
         ├── README.md                architecture and operational contract
@@ -24,6 +24,10 @@ server stay exactly where they are, unmodified.
         ├── science/
         │   ├── behavior.py          train-only transition measurement (lazy pandas)
         │   └── contracts.py         candidate/SID and reviewer identity validation
+        ├── verification/
+        │   ├── admission.py        source/evidence checks and real unittest re-runs
+        │   ├── cases/             separately reviewed mechanism test modules
+        │   └── tests/             offline evidence fault-injection tests
         ├── workflows/
         │   └── pipeline.py          DATA+LITERATURE -> GEOMETRY -> REVIEW
         ├── integrations/
@@ -58,12 +62,27 @@ separate processes); GEOMETRY waits for BOTH measured/train-only evidence and
 literature; REVIEW is bound to the candidate ID, SHA and CURRENT formula. These
 are scientific preparation tasks, not automatic Stage2 permission.
 
-The research package has NO direct trainer subprocess or GPU launcher. Use the
-surviving GenRec MCP cgv_check and stage2_start / stage3_start tools for official
-jobs only after explicit approval and all relevant current controls pass.
-CGV G1..G6 is the code contract gate. Stage2 descriptive metrics are NOT a hard
-early-stop gate. Current CLAUDE.md defines the official Stage3 outcome and
-frozen training settings; do not blindly import thresholds from closed Issues.
+The research package NEVER launches formal training. Official Stage2 now accepts
+`stage2_start(source_dir, verification_id)`, with `verification_check` as the
+test-only endpoint. The MCP verifies four independent real OpenCode session
+receipts and a distinct review, binds the source tree and four content-addressed
+test files to a frozen proposal, then actually runs math, gradient, DDP and
+entrypoint suites under the Stage2 Python environment. Missing or stale evidence
+and zero executed tests always BLOCK. The MCP's actual one-epoch trainer
+gradient smoke is still required AFTER these tests and BEFORE full 3000-epoch
+training. There is no active CGV or historical admission alternate launch path.
+
+Legacy `tools/cgv/` remains physically present temporarily for audit/reference,
+but its declarations are NOT accepted by current Stage2 start; remove only after
+the real HPC test chain and fault-injection regression are verified. The
+existing Stage2/Stage3 trainers were not modified, and descriptive Stage2
+metrics are not used as additional early-stop gates.
+
+Validation Agents author mechanism-specific executable suites and an independent
+Reviewer approves exact source and test hashes; passing tests alone are not
+proof that the test assertions cover the claimed mathematics. Agent-generated
+files require source review before promotion into `verification/cases/`.
+Read `tools/research/verification/cases/README.md` for evidence requirements.
 
 ## Acceptance scope
 

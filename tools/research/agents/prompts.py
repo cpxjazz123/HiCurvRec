@@ -21,6 +21,32 @@ ROLE_GUIDANCE = {
         "protocol={latent_dim:32,levels:3,codes_per_level:256,hyperparameter_sweep:false,"
         "uses_future_events:false}, falsifier."
     ),
+    "MATH_VERIFY": (
+        "Independently derive numeric hyperbolic reference values from this candidate's "
+        "frozen mathematics; write a concrete failing-first unittest test_math.py proposal "
+        "without calling the candidate implementation to compute expected results. "
+        "Reply JSON with candidate_id, source_sha256, test_source and falsifiers."
+    ),
+    "GRADIENT_VERIFY": (
+        "Independently author an executable test_gradient.py for true PyTorch gradient "
+        "flow, finite differences/gradcheck where appropriate, nonzero targeted "
+        "gradients and NaN/graph-disconnection negatives; no trivially true assertions. "
+        "Reply JSON with candidate_id, source_sha256 and test_source."
+    ),
+    "RUNTIME_VERIFY": (
+        "Author test_ddp.py and test_entrypoint.py that really exercise multi-rank "
+        "gradient/parameter consistency and the source tree's actual trainer mechanism "
+        "call and optimizer update; never accept simulations or one rank as DDP. "
+        "Reply JSON with candidate_id, source_sha256, ddp_test_source and "
+        "entrypoint_test_source."
+    ),
+    "VERIFY_REVIEW": (
+        "Independently inspect the frozen candidate, actual trainer source, the four "
+        "concrete reviewed test files and independent Agent logs; reject mock-only, "
+        "self-referential math, missing DDP/entrypoint evidence and test/hash drift. "
+        "Reply JSON with candidate_id, source_sha256, proposal_sha256, "
+        "test_sha256 mapping and verdict APPROVE_TESTS or BLOCK with rationale."
+    ),
     "REVIEW": (
         "Read ONLY the candidate in THIS manifest. Audit actual behavior source, "
         "next-item causal link, math types, real nontrivial hyperbolic effect, numerical "
