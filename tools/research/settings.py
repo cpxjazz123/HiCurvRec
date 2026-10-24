@@ -14,7 +14,14 @@ MCP = ROOT / "tools" / "genrec-mcp" / "server.py"
 
 # Change the source constant, not an argv flag. Inspect never spawns an agent.
 ACTION = "inspect"  # inspect | behavior | worker
-LIVE_AGENTS_ALLOWED = False
+# Live OpenCode Agents run only inside the per-task permission boundary that
+# tools/research/agents/runner.py writes next to every agent session: shell and
+# Code Mode denied, external paths denied, and edits limited to the agent's own
+# workspace (a relative path that climbs out of it is denied too). That boundary
+# was validated against the real CLI: a relative write inside the workspace is
+# accepted, while a parent-traversal write and an absolute write into the
+# repository are both refused.
+LIVE_AGENTS_ALLOWED = True
 RESEARCH_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
 AGENT_BINARY = "opencode"
 AGENT_MODEL = "openai/gpt-6-luna"
