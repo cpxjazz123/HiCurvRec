@@ -61,6 +61,13 @@ ROLE_GUIDANCE = {
         "reports in this manifest are the CURRENT evidence; any other Agent session under "
         "the run directory belongs to an earlier attempt against a source that has since "
         "changed, so it is archived history and NOT competing evidence. "
+        "Your sandbox has no shell and no torch, so you CANNOT execute these suites; do not "
+        "block on that. Execution proof belongs to verification_check, which re-runs all four "
+        "suites with the project Stage2 interpreter and refuses on any failure, on zero tests "
+        "or on a skip. Judge what static inspection can settle: the oracles are independent, "
+        "the DDP suite really gathers per-rank values, the entrypoint suite really calls the "
+        "trainer, the hashes match. State in the rationale what you verified statically and "
+        "what execution still has to prove. "
         "Reply JSON with candidate_id, source_sha256, proposal_sha256, "
         "test_sha256 mapping and verdict APPROVE_TESTS or BLOCK with rationale."
     ),
