@@ -111,6 +111,24 @@ class TaskStore:
             self._save(state, {"event": "retry" if retry else "blocked",
                                "task": task_id, "reason": str(reason)[:300]})
 
+    def reopen(self, task_id, reason):
+        """Send a completed task back for revision, with an audit event.
+
+        The scientific review can reject a proposal; the proposal then has to be
+        revised and re-reviewed. Reopening is explicit, audited and never
+        rewrites the previous evidence, which stays in the run directory.
+        """
+        with self.locked():
+            state = self._load()
+            task = state["tasks"].get(task_id)
+            if not task or task["status"] != "done":
+                raise StateError("only a completed task can be reopened")
+            task.update(status="pending", owner=None, lease_until=0, evidence=None,
+                        failure=str(reason)[:300])
+            self._save(state, {"event": "reopen", "task": task_id,
+                               "reason": str(reason)[:300]})
+        return True
+
     def cancel_prefix(self, prefix):
         """Pending jobs are cancelled; active workers must cooperatively stop."""
         with self.locked():

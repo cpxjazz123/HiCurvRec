@@ -65,6 +65,11 @@ def manifest_for(task, root):
             manifest.update(candidate_id=candidate["candidate_id"],
                             candidate_sha256=digest_file(proposal),
                             candidate=candidate)
+        if task == "geometry":
+            feedback = root / "agents" / "geometry" / "revision_feedback.json"
+            if feedback.is_file():
+                manifest.update(revision_feedback=read_json(feedback),
+                                revision_feedback_sha256=digest_file(feedback))
     manifest["inputs_sha256"] = digest_bytes(
         json.dumps(manifest, sort_keys=True, ensure_ascii=False).encode())
     return manifest
@@ -113,11 +118,24 @@ def process_next(run_id):
         else:
             manifest = manifest_for(task, root)
             prompt = build_prompt(role, manifest, OUTPUTS[task], root=root)
+            if role == "GEOMETRY" and manifest.get("revision_feedback"):
+                prompt = (prompt + "\n\nAn independent reviewer REJECTED your previous "
+                          "proposal with these findings. Correct exactly them, keep every "
+                          "requirement you already met, and write the output file again:\n"
+                          + json.dumps(manifest["revision_feedback"], ensure_ascii=False))
             if role == "REVIEW":
                 check_review_identity(
                     root / "agents" / "geometry" / "candidate.json", manifest, prompt)
             atomic_json(root / "manifests" / (task + ".json"), manifest)
             evidence = run_agent_until_valid(task, root, manifest, prompt)
+            if role == "REVIEW":
+                try:
+                    verify_science_output(task, root, manifest)
+                except ValueError as exc:
+                    if not _send_back_for_revision(dag, task_id, root, exc):
+                        raise
+                    dag.fail(task_id, owner, str(exc), retry=True)
+                    return {"task": task, "role": role, "evidence": False, "revision": True}
         if (root / "cancel.json").exists():
             dag.finish_cancel(task_id, owner)
             return None
@@ -162,6 +180,8 @@ def _archive_attempt(root: Path, task: str, attempt: int) -> None:
     for item in workspace.iterdir():
         if item.name == target.name or item.name.startswith("attempt-"):
             continue
+        if item.name == "revision_feedback.json":
+            continue  # the next attempt has to read it
         shutil.move(str(item), str(target / item.name))
 
 
@@ -191,3 +211,43 @@ def run_agent_until_valid(task: str, root: Path, manifest: dict, prompt: str) ->
                       "and write the output file again.")
             continue
         return evidence
+
+
+#: How many times the review may send one proposal back for revision inside a
+#: single run before the run is blocked.
+MAX_REVISIONS = 3
+
+
+def _send_back_for_revision(dag, review_task_id, root: Path, error: Exception) -> bool:
+    """Route a rejected proposal back to the geometry task with the findings.
+
+    The review's own verdict and findings are written next to the geometry
+    output, the previous geometry attempt is archived with its receipts, and the
+    geometry task is reopened so the next agent call can correct exactly what
+    the reviewer rejected.
+    """
+    review = root / "agents" / "review" / "review.json"
+    if not review.is_file():
+        return False
+    try:
+        payload = read_json(review)
+    except Exception:
+        return False
+    verdict = str(payload.get("verdict") or "")
+    if verdict not in ("FATAL", "MATERIAL", "PARKED"):
+        return False
+    workspace = root / "agents" / "geometry"
+    workspace.mkdir(parents=True, exist_ok=True)
+    attempts = len(list(workspace.glob("attempt-*")))
+    if attempts >= MAX_REVISIONS:
+        return False
+    atomic_json(workspace / "revision_feedback.json", {
+        "review_verdict": verdict,
+        "review_sha256": digest_file(review),
+        "blockers": payload.get("blockers"),
+        "reproducible_evidence": payload.get("reproducible_evidence"),
+    })
+    _archive_attempt(root, "geometry", attempts + 1)
+    dag.reopen(review_task_id.split("__", 1)[0] + "__geometry",
+               "review blocked the proposal: " + verdict)
+    return True
