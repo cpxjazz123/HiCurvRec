@@ -1,6 +1,7 @@
 """One canonical Issue117 DAG; each research run owns a separate evidence directory."""
 import json
 import os
+import shutil
 from pathlib import Path
 
 from .. import settings
@@ -116,11 +117,7 @@ def process_next(run_id):
                 check_review_identity(
                     root / "agents" / "geometry" / "candidate.json", manifest, prompt)
             atomic_json(root / "manifests" / (task + ".json"), manifest)
-            evidence = run_agent(task, prompt, OUTPUTS[task], root,
-                                 binary=settings.AGENT_BINARY,
-                                 model=settings.AGENT_MODEL,
-                                 timeout=settings.AGENT_TIMEOUT_SECONDS)
-            verify_science_output(task, root, manifest)
+            evidence = run_agent_until_valid(task, root, manifest, prompt)
         if (root / "cancel.json").exists():
             dag.finish_cancel(task_id, owner)
             return None
@@ -147,3 +144,50 @@ def inspect():
 def step():
     """Compatibility for the source-configured no-argument local entry."""
     return inspect()
+
+
+#: A rejected proposal is retried inside the same run, with the checker's own
+#: complaint, before the run is abandoned. One research run used to be spent per
+#: schema defect, which made the loop sample the generator instead of fixing it.
+MAX_PROPOSAL_ATTEMPTS = 3
+
+
+def _archive_attempt(root: Path, task: str, attempt: int) -> None:
+    """Keep the receipts of a rejected attempt instead of overwriting them."""
+    workspace = root / "agents" / task
+    if not workspace.is_dir():
+        return
+    target = workspace / ("attempt-%d" % attempt)
+    target.mkdir(parents=True, exist_ok=True)
+    for item in workspace.iterdir():
+        if item.name == target.name or item.name.startswith("attempt-"):
+            continue
+        shutil.move(str(item), str(target / item.name))
+
+
+def run_agent_until_valid(task: str, root: Path, manifest: dict, prompt: str) -> Path:
+    """Run the role agent until its output passes the machine checks.
+
+    Each rejected attempt keeps its own session, execution and output receipts,
+    and the next prompt carries the checker's complaint verbatim so the agent
+    can correct exactly that defect.
+    """
+    attempt = 0
+    while True:
+        attempt += 1
+        evidence = run_agent(task, prompt, OUTPUTS[task], root,
+                             binary=settings.AGENT_BINARY,
+                             model=settings.AGENT_MODEL,
+                             timeout=settings.AGENT_TIMEOUT_SECONDS)
+        try:
+            verify_science_output(task, root, manifest)
+        except ValueError as exc:
+            if attempt >= MAX_PROPOSAL_ATTEMPTS:
+                raise
+            _archive_attempt(root, task, attempt)
+            prompt = (prompt + "\n\nYour previous answer was rejected by the automated "
+                      "checker with this exact message:\n" + str(exc) +
+                      "\nFix precisely that defect, keep every requirement you already met, "
+                      "and write the output file again.")
+            continue
+        return evidence
