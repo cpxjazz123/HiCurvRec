@@ -440,3 +440,47 @@ class PlainTextContractTests(unittest.TestCase):
         self.assertEqual([idea["idea_id"] for idea in ideas], ["a", "c", "d"])
         self.assertTrue(ideas[0]["rejected_ideas"])
         self.assertIn("missing", ideas[0]["rejected_ideas"][0]["reason"])
+
+
+class IncompleteAnswerTests(unittest.TestCase):
+    """One missing line must not throw away a whole agent answer."""
+
+    def test_a_score_without_a_rationale_is_kept_and_flagged(self):
+        from tools.research.rounds import plaintext
+        answer = ("SCORE: a | novelty=4 | scientific_motivation=3 | feasibility=5 | "
+                  "downstream_impact=2 | experimental_distinctness=1\n")
+        parsed = plaintext.parse_scores(answer)
+        self.assertTrue(parsed["scores"][0]["rationale_missing"])
+        report = scoring_module.validate_report(parsed, scorer="s1")
+        self.assertTrue(report["scores"][0]["rationale_missing"])
+
+    def test_a_score_without_one_dimension_is_kept_and_flagged(self):
+        from tools.research.rounds import plaintext
+        answer = ("SCORE: a | novelty=4 | scientific_motivation=3 | feasibility=5 | "
+                  "experimental_distinctness=1\nRATIONALE: a | why\n")
+        parsed = plaintext.parse_scores(answer)
+        self.assertEqual(parsed["scores"][0]["missing_dimensions"], ["downstream_impact"])
+        report = scoring_module.validate_report(parsed, scorer="s1")
+        self.assertIn("downstream_impact", report["scores"][0]["missing_dimensions"])
+
+    def test_the_matrix_records_the_incomplete_scorers(self):
+        ideas = ideas_module.collect_ideas([
+            ("agent1", {"ideas": [_idea("a", title="alpha", change="1"),
+                                 _idea("b", title="beta", change="2")]}),
+            ("agent2", {"ideas": [_idea("c", title="gamma", change="3")]}),
+            ("agent3", {"ideas": [_idea("d", title="delta", change="4")]}),
+        ])
+        full = {"scorer": "s1", "scores": [
+            {"idea_id": idea["idea_id"], "scores": {dimension: 4 for dimension in scoring_module.DIMENSIONS},
+             "rationale": "because"} for idea in ideas]}
+        partial = {"scorer": "s2", "scores": [
+            {"idea_id": idea["idea_id"], "scores": {dimension: 4 for dimension in scoring_module.DIMENSIONS
+                                                   if dimension != "feasibility"},
+             "rationale": "because"} for idea in ideas]}
+        third = {"scorer": "s3", "scores": [
+            {"idea_id": idea["idea_id"], "scores": {dimension: 4 for dimension in scoring_module.DIMENSIONS},
+             "rationale": "because"} for idea in ideas]}
+        matrix = scoring_module.build_matrix(ideas, [full, partial, third])
+        row = [entry for entry in matrix["rows"] if entry["idea_id"] == "a"][0]
+        self.assertEqual(row["incomplete_scorers"], ["s2"])
+        self.assertIn("feasibility", row["medians"])
