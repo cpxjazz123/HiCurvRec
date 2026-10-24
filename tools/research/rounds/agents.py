@@ -34,7 +34,7 @@ IDEA_PROMPT = (
     "that cannot be made minimally specified. Do NOT propose a proof, a paper section or "
     "a quality floor; the ideas are selected for innovation and then implemented and "
     "measured.\n"
-    "Write JSON: {\"ideas\": [ ... ]} with between {minimum} and {maximum} ideas."
+    "Write JSON: {{\"ideas\": [ ... ]}} with between {minimum} and {maximum} ideas."
 )
 
 SCORE_PROMPT = (
@@ -46,9 +46,9 @@ SCORE_PROMPT = (
     "Do not rank the ideas against each other and do not veto: your report is one of "
     "three, and the aggregate decides. Do not score on Stage 2 quality diagnostics such "
     "as prefix counts or collision rates; selection is innovation-first.\n"
-    "Write JSON: {\"scorer\": \"<your id>\", \"scores\": [{\"idea_id\": ..., \"scores\": "
-    "{novelty, scientific_motivation, feasibility, downstream_impact, "
-    "experimental_distinctness}, \"rationale\": \"...\", \"uncertainties\": \"...\"}]} "
+    "Write JSON: {{\"scorer\": \"<your id>\", \"scores\": [{{\"idea_id\": ..., \"scores\": "
+    "{{novelty, scientific_motivation, feasibility, downstream_impact, "
+    "experimental_distinctness}}, \"rationale\": \"...\", \"uncertainties\": \"...\"}}]}} "
     "with one entry per idea."
 )
 
@@ -67,9 +67,9 @@ IMPLEMENT_PROMPT = (
     "with the reason.\n"
     "  4. Do not change the shared repository outside your own tree. Do not modify the "
     "baseline trees, the MCP server or the verification code.\n"
-    "Write JSON: {\"tree\": \"<absolute path of the tree>\", \"changed_files\": [...], "
-    "\"deviations\": [{\"item\": ..., \"reason\": ...}], \"assumptions\": [...], "
-    "\"smoke\": {\"command\": ..., \"result\": ...}, \"notes\": \"...\"}."
+    "Write JSON: {{\"tree\": \"<absolute path of the tree>\", \"changed_files\": [...], "
+    "\"deviations\": [{{\"item\": ..., \"reason\": ...}}], \"assumptions\": [...], "
+    "\"smoke\": {{\"command\": ..., \"result\": ...}}, \"notes\": \"...\"}}."
 )
 
 VERIFY_PROMPT = (
@@ -89,10 +89,10 @@ VERIFY_PROMPT = (
     "concrete reproduction or a minimal counterexample, say how severe it is and what "
     "the correction is. Do not demand a proof, a literature review or a quality floor: "
     "this is a correctness review of code, not a scientific paper review.\n"
-    "Write JSON: {\"verifier\": \"<your id>\", \"verdict\": \"PASS\"|\"NEEDS_FIX\", "
-    "\"checks\": [{\"name\": ..., \"verdict\": ..., \"findings\": [{\"severity\": ..., "
+    "Write JSON: {{\"verifier\": \"<your id>\", \"verdict\": \"PASS\"|\"NEEDS_FIX\", "
+    "\"checks\": [{{\"name\": ..., \"verdict\": ..., \"findings\": [{{\"severity\": ..., "
     "\"location\": \"file:line\", \"detail\": ..., \"reproduction\": ..., "
-    "\"correction\": ...}]}]}"
+    "\"correction\": ...}}]}}]}}"
 )
 
 REPAIR_PROMPT = (
@@ -103,7 +103,7 @@ REPAIR_PROMPT = (
     "defective. For every finding, state what you changed and how you know it is fixed. "
     "Run the smoke test and report its real output. Do not modify anything outside "
     "this tree.\n"
-    "Write JSON: {\"tree\": \"<path>\", \"repairs\": [{\"finding\": ..., \"change\": ..., "
-    "\"verification\": ...}], \"remaining_issues\": [...], \"smoke\": {\"command\": ..., "
-    "\"result\": ...}}."
+    "Write JSON: {{\"tree\": \"<path>\", \"repairs\": [{{\"finding\": ..., \"change\": ..., "
+    "\"verification\": ...}}], \"remaining_issues\": [...], \"smoke\": {{\"command\": ..., "
+    "\"result\": ...}}}}."
 )
