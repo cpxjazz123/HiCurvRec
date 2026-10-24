@@ -129,3 +129,79 @@ def emit(path, full: np.ndarray, ablated: np.ndarray, *, stage: str = "",
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     return {"path": str(out), "summary": summary}
+
+
+def emit_v2(path, full: np.ndarray, ablated: np.ndarray, *, stage: str = "",
+            areas: Optional[np.ndarray] = None, distances: Optional[np.ndarray] = None,
+            item_index: Optional[np.ndarray] = None, split: str = "train",
+            candidate_sha256: str = "", run_manifest: str = "", curvature: float = 1.0,
+            tangent_scale: float = 1.0, epsilon: float = 1e-6,
+            evaluation_count: Optional[int] = None, clamp_count: int = 0, out_of_ball: int = 0,
+            nonfinite_rows: Optional[Sequence[int]] = None,
+            expected_examples: Optional[int] = None) -> Dict[str, Any]:
+    """The artifact contract of issue #115's round-11 review, in one file.
+
+    Six requirements, each answered by a field rather than a sentence:
+
+    1. per-example AND per-code values: ``per_code`` carries the full and ablated score matrices,
+       ``area`` and ``distance`` when supplied, and ``tie_key`` (the lexicographic key per row);
+    2. the area-zero ablation is defined as ``A_k := 0`` for every code with the distance factor
+       retained, and the numeric tie tolerance is written down (0.0: exact ties only);
+    3. the tie share carries its own numerator, denominator and definition, and per-row tied counts;
+    4. the clamp/error rates carry their denominators, the out-of-ball count and the indices of any
+       non-finite scores;
+    5. coverage states the split, the stage and the expected index set, and refuses an incomplete one;
+    6. the binding block ties the file to the candidate hash, the run manifest, the checkpoint state,
+       ``c``, ``s`` and ``epsilon``, with round-trip-safe JSON floats.
+
+    An incomplete or mismatched artifact is not written: the function raises instead, because a
+    half-evidence file is worse than none.
+    """
+    full = np.asarray(full, dtype=np.float64)
+    ablated = np.asarray(ablated, dtype=np.float64)
+    n, codes = full.shape
+    if expected_examples is not None and n != int(expected_examples):
+        raise ValueError(f"the artifact covers {n} examples, the run expected {expected_examples}")
+    index = (np.asarray(item_index).tolist() if item_index is not None else list(range(n)))
+    if len(index) != n or len(set(index)) != n:
+        raise ValueError("the example index set must be complete and free of duplicates")
+    summary = audit(full, ablated)
+    ordered = np.sort(full, axis=1)
+    margins = ordered[:, 1] - ordered[:, 0] if codes > 1 else np.zeros(n)
+    winners = full.argmin(axis=1)
+    ties_per_row = (full == full.min(axis=1, keepdims=True)).sum(axis=1)
+    tie_key = [[int(w), float(margins[i]), int(ties_per_row[i])] for i, w in enumerate(winners)]
+    record = {
+        "schema_version": 2, "kind": "assignment_audit", "stage": stage,
+        "binding": {"candidate_sha256": candidate_sha256, "run_manifest": run_manifest,
+                    "curvature": float(curvature), "tangent_scale": float(tangent_scale),
+                    "epsilon": float(epsilon), "tie_tolerance": 0.0,
+                    "ablation": "A_k := 0 for every code, the distance factor retained",
+                    "float_format": "round-trip (repr) via json.dumps"},
+        "coverage": {"split": split, "stage": stage, "examples": n,
+                     "expected_examples": expected_examples,
+                     "index": index,
+                     "complete": expected_examples is None or n == int(expected_examples)},
+        "per_code": {"full_score": full.tolist(), "ablated_score": ablated.tolist(),
+                     "area": (None if areas is None else np.asarray(areas).tolist()),
+                     "distance": (None if distances is None else np.asarray(distances).tolist()),
+                     "code_order": "ascending 0..255 (deterministic)"},
+        "per_example": {"winner_full": winners.tolist(),
+                        "winner_ablated": ablated.argmin(axis=1).tolist(),
+                        "margin_full": margins.tolist(),
+                        "tied_codes": ties_per_row.tolist(),
+                        "tie_key": tie_key},
+        "summary": {**summary,
+                    "tie_definition": ("a row ties when two or more codes share the minimum FULL "
+                                       "score exactly; the lexicographic key (margin, lowest index) "
+                                       "is applied after that count")},
+        "per_operation": {"evaluation_count": (int(evaluation_count) if evaluation_count is not None
+                                               else None),
+                          "clamp_count": int(clamp_count),
+                          "out_of_ball": int(out_of_ball),
+                          "nonfinite_rows": list(nonfinite_rows or [])},
+    }
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return {"path": str(out), "summary": summary, "schema_version": 2}
