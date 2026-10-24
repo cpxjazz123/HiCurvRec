@@ -32,6 +32,11 @@ def _workspace(root: Path, task_id: str) -> Path:
 
 def _run_agent(root: Path, task_id: str, prompt: str, output_name: str) -> dict:
     """Run one agent in its own workspace and return its parsed answer."""
+    # The runner gives the agent a workspace but not a destination; without this
+    # the agent answers in prose and writes no file.
+    destination = Path(root) / "agents" / task_id / output_name
+    prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
+              " (this absolute path). Write nowhere else.")
     output = run_agent(task_id, prompt, output_name, Path(root),
                         binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
                         timeout=settings.AGENT_TIMEOUT_SECONDS)
