@@ -76,3 +76,24 @@
 49. DATA 与 LITERATURE 允许并行执行，GEOMETRY 和 REVIEW 必须等待各自实际证据依赖完成。
 50. MCP 的 `research_verify_start` 和 `research_verify_review` 必须使用当前候选的冻结提案及真实独立 OpenCode 会话。
 51. 研究 MCP 只能执行授权的 Agent 任务，正式 GPU 训练仍必须通过独立的 `verification_check` 和 `stage2_start` 准入。
+
+## 9. MCP 重载（改了 `tools/` 源码后必须做）
+
+52. MCP Server 是 harness（`omp`）拉起的 stdio 子进程：它只 import 一次代码，改了 `tools/` 下的源码后，**已在运行的进程仍是旧代码**。
+53. 重载方式：只对 server 子进程发 SIGTERM，harness 会按原命令行把它重新拉起（实测 3 秒内完成），新进程即载入当前磁盘上的代码。
+54. 定位与重载命令：
+
+    ```bash
+    OLD=$(pgrep -f 'genrec-mcp/server.py' | head -1)
+    ps -o pid,ppid,cmd -p "$OLD"          # 确认父进程是 omp，且只有这一个 server
+    kill -TERM "$OLD"
+    for i in $(seq 10); do sleep 3; NEW=$(pgrep -f 'genrec-mcp/server.py' | head -1); \
+      [ -n "$NEW" ] && [ "$NEW" != "$OLD" ] && break; done
+    pgrep -f 'genrec-mcp/server.py'        # 必须有新的 pid，且 tools/ 里的工具可正常调用
+    ```
+
+55. 禁止杀 `omp` 本体或它的 worker：那会连同本会话的上下文与工具挂载一起丢掉。
+56. 重载后必须实测一次 MCP 工具调用（而不是只看进程号变了）：调用失败或返回旧行为即视为重载未生效。
+57. 只有确认重载生效后，才可用 MCP 触发依赖新代码的行为（例如按源码漂移重新起草验证套件）；禁止绕过 MCP 直接调用内部函数来推进流程。
+58. 若重载后 MCP 仍拒绝某项请求，那是规则本身在 fail-closed（例如源码已变、证据哈希对不上），应先修规则或重新生成证据，不得靠直接调用内部函数绕过。
+
