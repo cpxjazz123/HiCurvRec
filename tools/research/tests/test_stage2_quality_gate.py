@@ -54,7 +54,11 @@ class QualityGateTests(unittest.TestCase):
         }))
         self.candidate_path.write_text(json.dumps(self.candidate))
         self.baseline_path.write_text(json.dumps(self.baseline))
-        self.patch = patch.multiple(gate, EXPECTED_PAIRS=4, FROZEN_BASELINE_L2_PREFIXES=2)
+        self.patch = patch.multiple(
+            gate, EXPECTED_PAIRS=4, FROZEN_BASELINE_L2_PREFIXES=2,
+            FROZEN_BASELINE_BLOB_SHA1=gate._git_blob_sha1(self.baseline_path),
+            FROZEN_VALID_PAIRS_BLOB_SHA1=gate._git_blob_sha1(self.pairs_path),
+            FROZEN_VALID_META_BLOB_SHA1=gate._git_blob_sha1(self.meta_path))
         self.patch.start()
         self.addCleanup(self.patch.stop)
 
@@ -96,6 +100,14 @@ class QualityGateTests(unittest.TestCase):
         self.pairs_path.unlink()
         self.assertFalse(self.evaluate()["passed"])
 
+    def test_tampered_independent_validation_pairs_fail_closed(self):
+        with zipfile.ZipFile(self.pairs_path, "a") as z:
+            z.writestr("injected.txt", "changed frozen bytes")
+        with patch.object(gate, "MIN_VALID_L1_HITRATE", 0.6):
+            result = self.evaluate()
+        self.assertFalse(result["passed"])
+        self.assertIn("frozen Git blob", result["refused"])
+
     def test_missing_baseline_refuses(self):
         self.baseline_path.unlink()
         self.assertFalse(self.evaluate()["passed"])
@@ -107,8 +119,11 @@ class QualityGateTests(unittest.TestCase):
         baseline = root / "stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json"
         data = root / "stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz"
         meta = root / "stage3_T5Train/monotonicity/behavior_pairs_valid_s42.meta.json"
-        with patch.object(gate, "EXPECTED_PAIRS", 52855), \
-             patch.object(gate, "FROZEN_BASELINE_L2_PREFIXES", 7414):
+        with patch.multiple(
+            gate, EXPECTED_PAIRS=52855, FROZEN_BASELINE_L2_PREFIXES=7414,
+            FROZEN_BASELINE_BLOB_SHA1="4743e45db263a40e044ab8af8da1abc0ca95b54c",
+            FROZEN_VALID_PAIRS_BLOB_SHA1="11d76dd452f3a27d1f6bf79fe7673bc6505733ef",
+            FROZEN_VALID_META_BLOB_SHA1="a0121691dc95168169bffdc3b6018608580468da"):
             verdict = gate.evaluate(candidate, baseline, data, meta)
         self.assertFalse(verdict["passed"])
         self.assertEqual(verdict["candidate"]["level2_distinct_prefixes"], 6233)
