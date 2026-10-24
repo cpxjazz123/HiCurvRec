@@ -63,7 +63,13 @@ class RealTrainerEntrypointTests(unittest.TestCase):
             self.assertEqual(checkpoint['selection'], 'final_epoch')
             self.assertTrue(checkpoint['state_dict'])
             sid = np.load(sid_path)
-            self.assertEqual(sid.shape, (8, 3))
+            # The fixture runs CODEBOOK_NUM levels, so the raw assignment has that
+            # many columns and the RecBole collision extension appends exactly one
+            # more. Asserting the arithmetic keeps the expectation tied to the
+            # configured run instead of a magic number.
+            configured_levels = trainer.CODEBOOK_NUM
+            self.assertEqual(configured_levels, 2)
+            self.assertEqual(sid.shape, (8, configured_levels + 1))
             self.assertEqual(len(np.unique(sid, axis=0)), 8)
             exported = json.loads(json_path.read_text())
             self.assertEqual(len(exported), 8)
@@ -75,6 +81,28 @@ class RealTrainerEntrypointTests(unittest.TestCase):
             self.assertNotEqual(train_rows[-1]['transition_loss'], 0.0, 'transition loss absent from actual training loss path')
             self.assertTrue(any(r.get('event') == 'ckpt_saved' for r in records))
             self.assertTrue(any(r.get('event') == 'train_end' for r in records))
+
+
+class TransitionSamplerTests(unittest.TestCase):
+    """The defect the suite reviewer found: the sampler must be unbiased."""
+
+    def test_sampling_follows_the_row_normalised_target(self):
+        import numpy as np
+        # Two source rows: row 0 -> {0: .75, 1: .25}, row 1 -> {2: 1.0}.
+        # T_ab sums to two here, not to one, which is exactly what the broken
+        # cumulative distribution mishandled.
+        anchors = np.array([0, 0, 1])
+        targets = np.array([0, 1, 2])
+        probabilities = np.array([0.75, 0.25, 1.0])
+        rng = np.random.default_rng(7)
+        drawn_anchor, drawn_target = trainer.sample_edges(
+            anchors, targets, probabilities, 200000, rng)
+        anchor_share = np.bincount(drawn_anchor, minlength=2) / len(drawn_anchor)
+        target_share = np.bincount(drawn_target, minlength=3) / len(drawn_target)
+        self.assertAlmostEqual(float(anchor_share[0]), 0.5, delta=0.01)
+        self.assertAlmostEqual(float(target_share[0]), 0.375, delta=0.01)
+        self.assertAlmostEqual(float(target_share[1]), 0.125, delta=0.01)
+        self.assertAlmostEqual(float(target_share[2]), 0.5, delta=0.01)
 
 
 if __name__ == '__main__':
