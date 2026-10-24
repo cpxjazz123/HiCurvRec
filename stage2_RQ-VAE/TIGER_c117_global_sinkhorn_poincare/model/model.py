@@ -42,6 +42,12 @@ class RQVAE(nn.Module):
         self.frozen_codes = codes
         self.frozen_reconstruction = self.rq.reconstruction(codes)
 
+    def forward(self, embeddings: torch.Tensor, index: torch.Tensor | None = None):
+        """DDP-visible entry point: the reducer must see this graph."""
+        if index is None:
+            index = torch.arange(embeddings.shape[0], device=embeddings.device)
+        return self.loss(embeddings, index)
+
     def loss(self, embeddings: torch.Tensor, index: torch.Tensor):
         if self.frozen_reconstruction is None or self.frozen_codes is None:
             raise RuntimeError("the epoch assignment has not been refreshed")
