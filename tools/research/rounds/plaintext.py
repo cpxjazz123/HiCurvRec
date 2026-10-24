@@ -73,12 +73,32 @@ def _first(fields: list[tuple[str, str]], key: str) -> str:
 
 
 IDEA_KEYS = ("IDEA", "TITLE", "MOTIVATION", "NOVELTY", "CHANGE", "SPECIFICATION",
-             "COST", "HYPOTHESIS", "RISKS", "END IDEA")
+             "COST", "HYPOTHESIS", "RISKS",
+             "BEHAVIOR SIGNAL", "BEHAVIOR COMPUTATION", "LEAKAGE BOUNDARY",
+             "HYPERBOLIC OPERATOR", "HYPERBOLIC LOCATION",
+             "COUPLING PATH", "COUPLING EQUATION", "OBSERVABLES",
+             "ABLATION BEHAVIOR OFF", "ABLATION GEOMETRY OFF", "ABLATION BOTH ON",
+             "SPEC EQUATIONS", "SPEC INPUTS OUTPUTS", "SAFEGUARDS",
+             "END IDEA")
 
 _IDEA_FIELDS = {
     "IDEA": "idea_id", "TITLE": "title", "MOTIVATION": "motivation",
     "NOVELTY": "novelty", "CHANGE": "key_change", "SPECIFICATION": "specification",
     "COST": "cost_estimate", "HYPOTHESIS": "falsifiable_hypothesis", "RISKS": "risks",
+    "BEHAVIOR SIGNAL": "behavior_signal",
+    "BEHAVIOR COMPUTATION": "behavior_computation",
+    "LEAKAGE BOUNDARY": "leakage_boundary",
+    "HYPERBOLIC OPERATOR": "hyperbolic_operator",
+    "HYPERBOLIC LOCATION": "hyperbolic_location",
+    "COUPLING PATH": "coupling_path",
+    "COUPLING EQUATION": "coupling_equation",
+    "OBSERVABLES": "observables",
+    "ABLATION BEHAVIOR OFF": "ablation_behavior_off",
+    "ABLATION GEOMETRY OFF": "ablation_geometry_off",
+    "ABLATION BOTH ON": "ablation_both_on",
+    "SPEC EQUATIONS": "spec_equations",
+    "SPEC INPUTS OUTPUTS": "spec_inputs_outputs",
+    "SAFEGUARDS": "safeguards",
 }
 
 
@@ -133,10 +153,14 @@ def parse_ideas(text: str) -> dict:
     return {"ideas": ideas}
 
 
-SCORE_KEYS = ("SCORE", "RATIONALE", "NOTE")
+SCORE_KEYS = ("SCORE", "SCOPE", "RATIONALE", "NOTE")
 
-_SCORE_DIMENSIONS = ("novelty", "scientific_motivation", "feasibility",
-                     "downstream_impact", "experimental_distinctness")
+#: The dimensions Issue #121 asks for: the coupling gets its own axis, so a
+#: mechanism that is merely behaviour-flavored cannot hide behind a high
+#: novelty score.
+_SCORE_DIMENSIONS = ("novelty", "behavior_problem_meaning", "coupling_strength",
+                     "implementability", "downstream_potential",
+                     "experimental_diversity")
 
 
 def parse_scores(text: str) -> dict:
@@ -148,7 +172,16 @@ def parse_scores(text: str) -> dict:
     fields = parse_fields(text, SCORE_KEYS)
     scores: list[dict] = []
     rationales: dict[str, str] = {}
+    scopes: dict[str, dict] = {}
     for name, value in fields:
+        if name == "SCOPE":
+            parts = [part.strip() for part in value.split("|")]
+            identifier = parts[0].strip()
+            verdict = parts[1].strip().upper() if len(parts) > 1 else ""
+            reason = parts[2] if len(parts) > 2 else ""
+            if identifier:
+                scopes[identifier] = {"verdict": verdict, "reason": reason}
+            continue
         if name == "SCORE":
             parts = [part.strip() for part in value.split("|")]
             identifier = parts[0].strip()
@@ -172,6 +205,9 @@ def parse_scores(text: str) -> dict:
                 rationales[identifier] = rest.strip() or value.strip()
     for entry in scores:
         entry["rationale"] = rationales.get(entry["idea_id"], "")
+        scope = scopes.get(entry["idea_id"])
+        entry["scope_verdict"] = (scope or {}).get("verdict", "")
+        entry["scope_reason"] = (scope or {}).get("reason", "")
         entry["missing_dimensions"] = [dimension for dimension in _SCORE_DIMENSIONS
                                        if dimension not in entry["scores"]]
         if not entry["rationale"]:
@@ -183,9 +219,9 @@ def parse_scores(text: str) -> dict:
     return {"scores": scores}
 
 
-VERIFY_KEYS = ("VERDICT", "CHECK", "CHECK VERDICT", "FINDING SEVERITY",
-               "FINDING LOCATION", "FINDING DETAIL", "FINDING REPRODUCTION",
-               "FINDING CORRECTION")
+VERIFY_KEYS = ("VERDICT", "CHECK", "CHECK VERDICT", "EXERCISED PATH",
+               "FINDING SEVERITY", "FINDING LOCATION", "FINDING DETAIL",
+               "FINDING REPRODUCTION", "FINDING CORRECTION")
 
 
 def parse_verification(text: str) -> dict:
@@ -202,10 +238,18 @@ def parse_verification(text: str) -> dict:
     for name, value in fields:
         if name == "VERDICT":
             continue
+        if name == "EXERCISED PATH":
+            if current is None:
+                continue
+            parts = [part.strip() for part in value.split("|")]
+            current["exercised_path"] = parts[0]
+            current["exercised_how"] = parts[1] if len(parts) > 1 else ""
+            continue
         if name == "CHECK":
             if current is not None:
                 checks.append(current)
-            current = {"name": value.strip(), "verdict": "", "findings": []}
+            current = {"name": value.strip(), "verdict": "", "findings": [],
+                       "exercised_path": "", "exercised_how": ""}
             finding = None
             continue
         if current is None:

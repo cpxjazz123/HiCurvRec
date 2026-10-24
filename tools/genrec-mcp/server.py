@@ -278,6 +278,84 @@ def tree_supports_single_gpu(tree: Path) -> bool:
         return False
 
 
+#: The frozen Stage2 run: 3000 epochs over 24556 items with 24 steps per epoch.
+STAGE2_FROZEN_EPOCHS = 3000
+STAGE2_FROZEN_STEPS_PER_EPOCH = 24
+#: A run that projects beyond this is a resource fact, not a scientific verdict.
+STAGE2_COST_BUDGET_HOURS = 48.0
+
+
+def project_frozen_run_cost(summary: dict | None) -> dict:
+    """Project the frozen run from the measured smoke.
+
+    The smoke runs the real trainer on the real data for a few steps, so its
+    step time is the only honest cost probe available before the full run.
+    """
+    summary = summary or {}
+    elapsed = summary.get("elapsed_s")
+    steps = summary.get("steps")
+    if not elapsed or not steps:
+        return {"projected_hours": None, "reason": "the smoke reported no timing"}
+    per_step = float(elapsed) / float(steps)
+    total_steps = STAGE2_FROZEN_EPOCHS * STAGE2_FROZEN_STEPS_PER_EPOCH
+    return {"projected_hours": per_step * total_steps / 3600.0,
+            "per_step_s": per_step, "elapsed_s": elapsed, "steps": steps,
+            "epochs": STAGE2_FROZEN_EPOCHS, "steps_per_epoch": STAGE2_FROZEN_STEPS_PER_EPOCH,
+            "budget_hours": STAGE2_COST_BUDGET_HOURS}
+
+
+def _stop_stage2_job(job: dict) -> None:
+    """Stop a running Stage 2 job whose measured cost is out of budget."""
+    tree = job.get("stage2_tree") or job.get("tree")
+    if not tree:
+        return
+    key = "stage2__" + Path(tree).name
+    state = load_state(key)
+    pid = state.get("worker_pid") or state.get("pid")
+    if pid:
+        for signal_number in (signal.SIGTERM, signal.SIGKILL):
+            try:
+                os.killpg(os.getpgid(int(pid)), signal_number)
+            except (OSError, ProcessLookupError, ValueError):
+                break
+    save_state(key, {**state, "status": "resource_blocked",
+                     "stopped_at": time.time()})
+
+
+def project_from_training_metrics(result_dir: Path) -> dict:
+    """Project the frozen run from the epochs the candidate has already run.
+
+    The trainer writes one row per epoch, so the measured epoch time is the
+    real cost of the real data. A projection over the budget is a resource
+    fact about this host, not a statement about the mechanism.
+    """
+    metrics = Path(result_dir) / "logs" / "training_metrics.jsonl"
+    if not metrics.is_file():
+        return {"projected_hours": None, "reason": "no metrics yet"}
+    rows = []
+    try:
+        for line in metrics.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if row.get("event") == "train" and row.get("epoch"):
+                rows.append(row)
+    except OSError:
+        return {"projected_hours": None, "reason": "the metrics file is unreadable"}
+    if len(rows) < 2:
+        return {"projected_hours": None, "reason": "not enough epochs measured yet"}
+    first, last = rows[0], rows[-1]
+    epochs = float(last["epoch"]) - float(first["epoch"])
+    seconds = float(last.get("wall_time_s", 0)) - float(first.get("wall_time_s", 0))
+    if epochs <= 0 or seconds <= 0:
+        return {"projected_hours": None, "reason": "the epoch timing is unusable"}
+    per_epoch = seconds / epochs
+    return {"projected_hours": per_epoch * STAGE2_FROZEN_EPOCHS / 3600.0,
+            "per_epoch_s": per_epoch, "measured_epochs": int(epochs),
+            "epochs": STAGE2_FROZEN_EPOCHS, "budget_hours": STAGE2_COST_BUDGET_HOURS}
+
+
 def stage2_launch_decision(gpu_probe: dict) -> str | None:
     """``None`` -> dispatch, otherwise the refusal reason for this probed layout.
 
@@ -1161,6 +1239,7 @@ def run_stage2_smoke(
     or 4-rank layout the real run will use.
     """
     HARNESS_DIR.mkdir(parents=True, exist_ok=True)
+    started = time.monotonic()
     scratch = HARNESS_DIR / f"smoke_{re.sub(r'[^A-Za-z0-9._-]+', '_', tree.name)}"
     driver = HARNESS_DIR / f"smoke_driver_{re.sub(r'[^A-Za-z0-9._-]+', '_', tree.name)}.py"
     driver.write_text(STAGE2_SMOKE_TEMPLATE, encoding="utf-8")
@@ -1208,10 +1287,16 @@ def run_stage2_smoke(
     # The smoke's weights and SIDs are throwaway: keep only the summary.
     shutil.rmtree(scratch, ignore_errors=True)
     driver.unlink(missing_ok=True)
+    elapsed = time.monotonic() - started
+    if summary is not None:
+        # The measured smoke is the only honest cost probe there is: it runs the
+        # real trainer on the real data, so its step time projects the full run.
+        summary["elapsed_s"] = round(elapsed, 3)
     return {
         "passed": result["rc"] == 0 and bool(summary and summary.get("passed")),
         "summary": summary,
         "rc": result["rc"],
+        "elapsed_s": round(elapsed, 3),
         "stderr_tail": result["stderr"][-800:],
         "scratch": str(scratch),
         "log": str(log_path) if log_path is not None else None,
@@ -1465,6 +1550,11 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
         after = validate_agent_evidence_only(tree, verification_id)
         if not after.get("passed"):
             refused = "source/test verification drift after smoke: " + str(after.get("refused"))
+    # The smoke pays for the DDP start-up, so its step time is only a hint. The
+    # honest cost probe is the measured epoch time of the real run, and the round
+    # checks that while the job runs.
+    projection = project_frozen_run_cost(summary)
+    smoke_detail["cost_projection_hint"] = projection
     if refused is None:
         # The smoke passed, so the archived copies are the only backup needed: drop
         # the originals now so the run writes a fresh artifact set instead of a
@@ -2342,7 +2432,7 @@ def round_worker_main(spec: dict) -> int:
     from tools.research.rounds import worker as round_worker
 
     round_id = spec["round_id"]
-    directory = REPO / "results" / "research" / "issue120" / "rounds" / round_id
+    directory = round_pipeline.find_round_directory(REPO, round_id)
     try:
         summary = round_worker.advance(REPO, round_id)
     except Exception as exc:                               # noqa: BLE001
@@ -2364,16 +2454,23 @@ def write_round_worker() -> Path:
     return worker
 
 
-def tool_research_round_start(objective: str = "") -> dict:
+def tool_research_round_start(objective: str = "", issue: str = "issue121") -> dict:
     """Start one multi-agent round: three ideation agents, then three scorers.
 
-    The round is asynchronous; research_round_status reports where it is.
+    The round is asynchronous; research_round_status reports where it is. The
+    research objective is the one the issue fixes, and an extra objective may
+    only add to it, never replace it.
     """
     import time
+    from tools.research.rounds import agents as round_agents
     from tools.research.rounds import pipeline as round_pipeline
 
     round_id = "round_" + time.strftime("%Y%m%d_%H%M%S") + "_" + str(int(time.time() * 1000) % 1000)
-    directory = round_pipeline.new_round(REPO, round_id, objective=objective)
+    full_objective = round_agents.RESEARCH_OBJECTIVE
+    if objective:
+        full_objective = full_objective + "\n\n" + objective
+    directory = round_pipeline.new_round(REPO, round_id, objective=full_objective,
+                                         issue=issue)
     worker = write_round_worker()
     log = HARNESS_DIR / ("round_" + round_id + ".log")
     with log.open("wb") as sink:
@@ -2398,7 +2495,7 @@ def _round_directory(round_id: str) -> Path:
     from tools.research.rounds import pipeline as round_pipeline
     if not round_id or "/" in round_id:
         raise ValueError("invalid round id")
-    return round_pipeline.round_root(REPO) / round_id
+    return round_pipeline.find_round_directory(REPO, round_id)
 
 
 def tool_research_round_status(round_id: str) -> dict:
@@ -2578,7 +2675,7 @@ def tool_research_round_collect(round_id: str) -> dict:
     directory = _round_directory(round_id)
     state = round_pipeline.load_state(directory)
     queue = round_jobs.JobQueue(directory)
-    started, refused = [], []
+    started, refused, resource_blocked = [], [], []
     for job in list(queue.jobs["jobs"]):
         if job["kind"] != "stage2" or job["status"] not in ("pending", "running"):
             continue
@@ -2586,6 +2683,23 @@ def tool_research_round_collect(round_id: str) -> dict:
         sid_path = result_dir / "item_sids.json"
         if not sid_path.is_file():
             if job["status"] == "running":
+                # The cost probe runs on the real training: a projection over the
+                # budget is a resource fact, so the job stops and the idea is
+                # kept for an optimisation route instead of being rejected.
+                projection = project_from_training_metrics(result_dir)
+                job["cost_projection"] = projection
+                if projection.get("projected_hours") is not None and \
+                        projection["projected_hours"] > STAGE2_COST_BUDGET_HOURS:
+                    _stop_stage2_job(job)
+                    queue.resource_block(job["job_id"],
+                                         "the measured epoch time projects " +
+                                         str(round(projection["projected_hours"], 1)) +
+                                         " h for the frozen " + str(STAGE2_FROZEN_EPOCHS) +
+                                         "-epoch run, over the " +
+                                         str(STAGE2_COST_BUDGET_HOURS) + " h budget",
+                                         evidence=projection)
+                    resource_blocked.append({"idea_id": job["idea_id"],
+                                             "projection": projection})
                 continue
             queue.start(job["job_id"])
             tree = _promote_round_tree(Path(job["tree"]), str(job["idea_id"]))
@@ -2619,12 +2733,12 @@ def tool_research_round_collect(round_id: str) -> dict:
                                             if job["kind"] == "stage3"]
     round_pipeline.save_state(directory, pipeline_module_state)
     return {"round_id": round_id, "stage2_started": started, "stage2_refused": refused,
-            "jobs": queue.report()}
+            "resource_blocked": resource_blocked, "jobs": queue.report()}
 
 TOOLS.update({
     "research_round_start": {
         "fn": tool_research_round_start,
-        "args": {"objective": "string"},
+        "args": {"objective": "string", "issue": "string"},
         "description": "Start one multi-agent research round: three independent "
                        "ideation agents, three independent scorers that judge every "
                        "idea, an explicit multi-candidate selection, one isolated "

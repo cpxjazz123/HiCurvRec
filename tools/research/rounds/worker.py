@@ -17,6 +17,7 @@ from .. import settings
 from ..agents.runner import run_agent
 from ..core.evidence import atomic_json, digest_file, read_json
 from . import agents as agent_contracts
+from . import baseline as baseline_module
 from . import ideas as ideas_module
 from . import plaintext
 from . import pipeline as pipeline_module
@@ -67,7 +68,10 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser) 
 
 def run_ideation(root: Path, objective: str) -> list:
     """Three independent ideation agents; each returns one to three ideas."""
-    prompt_base = agent_contracts.IDEA_PROMPT.format(minimum=IDEA_MIN, maximum=IDEA_MAX)
+    prompt_base = agent_contracts.IDEA_PROMPT.format(
+        minimum=IDEA_MIN, maximum=IDEA_MAX,
+        objective=agent_contracts.RESEARCH_OBJECTIVE,
+        scope=agent_contracts.SCOPE_CONTRACT)
     answers = []
     for index in range(1, pipeline_module.IDEAE_AGENTS + 1):
         task_id = "ideation_" + str(index)
@@ -86,8 +90,10 @@ def run_scoring(root: Path, ideas: list) -> list:
     reports = []
     for index in range(1, SCORERS + 1):
         task_id = "scoring_" + str(index)
-        prompt = (agent_contracts.SCORE_PROMPT +
-                  "\n\nThe ideas to score, all of them:\n" + payload)
+        prompt = (agent_contracts.SCORE_PROMPT.format(
+            objective=agent_contracts.RESEARCH_OBJECTIVE,
+            scope=agent_contracts.SCOPE_CONTRACT) +
+            "\n\nThe ideas to score, all of them:\n" + payload)
         report = _run_agent(root, task_id, prompt, "scores.txt", plaintext.parse_scores)
         report.setdefault("scorer", task_id)
         reports.append(report)
@@ -95,13 +101,24 @@ def run_scoring(root: Path, ideas: list) -> list:
 
 
 def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
-    """One implementation agent per selected idea, in its own tree."""
+    """One implementation agent per selected idea, in its own tree.
+
+    The tree is a fresh copy of the one permitted baseline, made here, so the
+    agent never starts from another candidate's work and never from a mutated
+    worktree.
+    """
     tree = Path(tree)
-    tree.mkdir(parents=True, exist_ok=True)
+    provenance = baseline_module.copy_baseline(tree)
     prompt = (agent_contracts.IMPLEMENT_PROMPT.format(
-        idea=plaintext.render_idea(idea), tree=str(tree)))
+        idea=plaintext.render_idea(idea), tree=str(tree),
+        objective=agent_contracts.RESEARCH_OBJECTIVE,
+        scope=agent_contracts.SCOPE_CONTRACT))
     report = _run_agent(root, "implementation_" + idea["idea_id"], prompt,
                         "implementation.txt", plaintext.parse_implementation)
+    report["provenance"] = provenance
+    report["baseline"] = provenance["baseline"]
+    report["baseline_digest"] = provenance["baseline_digest"]
+    report["candidate_digest_before_agent"] = provenance["candidate_digest"]
     atomic_json(tree / "PROPOSAL.json", idea)
     return report
 
@@ -109,7 +126,9 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
 def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> list:
     """Three independent verifiers of one implementation revision."""
     prompt = (agent_contracts.VERIFY_PROMPT.format(
-        idea=plaintext.render_idea(idea), tree=str(tree)))
+        idea=plaintext.render_idea(idea), tree=str(tree),
+        objective=agent_contracts.RESEARCH_OBJECTIVE,
+        scope=agent_contracts.SCOPE_CONTRACT))
     reports = []
     for index in range(1, VERIFIERS + 1):
         # The revision is part of the workspace name: a fresh review after a
@@ -126,7 +145,9 @@ def run_repair(root: Path, idea: dict, tree: Path, findings: list,
                revision: int = 0) -> dict:
     """The dedicated repair agent for one implementation revision."""
     prompt = (agent_contracts.REPAIR_PROMPT.format(
-        findings=plaintext.render_findings(findings), tree=str(tree)))
+        findings=plaintext.render_findings(findings), tree=str(tree),
+        objective=agent_contracts.RESEARCH_OBJECTIVE,
+        scope=agent_contracts.SCOPE_CONTRACT))
     return _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),
                       prompt, "repair.txt", plaintext.parse_repair)
 
@@ -151,17 +172,45 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
         log("selection: %d selected" % len(state["selection"]["selected"]))
 
     if state["step"] == "implementation":
+        trees_root = (Path(root) / "results" / "research" / state.get("issue", "issue120")
+                      / "trees" / round_id)
         for idea in pipeline_module.selected_ideas(state):
-            tree = Path(root) / "results" / "research" / "issue120" / "trees" / round_id / idea["idea_id"]
+            tree = trees_root / idea["idea_id"]
             try:
                 report = run_implementation(agent_root, idea, tree)
-            except Exception as exc:                       # noqa: BLE001 - recorded, not raised
-                state = pipeline_module.mark_blocked(state, idea["idea_id"],
-                                                     "implementation failed: " + str(exc))
+            except baseline_module.BaselineError as exc:
+                # The baseline is the one permitted source: if it is missing or
+                # unreadable the candidate is not built from anything else.
+                state = pipeline_module.mark_blocked(
+                    state, idea["idea_id"], "baseline unavailable: " + str(exc),
+                    kind=pipeline_module.BASELINE_UNAVAILABLE)
                 pipeline_module.save_state(directory, state)
                 continue
-            state.setdefault("implementations", []).append(
-                pipeline_module.implementation_record(idea, report, tree))
+            except Exception as exc:                       # noqa: BLE001 - recorded, not raised
+                state = pipeline_module.mark_agent_error(
+                    state, idea["idea_id"], "implementation failed: " + str(exc))
+                pipeline_module.save_state(directory, state)
+                continue
+            record = pipeline_module.implementation_record(idea, report, tree)
+            state.setdefault("implementations", []).append(record)
+            # The candidate must write only into its own result directory: a
+            # candidate that would overwrite the baseline or a sibling is
+            # refused before it can train.
+            siblings = [other["tree"] for other in state.get("implementations", [])
+                        if other["idea_id"] != idea["idea_id"]]
+            try:
+                record["output_paths"] = baseline_module.guard_output_paths(
+                    tree, other_candidates=siblings)
+            except baseline_module.BaselineError as exc:
+                record["blocking_findings"] = [{
+                    "verifier": "preflight", "check": "output isolation",
+                    "severity": "blocking", "location": "train_rqvae.py",
+                    "detail": str(exc),
+                    "reproduction": "read the trainer's output constants",
+                    "correction": "write only into the candidate's own result directory"}]
+                record["status"] = "needs_repair"
+                record["failure_signature"] = pipeline_module._failure_signature(
+                    record["blocking_findings"])
             pipeline_module.save_state(directory, state)
             log("implemented %s" % idea["idea_id"])
         state["step"] = "verification"
@@ -169,34 +218,41 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
 
     if state["step"] == "verification":
         for record in list(state.get("implementations", [])):
-            if record.get("status") not in ("implemented", "repaired"):
+            if record.get("status") not in ("implemented", "repaired", "agent_error",
+                                            "needs_repair"):
                 continue
             idea = ideas_module.idea_index(state["ideas"])[record["idea_id"]]
             try:
                 reports = run_verification(agent_root, idea, Path(record["tree"]),
                                            int(record.get("revision", 0)))
             except Exception as exc:                       # noqa: BLE001
-                state = pipeline_module.mark_blocked(state, record["idea_id"],
-                                                     "verification failed: " + str(exc))
+                # A reviewer that crashed says nothing about the mechanism: the
+                # branch is retried, and only an exhausted retry is recorded as
+                # an infrastructure failure.
+                state = pipeline_module.mark_agent_error(
+                    state, record["idea_id"], "verification failed: " + str(exc))
                 pipeline_module.save_state(directory, state)
                 continue
             state = pipeline_module.apply_verification(state, record["idea_id"], reports)
             pipeline_module.save_state(directory, state)
-            if record.get("status") == "needs_repair":
+            if record.get("blocking_findings"):
                 try:
                     repair = run_repair(agent_root, idea, Path(record["tree"]),
                                         record.get("blocking_findings", []),
                                         int(record.get("revision", 0)))
                     state = pipeline_module.apply_repair(state, record["idea_id"], repair)
                 except Exception as exc:                   # noqa: BLE001
-                    state = pipeline_module.mark_blocked(state, record["idea_id"],
-                                                         "repair failed: " + str(exc))
+                    state = pipeline_module.mark_agent_error(
+                        state, record["idea_id"], "repair failed: " + str(exc))
                 pipeline_module.save_state(directory, state)
                 log("%s: %s" % (record["idea_id"], record.get("status")))
         # Stay in verification until every implementation is resolved: a repair
         # reopens the review, and the round must not move on with work in flight.
         pending = [record for record in state.get("implementations", [])
-                   if record.get("status") in ("implemented", "repaired", "needs_repair")]
+                   if record.get("status") in ("implemented", "repaired", "needs_repair")
+                   or (record.get("status") == "agent_error"
+                       and int(record.get("agent_error_attempts", 0))
+                       <= pipeline_module.MAX_AGENT_RETRIES)]
         state["step"] = "verification" if pending else "stage2"
         pipeline_module.save_state(directory, state)
 

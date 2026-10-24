@@ -12,10 +12,30 @@ from tools.research.rounds import pipeline as pipeline_module
 from tools.research.rounds import scoring as scoring_module
 
 
-def _idea(identifier, title="t", change="c", spec="s"):
-    return {"idea_id": identifier, "title": title, "motivation": "m", "novelty": "n",
+def _idea(identifier, title="t", change="c", spec="s", **overrides):
+    """A proposal that meets the joint behaviour x hyperbolic scope contract."""
+    idea = {"idea_id": identifier, "title": title, "motivation": "m", "novelty": "n",
             "key_change": change, "specification": spec, "cost_estimate": "low",
-            "falsifiable_hypothesis": "h", "risks": ["r"]}
+            "falsifiable_hypothesis": "h", "risks": ["r"],
+            "behavior_signal": "train-only directed item transitions between "
+                               "consecutive items in the training sequences",
+            "behavior_computation": "counted on the train split interactions only",
+            "leakage_boundary": "train-only, no validation or test interaction is read",
+            "hyperbolic_operator": "Poincare distance with negative curvature",
+            "hyperbolic_location": "inside the residual quantization of the codebook",
+            "coupling_path": "the behaviour weight multiplies the curved residual "
+                             "distance inside the assignment, so both sides act in one "
+                             "computational pathway",
+            "coupling_equation": "L = sum_b w_behaviour(x_b) * d_poincare(v_b, c_b)",
+            "observables": "the codebook assignment changes when the weight changes",
+            "ablation_behavior_off": "set the behaviour weight to one everywhere",
+            "ablation_geometry_off": "replace the curved distance by the Euclidean one",
+            "ablation_both_on": "the full coupled assignment",
+            "spec_equations": "z = exp_0^poincare(log_0(v) + w * delta)",
+            "spec_inputs_outputs": "takes item vectors and transitions, returns codes",
+            "safeguards": "clamp the weight and check the loss is finite"}
+    idea.update(overrides)
+    return idea
 
 
 def _scores(identifier, value):
@@ -429,11 +449,8 @@ class PlainTextContractTests(unittest.TestCase):
 
     def test_one_malformed_idea_does_not_cost_the_others(self):
         ideas = ideas_module.collect_ideas([
-            ("agent1", {"ideas": [{"idea_id": "a", "title": "t", "motivation": "m",
-                                   "novelty": "n", "key_change": "c", "specification": "s",
-                                   "cost_estimate": "cost", "falsifiable_hypothesis": "h",
-                                   "risks": "r"},
-                                  {"idea_id": "b", "title": "incomplete"}]}),
+            ("agent1", {"ideas": [_idea("a", title="alpha", change="1"),
+                                 {"idea_id": "b", "title": "incomplete"}]}),
             ("agent2", {"ideas": [_idea("c", title="gamma", change="2")]}),
             ("agent3", {"ideas": [_idea("d", title="delta", change="3")]}),
         ])
@@ -447,8 +464,8 @@ class IncompleteAnswerTests(unittest.TestCase):
 
     def test_a_score_without_a_rationale_is_kept_and_flagged(self):
         from tools.research.rounds import plaintext
-        answer = ("SCORE: a | novelty=4 | scientific_motivation=3 | feasibility=5 | "
-                  "downstream_impact=2 | experimental_distinctness=1\n")
+        answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
+                  "implementability=2 | downstream_potential=1 | experimental_diversity=1\n")
         parsed = plaintext.parse_scores(answer)
         self.assertTrue(parsed["scores"][0]["rationale_missing"])
         report = scoring_module.validate_report(parsed, scorer="s1")
@@ -456,10 +473,11 @@ class IncompleteAnswerTests(unittest.TestCase):
 
     def test_a_score_without_one_dimension_is_kept_and_flagged(self):
         from tools.research.rounds import plaintext
-        answer = ("SCORE: a | novelty=4 | scientific_motivation=3 | feasibility=5 | "
-                  "experimental_distinctness=1\nRATIONALE: a | why\n")
+        answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
+                  "implementability=1 | experimental_distinctness=1\nRATIONALE: a | why\n")
         parsed = plaintext.parse_scores(answer)
-        self.assertEqual(parsed["scores"][0]["missing_dimensions"], ["downstream_impact"])
+        self.assertEqual(parsed["scores"][0]["missing_dimensions"],
+                         ["downstream_potential", "experimental_diversity"])
         report = scoring_module.validate_report(parsed, scorer="s1")
         self.assertIn("downstream_impact", report["scores"][0]["missing_dimensions"])
 
