@@ -86,6 +86,8 @@ class RQVAE(nn.Module):
         return self.rq.get_indices(z)
 
     @torch.no_grad()
-    def init_codebook(self, embeddings: torch.Tensor, device: torch.device) -> None:
+    def init_codebook(self, embeddings: torch.Tensor,
+                      device: torch.device | None = None) -> None:
+        """KMeans initialisation of the three codebooks on encoder outputs."""
         encoded = self.encoder(embeddings)
-        self.rq.init_codebook(encoded, device)
+        self.rq.init_codebook(encoded, device or embeddings.device)
