@@ -2333,6 +2333,8 @@ sys.exit(server.round_worker_main(json.loads(sys.argv[1])))
 
 def round_worker_main(spec: dict) -> int:
     """Advance one round through its agent stages."""
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
     from tools.research.rounds import pipeline as round_pipeline
     from tools.research.rounds import worker as round_worker
 
