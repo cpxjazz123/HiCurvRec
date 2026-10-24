@@ -12,7 +12,7 @@ from pathlib import Path
 from .. import settings
 from ..core.evidence import atomic_json, read_json
 from . import handlers
-from ..verification.admission import source_digest
+from ..verification.admission import EVIDENCE_ROOT, source_digest
 
 SOURCE_DIR = settings.ROOT / "stage2_RQ-VAE"
 SAFE_ID = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]{2,63}$")
@@ -47,7 +47,7 @@ def _lock(root):
 
 def _authored_source_digest(root, candidate_id: str):
     """The source digest the authoring Agents reported, if any."""
-    index = root / "verification" / candidate_id / "drafts" / "authors.json"
+    index = EVIDENCE_ROOT / "verification" / candidate_id / "drafts" / "authors.json"
     if not index.is_file():
         return None
     for entry in (read_json(index) or {}).values():
