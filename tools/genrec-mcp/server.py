@@ -2458,8 +2458,8 @@ def _promote_round_tree(tree: Path, idea_id: str) -> Path:
     source = Path(tree)
     if source.resolve() == target.resolve():
         return target
-    if target.exists():
-        return target
+    # Always refresh the allowlist copy: the reviewed tree is the source of truth,
+    # and the admission compares the copy's source digest with the record.
     ignore = shutil.ignore_patterns("logs", "__pycache__", "results", "dataset")
     shutil.copytree(source, target, ignore=ignore, dirs_exist_ok=True)
     return target
