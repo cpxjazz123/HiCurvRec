@@ -61,14 +61,21 @@ def plan_gpu_allocation(running_jobs: list, usable: list, *, jobs_per_gpu: int =
             if not card:
                 continue
             running_per_card[card] = running_per_card.get(card, 0) + 1
+    # The slots are handed out card by card, not card after card: one job per
+    # card first, and only the second slot of a card once every card is busy.
+    # Two jobs sharing a card halve each other's compute, so a spread costs
+    # nothing and finishes the candidates sooner.
+    per_card = max(1, int(jobs_per_gpu))
     free_slots = []
     idle_cards = []
-    for card in usable:
-        card = str(card)
-        used = running_per_card.get(card, 0)
-        if used == 0:
-            idle_cards.append(card)
-        free_slots.extend([card] * max(0, int(jobs_per_gpu) - used))
+    for level in range(per_card):
+        for card in usable:
+            card = str(card)
+            used = running_per_card.get(card, 0)
+            if used == 0:
+                idle_cards.append(card)
+            if used <= level:
+                free_slots.append(card)
     return {"free_slots": free_slots, "idle_cards": idle_cards,
             "running_per_card": running_per_card,
             "capacity": len(free_slots) + sum(running_per_card.values())}
