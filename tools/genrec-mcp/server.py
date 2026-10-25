@@ -2093,12 +2093,13 @@ def run_agent_verification(tree: Path, verification_id: str) -> dict:
 
 
 def round_admission(tree: Path, verification_id: str) -> dict:
-    """Admission for an Issue #120 round candidate.
+    """Admission for a round candidate (Issues #120/#121).
 
-    The round's own evidence is the implementation record: three independent
-    verifiers, no unresolved blocking finding, the source digest the verifiers
-    saw, and a real smoke result. Scientific paperwork is not a gate here; a
-    correct, numerically stable, runnable trainer is.
+    The round's own evidence is the implementation record: the configured
+    reviewer(s), no unresolved blocking finding, a passing output-path
+    preflight, the source digest the reviewer saw, and a real smoke result.
+    Scientific paperwork is not a gate here; a correct, numerically stable,
+    runnable trainer is.
     """
     if str(REPO) not in sys.path:
         sys.path.insert(0, str(REPO))
@@ -2107,7 +2108,7 @@ def round_admission(tree: Path, verification_id: str) -> dict:
     if len(parts) != 3 or parts[0] != "round":
         return {"passed": False, "refused": "not a round verification id"}
     _, round_id, idea_id = parts
-    directory = REPO / "results" / "research" / "issue120" / "rounds" / round_id
+    directory = module.find_round_directory(REPO, round_id)
     state = module.load_state(directory)
     records = [record for record in state.get("implementations", [])
                if record.get("idea_id") == idea_id]
@@ -2117,10 +2118,14 @@ def round_admission(tree: Path, verification_id: str) -> dict:
     if record.get("status") != "verified":
         return {"passed": False, "refused": "implementation status is " +
                 str(record.get("status"))}
-    if len(record.get("verdicts", [])) != 3:
-        return {"passed": False, "refused": "the implementation was not reviewed by three agents"}
+    if len(record.get("verdicts", [])) != module.VERIFIER_AGENTS:
+        return {"passed": False,
+                "refused": "the implementation was not reviewed by " +
+                           str(module.VERIFIER_AGENTS) + " agent(s)"}
     if record.get("blocking_findings"):
         return {"passed": False, "refused": "unresolved blocking findings remain"}
+    if record.get("output_preflight") == "failed":
+        return {"passed": False, "refused": "the output-path preflight failed"}
     # The tree may be the one the verifiers saw or its promoted copy inside the
     # Stage2 allowlist; the source digest is path-independent, so it is what must
     # match. A different digest means the code changed after the review.
@@ -2781,7 +2786,13 @@ def tool_research_round_launch(round_id: str, parallel: int = 0) -> dict:
             queue._job(job["job_id"])["gpu"] = gpu
             queue.save()
             verification = "round:" + round_id + ":" + str(job["idea_id"])
-            outcome = tool_stage2_start(str(job["tree"]), verification)
+            try:
+                outcome = tool_stage2_start(str(job["tree"]), verification)
+            except Exception as exc:                   # noqa: BLE001 - recorded, not raised
+                # A job must never stay "running" because the start raised.
+                queue.fail(job["job_id"], "the Stage 2 start raised: " + str(exc))
+                refused.append({"idea_id": job["idea_id"], "refused": str(exc)})
+                continue
         finally:
             if previous is None:
                 os.environ.pop("CUDA_VISIBLE_DEVICES", None)
