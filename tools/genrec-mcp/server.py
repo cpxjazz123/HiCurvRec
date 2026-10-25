@@ -2576,8 +2576,35 @@ def tool_research_round_implement(round_id: str) -> dict:
 
 
 def tool_research_round_verify(round_id: str) -> dict:
-    """Run the three verifiers per implementation and the dedicated repair loop."""
-    return _round_phase(round_id, "verification")
+    """Run the three verifiers per implementation and the dedicated repair loop.
+
+    A candidate that passes review does not wait for the others: it enters the
+    Stage 2 queue in the same call, so review and training overlap.
+    """
+    result = _round_phase(round_id, "verification")
+    if not result.get("ran"):
+        return result
+    from tools.research.rounds import pipeline as round_pipeline
+
+    directory = _round_directory(round_id)
+    state = round_pipeline.load_state(directory)
+    verified = [record["idea_id"] for record in round_pipeline.verified_implementations(state)]
+    already = {job["idea_id"] for job in _round_jobs(directory)["jobs"]
+               if job["kind"] == "stage2"}
+    fresh = [identifier for identifier in verified if identifier not in already]
+    if fresh:
+        # The launch owns the GPU boundary and the queue, and it is idempotent:
+        # it only starts what is not queued yet.
+        result["stage2"] = tool_research_round_launch(round_id)
+        result["dispatched"] = fresh
+    else:
+        result["dispatched"] = []
+    return result
+
+
+def _round_jobs(directory: Path) -> dict:
+    from tools.research.rounds import jobs as round_jobs
+    return round_jobs.JobQueue(directory).report()
 
 
 def tool_research_round_run(round_id: str) -> dict:
