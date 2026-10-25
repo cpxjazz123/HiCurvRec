@@ -149,6 +149,12 @@ def implementation_record(idea: dict, report: dict, tree: Path) -> dict:
         "proposal_sha256": digest_file(Path(tree) / "PROPOSAL.json")
         if (Path(tree) / "PROPOSAL.json").is_file() else None,
         "source_digest": _source_digest(tree),
+        # The provenance of the copy the implementation agent worked in: which
+        # baseline it came from, and the digest of that baseline and of the copy
+        # before the agent touched it.
+        "baseline": report.get("baseline"),
+        "baseline_digest": report.get("baseline_digest"),
+        "candidate_digest_before_agent": report.get("candidate_digest_before_agent"),
         "changed_files": report.get("changed_files", []),
         "deviations": report.get("deviations", []),
         "assumptions": report.get("assumptions", []),
