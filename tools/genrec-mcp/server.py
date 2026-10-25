@@ -309,6 +309,29 @@ def project_frozen_run_cost(summary: dict | None) -> dict:
             "budget_hours": STAGE2_COST_BUDGET_HOURS}
 
 
+def _stage2_finished(result_dir: Path) -> bool:
+    """Whether the Stage 2 run in this result directory reached its last epoch.
+
+    The trainer writes one row per epoch, so the last epoch is the proof that
+    the run completed; the exported SID on its own says nothing.
+    """
+    metrics = Path(result_dir) / "logs" / "training_metrics.jsonl"
+    if not metrics.is_file():
+        return False
+    last_epoch = 0
+    try:
+        for line in metrics.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if row.get("event") == "train" and row.get("epoch"):
+                last_epoch = max(last_epoch, int(row["epoch"]))
+    except OSError:
+        return False
+    return last_epoch >= 3000
+
+
 def _stop_stage2_job(job: dict) -> None:
     """Stop a running Stage 2 job whose measured cost is out of budget."""
     tree = job.get("stage2_tree") or job.get("tree")
@@ -2862,6 +2885,10 @@ def tool_research_round_collect(round_id: str) -> dict:
             continue
         result_dir = Path(job["result_dir"])
         sid_path = result_dir / "item_sids.json"
+        if sid_path.is_file() and not _stage2_finished(result_dir):
+            # A SID file alone does not mean the run finished: a stale or
+            # partial export must not start a Stage 3 on half a model.
+            continue
         if not sid_path.is_file():
             if job["status"] == "running":
                 # The cost probe runs on the real training: a projection over the
