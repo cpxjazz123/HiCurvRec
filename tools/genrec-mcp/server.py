@@ -2945,6 +2945,10 @@ def tool_research_round_collect(round_id: str) -> dict:
             # partial export must not start a Stage 3 on half a model.
             continue
         if not sid_path.is_file():
+            if job["status"] == "pending":
+                # Starting a job is the launch's decision: it owns the card
+                # allocation and the frozen recipe. Collect only collects.
+                continue
             if job["status"] == "running":
                 # The cost probe runs on the real training: a projection over the
                 # budget is a resource fact, so the job stops and the idea is
