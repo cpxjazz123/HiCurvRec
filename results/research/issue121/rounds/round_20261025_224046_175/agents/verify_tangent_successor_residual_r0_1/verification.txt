@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/train_rqvae.py:262-273 -> results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/model/model.py:26-30 -> results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/model/layers.py:284-319 | Static path trace: train-only source-target counts produce per-source successor prototypes; trainer indexes them by batch item IDs; RQLayer applies Poincare-ball log maps at the selected T1 anchor, changes the residual before the next VQ layer, and provides a Euclidean alternate branch. The same path is used for SID export at train_rqvae.py:439-442.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The enabled path is connected and the curved operation is computationally coupled to the train-only directed successor prototype. No finding for scope fidelity.
+FINDING REPRODUCTION: Follow successor_tensor construction and batch indexing into RQVAE.forward and RQLayer.forward at the cited lines; the transformed residual is the next quantizer's input.
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/model/layers.py:287-319; results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/train_rqvae.py:338-350 | Static forward/backward trace: quantized residual enters later VQ quantizers and their losses; straight-through VQ and reconstruction provide differentiable paths. However, configured comparison branches are not faithfully switchable: geometry-off references an undefined eps, and behaviour-off still applies a nonzero curved step during training.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/model/layers.py:293-319; results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/train_rqvae.py:262-273,338-342
+FINDING DETAIL: With HYPERBOLIC_ON=False, the Euclidean branch at line 319 uses eps, which is defined only inside the preceding hyperbolic branch; an enabled behaviour input therefore raises UnboundLocalError rather than running the geometry-off comparison. Separately, BEHAVIOUR_ON=False leaves a zero prototype table but the trainer unconditionally passes each zero row at line 340. In the curved path, Log_anchor(Exp_0(0)) = Log_anchor(0), generally nonzero for a nonzero selected anchor, so this is not the required zero behaviour step; it also differs from export, which passes None when behaviour is off.
+FINDING REPRODUCTION: Set HYPERBOLIC_ON=False and pass any non-None successor_means to RQLayer.forward: line 319 reads unbound eps. For the behaviour-off counterexample, set BEHAVIOUR_ON=False and use a nonzero T1 anchor: training passes a zero successor row, line 310 computes Log_anchor(0), and line 312 subtracts its normalized direction; compare export at train_rqvae.py:439-442, which passes None.
+FINDING CORRECTION: Define the Euclidean branch's epsilon independently (or use F.normalize with an explicit eps). When behaviour is off, bypass the successor correction entirely in training (pass None or branch on BEHAVIOUR_ON), matching evaluation/export; test behaviour-off, geometry-off, and both-on forward/backward and confirm assignment/gradient differences and finite values. In the enabled curved branch the bounded operations use clamped denominators and finite bounded inputs; no separate unavoidable float32 overflow was identified by inspection.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/train_rqvae.py:42-67,237-273,410-458,461-488 | Static integration trace: repository root is derived by walking to the repository marker; inputs are Stage1 embeddings and results/stage0_build_parquet/train.parquet; output directory is results/stage2_RQ-VAE/TIGER_tangent_successor_residual; export enumerates all embedding rows into item-id keyed JSON and collision-extends unique rows. The entry point launches torchrun unless GENREC_SINGLE_GPU is present, in which case it calls main directly.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified from source inspection. The candidate writes to its own promoted-arm result directory (the expected Stage2 location), not the baseline or another candidate. The direct single-card branch honors GENREC_SINGLE_GPU; the multi-card launcher remains present. Runtime execution was not performed per instruction.
+FINDING REPRODUCTION: Inspect the constants and source-to-export path at the cited lines; verify OUTPUT_JSON keys are enumerate(all_embeddings) item IDs and _extend_collisions checks uniqueness. Inspect __main__ branch at lines 485-488 for the single-card path.
+FINDING CORRECTION: none

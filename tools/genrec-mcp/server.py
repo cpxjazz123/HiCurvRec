@@ -1664,6 +1664,9 @@ def stage2_worker_main(tree_arg: str, spec: dict) -> int:
         )
         return 1
     cmd = [spec["python"], str(entry)]
+    # The arm's log directory does not exist yet for a fresh tree, and the run
+    # log is opened before the trainer can create it.
+    Path(logs["run_log"]).parent.mkdir(parents=True, exist_ok=True)
     with Path(logs["run_log"]).open("wb") as sink:
         child = subprocess.Popen(
             cmd,

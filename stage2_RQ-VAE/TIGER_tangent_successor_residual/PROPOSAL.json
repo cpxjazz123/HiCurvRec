@@ -1,0 +1,44 @@
+{
+  "ablation_behavior_off": "Set eta=0 and bypass all successor prototypes; retain 32-way T1, identical Poincare residual quantization, optimization, training steps and fixed seeds.",
+  "ablation_both_on": "Use train-only popularity-corrected successor prototypes inside the fixed-curvature Poincare tangent residual update, followed by matched T2/T3 quantization and deterministic T4.",
+  "ablation_geometry_off": "Replace Log/Exp/parallel transport with Euclidean residual r_i=x_i-eta clip_R(m_i), retaining the identical train-only prototypes, eta, 32-way T1 and all training settings.",
+  "also_proposed_by": [
+    "ideation_2"
+  ],
+  "behavior_computation": "From train.parquet only, count consecutive within-user transitions i→j. Set raw edge weight w_ij=(n_ij+alpha)/(n_i+alpha|S_i|) * (log(1+N_train)/(log(2+pop_train(j)))); normalize over observed successors, then m_i=sum_j w_ij e_j / sum_j w_ij using frozen Stage1 item embeddings. Use the train global embedding mean for items with no outgoing train edge. All counts and m_i are frozen before Stage2 SID export.",
+  "behavior_signal": "Directed immediate next-item successor distribution for each item, with a popularity-corrected weighted successor embedding prototype.",
+  "cost_estimate": "Precompute train successor means in O(E_train*d), store one d-vector and count per item. Per minibatch add O(Bd) tangent/log/transport work (about 24*24556 item-vectors per epoch at full coverage; 3000 epochs), expected <10% Stage2 wall-time overhead subject to manifold-kernel cost; no added Stage3 cost.",
+  "coupling_equation": "r_i=PT_{a_{k_i}->0}[Log_{a_{k_i}}(x_i)-eta clip_R(Log_{a_{k_i}}(Exp_0(m_i)))]; m_i=sum_j w_ij e_j is the behavior term and Log/Exp/PT on B_c are the curved term.",
+  "coupling_path": "The train transition prototype determines the tangent vector at the selected curved T1 anchor; the hyperbolic log map and parallel transport convert that behavior vector into the residual correction that directly determines T2/T3 assignments. Removing either changes those assignments.",
+  "duplicate_count": 1,
+  "evidence_revision": {
+    "answers": "answers the gap between the proposal's claimed assignment/continuation effect and the measured behavior-dependency results",
+    "evidence_note": "Positive row scalar leaves every arg-min unchanged (True); codeword-dependent weight moved 0 top-1 assignments (of an unspecified total); no direct measurement of tangent_successor_residual's effect (UNKNOWN)",
+    "revision": "The evidence does not support claiming that the proposed transition-directed residual correction improves continuation predictability; the probe shows a positive row scalar leaves every arg-min unchanged and the tested codeword-dependent weight moved 0 top-1 assignments, but it does not directly test this residual-update proposal",
+    "withdrawn": "The claim that the proposed transition signal is established to make later continuations easier to predict from the user's prefix"
+  },
+  "falsifiable_hypothesis": "Successor direction is predictable enough from a target item's training transition context that a small geodesic residual correction makes T2/T3 continuations easier to predict from the user's prefix, while T1 stays low-branching. Keep only if depth-1 survival does not fall, depth-2/3 survival rises, T4 NLL remains near constant and frozen Stage3 test_R@10 exceeds 0.065.",
+  "fingerprint": "8310e64ef412e3ed",
+  "hyperbolic_location": "Within Stage2 after hard Euclidean T1 selection and before L2/L3 residual quantization; the same transformed residual feeds training and exported hard SIDs. T4 remains the existing deterministic collision-extension token.",
+  "hyperbolic_operator": "Poincare-ball Log/Exp maps at fixed negative curvature -c (c=1) and parallel transport between tangent spaces, with a bounded geodesic residual correction; T1 assignment remains the Euclidean baseline.",
+  "idea_id": "tangent_successor_residual",
+  "key_change": "At each training item, use the train-only distribution of its observed successors to form a tangent-space direction at its selected T1 codeword, and subtract a bounded geodesic step in that direction before T2/T3 quantization. This changes the actual residual presented to subsequent quantizers; without transitions the step is zero, and with Euclidean geometry the parallel transport/log-exp construction is replaced by ordinary vector residual subtraction.",
+  "leakage_boundary": "Build edges, item popularity, successor sets and prototypes exclusively from train.parquet; Stage1 embeddings are content-only frozen artifacts. No validation/test interactions enter statistics, residual transforms, codebook fitting or SID assignment; evaluate only after the full SID file is frozen.",
+  "motivation": "The first generated token must be predictable from a user's recent item while later tokens retain item-specific distinctions; the available training transitions can supervise the residual direction without making the first level high-branching.",
+  "novelty": "Unlike cohort-anchor placement, behavior-conditioned curvature routing, or a behavior gate on first-level distance, this applies a directed transition signal to the *residual update between levels*: successor evidence bends the residual along a curved geodesic, rather than moving first-level anchors or adding a separate transition loss. T1 has 32 groups; T2/T3 retain most discrimination and T4 is collision extension only.",
+  "observables": "On canonical 52,855 pairs with ten fixed negatives report L1 Hard ER, gold-prefix survival depths 1–4, T4 NLL and frozen Stage3 test_R@10. Predict L1 ER broadly unchanged from its matched 32-way control, depth-1 survival maintained or improved and depth-2/3 survival improved, T4 NLL unchanged (<0.1 nats target), and test_R@10 >0.065. Capacity budget: T1 ≤3.47 nats; T2/T3 carry item discrimination; T4 <0.1 nats.",
+  "origin_agent": "ideation_2",
+  "proposal_revision": 1,
+  "risks": [
+    "Item-level successor averages can be multimodal and popularity dominated; a single direction may erase useful semantic residuals or leak source/target identity through a shortcut. If an item has few or no successors the estimate is noisy, and tangent transport may add instability."
+  ],
+  "safeguards": "Add alpha smoothing and popularity floor; require minimum edge count or shrink m_i toward global train mean; clip prototype norm and tangent correction, eta≤0.2 with warmup; clamp ball norms below (1-eps)/sqrt(c), use stable atanh/log implementations, float32 manifold arithmetic, eps denominators, finite-value checks and gradient clipping. Cache m_i; fixed deterministic seeds and frozen evaluation negatives.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "Given latent x_i, choose k_i by the unchanged baseline Euclidean T1 assignment. Compute v_i=Log_{a_{k_i}}(Exp_0(m_i)); r_i=PT_{a_{k_i}->0}(Log_{a_{k_i}}(x_i)-eta min(1,R/(||v_i||+eps))v_i). Feed r_i to the baseline L2/L3 residual quantizer and reconstruction/commitment objective. For behavior-off use eta=0; for geometry-off use r_i=x_i-eta clip_R(m_i). Do not append learned behavior tokens; preserve fixed width and collision extension.",
+  "spec_inputs_outputs": "Inputs: frozen item embeddings, train-only transition table/prototypes, Stage2 latent minibatch, and 32 first-level anchors. Outputs: unchanged-capacity T1 plus behavior-adjusted T2/T3 assignments and existing deterministic T4; gradients flow through latent, anchor, and downstream quantizer paths, not through the frozen transition table.",
+  "specification": {
+    "text": "Freeze train transition counts n_ij and p(j|i)=(n_ij+alpha)/(sum_j n_ij+alpha |S_i|) over observed successors S_i. Let m_i be the normalized weighted mean of frozen Stage1 embeddings of successors j (weights p(j|i)); for T1 anchor a_k and item latent x_i in the Poincare ball of curvature -c, form v_i=Log_{a_k}(Exp_0(m_i)) in T_{a_k}B_c, clip its norm to R, and set r_i=PT_{a_k->0}(Log_{a_k}(x_i)-eta v_i). Quantize r_i at L2/L3 using the baseline residual quantizer; hard T1 uses the baseline 32-way Euclidean assignment; only the successor-conditioned residual update is curved. Capacity budget: T1 ≤ log(32)=3.47 nats; T2/T3 jointly carry the discriminative information (target 8–10 nats); T4 target <0.1 nats and remains deterministic collision extension. Cost: one precomputed successor prototype per item, then per Stage2 item in the batch one Log, vector subtraction, parallel transport and Exp-equivalent residual operation, O(Bd) beyond baseline; at 24 steps this is 24*B such operations per epoch, versus 24*24556*d scalar-scale operations if all items are covered once (about 600k item-ops/epoch, 3000 epochs), typically <10% arithmetic overhead and no Stage3 cost."
+  },
+  "title": "Transition-directed tangent residuals preserve predictable coarse prefixes"
+}

@@ -1,0 +1,35 @@
+{
+  "blocked": [],
+  "created_at": 1792928404.483251,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1792928404.4832518,
+      "event": "round_created"
+    },
+    {
+      "at": 1792928404.4956293,
+      "event": "round_worker_started",
+      "pid": 3084410
+    }
+  ],
+  "ideas": [],
+  "ideas_rejected": [],
+  "implementations": [],
+  "issue": "issue121",
+  "matrix": null,
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\n## What Issue #125 measured, and what the next mechanism must change\n\n#125 ran a read-only forensics pass over the four existing arms and the resample\nreference, on all 57,439 test rows at the production width-20 beam:\n\n* Recall@10 tracks **whether the target SID survives the beam at all**: for 91–93% of rows\n  the target's complete SID is absent from all twenty beams in every arm, and\n  duplicate/seen filtering plus the fallback fill contribute zero hits.\n* The three single-first-code arms have `L1 Hard ER = 1.000` by construction while their\n  Recall@10 spans 0.0467–0.0623, and their gold first token survives 100% of the time.\n* Where the information sits decides everything: `l1_br` (0.0467) pushes it into T4\n  (16,462 distinct values, 9.03 nats, depth-4 survival 0.068); `l1_br_euclid` (0.0621)\n  keeps it at T2/T3 (gold median rank 6/16, depth-3 survival 0.161); the #124 arm (0.0512)\n  spreads it over T1–T3 and loses 26.5% at the **first** step (depth-1 survival 0.735);\n  `resample` (0.0636) keeps T4 nearly constant (0.05 nats) and T3 decisive.\n* Width-20 coverage is 8.84% (resample), 8.47% (euclid), 6.88% (#124), 6.78% (l1_br), and\n  Recall orders exactly like coverage. Item popularity dominates inside every arm.\n\nThe problem to solve is therefore the **joint predictability of the prefix**: branch too\nmuch at one level and the path dies inside the beam; branch nowhere and the level has no\ndiscriminative value. Both directions below must keep a genuine hyperbolic computation and\na train-only behaviour signal on one connected path, and must state a **capacity budget**\n(how much of the SID's information sits at T1/T2/T3/T4, with T4 required to stay a\nnear-constant collision-extension token).\n\n## Direction B (primary): make the first level behaviourally useful *and* cheap to predict\n\nKeep the behaviour-conditioned hyperbolic computation but constrain the prefix with the\ntrain-only transition structure, so that items that are the next target of similar cohorts\nshare a prefix and the first-level branching stays small relative to the beam width.\nState the coupling equation in which the train-only signal changes the curved assignment\nitself (not a second, disconnected loss).\n\n## Direction A (independent control): capacity-constrained hyperbolic first level\n\nThe same curved computation with 16, 32 or 64 effective first-level groups instead of 256,\nwith L2/L3 carrying the discrimination and the curvature/behaviour still choosing the\ngroup. A plain codebook-size change with no coupling is OUT OF SCOPE and must be rejected.\n\n## Propose two or three ideas each, from *different* coupling sites\n\nDo not let all ideas collapse into one design. Pick distinct positions, for example:\n1. behaviour-conditioned **anchor placement** on the ball (cohort prototypes) with a fixed\n   small first-level capacity;\n2. behaviour-conditioned **curvature per cohort** that changes the geodesic ranking of the\n   first-level codewords;\n3. a behaviour **transport/anchor cost inside a capacity-constrained Sinkhorn** first-level\n   assignment;\n4. a **transition-graph contrastive term on the prefix** that pulls successor-related items\n   into the same tangent-space cone;\n5. a **coarse-to-fine curved split** where the first level is a coarse hyperbolic partition\n   and the second level continues the same curved split, so the geometry acts twice.\nEach idea must name its three arms (both-on, behaviour-off, geometry-off) and the predicted\ndirection of: L1 Hard ER on the canonical 52,855 pairs with ten fixed negatives,\ngold-prefix survival at depths 1–4, T4 NLL, and Stage 3 `test_R@10` (target > 0.065).\n\n## Frozen constraints\n\nFour-token fixed-width SID with the deterministic collision-extension token, 3000 Stage 2\nepochs on four cards, no early stopping, no test-time tuning, the frozen Stage 3 protocol,\nno validation or test behaviour in SID construction. The #125 numbers are diagnostic\ninputs, not a target to fit.\n",
+  "probe_state": "PROBE_PENDING",
+  "repairs": [],
+  "round_id": "round_20261025_224004_482",
+  "schema": 1,
+  "scores": {},
+  "selection": null,
+  "stage2_jobs": [],
+  "stage3_jobs": [],
+  "step": "ideation",
+  "updated_at": 1792928404.4956362,
+  "verification": {},
+  "worker_log": "/tmp/genrec-mcp/round_round_20261025_224004_482.log",
+  "worker_pid": 3084410
+}

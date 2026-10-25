@@ -1,0 +1,1556 @@
+{
+  "decision_at": 1792929546.2285392,
+  "decision_hash": "87673a06c72f5ff93c5a2d36fac735ced6d2da0c3e2fc09f55e4d91a9d596da7",
+  "evidence": {
+    "branchwise_curvature_router": {
+      "bundle_sha256": "e07d941f30aa0ea9e9effb9057be8b285de90956b6f3cc176bb5288749e575a9",
+      "literature_sha256": "6b0b7e442595a64fe2c9867a9b444a89f2dc29b2748ad8fbf275f3b83674cf71",
+      "math_sha256": "e19193af4a06547d0574da122645b570bf0e17af34672b0f6884713c2ec648ec",
+      "probe_sha256": "d2972d560e85822c08e1808fb461c7c2f329f75c1f9bfa3189c5305c13c04caa"
+    },
+    "cohort_anchor_32": {
+      "bundle_sha256": "b0bb913c7fec033a8ebf435aac5ae0595e5cef3f451dc8bbdfe94b65ab81980b",
+      "literature_sha256": "075db8c0eb49e813619895df4c655bc492bddd21a43b047d65083e90ef5ec20d",
+      "math_sha256": "8e843706a6ce572fa25ca621e0d9203e8424eb686b5dad42e6b498fa25886a28",
+      "probe_sha256": "2a944e9966a98a2fd4597c82bbbaabaec132d7202e31b8408a90be56ff2c732b"
+    },
+    "cohort_anchor_ball": {
+      "bundle_sha256": "a3090da56d17dac07122c75a1b209920ba8bf5e5eefaaa9b8b16386f704d1d0e",
+      "literature_sha256": "1ffd543f3783152609074e0dd6c3583482b5077af4c0966300d5489474732fcd",
+      "math_sha256": "5dd877493d7813a709ffb7542cb8e48cf67a4ee9a2e9cbda8c775342bd8a1888",
+      "probe_sha256": "b0466528b4610237af54040fc521a862bfbd22a3cac4452736bff207c9a0f0bf"
+    },
+    "cohort_curvature_gate": {
+      "bundle_sha256": "2435c0ff84595259e9b89ab87da9636f42ab77b970f10fea71574a715a2cb972",
+      "literature_sha256": "38d61da067c721cf7bf83b7f7f25441fc2ade5271c72a195fc2ec9c9054790ec",
+      "math_sha256": "ab3df811ef5ffab21c7ca9bc872f5d22ad1e8c08cb49ac7f16fe58936fa7a6be",
+      "probe_sha256": "ab99f9e63c5f68875c8b509ea2c8f3a70ce2c6695b06a00f1d89396cc152bd9f"
+    },
+    "tangent_successor_residual": {
+      "bundle_sha256": "6274305d99aaa9d74b0a8dd55793100458ab520e1b599729de9f9b7c8432c05a",
+      "literature_sha256": "f976fa9eb5bb19f9d3fa06e5b077292232272d66a44dfb5c10548421b57fd815",
+      "math_sha256": "004e6a734ef5af22e7c78b4e40cb1cc50d25c529b0d1b1b7da9f7f17aff5f01b",
+      "probe_sha256": "1c77f2e787ba0301ac77bb539d1c71986ed87202d13d8712419f355586dfc9f1"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "cohort_anchor_32",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 4.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E16",
+            "E17",
+            "E18"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The measured behavior/beam evidence is not specific evidence that predecessor-cluster profiles improve SID assignments, while cached detached b_ik becomes stale as anchors/prototypes change; caching once per epoch may sever or bias the stated anchor-learning pathway.",
+          "scoring_2": "The cohort term's scale and gradients may overwhelm content distance or fail to move assignments; the bundle's generic behavior-dependency check failed, and no candidate-path test establishes that this exact cost changes assignments usefully.",
+          "scoring_3": "The proposal's claimed 32-way first-level capacity conflicts with the displayed frozen-cost arithmetic and its cached behavior cost is detached/stale within an epoch, potentially weakening the asserted joint training pathway; prior-art search is also unchecked."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 supports a plausible transition-uncertainty signal, but does not measure predecessor-cluster profile quality or coverage, so behavior_evidence is 3 rather than 4. The assignment-dependent curved cohort cost is genuinely coupled (E12), and its behavior-off/Euclidean controls support geometry_necessity=3, but a matched-control argument and cancellation checks are not supplied. E14–E17 are generic sanity checks, not the candidate path; E15 raises a behavior-dependency concern. E16 and the proposed E10–E13 support curved computation, but necessity over a matched Euclidean transform is not established. Novelty is limited by unchecked literature (E14) and the closely related cohort-anchor proposal in this bundle (E15/E19); no ledger comparison. The anchor-to-prefix-to-beam chain is plausible and assignment-specific, but lacks a diagnostic/result protocol beyond the hypothesis, hence downstream=4 and falsifiability=3. Sparse profiles are feasible, yet the cache/update ambiguity and inconsistent per-epoch cost estimates prevent a higher implementation score. Bounds/projection, sparse top-8 and ablations are useful; the primary risks are stale costs and unverified behavior dependence.",
+          "scoring_2": "E5 measures a substantial train-only entropy/top-successor gradient but is successor entropy evidence, not direct validation of predecessor-cluster profiles, so behavior=3. Curved distance is explicit and coupled, but a matched Euclidean transform could reproduce a learned prototype-distance penalty absent evidence ruling that out (geometry=3). E14-E17 provide related-work context, while E14-E17 do not establish novelty against a checked literature search (E14-E15 are sanity checks; E16-E17 are related work); the underlying cohort-anchor pattern is close to the other cohort-anchor proposal, so novelty=2. E6 identifies prefix attrition and the proposal names T1 assignment and expected later detail, giving downstream=4. Controls are named but not rigorously matched and no numeric failure threshold is given (falsifiability=2). The O(N*32*8) distance computation is specified, but the cache/detached-cost versus anchor-update gradient path is unresolved and risks numerical/optimization details (implementability=2). The mechanism changes anchor learning rather than merely adding an auxiliary loss, making a failed result informative (exploration=3). Bounded checks: implement candidate-path dependency, compare matched behavior-off/Euclidean/both-on arms, and audit literature/ledger before raising novelty.",
+          "scoring_3": "Behavior=3: plausible train-transition signal, but no measured predecessor-cluster statistic (E1-E5). Geometry=4: coupled geodesic term and Euclidean control are explicit (E10-E13), though necessity is not established. Novelty=2: distinct anchor placement is asserted, but literature is unchecked and related hyperbolic VQ exists (E14-E18). Downstream=3: plausible prefix/beam path, not a fully diagnostic assignment-to-effect account (E6). Falsifiability=2: named switches and outcomes, but no fully matched three-arm protocol/failure criterion. Implementability=2: core is specified, but cache/gradient semantics, prototype mapping, and cost accounting are internally unclear. Exploration=3: a distinct coupled mechanism, with useful failure lesson."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only directed predecessor-cluster profiles q_i enter an assignment-dependent Poincare-distance cost over trainable anchors; the proposed behavior-off, Euclidean and joint comparisons are identifiable. Numerical safeguards and training procedure are partly specified, but the stated cost/caching accounting is internally inconsistent and softmin/encoder update details are underspecified.",
+          "scoring_2": "Train-only predecessor-cluster distributions q_i,g alter the anchor-dependent Poincare geodesic cost used for T1 assignment, and the same assignment affects residual coding; the specification names behavior-off and Euclidean comparisons, but does not fully define matched training controls or a failure criterion.",
+          "scoring_3": "Train-only directed predecessor-cluster distributions q_i are specified, squared Poincare distances jointly drive behavior/content anchor ranking and training, and controls/observables are named; sparse fallback and budget details need clarification but do not break the core pathway."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.85,
+          "scoring_2": 2.75,
+          "scoring_3": 2.8
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 0,
+        "weighted_score": 2.75
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 2.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [
+          "geometry_necessity"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "branchwise_curvature_router",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 2.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 1.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E5",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposal's behavior-to-assignment dependency is not established: the frozen generic sanity check reports that a positive row scalar leaves argmin unchanged and that a codeword-dependent weight moved no top-1 indices (E15); candidate-specific joint-path validation is explicitly absent (E17).",
+          "scoring_2": "The uncertainty-to-curvature rule may not meaningfully change relative codeword ranking: the bundled dependency check reports a positive row scalar leaves argmin unchanged and a codeword-independent offset also cannot move it; the proposal's actual item-varying metric path needs its own dependency test.",
+          "scoring_3": "Behavior does not actually affect the selected T1 codeword: for a fixed item and its common c_i, the monotone radial exp map and common-curvature distance yield a distance ranking that can be invariant to the row's scalar curvature; the bundle's proxy explicitly found behavior dependency FAIL (E15)."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 gives measured, strong entropy/top-1 stratification (and E8 has coverage caveats), supporting a testable behavioral premise, not proof that this per-item router helps SIDs. The geometric operator and placement are explicit (E10–E12), but E15 is directly adverse and E17 leaves joint dependency unresolved; geometry_necessity=3 and behavior_evidence=3. Novelty=2 because the literature check is NOT_CHECKED (E18), related hyperbolic VQ work exists (E20–E21), and the computation is a routine item-conditioned curvature variant; no ledger comparison. The proposed uncertainty-to-distance-to-prefix chain is plausible but does not specify the assignment's expected direction or a discriminating diagnostic, so downstream=3. Three comparison arms are named, but the proposal lacks an explicit failure criterion and candidate-path dependency test; falsifiability=2. Formula/domain safeguards and vectorized cost are not fully reconciled with the large stated epoch cost and trainable encoder maps; implementability=2. Its conditional-metric failure mode is distinct enough to be informative, hence exploration=3.",
+          "scoring_2": "E5 supports measurable successor uncertainty and E6 shows early-prefix attrition, but neither establishes that entropy-conditioned curvature fixes it (behavior=3). Per-item curvature changes the curved metric, plausibly beyond a Euclidean transform, but matched-control argument and cancellation ruling are absent (geometry=3). E18 says prior-art search not checked and the router is close to the other curvature-gate mechanism, so novelty=2. It names T1 and prefix-survival diagnostics but gives no assignment-specific expected direction or discriminating diagnostic (downstream=3). Merely naming comparisons without matched controls or falsifier merits falsifiability=1. The entropy precompute, distance, and cost are described, but the formula has no clipping/domain epsilon details beyond bounded c and cost estimates (implementability=3). This is a routine curvature-routing variation and a negative is not especially distinct (exploration=2). Bounded check: exercise the candidate quantizer and verify entropy changes assignments/gradients against a matched Euclidean arm.",
+          "scoring_3": "Behavior=3: measured entropy stratification supports uncertainty as a signal (E5), though does not validate its assignment use. Geometry=1: valid curved operator, but the behavior dependency cancellation undermines the claimed coupling (E14-E16). Novelty=2: conditional curvature is distinct in form but literature is unchecked and likely a routine routing variant (E18-E21). Downstream=3: predicted prefix survival/Stage3 chain is testable, but assignment may not move. Falsifiability=2: three switches are suggested, yet controls are not operationally matched and no criterion is fully specified. Implementability=2: equations exist, but the key coupling is ineffective as specified and per-item curvature comparability is a risk. Exploration=2: near-repeat of curvature gating mechanisms, with the cancellation itself informative."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only normalized outgoing successor entropy selects item-specific curvature, which is used in Poincare maps and distances for the T1 assignment. The method names behavior-off, Euclidean and both-on comparisons, but the supplied evidence flags an assignment-invariance risk for the behavior pathway and the actual candidate path was not checked.",
+          "scoring_2": "Train-only normalized successor entropy sets itemwise negative curvature and that curvature enters Poincare mapping/distance for T1 ranking. Behavior-off, Euclidean and both-on are identifiable comparisons, though matched controls and a failure rule are not specified in enough detail.",
+          "scoring_3": "The specified curvature is a positive row scalar applied equally to every codeword's distance in the same per-item ball; it cannot alter argmin ranking. The candidate instead needs a behavior-dependent transformation that changes relative codeword distances or another assignment-driving quantity."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.6,
+          "scoring_2": 2.55,
+          "scoring_3": 2.15
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The specified curvature is a positive row scalar applied equally to every codeword's distance in the same per-item ball; it cannot alter argmin ranking. The candidate instead needs a behavior-dependent transformation that changes relative codeword distances or another assignment-driving quantity.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 0,
+        "weighted_score": 2.55
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "tangent_successor_residual",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E20"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E20"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19",
+            "E20"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "A per-item mean of that item's successors is not conditioned on the user's current history; the correction may encode an item's average outgoing neighborhood into its own SID without making the SID continuation predictable from a user prefix, and could erase content residual information.",
+          "scoring_2": "A target item's outgoing-successor mean is not necessarily predictable from the user's preceding-item context at recommendation time; moreover the residual correction could erase content detail without making the continuation easier to predict. The bundle's generic behavior-dependency check failed and the candidate path was not run.",
+          "scoring_3": "Its signal is a successor prototype for each source item, but the training item being quantized is not necessarily the source whose recent transition context appears in a Stage3 prefix; the proposal does not establish this item-level proxy predicts the user's next target."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5/E8 support a general train-transition predictability signal, but not the popularity-corrected prototype or its coverage, giving behavior_evidence=3. The curved residual pathway is explicit in E10–E12 and affects later quantization; matched Euclidean replacement is stated, but necessity is not argued against that control, and E15/E17 do not validate its candidate path, so geometry_necessity=3. E20 identifies same operator/path prior work and E18 is unchecked; residual placement is distinct from this bundle's anchor/router ideas but not demonstrated distinct from cited work, so novelty=2. The later-token-to-prefix mechanism is plausible but the hypothesis does not name a specific assignment diagnostic with a directional criterion, downstream=3. Controls are named, but there is no explicit falsifier or discriminating diagnostic, falsifiability=2. Maps, clipping and O(Bd) are specified, yet numerical guards for transport/projection and convergence risks are incomplete and the cost estimate is unvalidated, implementability=2. A failure would test whether item-level transition prototypes can usefully steer residuals, supporting exploration=3.",
+          "scoring_2": "E5 supplies successor uncertainty evidence, not evidence that an item's outgoing mean predicts a user's next target; hence behavior=3. Log/Exp/PT are real curved operations in residual formation, but the Euclidean residual control could reproduce the direction subtraction and no specific non-Euclidean advantage is demonstrated (geometry=3). The transition-directed residual pathway is distinct from anchor placement and curvature routing, but E18 is NOT_CHECKED and E20 marks same operator/path for HVQ-VAE, limiting novelty (3). It specifies which residual changes and predicts depth-2/3 survival while protecting depth 1, giving downstream=4. Three arms are implied, but matchedness and explicit failure/refutation conditions are lacking (falsifiability=2). The formula and complexity are mostly implementable, but prototype normalization/empty successor behavior, manifold domains, and how transformed training residuals map consistently to exported hard SIDs need resolution (implementability=2). A negative would test whether item-successor direction is useful at residual levels, a distinct failure mode (exploration=4). Bounded check: define empty-profile fallback and validate that training and exported SID quantization use the identical transform.",
+          "scoring_3": "Behavior=3: train transitions and popularity adjustment are specified, with broad train entropy evidence but no coverage statistic specific to prototype quality (E1-E5,E8). Geometry=3: explicit manifold residual operator plausibly differs from Euclidean subtraction, while matched control is named; no cancellation audit (E10-E16). Novelty=3: residual-stage location differs computationally from anchor/routing proposals, though cited work is unchecked and HVQ-VAE is marked same path (E18-E20). Downstream=3: later residual tokens could change prefix predictability, but the source-item/user-context link is uncertain (E6). Falsifiability=2: comparisons and outcomes are indicated, but matched three arms and a discriminating failure rule are incomplete. Implementability=2: operator and cost are given, but prototype aggregation, dimension consistency (m_i as a weighted embedding versus ball/tangent coordinates), and clipping/transport safeguards need resolution. Exploration=3: different residual failure mode could teach whether directed evidence belongs between levels."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only directed successor transitions produce a per-item successor prototype and a clipped tangent correction; Log, Exp and parallel transport modify the residual that L2/L3 quantize. Behavior-off, Euclidean and joint comparisons are described. The signal is not shown to predict the user-conditioned next item, and the behavior-dependent change to the quantizer output needs candidate-path validation.",
+          "scoring_2": "Train-only directed successor distributions form a prototype whose log-map direction is clipped and parallel-transported in a Poincare residual update before T2/T3 quantization; behavior and curvature are on one residual pathway. Behavior-off and Euclidean versions are described, but matched controls and a failure threshold are incomplete.",
+          "scoring_3": "Train-only directed successor weights construct m_i, and its Log/Exp/parallel-transport correction changes the residual that feeds later quantizers; behavior-off, Euclidean and both-on variants plus observables are named."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.6,
+          "scoring_2": 3.0,
+          "scoring_3": 2.8
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.8
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "cohort_anchor_ball",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The generic behavior-dependency check reports no top-1 movement for its tested codeword-dependent-weight proxy (E15); this proposal must show that its actual cohort anchors and learned cohort map move assignments rather than merely contribute a nearly constant cost.",
+          "scoring_2": "The cohort contribution can be weak or dominated by popularity/smoothing, and the stated dependency sanity check failed for the generic proxy; the proposal itself has no candidate-path evidence that the cohort term moves assignments or improves prefix predictability.",
+          "scoring_3": "The measured generic behavior-dependency check failed (E15), and this proposal's cohort cost can similarly fail to move assignments if the anchor term is effectively a shared offset or if learned anchors collapse; candidate-specific dependency has not been run (E17)."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 provides a measured train-only entropy/next-item statistic but not a measurement of incoming cohort features z_i or their coverage, so behavior_evidence=3. The mixed content and cohort geodesic costs give a real connected pathway and an assignment-specific downstream chain (E12), but E15 leaves behavior dependency uncertain and no matched-control cancellation analysis is supplied, giving geometry_necessity=3. E18 is unchecked; the proposal itself claims distinction from Euclidean behavior-conditioned quantization, but does not trace the prior-art comparison or own-ledger comparison, novelty=2. First-token assignment affects the prefix and later content residuals, with prefix survival and Stage3 as outcomes, so downstream=4. Three conditions are requested, but there is no explicit falsifier or discriminating diagnostic beyond broad keep criteria, falsifiability=3. Core features/maps/distances are implementable, but ball projection, safeguards, anchor optimization and exact cost are underspecified; hence implementability=3. It tests cohort-conditioned first-level geometry distinct from the residual/router paths, exploration=3.",
+          "scoring_2": "E5 measures outgoing entropy rather than coverage/quality of the incoming profiles z_i, and E8 coverage is sampled, so support is plausible but indirect (behavior=3). Poincare distance acts in assignment, but the mixed content/cohort objective is comparable to a matched Euclidean two-feature objective and the proposal does not rule that out (geometry=3). E18 is NOT_CHECKED, and this is computationally close to cohort_anchor_32 (novelty=2). E6 establishes beam-prefix attrition and the proposal identifies T1 as the affected assignment and later levels as detail, giving downstream=4. It names controls generally without a matched protocol, failure threshold, or discriminating diagnostic (falsifiability=2). Implementation needs resolution of EMA occupancy penalty/stop-gradient details, anchor/codeword gradient pathway, scale calibration, and the mismatch between specified first-level search dimensions/cost and baseline; thus implementability=2 despite the cost estimate. It tests behavior-driven anchor placement with a potentially informative negative (exploration=3). Bounded check: audit profile coverage and candidate-path assignment dependency; compare the same learned two-feature transform under Euclidean geometry.",
+          "scoring_3": "Behavior=3: transition profile computation is explicit and train-only; measured entropy evidence is indirect, with no profile-support audit (E1-E5). Geometry=3: geodesic cost participates directly in assignment and a Euclidean control is cited, but necessity/cancellation is not established (E10-E17). Novelty=2: computationally a cohort-anchor variant, close to cohort_anchor_32; literature and ledger argument are absent (E18-E21). Downstream=3: low-branching T1 is linked to beam survival and later residual detail, with a measurable outcome (E6). Falsifiability=2: behavior-off and Euclidean comparisons are implied, but not a complete matched design/failure diagnostic. Implementability=2: equations are mostly present but the map from cohort vector to dimension d, learned anchors, residual map, and occupancy penalty's optimization/stability are underspecified. Exploration=3: different incoming-profile feature path, and collapse would be informative."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Incoming train-only directed-transition cohort features enter a mixed content/cohort Poincare-distance assignment, and the selected first codeword determines the residual quantization input. Behavior-off, Euclidean and coupled comparisons are named. The geometry/projection and optimization safeguards are not fully specified, but the core coupled computation is implementable.",
+          "scoring_2": "Train-only incoming predecessor-cohort profiles z_i enter a Poincare feature and a cohort-anchor geodesic term that jointly selects T1 with content; later residual levels preserve detail. The three comparison types are suggested, but the exact matched controls and failure criterion are not fully specified.",
+          "scoring_3": "Training-only incoming transition profiles form a behavior feature, and the mixed content/cohort Poincare costs jointly determine T1; controls and observable effects are described."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.95,
+          "scoring_2": 2.75,
+          "scoring_3": 2.6
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 0,
+        "weighted_score": 2.75
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 2.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [
+          "geometry_necessity"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "cohort_curvature_gate",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 2.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 2.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 1.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 1.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19",
+            "E20",
+            "E21"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E20",
+            "E21"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E5",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19",
+            "E20",
+            "E21"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposed curvature gate may only rescale a row's distances and leave its argmin unchanged; the frozen generic behavior-dependency check reports exactly this invariance pattern and no movement from its codeword-dependent-weight proxy (E15), while the actual path remains untested (E17).",
+          "scoring_2": "The item-dependent curvature may primarily rescale or distort distance rather than encode useful branching structure; the bundle's generic behavior-dependency sanity check fails, and the exact candidate path remains untested. The same-operator/path prior-work matches in E20-E21 also weaken the novelty claim.",
+          "scoring_3": "The shared per-item curvature is a common metric for all candidate distances; under the proposed origin-centered exponential mapping it may preserve their ordering, making the transition gate ineffective. The bundle's generic behavior-dependency sanity check fails (E15), and candidate-path testing is absent (E17)."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 supports measurable outgoing-entropy heterogeneity, but not the confidence/entropy gate's effect on assignments, so behavior_evidence=3. Curvature and exponential maps act directly on assignment distances (E10–E12), yet E15 is adverse and no evidence rules out scale cancellation; geometry_necessity=2. E20–E21 label the same operator/path in related work and E18 is unchecked; the computation is close to the other per-item-curvature router proposal in this bundle, with no own-ledger argument, hence novelty=1. The path to changing T1 and then beam survival is plausible, but expected assignment direction and a specific discriminating diagnostic are absent (3). Three comparisons are named, but no explicit falsifier and dependency check are provided (2). Entropy/confidence are precomputable, but the geometry/map safeguards and distance cost are not validated and the candidate path is untested (2). Given the close in-bundle router variant and the measured proxy dependency failure, it is a small variation rather than a substantially distinct exploration (2).",
+          "scoring_2": "E5 audibly measures entropy/top-1 association, but it does not establish the proposed confidence-modulated curvature effect (behavior=3). The metric is explicitly curved and behavior-dependent, plausibly not Euclidean-equivalent, but no matched Euclidean result or cancellation audit is provided (geometry=3). E18 is unchecked and E20-E21 identify same operator/path related work, so novelty=2. It identifies T1 ranking and beam survival as the downstream chain, but lacks an assignment-level expected direction/diagnostic beyond general prefix survival (downstream=3). Controls are not operationally matched and there is no stated failure/refutation criterion (falsifiability=1). Formula, entropy precompute, bounded curvature, and batch cost are implementable in principle, with metric comparability and curvature exploitation remaining risks (implementability=3). It is a small variation of the other itemwise-curvature router and offers limited distinct exploration (exploration=2). Bounded check: test assignment dependency on the exact c_i map and compare against a parameter- and capacity-matched Euclidean distance control.",
+          "scoring_3": "Behavior=3: measured entropy/top-1 relationship supports uncertainty as a train-only signal, not its routing effect (E1-E5). Geometry=1: an explicit curved computation exists, but the shared row-specific metric may not change relative ranking and dependency check failed (E10-E16). Novelty=2: a conditional-curvature formulation, but related work is marked same operator/path and the search is unchecked (E18-E21). Downstream=3: first-token ranking to beam survival is plausible and measurable (E6). Falsifiability=2: behavior-off/Euclidean/both-on is named, but no fully matched controls or specific refutation rule. Implementability=2: equations are available, but an ineffective coupling and curvature-dependent coordinate interpretation require redesign or a candidate-path audit. Exploration=2: near-repeat of branchwise curvature routing, with a useful cancellation test."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only outgoing transition entropy and count set per-item curvature used in the Poincare exponential maps and first-level geodesic ranking; the specification states that both affect the computation. The named behavior-off/Euclidean/both-on comparisons satisfy the proposal-level comparison requirement, but the frozen sanity check flags the behavior dependency and candidate-path validation is absent.",
+          "scoring_2": "Train-only outgoing transition entropy and count set item-specific curvature, which changes exp-map coordinates and Poincare geodesic ranking for a shared 64-way T1 codebook. The proposal names behavior-off/Euclidean/both-on comparisons in intent, but does not define matched controls or a failure criterion.",
+          "scoring_3": "The entropy/confidence signal selects one curvature per item, but the same curvature is used for the item's embedding and every codeword in the same ball; the row-wise geometry can cancel from candidate ranking, so behavior is not shown to alter the core assignment."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.15,
+          "scoring_2": 2.55,
+          "scoring_3": 2.15
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The entropy/confidence signal selects one curvature per item, but the same curvature is used for the item's embedding and every codeword in the same ball; the row-wise geometry can cancel from candidate ranking, so behavior is not shown to alter the core assignment.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 0,
+        "weighted_score": 2.35
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": true,
+        "pair": [
+          "cohort_anchor_32",
+          "cohort_anchor_ball"
+        ],
+        "votes": {
+          "cohort_anchor_32": 2,
+          "cohort_anchor_ball": 1
+        },
+        "winner": "cohort_anchor_32"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "cohort_anchor_32",
+          "tangent_successor_residual"
+        ],
+        "votes": {
+          "cohort_anchor_32": 0,
+          "tangent_successor_residual": 3
+        },
+        "winner": "tangent_successor_residual"
+      },
+      {
+        "disagreement": true,
+        "pair": [
+          "cohort_anchor_ball",
+          "tangent_successor_residual"
+        ],
+        "votes": {
+          "cohort_anchor_ball": 1,
+          "tangent_successor_residual": 2
+        },
+        "winner": "tangent_successor_residual"
+      }
+    ],
+    "copeland": {
+      "branchwise_curvature_router": 0,
+      "cohort_anchor_32": 0,
+      "cohort_anchor_ball": -2,
+      "cohort_curvature_gate": 0,
+      "tangent_successor_residual": 2
+    },
+    "cycles": [],
+    "position_bias": {
+      "first_listed_wins": 5,
+      "second_listed_wins": 4
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "b0bb913c7fec033a8ebf435aac5ae0595e5cef3f451dc8bbdfe94b65ab81980b",
+      "idea_id": "cohort_anchor_32",
+      "proposal_sha256": "dcd9441d5c32f115592dc3001c1b499bccabffa1fced7d1f9da2e9e07814a218"
+    },
+    {
+      "evidence_sha256": "e07d941f30aa0ea9e9effb9057be8b285de90956b6f3cc176bb5288749e575a9",
+      "idea_id": "branchwise_curvature_router",
+      "proposal_sha256": "7a70e81fa2a569c83b3f3143b7d4942369c9ef81e67385e7cc786362ae770ce8"
+    },
+    {
+      "evidence_sha256": "6274305d99aaa9d74b0a8dd55793100458ab520e1b599729de9f9b7c8432c05a",
+      "idea_id": "tangent_successor_residual",
+      "proposal_sha256": "18dc242249166118417a7f168be57fd19754dcc72e3a2d5aa551e63c36c33403"
+    },
+    {
+      "evidence_sha256": "a3090da56d17dac07122c75a1b209920ba8bf5e5eefaaa9b8b16386f704d1d0e",
+      "idea_id": "cohort_anchor_ball",
+      "proposal_sha256": "47ef3ac25959f0a1dd6501881d2a9ddf11342f8783efcc38bcf5c58b0d03f331"
+    },
+    {
+      "evidence_sha256": "2435c0ff84595259e9b89ab87da9636f42ab77b970f10fea71574a715a2cb972",
+      "idea_id": "cohort_curvature_gate",
+      "proposal_sha256": "f6300fba7a30f41060e53b99322220a2eddc102f50c3cb763d3bd06284aed31a"
+    }
+  ],
+  "reviews": [
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "If all cohort prototypes p_g coincide, then b_ik is identical for every k, so adding lambda*b_ik cannot change any assignment; this exposes the need to demonstrate non-degenerate cohort-to-anchor distances and behavior dependency on the actual quantizer path.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18"
+          ],
+          "idea_id": "cohort_anchor_32",
+          "missing_dimensions": [],
+          "objection": "The measured behavior/beam evidence is not specific evidence that predecessor-cluster profiles improve SID assignments, while cached detached b_ik becomes stale as anchors/prototypes change; caching once per epoch may sever or bias the stated anchor-learning pathway.",
+          "rationale": "E5 supports a plausible transition-uncertainty signal, but does not measure predecessor-cluster profile quality or coverage, so behavior_evidence is 3 rather than 4. The assignment-dependent curved cohort cost is genuinely coupled (E12), and its behavior-off/Euclidean controls support geometry_necessity=3, but a matched-control argument and cancellation checks are not supplied. E14–E17 are generic sanity checks, not the candidate path; E15 raises a behavior-dependency concern. E16 and the proposed E10–E13 support curved computation, but necessity over a matched Euclidean transform is not established. Novelty is limited by unchecked literature (E14) and the closely related cohort-anchor proposal in this bundle (E15/E19); no ledger comparison. The anchor-to-prefix-to-beam chain is plausible and assignment-specific, but lacks a diagnostic/result protocol beyond the hypothesis, hence downstream=4 and falsifiability=3. Sparse profiles are feasible, yet the cache/update ambiguity and inconsistent per-epoch cost estimates prevent a higher implementation score. Bounds/projection, sparse top-8 and ablations are useful; the primary risks are stale costs and unverified behavior dependence.",
+          "scope_reason": "Train-only directed predecessor-cluster profiles q_i enter an assignment-dependent Poincare-distance cost over trainable anchors; the proposed behavior-off, Euclidean and joint comparisons are identifiable. Numerical safeguards and training procedure are partly specified, but the stated cost/caching accounting is internally inconsistent and softmin/encoder update details are underspecified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For a fixed item i with c_i shared across all k, if the mapped codewords and item embedding lie in a small neighborhood where d_{c_i}(x_i,a_k)^2 = s_i d_E(u_i,v_k)^2 for every k with s_i>0, then the argmin is unchanged as c_i varies. Thus curvature can change distance scale without changing the T1 assignment; this is a limiting local-geometry counterexample, not a claim that the full ball is Euclidean-identical.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19"
+          ],
+          "idea_id": "branchwise_curvature_router",
+          "missing_dimensions": [],
+          "objection": "The proposal's behavior-to-assignment dependency is not established: the frozen generic sanity check reports that a positive row scalar leaves argmin unchanged and that a codeword-dependent weight moved no top-1 indices (E15); candidate-specific joint-path validation is explicitly absent (E17).",
+          "rationale": "E5 gives measured, strong entropy/top-1 stratification (and E8 has coverage caveats), supporting a testable behavioral premise, not proof that this per-item router helps SIDs. The geometric operator and placement are explicit (E10–E12), but E15 is directly adverse and E17 leaves joint dependency unresolved; geometry_necessity=3 and behavior_evidence=3. Novelty=2 because the literature check is NOT_CHECKED (E18), related hyperbolic VQ work exists (E20–E21), and the computation is a routine item-conditioned curvature variant; no ledger comparison. The proposed uncertainty-to-distance-to-prefix chain is plausible but does not specify the assignment's expected direction or a discriminating diagnostic, so downstream=3. Three comparison arms are named, but the proposal lacks an explicit failure criterion and candidate-path dependency test; falsifiability=2. Formula/domain safeguards and vectorized cost are not fully reconciled with the large stated epoch cost and trainable encoder maps; implementability=2. Its conditional-metric failure mode is distinct enough to be informative, hence exploration=3.",
+          "scope_reason": "Train-only normalized outgoing successor entropy selects item-specific curvature, which is used in Poincare maps and distances for the T1 assignment. The method names behavior-off, Euclidean and both-on comparisons, but the supplied evidence flags an assignment-invariance risk for the behavior pathway and the actual candidate path was not checked.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If every item's successor prototype is the same vector m, then v_i is the same direction at its selected anchor (up to anchor-dependent coordinates); with eta=0 (the behavior-off arm) the residual is baseline, while for nonzero eta the common shift can alter residual assignments without conveying item-specific successor information. This is a minimal failure of the claimed behavior-specific benefit, not an identity of the full curved transform.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E20"
+          ],
+          "idea_id": "tangent_successor_residual",
+          "missing_dimensions": [],
+          "objection": "A per-item mean of that item's successors is not conditioned on the user's current history; the correction may encode an item's average outgoing neighborhood into its own SID without making the SID continuation predictable from a user prefix, and could erase content residual information.",
+          "rationale": "E5/E8 support a general train-transition predictability signal, but not the popularity-corrected prototype or its coverage, giving behavior_evidence=3. The curved residual pathway is explicit in E10–E12 and affects later quantization; matched Euclidean replacement is stated, but necessity is not argued against that control, and E15/E17 do not validate its candidate path, so geometry_necessity=3. E20 identifies same operator/path prior work and E18 is unchecked; residual placement is distinct from this bundle's anchor/router ideas but not demonstrated distinct from cited work, so novelty=2. The later-token-to-prefix mechanism is plausible but the hypothesis does not name a specific assignment diagnostic with a directional criterion, downstream=3. Controls are named, but there is no explicit falsifier or discriminating diagnostic, falsifiability=2. Maps, clipping and O(Bd) are specified, yet numerical guards for transport/projection and convergence risks are incomplete and the cost estimate is unvalidated, implementability=2. A failure would test whether item-level transition prototypes can usefully steer residuals, supporting exploration=3.",
+          "scope_reason": "Train-only directed successor transitions produce a per-item successor prototype and a clipped tangent correction; Log, Exp and parallel transport modify the residual that L2/L3 quantize. Behavior-off, Euclidean and joint comparisons are described. The signal is not shown to predict the user-conditioned next item, and the behavior-dependent change to the quantizer output needs candidate-path validation.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If all learned cohort anchors a_k coincide, then d_c(u_i,a_k)^2 is constant over k and the cohort term cannot affect k*, regardless of lambda; more generally, lambda=0 exactly cancels the behavior pathway.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19"
+          ],
+          "idea_id": "cohort_anchor_ball",
+          "missing_dimensions": [],
+          "objection": "The generic behavior-dependency check reports no top-1 movement for its tested codeword-dependent-weight proxy (E15); this proposal must show that its actual cohort anchors and learned cohort map move assignments rather than merely contribute a nearly constant cost.",
+          "rationale": "E5 provides a measured train-only entropy/next-item statistic but not a measurement of incoming cohort features z_i or their coverage, so behavior_evidence=3. The mixed content and cohort geodesic costs give a real connected pathway and an assignment-specific downstream chain (E12), but E15 leaves behavior dependency uncertain and no matched-control cancellation analysis is supplied, giving geometry_necessity=3. E18 is unchecked; the proposal itself claims distinction from Euclidean behavior-conditioned quantization, but does not trace the prior-art comparison or own-ledger comparison, novelty=2. First-token assignment affects the prefix and later content residuals, with prefix survival and Stage3 as outcomes, so downstream=4. Three conditions are requested, but there is no explicit falsifier or discriminating diagnostic beyond broad keep criteria, falsifiability=3. Core features/maps/distances are implementable, but ball projection, safeguards, anchor optimization and exact cost are underspecified; hence implementability=3. It tests cohort-conditioned first-level geometry distinct from the residual/router paths, exploration=3.",
+          "scope_reason": "Incoming train-only directed-transition cohort features enter a mixed content/cohort Poincare-distance assignment, and the selected first codeword determines the residual quantization input. Behavior-off, Euclidean and coupled comparisons are named. The geometry/projection and optimization safeguards are not fully specified, but the core coupled computation is implementable.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "In the local small-radius regime, if d_{c_i}(exp_0^{c_i}(Wx_i),exp_0^{c_i}(e_k))^2 = s_i d_E(Wx_i,e_k)^2 for all k and s_i>0, multiplying all candidates for item i by s_i leaves argmin unchanged. Thus item-varying curvature need not create behavior-dependent assignments; this is a local-limit counterexample, not an identity for arbitrary Poincare points.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19",
+            "E20",
+            "E21"
+          ],
+          "idea_id": "cohort_curvature_gate",
+          "missing_dimensions": [],
+          "objection": "The proposed curvature gate may only rescale a row's distances and leave its argmin unchanged; the frozen generic behavior-dependency check reports exactly this invariance pattern and no movement from its codeword-dependent-weight proxy (E15), while the actual path remains untested (E17).",
+          "rationale": "E5 supports measurable outgoing-entropy heterogeneity, but not the confidence/entropy gate's effect on assignments, so behavior_evidence=3. Curvature and exponential maps act directly on assignment distances (E10–E12), yet E15 is adverse and no evidence rules out scale cancellation; geometry_necessity=2. E20–E21 label the same operator/path in related work and E18 is unchecked; the computation is close to the other per-item-curvature router proposal in this bundle, with no own-ledger argument, hence novelty=1. The path to changing T1 and then beam survival is plausible, but expected assignment direction and a specific discriminating diagnostic are absent (3). Three comparisons are named, but no explicit falsifier and dependency check are provided (2). Entropy/confidence are precomputable, but the geometry/map safeguards and distance cost are not validated and the candidate path is untested (2). Given the close in-bundle router variant and the measured proxy dependency failure, it is a small variation rather than a substantially distinct exploration (2).",
+          "scope_reason": "Train-only outgoing transition entropy and count set per-item curvature used in the Poincare exponential maps and first-level geodesic ranking; the specification states that both affect the computation. The named behavior-off/Euclidean/both-on comparisons satisfy the proposal-level comparison requirement, but the frozen sanity check flags the behavior dependency and candidate-path validation is absent.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "For an item with only one nonzero cohort q_i,g=1, b_ik=d_c(a_k,p_g)^2 can still vary by k, so it is not generally a removable row offset; however, if all anchors are equidistant from p_g, b_ik is constant in k and cannot change the assignment.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17"
+          ],
+          "idea_id": "cohort_anchor_32",
+          "missing_dimensions": [],
+          "objection": "The cohort term's scale and gradients may overwhelm content distance or fail to move assignments; the bundle's generic behavior-dependency check failed, and no candidate-path test establishes that this exact cost changes assignments usefully.",
+          "rationale": "E5 measures a substantial train-only entropy/top-successor gradient but is successor entropy evidence, not direct validation of predecessor-cluster profiles, so behavior=3. Curved distance is explicit and coupled, but a matched Euclidean transform could reproduce a learned prototype-distance penalty absent evidence ruling that out (geometry=3). E14-E17 provide related-work context, while E14-E17 do not establish novelty against a checked literature search (E14-E15 are sanity checks; E16-E17 are related work); the underlying cohort-anchor pattern is close to the other cohort-anchor proposal, so novelty=2. E6 identifies prefix attrition and the proposal names T1 assignment and expected later detail, giving downstream=4. Controls are named but not rigorously matched and no numeric failure threshold is given (falsifiability=2). The O(N*32*8) distance computation is specified, but the cache/detached-cost versus anchor-update gradient path is unresolved and risks numerical/optimization details (implementability=2). The mechanism changes anchor learning rather than merely adding an auxiliary loss, making a failed result informative (exploration=3). Bounded checks: implement candidate-path dependency, compare matched behavior-off/Euclidean/both-on arms, and audit literature/ledger before raising novelty.",
+          "scope_reason": "Train-only predecessor-cluster distributions q_i,g alter the anchor-dependent Poincare geodesic cost used for T1 assignment, and the same assignment affects residual coding; the specification names behavior-off and Euclidean comparisons, but does not fully define matched training controls or a failure criterion.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If c_i only multiplies every candidate cost in row i by the same positive factor s_i, then argmin_k s_i C_ik=argmin_k C_ik; such a scalar-curvature implementation would make the behavior signal assignment-inert. This is not an identity for the full proposed Poincare metric, which can change pairwise distances nonuniformly.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17"
+          ],
+          "idea_id": "branchwise_curvature_router",
+          "missing_dimensions": [],
+          "objection": "The uncertainty-to-curvature rule may not meaningfully change relative codeword ranking: the bundled dependency check reports a positive row scalar leaves argmin unchanged and a codeword-independent offset also cannot move it; the proposal's actual item-varying metric path needs its own dependency test.",
+          "rationale": "E5 supports measurable successor uncertainty and E6 shows early-prefix attrition, but neither establishes that entropy-conditioned curvature fixes it (behavior=3). Per-item curvature changes the curved metric, plausibly beyond a Euclidean transform, but matched-control argument and cancellation ruling are absent (geometry=3). E18 says prior-art search not checked and the router is close to the other curvature-gate mechanism, so novelty=2. It names T1 and prefix-survival diagnostics but gives no assignment-specific expected direction or discriminating diagnostic (downstream=3). Merely naming comparisons without matched controls or falsifier merits falsifiability=1. The entropy precompute, distance, and cost are described, but the formula has no clipping/domain epsilon details beyond bounded c and cost estimates (implementability=3). This is a routine curvature-routing variation and a negative is not especially distinct (exploration=2). Bounded check: exercise the candidate quantizer and verify entropy changes assignments/gradients against a matched Euclidean arm.",
+          "scope_reason": "Train-only normalized successor entropy sets itemwise negative curvature and that curvature enters Poincare mapping/distance for T1 ranking. Behavior-off, Euclidean and both-on are identifiable comparisons, though matched controls and a failure rule are not specified in enough detail.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If eta=0 (or every m_i maps to the T1 anchor so Log_{a_k}(Exp_0(m_i))=0), then r_i=PT(Log_{a_k}(x_i)) is independent of successor behavior; this is a minimal cancellation case, not a claim that the specified positive eta always cancels.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E20"
+          ],
+          "idea_id": "tangent_successor_residual",
+          "missing_dimensions": [],
+          "objection": "A target item's outgoing-successor mean is not necessarily predictable from the user's preceding-item context at recommendation time; moreover the residual correction could erase content detail without making the continuation easier to predict. The bundle's generic behavior-dependency check failed and the candidate path was not run.",
+          "rationale": "E5 supplies successor uncertainty evidence, not evidence that an item's outgoing mean predicts a user's next target; hence behavior=3. Log/Exp/PT are real curved operations in residual formation, but the Euclidean residual control could reproduce the direction subtraction and no specific non-Euclidean advantage is demonstrated (geometry=3). The transition-directed residual pathway is distinct from anchor placement and curvature routing, but E18 is NOT_CHECKED and E20 marks same operator/path for HVQ-VAE, limiting novelty (3). It specifies which residual changes and predicts depth-2/3 survival while protecting depth 1, giving downstream=4. Three arms are implied, but matchedness and explicit failure/refutation conditions are lacking (falsifiability=2). The formula and complexity are mostly implementable, but prototype normalization/empty successor behavior, manifold domains, and how transformed training residuals map consistently to exported hard SIDs need resolution (implementability=2). A negative would test whether item-successor direction is useful at residual levels, a distinct failure mode (exploration=4). Bounded check: define empty-profile fallback and validate that training and exported SID quantization use the identical transform.",
+          "scope_reason": "Train-only directed successor distributions form a prototype whose log-map direction is clipped and parallel-transported in a Poincare residual update before T2/T3 quantization; behavior and curvature are on one residual pathway. Behavior-off and Euclidean versions are described, but matched controls and a failure threshold are incomplete.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If all z_i are zero (e.g. items have no observed predecessors), then u_i=exp_0(Az_i)=0 for all such items; their cohort distances can still differ by anchor, but they no longer distinguish those items by behavior. If all anchors have equal distance to zero, the behavior term is a constant and cannot affect their T1 choice.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18"
+          ],
+          "idea_id": "cohort_anchor_ball",
+          "missing_dimensions": [],
+          "objection": "The cohort contribution can be weak or dominated by popularity/smoothing, and the stated dependency sanity check failed for the generic proxy; the proposal itself has no candidate-path evidence that the cohort term moves assignments or improves prefix predictability.",
+          "rationale": "E5 measures outgoing entropy rather than coverage/quality of the incoming profiles z_i, and E8 coverage is sampled, so support is plausible but indirect (behavior=3). Poincare distance acts in assignment, but the mixed content/cohort objective is comparable to a matched Euclidean two-feature objective and the proposal does not rule that out (geometry=3). E18 is NOT_CHECKED, and this is computationally close to cohort_anchor_32 (novelty=2). E6 establishes beam-prefix attrition and the proposal identifies T1 as the affected assignment and later levels as detail, giving downstream=4. It names controls generally without a matched protocol, failure threshold, or discriminating diagnostic (falsifiability=2). Implementation needs resolution of EMA occupancy penalty/stop-gradient details, anchor/codeword gradient pathway, scale calibration, and the mismatch between specified first-level search dimensions/cost and baseline; thus implementability=2 despite the cost estimate. It tests behavior-driven anchor placement with a potentially informative negative (exploration=3). Bounded check: audit profile coverage and candidate-path assignment dependency; compare the same learned two-feature transform under Euclidean geometry.",
+          "scope_reason": "Train-only incoming predecessor-cohort profiles z_i enter a Poincare feature and a cohort-anchor geodesic term that jointly selects T1 with content; later residual levels preserve detail. The three comparison types are suggested, but the exact matched controls and failure criterion are not fully specified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If the implementation reduces c_i's effect to a positive per-item multiplier on every candidate distance, then the argmin is invariant: argmin_k s_i d_k=argmin_k d_k for s_i>0. The full exp-map plus curvature-dependent distance is not generally such a multiplier; this counterexample identifies a degenerate implementation to rule out.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E20",
+            "E21"
+          ],
+          "idea_id": "cohort_curvature_gate",
+          "missing_dimensions": [],
+          "objection": "The item-dependent curvature may primarily rescale or distort distance rather than encode useful branching structure; the bundle's generic behavior-dependency sanity check fails, and the exact candidate path remains untested. The same-operator/path prior-work matches in E20-E21 also weaken the novelty claim.",
+          "rationale": "E5 audibly measures entropy/top-1 association, but it does not establish the proposed confidence-modulated curvature effect (behavior=3). The metric is explicitly curved and behavior-dependent, plausibly not Euclidean-equivalent, but no matched Euclidean result or cancellation audit is provided (geometry=3). E18 is unchecked and E20-E21 identify same operator/path related work, so novelty=2. It identifies T1 ranking and beam survival as the downstream chain, but lacks an assignment-level expected direction/diagnostic beyond general prefix survival (downstream=3). Controls are not operationally matched and there is no stated failure/refutation criterion (falsifiability=1). Formula, entropy precompute, bounded curvature, and batch cost are implementable in principle, with metric comparability and curvature exploitation remaining risks (implementability=3). It is a small variation of the other itemwise-curvature router and offers limited distinct exploration (exploration=2). Bounded check: test assignment dependency on the exact c_i map and compare against a parameter- and capacity-matched Euclidean distance control.",
+          "scope_reason": "Train-only outgoing transition entropy and count set item-specific curvature, which changes exp-map coordinates and Poincare geodesic ranking for a shared 64-way T1 codebook. The proposal names behavior-off/Euclidean/both-on comparisons in intent, but does not define matched controls or a failure criterion.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "UNKNOWN; no mathematical identity or cancellation is claimed. A bounded check is to exercise the candidate's own assignment path with q varied and with Poincare distance replaced by its matched Euclidean counterpart, verifying assignments and gradients change.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E16",
+            "E17",
+            "E18"
+          ],
+          "idea_id": "cohort_anchor_32",
+          "missing_dimensions": [],
+          "objection": "The proposal's claimed 32-way first-level capacity conflicts with the displayed frozen-cost arithmetic and its cached behavior cost is detached/stale within an epoch, potentially weakening the asserted joint training pathway; prior-art search is also unchecked.",
+          "rationale": "Behavior=3: plausible train-transition signal, but no measured predecessor-cluster statistic (E1-E5). Geometry=4: coupled geodesic term and Euclidean control are explicit (E10-E13), though necessity is not established. Novelty=2: distinct anchor placement is asserted, but literature is unchecked and related hyperbolic VQ exists (E14-E18). Downstream=3: plausible prefix/beam path, not a fully diagnostic assignment-to-effect account (E6). Falsifiability=2: named switches and outcomes, but no fully matched three-arm protocol/failure criterion. Implementability=2: core is specified, but cache/gradient semantics, prototype mapping, and cost accounting are internally unclear. Exploration=3: a distinct coupled mechanism, with useful failure lesson.",
+          "scope_reason": "Train-only directed predecessor-cluster distributions q_i are specified, squared Poincare distances jointly drive behavior/content anchor ranking and training, and controls/observables are named; sparse fallback and budget details need clarification but do not break the core pathway.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 4.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "In one dimension, with origin-centered points x and codewords v_k, d_c(exp_0^c(x),exp_0^c(v_k)) is a strictly increasing function of |x-v_k| for fixed c; for x=0 and v_1=1,v_2=2, v_1 wins for every c>0. Changing the behavior-derived c therefore leaves the assignment unchanged.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18"
+          ],
+          "idea_id": "branchwise_curvature_router",
+          "missing_dimensions": [],
+          "objection": "Behavior does not actually affect the selected T1 codeword: for a fixed item and its common c_i, the monotone radial exp map and common-curvature distance yield a distance ranking that can be invariant to the row's scalar curvature; the bundle's proxy explicitly found behavior dependency FAIL (E15).",
+          "rationale": "Behavior=3: measured entropy stratification supports uncertainty as a signal (E5), though does not validate its assignment use. Geometry=1: valid curved operator, but the behavior dependency cancellation undermines the claimed coupling (E14-E16). Novelty=2: conditional curvature is distinct in form but literature is unchecked and likely a routine routing variant (E18-E21). Downstream=3: predicted prefix survival/Stage3 chain is testable, but assignment may not move. Falsifiability=2: three switches are suggested, yet controls are not operationally matched and no criterion is fully specified. Implementability=2: equations exist, but the key coupling is ineffective as specified and per-item curvature comparability is a risk. Exploration=2: near-repeat of curvature gating mechanisms, with the cancellation itself informative.",
+          "scope_reason": "The specified curvature is a positive row scalar applied equally to every codeword's distance in the same per-item ball; it cannot alter argmin ranking. The candidate instead needs a behavior-dependent transformation that changes relative codeword distances or another assignment-driving quantity.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 1.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "UNKNOWN; no identity or leakage claim is made. A bounded check is to compare held-out train-only transition predictability for the successor prototype against a popularity-only prototype, then test candidate-path assignment/residual changes under behavior-off and Euclidean switches.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19",
+            "E20"
+          ],
+          "idea_id": "tangent_successor_residual",
+          "missing_dimensions": [],
+          "objection": "Its signal is a successor prototype for each source item, but the training item being quantized is not necessarily the source whose recent transition context appears in a Stage3 prefix; the proposal does not establish this item-level proxy predicts the user's next target.",
+          "rationale": "Behavior=3: train transitions and popularity adjustment are specified, with broad train entropy evidence but no coverage statistic specific to prototype quality (E1-E5,E8). Geometry=3: explicit manifold residual operator plausibly differs from Euclidean subtraction, while matched control is named; no cancellation audit (E10-E16). Novelty=3: residual-stage location differs computationally from anchor/routing proposals, though cited work is unchecked and HVQ-VAE is marked same path (E18-E20). Downstream=3: later residual tokens could change prefix predictability, but the source-item/user-context link is uncertain (E6). Falsifiability=2: comparisons and outcomes are indicated, but matched three arms and a discriminating failure rule are incomplete. Implementability=2: operator and cost are given, but prototype aggregation, dimension consistency (m_i as a weighted embedding versus ball/tangent coordinates), and clipping/transport safeguards need resolution. Exploration=3: different residual failure mode could teach whether directed evidence belongs between levels.",
+          "scope_reason": "Train-only directed successor weights construct m_i, and its Log/Exp/parallel-transport correction changes the residual that feeds later quantizers; behavior-off, Euclidean and both-on variants plus observables are named.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For any item i, if all anchors a_k coincide at a, then d_c(u_i,a_k)^2 is identical across k; the cohort term adds the same value to every candidate and cannot change the argmin from the content term. This is a concrete degeneracy the training must guard against.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19"
+          ],
+          "idea_id": "cohort_anchor_ball",
+          "missing_dimensions": [],
+          "objection": "The measured generic behavior-dependency check failed (E15), and this proposal's cohort cost can similarly fail to move assignments if the anchor term is effectively a shared offset or if learned anchors collapse; candidate-specific dependency has not been run (E17).",
+          "rationale": "Behavior=3: transition profile computation is explicit and train-only; measured entropy evidence is indirect, with no profile-support audit (E1-E5). Geometry=3: geodesic cost participates directly in assignment and a Euclidean control is cited, but necessity/cancellation is not established (E10-E17). Novelty=2: computationally a cohort-anchor variant, close to cohort_anchor_32; literature and ledger argument are absent (E18-E21). Downstream=3: low-branching T1 is linked to beam survival and later residual detail, with a measurable outcome (E6). Falsifiability=2: behavior-off and Euclidean comparisons are implied, but not a complete matched design/failure diagnostic. Implementability=2: equations are mostly present but the map from cohort vector to dimension d, learned anchors, residual map, and occupancy penalty's optimization/stability are underspecified. Exploration=3: different incoming-profile feature path, and collapse would be informative.",
+          "scope_reason": "Training-only incoming transition profiles form a behavior feature, and the mixed content/cohort Poincare costs jointly determine T1; controls and observable effects are described.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "In one dimension with x=0 and tangent prototypes e_1=1,e_2=2, for every c_i>0 the Poincare distance from exp_0^{c_i}(0) to exp_0^{c_i}(e_k) is strictly increasing in e_k, so e_1 wins for every entropy/confidence value. Thus this case changes curvature but not assignment.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19",
+            "E20",
+            "E21"
+          ],
+          "idea_id": "cohort_curvature_gate",
+          "missing_dimensions": [],
+          "objection": "The shared per-item curvature is a common metric for all candidate distances; under the proposed origin-centered exponential mapping it may preserve their ordering, making the transition gate ineffective. The bundle's generic behavior-dependency sanity check fails (E15), and candidate-path testing is absent (E17).",
+          "rationale": "Behavior=3: measured entropy/top-1 relationship supports uncertainty as a train-only signal, not its routing effect (E1-E5). Geometry=1: an explicit curved computation exists, but the shared row-specific metric may not change relative ranking and dependency check failed (E10-E16). Novelty=2: a conditional-curvature formulation, but related work is marked same operator/path and the search is unchecked (E18-E21). Downstream=3: first-token ranking to beam survival is plausible and measurable (E6). Falsifiability=2: behavior-off/Euclidean/both-on is named, but no fully matched controls or specific refutation rule. Implementability=2: equations are available, but an ineffective coupling and curvature-dependent coordinate interpretation require redesign or a candidate-path audit. Exploration=2: near-repeat of branchwise curvature routing, with a useful cancellation test.",
+          "scope_reason": "The entropy/confidence signal selects one curvature per item, but the same curvature is used for the item's embedding and every codeword in the same ball; the row-wise geometry can cancel from candidate ranking, so behavior is not shown to alter the core assignment.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 1.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    }
+  ],
+  "round_id": "round_20261025_224046_175",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "tangent_successor_residual",
+        "status": "BACKUP",
+        "weighted_score": 2.8
+      },
+      {
+        "idea_id": "cohort_anchor_32",
+        "status": "BACKUP",
+        "weighted_score": 2.75
+      },
+      {
+        "idea_id": "cohort_anchor_ball",
+        "status": "BACKUP",
+        "weighted_score": 2.75
+      }
+    ],
+    "disagreement": {
+      "branchwise_curvature_router": 2.0,
+      "cohort_anchor_32": 1.0,
+      "cohort_anchor_ball": 1.0,
+      "cohort_curvature_gate": 2.0,
+      "tangent_successor_residual": 1.0
+    },
+    "disputed": {
+      "branchwise_curvature_router": [
+        "geometry_necessity"
+      ],
+      "cohort_anchor_32": [],
+      "cohort_anchor_ball": [],
+      "cohort_curvature_gate": [
+        "geometry_necessity"
+      ],
+      "tangent_successor_residual": []
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": true,
+          "pair": [
+            "cohort_anchor_32",
+            "cohort_anchor_ball"
+          ],
+          "votes": {
+            "cohort_anchor_32": 2,
+            "cohort_anchor_ball": 1
+          },
+          "winner": "cohort_anchor_32"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "cohort_anchor_32",
+            "tangent_successor_residual"
+          ],
+          "votes": {
+            "cohort_anchor_32": 0,
+            "tangent_successor_residual": 3
+          },
+          "winner": "tangent_successor_residual"
+        },
+        {
+          "disagreement": true,
+          "pair": [
+            "cohort_anchor_ball",
+            "tangent_successor_residual"
+          ],
+          "votes": {
+            "cohort_anchor_ball": 1,
+            "tangent_successor_residual": 2
+          },
+          "winner": "tangent_successor_residual"
+        }
+      ],
+      "copeland": {
+        "branchwise_curvature_router": 0,
+        "cohort_anchor_32": 0,
+        "cohort_anchor_ball": -2,
+        "cohort_curvature_gate": 0,
+        "tangent_successor_residual": 2
+      },
+      "cycles": [],
+      "position_bias": {
+        "first_listed_wins": 5,
+        "second_listed_wins": 4
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "cohort_anchor_32",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.75 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 0"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.75
+      },
+      {
+        "idea_id": "branchwise_curvature_router",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.55 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 0"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.55
+      },
+      {
+        "idea_id": "tangent_successor_residual",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.8 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.8
+      },
+      {
+        "idea_id": "cohort_anchor_ball",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.75 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 0"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.75
+      },
+      {
+        "idea_id": "cohort_curvature_gate",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.35 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 0"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.35
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [],
+    "selection_is_multiple": false,
+    "status": "NO_QUALIFIED_IDEA",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  }
+}

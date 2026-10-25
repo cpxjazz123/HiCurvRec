@@ -1,0 +1,60 @@
+{
+  "kind": "next_round_premises",
+  "issue": "125 -> 121",
+  "cohort_profile_signal": {
+    "kind": "cohort_profile_signal",
+    "cohorts": 64,
+    "items": 24556,
+    "transitions": 339519,
+    "profile_entropy": {
+      "mean": 1.6468733549118042,
+      "p10": 0.6931471824645996,
+      "p90": 2.5520853996276855,
+      "share_zero": 0.02687734158657762
+    },
+    "profile_support": {
+      "mean_nonzero_cohorts": 7.496986479882717,
+      "share_single_cohort": 0.025574197752076887
+    },
+    "pairs_used": 52793,
+    "profile_overlap": {
+      "positive_hit_rate": 0.9290815070179759,
+      "negative_hit_rate": 0.8871460231470081,
+      "positive_minus_negative": 0.019729450345039368,
+      "share_positive_above_its_negatives": 0.5897884189191749,
+      "share_of_pairs_with_ties": 0.003769439130187714
+    },
+    "definition": "the profile of an item is the distribution of its train-only predecessors over successor-cohorts; the positive/negative rates use the same 52,855 held-out valid pairs and ten fixed negatives as the canonical ER"
+  },
+  "first_level_capacity_ceiling": {
+    "kind": "first_level_capacity_ceiling",
+    "pairs": 52855,
+    "definition": "k-means over the frozen Stage1 vectors; a pair is a hit when the anchor and the target share a cluster; the same 52,855 valid pairs and ten fixed negatives as the canonical ER",
+    "capacity": {
+      "16": {
+        "positive_hit_rate": 0.31058556427963296,
+        "negative_hit_rate": 0.13519629174155712,
+        "expected_rank_ratio": 2.29729351507179,
+        "gap": 0.17538927253807585
+      },
+      "32": {
+        "positive_hit_rate": 0.2163655283322297,
+        "negative_hit_rate": 0.07154290038785356,
+        "expected_rank_ratio": 3.02427672290686,
+        "gap": 0.14482262794437611
+      },
+      "64": {
+        "positive_hit_rate": 0.15466843250402043,
+        "negative_hit_rate": 0.037591523980701924,
+        "expected_rank_ratio": 4.114449645175902,
+        "gap": 0.11707690852331851
+      },
+      "256": {
+        "positive_hit_rate": 0.08222495506574591,
+        "negative_hit_rate": 0.012942957146911361,
+        "expected_rank_ratio": 6.3528723870779125,
+        "gap": 0.06928199791883455
+      }
+    }
+  }
+}
