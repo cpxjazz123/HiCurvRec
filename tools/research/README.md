@@ -209,6 +209,14 @@ scope, whatever they score. The scope decision is audited against the
 proposal's own content, so one reviewer's label never decides an idea; a
 disagreement is recorded instead.
 
+No trainer may contain an absolute path: the repository root is derived by
+walking up to the `stage2_RQ-VAE` marker, and every artifact path derives from
+it (`REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME`). The preflight runs
+at the **promoted** location, because a path built from `Path(__file__)`'s depth
+is right in the round workspace and wrong after the copy, and it refuses an
+absolute literal, a `parents[N]` anchor, an artifact inside the source tree, or
+a result directory outside the arm.
+
 `rounds/baseline.py` holds the one permitted source tree,
 `stage2_RQ-VAE/TIGER_RQ-VAE`. Every selected idea gets a **fresh copy** of it,
 with the resolved path and the source digest of both the baseline and the copy
