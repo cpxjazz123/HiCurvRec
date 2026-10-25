@@ -296,3 +296,22 @@ class StateDistinctionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DigestLocationTests(unittest.TestCase):
+    """A tree's digest does not depend on where the tree is filed."""
+
+    def test_a_tree_under_results_still_has_a_digest(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            tree = root / "results" / "research" / "issue121" / "trees" / "r" / "idea"
+            (tree / "model").mkdir(parents=True)
+            (tree / "train_rqvae.py").write_text("x = 1\n", encoding="utf-8")
+            (tree / "model" / "model.py").write_text("y = 2\n", encoding="utf-8")
+            digest = baseline_module.source_digest(tree)
+            self.assertTrue(digest)
+            other = root / "elsewhere" / "idea"
+            (other / "model").mkdir(parents=True)
+            (other / "train_rqvae.py").write_text("x = 1\n", encoding="utf-8")
+            (other / "model" / "model.py").write_text("y = 2\n", encoding="utf-8")
+            self.assertEqual(digest, baseline_module.source_digest(other))

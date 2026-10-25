@@ -47,7 +47,9 @@ def source_digest(tree: Path) -> str:
     digest = hashlib.sha256()
     tree = Path(tree)
     for path in sorted(tree.rglob("*.py")):
-        if any(part in _RUN_ARTIFACTS for part in path.parts):
+        # The parts that matter are the ones inside the tree: a tree that lives
+        # under results/ must not look like it holds no source at all.
+        if any(part in _RUN_ARTIFACTS for part in path.relative_to(tree).parts):
             continue
         digest.update(str(path.relative_to(tree)).encode("utf-8"))
         digest.update(b"\0")
