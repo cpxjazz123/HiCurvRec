@@ -1,0 +1,10 @@
+TREE: /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_110026_78/branch_tangent_residual
+CHANGED FILE: model/layers.py
+CHANGED FILE: model/model.py
+CHANGED FILE: train_rqvae.py
+DEVIATION: The specified frozen train-only successor covariance, item-indexed branch vectors, and trainer plumbing to supply those vectors at train/export time were not completed | The available training loop batches embeddings without item IDs and implementing the requested data pathway safely requires an end-to-end interface change; the current partial hook does not receive branch data and must not be treated as a valid candidate.
+DEVIATION: The curved score currently selects indices but invokes the baseline VQ layer separately for its loss accounting | This was an incomplete implementation and needs consistency verification before training.
+ASSUMPTION: The promotion destination is GeneRec/results/stage2_RQ-VAE/TIGER_branch_tangent_residual, derived from the requested candidate identifier.
+SMOKE COMMAND: Not run.
+SMOKE RESULT: No smoke test was run; therefore forward/backward, finite gradients, SID export, single-GPU training, and output-path isolation are unverified.
+NOTES: Do not promote or run this tree as a completed implementation. The GENREC_SINGLE_GPU launcher bypass was added; constants for all result outputs were redirected to the candidate-specific promotion directory. The requested scope contract is not yet satisfied.

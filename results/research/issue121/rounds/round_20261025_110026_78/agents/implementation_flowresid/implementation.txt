@@ -1,0 +1,13 @@
+TREE: /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_110026_78/flowresid
+CHANGED FILE: model/layers.py
+CHANGED FILE: model/model.py
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: smoke_test.py
+DEVIATION: Used fixed curvature c=1 and fixed per-level steering eta=0.15 rather than trainable curvature/eta | Keeps the frozen model configuration and avoids adding learned parameters beyond the idea's scope.
+DEVIATION: Derived each directed edge from the last item in each training history to that row's target, then applied inverse-square-root target-popularity weighting before retaining and normalizing the top 32 | The supplied parquet exposes cumulative history/target rows rather than a separate transition table; this provides an unambiguous training-only transition estimate.
+DEVIATION: Computed each item's weighted barycenter once in the initialized encoder's tangent chart and cached it; the cached target stays fixed during training | Avoids re-encoding all items on every minibatch while retaining differentiable per-level log-map/geodesic steering and Poincaré code assignment.
+DEVIATION: Used the cached outdegree gate min(log1p(weighted outgoing mass)/5, 1) | The specification names s_i=log(1+outdegree_i) but does not give a gate scale; clipping provides a bounded scalar gate for numerical stability.
+ASSUMPTION: Each prefix row's final history item followed by its target is treated as one observed directed transition; empty histories contribute no edge.
+SMOKE COMMAND: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python results/research/issue121/trees/round_20261025_110026_78/flowresid/smoke_test.py
+SMOKE RESULT: PASS finite_loss=1.439312 encoder_grad=0.048953 sid_shape=(5, 4) unique=5
+NOTES: Smoke test checks behavior-on versus behavior-off assignment distances, Poincaré versus Euclidean distances, finite forward/backward, encoder and codebook gradients, and the collision-extension SID shape/uniqueness. py_compile also succeeded. Trainer retains GENREC_SINGLE_GPU=1/true/yes to bypass torchrun and writes training artifacts only under results/stage2_RQ-VAE/TIGER_flowresid/. Full 3000-epoch training and Stage3 Recall@10 were not run.

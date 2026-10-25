@@ -1,0 +1,37 @@
+{
+  "ablation_behavior_off": "Set lambda=0 (same curved RQ-VAE, same schedule and seeds); branch statistics are not used.",
+  "ablation_both_on": "Use the complete branch-conditioned Poincare assignment; compare all arms with matched Stage3 training and validation selection.",
+  "ablation_geometry_off": "Replace Poincare maps/geodesic with Euclidean vectors and squared Euclidean distance while retaining the exact branch penalty direction/projection; retune only a predeclared lambda grid.",
+  "also_proposed_by": [
+    "ideation_3"
+  ],
+  "behavior_computation": "Training split only: collect (user, preceding up-to-5 distinct item IDs, next target item) transitions; map history items to frozen Stage1 embeddings, mean-pool and project; cluster contexts per target into at most 8 branches, with minimum support 3, then compute count-weighted covariance. No held-out sequence is included.",
+  "behavior_signal": "User-interest branching among contexts that precede the same target item.",
+  "cost_estimate": "Precompute sparse context summaries in O(number of training transitions); first-level assignment adds one scalar projection and cost term per item-codeword pair. At frozen scale 24,556 items and 24 steps/epoch, a full-item pass per step means about 24,556* K0 projections (K0=64: 1.57M scalar projections/step) and 72,000 steps over 3,000 epochs; cache item branch vectors/eigenvectors so only the inexpensive pairwise projection is added. Expected wall-clock overhead 5–15% versus the same curved baseline, excluding one-time sparse aggregation.",
+  "coupling_equation": "S(j,k)=d_c(exp_0^c(a_j),exp_0^c(v_k))^2 + lambda*log(1+alpha*h_j*|<log_0^c(exp_0^c(a_j))-log_0^c(exp_0^c(v_k)),u_j>|); k*(j)=argmin_k S(j,k).",
+  "coupling_path": "Training-only branch covariance supplies h_j and direction u_j inside the same per-codeword curved assignment score; removing behaviour eliminates g, while replacing d_c/log/exp by Euclidean geometry changes the score and assignments.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "Items with genuine multi-intent use have behaviour branches that are not aligned with text-only nearest-code boundaries; branch-conditioned geodesic assignment should alter their first-token assignments and make next-token prefixes more predictive. Keep only if both-on improves validation-selected Stage3 test Recall@10 and exceeds 0.065, with reproducible seeds.",
+  "fingerprint": "139770c58de0c051",
+  "hyperbolic_location": "First residual-quantization level's hard codeword assignment during Stage2 fitting; the codeword vectors and encoded items are mapped to the ball before computing the behaviour-conditioned cost.",
+  "hyperbolic_operator": "Poincare-ball exp_0^c/log_0^c and geodesic distance d_c for fixed negative curvature -c, c=1 initially.",
+  "idea_id": "branchcone",
+  "key_change": "Build training-only user-context branches and estimate a compact tangent-space branch prototype and dispersion for each item. During first-level quantization, use dispersion to modulate a Poincare geodesic cost between the encoded item and each codeword, so branch-rich items are assigned by a behaviour-conditioned curved metric; later residual levels stay baseline.",
+  "leakage_boundary": "Generate statistics solely from the Stage2 training interaction split and the fixed Stage1 item embeddings; persist item-indexed statistics before SID fitting. Validation/test events are not read by preprocessing, assignment, checkpoint selection for SID, or cached statistics.",
+  "motivation": "A single semantic prefix can merge items that are substitutes for one audience but lead into distinct next-step intents for different users; preserve branching recommendation roles while retaining text-semantic reconstruction.",
+  "novelty": "Rather than append a behavioural token or regularize an independent graph loss, user-specific branching changes the curved distance that determines each item's first RQ assignment. It uses per-item dispersion over user-context branch directions, not global popularity balancing or a generic hyperbolic RQ-VAE.",
+  "observables": "First-level SID changes concentrated on high-branch items; increased training-prefix predictability measured on held-out training contexts; Stage3 validation/test Recall@10 should rise, with target test Recall@10 >0.065.",
+  "origin_agent": "ideation_3",
+  "risks": [
+    "Sparse per-item sequences make branch covariance noisy; the leading direction can capture popularity or sequence-position artifacts; lambda can overwhelm semantic reconstruction; freezing the branch statistics may miss evolving assignments."
+  ],
+  "safeguards": "Clamp sqrt(c)||x|| <= 1-epsilon before exp/log; clamp atanh input to 1-epsilon; normalize u_j and set it to zero for fewer than 3 contexts or near-zero covariance; cap alpha and lambda; accumulate statistics in float64, costs in float32; use deterministic clustering seed and stable tie-breaking.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "Given tangent vectors a_j,v_k with norm bounded below 1/sqrt(c), exp_0^c(x)=tanh(sqrt(c)||x||)x/(sqrt(c)||x||), log_0^c(y)=atanh(sqrt(c)||y||)y/(sqrt(c)||y||), d_c(x,y)=2/sqrt(c)*atanh(sqrt(c)||(-x)oplus_c y||). Use branch covariance C_j=sum_b p_jb(m_jb-m_j)(m_jb-m_j)^T, h_j=clip(tr(C_j)/(tr(C_j)+tau),0,1), u_j=top_eigenvector(C_j). Assignment uses S above, with deterministic tie-break by code index; backprop through selected code via standard straight-through estimator.",
+  "spec_inputs_outputs": "Inputs: training-only transition records, frozen item embeddings, Stage2 encoder output a_j, first-level tangent codewords v_k, c, lambda, alpha. Outputs: per-item branch statistics (h_j,u_j) and first-level code index k*(j), then ordinary residual codes.",
+  "specification": {
+    "text": "For each training user sequence, form contexts from the preceding up-to-5 distinct items and target next item j. Encode context by the mean of frozen item embeddings, project to tangent space at origin, and cluster contexts into B=8 fixed k-means branch prototypes per target item (retain counts n_jb). Let h_j be the normalized weighted covariance trace of these branch vectors, clipped to [0,1]. With z_j=exp_0^c(a_j), codewords q_k=exp_0^c(v_k), define d_k=d_c(z_j,q_k), and g_jk=log(1+alpha*h_j*|<log_0(z_j)-log_0(q_k), u_j>|), where u_j is the leading eigenvector of the branch covariance (zero if undefined). Assign k*=argmin_k [d_k^2 + lambda*g_jk]; train reconstruction/codebook losses using that hard assignment and straight-through gradient. This is a curved, behaviour-conditioned assignment cost, not a post-hoc loss."
+  },
+  "title": "User-branch-conditioned hyperbolic first-code assignment"
+}

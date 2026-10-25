@@ -1,0 +1,11 @@
+TREE: /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_110026_78/branchcone
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: model/model.py
+CHANGED FILE: model/layers.py
+DEVIATION: Used the leading covariance direction of per-item context means rather than clustering contexts into B=8 k-means prototypes | avoided repeated small per-item clustering and retained an item-level branch direction/dispersion statistic; sparse contexts remain zero/undefined.
+DEVIATION: For context dimensions larger than the quantizer tangent dimension, truncated the leading direction to the first CODEBOOK_DIM coordinates (or zero-padded when smaller) | the frozen encoder maps to a 32-dimensional quantizer space, and no learned/frozen projection was specified.
+DEVIATION: Curvature fixed to c=1 and branch_lambda fixed to 0.1 | specification left both as unspecified alpha/lambda and baseline has no curvature parameters.
+ASSUMPTION: Training parquet rows are in temporal order within each user and columns user and target identify user and next-item target; contexts are built in that row order using training rows only.
+SMOKE COMMAND: python -m py_compile results/research/issue121/trees/round_20261025_110026_78/branchcone/train_rqvae.py results/research/issue121/trees/round_20261025_110026_78/branchcone/model/*.py && python - <<'PY' [tiny RQVAE forward/backward/SID-export check shown in the implementation run]
+SMOKE RESULT: Python compilation succeeded. Runtime forward/backward/SID check could not execute: ModuleNotFoundError: No module named 'torch'.
+NOTES: Trainer output/checkpoint/metrics/log paths now target results/stage2_RQ-VAE/TIGER_branchcone. GENREC_SINGLE_GPU bypasses the four-rank launcher. This environment lacks PyTorch, so finite-loss/gradient/SID runtime validation and full training/export remain unverified. The curved branch-conditioned distance runs in first-level _distances and controls hard assignments; behaviour-off is branch_geometry_on=False and geometry-off comparison is not supplied as a trainer mode (disable the curved branch path and use baseline Euclidean _distances for that comparison). Training scope assumes train parquet is the only behaviour source. No Stage3 Recall@10 result was measured.

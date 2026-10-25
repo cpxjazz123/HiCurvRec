@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/train_rqvae.py:239-259 -> model/layers.py:129-143, 154-174 | Traced training-only chronological train-frame adjacency construction into per-item successor IDs/probabilities, then through each quantizer's code assignment score. The flow score uses exp0 mappings and squared Poincare distance, added to Euclidean content distance before argmin; the signal and curved operation are in one assignment pathway. This is not the specified Lorentz geometry, but it is an explicit curved Poincare operation and is computationally coupled for assignment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/model/layers.py:82-93
+FINDING DETAIL: The implementation uses the Poincare ball map/distance, rather than the proposal's Lorentz hyperboloid points and Lorentz distance. It still satisfies the scope's explicit curved-operation requirement, so this is a fidelity discrepancy, not a scope failure.
+FINDING REPRODUCTION: Inspect VQLayer._exp0 and _poincare_d2, called on successors and code source points at lines 140-142; there is no Lorentz-coordinate operation in this path.
+FINDING CORRECTION: Either implement the specified hyperboloid maps and Lorentz distance or describe and validate this as a Poincare-ball variant.
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/model/layers.py:129-174 | Followed the real forward computation from coupled distances through hard argmin and the returned quantization loss; the flow score affects indices, but its graph is discarded by argmin and the returned loss is independent of flow distances.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/model/layers.py:145-152, 161-174
+FINDING DETAIL: Flow assignment is nondifferentiable and the flow distance is not included in quant_loss. Consequently flow_target and flow_source receive no gradients from a real forward/backward; these intended learned role points are dead parameters. In distributed training, DDP uses find_unused_parameters=False (train_rqvae.py:263), so this can also trigger an unfinished-reduction error on the next iteration because those parameters are unused.
+FINDING REPRODUCTION: Configure a VQLayer with nonempty successor data, call forward(x, item_ids=ids), backpropagate the returned quant_loss, and inspect flow_target.weight.grad and flow_source.weight.grad: both are None. With a scalar loss formed from the returned reconstruction and quant_loss, the straight-through output also carries no assignment-score gradient. Turning flow on can change hard indices, but cannot train the role points; turning it off or replacing the curve changes no loss gradient.
+FINDING CORRECTION: Add a differentiable behavior/geometry objective to the optimized loss for selected or soft assignments (and ensure role points get finite gradients), while retaining the coupled assignment score. Verify finite gradients and parameter updates for both role tables and explicitly compare behavior-off, Euclidean, and both-on runs.
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/train_rqvae.py:42-53, 217-263, 392-470 | Statically traced main, input paths, train-only graph construction, export indexing, output paths, and launcher branches. Did not launch the 3,000-epoch trainer because its hardcoded external data/output paths are not this isolated tree's test fixture.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/train_rqvae.py:447-448
+FINDING DETAIL: The single-card launcher branch checks the environment value against literal "1" and does not define/use SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" as requested. Truthy values such as "true" or "yes" therefore fall through and invoke four-card torchrun. In addition, the flow parameters have no backward gradients (trainability finding), incompatible with the current DDP find_unused_parameters=False configuration.
+FINDING REPRODUCTION: Set GENREC_SINGLE_GPU=true (or yes) with RANK unset and invoke the script: the condition at line 447 is false and _launch_via_torchrun starts its configured four-process launcher. The dead flow parameters can be reproduced as described in the trainability check and can fail DDP's next reduction.
+FINDING CORRECTION: Define SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" and parse accepted truthy values consistently (or at minimum test the documented value); separately make flow parameters participate in the differentiated objective or configure DDP safely. Before accepting integration, execute a reduced fixture run and check output SID row i maps to item i, output stays within the tree's dedicated result directory, and both single-card and multi-card launch branches work.

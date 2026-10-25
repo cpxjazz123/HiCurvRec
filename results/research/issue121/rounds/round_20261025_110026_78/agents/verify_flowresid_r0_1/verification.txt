@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/flowresid/train_rqvae.py:239-269 -> results/research/issue121/trees/round_20261025_110026_78/flowresid/model/layers.py:143-153, 325-343 | Static path trace: training targets and last-prefix items form popularity-adjusted directed edges, top-32 neighbours form Poincare tangent-chart barycentres, and item-ID-indexed flow steers the current residual point before Poincare codeword distance selection; each level then performs curved residual subtraction. The supplied CPU smoke test was attempted but could not import torch in this environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/flowresid/model/layers.py:143-153
+FINDING DETAIL: The connected behaviour-plus-curved assignment pathway is present for VQLayer and the trainer's configured vq_type="vq". No fidelity defect found by source inspection.
+FINDING REPRODUCTION: Follow train_rqvae.py:243-267 to set_flow, then RQLayer.forward passes item_ids to VQLayer.forward and assignment_distances; this applies the flow move and curved distance before argmin.
+FINDING CORRECTION: None required for the configured VQ path.
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/flowresid/smoke_test.py:22-43 | Attempted `python smoke_test.py` in the implementation directory; execution stopped at import torch (ModuleNotFoundError). Source inspection shows forward/backward assertions, but the test only compares distance matrices, not assignment IDs or gradients under behaviour-off and Euclidean substitutions.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/flowresid/smoke_test.py:24-34
+FINDING DETAIL: The required on/off effect is not established: test asserts distances differ, not that SID assignment or gradients change and revert. Its Euclidean baseline is raw latent/code subtraction, unlike the curved no-flow assignment that maps both to the ball, so it does not isolate geometry. Further, the smoke test is not executable in this environment due to missing torch, leaving finite loss/gradient assertions unverified here.
+FINDING REPRODUCTION: `python smoke_test.py` fails immediately with `ModuleNotFoundError: No module named 'torch'`. Even in a torch environment, lines 32-33 only compare distances, and lines 40-41 check non-None gradients only for the behavior-on pass.
+FINDING CORRECTION: Run under the project's torch environment and extend the controlled test to compare actual token assignments and parameter gradients for both-on, behavior-off, and Euclidean-distance variants using identical inputs, codebooks, and seeds; assert finite loss/gradient values and that toggling either factor changes and restores the measured output/update.
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/flowresid/train_rqvae.py:42-53, 217-269, 434-476 | Static inspection of trainer inputs/outputs and launcher; the full trainer was not run because dependencies/data/GPU were unavailable. Single-card bypass is explicitly selected by GENREC_SINGLE_GPU at lines 92 and 453-454; normal launch uses torchrun at lines 449-472.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/flowresid/train_rqvae.py:48-53
+FINDING DETAIL: Trainer output paths are hard-coded to `/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_flowresid`, not this experiment's own result directory/tree. This violates the requirement that the trainer write only into its own result directory and risks cross-run contamination. Export indexing is by embedding row via enumerate and extension makes tokens unique, but that was only source-inspected, not run-validated. The configured frozen data paths are the standard stage1 embedding and stage0 train parquet paths; runtime frozen-data identity was not verifiable without files.
+FINDING REPRODUCTION: Import/inspect train_rqvae.py and observe `_RESULT_DIR` at line 48; CHECKPOINT, metrics, SID and JSON all derive from it at lines 49-53, outside `results/research/issue121/trees/round_20261025_110026_78/flowresid` and its assigned round result directory.
+FINDING CORRECTION: Derive all generated artifacts (including logs and launcher log) from the experiment's assigned result directory, and run the trainer with the frozen input files to verify item-row alignment, export shape/indexing, no out-of-directory writes, and both torchrun and GENREC_SINGLE_GPU branches.
