@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/branchcone/train_rqvae.py:244-264 -> model/layers.py:104-121, 132-152 | Traced training-only contexts into per-item h/u and first-level item-ID lookup into a Poincare distance plus branch projection score. Static execution-path inspection; attempted synthetic runtime exercise, but Python environment has no torch installed (ModuleNotFoundError).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/branchcone/train_rqvae.py:257-264
+FINDING DETAIL: The connected behaviour-conditioned curved assignment exists: h and u from training context covariance are consumed in the same per-codeword Poincare score at layers.py:106-116. However, this preprocessing does not implement the stated B=8 per-target clustering/count-weighted covariance: it uses covariance over all raw context means and sets h from its trace. This remains a training-only branching signal coupled to curved assignment, so the coupling is in scope, but the implementation/specification disagree.
+FINDING REPRODUCTION: Inspect train_rqvae.py:247-264: every context mean is appended, then torch.cov is applied directly; no KMeans, branch counts, or count-weighted cluster means occur. A target with multiple repeated/near-identical contexts is therefore summarized from raw samples rather than the specified branch prototypes.
+FINDING CORRECTION: Either implement the declared per-target B=8 clustering, support/count weighting, and normalized covariance, or update the proposal to accurately specify the raw-context covariance actually computed.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/branchcone/model/layers.py:104-152 and model/model.py:26-30 | Inspected score, hard argmin, straight-through output and VQ losses; attempted a synthetic forward/backward and three-way assignment comparison, but execution is unavailable because torch is not installed in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/branchcone/model/layers.py:106-116, 149-152
+FINDING DETAIL: The required real forward/backward check and behavior-off/geometry-off assignment or gradient comparison could not be performed; no executable evidence establishes finite loss/gradients or that the coupled score changes an assignment in the actual implementation. The score is used by argmin (so it can affect a hard assignment), but it is not itself differentiated; gradients flow through the selected code's ordinary VQ losses. Static inspection is not sufficient to certify the requested trainability condition.
+FINDING REPRODUCTION: Run a synthetic VQLayer/RQVAE forward, loss.backward(), and compare SID plus gradients for (1) branch strength nonzero with curved mode, (2) strength zero, and (3) branch_geometry_on=False. In this review environment, the corresponding attempt stops at `import torch` with `ModuleNotFoundError: No module named 'torch'`.
+FINDING CORRECTION: Run this verification in the project’s PyTorch environment and retain a deterministic regression test that asserts finite loss and intended parameter gradients and demonstrates the prescribed ablation response. Correct any failing numerical or assignment cases before approval.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/branchcone/train_rqvae.py:40-52, 215-230, 394-438, 445-471 | Inspected trainer data inputs, output constants/export/indexing, and launcher control flow; did not run the full trainer because its fixed external data paths are unavailable here.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/branchcone/train_rqvae.py:48-52
+FINDING DETAIL: The trainer writes SID, JSON, checkpoint, metrics, and logs to hard-coded `/home/wlia0047/...` locations rather than its own tree/result directory. This violates the explicit output-isolation requirement and can overwrite another experiment's artifacts. The frozen input paths are explicit Stage1 embeddings and Stage0 training parquet, and the SID export is built in enumerated embedding-row order with an item_id-to-row JSON map (lines 423-436), but trainer execution/export were not runtime-validated. Separately, launcher bypass uses truthiness on GENREC_SINGLE_GPU instead of the specified SINGLE_GPU_ENV constant/value parsing: setting GENREC_SINGLE_GPU=0 incorrectly bypasses torchrun.
+FINDING REPRODUCTION: Import/inspect the constants: OUTPUT_SID, OUTPUT_JSON, CHECKPOINT, METRICS_PATH, and LOG_DIR resolve outside `results/research/issue121/trees/.../branchcone`. For launcher behavior, set `GENREC_SINGLE_GPU=0` with no RANK; line 447 returns without launching torchrun, then main runs directly. No end-to-end run was possible because the hard-coded input files and torch runtime are unavailable.
+FINDING CORRECTION: Derive all writable paths from this experiment's own result directory (or a controlled run directory) and add a guard preventing writes elsewhere. Define `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` and parse accepted true values explicitly, consistent with the sibling launcher. Then run the real trainer and validate exported SID dimensions, integer values, uniqueness, and row/item indexing.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/train_rqvae.py:241-261 -> model/layers.py:129-143, 167-189 | Static code-path inspection: the trainer builds directed adjacency solely from training histories and targets, supplies item IDs to each quantizer; per-item successor embeddings are mapped with _exp0 and Poincare squared distance is added to each candidate's code distance before assignment. The layer also adds a flow objective over the same target/source role points.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect identified for this check. The coupled scoring path is exercised by the normal trainer call with item_ids; the curved operation is computationally inside candidate assignment, not merely an auxiliary unrelated loss. Implementation uses Poincare-ball geometry rather than Lorentz coordinates, which is still an explicit curved operation.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/model/layers.py:81-93, 129-156, 167-189 | Static autograd-path inspection; attempted a direct PyTorch forward/backward probe, but the environment has no torch installed (ModuleNotFoundError), so finite loss/gradient and update reversibility could not be verified dynamically.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/model/layers.py:129-156
+FINDING DETAIL: Runtime trainability and the required behavior-off / Euclidean-geometry comparisons are not demonstrated. The code has a flow_on switch, but no Euclidean-distance mode or comparison harness; moreover _flow_objective at lines 145-156 is a separate flow-only soft assignment loss, so observing its gradients alone would not establish that changing curved geometry changes the core assignment pathway. The assignment distance itself appears connected by inspection, but a real finite backward/update cannot be confirmed in this environment.
+FINDING REPRODUCTION: In the supplied environment, `python -c 'import torch'` fails with `ModuleNotFoundError: No module named torch`, preventing the required forward/backward reproduction. In an equipped environment, run identical fixed batches with flow_on true/false and with _poincare_d2 replaced by an explicitly Euclidean squared-distance implementation; compare tokens and gradients for flow_source, flow_target, codebook, and encoder, and assert finite loss/gradients and changed-back outputs.
+FINDING CORRECTION: Run and record the fixed-batch forward/backward and optimizer-step comparisons in a PyTorch-equipped environment. Add an explicit geometry selector (Poincare versus Euclidean) used by both assignment and flow objective, plus a small deterministic test covering both toggles, finite values, intended parameter gradients, and assignment/gradient changes.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/train_rqvae.py:40-55, 219-261, 394-442, 445-473 | Static entry-point/data/export/launcher inspection; verified source paths, result-directory derivation, indexed all-item SID export, and the GENREC_SINGLE_GPU branch. Full trainer and launcher execution was not possible because PyTorch is unavailable.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_110026_78/lorentz_flow_code/train_rqvae.py:219-261
+FINDING DETAIL: Integration is not runtime-verified: the actual trainer, frozen parquet/data path, SID artifact, write confinement, and distributed launcher (including the single-card branch) were not run. Static inspection shows train-only graph construction, writes routed under the repository's results/stage2_RQ-VAE/TIGER_lorentz_flow_code directory, enumeration-indexed all-item export, and the single-card environment variable branch, but does not establish that the real entry point executes successfully or that the exported IDs match the frozen data contract.
+FINDING REPRODUCTION: Run the trainer entry point with GENREC_SINGLE_GPU=1 against the frozen stage1 embedding and stage0 train parquet, then check output paths and validate each exported row against its item index; separately run the normal torchrun launcher and inspect rank completion. Current environment fails before this at importing torch.
+FINDING CORRECTION: Execute those integration checks in the project's supported environment and retain their logs/artifact validation. Fix any runtime or indexing/path mismatch they expose before accepting the implementation.
