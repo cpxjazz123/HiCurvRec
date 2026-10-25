@@ -135,7 +135,8 @@ def _eval_path_expr(expr: str, anchors: dict, tree: Path):
     return str(value) if value is not None else None
 
 
-def _declared_paths(tree: Path, *, location: Path = None) -> dict:
+def _declared_paths(tree: Path, *, location: Path = None,
+                    repo_root: Path = None) -> dict:
     """The output paths a trainer declares, resolved through its own anchors.
 
     A trainer writes chains such as
@@ -153,6 +154,12 @@ def _declared_paths(tree: Path, *, location: Path = None) -> dict:
     # An output path anchored on the number of parents of this file works in the
     # round tree and breaks after promotion, where the tree sits one level
     # higher. That is a defect, not a style choice.
+    # No absolute path may appear in a trainer at all: the same file runs in the
+    # round workspace and in the Stage 2 allowlist, so every path is derived
+    # from the repository marker.
+    for match in re.finditer(r"[\"'](/home/[^\"']*|/fs04/[^\"']*)[\"']", text):
+        raise BaselineError("the trainer contains an absolute path: " + match.group(1) +
+                            "; derive every path from the repository root instead")
     for match in re.finditer(r"^(\w+)\s*=\s*Path\(__file__\)(?:\.resolve\(\))?"
                              r"\.parents\[\d+\]", text, re.M):
         name = match.group(1)
@@ -164,6 +171,14 @@ def _declared_paths(tree: Path, *, location: Path = None) -> dict:
                                 "absolute path under results/stage2_RQ-VAE/")
     # The names a trainer may use for the two anchors it is allowed to start
     # from. Anything else has to be resolvable from these.
+    # A function that walks up to the stage2_RQ-VAE marker is the accepted way
+    # to derive the repository root without an absolute path.
+    marker_walkers = set()
+    for match in re.finditer(r"^def\s+(\w+)\s*\([^)]*\)[^:]*:\n((?:[ \t]+.*\n|\n)+)",
+                             text, re.M):
+        name, body = match.group(1), match.group(2)
+        if "parents" in body and "stage2_RQ-VAE" in body:
+            marker_walkers.add(name)
     anchors: dict[str, str] = {}
     assignments = re.findall(r"^(\w+)\s*=\s*(.+)$", text, re.M)
     assigned = {name for name, _ in assignments}
@@ -184,7 +199,14 @@ def _declared_paths(tree: Path, *, location: Path = None) -> dict:
         for name, expr in assignments:
             if name in anchors:
                 continue
-            value = _eval_path_expr(expr.strip(), anchors, here)
+            stripped = expr.strip()
+            call = re.fullmatch(r"(\w+)\(\)", stripped)
+            if call and call.group(1) in marker_walkers:
+                anchors[name] = str(Path(repo_root).resolve() if repo_root is not None
+                                    else _repo_root())
+                changed = True
+                continue
+            value = _eval_path_expr(stripped, anchors, here)
             if value is not None:
                 anchors[name] = value
                 changed = True
@@ -216,6 +238,15 @@ def results_root(baseline: Path) -> Path:
     return Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE")
 
 
+def _repo_root() -> Path:
+    """The repository this package lives in, found by its own marker."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "stage2_RQ-VAE").is_dir():
+            return parent
+    return here.parents[0]
+
+
 def arm_name(tree: Path) -> str:
     """The name this tree gets when it enters the Stage 2 allowlist."""
     name = Path(tree).name
@@ -224,7 +255,8 @@ def arm_name(tree: Path) -> str:
 
 def guard_output_paths(tree: Path, *, baseline: Path = None,
                        other_candidates=(), arm: str = None,
-                       location: Path = None) -> dict:
+                       location: Path = None, repo_root: Path = None,
+                       check_collision: bool = True) -> dict:
     """Refuse a candidate that would write into the baseline or a sibling.
 
     Returns the resolved output paths when the candidate is isolated, and
@@ -233,17 +265,18 @@ def guard_output_paths(tree: Path, *, baseline: Path = None,
     tree = Path(tree).resolve()
     base = (Path(baseline).resolve() if baseline is not None
             else baseline_path().resolve())
+    expected_root = Path(repo_root).resolve() if repo_root is not None else _repo_root()
     promoted = Path(location) if location is not None else (
-        Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE") / (arm or arm_name(tree)))
-    declared_all = _declared_paths(tree, location=promoted)
+        expected_root / "stage2_RQ-VAE" / (arm or arm_name(tree)))
+    declared_all = _declared_paths(tree, location=promoted, repo_root=expected_root)
     # A repository root that depends on the file's depth is correct in the round
     # tree and wrong after promotion; it is checked where the trainer will run.
     for name, value in declared_all.items():
         if name in ("REPO_ROOT", "_REPO_ROOT", "ROOT", "_ROOT", "PROJECT_ROOT", "REPO"):
-            if Path(value).resolve() != Path("/home/wlia0047/ar57/wenyu/GeneRec").resolve():
+            if Path(value).resolve() != expected_root:
                 raise BaselineError("the trainer's " + name + " resolves to " + str(value) +
                                     " instead of the repository root once the tree is "
-                                    "promoted; use the absolute repository path")
+                                    "promoted; derive it from the stage2_RQ-VAE marker")
     declared = {name: value for name, value in declared_all.items()
                 if name in _OUTPUT_CONSTANTS}
     if not declared:
@@ -257,21 +290,27 @@ def guard_output_paths(tree: Path, *, baseline: Path = None,
         protected.append(results_root(base) / other.name)
     # The one place a candidate may write: the repository's Stage 2 results,
     # resolved so the /home and /fs04 spellings of the same directory agree.
-    approved = (Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE")).resolve()
+    approved = (expected_root / "results" / "stage2_RQ-VAE").resolve()
     resolved = {}
     for name, text in declared.items():
         path = _resolve(text, tree).resolve()
         resolved[name] = str(path)
-        if tree in path.parents:
-            # The source tree is read-only: run artifacts inside it would be
-            # carried into the next promotion and read as this run's evidence.
-            raise BaselineError("the candidate writes into its own source tree: "
-                                + name + " -> " + str(path))
-        for target in protected:
+        logs_inside_the_tree = name in ("LOG_DIR", "METRICS_PATH")
+        if tree in path.parents and not logs_inside_the_tree:
+            # Artefacts must not live in the source tree: it is copied again on
+            # the next promotion. Logs are the exception, because the project's
+            # own convention puts them under <tree>/logs/ and the MCP reads them
+            # there.
+            raise BaselineError("the candidate writes its artifacts into its own source "
+                                "tree: " + name + " -> " + str(path))
+        for target in (protected if check_collision else []):
             target = Path(target).resolve()
             if path == target or target in path.parents:
                 raise BaselineError("the candidate would write into the baseline or "
                                     "another candidate: " + name + " -> " + str(path))
+        if name in ("LOG_DIR", "METRICS_PATH"):
+            resolved[name] = str(path)
+            continue
         arm_dir = approved / (arm or arm_name(tree))
         if path != arm_dir and arm_dir not in path.parents:
             raise BaselineError("the candidate writes outside its arm directory "

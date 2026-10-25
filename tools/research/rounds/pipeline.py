@@ -372,7 +372,8 @@ def record_framework_finding(state: dict, implementation_id: str, *, source: str
     return state
 
 
-def recheck_output_paths(state: dict, implementation_id: str) -> dict:
+def recheck_output_paths(state: dict, implementation_id: str,
+                          repo_root: Path = None) -> dict:
     """Re-run the output-path preflight after a repair.
 
     A repaired tree may have moved its outputs to the right place; the earlier
@@ -389,7 +390,7 @@ def recheck_output_paths(state: dict, implementation_id: str) -> dict:
                 if finding.get("verifier") != "preflight"]
     try:
         record["output_paths"] = baseline_module.guard_output_paths(
-            tree, other_candidates=siblings)
+            tree, other_candidates=siblings, repo_root=repo_root)
         record["output_preflight"] = "passed"
     except baseline_module.BaselineError as exc:
         findings.insert(0, {"verifier": "preflight", "check": "output isolation",
