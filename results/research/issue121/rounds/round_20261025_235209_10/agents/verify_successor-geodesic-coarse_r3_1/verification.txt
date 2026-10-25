@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:300-321 -> model/model.py:26-30 -> model/layers.py:292-332 | Static path trace: adjacent training targets are counted into directed per-item successor IDs/weights, indexed by the current batch, encoded by the shared encoder, projected into the Poincare ball, and their weighted geodesic distances to each candidate prototype are added to the same costs used for T1 argmin. This is one connected assignment pathway; no runtime execution was possible or required here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The specified training-time coupling is present: successor-conditioned geodesic consensus modifies the T1 assignment costs. No independent behavior-only loss or unused hyperbolic helper is being counted as the coupling.
+FINDING REPRODUCTION: Trace train_rqvae.py:300-321 and layers.py:314-333; the costs used by argmin include both Poincare item-prototype distance and the weighted successor-to-prototype Poincare term.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:296-339; train_rqvae.py:391-399 | Static differentiability review of the real forward/loss/backward sequence. No PyTorch/shell runtime was available; the instructed MCP one-epoch gradient smoke is the expected runtime proof.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The combined cost is finite-protected away from the ball boundary (projection radius 1-1e-5, denominator floor 1e-7, atanh argument capped below 1); weighted successor costs feed both hard argmin and the differentiable soft-probability surrogate. T1 embeddings and encoder outputs therefore have gradient paths through the surrogate and the existing commitment/reconstruction terms. The behavior switch removes the successor summand; the Euclidean switch substitutes Euclidean distances. No detached/computed-but-unused coupled term was found. This is a static conclusion, not a claimed numerical gradient execution.
+FINDING REPRODUCTION: Inspect layers.py:300-312 and 314-339, then the trainer's loss.backward() at train_rqvae.py:391-399. The soft surrogate is added to quant_loss and returned through compute_loss; the hard indices are derived from the behavior-conditioned costs.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:40-69, 293-321, 432-435, 480-501, 510-538; model/model.py:33-37 | Static integration trace from trainer entry through training data, export, and launcher. Runtime execution unavailable as directed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/model.py:33-37; train_rqvae.py:432-435, 487-495
+FINDING DETAIL: The exported T1 SID assignment drops the behavior signal. Training calls RQVAE.forward with successor embeddings/weights (trainer lines 387-391), but get_indices accepts only embeddings and invokes rq without successor_latents or successor_weights (model lines 33-37). Both evaluation tokens and the final exported tokens therefore use only the curved item-to-prototype distance, not the successor-geodesic consensus that defines the proposed coarse partition. The resulting valid/indexed JSON and collision extension cannot repair the missing T1 behavior-conditioned assignment.
+FINDING REPRODUCTION: Minimal counterexample: take one item with two nonzero successor weights and latent successors positioned near prototype A, while the item latent is nearer prototype B. During training, layers.py:314-333 adds the weighted successor-geodesic term and can select A. At export, train_rqvae.py:487-489 calls get_indices without neighbors, so layers.py receives None and selects by d0 alone (line 314 condition is false), selecting B. This is directly visible without running the trainer.
+FINDING CORRECTION: Make the inference/export API accept the same training-derived successor IDs and weights, encode successor items, and pass them through the T1 assignment path for evaluation and final export. Preserve the same item indexing and ensure no test events enter the successor table. Then verify the output JSON maps every item ID to its row and remains collision-extended.

@@ -1,0 +1,5 @@
+{
+  "kind": "scoring_retry_audit",
+  "reason": "reviewer scoring_2 wrote a RATIONALE line without the idea id in both attempts, which the strict rubric rejects; the two answers are kept under agents/failed_scoring/ and the scoring phase runs again with a fresh reviewer",
+  "next": "a fresh scoring pass over the same frozen bundle; nothing else changed"
+}

@@ -1,0 +1,21 @@
+{
+  "kind": "implementation_abandoned_audit",
+  "idea_id": "branching-curvature-budget",
+  "revision": 9,
+  "measured_smoke": {
+    "passed": true,
+    "epoch_seconds": 10.322,
+    "steps": 24,
+    "projected_hours_3000_epochs": 8.6,
+    "sid_shape": [
+      24587,
+      5
+    ]
+  },
+  "reasons": [
+    "the candidate emits a five-token SID (four learned levels plus the collision extension), while the frozen protocol is a fixed four-token SID; the Stage 3 dataset derives its generation width from the SID file, so this candidate cannot be compared with the six measured arms",
+    "the continuation penalty as implemented is O(B^2 K) per level: the measured one-epoch smoke takes 10.3 s against the baseline's 0.13 s, projecting about 8.6 hours for the frozen 3000 epochs"
+  ],
+  "kept": "the verifier findings and the eight repairs stay in the record",
+  "next": "the same measured rule is applied on the already verified coarse-first-level tree, where the tail is the only part that needs to change"
+}

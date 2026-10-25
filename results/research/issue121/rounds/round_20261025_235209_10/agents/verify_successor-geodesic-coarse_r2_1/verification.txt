@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: successor-geodesic-coarse/train_rqvae.py:299-320 -> successor-geodesic-coarse/model/model.py:26-30 -> successor-geodesic-coarse/model/layers.py:280-327 | Traced real trainer batch construction into the model forward and first-level assignment; the training-only adjacent-event successor table supplies successor embeddings/weights to the Poincare prototype costs used by argmin.
+FINDING SEVERITY: blocking
+FINDING LOCATION: successor-geodesic-coarse/model/layers.py:309-311, 321-325
+FINDING DETAIL: The implemented distance is not the Poincare-ball distance specified. For curvature -1, Poincare distance is 2*atanh(||x-y||/sqrt((1-||x||^2)(1-||y||^2))). The code uses sqrt(2*||x-y||^2/denominator), adding an erroneous sqrt(2) factor before atanh in both item-to-prototype and successor-to-prototype calculations. Thus the claimed geodesic cost and consensus objective are quantitatively wrong, even though behavior and a curved-looking nonlinear term are connected.
+FINDING REPRODUCTION: Set x and p to distinct small-norm vectors well inside the ball, so no clamp is active. Compare the code's d0 at layers.py:309-311 with the formula above: its argument to atanh is sqrt(2) times the correct argument. Repeat for a successor and prototype at lines 321-325. This changes the assignment objective and its gradients.
+FINDING CORRECTION: Compute delta2=||x-p||^2 and use 2*atanh(sqrt(delta2 / ((1-||x||^2)*(1-||p||^2))).clamp(max=1-eps)); apply the same correctly scaled formula to neighbor-prototype distances, with the curvature factors included if curvature becomes configurable.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: successor-geodesic-coarse/model/layers.py:313-333 | Source-level gradient trace: costs includes weighted successor distances when enabled, hard argmin selects the code, and the added soft expected-cost term remains differentiable; VQ commitment/codebook losses also train residual and prototype parameters. The trainer calls backward at train_rqvae.py:390-397 and clips gradients. The projection and denominator clamps bound float32 inputs and atanh arguments below one. Runtime execution is unavailable here as stipulated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No separate trainability defect found. The erroneous distance scaling is reported under behaviour x geometry fidelity; it does not create a dead term or an evident non-finite path.
+FINDING REPRODUCTION: The candidate check records INCONCLUSIVE_OR_INFRA_ERROR because its checker could not drive a per-item behaviour signal (CANDIDATE_CHECK.json:9-11); the permitted GPU smoke has not been supplied. Code inspection confirms successor embeddings and weights reach the differentiable first-level costs and soft expected-cost term. No actual switch-off/Euclidean comparison was executable from this environment.
+FINDING CORRECTION: Correct the Poincare distance as above, then retain the prescribed one-epoch GPU gradient smoke to verify finite loss/gradients and compare both-on, behavior-off, and Euclidean modes.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: successor-geodesic-coarse/train_rqvae.py:42-69, 99-110, 278-327, 384-400, 457-502, 509-537 | Inspected the actual entry point, path constants, data inputs, training/export and launcher branches. It reads the repository stage1 embedding and frozen stage0 train parquet, derives the result directory from the repository root and candidate arm name, exports rows by enumerate(item_id), writes JSON and NPY under that arm directory, and has the GENREC_SINGLE_GPU bypass plus torchrun path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The candidate destination is results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse, its own promoted arm directory; it is not the baseline or another candidate's directory. Export keys are item IDs matching embedding row order, and collision extension checks uniqueness. The single-card launcher branch reads SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at lines 100 and 511-512. Actual trainer execution is unavailable as stipulated.
+FINDING REPRODUCTION: Verify constants and execution flow at the cited locations; setting GENREC_SINGLE_GPU=1 skips subprocess torchrun and invokes main directly, while a normal parent process launches four workers. Export builds the mapping from enumerate(sid) and writes item_sids.json in RESULT_DIR.
+FINDING CORRECTION: None required from this source review.

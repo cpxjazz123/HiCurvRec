@@ -204,6 +204,32 @@
       "idea_id": "branching-curvature-budget",
       "reason": "the verifiers still reject the implementation after 8 repair rounds, which is the cap",
       "revision": 8
+    },
+    {
+      "at": 1792946873.7866044,
+      "event": "implementation_reopened",
+      "idea_id": "branching-curvature-budget",
+      "reason": "the single remaining finding was fixed: the continuation penalty now averages the three prefix representatives, not the extension token"
+    },
+    {
+      "at": 1792946877.8429458,
+      "event": "source_changed_before_review",
+      "idea_id": "branching-curvature-budget",
+      "revision": 9
+    },
+    {
+      "at": 1792946924.227906,
+      "event": "verification_needs_repair",
+      "idea_id": "branching-curvature-budget",
+      "revision": 9,
+      "signature": "fdce81965cd0a8e7"
+    },
+    {
+      "at": 1792946924.2625272,
+      "event": "implementation_revision_capped",
+      "idea_id": "branching-curvature-budget",
+      "reason": "the verifiers still reject the implementation after 9 repair rounds, which is the cap",
+      "revision": 9
     }
   ],
   "evidence_bundles": {
@@ -20861,16 +20887,16 @@
       "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
       "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
       "blocked_kind": "IMPLEMENTATION_NEEDS_FIX",
-      "blocked_reason": "the verifiers still reject the implementation after 8 repair rounds, which is the cap",
+      "blocked_reason": "the verifiers still reject the implementation after 9 repair rounds, which is the cap",
       "blocking_findings": [
         {
           "check": "b) trainability",
-          "correction": "Restrict the continuation distance calculation to the first three levels (e.g. enumerate(self.rq.vq_layers[:3]) and average those terms), preserving the existing branch-conditioned curved distance and discrete-neighbor gradient behavior. Extend the smoke to assert T4 is excluded and that behavior-off/Euclidean controls alter the same objective as intended.",
-          "detail": "The stated continuation consistency penalty is specified on the first three-level prefix representatives, but implementation averages the selected-code geodesic distance over every RQ layer, including T4. This makes the actual behavior-conditioned loss optimize the tail as well as the prefix, contrary to the specified pathway and its intended division of prefix/tail roles. The remaining main loss and curved assignment paths appear differentiable and numerically guarded by finite checks/clamps; the defect is the implemented objective not matching the required continuation term.",
-          "location": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/model.py:40-45",
-          "reproduction": "With edge_embeddings provided, model.forward loops over enumerate(self.rq.vq_layers) at lines 40-44 and appends one distance per level, then averages them. A four-level model therefore includes level index 3/T4; even if T1-T3 distances are zero, a nonzero T4 successor-code distance contributes to edge_loss and its gradient.",
+          "correction": "Replace the dense all-pairs soft conditional entropy with a minibatch/sampled-pair or sparse-prefix estimator whose memory and compute are bounded by the configured edge/sample budget, or otherwise explicitly bound batch size and validate the cost on the real trainer smoke before admission. Preserve gradients through the curved soft assignments.",
+          "detail": "The added balance term constructs pairwise B-by-B prefix affinities for each preceding level and performs affinity-by-probability products, making its compute and retained autograd graph O(B^2 K), not the stated sparse-edge O(B*degree*D) cost. With the configured per-rank batch of 1024, each affinity is 1,048,576 elements, and multiple levels/gradient intermediates are retained. This is a major unaccounted training-time and GPU-memory burden relative to the proposed cost budget; the stated 5-15% overhead is not supported by this implementation. The source smoke uses only B=12 and cannot expose this at trainer batch size.",
+          "location": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:253-289,429-432",
+          "reproduction": "Call _soft_conditional_entropy with a 1024-row batch on the configured GPU and profile peak allocated memory and step time; compare against the trainer with this term disabled. The routine explicitly creates torch.ones((len(embeddings), len(embeddings))) and multiplies pairwise affinities at train_rqvae.py:270-279.",
           "severity": "blocking",
-          "verifier": "verify_branching-curvature-budget_r8_1"
+          "verifier": "verify_branching-curvature-budget_r9_1"
         }
       ],
       "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
@@ -20898,7 +20924,7 @@
           "reason": "Retains a direct single-process path; the original launcher otherwise auto-starts four ranks."
         }
       ],
-      "failure_signature": "f0e10c83bc579fc8",
+      "failure_signature": "fdce81965cd0a8e7",
       "idea_id": "branching-curvature-budget",
       "notes": "The curved Poincare distance is used at each of the baseline's three assignment levels and the cached training-only item branching values are also supplied at full-catalog export. Smoke covers the model pathway and SID extension, not a full 3000-epoch data run. Repository-root discovery remains marker-based; output paths derive from ARM_NAME. No absolute filesystem paths were added to trainer constants. The requested promoted-location smoke was not run because that would require copying files outside this candidate tree.",
       "output_paths": {
@@ -20911,6 +20937,7 @@
       },
       "output_preflight": "passed",
       "proposal_sha256": "be80a0a52e2e4d1ce52f8a125d0db2d537b2f66406855328cf05549daa58c9c4",
+      "reopened_after_cap": 1,
       "repairs": [
         {
           "remaining_issues": [
@@ -21054,13 +21081,13 @@
           }
         }
       ],
-      "revision": 8,
+      "revision": 9,
       "revision_capped": true,
       "smoke": {
         "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 smoke_test.py",
         "result": "PASS finite forward/backward; codebook gradients; curved-vs-Euclidean assignment metric; unique SID export"
       },
-      "source_digest": "a3d752058657bc87f1cf41bd330b314edef4a1e8aa12322c73f48a60bf65c7da",
+      "source_digest": "5f0d40f68370dcf77687c4bb27568a7d5a47cc1c45adb9e86fdfe8473be762bf",
       "status": "blocked",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget",
       "tree_exists": true,
@@ -21068,14 +21095,14 @@
         {
           "checks": [
             {
-              "exercised_how": "Traced the real trainer path: directed adjacent targets per user produce cached branching values; sampled source-successor edges are encoded and quantized with branching-conditioned Poincare assignments; the edge loss measures selected code vectors with source-conditioned Poincare distance and is added to training loss. Also inspected smoke_test.py:40-55,64-75 for the corresponding populated-edge and curved-vs-Euclidean exercises. Runtime execution was not available in this sandbox.",
-              "exercised_path": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:338-356,413-432 -> model/model.py:35-45 -> model/layers.py:148-156,223-228",
+              "exercised_how": "Traced training-only per-user directed target transitions into cached branching values, through per-item curvature-conditioned Poincare distances used for every residual assignment; also traced sparse successor pairs through curved code-vector distances. Inspected smoke_test.py:40-75, which populates successor edges, executes the model and coupled loss, backpropagates, and compares curved against Euclidean distance/assignment behavior.",
+              "exercised_path": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:338-354 -> model/layers.py:140-153 -> model/model.py:26-49",
               "findings": [
                 {
-                  "correction": "none",
-                  "detail": "No a-check defect found. The transition signal and curved operation share the edge-code distance computation; this is not an unused helper or a detached behavior suffix.",
+                  "correction": "None.",
+                  "detail": "None. The behavior statistic and curved operation are in connected computations, not separate losses or unused helpers.",
                   "location": "none",
-                  "reproduction": "Follow train_rqvae.py:418-432 into RQVAE.forward and the Poincare edge distance at model/model.py:38-45.",
+                  "reproduction": "Static path inspection and the source-level smoke assertions at smoke_test.py:40-75.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -21083,14 +21110,14 @@
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Inspected the autograd route and the authored smoke assertions at smoke_test.py:15-20,40-55,64-75,91-101; the smoke could not be executed here.",
-              "exercised_path": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/model.py:38-45; model/layers.py:107-129,148-156",
+              "exercised_how": "Inspected the differentiable distances, straight-through quantizer and loss/backward route, and the supplied smoke's finite-gradient and behavior/geometry comparison assertions. No runtime execution is claimed.",
+              "exercised_path": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/layers.py:107-129,140-161; model/model.py:26-49; train_rqvae.py:418-432; smoke_test.py:15-20,40-55,94-101",
               "findings": [
                 {
-                  "correction": "Restrict the continuation distance calculation to the first three levels (e.g. enumerate(self.rq.vq_layers[:3]) and average those terms), preserving the existing branch-conditioned curved distance and discrete-neighbor gradient behavior. Extend the smoke to assert T4 is excluded and that behavior-off/Euclidean controls alter the same objective as intended.",
-                  "detail": "The stated continuation consistency penalty is specified on the first three-level prefix representatives, but implementation averages the selected-code geodesic distance over every RQ layer, including T4. This makes the actual behavior-conditioned loss optimize the tail as well as the prefix, contrary to the specified pathway and its intended division of prefix/tail roles. The remaining main loss and curved assignment paths appear differentiable and numerically guarded by finite checks/clamps; the defect is the implemented objective not matching the required continuation term.",
-                  "location": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/model.py:40-45",
-                  "reproduction": "With edge_embeddings provided, model.forward loops over enumerate(self.rq.vq_layers) at lines 40-44 and appends one distance per level, then averages them. A four-level model therefore includes level index 3/T4; even if T1-T3 distances are zero, a nonzero T4 successor-code distance contributes to edge_loss and its gradient.",
+                  "correction": "Replace the dense all-pairs soft conditional entropy with a minibatch/sampled-pair or sparse-prefix estimator whose memory and compute are bounded by the configured edge/sample budget, or otherwise explicitly bound batch size and validate the cost on the real trainer smoke before admission. Preserve gradients through the curved soft assignments.",
+                  "detail": "The added balance term constructs pairwise B-by-B prefix affinities for each preceding level and performs affinity-by-probability products, making its compute and retained autograd graph O(B^2 K), not the stated sparse-edge O(B*degree*D) cost. With the configured per-rank batch of 1024, each affinity is 1,048,576 elements, and multiple levels/gradient intermediates are retained. This is a major unaccounted training-time and GPU-memory burden relative to the proposed cost budget; the stated 5-15% overhead is not supported by this implementation. The source smoke uses only B=12 and cannot expose this at trainer batch size.",
+                  "location": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:253-289,429-432",
+                  "reproduction": "Call _soft_conditional_entropy with a 1024-row batch on the configured GPU and profile peak allocated memory and step time; compare against the trainer with this term disabled. The routine explicitly creates torch.ones((len(embeddings), len(embeddings))) and multiplies pairwise affinities at train_rqvae.py:270-279.",
                   "severity": "blocking"
                 }
               ],
@@ -21098,14 +21125,14 @@
               "verdict": "NEEDS_FIX"
             },
             {
-              "exercised_how": "Source-inspected repository-root discovery, frozen stage1 embedding and stage0 train parquet inputs, candidate-specific Stage2 result destination, item-indexed JSON export and collision extension, torchrun launcher, and the GENREC_SINGLE_GPU branch. The trainer could not be executed in this sandbox.",
-              "exercised_path": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:40-67,102-112,157-179,323-356,497-540,547-575",
+              "exercised_how": "Statically traced the real entry point's frozen stage1 embedding and stage0 train.parquet paths, target-ID validation and all-embedding indexed export, collision extension and item_sids.json keys, candidate-specific result path, and torchrun launcher including GENREC_SINGLE_GPU. The runtime candidate-path check reports ModuleNotFoundError; per instruction, this review is source-based and does not treat unavailable runtime execution as a defect.",
+              "exercised_path": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:58-66,323-325,532-540,547-574",
               "findings": [
                 {
-                  "correction": "none",
-                  "detail": "No integration defect found by source inspection. The output targets results/stage2_RQ-VAE/TIGER_branching-curvature-budget, the candidate-specific promoted arm directory; item_sids.json enumerates embedding-row IDs, and the single-card bypass checks SINGLE_GPU_ENV == \"1\".",
+                  "correction": "None.",
+                  "detail": "None found in the inspected integration path. The result destination is the required candidate-specific results/stage2_RQ-VAE/TIGER_branching-curvature-budget directory; the input paths are the frozen project paths; the JSON mapping is enumerated by item ID; and the single-GPU branch checks the required GENREC_SINGLE_GPU variable.",
                   "location": "none",
-                  "reproduction": "Inspect train_rqvae.py:58-67 for paths, 323-327 for frozen data loading and ID bounds, 532-540 for SID export, and 547-575 for launcher and single-card branch.",
+                  "reproduction": "Source inspection at the listed lines; trainer execution was not performed.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -21114,8 +21141,12 @@
             }
           ],
           "verdict": "NEEDS_FIX",
-          "verifier": "verify_branching-curvature-budget_r8_1"
+          "verifier": "verify_branching-curvature-budget_r9_1"
         }
+      ],
+      "abandoned_reason": [
+        "the candidate emits a five-token SID (four learned levels plus the collision extension), while the frozen protocol is a fixed four-token SID; the Stage 3 dataset derives its generation width from the SID file, so this candidate cannot be compared with the six measured arms",
+        "the continuation penalty as implemented is O(B^2 K) per level: the measured one-epoch smoke takes 10.3 s against the baseline's 0.13 s, projecting about 8.6 hours for the frozen 3000 epochs"
       ]
     }
   ],
@@ -24686,6 +24717,22 @@
       "idea_id": "branching-curvature-budget",
       "revision": 8,
       "signature": "f0e10c83bc579fc8"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Replace the dense all-pairs soft conditional entropy with a minibatch/sampled-pair or sparse-prefix estimator whose memory and compute are bounded by the configured edge/sample budget, or otherwise explicitly bound batch size and validate the cost on the real trainer smoke before admission. Preserve gradients through the curved soft assignments.",
+          "detail": "The added balance term constructs pairwise B-by-B prefix affinities for each preceding level and performs affinity-by-probability products, making its compute and retained autograd graph O(B^2 K), not the stated sparse-edge O(B*degree*D) cost. With the configured per-rank batch of 1024, each affinity is 1,048,576 elements, and multiple levels/gradient intermediates are retained. This is a major unaccounted training-time and GPU-memory burden relative to the proposed cost budget; the stated 5-15% overhead is not supported by this implementation. The source smoke uses only B=12 and cannot expose this at trainer batch size.",
+          "location": "results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:253-289,429-432",
+          "reproduction": "Call _soft_conditional_entropy with a 1024-row batch on the configured GPU and profile peak allocated memory and step time; compare against the trainer with this term disabled. The routine explicitly creates torch.ones((len(embeddings), len(embeddings))) and multiplies pairwise affinities at train_rqvae.py:270-279.",
+          "severity": "blocking",
+          "verifier": "verify_branching-curvature-budget_r9_1"
+        }
+      ],
+      "idea_id": "branching-curvature-budget",
+      "revision": 9,
+      "signature": "fdce81965cd0a8e7"
     }
   ],
   "review_bundles": {
@@ -24699,9 +24746,9 @@
   "revision_capped": [
     {
       "idea_id": "branching-curvature-budget",
-      "reason": "the verifiers still reject the implementation after 8 repair rounds, which is the cap",
-      "revision": 8,
-      "signature": "f0e10c83bc579fc8"
+      "reason": "the verifiers still reject the implementation after 9 repair rounds, which is the cap",
+      "revision": 9,
+      "signature": "fdce81965cd0a8e7"
     }
   ],
   "round_id": "round_20261026_015406_723",
@@ -25450,7 +25497,7 @@
   "stage2_jobs": [],
   "stage3_jobs": [],
   "step": "stage2",
-  "updated_at": 1792944086.7345812,
+  "updated_at": 1792946924.297933,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261026_015406_723.log",
   "worker_pid": 3525838,

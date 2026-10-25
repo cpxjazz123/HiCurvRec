@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:300-321 -> results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/model.py:26-30 -> results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:292-337 | Static path inspection: confirmed training-only directed adjacent-event counts and corrected/normalized top-16 weights are constructed from train_frame; per-item successor embeddings and weights are passed into the actual model forward; level-0 assignment uses Poincare-ball distances both from item to prototype and from each successor to prototype, with the weighted successor-geodesic term added to the same assignment costs before argmin.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The behaviour signal and curved operation meet in one level-0 cost/assignment pathway; T2/T3 remain the Euclidean residual levels and collision extension follows afterward.
+FINDING REPRODUCTION: Inspect train_rqvae.py:300-321, 387-391 and layers.py:294-345. No trainer execution was attempted.
+FINDING CORRECTION: None.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:296-345 | Static differentiability and switch-path inspection: the coupled distances feed costs, probabilities, and the hard argmin; the soft expected-cost term is added to quant_loss, and the straight-through quantized result continues through reconstruction. The behaviour and Euclidean switches explicitly remove the successor term or replace both distance computations.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Code inspection shows differentiable dependencies from the coupled cost to the encoder and trainable first-level codebook, plus a nonzero soft-assignment cost term; behavior-off and Euclidean paths alter those costs. No dead computed term or evident float32 overflow/NaN hazard was found. Runtime finite-gradient proof is not claimed; the supplied MCP smoke is the runtime proof before a full run.
+FINDING REPRODUCTION: Compare layers.py:303-312 with 314-337, and 338-345. Setting t1_behavior_on false skips the successor addition; setting t1_euclidean true uses Euclidean cdist for the item and successor costs. These switches are source-inspected, not executed here.
+FINDING CORRECTION: None.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:40-69, 279-331, 461-544 | Static entry-point and path audit: traced root resolution, frozen embedding/parquet inputs, target-ID validation, export, and launcher branches, including GENREC_SINGLE_GPU.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The repository root is found by the .git plus stage2_RQ-VAE marker (lines 42-61); inputs are the frozen sentence_t5.npy and stage0 train.parquet (63-65). Output paths are confined to results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse (60-69), the promoted candidate directory. SID rows are emitted in embedding/item-ID order by enumerate (490-507), with shape/uniqueness checks. Launcher uses four-card torchrun by default and returns to direct main execution when GENREC_SINGLE_GPU=1 (516-544). No baseline/other-candidate/out-of-repository write path found. Execution was not performed.
+FINDING REPRODUCTION: Inspect train_rqvae.py:42-69 for path derivation; 293-321 for the input and training-only behaviour data; 483-509 for checkpoint/SID export and indexing; 516-544 for launcher branches.
+FINDING CORRECTION: None.
