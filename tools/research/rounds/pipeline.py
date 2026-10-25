@@ -161,8 +161,9 @@ def _source_digest(tree: Path) -> str:
     """The digest of the tree's source files, for the provenance record."""
     import hashlib
     digest = hashlib.sha256()
-    for path in sorted(Path(tree).rglob("*.py")):
-        if "__pycache__" in path.parts:
+    tree = Path(tree)
+    for path in sorted(tree.rglob("*.py")):
+        if "__pycache__" in path.relative_to(tree).parts:
             continue
         digest.update(str(path.relative_to(tree)).encode("utf-8"))
         digest.update(b"\0")

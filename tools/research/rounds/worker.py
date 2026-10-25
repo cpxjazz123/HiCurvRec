@@ -176,6 +176,14 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
                       / "trees" / round_id)
         for idea in pipeline_module.selected_ideas(state):
             tree = trees_root / idea["idea_id"]
+            if any(record["idea_id"] == idea["idea_id"]
+                   for record in state.get("implementations", [])):
+                continue
+            # The record exists before the agent runs, so a failure of the
+            # agent is recorded against the candidate instead of losing it.
+            state.setdefault("implementations", []).append(
+                pipeline_module.implementation_record(idea, {}, tree))
+            pipeline_module.save_state(directory, state)
             try:
                 report = run_implementation(agent_root, idea, tree)
             except baseline_module.BaselineError as exc:
@@ -191,8 +199,9 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
                     state, idea["idea_id"], "implementation failed: " + str(exc))
                 pipeline_module.save_state(directory, state)
                 continue
-            record = pipeline_module.implementation_record(idea, report, tree)
-            state.setdefault("implementations", []).append(record)
+            record = [item for item in state["implementations"]
+                      if item["idea_id"] == idea["idea_id"]][0]
+            record.update(pipeline_module.implementation_record(idea, report, tree))
             # The candidate must write only into its own result directory: a
             # candidate that would overwrite the baseline or a sibling is
             # refused before it can train.
