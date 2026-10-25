@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/train_rqvae.py:262-289 -> model/layers.py:115-144, 153-168, 321-340 | Traced construction of directed adjacent history-item -> target counts from TRAIN_FILE, smoothed successor direction/confidence, batch ID lookup and behavior handoff through RQVAE/RQLayer to first-stage assignment. The score maps latent and codewords using exp0, computes Poincare distance and a bounded boundary potential together, then uses their combined score for argmin. Reviewed smoke_test.py:26-38 for intended behavior-/geometry-off comparisons; no runtime execution claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The transition signal and curved operation meet in one assignment pathway; residual levels remain baseline, as specified.
+FINDING REPRODUCTION: Static trace: train_rqvae.py:267-289 creates the statistics exclusively from TRAIN_FILE, lines 345-349 selects them by training item IDs, model/model.py:26-30 forwards them, and layers.py:154-168 consumes the coupled score for first-level assignment.
+FINDING CORRECTION: None required.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/model/layers.py:115-144, 153-181, 321-340 | Source-level forward/backward trace: the bounded Poincare/Busemann score selects an index; selected code embeddings feed quantization loss and the straight-through output, allowing codebook and encoder gradients. The smoke test at smoke_test.py:13-23 specifies finite loss and gradient assertions, and lines 26-38 check differing curved, geometry-off and behavior-off computations. Runtime smoke was not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability or float32 numerical defect found. Geometry uses fixed c=0.5, projected points, clamped denominators, and a potential clipped to [-20,20]. The term affects the discrete assignment; its selected code changes the ordinary differentiable quantization/straight-through path. As with standard hard VQ, the argmin itself is not differentiable, but it is not a dead term.
+FINDING REPRODUCTION: Inspect layers.py:129-144 for the curved score and safeguards, lines 166-181 for assignment, codebook loss and straight-through output; inspect smoke_test.py:17-23 and 29-38 for the intended gradient and ablation checks. No PyTorch runtime execution was performed.
+FINDING CORRECTION: None required.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/train_rqvae.py:40-67, 233-290, 417-465, 468-496 | Static integration trace of repository-root/result resolution, frozen stage1 embedding and stage0 training parquet inputs, training-only statistics, final all-item token export and unique SID extension; reviewed top-level launcher and SINGLE_GPU_ENV branch. smoke_test.py:5-9 checks expected promoted result path. Trainer/runtime and distributed launch were not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Result path resolves to results/stage2_RQ-VAE/TIGER_transition_busemann_gate/, the intended promoted candidate directory. Export enumerates item IDs in embedding-row order, writes integer SID arrays plus string-keyed JSON, and extends collisions to unique rows. The launcher returns to direct main execution when GENREC_SINGLE_GPU is set; otherwise it launches torchrun, and torchrun children bypass relaunch.
+FINDING REPRODUCTION: Inspect train_rqvae.py:49-67 for root/data/output paths; lines 247-271 for frozen inputs and train-only transition construction; lines 445-461 for export/indexing; lines 470-496 for launcher and single-card branch. This is source inspection, not an executed trainer/distributed run.
+FINDING CORRECTION: None required.
