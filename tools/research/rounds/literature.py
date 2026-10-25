@@ -215,7 +215,14 @@ def run_literature(idea: dict, *, cache_dir: Path, budget_seconds: float = 60.0)
     outcomes = []
     status = STATUS_OK
     for query in queries:
-        outcome = _fetch(query, cache_dir=Path(cache_dir))
+        try:
+            outcome = _fetch(query, cache_dir=Path(cache_dir))
+        except Exception as exc:                            # noqa: BLE001
+            # A retrieval failure is recorded, never raised: the pass must not
+            # take the round down with it.
+            outcome = {"status": STATUS_NOT_CHECKED, "query": query,
+                       "reason": type(exc).__name__ + ": " + str(exc)[:180],
+                       "source": "openalex", "results": []}
         outcomes.append({"query": query, "status": outcome.get("status"),
                          "source": outcome.get("source"),
                          "results": len(outcome.get("results", [])),

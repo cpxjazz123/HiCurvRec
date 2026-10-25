@@ -135,6 +135,50 @@ def _probe_digest(payload: dict) -> str:
                                      default=str).encode("utf-8")).hexdigest()
 
 
+def _write_probe_artifacts(directory: Path, identifier: str, outcome: dict,
+                           bundle: dict) -> None:
+    """Store the probe, the literature, the math checks and the bundle."""
+    from ..core.evidence import atomic_json
+
+    target = Path(directory) / "probes" / identifier
+    target.mkdir(parents=True, exist_ok=True)
+    atomic_json(target / "probe.json", outcome.get("probe") or {})
+    atomic_json(target / "literature.json", outcome.get("literature") or {})
+    atomic_json(target / "math_checks.json", outcome.get("math") or {})
+    atomic_json(target / "evidence_bundle.json", bundle or {})
+
+
+def _probe_gaps(outcome: dict) -> list:
+    """What the probe could not establish, as the proposal author must answer it."""
+    gaps = []
+    probe = outcome.get("probe") or {}
+    for name, value in (probe.get("metrics") or {}).items():
+        if isinstance(value, dict) and value.get("status") not in ("OK",):
+            gaps.append(name + ": " + str(value.get("reason") or value.get("status")))
+    math_report = outcome.get("math") or {}
+    for check in math_report.get("checks", []):
+        if check.get("status") in ("FAIL", "INCONCLUSIVE"):
+            gaps.append("math " + str(check.get("check")) + ": " + str(check.get("detail"))[:160])
+    literature = outcome.get("literature") or {}
+    if literature.get("status") != "OK":
+        gaps.append("literature: " + str(literature.get("status")))
+    return gaps
+
+
+def run_evidence_revision(root: Path, idea: dict, gaps: list, revision: int) -> dict:
+    """One bounded, evidence-driven revision of a proposal.
+
+    The author answers the specific gaps the probe found; the proposal hash
+    changes and only the affected probes are run again.
+    """
+    prompt = agent_contracts.EVIDENCE_REVISION_PROMPT.format(
+        gaps="\n".join("- " + gap for gap in gaps),
+        proposal=plaintext.render_idea(idea))
+    return _run_agent(root, "evidence_revision_" + idea["idea_id"] + "_r" + str(revision),
+                      prompt, "revision.txt", plaintext.parse_evidence_revision,
+                      role="ideate")
+
+
 def phase_probe(root: Path, round_id: str, *, log=print) -> dict:
     """Run the evidence probe of every proposal and freeze the bundles."""
     directory = pipeline_module.find_round_directory(root, round_id)
@@ -159,6 +203,46 @@ def phase_probe(root: Path, round_id: str, *, log=print) -> dict:
         "math": outcome.get("math")}
         for identifier, outcome in outcomes.items()}
     state["evidence_bundles"] = bundles
+    for identifier, bundle in bundles.items():
+        _write_probe_artifacts(directory, identifier, outcomes.get(identifier, {}), bundle)
+    # One bounded evidence-driven revision per proposal, then the affected probes
+    # run again. A revision can lower a score as well: it is evidence, not a
+    # promotion.
+    revisions = []
+    for idea in list(ideas):
+        identifier = idea["idea_id"]
+        gaps = _probe_gaps(outcomes.get(identifier, {}))
+        if not gaps:
+            continue
+        try:
+            answer = run_evidence_revision(directory, idea, gaps, 0)
+        except Exception as exc:                            # noqa: BLE001
+            pipeline_module.record_event(state, "evidence_revision_failed",
+                                         idea_id=identifier, error=str(exc)[:200])
+            continue
+        updated = dict(idea)
+        updated["proposal_revision"] = 1
+        updated["evidence_revision"] = answer
+        state["ideas"] = [updated if entry["idea_id"] == identifier else entry
+                          for entry in state["ideas"]]
+        revisions.append({"idea_id": identifier, "gaps": gaps,
+                          "revision": answer.get("revision", "")[:200]})
+        # Only the affected probes run again, within the same budget.
+        refreshed = run_probes(directory, [updated], repo=Path(root))
+        outcomes[identifier] = refreshed[identifier]
+        base = evidence_module.build_bundle(updated, root=Path(root))
+        bundles[identifier] = evidence_module.merge_probe_evidence(
+            base, probe=refreshed[identifier].get("probe"),
+            literature=refreshed[identifier].get("literature"),
+            math_report=refreshed[identifier].get("math"))
+        _write_probe_artifacts(directory, identifier, refreshed[identifier],
+                               bundles[identifier])
+    state["evidence_bundles"] = bundles
+    state["probe_results"] = {identifier: {
+        "probe": outcome.get("probe"), "literature": outcome.get("literature"),
+        "math": outcome.get("math")}
+        for identifier, outcome in outcomes.items()}
+    state["evidence_revisions"] = revisions
     state["step"] = "scoring"
     pipeline_module.record_event(state, "probe_complete", ideas=len(ideas))
     pipeline_module.save_state(directory, state)
