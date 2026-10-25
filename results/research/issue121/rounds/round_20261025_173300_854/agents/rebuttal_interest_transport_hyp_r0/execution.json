@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "rebuttal_interest_transport_hyp_r0",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792910443.113281,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "rebuttal.txt",
+  "output_sha256": "92fc671241efd2af132519e3a3cb27cce45e8dda9da7171d2e4c9aa57487b8a8",
+  "pid": 1978386,
+  "project_marker": ".git",
+  "prompt_sha256": "43ea22bd605729fca5c4fbf505c3ef78b7e807d861232f7740ac4c848b1641a9",
+  "session_sha256": "118e8281ade35a2118b007e4d0093adbc8c22e613dd1ea313f36ad43d7ad9b06",
+  "stderr_present": false,
+  "task_id": "rebuttal_interest_transport_hyp_r0",
+  "timed_out": false,
+  "verified": true
+}

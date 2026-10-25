@@ -22,6 +22,7 @@ from . import baseline as baseline_module
 from . import evidence as evidence_module
 from . import ideas as ideas_module
 from . import plaintext
+from . import scoring as scoring_module
 from . import pipeline as pipeline_module
 
 IDEA_MIN = 1
@@ -125,8 +126,7 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None) -> dict:
             rubric=_rubric_text()) +
             "\n\nThe proposals, all of them:\n" + payload +
             "\n\nThe frozen evidence bundle:\n" + evidence_text)
-        report = _run_agent(root, task_id, prompt, "scores.txt",
-                            plaintext.parse_scores, role="score")
+        report = _review_with_retry(root, task_id, prompt)
         report.setdefault("scorer", task_id)
         report["rubric_version"] = scoring_module.RUBRIC["version"]
         report["rubric_sha256"] = scoring_module.RUBRIC["sha256"]
@@ -190,6 +190,35 @@ def _one_bounded_revision(directory: Path, agent_root: Path, repo: Path, state: 
         outcome = run_scoring(agent_root, state["ideas"], repo=repo)
         return state, outcome["reports"], outcome
     return state, reports, outcome
+
+
+def _review_with_retry(root: Path, task_id: str, prompt: str) -> dict:
+    """One review, and one bounded retry if its schema is broken.
+
+    The rubric schema is strict on purpose: a renamed, unknown or missing field
+    is an error, not a partial average. A reviewer that breaks it is told what
+    was wrong and asked once more, with a fresh workspace, so a stale answer can
+    never be reused.
+    """
+    attempt = 0
+    last_error = None
+    while attempt < 2:
+        suffix = "" if attempt == 0 else (
+            "\n\nYour previous answer was rejected by the schema: " + str(last_error) +
+            "\nAnswer again, with one complete block per proposal (SCORE with all seven "
+            "dimensions, SCOPE, EVIDENCE, OBJECTION, RATIONALE).")
+        name = "scores.txt" if attempt == 0 else "scores_retry.txt"
+        run_id = task_id if attempt == 0 else task_id + "_retry1"
+        try:
+            report = _run_agent(root, run_id, prompt + suffix, name,
+                                plaintext.parse_scores, role="score")
+            scoring_module.validate_report(report, scorer=task_id)
+            return report
+        except (scoring_module.ScoreError, pipeline_module.RoundError) as exc:
+            last_error = exc
+            attempt += 1
+    raise pipeline_module.RoundError("reviewer " + task_id + " broke the rubric schema "
+                                     "twice: " + str(last_error))
 
 
 def _finalist_ids(ideas: list, reports: list) -> list:
