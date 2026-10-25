@@ -2904,6 +2904,19 @@ def tool_research_round_collect(round_id: str) -> dict:
             stage3["started"] = bool(result.get("started"))
             if not result.get("started"):
                 stage3["refused"] = result.get("refused")
+    # A Stage 3 run that finished since the last collect is recorded now: the
+    # result of a completed chain must reach the round's registry.
+    for job in list(queue.jobs["jobs"]):
+        if job["kind"] != "stage3" or job["status"] not in ("pending", "running"):
+            continue
+        sid_path = job.get("sid_path")
+        if not sid_path:
+            continue
+        status = tool_stage3_status(str(sid_path))
+        result = status.get("test_result") or status.get("result")
+        if not result:
+            continue
+        queue.complete_stage3(job["job_id"], result)
     pipeline_module_state = state
     pipeline_module_state["stage2_jobs"] = queue.report()["jobs"]
     pipeline_module_state["stage3_jobs"] = [job for job in queue.report()["jobs"]
