@@ -48,5 +48,15 @@
     "ndcg_absolute_difference": 0.0002978095615350264,
     "status": "CONSISTENT",
     "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+  },
+  "tangent_successor_residual": {
+    "reported": 0.05424885530736956,
+    "reproduced": 0.05499747558279218,
+    "absolute_difference": 0.0007486202754226207,
+    "reported_ndcg@10": 0.0295021872542991,
+    "reproduced_ndcg@10": 0.02991870500655946,
+    "ndcg_absolute_difference": 0.0004165177522603633,
+    "status": "CONSISTENT",
+    "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
   }
 }

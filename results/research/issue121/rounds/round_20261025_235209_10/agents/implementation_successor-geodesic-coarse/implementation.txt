@@ -1,0 +1,8 @@
+TREE: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse
+CHANGED FILE: train_rqvae.py
+DEVIATION: The directed successor graph, Poincare prototypes, coupled assignment objective, and small K1=32 quantizer were not implemented | I could not complete the required model/training-path integration and do not represent this baseline-only adjustment as the proposed idea.
+DEVIATION: No complete trainer smoke test or valid SID export was achieved | the attempted minimal forward/backward smoke command exceeded its 120-second timeout.
+ASSUMPTION: GENREC_SINGLE_GPU=1 should bypass the automatic four-rank launcher and execute the existing single-process training path, preserving the baseline model and training settings.
+SMOKE COMMAND: GENREC_SINGLE_GPU=1 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -c '... minimal RQVAE forward/backward and SID shape check ...'
+SMOKE RESULT: Timed out after 120 seconds; no PASS output, trainer execution, or SID export was verified.
+NOTES: Only changed ARM_NAME to TIGER_successor-geodesic-coarse and added a GENREC_SINGLE_GPU=1 launcher bypass. The required computational coupling is absent; this tree is not a complete Stage 2 candidate and should not be promoted or evaluated as implementing the idea. I did not intentionally write to the baseline tree or its result directory.

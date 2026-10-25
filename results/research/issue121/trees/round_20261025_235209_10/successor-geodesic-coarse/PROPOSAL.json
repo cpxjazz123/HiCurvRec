@@ -1,0 +1,44 @@
+{
+  "ablation_behavior_off": "Set lambda=0 while keeping K1=32, curvature, initialization, optimizer, losses, and all other levels unchanged; this is curved item-only T1 assignment.",
+  "ablation_both_on": "Use training-only q_ij and the Poincare curved C_ik above; evaluate with frozen Stage3 protocol.",
+  "ablation_geometry_off": "Replace exp/log and d_c everywhere in C_ik with identity and squared Euclidean distance, preserving the same q_ij, lambda, K1, data, and optimization schedule.",
+  "also_proposed_by": [
+    "ideation_1"
+  ],
+  "behavior_computation": "Sort each training split's events by user and timestamp when available; count adjacent (source,target) pairs; retain top 16 per source with weight c_ij/sqrt((c_i+1)(c_j+1)), then normalize. The split is Stage2 training parquet only.",
+  "behavior_signal": "Directed adjacent-item successor transitions, popularity-corrected.",
+  "cost_estimate": "One-time graph construction O(E log 16) time and O(24556*16) storage. At frozen scale each step has B≈1023 items, 32 prototypes, 16 neighbors: ~0.52M pairwise curved-distance evaluations, versus ~32.8k item-prototype distances (about 16x first-level distance work); batched vectorization keeps this modest. 24 steps/epoch × 3000 epochs = 72,000 updates; no extra updates, estimated step wall time +5–15% overall (measure). Four-card DDP retains the same 24 steps/epoch.",
+  "coupling_equation": "C_ik=d_c(x_i,p_k)^2 + lambda*sum_{j in S_i}q_ij*d_c(p_k,x_j)^2; a_ik=softmax_k(-C_ik/tau), k_i=argmin_k C_ik.",
+  "coupling_path": "Each source's training successor distribution weights the prototype-to-successor geodesic term inside the same per-item T1 assignment cost that also measures the item-to-prototype geodesic; altering either q or d_c changes T1 assignments and gradients.",
+  "duplicate_count": 1,
+  "evidence_revision": {
+    "answers": "answers the gaps about row-scalar invariance and whether codeword-dependent weighting moves assignments",
+    "evidence_note": "Positive row scalar left every arg-min unchanged (True); codeword-dependent weight moved 0 top-1 assignments (False)",
+    "revision": "Withdraw the claim that the proposed successor-geodesic objective is evidenced to move first-level assignments or improve prefix reachability; the measured probe found no top-1 assignments moved under a codeword-dependent weight, so evidence does not support the claimed assignment effect",
+    "withdrawn": "The claim that this proposal can move assignments and thereby make likely successors more reachable through an early beam prefix"
+  },
+  "falsifiable_hypothesis": "Corrected successor neighborhoods have locally coherent coarse destinations, so both-on improves depth-1/2 gold-prefix survival and width-20 inclusion enough to lift test_R@10 above 0.065. Keep only if the change appears on canonical train/valid pair ranking and frozen Stage3 evaluation, not merely reconstruction loss.",
+  "fingerprint": "55d3464df7d4a32b",
+  "hyperbolic_location": "First-level training assignment score and its codebook/commitment gradients; only T1 uses this operator, preserving fixed T2/T3 RQ and deterministic T4.",
+  "hyperbolic_operator": "Poincare exp map and squared distance d_c(x,y)=2/sqrt(c)*atanh(sqrt(c)*||(-x)⊕_c y||), curvature -c with c=1 fixed initially.",
+  "idea_id": "successor-geodesic-coarse",
+  "key_change": "Precompute a compact successor-neighbor list from training events. Optimize 32 Poincare prototypes and assign each item to the prototype minimizing its embedding distance plus a neighbor-consensus geodesic term; residual quantization at T2/T3 supplies the remaining semantic detail.",
+  "leakage_boundary": "Build the table before Stage2 optimization using only Stage2 training events; do not load/merge validation or test histories. Item embeddings and IDs are frozen as in baseline; unseen-to-training items receive an empty S_i. SID export applies the learned encoder/prototypes only, with no interaction-dependent lookup.",
+  "motivation": "A target that follows an anchor in training histories should remain reachable through an early beam prefix, while the first level must avoid scattering likely successors across a large alphabet. Make the coarse split follow directed successor neighborhoods, reserving T2/T3 for item discrimination and T4 for collision extension.",
+  "novelty": "Unlike adding a transition bias to an otherwise unchanged Euclidean quantizer or changing codebook size alone, trainable first-level prototypes are positioned by a directed, popularity-corrected successor objective in the Poincare ball, and assignment uses that same curved objective. Use K1=32 (not a four-level repartition); keep total SID width and remaining-level codebook sizes fixed.",
+  "observables": "Report L1 Hard ER on the canonical 52,855 pairs with ten fixed negatives; width-20 gold-prefix survival at depths 1,2,3,4; teacher-forced T4 NLL; and frozen Stage3 test_R@10. Predicted both-on vs behavior-off and geometry-off: L1 ER should rise modestly above its 1-code trivial baseline if 32 codes are occupied (but remain interpreted with the fixed alphabet); depth-1 survival may be lower than a single-code arm, while depth-2/3 survival and complete-path survival should rise; T4 NLL should stay near baseline/low and should not carry the gain; target test_R@10 >0.065.",
+  "origin_agent": "ideation_1",
+  "proposal_revision": 1,
+  "risks": [
+    "High branching or sparse histories make successor consensus noisy; geometric prototypes can collapse or overfit frequent hubs; the latent embedding may not align with item transitions. lambda/tau require a predeclared train/valid-only choice, not test tuning."
+  ],
+  "safeguards": "Project ball vectors to norm <=(1-1e-5)/sqrt(c); clamp atanh argument to 1-1e-6; compute distances/softmax in FP32; clamp tau>=0.03 and gradient norm; add epsilon to counts and normalizers; empty neighbor list means zero neighbor term; deterministic tie-breaking; monitor prototype occupancy and NaN/Inf; collision token must not depend on validation/test.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "q_ij=normalize_j[c_ij/sqrt((c_i+1)(c_j+1))]; x_i=exp^c_0(W e_i); C_ik=d_c(x_i,p_k)^2+lambda*sum_j q_ij*d_c(p_k,x_j)^2; k_i=argmin_k C_ik. Use softmax(-C/tau) for gradients and straight-through hard assignment; optimize baseline RQ-VAE reconstruction + commitment/codebook losses. Export [k_i,T2_i,T3_i,T4_collision_i].",
+  "spec_inputs_outputs": "Inputs: frozen Stage1 embedding e_i; train-only sparse successor lists/weights; 32 trainable prototypes; baseline encoder/decoder and fixed RQ levels. Output per item: four integer SID tokens, with T1=k_i and T4 determined only by collision resolution.",
+  "specification": {
+    "text": "For each item i, make S_i the top 16 successors by count c_ij/sqrt((c_i+1)(c_j+1)), over adjacent events of each training user only. Let x_i=exp^c_0(W e_i), and prototypes p_k lie in the curvature -c ball. For a minibatch, soft assignment a_ik=softmax_k(-[d_c(x_i,p_k)^2 + lambda*sum_{j in S_i} q_ij d_c(p_k,x_j)^2]/tau), with q normalized popularity-corrected weights. Train via soft-to-hard codebook/commitment loss and straight-through hard argmin; export hard k as T1. Re-encode residuals and use the fixed baseline Euclidean RQ levels at T2/T3; force T4 to the deterministic collision token. Clip gradients and retain the baseline reconstruction objective."
+  },
+  "title": "Successor-geodesic coarse partition with a small first-level alphabet"
+}

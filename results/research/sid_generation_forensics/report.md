@@ -19,6 +19,7 @@ Read-only forensic comparison of four Stage3 arms (plus the historical resample 
 | l1_only | 0.0614042724 | 0.062327 | 9.23e-04 | CONSISTENT | single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding |
 | resample | 0.0636327234 | 0.063633 | 1.09e-11 | EXACT | single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding |
 | successor_entropy | 0.05062762234718571 | 0.051220 | 5.92e-04 | CONSISTENT | single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding |
+| tangent_successor_residual | 0.05424885530736956 | 0.054997 | 7.49e-04 | CONSISTENT | single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding |
 
 The single-process pass is bit-identical to the frozen evaluator at the same batch shape (verified on `l1_br`: 0.046710423231602224 both ways), and the four-rank sharded protocol reproduces the same number, so a residual against the original run is a bf16 batch-order effect, not an implementation gap. `l1_br` is the exception: no protocol variant (one or four ranks, bf16 or fp32, batch 256/512/1024) reaches its recorded 0.040687, so that number is reported but never used as a reference.
 
@@ -31,6 +32,7 @@ The single-process pass is bit-identical to the frozen evaluator at the same bat
 | l1_br | 1 | 1 | 1 | 0.000 | 1.000 | 1.0000 | 1.00000 | 25354 |
 | successor_entropy | 256 | 3952 | 13702 | 5.457 | 1.280 | 0.1208 | 0.09443 | 861 |
 | resample | 241 | 16145 | 23695 | 7.826 | 16.390 | 0.0794 | 0.00485 | 777 |
+| tangent_successor_residual | None | None | None | 0.000 | undefined | 0.0000 | 0.00000 | None |
 
 The single-code arms have exactly one L1 value, so *every* pair shares it: P(pos)=P(neg)=1 and ER=1 by construction. That is what the earlier “L1 HARD ≈ 1” observation measured; it is a property of the SID table, not of a model.
 
@@ -43,6 +45,7 @@ The single-code arms have exactly one L1 value, so *every* pair shares it: P(pos
 | l1_br | 0.00 | 0.00 | 0.00 | 9.03 | 0.00 | 1.000 | 1.000 | 1.000 | 0.008 |
 | successor_entropy | 3.45 | 2.33 | 2.29 | 0.98 | 0.00 | 0.262 | 0.338 | 0.412 | 0.680 |
 | resample | 4.55 | 3.82 | 0.73 | 0.05 | 0.00 | 0.098 | 0.152 | 0.794 | 0.977 |
+| tangent_successor_residual | 4.00 | 3.17 | 1.67 | 0.29 | 0.00 | 0.121 | 0.187 | 0.527 | 0.885 |
 
 ## Layer D — real width-20 beam survival and postprocessing
 
@@ -53,6 +56,7 @@ The single-code arms have exactly one L1 value, so *every* pair shares it: P(pos
 | l1_br | 0.04671 | 0.06778 | 1.000 | 1.000 | 1.000 | 0.068 | 0.932 | 0.047 | 0.021 |
 | successor_entropy | 0.05122 | 0.06877 | 0.735 | 0.400 | 0.133 | 0.069 | 0.931 | 0.051 | 0.018 |
 | resample | 0.06363 | 0.08837 | 0.497 | 0.122 | 0.091 | 0.088 | 0.912 | 0.064 | 0.025 |
+| tangent_successor_residual | 0.05500 | 0.07307 | 0.643 | 0.180 | 0.090 | 0.073 | 0.927 | 0.055 | 0.018 |
 
 ## Layer D2 — where each example is lost
 
@@ -63,6 +67,7 @@ The single-code arms have exactly one L1 value, so *every* pair shares it: P(pos
 | l1_br | 2683 | 0.0467 | 0 | 1210 | 0 | 0 | 53546 |
 | successor_entropy | 2942 | 0.0512 | 0 | 1008 | 0 | 0 | 53489 |
 | resample | 3655 | 0.0636 | 0 | 1421 | 0 | 0 | 52363 |
+| tangent_successor_residual | 3159 | 0.0550 | 0 | 1038 | 0 | 0 | 53242 |
 
 The binding constraint is the last column: for nine examples in ten the target SID never appears among the twenty beams, so duplicate removal, seen filtering and the fallback fill cannot move Recall materially. Those three mechanisms are replayed exactly, and their contribution is at most the few examples in the middle columns.
 
@@ -94,6 +99,12 @@ The binding constraint is the last column: for nine examples in ten the target S
 | successor_entropy | gold_nll_T4 | 0.98303 | 1.22575 | -0.24272 | - |
 | successor_entropy | recall@10 | 0.05122 | 0.06207 | -0.01085 | [-0.01267, -0.00914] |
 | successor_entropy | raw_beam_coverage | 0.06877 | 0.08473 | -0.01596 | - |
+| tangent_successor_residual | gold_nll_T1 | 3.99851 | 0.00009 | 3.99842 | - |
+| tangent_successor_residual | gold_nll_T2 | 3.16678 | 3.22015 | -0.05338 | - |
+| tangent_successor_residual | gold_nll_T3 | 1.67172 | 4.35771 | -2.68599 | - |
+| tangent_successor_residual | gold_nll_T4 | 0.29027 | 1.22575 | -0.93548 | - |
+| tangent_successor_residual | recall@10 | 0.05500 | 0.06207 | -0.00707 | [-0.00888, -0.00524] |
+| tangent_successor_residual | raw_beam_coverage | 0.07307 | 0.08473 | -0.01166 | - |
 
 ## Hypotheses
 

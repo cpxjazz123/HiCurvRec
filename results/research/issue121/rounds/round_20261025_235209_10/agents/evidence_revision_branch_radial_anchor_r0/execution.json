@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "evidence_revision_branch_radial_anchor_r0",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792933250.9879472,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "revision.txt",
+  "output_sha256": "13d0d5362814e85b2847766cecab2cefbd292319e49514000ac32d9fe550a045",
+  "pid": 3404263,
+  "project_marker": ".git",
+  "prompt_sha256": "122661b23cf73ff4f1219f4bfbe65f3f0ed907690574524a087945305eaf5892",
+  "session_sha256": "7b643efa6ce2db0fd74bac010fed222bbf3fb25d43b95a6be3eb6e96a4d53973",
+  "stderr_present": false,
+  "task_id": "evidence_revision_branch_radial_anchor_r0",
+  "timed_out": false,
+  "verified": true
+}
