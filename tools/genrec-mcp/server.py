@@ -2389,6 +2389,11 @@ def handle(message: dict) -> None:
 
 
 def main() -> None:
+    # The tools import the research package, and the server may be started from
+    # any directory: the repository root has to be importable before the first
+    # request arrives.
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
     for line in sys.stdin:
         line = line.strip()
         if not line:
@@ -2844,7 +2849,8 @@ def tool_research_round_collect(round_id: str) -> dict:
 TOOLS.update({
     "research_round_start": {
         "fn": tool_research_round_start,
-        "args": {"objective": "string", "issue": "string", "run": "boolean"},
+        "args": {"objective": "string, optional", "issue": "string, optional",
+                 "run": "boolean, optional"},
         "description": "Start one multi-agent research round: three independent "
                        "ideation agents, three independent scorers that judge every "
                        "idea, an explicit multi-candidate selection, one isolated "
@@ -2902,7 +2908,7 @@ TOOLS.update({
     },
     "research_round_launch": {
         "fn": tool_research_round_launch,
-        "args": {"round_id": "string", "parallel": "integer"},
+        "args": {"round_id": "string", "parallel": "integer, optional"},
         "description": "Enqueue the verified implementations and start up to "
                        "`parallel` Stage 2 jobs, each pinned to its own GPU.",
     },
