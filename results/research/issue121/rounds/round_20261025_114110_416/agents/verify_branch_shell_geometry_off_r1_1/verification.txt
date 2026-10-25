@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity (ablation-control exception)
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:243-264,329-333,375-376,427-429; model/layers.py:101-123,143-156 | Static inspection of the real training and export calls. This is explicitly the geometry-off control, so the missing curved coupling is intentional: training-only directed transition entropy is computed as per-item branch radii; the trainer passes geometry_on=False, and the layer uses Euclidean distances while retaining the branch-conditioned radial penalty. The model also has a curved branch for comparison, but it is not selected by these trainer calls.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No finding. The control's requested Euclidean geometry-off path is present, and the behaviour signal remains active.
+FINDING REPRODUCTION: Inspect train_rqvae.py:329-333 and model/layers.py:101-123,143-156; no runtime execution was performed.
+FINDING CORRECTION: none
+CHECK: b) trainability and exact switch isolation
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/model/layers.py:101-123,143-158,163-179,310-330; train_rqvae.py:307-313,329-341 | Static trace of quantizer forward/backward and initialization. The ordinary VQ forward has a differentiable selected-distance term (`distances.gather(...).mean()`), while straight-through reconstruction/commitment paths reach encoder and codebook parameters. The included smoke_test.py:17-41 covers finite gradients and assignment comparisons for model calls, but cannot establish the trainer's initialization path because it does not call `init_codebook` with geometry off.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:307-312; model/layers.py:163-179
+FINDING DETAIL: The geometry switch is not off for the whole training computation. Trainer initialization calls `raw_module.init_codebook(...)` without a geometry flag; `VQLayer.init_codebook` then assigns each KMeans center using `_distances(x)` with its default `geometry_on=True` and builds residuals from those curved assignments. Thus the control still uses Poincare geometry in codebook/residual initialization even though epoch training and export pass geometry_on=False. The differentiable training route itself is finite by source inspection (with the runtime smoke appropriately unavailable here), but the requested exact one-switch Euclidean control is not isolated.
+FINDING REPRODUCTION: Trace train_rqvae.py:307-312 into model/layers.py:163-179: KMeans centers are initialized, then `_distances(x)` defaults to curved exp-map/Poincare distance at layers.py:101-110. This occurs before the first geometry_on=False batch call at train_rqvae.py:333.
+FINDING CORRECTION: Thread geometry_on=False through RQVAE.init_codebook, RQLayer.init_codebook, and VQLayer.init_codebook, and use that flag for the assignment used to form initialization residuals; preserve the parent's curved initialization for the both-on arm. Keep all other initialization behavior identical.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:39-59,143-164,223-268,274-300,399-445,448-474 | Static inspection of the real entry point, data loading and ID checks, train/eval/export, and launcher. Execution was not attempted, as specified. The data inputs resolve from the repository root to stage1 `sentence_t5.npy` and frozen stage0 `train.parquet`; output resolves to this arm's `results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off/`. SID export enumerates embedding rows into item IDs, extends collisions, and verifies uniqueness. The launcher tests `GENREC_SINGLE_GPU` at line 450 and otherwise starts torchrun; an existing RANK also bypasses relaunch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The result directory is the required promoted-tree destination, and writes are scoped to it. Runtime trainer/launcher execution was unavailable and is not treated as a defect.
+FINDING REPRODUCTION: Follow the constants at train_rqvae.py:51-60 and export at 399-441; inspect launcher condition at 448-474. Static inspection only.
+FINDING CORRECTION: none

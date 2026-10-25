@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) ABLATION CONTROL: exact named switch off; mechanism otherwise unchanged
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:312-333,376,429 | Static code trace plus comparison with sibling mechanism results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:309-330,373,426. Confirmed geometry_on=False at codebook initialization, training forward, evaluation assignment, and final SID export. In model/layers.py:101-123, this selects matched Euclidean squared distance and Euclidean code radii while retaining the same training-derived radius penalty; behavior_on remains at its default True. The frozen train-only consecutive-transition/entropy computation is unchanged at train_rqvae.py:243-264. Compared the trainer against the parent mechanism: apart from the required geometry switch, candidate-owned output paths and relocatable repository/torchrun paths, the trainer flow and settings are retained.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. This is explicitly the geometry-off ablation, so the intentionally absent curved coupling is not a finding.
+FINDING REPRODUCTION: Trace train_rqvae.py:312-333 and the evaluation/export calls at 376 and 429 into model/layers.py:101-123. Each uses geometry_on=False; behavior_on remains enabled and target radii continue to affect assignment.
+FINDING CORRECTION: None required.
+CHECK: b) ABLATION CONTROL: it still trains; forward/backward and parameter paths are live and finite by code inspection
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/model/layers.py:111-123,134-158,310-330 | Inspected the real training path at train_rqvae.py:329-341. The selected Euclidean distance plus behavior-conditioned radial penalty is differentiable; the gathered selected-distance term is added to the quantization loss, while straight-through reconstruction/commitment paths reach encoder and codebook. smoke_test.py:19-41 specifies finite loss/gradient, optimizer-update, and assignment-change checks, but was not executed. Numerical stability was checked from code: the active Euclidean path uses finite squared-distance operations and finite radius inputs; this ablation does not execute the Poincare operations. The comparisons in smoke_test.py:34-41 check curved/Euclidean and behavior-on/off assignment changes.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No trainability defect found by code inspection. The stated runtime sandbox limitation applies; this review does not claim an executed forward/backward.
+FINDING REPRODUCTION: In the code-defined smoke, model(..., geometry_on=False) feeds RQLayer/VQLayer; the selected distance contributes at layers.py:156 and gradients flow through the VQ losses at 155 and the encoder/decoder reconstruction loss. Run smoke_test.py in the supported PyTorch environment for the specified finite-gradient and assignment assertions.
+FINDING CORRECTION: None required.
+CHECK: c) Integration: real trainer, frozen data path, candidate-owned output, SID export/indexing, and distributed/single-card launcher
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:42-60,143-164,223-275,399-445,448-474 | Static integration trace only. Repository-relative frozen inputs are stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet; training-only transitions are calculated from that train parquet. RESULT_DIR resolves to results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off, with no baseline/other-candidate path or external absolute output. Export enumerates every embedding row as item_id at 436-439; _extend_collisions adds a uniqueness level and checks unique rows at 433-440. Launcher preserves SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at line 39 and bypasses torchrun for that single-card setting at 450-451; otherwise it launches the same script with torchrun at 460-469. The trainer entry point invokes launcher then main at 472-474.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Runtime execution is not claimed.
+FINDING REPRODUCTION: Resolve _repository_root from the trainer path (42-53), trace inputs at 54-55 and outputs at 53, then inspect main/export (223-275,399-445) and launcher branches (448-474). For runtime verification, invoke the trainer in the supported environment with GENREC_SINGLE_GPU=1 for the single-card branch or without it for torchrun.
+FINDING CORRECTION: None required.

@@ -43,7 +43,7 @@ def _repository_root() -> Path:
     """The repository root, found by walking up to the stage2_RQ-VAE marker."""
     here = Path(__file__).resolve()
     for parent in here.parents:
-        if (parent / "stage2_RQ-VAE").is_dir():
+        if (parent / "stage2_RQ-VAE").is_dir() and (parent / "stage1_GeneEmbedding").is_dir() and (parent / ".git").exists():
             return parent
     raise RuntimeError("cannot locate the repository root above " + str(here))
 
@@ -309,7 +309,7 @@ def main() -> None:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     raw_module = model.module if isinstance(model, DDP) else model
     with torch.no_grad():
-        raw_module.init_codebook(train_embeddings.to(device))
+        raw_module.init_codebook(train_embeddings.to(device), geometry_on=False)
     if world_size > 1:
         dist.barrier()
 
@@ -373,8 +373,7 @@ def main() -> None:
             if rank == 0:
                 with torch.no_grad():
                     raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=False, branch_radii=branch_radii.to(device), geometry_on=False)
-                    ).cpu().numpy().astype(np.int64)
+                        all_embeddings.to(device), infer_use_sk=False, branch_radii=branch_radii.to(device), geometry_on=False).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
                 final_collision = collision_v
@@ -427,8 +426,7 @@ def main() -> None:
         try:
             with torch.no_grad():
                 raw_tokens = raw_module.get_indices(
-                    all_embeddings.to(device), infer_use_sk=False, branch_radii=branch_radii.to(device), geometry_on=False)
-                ).cpu().numpy().astype(np.int64)
+                    all_embeddings.to(device), infer_use_sk=False, branch_radii=branch_radii.to(device), geometry_on=False).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:
                 layer._skip_ddp_reduce = False

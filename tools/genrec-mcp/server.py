@@ -2140,10 +2140,14 @@ def round_admission(tree: Path, verification_id: str) -> dict:
                 "refused": "the tree changed after the verifiers saw it" +
                            ("" if Path(record.get("tree", "")).resolve() == Path(tree).resolve()
                             else " (and it is not the reviewed path)")}
-    if not record.get("smoke"):
-        return {"passed": False, "refused": "the implementation recorded no smoke result"}
+    # The implementation agent's own smoke claim is evidence, not the gate: the
+    # Stage 2 start runs the real one-epoch gradient smoke before any full run,
+    # and that is the check that has to pass. A derived control (an ablation)
+    # has no agent claim at all, and it is still admitted to the smoke.
+    smoke_note = "the implementation recorded no smoke of its own; the Stage 2 smoke is the gate"
     return {"passed": True, "round_id": round_id, "idea_id": idea_id,
             "revision": record.get("revision", 0),
+            "smoke_note": smoke_note,
             "source_digest": record.get("source_digest"),
             "verifiers": [verdict.get("verifier") for verdict in record.get("verdicts", [])],
             "smoke": record.get("smoke", {})}

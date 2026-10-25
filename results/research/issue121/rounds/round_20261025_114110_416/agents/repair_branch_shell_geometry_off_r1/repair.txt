@@ -1,0 +1,5 @@
+REPAIR: Geometry-off control used curved distances during codebook/residual initialization | Added a default-preserving geometry_on parameter through RQVAE.init_codebook, RQLayer.init_codebook, and VQLayer.init_codebook; the branch_shell_geometry_off trainer now calls initialization with geometry_on=False, while the default remains True for the both-on arm | Source trace confirms the flag reaches VQLayer._distances for initialization assignments and hence residual construction; the training call continues to use geometry_on=False
+REMAINING ISSUE: The smoke test could not execute because this environment has no PyTorch installation (ModuleNotFoundError: No module named 'torch').
+SMOKE COMMAND: cd /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off && python smoke_test.py
+SMOKE RESULT: Failed before test execution: ModuleNotFoundError: No module named 'torch' (exit code 1).
+NOTES: No changes were made outside the specified implementation tree, except for this requested repair report. No runtime smoke success is claimed.

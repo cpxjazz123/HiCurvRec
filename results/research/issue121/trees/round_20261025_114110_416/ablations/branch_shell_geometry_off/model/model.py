@@ -36,9 +36,9 @@ class RQVAE(nn.Module):
         return tokens
 
     @torch.no_grad()
-    def init_codebook(self, embeddings: torch.Tensor) -> None:
+    def init_codebook(self, embeddings: torch.Tensor, geometry_on: bool = True) -> None:
         encoded = self.encoder(embeddings)
-        self.rq.init_codebook(encoded, embeddings.device)
+        self.rq.init_codebook(encoded, embeddings.device, geometry_on=geometry_on)
 
     def compute_loss(
         self,
