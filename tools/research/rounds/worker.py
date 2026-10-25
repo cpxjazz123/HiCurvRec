@@ -152,117 +152,174 @@ def run_repair(root: Path, idea: dict, tree: Path, findings: list,
                       prompt, "repair.txt", plaintext.parse_repair)
 
 
-def advance(root: Path, round_id: str, *, log=print) -> dict:
-    """Run the agent stages of a round until it waits for Stage 2."""
+def phase_ideation(root: Path, round_id: str, *, log=print) -> dict:
+    """Run the three ideation agents and merge what they proposed."""
     directory = pipeline_module.find_round_directory(root, round_id)
     state = pipeline_module.load_state(directory)
-    # Agent workspaces belong to the round, not to the repository root.
     agent_root = directory
+    if state["step"] != "ideation":
+        return {"phase": "ideation", "ran": False, "step": state["step"],
+                "ideas": len(state.get("ideas", [])),
+                "reason": "the round is no longer in the ideation phase"}
+    answers = run_ideation(agent_root, state.get("objective", ""))
+    state = pipeline_module.apply_ideation(state, answers)
+    pipeline_module.save_state(directory, state)
+    log("ideation: %d ideas" % len(state["ideas"]))
+    return {"phase": "ideation", "ran": True, "step": state["step"],
+            "ideas": len(state["ideas"]),
+            "rejected": len(state.get("ideas_rejected", [])),
+            "duplicates": len(state.get("duplicates", []))}
 
-    if state["step"] == "ideation":
-        answers = run_ideation(agent_root, state.get("objective", ""))
-        state = pipeline_module.apply_ideation(state, answers)
+
+def phase_scoring(root: Path, round_id: str, *, log=print) -> dict:
+    """Run the three scorers over every idea and select the qualified ones."""
+    directory = pipeline_module.find_round_directory(root, round_id)
+    state = pipeline_module.load_state(directory)
+    agent_root = directory
+    if state["step"] != "scoring":
+        return {"phase": "scoring", "ran": False, "step": state["step"],
+                "selected": len((state.get("selection") or {}).get("selected", [])),
+                "reason": "the round is no longer in the scoring phase"}
+    reports = run_scoring(agent_root, state["ideas"])
+    state = pipeline_module.apply_scoring(state, reports)
+    pipeline_module.save_state(directory, state)
+    selection = state.get("selection") or {}
+    log("selection: %d selected" % len(selection.get("selected", [])))
+    return {"phase": "scoring", "ran": True, "step": state["step"],
+            "scorers": len(reports),
+            "selected": [entry["idea_id"] for entry in selection.get("selected", [])],
+            "rejected": [entry["idea_id"] for entry in selection.get("rejected", [])]}
+
+
+def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
+    """Build one isolated candidate per selected idea, each from the baseline."""
+    directory = pipeline_module.find_round_directory(root, round_id)
+    state = pipeline_module.load_state(directory)
+    agent_root = directory
+    if state["step"] != "implementation":
+        return {"phase": "implementation", "ran": False, "step": state["step"],
+                "implementations": len(state.get("implementations", [])),
+                "reason": "the round is no longer in the implementation phase"}
+    trees_root = (Path(root) / "results" / "research" / state.get("issue", "issue120")
+                  / "trees" / round_id)
+    for idea in pipeline_module.selected_ideas(state):
+        tree = trees_root / idea["idea_id"]
+        if any(record["idea_id"] == idea["idea_id"]
+               for record in state.get("implementations", [])):
+            continue
+        # The record exists before the agent runs, so a failure of the
+        # agent is recorded against the candidate instead of losing it.
+        state.setdefault("implementations", []).append(
+            pipeline_module.implementation_record(idea, {}, tree))
         pipeline_module.save_state(directory, state)
-        log("ideation: %d ideas" % len(state["ideas"]))
-
-    if state["step"] == "scoring":
-        reports = run_scoring(agent_root, state["ideas"])
-        state = pipeline_module.apply_scoring(state, reports)
-        pipeline_module.save_state(directory, state)
-        log("selection: %d selected" % len(state["selection"]["selected"]))
-
-    if state["step"] == "implementation":
-        trees_root = (Path(root) / "results" / "research" / state.get("issue", "issue120")
-                      / "trees" / round_id)
-        for idea in pipeline_module.selected_ideas(state):
-            tree = trees_root / idea["idea_id"]
-            if any(record["idea_id"] == idea["idea_id"]
-                   for record in state.get("implementations", [])):
-                continue
-            # The record exists before the agent runs, so a failure of the
-            # agent is recorded against the candidate instead of losing it.
-            state.setdefault("implementations", []).append(
-                pipeline_module.implementation_record(idea, {}, tree))
+        try:
+            report = run_implementation(agent_root, idea, tree)
+        except baseline_module.BaselineError as exc:
+            # The baseline is the one permitted source: if it is missing or
+            # unreadable the candidate is not built from anything else.
+            state = pipeline_module.mark_blocked(
+                state, idea["idea_id"], "baseline unavailable: " + str(exc),
+                kind=pipeline_module.BASELINE_UNAVAILABLE)
             pipeline_module.save_state(directory, state)
-            try:
-                report = run_implementation(agent_root, idea, tree)
-            except baseline_module.BaselineError as exc:
-                # The baseline is the one permitted source: if it is missing or
-                # unreadable the candidate is not built from anything else.
-                state = pipeline_module.mark_blocked(
-                    state, idea["idea_id"], "baseline unavailable: " + str(exc),
-                    kind=pipeline_module.BASELINE_UNAVAILABLE)
-                pipeline_module.save_state(directory, state)
-                continue
-            except Exception as exc:                       # noqa: BLE001 - recorded, not raised
-                state = pipeline_module.mark_agent_error(
-                    state, idea["idea_id"], "implementation failed: " + str(exc))
-                pipeline_module.save_state(directory, state)
-                continue
-            record = [item for item in state["implementations"]
-                      if item["idea_id"] == idea["idea_id"]][0]
-            record.update(pipeline_module.implementation_record(idea, report, tree))
-            # The candidate must write only into its own result directory: a
-            # candidate that would overwrite the baseline or a sibling is
-            # refused before it can train.
-            siblings = [other["tree"] for other in state.get("implementations", [])
-                        if other["idea_id"] != idea["idea_id"]]
-            try:
-                record["output_paths"] = baseline_module.guard_output_paths(
-                    tree, other_candidates=siblings)
-            except baseline_module.BaselineError as exc:
-                record["blocking_findings"] = [{
-                    "verifier": "preflight", "check": "output isolation",
-                    "severity": "blocking", "location": "train_rqvae.py",
-                    "detail": str(exc),
-                    "reproduction": "read the trainer's output constants",
-                    "correction": "write only into the candidate's own result directory"}]
-                record["status"] = "needs_repair"
-                record["failure_signature"] = pipeline_module._failure_signature(
-                    record["blocking_findings"])
+            continue
+        except Exception as exc:                           # noqa: BLE001 - recorded, not raised
+            state = pipeline_module.mark_agent_error(
+                state, idea["idea_id"], "implementation failed: " + str(exc))
             pipeline_module.save_state(directory, state)
-            log("implemented %s" % idea["idea_id"])
-        state["step"] = "verification"
+            continue
+        record = [item for item in state["implementations"]
+                  if item["idea_id"] == idea["idea_id"]][0]
+        record.update(pipeline_module.implementation_record(idea, report, tree))
+        # The candidate must write only into its own result directory: a
+        # candidate that would overwrite the baseline or a sibling is
+        # refused before it can train.
+        siblings = [other["tree"] for other in state.get("implementations", [])
+                    if other["idea_id"] != idea["idea_id"]]
+        try:
+            record["output_paths"] = baseline_module.guard_output_paths(
+                tree, other_candidates=siblings)
+        except baseline_module.BaselineError as exc:
+            record["blocking_findings"] = [{
+                "verifier": "preflight", "check": "output isolation",
+                "severity": "blocking", "location": "train_rqvae.py",
+                "detail": str(exc),
+                "reproduction": "read the trainer's output constants",
+                "correction": "write only into the candidate's own result directory"}]
+            record["status"] = "needs_repair"
+            record["failure_signature"] = pipeline_module._failure_signature(
+                record["blocking_findings"])
         pipeline_module.save_state(directory, state)
+        log("implemented %s" % idea["idea_id"])
+    state["step"] = "verification"
+    pipeline_module.save_state(directory, state)
+    return {"phase": "implementation", "ran": True, "step": state["step"],
+            "implementations": [{"idea_id": record["idea_id"], "status": record["status"],
+                                 "revision": record.get("revision", 0)}
+                                for record in state.get("implementations", [])]}
 
-    if state["step"] == "verification":
-        for record in list(state.get("implementations", [])):
-            if record.get("status") not in ("implemented", "repaired", "agent_error",
-                                            "needs_repair"):
-                continue
-            idea = ideas_module.idea_index(state["ideas"])[record["idea_id"]]
+
+def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
+    """Run the three verifiers per implementation and the repair loop."""
+    directory = pipeline_module.find_round_directory(root, round_id)
+    state = pipeline_module.load_state(directory)
+    agent_root = directory
+    if state["step"] != "verification":
+        return {"phase": "verification", "ran": False, "step": state["step"],
+                "verified": len(pipeline_module.verified_implementations(state)),
+                "reason": "the round is no longer in the verification phase"}
+    for record in list(state.get("implementations", [])):
+        if record.get("status") not in ("implemented", "repaired", "agent_error",
+                                        "needs_repair"):
+            continue
+        idea = ideas_module.idea_index(state["ideas"])[record["idea_id"]]
+        try:
+            reports = run_verification(agent_root, idea, Path(record["tree"]),
+                                       int(record.get("revision", 0)))
+        except Exception as exc:                           # noqa: BLE001
+            # A reviewer that crashed says nothing about the mechanism: the
+            # branch is retried, and only an exhausted retry is recorded as
+            # an infrastructure failure.
+            state = pipeline_module.mark_agent_error(
+                state, record["idea_id"], "verification failed: " + str(exc))
+            pipeline_module.save_state(directory, state)
+            continue
+        state = pipeline_module.apply_verification(state, record["idea_id"], reports)
+        pipeline_module.save_state(directory, state)
+        if record.get("blocking_findings"):
             try:
-                reports = run_verification(agent_root, idea, Path(record["tree"]),
-                                           int(record.get("revision", 0)))
+                repair = run_repair(agent_root, idea, Path(record["tree"]),
+                                    record.get("blocking_findings", []),
+                                    int(record.get("revision", 0)))
+                state = pipeline_module.apply_repair(state, record["idea_id"], repair)
             except Exception as exc:                       # noqa: BLE001
-                # A reviewer that crashed says nothing about the mechanism: the
-                # branch is retried, and only an exhausted retry is recorded as
-                # an infrastructure failure.
                 state = pipeline_module.mark_agent_error(
-                    state, record["idea_id"], "verification failed: " + str(exc))
-                pipeline_module.save_state(directory, state)
-                continue
-            state = pipeline_module.apply_verification(state, record["idea_id"], reports)
+                    state, record["idea_id"], "repair failed: " + str(exc))
             pipeline_module.save_state(directory, state)
-            if record.get("blocking_findings"):
-                try:
-                    repair = run_repair(agent_root, idea, Path(record["tree"]),
-                                        record.get("blocking_findings", []),
-                                        int(record.get("revision", 0)))
-                    state = pipeline_module.apply_repair(state, record["idea_id"], repair)
-                except Exception as exc:                   # noqa: BLE001
-                    state = pipeline_module.mark_agent_error(
-                        state, record["idea_id"], "repair failed: " + str(exc))
-                pipeline_module.save_state(directory, state)
-                log("%s: %s" % (record["idea_id"], record.get("status")))
-        # Stay in verification until every implementation is resolved: a repair
-        # reopens the review, and the round must not move on with work in flight.
-        pending = [record for record in state.get("implementations", [])
-                   if record.get("status") in ("implemented", "repaired", "needs_repair")
-                   or (record.get("status") == "agent_error"
-                       and int(record.get("agent_error_attempts", 0))
-                       <= pipeline_module.MAX_AGENT_RETRIES)]
-        state["step"] = "verification" if pending else "stage2"
-        pipeline_module.save_state(directory, state)
+            log("%s: %s" % (record["idea_id"], record.get("status")))
+    # Stay in verification until every implementation is resolved: a repair
+    # reopens the review, and the round must not move on with work in flight.
+    pending = [record for record in state.get("implementations", [])
+               if record.get("status") in ("implemented", "repaired", "needs_repair")
+               or (record.get("status") == "agent_error"
+                   and int(record.get("agent_error_attempts", 0))
+                   <= pipeline_module.MAX_AGENT_RETRIES)]
+    state["step"] = "verification" if pending else "stage2"
+    pipeline_module.save_state(directory, state)
+    return {"phase": "verification", "ran": True, "step": state["step"],
+            "verified": len(pipeline_module.verified_implementations(state)),
+            "pending": [record["idea_id"] for record in pending],
+            "blocked": [entry["idea_id"] for entry in state.get("blocked", [])],
+            "agent_errors": [entry["idea_id"] for entry in state.get("agent_errors", [])]}
 
-    return pipeline_module.summary(state)
+
+#: The phases of a round, in the order they run.
+PHASES = ("ideation", "scoring", "implementation", "verification")
+
+
+def advance(root: Path, round_id: str, *, log=print) -> dict:
+    """Run the agent stages of a round until it waits for Stage 2."""
+    for phase in (phase_ideation, phase_scoring, phase_implementation,
+                  phase_verification):
+        phase(root, round_id, log=log)
+    return pipeline_module.summary(
+        pipeline_module.load_state(pipeline_module.find_round_directory(root, round_id)))

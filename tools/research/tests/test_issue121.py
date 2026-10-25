@@ -6,6 +6,7 @@ hyperbolic-only distance swap, two unrelated losses and inherited hyperbolic
 code that nothing calls. All four have to be out of scope even when they score
 well.
 """
+import pathlib
 import shutil
 import tempfile
 import unittest
@@ -346,3 +347,49 @@ class GpuCapacityTests(unittest.TestCase):
                                                jobs_per_gpu=2)
         self.assertEqual(plan["idle_cards"], [])
         self.assertEqual(sorted(plan["free_slots"]), ["0", "1", "2", "3"])
+
+
+class PhaseToolTests(unittest.TestCase):
+    """Every phase of a round is a tool of its own."""
+
+    def test_the_server_exposes_one_tool_per_phase(self):
+        import importlib.util
+        server = pathlib.Path(__file__).resolve().parents[2] / "genrec-mcp" / "server.py"
+        spec = importlib.util.spec_from_file_location("genrec_server", str(server))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        for phase in ("ideate", "score", "implement", "verify"):
+            self.assertIn("research_round_" + phase, module.TOOLS)
+        for name in ("research_round_start", "research_round_run", "research_round_status",
+                     "research_round_results", "research_round_launch", "research_round_collect"):
+            self.assertIn(name, module.TOOLS)
+
+    def test_a_phase_is_a_named_function_of_the_round_worker(self):
+        from tools.research.rounds import worker as worker_module
+        for phase in worker_module.PHASES:
+            self.assertTrue(callable(getattr(worker_module, "phase_" + phase)))
+
+    def test_a_phase_refuses_a_round_that_is_not_in_it(self):
+        from tools.research.rounds import worker as worker_module
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_tools", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["step"] = "stage2"
+            pipeline_module.save_state(directory, state)
+            result = worker_module.phase_ideation(root, "round_tools")
+            self.assertFalse(result["ran"])
+            self.assertEqual(result["step"], "stage2")
+            self.assertIn("no longer in the ideation phase", result["reason"])
+
+    def test_two_runners_cannot_work_on_the_same_round(self):
+        from tools.research.rounds import lock as lock_module
+        with tempfile.TemporaryDirectory() as work:
+            directory = Path(work)
+            first = lock_module.RoundLock(directory)
+            first.acquire(owner="first")
+            second = lock_module.RoundLock(directory)
+            with self.assertRaises(lock_module.RoundBusy):
+                second.acquire(owner="second")
+            first.release()
+            second.acquire(owner="second")
