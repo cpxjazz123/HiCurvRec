@@ -418,3 +418,15 @@ def parse_rebuttal(text: str) -> dict:
     return {"change": change.strip(), "why": why.strip(),
             "unchanged": _first(fields, "UNCHANGED").strip(),
             "remaining": _first(fields, "REMAINING").strip()}
+
+
+EVIDENCE_REVISION_KEYS = ("REVISION", "WITHDRAWN", "EVIDENCE NOTE")
+
+
+def parse_evidence_revision(text: str) -> dict:
+    """Read the one bounded, evidence-driven revision of a proposal."""
+    fields = parse_fields(text, EVIDENCE_REVISION_KEYS)
+    revision, _, gap = _first(fields, "REVISION").partition("|")
+    return {"revision": revision.strip(), "answers": gap.strip(),
+            "withdrawn": _first(fields, "WITHDRAWN").strip(),
+            "evidence_note": _first(fields, "EVIDENCE NOTE").strip()}

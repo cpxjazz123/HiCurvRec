@@ -155,6 +155,21 @@ SCORE_PROMPT = (
     "One block per proposal, using the idea_id exactly as it is given."
 )
 
+EVIDENCE_REVISION_PROMPT = (
+    "The evidence probe measured the following about your proposal, and it could not "
+    "establish these points:\n{gaps}\n"
+    "Your proposal:\n{proposal}\n"
+    "You have ONE bounded revision of the proposal (not of any code): answer the specific "
+    "gaps with what the evidence shows, or state that the evidence does not support the "
+    "claim. Do not add a mechanism, do not change the coupling, and do not promise a "
+    "Recall. If the evidence contradicts the proposal, say so.\n"
+    "Write PLAIN TEXT, in exactly this shape:\n"
+    "REVISION: <what the proposal now claims, or what it withdraws> | <which gap it "
+    "answers>\n"
+    "WITHDRAWN: <the claim you withdraw, or NONE>\n"
+    "EVIDENCE NOTE: <the measured numbers you relied on, or UNKNOWN>"
+)
+
 PAIRWISE_PROMPT = (
     "You are one of three independent reviewers, comparing two FINALIST mechanisms head to "
     "head on the same rubric and the same frozen evidence bundle.\n"
