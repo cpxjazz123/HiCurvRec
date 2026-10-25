@@ -68,13 +68,14 @@ def plan_gpu_allocation(running_jobs: list, usable: list, *, jobs_per_gpu: int =
     per_card = max(1, int(jobs_per_gpu))
     free_slots = []
     idle_cards = []
+    for card in usable:
+        card = str(card)
+        if running_per_card.get(card, 0) == 0:
+            idle_cards.append(card)
     for level in range(per_card):
         for card in usable:
             card = str(card)
-            used = running_per_card.get(card, 0)
-            if used == 0:
-                idle_cards.append(card)
-            if used <= level:
+            if running_per_card.get(card, 0) <= level:
                 free_slots.append(card)
     return {"free_slots": free_slots, "idle_cards": idle_cards,
             "running_per_card": running_per_card,
