@@ -1,0 +1,127 @@
+{
+  "audit_hash": "8e294539665a6fe97e80a3b072a0720e3a5ca1f6d7400c47f54a47314605ef21",
+  "kind": "rescored_audit",
+  "payload": {
+    "back_references": {
+      "decision.json": "15a91440cfd02c21e293083c0d2ea2e116f49f5b68bb00fd5a704fe6ee9f4404",
+      "decision_hash": "adb2546fbf2769da0d51c427110545217b1f3f93f8fddacfd5265d9eb8b88285",
+      "evidence_bundle.json": "c1684bcd07c2eb14a15af62f983a50f4e9357dd0dd188ff41015dcfa2c7bee70",
+      "math_checks.json": "fde855db9ab2b41d179a0191b796da196a789e201011fb51ef9beaa9be567ff8",
+      "original_behavior_off": [
+        0,
+        0,
+        0
+      ],
+      "original_both_on": [
+        0,
+        0,
+        0
+      ],
+      "original_geometry_off": [
+        0,
+        1,
+        0
+      ],
+      "original_math_status": "PASS"
+    },
+    "idea_id": "successor_entropy_curvature",
+    "kind": "math_validation_audit",
+    "mutation": "none: probe.json, math_checks.json, evidence_bundle.json and decision.json are unchanged",
+    "reason": "Issue #124: the generic proxy check in math_checks.py could not fail. It multiplied every codeword score of an item by the same positive scalar and concluded the assignment changed from a single `or`. For a row-wise positive factor w_i, argmin_k (1+w_i) d(i,k) = argmin_k d(i,k), so a behaviour weight that only scales a row can never move an assignment. The observed artifact (both_on = behaviour_off = [0,0,0]) is the proof, not a coincidence.",
+    "revalidation": {
+      "checks": [
+        {
+          "check": "geometry_operator_valid",
+          "curved_euclidean_ratio": 1.4284764736829607,
+          "detail": "log_0(exp_0(v)) error 2.78e-17, sectional curvature -0.5, curved/euclidean ratio 1.4285, domain guard holds",
+          "domain_limit": 1.4142121481595324,
+          "implication": "a valid operator says nothing about the coupling: the behaviour must still reach the same computation",
+          "round_trip_error": 2.7755575615628914e-17,
+          "scope": "OPERATOR_ONLY",
+          "sectional_curvature": -0.5,
+          "status": "PASS"
+        },
+        {
+          "check": "behavior_dependency",
+          "detail": "a positive row scalar leaves every arg-min unchanged (measured: True), so it can never move an assignment; a codeword-dependent weight moved False of the top-1 indices; a codeword-independent offset is also invariant (True)",
+          "implication": "behaviour must enter the score in a codeword-dependent way; a row scale or a common offset is an invariance, not a coupling",
+          "scope": "PROXY",
+          "status": "FAIL",
+          "witness": {
+            "codeword_weight_changes_assignment": false,
+            "margins_behavior_off": [
+              3.0071937752078792,
+              3.738259417813131,
+              1.7606954149815075,
+              4.096799413871968
+            ],
+            "margins_both_on": [
+              3.0071937752078792,
+              14.015759849375165,
+              1.7606954149815075,
+              0.5174832507691249
+            ],
+            "offset_invariance": true,
+            "row_scalar_invariance": true
+          }
+        },
+        {
+          "check": "geometry_dependency",
+          "detail": "the matched Euclidean intervention changed 1 of the top-1 indices",
+          "implication": "the curved and the Euclidean computations must differ in the quantity the mechanism claims",
+          "scope": "PROXY",
+          "status": "PASS",
+          "witness": {
+            "both_on_top1": [
+              1,
+              2,
+              1,
+              1
+            ],
+            "geometry_off_top1": [
+              2,
+              1,
+              2,
+              0
+            ]
+          }
+        },
+        {
+          "check": "joint_path_dependency",
+          "detail": "the candidate's own quantizer path is not exercised by the generic proxy; the joint dependency needs the implemented tree",
+          "implication": "only the candidate path check can admit a Stage 2 run",
+          "scope": "PROXY",
+          "status": "CANDIDATE_PATH_NOT_RUN"
+        }
+      ],
+      "elapsed_seconds": 0.008,
+      "failed_checks": [
+        "behavior_dependency"
+      ],
+      "idea_id": "successor_entropy_curvature",
+      "implementation_digest": "b91281011f612c50",
+      "note": "the operator checks and the proxies are not the candidate's own pathway; the joint path needs the implemented candidate",
+      "operator_family": "poincare",
+      "schema": 2,
+      "seed": 20261025,
+      "status": "INCONCLUSIVE",
+      "tensor_size": 4
+    },
+    "round_id": "round_20261025_181918_856",
+    "schema": 1,
+    "what_the_prior_pass_did_not_establish": [
+      "that the behaviour signal changes the assignment: the row scalar is an invariance of the arg-min",
+      "that the candidate's own path uses the behaviour signal",
+      "anything about Stage 3 Recall"
+    ],
+    "what_the_prior_pass_established": [
+      "the maps are mutually consistent (log_0(exp_0(v)) = v)",
+      "the curvature sign convention holds",
+      "the distance is not the Euclidean one"
+    ],
+    "written_at": 1792914312.4842553
+  },
+  "reason": "Issue #124: the generic proxy check in math_checks.py could not fail. It multiplied every codeword score of an item by the same positive scalar and concluded the assignment changed from a single `or`. For a row-wise positive factor w_i, argmin_k (1+w_i) d(i,k) = argmin_k d(i,k), so a behaviour weight that only scales a row can never move an assignment. The observed artifact (both_on = behaviour_off = [0,0,0]) is the proof, not a coincidence.",
+  "schema": 1,
+  "written_at": 1792914314.559181
+}

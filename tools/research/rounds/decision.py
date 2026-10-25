@@ -60,6 +60,21 @@ def build_snapshot(*, round_id: str, evaluation: dict, reports: list,
     return snapshot
 
 
+def decision_hash(snapshot: dict) -> str:
+    """The hash of a decision, without the hash field itself."""
+    return _digest({key: value for key, value in snapshot.items() if key != "decision_hash"})
+
+
+def write_revision(directory: Path, snapshot: dict, revision: int) -> Path:
+    """Write a later decision beside the first one, never over it."""
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / ("decision_rev" + str(revision) + ".json")
+    from ..core.evidence import atomic_json
+    atomic_json(path, snapshot)
+    return path
+
+
 def write_snapshot(directory: Path, snapshot: dict) -> Path:
     """Write the decision once. An existing decision is never overwritten."""
     directory = Path(directory)

@@ -170,9 +170,25 @@ def apply_scoring(state: dict, reports: list, *, comparisons: list = None,
         snapshot = decision_module.build_snapshot(
             round_id=state.get("round_id", ""), evaluation=evaluation, reports=reports,
             bundles=bundles or {}, proposals=state["ideas"], source_commit=source_commit)
-        decision_module.write_snapshot(Path(directory), snapshot)
-        state["decision_hash"] = snapshot["decision_hash"]
-        state["decision_at"] = snapshot["decision_at"]
+        existing = decision_module.load_snapshot(Path(directory))
+        if existing and existing.get("decision_hash") != snapshot.get("decision_hash"):
+            # The decision of a completed round is never rewritten: a new review
+            # (of a revised proposal, or under a new rubric) is recorded beside it
+            # and linked to the decision it supersedes.
+            revision = int(existing.get("revision", 1)) + 1
+            snapshot["revision"] = revision
+            snapshot["supersedes_decision_hash"] = existing.get("decision_hash")
+            snapshot["decision_hash"] = decision_module.decision_hash(snapshot)
+            path = decision_module.write_revision(Path(directory), snapshot, revision)
+            state["decision_hash"] = snapshot["decision_hash"]
+            state["decision_at"] = snapshot["decision_at"]
+            state["decision_revision"] = revision
+            state["decision_supersedes"] = existing.get("decision_hash")
+            state["decision_file"] = str(path)
+        else:
+            decision_module.write_snapshot(Path(directory), snapshot)
+            state["decision_hash"] = snapshot["decision_hash"]
+            state["decision_at"] = snapshot["decision_at"]
     # NO_QUALIFIED_IDEA stays a visible state: the round asks for refined
     # ideation and evidence instead of inventing a winner.
     if selection["status"] == scoring_module.STATUS_NO_QUALIFIED:
