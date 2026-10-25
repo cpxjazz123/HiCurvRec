@@ -1,0 +1,35 @@
+{
+  "blocked": [],
+  "created_at": 1792940046.7244213,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1792940046.7244217,
+      "event": "round_created"
+    },
+    {
+      "at": 1792940046.7322295,
+      "event": "round_worker_started",
+      "pid": 3525838
+    }
+  ],
+  "ideas": [],
+  "ideas_rejected": [],
+  "implementations": [],
+  "issue": "issue121",
+  "matrix": null,
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\n## What the seven measured arms show (Issue #125 forensics, 57,439 rows, width-20 beam)\n\nEvery number below is measured on the frozen checkpoints with the production evaluator.\n\"coverage\" is the share of rows whose target SID survives among the twenty beams;\n\"alive\" is the share whose gold prefix is still alive at that depth; acc@1 is the\nteacher-forced top-1 accuracy of that position.\n\n| arm | recall@10 | coverage | alive L1/L2/L3/L4 | acc@1 T1/T2/T3/T4 | distinct T1/T2/T3/T4 |\n|---|---|---|---|---|---|\n| resample | 0.06363 | 0.0884 | .497/.122/.091/.088 | .098/.152/**.794**/**.977** | 241/256/256/**10** |\n| l1_only | 0.06233 | 0.0855 | 1.000/.829/.156/.086 | 1.000/.175/.106/.557 | 1/94/256/37 |\n| l1_br_euclid | 0.06207 | 0.0847 | 1.000/.829/.161/.085 | 1.000/.178/.115/.550 | 1/80/256/44 |\n| successor_geodesic_coarse | 0.05500 | 0.0740 | **.989**/.341/.122/.074 | .248/.180/.338/.737 | **26**/223/256/68 |\n| tangent_successor_residual | 0.05500 | 0.0731 | .643/.180/.090/.073 | .121/.187/.527/**.885** | 238/251/256/**27** |\n| successor_entropy | 0.05122 | 0.0688 | .735/.400/.133/.069 | .262/.338/.412/.680 | 250/211/256/91 |\n| l1_br | 0.04671 | 0.0678 | 1.000/1.000/1.000/.068 | 1.000/1.000/1.000/.008 | 1/1/1/16462 |\n\n**The measured rule.** Recall@10 is ordered by coverage and by nothing else, and coverage\nis the *joint* survival of the four positions. Two ingredients exist, and no arm has both:\n\n1. **A coarse first level is free.** `successor_geodesic_coarse` put 26 codes in T1 and its\n   gold first token survived 98.9% of the time; but its loss moved to depth 2 (65% of the\n   rows drop there) and its coverage only reached 0.0740.\n2. **A decisive tail is what pays.** `resample` has the *worst* first-token survival of all\n   arms (0.497, T1 acc 0.098) and still the best coverage, because its third token is\n   correct 79.4% of the time given the oracle prefix and its fourth token 97.7% of the\n   time, over a fourth-token alphabet of only ten values. `l1_br` is the same shape\n   inverted: everything in T4 (16,462 values, 9.03 nats) and 93% of the rows drop at\n   depth 4.\n\nExtrapolating the measured per-level ratios, a first level as free as\n`successor_geodesic_coarse` combined with the tail ratios of `resample` would give a\ncoverage near 0.17 instead of 0.088, i.e. roughly double the best arm.\n\n## What this round must design\n\nA mechanism whose **joint survival** is maximised: a first level that is cheap to predict\n*and* behaviourally meaningful, plus a tail that is decisive. Concretely, the proposal\nmust aim for a first level of roughly 16-64 effective groups whose gold token survives\nalmost always, and for the later positions to be nearly determined by the earlier ones\n(T3 top-1 around 0.7 or better, T4 nearly deterministic over a small extension alphabet),\nwhile keeping a genuine behaviour-conditioned hyperbolic computation and a train-only\nbehaviour signal on one connected path.\n\nThe behaviour conditioning may act on the first-level assignment, on the residual path\nthat feeds T2/T3, or on both; what matters is that it *changes the curved computation*\nthat produces the tokens, and that the proposal states why the coupling makes the later\ntokens more predictable rather than merely different. A mechanism that only renumbers the\nfirst level, or that only pushes the information into T4, is out of scope.\n\nA plain codebook-size change is out of scope; a curved assignment with no behaviour term\nis out of scope.\n\nPropose two or three ideas from *different* coupling sites, for example: a coarse hyperbolic\nfirst level whose prototypes are placed by the train-only successor structure together with\na residual-level coupling; a curved assignment whose *second* level inherits the behaviour\nprototype through the tangent transport; a hierarchical geometry where one behaviour\nprototype steers the first level and the residual transport, so the third code becomes a\nnear-deterministic function of the first two.\n\nEach idea must state its three arms (both-on, behaviour-off, geometry-off) and the predicted\ndirection of: `L1 Hard ER` on the canonical 52,855 pairs with ten fixed negatives,\ngold-prefix survival at depths 1-4 under width-20 beam search, the teacher-forced NLL and\ntop-1 accuracy of T3 and T4, and Stage 3 `test_R@10` (target > 0.065).\n\n## Frozen constraints\n\nFour-token fixed-width SID with the deterministic collision-extension token, 3000 Stage 2\nepochs on four cards, no early stopping, no test-time tuning, the frozen Stage 3 protocol,\nand no validation or test behaviour in SID construction.\n",
+  "probe_state": "PROBE_PENDING",
+  "repairs": [],
+  "round_id": "round_20261026_015406_723",
+  "schema": 1,
+  "scores": {},
+  "selection": null,
+  "stage2_jobs": [],
+  "stage3_jobs": [],
+  "step": "ideation",
+  "updated_at": 1792940046.7322354,
+  "verification": {},
+  "worker_log": "/tmp/genrec-mcp/round_round_20261026_015406_723.log",
+  "worker_pid": 3525838
+}

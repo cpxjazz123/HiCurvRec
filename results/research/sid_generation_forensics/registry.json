@@ -9,5 +9,16 @@
       "test_ndcg@10": 0.0295021872542991
     },
     "family": "successor prototype, tangent residual"
+  },
+  "successor_geodesic_coarse": {
+    "stage3": "TIGER_successor-geodesic-coarse",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse/item_sids.json",
+    "sid_origin": "in-repo",
+    "reported": {
+      "test_recall@10": 0.054858197392015876,
+      "test_recall@5": 0.037465833318825185,
+      "test_ndcg@10": 0.030173576832768327
+    },
+    "family": "coarse geodesic first level with successor-weighted prototypes"
   }
 }
