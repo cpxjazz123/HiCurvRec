@@ -315,3 +315,34 @@ class DigestLocationTests(unittest.TestCase):
             (other / "train_rqvae.py").write_text("x = 1\n", encoding="utf-8")
             (other / "model" / "model.py").write_text("y = 2\n", encoding="utf-8")
             self.assertEqual(digest, baseline_module.source_digest(other))
+
+
+class GpuCapacityTests(unittest.TestCase):
+    """A card may host two of these trainers, so the queue fills the cards."""
+
+    def test_an_idle_host_offers_two_slots_per_card(self):
+        from tools.research.rounds import jobs as jobs_module
+        plan = jobs_module.plan_gpu_allocation([], ["0", "1", "2", "3"], jobs_per_gpu=2)
+        self.assertEqual(plan["free_slots"], ["0", "0", "1", "1", "2", "2", "3", "3"])
+        self.assertEqual(plan["idle_cards"], ["0", "1", "2", "3"])
+
+    def test_a_running_job_takes_one_slot_of_its_card(self):
+        from tools.research.rounds import jobs as jobs_module
+        plan = jobs_module.plan_gpu_allocation([{"gpu": "0"}], ["0", "1", "2", "3"],
+                                               jobs_per_gpu=2)
+        self.assertEqual(plan["free_slots"], ["0", "1", "1", "2", "2", "3", "3"])
+        self.assertNotIn("0", plan["idle_cards"])
+
+    def test_a_full_card_offers_nothing(self):
+        from tools.research.rounds import jobs as jobs_module
+        plan = jobs_module.plan_gpu_allocation([{"gpu": "0"}, {"gpu": "0"}],
+                                               ["0", "1"], jobs_per_gpu=2)
+        self.assertNotIn("0", plan["free_slots"])
+        self.assertEqual(plan["idle_cards"], ["1"])
+
+    def test_a_four_rank_job_holds_four_cards(self):
+        from tools.research.rounds import jobs as jobs_module
+        plan = jobs_module.plan_gpu_allocation([{"gpu": "0,1,2,3"}], ["0", "1", "2", "3"],
+                                               jobs_per_gpu=2)
+        self.assertEqual(plan["idle_cards"], [])
+        self.assertEqual(sorted(plan["free_slots"]), ["0", "1", "2", "3"])

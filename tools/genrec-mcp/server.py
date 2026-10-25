@@ -278,6 +278,11 @@ def tree_supports_single_gpu(tree: Path) -> bool:
         return False
 
 
+#: How many Stage 2 jobs one card may host at the same time. The host has four
+#: cards and each one fits several of these trainers, so the queue fills the
+#: cards instead of leaving three quarters of the host idle.
+STAGE2_JOBS_PER_GPU = 2
+
 #: The frozen Stage2 run: 3000 epochs over 24556 items with 24 steps per epoch.
 STAGE2_FROZEN_EPOCHS = 3000
 STAGE2_FROZEN_STEPS_PER_EPOCH = 24
@@ -2581,12 +2586,13 @@ def _promote_round_tree(tree: Path, idea_id: str) -> Path:
     return target
 
 
-def tool_research_round_launch(round_id: str, parallel: int = 2) -> dict:
-    """Enqueue every verified implementation and start up to `parallel` Stage 2 jobs.
+def tool_research_round_launch(round_id: str, parallel: int = 0) -> dict:
+    """Enqueue every verified implementation and start the Stage 2 jobs that fit.
 
-    On a four-card host two jobs of one card each run concurrently: each launch is
-    pinned to its own CUDA_VISIBLE_DEVICES and its tree and result directory are
-    distinct, so the jobs cannot observe or overwrite each other.
+    The host has four cards and a card holds more than one of these trainers,
+    so the queue fills the cards instead of leaving them idle: every launch is
+    pinned to its own CUDA_VISIBLE_DEVICES and its tree and result directory
+    are distinct, so the jobs cannot observe or overwrite each other.
     """
     import os
     from tools.research.rounds import jobs as round_jobs
@@ -2594,7 +2600,12 @@ def tool_research_round_launch(round_id: str, parallel: int = 2) -> dict:
 
     directory = _round_directory(round_id)
     state = round_pipeline.load_state(directory)
-    queue = round_jobs.JobQueue(directory, max_parallel=max(1, int(parallel)))
+    probe = probe_gpu_layout()
+    usable = list(probe.get("visible") or probe.get("physical") or [])
+    # The capacity is a fact about the host: cards times the jobs a card holds.
+    capacity = max(1, len(usable) * STAGE2_JOBS_PER_GPU)
+    budget = capacity if int(parallel) <= 0 else min(int(parallel), capacity)
+    queue = round_jobs.JobQueue(directory, max_parallel=max(1, budget))
     queued = []
     for record in round_pipeline.verified_implementations(state):
         tree = _promote_round_tree(Path(record["tree"]), str(record["idea_id"]))
@@ -2605,36 +2616,37 @@ def tool_research_round_launch(round_id: str, parallel: int = 2) -> dict:
                                  round_id=round_id)
             queued.append(record["idea_id"])
     launched, refused = [], []
-    probe = probe_gpu_layout()
-    # Only the cards this process may use, and never a card a running job already
-    # holds: two jobs on one card would break both.
-    usable = list(probe.get("visible") or probe.get("physical") or [])
-    busy = set()
-    for job in queue.jobs["jobs"]:
-        if job["status"] == "running" and job.get("gpu"):
-            busy.add(str(job["gpu"]))
-    free_gpus = [gpu for gpu in usable if str(gpu) not in busy]
+    # How many jobs each card already holds. A card may host several of these
+    # trainers, so the capacity is per card, not per host.
+    allocation = round_jobs.plan_gpu_allocation(
+        [job for job in queue.jobs["jobs"] if job["status"] == "running"],
+        usable, jobs_per_gpu=STAGE2_JOBS_PER_GPU)
+    free_slots = list(allocation["free_slots"])
+    idle_cards = list(allocation["idle_cards"])
     batch = queue.next_batch("stage2")
     if probe.get("visible_count") == 1:
         # One card each: a tree that can only fork four ranks cannot start here,
         # so the trees that honour the single-card contract go first.
         batch.sort(key=lambda job: 0 if tree_supports_single_gpu(Path(job["tree"])) else 1)
-    for slot, job in enumerate(batch):
-        gpu = free_gpus[slot] if slot < len(free_gpus) else None
-        if gpu is None and usable:
-            break
-        # A trainer that only forks four ranks needs the whole allocation, and
-        # taking it means no other job may run beside it.
+    for job in batch:
+        # A trainer that only forks four ranks needs four cards of their own, so
+        # it waits for the host to be idle instead of sharing a card.
         if not tree_supports_single_gpu(Path(job["tree"])):
-            if len(free_gpus) < 4:
+            if len(idle_cards) < 4:
                 queue.fail(job["job_id"],
                            "this tree's trainer only forks four ranks and fewer than four "
-                           "cards are free, so it cannot be trained here",
-                           evidence={"free_gpus": free_gpus})
+                           "cards are idle, so it cannot be trained here",
+                           evidence={"idle_cards": idle_cards})
                 refused.append({"idea_id": job["idea_id"], "refused": "needs a four-card allocation"})
                 continue
-            gpu = ",".join(str(card) for card in free_gpus[:4])
-            free_gpus = free_gpus[4:]
+            gpu = ",".join(idle_cards[:4])
+            for card in idle_cards[:4]:
+                free_slots = [slot for slot in free_slots if slot != card]
+            idle_cards = idle_cards[4:]
+        else:
+            if not free_slots:
+                break
+            gpu = free_slots.pop(0)
         previous = os.environ.get("CUDA_VISIBLE_DEVICES")
         if gpu is not None:
             os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
