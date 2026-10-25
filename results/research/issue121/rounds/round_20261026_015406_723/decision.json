@@ -1,0 +1,1674 @@
+{
+  "decision_at": 1792941123.114417,
+  "decision_hash": "5d0baf2122de369b95fbbe9f6694aee610546ef32b67b7c1a7929cd3e01773ef",
+  "evidence": {
+    "branching-curvature-budget": {
+      "bundle_sha256": "1acdc4472893a05ca4b33d7ad201ded9f3c7e33b6092224a9fa45ca46413fe65",
+      "literature_sha256": "31789d74e2e9c15a110a464d205bd63981d72ebe870c9bd89b6cf7e3e535319c",
+      "math_sha256": "bcfe6b1d4aaeb8b5a4599130a588f9aa16c4821f216ef4617d4e42ddf6049e56",
+      "probe_sha256": "a2e0353d7d3922cdb1536a1d3c82ab3c1f9f2edc04fbbaa67aa5d68c9d791a36"
+    },
+    "curved_transition_residual": {
+      "bundle_sha256": "36d2c6fd13e0d45f85db0e5ccc0ca93e7d81800d9dc44dce45a93221b1d11830",
+      "literature_sha256": "65e1b560bfefe760d8ad5bc6d06a856fa581952f2fcb839e739f2acc382fa1ce",
+      "math_sha256": "1828c02a469023cd130fd7651967b45504d4ee30cee4502c9596038471236b4d",
+      "probe_sha256": "768ca4ff1d24e8c60d7e5438fad29f0da649dc175b1a33838f855664274e0ade"
+    },
+    "successor-chart-residual": {
+      "bundle_sha256": "b2bc7b945748e74c062f160490ec2a8fa0bf4c7397cc14b3906cfb0bc44e292e",
+      "literature_sha256": "a42340c6fb3865bc476467a4a2f29c1aaf3bbc44143f903f125dc20a1c374d5f",
+      "math_sha256": "66e0748a4a77538fa0706f9cae6d639f5e3ba48ba67e4e9bb5e987dff9fc247b",
+      "probe_sha256": "12443f10829e61aa3be8e5ef7d583b576ba925915878799602ce7e5888dd9011"
+    },
+    "successor_shell_budget": {
+      "bundle_sha256": "c36f3fe9672167fe81adb009320cc3a6e4be299001c7af76d84b47cc94f727a4",
+      "literature_sha256": "4b1d4d2da8898bb71ab40e1d68ec81a4deaf090b8956b3da1e9dfe3b02fef95e",
+      "math_sha256": "e9918a240923375bc3c36ed30f808aefdbcfa63c09de9d8b1bc3953c216dda6c",
+      "probe_sha256": "c7cc3f5c96c92dad75d496e636816c665a5bfdf097252b497126c2dd4301b2cf"
+    },
+    "train_cooccur_hyperbolic_capacity": {
+      "bundle_sha256": "6e1c1bef369ac4eacbd469b4df9a84ebf22877c49369c40284eea36ee37fe649",
+      "literature_sha256": "30cb1ba935023d68e1e691affb697af5fee0b5b62177d5efee70955ababf07eb",
+      "math_sha256": "9b75404f7907f567cba3973f7c895f320fa89a1e3cddf2a5f1bd30a1ed8fd098",
+      "probe_sha256": "31a2736dc6b8eb8ea7fbf37f7f55d878f427e988fbfbe8ef43011c13e58cfaa2"
+    },
+    "userbranch_hyperbolic_transport": {
+      "bundle_sha256": "c297abf493fe5d23903d66ab5c32c560c647bf337ba88a474ea0618420beca00",
+      "literature_sha256": "6104ad36b4304d50ea4d0f0b3a63f47cf6817b9ead1881729ebb319cb45949df",
+      "math_sha256": "5a901956ac18ca1f3e5a0c09b53d316b40d20b5cc212dddb13ea20ef93bbffa5",
+      "probe_sha256": "1ece8361ee489e8ae35648eb36bf9423f22eceadec8411e97c289c1e06278d26"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "successor_shell_budget",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "c36f3fe9672167fe:E1",
+            "c36f3fe9672167fe:E2",
+            "c36f3fe9672167fe:E5",
+            "c36f3fe9672167fe:E6",
+            "c36f3fe9672167fe:E7",
+            "c36f3fe9672167fe:E12",
+            "c36f3fe9672167fe:E13",
+            "c36f3fe9672167fe:E14",
+            "c36f3fe9672167fe:E15"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "c36f3fe9672167fe:E1",
+            "c36f3fe9672167fe:E2",
+            "c36f3fe9672167fe:E5",
+            "c36f3fe9672167fe:E12",
+            "c36f3fe9672167fe:E13",
+            "c36f3fe9672167fe:E14",
+            "c36f3fe9672167fe:E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The displayed hinge term compares the same successor direction against candidate child and alternative, but does not define how alt is selected or how empirical successor-child targets are derived; the proposed fixed T1 reservation may also conflict with learned assignments and capacity.",
+          "scoring_2": "The score mixes a parent-conditioned residual term with a successor-centroid term whose weighting/sign and alt-child definition are underspecified; an entropy-weighted direction can pull children toward an averaged mode while splitting incompatible successors, and the measured successor methods did not reach the target (E6-E7).",
+          "scoring_3": "The equation's positive-part difference against c_alt does not clearly define which alternative is selected or how it corresponds to the empirical successor-child distribution; moreover the proposed 32-way T1 budget can alter capacity independently of the behavior/geometry mechanism."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 strongly supports heterogeneous, predictable successor branching with coverage; E6-E7 show existing successor-entropy/geodesic methods underperform, so coarse-prefix motivation is plausible but not proven. Curved distance genuinely enters assignment, but the behavior-direction distance term is essentially a matched Euclidean scoring feature and no cancellation/necessity argument is given (3). Its child-partition computation is adjacent to measured successor-geodesic/entropy mechanisms, hence routine-nearby rather than strongly novel (2). Assignment and conditional-token diagnostics give a plausible downstream chain (4); controls are named but no exact failure threshold or discriminating diagnostic is fully specified (3). The ambiguities in alt, targets, and differentiable objective prevent a fully implementable specification (3). A modest variation on measured negative families has limited exploration value (2). UNKNOWN: novelty beyond the listed ledger; bounded check: compare the exact objective to the recorded successor-geodesic and successor-entropy implementations.",
+          "scoring_2": "E5 supports a measured, stratified successor-entropy signal with strong top-1-mass association and broad item coverage, meriting 4, but does not directly establish local child-partition coherence. The curved operation is explicit but no evidence rules out a matched Euclidean scoring transform (3). The proposal is a variation of measured successor-conditioned/coarse-geodesic and tangent-residual families (E6-E7), hence novelty 2. It names changed child assignments and predicts better later-prefix survival/NLL (4); three comparisons are requested but no failure threshold/diagnostic is specified beyond the Stage3 gate (3). Scoring, preprocessing, and safeguards/control matching are not sufficiently complete for higher implementability (3); compute and hyperparameter risks remain. UNKNOWN on traceable external prior-art/ledger distinction; a bounded ledger comparison of the exact sibling-conditioned objective would resolve novelty uncertainty.",
+          "scoring_3": "E5 provides measured, stratified transition entropy with support; it is relevant but does not establish successor modes cluster within T1 subtrees, so 4 rather than 5. The geodesic operation is explicit (E12-E14), but a matched Euclidean transform could reproduce a distance-based preference and no curvature-specific advantage/cancellation analysis is supplied (3). No cited-work/ledger trace beyond claims in the proposal is available (novelty 2; bounded check: compare the exact equation with the cited-work and experiment ledger). The child partition → conditional predictability → beam survival chain has named diagnostics and directions (4). Controls are not sufficiently enumerated/matched (3). The multi-term quantizer/loss and candidate-alt definition need clarification for implementation, and the frozen-time estimate is only a proposal (2; bounded check: implement a one-batch shape/numerics test and benchmark)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only directed transitions and their smoothed distribution/entropy are specified; Lorentz geodesic child assignment and behavior-conditioned sibling separation form a connected pathway at T2/T3. Behaviour-off, Euclidean and both-on comparisons are required by the proposal's hypothesis/controls; compare on identical schedule and data.",
+          "scoring_2": "Train-only directed successor probabilities and entropy/tangent mean condition the candidate child score and sibling-partition objective; hyperbolic geodesic distances act in T2/T3 assignment, so both signals enter the same assignment pathway. Behavior-off, Euclidean, and both-on are required comparisons, though the proposal does not fully specify matched-control details or a concrete falsifier.",
+          "scoring_3": "It specifies train-only directed transitions and a curved child assignment coupled through successor-conditioned geodesic scoring, with SID/prefix/Stage3 outcomes. However, it does not unambiguously specify the required behavior-off, Euclidean geometry-off, and both-on comparison protocol; “beats both controls” does not define the behavior-off arm. Add those three matched arms to satisfy the scope contract."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.1,
+          "scoring_2": 3.1,
+          "scoring_3": 3.0
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It specifies train-only directed transitions and a curved child assignment coupled through successor-conditioned geodesic scoring, with SID/prefix/Stage3 outcomes. However, it does not unambiguously specify the required behavior-off, Euclidean geometry-off, and both-on comparison protocol; “beats both controls” does not define the behavior-off arm. Add those three matched arms to satisfy the scope contract.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.1
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "curved_transition_residual",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 4.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "36d2c6fd13e0d45f:E1",
+            "36d2c6fd13e0d45f:E2",
+            "36d2c6fd13e0d45f:E5",
+            "36d2c6fd13e0d45f:E6",
+            "36d2c6fd13e0d45f:E7",
+            "36d2c6fd13e0d45f:E12",
+            "36d2c6fd13e0d45f:E13",
+            "36d2c6fd13e0d45f:E14",
+            "36d2c6fd13e0d45f:E15",
+            "36d2c6fd13e0d45f:E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "36d2c6fd13e0d45f:E1",
+            "36d2c6fd13e0d45f:E2",
+            "36d2c6fd13e0d45f:E5",
+            "36d2c6fd13e0d45f:E12",
+            "36d2c6fd13e0d45f:E13",
+            "36d2c6fd13e0d45f:E14",
+            "36d2c6fd13e0d45f:E15",
+            "36d2c6fd13e0d45f:E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "A single successor barycenter can erase multimodal continuation structure, while the decoder loss can reward predicting that average without making item-level next-item assignments useful.",
+          "scoring_2": "Averaging successors into one vector can erase multimodal continuation structure, and the auxiliary code-to-mean cosine target may reward predicting a mean rather than assigning distinct useful successor modes.",
+          "scoring_3": "The behavior direction is the unconditional per-item successor mean, not the continuation mode remaining after the actual prefix; subtracting it could remove item-identifying signal or average incompatible branches."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 supports variation in successor predictability and E6-E7 show tangent successor residual is already measured and weak, making support for this specific mechanism weaker than for the broad signal (4). Parallel transport and curved residual quantization are real operations, but no matched-control argument establishes value over Euclidean residual steering (3). The measured tangent-successor residual is close prior art; this replaces its operation but remains a routine family variation (2). The residual assignment and T2/T3 prediction chain is explicit, with expected diagnostics (4). Both controls and a retain criterion are mentioned, but matching and a discriminating diagnostic/falsifier are incomplete (3). The stated operations are plausible, though choice of tangent space for μ, decoder/code dimensions and guards for the transport/Exp domain are not fully pinned down (3). The negative would mainly repeat the known successor-residual failure family (2). UNKNOWN: independent novelty beyond E6-E7; bounded check: compare full equations to the recorded tangent_successor_residual run.",
+          "scoring_2": "E5 establishes substantial, well-covered variation in successor entropy/top-1 mass, but does not measure whether the barycenter aligns with residuals (4). Parallel transport, exponential update and geodesic assignment are explicit; the bundle specifies a Euclidean control (E15), but does not establish that a matched Euclidean residual translation cannot reproduce the practical transform (3). The mechanism is near the measured tangent-successor residual family (E6-E7), with a distinct transport/decoder detail but not a demonstrated computationally distant prior-art basis (2). It specifies a path from changed residual/code to T2/T3 predictability and named diagnostics (4). Three comparisons and a retain criterion are present, but no explicit discriminating diagnostic or refutation rule beyond failure of the gate (3). Maps, clipped loss, preprocessing, and rough cost make it implementable with numerical guards (4); affordability and exact clipping/projection bounds remain uncertain. UNKNOWN on exact novelty against external literature; bounded check: compare the transport-plus-decoder equations against the cited tangent-residual implementation and ledger.",
+          "scoring_3": "E5 supports heterogeneous successor predictability with measured coverage in the reported bins, but not the residual-mode premise (4). Explicit log/parallel transport/exp and geodesic assignment are given, and the Euclidean arm is referenced in E15; necessity beyond a matched Euclidean residual shift is not argued (3). The proposal itself distinguishes its operation from other steering approaches, but no traceable prior-art/ledger evidence is included (2; bounded check: equation-level ledger and cited-work comparison). The residual assignment → token predictability → beam/Recall chain is explicit with diagnostics/directions (4). Three controls and a failure threshold are mentioned generally, not fully matched and defined (3). It is nearly implementable with safeguards and cost, but the frame/anchor and decoder parameterization need exact convention/shape validation (3). Exploration value is low because tangent_successor_residual and successor-geodesic mechanisms are already measured in E6-E7 (1)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only directed successor probabilities and barycenter are explicitly computed; Lorentz parallel transport and Exp/Log alter residuals before T2/T3 quantization, with a behavior-conditioned code decoder. The hypothesis requires behaviour-off, Euclidean and both-on comparisons.",
+          "scoring_2": "Training-only directed successor probabilities form a tangent barycenter, which is parallel-transported and subtracted via Lorentz log/exp at the T2/T3 residual update before geodesic code assignment; removing behavior or curvature changes that residual computation.",
+          "scoring_3": "The training-only successor distribution directly shifts the residual through Lorentz transport before curved quantization, so behavior and geometry are coupled in the core path. But the proposal does not explicitly name matched behavior-off, Euclidean geometry-off, and both-on comparisons; “both controls” is not a sufficiently specified comparison set. State those arms to meet the scope contract."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.1,
+          "scoring_2": 3.2,
+          "scoring_3": 3.05
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The training-only successor distribution directly shifts the residual through Lorentz transport before curved quantization, so behavior and geometry are coupled in the core path. But the proposal does not explicitly name matched behavior-off, Euclidean geometry-off, and both-on comparisons; “both controls” is not a sufficiently specified comparison set. State those arms to meet the scope contract.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.1
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "userbranch_hyperbolic_transport",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "c297abf493fe5d23:E1",
+            "c297abf493fe5d23:E2",
+            "c297abf493fe5d23:E5",
+            "c297abf493fe5d23:E6",
+            "c297abf493fe5d23:E7",
+            "c297abf493fe5d23:E12",
+            "c297abf493fe5d23:E13",
+            "c297abf493fe5d23:E14",
+            "c297abf493fe5d23:E15",
+            "c297abf493fe5d23:E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "c297abf493fe5d23:E1",
+            "c297abf493fe5d23:E2",
+            "c297abf493fe5d23:E5",
+            "c297abf493fe5d23:E12",
+            "c297abf493fe5d23:E13",
+            "c297abf493fe5d23:E14",
+            "c297abf493fe5d23:E15",
+            "c297abf493fe5d23:E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The parent-conditioned branch statistic is not operationally defined when the assigned parent prefix is not a successor's prefix, and the claimed inverse transport / residual update is underspecified relative to x' assignment.",
+          "scoring_2": "The proposed “isometry-like” Mobius translation is not generally an isometry of the Poincare metric; moreover, translating residual and codebook but then “quantizing with corresponding inverse transport” needs a precise coordinate convention to avoid applying the transport twice or inconsistently.",
+          "scoring_3": "The branch signal is conditioned on an already assigned parent prefix, but the specification does not make clear whether successor items have that same parent under the evolving codebooks; the grouping and conditioning can therefore be unstable or circular."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 and E9 support nondegenerate behavioural structure, but the proposal's parent-conditioned branch availability/coverage is not measured (4 rather than 5). Mobius translation changes actual curved assignments; however matched Euclidean translation can reproduce a learned offset in many local cases, and necessity is not argued (3). It is a computational variant of the already measured successor/geodesic and tangent-residual family in E6-E7 (2). It names child assignment, prefix survival, NLL and expected direction (4). Three comparisons and a rejection signal are proposed, but matching and a uniquely discriminating diagnostic are lacking (3). Top-M grouping, parent-conditioned mass and inverse transport/residual semantics need additional choices for implementation (2). A negative is likely to restate the prior steering/residual family result (2). UNKNOWN: coverage of parent-conditioned branch evidence; bounded check: compute fraction of training items with nonzero parent-conditioned successor mass at T2 and T3.",
+          "scoring_2": "E5 supports measured successor branching, though not the proposed parent-conditioned branch-centroid availability or quality (4). Actual curved maps, Mobius addition and geodesic assignment are specified, but a matched Euclidean translation can plausibly reproduce much of the conditioning effect and the claimed isometry is doubtful (3). The residual-frame/parent-conditioned branch computation is distinct from the measured scalar successor and tangent-residual mechanisms (E6-E7), but no traceable external prior-art comparison is supplied (3). The affected assignment, predicted T2/T3 NLL/top-1 and beam survival diagnostics are named (4). Three comparisons and a rejection signal are stated, but no fully specified falsifier/discriminating diagnostic is given (3). The specification leaves curvature conventions, pi(m|i,p) handling and inverse transport implementation ambiguous; differentiable soft assignment and fallback are present, so implementation needs resolution (3). UNKNOWN on prior-art distinction; bounded check: search and compare computationally against transition-conditioned Möbius quantizers, then specify one exact forward/inverse residual convention.",
+          "scoring_3": "E5 is measured successor entropy, not evidence for parent-specific branches; E9 gives a related train-only profile signal but not this conditional statistic, so 3 (bounded check: measure parent-conditioned branch coverage and held-out-train profile lift). Curved Mobius transport and geodesic scoring act in assignment (E12-E14), plausibly non-Euclidean but no necessity argument against matched control (3). It is described as distinct from other steering mechanisms, yet no traceable ledger/prior-art comparison supports more than a routine variation (2). The proposed child-token predictability and Stage3 chain has concrete depth diagnostics/directions (4). Controls/failure criterion are discussed but not fully specified as three matched arms (3). It can be implemented with listed operations and safeguards, but parent-conditioned cache/update conventions and inverse transport need precise validation (3). A materially different branch-frame failure mode offers some exploration value, though it remains close to measured successor steering (2)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Popularity-adjusted directed transitions are grouped into branches from training sequences; branch-conditioned Mobius translation changes the actual Poincare residual supplied to T2/T3 geodesic assignment. Behaviour-off, Euclidean and both-on controls are called for.",
+          "scoring_2": "Train-only popularity-adjusted directed successor branches, conditioned on assigned parent, produce b_{i,p}; Mobius translation and Poincare geodesic child assignment transform the residual actually quantized at T2/T3. Behavior-off sets b=0 and geometry-off replaces the curved transport/metric, so both affect the core computation.",
+          "scoring_3": "It names popularity-adjusted train transitions, parent-conditioned branch aggregation, and a Mobius-transported residual used in curved child assignment. It does not explicitly lay out the required behavior-off, Euclidean geometry-off, and both-on comparisons; “both-on” and ablation language do not identify all three matched arms. Add the comparison definitions."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.0,
+          "scoring_2": 3.35,
+          "scoring_3": 2.9
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It names popularity-adjusted train transitions, parent-conditioned branch aggregation, and a Mobius-transported residual used in curved child assignment. It does not explicitly lay out the required behavior-off, Euclidean geometry-off, and both-on comparisons; “both-on” and ablation language do not identify all three matched arms. Add the comparison definitions.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.1
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "train_cooccur_hyperbolic_capacity",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "6e1c1bef369ac4ea:E1",
+            "6e1c1bef369ac4ea:E2",
+            "6e1c1bef369ac4ea:E5",
+            "6e1c1bef369ac4ea:E6",
+            "6e1c1bef369ac4ea:E7",
+            "6e1c1bef369ac4ea:E9",
+            "6e1c1bef369ac4ea:E12",
+            "6e1c1bef369ac4ea:E13",
+            "6e1c1bef369ac4ea:E14",
+            "6e1c1bef369ac4ea:E15",
+            "6e1c1bef369ac4ea:E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "6e1c1bef369ac4ea:E1",
+            "6e1c1bef369ac4ea:E2",
+            "6e1c1bef369ac4ea:E5",
+            "6e1c1bef369ac4ea:E9",
+            "6e1c1bef369ac4ea:E12",
+            "6e1c1bef369ac4ea:E13",
+            "6e1c1bef369ac4ea:E14",
+            "6e1c1bef369ac4ea:E15",
+            "6e1c1bef369ac4ea:E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposed batch affinity term uses only neighbors j in the minibatch, so its value and gradients depend on batch construction; the stated top-32 sparse approach does not specify deterministic inclusion or how minibatches cover those neighbors.",
+          "scoring_2": "The specified dense minibatch affinity/Sinkhorn cost is unaffordable at the stated frozen batch and run scale unless sparsification/blocking changes the objective; the suggested sparse top-neighbor implementation is not fully specified and the stated <5% overhead is unsupported.",
+          "scoring_3": "The specified dense B² batch-affinity term is expensive at B≈1,023, while sparse-top-neighbor/block approximation changes the assignment calculation and its cost is not reconciled with the claimed frozen budget."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E9 gives measured support for a related train-only cohort-profile signal, but not this within-window co-consumption/PMI statistic, so evidence for the exact signal is plausible rather than measured (3). Curved cost and residual transform act in the pathway; Euclidean Sinkhorn/context can reproduce much of the structure, and necessity is not argued (3). Batch-level affinity plus transport/context is computationally distinct from itemwise successor steering measured in E6-E7, although related in purpose (3). Soft parent influences residual assignment and predicted prefix/tail diagnostics are clear (4). Ablations and broad retention criterion exist, without a fully matched protocol or discriminating diagnostic (3). At B≈1,023, dense B² affinity is costly; sparse batching, mass normalization and differentiability/transport safeguards remain underspecified (2). The batch-dependence failure mode offers a useful distinct lesson (3). UNKNOWN: measured evidence for the proposed ±3 PMI affinity and coverage; bounded check: calculate its positive-vs-negative affinity separation and coverage on the frozen training-derived pair probe.",
+          "scoring_2": "E9 measures a train-only cohort-profile signal on held-out pairs and E8 indicates capacity effects, but neither directly measures the proposed within-window PMI affinity; evidence for this exact behavior hypothesis is plausible rather than directly audited (3). Poincare distance, barycenter and Mobius residual mapping are explicit, but no argument rules out a matched Euclidean transport/assignment effect (3). Batch-level affinity plus constrained entropic assignment is distinct from the itemwise successor mechanisms in the bundle, though external prior-art/ledger traceability is absent (3). It specifies soft parent context, residual assignment and predicted prefix/NLL/Recall effects (4). Behavior-off, geometry-off and both-on are implied/requested, with measurable outcomes, but controls and falsifier are not operationally matched in detail (3). Equations are mostly actionable, but minibatch affinity construction, sparse approximation, barycenter projection and frozen budget conflict leave significant implementation/performance risk (3). UNKNOWN for novelty against cited work and ledger; bounded check: compare the exact affinity-tilted Sinkhorn objective and measure sparse approximation error/cost on one frozen batch.",
+          "scoring_3": "E2 specifies the train-only signal, but the cited measured evidence (E9) is predecessor-profile overlap rather than within-window co-consumption affinity, so support is plausible but indirect (3; bounded check: measure PMI-neighbor positive/negative lift and coverage). The curved cost/transport are explicit (E12-E14), but matched Euclidean Sinkhorn can reproduce much of the transform and necessity is not shown (3). Batch affinity plus entropic transport is distinct from itemwise successor scoring; cited work/ledger trace is absent (3; bounded check: compare exact computation to ledger). Soft-parent context → later assignments → prefix survival and Stage3 metrics is articulated (4). The failure condition and diagnostics are present, but comparisons are not fully defined/matched (3). As written it is implementable in principle, but dense cost and the projected weighted ball mean/row-column mass conventions require resolving before frozen-budget implementation (2). It explores a batch-level assignment failure mode with an informative resource/affinity tradeoff (3)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only within-window co-consumption PMI is specified; it changes Poincare-distance T1 Sinkhorn costs, and the resulting soft parent context is Mobius-composed into curved T2/T3 residuals. The proposal calls for behaviour-off, Euclidean and both-on comparisons.",
+          "scoring_2": "Train-only within-window co-consumption PMI tilts a Poincare-distance assignment cost; Sinkhorn soft parent assignments are then mapped through curved operations into T2/T3 residual quantization. This is one connected behavior-and-geometry pathway, not an unrelated loss.",
+          "scoring_3": "It explicitly couples train-only co-consumption affinity, hyperbolic cost, Sinkhorn parent assignment, and curved residual transport. The proposal does not explicitly name behavior-off, Euclidean geometry-off, and both-on comparison arms; its general “both ablations” statement is underspecified. Specify all three matched comparisons."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.05,
+          "scoring_2": 3.15,
+          "scoring_3": 3.05
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It explicitly couples train-only co-consumption affinity, hyperbolic cost, Sinkhorn parent assignment, and curved residual transport. The proposal does not explicitly name behavior-off, Euclidean geometry-off, and both-on comparison arms; its general “both ablations” statement is underspecified. Specify all three matched comparisons.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.05
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 2.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 3.0,
+          "implementability": 0.0,
+          "novelty": 2.0
+        },
+        "disputed": [
+          "downstream_mechanism",
+          "exploration_value",
+          "geometry_necessity",
+          "novelty"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "successor-chart-residual",
+        "max_disagreement": 3.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 2.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 0.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 0.0,
+            "implementability": 2.0,
+            "novelty": 0.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "b2bc7b945748e74c:E1",
+            "b2bc7b945748e74c:E2",
+            "b2bc7b945748e74c:E5",
+            "b2bc7b945748e74c:E6",
+            "b2bc7b945748e74c:E7",
+            "b2bc7b945748e74c:E12",
+            "b2bc7b945748e74c:E13",
+            "b2bc7b945748e74c:E14",
+            "b2bc7b945748e74c:E15",
+            "b2bc7b945748e74c:E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "b2bc7b945748e74c:E1",
+            "b2bc7b945748e74c:E2",
+            "b2bc7b945748e74c:E5",
+            "b2bc7b945748e74c:E12",
+            "b2bc7b945748e74c:E13",
+            "b2bc7b945748e74c:E14",
+            "b2bc7b945748e74c:E15",
+            "b2bc7b945748e74c:E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The chart coordinates and selected codeword are not consistently defined: the equation maps a tangent residual back through exp_b before measuring against exp_b(q), then says subtract q by Mobius subtraction, without specifying whether q is a tangent vector or a ball point; if both are chart points, the stated transform can cancel the chart dependence.",
+          "scoring_2": "The defining chart transform is an exact inverse-map cancellation, so the successor barycenter does not alter the assignment cost as specified; the subsequent “subtract selected q in same chart” is also insufficiently defined to rescue that coupling.",
+          "scoring_3": "The chart barycenter is computed from successor embeddings but the specification does not establish that those embeddings are aligned to continuation modes relevant to the current residual; the chart may shift coordinates without making children more predictive."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 supports meaningful transition entropy, though not specifically that barycenter charts compact residuals (4). The operation is curved but the specified log/exp round trip is identity and no non-canceling geometric benefit against a matched Euclidean chart is established (2). Successor barycenter steering/residual quantization is close to measured successor-geodesic and tangent-residual proposals in E6-E7 (2). Residual-to-next-item chain is plausible but the chart's effect on assignments is ambiguous (3). Ablations and outcome criteria are named, but no discriminating test or clear falsifier is defined (3). The tangent-versus-ball representation, residual subtraction, Karcher convergence safeguards and codebook parameterization require redesign/clarification (2). A negative largely revisits successor-residual steering (2). UNKNOWN: whether a corrected chart definition yields a non-canceling computation; bounded check: unit-test the proposed map and assignment on two distinct barycenters with fixed r and q.",
+          "scoring_2": "E5 supports successor transition structure with measured coverage, but the proposed chart has no effect on assignments, so it does not support this SID hypothesis as specified (4 for signal evidence, not efficacy). Geometry itself is named and computed, but cancels from the behavior-conditioned mechanism (0). The exact computation is identical to ordinary geodesic assignment at the stated step (0). No effective assignment-to-recommendation chain survives the cancellation (1). A three-way comparison is proposed, but the critical cancellation is not treated as a falsifier and no discriminating diagnostic is defined (2). The expression is implementable as written but fails to implement the claimed mechanism and leaves residual subtraction ambiguous (2). It repeats a chart-transport family while yielding a clear cancellation negative, but as proposed it is a measured-geodesic-equivalent computation (0). UNKNOWN on whether the intended residual subtraction could introduce non-canceling chart dependence; bounded check: derive the exact update after code subtraction and verify whether it is invariant to b.",
+          "scoring_3": "E5 supports nonuniform successor entropy and E10 reports transition coverage, but does not measure chart usefulness for residuals (4; bounded check: evaluate residual-neighbor concentration by successor-profile strata). Geodesic chart operations are explicit (E12-E14), yet a chart change can be equivalent to a matched Euclidean coordinate transform and no curvature-specific advantage/cancellation analysis is supplied (3). Difference from cited work/ledger is asserted computationally, but traceable sources are not provided (2; bounded check: equation-level comparison against ledger). The assignment-to-token predictability-to-beam chain and diagnostics are stated (4). The controls are referenced but not specified with a failure criterion in matched detail (3). Implementability is impaired by the assignment equation appearing to apply exp_b to v=log_b(r), which recovers r, and by ambiguous subtraction/inverse-chart conventions (2; bounded check: unit-test chart round trip and tensor dimensions). A local-chart alternative is somewhat distinct but close to measured successor geodesic/tangent residual families (2)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "The smoothed train-only directed successor distribution defines an item-specific Poincare chart; its chart-dependent codebook/residual assignment at T2/T3 is connected to the behavior signal. Behaviour-off, Euclidean and both-on comparisons are required by the hypothesis.",
+          "scoring_2": "The behavior signal is specified, but the charted-point expression cancels: exp_{b_i}(log_{b_i}(r_i))=r_i and likewise for each codeword. Thus the purported behavior-conditioned chart does not change the geodesic assignment; the coupling is not real as written. Specify an operation that remains chart-dependent after the maps, then compare behavior-off, matched Euclidean and both-on.",
+          "scoring_3": "It names a train-only directed successor distribution and uses its hyperbolic barycenter to define the chart for curved T2/T3 residual quantization, changing the assignment. However, it does not explicitly specify behavior-off, Euclidean geometry-off, and both-on comparisons; references to “both ablations” do not define these arms. Add that matched comparison set."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.65,
+          "scoring_2": 1.35,
+          "scoring_3": 3.0
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The behavior signal is specified, but the charted-point expression cancels: exp_{b_i}(log_{b_i}(r_i))=r_i and likewise for each codeword. Thus the purported behavior-conditioned chart does not change the geodesic assignment; the coupling is not real as written. Specify an operation that remains chart-dependent after the maps, then compare behavior-off, matched Euclidean and both-on.",
+            "scorer": "scoring_2"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It names a train-only directed successor distribution and uses its hyperbolic barycenter to define the chart for curved T2/T3 residual quantization, changing the assignment. However, it does not explicitly specify behavior-off, Euclidean geometry-off, and both-on comparisons; references to “both ablations” do not define these arms. Add that matched comparison set.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.65
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "branching-curvature-budget",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "1acdc4472893a05c:E1",
+            "1acdc4472893a05c:E2",
+            "1acdc4472893a05c:E5",
+            "1acdc4472893a05c:E6",
+            "1acdc4472893a05c:E7",
+            "1acdc4472893a05c:E12",
+            "1acdc4472893a05c:E13",
+            "1acdc4472893a05c:E14",
+            "1acdc4472893a05c:E15"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "1acdc4472893a05c:E1",
+            "1acdc4472893a05c:E2",
+            "1acdc4472893a05c:E5",
+            "1acdc4472893a05c:E12",
+            "1acdc4472893a05c:E13",
+            "1acdc4472893a05c:E14",
+            "1acdc4472893a05c:E15",
+            "1acdc4472893a05c:E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The per-item curvature does not itself create a hierarchical four-level path; the added tail-balance penalty compares conditional entropies in a way that may force token entropy distributions without improving recommendation-relevant assignments, and its estimator/margin are unspecified.",
+          "scoring_2": "With c_i used consistently to map both a latent and all codewords, much of item-conditioned curvature may act as a smooth reparameterization of distances rather than a uniquely useful hierarchy; the entropy-to-curvature rule may encode sparsity/popularity rather than semantic branching.",
+          "scoring_3": "Per-item curvature changes the metric scale based on entropy, but the proposal does not show that normalized branching—not count/support or popularity—should determine curvature, and combines this with multiple regularizers that make the source of any effect hard to identify."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 strongly supports entropy as a measured branching statistic with coverage, though the claimed optimal allocation of curvature remains a hypothesis (4). Curvature changes metric and assignment, but a matched Euclidean per-item scale/temperature could reproduce some effects and cancellation/necessity is not ruled out (3). It is computationally different from successor direction/barycenter steering in E6-E7 and offers a distinct curvature-conditioning test, but no external prior-art evidence is supplied (3). The assignment-to-prefix/tail-to-beam chain and expected direction are explicit with diagnostics (4). Three controls and reject criteria are stated, but exact matched schedules and an individual discriminating diagnostic are missing (3). The curvature assignment is implementable in principle, but regularizer neighbor mapping, conditional-entropy estimator, and numerically stable variable-curvature map/guards are insufficiently specified (2). A failure would inform whether branching entropy should alter metric curvature rather than code targets (3). UNKNOWN: traceable prior-art distinction; bounded check: audit the cited/ledger mechanisms for any per-item entropy-conditioned curvature assignment.",
+          "scoring_2": "E5 gives audited, strongly stratified entropy and top-1 mass with broad item counts, supporting 4, while not establishing that entropy determines the required code depth. Curvature explicitly changes geometry and the matched Euclidean control is called for (E15), but necessity beyond a rescaled Euclidean metric and cancellation risks are not ruled out (3). This per-item curvature-conditioned quantization differs computationally from the measured successor direction/coarse and tangent residual families (E6-E7), but external citations/ledger comparison is missing (3). The proposed chain from branching to curvature to hierarchy is plausible; assignment changes and diagnostics are described, though the expected direction of the affected assignment is not fully specified (3). Three controls and several metrics are implied, but no numerical failure criterion or precise discriminating diagnostic is fully fixed (3). Sparse preprocessing and ordinary geodesic assignment are feasible, but the neighbor-code regularizer, entropy normalization for zero/rare supports, and batch-estimated tail-balance entropy need differentiable/numerical definitions (3). UNKNOWN on traceable novelty and the exact equivalence to matched controls; bounded check: run a metric-equivalence derivation for fixed c_i per item and specify a matched Euclidean transform/control plus explicit cancellation tests.",
+          "scoring_3": "E5 gives auditable entropy/top-1 stratification, though it does not establish that entropy should control geometric curvature (4). Hyperbolic distance at item-conditioned curvature is explicit (E12-E14), but curvature scaling could be matched by Euclidean rescaling and no necessity/cancellation argument is given (3). The idea is distinct in form but lies within routine behavior-conditioned geometry and has no traceable prior-art/ledger comparison (2; bounded check: compare full per-item metric equation with cited work and ledger). Its proposed hierarchy → branching allocation → beam survival chain has named diagnostics and directions (4). Ablations/failure criterion are mentioned but not specified as matched controls (3). Curvature scaling and sparse regularization are plausible, but the tail-balance entropy expression and discrete successor-code lookup/neighbor update need exact definitions and numerical testing (2). The mechanism is a variation on measured successor-entropy/geodesic families (2)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Normalized entropy of training-only directed next-item probabilities sets per-item negative curvature, used in every residual geodesic assignment and a successor consistency penalty. Curvature-off/Euclidean, behavior-off and both-on comparisons are identified.",
+          "scoring_2": "Normalized entropy of training-only directed successor probabilities sets item-specific negative curvature; that curvature changes the Poincare map and geodesic quantization metric at every residual level, while successor edges also enter the continuation regularizer. Both behavior and geometry affect assignment and training updates.",
+          "scoring_3": "It directly conditions per-item negative curvature on train-only successor branching and uses that curvature in residual assignment and a transition regularizer, satisfying computational coupling. But behavior-off, Euclidean geometry-off, and both-on comparisons are not explicitly specified as matched arms; the generic “each ablation” language is insufficient. Define those comparisons."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.25,
+          "scoring_2": 3.2,
+          "scoring_3": 3.0
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It directly conditions per-item negative curvature on train-only successor branching and uses that curvature in residual assignment and a transition regularizer, satisfying computational coupling. But behavior-off, Euclidean geometry-off, and both-on comparisons are not explicitly specified as matched arms; the generic “each ablation” language is insufficient. Define those comparisons.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.25
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": true,
+        "pair": [
+          "branching-curvature-budget",
+          "curved_transition_residual"
+        ],
+        "votes": {
+          "branching-curvature-budget": 2,
+          "curved_transition_residual": 1
+        },
+        "winner": "branching-curvature-budget"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "branching-curvature-budget",
+          "successor_shell_budget"
+        ],
+        "votes": {
+          "branching-curvature-budget": 0,
+          "successor_shell_budget": 3
+        },
+        "winner": "successor_shell_budget"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "curved_transition_residual",
+          "successor_shell_budget"
+        ],
+        "votes": {
+          "curved_transition_residual": 0,
+          "successor_shell_budget": 3
+        },
+        "winner": "successor_shell_budget"
+      }
+    ],
+    "copeland": {
+      "branching-curvature-budget": 0,
+      "curved_transition_residual": -2,
+      "successor-chart-residual": 0,
+      "successor_shell_budget": 2,
+      "train_cooccur_hyperbolic_capacity": 0,
+      "userbranch_hyperbolic_transport": 0
+    },
+    "cycles": [],
+    "position_bias": {
+      "first_listed_wins": 5,
+      "second_listed_wins": 4
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "c36f3fe9672167fe81adb009320cc3a6e4be299001c7af76d84b47cc94f727a4",
+      "idea_id": "successor_shell_budget",
+      "proposal_sha256": "8eddddbe1d2f244807615cad46936aad8b4753fcfc78092abf82351bfd1ce4d9"
+    },
+    {
+      "evidence_sha256": "36d2c6fd13e0d45f85db0e5ccc0ca93e7d81800d9dc44dce45a93221b1d11830",
+      "idea_id": "curved_transition_residual",
+      "proposal_sha256": "f61b184c8fdb1d02e823d527ac0a15d39afef646ae898a0d6fb2cf4b04fb0dca"
+    },
+    {
+      "evidence_sha256": "c297abf493fe5d23903d66ab5c32c560c647bf337ba88a474ea0618420beca00",
+      "idea_id": "userbranch_hyperbolic_transport",
+      "proposal_sha256": "e15a9bc7518f698e44c8334379ad0bd6c95a5dad00444b763ca31e3f52e862b2"
+    },
+    {
+      "evidence_sha256": "6e1c1bef369ac4eacbd469b4df9a84ebf22877c49369c40284eea36ee37fe649",
+      "idea_id": "train_cooccur_hyperbolic_capacity",
+      "proposal_sha256": "5efa0c170ab583224b06eda125026aebba78fef1164962d583df9077e3aa2ff6"
+    },
+    {
+      "evidence_sha256": "b2bc7b945748e74c062f160490ec2a8fa0bf4c7397cc14b3906cfb0bc44e292e",
+      "idea_id": "successor-chart-residual",
+      "proposal_sha256": "4a8d711648aa30445fbc465f6b9a6956c6d6ada29eaa35905c023d87050a3aff"
+    },
+    {
+      "evidence_sha256": "1acdc4472893a05ca4b33d7ad201ded9f3c7e33b6092224a9fa45ca46413fe65",
+      "idea_id": "branching-curvature-budget",
+      "proposal_sha256": "3fb3ad94462c006f0fe3554c6bba8da4197605ecb0e3d9bb09070f378d5ab867"
+    }
+  ],
+  "reviews": [
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "If c_m and c_alt are equidistant from exp_o(u_i), the hinge contribution is zero regardless of whether either child corresponds to the observed successor branch; the behavior term then cannot distinguish those assignments.",
+          "evidence_ids": [
+            "c36f3fe9672167fe:E1",
+            "c36f3fe9672167fe:E2",
+            "c36f3fe9672167fe:E5",
+            "c36f3fe9672167fe:E6",
+            "c36f3fe9672167fe:E7",
+            "c36f3fe9672167fe:E12",
+            "c36f3fe9672167fe:E13",
+            "c36f3fe9672167fe:E14",
+            "c36f3fe9672167fe:E15"
+          ],
+          "idea_id": "successor_shell_budget",
+          "missing_dimensions": [],
+          "objection": "The displayed hinge term compares the same successor direction against candidate child and alternative, but does not define how alt is selected or how empirical successor-child targets are derived; the proposed fixed T1 reservation may also conflict with learned assignments and capacity.",
+          "rationale": "E5 strongly supports heterogeneous, predictable successor branching with coverage; E6-E7 show existing successor-entropy/geodesic methods underperform, so coarse-prefix motivation is plausible but not proven. Curved distance genuinely enters assignment, but the behavior-direction distance term is essentially a matched Euclidean scoring feature and no cancellation/necessity argument is given (3). Its child-partition computation is adjacent to measured successor-geodesic/entropy mechanisms, hence routine-nearby rather than strongly novel (2). Assignment and conditional-token diagnostics give a plausible downstream chain (4); controls are named but no exact failure threshold or discriminating diagnostic is fully specified (3). The ambiguities in alt, targets, and differentiable objective prevent a fully implementable specification (3). A modest variation on measured negative families has limited exploration value (2). UNKNOWN: novelty beyond the listed ledger; bounded check: compare the exact objective to the recorded successor-geodesic and successor-entropy implementations.",
+          "scope_reason": "Train-only directed transitions and their smoothed distribution/entropy are specified; Lorentz geodesic child assignment and behavior-conditioned sibling separation form a connected pathway at T2/T3. Behaviour-off, Euclidean and both-on comparisons are required by the proposal's hypothesis/controls; compare on identical schedule and data.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For successors with equal mass at tangent vectors +v and -v, μ_i=0; transport subtracts no behavioral direction although both distinct continuation modes exist.",
+          "evidence_ids": [
+            "36d2c6fd13e0d45f:E1",
+            "36d2c6fd13e0d45f:E2",
+            "36d2c6fd13e0d45f:E5",
+            "36d2c6fd13e0d45f:E6",
+            "36d2c6fd13e0d45f:E7",
+            "36d2c6fd13e0d45f:E12",
+            "36d2c6fd13e0d45f:E13",
+            "36d2c6fd13e0d45f:E14",
+            "36d2c6fd13e0d45f:E15",
+            "36d2c6fd13e0d45f:E16"
+          ],
+          "idea_id": "curved_transition_residual",
+          "missing_dimensions": [],
+          "objection": "A single successor barycenter can erase multimodal continuation structure, while the decoder loss can reward predicting that average without making item-level next-item assignments useful.",
+          "rationale": "E5 supports variation in successor predictability and E6-E7 show tangent successor residual is already measured and weak, making support for this specific mechanism weaker than for the broad signal (4). Parallel transport and curved residual quantization are real operations, but no matched-control argument establishes value over Euclidean residual steering (3). The measured tangent-successor residual is close prior art; this replaces its operation but remains a routine family variation (2). The residual assignment and T2/T3 prediction chain is explicit, with expected diagnostics (4). Both controls and a retain criterion are mentioned, but matching and a discriminating diagnostic/falsifier are incomplete (3). The stated operations are plausible, though choice of tangent space for μ, decoder/code dimensions and guards for the transport/Exp domain are not fully pinned down (3). The negative would mainly repeat the known successor-residual failure family (2). UNKNOWN: independent novelty beyond E6-E7; bounded check: compare full equations to the recorded tangent_successor_residual run.",
+          "scope_reason": "Training-only directed successor probabilities and barycenter are explicitly computed; Lorentz parallel transport and Exp/Log alter residuals before T2/T3 quantization, with a behavior-conditioned code decoder. The hypothesis requires behaviour-off, Euclidean and both-on comparisons.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If no successor has prefix p, then π(m|i,p) has zero total mass; the proposal says b=0 for no evidence, but does not specify an epsilon/normalization rule for near-zero mass, so the stated formula is undefined at the zero-mass case without that fallback.",
+          "evidence_ids": [
+            "c297abf493fe5d23:E1",
+            "c297abf493fe5d23:E2",
+            "c297abf493fe5d23:E5",
+            "c297abf493fe5d23:E6",
+            "c297abf493fe5d23:E7",
+            "c297abf493fe5d23:E12",
+            "c297abf493fe5d23:E13",
+            "c297abf493fe5d23:E14",
+            "c297abf493fe5d23:E15",
+            "c297abf493fe5d23:E16"
+          ],
+          "idea_id": "userbranch_hyperbolic_transport",
+          "missing_dimensions": [],
+          "objection": "The parent-conditioned branch statistic is not operationally defined when the assigned parent prefix is not a successor's prefix, and the claimed inverse transport / residual update is underspecified relative to x' assignment.",
+          "rationale": "E5 and E9 support nondegenerate behavioural structure, but the proposal's parent-conditioned branch availability/coverage is not measured (4 rather than 5). Mobius translation changes actual curved assignments; however matched Euclidean translation can reproduce a learned offset in many local cases, and necessity is not argued (3). It is a computational variant of the already measured successor/geodesic and tangent-residual family in E6-E7 (2). It names child assignment, prefix survival, NLL and expected direction (4). Three comparisons and a rejection signal are proposed, but matching and a uniquely discriminating diagnostic are lacking (3). Top-M grouping, parent-conditioned mass and inverse transport/residual semantics need additional choices for implementation (2). A negative is likely to restate the prior steering/residual family result (2). UNKNOWN: coverage of parent-conditioned branch evidence; bounded check: compute fraction of training items with nonzero parent-conditioned successor mass at T2 and T3.",
+          "scope_reason": "Popularity-adjusted directed transitions are grouped into branches from training sequences; branch-conditioned Mobius translation changes the actual Poincare residual supplied to T2/T3 geodesic assignment. Behaviour-off, Euclidean and both-on controls are called for.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For a batch containing item i but none of its cached co-consumed neighbors, the affinity sum is empty and the behavior tilt is exactly zero; the same i in a batch containing neighbor j receives a different assignment cost.",
+          "evidence_ids": [
+            "6e1c1bef369ac4ea:E1",
+            "6e1c1bef369ac4ea:E2",
+            "6e1c1bef369ac4ea:E5",
+            "6e1c1bef369ac4ea:E6",
+            "6e1c1bef369ac4ea:E7",
+            "6e1c1bef369ac4ea:E9",
+            "6e1c1bef369ac4ea:E12",
+            "6e1c1bef369ac4ea:E13",
+            "6e1c1bef369ac4ea:E14",
+            "6e1c1bef369ac4ea:E15",
+            "6e1c1bef369ac4ea:E16"
+          ],
+          "idea_id": "train_cooccur_hyperbolic_capacity",
+          "missing_dimensions": [],
+          "objection": "The proposed batch affinity term uses only neighbors j in the minibatch, so its value and gradients depend on batch construction; the stated top-32 sparse approach does not specify deterministic inclusion or how minibatches cover those neighbors.",
+          "rationale": "E9 gives measured support for a related train-only cohort-profile signal, but not this within-window co-consumption/PMI statistic, so evidence for the exact signal is plausible rather than measured (3). Curved cost and residual transform act in the pathway; Euclidean Sinkhorn/context can reproduce much of the structure, and necessity is not argued (3). Batch-level affinity plus transport/context is computationally distinct from itemwise successor steering measured in E6-E7, although related in purpose (3). Soft parent influences residual assignment and predicted prefix/tail diagnostics are clear (4). Ablations and broad retention criterion exist, without a fully matched protocol or discriminating diagnostic (3). At B≈1,023, dense B² affinity is costly; sparse batching, mass normalization and differentiability/transport safeguards remain underspecified (2). The batch-dependence failure mode offers a useful distinct lesson (3). UNKNOWN: measured evidence for the proposed ±3 PMI affinity and coverage; bounded check: calculate its positive-vs-negative affinity separation and coverage on the frozen training-derived pair probe.",
+          "scope_reason": "Training-only within-window co-consumption PMI is specified; it changes Poincare-distance T1 Sinkhorn costs, and the resulting soft parent context is Mobius-composed into curved T2/T3 residuals. The proposal calls for behaviour-off, Euclidean and both-on comparisons.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "Under the standard chart convention, exp_b(log_b(r))=r exactly. If q_lk is a ball point, d(exp_b(log_b(r)), exp_b(q_lk))=d(r,exp_b(q_lk)); the b_i chart does not move r and only changes codebook parameterization. If q_lk is instead already a ball point, the expression exp_b(q_lk) is dimensionally invalid as an exponential-map tangent input unless converted by log_b.",
+          "evidence_ids": [
+            "b2bc7b945748e74c:E1",
+            "b2bc7b945748e74c:E2",
+            "b2bc7b945748e74c:E5",
+            "b2bc7b945748e74c:E6",
+            "b2bc7b945748e74c:E7",
+            "b2bc7b945748e74c:E12",
+            "b2bc7b945748e74c:E13",
+            "b2bc7b945748e74c:E14",
+            "b2bc7b945748e74c:E15",
+            "b2bc7b945748e74c:E16"
+          ],
+          "idea_id": "successor-chart-residual",
+          "missing_dimensions": [],
+          "objection": "The chart coordinates and selected codeword are not consistently defined: the equation maps a tangent residual back through exp_b before measuring against exp_b(q), then says subtract q by Mobius subtraction, without specifying whether q is a tangent vector or a ball point; if both are chart points, the stated transform can cancel the chart dependence.",
+          "rationale": "E5 supports meaningful transition entropy, though not specifically that barycenter charts compact residuals (4). The operation is curved but the specified log/exp round trip is identity and no non-canceling geometric benefit against a matched Euclidean chart is established (2). Successor barycenter steering/residual quantization is close to measured successor-geodesic and tangent-residual proposals in E6-E7 (2). Residual-to-next-item chain is plausible but the chart's effect on assignments is ambiguous (3). Ablations and outcome criteria are named, but no discriminating test or clear falsifier is defined (3). The tangent-versus-ball representation, residual subtraction, Karcher convergence safeguards and codebook parameterization require redesign/clarification (2). A negative largely revisits successor-residual steering (2). UNKNOWN: whether a corrected chart definition yields a non-canceling computation; bounded check: unit-test the proposed map and assignment on two distinct barycenters with fixed r and q.",
+          "scope_reason": "The smoothed train-only directed successor distribution defines an item-specific Poincare chart; its chart-dependent codebook/residual assignment at T2/T3 is connected to the behavior signal. Behaviour-off, Euclidean and both-on comparisons are required by the hypothesis.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For h_i=1, c_i=c_min; if every item has no transition evidence, all receive the same curvature regardless of their distinct latent geometry, so the behavior-conditioned part collapses to a global-curvature quantizer.",
+          "evidence_ids": [
+            "1acdc4472893a05c:E1",
+            "1acdc4472893a05c:E2",
+            "1acdc4472893a05c:E5",
+            "1acdc4472893a05c:E6",
+            "1acdc4472893a05c:E7",
+            "1acdc4472893a05c:E12",
+            "1acdc4472893a05c:E13",
+            "1acdc4472893a05c:E14",
+            "1acdc4472893a05c:E15"
+          ],
+          "idea_id": "branching-curvature-budget",
+          "missing_dimensions": [],
+          "objection": "The per-item curvature does not itself create a hierarchical four-level path; the added tail-balance penalty compares conditional entropies in a way that may force token entropy distributions without improving recommendation-relevant assignments, and its estimator/margin are unspecified.",
+          "rationale": "E5 strongly supports entropy as a measured branching statistic with coverage, though the claimed optimal allocation of curvature remains a hypothesis (4). Curvature changes metric and assignment, but a matched Euclidean per-item scale/temperature could reproduce some effects and cancellation/necessity is not ruled out (3). It is computationally different from successor direction/barycenter steering in E6-E7 and offers a distinct curvature-conditioning test, but no external prior-art evidence is supplied (3). The assignment-to-prefix/tail-to-beam chain and expected direction are explicit with diagnostics (4). Three controls and reject criteria are stated, but exact matched schedules and an individual discriminating diagnostic are missing (3). The curvature assignment is implementable in principle, but regularizer neighbor mapping, conditional-entropy estimator, and numerically stable variable-curvature map/guards are insufficiently specified (2). A failure would inform whether branching entropy should alter metric curvature rather than code targets (3). UNKNOWN: traceable prior-art distinction; bounded check: audit the cited/ledger mechanisms for any per-item entropy-conditioned curvature assignment.",
+          "scope_reason": "Normalized entropy of training-only directed next-item probabilities sets per-item negative curvature, used in every residual geodesic assignment and a successor consistency penalty. Curvature-off/Euclidean, behavior-off and both-on comparisons are identified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "For two equally likely successors with opposite tangent vectors u and -u, the normalized mean is zero; the proposed direction term then has no preference between children symmetric about the origin, although the empirical distribution has two distinct continuation modes.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "successor_shell_budget",
+          "missing_dimensions": [],
+          "objection": "The score mixes a parent-conditioned residual term with a successor-centroid term whose weighting/sign and alt-child definition are underspecified; an entropy-weighted direction can pull children toward an averaged mode while splitting incompatible successors, and the measured successor methods did not reach the target (E6-E7).",
+          "rationale": "E5 supports a measured, stratified successor-entropy signal with strong top-1-mass association and broad item coverage, meriting 4, but does not directly establish local child-partition coherence. The curved operation is explicit but no evidence rules out a matched Euclidean scoring transform (3). The proposal is a variation of measured successor-conditioned/coarse-geodesic and tangent-residual families (E6-E7), hence novelty 2. It names changed child assignments and predicts better later-prefix survival/NLL (4); three comparisons are requested but no failure threshold/diagnostic is specified beyond the Stage3 gate (3). Scoring, preprocessing, and safeguards/control matching are not sufficiently complete for higher implementability (3); compute and hyperparameter risks remain. UNKNOWN on traceable external prior-art/ledger distinction; a bounded ledger comparison of the exact sibling-conditioned objective would resolve novelty uncertainty.",
+          "scope_reason": "Train-only directed successor probabilities and entropy/tangent mean condition the candidate child score and sibling-partition objective; hyperbolic geodesic distances act in T2/T3 assignment, so both signals enter the same assignment pathway. Behavior-off, Euclidean, and both-on are required comparisons, though the proposal does not fully specify matched-control details or a concrete falsifier.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "With equal successor mass at tangent vectors +v and -v, μ_i=0; the transport term is exactly zero for any η, so this mechanism reduces to the unconditioned residual update for that branching item.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "curved_transition_residual",
+          "missing_dimensions": [],
+          "objection": "Averaging successors into one vector can erase multimodal continuation structure, and the auxiliary code-to-mean cosine target may reward predicting a mean rather than assigning distinct useful successor modes.",
+          "rationale": "E5 establishes substantial, well-covered variation in successor entropy/top-1 mass, but does not measure whether the barycenter aligns with residuals (4). Parallel transport, exponential update and geodesic assignment are explicit; the bundle specifies a Euclidean control (E15), but does not establish that a matched Euclidean residual translation cannot reproduce the practical transform (3). The mechanism is near the measured tangent-successor residual family (E6-E7), with a distinct transport/decoder detail but not a demonstrated computationally distant prior-art basis (2). It specifies a path from changed residual/code to T2/T3 predictability and named diagnostics (4). Three comparisons and a retain criterion are present, but no explicit discriminating diagnostic or refutation rule beyond failure of the gate (3). Maps, clipped loss, preprocessing, and rough cost make it implementable with numerical guards (4); affordability and exact clipping/projection bounds remain uncertain. UNKNOWN on exact novelty against external literature; bounded check: compare the transport-plus-decoder equations against the cited tangent-residual implementation and ledger.",
+          "scope_reason": "Training-only directed successor probabilities form a tangent barycenter, which is parallel-transported and subtracted via Lorentz log/exp at the T2/T3 residual update before geodesic code assignment; removing behavior or curvature changes that residual computation.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 4.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "In one dimension, Mobius addition is (t+x)/(1+c tx), which is not ordinary addition; its derivative with respect to x is (1-c t^2)/(1+c tx)^2 and varies with x, so it is not a distance-preserving translation for arbitrary x.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "userbranch_hyperbolic_transport",
+          "missing_dimensions": [],
+          "objection": "The proposed “isometry-like” Mobius translation is not generally an isometry of the Poincare metric; moreover, translating residual and codebook but then “quantizing with corresponding inverse transport” needs a precise coordinate convention to avoid applying the transport twice or inconsistently.",
+          "rationale": "E5 supports measured successor branching, though not the proposed parent-conditioned branch-centroid availability or quality (4). Actual curved maps, Mobius addition and geodesic assignment are specified, but a matched Euclidean translation can plausibly reproduce much of the conditioning effect and the claimed isometry is doubtful (3). The residual-frame/parent-conditioned branch computation is distinct from the measured scalar successor and tangent-residual mechanisms (E6-E7), but no traceable external prior-art comparison is supplied (3). The affected assignment, predicted T2/T3 NLL/top-1 and beam survival diagnostics are named (4). Three comparisons and a rejection signal are stated, but no fully specified falsifier/discriminating diagnostic is given (3). The specification leaves curvature conventions, pi(m|i,p) handling and inverse transport implementation ambiguous; differentiable soft assignment and fallback are present, so implementation needs resolution (3). UNKNOWN on prior-art distinction; bounded check: search and compare computationally against transition-conditioned Möbius quantizers, then specify one exact forward/inverse residual convention.",
+          "scope_reason": "Train-only popularity-adjusted directed successor branches, conditioned on assigned parent, produce b_{i,p}; Mobius translation and Poincare geodesic child assignment transform the residual actually quantized at T2/T3. Behavior-off sets b=0 and geometry-off replaces the curved transport/metric, so both affect the core computation.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For a minibatch with no cached co-consumption edges among its items, the affinity tilt is zero; the behavior-conditioned part of M is identical to the behavior-off assignment for that batch, even though global co-consumption exists.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "train_cooccur_hyperbolic_capacity",
+          "missing_dimensions": [],
+          "objection": "The specified dense minibatch affinity/Sinkhorn cost is unaffordable at the stated frozen batch and run scale unless sparsification/blocking changes the objective; the suggested sparse top-neighbor implementation is not fully specified and the stated <5% overhead is unsupported.",
+          "rationale": "E9 measures a train-only cohort-profile signal on held-out pairs and E8 indicates capacity effects, but neither directly measures the proposed within-window PMI affinity; evidence for this exact behavior hypothesis is plausible rather than directly audited (3). Poincare distance, barycenter and Mobius residual mapping are explicit, but no argument rules out a matched Euclidean transport/assignment effect (3). Batch-level affinity plus constrained entropic assignment is distinct from the itemwise successor mechanisms in the bundle, though external prior-art/ledger traceability is absent (3). It specifies soft parent context, residual assignment and predicted prefix/NLL/Recall effects (4). Behavior-off, geometry-off and both-on are implied/requested, with measurable outcomes, but controls and falsifier are not operationally matched in detail (3). Equations are mostly actionable, but minibatch affinity construction, sparse approximation, barycenter projection and frozen budget conflict leave significant implementation/performance risk (3). UNKNOWN for novelty against cited work and ledger; bounded check: compare the exact affinity-tilted Sinkhorn objective and measure sparse approximation error/cost on one frozen batch.",
+          "scope_reason": "Train-only within-window co-consumption PMI tilts a Poincare-distance assignment cost; Sinkhorn soft parent assignments are then mapped through curved operations into T2/T3 residual quantization. This is one connected behavior-and-geometry pathway, not an unrelated loss.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For any valid b and r in the manifold, exp_b(log_b(r))=r. Therefore for every code q, d(exp_b(log_b(r)),exp_b(log_b(q)))=d(r,q), independent of b and P_ij. This is an exact cancellation, not merely a small-curvature approximation.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "successor-chart-residual",
+          "missing_dimensions": [],
+          "objection": "The defining chart transform is an exact inverse-map cancellation, so the successor barycenter does not alter the assignment cost as specified; the subsequent “subtract selected q in same chart” is also insufficiently defined to rescue that coupling.",
+          "rationale": "E5 supports successor transition structure with measured coverage, but the proposed chart has no effect on assignments, so it does not support this SID hypothesis as specified (4 for signal evidence, not efficacy). Geometry itself is named and computed, but cancels from the behavior-conditioned mechanism (0). The exact computation is identical to ordinary geodesic assignment at the stated step (0). No effective assignment-to-recommendation chain survives the cancellation (1). A three-way comparison is proposed, but the critical cancellation is not treated as a falsifier and no discriminating diagnostic is defined (2). The expression is implementable as written but fails to implement the claimed mechanism and leaves residual subtraction ambiguous (2). It repeats a chart-transport family while yielding a clear cancellation negative, but as proposed it is a measured-geodesic-equivalent computation (0). UNKNOWN on whether the intended residual subtraction could introduce non-canceling chart dependence; bounded check: derive the exact update after code subtraction and verify whether it is invariant to b.",
+          "scope_reason": "The behavior signal is specified, but the charted-point expression cancels: exp_{b_i}(log_{b_i}(r_i))=r_i and likewise for each codeword. Thus the purported behavior-conditioned chart does not change the geodesic assignment; the coupling is not real as written. Specify an operation that remains chart-dependent after the maps, then compare behavior-off, matched Euclidean and both-on.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 0.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 0.0,
+            "implementability": 2.0,
+            "novelty": 0.0
+          }
+        },
+        {
+          "counterexample": "If every item has the same normalized entropy h_i=h, then c_i is constant for all items; the proposed item-conditioned curvature budget collapses to one fixed-curvature quantizer, and the behavior signal contributes no between-item curvature conditioning.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "branching-curvature-budget",
+          "missing_dimensions": [],
+          "objection": "With c_i used consistently to map both a latent and all codewords, much of item-conditioned curvature may act as a smooth reparameterization of distances rather than a uniquely useful hierarchy; the entropy-to-curvature rule may encode sparsity/popularity rather than semantic branching.",
+          "rationale": "E5 gives audited, strongly stratified entropy and top-1 mass with broad item counts, supporting 4, while not establishing that entropy determines the required code depth. Curvature explicitly changes geometry and the matched Euclidean control is called for (E15), but necessity beyond a rescaled Euclidean metric and cancellation risks are not ruled out (3). This per-item curvature-conditioned quantization differs computationally from the measured successor direction/coarse and tangent residual families (E6-E7), but external citations/ledger comparison is missing (3). The proposed chain from branching to curvature to hierarchy is plausible; assignment changes and diagnostics are described, though the expected direction of the affected assignment is not fully specified (3). Three controls and several metrics are implied, but no numerical failure criterion or precise discriminating diagnostic is fully fixed (3). Sparse preprocessing and ordinary geodesic assignment are feasible, but the neighbor-code regularizer, entropy normalization for zero/rare supports, and batch-estimated tail-balance entropy need differentiable/numerical definitions (3). UNKNOWN on traceable novelty and the exact equivalence to matched controls; bounded check: run a metric-equivalence derivation for fixed c_i per item and specify a matched Euclidean transform/control plus explicit cancellation tests.",
+          "scope_reason": "Normalized entropy of training-only directed successor probabilities sets item-specific negative curvature; that curvature changes the Poincare map and geodesic quantization metric at every residual level, while successor edges also enter the continuation regularizer. Both behavior and geometry affect assignment and training updates.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "With one successor-child and all candidate child codewords coincident, d(u,c_m)=d(u,c_alt), so the geodesic separation term is zero for every assignment and supplies no behavior-geometry coupling signal.",
+          "evidence_ids": [
+            "c36f3fe9672167fe:E1",
+            "c36f3fe9672167fe:E2",
+            "c36f3fe9672167fe:E5",
+            "c36f3fe9672167fe:E12",
+            "c36f3fe9672167fe:E13",
+            "c36f3fe9672167fe:E14",
+            "c36f3fe9672167fe:E15"
+          ],
+          "idea_id": "successor_shell_budget",
+          "missing_dimensions": [],
+          "objection": "The equation's positive-part difference against c_alt does not clearly define which alternative is selected or how it corresponds to the empirical successor-child distribution; moreover the proposed 32-way T1 budget can alter capacity independently of the behavior/geometry mechanism.",
+          "rationale": "E5 provides measured, stratified transition entropy with support; it is relevant but does not establish successor modes cluster within T1 subtrees, so 4 rather than 5. The geodesic operation is explicit (E12-E14), but a matched Euclidean transform could reproduce a distance-based preference and no curvature-specific advantage/cancellation analysis is supplied (3). No cited-work/ledger trace beyond claims in the proposal is available (novelty 2; bounded check: compare the exact equation with the cited-work and experiment ledger). The child partition → conditional predictability → beam survival chain has named diagnostics and directions (4). Controls are not sufficiently enumerated/matched (3). The multi-term quantizer/loss and candidate-alt definition need clarification for implementation, and the frozen-time estimate is only a proposal (2; bounded check: implement a one-batch shape/numerics test and benchmark).",
+          "scope_reason": "It specifies train-only directed transitions and a curved child assignment coupled through successor-conditioned geodesic scoring, with SID/prefix/Stage3 outcomes. However, it does not unambiguously specify the required behavior-off, Euclidean geometry-off, and both-on comparison protocol; “beats both controls” does not define the behavior-off arm. Add those three matched arms to satisfy the scope contract.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If two equally likely successors have tangent vectors +v and -v, then μ_i=0; transport subtracts nothing, so the advertised transition-conditioned residual effect disappears despite nonzero branching.",
+          "evidence_ids": [
+            "36d2c6fd13e0d45f:E1",
+            "36d2c6fd13e0d45f:E2",
+            "36d2c6fd13e0d45f:E5",
+            "36d2c6fd13e0d45f:E12",
+            "36d2c6fd13e0d45f:E13",
+            "36d2c6fd13e0d45f:E14",
+            "36d2c6fd13e0d45f:E15",
+            "36d2c6fd13e0d45f:E16"
+          ],
+          "idea_id": "curved_transition_residual",
+          "missing_dimensions": [],
+          "objection": "The behavior direction is the unconditional per-item successor mean, not the continuation mode remaining after the actual prefix; subtracting it could remove item-identifying signal or average incompatible branches.",
+          "rationale": "E5 supports heterogeneous successor predictability with measured coverage in the reported bins, but not the residual-mode premise (4). Explicit log/parallel transport/exp and geodesic assignment are given, and the Euclidean arm is referenced in E15; necessity beyond a matched Euclidean residual shift is not argued (3). The proposal itself distinguishes its operation from other steering approaches, but no traceable prior-art/ledger evidence is included (2; bounded check: equation-level ledger and cited-work comparison). The residual assignment → token predictability → beam/Recall chain is explicit with diagnostics/directions (4). Three controls and a failure threshold are mentioned generally, not fully matched and defined (3). It is nearly implementable with safeguards and cost, but the frame/anchor and decoder parameterization need exact convention/shape validation (3). Exploration value is low because tangent_successor_residual and successor-geodesic mechanisms are already measured in E6-E7 (1).",
+          "scope_reason": "The training-only successor distribution directly shifts the residual through Lorentz transport before curved quantization, so behavior and geometry are coupled in the core path. But the proposal does not explicitly name matched behavior-off, Euclidean geometry-off, and both-on comparisons; “both controls” is not a sufficiently specified comparison set. State those arms to meet the scope contract.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If no successor in the cached top-M set has prefix p, the specified zero fallback gives b=0; then x'=log(exp(r)⊕exp(0))=r, so the behavior-geometry pathway is exactly inactive for that item.",
+          "evidence_ids": [
+            "c297abf493fe5d23:E1",
+            "c297abf493fe5d23:E2",
+            "c297abf493fe5d23:E5",
+            "c297abf493fe5d23:E12",
+            "c297abf493fe5d23:E13",
+            "c297abf493fe5d23:E14",
+            "c297abf493fe5d23:E15",
+            "c297abf493fe5d23:E16"
+          ],
+          "idea_id": "userbranch_hyperbolic_transport",
+          "missing_dimensions": [],
+          "objection": "The branch signal is conditioned on an already assigned parent prefix, but the specification does not make clear whether successor items have that same parent under the evolving codebooks; the grouping and conditioning can therefore be unstable or circular.",
+          "rationale": "E5 is measured successor entropy, not evidence for parent-specific branches; E9 gives a related train-only profile signal but not this conditional statistic, so 3 (bounded check: measure parent-conditioned branch coverage and held-out-train profile lift). Curved Mobius transport and geodesic scoring act in assignment (E12-E14), plausibly non-Euclidean but no necessity argument against matched control (3). It is described as distinct from other steering mechanisms, yet no traceable ledger/prior-art comparison supports more than a routine variation (2). The proposed child-token predictability and Stage3 chain has concrete depth diagnostics/directions (4). Controls/failure criterion are discussed but not fully specified as three matched arms (3). It can be implemented with listed operations and safeguards, but parent-conditioned cache/update conventions and inverse transport need precise validation (3). A materially different branch-frame failure mode offers some exploration value, though it remains close to measured successor steering (2).",
+          "scope_reason": "It names popularity-adjusted train transitions, parent-conditioned branch aggregation, and a Mobius-transported residual used in curved child assignment. It does not explicitly lay out the required behavior-off, Euclidean geometry-off, and both-on comparisons; “both-on” and ablation language do not identify all three matched arms. Add the comparison definitions.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If a minibatch has no cached co-consumption edges (or lambda=0), the affinity tilt vanishes and the Sinkhorn-plus-curved assignment is not behavior-coupled; Sinkhorn capacity alone cannot establish the claimed coupling.",
+          "evidence_ids": [
+            "6e1c1bef369ac4ea:E1",
+            "6e1c1bef369ac4ea:E2",
+            "6e1c1bef369ac4ea:E5",
+            "6e1c1bef369ac4ea:E9",
+            "6e1c1bef369ac4ea:E12",
+            "6e1c1bef369ac4ea:E13",
+            "6e1c1bef369ac4ea:E14",
+            "6e1c1bef369ac4ea:E15",
+            "6e1c1bef369ac4ea:E16"
+          ],
+          "idea_id": "train_cooccur_hyperbolic_capacity",
+          "missing_dimensions": [],
+          "objection": "The specified dense B² batch-affinity term is expensive at B≈1,023, while sparse-top-neighbor/block approximation changes the assignment calculation and its cost is not reconciled with the claimed frozen budget.",
+          "rationale": "E2 specifies the train-only signal, but the cited measured evidence (E9) is predecessor-profile overlap rather than within-window co-consumption affinity, so support is plausible but indirect (3; bounded check: measure PMI-neighbor positive/negative lift and coverage). The curved cost/transport are explicit (E12-E14), but matched Euclidean Sinkhorn can reproduce much of the transform and necessity is not shown (3). Batch affinity plus entropic transport is distinct from itemwise successor scoring; cited work/ledger trace is absent (3; bounded check: compare exact computation to ledger). Soft-parent context → later assignments → prefix survival and Stage3 metrics is articulated (4). The failure condition and diagnostics are present, but comparisons are not fully defined/matched (3). As written it is implementable in principle, but dense cost and the projected weighted ball mean/row-column mass conventions require resolving before frozen-budget implementation (2). It explores a batch-level assignment failure mode with an informative resource/affinity tradeoff (3).",
+          "scope_reason": "It explicitly couples train-only co-consumption affinity, hyperbolic cost, Sinkhorn parent assignment, and curved residual transport. The proposal does not explicitly name behavior-off, Euclidean geometry-off, and both-on comparison arms; its general “both ablations” statement is underspecified. Specify all three matched comparisons.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For a single successor, b_i equals that successor point (up to smoothing); if the current residual and all codewords are shifted by the same chart isometry and inverse transport is exact, pairwise distances and nearest-code assignments are unchanged, yielding no benefit from charting.",
+          "evidence_ids": [
+            "b2bc7b945748e74c:E1",
+            "b2bc7b945748e74c:E2",
+            "b2bc7b945748e74c:E5",
+            "b2bc7b945748e74c:E12",
+            "b2bc7b945748e74c:E13",
+            "b2bc7b945748e74c:E14",
+            "b2bc7b945748e74c:E15",
+            "b2bc7b945748e74c:E16"
+          ],
+          "idea_id": "successor-chart-residual",
+          "missing_dimensions": [],
+          "objection": "The chart barycenter is computed from successor embeddings but the specification does not establish that those embeddings are aligned to continuation modes relevant to the current residual; the chart may shift coordinates without making children more predictive.",
+          "rationale": "E5 supports nonuniform successor entropy and E10 reports transition coverage, but does not measure chart usefulness for residuals (4; bounded check: evaluate residual-neighbor concentration by successor-profile strata). Geodesic chart operations are explicit (E12-E14), yet a chart change can be equivalent to a matched Euclidean coordinate transform and no curvature-specific advantage/cancellation analysis is supplied (3). Difference from cited work/ledger is asserted computationally, but traceable sources are not provided (2; bounded check: equation-level comparison against ledger). The assignment-to-token predictability-to-beam chain and diagnostics are stated (4). The controls are referenced but not specified with a failure criterion in matched detail (3). Implementability is impaired by the assignment equation appearing to apply exp_b to v=log_b(r), which recovers r, and by ambiguous subtraction/inverse-chart conventions (2; bounded check: unit-test chart round trip and tensor dimensions). A local-chart alternative is somewhat distinct but close to measured successor geodesic/tangent residual families (2).",
+          "scope_reason": "It names a train-only directed successor distribution and uses its hyperbolic barycenter to define the chart for curved T2/T3 residual quantization, changing the assignment. However, it does not explicitly specify behavior-off, Euclidean geometry-off, and both-on comparisons; references to “both ablations” do not define these arms. Add that matched comparison set.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If all items have h_i=1, then c_i=c_min for all items: the behavior-conditioned curvature becomes a single global curvature and no longer allocates curvature by branching, although the curved quantizer remains.",
+          "evidence_ids": [
+            "1acdc4472893a05c:E1",
+            "1acdc4472893a05c:E2",
+            "1acdc4472893a05c:E5",
+            "1acdc4472893a05c:E12",
+            "1acdc4472893a05c:E13",
+            "1acdc4472893a05c:E14",
+            "1acdc4472893a05c:E15",
+            "1acdc4472893a05c:E16"
+          ],
+          "idea_id": "branching-curvature-budget",
+          "missing_dimensions": [],
+          "objection": "Per-item curvature changes the metric scale based on entropy, but the proposal does not show that normalized branching—not count/support or popularity—should determine curvature, and combines this with multiple regularizers that make the source of any effect hard to identify.",
+          "rationale": "E5 gives auditable entropy/top-1 stratification, though it does not establish that entropy should control geometric curvature (4). Hyperbolic distance at item-conditioned curvature is explicit (E12-E14), but curvature scaling could be matched by Euclidean rescaling and no necessity/cancellation argument is given (3). The idea is distinct in form but lies within routine behavior-conditioned geometry and has no traceable prior-art/ledger comparison (2; bounded check: compare full per-item metric equation with cited work and ledger). Its proposed hierarchy → branching allocation → beam survival chain has named diagnostics and directions (4). Ablations/failure criterion are mentioned but not specified as matched controls (3). Curvature scaling and sparse regularization are plausible, but the tail-balance entropy expression and discrete successor-code lookup/neighbor update need exact definitions and numerical testing (2). The mechanism is a variation on measured successor-entropy/geodesic families (2).",
+          "scope_reason": "It directly conditions per-item negative curvature on train-only successor branching and uses that curvature in residual assignment and a transition regularizer, satisfying computational coupling. But behavior-off, Euclidean geometry-off, and both-on comparisons are not explicitly specified as matched arms; the generic “each ablation” language is insufficient. Define those comparisons.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    }
+  ],
+  "round_id": "round_20261026_015406_723",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "curved_transition_residual",
+        "status": "BACKUP",
+        "weighted_score": 3.1
+      },
+      {
+        "idea_id": "successor_shell_budget",
+        "status": "BACKUP",
+        "weighted_score": 3.1
+      },
+      {
+        "idea_id": "userbranch_hyperbolic_transport",
+        "status": "BACKUP",
+        "weighted_score": 3.1
+      }
+    ],
+    "disagreement": {
+      "branching-curvature-budget": 1.0,
+      "curved_transition_residual": 1.0,
+      "successor-chart-residual": 3.0,
+      "successor_shell_budget": 1.0,
+      "train_cooccur_hyperbolic_capacity": 1.0,
+      "userbranch_hyperbolic_transport": 1.0
+    },
+    "disputed": {
+      "branching-curvature-budget": [],
+      "curved_transition_residual": [],
+      "successor-chart-residual": [
+        "downstream_mechanism",
+        "exploration_value",
+        "geometry_necessity",
+        "novelty"
+      ],
+      "successor_shell_budget": [],
+      "train_cooccur_hyperbolic_capacity": [],
+      "userbranch_hyperbolic_transport": []
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": true,
+          "pair": [
+            "branching-curvature-budget",
+            "curved_transition_residual"
+          ],
+          "votes": {
+            "branching-curvature-budget": 2,
+            "curved_transition_residual": 1
+          },
+          "winner": "branching-curvature-budget"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "branching-curvature-budget",
+            "successor_shell_budget"
+          ],
+          "votes": {
+            "branching-curvature-budget": 0,
+            "successor_shell_budget": 3
+          },
+          "winner": "successor_shell_budget"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "curved_transition_residual",
+            "successor_shell_budget"
+          ],
+          "votes": {
+            "curved_transition_residual": 0,
+            "successor_shell_budget": 3
+          },
+          "winner": "successor_shell_budget"
+        }
+      ],
+      "copeland": {
+        "branching-curvature-budget": 0,
+        "curved_transition_residual": -2,
+        "successor-chart-residual": 0,
+        "successor_shell_budget": 2,
+        "train_cooccur_hyperbolic_capacity": 0,
+        "userbranch_hyperbolic_transport": 0
+      },
+      "cycles": [],
+      "position_bias": {
+        "first_listed_wins": 5,
+        "second_listed_wins": 4
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "successor-chart-residual",
+        "max_disagreement": 3.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.65 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.65
+      },
+      {
+        "idea_id": "successor_shell_budget",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.1
+      },
+      {
+        "idea_id": "userbranch_hyperbolic_transport",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.1
+      },
+      {
+        "idea_id": "curved_transition_residual",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.1
+      },
+      {
+        "idea_id": "train_cooccur_hyperbolic_capacity",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.05
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "copeland": 0,
+        "idea_id": "branching-curvature-budget",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "weighted_score": 3.25
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  }
+}

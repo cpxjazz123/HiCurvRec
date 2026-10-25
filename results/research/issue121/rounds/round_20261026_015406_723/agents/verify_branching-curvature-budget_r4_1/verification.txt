@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:304-322 -> results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/layers.py:106-122,133-155 -> results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/model.py:33-45 | Traced training-only ordered transitions into normalized branching, then per-item curvature into Poincare assignment and into the successor-code Poincare edge distance. The source-level gradient smoke in smoke_test.py:28-43 exercises the trainer edge-input/model/loss/backward route; it is inspected, not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/layers.py:141
+FINDING DETAIL: No blocking fidelity defect found. With branching supplied, every residual level selects codes using the curved Poincare distance, and the successor-edge penalty uses that same curved distance with source branching. This is a connected computational pathway, not an appended behavior token or an unrelated auxiliary loss.
+FINDING REPRODUCTION: Trace train_rqvae.py:384-391 to RQVAE.forward at model/model.py:30-45, then to RQLayer.forward at model/layers.py:297-315 and VQLayer.forward at :133-155; the edge loss calls the same distance at model/model.py:38-45.
+FINDING CORRECTION: None required for this check.
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/smoke_test.py:14-26,28-63 | Inspected the proposed forward/backward and geometry/behavior comparison smoke; confirmed the edge loss remains in the trainer total loss at train_rqvae.py:398-403. No execution was attempted.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:394-398
+FINDING DETAIL: The required tail-balance penalty is not implemented on the proposed T3/T4 hierarchy. CODEBOOK_NUM is 3 at train_rqvae.py:76, and _conditional_entropy returns conditional entropies for levels 1 onward at :236-249; thus ent[-2] and ent[-1] here compare T2|T1 to T3|T1,T2. They cannot represent H(T3|T1,T2) versus H(T4|T1,T2,T3). Collision extension at export is not a learned fourth quantization level. The balance term is therefore a live but mis-targeted loss, rather than the specified protection against deferring ambiguity to T4.
+FINDING REPRODUCTION: With CODEBOOK_NUM=3, tokens have three columns (layers.py:306-315), so _conditional_entropy(tokens) has only two entries. At train_rqvae.py:397 the selected entries are the T2 and T3 conditional entropies. This can be verified without running training by following those dimensions.
+FINDING CORRECTION: Implement the fourth learned quantization level and calculate the declared T3/T4 conditional-entropy hinge from its four-token outputs, or revise the proposal and balance claim to a three-level mechanism and use the correspondingly intended entropy quantities. Keep the balance term connected to the optimized loss.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:42-67,275-323,463-540 | Inspected root/path derivation, frozen input paths, trainer/export path, and launcher including its one-GPU condition; compared the launcher convention with stage2_RQ-VAE/TIGER_transition_geodesic_codebook/train_rqvae.py:48-58.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:58-67,513-540
+FINDING DETAIL: No integration defect found. Inputs resolve to the frozen stage1 embedding and stage0 train parquet; output paths resolve to this candidate's promoted results/stage2_RQ-VAE/TIGER_branching-curvature-budget directory. Export builds rows by embedding item ID order and emits unique extended SIDs plus string-keyed JSON. The subprocess launcher uses four ranks by default and honors the required GENREC_SINGLE_GPU=1 branch. It uses the environment-variable literal instead of declaring SINGLE_GPU_ENV, but the behavior is equivalent and does not prevent the single-card path from working.
+FINDING REPRODUCTION: Follow REPO_ROOT and RESULT_DIR at train_rqvae.py:42-67, enumerate-based payload at :498-504, and _launch_via_torchrun at :513-540; the single-card path returns without spawning torchrun when GENREC_SINGLE_GPU is "1".
+FINDING CORRECTION: None required for this check.

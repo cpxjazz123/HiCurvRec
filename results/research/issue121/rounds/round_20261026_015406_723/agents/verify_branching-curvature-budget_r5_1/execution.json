@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_branching-curvature-budget_r5_1",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792943434.6554873,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "verification.txt",
+  "output_sha256": "63205efd097253300a8e5e0826e1f7eea8d1ea18d14009e0ea122a405f74cdf2",
+  "pid": 3719604,
+  "project_marker": ".git",
+  "prompt_sha256": "40fa614477026c67debb6c368311a3ddf9490585877570c0548b186a2c482be9",
+  "session_sha256": "97ee305d362b7d970f8a5ca1fcce760b0c5970e21ef0c30a825540e2e0ca7235",
+  "stderr_present": false,
+  "task_id": "verify_branching-curvature-budget_r5_1",
+  "timed_out": false,
+  "verified": true
+}

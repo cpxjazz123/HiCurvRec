@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:311-328 -> model/layers.py:133-142 | Inspected training-only directed per-user target transitions and normalized successor entropy calculation, then traced branch_values into each residual quantizer's curvature-conditioned Poincare distance. Also traced sparse successor edges into Poincare code-vector distance in train_rqvae.py:251-279, and the resulting losses into the trainer objective at :394-395. This is an actual connected behaviour/curvature path, not an unused import or behavior suffix.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No scope-fidelity defect found. The per-item training-only branching statistic conditions curvature in all three assignment levels; sampled directed successor pairs are also scored with the curved distance. Note: the balance term compares the two available minibatch conditional entropies, rather than implementing the proposal's specifically stated T3/T4 expression; it is an auxiliary mismatch, not a break in the central coupled pathway.
+FINDING REPRODUCTION: Code inspection of train_rqvae.py:311-328, :251-279, :391-395 and model/layers.py:106-122, :133-155.
+FINDING CORRECTION: No correction required for this check.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/layers.py:106-122,133-155,297-315; train_rqvae.py:251-279,390-401 | Traced differentiable finite-clamped Poincare distances through argmin assignments and quantization/codebook losses, plus successor geodesic penalty back to selected code vectors; inspected the supplied smoke_test.py:12-27 as a source-level test (not executed). The user specifies that runtime GPU smoke is handled externally.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead loss or float32 overflow hazard found in the exercised coupled path. Curvature is bounded to [0.15,1], exp-map input is clamped, points are bounded inside the ball, and acosh input is bounded away from 1. Behavior is passed to assignment and changes the distance matrix; removing branching takes the Euclidean _distances branch. The smoke test does not actually test changed argmin IDs or toggled gradients, only that metrics differ, so those comparative claims are not established by that test, but the traced implementation is coupled and differentiable through distance-based auxiliary/codebook losses.
+FINDING REPRODUCTION: Inspect model/layers.py:140-142 and :152-155; compare branch=None with branch tensor. Inspect smoke_test.py:24-26, which compares distance matrices, not resulting IDs or parameter gradients.
+FINDING CORRECTION: No blocking correction required; extend the runtime smoke to assert an assignment or gradient difference under behavior/Euclidean toggles if an explicit differential runtime assertion is desired.
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:282-309,386-401,460-507,510-538 | Inspected real main/launcher path, frozen stage0 parquet and stage1 embedding inputs, candidate-specific result path, item-indexed JSON export, and single-GPU environment branch. Did not execute the trainer, per the stated sandbox constraint.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:391-401
+FINDING DETAIL: In multi-card execution the trainer invokes the underlying module directly for both the main forward (model(batch, ...)) and loss handling through raw_module, rather than invoking the DDP wrapper. The subsequent backward therefore does not run DDP's reducer hooks through a DDP forward; rank-local model/codebook gradients and optimizer updates are not synchronized. Each rank can train a different model, while only rank 0 exports its copy. Moreover the sparse edge term runs additional raw_module forwards at :264, so it also bypasses DDP. This invalidates the advertised 4-card training path.
+FINDING REPRODUCTION: Launch with more than one rank (the default launcher uses four): each rank receives different shuffled batches at train_rqvae.py:330-335, then calls raw_module directly at :391 and steps its own optimizer at :401 without a DDP forward/reducer synchronization. The exported artifact is rank 0's local trajectory only.
+FINDING CORRECTION: Route the differentiable training forward through the DDP-wrapped model and ensure auxiliary edge computations participate in DDP synchronization (for example, consolidate them into the wrapped forward or explicitly synchronize all relevant gradients). Verify all ranks' parameters agree after an optimizer step and that the smoke runs on the real launcher.

@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:305-323,385-399 -> model/model.py:35-45 -> model/layers.py:107-126,137-153 | Traced the trainer's train-only directed transitions into cached normalized branching and sparse successor pairs, then into the RQVAE edge forward and Poincare distance. The same branch-conditioned curved quantizer handles the edge item assignments; the geodesic edge loss compares their selected code vectors and is added to the training loss. The provided smoke_test.py:40-55 exercises populated and empty edge inputs and backward by source inspection only (not executed here).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: One connected training-only behavior/curved-computation pathway exists. It is not merely an imported helper or a detached auxiliary Euclidean behavior loss. The specified tail-balance penalty is a separate concern reported under trainability.
+FINDING REPRODUCTION: Follow train_rqvae.py:305-323,385-399 through model/model.py:35-45 and model/layers.py:145-150, then see curved distance implementation at layers.py:107-126.
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:385-405 -> model/model.py:35-45 -> model/layers.py:107-126,145-153 | Inspected the actual forward/loss/backward wiring and the candidate smoke's intended gradient checks at smoke_test.py:13-38,40-75; execution is unavailable as stipulated.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:395-399
+FINDING DETAIL: balance_loss is computed from integer argmin token IDs. _conditional_entropy uses torch.unique/counts over those IDs (train_rqvae.py:237-250), so ent has no autograd path to the encoder or codebooks. The added BALANCE_WEIGHT * balance_loss is therefore a dead training term: it changes the reported scalar loss but cannot prevent detail from moving to T4 as claimed. The other RQ-VAE and edge-geodesic terms do have differentiable paths to decoder/encoder and selected codebook vectors, respectively; the Poincare distance clamps are finite for finite float32 inputs. The supplied smoke checks ordinary finite gradients but do not check a gradient from the balance term.
+FINDING REPRODUCTION: In a minimal test, construct tokens via argmin as the quantizer does, calculate _conditional_entropy(tokens), backpropagate its hinge, and inspect parameter grads: tokens are integer/non-differentiable, so the balance term has no grad_fn/parameter gradient. Equivalently, compare training parameter gradients with BALANCE_WEIGHT set to zero versus nonzero: this term contributes no gradient.
+FINDING CORRECTION: Replace the entropy hinge with a differentiable estimate based on assignment probabilities/logits (e.g. soft code assignments and conditional entropy), or remove the claim/term; ensure its gradient reaches the intended quantizer parameters and add a smoke assertion for that gradient.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:42-67,276-323,464-507,514-542 | Inspected the real trainer entry point, frozen Stage1 embedding and Stage0 parquet paths, train-only split use, candidate-specific promoted output name, item-indexed JSON/array export, and launcher including GENREC_SINGLE_GPU at lines 102,514-542. Did not execute the trainer per the stated runtime limitation.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer resolves repository root by the stage2_RQ-VAE marker (lines 42-59), reads the frozen data paths at lines 61-64, and writes results under its own promoted arm directory results/stage2_RQ-VAE/TIGER_branching-curvature-budget (lines 58-67); export enumerates embedding rows as item IDs and verifies unique extended SIDs (lines 499-505). The four-GPU torchrun branch and single-GPU environment bypass are both present (lines 514-542). No baseline/other-candidate/out-of-repository write path was found.
+FINDING REPRODUCTION: Static path trace from _repository_root and RESULT_DIR at train_rqvae.py:42-67; trace output creation at 471-505 and launcher branches at 514-542.
+FINDING CORRECTION: none

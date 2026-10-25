@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:338-356,413-432 -> model/model.py:35-45 -> model/layers.py:148-156,223-228 | Traced the real trainer path: directed adjacent targets per user produce cached branching values; sampled source-successor edges are encoded and quantized with branching-conditioned Poincare assignments; the edge loss measures selected code vectors with source-conditioned Poincare distance and is added to training loss. Also inspected smoke_test.py:40-55,64-75 for the corresponding populated-edge and curved-vs-Euclidean exercises. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No a-check defect found. The transition signal and curved operation share the edge-code distance computation; this is not an unused helper or a detached behavior suffix.
+FINDING REPRODUCTION: Follow train_rqvae.py:418-432 into RQVAE.forward and the Poincare edge distance at model/model.py:38-45.
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/model.py:38-45; model/layers.py:107-129,148-156 | Inspected the autograd route and the authored smoke assertions at smoke_test.py:15-20,40-55,64-75,91-101; the smoke could not be executed here.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/model.py:40-45
+FINDING DETAIL: The stated continuation consistency penalty is specified on the first three-level prefix representatives, but implementation averages the selected-code geodesic distance over every RQ layer, including T4. This makes the actual behavior-conditioned loss optimize the tail as well as the prefix, contrary to the specified pathway and its intended division of prefix/tail roles. The remaining main loss and curved assignment paths appear differentiable and numerically guarded by finite checks/clamps; the defect is the implemented objective not matching the required continuation term.
+FINDING REPRODUCTION: With edge_embeddings provided, model.forward loops over enumerate(self.rq.vq_layers) at lines 40-44 and appends one distance per level, then averages them. A four-level model therefore includes level index 3/T4; even if T1-T3 distances are zero, a nonzero T4 successor-code distance contributes to edge_loss and its gradient.
+FINDING CORRECTION: Restrict the continuation distance calculation to the first three levels (e.g. enumerate(self.rq.vq_layers[:3]) and average those terms), preserving the existing branch-conditioned curved distance and discrete-neighbor gradient behavior. Extend the smoke to assert T4 is excluded and that behavior-off/Euclidean controls alter the same objective as intended.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:40-67,102-112,157-179,323-356,497-540,547-575 | Source-inspected repository-root discovery, frozen stage1 embedding and stage0 train parquet inputs, candidate-specific Stage2 result destination, item-indexed JSON export and collision extension, torchrun launcher, and the GENREC_SINGLE_GPU branch. The trainer could not be executed in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The output targets results/stage2_RQ-VAE/TIGER_branching-curvature-budget, the candidate-specific promoted arm directory; item_sids.json enumerates embedding-row IDs, and the single-card bypass checks SINGLE_GPU_ENV == "1".
+FINDING REPRODUCTION: Inspect train_rqvae.py:58-67 for paths, 323-327 for frozen data loading and ID bounds, 532-540 for SID export, and 547-575 for launcher and single-card branch.
+FINDING CORRECTION: none
