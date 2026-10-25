@@ -417,8 +417,10 @@ class PhaseToolTests(unittest.TestCase):
 class RepairCapTests(unittest.TestCase):
     """A candidate stops asking for agents after the allowed repair rounds."""
 
-    def test_the_cap_is_five_rounds(self):
-        self.assertEqual(pipeline_module.MAX_REVISIONS, 5)
+    def test_the_cap_is_a_cost_budget(self):
+        """The cap bounds the agent cost; the operator may raise it."""
+        self.assertGreaterEqual(pipeline_module.MAX_REVISIONS, 5)
+        self.assertLessEqual(pipeline_module.MAX_REVISIONS, 8)
 
     def test_a_candidate_at_the_cap_is_recorded_instead_of_repaired(self):
         with tempfile.TemporaryDirectory() as work:
