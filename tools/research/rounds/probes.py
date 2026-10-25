@@ -405,3 +405,33 @@ def run_probe(idea: dict, *, repo: Path, budget_seconds: float = DEFAULT_BUDGET_
     report["elapsed_seconds"] = round(time.monotonic() - started, 3)
     report["within_budget"] = report["elapsed_seconds"] <= budget_seconds
     return report
+
+
+def _cli() -> int:                                    # pragma: no cover - entry point
+    """Run one probe and print its report as JSON.
+
+    The probe needs the project's interpreter (pandas and pyarrow); the MCP
+    server's own interpreter does not carry them, so the orchestrator runs this
+    module as a bounded subprocess instead of importing it in place.
+    """
+    import argparse
+    import json
+    import sys
+
+    parser = argparse.ArgumentParser(description="train-only evidence probe")
+    parser.add_argument("--idea", required=True, help="the proposal as JSON")
+    parser.add_argument("--repo", required=True)
+    parser.add_argument("--budget", type=float, default=DEFAULT_BUDGET_SECONDS)
+    parser.add_argument("--max-users", type=int, default=DEFAULT_MAX_USERS)
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    arguments = parser.parse_args()
+    idea = json.loads(arguments.idea)
+    report = run_probe(idea, repo=Path(arguments.repo),
+                       budget_seconds=arguments.budget,
+                       max_users=arguments.max_users, seed=arguments.seed)
+    print(json.dumps(report, ensure_ascii=False, default=str))
+    return 0
+
+
+if __name__ == "__main__":                            # pragma: no cover
+    raise SystemExit(_cli())

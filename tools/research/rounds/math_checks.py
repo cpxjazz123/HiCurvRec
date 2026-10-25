@@ -198,3 +198,21 @@ def _proxy_off_on(c: float) -> dict:
                        ", behaviour-off " + str(behavior_off.tolist()) +
                        ", geometry-off " + str(geometry_off.tolist()) +
                        ", the switches change the assignment: " + str(changed)}
+
+
+def _cli() -> int:                                    # pragma: no cover - entry point
+    """Run the checks of one proposal and print the report as JSON."""
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(description="hyperbolic sanity checks")
+    parser.add_argument("--idea", required=True)
+    parser.add_argument("--seed", type=int, default=SEED)
+    arguments = parser.parse_args()
+    print(json.dumps(run_math_checks(json.loads(arguments.idea), seed=arguments.seed),
+                     ensure_ascii=False, default=str))
+    return 0
+
+
+if __name__ == "__main__":                            # pragma: no cover
+    raise SystemExit(_cli())

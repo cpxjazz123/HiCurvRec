@@ -1,0 +1,259 @@
+{
+ "status": "OK",
+ "query": "user behavior conditioned codebook learning",
+ "source": "openalex",
+ "retrieved_at": 1792913003.6911538,
+ "results": [
+  {
+   "title": "Semantic Codebook Learning for Dynamic Recommendation Models",
+   "authors": [
+    "Zheqi Lv",
+    "Shaoxuan He",
+    "Tianyu Zhan",
+    "Shengyu Zhang",
+    "Wenqiao Zhang",
+    "Jingyuan Chen",
+    "Zhou Zhao",
+    "Fei Qing Wu"
+   ],
+   "year": 2024,
+   "doi": "https://doi.org/10.1145/3664647.3680574",
+   "url": "https://doi.org/10.1145/3664647.3680574",
+   "source_id": "https://openalex.org/W4403780716",
+   "abstract": "Dynamic sequential recommendation (DSR) can generate model parameters based on user behavior to improve the personalization of sequential recommendation under various user preferences. However, it faces the challenges of large parameter search space and sparse and noisy user-item interactions, which reduces the applicability of the generated model parameters. The Semantic Codebook Learning for Dynamic Recommendation Models (SOLID) framework presents a significant advancement in DSR by effectively tackling these challenges. By transforming item sequences into semantic sequences and employing a dual parameter model, SOLID compresses the parameter generation search space and leverages homogeneity within the recommendation system. The introduction of the semantic metacode and semantic codebook, which stores disentangled item representations, ensures robust and accurate parameter generation. Extensive experiments demonstrates that SOLID consistently outperforms existing DSR, delivering more accurate, stable, and robust recommendations.",
+   "source": "openalex",
+   "cited_by": 10
+  },
+  {
+   "title": "CURP: Codebook-based Continuous User Representation for Personalized Generation with LLMs",
+   "authors": [
+    "Liang Wang",
+    "Xinyi Mou",
+    "Xiaoli Liu",
+    "Xuanjing Huang",
+    "Zhongyu Wei"
+   ],
+   "year": 2026,
+   "doi": "https://doi.org/10.48550/arxiv.2602.00742",
+   "url": "https://doi.org/10.48550/arxiv.2602.00742",
+   "source_id": "https://openalex.org/W7127403960",
+   "abstract": "User modeling characterizes individuals through their preferences and behavioral patterns to enable personalized simulation and generation with Large Language Models (LLMs) in contemporary approaches. However, existing methods, whether prompt-based or training-based methods, face challenges in balancing personalization quality against computational and data efficiency. We propose a novel framework CURP, which employs a bidirectional user encoder and a discrete prototype codebook to extract multi-dimensional user traits. This design enables plug-and-play personalization with a small number of trainable parameters (about 20M parameters, about 0.2\\% of the total model size). Through extensive experiments on variant generation tasks, we show that CURP achieves superior performance and generalization compared to strong baselines, while offering better interpretability and scalability. The code are available at https://github.com/RaidonWong/CURP_code",
+   "source": "openalex",
+   "cited_by": 0
+  },
+  {
+   "title": "Discriminative Codebook Hashing for Supervised Video Retrieval",
+   "authors": [
+    "Xiaoman Bian",
+    "Rushi Lan",
+    "Xiaoqin Wang",
+    "Chen Chen",
+    "Zhenbing Liu",
+    "Xiaonan Luo",
+    "Kuei‐Kuei Lai"
+   ],
+   "year": 2021,
+   "doi": "https://doi.org/10.1155/2021/5845094",
+   "url": "https://doi.org/10.1155/2021/5845094",
+   "source_id": "https://openalex.org/W3195084105",
+   "abstract": "In recent years, hashing learning has received increasing attention in supervised video retrieval. However, most existing supervised video hashing approaches design hash functions based on pairwise similarity or triple relationships and focus on local information, which results in low retrieval accuracy. In this work, we propose a novel supervised framework called discriminative codebook hashing (DCH) for large-scale video retrieval. The proposed DCH encourages samples within the same category to converge to the same code word and maximizes the mutual distances among different categories. Specifically, we first propose the discriminative codebook via a predefined distance among intercode words and Bernoulli distributions to handle each hash bit. Then, we use the composite Kullback-Leibler (KL) divergence to align the neighborhood structures between the high-dimensional space and the Hamming space. The proposed DCH is optimized via the gradient descent algorithm. Experimental results on three widely used video datasets verify that our proposed DCH performs better than several state-of-the-art methods.",
+   "source": "openalex",
+   "cited_by": 2
+  },
+  {
+   "title": "Decentralized Interference-Aware Codebook Learning in Millimeter Wave MIMO Systems",
+   "authors": [
+    "Yu Zhang",
+    "Ahmed Alkhateeb"
+   ],
+   "year": 2024,
+   "doi": "https://doi.org/10.1109/tcomm.2024.3486986",
+   "url": "https://doi.org/10.1109/tcomm.2024.3486986",
+   "source_id": "https://openalex.org/W4403827282",
+   "abstract": "Beam codebooks are integral components of future millimeter wave MIMO systems. Therefore, it is critical to optimize these codebooks for efficient and reliable communications. Prior work has focused on single-cell codebook learning problems and under stationary interference. In this work, we generalize the interference-aware codebook learning problem to networks with multiple cells/basestations. One of the key differences is that the underlying environment becomes non-stationary, as the behavior of one basestation may influence the learning of the others. Further, we avoid information exchange between different learning nodes which leads to a fully decentralized system with increased learning difficulties. To tackle the non-stationarity, the averaging of measurements is used to estimate the interference nulling performance of a particular beam, based on which a decision rule is provided. Furthermore, we theoretically justify the adoption of such estimator, and prove that it is a sufficient statistic for the underlying quantity of interest in an asymptotic sense. Finally, a novel reward function is proposed to decouple the learning of the multiple agents running at different nodes. ",
+   "source": "openalex",
+   "cited_by": 4
+  },
+  {
+   "title": "Persistence codebooks for topological data analysis",
+   "authors": [
+    "Bartosz Zieliński",
+    "Michał Lipiński",
+    "Mateusz Juda",
+    "Matthias Zeppelzauer",
+    "Paweł Dłotko"
+   ],
+   "year": 2020,
+   "doi": "https://doi.org/10.1007/s10462-020-09897-4",
+   "url": "https://doi.org/10.1007/s10462-020-09897-4",
+   "source_id": "https://openalex.org/W2786206705",
+   "abstract": "Abstract Persistent homology is a rigorous mathematical theory that provides a robust descriptor of data in the form of persistence diagrams (PDs) which are 2D multisets of points. Their variable size makes them, however, difficult to combine with typical machine learning workflows. In this paper we introduce persistence codebooks, a novel expressive and discriminative fixed-size vectorized representation of PDs that adapts to the inherent sparsity of persistence diagrams. To this end, we adapt bag-of-words, vectors of locally aggregated descriptors and Fischer vectors for the quantization of PDs. Persistence codebooks represent PDs in a convenient way for machine learning and statistical analysis and have a number of favorable practical and theoretical properties including 1-Wasserstein stability. We evaluate the presented representations on several heterogeneous datasets and show their (high) discriminative power. Our approach yields comparable—and partly even higher—performance in much less time than alternative approaches.",
+   "source": "openalex",
+   "cited_by": 32
+  },
+  {
+   "title": "Research on Vocabulary Sizes and Codebook Universality",
+   "authors": [
+    "Weixue Liu",
+    "Jian Hou",
+    "Hamid Reza Karimi"
+   ],
+   "year": 2014,
+   "doi": "https://doi.org/10.1155/2014/697245",
+   "url": "https://doi.org/10.1155/2014/697245",
+   "source_id": "https://openalex.org/W2103733568",
+   "abstract": "Codebook is an effective image representation method. By clustering in local image descriptors, a codebook is shown to be a distinctive image feature and widely applied in object classification. In almost all existing works on codebooks, the building of the visual vocabulary follows a basic routine, that is, extracting local image descriptors and clustering with a user-designated number of clusters. The problem with this routine lies in that building a codebook for each single dataset is not efficient. In order to deal with this problem, we investigate the influence of vocabulary sizes on classification performance and vocabulary universality with the kNN classifier. Experimental results indicate that, under the condition that the vocabulary size is large enough, the vocabularies built from different datasets are exchangeable and universal.",
+   "source": "openalex",
+   "cited_by": 4
+  },
+  {
+   "title": "How Anthropomorphic Attitudes Toward Agents Divide User Behavior, and How Design Should Change",
+   "authors": [
+    "Tingyu Cao",
+    "Yan Tang",
+    "Keer Hu",
+    "Bomingxuan Zhu",
+    "Ruyi Zou",
+    "Huaze Tang",
+    "Yuanbo Tang",
+    "Shao-Lun Huang"
+   ],
+   "year": 2026,
+   "doi": "https://doi.org/10.48550/arxiv.2610.13156",
+   "url": "https://doi.org/10.48550/arxiv.2610.13156",
+   "source_id": "https://openalex.org/W7221506486",
+   "abstract": "Studies of conversational agents rely on interviews, surveys, lab tasks, or taxonomies. Whether anthropomorphic naming splits those patterns, and whether replies should change, lack field evidence. We report a field study of a desktop assistant (May-August 2026; n=257). Stance is an anthropomorphic assistant name (118 users; 45.9%). Behavior comes from a 128-unit sparse-autoencoder codebook, identity tags, and opening lexicons. Ranks differ by stance (Spearman rho=+0.249 vs. null mean +0.382; p=.0419). Teacher and tutoring identities covary with renaming, an introverted task-only orientation against it; renamers greet more and command less; confiding shows the codebook's largest gap. We revise the agent: greet and receive affect on relational openings, execute directly on tasking. In 1,744 judgments (n=129), renamers chose the revised reply far more often than default-name users on being treated as a person and having affect received, less robustly on willingness to continue, and neither judged it worse on task interference.",
+   "source": "openalex",
+   "cited_by": 0
+  },
+  {
+   "title": "When Better Codebooks Are Not Enough: Predictive Performance and Behavioral Reliability in LLM Political Event Coding",
+   "authors": [
+    "Zixian He",
+    "Bharath Raahul Murugesan",
+    "Patrick T. Brandt",
+    "Hu, Yibo"
+   ],
+   "year": 2026,
+   "doi": "https://doi.org/10.48550/arxiv.2606.06781",
+   "url": "https://doi.org/10.48550/arxiv.2606.06781",
+   "source_id": "https://openalex.org/W7163903016",
+   "abstract": "High accuracy does not necessarily make an LLM a faithful coder. This issue matters because many social-science studies rely on expert-written codebooks to turn text into structured data. We study political event coding, where a model must identify the action that one actor directs toward another under detailed coding rules. We compare label names alone with concise definitions and enriched guidance that adds examples, event-mode instructions, and boundary rules. We also evaluate alternative prompting and retrieval methods. We then test behavioral reliability under changes to codebook order, label names, and label-definition mappings. Enriched guidance raises mean root-level macro-F1 from 0.457 to 0.633. Methods with access to definitions remain effective when meaningful label names are removed, but no evaluated method exceeds 0.20 weighted F1 after the label-definition mapping is reassigned. These results motivate separate evaluation of predictive performance and adherence to the supplied coding rules.",
+   "source": "openalex",
+   "cited_by": 0
+  },
+  {
+   "title": "An Explanation of the Codebook for Analysing XR Development",
+   "authors": [
+    "Jason Robert RAMESHWAR",
+    "Graham S. King"
+   ],
+   "year": 2023,
+   "doi": null,
+   "url": "https://openalex.org/W7220194369",
+   "source_id": "https://openalex.org/W7220194369",
+   "abstract": "The Covid-19 pandemic highlighted the importance of virtual systems during physical isolation. Extended Reality (XR) is an alternative to disruptions of physical reality. Therefore, there is a need to increase the development of XR projects. This paper provides a reference codebook to identify critical elements for developing or assessing any XR project. The review of the paper \"Analysis of Caribbean XR Survey Creates an XR Development Strategy as a Path to the Regional Metaverse Evolution\" provided the codes. The analysis of the development strategy’s elements identified factors that encourage XR project creation, completion, and accelerated development. The codebook consists of 24 codes, grouped into categories: strategy and policy, financial, software, human resources, training, geographic, industry sector, design, UX, and I4.0. It employs a three-step process: code familiarisation, code application, and analysis and assessment of coded information. A concise summary table facilitates easy usage. The codebook provides a systematic approach to analyse XR development from ideation to Proof of Concept. It enables stakeholders to identify core requirements, prioritise factors of inf",
+   "source": "openalex",
+   "cited_by": 0
+  },
+  {
+   "title": "A Tutorial on Downlink Precoder Selection Strategies for 3GPP MIMO Codebooks",
+   "authors": [
+    "Xiaotian Fu",
+    "Didier Le Ruyet",
+    "Raphaël Visoz",
+    "Venkatesh Ramireddy",
+    "Marcus Grossmann",
+    "Markus Landmann",
+    "Wilmar Quiroga"
+   ],
+   "year": 2023,
+   "doi": "https://doi.org/10.1109/access.2023.3338866",
+   "url": "https://doi.org/10.1109/access.2023.3338866",
+   "source_id": "https://openalex.org/W4389233088",
+   "abstract": "This paper deals with the evolution of downlink codebook based multiple-input multiple-output (MIMO) within the third generation partnership project (3GPP) through release 15 to 17. There exist already several tutorials on this topic. However, to the authors’ knowledge, the comparison in terms of complexity performance trade-off between practical precoder selection strategies in frequency or delay domain has not been tackled so far in the literature. This paper describes with matrix formalism the two main codebook types specified within 3GPP, i.e., Type-I codebook (low resolution) and Type-II codebook (high resolution). The Rel. 17 port selection is also detailed as well as the multi-user MIMO (MU-MIMO) precoding strategy to be applied relying on Type-II codebook feedback. For the enhanced Type-II codebook, two main practical precoder selection strategies are detailed at the UE side (i) based on singular value decomposition per sub-band in the frequency domain, (ii) based on wideband singular decomposition in the delay domain. Monte Carlo simulations demonstrate that the delay domain strategy performance may suffer from spatial interference for single user MIMO high rank transmissi",
+   "source": "openalex",
+   "cited_by": 23
+  },
+  {
+   "title": "Discrete Diffusion for Codebook-Based Beam Candidate Generation",
+   "authors": [
+    "Amirhossein Azarbahram",
+    "Onel L. Alcaraz López"
+   ],
+   "year": 2026,
+   "doi": "https://doi.org/10.48550/arxiv.2604.08197",
+   "url": "https://doi.org/10.48550/arxiv.2604.08197",
+   "source_id": "https://openalex.org/W7153182194",
+   "abstract": "Millimeter-wave (mmWave) communication enables high data rates through large bandwidths and highly directional beamforming, but its sensitivity to blockage and mobility makes reliable beam alignment a central challenge. Limited-probing beam management is a fundamental problem in codebook-based mmWave systems, where only a small subset of beams can be evaluated simultaneously, and the serving decision is restricted to the probed set. Under mobility and noisy feedback, this leads to a sequential and partially observable decision problem in which performance depends critically on the quality of the proposed beam candidates. In this paper, we consider limited-probing beam management and develop a history-conditioned discrete denoising diffusion probabilistic model for beam candidate generation. The proposed method learns from logged probing histories a conditional distribution over promising beam indices, which is then used to construct probing candidates online. Numerical analysis shows that the proposed approach consistently achieves better signal-to-noise ratio, beam-miss probability, and conditional probe regret under tight probing budgets compared with strong learning-based and di",
+   "source": "openalex",
+   "cited_by": 0
+  },
+  {
+   "title": "Codebook-Based Configuration of Reconfigurable Intelligent Surfaces",
+   "authors": [
+    "Friedemann Laue"
+   ],
+   "year": 2026,
+   "doi": "https://doi.org/10.25593/open-fau-3035",
+   "url": "https://doi.org/10.25593/open-fau-3035",
+   "source_id": "https://openalex.org/W7161488945",
+   "abstract": "Reconfigurable intelligent surfaces (RISs) are envisioned to become a promising technology for future wireless communication systems as they have the ability to provide cost-efficient solutions for the growing demand for network coverage and high data rates. A typical RIS acts as a smart reflector, capable of inducing a controllable phase shift to impinging electromagnetic (EM) waves at each of its unit cells. The key challenge in RIS-assisted networks is the efficient configuration of these unit cells with optimal phase shifts. This thesis provides a comprehensive overview of RIS technology and investigates the use of RISs for extending the coverage in wireless communication networks through codebook-based configuration of the RIS unit cells. In particular, this thesis is based on three main contributions, which are summarized below. First, a grant-free access scenario is studied, where devices located within a given coverage area try to access a base station (BS) via a RIS-assisted link. The goal is to determine the optimal phase-shift configuration for a RIS codebook that maximizes the probability of device activity detection at the BS for all potential device locations within t",
+   "source": "openalex",
+   "cited_by": 0
+  },
+  {
+   "title": "Adaptive Hybrid Beamforming Codebook Design Using Multi-Agent Reinforcement Learning for Multiuser Multiple-Input–Multiple-Output Systems",
+   "authors": [
+    "Manasjyoti Bhuyan",
+    "Kandarpa Kumar Sarma",
+    "Debashis Dev Misra",
+    "Koushik Guha",
+    "Jacopo Iannacci"
+   ],
+   "year": 2024,
+   "doi": "https://doi.org/10.3390/app14167109",
+   "url": "https://doi.org/10.3390/app14167109",
+   "source_id": "https://openalex.org/W4401535495",
+   "abstract": "This paper presents a novel approach to designing beam codebooks for downlink multiuser hybrid multiple-input–multiple-output (MIMO) wireless communication systems, leveraging multi-agent reinforcement learning (MARL). The primary objective is to develop an environment-specific beam codebook composed of non-interfering beams, learned by cooperative agents within the MARL framework. Machine learning (ML)-based beam codebook design for downlink communications have been based on channel state information (CSI) feedback or only reference signal received power (RSRP), consisting of an offline training and user clustering phase. In massive MIMO, the full CSI feedback data is of large size and is resource-intensive to process, making it challenging to implement efficiently. RSRP alone for a stand-alone base station is not a good marker of the position of a receiver. Hence, in this work, uplink CSI estimated at the base station along with feedback of RSRP and binary acknowledgment of the accuracy of received data is utilized to design the beamforming codebook at the base station. Simulations using sub-array antenna and ray-tracing channel demonstrate the proposed system’s ability to learn ",
+   "source": "openalex",
+   "cited_by": 3
+  },
+  {
+   "title": "ISAC with Backscattering RFID Tags: Beamforming and Codebook Design",
+   "authors": [
+    "Luo, Hao",
+    "Umut Demirhan",
+    "Ahmed Alkhateeb"
+   ],
+   "year": 2026,
+   "doi": "https://doi.org/10.48550/arxiv.2604.14689",
+   "url": "https://doi.org/10.48550/arxiv.2604.14689",
+   "source_id": "https://openalex.org/W7154742669",
+   "abstract": "This paper explores an integrated sensing and communication (ISAC) system with backscattering RFID tags. In this setup, an access point employs communication beams to serve communication users while leveraging a sensing beam to interrogate RFID tags. Under the total transmit power constraint of the system, our objective is to design a joint sensing and communication beamforming codebook by considering the tag interrogation and communication requirements. To lay a foundation for the codebook design problem, we first study the beamforming design problem in a single-tag scenario and investigate two approaches: (i) a zero-forcing approach with optimized sensing/communication power allocation, for which a closed-form solution is derived under a dominant sensitivity condition, and (ii) a joint sensing and communication beamforming design obtained by transmit power minimization. Then, we investigate the codebook design problem in a multi-tag scenario. To resolve this, we propose a sector-based joint sensing and communication beamforming codebook that scans the region of interest. For each sector, semidefinite relaxation and generalized Benders decomposition are employed to handle the resu",
+   "source": "openalex",
+   "cited_by": 0
+  },
+  {
+   "title": "From a Static Multi-Level Small Semantic Codebook to a Dynamic Single-Level Large Semantic Codebook for Generative Recommendation",
+   "authors": [
+    "Tianlu Xie",
+    "Xin Ku",
+    "Mingjie Sun",
+    "Yunhao Sha",
+    "Lixiang Wang",
+    "Peng Wang",
+    "Yiyu Wang",
+    "Wenjin Wu"
+   ],
+   "year": 2026,
+   "doi": "https://doi.org/10.48550/arxiv.2608.21012",
+   "url": "https://doi.org/10.48550/arxiv.2608.21012",
+   "source_id": "https://openalex.org/W7204099963",
+   "abstract": "Generative recommendation represents each item with a sequence of discrete Semantic IDs (SIDs) and predicts the sequence to retrieve the next item. Typical systems use multi-level residual quantization, which increases autoregressive decoding cost and creates a large hierarchical space that may be sparsely occupied. Static codebooks also become misaligned with current traffic as new items arrive and exposure distributions change. We propose a single-level large semantic codebook that replaces multiple residual semantic codes with one semantic token while retaining a separate collaborative disambiguation token to reduce item collisions. We further introduce an exposure-aware dynamic update mechanism based on temporal weight decay, exponential moving-average center updates, and an exposure-weighted penalty on SID changes. We also develop an offline evaluation framework covering representation quality, code utilization, cluster load, full-SID collision, and temporal stability. On two public datasets, the two-level SID improves mean Recall@10 by 5.0%-8.8% and mean NDCG@10 by 4.1%-5.1% for OneRec-V1, and by 7.1%-8.7% and 3.8%-8.5%, respectively, for OneRec-V2. Dynamic updating provides ",
+   "source": "openalex",
+   "cited_by": 0
+  }
+ ],
+ "total_reported": 10925
+}
