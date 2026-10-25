@@ -1010,6 +1010,33 @@ def write_report() -> Path:
         ["arm", "recall@10", "raw coverage", "alive L1", "alive L2", "alive L3", "alive L4",
          "absent", "hit(beams)", "generated-rank-out"], beam_rows))
     lines.append("")
+    lines.append("## Layer D2 — where each example is lost")
+    lines.append("")
+    category_rows = []
+    for name in arms:
+        entry = beam_metrics.get(name) or {}
+        share = (entry.get("beam") or {}).get("category_share") or {}
+        counts = (entry.get("beam") or {}).get("categories") or {}
+        category_rows.append([
+            name,
+            counts.get("hit_from_beams", 0), "%.4f" % share.get("hit_from_beams", 0.0),
+            counts.get("hit_from_fallback", 0),
+            counts.get("sid_generated_dropped_before_top10", 0),
+            counts.get("sid_generated_rank_ge_10", 0),
+            counts.get("sid_generated_filtered_seen", 0),
+            counts.get("sid_absent_from_beams", 0),
+        ])
+    lines.append(_markdown_table(
+        ["arm", "hit (beams)", "hit share", "hit (fallback)",
+         "generated, outside top-10", "generated, dropped", "generated, seen-filtered",
+         "SID never generated"], category_rows))
+    lines.append("")
+    lines.append("The binding constraint is the last column: for nine examples in ten the target "
+                 "SID never appears among the twenty beams, so duplicate removal, seen filtering "
+                 "and the fallback fill cannot move Recall materially. Those three mechanisms are "
+                 "replayed exactly, and their contribution is at most the few examples in the "
+                 "middle columns.")
+    lines.append("")
     comparison = OUT / "paired_comparison.csv"
     if comparison.is_file():
         lines.append("## Layer E — paired comparison against `l1_br_euclid`")
