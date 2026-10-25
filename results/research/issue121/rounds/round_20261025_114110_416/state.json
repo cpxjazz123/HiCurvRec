@@ -837,6 +837,75 @@
         "branch_shell_behavior_off",
         "branch_shell_geometry_off"
       ]
+    },
+    {
+      "at": 1792899370.548702,
+      "event": "verification_needs_repair",
+      "idea_id": "branch_shell_behavior_off",
+      "revision": 0,
+      "signature": "8459ab4776edf2d2"
+    },
+    {
+      "at": 1792899416.721631,
+      "event": "implementation_repaired",
+      "idea_id": "branch_shell_behavior_off",
+      "revision": 1
+    },
+    {
+      "at": 1792899416.7395256,
+      "event": "output_paths_rechecked",
+      "idea_id": "branch_shell_behavior_off",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792899457.3023148,
+      "event": "verification_needs_repair",
+      "idea_id": "branch_shell_geometry_off",
+      "revision": 0,
+      "signature": "b0dacd22e64e9063"
+    },
+    {
+      "at": 1792899623.2372515,
+      "event": "implementation_repaired",
+      "idea_id": "branch_shell_geometry_off",
+      "revision": 1
+    },
+    {
+      "at": 1792899623.2546394,
+      "event": "output_paths_rechecked",
+      "idea_id": "branch_shell_geometry_off",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792899690.1281853,
+      "event": "implementation_verified",
+      "idea_id": "branch_shell_behavior_off",
+      "revision": 1
+    },
+    {
+      "at": 1792899734.336969,
+      "event": "verification_needs_repair",
+      "idea_id": "branch_shell_geometry_off",
+      "revision": 1,
+      "signature": "5353499ccc009506"
+    },
+    {
+      "at": 1792899775.497053,
+      "event": "implementation_repaired",
+      "idea_id": "branch_shell_geometry_off",
+      "revision": 2
+    },
+    {
+      "at": 1792899775.5129244,
+      "event": "output_paths_rechecked",
+      "idea_id": "branch_shell_geometry_off",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792899963.6413229,
+      "event": "implementation_verified",
+      "idea_id": "branch_shell_geometry_off",
+      "revision": 2
     }
   ],
   "ideas": [
@@ -2398,41 +2467,222 @@
       "assumptions": [],
       "baseline": null,
       "baseline_digest": null,
+      "blocking_findings": [],
       "candidate_digest_before_agent": null,
       "changed_files": [
         "train_rqvae.py"
       ],
       "deviations": [],
+      "failure_signature": "8459ab4776edf2d2",
       "idea_id": "branch_shell_behavior_off",
       "notes": "",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off"
+      },
+      "output_preflight": "passed",
       "proposal_sha256": "e7e4d63e27ca819feebfad0f1b7d09dcf4732a65aefdb8211c3f3b8550ca2380",
-      "revision": 0,
+      "repairs": [
+        {
+          "remaining_issues": [
+            "The requested smoke test cannot execute in this environment because PyTorch is not installed. Also, this candidate explicitly calls the training and SID-export paths with `behavior_on=False`, so it does not satisfy the separate requirement that the training loop exercise a connected behavior-plus-hyperbolic pathway; changing that would contradict this behavior-off candidate and exceeds the reported syntax-only repair."
+          ],
+          "repairs": [
+            {
+              "change": "Moved each call's closing parenthesis so `.cpu().numpy().astype(np.int64)` is applied to the returned tensor inside a single balanced expression",
+              "finding": "SyntaxError in the evaluation and final-export raw-token get_indices calls (train_rqvae.py:375-377, 429-431)",
+              "verification": "`python -m py_compile train_rqvae.py` completed successfully; the smoke command then reached smoke_test.py and failed at `import torch` with `ModuleNotFoundError: No module named 'torch'`, confirming the parser defect is gone but preventing runtime validation"
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "`python -m py_compile train_rqvae.py && python smoke_test.py`",
+            "result": "Compilation succeeded silently. `smoke_test.py` printed a traceback ending in `ModuleNotFoundError: No module named 'torch'` and exited with code 1."
+          }
+        }
+      ],
+      "revision": 1,
       "smoke": {},
-      "source_digest": "673d3b4989808aa0eed398a9d6cbb03e34522f151b3e1dad38a65f5a19a69cbf",
-      "status": "implemented",
+      "source_digest": "beb1cb4228195b2a8363a32771f5a22561e9fb4cae705dffe43adeda7fd50623",
+      "status": "verified",
       "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_behavior_off",
       "tree_exists": true,
-      "verdicts": []
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Inspected the actual trainer call and traced it through model/model.py:26-29 and model/layers.py:101-123, 139-156, 310-330. This is an intentional behavior-off control, so the missing behavior-geometry coupling is not a defect: behavior_on=False removes target_radius from the assignment while curved Poincare distances remain active. The parent branch_shell layer implementation is unchanged.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_behavior_off/train_rqvae.py:333",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No defect found. The control disables the named behavior-conditioned shell term and retains the curved distance pathway; the behavior-off result is intentionally not coupled.",
+                  "location": "none",
+                  "reproduction": "Source trace: trainer passes behavior_on=False at train_rqvae.py:333, and VQLayer.forward selects target_radius only when behavior_on is true at model/layers.py:143. Curved geometry is still selected by the default geometry_on=True at model/layers.py:103-110. The included smoke assertions at smoke_test.py:35-41 specify assignment comparisons, but were not executed here.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behavior x geometry fidelity (ablation control)",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static forward/backward trace: distances enter the selected-distance quantization loss at lines 143-156; that loss is returned and consumed by compute_loss in model/model.py:43-50. The straight-through quantized result feeds the decoder. The control's training call omits the behavior radius, while the retained Poincare assignment/distance term remains differentiable with respect to latent and codebook parameters. The smoke test at smoke_test.py:19-31 and assignment contrast checks at 34-41 are code-level checks only; no runtime execution was performed.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_behavior_off/model/layers.py:143-158",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No code-visible dead loss term, detached differentiable path, or obvious float32 overflow hazard found. The selected distance contributes to quant_loss even when the behavior shell term is off. The requested sandbox limitation prevents runtime confirmation; this is not reported as a defect.",
+                  "location": "none",
+                  "reproduction": "Inspect VQLayer.forward at model/layers.py:143-158: quant_loss adds the selected distance, then RQLayer averages and returns it at lines 323-330; trainer computes loss and calls backward at train_rqvae.py:334-341. The smoke script asserts finite loss and nonzero encoder/codebook gradients at smoke_test.py:19-31, and compares curved/Euclidean and behavior-on/off assignments at 32-41. It was not run.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the real main/launcher path, frozen input paths, candidate result paths, ID-to-SID export, and the GENREC_SINGLE_GPU branch. Runtime was not available.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_behavior_off/train_rqvae.py:223-264, 329-341, 422-443, 450-476",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No integration defect found by inspection. Inputs resolve to the frozen stage1 embedding and stage0 training parquet (lines 51-57); outputs are scoped to this arm's results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off directory (lines 51-60). Export enumerates SID rows by item ID, checks unique extended SIDs, and emits numeric string keys (lines 435-443). The launcher honors SINGLE_GPU_ENV == \"GENREC_SINGLE_GPU\" (lines 39, 450-453), and otherwise starts torchrun; the requested one-card branch is present. Training-only transition statistics are computed from TRAIN_FILE at lines 243-264.",
+                  "location": "none",
+                  "reproduction": "Source inspection: _repository_root and all path constants at train_rqvae.py:42-60; train-only history sorting/counting at 243-264; SID extension/export at 186-200 and 435-443; launcher condition and subprocess call at 450-476. No trainer execution or output-file validation was possible in this sandbox.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_branch_shell_behavior_off_r1_1"
+        }
+      ]
     },
     {
       "assumptions": [],
       "baseline": null,
       "baseline_digest": null,
+      "blocking_findings": [],
       "candidate_digest_before_agent": null,
       "changed_files": [
         "train_rqvae.py"
       ],
       "deviations": [],
+      "failure_signature": "5353499ccc009506",
       "idea_id": "branch_shell_geometry_off",
       "notes": "",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off"
+      },
+      "output_preflight": "passed",
       "proposal_sha256": "e7e4d63e27ca819feebfad0f1b7d09dcf4732a65aefdb8211c3f3b8550ca2380",
-      "revision": 0,
+      "repairs": [
+        {
+          "remaining_issues": [
+            "This geometry-off ablation invokes the trainer with `geometry_on=False`; therefore its active training computation does not exercise curved geometry, despite the shared model supporting behavior-conditioned Poincare assignment when geometry is enabled. Changing that would invalidate the requested geometry-off ablation, so I preserved it."
+          ],
+          "repairs": [
+            {
+              "change": "Removed each extra leading ) so .cpu().numpy().astype(np.int64) is chained directly onto the get_indices call. Also tightened repository-root detection to require the repository markers together; this prevents the candidate-local results/stage2_RQ-VAE artifact directory from being mistaken for the repository root and keeps inputs at frozen stage1/stage0 locations.",
+              "finding": "SyntaxError from extra closing parentheses in the two get_indices conversions (reported lines 377 and 431)",
+              "verification": "python -m py_compile train_rqvae.py passed; the trainer resolved REPO_ROOT as /fs04/ar57/wenyu/GeneRec, and completed the real one-epoch GPU run below."
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "GENREC_SINGLE_GPU=1 CUDA_VISIBLE_DEVICES=1 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -c 'import train_rqvae as t; print(\"REPO_ROOT\", t.REPO_ROOT); t.EPOCHS=1; t.WARMUP_EPOCHS=0; t.EVAL_INTERVAL=1; t.main()'",
+            "result": "REPO_ROOT /fs04/ar57/wenyu/GeneRec; [RecBole RQ-VAE] device=cuda:0 all_items=24587 train_items=24556 world_size=1; [RecBole RQ-VAE] config: epochs=1 batch_size_per_rank=1024 total_batch=1024 lr=0.001; [RecBole RQ-VAE] initializing codebooks with KMeans; [RQ-VAE] epoch=1 loss=0.00042510 recon=0.00025364 lr=0.000e+00 raw_unique=1118/24587 collision=0.954529 time=1.621s; [RecBole RQ-VAE] exported raw_shape=(24587, 3) sid_shape=(24587, 4) unique=24587 -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off/sids_for_hgrec.npy. It exited successfully; PyTorch printed determinism/CuBLAS warnings."
+          }
+        },
+        {
+          "remaining_issues": [
+            "The smoke test could not execute because this environment has no PyTorch installation (ModuleNotFoundError: No module named 'torch')."
+          ],
+          "repairs": [
+            {
+              "change": "Added a default-preserving geometry_on parameter through RQVAE.init_codebook, RQLayer.init_codebook, and VQLayer.init_codebook; the branch_shell_geometry_off trainer now calls initialization with geometry_on=False, while the default remains True for the both-on arm",
+              "finding": "Geometry-off control used curved distances during codebook/residual initialization",
+              "verification": "Source trace confirms the flag reaches VQLayer._distances for initialization assignments and hence residual construction; the training call continues to use geometry_on=False"
+            }
+          ],
+          "revision": 2,
+          "smoke": {
+            "command": "cd /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off && python smoke_test.py",
+            "result": "Failed before test execution: ModuleNotFoundError: No module named 'torch' (exit code 1)."
+          }
+        }
+      ],
+      "revision": 2,
       "smoke": {},
-      "source_digest": "7a14cf630cf65528da753c85ee51bd8330417e2b61152e663e7538b4505fa90f",
-      "status": "implemented",
+      "source_digest": "f1233ba91b50a4d7a1a1ad4e7ecc624c6f789a416951e9ec89f7643afe3327fd",
+      "status": "verified",
       "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off",
       "tree_exists": true,
-      "verdicts": []
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Static code trace plus comparison with sibling mechanism results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:309-330,373,426. Confirmed geometry_on=False at codebook initialization, training forward, evaluation assignment, and final SID export. In model/layers.py:101-123, this selects matched Euclidean squared distance and Euclidean code radii while retaining the same training-derived radius penalty; behavior_on remains at its default True. The frozen train-only consecutive-transition/entropy computation is unchanged at train_rqvae.py:243-264. Compared the trainer against the parent mechanism: apart from the required geometry switch, candidate-owned output paths and relocatable repository/torchrun paths, the trainer flow and settings are retained.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:312-333,376,429",
+              "findings": [
+                {
+                  "correction": "None required.",
+                  "detail": "No defect found. This is explicitly the geometry-off ablation, so the intentionally absent curved coupling is not a finding.",
+                  "location": "none",
+                  "reproduction": "Trace train_rqvae.py:312-333 and the evaluation/export calls at 376 and 429 into model/layers.py:101-123. Each uses geometry_on=False; behavior_on remains enabled and target radii continue to affect assignment.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) ABLATION CONTROL: exact named switch off; mechanism otherwise unchanged",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the real training path at train_rqvae.py:329-341. The selected Euclidean distance plus behavior-conditioned radial penalty is differentiable; the gathered selected-distance term is added to the quantization loss, while straight-through reconstruction/commitment paths reach encoder and codebook. smoke_test.py:19-41 specifies finite loss/gradient, optimizer-update, and assignment-change checks, but was not executed. Numerical stability was checked from code: the active Euclidean path uses finite squared-distance operations and finite radius inputs; this ablation does not execute the Poincare operations. The comparisons in smoke_test.py:34-41 check curved/Euclidean and behavior-on/off assignment changes.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/model/layers.py:111-123,134-158,310-330",
+              "findings": [
+                {
+                  "correction": "None required.",
+                  "detail": "No trainability defect found by code inspection. The stated runtime sandbox limitation applies; this review does not claim an executed forward/backward.",
+                  "location": "none",
+                  "reproduction": "In the code-defined smoke, model(..., geometry_on=False) feeds RQLayer/VQLayer; the selected distance contributes at layers.py:156 and gradients flow through the VQ losses at 155 and the encoder/decoder reconstruction loss. Run smoke_test.py in the supported PyTorch environment for the specified finite-gradient and assignment assertions.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) ABLATION CONTROL: it still trains; forward/backward and parameter paths are live and finite by code inspection",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static integration trace only. Repository-relative frozen inputs are stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet; training-only transitions are calculated from that train parquet. RESULT_DIR resolves to results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off, with no baseline/other-candidate path or external absolute output. Export enumerates every embedding row as item_id at 436-439; _extend_collisions adds a uniqueness level and checks unique rows at 433-440. Launcher preserves SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\" at line 39 and bypasses torchrun for that single-card setting at 450-451; otherwise it launches the same script with torchrun at 460-469. The trainer entry point invokes launcher then main at 472-474.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:42-60,143-164,223-275,399-445,448-474",
+              "findings": [
+                {
+                  "correction": "None required.",
+                  "detail": "No integration defect found by source inspection. Runtime execution is not claimed.",
+                  "location": "none",
+                  "reproduction": "Resolve _repository_root from the trainer path (42-53), trace inputs at 54-55 and outputs at 53, then inspect main/export (223-275,399-445) and launcher branches (448-474). For runtime verification, invoke the trainer in the supported environment with GENREC_SINGLE_GPU=1 for the single-card branch or without it for torchrun.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) Integration: real trainer, frozen data path, candidate-owned output, SID export/indexing, and distributed/single-card launcher",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_branch_shell_geometry_off_r2_1"
+        }
+      ]
     }
   ],
   "issue": "issue121",
@@ -4927,6 +5177,54 @@
       "idea_id": "transition_geodesic_codebook",
       "revision": 8,
       "signature": "6902942bf1b675a3"
+    },
+    {
+      "findings": [
+        {
+          "check": "c) integration",
+          "correction": "Move `.cpu().numpy().astype(np.int64)` onto the expression before the single closing parenthesis, or remove the extra leading `)` on each following line, at both evaluation and final-export call sites.",
+          "detail": "Both raw-token get_indices calls close the call on the line containing behavior_on=False and then begin the next line with an additional unmatched `).cpu()`. This is a Python SyntaxError, preventing import or execution of the trainer. As a result neither training nor SID export can occur, despite the otherwise candidate-specific output directory and correctly enumerated JSON keys.",
+          "location": "train_rqvae.py:375-377 and 429-431",
+          "reproduction": "Parse/import train_rqvae.py (or run its entry point); Python reports an unmatched closing parenthesis at line 377. The same malformed expression is present at line 431.",
+          "severity": "blocking",
+          "verifier": "verify_branch_shell_behavior_off_r0_1"
+        }
+      ],
+      "idea_id": "branch_shell_behavior_off",
+      "revision": 0,
+      "signature": "8459ab4776edf2d2"
+    },
+    {
+      "findings": [
+        {
+          "check": "c) Integration",
+          "correction": "Remove the extra leading `)` on lines 377 and 431 so `.cpu().numpy().astype(np.int64)` is chained directly from the `get_indices(...)` result; then re-run syntax validation and the required GPU one-epoch smoke through the real trainer/launcher.",
+          "detail": "Both calls close get_indices on the preceding line and then begin with an extra `)` before `.cpu()`. Python raises SyntaxError on import/compile, so neither the training entry point nor the trainer can run. The result path itself is correctly candidate-specific (`TIGER_branch_shell_geometry_off` under results/stage2_RQ-VAE); input paths are the frozen stage1 and stage0 paths; exported JSON keys enumerate item IDs from zero. The single-card branch explicitly checks `GENREC_SINGLE_GPU` at line 452 and returns without launching torchrun when set to \"1\".",
+          "location": "results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:377 and 431",
+          "reproduction": "Compile train_rqvae.py or invoke its entry point: parsing fails at the stray `)` at line 377 (and independently at line 431). This occurs before any data loading or launcher behavior.",
+          "severity": "blocking",
+          "verifier": "verify_branch_shell_geometry_off_r0_1"
+        }
+      ],
+      "idea_id": "branch_shell_geometry_off",
+      "revision": 0,
+      "signature": "b0dacd22e64e9063"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability and exact switch isolation",
+          "correction": "Thread geometry_on=False through RQVAE.init_codebook, RQLayer.init_codebook, and VQLayer.init_codebook, and use that flag for the assignment used to form initialization residuals; preserve the parent's curved initialization for the both-on arm. Keep all other initialization behavior identical.",
+          "detail": "The geometry switch is not off for the whole training computation. Trainer initialization calls `raw_module.init_codebook(...)` without a geometry flag; `VQLayer.init_codebook` then assigns each KMeans center using `_distances(x)` with its default `geometry_on=True` and builds residuals from those curved assignments. Thus the control still uses Poincare geometry in codebook/residual initialization even though epoch training and export pass geometry_on=False. The differentiable training route itself is finite by source inspection (with the runtime smoke appropriately unavailable here), but the requested exact one-switch Euclidean control is not isolated.",
+          "location": "results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:307-312; model/layers.py:163-179",
+          "reproduction": "Trace train_rqvae.py:307-312 into model/layers.py:163-179: KMeans centers are initialized, then `_distances(x)` defaults to curved exp-map/Poincare distance at layers.py:101-110. This occurs before the first geometry_on=False batch call at train_rqvae.py:333.",
+          "severity": "blocking",
+          "verifier": "verify_branch_shell_geometry_off_r1_1"
+        }
+      ],
+      "idea_id": "branch_shell_geometry_off",
+      "revision": 1,
+      "signature": "5353499ccc009506"
     }
   ],
   "revision_capped": [
@@ -5369,6 +5667,26 @@
       "kind": "stage3",
       "stage3_job_id": null,
       "status": "done"
+    },
+    {
+      "attempts": 3,
+      "error": "independent executable verification: the implementation recorded no smoke result",
+      "failure_kind": null,
+      "idea_id": "branch_shell_behavior_off",
+      "job_id": "stage2:branch_shell_behavior_off",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "failed"
+    },
+    {
+      "attempts": 2,
+      "error": "independent executable verification: the implementation recorded no smoke result",
+      "failure_kind": null,
+      "idea_id": "branch_shell_geometry_off",
+      "job_id": "stage2:branch_shell_geometry_off",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "failed"
     }
   ],
   "stage3_jobs": [
@@ -5384,6 +5702,6 @@
     }
   ],
   "step": "stage2",
-  "updated_at": 1792899279.2042449,
+  "updated_at": 1792899965.651555,
   "verification": {}
 }

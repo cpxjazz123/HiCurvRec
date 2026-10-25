@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity / ablation switch
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:101-123,143 | Inspected the RQLayer-to-VQLayer path and trainer calls. This is an ablation control, so the behaviour-to-radius contribution is intentionally removed by behavior_on=False; curved exp-map/Poincare assignment remains enabled by the default geometry_on=True. The branch-shell mechanism itself is inherited and exercised in smoke_test.py:19,33-41 with behavior_on=True, not in this control run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:101-123,134-158; smoke_test.py:17-41,43-51 | Source inspection shows the selected distance is included in quant_loss (line 156), which is backpropagated, while straight-through quantization preserves encoder gradients. The smoke test exercises forward/backward with finite-loss and nonzero finite encoder/codebook gradients and checks assignments differ for behaviour-off and Euclidean substitutions. The ablation trainer passes behavior_on=False at train and export call sites. No runtime execution is claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:372-377,427-432,450-476 | Inspected the trainer entry point, frozen training parquet input and train-only transition construction (lines 54-55,237-264), candidate-scoped output paths (lines 51-60), SID indexing/export (lines 429-441), and launcher including GENREC_SINGLE_GPU branch (lines 39,450-476). Static inspection finds the trainer cannot parse, so its real entry point cannot run; downstream integration properties are otherwise correctly wired in source but cannot be exercised through this broken entry point.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:375-377 and 429-431
+FINDING DETAIL: Both raw-token get_indices calls close the call on the line containing behavior_on=False and then begin the next line with an additional unmatched `).cpu()`. This is a Python SyntaxError, preventing import or execution of the trainer. As a result neither training nor SID export can occur, despite the otherwise candidate-specific output directory and correctly enumerated JSON keys.
+FINDING REPRODUCTION: Parse/import train_rqvae.py (or run its entry point); Python reports an unmatched closing parenthesis at line 377. The same malformed expression is present at line 431.
+FINDING CORRECTION: Move `.cpu().numpy().astype(np.int64)` onto the expression before the single closing parenthesis, or remove the extra leading `)` on each following line, at both evaluation and final-export call sites.

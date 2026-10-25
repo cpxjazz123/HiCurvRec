@@ -373,7 +373,7 @@ def main() -> None:
             if rank == 0:
                 with torch.no_grad():
                     raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=False, branch_radii=branch_radii.to(device), behavior_on=False)
+                        all_embeddings.to(device), infer_use_sk=False, branch_radii=branch_radii.to(device), behavior_on=False
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
@@ -427,7 +427,7 @@ def main() -> None:
         try:
             with torch.no_grad():
                 raw_tokens = raw_module.get_indices(
-                    all_embeddings.to(device), infer_use_sk=False, branch_radii=branch_radii.to(device), behavior_on=False)
+                    all_embeddings.to(device), infer_use_sk=False, branch_radii=branch_radii.to(device), behavior_on=False
                 ).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:

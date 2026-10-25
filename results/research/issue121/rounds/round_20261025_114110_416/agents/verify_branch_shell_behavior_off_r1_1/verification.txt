@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behavior x geometry fidelity (ablation control)
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_behavior_off/train_rqvae.py:333 | Inspected the actual trainer call and traced it through model/model.py:26-29 and model/layers.py:101-123, 139-156, 310-330. This is an intentional behavior-off control, so the missing behavior-geometry coupling is not a defect: behavior_on=False removes target_radius from the assignment while curved Poincare distances remain active. The parent branch_shell layer implementation is unchanged.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The control disables the named behavior-conditioned shell term and retains the curved distance pathway; the behavior-off result is intentionally not coupled.
+FINDING REPRODUCTION: Source trace: trainer passes behavior_on=False at train_rqvae.py:333, and VQLayer.forward selects target_radius only when behavior_on is true at model/layers.py:143. Curved geometry is still selected by the default geometry_on=True at model/layers.py:103-110. The included smoke assertions at smoke_test.py:35-41 specify assignment comparisons, but were not executed here.
+FINDING CORRECTION: None.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_behavior_off/model/layers.py:143-158 | Static forward/backward trace: distances enter the selected-distance quantization loss at lines 143-156; that loss is returned and consumed by compute_loss in model/model.py:43-50. The straight-through quantized result feeds the decoder. The control's training call omits the behavior radius, while the retained Poincare assignment/distance term remains differentiable with respect to latent and codebook parameters. The smoke test at smoke_test.py:19-31 and assignment contrast checks at 34-41 are code-level checks only; no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-visible dead loss term, detached differentiable path, or obvious float32 overflow hazard found. The selected distance contributes to quant_loss even when the behavior shell term is off. The requested sandbox limitation prevents runtime confirmation; this is not reported as a defect.
+FINDING REPRODUCTION: Inspect VQLayer.forward at model/layers.py:143-158: quant_loss adds the selected distance, then RQLayer averages and returns it at lines 323-330; trainer computes loss and calls backward at train_rqvae.py:334-341. The smoke script asserts finite loss and nonzero encoder/codebook gradients at smoke_test.py:19-31, and compares curved/Euclidean and behavior-on/off assignments at 32-41. It was not run.
+FINDING CORRECTION: None.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_behavior_off/train_rqvae.py:223-264, 329-341, 422-443, 450-476 | Inspected the real main/launcher path, frozen input paths, candidate result paths, ID-to-SID export, and the GENREC_SINGLE_GPU branch. Runtime was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Inputs resolve to the frozen stage1 embedding and stage0 training parquet (lines 51-57); outputs are scoped to this arm's results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off directory (lines 51-60). Export enumerates SID rows by item ID, checks unique extended SIDs, and emits numeric string keys (lines 435-443). The launcher honors SINGLE_GPU_ENV == "GENREC_SINGLE_GPU" (lines 39, 450-453), and otherwise starts torchrun; the requested one-card branch is present. Training-only transition statistics are computed from TRAIN_FILE at lines 243-264.
+FINDING REPRODUCTION: Source inspection: _repository_root and all path constants at train_rqvae.py:42-60; train-only history sorting/counting at 243-264; SID extension/export at 186-200 and 435-443; launcher condition and subprocess call at 450-476. No trainer execution or output-file validation was possible in this sandbox.
+FINDING CORRECTION: None.

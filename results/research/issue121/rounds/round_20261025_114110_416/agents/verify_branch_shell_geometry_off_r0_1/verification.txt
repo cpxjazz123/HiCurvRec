@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) Ablation control: named switch and mechanism fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:243-264,333,375-377,429-431 | Inspected the training-only consecutive-transition entropy calculation and trainer calls. The trainer supplies branch radii and explicitly sets geometry_on=False for training, evaluation and export; model/layers.py:111-123 switches to Euclidean distance and Euclidean codeword norm while retaining the branch-conditioned radial penalty. Compared the same code path with the derived both-on mechanism: the intended geometry switch is the changed assignment metric; the behavior statistic and other mechanism are retained.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable; source inspection confirms the named geometry switch is off and branch calibration remains enabled.
+FINDING CORRECTION: None.
+CHECK: b) Trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/model/layers.py:111-123,134-158,310-330 | Source-inspected differentiable Euclidean distance and matched radial penalty through selected-distance loss, straight-through quantization and residual stages. The code's smoke_test.py:17-31 covers finite forward/backward, nonzero encoder/codebook gradients and optimizer updates; lines 35-41 compare assignments across behavior/geometry switches. Runtime execution is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection. The Euclidean distance and retained branch penalty feed the selected-distance term at layers.py:156, so the ablation still has an active differentiable training objective. The behavior-off path removes target_radius at line 143; geometry-off selects the Euclidean branch at lines 111-123.
+FINDING REPRODUCTION: The provided smoke test's forward/backward and switch-comparison cases are the concrete source-level checks; they were not run. No dead computed term or evident float32 overflow/NaN hazard was identified in this Euclidean path.
+FINDING CORRECTION: None.
+CHECK: c) Integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:39,51-60,223-264,329-341,375-377,429-442,450-475 | Inspected the real trainer entry point, frozen stage1 embedding and stage0 training-parquet paths, candidate-specific output directory and item-id enumeration in JSON export, plus the torchrun and single-card launcher branches. The trainer cannot currently be parsed because of an unmatched closing parenthesis in both inference calls.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off/train_rqvae.py:377 and 431
+FINDING DETAIL: Both calls close get_indices on the preceding line and then begin with an extra `)` before `.cpu()`. Python raises SyntaxError on import/compile, so neither the training entry point nor the trainer can run. The result path itself is correctly candidate-specific (`TIGER_branch_shell_geometry_off` under results/stage2_RQ-VAE); input paths are the frozen stage1 and stage0 paths; exported JSON keys enumerate item IDs from zero. The single-card branch explicitly checks `GENREC_SINGLE_GPU` at line 452 and returns without launching torchrun when set to "1".
+FINDING REPRODUCTION: Compile train_rqvae.py or invoke its entry point: parsing fails at the stray `)` at line 377 (and independently at line 431). This occurs before any data loading or launcher behavior.
+FINDING CORRECTION: Remove the extra leading `)` on lines 377 and 431 so `.cpu().numpy().astype(np.int64)` is chained directly from the `get_indices(...)` result; then re-run syntax validation and the required GPU one-epoch smoke through the real trainer/launcher.

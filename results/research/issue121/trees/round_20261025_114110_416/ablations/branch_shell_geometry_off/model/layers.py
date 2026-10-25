@@ -160,7 +160,7 @@ class VQLayer(nn.Module):
     def embed_code(self, embed_id: torch.Tensor) -> torch.Tensor:
         return F.embedding(embed_id, self.get_code_embs())
 
-    def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
+    def init_codebook(self, x: torch.Tensor, device: torch.device, geometry_on: bool = True) -> torch.Tensor:
         # Only rank 0 fits KMeans, but every rank must participate in the
         # broadcast before copying the identical centers into its codebook.
         if distributed.is_initialized():
@@ -175,7 +175,7 @@ class VQLayer(nn.Module):
         if distributed.is_initialized():
             distributed.broadcast(centers, 0)
         self._copy_init_embed(centers.clone())
-        embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])
+        embed_ind = torch.argmin(self._distances(x, geometry_on=geometry_on), dim=-1).view(*x.shape[:-1])
         return x - self.embed_code(embed_ind)
 
 
@@ -329,8 +329,8 @@ class RQLayer(nn.Module):
             output[:, level] = indices
         return quantized_x, sum_quant_loss / self.codebook_num, num_unused_codes, output
 
-    def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
+    def init_codebook(self, x: torch.Tensor, device: torch.device, geometry_on: bool = True) -> torch.Tensor:
         residual = x
         for vq_layer in self.vq_layers:
-            residual = vq_layer.init_codebook(residual, device)
+            residual = vq_layer.init_codebook(residual, device, geometry_on=geometry_on)
         return residual
