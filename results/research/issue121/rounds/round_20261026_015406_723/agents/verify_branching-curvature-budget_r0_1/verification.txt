@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: branching-curvature-budget/train_rqvae.py:261-279 -> model/model.py:26-30 -> model/layers.py:133-155,297-315 | Static path trace; smoke_test.py:13-26 constructs branch values and compares Poincare and Euclidean distance matrices. The trainer derives per-item directed successor entropy from training rows, passes the resulting branch tensor into every RQ layer, and VQLayer uses its curvature-conditioned Poincare distance to select each residual code. This is one connected behavior-conditioned curved assignment path, not a behavior suffix or unrelated loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No scope-level coupling defect found. The implemented mechanism is narrower than the idea: it omits the proposed continuation consistency and tail-balance penalties, and the configured hierarchy has three levels rather than the specified four. The actual branching-conditioned curvature quantizer nevertheless satisfies the required behavior/geometry connected-pathway criterion.
+FINDING REPRODUCTION: Static trace of the cited functions; smoke_test.py directly exercises the branch-conditioned model call and verifies curved distances differ from Euclidean distances.
+FINDING CORRECTION: No correction is required for the scope criterion. To implement the full stated proposal, add the specified continuation and tail-balance terms and align the level count with the four-level specification.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: branching-curvature-budget/smoke_test.py:8-27 | Code inspection of the supplied forward/backward smoke (not executed here): it uses finite random inputs and nonconstant branching, checks finite loss and first-codebook gradients, and compares curved with Euclidean metrics. In layers.py:107-122 the curvature and Poincare map are clamped to bounded finite ranges; selected indices feed the quantization losses and straight-through output at lines 142-155, allowing gradients to encoder/codebooks without differentiating through argmin.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 overflow/NaN hazard found. Curvature changes assignment distances and therefore can alter selected codes and their resulting gradient path; setting branching to None restores Euclidean distance in layers.py:141. Runtime gradients and actual assignment changes are not established by this static review, but the supplied smoke is the intended runtime proof and is outside this inspection.
+FINDING REPRODUCTION: Inspect smoke_test.py:15-26 and layers.py:140-155. The user's stated sandbox constraint precludes treating lack of local execution as a defect.
+FINDING CORRECTION: None required based on code inspection.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: branching-curvature-budget/train_rqvae.py:40-67,232-280,406-449,456-484 | Static trace: root is discovered by the stage2_RQ-VAE repository marker; training inputs are the stage1 sentence_t5.npy embeddings and results/stage0_build_parquet/train.parquet; the trainer emits item_sids.json keyed by enumerated item row IDs and an SID array covering all embedding rows. Result paths resolve under results/stage2_RQ-VAE/TIGER_branching-curvature-budget, the candidate's own promoted arm directory. Launcher bypasses torchrun for an existing rank or GENREC_SINGLE_GPU=1; otherwise it starts the four-process launcher.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by static inspection. The single-card branch checks the required GENREC_SINGLE_GPU environment variable name (as a literal), the data files are the frozen paths, and output is in the candidate arm directory rather than the baseline or another candidate. Export explicitly verifies unique extended SIDs.
+FINDING REPRODUCTION: Trace the cited constants and main/export/launcher paths. Runtime execution is not claimed.
+FINDING CORRECTION: None required.

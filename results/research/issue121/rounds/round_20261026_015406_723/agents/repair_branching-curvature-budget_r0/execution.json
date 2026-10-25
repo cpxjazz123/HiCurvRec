@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "repair_branching-curvature-budget_r0",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792941598.6527255,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "ab212be6b7c1e4a8b20521f88622d172d47f48ba261035d1181c1969ae693c0c",
+  "isolation_policy": "opencode v2 permission object: bash allowed (this role runs the smoke test), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "repair.txt",
+  "output_sha256": "10f1429f1a1c71ddb9f4eee950180c55277b68a284b22ba7f79b1cca8c1d8f60",
+  "pid": 3625567,
+  "project_marker": ".git",
+  "prompt_sha256": "48e67ebebc15bb773eb23654862a5b9003c14d4fadae963d78bb1d92e310ff0e",
+  "session_sha256": "2b28cb740d763aaddd3f9d3525695491b58a37d37ec917be7996c5d308568931",
+  "stderr_present": false,
+  "task_id": "repair_branching-curvature-budget_r0",
+  "timed_out": false,
+  "verified": true
+}

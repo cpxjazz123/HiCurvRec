@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "implementation_branching-curvature-budget",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792941472.4400535,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "ab212be6b7c1e4a8b20521f88622d172d47f48ba261035d1181c1969ae693c0c",
+  "isolation_policy": "opencode v2 permission object: bash allowed (this role runs the smoke test), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "implementation.txt",
+  "output_sha256": "f8cb4eb4bdea9030b6863bf86f443851802159b6303866a477beb299595e8d76",
+  "pid": 3601935,
+  "project_marker": ".git",
+  "prompt_sha256": "23f72efbfcb612448b227f6ef16542b8f7dbb694a7d953040791b8385f3f02b9",
+  "session_sha256": "5af5a486f71c7f41e2a2b37e0c9f0d336302bc0d3deabb05cf6955c33e8576d5",
+  "stderr_present": false,
+  "task_id": "implementation_branching-curvature-budget",
+  "timed_out": false,
+  "verified": true
+}
