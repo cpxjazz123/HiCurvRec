@@ -471,3 +471,42 @@ class McpProtocolTests(unittest.TestCase):
         self.assertTrue(called)
         # The tool answers with an error instead of the server dying.
         self.assertTrue(called[0]["result"].get("isError"))
+
+
+class ReviewContractTests(unittest.TestCase):
+    """The review must separate an environment limit from a defect."""
+
+    def test_the_verification_prompt_does_not_treat_a_missing_torch_as_a_defect(self):
+        from tools.research.rounds import agents as agents_module
+        prompt = agents_module.VERIFY_PROMPT
+        self.assertIn("no PyTorch", prompt)
+        self.assertIn("NOT defects", prompt)
+        self.assertIn("results/stage2_RQ-VAE", prompt)
+        self.assertNotIn("Write JSON", prompt)
+
+    def test_the_preflight_runs_again_after_a_repair(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_pre", objective="o")
+            tree = root / "tree"
+            tree.mkdir()
+            (tree / "train_rqvae.py").write_text(
+                'OUTPUT_JSON = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/'
+                'stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json")\n', encoding="utf-8")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [pipeline_module.implementation_record(
+                _coupled(), {}, tree)]
+            state["implementations"][0]["blocking_findings"] = [
+                {"verifier": "preflight", "check": "output isolation",
+                 "severity": "blocking", "location": "train_rqvae.py",
+                 "detail": "writes into the baseline", "reproduction": "",
+                 "correction": ""}]
+            state["implementations"][0]["status"] = "needs_repair"
+            # The repair fixed the path.
+            (tree / "train_rqvae.py").write_text(
+                'OUTPUT_JSON = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/'
+                'stage2_RQ-VAE/TIGER_coupled/item_sids.json")\n', encoding="utf-8")
+            state = pipeline_module.recheck_output_paths(state, "coupled")
+            record = state["implementations"][0]
+            self.assertEqual(record["output_preflight"], "passed")
+            self.assertEqual(record["blocking_findings"], [])

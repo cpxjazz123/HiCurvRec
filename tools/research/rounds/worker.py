@@ -301,6 +301,9 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
                                     record.get("blocking_findings", []),
                                     int(record.get("revision", 0)))
                 state = pipeline_module.apply_repair(state, record["idea_id"], repair)
+                # The repair may have fixed the output paths: re-run the
+                # preflight so a stale finding cannot block the candidate.
+                state = pipeline_module.recheck_output_paths(state, record["idea_id"])
             except Exception as exc:                       # noqa: BLE001
                 state = pipeline_module.mark_agent_error(
                     state, record["idea_id"], "repair failed: " + str(exc))
