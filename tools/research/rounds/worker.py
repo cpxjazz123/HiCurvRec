@@ -277,6 +277,18 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
         if record.get("status") not in ("implemented", "repaired", "agent_error",
                                         "needs_repair"):
             continue
+        # A tree whose source changed since the last review must be reviewed
+        # again by a fresh agent: the revision is bumped, so the reviewer works
+        # in a new workspace and no earlier answer is reused.
+        if record.get("source_digest") and record["source_digest"] != \
+                pipeline_module._source_digest(Path(record["tree"])):
+            record["revision"] = int(record.get("revision", 0)) + 1
+            record["status"] = "implemented"
+            record["source_digest"] = pipeline_module._source_digest(Path(record["tree"]))
+            pipeline_module.record_event(state, "source_changed_before_review",
+                                         idea_id=record["idea_id"],
+                                         revision=record["revision"])
+            pipeline_module.save_state(directory, state)
         idea = ideas_module.idea_index(state["ideas"])[record["idea_id"]]
         try:
             reports = run_verification(agent_root, idea, Path(record["tree"]),
