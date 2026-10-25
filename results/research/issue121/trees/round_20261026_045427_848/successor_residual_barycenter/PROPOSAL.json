@@ -1,0 +1,51 @@
+{
+  "ablation_behavior_off": "Set λ_s=0 and remove q/barycenter terms, retaining identical Poincare residual item-to-codeword distance, codebooks, seeds, schedule and all other training settings.",
+  "ablation_both_on": "Use q from training histories and curvature −0.5 Poincare assignment/consensus at both T2 and T3, fixed T1/T4 behavior, same four-token SID and frozen Stage3 protocol.",
+  "ablation_geometry_off": "Keep the same q, neighbors, residual cache and λ_s but replace exp/log/projection/geodesic terms in both item and successor costs with norm/scale-matched Euclidean squared distances; use training-only scale matching.",
+  "also_proposed_by": [
+    "ideation_1"
+  ],
+  "behavior_computation": "Count consecutive item pairs from training histories only; use qij=(Cij+απj)/(outcount_i+α), retain top eight observed successors, renormalize, and cache. Train split only.",
+  "behavior_signal": "Smoothed directed next-item distribution qij, restricted to training items with observed outgoing transitions.",
+  "cost_estimate": "One preprocessing pass O(Etrain), sparse q storage, and cached neighbor residuals. Per step (about 1,023 items, 24,556 total training items, 24 steps/epoch, 3,000 epochs=72,000 steps), evaluate at most M=8 outgoing neighbors × K=256 codewords × D coordinates at each of T2,T3; this is about 1,023×8×256×D×2 pairwise terms per step, vectorized and restricted to observed neighbors. Relative to 0.13 s/epoch baseline, estimate 1.15–1.35×; reject if single-epoch smoke exceeds 0.17 s. Cache/train-only sparse top-8 transitions and never add a full N×N operation.",
+  "coupling_equation": "k_i^s=argmin_k[d_c(x_i^s,c_sk)^2+λ_s Σ_j qij d_c(y_j^s,c_sk)^2], s∈{2,3}, where qij is training-only successor weight and d_c is Poincare geodesic distance at curvature −0.5.",
+  "coupling_path": "Training transition counts → qij → cached successor residual barycenter/neighbor set → behavior-weighted Poincare distance to each candidate residual codeword → hard T2/T3 code selection → emitted four-token SID. Either q or curved distances changed/removed, the candidate ranking and therefore SID can change.",
+  "duplicate_count": 1,
+  "evidence_revision": {
+    "answers": "addresses the measured behavior_dependency gap",
+    "evidence_note": "A positive row scalar left every arg-min unchanged (measured: True); the codeword-dependent weight moved 0 of the top-1 assignments",
+    "revision": "Withdraw the claim that the proposal's codeword-dependent geodesic term moves T2/T3 assignments; the evidence shows it moved 0 of the top-1 assignments, so the proposal does not establish behavior-driven branch consensus or its intended assignment effect",
+    "withdrawn": "The claim that the codeword-dependent successor-consensus term changes T2/T3 assignments or can support the proposed T3 improvement"
+  },
+  "falsifiable_hypothesis": "High-probability successors share meaningful residual continuations, and their geodesic consensus can collapse ambiguous third-token choices conditioned on prefix while preserving reconstruction. Worth keeping only if T3 teacher-forced top-1 rises materially above 0.53 (target 0.7–0.8), both-on beats both controls, and frozen Stage3 test_R@10 exceeds 0.065.",
+  "fingerprint": "94a4e65d6a0ff9e7",
+  "hyperbolic_location": "At each residual assignment score for T2 and T3: map current residuals and candidate residual codewords into the ball; use geodesic distance both in successor-consensus score and item-to-codeword score. T1 remains cheap Euclidean/coarse and T4 remains deterministic collision extension.",
+  "hyperbolic_operator": "Poincare exp/log maps and squared geodesic distance d_c at fixed sectional curvature −0.5, with projection to radius (1−ε)/sqrt(c).",
+  "idea_id": "successor_residual_barycenter",
+  "key_change": "Precompute a sparse successor distribution for each training item, then at residual levels 2 and 3 softly summarize the successor residuals of its observed outgoing neighbors. Add the Poincare geodesic distance from each candidate residual codeword to this level-specific successor barycenter into that same level's hard assignment score.",
+  "leakage_boundary": "Build counts from the Stage2 training-history partition and training item IDs; no validation/test events, histories, candidate labels, or metrics enter q, barycenter construction, or SID export. Unknown/no-outgoing items have an explicit zero consensus term.",
+  "motivation": "T3 should become predictable given the already emitted T1/T2 prefix: training items with similar directed continuation distributions should share a compact residual branch rather than being separated by embedding reconstruction alone.",
+  "novelty": "Unlike existing first-level successor-prototype/geodesic mechanisms, behavior-driven branch consensus is applied to residuals after subtracting the actual preceding code vectors; its codeword-dependent geodesic term directly changes T2 and T3 assignments. T1 and deterministic T4 remain untouched.",
+  "observables": "Predict lower L1 Hard ER (or no material increase) because T1 is unchanged but residual partitions may become more behavior-consistent; gold-prefix survival should be unchanged at depth 1, rise at depths 2–3 if useful, and remain high at depth 4. Teacher-forced T3 top-1 should rise from ≤0.53 toward 0.7–0.8; T4 should remain near its current high value (roughly ≥0.9). Record distinct-token counts and SID collisions as diagnostics only. Primary outcome is unchanged-protocol Stage3 test_R@10 >0.065.",
+  "origin_agent": "ideation_1",
+  "proposal_revision": 1,
+  "rejected_ideas": [
+    {
+      "idea_id": "prefix_successor_ball",
+      "origin_agent": "ideation_3",
+      "reason": "out of scope: ablation_geometry_off does not say what replaces the curve"
+    }
+  ],
+  "risks": [
+    "Sparse/low-support transitions may give noisy barycenters; stale cached residual assignments can lag; a consensus weight that is too large can erase item-specific detail or cause code collapse. Restrict to top-8 supported neighbors, stop-gradient through their residuals, and tune λ only on training-side diagnostics, not validation/test outcomes."
+  ],
+  "safeguards": "Compute geometry in float32; project every point to norm ≤(1−10⁻⁵)/sqrt(c); clamp denominator to ≥10⁻⁷ and atanh argument to [0,1−10⁻⁶]; add α=1 smoothing; require at least one observed outgoing edge or set consensus to zero; normalize top-eight weights; stop-gradient neighbor residuals; cap λ to a small train-only calibrated range; log finite values, code occupancy, argmin changes and gradient norms. Abort smoke if assignments do not change versus behavior-off or epoch time is >0.17 s.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "For each s=2,3 and minibatch item i: r_i=z_i−Σ_{t<s}e_{k_i^t}; x_i=Proj_c(exp^c_0(r_i)); for j in top8(i), y_j=Proj_c(exp^c_0(stopgrad(r_j^s))); score_ik=d_c(x_i,Proj_c(exp^c_0(e_sk)))²+λ_s Σ_jqij d_c(y_j,Proj_c(exp^c_0(e_sk)))²; k_i=argmin score_ik. Update codebook/encoder with the ordinary RQ-VAE commitment/reconstruction gradients for that chosen code; retain ordinary straight-through path. Only the T2/T3 residual stage uses this score.",
+  "spec_inputs_outputs": "Inputs: item encoder vector z_i, preceding hard code vectors, T2/T3 codebook vectors, cached sparse top-eight qij, cached preceding-epoch neighbor residuals, fixed c=0.5, λ2/λ3. Output: one integer code per item at each residual level, selected code vectors and the standard quantization loss. Tensorize candidate-codeword distances; no dense graph.",
+  "specification": {
+    "text": "Let Cij be counts of adjacent directed transitions in training histories and qij=(Cij+απj)/(Σl Cil+α), with π the training successor marginal. At level s∈{2,3}, let r_i^s=z_i−Σ_{t<s}e_{k_i^t} and for each observed successor j let r_j^s be its residual using current hard assignments (stop-gradient on neighbor residuals). Compute b_i^s=log^c_0(Proj_c(Σj qij exp^c_0(r_j^s))) and assign k_i^s=argmin_k ||log^c_0(x_i^s)−log^c_0(c_sk)||² + λ_s Σj qij d_c(Proj_c(exp^c_0(r_j^s)),Proj_c(exp^c_0(c_sk)))², where x_i^s=Proj_c(exp^c_0(r_i^s)); curvature is −c, c=0.5. The second term is a successor-weighted geodesic consensus cost and is not a row-constant bias. Use assignments from the previous completed minibatch/epoch for neighbor residual lookup and refresh cached residuals once per epoch; no iterative graph traversal during a step."
+  },
+  "title": "Successor-consensus geodesic residual assignment at T2–T3"
+}

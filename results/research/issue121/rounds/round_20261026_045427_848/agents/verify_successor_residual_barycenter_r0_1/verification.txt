@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:262-282 -> model/model.py:26-29 -> model/layers.py:309-329, 128-155 | Static call-path inspection: derives directed transition probabilities solely from train_frame histories/targets, selects train-only neighbor residuals, then computes Poincare distances in the same per-codeword assignment score at residual quantizer levels 2 and 3. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: One connected behaviour-and-geometry assignment pathway is exercised by the real trainer call: sparse directed successor weights multiply codeword-dependent curved distances, and the resulting sum is added before argmin. This is not a separate loss or an unused helper. The trainer uses fixed curvature c=0.5. Note that the code computes a weighted sum of neighbor-to-codeword distances, not the specified successor barycenter distance; this still meets the core coupled-path criterion.
+FINDING REPRODUCTION: Follow train_rqvae.py:267-282 (transition construction), 353-357 (neighbor residual/weight feed), model/model.py:26-29 (forwarding), then layers.py:139-155 (curved score added before assignment).
+FINDING CORRECTION: No correction required for this check.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/layers.py:139-155, 165-168, 321-328 | Static forward/backward-path inspection only, as required by the sandbox constraint. The score feeds hard indices; those indices select embeddings used in quantization loss, whose gradients reach encoder/codebook parameters. Neighbor residuals are explicitly detached. No runtime gradient smoke was run.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:338-357; model/layers.py:321-324
+FINDING DETAIL: The cache contains only one residual representation per item, computed after quantizing levels 1 and 2 (train_rqvae.py:341-345). That same post-level-2 residual is passed to both levels 2 and 3 (lines 353-357; layers.py:322-323). The specification requires distinct per-level residuals: at T2, subtract only the preceding T1 code; at T3, subtract T1 and T2. Consequently the T2 coupling is applied to the wrong successor residual, so the implemented coupled mechanism is not the stated level-specific assignment and its T2 score/gradient-routing-through-assignment behavior is incorrect. Also, the proposal requires behavior-off and Euclidean controls: geometry_on exists only as a VQLayer argument and the trainer does not expose or pass it (default True); there is no trainer-level control for the required comparisons. Hard argmin is expected, but assignment changes can still alter which codeword receives quantization gradients.
+FINDING REPRODUCTION: With any item having a nonzero first-level code and a successor with nonzero second-level code, compare the cached value at train_rqvae.py:345 with the expected T2 residual (encoder output minus only its first code). They differ, yet the cached value is passed as the T2 neighbor residual at line 357. For the control omission, inspect the trainer invocation at lines 357 and VQLayer.forward defaults at layers.py:134-135: it supplies no geometry switch, so trainer runs cannot select geometry-off; no behavior-off trainer option exists either.
+FINDING CORRECTION: Cache both level-specific residual tables from the same epoch-frozen assignments: after level 1 for T2 neighbors and after levels 1-2 for T3 neighbors; pass the matching table per residual level. Add explicit trainer-configurable behavior and geometry switches and perform the required comparisons; ensure the behavior-off and geometry-off paths truly remove the corresponding score contribution.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:40-67, 232-283, 424-471, 474-502 | Static inspection of root/data/output/launcher paths and export logic; no trainer execution. The required GENREC_SINGLE_GPU branch is present and checked before torchrun launch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer resolves the repository root from the stage2_RQ-VAE marker and targets results/stage2_RQ-VAE/TIGER_successor_residual_barycenter (lines 49-65), with train.parquet from the frozen stage0 path (line 62). It exports rows keyed by embedding item index (lines 453-465), extends collisions to uniqueness, and writes checkpoint/log/SID artifacts only under this candidate's RESULT_DIR. The launcher honors GENREC_SINGLE_GPU at lines 233-244 and bypasses torchrun at 476-477; otherwise it starts four workers and child ranks avoid relaunching at 478-494. Runtime correctness is not claimed.
+FINDING REPRODUCTION: Read the constants at train_rqvae.py:56-67, export and indexing at 453-465, and launcher/single-card branches at 474-502.
+FINDING CORRECTION: No correction required for this check.

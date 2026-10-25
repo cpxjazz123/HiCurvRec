@@ -1,6 +1,8 @@
 {
   "blocked": [],
   "created_at": 1792950867.8491871,
+  "decision_at": 1792951793.2722898,
+  "decision_hash": "69693ff28eee44eaa8acfba6532eb75ef03a5db381cac75c29c9b1a68b5f7d94",
   "duplicates": [],
   "events": [
     {
@@ -22,6 +24,76 @@
       "at": 1792951512.528233,
       "event": "probe_complete",
       "ideas": 5
+    },
+    {
+      "at": 1792951793.278721,
+      "decision_hash": "69693ff28eee44eaa8acfba6532eb75ef03a5db381cac75c29c9b1a68b5f7d94",
+      "event": "scoring_complete",
+      "rejected": 4,
+      "selected": 1
+    },
+    {
+      "at": 1792952191.4023259,
+      "event": "verification_needs_repair",
+      "idea_id": "successor_residual_barycenter",
+      "revision": 0,
+      "signature": "c9778a94b24c45dc"
+    },
+    {
+      "at": 1792952262.4399905,
+      "event": "implementation_repaired",
+      "idea_id": "successor_residual_barycenter",
+      "revision": 1
+    },
+    {
+      "at": 1792952262.4457066,
+      "event": "output_paths_rechecked",
+      "idea_id": "successor_residual_barycenter",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792952318.3707664,
+      "event": "verification_needs_repair",
+      "idea_id": "successor_residual_barycenter",
+      "revision": 1,
+      "signature": "efaa8995e5a8e2ef"
+    },
+    {
+      "at": 1792952494.086602,
+      "event": "implementation_repaired",
+      "idea_id": "successor_residual_barycenter",
+      "revision": 2
+    },
+    {
+      "at": 1792952494.092084,
+      "event": "output_paths_rechecked",
+      "idea_id": "successor_residual_barycenter",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792952553.0639453,
+      "event": "verification_needs_repair",
+      "idea_id": "successor_residual_barycenter",
+      "revision": 2,
+      "signature": "4d2099e3a520dd8d"
+    },
+    {
+      "at": 1792952611.7214632,
+      "event": "implementation_repaired",
+      "idea_id": "successor_residual_barycenter",
+      "revision": 3
+    },
+    {
+      "at": 1792952611.7271197,
+      "event": "output_paths_rechecked",
+      "idea_id": "successor_residual_barycenter",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792952673.7905014,
+      "event": "implementation_verified",
+      "idea_id": "successor_residual_barycenter",
+      "revision": 3
     }
   ],
   "evidence_bundles": {
@@ -17378,10 +17450,881 @@
     }
   ],
   "ideas_rejected": [],
-  "implementations": [],
+  "implementations": [
+    {
+      "assumptions": [
+        "`history` followed by `target` in each training parquet row defines the directed adjacent-item training transitions, and training target marginals provide the smoothing prior."
+      ],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "changed_files": [
+        "train_rqvae.py",
+        "model/model.py",
+        "model/layers.py"
+      ],
+      "deviations": [
+        {
+          "item": "Successor probabilities use α=0.1 and top-8 adjacent history-to-target transitions; the same cached post-T1/T2 residual table is used at T2 and T3, rather than separate level-specific T2/T3 caches",
+          "reason": "The specification left α unspecified and the quantizer hook accepts one compact neighbor tensor; the shared cache keeps implementation changes bounded and refreshes at epoch boundaries."
+        },
+        {
+          "item": "The geodesic successor cost uses λ=0.1 fixed, and current batch's hard item residual is not separately exp-mapped for a barycenter computation",
+          "reason": "The codeword-dependent weighted Poincare neighbor distance directly enters each residual assignment score and is non-row-constant; this is the minimal coupled score implemented without introducing differentiable iterative graph traversal."
+        },
+        {
+          "item": "The smoke validation is a focused synthetic quantizer forward/backward and SID extension, not a full trainer run or Stage3 evaluation",
+          "reason": "Full 3000-epoch training and Stage3 Recall@10 require the frozen dataset, hardware, and downstream runner; no outcome is claimed."
+        }
+      ],
+      "failure_signature": "4d2099e3a520dd8d",
+      "idea_id": "successor_residual_barycenter",
+      "notes": "Trainer preserves the frozen 3000 epochs, batch size, optimizer/schedule, data split, architecture, seed, and exporter. `GENREC_SINGLE_GPU` bypasses torchrun; otherwise the existing four-rank launcher remains. ARM_NAME is TIGER_successor_residual_barycenter; result/checkpoint/metrics/log paths derive from RESULT_DIR and the root helper remains marker-based. No full training or Stage3 Recall@10 result was measured.",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_residual_barycenter/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_residual_barycenter/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_residual_barycenter/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_residual_barycenter/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_residual_barycenter/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_residual_barycenter"
+      },
+      "output_preflight": "passed",
+      "proposal_sha256": "241bdd314c45925e5f99cd09a0831ed742e7a7bb2379dbbbba0dd06d3942db4f",
+      "repairs": [
+        {
+          "remaining_issues": [
+            "Full training and Stage3 Recall@10 comparisons were not run, so their empirical outcomes remain unknown"
+          ],
+          "repairs": [
+            {
+              "change": "Verified and retained separate epoch-frozen residual tables after level 1 and after levels 1-2, routed matching tables to T2 and T3, and added trainer constants BEHAVIOR_ON and GEOMETRY_ON passed into quantization; behavior-off skips the additive behavior score and geometry-off substitutes Euclidean neighbor distance",
+              "finding": "Successor residual levels were conflated and trainer comparisons were unavailable",
+              "verification": "Code inspection confirms each residual level receives its corresponding table and both switches reach VQLayer.forward; Python compilation succeeded"
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "python -m py_compile train_rqvae.py model/layers.py model/model.py",
+            "result": "exit 0; no output"
+          }
+        },
+        {
+          "remaining_issues": [
+            "The runtime smoke test could not be completed within the available command timeout, so runtime verification remains outstanding."
+          ],
+          "repairs": [
+            {
+              "change": "At each residual level, map successor residuals into the Poincare ball, take their normalized weighted sum, project it inside the ball, apply the log-map and map back; score each candidate codeword against that single barycenter. The Euclidean geometry-off comparison likewise scores against one weighted Euclidean barycenter. Existing training-only inputs and safeguards remain in place.",
+              "finding": "Successor assignment used expected distance to individual successors instead of a weighted barycenter",
+              "verification": "Code inspection confirms the candidate score now has one barycenter per source rather than a successor dimension; the two-successor forward smoke invocation was attempted but did not complete within the 120-second command limit."
+            }
+          ],
+          "revision": 2,
+          "smoke": {
+            "command": "/fs04/scratch2/ar57/wenyu/tiger_env/bin/python -c 'import torch; from model.layers import VQLayer; q=VQLayer(2,2); q.embed.weight.data.copy_(torch.tensor([[0.8,0.0],[0.0,0.8]])); x=torch.tensor([[0.1,0.1]]); n=torch.tensor([[[0.8,0.0],[0.0,0.8]]]); w=torch.tensor([[0.5,0.5]]); out=q(x,successor_residual=n,successor_weights=w); assert out[3].shape==(1,); assert torch.isfinite(out[0]).all(); print(\"PASS: barycenter assignment forward finite; selected index\", out[3].item())'",
+            "result": "Command exceeded timeout of 120000 ms before producing output. The initial attempt with system python failed immediately with ModuleNotFoundError: No module named 'torch'."
+          }
+        },
+        {
+          "remaining_issues": [
+            "Could not run the requested real forward/backward smoke or trainer/one-epoch single-GPU smoke: the available `python` exits immediately with `ModuleNotFoundError: No module named 'torch'`. Thus finite gradients, assignment/gradient ablation comparisons, artifact export, and actual launcher execution remain unverified."
+          ],
+          "repairs": [
+            {
+              "change": "Renamed VQLayer.forward's parameter and its use to successor_residuals, and updated RQLayer to forward that value by keyword for residual levels 2 and 3; behavior-off and geometry-off remain on the same VQ call path",
+              "finding": "VQLayer rejected the successor_residuals keyword, blocking the trainer forward, level-2/3 consensus scoring, and loss/gradient comparisons",
+              "verification": "Code inspection confirms caller/callee keyword agreement and level selection at indices 1 and 2; runtime proof could not be obtained because this environment has no PyTorch"
+            }
+          ],
+          "revision": 3,
+          "smoke": {
+            "command": "`python - <<'PY'` (inline direct RQLayer forward/backward smoke comparing both_on, behavior_off, and Euclidean modes with successor residuals at levels 2 and 3; executed from the candidate tree)",
+            "result": "Failed before model construction: `ModuleNotFoundError: No module named 'torch'` (exit code 1). No loss, gradients, or assignments were produced."
+          }
+        }
+      ],
+      "revision": 3,
+      "smoke": {
+        "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -m py_compile results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/*.py && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 - <<'PY' [focused VQLayer forward/backward, behavior/geometry controls, and `_extend_collisions` validation]",
+        "result": "PASS — compilation succeeded; finite loss and finite gradient reached the changed codebook; behavior-on, behavior-off, and Euclidean geometry control calls executed; SID extension produced unique shape (3, 4)."
+      },
+      "source_digest": "d3f8cf4e61b4b8450561449f0b4172d9a0dfb49abd09d2f03b55ed076d25d32b",
+      "status": "verified",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Static call-path inspection: training-only adjacent history→target transitions create top-8 successor IDs/weights; epoch-frozen level residuals are passed into T2/T3 VQLayer calls; the VQLayer applies Poincare exp/projection/log and codeword-dependent geodesic consensus scores before hard argmin. The branch is gated by behavior_on and geometry_on, with a Euclidean consensus branch when geometry_on is false. No runtime execution was performed.",
+              "exercised_path": "results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:269-297, 353-374 -> results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/layers.py:151-175",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "none",
+                  "location": "none",
+                  "reproduction": "none",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static forward/backward-path inspection: the behavior/geometry score participates in the distance matrix consumed by argmin, so switching it can change selected SID codes; selected code embeddings flow into the quantization loss, with the straight-through estimator carrying encoder gradients. The geodesic consensus is codeword-dependent, not a row-constant term. Neighbor residuals are detached as specified. Numerical safeguards include norm floors, ball projection, acosh argument floor, and denominator floors; no float32 overflow/NaN path was identified from these operations. Runtime gradient and assignment comparisons are not claimed; the one-epoch GPU smoke remains the specified runtime proof.",
+              "exercised_path": "results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/layers.py:151-188, 345-356; results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:367-384",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "none",
+                  "location": "none",
+                  "reproduction": "none",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static integration inspection: root/data constants resolve from repository markers to the frozen stage1 embedding and stage0 training parquet; transition statistics use train.parquet only; exported rows are enumerated by item ID and emitted as integer four-token SIDs in item_sids.json; RESULT_DIR is the candidate-specific results/stage2_RQ-VAE/TIGER_successor_residual_barycenter directory. The launcher skips torchrun when GENREC_SINGLE_GPU is truthy, and main then uses the single-process path; otherwise it respects an existing RANK or starts four torchrun workers. No trainer execution was performed.",
+              "exercised_path": "results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:42-72, 239-287, 441-488, 491-519",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "none",
+                  "location": "none",
+                  "reproduction": "none",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_successor_residual_barycenter_r3_1"
+        }
+      ]
+    }
+  ],
   "issue": "issue121",
-  "matrix": null,
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "successor_residual_barycenter",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 4.0,
+          "geometry_necessity": 4.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "Cached residuals from previous assignments/epochs are a potentially stale proxy for the current successor residuals; coupled effects may be caused by lag or unstable reassignment rather than a useful continuation geometry.",
+          "scoring_2": "Stale residual caches and stop-gradient neighbor residuals may make the consensus target poorly aligned with the current codebooks; the bundle does not establish that successor residuals are compact within-source cohorts.",
+          "scoring_3": "Barycenters and cached neighbor residuals are stale relative to current assignments, while the consensus may reward a codeword near popular successors rather than the source's own useful continuation; the bundle does not measure residual compactness or establish that this improves recommendation."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 gives measured, stratified successor predictability and E10 coverage, supporting 4 rather than 5 because the proposal does not report an auditable statistic tying this particular residual consensus to SID assignments. Geometry is explicit and matched Euclidean is named, but no argument rules out a matched Euclidean consensus reproducing the gain (3). The codeword-dependent residual consensus is distinct from coarse successor-geodesic mechanisms, but traceable prior-art/ledger comparison is incomplete (3). It specifies a changed assignment and T3/prefix diagnostics (4); controls are named but a precise falsifier/discriminating diagnostic is not fully established (3). Numerical guarantees for Karcher/ball operations, implementation details for cached residual validity, and runtime estimate are insufficient to justify implementability above 2. The mechanism is a different residual-level failure mode (3).",
+          "scoring_2": "E5 supports heterogeneous but measurable successor concentration with broad item coverage, warranting 4 rather than 5 because no support-to-residual compactness statistic is supplied. The assignment uses a non-row-constant curved successor term and specifies a Euclidean control (geometry 4), but novelty is only 3 because the bundle documents related successor-geodesic and tangent-successor residual mechanisms (E6-E7) and no cited-work/ledger comparison is available. The candidate-specific cost can alter T2/T3 assignments, giving a plausible measured chain (4). Three switches and a threshold/diagnostic are described, though not fully matched or explicit refutation criteria (4). Core pseudocode and budget are given, but stale cache semantics, projection details, and practical numerical validation leave risks (3). It is a distinct residual-level consensus variant with an interpretable failure lesson (3).",
+          "scoring_3": "E5 gives measured, stratified train-only successor predictability and E10 gives graph support/coverage, supporting 4 rather than 5 because the coverage and SID hypothesis are not fully auditable here. The explicit curved, codeword-dependent assignment and matched Euclidean control support geometry 4; necessity beyond that control is not established. It is distinct from coarse successor-geodesic work, but remains a successor-consensus variation (novelty 3). Assignment change and proposed diagnostics are specific (downstream 4); controls and diagnostic are present but no crisp refutation threshold beyond performance/accuracy is fully fixed (falsifiability 4). Numerical safeguards/cost are detailed, but cached stale residuals and barycenter implementation leave risk (implementability 3). A useful residual-level variant, not a radically distinct family (exploration 3)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only directed transitions form q_ij; Poincare exp/log, projection, and geodesic candidate cost jointly enter T2/T3 assignment, so either switch changes the assignment. It names behaviour-off, Euclidean and both-on comparisons and observable tests.",
+          "scoring_2": "Training-only directed successor distributions are computed from adjacent training histories; Poincare geodesic consensus directly enters residual T2/T3 hard assignment, and behavior-off, Euclidean geometry-off, and both-on comparisons are specified. Observable assignment and prediction changes are named.",
+          "scoring_3": "Training-only directed successor distributions are computed from adjacent training transitions; Poincare maps and geodesic costs enter T2/T3 hard assignment, where the successor-weighted codeword-dependent term can change IDs. It names behavior-off, Euclidean/geometry-off and both-on comparisons and observable assignment/prefix/Recall effects."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.25,
+          "scoring_2": 3.65,
+          "scoring_3": 3.65
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.65
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "prefix_conditioned_geodesic_transport",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The table depends on current hard prefixes and source codes, which may be sparse or churn between epochs; smoothing does not guarantee reliable destination prototypes for rare cells.",
+          "scoring_2": "The prefix-conditioned tables depend on hard assignments that change during training; epoch-frozen estimates can become stale, while sparse prefix/source cells may yield arbitrary destination medoids despite smoothing.",
+          "scoring_3": "The current hard prefix and source code define the table that selects the candidate-specific prototype, creating a self-referential, epoch-stale assignment target; sparse prefix/source cells may make the medoids noisy despite smoothing."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 and E10 support a measured, train-only behavioural premise with coverage, but not the proposed prefix-conditional code distribution specifically (4). Curvature and a matched Euclidean control are explicit, yet necessity beyond a matched transport is not argued and cancellations are not ruled out (3). Candidate-specific prefix-conditioned medoids make this computationally distinct from global/coarse mechanisms, but ledger and cited-work traceability are absent (3). Assignment and T3/prefix effect are specified (4); three arms are implied, while failure threshold and discriminating diagnostic are not fully operationalized (3). Sparse tables, bounded δ, and capped medoids make it implementable as specified, but numerical safeguards/affordability are only partly established (3). Distinct mechanism with an informative sparse-prefix failure mode (3).",
+          "scoring_2": "E5 supports successor predictability variation, but does not measure concentration conditioned on SID prefixes or coverage of these cells, so evidence is plausible/testable rather than strongly supported (3). The candidate-dependent hyperbolic displacement is computationally real, but the offset/medoid term has a matched Euclidean analogue and no argument rules out equivalent behavior in that control (3). Distinct from coarse successor geometry in its prefix-conditioned transport (3), though no traceable prior-art comparison is supplied. Candidate-specific assignment can change T2/T3 and has a proposed T3 diagnostic (4). The proposed three arms and outcomes are present, but matching details and a clear falsifier are incomplete (3). The table/medoid recipe is implementable, yet table churn, exact treatment of unseen cells and bounds need clarification (3). New conditional computation with a useful sparsity-failure lesson (3).",
+          "scoring_3": "E5 and E10 support a measurable behavioral signal, but do not directly measure prefix-conditioned code distributions, so behavior is 4 rather than 5. Candidate-dependent geodesic transport is explicit and a Euclidean ablation is named (geometry 4); the computational distinction from global successor clustering/coarse mechanisms is substantial, though the evidence bundle does not supply a traceable literature/ledger audit (novelty 4). The assignment path and intended prefix/T3 diagnostics are concrete (downstream 4). Three arms and performance checks are named, but a precise null/refutation diagnostic is less complete (falsifiability 4). Sparse table/medoid and table-update details are implementable but under-specified for stable training (implementability 3). The conditional transport is a substantially different mechanism whose failure would test whether prefix-conditioned behavioral state helps (exploration 4)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only adjacent transitions are counted by source prefix and residual code; a candidate-dependent prefix-conditioned destination prototype and Poincare transported score jointly change T2/T3 hard assignment. Behavior-off, geometry-off/Euclidean and both-on outcomes are called for.",
+          "scoring_2": "Training-only directed transitions are aggregated by current prefix and source/destination codes; Poincare transport and geodesic candidate cost use those statistics directly in T2/T3 assignment. Behavior-off, Euclidean geometry-off, and both-on are required comparisons by the stated test plan.",
+          "scoring_3": "Training-only directed transitions are conditioned on current source prefix and residual code; a Poincare-transported candidate score and prefix/source-conditioned destination prototype jointly affect T2/T3 assignment. Behavior-off, Euclidean/geometry-off and both-on comparisons and measurable downstream outcomes are specified."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.35,
+          "scoring_2": 3.15,
+          "scoring_3": 3.9
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.35
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "prefix_successor_barycenter",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The specification is internally inconsistent: it first describes a prefix-selected cohort mean at T3, then defines m_i using successors of i that share i's prefix, while the T2 auxiliary term reuses that cohort mean mapped to a different residual level; the exact cohort and level-specific inputs are not unambiguous.",
+          "scoring_2": "The specification mixes a level-3 residual Karcher mean with a level-2 residual cost and leaves the exact mapping of the shared cohort mean to the T2 residual ball unspecified; prefix-conditioned neighbor retrieval is also self-referential.",
+          "scoring_3": "The specified level-2 auxiliary compares a level-2 candidate to a cohort mean defined from level-3 residuals, without a well-defined common residual space or mapping; this can make the claimed T2 coupling invalid. Also, the written T3 assignment uses Euclidean source-to-code distance, with curvature only in its consensus term."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5/E10 support measured successor structure and coverage, but do not measure compactness of successor residuals conditional on prefixes, so 4. The Karcher/geodesic operations are explicit with a Euclidean counterpart, but a matched Euclidean barycenter could reproduce much of the effect and no cancellation argument is given (3). It is distinct from first-code/coarse mechanisms, though ledger/prior-art traceability is limited (3). It names altered T3 assignments, predicted direction, and diagnostics (4). Three comparisons and thresholds are present but a concrete refuting diagnostic is not sufficiently separated from admission criteria (3). Ambiguous level mapping, Karcher numerical safeguards, and the implausibly small runtime estimate prevent a higher implementation score (2). It probes a distinct prefix-conditioned failure mode (3).",
+          "scoring_2": "E5 gives measured overall entropy strata, not evidence that successors within a T1,T2 prefix have concentrated residuals, so 3. Karcher/geodesic consensus is curved and assignment-coupled but the base cost is Euclidean and no cancellation or matched-control argument establishes necessity (3). It is a routine prefix-conditioned successor-barycenter variant of the other proposals (2). The T3 codeword decision is explicitly altered and T3 accuracy is measurable (4). Three arms are requested but matchedness and a decisive falsifier are weakly specified (3). Numerical steps are outlined, but level-2 cohort mapping and fallback/weight details require redesign (2). This is a small variation in the same family (2).",
+          "scoring_3": "E5/E10 support train-only successor structure, but direct evidence for concentration within assigned prefixes is missing (behavior 4). The curved Karcher mean and cost are real, but the T3 base assignment is Euclidean and the T2 cross-level geometry is unresolved, weakening geometry-specific value (3). It overlaps successor-consensus mechanisms and is a prefix-gated variation (novelty 3). A T3 assignment change and diagnostics are named (downstream 4). Controls are mentioned, but no discriminating diagnostic/refutation is clearly stated beyond thresholds (falsifiability 3). The cross-level residual mismatch and ambiguous cost specification require redesign (implementability 2). It tests a plausible prefix gating variation, but not a substantially distinct family (exploration 3)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only directed successors and assigned-prefix cohort selection feed Karcher means and geodesic candidate penalties at T2/T3, directly changing hard assignments. The proposal requests behaviour-off, geometry-off and both-on comparisons and observable T3/Stage3 outcomes.",
+          "scoring_2": "Train-only directed successor counts, prefix cohort selection, Karcher means and curved candidate costs are connected at T2/T3 assignment; the proposal requires behavior-off, Euclidean and both-on comparisons.",
+          "scoring_3": "Training-only directed successor counts select a same-prefix successor cohort; a Poincare Karcher mean and geodesic candidate cost enter T3 hard assignment, so both behavior and curvature affect emitted IDs. The proposal names behavior-off, Euclidean/geometry-off and both-on comparisons through its prescribed comparison requirement and specifies observable T3/Stage3 outcomes. The level-2 auxiliary term is dimensionally unclear, but the T3 pathway independently satisfies scope."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.25,
+          "scoring_2": 2.8,
+          "scoring_3": 3.25
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.25
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "successor_triplet_margin",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 2.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The margin target assumes a source residual should be close to its destination successor residual, although a directed transition does not imply that the two item residuals should be neighbors; the proposal itself flags this semantic risk.",
+          "scoring_2": "A directed edge from i to j does not establish that residual representations of i and j should be close; the proposed metric-learning target may oppose the reconstruction semantics and create false positives/negatives.",
+          "scoring_3": "A directed edge from i to j does not establish that their residual representations should be close; especially after shared-prefix filtering, the triplet target may encode transition adjacency rather than predictive similarity and can conflict with reconstruction."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5/E10 evidence training successor structure with coverage, but not that edge endpoints should be close in residual space (4). Poincare ranking is explicit, yet the matched Euclidean transform can implement the same triplet ordering and the geometry-specific necessity is not argued (2). The proposal itself identifies existing coarse successor-geodesic/tangent mechanisms, and edge triplet ranking is a routine variation without ledger/prior-art distinction (2). A plausible chain through shared residual/codebook gradients to T3 is given, but the direction and diagnostic chain is incomplete (3). Three arms, T3/T4 checks, and threshold are named, but no sharply specified falsifier/discriminator (3). Sampling and basic costs are specified, though sampling/fallback details and numerical guards are incomplete (3). It is a small variation in a measured successor-geometric family (2).",
+          "scoring_2": "E5 supports heterogeneous next-item distributions but not that adjacent item residuals should be similar, so behavioral support is plausible and testable (3). Curved triplet distance enters the loss and curved assignment, but a matched Euclidean transform could reproduce the ranking and no argument rules out cancellation (2). It is a familiar triplet-ranking variation and resembles measured successor-geodesic/residual families in E6-E7 (2). A plausible path runs from triplet gradients through residual code representations and assignments to T3 IDs, but the link to recommendation remains uncertain (3). Three arms and prediction criteria are stated, but the controls are not fully specified as matched and no sharp falsifier is given (3). Sampling, loss and costs are implementable, with false-negative and collapse risks named (3). It is a modest variation with limited distinct exploration value (2).",
+          "scoring_3": "E5 and E10 support measurable train-only transition structure, not the specific residual-triplet premise (behavior 4). The Poincare triplet is explicit, but a matched Euclidean triplet can express the same ordering and the proposal gives limited evidence for a uniquely curved benefit (geometry 3). Triplet ranking is distinct from prototype consensus but is a familiar variation (novelty 3). A plausible representation-to-code-to-recommendation path exists, though the expected assignment change and diagnostic chain are less specific (downstream 3). Three arms, accuracy/Recall checks, and risks are named, but a discriminating diagnostic/refuter is not fully pinned down (falsifiability 4). The batch computation is plausible, yet the fallback negative rule and “64 triples” versus distributed count wording leave implementation details unresolved (implementability 3). A distinct objective with an interpretable negative result, but within the successor-ranking family (exploration 3)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only directed successor positives and popularity-adjusted non-successors define triplets; the specification says Poincare residual ranking and curved hard assignment at T2/T3, so the same behavioral signal and geometry reach assignment/update. It names behavior-off, geometry-off and both-on comparisons.",
+          "scoring_2": "Train-only directed successor positives and popularity-adjusted non-successors form triplets; Poincare residual ranking and curved T2/T3 hard-assignment costs connect behavior and geometry to emitted codes. The proposal names behavior-off, geometry-off/Euclidean and both-on comparisons.",
+          "scoring_3": "Training-only directed successor positives and popularity-adjusted non-successors define triplets; curved residual triplet distances update representations/codebooks, and curved T2/T3 hard assignment uses those codebooks, connecting behavior and geometry to emitted assignments. Behavior-off, geometry-off/Euclidean and both-on are prescribed, with T3 and Stage3 outcomes."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.75,
+          "scoring_2": 2.55,
+          "scoring_3": 3.3
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.75
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "successor_hyperbolic_margin",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 2.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The assignment objective adds Euclidean squared distance and γ times Poincare distance squared; without scale calibration, the Euclidean term may dominate, while the proposal does not establish that curvature rather than an ordinary weighted metric drives the effect.",
+          "scoring_2": "The specification says positive and negative pairs are selected by successor-distribution JS within a prefix, but its triplet distance is between residual embeddings rather than codeword-conditioned successor prototypes; the assumed embedding geometry may not encode the behavioral similarity being supervised.",
+          "scoring_3": "The score adds Euclidean squared distance and a weighted Poincare distance, so the curved component may merely act as a rescaling/regularizer; moreover, the triplet criterion assumes successor-distribution similarity should be represented by residual proximity without direct evidence."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5/E10 support measured training behaviour and coverage, not the proposed same-prefix JS pair support (4). Poincare geometry is computationally explicit and used in assignment, but the additive Euclidean term and lack of matched-control/cancellation analysis undermine necessity (2). This is close to successor triplet ranking and existing successor-geodesic residual families, with no traceable ledger distinction (2). The intended path from triplet/codebook updates to T3 assignments is plausible but lacks a specific assignment diagnostic/direction beyond hoped-for accuracy (3). It mentions the three arms and a threshold, but no discriminating diagnostic or clear refutation apart from performance (3). Pair support, fallback, dimension handling, and ball numerical safeguards are underspecified, and affordability is asserted rather than audited (2). It is a near-repeat of measured successor-geometric mechanisms (2).",
+          "scoring_2": "E5 supports measurable successor heterogeneity, not same-prefix JS pair coverage or the proposed positive/negative separation, so 3. Poincare distances are explicit, but the ranking is a standard metric transform with a Euclidean counterpart and no argument that curvature is necessary (2). Triplet metric learning plus curved quantization is routine relative to the measured successor-geodesic/tangent-residual family in E6-E7 (2). The codebook-gradient/assignment chain is plausible but indirect from pair labels to T3 continuation (3). Three arms and a target are named, yet controls and a falsification threshold are underspecified (3). Pair sampling, confidence and assignment are described, but projection/normalization scale, thresholds a/b, gamma and margin selection are unspecified, preventing a fully guarded implementation (2). This is a small variation with a useful but familiar failure mode (2).",
+          "scoring_3": "E5/E10 support the train-only behavioral substrate and coverage, but not the proposed within-prefix JS-to-residual relationship (behavior 4). Curvature enters both ranking and assignment, but its added value versus the matched Euclidean objective and possible redundancy with Euclidean distance are not resolved (geometry 3). The prefix-local triplet is distinguishable from consensus methods but remains a routine ranking variant without traceable prior-art/ledger comparison in this bundle (novelty 3). The codeword-update-to-T3-ID path and diagnostics are specified (downstream 4). The proposal names the three arms and relevant outcomes, but lacks a strong discriminating test beyond comparative performance (falsifiability 4). It is broadly implementable and cost-conscious, though pair selection, balancing and numeric projection safeguards need detail (implementability 3). The result could inform the value of conditional ranking, but it is not a substantially new failure mode (exploration 3)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only successor-distribution similarity selects positive/negative pairs; Poincare triplet gradients and geodesic assignment costs at L2/L3 couple that behavior to the actual quantizer. Behavior-off, Euclidean and both-on comparisons are specified.",
+          "scoring_2": "Training-only successor distributions define prefix-local positive/negative pairs; Poincare triplet gradients and geodesic T2/T3 assignment are connected through residual code representations and codebook updates. The proposal calls for behavior-off, geometry-off and both-on comparisons.",
+          "scoring_3": "Training-only smoothed successor distributions and within-prefix JS similarity/dissimilarity select triplets; Poincare triplet loss trains residual/codeword representations, and geodesic assignment at T2/T3 makes the coupled pathway affect emitted SIDs. Behavior-off, geometry-off and both-on comparisons and measurable outcomes are stated."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.65,
+          "scoring_2": 2.45,
+          "scoring_3": 3.45
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.65
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
   "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\n## The one measured gap this round must close: the third token\n\nEight arms have been measured with the same width-20 beam forensics (57,439 rows).\nRecall@10 is ordered by coverage, and coverage is the joint survival of the four positions:\n\n| arm | recall@10 | coverage | alive L1/L2/L3/L4 | acc@1 T1/T2/T3/T4 | distinct T1/T2/T3/T4 |\n|---|---|---|---|---|---|\n| resample | **0.06363** | 0.0884 | .497/.122/.091/.088 | .098/.152/**.794**/**.977** | 241/256/256/**10** |\n| l1_only | 0.06233 | 0.0855 | 1.000/.829/.156/.086 | 1.000/.175/.106/.557 | 1/94/256/37 |\n| l1_br_euclid | 0.06207 | 0.0847 | 1.000/.829/.161/.085 | 1.000/.178/.115/.550 | 1/80/256/44 |\n| successor_geodesic_coarse (v1) | 0.05486 | 0.0740 | .989/.341/.122/.074 | .248/.180/**.338**/.737 | 26/223/256/68 |\n| successor_geodesic_coarse (v2, curved behaviour-ordered extension) | 0.05529 | - | - | - | 28/... |\n| tangent_successor_residual | 0.05500 | 0.0731 | .643/.180/.090/.073 | .121/.187/**.527**/**.885** | 238/251/256/**27** |\n| successor_entropy | 0.05122 | 0.0688 | .735/.400/.133/.069 | .262/.338/.412/.680 | 250/211/256/91 |\n| l1_br | 0.04671 | 0.0678 | 1.000/1.000/1.000/.068 | 1.000/1.000/1.000/.008 | 1/1/1/16462 |\n\nThree findings are now solid:\n\n1. **A coarse first level is nearly free** (v1: 26 codes, gold first token alive 98.9%,\n   T1 accuracy 0.248), and it is *not* what holds recall back.\n2. **Ordering the extension token by a behaviour-informed curved rank changes almost\n   nothing** (v2: 0.05529 against v1's 0.05486), because the tail was already the cheapest\n   part of these arms.\n3. **The third position is the discriminator that separates the best arm from every other\n   arm**: `resample` is correct 79.4% of the time at T3 (and 97.7% at T4 over ten extension\n   values), while every other arm is between 0.106 and 0.527 at T3. Its first level is the\n   *worst* (0.497) and it still wins, because once the path survives to T2 the rest is\n   nearly determined.\n\n## What must be designed\n\nA mechanism that makes the **third code nearly determined by the first two codes and the\ntrain-only behaviour structure** — i.e. a residual-level behavioural clustering, not a\nfirst-level one. Concretely the proposal must target T3 top-1 well above 0.53 (towards\n0.7-0.8) while keeping the first level cheap and the fourth token a small near-deterministic\nextension, and must keep a genuine behaviour-conditioned hyperbolic computation on one\nconnected path (the curvature and the geodesic distance must change which codes the\nresidual quantizer chooses at levels 2 and 3).\n\nThe behaviour signal is the train-only directed successor structure (counts, smoothed\ndistributions, or a learned successor prototype) computed from training histories only. The\nmechanism may use it as a contrastive/triplet term on the *residual* codes, as a curved\nassignment cost at levels 2-3, or as a curved consensus among successor codes — but it must\nbe one connected computation whose removal changes the emitted SID.\n\nOut of scope: renumbering the first level only; a pure capacity change; a penalty on the\nfourth token; a second disconnected loss whose gradient never reaches the assignment.\n\n## Required measurement contract\n\nState, for the mechanism: the predicted direction of `L1 Hard ER` (canonical 52,855 pairs\nwith ten fixed negatives), gold-prefix survival at depths 1-4, the teacher-forced top-1\naccuracy of T3 and T4, and Stage 3 `test_R@10` (target > 0.065). Define the three arms\n(both-on, behaviour-off, geometry-off) and state where the curve acts at each level.\n\n## Frozen constraints\n\nFour-token fixed-width SID with the deterministic collision-extension token, 3000 Stage 2\nepochs on four cards, no early stopping, no test-time tuning, the frozen Stage 3 protocol,\nno validation or test behaviour in SID construction. Keep the cost near the baseline: a\ncandidate whose one-epoch smoke is far slower than the baseline's (0.13 s/epoch) is\nrejected.\n",
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": false,
+        "pair": [
+          "prefix_conditioned_geodesic_transport",
+          "prefix_successor_barycenter"
+        ],
+        "votes": {
+          "prefix_conditioned_geodesic_transport": 3,
+          "prefix_successor_barycenter": 0
+        },
+        "winner": "prefix_conditioned_geodesic_transport"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "prefix_conditioned_geodesic_transport",
+          "successor_residual_barycenter"
+        ],
+        "votes": {
+          "prefix_conditioned_geodesic_transport": 0,
+          "successor_residual_barycenter": 3
+        },
+        "winner": "successor_residual_barycenter"
+      },
+      {
+        "disagreement": true,
+        "pair": [
+          "prefix_successor_barycenter",
+          "successor_residual_barycenter"
+        ],
+        "votes": {
+          "prefix_successor_barycenter": 2,
+          "successor_residual_barycenter": 1
+        },
+        "winner": "prefix_successor_barycenter"
+      }
+    ],
+    "copeland": {
+      "prefix_conditioned_geodesic_transport": 0,
+      "prefix_successor_barycenter": 0,
+      "successor_hyperbolic_margin": 0,
+      "successor_residual_barycenter": 0,
+      "successor_triplet_margin": 0
+    },
+    "cycles": [
+      [
+        "prefix_conditioned_geodesic_transport",
+        "prefix_successor_barycenter",
+        "successor_residual_barycenter"
+      ]
+    ],
+    "position_bias": {
+      "first_listed_wins": 8,
+      "second_listed_wins": 1
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
   "probe_results": {
     "prefix_conditioned_geodesic_transport": {
       "literature": {
@@ -19555,15 +20498,762 @@
     }
   },
   "probe_state": "PROBE_PENDING",
-  "repairs": [],
+  "repairs": [
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Cache both level-specific residual tables from the same epoch-frozen assignments: after level 1 for T2 neighbors and after levels 1-2 for T3 neighbors; pass the matching table per residual level. Add explicit trainer-configurable behavior and geometry switches and perform the required comparisons; ensure the behavior-off and geometry-off paths truly remove the corresponding score contribution.",
+          "detail": "The cache contains only one residual representation per item, computed after quantizing levels 1 and 2 (train_rqvae.py:341-345). That same post-level-2 residual is passed to both levels 2 and 3 (lines 353-357; layers.py:322-323). The specification requires distinct per-level residuals: at T2, subtract only the preceding T1 code; at T3, subtract T1 and T2. Consequently the T2 coupling is applied to the wrong successor residual, so the implemented coupled mechanism is not the stated level-specific assignment and its T2 score/gradient-routing-through-assignment behavior is incorrect. Also, the proposal requires behavior-off and Euclidean controls: geometry_on exists only as a VQLayer argument and the trainer does not expose or pass it (default True); there is no trainer-level control for the required comparisons. Hard argmin is expected, but assignment changes can still alter which codeword receives quantization gradients.",
+          "location": "results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:338-357; model/layers.py:321-324",
+          "reproduction": "With any item having a nonzero first-level code and a successor with nonzero second-level code, compare the cached value at train_rqvae.py:345 with the expected T2 residual (encoder output minus only its first code). They differ, yet the cached value is passed as the T2 neighbor residual at line 357. For the control omission, inspect the trainer invocation at lines 357 and VQLayer.forward defaults at layers.py:134-135: it supplies no geometry switch, so trainer runs cannot select geometry-off; no behavior-off trainer option exists either.",
+          "severity": "blocking",
+          "verifier": "verify_successor_residual_barycenter_r0_1"
+        }
+      ],
+      "idea_id": "successor_residual_barycenter",
+      "revision": 0,
+      "signature": "c9778a94b24c45dc"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Implement the specified weighted successor barycenter at each level (map successor residuals into the ball, weighted sum, project, log-map) and use the candidate residual codeword's Poincare distance to that barycenter in the assignment score. Retain the training-only data and safeguards.",
+          "detail": "There is one genuinely connected path: training-only directed successor residuals and weights enter the Poincare pairwise geodesic score, which is added to the assignment distances at residual levels 2 and 3. However, the implemented computation is not the proposed successor-barycenter assignment. It scores each candidate by the expected squared distance to individual successor points (lines 149-154); it never computes the weighted barycenter using exp/log maps, nor scores the candidate against that barycenter. This changes the central specified mechanism, not merely a numerical implementation detail.",
+          "location": "results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/layers.py:142-156",
+          "reproduction": "For a source with two equally weighted successors at distinct residuals, inspect `geo`/`consensus` at lines 149-154: the code sums the two candidate-to-successor distances. The specified computation first averages their mapped successor points and assigns using candidate-to-that-single-barycenter distance. These objectives are generally unequal, so this minimal case distinguishes the implementation.",
+          "severity": "blocking",
+          "verifier": "verify_successor_residual_barycenter_r1_1"
+        }
+      ],
+      "idea_id": "successor_residual_barycenter",
+      "revision": 1,
+      "signature": "efaa8995e5a8e2ef"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Make the VQLayer argument name consistent with the caller (prefer successor_residuals) and verify forwarding at both residual levels 2 and 3. Keep the behavior-off and geometry-off branches routed through the same assignments for controlled comparisons.",
+          "detail": "RQLayer passes successor_residuals as a keyword to VQLayer.forward, whose parameter is named successor_residual (singular) at lines 140-145. Thus the connected training pathway raises TypeError before the successor-weighted Poincare consensus score can execute. The intended coupling itself is code-present: directed transitions are created in train_rqvae.py:275-297, per-level cached successor residuals are supplied at lines 369-374, and the curved candidate-dependent score is computed at layers.py:159-174.",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/layers.py:347",
+          "reproduction": "Call the trainer's normal model(batch, successor_residuals=..., successor_weights=...) path. RQLayer.forward reaches line 347 and Python raises `TypeError: VQLayer.forward() got an unexpected keyword argument 'successor_residuals'`. A direct RQLayer forward with the neighbor arrays reproduces the same error.",
+          "severity": "blocking",
+          "verifier": "verify_successor_residual_barycenter_r2_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Fix the argument-name mismatch, then exercise a finite-loss backward with gradients checked on the level-2/3 codebook parameters, and compare assignments/gradients for both-on, behavior-off, and Euclidean-geometry modes.",
+          "detail": "No real forward/backward through the proposed mechanism is possible: the unexpected keyword error prevents finite loss/gradient evaluation and prevents comparing both-on against behavior-off or Euclidean geometry. The geometric arithmetic itself uses finite-radius projection, clamps atanh inputs below 1, clamps distance denominators, and leaves the candidate codeword in the differentiable distance path (lines 121-138, 154-174); the blocking issue is that this code is unreachable from the trainer.",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/layers.py:347",
+          "reproduction": "Run one batch through RQLayer.forward with non-None successor residuals and weights. The call to vq_layer at line 347 fails before _indices and quant_loss are reached; therefore there are no gradients to inspect and toggling behavior_on/geometry_on cannot establish the required assignment/gradient reversibility.",
+          "severity": "blocking",
+          "verifier": "verify_successor_residual_barycenter_r2_1"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Correct the VQLayer keyword contract as described above, then run the existing one-epoch gradient smoke and validate the output artifact against item IDs and the expected candidate result directory; retain and exercise both launcher branches.",
+          "detail": "The trainer entry point cannot complete training or produce its promised SID artifacts because its first batch reaches the VQLayer keyword mismatch. The inspected integration wiring otherwise points to the repository's frozen stage1 sentence_t5.npy and stage0 train.parquet (train_rqvae.py:66-69), derives the candidate-specific promoted result path (lines 60-71), exports item-indexed JSON rows (lines 469-482), and retains the GENREC_SINGLE_GPU launcher/main checks (lines 61, 239-251, 491-519). Those source-level properties do not overcome the forward failure.",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/layers.py:347",
+          "reproduction": "Start the normal entry point in either torchrun or GENREC_SINGLE_GPU=1 mode and allow initialization to reach the first loader batch. The call at train_rqvae.py:374 eventually raises the unexpected-keyword TypeError, terminating before the epoch completes and before the export at lines 469-482. The single-card branch reaches the same failing model path.",
+          "severity": "blocking",
+          "verifier": "verify_successor_residual_barycenter_r2_1"
+        }
+      ],
+      "idea_id": "successor_residual_barycenter",
+      "revision": 2,
+      "signature": "4d2099e3a520dd8d"
+    }
+  ],
+  "review_bundles": {
+    "prefix_conditioned_geodesic_transport": "4a61faf11c7dc6c61bd189ef69f37a3e540f49e05c4aa02c12e637351ec145d0",
+    "prefix_successor_barycenter": "1b8fac531a1a250bacb2df3c107321442139ffc7540d5b69537b7995114cd389",
+    "successor_hyperbolic_margin": "e8dabeb0ad76745e26905a52bd7074e6d4cc68874814614f49456e4e0eb7b537",
+    "successor_residual_barycenter": "93de2ca36eb7b65ff2bfb84269a7d9008ce7ca37a8824315d3a51f9e045a79c6",
+    "successor_triplet_margin": "4dd97f8be0b73ee12aedb48170045be62a2e0949265784aaf411d330aa0996b2"
+  },
   "round_id": "round_20261026_045427_848",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
   "schema": 1,
-  "scores": {},
-  "selection": null,
-  "stage2_jobs": [],
+  "scores": {
+    "scoring_1": {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "At a given level, if all candidate codewords have equal geodesic distance to the successor residuals, the consensus term is constant in k and cannot alter the argmin, even though the behavior table and hyperbolic operation are present.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "successor_residual_barycenter",
+          "missing_dimensions": [],
+          "objection": "Cached residuals from previous assignments/epochs are a potentially stale proxy for the current successor residuals; coupled effects may be caused by lag or unstable reassignment rather than a useful continuation geometry.",
+          "rationale": "E5 gives measured, stratified successor predictability and E10 coverage, supporting 4 rather than 5 because the proposal does not report an auditable statistic tying this particular residual consensus to SID assignments. Geometry is explicit and matched Euclidean is named, but no argument rules out a matched Euclidean consensus reproducing the gain (3). The codeword-dependent residual consensus is distinct from coarse successor-geodesic mechanisms, but traceable prior-art/ledger comparison is incomplete (3). It specifies a changed assignment and T3/prefix diagnostics (4); controls are named but a precise falsifier/discriminating diagnostic is not fully established (3). Numerical guarantees for Karcher/ball operations, implementation details for cached residual validity, and runtime estimate are insufficient to justify implementability above 2. The mechanism is a different residual-level failure mode (3).",
+          "scope_reason": "Train-only directed transitions form q_ij; Poincare exp/log, projection, and geodesic candidate cost jointly enter T2/T3 assignment, so either switch changes the assignment. It names behaviour-off, Euclidean and both-on comparisons and observable tests.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If the learned tangent offset δ=0 and the transported point equals the source point, and every candidate prototype v_{p,a} is the same point, the second term is identical for all a and contributes no behavior-conditioned selection.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "prefix_conditioned_geodesic_transport",
+          "missing_dimensions": [],
+          "objection": "The table depends on current hard prefixes and source codes, which may be sparse or churn between epochs; smoothing does not guarantee reliable destination prototypes for rare cells.",
+          "rationale": "E5 and E10 support a measured, train-only behavioural premise with coverage, but not the proposed prefix-conditional code distribution specifically (4). Curvature and a matched Euclidean control are explicit, yet necessity beyond a matched transport is not argued and cancellations are not ruled out (3). Candidate-specific prefix-conditioned medoids make this computationally distinct from global/coarse mechanisms, but ledger and cited-work traceability are absent (3). Assignment and T3/prefix effect are specified (4); three arms are implied, while failure threshold and discriminating diagnostic are not fully operationalized (3). Sparse tables, bounded δ, and capped medoids make it implementable as specified, but numerical safeguards/affordability are only partly established (3). Distinct mechanism with an informative sparse-prefix failure mode (3).",
+          "scope_reason": "Training-only adjacent transitions are counted by source prefix and residual code; a candidate-dependent prefix-conditioned destination prototype and Poincare transported score jointly change T2/T3 hard assignment. Behavior-off, geometry-off/Euclidean and both-on outcomes are called for.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If fewer than two successors share the prefix, fallback to all successors makes the mean independent of the prefix; in that case the claimed prefix-conditioned pathway disappears for that source.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "prefix_successor_barycenter",
+          "missing_dimensions": [],
+          "objection": "The specification is internally inconsistent: it first describes a prefix-selected cohort mean at T3, then defines m_i using successors of i that share i's prefix, while the T2 auxiliary term reuses that cohort mean mapped to a different residual level; the exact cohort and level-specific inputs are not unambiguous.",
+          "rationale": "E5/E10 support measured successor structure and coverage, but do not measure compactness of successor residuals conditional on prefixes, so 4. The Karcher/geodesic operations are explicit with a Euclidean counterpart, but a matched Euclidean barycenter could reproduce much of the effect and no cancellation argument is given (3). It is distinct from first-code/coarse mechanisms, though ledger/prior-art traceability is limited (3). It names altered T3 assignments, predicted direction, and diagnostics (4). Three comparisons and thresholds are present but a concrete refuting diagnostic is not sufficiently separated from admission criteria (3). Ambiguous level mapping, Karcher numerical safeguards, and the implausibly small runtime estimate prevent a higher implementation score (2). It probes a distinct prefix-conditioned failure mode (3).",
+          "scope_reason": "Train-only directed successors and assigned-prefix cohort selection feed Karcher means and geodesic candidate penalties at T2/T3, directly changing hard assignments. The proposal requests behaviour-off, geometry-off and both-on comparisons and observable T3/Stage3 outcomes.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For a deterministic edge i→j where r_i and r_j encode unrelated item content, the triplet pulls them together despite the transition being predictable; if the sampled negative is also a plausible but unobserved successor, the ranking signal is contradictory.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "successor_triplet_margin",
+          "missing_dimensions": [],
+          "objection": "The margin target assumes a source residual should be close to its destination successor residual, although a directed transition does not imply that the two item residuals should be neighbors; the proposal itself flags this semantic risk.",
+          "rationale": "E5/E10 evidence training successor structure with coverage, but not that edge endpoints should be close in residual space (4). Poincare ranking is explicit, yet the matched Euclidean transform can implement the same triplet ordering and the geometry-specific necessity is not argued (2). The proposal itself identifies existing coarse successor-geodesic/tangent mechanisms, and edge triplet ranking is a routine variation without ledger/prior-art distinction (2). A plausible chain through shared residual/codebook gradients to T3 is given, but the direction and diagnostic chain is incomplete (3). Three arms, T3/T4 checks, and threshold are named, but no sharply specified falsifier/discriminator (3). Sampling and basic costs are specified, though sampling/fallback details and numerical guards are incomplete (3). It is a small variation in a measured successor-geometric family (2).",
+          "scope_reason": "Train-only directed successor positives and popularity-adjusted non-successors define triplets; the specification says Poincare residual ranking and curved hard assignment at T2/T3, so the same behavioral signal and geometry reach assignment/update. It names behavior-off, geometry-off and both-on comparisons.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If γ_l=0, or the geodesic term is constant across candidates in a cell, assignment reduces to Euclidean nearest-code selection even though the triplet loss remains curved; then geometry does not govern emitted T3 IDs.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "successor_hyperbolic_margin",
+          "missing_dimensions": [],
+          "objection": "The assignment objective adds Euclidean squared distance and γ times Poincare distance squared; without scale calibration, the Euclidean term may dominate, while the proposal does not establish that curvature rather than an ordinary weighted metric drives the effect.",
+          "rationale": "E5/E10 support measured training behaviour and coverage, not the proposed same-prefix JS pair support (4). Poincare geometry is computationally explicit and used in assignment, but the additive Euclidean term and lack of matched-control/cancellation analysis undermine necessity (2). This is close to successor triplet ranking and existing successor-geodesic residual families, with no traceable ledger distinction (2). The intended path from triplet/codebook updates to T3 assignments is plausible but lacks a specific assignment diagnostic/direction beyond hoped-for accuracy (3). It mentions the three arms and a threshold, but no discriminating diagnostic or clear refutation apart from performance (3). Pair support, fallback, dimension handling, and ball numerical safeguards are underspecified, and affordability is asserted rather than audited (2). It is a near-repeat of measured successor-geometric mechanisms (2).",
+          "scope_reason": "Train-only successor-distribution similarity selects positive/negative pairs; Poincare triplet gradients and geodesic assignment costs at L2/L3 couple that behavior to the actual quantizer. Behavior-off, Euclidean and both-on comparisons are specified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    "scoring_2": {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "For a source with two equally weighted successors whose residuals lie on opposite sides of the ball, their barycenter can lie between both modes; a single consensus target can penalize either valid branch rather than improve T3 predictability.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "successor_residual_barycenter",
+          "missing_dimensions": [],
+          "objection": "Stale residual caches and stop-gradient neighbor residuals may make the consensus target poorly aligned with the current codebooks; the bundle does not establish that successor residuals are compact within-source cohorts.",
+          "rationale": "E5 supports heterogeneous but measurable successor concentration with broad item coverage, warranting 4 rather than 5 because no support-to-residual compactness statistic is supplied. The assignment uses a non-row-constant curved successor term and specifies a Euclidean control (geometry 4), but novelty is only 3 because the bundle documents related successor-geodesic and tangent-successor residual mechanisms (E6-E7) and no cited-work/ledger comparison is available. The candidate-specific cost can alter T2/T3 assignments, giving a plausible measured chain (4). Three switches and a threshold/diagnostic are described, though not fully matched or explicit refutation criteria (4). Core pseudocode and budget are given, but stale cache semantics, projection details, and practical numerical validation leave risks (3). It is a distinct residual-level consensus variant with an interpretable failure lesson (3).",
+          "scope_reason": "Training-only directed successor distributions are computed from adjacent training histories; Poincare geodesic consensus directly enters residual T2/T3 hard assignment, and behavior-off, Euclidean geometry-off, and both-on comparisons are specified. Observable assignment and prediction changes are named.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If a cell has no observed transitions, its smoothed distribution is only the global prior; if that prior is identical for every candidate source code a, the behavior term is the same for all a and cannot distinguish candidates.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "prefix_conditioned_geodesic_transport",
+          "missing_dimensions": [],
+          "objection": "The prefix-conditioned tables depend on hard assignments that change during training; epoch-frozen estimates can become stale, while sparse prefix/source cells may yield arbitrary destination medoids despite smoothing.",
+          "rationale": "E5 supports successor predictability variation, but does not measure concentration conditioned on SID prefixes or coverage of these cells, so evidence is plausible/testable rather than strongly supported (3). The candidate-dependent hyperbolic displacement is computationally real, but the offset/medoid term has a matched Euclidean analogue and no argument rules out equivalent behavior in that control (3). Distinct from coarse successor geometry in its prefix-conditioned transport (3), though no traceable prior-art comparison is supplied. Candidate-specific assignment can change T2/T3 and has a proposed T3 diagnostic (4). The proposed three arms and outcomes are present, but matching details and a clear falsifier are incomplete (3). The table/medoid recipe is implementable, yet table churn, exact treatment of unseen cells and bounds need clarification (3). New conditional computation with a useful sparsity-failure lesson (3).",
+          "scope_reason": "Training-only directed transitions are aggregated by current prefix and source/destination codes; Poincare transport and geodesic candidate cost use those statistics directly in T2/T3 assignment. Behavior-off, Euclidean geometry-off, and both-on are required comparisons by the stated test plan.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If all successors in a source's prefix cohort have identical level-3 residual u, the Karcher mean is exactly u and the proposed consensus merely attracts the codeword to u; if the cohort is empty, fallback changes the conditioning premise entirely.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "prefix_successor_barycenter",
+          "missing_dimensions": [],
+          "objection": "The specification mixes a level-3 residual Karcher mean with a level-2 residual cost and leaves the exact mapping of the shared cohort mean to the T2 residual ball unspecified; prefix-conditioned neighbor retrieval is also self-referential.",
+          "rationale": "E5 gives measured overall entropy strata, not evidence that successors within a T1,T2 prefix have concentrated residuals, so 3. Karcher/geodesic consensus is curved and assignment-coupled but the base cost is Euclidean and no cancellation or matched-control argument establishes necessity (3). It is a routine prefix-conditioned successor-barycenter variant of the other proposals (2). The T3 codeword decision is explicitly altered and T3 accuracy is measurable (4). Three arms are requested but matchedness and a decisive falsifier are weakly specified (3). Numerical steps are outlined, but level-2 cohort mapping and fallback/weight details require redesign (2). This is a small variation in the same family (2).",
+          "scope_reason": "Train-only directed successor counts, prefix cohort selection, Karcher means and curved candidate costs are connected at T2/T3 assignment; the proposal requires behavior-off, Euclidean and both-on comparisons.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "A history may contain adjacent items i and j with unrelated embeddings and disjoint successor distributions; the triplet still forces d(r_i,r_j) below a sampled non-successor distance, although no evidence says that is the desired residual geometry.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "successor_triplet_margin",
+          "missing_dimensions": [],
+          "objection": "A directed edge from i to j does not establish that residual representations of i and j should be close; the proposed metric-learning target may oppose the reconstruction semantics and create false positives/negatives.",
+          "rationale": "E5 supports heterogeneous next-item distributions but not that adjacent item residuals should be similar, so behavioral support is plausible and testable (3). Curved triplet distance enters the loss and curved assignment, but a matched Euclidean transform could reproduce the ranking and no argument rules out cancellation (2). It is a familiar triplet-ranking variation and resembles measured successor-geodesic/residual families in E6-E7 (2). A plausible path runs from triplet gradients through residual code representations and assignments to T3 IDs, but the link to recommendation remains uncertain (3). Three arms and prediction criteria are stated, but the controls are not fully specified as matched and no sharp falsifier is given (3). Sampling, loss and costs are implementable, with false-negative and collapse risks named (3). It is a modest variation with limited distinct exploration value (2).",
+          "scope_reason": "Train-only directed successor positives and popularity-adjusted non-successors form triplets; Poincare residual ranking and curved T2/T3 hard-assignment costs connect behavior and geometry to emitted codes. The proposal names behavior-off, geometry-off/Euclidean and both-on comparisons.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If two items have identical smoothed successor distributions but their residuals are far apart, the sampling labels them positive while the triplet objective must pull them together; conversely, low-confidence sparse distributions can label a pair negative based on sampling noise.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "successor_hyperbolic_margin",
+          "missing_dimensions": [],
+          "objection": "The specification says positive and negative pairs are selected by successor-distribution JS within a prefix, but its triplet distance is between residual embeddings rather than codeword-conditioned successor prototypes; the assumed embedding geometry may not encode the behavioral similarity being supervised.",
+          "rationale": "E5 supports measurable successor heterogeneity, not same-prefix JS pair coverage or the proposed positive/negative separation, so 3. Poincare distances are explicit, but the ranking is a standard metric transform with a Euclidean counterpart and no argument that curvature is necessary (2). Triplet metric learning plus curved quantization is routine relative to the measured successor-geodesic/tangent-residual family in E6-E7 (2). The codebook-gradient/assignment chain is plausible but indirect from pair labels to T3 continuation (3). Three arms and a target are named, yet controls and a falsification threshold are underspecified (3). Pair sampling, confidence and assignment are described, but projection/normalization scale, thresholds a/b, gamma and margin selection are unspecified, preventing a fully guarded implementation (2). This is a small variation with a useful but familiar failure mode (2).",
+          "scope_reason": "Training-only successor distributions define prefix-local positive/negative pairs; Poincare triplet gradients and geodesic T2/T3 assignment are connected through residual code representations and codebook updates. The proposal calls for behavior-off, geometry-off and both-on comparisons.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    "scoring_3": {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "For two successor residuals u and -u with equal weights in a symmetric local tangent region, the origin is their barycenter; the consensus term then favors a central codeword even if the source residual is near u, so the proposed assignment can oppose source reconstruction.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "successor_residual_barycenter",
+          "missing_dimensions": [],
+          "objection": "Barycenters and cached neighbor residuals are stale relative to current assignments, while the consensus may reward a codeword near popular successors rather than the source's own useful continuation; the bundle does not measure residual compactness or establish that this improves recommendation.",
+          "rationale": "E5 gives measured, stratified train-only successor predictability and E10 gives graph support/coverage, supporting 4 rather than 5 because the coverage and SID hypothesis are not fully auditable here. The explicit curved, codeword-dependent assignment and matched Euclidean control support geometry 4; necessity beyond that control is not established. It is distinct from coarse successor-geodesic work, but remains a successor-consensus variation (novelty 3). Assignment change and proposed diagnostics are specific (downstream 4); controls and diagnostic are present but no crisp refutation threshold beyond performance/accuracy is fully fixed (falsifiability 4). Numerical safeguards/cost are detailed, but cached stale residuals and barycenter implementation leave risk (implementability 3). A useful residual-level variant, not a radically distinct family (exploration 3).",
+          "scope_reason": "Training-only directed successor distributions are computed from adjacent training transitions; Poincare maps and geodesic costs enter T2/T3 hard assignment, where the successor-weighted codeword-dependent term can change IDs. It names behavior-off, Euclidean/geometry-off and both-on comparisons and observable assignment/prefix/Recall effects.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If every candidate a in a prefix cell has the same destination distribution, then every v_{p,a} is identical and the transport term is candidate-independent for fixed i; it cancels from argmin and cannot change that item's assignment.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "prefix_conditioned_geodesic_transport",
+          "missing_dimensions": [],
+          "objection": "The current hard prefix and source code define the table that selects the candidate-specific prototype, creating a self-referential, epoch-stale assignment target; sparse prefix/source cells may make the medoids noisy despite smoothing.",
+          "rationale": "E5 and E10 support a measurable behavioral signal, but do not directly measure prefix-conditioned code distributions, so behavior is 4 rather than 5. Candidate-dependent geodesic transport is explicit and a Euclidean ablation is named (geometry 4); the computational distinction from global successor clustering/coarse mechanisms is substantial, though the evidence bundle does not supply a traceable literature/ledger audit (novelty 4). The assignment path and intended prefix/T3 diagnostics are concrete (downstream 4). Three arms and performance checks are named, but a precise null/refutation diagnostic is less complete (falsifiability 4). Sparse table/medoid and table-update details are implementable but under-specified for stable training (implementability 3). The conditional transport is a substantially different mechanism whose failure would test whether prefix-conditioned behavioral state helps (exploration 4).",
+          "scope_reason": "Training-only directed transitions are conditioned on current source prefix and residual code; a Poincare-transported candidate score and prefix/source-conditioned destination prototype jointly affect T2/T3 assignment. Behavior-off, Euclidean/geometry-off and both-on comparisons and measurable downstream outcomes are specified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        },
+        {
+          "counterexample": "If the T2 residual has dimension d2 and the level-3 cohort mean has dimension d3 with d2 != d3, d_c(c_{2k},m_i) is undefined absent an explicit map; the specification gives no such map. Separately, with lambda=0 the curved consensus vanishes and only the Euclidean nearest-code rule remains.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "prefix_successor_barycenter",
+          "missing_dimensions": [],
+          "objection": "The specified level-2 auxiliary compares a level-2 candidate to a cohort mean defined from level-3 residuals, without a well-defined common residual space or mapping; this can make the claimed T2 coupling invalid. Also, the written T3 assignment uses Euclidean source-to-code distance, with curvature only in its consensus term.",
+          "rationale": "E5/E10 support train-only successor structure, but direct evidence for concentration within assigned prefixes is missing (behavior 4). The curved Karcher mean and cost are real, but the T3 base assignment is Euclidean and the T2 cross-level geometry is unresolved, weakening geometry-specific value (3). It overlaps successor-consensus mechanisms and is a prefix-gated variation (novelty 3). A T3 assignment change and diagnostics are named (downstream 4). Controls are mentioned, but no discriminating diagnostic/refutation is clearly stated beyond thresholds (falsifiability 3). The cross-level residual mismatch and ambiguous cost specification require redesign (implementability 2). It tests a plausible prefix gating variation, but not a substantially distinct family (exploration 3).",
+          "scope_reason": "Training-only directed successor counts select a same-prefix successor cohort; a Poincare Karcher mean and geodesic candidate cost enter T3 hard assignment, so both behavior and curvature affect emitted IDs. The proposal names behavior-off, Euclidean/geometry-off and both-on comparisons through its prescribed comparison requirement and specifies observable T3/Stage3 outcomes. The level-2 auxiliary term is dimensionally unclear, but the T3 pathway independently satisfies scope.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "A two-item cycle i→j and j→i makes each item's only observed successor the other, while their residuals may encode unrelated item content; the objective forces them together despite no evidence that a shared residual code predicts the next-item ranking.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "successor_triplet_margin",
+          "missing_dimensions": [],
+          "objection": "A directed edge from i to j does not establish that their residual representations should be close; especially after shared-prefix filtering, the triplet target may encode transition adjacency rather than predictive similarity and can conflict with reconstruction.",
+          "rationale": "E5 and E10 support measurable train-only transition structure, not the specific residual-triplet premise (behavior 4). The Poincare triplet is explicit, but a matched Euclidean triplet can express the same ordering and the proposal gives limited evidence for a uniquely curved benefit (geometry 3). Triplet ranking is distinct from prototype consensus but is a familiar variation (novelty 3). A plausible representation-to-code-to-recommendation path exists, though the expected assignment change and diagnostic chain are less specific (downstream 3). Three arms, accuracy/Recall checks, and risks are named, but a discriminating diagnostic/refuter is not fully pinned down (falsifiability 4). The batch computation is plausible, yet the fallback negative rule and “64 triples” versus distributed count wording leave implementation details unresolved (implementability 3). A distinct objective with an interpretable negative result, but within the successor-ranking family (exploration 3).",
+          "scope_reason": "Training-only directed successor positives and popularity-adjusted non-successors define triplets; curved residual triplet distances update representations/codebooks, and curved T2/T3 hard assignment uses those codebooks, connecting behavior and geometry to emitted assignments. Behavior-off, geometry-off/Euclidean and both-on are prescribed, with T3 and Stage3 outcomes.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If gamma_l is zero, or if all candidate codewords have the same Poincare distance from an item, the geodesic component is assignment-constant and the argmin is exactly the Euclidean nearest-code assignment; a nonzero gamma alone does not guarantee a changed SID.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "successor_hyperbolic_margin",
+          "missing_dimensions": [],
+          "objection": "The score adds Euclidean squared distance and a weighted Poincare distance, so the curved component may merely act as a rescaling/regularizer; moreover, the triplet criterion assumes successor-distribution similarity should be represented by residual proximity without direct evidence.",
+          "rationale": "E5/E10 support the train-only behavioral substrate and coverage, but not the proposed within-prefix JS-to-residual relationship (behavior 4). Curvature enters both ranking and assignment, but its added value versus the matched Euclidean objective and possible redundancy with Euclidean distance are not resolved (geometry 3). The prefix-local triplet is distinguishable from consensus methods but remains a routine ranking variant without traceable prior-art/ledger comparison in this bundle (novelty 3). The codeword-update-to-T3-ID path and diagnostics are specified (downstream 4). The proposal names the three arms and relevant outcomes, but lacks a strong discriminating test beyond comparative performance (falsifiability 4). It is broadly implementable and cost-conscious, though pair selection, balancing and numeric projection safeguards need detail (implementability 3). The result could inform the value of conditional ranking, but it is not a substantially new failure mode (exploration 3).",
+          "scope_reason": "Training-only smoothed successor distributions and within-prefix JS similarity/dissimilarity select triplets; Poincare triplet loss trains residual/codeword representations, and geodesic assignment at T2/T3 makes the coupled pathway affect emitted SIDs. Behavior-off, geometry-off and both-on comparisons and measurable outcomes are stated.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    }
+  },
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "prefix_conditioned_geodesic_transport",
+        "status": "BACKUP",
+        "weighted_score": 3.35
+      },
+      {
+        "idea_id": "prefix_successor_barycenter",
+        "status": "BACKUP",
+        "weighted_score": 3.25
+      },
+      {
+        "idea_id": "successor_triplet_margin",
+        "status": "BACKUP",
+        "weighted_score": 2.75
+      }
+    ],
+    "disagreement": {
+      "prefix_conditioned_geodesic_transport": 1.0,
+      "prefix_successor_barycenter": 1.0,
+      "successor_hyperbolic_margin": 1.0,
+      "successor_residual_barycenter": 1.0,
+      "successor_triplet_margin": 1.0
+    },
+    "disputed": {
+      "prefix_conditioned_geodesic_transport": [],
+      "prefix_successor_barycenter": [],
+      "successor_hyperbolic_margin": [],
+      "successor_residual_barycenter": [],
+      "successor_triplet_margin": []
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": false,
+          "pair": [
+            "prefix_conditioned_geodesic_transport",
+            "prefix_successor_barycenter"
+          ],
+          "votes": {
+            "prefix_conditioned_geodesic_transport": 3,
+            "prefix_successor_barycenter": 0
+          },
+          "winner": "prefix_conditioned_geodesic_transport"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "prefix_conditioned_geodesic_transport",
+            "successor_residual_barycenter"
+          ],
+          "votes": {
+            "prefix_conditioned_geodesic_transport": 0,
+            "successor_residual_barycenter": 3
+          },
+          "winner": "successor_residual_barycenter"
+        },
+        {
+          "disagreement": true,
+          "pair": [
+            "prefix_successor_barycenter",
+            "successor_residual_barycenter"
+          ],
+          "votes": {
+            "prefix_successor_barycenter": 2,
+            "successor_residual_barycenter": 1
+          },
+          "winner": "prefix_successor_barycenter"
+        }
+      ],
+      "copeland": {
+        "prefix_conditioned_geodesic_transport": 0,
+        "prefix_successor_barycenter": 0,
+        "successor_hyperbolic_margin": 0,
+        "successor_residual_barycenter": 0,
+        "successor_triplet_margin": 0
+      },
+      "cycles": [
+        [
+          "prefix_conditioned_geodesic_transport",
+          "prefix_successor_barycenter",
+          "successor_residual_barycenter"
+        ]
+      ],
+      "position_bias": {
+        "first_listed_wins": 8,
+        "second_listed_wins": 1
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "successor_triplet_margin",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.75 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.75
+      },
+      {
+        "idea_id": "successor_hyperbolic_margin",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.65 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.65
+      },
+      {
+        "idea_id": "prefix_conditioned_geodesic_transport",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.35
+      },
+      {
+        "idea_id": "prefix_successor_barycenter",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.25
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "copeland": 0,
+        "idea_id": "successor_residual_barycenter",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 4.0,
+          "geometry_necessity": 4.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "weighted_score": 3.65
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  },
+  "stage2_jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "successor_residual_barycenter",
+      "job_id": "stage2:successor_residual_barycenter",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "running"
+    }
+  ],
   "stage3_jobs": [],
-  "step": "scoring",
-  "updated_at": 1792951512.5282369,
+  "step": "stage2",
+  "updated_at": 1792952674.0756946,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261026_045427_848.log",
   "worker_pid": 3964526
