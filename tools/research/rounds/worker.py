@@ -11,6 +11,7 @@ from __future__ import annotations
 import itertools
 import json
 import shutil
+import sys
 import time
 from pathlib import Path
 
@@ -103,6 +104,67 @@ def _rubric_text() -> str:
     return "\n".join(lines)
 
 
+def _run_probe_subprocess(idea: dict, *, repo: Path, budget: float,
+                          max_users: int, seed: int) -> dict:
+    """The data probe, in the project's interpreter and inside its budget.
+
+    The MCP server's interpreter carries neither pandas nor torch, so the probe
+    runs as a bounded subprocess of the research interpreter. The budget is
+    enforced twice: the probe measures its own time and the caller kills the
+    process when it overruns.
+    """
+    import subprocess
+
+    from .. import settings
+
+    python = getattr(settings, "RESEARCH_PYTHON", sys.executable)
+    argv = [python, "-m", "tools.research.rounds.probes",
+            "--idea", json.dumps(idea, ensure_ascii=False),
+            "--repo", str(repo), "--budget", str(budget),
+            "--max-users", str(max_users), "--seed", str(seed)]
+    try:
+        finished = subprocess.run(argv, cwd=str(repo), capture_output=True, text=True,
+                                  timeout=budget + 30.0)
+    except subprocess.TimeoutExpired:
+        return {"status": "UNKNOWN", "idea_id": idea.get("idea_id"),
+                "reason": "the probe overran its budget and was stopped",
+                "metrics": {}}
+    if finished.returncode != 0:
+        return {"status": "UNKNOWN", "idea_id": idea.get("idea_id"),
+                "reason": "the probe process failed: " + finished.stderr[-300:],
+                "metrics": {}}
+    try:
+        return json.loads(finished.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        return {"status": "UNKNOWN", "idea_id": idea.get("idea_id"),
+                "reason": "the probe produced no readable report", "metrics": {}}
+
+
+def _run_math_subprocess(idea: dict, *, seed: int) -> dict:
+    """The math checks, in the project's interpreter (the only one with torch)."""
+    import subprocess
+
+    from .. import settings
+
+    python = getattr(settings, "RESEARCH_PYTHON", sys.executable)
+    argv = [python, "-m", "tools.research.rounds.math_checks",
+            "--idea", json.dumps(idea, ensure_ascii=False), "--seed", str(seed)]
+    try:
+        finished = subprocess.run(argv, cwd=str(Path.cwd()), capture_output=True,
+                                  text=True, timeout=120.0)
+    except subprocess.TimeoutExpired:
+        return {"status": "NOT_RUN", "idea_id": idea.get("idea_id"), "checks": [],
+                "reason": "the checks overran their budget"}
+    if finished.returncode != 0:
+        return {"status": "NOT_RUN", "idea_id": idea.get("idea_id"), "checks": [],
+                "reason": "the checks could not run: " + finished.stderr[-300:]}
+    try:
+        return json.loads(finished.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        return {"status": "NOT_RUN", "idea_id": idea.get("idea_id"), "checks": [],
+                "reason": "the checks produced no readable report"}
+
+
 def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None) -> dict:
     """The pre-score evidence probe of every proposal.
 
@@ -118,11 +180,13 @@ def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None) -
     outcomes = {}
     for idea in ideas:
         identifier = idea["idea_id"]
-        probe = probes_module.run_probe(idea, repo=repo)
+        probe = _run_probe_subprocess(
+            idea, repo=repo, budget=probes_module.DEFAULT_BUDGET_SECONDS,
+            max_users=probes_module.DEFAULT_MAX_USERS, seed=probes_module.DEFAULT_SEED)
         probe["sha256"] = _probe_digest(probe)
         literature = literature_module.run_literature(idea, cache_dir=cache_dir)
         literature["sha256"] = _probe_digest(literature)
-        math_report = math_checks_module.run_math_checks(idea, repo=repo)
+        math_report = _run_math_subprocess(idea, seed=math_checks_module.SEED)
         math_report["sha256"] = _probe_digest(math_report)
         outcomes[identifier] = {"probe": probe, "literature": literature,
                                 "math": math_report}

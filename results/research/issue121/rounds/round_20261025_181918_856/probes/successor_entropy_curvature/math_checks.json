@@ -1,0 +1,47 @@
+{
+  "checks": [
+    {
+      "check": "log0_exp0_round_trip",
+      "detail": "max |log_0(exp_0(v)) - v| = 2.776e-17",
+      "error": 2.7755575615628914e-17,
+      "implication": "the maps are mutually consistent; this is a sanity check, NOT evidence that the curvature helps",
+      "status": "PASS"
+    },
+    {
+      "check": "curvature_is_negative",
+      "detail": "curvature magnitude c=0.5 gives sectional curvature -0.5",
+      "sectional_curvature": -0.5,
+      "status": "PASS"
+    },
+    {
+      "check": "distance_is_not_euclidean",
+      "detail": "curved/euclidean distance ratio = 1.4285",
+      "implication": "a ratio of one would mean the matched Euclidean control reproduces the operator",
+      "ratio": 1.4284764736829607,
+      "status": "PASS"
+    },
+    {
+      "check": "domain_guard_holds",
+      "detail": "max ||projected|| = 1.414212 under the limit 1.414212",
+      "limit": 1.4142121481595324,
+      "status": "PASS"
+    },
+    {
+      "check": "proxy_behavior_off_geometry_off_both_on",
+      "detail": "both-on assignment [0, 0, 0], behaviour-off [0, 0, 0], geometry-off [0, 1, 0], the switches change the assignment: True",
+      "limitation": "a synthetic proxy: it shows the switches are meaningful in principle, it is NOT the candidate's own pathway and says nothing about the candidate's SID or its Recall",
+      "proxy": true,
+      "status": "PASS"
+    }
+  ],
+  "elapsed_seconds": 0.007,
+  "idea_id": "successor_entropy_curvature",
+  "implementation_digest": "ba2c481620c48c14",
+  "note": "a geometric sanity check is not evidence that Stage 3 Recall improves",
+  "operator_family": "poincare",
+  "schema": 1,
+  "seed": 20261025,
+  "sha256": "f85e1b171d58758081b147350d4fdc241bc9a54fe40a3a41adc779beec2341fa",
+  "status": "PASS",
+  "tensor_size": 4
+}
