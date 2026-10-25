@@ -1,22 +1,29 @@
 {
   "jobs": [
     {
-      "attempts": 2,
-      "error": "the trainer crashed on start: PermissionError: '/fs04/results'",
+      "attempts": 3,
+      "error": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/transition_geodesic_codebook",
       "failure_evidence": {
-        "log": "stage2_RQ-VAE/TIGER_transition_geodesic_codebook/logs/train_run.log"
+        "refused": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/transition_geodesic_codebook"
       },
-      "finished_at": 1792894691.250797,
-      "gpu": "1",
+      "finished_at": 1792900450.5693474,
+      "gpu": "3",
       "idea_id": "transition_geodesic_codebook",
       "job_id": "stage2:transition_geodesic_codebook",
       "kind": "stage2",
       "note": "reset after a stale admission error",
+      "previous_attempts": [
+        {
+          "error": "the trainer crashed on start: PermissionError: '/fs04/results'",
+          "finished_at": 1792894691.250797,
+          "status": "failed"
+        }
+      ],
       "queued_at": 1792894040.5443628,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook",
       "round_id": "round_20261025_114110_416",
-      "started_at": 1792894368.5787263,
+      "started_at": 1792900450.4134324,
       "status": "failed",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_geodesic_codebook"
     },
@@ -172,8 +179,11 @@
     {
       "attempts": 2,
       "cost_projection": {
-        "projected_hours": null,
-        "reason": "no metrics yet"
+        "budget_hours": 48.0,
+        "epochs": 3000,
+        "measured_epochs": 916,
+        "per_epoch_s": 1.3315054585152837,
+        "projected_hours": 1.1095878820960698
       },
       "error": null,
       "failure_evidence": {
@@ -202,8 +212,11 @@
     {
       "attempts": 2,
       "cost_projection": {
-        "projected_hours": null,
-        "reason": "no metrics yet"
+        "budget_hours": 48.0,
+        "epochs": 3000,
+        "measured_epochs": 847,
+        "per_epoch_s": 1.439448642266824,
+        "projected_hours": 1.1995405352223532
       },
       "error": null,
       "finished_at": null,
@@ -250,13 +263,17 @@
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell"
     },
     {
-      "attempts": 3,
+      "attempts": 4,
+      "cost_projection": {
+        "projected_hours": null,
+        "reason": "no metrics yet"
+      },
       "error": null,
       "failure_evidence": {
         "refused": "independent executable verification: the implementation recorded no smoke result"
       },
       "finished_at": null,
-      "gpu": null,
+      "gpu": "2",
       "idea_id": "branch_shell_behavior_off",
       "job_id": "stage2:branch_shell_behavior_off",
       "kind": "stage2",
@@ -272,26 +289,26 @@
           "status": "failed"
         },
         {
-          "status": "failed",
-          "error": "independent executable verification: the implementation recorded no smoke result"
+          "error": "independent executable verification: the implementation recorded no smoke result",
+          "status": "failed"
         }
       ],
       "queued_at": 1792899775.9814801,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off",
       "round_id": "round_20261025_114110_416",
-      "started_at": 1792899965.012843,
-      "status": "pending",
+      "started_at": 1792900206.5776963,
+      "status": "running",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell_behavior_off"
     },
     {
-      "attempts": 2,
+      "attempts": 3,
       "error": null,
       "failure_evidence": {
         "refused": "independent executable verification: the implementation recorded no smoke result"
       },
-      "finished_at": null,
-      "gpu": null,
+      "finished_at": 1792900207.6363049,
+      "gpu": "3",
       "idea_id": "branch_shell_geometry_off",
       "job_id": "stage2:branch_shell_geometry_off",
       "kind": "stage2",
@@ -302,17 +319,46 @@
           "status": "failed"
         },
         {
-          "status": "failed",
-          "error": "independent executable verification: the implementation recorded no smoke result"
+          "error": "independent executable verification: the implementation recorded no smoke result",
+          "status": "failed"
+        },
+        {
+          "status": "done",
+          "error": "marked done on a partial SID export; the collect now requires the last epoch before it accepts a run as finished",
+          "finished_at": 1792900207.6363049
         }
       ],
       "queued_at": 1792899964.0867279,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off",
       "round_id": "round_20261025_114110_416",
-      "started_at": 1792899965.1286364,
-      "status": "pending",
+      "stage3_job_id": "stage3:branch_shell_geometry_off",
+      "started_at": 1792900206.7903335,
+      "status": "running",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell_geometry_off"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": null,
+      "idea_id": "branch_shell_geometry_off",
+      "job_id": "stage3:branch_shell_geometry_off",
+      "kind": "stage3",
+      "queued_at": 1792900208.0250008,
+      "result": null,
+      "round_id": "round_20261025_114110_416",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_geometry_off/item_sids.json",
+      "stage2_job_id": "stage2:branch_shell_geometry_off",
+      "started_at": null,
+      "status": "superseded",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell_geometry_off",
+      "setdefault": null,
+      "previous_attempts": [
+        {
+          "status": "pending",
+          "error": "started on a partial SID; stopped"
+        }
+      ]
     }
   ],
   "schema": 1
