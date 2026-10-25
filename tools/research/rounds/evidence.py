@@ -79,6 +79,36 @@ def measured_outcomes(root: Path) -> list:
     return outcomes
 
 
+def measured_behaviour(root: Path) -> list:
+    """The measured successor-entropy stratification, if a round recorded one.
+
+    A reviewer that asked for a measured behaviour statistic must be answered
+    with the numbers, not with a promise, so every recorded stratification
+    artifact under the research tree is quoted as OBSERVED evidence.
+    """
+    claims = []
+    for path in sorted(Path(root).rglob("evidence_successor_entropy_stratification.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        bins = payload.get("bins") or []
+        if not bins:
+            continue
+        low, high = payload.get("low_entropy_vs_high_entropy", {}).get("top1_mass", [None, None])
+        summary = ("; ".join("bin %s H=%.3f support %.1f distinct %.2f top1 %.3f" % (
+            entry["bin"], entry["mean_entropy"], entry["mean_support"],
+            entry["mean_distinct_successors"], entry["mean_top1_mass"])
+            for entry in bins))
+        claims.append(_claim(
+            "measured successor-entropy stratification on the train split: top-1 successor "
+            "mass " + str(low) + " in the lowest entropy quintile against " + str(high) +
+            " in the highest, Spearman(entropy, top-1 mass) = " +
+            str(payload.get("spearman_entropy_vs_top1_mass")) + "; " + summary,
+            "repo", str(path), "OBSERVED", payload))
+    return claims
+
+
 def build_bundle(idea: dict, *, root: Path, round_state: dict = None,
                  prior_rounds: list = None) -> dict:
     """The evidence bundle of one proposal, assembled from what exists.
@@ -108,6 +138,8 @@ def build_bundle(idea: dict, *, root: Path, round_state: dict = None,
                                   rubric_module.UNKNOWN))
     behavioural.append(_claim("the frozen training data contract", "repo",
                               DATA_CONTRACT["stage2_train"], "OBSERVED"))
+    for measured in measured_behaviour(root):
+        behavioural.append(measured)
     geometric = []
     for field, label in (("hyperbolic_operator", "the curved operation"),
                          ("hyperbolic_location", "where it acts"),

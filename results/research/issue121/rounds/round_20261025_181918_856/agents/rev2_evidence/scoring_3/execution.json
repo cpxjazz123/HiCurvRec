@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "scoring_3",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792915099.5785882,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "scores.txt",
+  "output_sha256": "4c01f5945016da4fe60746837886c470746174b3e30fd4a6a28f4686efdb5f8c",
+  "pid": 2271420,
+  "project_marker": ".git",
+  "prompt_sha256": "970bb2a57e6a4121b4610b6fa3ce172a303b9889218f04e3bc6f6da230c5cefa",
+  "session_sha256": "404cccdbc6725259636d21029729920a1b689c79693abe71f6e789d7a28e6a66",
+  "stderr_present": false,
+  "task_id": "scoring_3",
+  "timed_out": false,
+  "verified": true
+}

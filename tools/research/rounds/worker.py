@@ -497,6 +497,15 @@ def run_rebuttal(root: Path, idea: dict, objection: str, counterexample: str,
                       prompt, "rebuttal.txt", plaintext.parse_rebuttal, role="score")
 
 
+def _repository_root(start: Path) -> Path:
+    """The repository root above a round directory, found by the marker."""
+    here = Path(start).resolve()
+    for parent in here.parents:
+        if (parent / ".git").exists() and (parent / "stage2_RQ-VAE").is_dir():
+            return parent
+    return here
+
+
 def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
     """One implementation agent per selected idea, in its own tree.
 
@@ -518,6 +527,18 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
     report["baseline_digest"] = provenance["baseline_digest"]
     report["candidate_digest_before_agent"] = provenance["candidate_digest"]
     atomic_json(tree / "PROPOSAL.json", idea)
+    # Issue #124: the candidate's own path is checked, not just the generic
+    # probe. A candidate whose implemented operator is insensitive to the
+    # behaviour signal, or that loses the gradient, is blocked here.
+    try:
+        from . import candidate_checks
+        check = candidate_checks.run_candidate_check(tree, repo=_repository_root(Path(root)))
+    except Exception as exc:                              # noqa: BLE001
+        check = {"verdict": "INCONCLUSIVE_OR_INFRA_ERROR",
+                 "reason": "the candidate path check crashed: " + type(exc).__name__}
+    report["candidate_path_check"] = check
+    report["candidate_digest_after_agent"] = provenance["candidate_digest"]
+    atomic_json(tree / "CANDIDATE_CHECK.json", check)
     return report
 
 

@@ -174,16 +174,19 @@ def apply_scoring(state: dict, reports: list, *, comparisons: list = None,
         if existing and existing.get("decision_hash") != snapshot.get("decision_hash"):
             # The decision of a completed round is never rewritten: a new review
             # (of a revised proposal, or under a new rubric) is recorded beside it
-            # and linked to the decision it supersedes.
-            revision = int(existing.get("revision", 1)) + 1
+            # and linked to the decision it supersedes. The next revision number is
+            # read from the highest decision file on disk, not from the original
+            # one, so a second re-review never lands on an existing file.
+            latest = decision_module.latest_snapshot(Path(directory)) or existing
+            revision = int(latest.get("revision", 1)) + 1
             snapshot["revision"] = revision
-            snapshot["supersedes_decision_hash"] = existing.get("decision_hash")
+            snapshot["supersedes_decision_hash"] = latest.get("decision_hash")
             snapshot["decision_hash"] = decision_module.decision_hash(snapshot)
             path = decision_module.write_revision(Path(directory), snapshot, revision)
             state["decision_hash"] = snapshot["decision_hash"]
             state["decision_at"] = snapshot["decision_at"]
             state["decision_revision"] = revision
-            state["decision_supersedes"] = existing.get("decision_hash")
+            state["decision_supersedes"] = snapshot["supersedes_decision_hash"]
             state["decision_file"] = str(path)
         else:
             decision_module.write_snapshot(Path(directory), snapshot)
