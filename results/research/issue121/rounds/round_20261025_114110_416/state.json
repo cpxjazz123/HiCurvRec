@@ -912,6 +912,32 @@
       "event": "implementation_verified",
       "idea_id": "transition_geodesic_codebook",
       "revision": 8
+    },
+    {
+      "at": 1792902046.6314363,
+      "event": "implementation_verified",
+      "idea_id": "branch_shell",
+      "revision": 5
+    },
+    {
+      "event": "round_stopped_by_operator",
+      "at": 1792903845.5557177,
+      "reason": "the round was a five-mechanism batch from before the one-mechanism rule; it is stopped and its evidence kept"
+    }
+  ],
+  "exploratory_runs": [
+    {
+      "idea_id": "branch_shell",
+      "note": "not comparable to the frozen four-card recipe; kept as a diagnostic",
+      "policy": "single card, global batch 1024",
+      "stage3_result": {
+        "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_branch_shell/ckpt/Amazon_2023_Instruments/Oct-25-2026_13-51-11/HG_Rec_best.pth",
+        "n_eval": 57439,
+        "test_ndcg@10": 0.03135972497952313,
+        "test_ndcg@5": 0.025816501234338922,
+        "test_recall@10": 0.05585055450129703,
+        "test_recall@5": 0.03873674680965894
+      }
     }
   ],
   "ideas": [
@@ -1842,8 +1868,8 @@
         "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py",
         "result": "PASS loss=2.358819 encoder_grad=finite codebook_grad=finite ablations=assignment-path-active sid_shape=(12, 4) unique=12"
       },
-      "source_digest": null,
-      "status": "implemented",
+      "source_digest": "a23461d358e982494aa9c432ecf66a2e4ae37845814fd28ad0b6e1fb612c3a28",
+      "status": "verified",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_shell",
       "tree_exists": true,
       "verdicts": [
@@ -5632,7 +5658,7 @@
       "job_id": "stage2:branch_shell",
       "kind": "stage2",
       "stage3_job_id": "stage3:branch_shell",
-      "status": "done"
+      "status": "pending"
     },
     {
       "attempts": 3,
@@ -5671,8 +5697,8 @@
       "idea_id": "branch_shell_behavior_off",
       "job_id": "stage2:branch_shell_behavior_off",
       "kind": "stage2",
-      "stage3_job_id": null,
-      "status": "running"
+      "stage3_job_id": "stage3:branch_shell_behavior_off",
+      "status": "done"
     },
     {
       "attempts": 4,
@@ -5693,6 +5719,16 @@
       "kind": "stage3",
       "stage3_job_id": null,
       "status": "superseded"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "branch_shell_behavior_off",
+      "job_id": "stage3:branch_shell_behavior_off",
+      "kind": "stage3",
+      "stage3_job_id": null,
+      "status": "pending"
     }
   ],
   "stage3_jobs": [
@@ -5715,24 +5751,24 @@
       "kind": "stage3",
       "stage3_job_id": null,
       "status": "superseded"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "branch_shell_behavior_off",
+      "job_id": "stage3:branch_shell_behavior_off",
+      "kind": "stage3",
+      "stage3_job_id": null,
+      "status": "pending"
     }
   ],
-  "step": "verification",
-  "updated_at": 1792901806.4416149,
+  "step": "stage2",
+  "updated_at": 1792903732.4309187,
   "verification": {},
-  "exploratory_runs": [
-    {
-      "idea_id": "branch_shell",
-      "policy": "single card, global batch 1024",
-      "note": "not comparable to the frozen four-card recipe; kept as a diagnostic",
-      "stage3_result": {
-        "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_branch_shell/ckpt/Amazon_2023_Instruments/Oct-25-2026_13-51-11/HG_Rec_best.pth",
-        "n_eval": 57439,
-        "test_ndcg@10": 0.03135972497952313,
-        "test_ndcg@5": 0.025816501234338922,
-        "test_recall@10": 0.05585055450129703,
-        "test_recall@5": 0.03873674680965894
-      }
-    }
-  ]
+  "stopped": {
+    "at": 1792903845.5557184,
+    "by": "operator",
+    "rule": "one mechanism per exploration"
+  }
 }
