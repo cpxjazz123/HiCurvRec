@@ -301,6 +301,22 @@ class PostprocessTests(unittest.TestCase):
         self.assertNotIn(40, selected)
 
 
+class RegisterArmTests(unittest.TestCase):
+    def test_a_new_arm_joins_the_table_without_touching_the_fixed_four(self):
+        before = dict(forensics.ARMS)
+        try:
+            forensics.register_arm("probe_candidate", stage3="TIGER_probe_candidate",
+                                   sid="results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+                                   reported={"test_recall@10": 0.0}, family="probe")
+            self.assertIn("probe_candidate", forensics.ARMS)
+            self.assertEqual(forensics.ARMS["probe_candidate"]["stage3"], "TIGER_probe_candidate")
+            self.assertTrue(Path(forensics.ARMS["probe_candidate"]["sid"]).is_absolute())
+            for name in ("l1_br", "l1_only", "l1_br_euclid", "successor_entropy", "resample"):
+                self.assertEqual(forensics.ARMS[name]["reported"], before[name]["reported"])
+        finally:
+            forensics.ARMS.pop("probe_candidate", None)
+
+
 class ImmutabilityTests(unittest.TestCase):
     def test_the_module_writes_only_inside_its_own_report_directory(self):
         allowed = forensics.OUT.resolve()

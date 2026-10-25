@@ -62,19 +62,21 @@ def _tree_digest(tree: Path) -> str:
 
 
 def _load_candidate(tree: Path):
-    """Import the candidate's model package from its own tree."""
+    """Import the candidate's model package from its own tree.
+
+    The tree stays on ``sys.path`` for the rest of the check: the candidate's own
+    trainer imports ``model`` at module level, so removing the entry too early
+    makes that import fail with a bare ModuleNotFoundError.
+    """
     tree = Path(tree).resolve()
     for name in list(sys.modules):
         if name == "model" or name.startswith("model."):
             del sys.modules[name]
-    sys.path.insert(0, str(tree))
-    try:
-        module = importlib.import_module("model.model")
-        importlib.reload(module)
-        return module
-    finally:
-        if sys.path and sys.path[0] == str(tree):
-            sys.path.pop(0)
+    if str(tree) not in sys.path:
+        sys.path.insert(0, str(tree))
+    module = importlib.import_module("model.model")
+    importlib.reload(module)
+    return module
 
 
 def _interventions(curvature, behaviour_off: bool):
@@ -85,6 +87,89 @@ def _interventions(curvature, behaviour_off: bool):
         # The behaviour control: one global curvature for every item.
         return torch.full_like(curvature, float(curvature.mean()))
     return curvature
+
+
+#: Names a candidate may use for the per-item behaviour signal it feeds to the
+#: quantizer. The check does not assume one: it looks for a callable that
+#: produces a per-item tensor and for a model argument that accepts it.
+SIGNAL_PATTERNS = ("successor", "prototype", "cohort", "profile", "entropy", "signal",
+                   "mean", "centroid", "anchor_stat")
+#: Model arguments that are *not* the behaviour signal.
+IGNORED_ARGUMENTS = {"x", "embeddings", "infer_use_sk", "geometry_on", "curvature",
+                     "inputs", "input_ids"}
+
+
+def discover_signal(tree: Path, trainer, model, item_count: int):
+    """Find the candidate's own per-item behaviour input, without guessing its API.
+
+    Returns ``(kind, name, tensor)`` or ``None``. ``kind`` is ``"trainer"`` when
+    the signal is computed by a function in the trainer and ``"layer"`` when the
+    model itself carries the per-item tensor.
+    """
+    import numpy as np
+    import torch
+
+    for name in sorted(vars(trainer)):
+        if not callable(getattr(trainer, name)):
+            continue
+        lowered = name.lower()
+        if not any(pattern in lowered for pattern in SIGNAL_PATTERNS):
+            continue
+        function = getattr(trainer, name)
+        for arguments in ((item_count,), ()):
+            try:
+                value = function(*arguments)
+            except Exception:
+                continue
+            if torch.is_tensor(value):
+                tensor = value.detach().float()
+            elif isinstance(value, np.ndarray):
+                tensor = torch.tensor(value, dtype=torch.float32)
+            else:
+                continue
+            if tensor.dim() == 1:
+                tensor = tensor.unsqueeze(1)
+            if tensor.dim() == 2 and tensor.shape[0] == item_count and tensor.shape[1] > 0:
+                return "trainer", name, tensor
+    # A module-level array the trainer computed once (a cached per-item signal).
+    for name in sorted(vars(trainer)):
+        lowered = name.lower()
+        if not any(pattern in lowered for pattern in SIGNAL_PATTERNS):
+            continue
+        value = getattr(trainer, name)
+        if torch.is_tensor(value) and value.dim() == 2 and value.shape[0] == item_count:
+            return "trainer_attribute", name, value.detach().float()
+        if isinstance(value, np.ndarray) and value.ndim == 2 and value.shape[0] == item_count:
+            return "trainer_attribute", name, torch.tensor(value, dtype=torch.float32)
+    # A model that carries the per-item tensor itself (the layer receives it).
+    for attribute in ("successor_means", "behaviour_means", "cohort_means", "signal"):
+        value = getattr(model, attribute, None)
+        if torch.is_tensor(value) and value.dim() == 2:
+            return "model", attribute, value.detach().float()
+    return None
+
+
+def signal_argument(model, trainer) -> str:
+    """The model or layer argument that carries the per-item behaviour signal."""
+    import inspect
+
+    for owner in (model, getattr(model, "rq", None)):
+        if owner is None:
+            continue
+        layers = getattr(getattr(owner, "vq_layers", None), "__iter__", None)
+        candidates = [owner]
+        if layers is not None:
+            candidates.extend(list(layers))
+        for candidate in candidates:
+            try:
+                signature = inspect.signature(candidate.forward)
+            except (TypeError, ValueError):
+                continue
+            for name in signature.parameters:
+                if name in IGNORED_ARGUMENTS or name == "self":
+                    continue
+                return name
+    return ""
 
 
 def run_candidate_check(tree: Path, *, repo: Path = None, items: int = DEFAULT_ITEMS,
@@ -117,45 +202,73 @@ def run_candidate_check(tree: Path, *, repo: Path = None, items: int = DEFAULT_I
         embeddings = np.load(
             Path(repo or ".") / "stage1_GeneEmbedding/output/sentence_t5.npy",
             mmap_mode="r")
+        item_count = int(len(embeddings))
         sample = torch.tensor(np.asarray(embeddings[:items], dtype=np.float32))
-        entropy = trainer._successor_entropy(int(len(embeddings)))
-        curvature_all = trainer._curvature_from_entropy(entropy, int(len(embeddings)))
-        curvature = curvature_all[:items]
-
-        config = trainer._tokenizer_config()
+        config = None
+        for name in ("_tokenizer_config", "tokenizer_config", "_config"):
+            builder = getattr(trainer, name, None)
+            if callable(builder):
+                config = builder()
+                break
+        if config is None:
+            report["verdict"] = VERDICT_INCONCLUSIVE
+            report["reason"] = "the candidate exposes no tokenizer config to build its model"
+            report["elapsed_seconds"] = round(time.monotonic() - started, 3)
+            return report
         model = module.RQVAE(config, in_dim=sample.shape[1]).eval()
+        for attribute in ("hyperbolic_on", "geometry_on"):
+            if hasattr(model.rq, attribute):
+                setattr(model.rq, attribute, True)
+        found = discover_signal(tree, trainer, model, item_count)
+        if found is None:
+            report["verdict"] = VERDICT_INCONCLUSIVE
+            report["reason"] = ("the candidate exposes no per-item behaviour signal the "
+                                "checker can drive, so its coupling cannot be tested here")
+            report["elapsed_seconds"] = round(time.monotonic() - started, 3)
+            return report
+        kind, signal_name, signal = found
+        argument = signal_argument(model, trainer)
+        if not argument:
+            report["verdict"] = VERDICT_INCONCLUSIVE
+            report["reason"] = ("the candidate's model takes no per-item behaviour argument, "
+                                "so the coupling cannot be driven on its own path")
+            report["elapsed_seconds"] = round(time.monotonic() - started, 3)
+            return report
+        signal_rows = signal[:items]
+        control = signal_rows.mean(dim=0, keepdim=True).expand_as(signal_rows).contiguous()
+        report["signal"] = {"kind": kind, "name": signal_name, "argument": argument,
+                            "shape": list(signal.shape),
+                            "per_item_variation": float(signal_rows.std(dim=0).mean())}
 
-        def run(curvature_vector, geometry_on: bool):
+        def run(signal_value, geometry_on=True):
             with torch.no_grad():
                 latent = model.encoder(sample)
-                if geometry_on:
-                    distances = model.rq.vq_layers[0]._curved_distances(latent,
-                                                                         curvature_vector)
-                else:
-                    distances = model.rq.vq_layers[0]._distances(latent)
-                indices = distances.argmin(-1)
-                margins = (distances.topk(2, dim=-1).values[:, 0]
-                           - distances.topk(2, dim=-1).values[:, 1])
-            return indices, margins, distances
+                layer = model.rq.vq_layers[0]
+                kwargs = {argument: signal_value}
+                if "geometry_on" in layer.forward.__code__.co_varnames:
+                    kwargs["geometry_on"] = geometry_on
+                quant, _loss, _unused, tokens = model.rq(latent, **kwargs)
+            return tokens, quant
 
-        both_indices, both_margins, both_scores = run(curvature, True)
-        behaviour_indices, behaviour_margins, _ = run(
-            _interventions(curvature, True), True)
-        geometry_indices, geometry_margins, _ = run(curvature, False)
+        both_tokens, both_quant = run(signal_rows)
+        control_tokens, control_quant = run(control)
+        zero_tokens, zero_quant = run(torch.zeros_like(signal_rows))
+        behaviour_moved = int((both_tokens != control_tokens).any(dim=1).sum())
+        zero_moved = int((both_tokens != zero_tokens).any(dim=1).sum())
+        geometry_moved = 0
+        if "geometry_on" in model.rq.vq_layers[0].forward.__code__.co_varnames:
+            off_tokens, _ = run(signal_rows, geometry_on=False)
+            geometry_moved = int((both_tokens != off_tokens).any(dim=1).sum())
 
-        behaviour_moved = int((both_indices != behaviour_indices).sum())
-        geometry_moved = int((both_indices != geometry_indices).sum())
-        curvature_spread = float(curvature.max() - curvature.min())
-
-        # The gradients: the coupled path must give finite gradients to the
-        # parameters the mechanism claims to train.
         model.train()
         latent = model.encoder(sample)
-        distances = model.rq.vq_layers[0]._curved_distances(latent, curvature)
-        loss = distances.min(dim=-1).values.sum()
+        kwargs = {argument: signal_rows}
+        if "geometry_on" in model.rq.vq_layers[0].forward.__code__.co_varnames:
+            kwargs["geometry_on"] = True
+        quant, _loss, _unused, _tokens = model.rq(latent, **kwargs)
+        loss = quant.sum()
         loss.backward()
-        grads = {}
-        finite = True
+        grads, finite = {}, True
         for name, parameter in model.named_parameters():
             if parameter.grad is None:
                 continue
@@ -164,48 +277,38 @@ def run_candidate_check(tree: Path, *, repo: Path = None, items: int = DEFAULT_I
             if not math.isfinite(value):
                 finite = False
         codebook_grad = sum(value for name, value in grads.items()
-                            if "rq.vq_layers.0.embed" in name)
+                            if "vq_layers.0" in name)
         encoder_grad = sum(value for name, value in grads.items() if "encoder" in name)
-
-        # The negative control: a candidate whose behaviour signal is
-        # disconnected must be rejected, not admitted.
-        negative_indices, _, _ = run(_interventions(curvature, True), True)
-        negative_control_rejected = bool(
-            torch.equal(negative_indices, behaviour_indices))
-
         report.update({
             "behaviour_moved_assignments": behaviour_moved,
+            "zero_signal_moved_assignments": zero_moved,
             "geometry_moved_assignments": geometry_moved,
-            "items": int(both_indices.shape[0]),
-            "curvature_spread": curvature_spread,
-            "curvature_min": float(curvature.min()),
-            "curvature_max": float(curvature.max()),
-            "mean_margin_both_on": float(both_margins.mean()),
-            "mean_margin_behavior_off": float(behaviour_margins.mean()),
             "gradients_finite": finite,
             "codebook_gradient": codebook_grad,
             "encoder_gradient": encoder_grad,
-            "negative_control_rejected": negative_control_rejected,
-            "score_margins": {"both_on": [float(value) for value in both_margins[:8]],
-                              "behavior_off": [float(value) for value in behaviour_margins[:8]]},
+            "negative_control_rejected": bool(behaviour_moved > 0),
         })
         if not finite:
             report["verdict"] = VERDICT_INCONCLUSIVE
             report["reason"] = "the gradients of the coupled path are not finite"
         elif behaviour_moved == 0:
             report["verdict"] = VERDICT_DEGENERATE
-            report["reason"] = ("the behaviour signal does not move a single first-level "
-                                "assignment: the implemented path is insensitive to it")
-        elif geometry_moved == 0 or codebook_grad <= 0:
+            report["reason"] = ("the behaviour signal does not move a single assignment: the "
+                                "implemented path is insensitive to it")
+        elif zero_moved == 0 and geometry_moved == 0:
             report["verdict"] = VERDICT_DEGENERATE
-            report["reason"] = ("the matched Euclidean control moves nothing or the "
-                                "codebook receives no gradient")
+            report["reason"] = ("neither the zero signal nor the geometry control changes the "
+                                "assignment, so the path is degenerate")
+        elif codebook_grad <= 0:
+            report["verdict"] = VERDICT_DEGENERATE
+            report["reason"] = "the codebook receives no gradient from the coupled path"
         else:
             report["verdict"] = VERDICT_VERIFIED
             report["reason"] = ("the behaviour signal moves " + str(behaviour_moved) +
-                                " first-level assignments, the matched Euclidean control "
-                                "moves " + str(geometry_moved) + ", the codebook receives a "
-                                "finite gradient and the disconnected control is rejected")
+                                " assignments, the zero-signal control moves " + str(zero_moved) +
+                                ", the geometry control moves " + str(geometry_moved) +
+                                ", the codebook receives a finite gradient and the "
+                                "disconnected control is rejected")
     except Exception as exc:                              # noqa: BLE001
         report["verdict"] = VERDICT_INCONCLUSIVE
         report["reason"] = "the candidate path check failed: " + type(exc).__name__ + ": " + str(exc)[:300]

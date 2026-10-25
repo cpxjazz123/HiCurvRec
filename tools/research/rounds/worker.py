@@ -29,7 +29,7 @@ from . import plaintext
 from . import scoring as scoring_module
 from . import pipeline as pipeline_module
 
-IDEA_MIN = 1
+IDEA_MIN = 2
 IDEA_MAX = 3
 SCORERS = 3
 VERIFIERS = 1
@@ -411,7 +411,10 @@ def _one_bounded_revision(directory: Path, agent_root: Path, repo: Path, state: 
         state["ideas"] = [updated if entry["idea_id"] == identifier else entry
                           for entry in state["ideas"]]
         pipeline_module.save_state(directory, state)
-        outcome = run_scoring(agent_root, state["ideas"], repo=repo)
+        # The revised proposal must be scored against the same frozen bundle, so
+        # the state has to travel with it; dropping it made the revision path
+        # crash on the first re-score.
+        outcome = run_scoring(agent_root, state["ideas"], repo=repo, state=state)
         return state, outcome["reports"], outcome
     return state, reports, outcome
 

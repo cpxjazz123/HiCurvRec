@@ -109,6 +109,95 @@ def measured_behaviour(root: Path) -> list:
     return claims
 
 
+def measured_forensics(root: Path) -> list:
+    """The Issue #125 measurements, as evidence a reviewer can read.
+
+    A proposal that claims a prefix will stay alive in a width-20 beam can be
+    checked against the measured survival of the arms that already exist, so the
+    numbers are quoted verbatim from the forensics report instead of restated.
+    """
+    claims = []
+    for path in sorted(Path(root).rglob("per_model_beam_metrics.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        parts = []
+        for arm, entry in sorted(payload.items()):
+            beam = entry.get("beam") or {}
+            alive = beam.get("gold_prefix_alive_rate") or {}
+            parts.append("%s: recall@10 %.5f, target SID inside the 20 beams %.4f, "
+                         "gold prefix alive at depth 1/2/3/4 %.3f/%.3f/%.3f/%.3f"
+                         % (arm, beam.get("recall@10") or 0.0,
+                            beam.get("raw_beam_coverage") or 0.0,
+                            alive.get("depth_1", 0.0), alive.get("depth_2", 0.0),
+                            alive.get("depth_3", 0.0), alive.get("depth_4", 0.0)))
+        claims.append(_claim(
+            "measured width-20 beam survival on the 57,439-row test split: " +
+            "; ".join(parts), "repo", str(path), "OBSERVED", payload))
+    for path in sorted(Path(root).rglob("per_model_token_metrics.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        parts = []
+        for arm, entry in sorted(payload.items()):
+            positions = ((entry.get("token") or {}).get("positions") or {})
+            parts.append("%s: T1/T2/T3/T4 NLL %.2f/%.2f/%.2f/%.2f" % (
+                arm,
+                (positions.get("T1") or {}).get("mean_nll") or 0.0,
+                (positions.get("T2") or {}).get("mean_nll") or 0.0,
+                (positions.get("T3") or {}).get("mean_nll") or 0.0,
+                (positions.get("T4") or {}).get("mean_nll") or 0.0))
+        claims.append(_claim(
+            "measured teacher-forced per-position NLL: " + "; ".join(parts),
+            "repo", str(path), "OBSERVED", payload))
+    return claims
+
+
+def measured_premises(root: Path) -> list:
+    """The measured premises a capacity or cohort proposal must be judged against.
+
+    Two questions decide the next round, and both are answerable before training:
+    how much of the canonical behaviour pairing a first level of K groups can keep,
+    and whether a cohort profile separates behavioural neighbours at all.
+    """
+    claims = []
+    for path in sorted(Path(root).rglob("next_round_premises.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        capacity = (payload.get("first_level_capacity_ceiling") or {}).get("capacity") or {}
+        if capacity:
+            claims.append(_claim(
+                "measured first-level capacity ceiling on the frozen Stage1 vectors: "
+                "share of canonical pairs whose anchor and target share one of K clusters is " +
+                ", ".join("K=%s %.4f (negative %.4f)" % (
+                    key, value.get("positive_hit_rate") or 0.0,
+                    value.get("negative_hit_rate") or 0.0)
+                    for key, value in sorted(capacity.items(), key=lambda item: int(item[0]))) +
+                "; a small K keeps behavioural neighbours together far more often in absolute "
+                "terms, which is what width-20 prefix survival depends on",
+                "repo", str(path), "OBSERVED", payload))
+        profile = payload.get("cohort_profile_signal") or {}
+        overlap = profile.get("profile_overlap") or {}
+        if overlap:
+            claims.append(_claim(
+                "measured train-only cohort-profile signal: a positive shares a successor cohort "
+                "with its anchor %.4f of the time against %.4f for the fixed negatives, and the "
+                "positive's profile overlap exceeds every one of its ten negatives for %.4f of "
+                "pairs; profile entropy averages %.2f nats over %.1f cohorts per item, so the "
+                "profile is not degenerate" % (
+                    overlap.get("positive_hit_rate") or 0.0,
+                    overlap.get("negative_hit_rate") or 0.0,
+                    overlap.get("share_positive_above_its_negatives") or 0.0,
+                    (profile.get("profile_entropy") or {}).get("mean") or 0.0,
+                    (profile.get("profile_support") or {}).get("mean_nonzero_cohorts") or 0.0),
+                "repo", str(path), "OBSERVED", payload))
+    return claims
+
+
 def build_bundle(idea: dict, *, root: Path, round_state: dict = None,
                  prior_rounds: list = None) -> dict:
     """The evidence bundle of one proposal, assembled from what exists.
@@ -139,6 +228,10 @@ def build_bundle(idea: dict, *, root: Path, round_state: dict = None,
     behavioural.append(_claim("the frozen training data contract", "repo",
                               DATA_CONTRACT["stage2_train"], "OBSERVED"))
     for measured in measured_behaviour(root):
+        behavioural.append(measured)
+    for measured in measured_forensics(root):
+        behavioural.append(measured)
+    for measured in measured_premises(root):
         behavioural.append(measured)
     geometric = []
     for field, label in (("hyperbolic_operator", "the curved operation"),

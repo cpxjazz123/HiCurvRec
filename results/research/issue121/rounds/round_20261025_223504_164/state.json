@@ -1,0 +1,40 @@
+{
+  "blocked": [],
+  "created_at": 1792928104.1656587,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1792928104.1656592,
+      "event": "round_created"
+    },
+    {
+      "at": 1792928104.1743522,
+      "event": "round_worker_started",
+      "pid": 3029495
+    },
+    {
+      "at": 1792928247.7361166,
+      "error": "a round needs at least three distinct ideas, got 2",
+      "event": "round_failed"
+    }
+  ],
+  "ideas": [],
+  "ideas_rejected": [],
+  "implementations": [],
+  "issue": "issue121",
+  "matrix": null,
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\n## What Issue #125 measured, and what the next mechanism must therefore change\n\nIssue #125 ran a read-only forensics pass on the four existing arms and the resample\nreference, on all 57,439 test rows, at the production width-20 beam. The measurements\nthat must constrain any new proposal:\n\n* Recall@10 tracks **whether the target SID survives the width-20 beam at all**, not the\n  first level's prefix statistics. The target's complete SID is absent from all twenty\n  beams for 91–93% of rows in every arm, and duplicate/seen filtering and the fallback\n  fill contribute **zero** hits. Postprocessing cannot move Recall.\n* The three arms with a single first-level code have `L1 Hard ER = 1.000` by construction\n  (P(pos)=P(neg)=1) while their Recall@10 spans 0.0467–0.0623, and their gold first token\n  survives 100% of the time. A quantity that is constant cannot explain the gap.\n* Gold-prefix survival and teacher-forced NLL per position separate the arms:\n  `l1_br` (Recall 0.0467) puts all information into T4 (16,462 distinct values, 9.03 nats,\n  alive at depth 4 only 0.068); `l1_br_euclid` (0.0621) puts it into T2/T3 (gold median\n  rank 6/16, so it fits inside twenty beams, alive at depth 3 = 0.161); the #124\n  `successor_entropy` (0.0512) spreads it over T1–T3 and loses 26.5% of the examples at\n  the **first** step (alive at depth 1 = 0.735); `resample` (0.0636) keeps T4 nearly\n  constant (0.05 nats) and T3 decisive.\n* Width-20 coverage is 8.84% (resample), 8.47% (euclid), 6.88% (successor_entropy),\n  6.78% (l1_br). Recall orders exactly like coverage.\n* Within every arm, item popularity dominates: the coldest quintile recalls almost\n  nothing, the hottest reaches about a fifth.\n\nSo the binding problem is **the joint predictability of a prefix**: a level that carries\ntoo much branching loses the path inside the beam (either early, as in\n`successor_entropy`, or at the very end, as in `l1_br`), while a level that carries no\nbranching has no discriminative value. A new mechanism has to place the branching where\nthe model can rank it, and make the first level both cheap to predict and behaviourally\nuseful.\n\n## The two directions this round must cover (both in scope only with real geometry)\n\n**Direction B — primary.** Keep a genuine behaviour-conditioned hyperbolic computation and\ncouple it to the first-level assignment through a **training-only transition-structure\nconstraint**, so that the prefix is (i) behaviourally discriminative — items that are the\nnext target of similar user cohorts land in the same or adjacent prefixes — and (ii)\ncheap to predict from the user history — the number of effective first-level groups and\nthe way the curved assignment distributes items must keep the first token's branching\nsmall relative to the beam width. The proposal must state the coupling equation that\nmakes the train-only behaviour signal change the curved assignment (not a second,\ndisconnected loss), and must state its capacity budget: how much of the SID's information\nsits at T1, T2, T3 and T4, with T4 required to stay a near-constant collision-extension\ntoken rather than the only discriminating position.\n\n**Direction A — independent control.** The same hyperbolic computation with a\n**capacity-constrained first level**: 16, 32 or 64 effective first-level groups instead of\n256, with L2/L3 carrying the discrimination, and the curvature/behaviour still choosing\nthe group. Its purpose is to separate \"the first level has too many codes\" from \"the\nprefix is not behaviourally aligned\". It is in scope only if the curved assignment and the\ntrain-only behaviour signal remain one connected computation; a plain codebook-size change\nis out of scope and must be rejected by the scope gate.\n\n## Required measurement contract for every proposal\n\nEach proposal must state, for its own mechanism, the predicted direction of:\n1. `L1 Hard ER` on the canonical 52,855 valid pairs with the ten fixed negatives;\n2. gold-prefix survival at depths 1, 2, 3 and 4 under width-20 beam search;\n3. the teacher-forced NLL of T4 (information must not pile up there);\n4. Stage 3 `test_R@10`, with the target being > 0.065;\nand must define its three arms: both-on, behaviour-off (the train-only signal replaced by\na constant or shuffled control) and geometry-off (a matched Euclidean assignment with the\nsame capacity). The mechanism is only interesting if behaviour-off and geometry-off both\nchange the measured prefix structure.\n\n## Frozen constraints\n\nFour-token fixed-width SID with the deterministic collision-extension token, 3000 Stage 2\nepochs on four cards, no early stopping, no test-time tuning, the frozen Stage 3 protocol,\nand no use of validation or test behaviour anywhere in the SID construction. The measured\nforensics above are diagnostic inputs, not a target to fit.\n",
+  "probe_state": "PROBE_PENDING",
+  "repairs": [],
+  "round_id": "round_20261025_223504_164",
+  "schema": 1,
+  "scores": {},
+  "selection": null,
+  "stage2_jobs": [],
+  "stage3_jobs": [],
+  "step": "ideation",
+  "updated_at": 1792928247.7361183,
+  "verification": {},
+  "worker_log": "/tmp/genrec-mcp/round_round_20261025_223504_164.log",
+  "worker_pid": 3029495
+}

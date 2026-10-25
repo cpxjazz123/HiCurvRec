@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/train_rqvae.py:258-281 -> model/model.py:26-30 -> model/layers.py:275-338 | Traced the actual trainer batch path: source-target counts are constructed only from train.parquet, successor means are selected by item ID and encoded, then the first-level residual is replaced using Poincare log/exp-style maps and transport before subsequent VQ levels. The no-successor path passes None and leaves the baseline residual; the Euclidean flag branch uses successor correction without the curved operations.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The behaviour signal and curved construction meet in the residual actually quantized by later levels.
+FINDING REPRODUCTION: Source trace at train_rqvae.py:258-281 and model/layers.py:286-338; the smoke harness also invokes model(x, successors) at smoke_test.py:17-23.
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/model/layers.py:289-330 | Code-level forward/backward review: the tangent adjustment is used to form the residual consumed by later quantizers; log/exp, transport, and bounded subtraction are differentiable. Clamps bound the ball radius and tangent magnitude, and protect denominators. The loss path remains connected through straight-through quantization. smoke_test.py:17-26 exercises finite forward loss and encoder gradient; assignment/coupling switches can be checked by comparing tokens and gradients across behavior-on/off and hyperbolic-on/Euclidean modes.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 numerical hazard found. With successor_means=None the behavior adjustment is absent; with hyperbolic_on=False the curved log/exp/transport branch is replaced by Euclidean successor residual adjustment. Both affect the residual provided to level 2 and therefore can affect assignments and gradients. Runtime trainer execution was not performed.
+FINDING REPRODUCTION: smoke_test.py:17-30 is the supplied forward/backward and SID-export smoke. A minimal switch comparison uses identical model weights and input batch with successor_means=None versus supplied means, then hyperbolic_on=True versus False, comparing layer-2 tokens and parameter gradients. No PyTorch runtime was available for execution here.
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual/train_rqvae.py:40-67,238-281,423-500 | Inspected trainer entry and path/data/export/launcher code. It resolves repository root from the stage2_RQ-VAE marker, reads the frozen stage0 train.parquet and Stage1 embeddings, writes checkpoint/log/SIDs under results/stage2_RQ-VAE/TIGER_tangent_successor_residual, exports item-index-keyed JSON plus an array in embedding row order, extends collisions deterministically, and uses torchrun unless GENREC_SINGLE_GPU is present.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The candidate-specific result directory is the required Stage2 location; the launcher has a working environment-variable single-card bypass and the ordinary torchrun branch remains intact. Trainer execution was not performed.
+FINDING REPRODUCTION: Source references above; smoke_test.py:27-33 checks collision extension, repository-root resolution, and candidate result-directory naming. GENREC_SINGLE_GPU branch is at train_rqvae.py:498-501.
+FINDING CORRECTION: none

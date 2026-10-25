@@ -1,0 +1,12 @@
+TREE: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_224046_175/tangent_successor_residual
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: model/model.py
+CHANGED FILE: model/layers.py
+CHANGED FILE: smoke_test.py
+DEVIATION: Successor probabilities use empirical edge-frequency normalization without the proposed alpha smoothing, and one normalized mean per source replaces a probability-weighted mean over distinct observed successors | the available train frame supplies repeated source-target rows and this keeps a compact train-only prototype implementation.
+DEVIATION: The curved operation uses fixed unit negative curvature, a 0.1 latent-to-ball scale, bounded tangent norm 1 and a fixed 0.05 step rather than configurable/trainable curvature and the idea's exact R=1, eta parameterization | conservative constants keep the ball operations numerically bounded; the model still applies Poincare log, tangent subtraction/transport approximation and exp before later residual quantization.
+DEVIATION: No standalone full 3000-epoch training or Stage3 evaluation was run | the smoke check is deliberately minimal and avoids writing outside the candidate tree; Recall@10 > 0.065 remains unverified.
+ASSUMPTION: The training parquet's source and target columns represent directed train-only item transitions, and its target ids index the Stage1 embedding rows; when those columns are absent, successor prototypes remain zero and the behaviour correction is effectively absent.
+SMOKE COMMAND: GENREC_SINGLE_GPU=1 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 smoke_test.py
+SMOKE RESULT: PASS forward_backward_finite_gradients_sid_export promoted_root /fs04/ar57/wenyu/GeneRec
+NOTES: Training defaults (3000 epochs, model dimensions, codebooks, optimizer, schedule, batch size and seed) were retained. The single-GPU branch is selected by presence of GENREC_SINGLE_GPU. Export inference receives the same frozen per-item train successor prototypes used in training. Paths are derived from the repository root and ARM_NAME; output and log paths are under results/stage2_RQ-VAE/TIGER_tangent_successor_residual. The smoke test verifies finite loss, finite encoder gradients, token generation and unique collision-extended SID export; it is not a promoted-location filesystem copy test.

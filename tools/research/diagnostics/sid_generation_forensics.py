@@ -1366,3 +1366,167 @@ def recover_inputs() -> dict:
                            "origin": reference + ":" + path, "items": int(table.shape[0]),
                            "width": int(table.shape[1])}
     return recovered
+
+
+def register_arm(name: str, *, stage3: str, sid: str, reported: dict = None,
+                 family: str = "", sid_origin: str = "in-repo") -> str:
+    """Add a new arm to the table so the same forensics can be run on it.
+
+    The four arms of Issue #125 are fixed history; a new candidate only needs its
+    Stage3 arm name and its SID path, and every layer (canonical ER, token NLL,
+    beam survival, decomposition) then applies unchanged.
+    """
+    sid_path = Path(sid)
+    if not sid_path.is_absolute():
+        sid_path = REPO / sid_path
+    ARMS[name] = {"stage3": stage3, "sid": sid_path, "sid_origin": sid_origin,
+                  "reported": dict(reported or {}), "family": family or "new candidate"}
+    return name
+
+
+# ---------------------------------------------------------------------------
+# Measured premises for the next round (train/valid only, no test behaviour)
+# ---------------------------------------------------------------------------
+def cohort_profile_signal(*, cohorts: int = 64, seed: int = SEED) -> dict:
+    """Is an item's cohort profile a real, non-degenerate behavioural signal?
+
+    Train-only construction: the ordered train sequences give a predecessor ->
+    successor count table; predecessors are grouped into ``cohorts`` buckets by
+    their successor distribution, and every item gets a profile over the buckets
+    of its own predecessors. The profile is then asked the only question that
+    matters for a prefix mechanism: do two items that are behavioural neighbours
+    (an anchor and a held-out next target) have more similar profiles than an
+    anchor and a random negative?
+    """
+    import pandas as pd
+
+    frame = pd.read_parquet(TRAIN_PARQUET, columns=["user", "seen_history", "target"])
+    frame = frame.sort_values("user", kind="stable")
+    pairs: dict[tuple[int, int], int] = {}
+    predecessors: dict[int, dict[int, int]] = {}
+    for _, group in frame.groupby("user", sort=False):
+        row = group.iloc[-1]
+        sequence = [int(item) for item in list(row["seen_history"])]
+        if pd.notna(row.get("target")):
+            sequence.append(int(row["target"]))
+        for left, right in zip(sequence, sequence[1:]):
+            pairs[(left, right)] = pairs.get((left, right), 0) + 1
+            predecessors.setdefault(right, {})
+            predecessors[right][left] = predecessors[right].get(left, 0) + 1
+    items = sorted({item for pair in pairs for item in pair})
+    index = {item: position for position, item in enumerate(items)}
+
+    # A predecessor's own successor distribution is its feature; k-means over those
+    # sparse features gives the cohorts without touching any validation or test row.
+    rng = np.random.default_rng(seed)
+    successors_of = {}
+    for (left, right), count in pairs.items():
+        successors_of.setdefault(left, {})
+        successors_of[left][right] = count
+    vocabulary = sorted({right for (_, right) in pairs})
+    column = {item: position for position, item in enumerate(vocabulary)}
+    features = np.zeros((len(items), len(vocabulary)), dtype=np.float32)
+    for left, row in successors_of.items():
+        total = sum(row.values())
+        for right, count in row.items():
+            features[index[left], column[right]] = count / total
+    norms = np.linalg.norm(features, axis=1, keepdims=True)
+    features = features / np.where(norms > 0, norms, 1.0)
+    seeds = features[rng.choice(len(features), size=min(cohorts, len(features)), replace=False)]
+    for _ in range(12):
+        similarity = features @ seeds.T
+        assignment = similarity.argmax(axis=1)
+        for cohort in range(len(seeds)):
+            members = features[assignment == cohort]
+            if len(members):
+                seeds[cohort] = members.mean(axis=0)
+
+    profile = np.zeros((len(items), len(seeds)), dtype=np.float32)
+    for right, row in predecessors.items():
+        total = sum(row.values())
+        for left, count in row.items():
+            profile[index[right], assignment[index[left]]] += count / total
+    profile_norm = profile / np.where(profile.sum(axis=1, keepdims=True) > 0,
+                                      profile.sum(axis=1, keepdims=True), 1.0)
+    entropy = -(np.where(profile_norm > 0, profile_norm * np.log(profile_norm + 1e-12), 0.0)
+                ).sum(axis=1)
+
+    payload = np.load(PAIRS)
+    anchors, positives, negatives = payload["anchors"], payload["positives"], payload["negatives"]
+    keep = np.array([int(a) in index and int(p) in index for a, p in zip(anchors, positives)])
+    anchors, positives, negatives = anchors[keep], positives[keep], negatives[keep]
+    valid_negatives = np.array([[int(item) in index for item in row] for row in negatives])
+    anchor_index = np.array([index[int(item)] for item in anchors])
+    positive_index = np.array([index[int(item)] for item in positives])
+
+    def similarity(left_index, right_index):
+        left, right = profile_norm[left_index], profile_norm[right_index]
+        return (left * right).sum(axis=1)
+
+    positive_score = similarity(anchor_index, positive_index)
+    negative_scores = np.stack([
+        similarity(anchor_index, np.array([index.get(int(item), 0) for item in negatives[:, column_]]))
+        for column_ in range(negatives.shape[1])], axis=1)
+    positive_hit = (positive_score > 0).astype(np.float64)
+    negative_hit = (negative_scores > 0).astype(np.float64).mean(axis=1)
+    separation = positive_score[:, None] - negative_scores
+    return {
+        "kind": "cohort_profile_signal",
+        "cohorts": int(len(seeds)),
+        "items": int(len(items)),
+        "transitions": int(sum(pairs.values())),
+        "profile_entropy": {"mean": float(entropy.mean()),
+                            "p10": float(np.quantile(entropy, 0.10)),
+                            "p90": float(np.quantile(entropy, 0.90)),
+                            "share_zero": float((entropy == 0).mean())},
+        "profile_support": {"mean_nonzero_cohorts": float((profile > 0).sum(axis=1).mean()),
+                            "share_single_cohort": float(((profile > 0).sum(axis=1) == 1).mean())},
+        "pairs_used": int(len(anchors)),
+        "profile_overlap": {
+            "positive_hit_rate": float(positive_hit.mean()),
+            "negative_hit_rate": float(negative_hit.mean()),
+            "positive_minus_negative": float(positive_score.mean() - negative_scores.mean()),
+            "share_positive_above_its_negatives": float((separation > 0).mean()),
+            "share_of_pairs_with_ties": float((separation == 0).all(axis=1).mean()),
+        },
+        "definition": ("the profile of an item is the distribution of its train-only "
+                       "predecessors over successor-cohorts; the positive/negative rates use the "
+                       "same 52,855 held-out valid pairs and ten fixed negatives as the canonical ER"),
+    }
+
+
+def first_level_capacity_ceiling(k_list=(16, 32, 64, 256), *, seed: int = SEED) -> dict:
+    """What a first level of K groups can at best preserve of the behaviour pairs.
+
+    The frozen Stage1 item vectors are clustered into K groups and every canonical
+    pair is scored by "do the anchor and the target share a group". This is the
+    ceiling a capacity-constrained first level can reach without any geometry, so
+    it separates "too few codes" from "codes not behaviour-aligned".
+    """
+    from sklearn.cluster import KMeans
+
+    embeddings = np.load(REPO / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy",
+                         mmap_mode="r")
+    matrix = np.asarray(embeddings, dtype=np.float32)
+    payload = np.load(PAIRS)
+    anchors = payload["anchors"].astype(np.int64)
+    positives = payload["positives"].astype(np.int64)
+    negatives = payload["negatives"].astype(np.int64)
+    result = {"kind": "first_level_capacity_ceiling", "pairs": int(len(anchors)),
+              "definition": ("k-means over the frozen Stage1 vectors; a pair is a hit when the "
+                             "anchor and the target share a cluster; the same 52,855 valid pairs "
+                             "and ten fixed negatives as the canonical ER"),
+              "capacity": {}}
+    for k in k_list:
+        model = KMeans(n_clusters=int(k), n_init=4, random_state=seed).fit(matrix)
+        labels = model.labels_
+        positive_hit = (labels[anchors] == labels[positives]).astype(np.float64)
+        negative_hit = (labels[anchors][:, None] == labels[negatives]).astype(np.float64).mean(axis=1)
+        positive_rate, negative_rate = float(positive_hit.mean()), float(negative_hit.mean())
+        result["capacity"][str(k)] = {
+            "positive_hit_rate": positive_rate,
+            "negative_hit_rate": negative_rate,
+            "expected_rank_ratio": (positive_rate / negative_rate) if negative_rate > 0 else None,
+            "gap": positive_rate - negative_rate,
+        }
+    return result
