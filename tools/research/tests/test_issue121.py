@@ -510,3 +510,31 @@ class ReviewContractTests(unittest.TestCase):
             record = state["implementations"][0]
             self.assertEqual(record["output_preflight"], "passed")
             self.assertEqual(record["blocking_findings"], [])
+
+
+class OutputAnchorTests(unittest.TestCase):
+    """The preflight reads the trainer's own anchors, and rejects the tree itself."""
+
+    def test_a_result_dir_defined_from_the_tree_file_is_refused(self):
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "TIGER_x"
+            tree.mkdir()
+            (tree / "train_rqvae.py").write_text(
+                'RESULT_DIR = Path(__file__).resolve().parent / '
+                '"results/stage2_RQ-VAE/TIGER_x"\n'
+                'OUTPUT_JSON = RESULT_DIR / "item_sids.json"\n', encoding="utf-8")
+            declared = baseline_module._declared_paths(tree)
+            self.assertIn("OUTPUT_JSON", declared)
+            with self.assertRaises(baseline_module.BaselineError):
+                baseline_module.guard_output_paths(tree)
+
+    def test_a_result_dir_in_the_repository_is_accepted(self):
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "TIGER_ok"
+            tree.mkdir()
+            (tree / "train_rqvae.py").write_text(
+                'RESULT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/'
+                'stage2_RQ-VAE/TIGER_ok")\nOUTPUT_JSON = RESULT_DIR / "item_sids.json"\n',
+                encoding="utf-8")
+            resolved = baseline_module.guard_output_paths(tree)
+            self.assertTrue(resolved["OUTPUT_JSON"].endswith("TIGER_ok/item_sids.json"))

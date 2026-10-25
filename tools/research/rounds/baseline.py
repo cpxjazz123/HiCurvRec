@@ -88,17 +88,32 @@ def copy_baseline(destination: Path, *, baseline: Path = None) -> dict:
 
 
 def _declared_paths(tree: Path) -> dict:
-    """The output paths a trainer declares, as written in its source."""
+    """The output paths a trainer declares, resolved through its own anchors.
+
+    A trainer often writes ``RESULT_DIR = ... / "results/stage2_RQ-VAE/TIGER_x"``
+    and then ``OUTPUT_JSON = RESULT_DIR / "item_sids.json"``, so reading only
+    literal ``Path("...")`` assignments would miss every output it declares.
+    """
     entry = Path(tree) / "train_rqvae.py"
     if not entry.is_file():
         return {}
     text = entry.read_text(encoding="utf-8", errors="replace")
-    found = {}
-    for name in _OUTPUT_CONSTANTS:
-        match = re.search(r"^" + name + r"\s*=\s*Path\(\s*[\"']([^\"']+)[\"']", text, re.M)
-        if match:
-            found[name] = match.group(1)
-    return found
+    anchors: dict[str, str] = {}
+    for match in re.finditer(r"^(\w+)\s*=\s*Path\(\s*[\"']([^\"']+)[\"']\s*\)", text, re.M):
+        anchors[match.group(1)] = match.group(2)
+    for match in re.finditer(r"^(\w+)\s*=\s*Path\(__file__\)(?:\.resolve\(\))?\.parent"
+                             r"\s*/\s*[\"']([^\"']+)[\"']", text, re.M):
+        anchors[match.group(1)] = str(Path(tree) / match.group(2))
+    changed = True
+    while changed:
+        changed = False
+        for match in re.finditer(r"^(\w+)\s*=\s*(\w+)\s*/\s*[\"']([^\"']+)[\"']",
+                                 text, re.M):
+            name, base, tail = match.group(1), match.group(2), match.group(3)
+            if base in anchors and name not in anchors:
+                anchors[name] = str(Path(anchors[base]) / tail)
+                changed = True
+    return {name: value for name, value in anchors.items() if name in _OUTPUT_CONSTANTS}
 
 
 def _resolve(path_text: str, tree: Path) -> Path:
@@ -124,7 +139,8 @@ def guard_output_paths(tree: Path, *, baseline: Path = None,
     raises :class:`BaselineError` when it is not.
     """
     tree = Path(tree).resolve()
-    base = Path(baseline).resolve() if baseline is not None else baseline_path()
+    base = (Path(baseline).resolve() if baseline is not None
+            else baseline_path().resolve())
     declared = _declared_paths(tree)
     if not declared:
         raise BaselineError("the candidate declares no output path: " + str(tree))
@@ -135,16 +151,25 @@ def guard_output_paths(tree: Path, *, baseline: Path = None,
         other = Path(other).resolve()
         protected.append(other)
         protected.append(results_root(base) / other.name)
+    # The one place a candidate may write: the repository's Stage 2 results,
+    # resolved so the /home and /fs04 spellings of the same directory agree.
+    approved = (Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE")).resolve()
     resolved = {}
     for name, text in declared.items():
-        path = _resolve(text, tree)
+        path = _resolve(text, tree).resolve()
         resolved[name] = str(path)
+        if tree in path.parents:
+            # The source tree is read-only: run artifacts inside it would be
+            # carried into the next promotion and read as this run's evidence.
+            raise BaselineError("the candidate writes into its own source tree: "
+                                + name + " -> " + str(path))
         for target in protected:
+            target = Path(target).resolve()
             if path == target or target in path.parents:
                 raise BaselineError("the candidate would write into the baseline or "
                                     "another candidate: " + name + " -> " + str(path))
-        if tree in path.parents and "results/stage2_RQ-VAE" not in str(path):
-            raise BaselineError("the candidate writes outside its result directory: "
+        if approved not in path.parents and path != approved:
+            raise BaselineError("the candidate writes outside results/stage2_RQ-VAE/: "
                                 + name + " -> " + str(path))
     return resolved
 
