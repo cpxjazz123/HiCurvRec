@@ -147,13 +147,20 @@ experiment-first pipeline:
 ```text
 3 ideation agents (1-3 ideas each, 3-9 total)
   -> 3 independent scorers, each judging EVERY idea (full matrix, medians, disagreement)
-  -> explicit, configurable rule selects several ideas (no veto, rejections logged)
-  -> one implementation agent per selected idea, in its own tree
-  -> one verifier per implementation
-     -> any correctness blocker: a dedicated repair agent, then the three reviews again
-     -> no progress after the revision budget: BLOCKED with evidence, other ideas continue
-  -> verified implementations enter the Stage 2 queue (resource-aware, deterministic)
-  -> every Stage 2 that exports a technically valid SID hands over to Stage 3 automatically
+  -> the rule keeps ONE mechanism: the single best qualified idea (rejections logged;
+     an out-of-scope idea is never selected, not even as the fallback)
+  -> one implementation agent builds that mechanism in its own copy of the baseline
+  -> the verifier reviews it
+     -> any correctness blocker: a dedicated repair agent, then the review again
+     -> no progress after the revision budget: BLOCKED with evidence
+  -> the verified mechanism enters the Stage 2 queue in the frozen four-card shape
+  -> its Stage 2 hands over to Stage 3 automatically
+
+A round is not a shortlist. It produces exactly one mechanism and carries it all
+the way to a measured Stage 3 result; the next round proposes the next mechanism
+(`max_selected = 1`, `keep_single_best`). Derived controls (the behaviour-off and
+geometry-off ablations of that one mechanism) are optional and are recorded
+separately from the mechanism.
 ```
 
 `rounds/` holds it: `ideas.py` (idea contract, cross-agent duplicates with
