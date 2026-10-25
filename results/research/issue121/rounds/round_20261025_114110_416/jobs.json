@@ -21,17 +21,18 @@
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_geodesic_codebook"
     },
     {
-      "attempts": 2,
+      "attempts": 3,
       "cost_projection": {
         "projected_hours": null,
         "reason": "no metrics yet"
       },
-      "error": "the one-epoch smoke failed on a device mismatch; fixed and re-queued",
+      "error": "independent executable verification: the tree changed after the verifiers saw it (and it is not the reviewed path)",
       "failure_evidence": {
-        "refused": "independent executable verification: the output-path preflight failed"
+        "refused": "independent executable verification: the tree changed after the verifiers saw it (and it is not the reviewed path)"
       },
-      "finished_at": null,
-      "gpu": null,
+      "failure_kind": "SMOKE_FAILED",
+      "finished_at": 1792898717.5553093,
+      "gpu": "1",
       "idea_id": "lorentz_user_cohort_margin",
       "job_id": "stage2:lorentz_user_cohort_margin",
       "kind": "stage2",
@@ -87,19 +88,23 @@
           "status": "failed"
         },
         {
-          "status": "running",
           "error": "the one-epoch smoke failed with a device mismatch (a GPU index into a CPU tensor); the defect is fixed in the tree and the smoke now passes",
-          "finished_at": null
+          "finished_at": null,
+          "status": "running"
+        },
+        {
+          "error": "the one-epoch smoke failed on a device mismatch; fixed and re-queued",
+          "finished_at": null,
+          "status": "failed"
         }
       ],
       "queued_at": 1792896400.360401,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
       "round_id": "round_20261025_114110_416",
-      "started_at": 1792896535.0172203,
+      "started_at": 1792898717.4863117,
       "status": "failed",
-      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
-      "failure_kind": "SMOKE_FAILED"
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin"
     },
     {
       "attempts": 2,
@@ -150,61 +155,83 @@
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell"
     },
     {
-      "attempts": 1,
-      "error": "the trainer crashed on start: PermissionError: '/results'",
+      "attempts": 2,
+      "cost_projection": {
+        "projected_hours": null,
+        "reason": "no metrics yet"
+      },
+      "error": null,
       "failure_evidence": {
         "log": "stage2_RQ-VAE/TIGER_branch_tangent_codes/logs/train_run.log"
       },
-      "finished_at": 1792894691.2630029,
+      "finished_at": null,
       "gpu": "0",
       "idea_id": "branch_tangent_codes",
       "job_id": "stage2:branch_tangent_codes",
       "kind": "stage2",
+      "previous_attempts": [
+        {
+          "error": "the trainer crashed on start: PermissionError: '/results'",
+          "finished_at": 1792894691.2630029,
+          "status": "failed"
+        }
+      ],
       "queued_at": 1792894161.9659545,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_tangent_codes",
       "round_id": "round_20261025_114110_416",
-      "started_at": 1792894368.365043,
-      "status": "failed",
+      "started_at": 1792898717.2185924,
+      "status": "running",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_tangent_codes"
     },
     {
-      "attempts": 1,
+      "attempts": 2,
+      "cost_projection": {
+        "projected_hours": null,
+        "reason": "no metrics yet"
+      },
       "error": null,
       "finished_at": null,
-      "gpu": null,
+      "gpu": "0",
       "idea_id": "lorentz_prefix_mass",
       "job_id": "stage2:lorentz_prefix_mass",
       "kind": "stage2",
+      "previous_attempts": [
+        {
+          "error": "the one-epoch smoke died with an Intel MKL / libtorch load error while the four-card Stage 3 run held every GPU: an infrastructure failure, not a defect of the candidate",
+          "finished_at": null,
+          "status": "running"
+        }
+      ],
       "queued_at": 1792896389.3684416,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass",
       "round_id": "round_20261025_114110_416",
-      "started_at": 1792896389.4574106,
-      "status": "pending",
-      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_prefix_mass",
-      "previous_attempts": [
-        {
-          "status": "running",
-          "error": "the one-epoch smoke died with an Intel MKL / libtorch load error while the four-card Stage 3 run held every GPU: an infrastructure failure, not a defect of the candidate",
-          "finished_at": null
-        }
-      ]
+      "started_at": 1792898717.3742023,
+      "status": "running",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_prefix_mass"
     },
     {
       "attempts": 0,
       "error": null,
-      "finished_at": null,
+      "finished_at": 1792898874.9954138,
       "idea_id": "branch_shell",
       "job_id": "stage3:branch_shell",
       "kind": "stage3",
       "queued_at": 1792896551.4322486,
-      "result": null,
+      "result": {
+        "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_branch_shell/ckpt/Amazon_2023_Instruments/Oct-25-2026_13-51-11/HG_Rec_best.pth",
+        "n_eval": 57439,
+        "test_ndcg@10": 0.03135972497952313,
+        "test_ndcg@5": 0.025816501234338922,
+        "test_recall@10": 0.05585055450129703,
+        "test_recall@5": 0.03873674680965894
+      },
       "round_id": "round_20261025_114110_416",
       "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell/item_sids.json",
       "stage2_job_id": "stage2:branch_shell",
       "started_at": null,
-      "status": "pending",
+      "status": "done",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell"
     }
   ],

@@ -1,0 +1,37 @@
+{
+  "ablation_behavior_off": "Shuffle cohort labels within each target while preserving class counts and all geometry/loss settings; this destroys user-behavior correspondence while retaining the same pair budget.",
+  "ablation_both_on": "Train with the unshuffled train-only cohort labels and Lorentz geodesic margin, alongside baseline RQ-VAE losses; export hard SIDs and run the same Stage3 evaluation.",
+  "ablation_geometry_off": "Replace Lorentz exp/distance by Euclidean representation and Euclidean norm in the same pair margin, keeping labels, dimensions, pair samples and margin calibration matched.",
+  "also_proposed_by": [
+    "ideation_1"
+  ],
+  "behavior_computation": "Using only train sequences, enumerate (user, source i, target j) adjacent transitions; context is mean Stage1 vector of preceding up-to-five distinct training items. For each target j with ≥20 transitions, run deterministic k-means (K=min(4, floor(n_j/5))) on context vectors and label each transition; pair distinct source items with the same target and different cohort labels as positives, same cohort as negatives. Exclude users/targets below support threshold.",
+  "behavior_signal": "Cross-user context cohort identity for transitions into a shared next item.",
+  "cost_estimate": "One train transition/context preprocessing pass O(E_train·d), cohort clustering on sampled contexts, then O(Pd) Lorentz pair distances per step for P sampled pairs. At frozen scale 24,556 items ×24 steps/epoch ×3,000 epochs, cache transition pairs and draw e.g. P=2B per minibatch; expect 5–20% overhead depending on pair count/dimension, no Stage3 inference cost.",
+  "coupling_equation": "L_pair(a,b)=1[y_diff]·max(0,m-d_L(exp_o(q_a),exp_o(q_b)))² + 1[y_same]·max(0,d_L(exp_o(q_a),exp_o(q_b))-M)², where y_diff comes only from training-user context cohort labels.",
+  "coupling_path": "Training user-context cohorts determine positive/negative pair labels; those labels select the margin branch applied to Lorentz distance between the exact quantized representations underlying the SIDs, changing their codebook/encoder updates.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "For targets with multiple user-context cohorts, the cohort distinction is predictive rather than noise; preserving it in curved code representations will change relevant SID digits and improve validation-selected Stage3 test Recall@10 toward/above 0.065. Confirm that pairwise distance margins and held-out-within-train cohort-conditioned next-item diagnostics change alongside test recall.",
+  "fingerprint": "5ba14bb267430f8a",
+  "hyperbolic_location": "A contrastive margin loss on the level-l quantized item points; gradients pass through Lorentz distance to the encoder/codebook that produces the SID digits.",
+  "hyperbolic_operator": "Lorentz geodesic distance on curvature -κ, κ>0, between origin-exp-mapped quantized source representations.",
+  "idea_id": "lorentz_user_cohort_margin",
+  "key_change": "Sample pairs of training examples with the same next item but different preceding user-context cohorts; encourage the source-item SID representations to preserve the observed cohort contrast at each RQ level via a Lorentzian geodesic margin. The contrast term acts on the actual residual/code representation used to construct SIDs.",
+  "leakage_boundary": "Build contexts, target groupings, cohort centroids/labels and pairs strictly from train rows and training-period histories; freeze them before Stage2 fitting. Do not use validation/test targets, user histories, labels or interaction statistics for pairs or SID assignment.",
+  "motivation": "A target item can follow similar textual items for one user cohort and a different set for another; ordinary itemwise quantization can erase these user-conditioned distinctions even when next-item prediction needs them.",
+  "novelty": "Rather than a per-item branch vector or successor barycenter, this uses pairwise contrastive comparisons between same-target transitions from different users, with the contrast margin defined by hyperbolic distance between quantized source representations. It is a relational training signal, not a behavior term appended to Euclidean nearest-code assignment.",
+  "observables": "Pair margins become satisfied without reconstruction collapse; cohort-conditioned hard SID distances/assignments change; Stage3 test Recall@10 improves versus both toggles. Report performance by target support and cohort multiplicity.",
+  "origin_agent": "ideation_1",
+  "risks": [
+    "Same-target cohort labels may reflect sampling noise, item popularity, or history length; the pair loss can conflict with semantic reconstruction or over-separate paraphrastic items. Sparse targets yield few reliable pairs; cohort clustering can be unstable."
+  ],
+  "safeguards": "Require target support and multiple cohorts; cap pairs per target/user to avoid popularity domination; L2-normalize context vectors before clustering; fix clustering seed and label ordering; compute Lorentz distance in float32/64 with acosh clamp and hyperboloid projection; clip gradients; use zero pair loss for invalid/rare items; monitor reconstruction and pair-label balance. Set m<M with margins selected on training-only distance quantiles and λ via validation protocol.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "Let q_i^l be the straight-through quantized tangent representation at level l; map X_i=exp_o^{(-κ)}(q_i^l) to the Lorentz sheet. d(X,Y)=acosh(max(1,-κ<X,Y>_L))/sqrt(κ). Given pair label y=1 for different cohorts, L_pair=y[m-d]_+² +(1-y)[d-M]_+². Total objective L_base+λ L_pair; sample balanced pairs and average. Hard SID indices remain standard nearest-code indices, but the pair gradient updates the same encoder/codebook points and therefore can alter assignments on subsequent steps.",
+  "spec_inputs_outputs": "Inputs: train-only transitions and contexts, frozen Stage1 item embeddings, deterministic per-target cohort labels/pair sampler, RQ-VAE level representations/codebooks, κ,m,M,λ. Outputs: pair loss/gradients and updated code parameters; ordinary hard SID digits.",
+  "specification": {
+    "text": "From each train transition (u,i→j), form context vector h_u,i as the mean of frozen Stage1 embeddings of up to the previous 5 train items, excluding j. For same target j, pair contexts from different users; define y_ab=1 if their contexts fall in different deterministic training-only k-means cohorts, else 0. Let z_ab be their source-item quantized Lorentz points at a selected level; optimize L_pair= y·max(0,m-d_L(z_a,z_b))² +(1-y)·max(0,d_L(z_a,z_b)-M)² with 0<m<M, sampled balanced pairs. To avoid pulling identical source item copies apart inconsistently, pair only distinct source items; use the item's code representation as z."
+  },
+  "title": "Preserve cross-user successor contrasts with a Lorentzian pairwise code margin"
+}
