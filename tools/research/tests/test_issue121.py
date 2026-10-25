@@ -671,3 +671,53 @@ class NoAbsolutePathTests(unittest.TestCase):
             with self.assertRaises(baseline_module.BaselineError) as caught:
                 baseline_module._declared_paths(tree)
             self.assertIn("absolute path", str(caught.exception))
+
+
+class OneMechanismPerRoundTests(unittest.TestCase):
+    """A round produces exactly one mechanism and carries it to training."""
+
+    def _round_ideas(self):
+        return ideas_module.collect_ideas([
+            ("agent1", {"ideas": [_coupled(idea_id="a"), _coupled(idea_id="b", title="beta")]}),
+            ("agent2", {"ideas": [_coupled(idea_id="c", title="gamma")]}),
+            ("agent3", {"ideas": [_coupled(idea_id="d", title="delta")]}),
+        ])
+
+    def test_the_rule_selects_one_mechanism_even_when_several_qualify(self):
+        ideas = self._round_ideas()
+        reports = []
+        for scorer, base in (("s1", 5), ("s2", 4), ("s3", 4)):
+            reports.append({"scorer": scorer, "scores": [
+                {"idea_id": idea["idea_id"],
+                 "scores": {dimension: base for dimension in scoring_module.DIMENSIONS},
+                 "rationale": "qualified"} for idea in ideas]})
+        matrix = scoring_module.build_matrix(ideas, reports)
+        selection = scoring_module.select(matrix)
+        self.assertEqual(len(selection["selected"]), 1)
+        self.assertFalse(selection["selection_is_multiple"])
+        self.assertTrue(selection["rejected"])
+
+    def test_the_best_qualified_mechanism_is_the_one_kept(self):
+        ideas = self._round_ideas()
+        reports = []
+        for scorer in ("s1", "s2", "s3"):
+            scores = []
+            for idea in ideas:
+                value = 5 if idea["idea_id"] == "c" else 2
+                scores.append({"idea_id": idea["idea_id"],
+                               "scores": {dimension: value
+                                          for dimension in scoring_module.DIMENSIONS},
+                               "rationale": "r"})
+            reports.append({"scorer": scorer, "scores": scores})
+        matrix = scoring_module.build_matrix(ideas, reports)
+        selection = scoring_module.select(matrix)
+        self.assertEqual([entry["idea_id"] for entry in selection["selected"]], ["c"])
+
+    def test_the_single_mechanism_still_has_to_carry_its_own_implementation(self):
+        """The round is not finished when the mechanism is selected."""
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_one", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["step"] = "implementation"
+            self.assertEqual(pipeline_module.summary(state)["step"], "implementation")
