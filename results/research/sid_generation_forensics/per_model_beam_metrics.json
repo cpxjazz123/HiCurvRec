@@ -1,0 +1,222 @@
+{
+  "l1_br": {
+    "n_eval": 57439,
+    "beam": {
+      "rows": 57439,
+      "beam_width": 20,
+      "recall@5": 0.030449694458468984,
+      "recall@10": 0.046710423231602224,
+      "ndcg@10": 0.025124111105543846,
+      "raw_beam_coverage": 0.06777624958651784,
+      "gold_prefix_alive_rate": {
+        "depth_1": 1.0,
+        "depth_2": 1.0,
+        "depth_3": 1.0,
+        "depth_4": 0.06777624958651787
+      },
+      "first_drop_depth_histogram": {
+        "0_never_dropped": 3893,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 53546
+      },
+      "categories": {
+        "sid_absent_from_beams": 53546,
+        "hit_from_beams": 2683,
+        "sid_generated_dropped_before_top10": 1210
+      },
+      "category_share": {
+        "sid_absent_from_beams": 0.9322237504134822,
+        "hit_from_beams": 0.046710423231602224,
+        "sid_generated_dropped_before_top10": 0.021065826354915648
+      }
+    },
+    "sid_sha256": "ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_s42/ckpt/Amazon_2023_Instruments/Oct-12-2026_08-36-27/HG_Rec_best.pth",
+    "reproduction": {
+      "reported_test_recall@10": 0.0406866415,
+      "reproduced_test_recall@10": 0.046710423231602224,
+      "reported_ndcg@10": 0.021673569339540715,
+      "reproduced_ndcg@10": 0.025124111105543846,
+      "ndcg_absolute_difference": 0.0034505417660031304,
+      "absolute_difference": 0.006023781731602222
+    }
+  },
+  "l1_br_euclid": {
+    "n_eval": 57439,
+    "beam": {
+      "rows": 57439,
+      "beam_width": 20,
+      "recall@5": 0.041295983565173486,
+      "recall@10": 0.062065843764689495,
+      "ndcg@10": 0.034032744611630306,
+      "raw_beam_coverage": 0.08473336931353259,
+      "gold_prefix_alive_rate": {
+        "depth_1": 1.0,
+        "depth_2": 0.828774874214384,
+        "depth_3": 0.16144083288358085,
+        "depth_4": 0.08473336931353262
+      },
+      "first_drop_depth_histogram": {
+        "0_never_dropped": 4867,
+        "1": 0,
+        "2": 9835,
+        "3": 38331,
+        "4": 4406
+      },
+      "categories": {
+        "sid_absent_from_beams": 52572,
+        "hit_from_beams": 3565,
+        "sid_generated_dropped_before_top10": 1302
+      },
+      "category_share": {
+        "sid_absent_from_beams": 0.9152666306864674,
+        "hit_from_beams": 0.062065843764689495,
+        "sid_generated_dropped_before_top10": 0.02266752554884312
+      }
+    },
+    "sid_sha256": "8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_euclid_s42/ckpt/Amazon_2023_Instruments/Oct-12-2026_09-33-58/HG_Rec_best.pth",
+    "reproduction": {
+      "reported_test_recall@10": 0.06250108811086544,
+      "reproduced_test_recall@10": 0.062065843764689495,
+      "reported_ndcg@10": 0.03388172223797936,
+      "reproduced_ndcg@10": 0.034032744611630306,
+      "ndcg_absolute_difference": 0.00015102237365094417,
+      "absolute_difference": 0.0004352443461759434
+    }
+  },
+  "l1_only": {
+    "n_eval": 57439,
+    "beam": {
+      "rows": 57439,
+      "beam_width": 20,
+      "recall@5": 0.0413482128867146,
+      "recall@10": 0.062326990372395065,
+      "ndcg@10": 0.034109386583941935,
+      "raw_beam_coverage": 0.0855342189104964,
+      "gold_prefix_alive_rate": {
+        "depth_1": 1.0,
+        "depth_2": 0.8292101185605599,
+        "depth_3": 0.15628753982485769,
+        "depth_4": 0.08553421891049635
+      },
+      "first_drop_depth_histogram": {
+        "0_never_dropped": 4913,
+        "1": 0,
+        "2": 9810,
+        "3": 38652,
+        "4": 4064
+      },
+      "categories": {
+        "sid_absent_from_beams": 52526,
+        "hit_from_beams": 3580,
+        "sid_generated_dropped_before_top10": 1333
+      },
+      "category_share": {
+        "sid_absent_from_beams": 0.9144657810895036,
+        "hit_from_beams": 0.062326990372395065,
+        "sid_generated_dropped_before_top10": 0.02320722853810129
+      }
+    },
+    "sid_sha256": "e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_s42/ckpt/Amazon_2023_Instruments/Oct-12-2026_07-31-01/HG_Rec_best.pth",
+    "reproduction": {
+      "reported_test_recall@10": 0.0614042724,
+      "reproduced_test_recall@10": 0.062326990372395065,
+      "reported_ndcg@10": 0.0334570058914946,
+      "reproduced_ndcg@10": 0.034109386583941935,
+      "ndcg_absolute_difference": 0.0006523806924473366,
+      "absolute_difference": 0.0009227179723950638
+    }
+  },
+  "resample": {
+    "n_eval": 57439,
+    "beam": {
+      "rows": 57439,
+      "beam_width": 20,
+      "recall@5": 0.04204460384059611,
+      "recall@10": 0.0636327234109229,
+      "ndcg@10": 0.03502501239941307,
+      "raw_beam_coverage": 0.08837201204756351,
+      "gold_prefix_alive_rate": {
+        "depth_1": 0.4972753703929386,
+        "depth_2": 0.12169431919079371,
+        "depth_3": 0.09136649314925399,
+        "depth_4": 0.08837201204756351
+      },
+      "first_drop_depth_histogram": {
+        "0_never_dropped": 5076,
+        "1": 28876,
+        "2": 21573,
+        "3": 1742,
+        "4": 172
+      },
+      "categories": {
+        "sid_absent_from_beams": 52363,
+        "hit_from_beams": 3655,
+        "sid_generated_dropped_before_top10": 1421
+      },
+      "category_share": {
+        "sid_absent_from_beams": 0.9116279879524365,
+        "hit_from_beams": 0.0636327234109229,
+        "sid_generated_dropped_before_top10": 0.02473928863664061
+      }
+    },
+    "sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample/ckpt/Amazon_2023_Instruments/Oct-15-2026_01-33-53/HG_Rec_best.pth",
+    "reproduction": {
+      "reported_test_recall@10": 0.0636327234,
+      "reproduced_test_recall@10": 0.0636327234109229,
+      "reported_ndcg@10": null,
+      "reproduced_ndcg@10": 0.03502501239941307,
+      "ndcg_absolute_difference": null,
+      "absolute_difference": 1.0922901472198987e-11
+    }
+  },
+  "successor_entropy": {
+    "n_eval": 57439,
+    "beam": {
+      "rows": 57439,
+      "beam_width": 20,
+      "recall@5": 0.034749908598687304,
+      "recall@10": 0.05121955465798499,
+      "ndcg@10": 0.028319735944137003,
+      "raw_beam_coverage": 0.06876860669579898,
+      "gold_prefix_alive_rate": {
+        "depth_1": 0.7354236668465677,
+        "depth_2": 0.39951949024182176,
+        "depth_3": 0.13325440902522676,
+        "depth_4": 0.06876860669579903
+      },
+      "first_drop_depth_histogram": {
+        "0_never_dropped": 3950,
+        "1": 15197,
+        "2": 19294,
+        "3": 15294,
+        "4": 3704
+      },
+      "categories": {
+        "sid_absent_from_beams": 53489,
+        "hit_from_beams": 2942,
+        "sid_generated_dropped_before_top10": 1008
+      },
+      "category_share": {
+        "sid_absent_from_beams": 0.931231393304201,
+        "hit_from_beams": 0.05121955465798499,
+        "sid_generated_dropped_before_top10": 0.01754905203781403
+      }
+    },
+    "sid_sha256": "3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor_entropy_curvature/ckpt/Amazon_2023_Instruments/Oct-25-2026_19-35-32/HG_Rec_best.pth",
+    "reproduction": {
+      "reported_test_recall@10": 0.05062762234718571,
+      "reproduced_test_recall@10": 0.05121955465798499,
+      "reported_ndcg@10": 0.028021926382601977,
+      "reproduced_ndcg@10": 0.028319735944137003,
+      "ndcg_absolute_difference": 0.0002978095615350264,
+      "absolute_difference": 0.0005919323107992855
+    }
+  }
+}

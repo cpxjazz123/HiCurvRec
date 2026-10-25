@@ -1,0 +1,778 @@
+{
+  "l1_br_euclid": {
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/hyper_l1_br_euclid_s42/item_sids.json",
+    "sid_sha256": "8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541",
+    "canonical_er": {
+      "L1": {
+        "pairs": 52855,
+        "positive_hit_rate": 1.0,
+        "negative_hit_rate": 1.0,
+        "expected_rank_ratio": 1.0,
+        "positive_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "negative_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L2": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.14308958471289376,
+        "negative_hit_rate": 0.02305174534102734,
+        "expected_rank_ratio": 6.207321076822061,
+        "positive_hit_rate_ci95": [
+          0.14028899820262983,
+          0.14624964525588877
+        ],
+        "negative_hit_rate_ci95": [
+          0.022660107842209825,
+          0.02348505344811276
+        ],
+        "ratio_ci95": [
+          6.038882104650492,
+          6.376206298565118
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L3": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.0062624160438936715,
+        "negative_hit_rate": 0.00028001135181155985,
+        "expected_rank_ratio": 22.36486486486487,
+        "positive_hit_rate_ci95": [
+          0.005581307350297985,
+          0.006943524737489357
+        ],
+        "negative_hit_rate_ci95": [
+          0.00023649607416516885,
+          0.00032541859805127236
+        ],
+        "ratio_ci95": [
+          18.571015689512798,
+          27.313667881067104
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "pairs_file": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+      "pairs_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "definition": "ER = P(positive shares the anchor's prefix) / P(a fixed negative shares it), over the same 52855 valid pairs and the same 10 negatives for every arm"
+    },
+    "structure": {
+      "items": 24587,
+      "width": 4,
+      "levels": {
+        "L1": {
+          "distinct": 1,
+          "largest_bucket": 24587,
+          "largest_bucket_share": 1.0,
+          "top10_share": 1.0,
+          "mean_bucket": 24587.0,
+          "median_bucket": 24587.0,
+          "bucket_histogram": {
+            "1": 0,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 1
+          },
+          "items_in_buckets_gt100": 24587
+        },
+        "L2": {
+          "distinct": 85,
+          "largest_bucket": 777,
+          "largest_bucket_share": 0.03160206613250905,
+          "top10_share": 0.27620287143612476,
+          "mean_bucket": 289.25882352941176,
+          "median_bucket": 316.0,
+          "bucket_histogram": {
+            "1": 7,
+            "2-5": 12,
+            "6-20": 6,
+            "21-100": 6,
+            ">100": 54
+          },
+          "items_in_buckets_gt100": 24255
+        },
+        "L3": {
+          "distinct": 9093,
+          "largest_bucket": 45,
+          "largest_bucket_share": 0.001830235490299752,
+          "top10_share": 0.013340383129295969,
+          "mean_bucket": 2.703948091938854,
+          "median_bucket": 2.0,
+          "bucket_histogram": {
+            "1": 3710,
+            "2-5": 4494,
+            "6-20": 865,
+            "21-100": 24,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        },
+        "L4": {
+          "distinct": 24587,
+          "largest_bucket": 1,
+          "largest_bucket_share": 4.067189978443893e-05,
+          "top10_share": 0.0004067189978443893,
+          "mean_bucket": 1.0,
+          "median_bucket": 1.0,
+          "bucket_histogram": {
+            "1": 24587,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        }
+      },
+      "collision_extension": {
+        "distinct_triples": 9093,
+        "items_sharing_a_triple": 15494,
+        "share_sharing_a_triple": 0.6301704152600968,
+        "fourth_token_min": 768,
+        "fourth_token_max": 812,
+        "fourth_token_distinct": 45
+      },
+      "first_level_usage": {
+        "codes_used": 1,
+        "codes_total": 240,
+        "entropy_bits": -0.0,
+        "effective_codes": 1.0
+      }
+    },
+    "reported": {
+      "test_recall@10": 0.06250108811086544,
+      "test_recall@5": 0.04068664148052717,
+      "test_ndcg@10": 0.03388172223797936
+    },
+    "historical_note": "the repo's earlier valid_l1_hard_er (e.g. resample 16.3895) uses the same P(pos)/P(neg) ratio; any older ‘L1 HARD ≈ 1’ observation came from a different pair/negative sampler and is not comparable"
+  },
+  "l1_only": {
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/hyper_l1_s42/item_sids.json",
+    "sid_sha256": "e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7",
+    "canonical_er": {
+      "L1": {
+        "pairs": 52855,
+        "positive_hit_rate": 1.0,
+        "negative_hit_rate": 1.0,
+        "expected_rank_ratio": 1.0,
+        "positive_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "negative_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L2": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.14282470910982878,
+        "negative_hit_rate": 0.02323148235739287,
+        "expected_rank_ratio": 6.1478947797051875,
+        "positive_hit_rate_ci95": [
+          0.13981647904644784,
+          0.1458901712231577
+        ],
+        "negative_hit_rate_ci95": [
+          0.022796329580928955,
+          0.023668574401664935
+        ],
+        "ratio_ci95": [
+          5.970924576543731,
+          6.31649985422935
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L3": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.005675905779964053,
+        "negative_hit_rate": 0.0002667675716583105,
+        "expected_rank_ratio": 21.27659574468085,
+        "positive_hit_rate_ci95": [
+          0.005032636458234793,
+          0.0063191751016933115
+        ],
+        "negative_hit_rate_ci95": [
+          0.00022325229401191942,
+          0.00031028284930470154
+        ],
+        "ratio_ci95": [
+          17.607361963190183,
+          26.333536585365852
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "pairs_file": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+      "pairs_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "definition": "ER = P(positive shares the anchor's prefix) / P(a fixed negative shares it), over the same 52855 valid pairs and the same 10 negatives for every arm"
+    },
+    "structure": {
+      "items": 24587,
+      "width": 4,
+      "levels": {
+        "L1": {
+          "distinct": 1,
+          "largest_bucket": 24587,
+          "largest_bucket_share": 1.0,
+          "top10_share": 1.0,
+          "mean_bucket": 24587.0,
+          "median_bucket": 24587.0,
+          "bucket_histogram": {
+            "1": 0,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 1
+          },
+          "items_in_buckets_gt100": 24587
+        },
+        "L2": {
+          "distinct": 97,
+          "largest_bucket": 763,
+          "largest_bucket_share": 0.031032659535526905,
+          "top10_share": 0.2708748525643633,
+          "mean_bucket": 253.4742268041237,
+          "median_bucket": 257.0,
+          "bucket_histogram": {
+            "1": 9,
+            "2-5": 17,
+            "6-20": 7,
+            "21-100": 9,
+            ">100": 55
+          },
+          "items_in_buckets_gt100": 24118
+        },
+        "L3": {
+          "distinct": 9324,
+          "largest_bucket": 38,
+          "largest_bucket_share": 0.0015455321918086795,
+          "top10_share": 0.012770976532313825,
+          "mean_bucket": 2.636958386958387,
+          "median_bucket": 2.0,
+          "bucket_histogram": {
+            "1": 3881,
+            "2-5": 4631,
+            "6-20": 787,
+            "21-100": 25,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        },
+        "L4": {
+          "distinct": 24587,
+          "largest_bucket": 1,
+          "largest_bucket_share": 4.067189978443893e-05,
+          "top10_share": 0.0004067189978443893,
+          "mean_bucket": 1.0,
+          "median_bucket": 1.0,
+          "bucket_histogram": {
+            "1": 24587,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        }
+      },
+      "collision_extension": {
+        "distinct_triples": 9324,
+        "items_sharing_a_triple": 15263,
+        "share_sharing_a_triple": 0.6207752064098914,
+        "fourth_token_min": 768,
+        "fourth_token_max": 805,
+        "fourth_token_distinct": 38
+      },
+      "first_level_usage": {
+        "codes_used": 1,
+        "codes_total": 150,
+        "entropy_bits": -0.0,
+        "effective_codes": 1.0
+      }
+    },
+    "reported": {
+      "test_recall@10": 0.0614042724,
+      "test_recall@5": 0.04091296854053
+    },
+    "historical_note": "the repo's earlier valid_l1_hard_er (e.g. resample 16.3895) uses the same P(pos)/P(neg) ratio; any older ‘L1 HARD ≈ 1’ observation came from a different pair/negative sampler and is not comparable"
+  },
+  "l1_br": {
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/hyper_l1_br_s42/item_sids.json",
+    "sid_sha256": "ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969",
+    "canonical_er": {
+      "L1": {
+        "pairs": 52855,
+        "positive_hit_rate": 1.0,
+        "negative_hit_rate": 1.0,
+        "expected_rank_ratio": 1.0,
+        "positive_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "negative_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L2": {
+        "pairs": 52855,
+        "positive_hit_rate": 1.0,
+        "negative_hit_rate": 1.0,
+        "expected_rank_ratio": 1.0,
+        "positive_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "negative_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L3": {
+        "pairs": 52855,
+        "positive_hit_rate": 1.0,
+        "negative_hit_rate": 1.0,
+        "expected_rank_ratio": 1.0,
+        "positive_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "negative_hit_rate_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_ci95": [
+          1.0,
+          1.0
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "pairs_file": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+      "pairs_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "definition": "ER = P(positive shares the anchor's prefix) / P(a fixed negative shares it), over the same 52855 valid pairs and the same 10 negatives for every arm"
+    },
+    "structure": {
+      "items": 24587,
+      "width": 4,
+      "levels": {
+        "L1": {
+          "distinct": 1,
+          "largest_bucket": 24587,
+          "largest_bucket_share": 1.0,
+          "top10_share": 1.0,
+          "mean_bucket": 24587.0,
+          "median_bucket": 24587.0,
+          "bucket_histogram": {
+            "1": 0,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 1
+          },
+          "items_in_buckets_gt100": 24587
+        },
+        "L2": {
+          "distinct": 1,
+          "largest_bucket": 24587,
+          "largest_bucket_share": 1.0,
+          "top10_share": 1.0,
+          "mean_bucket": 24587.0,
+          "median_bucket": 24587.0,
+          "bucket_histogram": {
+            "1": 0,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 1
+          },
+          "items_in_buckets_gt100": 24587
+        },
+        "L3": {
+          "distinct": 1,
+          "largest_bucket": 24587,
+          "largest_bucket_share": 1.0,
+          "top10_share": 1.0,
+          "mean_bucket": 24587.0,
+          "median_bucket": 24587.0,
+          "bucket_histogram": {
+            "1": 0,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 1
+          },
+          "items_in_buckets_gt100": 24587
+        },
+        "L4": {
+          "distinct": 24587,
+          "largest_bucket": 1,
+          "largest_bucket_share": 4.067189978443893e-05,
+          "top10_share": 0.0004067189978443893,
+          "mean_bucket": 1.0,
+          "median_bucket": 1.0,
+          "bucket_histogram": {
+            "1": 24587,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        }
+      },
+      "collision_extension": {
+        "distinct_triples": 1,
+        "items_sharing_a_triple": 24586,
+        "share_sharing_a_triple": 0.9999593281002156,
+        "fourth_token_min": 768,
+        "fourth_token_max": 25354,
+        "fourth_token_distinct": 24587
+      },
+      "first_level_usage": {
+        "codes_used": 1,
+        "codes_total": 78,
+        "entropy_bits": -0.0,
+        "effective_codes": 1.0
+      }
+    },
+    "reported": {
+      "test_recall@10": 0.0406866415,
+      "test_recall@5": 0.02564459687
+    },
+    "historical_note": "the repo's earlier valid_l1_hard_er (e.g. resample 16.3895) uses the same P(pos)/P(neg) ratio; any older ‘L1 HARD ≈ 1’ observation came from a different pair/negative sampler and is not comparable"
+  },
+  "successor_entropy": {
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/item_sids.json",
+    "sid_sha256": "3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a",
+    "canonical_er": {
+      "L1": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.12084003405543468,
+        "negative_hit_rate": 0.09442815249266864,
+        "expected_rank_ratio": 1.2797034662392304,
+        "positive_hit_rate_ci95": [
+          0.1178686973796235,
+          0.12369690663134993
+        ],
+        "negative_hit_rate_ci95": [
+          0.09326080787058937,
+          0.09550860845709962
+        ],
+        "ratio_ci95": [
+          1.2494450568207798,
+          1.3098054327880733
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L2": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.02427395705231293,
+        "negative_hit_rate": 0.006474316526345662,
+        "expected_rank_ratio": 3.74926943308007,
+        "positive_hit_rate_ci95": [
+          0.0229684987229212,
+          0.02567401381137073
+        ],
+        "negative_hit_rate_ci95": [
+          0.00623588118437234,
+          0.0067127045691041535
+        ],
+        "ratio_ci95": [
+          3.5226196490235986,
+          4.002985410279934
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L3": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.004635323053637309,
+        "negative_hit_rate": 0.0003348784410178791,
+        "expected_rank_ratio": 13.841807909604519,
+        "positive_hit_rate_ci95": [
+          0.004067732475640904,
+          0.005240753003500142
+        ],
+        "negative_hit_rate_ci95": [
+          0.00028379528899820264,
+          0.0003878535616308769
+        ],
+        "ratio_ci95": [
+          11.379091545597758,
+          16.999999999999996
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "pairs_file": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+      "pairs_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "definition": "ER = P(positive shares the anchor's prefix) / P(a fixed negative shares it), over the same 52855 valid pairs and the same 10 negatives for every arm"
+    },
+    "structure": {
+      "items": 24587,
+      "width": 4,
+      "levels": {
+        "L1": {
+          "distinct": 256,
+          "largest_bucket": 5379,
+          "largest_bucket_share": 0.21877414894049702,
+          "top10_share": 0.5831536991092854,
+          "mean_bucket": 96.04296875,
+          "median_bucket": 22.5,
+          "bucket_histogram": {
+            "1": 2,
+            "2-5": 32,
+            "6-20": 89,
+            "21-100": 91,
+            ">100": 42
+          },
+          "items_in_buckets_gt100": 19487
+        },
+        "L2": {
+          "distinct": 3952,
+          "largest_bucket": 985,
+          "largest_bucket_share": 0.04006182128767235,
+          "top10_share": 0.15756293976491642,
+          "mean_bucket": 6.2214068825910935,
+          "median_bucket": 1.0,
+          "bucket_histogram": {
+            "1": 2193,
+            "2-5": 1135,
+            "6-20": 445,
+            "21-100": 137,
+            ">100": 42
+          },
+          "items_in_buckets_gt100": 8966
+        },
+        "L3": {
+          "distinct": 13702,
+          "largest_bucket": 94,
+          "largest_bucket_share": 0.0038231585797372596,
+          "top10_share": 0.025297921665921014,
+          "mean_bucket": 1.79440957524449,
+          "median_bucket": 1.0,
+          "bucket_histogram": {
+            "1": 10330,
+            "2-5": 2817,
+            "6-20": 490,
+            "21-100": 65,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        },
+        "L4": {
+          "distinct": 24587,
+          "largest_bucket": 1,
+          "largest_bucket_share": 4.067189978443893e-05,
+          "top10_share": 0.0004067189978443893,
+          "mean_bucket": 1.0,
+          "median_bucket": 1.0,
+          "bucket_histogram": {
+            "1": 24587,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        }
+      },
+      "collision_extension": {
+        "distinct_triples": 13702,
+        "items_sharing_a_triple": 10885,
+        "share_sharing_a_triple": 0.4427136291536178,
+        "fourth_token_min": 768,
+        "fourth_token_max": 861,
+        "fourth_token_distinct": 94
+      },
+      "first_level_usage": {
+        "codes_used": 256,
+        "codes_total": 256,
+        "entropy_bits": 5.456685480619913,
+        "effective_codes": 43.91632663619636
+      }
+    },
+    "reported": {
+      "test_recall@10": 0.05062762234718571,
+      "test_recall@5": 0.034279844704817285,
+      "test_ndcg@10": 0.028021926382601977
+    },
+    "historical_note": "the repo's earlier valid_l1_hard_er (e.g. resample 16.3895) uses the same P(pos)/P(neg) ratio; any older ‘L1 HARD ≈ 1’ observation came from a different pair/negative sampler and is not comparable"
+  },
+  "resample": {
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+    "sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+    "canonical_er": {
+      "L1": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.07944376123356352,
+        "negative_hit_rate": 0.004847223536089301,
+        "expected_rank_ratio": 16.38953942232631,
+        "positive_hit_rate_ci95": [
+          0.07711663986377826,
+          0.08175196291741557
+        ],
+        "negative_hit_rate_ci95": [
+          0.00466370258253713,
+          0.005038312364014757
+        ],
+        "ratio_ci95": [
+          15.597432226040475,
+          17.21849414837102
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L2": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.003424463153911645,
+        "negative_hit_rate": 5.8651026392961884e-05,
+        "expected_rank_ratio": 58.387096774193544,
+        "positive_hit_rate_ci95": [
+          0.002950998013432977,
+          0.0039352946741084095
+        ],
+        "negative_hit_rate_ci95": [
+          3.968404124491533e-05,
+          8.135464951281809e-05
+        ],
+        "ratio_ci95": [
+          41.6625,
+          88.5
+        ],
+        "ratio_undefined_draws": 0
+      },
+      "L3": {
+        "pairs": 52855,
+        "positive_hit_rate": 0.0005297512061299783,
+        "negative_hit_rate": 7.567874373285404e-06,
+        "expected_rank_ratio": 70.0,
+        "positive_hit_rate_ci95": [
+          0.0003405543467978432,
+          0.0007378677513953268
+        ],
+        "negative_hit_rate_ci95": [
+          1.891968593321351e-06,
+          1.5135748746570807e-05
+        ],
+        "ratio_ci95": [
+          30.093750000000007,
+          290.0
+        ],
+        "ratio_undefined_draws": 36
+      },
+      "pairs_file": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+      "pairs_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0",
+      "definition": "ER = P(positive shares the anchor's prefix) / P(a fixed negative shares it), over the same 52855 valid pairs and the same 10 negatives for every arm"
+    },
+    "structure": {
+      "items": 24587,
+      "width": 4,
+      "levels": {
+        "L1": {
+          "distinct": 241,
+          "largest_bucket": 253,
+          "largest_bucket_share": 0.01028999064546305,
+          "top10_share": 0.08150648716801562,
+          "mean_bucket": 102.02074688796681,
+          "median_bucket": 98.0,
+          "bucket_histogram": {
+            "1": 1,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 130,
+            ">100": 110
+          },
+          "items_in_buckets_gt100": 14546
+        },
+        "L2": {
+          "distinct": 16145,
+          "largest_bucket": 25,
+          "largest_bucket_share": 0.0010167974946109733,
+          "top10_share": 0.008297067556025542,
+          "mean_bucket": 1.5228863425209043,
+          "median_bucket": 1.0,
+          "bucket_histogram": {
+            "1": 11438,
+            "2-5": 4467,
+            "6-20": 237,
+            "21-100": 3,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        },
+        "L3": {
+          "distinct": 23695,
+          "largest_bucket": 10,
+          "largest_bucket_share": 0.0004067189978443893,
+          "top10_share": 0.0027656891853418473,
+          "mean_bucket": 1.0376450728001687,
+          "median_bucket": 1.0,
+          "bucket_histogram": {
+            "1": 22993,
+            "2-5": 696,
+            "6-20": 6,
+            "21-100": 0,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        },
+        "L4": {
+          "distinct": 24587,
+          "largest_bucket": 1,
+          "largest_bucket_share": 4.067189978443893e-05,
+          "top10_share": 0.0004067189978443893,
+          "mean_bucket": 1.0,
+          "median_bucket": 1.0,
+          "bucket_histogram": {
+            "1": 24587,
+            "2-5": 0,
+            "6-20": 0,
+            "21-100": 0,
+            ">100": 0
+          },
+          "items_in_buckets_gt100": 0
+        }
+      },
+      "collision_extension": {
+        "distinct_triples": 23695,
+        "items_sharing_a_triple": 892,
+        "share_sharing_a_triple": 0.036279334607719524,
+        "fourth_token_min": 768,
+        "fourth_token_max": 777,
+        "fourth_token_distinct": 10
+      },
+      "first_level_usage": {
+        "codes_used": 241,
+        "codes_total": 256,
+        "entropy_bits": 7.825791681874778,
+        "effective_codes": 226.8809521259733
+      }
+    },
+    "reported": {
+      "test_recall@10": 0.0636327234
+    },
+    "historical_note": "the repo's earlier valid_l1_hard_er (e.g. resample 16.3895) uses the same P(pos)/P(neg) ratio; any older ‘L1 HARD ≈ 1’ observation came from a different pair/negative sampler and is not comparable"
+  }
+}

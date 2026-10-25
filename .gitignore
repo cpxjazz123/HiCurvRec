@@ -650,3 +650,7 @@ results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
 
 # Archived issue #116 runs stay untracked and remain isolated
 /results/research/issue116/
+
+# Issue #125: recovered read-only from git history by recover_inputs();
+# re-adding them would undo the deletion that freed the space.
+/results/research/sid_generation_forensics/inputs/
