@@ -538,3 +538,62 @@ class OutputAnchorTests(unittest.TestCase):
                 encoding="utf-8")
             resolved = baseline_module.guard_output_paths(tree)
             self.assertTrue(resolved["OUTPUT_JSON"].endswith("TIGER_ok/item_sids.json"))
+
+
+class SeveritySentenceTests(unittest.TestCase):
+    """A reviewer writes a sentence; the first word says how severe it is."""
+
+    def test_a_minor_sentence_does_not_block(self):
+        for severity in ("minor when it does not stop the work", "minor", "nit",
+                         "informational note", "advisory"):
+            with self.subTest(severity=severity):
+                self.assertFalse(pipeline_module._is_blocking(severity))
+
+    def test_a_blocking_sentence_blocks(self):
+        for severity in ("blocking", "BLOCKING", "blocker", "critical", "high",
+                         "unsafe", "fatal", ""):
+            with self.subTest(severity=severity):
+                self.assertTrue(pipeline_module._is_blocking(severity))
+
+    def test_three_pass_verdicts_with_only_minor_findings_verify(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_minor", objective="o")
+            tree = root / "coupled"
+            tree.mkdir()
+            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [pipeline_module.implementation_record(
+                _coupled(), {"changed_files": ["model.py"]}, tree)]
+            minor = {"verifier": "v", "verdict": "PASS",
+                     "checks": [{"name": "a) fidelity", "verdict": "PASS",
+                                 "findings": [{"severity": "minor when it does not stop "
+                                                          "the work",
+                                               "location": "model.py:1",
+                                               "detail": "no blocking defect found",
+                                               "reproduction": "", "correction": ""}]}]}
+            state = pipeline_module.apply_verification(
+                state, "coupled", [dict(minor, verifier="v1"), dict(minor, verifier="v2"),
+                                   dict(minor, verifier="v3")])
+            self.assertEqual(state["implementations"][0]["status"], "verified")
+
+    def test_a_preflight_failure_blocks_even_when_the_reviewers_pass(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_pre2", objective="o")
+            tree = root / "coupled"
+            tree.mkdir()
+            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [pipeline_module.implementation_record(
+                _coupled(), {"changed_files": ["model.py"]}, tree)]
+            state["implementations"][0]["blocking_findings"] = [
+                {"verifier": "preflight", "check": "output isolation",
+                 "severity": "blocking", "location": "train_rqvae.py",
+                 "detail": "writes into the baseline", "reproduction": "", "correction": ""}]
+            passing = {"verifier": "v", "verdict": "PASS", "checks": []}
+            state = pipeline_module.apply_verification(
+                state, "coupled", [dict(passing, verifier="v1"),
+                                   dict(passing, verifier="v2"),
+                                   dict(passing, verifier="v3")])
+            self.assertEqual(state["implementations"][0]["status"], "needs_repair")
