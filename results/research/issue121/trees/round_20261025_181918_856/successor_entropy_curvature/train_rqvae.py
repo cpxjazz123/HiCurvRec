@@ -64,7 +64,7 @@ TRAIN_FILE     = REPO_ROOT / "results" / "stage0_build_parquet" / "train.parquet
 OUTPUT_SID     = RESULT_DIR / "sids_for_hgrec.npy"
 OUTPUT_JSON    = RESULT_DIR / "item_sids.json"
 CHECKPOINT     = RESULT_DIR / "rqvae_best.pth"
-LOG_DIR        = REPO_ROOT / "stage2_RQ-VAE" / ARM_NAME / "logs"
+LOG_DIR        = RESULT_DIR / "logs"
 METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 
 
@@ -117,7 +117,7 @@ def _successor_entropy(item_count: int) -> np.ndarray:
             probability = (count + ENTROPY_SMOOTHING * (marginal[target] / grand)) / (
                 mass + ENTROPY_SMOOTHING)
             value -= probability * math.log(probability + ENTROPY_EPS)
-        entropy[item] = value / math.log(max(2, len(marginal)))
+        entropy[item] = value / math.log(max(2, item_count))
     return np.clip(entropy, 0.0, 1.0)
 
 
@@ -159,6 +159,7 @@ EVAL_INTERVAL       = 50
 
 
 # === DDP launcher 配置 (与 stage3 不同 master_port 避免冲突) ===
+SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"
 _LAUNCHER = {
     # torchrun lives next to the interpreter that runs this file: no absolute
     # path, and the same interpreter the project pins in CLAUDE.md §2.
@@ -295,7 +296,7 @@ def _tokenizer_config() -> SimpleNamespace:
 
 def main() -> None:
     # === DDP 初始化 ===
-    if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
+    if os.environ.get(SINGLE_GPU_ENV, "") != "1" and "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
         dist.init_process_group(backend="nccl")
         rank = dist.get_rank()
         world_size = dist.get_world_size()
@@ -322,10 +323,17 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    train_dataset = TensorDataset(train_embeddings)
+    # The row of every training item inside the global curvature vector: a batch
+    # carries embeddings only, so it must also carry the rows that index the
+    # train-only signal. Without this the curvature vector would be applied to a
+    # batch it does not match.
+    train_dataset = TensorDataset(train_embeddings,
+                                  torch.arange(len(train_ids), dtype=torch.long))
     # The train-only successor entropy, cached before any SID is built.
     entropy = _successor_entropy(int(len(all_embeddings)))
     curvature = _curvature_from_entropy(entropy, int(len(all_embeddings)))
+    # The curvature of the training rows only, in the row order the loader uses.
+    curvature_train = curvature[torch.from_numpy(train_ids)]
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -380,11 +388,12 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, rows in loader:
             batch = batch.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_loss, _, _ = model(
-                batch, curvature=curvature.to(device), geometry_on=GEOMETRY_ON)
+                batch, curvature=curvature_train[rows].to(device),
+                geometry_on=GEOMETRY_ON)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if not torch.isfinite(loss):
@@ -505,6 +514,10 @@ def main() -> None:
 
 def _launch_via_torchrun() -> None:
     """2026-09-22: 与 stage3 同款, 但不同端口 (50202). 顶层调用时自动 fork 4 卡 DDP."""
+    if os.environ.get(SINGLE_GPU_ENV, "") == "1":
+        # Frozen one-card path: do not launch torchrun or initialize a process group.
+        # The module entry point invokes main() exactly once after this returns.
+        return
     if int(os.environ.get("RANK", -1)) >= 0:
         return  # 已经在 torchrun 启动的子进程里
     LOG_DIR.mkdir(parents=True, exist_ok=True)

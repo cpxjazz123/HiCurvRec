@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:84-131 -> model/layers.py:107-142,153-178,317-341 | Traced the trainer's train-only entropy/cache into the first residual layer's curved assignment, and reviewed CANDIDATE_CHECK.json:9-19,42-44 for reported on/off and gradient probes. The pathway is genuinely connected: per-item curvature changes Poincare-mapped candidate distances and argmin, and standard quantization losses update encoder/codebook parameters. The reported probe says assignments move with behavior and geometry controls, with finite nonzero gradients. Source-level execution cannot be repeated in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:120
+FINDING DETAIL: Entropy normalization uses log(max(2, len(marginal))), where len(marginal) is the number of observed distinct successor IDs, rather than log(max(2, N)) for the item/catalog count specified by the proposal. These denominators differ whenever some catalog items never appear as a successor; this inflates normalized entropy and consequently curvature, with values potentially clipped to 1.0. Thus the implemented behavior-to-curvature signal is not the specified normalized successor entropy.
+FINDING REPRODUCTION: Use an item inventory of N=100 with successors observed for only two IDs and an outgoing distribution (0.5, 0.5). The code divides log(2) by log(2), producing H=1; the specified normalization divides by log(100), producing about 0.1505. The resulting curvatures are 1.0 versus about 0.2355 for c_min=0.1,c_max=1.0.
+FINDING CORRECTION: Pass the full item_count into the entropy denominator and compute value / math.log(max(2, item_count)); retain the existing [0,1] clipping and bounded-curvature mapping.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/model/layers.py:107-142,153-178,317-341; train_rqvae.py:383-395 | Inspected the real forward/backward path, including finite-loss guard, backward, gradient clipping, and optimizer step; also inspected the candidate probe record at CANDIDATE_CHECK.json:9-19. Curved distance uses bounded positive curvature, maps points inside the Poincare ball, and clamps the atanh argument below one. The selected curved assignment is consumed by non-detached codebook/commitment losses and the straight-through output; no computed coupled term is discarded. The probe reports finite gradients reaching both codebook and encoder, and assignment changes under behavior-off and Euclidean controls. Runtime execution is unavailable here as specified.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: NONE
+FINDING DETAIL: NONE
+FINDING REPRODUCTION: NONE
+FINDING CORRECTION: NONE
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:41-68,296-329,455-499,506-532 | Statically traced root and input paths, DDP setup, training, final SID generation/export, and launcher entry point. Output resolves to results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/, the required candidate-specific location; train.parquet is the frozen stage0 path. Export enumerates all embedding rows as item IDs and writes integer SID rows to both NPY and JSON, extending collisions and checking uniqueness. The 4-process torchrun path exists. The required single-card launcher branch is absent: this candidate contains no SINGLE_GPU_ENV / GENREC_SINGLE_GPU handling, and its unconditional launcher requests four processes.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:506-526
+FINDING DETAIL: _launch_via_torchrun unconditionally starts four torchrun workers and never reads SINGLE_GPU_ENV = "GENREC_SINGLE_GPU". The single-card smoke/launch mode therefore cannot select a one-process training path, contrary to the integration contract; on a one-GPU allocation the hard-coded four-process launch can fail or hang.
+FINDING REPRODUCTION: Set GENREC_SINGLE_GPU=1 and invoke the trainer entry point with one visible GPU. The code still builds --nproc_per_node=4 and CUDA_VISIBLE_DEVICES=0,1,2,3 at lines 167-170, 518-524; there is no environment check that changes this behavior.
+FINDING CORRECTION: Add SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" and honor it in the launcher: when enabled, bypass torchrun and call main() directly (or use a one-process launch), while retaining the existing four-card distributed path otherwise and avoiding initialization of a process group in the single-card branch.

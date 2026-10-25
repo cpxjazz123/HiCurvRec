@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:84-131 -> train_rqvae.py:327-329 -> model/layers.py:317-335 -> model/layers.py:117-142 | Traced the real training call and first-level assignment, and inspected CANDIDATE_CHECK.json lines 9-19, which records both behavior and geometry controls moving assignments and finite gradients. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The train-only successor entropy is mapped to per-item curvature and passed to the first-level Poincare distance used for codeword ranking. The residual levels remain baseline as specified. The behavior-off control sets a shared curvature; geometry-off bypasses curved distance for Euclidean distance.
+FINDING REPRODUCTION: Follow the call chain at the cited locations; the candidate check records assignment changes under both controls.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:117-178; model/model.py:26-32; train_rqvae.py:387-395 | Static differentiability and numerical review of the real forward/backward path, cross-checked against CANDIDATE_CHECK.json lines 9-19 (assignment movement, finite gradients, nonzero encoder/codebook gradients, and disconnected negative-control rejection). No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Curved distance is finite-safe for the configured positive curvature band: exp-map outputs are bounded inside the ball, the Mobius denominator is clamped, and the atanh input is capped below one. The discrete argmin itself is not differentiated, but it selects codewords for the existing straight-through quantizer and its commitment/codebook losses, so assignment changes alter downstream gradients and updates. The recorded candidate check reports finite, nonzero gradients reaching encoder and codebook.
+FINDING REPRODUCTION: Compare both-on, behavior-off, and geometry-off assignments in the candidate check; inspect the forward path at model/layers.py:160-178 and its curved-distance implementation at lines 127-142.
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:41-68, 297-320, 456-500, 507-537 | Inspected root/data/result path derivation, trainer entry point, export/index construction, and distributed/single-card launcher branches. Trainer execution was not performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:509-512, 535-537
+FINDING DETAIL: In the single-card branch, _launch_via_torchrun() calls main() and returns, after which the module-level entry point calls main() again. Thus GENREC_SINGLE_GPU=1 runs the complete trainer twice sequentially, reinitializing and overwriting its own outputs rather than running once. This violates the frozen single-card launcher behavior and can double runtime / corrupt the intended run record.
+FINDING REPRODUCTION: Set GENREC_SINGLE_GPU=1 and execute train_rqvae.py: the first main() is called at line 511; on return, execution continues to the unconditional main() at line 537 and starts a second training run.
+FINDING CORRECTION: Make the entry point mutually exclusive, e.g. have _launch_via_torchrun return whether it handled training and call main() only for the torchrun-child path, or remove the main() call from the single-card branch and let the entry point invoke it exactly once.
