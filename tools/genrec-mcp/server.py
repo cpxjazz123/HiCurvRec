@@ -2124,8 +2124,14 @@ def round_admission(tree: Path, verification_id: str) -> dict:
                            str(module.VERIFIER_AGENTS) + " agent(s)"}
     if record.get("blocking_findings"):
         return {"passed": False, "refused": "unresolved blocking findings remain"}
-    if record.get("output_preflight") == "failed":
-        return {"passed": False, "refused": "the output-path preflight failed"}
+    # The output-path preflight is run again here, on the tree that is about
+    # to train: a stored verdict from an earlier revision says nothing about
+    # the source that is running now.
+    from tools.research.rounds import baseline as round_baseline
+    try:
+        round_baseline.guard_output_paths(Path(tree), baseline=round_baseline.baseline_path())
+    except round_baseline.BaselineError as exc:
+        return {"passed": False, "refused": "the output-path preflight failed: " + str(exc)}
     # The tree may be the one the verifiers saw or its promoted copy inside the
     # Stage2 allowlist; the source digest is path-independent, so it is what must
     # match. A different digest means the code changed after the review.
@@ -2741,8 +2747,30 @@ def tool_research_round_launch(round_id: str, parallel: int = 0) -> dict:
     for record in round_pipeline.verified_implementations(state):
         tree = _promote_round_tree(Path(record["tree"]), str(record["idea_id"]))
         target = tree_result_dir(tree)
-        if not any(job["idea_id"] == record["idea_id"] and job["kind"] == "stage2"
-                   for job in queue.jobs["jobs"]):
+        # A candidate whose previous job failed is queued again: the failure
+        # was a runtime defect that has since been repaired. The old attempt
+        # keeps its evidence, and the job goes back to pending.
+        live = {"pending", "running", "done"}
+        previous = [job for job in queue.jobs["jobs"]
+                    if job["idea_id"] == record["idea_id"] and job["kind"] == "stage2"]
+        stale = [job for job in previous if job.get("status") not in live]
+        if stale:
+            # One job per candidate runs at a time. If a live job already
+            # exists, the stale ones are kept as evidence; otherwise the newest
+            # stale job goes back to pending.
+            has_live = any(job.get("status") in live for job in previous)
+            for index, job in enumerate(stale):
+                job.setdefault("previous_attempts", []).append(
+                    {"status": job.get("status"), "error": job.get("error"),
+                     "finished_at": job.get("finished_at")})
+                if not has_live and index == 0:
+                    job["status"] = "pending"
+                    job["error"] = None
+                    job["finished_at"] = None
+                else:
+                    job["status"] = "superseded"
+            queue.save()
+        if not previous:
             queue.enqueue_stage2(idea_id=record["idea_id"], tree=tree, result_dir=target,
                                  round_id=round_id)
             queued.append(record["idea_id"])

@@ -90,6 +90,25 @@ class JobQueue:
     # ------------------------------------------------------------- persistence
     def save(self) -> None:
         self.root.mkdir(parents=True, exist_ok=True)
+        # One live record per job id: a candidate may have an older attempt with
+        # the same id, and two live records would make the queue ambiguous.
+        by_id = {}
+        for job in self.jobs["jobs"]:
+            keep = by_id.get(job["job_id"])
+            if keep is None:
+                by_id[job["job_id"]] = job
+                continue
+            live = job if job.get("status") != "superseded" else keep
+            dead = keep if live is job else job
+            if live.get("status") == "superseded" and dead.get("status") != "superseded":
+                live, dead = dead, live
+            live.setdefault("previous_attempts", []).extend(dead.get("previous_attempts", []))
+            if dead.get("error"):
+                live.setdefault("previous_attempts", []).append(
+                    {"status": dead.get("status"), "error": dead.get("error"),
+                     "finished_at": dead.get("finished_at")})
+            by_id[job["job_id"]] = live
+        self.jobs["jobs"] = list(by_id.values())
         atomic_json(self.path, self.jobs)
 
     def _job(self, job_id: str) -> dict:
