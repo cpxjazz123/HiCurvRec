@@ -38,23 +38,26 @@ from model import RQVAE
 
 SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"
 
-# === 硬编码路径常量 (CLAUDE.md §1) ===
-# Stage0 emits user-event parquet directly into results/stage0_build_parquet/.
-EMBEDDING_FILE = Path(
-    "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy"  # stage1
-)
-TRAIN_FILE     = Path(
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
-)
-# Candidate-owned output directory; do not share baseline or other candidate outputs.
-CANDIDATE_ID = "branch_shell"
-# This candidate's promoted-tree result directory (never the baseline's TIGER_* output).
-OUTPUT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE") / f"TIGER_{CANDIDATE_ID}"
-OUTPUT_SID     = OUTPUT_DIR / "sids_for_hgrec.npy"
-OUTPUT_JSON    = OUTPUT_DIR / "item_sids.json"
-CHECKPOINT     = OUTPUT_DIR / "rqvae_best.pth"
-METRICS_PATH   = OUTPUT_DIR / "logs/training_metrics.jsonl"
-LOG_DIR        = OUTPUT_DIR / "logs"
+# === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
+def _repository_root() -> Path:
+    """The repository root, found by walking up to the stage2_RQ-VAE marker."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "stage2_RQ-VAE").is_dir():
+            return parent
+    raise RuntimeError("cannot locate the repository root above " + str(here))
+
+
+REPO_ROOT = _repository_root()
+ARM_NAME = "TIGER_branch_shell"
+RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
+EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
+TRAIN_FILE     = REPO_ROOT / "results" / "stage0_build_parquet" / "train.parquet"
+OUTPUT_SID     = RESULT_DIR / "sids_for_hgrec.npy"
+OUTPUT_JSON    = RESULT_DIR / "item_sids.json"
+CHECKPOINT     = RESULT_DIR / "rqvae_best.pth"
+LOG_DIR        = RESULT_DIR / "logs"
+METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
@@ -86,7 +89,7 @@ EVAL_INTERVAL       = 50
 
 # === DDP launcher 配置 (与 stage3 不同 master_port 避免冲突) ===
 _LAUNCHER = {
-    "torchrun":    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun",
+    "torchrun":    str(Path(sys.executable).with_name("torchrun")),
     "script":      os.path.abspath(__file__),
     "nproc":       4,
     "master_port": 50202,

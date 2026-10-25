@@ -671,7 +671,7 @@
       "at": 1792895579.8147504,
       "event": "implementation_reopened",
       "idea_id": "branch_tangent_codes",
-      "reason": "the remaining finding names the exact Möbius numerator"
+      "reason": "the remaining finding names the exact M\u00f6bius numerator"
     },
     {
       "at": 1792895579.814753,
@@ -918,20 +918,20 @@
     {
       "ablation_behavior_off": "Set t_beh to the baseline empirical occupancy target independent of transition weights (or w_i=1 and t from item-uniform mass), while retaining Lorentz distances, soft occupancy, and loss weight.",
       "ablation_both_on": "Use train-only transition-mass targets and Lorentzian soft code assignments/prefix occupancy; export ordinary hard RQ SIDs and evaluate the locked Stage3 protocol.",
-      "ablation_geometry_off": "Replace exp_o and d_L by matched-dimensional Euclidean squared distances in assignment probabilities; retain identical transition-derived targets, τ, objective and parameter budget.",
+      "ablation_geometry_off": "Replace exp_o and d_L by matched-dimensional Euclidean squared distances in assignment probabilities; retain identical transition-derived targets, \u03c4, objective and parameter budget.",
       "also_proposed_by": [
         "ideation_1"
       ],
-      "behavior_computation": "On train.parquet only, form within-user chronological adjacent pairs i→j. Set q_i=log(1+outdegree_i) and edge weight a_ij=count(i→j)/(sqrt(1+train_item_frequency(j))); define w_i=1+q_i and prefix target t_p^l proportional to Σ_i w_i·Σ_j a_ij for items i assigned under the current prefix p, with targets updated only from training-derived counts and frozen baseline prefix assignments (recommended to avoid target drift). Normalize targets separately per level.",
+      "behavior_computation": "On train.parquet only, form within-user chronological adjacent pairs i\u2192j. Set q_i=log(1+outdegree_i) and edge weight a_ij=count(i\u2192j)/(sqrt(1+train_item_frequency(j))); define w_i=1+q_i and prefix target t_p^l proportional to \u03a3_i w_i\u00b7\u03a3_j a_ij for items i assigned under the current prefix p, with targets updated only from training-derived counts and frozen baseline prefix assignments (recommended to avoid target drift). Normalize targets separately per level.",
       "behavior_signal": "Training-only outgoing continuation mass per source item and per resulting SID prefix.",
-      "cost_estimate": "One training adjacency pass O(E_train), sparse prefix-target tables, plus soft assignment already comparable to baseline. At frozen full-item scale 24,556×24×3,000=1,768,032,000 item-stage evaluations; the added operation is O(BLK) for minibatch B, L levels, K codes, plus O(number of observed prefixes) target aggregation. Expect about 5–15% tokenizer wall-clock overhead with sparse prefix accumulation; Stage3 unchanged.",
-      "coupling_equation": "p_i^l(k)=softmax_k[-d_L(exp_o(r_i^l),exp_o(c_k^l))²/τ]; m_p^l=Σ_i w_i Π_{s≤l}p_i^s(p_s); L_occ=Σ_l KL(t_beh^l || m_Lorentz^l). The behavior target t_beh and curved-distance-generated occupancy m_Lorentz meet in the same differentiable objective.",
+      "cost_estimate": "One training adjacency pass O(E_train), sparse prefix-target tables, plus soft assignment already comparable to baseline. At frozen full-item scale 24,556\u00d724\u00d73,000=1,768,032,000 item-stage evaluations; the added operation is O(BLK) for minibatch B, L levels, K codes, plus O(number of observed prefixes) target aggregation. Expect about 5\u201315% tokenizer wall-clock overhead with sparse prefix accumulation; Stage3 unchanged.",
+      "coupling_equation": "p_i^l(k)=softmax_k[-d_L(exp_o(r_i^l),exp_o(c_k^l))\u00b2/\u03c4]; m_p^l=\u03a3_i w_i \u03a0_{s\u2264l}p_i^s(p_s); L_occ=\u03a3_l KL(t_beh^l || m_Lorentz^l). The behavior target t_beh and curved-distance-generated occupancy m_Lorentz meet in the same differentiable objective.",
       "coupling_path": "Train transition mass defines the target distribution over prefixes; Lorentzian distances define soft code memberships and their multi-level prefix occupancy; the KL gradient moves code parameters until geometry-induced memberships better match behavior mass.",
       "duplicate_count": 1,
       "falsifiable_hypothesis": "Training continuation mass has useful hierarchical structure that static content loss underrepresents; both-on should shift codebook gradients and prefix populations toward predictive continuation regions and improve validation-selected Stage3 test Recall@10, with target >0.065. Verify changed prefix occupancies and parameter updates, not just SID quality.",
       "fingerprint": "b5c22611814df185",
       "hyperbolic_location": "The soft code assignment probabilities used to compute differentiable subtree occupancies, and thus the prefix-mass training gradient in Stage2 RQ-VAE.",
-      "hyperbolic_operator": "Lorentz-hyperboloid geodesic distance d_L at fixed curvature -κ, κ>0; use Lorentz exponential map at the origin for residual and code points.",
+      "hyperbolic_operator": "Lorentz-hyperboloid geodesic distance d_L at fixed curvature -\u03ba, \u03ba>0; use Lorentz exponential map at the origin for residual and code points.",
       "idea_id": "lorentz_prefix_mass",
       "key_change": "At each RQ level, derive a fixed continuation-mass target for each partial SID prefix from training transitions, and train prefix prototypes so their Lorentzian soft occupancy matches that distribution. The occupancy gradient changes the codebook parameters that determine the discrete prefixes.",
       "leakage_boundary": "All edge counts, item frequencies, source weights, and baseline assignments are constructed from training rows only; validation/test interactions are not used in target formation, SID fitting, or cache updates. Evaluate held-out Stage3 splits only after the tokenizer and SIDs are frozen.",
@@ -942,13 +942,13 @@
       "risks": [
         "Mass matching may merely encode popularity, overwhelm reconstruction, or create a few overloaded prefixes; soft products can vanish at deep levels; target counts may be sparse. Tune a small loss-weight grid on validation and report popularity-stratified recall."
       ],
-      "safeguards": "Compute Lorentz vectors in float32/64; project to future hyperboloid after updates; clamp acosh argument to ≥1+ε and exp-map tangent norms; use log-domain products or clamp p≥ε at deeper levels; normalize t/m with epsilon and smooth rare prefixes; cap w_i and λ; monitor gradient norms, occupancy entropy and reconstruction; deterministic tie-breaking. Keep target table frozen to baseline assignments to prevent feedback loops.",
+      "safeguards": "Compute Lorentz vectors in float32/64; project to future hyperboloid after updates; clamp acosh argument to \u22651+\u03b5 and exp-map tangent norms; use log-domain products or clamp p\u2265\u03b5 at deeper levels; normalize t/m with epsilon and smooth rare prefixes; cap w_i and \u03bb; monitor gradient norms, occupancy entropy and reconstruction; deterministic tie-breaking. Keep target table frozen to baseline assignments to prevent feedback loops.",
       "scope_reasons": [],
       "scope_verdict": "IN_SCOPE",
-      "spec_equations": "For hyperboloid signature (-,+,...), <X,Y>_L=-X0Y0+Σ_{d>0}XdYd; d_L(X,Y)=acosh(max(1,-κ<X,Y>_L))/sqrt(κ). For each level l, x_i^l=exp_o(r_i^l), q_k^l=exp_o(c_k^l), p_i^l=softmax(-d_L(x_i^l,q_k^l)^2/τ). For prefix p=(k1,...,kl), m_p^l=ε+Σ_i w_i∏_{s=1}^l p_i^s(ks), normalize m over p. Freeze t_p^l from train-only baseline hard SID assignments and transition masses; L=L_base+λΣ_l KL(t^l||m^l). Stop gradient through t. Use straight-through hard argmin for normal RQ forward/export; soft occupancy is a training auxiliary directly shaping the same code vectors.",
-      "spec_inputs_outputs": "Inputs: training sequences, frozen baseline SIDs for target aggregation, train item frequencies, current residuals and codebooks, κ, τ, λ. Outputs: frozen per-level prefix target tables, differentiable occupancy loss and gradients, then hard per-item RQ digits/SIDs.",
+      "spec_equations": "For hyperboloid signature (-,+,...), <X,Y>_L=-X0Y0+\u03a3_{d>0}XdYd; d_L(X,Y)=acosh(max(1,-\u03ba<X,Y>_L))/sqrt(\u03ba). For each level l, x_i^l=exp_o(r_i^l), q_k^l=exp_o(c_k^l), p_i^l=softmax(-d_L(x_i^l,q_k^l)^2/\u03c4). For prefix p=(k1,...,kl), m_p^l=\u03b5+\u03a3_i w_i\u220f_{s=1}^l p_i^s(ks), normalize m over p. Freeze t_p^l from train-only baseline hard SID assignments and transition masses; L=L_base+\u03bb\u03a3_l KL(t^l||m^l). Stop gradient through t. Use straight-through hard argmin for normal RQ forward/export; soft occupancy is a training auxiliary directly shaping the same code vectors.",
+      "spec_inputs_outputs": "Inputs: training sequences, frozen baseline SIDs for target aggregation, train item frequencies, current residuals and codebooks, \u03ba, \u03c4, \u03bb. Outputs: frozen per-level prefix target tables, differentiable occupancy loss and gradients, then hard per-item RQ digits/SIDs.",
       "specification": {
-        "text": "Build assignments p_i^l(k) with a temperature-softmax of negative Lorentz distances from current residual points to level-l code points; define soft prefix mass m_p^l as the sum over items of w_i times the product of their assignments along prefix p. Set w_i to a smoothed training continuation mass (defined below), normalize w to mean one, and minimize L_occ=Σ_l KL(stopgrad(t^l)||m^l), where t_p^l is the normalized training-only probability mass of transitions whose source item has prefix p. Compute m with differentiable products and normalize with epsilon. Keep baseline reconstruction and commitment losses; hard SID export remains ordinary argmin RQ."
+        "text": "Build assignments p_i^l(k) with a temperature-softmax of negative Lorentz distances from current residual points to level-l code points; define soft prefix mass m_p^l as the sum over items of w_i times the product of their assignments along prefix p. Set w_i to a smoothed training continuation mass (defined below), normalize w to mean one, and minimize L_occ=\u03a3_l KL(stopgrad(t^l)||m^l), where t_p^l is the normalized training-only probability mass of transitions whose source item has prefix p. Compute m with differentiable products and normalize with epsilon. Keep baseline reconstruction and commitment losses; hard SID export remains ordinary argmin RQ."
       },
       "title": "Fit hierarchical code occupancy to training continuation mass in Lorentz space"
     },
@@ -959,16 +959,16 @@
       "also_proposed_by": [
         "ideation_1"
       ],
-      "behavior_computation": "Using only train sequences, enumerate (user, source i, target j) adjacent transitions; context is mean Stage1 vector of preceding up-to-five distinct training items. For each target j with ≥20 transitions, run deterministic k-means (K=min(4, floor(n_j/5))) on context vectors and label each transition; pair distinct source items with the same target and different cohort labels as positives, same cohort as negatives. Exclude users/targets below support threshold.",
+      "behavior_computation": "Using only train sequences, enumerate (user, source i, target j) adjacent transitions; context is mean Stage1 vector of preceding up-to-five distinct training items. For each target j with \u226520 transitions, run deterministic k-means (K=min(4, floor(n_j/5))) on context vectors and label each transition; pair distinct source items with the same target and different cohort labels as positives, same cohort as negatives. Exclude users/targets below support threshold.",
       "behavior_signal": "Cross-user context cohort identity for transitions into a shared next item.",
-      "cost_estimate": "One train transition/context preprocessing pass O(E_train·d), cohort clustering on sampled contexts, then O(Pd) Lorentz pair distances per step for P sampled pairs. At frozen scale 24,556 items ×24 steps/epoch ×3,000 epochs, cache transition pairs and draw e.g. P=2B per minibatch; expect 5–20% overhead depending on pair count/dimension, no Stage3 inference cost.",
-      "coupling_equation": "L_pair(a,b)=1[y_diff]·max(0,m-d_L(exp_o(q_a),exp_o(q_b)))² + 1[y_same]·max(0,d_L(exp_o(q_a),exp_o(q_b))-M)², where y_diff comes only from training-user context cohort labels.",
+      "cost_estimate": "One train transition/context preprocessing pass O(E_train\u00b7d), cohort clustering on sampled contexts, then O(Pd) Lorentz pair distances per step for P sampled pairs. At frozen scale 24,556 items \u00d724 steps/epoch \u00d73,000 epochs, cache transition pairs and draw e.g. P=2B per minibatch; expect 5\u201320% overhead depending on pair count/dimension, no Stage3 inference cost.",
+      "coupling_equation": "L_pair(a,b)=1[y_diff]\u00b7max(0,m-d_L(exp_o(q_a),exp_o(q_b)))\u00b2 + 1[y_same]\u00b7max(0,d_L(exp_o(q_a),exp_o(q_b))-M)\u00b2, where y_diff comes only from training-user context cohort labels.",
       "coupling_path": "Training user-context cohorts determine positive/negative pair labels; those labels select the margin branch applied to Lorentz distance between the exact quantized representations underlying the SIDs, changing their codebook/encoder updates.",
       "duplicate_count": 1,
       "falsifiable_hypothesis": "For targets with multiple user-context cohorts, the cohort distinction is predictive rather than noise; preserving it in curved code representations will change relevant SID digits and improve validation-selected Stage3 test Recall@10 toward/above 0.065. Confirm that pairwise distance margins and held-out-within-train cohort-conditioned next-item diagnostics change alongside test recall.",
       "fingerprint": "5ba14bb267430f8a",
       "hyperbolic_location": "A contrastive margin loss on the level-l quantized item points; gradients pass through Lorentz distance to the encoder/codebook that produces the SID digits.",
-      "hyperbolic_operator": "Lorentz geodesic distance on curvature -κ, κ>0, between origin-exp-mapped quantized source representations.",
+      "hyperbolic_operator": "Lorentz geodesic distance on curvature -\u03ba, \u03ba>0, between origin-exp-mapped quantized source representations.",
       "idea_id": "lorentz_user_cohort_margin",
       "key_change": "Sample pairs of training examples with the same next item but different preceding user-context cohorts; encourage the source-item SID representations to preserve the observed cohort contrast at each RQ level via a Lorentzian geodesic margin. The contrast term acts on the actual residual/code representation used to construct SIDs.",
       "leakage_boundary": "Build contexts, target groupings, cohort centroids/labels and pairs strictly from train rows and training-period histories; freeze them before Stage2 fitting. Do not use validation/test targets, user histories, labels or interaction statistics for pairs or SID assignment.",
@@ -979,13 +979,13 @@
       "risks": [
         "Same-target cohort labels may reflect sampling noise, item popularity, or history length; the pair loss can conflict with semantic reconstruction or over-separate paraphrastic items. Sparse targets yield few reliable pairs; cohort clustering can be unstable."
       ],
-      "safeguards": "Require target support and multiple cohorts; cap pairs per target/user to avoid popularity domination; L2-normalize context vectors before clustering; fix clustering seed and label ordering; compute Lorentz distance in float32/64 with acosh clamp and hyperboloid projection; clip gradients; use zero pair loss for invalid/rare items; monitor reconstruction and pair-label balance. Set m<M with margins selected on training-only distance quantiles and λ via validation protocol.",
+      "safeguards": "Require target support and multiple cohorts; cap pairs per target/user to avoid popularity domination; L2-normalize context vectors before clustering; fix clustering seed and label ordering; compute Lorentz distance in float32/64 with acosh clamp and hyperboloid projection; clip gradients; use zero pair loss for invalid/rare items; monitor reconstruction and pair-label balance. Set m<M with margins selected on training-only distance quantiles and \u03bb via validation protocol.",
       "scope_reasons": [],
       "scope_verdict": "IN_SCOPE",
-      "spec_equations": "Let q_i^l be the straight-through quantized tangent representation at level l; map X_i=exp_o^{(-κ)}(q_i^l) to the Lorentz sheet. d(X,Y)=acosh(max(1,-κ<X,Y>_L))/sqrt(κ). Given pair label y=1 for different cohorts, L_pair=y[m-d]_+² +(1-y)[d-M]_+². Total objective L_base+λ L_pair; sample balanced pairs and average. Hard SID indices remain standard nearest-code indices, but the pair gradient updates the same encoder/codebook points and therefore can alter assignments on subsequent steps.",
-      "spec_inputs_outputs": "Inputs: train-only transitions and contexts, frozen Stage1 item embeddings, deterministic per-target cohort labels/pair sampler, RQ-VAE level representations/codebooks, κ,m,M,λ. Outputs: pair loss/gradients and updated code parameters; ordinary hard SID digits.",
+      "spec_equations": "Let q_i^l be the straight-through quantized tangent representation at level l; map X_i=exp_o^{(-\u03ba)}(q_i^l) to the Lorentz sheet. d(X,Y)=acosh(max(1,-\u03ba<X,Y>_L))/sqrt(\u03ba). Given pair label y=1 for different cohorts, L_pair=y[m-d]_+\u00b2 +(1-y)[d-M]_+\u00b2. Total objective L_base+\u03bb L_pair; sample balanced pairs and average. Hard SID indices remain standard nearest-code indices, but the pair gradient updates the same encoder/codebook points and therefore can alter assignments on subsequent steps.",
+      "spec_inputs_outputs": "Inputs: train-only transitions and contexts, frozen Stage1 item embeddings, deterministic per-target cohort labels/pair sampler, RQ-VAE level representations/codebooks, \u03ba,m,M,\u03bb. Outputs: pair loss/gradients and updated code parameters; ordinary hard SID digits.",
       "specification": {
-        "text": "From each train transition (u,i→j), form context vector h_u,i as the mean of frozen Stage1 embeddings of up to the previous 5 train items, excluding j. For same target j, pair contexts from different users; define y_ab=1 if their contexts fall in different deterministic training-only k-means cohorts, else 0. Let z_ab be their source-item quantized Lorentz points at a selected level; optimize L_pair= y·max(0,m-d_L(z_a,z_b))² +(1-y)·max(0,d_L(z_a,z_b)-M)² with 0<m<M, sampled balanced pairs. To avoid pulling identical source item copies apart inconsistently, pair only distinct source items; use the item's code representation as z."
+        "text": "From each train transition (u,i\u2192j), form context vector h_u,i as the mean of frozen Stage1 embeddings of up to the previous 5 train items, excluding j. For same target j, pair contexts from different users; define y_ab=1 if their contexts fall in different deterministic training-only k-means cohorts, else 0. Let z_ab be their source-item quantized Lorentz points at a selected level; optimize L_pair= y\u00b7max(0,m-d_L(z_a,z_b))\u00b2 +(1-y)\u00b7max(0,d_L(z_a,z_b)-M)\u00b2 with 0<m<M, sampled balanced pairs. To avoid pulling identical source item copies apart inconsistently, pair only distinct source items; use the item's code representation as z."
       },
       "title": "Preserve cross-user successor contrasts with a Lorentzian pairwise code margin"
     },
@@ -1081,7 +1081,7 @@
       "hyperbolic_location": "A transition-neighborhood Frechet mean and entropy-gated geodesic target shift are computed inside the quantization forward path before the first residual assignment.",
       "hyperbolic_operator": "Poincare geodesic interpolation via log^c_z, exp^c_z and distance d_c, with fixed curvature -0.5.",
       "idea_id": "transition_geodesic_codebook",
-      "key_change": "Maintain a slowly updated Poincare prototype for each item’s observed next-item neighborhood and interpolate the item latent toward that prototype along the geodesic before residual quantization; the interpolation weight is the item’s empirical transition entropy, so highly branching items receive more continuation structure.",
+      "key_change": "Maintain a slowly updated Poincare prototype for each item\u2019s observed next-item neighborhood and interpolate the item latent toward that prototype along the geodesic before residual quantization; the interpolation weight is the item\u2019s empirical transition entropy, so highly branching items receive more continuation structure.",
       "leakage_boundary": "Training interactions alone produce graph, probabilities, entropy and neighbor lists; validation/test interactions are excluded from statistics, prototype initialization, training, and SID export.",
       "motivation": "Next-item prediction depends on local directed transitions, but ordinary codebook centroids are optimized to reconstruct item embeddings rather than to preserve the geometry of likely continuations.",
       "novelty": "Rather than attach graph regularization to an otherwise standard quantizer, this uses the training-only transition graph to construct geodesic barycentric targets that directly determine the RQ-VAE codebook assignment and its gradient.",
@@ -1417,7 +1417,7 @@
       "copy_verified_at_creation": true,
       "deviations": [
         {
-          "item": "Used MiniBatchKMeans with a deterministic, data-size-derived cohort count (2–8) rather than a fixed k-means configuration",
+          "item": "Used MiniBatchKMeans with a deterministic, data-size-derived cohort count (2\u20138) rather than a fixed k-means configuration",
           "reason": "the idea did not specify k and minibatch clustering bounds preprocessing cost on 396,958 training events."
         },
         {
@@ -1842,8 +1842,8 @@
         "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py",
         "result": "PASS loss=2.358819 encoder_grad=finite codebook_grad=finite ablations=assignment-path-active sid_shape=(12, 4) unique=12"
       },
-      "source_digest": "969074d03799e7ce6b2f2299f0cc6ae92c57d21e898401017837f25152db4277",
-      "status": "verified",
+      "source_digest": null,
+      "status": "implemented",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_shell",
       "tree_exists": true,
       "verdicts": [
@@ -2366,7 +2366,7 @@
           ],
           "repairs": [
             {
-              "change": "Replaced the extra Möbius-add around expmap_at with the specified damped Frechet update expmap_at(prototype, 0.25 * update, c), and replaced the logmap0/Möbius-delta plus expmap0/Möbius-add target with tangent=logmap_at(z, prototype, c) and target=expmap_at(z, beta * behavior_gate[:, None] * tangent, c). The training loop still sends its training-only directed transition probabilities, neighbors, and entropy gate through this transform and into curved quantization.",
+              "change": "Replaced the extra M\u00f6bius-add around expmap_at with the specified damped Frechet update expmap_at(prototype, 0.25 * update, c), and replaced the logmap0/M\u00f6bius-delta plus expmap0/M\u00f6bius-add target with tangent=logmap_at(z, prototype, c) and target=expmap_at(z, beta * behavior_gate[:, None] * tangent, c). The training loop still sends its training-only directed transition probabilities, neighbors, and entropy gate through this transform and into curved quantization.",
               "finding": "Blocking geodesic/Frechet semantic defect in model/model.py:41-47",
               "verification": "Source inspection confirms both formulas now use the required base-point maps directly. I attempted the requested behavior-off / Euclidean-geometry-off / both-on gradient and assignment smoke; it could not execute because the available `python` has no PyTorch installed, so finite gradients and assignment/gradient changes are NOT runtime-verified."
             }
@@ -3237,7 +3237,7 @@
         {
           "check": "a) behaviour x geometry fidelity",
           "correction": "If strict curved representations are intended, explicitly define the tangent/code point and Lorentz map as the representation used by the margin (and document that SID hard assignment remains Euclidean); otherwise describe this accurately as a Lorentzian pair loss over Euclidean RQ code vectors.",
-          "detail": "The path is genuinely coupled: cohort labels derived from train behavior select the attraction/repulsion margin, while Lorentz distance acts on codebook vectors returned from the selected level and the loss is added to the RQ-VAE objective. However, this implements Lorentz geometry only in the auxiliary margin distance; it does not use Lorentz points or a curved operation for quantization itself. The idea's claimed actual quantized Lorentz points are origin-exp-mapped only inside distance calculation, and `cohort_code_vectors` returns a selected Euclidean codebook vector. This still meets the stated connected-pathway contract, but not the stronger “curved code representation” wording.",
+          "detail": "The path is genuinely coupled: cohort labels derived from train behavior select the attraction/repulsion margin, while Lorentz distance acts on codebook vectors returned from the selected level and the loss is added to the RQ-VAE objective. However, this implements Lorentz geometry only in the auxiliary margin distance; it does not use Lorentz points or a curved operation for quantization itself. The idea's claimed actual quantized Lorentz points are origin-exp-mapped only inside distance calculation, and `cohort_code_vectors` returns a selected Euclidean codebook vector. This still meets the stated connected-pathway contract, but not the stronger \u201ccurved code representation\u201d wording.",
           "location": "train_rqvae.py:61-77, 364-366",
           "reproduction": "Inspect train_rqvae.py:365 and model/model.py:58-62: `z` is the selected raw embedding code, passed into `pair_margin_loss`; only `lorentz_distance` maps it to the hyperboloid. The train-only pair labels do affect which Lorentz margin branch is used.",
           "severity": "minor when it does not stop the work",
@@ -3271,9 +3271,9 @@
         {
           "check": "a) behaviour x geometry fidelity",
           "correction": "If the intended claim is curved residual quantization rather than a curved assignment metric over Euclidean residuals, define/map residuals and codewords consistently and compute commitment/codebook updates in that geometry; otherwise accurately constrain the stated mechanism to curved assignment plus Euclidean residual update.",
-          "detail": "The selected Poincaré distance contributes a differentiable distance penalty to quant_loss, but the commitment/codebook losses and straight-through reconstruction still operate on raw Euclidean latent/code vectors. Thus the curved pathway affects assignments and adds distance gradient, but does not use a curved residual/update as implied by a fully hyperbolic residual quantizer. The required behaviour-geometry coupling is nevertheless real: branch radius changes the curved argmin metric.",
+          "detail": "The selected Poincar\u00e9 distance contributes a differentiable distance penalty to quant_loss, but the commitment/codebook losses and straight-through reconstruction still operate on raw Euclidean latent/code vectors. Thus the curved pathway affects assignments and adds distance gradient, but does not use a curved residual/update as implied by a fully hyperbolic residual quantizer. The required behaviour-geometry coupling is nevertheless real: branch radius changes the curved argmin metric.",
           "location": "results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:147-149",
-          "reproduction": "Source-trace VQLayer.forward: behavior_on selects target_radius at line 135; _distances adds radius penalty to Poincaré distances at lines 103-109; indices select code at 136; gathered distance enters quant_loss at 148. The smoke test could not run in this environment: `python .../branch_shell/smoke_test.py` fails immediately with `ModuleNotFoundError: No module named 'torch'`.",
+          "reproduction": "Source-trace VQLayer.forward: behavior_on selects target_radius at line 135; _distances adds radius penalty to Poincar\u00e9 distances at lines 103-109; indices select code at 136; gathered distance enters quant_loss at 148. The smoke test could not run in this environment: `python .../branch_shell/smoke_test.py` fails immediately with `ModuleNotFoundError: No module named 'torch'`.",
           "severity": "minor when it does not stop the work",
           "verifier": "verify_branch_shell_r0_1"
         },
@@ -3385,8 +3385,8 @@
         },
         {
           "check": "a) behaviour x geometry fidelity",
-          "correction": "Implement the standard Poincare log map using delta=(-z)⊕_c b, its unscaled norm, and the lambda_z factor shown above; add a nonzero-basepoint numerical comparison test.",
-          "detail": "The coupled path invokes a purported Poincare logarithm at z, but _log_at computes the wrong tangent scale. With delta = (-z) ⊕_c b, the logarithm should be [2/(sqrt(c) lambda_z)] atanh(sqrt(c)||delta||) delta/||delta||, where lambda_z=2/(1-c||z||²). Instead this code folds (1-c||z||²) into delta's norm before atanh and divides by that altered norm. Thus the path is behaviour-conditioned and curved, but does not implement the specified log map; it produces a different displacement and can distort the intended geometry.",
+          "correction": "Implement the standard Poincare log map using delta=(-z)\u2295_c b, its unscaled norm, and the lambda_z factor shown above; add a nonzero-basepoint numerical comparison test.",
+          "detail": "The coupled path invokes a purported Poincare logarithm at z, but _log_at computes the wrong tangent scale. With delta = (-z) \u2295_c b, the logarithm should be [2/(sqrt(c) lambda_z)] atanh(sqrt(c)||delta||) delta/||delta||, where lambda_z=2/(1-c||z||\u00b2). Instead this code folds (1-c||z||\u00b2) into delta's norm before atanh and divides by that altered norm. Thus the path is behaviour-conditioned and curved, but does not implement the specified log map; it produces a different displacement and can distort the intended geometry.",
           "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:48-55",
           "reproduction": "Evaluate _log_at for nonzero z and b (for example c=0.5, z=(0.2,0), b=(0,0.2)) against the formula in FINDING DETAIL; the returned tangent magnitude differs. This is exercised by _branch_target at model/model.py:64-67 whenever an active training context is supplied.",
           "severity": "blocking",
@@ -3543,7 +3543,7 @@
         },
         {
           "check": "trainability",
-          "correction": "Run the forward/backward and controlled both-on, behaviour-off, and Euclidean ablation tests in the project’s intended torch environment. Assert finite occupancy and gradients, nonzero intended codebook/encoder gradients, an optimizer update, and measurable gradient or assignment change in each ablation (with deterministic inputs and fixed parameters).",
+          "correction": "Run the forward/backward and controlled both-on, behaviour-off, and Euclidean ablation tests in the project\u2019s intended torch environment. Assert finite occupancy and gradients, nonzero intended codebook/encoder gradients, an optimizer update, and measurable gradient or assignment change in each ablation (with deterministic inputs and fixed parameters).",
           "detail": "No real forward/backward or ablation comparison was executable in the available environment (`ModuleNotFoundError: No module named 'torch'`). Consequently finite loss/gradient, stability, parameter-update reachability, and changed-back behavior under both ablations are not verified. The smoke test merely checks that some VQ-layer parameter has a gradient; it does not require occupancy-only gradients to reach intended parameters or assert that either ablation changes gradients/SIDs.",
           "location": "results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/smoke_test.py:5",
           "reproduction": "Run `python smoke_test.py` from the candidate tree in this environment; it fails immediately importing torch. Even in a torch-enabled environment, lines 36-39 only print ablation losses, without assertions comparing them or their gradients/assignments.",
@@ -3609,7 +3609,7 @@
           "correction": "Build/consume the target and occupancy using the same conditioning key and population: for every source-prefix subtree, accumulate continuation mass over its training outgoing edges and compare it with differentiable destination assignments for those edges (or explicitly define a different consistent population). Smooth/skip unsupported rows rather than using all-zero KL targets. Then execute a small trainer/export integration test with frozen inputs and verify item-row indexing, output location, and both launcher branches.",
           "detail": "The continuation target table is built from each transition's SOURCE prefix (src) and destination code at the current level, but prefix_occupancy_loss indexes that table with each batch item's own hard prefix (model.py:93-99) and compares it to occupancy of items in that same prefix group. This does not aggregate destination-item occupancy conditioned on the source item's prefix; it treats destination prefixes as if they were source prefixes. In addition, deeper table entries with no outgoing training transition normalize to all zeros (train_rqvae.py:316), so their KL target is identically zero and contributes no useful target gradient. This makes the claimed target semantics incorrect for sparse/empty subtrees. Paths and single-card launcher exist by inspection, but execution, frozen-data provenance, and export correctness were not runtime-verified.",
           "location": "results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:301-317",
-          "reproduction": "Minimal counterexample: take two items a,b with distinct level-0 prefixes and one training edge a→b. The table row for a's prefix receives b's level-0 code (train_rqvae.py:311-315); occupancy is then computed over the batch items grouped by their own prefix and table row for that same prefix (model.py:93-99), not from the destinations of edges whose source is a. A prefix with no outgoing edge has a zero row after normalization at line 316.",
+          "reproduction": "Minimal counterexample: take two items a,b with distinct level-0 prefixes and one training edge a\u2192b. The table row for a's prefix receives b's level-0 code (train_rqvae.py:311-315); occupancy is then computed over the batch items grouped by their own prefix and table row for that same prefix (model.py:93-99), not from the destinations of edges whose source is a. A prefix with no outgoing edge has a zero row after normalization at line 316.",
           "severity": "blocking",
           "verifier": "verify_lorentz_prefix_mass_r1_3"
         }
@@ -3623,7 +3623,7 @@
         {
           "check": "behaviour x geometry fidelity",
           "correction": "No correction required for this check.",
-          "detail": "This is a connected behaviour–geometry path: training-only cohort labels from same-target transitions gate a margin on Lorentz distances between quantized source code vectors, and the term is included in the optimizer's loss. It is not merely an unused helper or a detached auxiliary behavior term.",
+          "detail": "This is a connected behaviour\u2013geometry path: training-only cohort labels from same-target transitions gate a margin on Lorentz distances between quantized source code vectors, and the term is included in the optimizer's loss. It is not merely an unused helper or a detached auxiliary behavior term.",
           "location": "results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:89-112, 367-375",
           "reproduction": "Follow build_transition_pairs at lines 89-112 into the sampled pairs and pair_margin_loss call at lines 367-375; pair_margin_loss computes Lorentz distance at lines 81-86.",
           "severity": "minor when it does not stop the work",
@@ -3825,8 +3825,8 @@
         },
         {
           "check": "a) behaviour x geometry fidelity",
-          "correction": "Implement the standard Poincare log map using delta=(-z)⊕_c b, its unscaled norm, and the lambda_z factor shown above; add a nonzero-basepoint numerical comparison test.",
-          "detail": "The coupled path invokes a purported Poincare logarithm at z, but _log_at computes the wrong tangent scale. With delta = (-z) ⊕_c b, the logarithm should be [2/(sqrt(c) lambda_z)] atanh(sqrt(c)||delta||) delta/||delta||, where lambda_z=2/(1-c||z||²). Instead this code folds (1-c||z||²) into delta's norm before atanh and divides by that altered norm. Thus the path is behaviour-conditioned and curved, but does not implement the specified log map; it produces a different displacement and can distort the intended geometry.",
+          "correction": "Implement the standard Poincare log map using delta=(-z)\u2295_c b, its unscaled norm, and the lambda_z factor shown above; add a nonzero-basepoint numerical comparison test.",
+          "detail": "The coupled path invokes a purported Poincare logarithm at z, but _log_at computes the wrong tangent scale. With delta = (-z) \u2295_c b, the logarithm should be [2/(sqrt(c) lambda_z)] atanh(sqrt(c)||delta||) delta/||delta||, where lambda_z=2/(1-c||z||\u00b2). Instead this code folds (1-c||z||\u00b2) into delta's norm before atanh and divides by that altered norm. Thus the path is behaviour-conditioned and curved, but does not implement the specified log map; it produces a different displacement and can distort the intended geometry.",
           "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:48-55",
           "reproduction": "Evaluate _log_at for nonzero z and b (for example c=0.5, z=(0.2,0), b=(0,0.2)) against the formula in FINDING DETAIL; the returned tangent magnitude differs. This is exercised by _branch_target at model/model.py:64-67 whenever an active training context is supplied.",
           "severity": "blocking",
@@ -5017,7 +5017,7 @@
         {
           "check": "behaviour x geometry fidelity",
           "correction": "Correct delta in _log_at to the Mobius subtraction numerator, retaining the existing conformal-factor/log scaling, and add a small non-collinear and scalar reference-formula test. Then recheck curved assignment.",
-          "detail": "The purported Poincare log map at z has an incorrectly assembled Mobius subtraction numerator. For (-z) (+_c) b, the numerator must be (1 - 2c<z,b> + c||b||²)(-z) + (1 - c||z||²)b. The code instead multiplies the first coefficient by b and subtracts the second coefficient times z. Therefore its branch tangent is not log_z(b), so the specified behavior-to-curved-tangent pathway is not implemented faithfully.",
+          "detail": "The purported Poincare log map at z has an incorrectly assembled Mobius subtraction numerator. For (-z) (+_c) b, the numerator must be (1 - 2c<z,b> + c||b||\u00b2)(-z) + (1 - c||z||\u00b2)b. The code instead multiplies the first coefficient by b and subtracts the second coefficient times z. Therefore its branch tangent is not log_z(b), so the specified behavior-to-curved-tangent pathway is not implemented faithfully.",
           "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:48-57",
           "reproduction": "For any nonzero z and b (for example scalar z=0.2, b=0.4, c=0.5), directly compare _log_at(z,b,c) with the standard Poincare log map formula above. They differ; consequently _branch_target differs from the specified exp/log transported branch displacement even with contexts supplied.",
           "severity": "blocking",
@@ -5074,7 +5074,7 @@
         {
           "check": "behaviour x geometry fidelity",
           "correction": "Correct delta in _log_at to the Mobius subtraction numerator, retaining the existing conformal-factor/log scaling, and add a small non-collinear and scalar reference-formula test. Then recheck curved assignment.",
-          "detail": "The purported Poincare log map at z has an incorrectly assembled Mobius subtraction numerator. For (-z) (+_c) b, the numerator must be (1 - 2c<z,b> + c||b||²)(-z) + (1 - c||z||²)b. The code instead multiplies the first coefficient by b and subtracts the second coefficient times z. Therefore its branch tangent is not log_z(b), so the specified behavior-to-curved-tangent pathway is not implemented faithfully.",
+          "detail": "The purported Poincare log map at z has an incorrectly assembled Mobius subtraction numerator. For (-z) (+_c) b, the numerator must be (1 - 2c<z,b> + c||b||\u00b2)(-z) + (1 - c||z||\u00b2)b. The code instead multiplies the first coefficient by b and subtracts the second coefficient times z. Therefore its branch tangent is not log_z(b), so the specified behavior-to-curved-tangent pathway is not implemented faithfully.",
           "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:48-57",
           "reproduction": "For any nonzero z and b (for example scalar z=0.2, b=0.4, c=0.5), directly compare _log_at(z,b,c) with the standard Poincare log map formula above. They differ; consequently _branch_target differs from the specified exp/log transported branch displacement even with contexts supplied.",
           "severity": "blocking",
@@ -5131,7 +5131,7 @@
         {
           "check": "trainability",
           "correction": "Set the Frechet iteration result directly to expmap_at(prototype, update), without the extra mobius_add. Compute tangent=logmap_at(z,prototype,c), then target=expmap_at(z,beta*gate*tangent,c). Then verify finite gradients and assignment/gradient changes in the supplied behavior-off, Euclidean-geometry-off, both-on smoke.",
-          "detail": "The Frechet update computes expmap_at(prototype, update), which already returns a point based at prototype, then Möbius-adds that point to prototype again (line 44). The target shift likewise substitutes logmap0(Möbius-delta) for logmap_at(z, prototype), and expmap0 plus Möbius addition is not the specified expmap_at(z, beta*g*logmap_at(z,m)). This is a coupled curved pathway, but it is not the proposed geodesic barycenter/interpolation. Thus the claim that this implementation tests the specified mechanism is not supported. Gradients exist in code, but this semantic error makes the trainability/effect comparison invalid for the stated idea.",
+          "detail": "The Frechet update computes expmap_at(prototype, update), which already returns a point based at prototype, then M\u00f6bius-adds that point to prototype again (line 44). The target shift likewise substitutes logmap0(M\u00f6bius-delta) for logmap_at(z, prototype), and expmap0 plus M\u00f6bius addition is not the specified expmap_at(z, beta*g*logmap_at(z,m)). This is a coupled curved pathway, but it is not the proposed geodesic barycenter/interpolation. Thus the claim that this implementation tests the specified mechanism is not supported. Gradients exist in code, but this semantic error makes the trainability/effect comparison invalid for the stated idea.",
           "location": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:41-47",
           "reproduction": "For any nonzero prototype and update, line 44 applies prototype twice: expmap_at returns mobius_add(prototype, expmap0(...)); the outer mobius_add(prototype, ...) moves it again. For a nonzero z and distinct prototype, compare lines 46-47 with logmap_at(z,prototype) followed by expmap_at(z,scaled_tangent); the implemented expressions are not those maps. A minimal unit counterexample is one item, one nonzero neighbor, gate=1, and any nonzero encoded latent.",
           "severity": "blocking",
@@ -5605,27 +5605,27 @@
   },
   "stage2_jobs": [
     {
-      "attempts": 3,
-      "error": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/transition_geodesic_codebook",
+      "attempts": 6,
+      "error": null,
       "failure_kind": null,
       "idea_id": "transition_geodesic_codebook",
       "job_id": "stage2:transition_geodesic_codebook",
       "kind": "stage2",
       "stage3_job_id": null,
-      "status": "failed"
+      "status": "pending"
     },
     {
-      "attempts": 6,
+      "attempts": 7,
       "error": null,
       "failure_kind": "SMOKE_FAILED",
       "idea_id": "lorentz_user_cohort_margin",
       "job_id": "stage2:lorentz_user_cohort_margin",
       "kind": "stage2",
       "stage3_job_id": null,
-      "status": "running"
+      "status": "pending"
     },
     {
-      "attempts": 2,
+      "attempts": 3,
       "error": null,
       "failure_kind": null,
       "idea_id": "branch_shell",
@@ -5635,24 +5635,24 @@
       "status": "done"
     },
     {
-      "attempts": 2,
+      "attempts": 3,
       "error": null,
       "failure_kind": null,
       "idea_id": "branch_tangent_codes",
       "job_id": "stage2:branch_tangent_codes",
       "kind": "stage2",
       "stage3_job_id": null,
-      "status": "running"
+      "status": "pending"
     },
     {
-      "attempts": 2,
+      "attempts": 3,
       "error": null,
       "failure_kind": null,
       "idea_id": "lorentz_prefix_mass",
       "job_id": "stage2:lorentz_prefix_mass",
       "kind": "stage2",
       "stage3_job_id": null,
-      "status": "running"
+      "status": "pending"
     },
     {
       "attempts": 0,
@@ -5665,7 +5665,7 @@
       "status": "done"
     },
     {
-      "attempts": 4,
+      "attempts": 6,
       "error": null,
       "failure_kind": null,
       "idea_id": "branch_shell_behavior_off",
@@ -5675,14 +5675,14 @@
       "status": "running"
     },
     {
-      "attempts": 3,
+      "attempts": 4,
       "error": null,
       "failure_kind": null,
       "idea_id": "branch_shell_geometry_off",
       "job_id": "stage2:branch_shell_geometry_off",
       "kind": "stage2",
       "stage3_job_id": "stage3:branch_shell_geometry_off",
-      "status": "done"
+      "status": "pending"
     },
     {
       "attempts": 0,
@@ -5692,7 +5692,7 @@
       "job_id": "stage3:branch_shell_geometry_off",
       "kind": "stage3",
       "stage3_job_id": null,
-      "status": "pending"
+      "status": "superseded"
     }
   ],
   "stage3_jobs": [
@@ -5714,10 +5714,25 @@
       "job_id": "stage3:branch_shell_geometry_off",
       "kind": "stage3",
       "stage3_job_id": null,
-      "status": "pending"
+      "status": "superseded"
     }
   ],
-  "step": "stage2",
-  "updated_at": 1792900451.4496734,
-  "verification": {}
+  "step": "verification",
+  "updated_at": 1792901806.4416149,
+  "verification": {},
+  "exploratory_runs": [
+    {
+      "idea_id": "branch_shell",
+      "policy": "single card, global batch 1024",
+      "note": "not comparable to the frozen four-card recipe; kept as a diagnostic",
+      "stage3_result": {
+        "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_branch_shell/ckpt/Amazon_2023_Instruments/Oct-25-2026_13-51-11/HG_Rec_best.pth",
+        "n_eval": 57439,
+        "test_ndcg@10": 0.03135972497952313,
+        "test_ndcg@5": 0.025816501234338922,
+        "test_recall@10": 0.05585055450129703,
+        "test_recall@5": 0.03873674680965894
+      }
+    }
+  ]
 }
