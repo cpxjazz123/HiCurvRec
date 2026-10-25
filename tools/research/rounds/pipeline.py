@@ -29,7 +29,10 @@ STATE_ROOT = Path("results/research") / DEFAULT_ISSUE / "rounds"
 IDEAE_AGENTS = 3
 SCORER_AGENTS = 3
 VERIFIER_AGENTS = 3
-MAX_REVISIONS = 4
+#: How many repair rounds one implementation may have. The cap exists so a
+#: candidate that cannot be repaired stops costing agents and is recorded with
+#: its evidence instead of looping forever.
+MAX_REVISIONS = 5
 
 
 class RoundError(RuntimeError):
@@ -317,6 +320,26 @@ def mark_agent_error(state: dict, implementation_id: str, error: str) -> dict:
     return state
 
 
+def mark_revision_capped(state: dict, implementation_id: str, reason: str) -> dict:
+    """Stop a candidate that used up its repair rounds.
+
+    The branch keeps its findings and its signature: a candidate that needs
+    more than the allowed rounds is recorded, not repaired forever.
+    """
+    record = _implementation(state, implementation_id)
+    record["status"] = "blocked"
+    record["blocked_reason"] = reason
+    record["blocked_kind"] = IMPLEMENTATION_NEEDS_FIX
+    record["revision_capped"] = True
+    state.setdefault("revision_capped", []).append(
+        {"idea_id": implementation_id, "reason": reason,
+         "revision": record.get("revision", 0),
+         "signature": record.get("failure_signature")})
+    record_event(state, "implementation_revision_capped", idea_id=implementation_id,
+                 reason=reason, revision=record.get("revision", 0))
+    return state
+
+
 def mark_resource_blocked(state: dict, implementation_id: str, reason: str) -> dict:
     """Record a measured infeasibility, keeping the idea for an optimisation route."""
     record = _implementation(state, implementation_id)
@@ -361,6 +384,7 @@ def summary(state: dict) -> dict:
         "verified": len(verified_implementations(state)),
         "blocked": len(state.get("blocked", [])),
         "agent_errors": len(state.get("agent_errors", [])),
+        "revision_capped": len(state.get("revision_capped", [])),
         "resource_blocked": len(state.get("resource_blocked", [])),
         "stage2_jobs": len(state.get("stage2_jobs", [])),
         "stage3_jobs": len(state.get("stage3_jobs", [])),
