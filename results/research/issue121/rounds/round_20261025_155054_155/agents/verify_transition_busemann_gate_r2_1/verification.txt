@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/train_rqvae.py:262-289 -> model/layers.py:115-147, 324-343 | Source inspection traced training.parquet-only adjacent history[-1] -> target counts into cached direction/confidence; trainer supplies those values at :347-349; first residual VQ layer maps latent/codewords to the fixed-curvature Poincare ball, computes squared geodesic distance and boundary potential, and uses their combined score for argmin. Export reuses the same cached training-derived behavior at train_rqvae.py:445-449. No validation/test behavior input is present on this path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behavior term is not a suffix or unrelated loss: confidence-weighted successor direction changes the first-stage curved assignment score itself. The code uses fixed c=0.5, exp-at-origin mapping, projected points and a bounded Poisson-kernel potential.
+FINDING REPRODUCTION: Source trace at the cited lines; no trainer execution attempted.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/model/layers.py:115-184, 324-343; smoke_test.py:13-39 | Inspected the forward path from score/argmin through codeword lookup, straight-through quantization and quantization loss, then backward reachability to encoder/codebook parameters. The source smoke exercises forward/backward, checks finite loss/encoder and codebook gradients, checks score differences for behavior/geometry controls, and checks SID shape/uniqueness; it is not run here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or obvious float32 instability found. Scores are bounded by positive denominator floors, projected to radius 0.9/sqrt(c), and the potential is clamped to [-20,20]. Assignment is discrete as in baseline VQ, while the selected codeword's standard quantization loss and straight-through encoder path remain active. Behavior-off uses baseline distance when behavior is absent or gate disabled; geometry-off has a separate Euclidean-plus-direction score.
+FINDING REPRODUCTION: Inspect model/layers.py:139-147 for finite curved score construction and :169-184 for assignment-to-loss path; inspect smoke_test.py:17-39 for the intended checks. Runtime gradient smoke is not run in this environment.
+FINDING CORRECTION: None. Runtime GPU smoke remains the stated pre-full-run check.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/train_rqvae.py:40-67, 233-290, 417-465, 468-496 | Source-inspected repository-root discovery and candidate-owned RESULT_DIR; frozen stage1 embedding and stage0 train.parquet inputs; train target-ID validation; rank-0 SID export and collision extension; and torchrun launcher plus SINGLE_GPU_ENV handling. This is a static integration review, not an execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. ARM_NAME resolves output to results/stage2_RQ-VAE/TIGER_transition_busemann_gate, matching the promoted tree name; outputs, checkpoint and logs stay under that candidate directory. Export emits one row per embedding row keyed by enumerate(item_id), validates unique extended SIDs, and writes JSON keys as item IDs. The launcher uses torchrun for multi-GPU and bypasses relaunch when GENREC_SINGLE_GPU is set; this honors the required single-card branch. Frozen data paths point to stage1 sentence_t5.npy and stage0 train.parquet.
+FINDING REPRODUCTION: Follow path constants at :56-67, train input and ID checks at :247-251, export at :453-461, and launcher at :468-496. No trainer execution attempted.
+FINDING CORRECTION: None.

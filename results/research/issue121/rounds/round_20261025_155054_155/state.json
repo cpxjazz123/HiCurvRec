@@ -1,0 +1,867 @@
+{
+  "blocked": [],
+  "created_at": 1792903854.1563041,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1792903854.1563044,
+      "event": "round_created"
+    },
+    {
+      "at": 1792903854.163077,
+      "event": "round_created",
+      "pid": null
+    },
+    {
+      "at": 1792903973.81702,
+      "duplicates": 0,
+      "event": "ideation_complete",
+      "ideas": 3
+    },
+    {
+      "at": 1792904035.7207057,
+      "event": "scoring_complete",
+      "rejected": 2,
+      "selected": 1
+    },
+    {
+      "at": 1792904438.4552002,
+      "event": "implementation_verified",
+      "idea_id": "transition_busemann_gate",
+      "revision": 0
+    },
+    {
+      "at": 1792904599.5040941,
+      "detail": "the one-epoch gradient smoke crashed: RuntimeError: The size of tensor a (32) must match the size of tensor b (768) at a broadcast — the Busemann term mixes a codebook-dim vector with a 768-dim item e",
+      "event": "framework_finding",
+      "idea_id": "transition_busemann_gate",
+      "source": "smoke"
+    },
+    {
+      "at": 1792904599.6220214,
+      "event": "implementation_verified",
+      "idea_id": "transition_busemann_gate",
+      "revision": 0
+    },
+    {
+      "at": 1792904646.7347114,
+      "detail": "the one-epoch gradient smoke crashed: RuntimeError: The size of tensor a (32) must match the size of tensor b (768) — the Busemann term mixes a codebook-dim vector with a 768-dim item embedding",
+      "event": "framework_finding",
+      "idea_id": "transition_busemann_gate",
+      "source": "smoke"
+    },
+    {
+      "at": 1792904646.8697715,
+      "event": "verification_needs_repair",
+      "idea_id": "transition_busemann_gate",
+      "revision": 0,
+      "signature": "6d72a24f2223aea8"
+    },
+    {
+      "at": 1792904687.2818544,
+      "event": "implementation_repaired",
+      "idea_id": "transition_busemann_gate",
+      "revision": 1
+    },
+    {
+      "at": 1792904734.934124,
+      "event": "implementation_verified",
+      "idea_id": "transition_busemann_gate",
+      "revision": 1
+    },
+    {
+      "at": 1792904872.9105566,
+      "event": "source_changed_before_review",
+      "idea_id": "transition_busemann_gate",
+      "revision": 2
+    },
+    {
+      "at": 1792904911.6516685,
+      "event": "implementation_verified",
+      "idea_id": "transition_busemann_gate",
+      "revision": 2
+    }
+  ],
+  "ideas": [
+    {
+      "ablation_behavior_off": "Set lambda_l=0 for all levels while retaining the same Poincare maps, geodesic code assignment, initialization, and training budget; this isolates the contribution of training transitions.",
+      "ablation_both_on": "Use training-only t_i, nonzero decaying lambda_l, curvature -c Poincare maps and geodesic assignments at every level as specified; evaluate final-epoch exported SIDs in Stage3.",
+      "ablation_geometry_off": "Replace exp/log maps and d_{-c} assignment with identity maps and squared Euclidean distance, retaining the same t_i, lambda schedule, residual recurrence, optimizer, and budget; this isolates curvature.",
+      "also_proposed_by": [
+        "ideation_1"
+      ],
+      "behavior_computation": "From training split only, sort each user's training interactions by timestamp (stable tie-break by event row ID), count each adjacent item pair C_ij, and normalize outgoing counts with alpha-smoothed training-only destination popularity pi(j). Construct each t_i as the weighted mean of projected frozen destination embeddings. Drop self-pairs; items with no outgoing training edge use the smoothed pi-weighted mean. Cache sparse counts and t_i; do not use validation or test sequences.",
+      "behavior_signal": "Directed sequential co-consumption / next-item transitions: a user's immediately consecutive training items provide an ordered source→destination signal.",
+      "cost_estimate": "Precompute transition counts/targets once in O(M+T_train) sparse operations and memory proportional to observed unique transitions, for M=24,556 training items and T_train training-only events. Per RQ-VAE step (one minibatch of B items, d=code dimension, K_l codes at each level L), added target lookup is O(Bd) and stable Poincare distance/map and assignment work is O(B*d*sum_l K_l), same asymptotic order as baseline code assignment but with a larger constant; no graph traversal or full-catalog pass per step. At the frozen scale of 24 steps/epoch × 3,000 epochs = 72,000 optimizer steps, run the extra O(B*d*sum_l K_l) computation each step; transition preprocessing is amortized once. Report measured wall-clock overhead against the same batch and hardware.",
+      "coupling_equation": "k_i^l=argmin_k d_{-c}( exp_0^{-c}( log_0^{-c}(r_i^l)+lambda_l*log_0^{-c}(t_i) ), exp_0^{-c}(c_lk) ); r_i^(l+1)=r_i^l-c_lk_i^l, where t_i is computed from training-only directed behavior and d_{-c}, exp_0^{-c}, log_0^{-c} are the curved operators at curvature -c.",
+      "coupling_path": "Training-only transition counts produce destination target t_i; t_i is log-mapped and shifts the current residual before exp-mapping; the resulting point is compared to codewords using Poincare geodesic distance, selecting the code and changing the next residual/SID. Removing behavior removes the shift; removing curvature changes maps and distance to their Euclidean counterparts.",
+      "duplicate_count": 1,
+      "falsifiable_hypothesis": "Directed next-item neighborhoods have a hierarchy (broad destinations plus specific branches) that the negative-curvature geometry can represent with less distortion than flat Euclidean residual codes. Worth keeping only if the both-on run improves Stage3 test Recall@10, targeting >0.065, over both controlled ablations; also inspect whether assignments of items with similar outgoing distributions become closer at coarse levels without collapsing distinct destinations.",
+      "fingerprint": "a725f91f4a8a3a2f",
+      "hyperbolic_location": "In each residual quantizer level's assignment calculation, after behavior-conditioned tangent shift and before code selection; tangent residual is carried to the next level. Thus curvature affects actual SID assignments and subsequent residuals, not only an auxiliary penalty.",
+      "hyperbolic_operator": "Poincare-ball exponential/logarithmic maps at the origin and geodesic distance with fixed negative curvature -c, c>0. Use d_c(x,y)=(2/sqrt(c))*atanh(sqrt(c)*||(-x)⊕_c y||), with Mobius addition ⊕_c, evaluated only inside the open ball.",
+      "idea_id": "transition_geodesic_residual",
+      "key_change": "Precompute a smoothed outgoing-transition target vector per training item. At each RQ level, map the current residual and candidate code vectors into a fixed-curvature Poincare ball, shift the residual along the log-map direction toward its transition target, and select the code with minimum geodesic distance to that shifted point; subtract the selected code in the tangent space for the next residual.",
+      "leakage_boundary": "Build C, pi, and t exclusively from the training interaction file and training item IDs; freeze/cache them before fitting the tokenizer. Do not read validation/test interactions or their timestamps, targets, or derived graph statistics. Validation/test are used only by the established downstream evaluation after SID export.",
+      "motivation": "Ordinary residual quantization optimizes item reconstruction independently, so a code chosen for an item may not preserve which items users actually move to next. Make each item's quantization residual account for its observed outgoing next-item neighborhood, while representing the hierarchy of frequent and increasingly specific transitions in a negatively curved latent space.",
+      "novelty": "The repository's RQ-VAE uses Euclidean residual VQ and has a bootstrap-consensus assignment regularizer; this instead changes the residual itself using directed training transitions, and quantizes that behavior-conditioned residual by Poincare geodesic distance. It is not a separate behavior loss on top of unchanged assignments.",
+      "observables": "Compare per-item level assignments and code usage, outgoing-transition predictability from coarse SID prefixes, the gradient/update change in encoder and codebooks, and ultimately Stage3 test Recall@10. The decision metric is Stage3 test Recall@10 versus the three named conditions, with >0.065 as the target; assignment/prefix metrics are diagnostics, not admission criteria.",
+      "origin_agent": "ideation_1",
+      "risks": [
+        "Sparse or low-count histories yield noisy targets; popularity smoothing may overemphasize head items. A single expected-neighbor vector can blur multimodal branches. Curved-distance scaling and lambda can swamp reconstruction, while tangent residual subtraction is an approximation to fully intrinsic residual quantization. Stage3 may not benefit even if the transition structure is represented better."
+      ],
+      "safeguards": "Compute maps/distance in FP32 or FP64; clamp sqrt(c)||x|| to at most 1-eps (eps=1e-5), clamp atanh arguments to [-1+eps,1-eps], and floor norm denominators at 1e-8. Reject nonfinite transitions/targets, normalize with denominator floor, use alpha>0 smoothing, cap ||t_i|| and lambda_l, and monitor maximum ball norm plus finite losses/gradients. Empty outgoing rows use pi-smoothed fallback. Do not allow zero-degree items or padding IDs to create NaNs.",
+      "scope_reasons": [],
+      "scope_verdict": "IN_SCOPE",
+      "spec_equations": "For curvature c>0, exp_0^{-c}(u)=tanh(sqrt(c)||u||)*u/(sqrt(c)||u||), with zero limit at ||u||=0; log_0^{-c}(x)=atanh(sqrt(c)||x||)*x/(sqrt(c)||x||). Project each mapped point/code to norm <= (1-eps)/sqrt(c). For l=0,...,L-1: u=log(r_l); v=log(t_i); y=exp(u+lambda_0*rho^l*v); k=argmin_k d_{-c}(y,exp(c_lk)); q_l=c_lk; r_(l+1)=r_l-q_l. Use straight-through assignment for gradients and the existing codebook/commitment objective. Use stable atanh clamp and norm floors; optionally learn c only with positive parameterization and clamp it to a configured safe interval, but primary comparison fixes c (e.g. c=1).",
+      "spec_inputs_outputs": "Inputs are current item latent z_i, its training-only target t_i, level-l residual r_i^l, codebook {c_lk}, fixed c, lambda_l, and rho. Outputs are integer code k_i^l, selected code vector q_i^l, and next residual r_i^(l+1); concatenated k_i^l across levels is the raw SID.",
+      "specification": {
+        "text": "Let E_i be the frozen item embedding and D_train the training interaction sequences only. Count directed adjacent pairs C_ij in each user's time-ordered training sequence; define p_i(j)=(C_ij+alpha*pi(j))/(sum_k C_ik+alpha), where pi is the normalized training-only target-item frequency. Form t_i=normalize(sum_j p_i(j) A E_j), where A is a learned linear projection shared with the encoder. For item i and level l, let r_i^0=z_i and c_lk be Euclidean code vectors; use exp_0^c to map vectors to ball B_c and log_0^c to return to tangent space. Set u_i^l=log_0^c(exp_0^c(r_i^l)); v_i=log_0^c(exp_0^c(t_i)); h_i^l=u_i^l+lambda_l v_i, y_i^l=exp_0^c(h_i^l), and k*=argmin_k d_c(y_i^l,exp_0^c(c_lk)); set q_i^l=c_lk* and r_i^(l+1)=r_i^l-q_i^l. Train reconstruction plus ordinary VQ commitment/codebook losses, with the assignment and residual recurrence above defining the coupled path. Set lambda_l lower at fine levels (e.g. lambda_l=lambda_0*rho^l, 0<rho<1)."
+      },
+      "title": "Transition-directed geodesic residual quantization"
+    },
+    {
+      "ablation_behavior_off": "Set a_i=0 for every item, preserving the same Poincare distance, codebook, optimizer and schedule; this is curved distance-only quantization.",
+      "ablation_both_on": "Use cached training-only transition direction and confidence in the stated fixed-curvature Poincare distance plus boundary Busemann assignment at residual stage zero; all other settings match baseline.",
+      "ablation_geometry_off": "Keep the identical cached q_ij, h_i and a_i, but use Euclidean latent/codeword distances and a bounded linear directional score -lambda*a_i*dot(y_k,u_i), with scale matched on training batches; no Poincare map or boundary potential is used.",
+      "also_proposed_by": [
+        "ideation_2"
+      ],
+      "behavior_computation": "From training split only, count adjacent pairs n_ij; use smoothed transition probabilities q_ij=(n_ij+alpha*pi_j)/(n_i+alpha) and expected frozen embedding displacement h_i=sum_j q_ij(e_j-e_i). Confidence a_i shrinks low-count sources; unseen sources use h_i=0 and a_i=0.",
+      "behavior_signal": "Directed item-to-next-item transition distribution for each source item, pooled over training user sequences.",
+      "cost_estimate": "One preprocessing pass over training transitions O(T) plus O(N*K*D) cached direction-score work per epoch step for the first-stage quantizer; asymptotic assignment cost is unchanged and the Busemann term adds about one scalar/vector operation per item-codeword pair alongside Poincare distance. At frozen scale, 24,556 training items x 3,000 epochs = 73,668,000 item presentations total (24 batches/steps per epoch, about 1,023 items per step). Correction: the frozen total is 24*3000=72,000 optimizer steps; for a full epoch pass of 24 batches each, 73,668,000 item presentations total across all epochs. Added Busemann evaluation is one O(D) term per compared codeword, i.e. approximately 73,668,000*K*D scalar-coordinate contributions across the full run; cached h_i makes no sequence traversal occur in training. Expect modest constant-factor overhead over the first-stage hyperbolic distance, no extra model parameters.",
+      "coupling_equation": "k_i=argmin_k { d_c(x_i,y_k)^2 - lambda*a_i*B_c(y_k;u_i) }, with u_i=normalize(sum_j q_ij(e_j-e_i)), x_i=exp^(-c)_0(z_i), y_k=exp^(-c)_0(c_k), c=0.5, and B_c the bounded Poincare boundary Busemann potential.",
+      "coupling_path": "Training transition counts create a source-item direction and confidence; those values parameterize a hyperbolic boundary potential evaluated for each candidate codeword, which is added to its Poincare distance score and directly selects the emitted first SID token. Turning off transitions nulls the potential; flattening geometry replaces the Poincare distance and boundary potential with Euclidean distance and matched linear directional score.",
+      "duplicate_count": 1,
+      "falsifiable_hypothesis": "For items with sufficient outgoing evidence, successor direction is predictive of useful next-item prefixes and the hyperbolic boundary potential separates multiple continuation modes without sacrificing content reconstruction. Keep only if coupled run improves Stage3 test Recall@10 versus both controlled ablations, targeting >0.065; confirm it changes first-stage code assignments and improves train-prefix successor predictability without relying on validation/test interactions.",
+      "fingerprint": "d8971f182627fff3",
+      "hyperbolic_location": "First residual quantizer's hard codeword assignment score; subsequent residual quantizers retain baseline behavior.",
+      "hyperbolic_operator": "Poincare exponential map and squared geodesic distance at fixed negative curvature -0.5, combined with a boundary Busemann/Poisson-kernel potential on the same Poincare ball.",
+      "idea_id": "transition_busemann_gate",
+      "key_change": "At each item, form a stable tangent-space successor direction from its observed training-only outgoing transitions, map that direction to a Poincare-ball boundary anchor, then add the direction's Busemann potential to the curved distance used for first-stage code assignment. The chosen codeword and straight-through quantized latent therefore change as a function of both the transition signal and curvature.",
+      "leakage_boundary": "Construct n_ij, pi, q, h_i and confidence using only the training sequence file; freeze and hash this cache before generating SIDs. Never read validation/test events or their ordering during preprocessing, fitting, tuning, or SID assignment; select lambda by training-only diagnostics, and reserve validation/test solely for the prescribed downstream evaluation.",
+      "motivation": "Items with the same content embedding can have different next-item roles; ordinary reconstruction quantization has no reason to allocate a code that preserves which successor direction a user's training history tends to follow.",
+      "novelty": "This does not set a branch-dependent radius, interpolate an item toward a transition-neighborhood Frechet prototype, or append a behavior suffix. It makes the ranking of actual residual codewords depend on a train-only directed successor direction through a hyperbolic Busemann potential, a directional rather than radial/geodesic-target coupling.",
+      "observables": "First-stage SID assignments change preferentially for high-confidence source items; nearest-code successor predictability on held-out training transitions and Stage3 test Recall@10 should rise. Log assignment flip fraction by confidence bin, transition-prefix hit rate, reconstruction loss, gradient norms, and test Recall@10.",
+      "origin_agent": "ideation_2",
+      "risks": [
+        "Sparse or noisy outgoing transitions make h_i unreliable; popularity smoothing may erase meaningful personalization; the shared direction averages genuinely multimodal successors; Busemann scores near the boundary can dominate reconstruction; downstream Stage3 may not exploit directional code organization. Confidence shrinkage, bounded scores, and a small lambda are essential."
+      ],
+      "safeguards": "Use float32 geometry even under mixed precision; clamp Poincare norms to (1-epsilon)/sqrt(c), epsilon=1e-6; normalize directions with a 1e-8 floor and zero out directions below that floor; clip Busemann potential to [-10,10], use log1p counts, cap alpha and confidence inputs, and use fallback a_i=0 for no transition evidence. Verify finite distances/gradients and nonzero assignment changes in smoke tests. Match Euclidean control score scale using training-only statistics and keep all preprocessing deterministic.",
+      "scope_reasons": [],
+      "scope_verdict": "IN_SCOPE",
+      "spec_equations": "For each training sequence s=(i_1,...,i_m), n_ij += count(t: i_t=i and i_{t+1}=j); pi_j=(freq_j+alpha)/(sum_l freq_l+alpha*V). q_ij=(n_ij+alpha*pi_j)/(n_i+alpha). h_i=sum_j q_ij(e_j-e_i), u_i=h_i/max(||h_i||,1e-8), a_i=min(1,log(1+n_i)/log(1+n95)). For each candidate code y, x=Proj(exp_0^{-c}(z)), y=Proj(exp_0^{-c}(c_k)), t= c||y-u/sqrt(c)||^2+epsilon, B=clip(log((1-c||y||^2+epsilon)/t),-Bmax,Bmax); S=d_c(x,y)^2-lambda*a_i*(B-mean_k B); k=argmin S. Apply normal straight-through quantization update from chosen y; use standard baseline residual update thereafter.",
+      "spec_inputs_outputs": "Inputs are training-only user-ordered item sequences, frozen item embeddings e_i, encoder latent z_i, first-stage codebook {c_k}, fixed c and alpha/lambda. Outputs are frozen per-item (u_i,a_i), first-stage assignment indices, quantized vectors and final RQ-VAE SIDs.",
+      "specification": {
+        "text": "Let frozen item embedding be e_i and training sequences define counts n_ij of adjacent i->j events. Compute q_ij=(n_ij+alpha*pi_j)/(sum_l n_il+alpha), where pi is training-only item frequency normalized; cache h_i=sum_j q_ij*(e_j-e_i), normalized to unit length with norm floor, and confidence a_i=min(1, log(1+sum_j n_ij)/log(1+n95)), where n95 is the 95th percentile training outgoing count. For encoder output z_i and first-stage codeword c_k, map x_i=exp^(-c)_0(z_i), y_k=exp^(-c)_0(c_k), project to radius <=0.9/sqrt(c). Set u_i=normalize(h_i), and boundary anchor b_i=(1-epsilon)u_i/sqrt(c). Score S_ik=d_c(x_i,y_k)^2 + lambda*a_i*B_c(y_k;b_i), assign argmin_k S_ik. Here B_c(y;b)=log((1-c||b||^2)||y-b||^2 / ((1-c||y||^2)||b-y||^2)) is numerically singular as written at b=y; implement the equivalent stable Poisson-kernel potential B_c(y;u)=log((1-c||y||^2)/(c||y-u/sqrt(c)||^2+epsilon)) with unit direction u and boundary anchor, clipping its input to [epsilon,1/epsilon], and subtract its codebook mean so the additive offset is immaterial. Use fixed curvature -c, c=0.5; lambda is selected once on training-only assignment/reconstruction diagnostics and frozen before Stage3. (Sign convention: minimize distance minus lambda*a_i*B, so codes in the successor-facing direction are favored.) Residual stages after stage 0 remain baseline Euclidean RQ to limit disruption."
+      },
+      "title": "Successor-direction Busemann gating of curved residual assignments"
+    },
+    {
+      "ablation_behavior_off": "Replace every h_i with the training-set mean (one common kappa), retaining the same Lorentz operator and parameterization; compare assignments, gradients and Stage3 test Recall@10.",
+      "ablation_both_on": "Use each item's train-only h_i to set bounded kappa_i and use the corresponding Lorentz distance in every RQ level; export these SIDs and evaluate the unchanged Stage3 protocol on test_R@10.",
+      "ablation_geometry_off": "Keep the training-derived h_i table and all other settings, but replace Lorentz distance with squared Euclidean residual-code distance (no curvature-dependent lift); compare the same outputs and Stage3 test Recall@10.",
+      "also_proposed_by": [
+        "ideation_3"
+      ],
+      "behavior_computation": "Group train.parquet by user, order each user's training interactions by timestamp, count each consecutive directed pair (item_t,item_{t+1}); aggregate counts by source item, apply additive smoothing over its observed successor set, then normalize Shannon entropy by log successor count. Cache only the resulting training-item scalar h_i.",
+      "behavior_signal": "Per-item normalized entropy of the directed training next-item distribution (next-item branching).",
+      "cost_estimate": "Precompute transition counts/entropy once, O(E_train) time and O(I) storage; negligible relative to 3000 epochs. Per training step at the frozen scale (24 steps/epoch, 3000 epochs, 24556 items; roughly 1024 items/step), the extra work is one curvature lookup per item and a variable-curvature Lorentz lift/distance for each existing item-code comparison: O(B*K*D) arithmetic and O(B*K) distance memory, with no extra model pass or pairwise item graph. Expect a modest constant-factor increase over the baseline hyperbolic distance; exact wall-clock should be measured against geometry-off and fixed-curvature runs.",
+      "coupling_equation": "q_i=argmin_k d_{-kappa(h_i)}(r_i,c_k)^2, where h_i=H(next_item|item_i, train) and d_{-kappa} is the Lorentz distance at negative curvature -kappa; thus changing either h_i or the curved distance changes q_i and its training gradient.",
+      "coupling_path": "Training transition counts -> normalized branching entropy h_i -> curvature kappa_i -> Lorentz lift and distance between residual r_i and each code -> assignment probabilities/code choice -> residual and encoder/codebook gradients -> exported SID.",
+      "duplicate_count": 1,
+      "falsifiable_hypothesis": "High-branching items benefit from a different effective radial/angular tradeoff during quantization, making their prefixes more useful for next-item generation without damaging predictable items. Keep only if both-on improves Stage3 test Recall@10 over both controls and behaviour/geometry interventions measurably change assignments or codebook/encoder gradients.",
+      "fingerprint": "5496c10170dd23be",
+      "hyperbolic_location": "In each residual-quantization level's code assignment logits/argmin, replacing the current Euclidean or fixed-curvature distance before selecting the code and forming the residual.",
+      "hyperbolic_operator": "Lorentz-model distance on the hyperboloid of constant sectional curvature -kappa_i, using exp-at-origin tangent lifts and the Lorentz inner product/acosh distance; kappa_i is bounded and item dependent.",
+      "idea_id": "branch_curvature_gate",
+      "key_change": "Precompute a smoothed branching score for each item using training transitions, map it to bounded negative curvature, and use that item-specific curvature in the Lorentz distance from the item's current residual to each code vector at every RQ level.",
+      "leakage_boundary": "Construct the transition table exclusively from the training split before Stage2; validation/test rows are never loaded by the precomputation. Unseen items receive h_i=0 and the fixed low-curvature default; freeze the lookup for Stage2 SID export and Stage3.",
+      "motivation": "Items that lead to many distinct next items represent branching interests and may need a broader, more discriminative hierarchy than predictable one-successor items; a single global curvature cannot adapt the SID assignment geometry to that difference.",
+      "novelty": "Instead of adding a behaviour regularizer or matching behaviour to prefix occupancy, compute an item-specific curvature from its training next-item branching entropy and use that curvature inside each item's actual Lorentz code-distance calculation. Behaviour therefore changes the metric used to assign SIDs.",
+      "observables": "Measure per-item SID changes stratified by training branching entropy, assignment probabilities/codebook gradients, and Stage3 test Recall@10; predict larger useful assignment changes among high-entropy items and improved generated continuation ranking.",
+      "origin_agent": "ideation_3",
+      "risks": [
+        "Entropy estimates for rare items are noisy; train transitions may not represent test-time branching; per-item varying curvature can distort a globally shared codebook's geometry, destabilize assignments, or cause rare high-entropy items to overfit. Test smoothing, bounded curvature and warm-up; do not tune using validation/test interactions."
+      ],
+      "safeguards": "Clamp kappa to [0.25,4] and curvature magnitude away from zero; compute norm with epsilon, use stable acosh argument clamp >=1+1e-6, clamp h to [0,1], use alpha (e.g. 1) and h=0 for fewer than two distinct successors, handle unknown IDs with h=0, run distance arithmetic in float32 under mixed precision, and log finite-distance/gradient checks. Match codebook initialization, seed, training budget and all non-geometry settings across ablations.",
+      "scope_reasons": [],
+      "scope_verdict": "IN_SCOPE",
+      "spec_equations": "For source item i, successors S_i and smoothed probabilities p_ij=(c_ij+alpha)/(C_i+alpha|S_i|), h_i=0 if |S_i|<2 else clip(-sum_j p_ij log p_ij/log|S_i|,0,1). kappa_i=exp((1-h_i)log kappa_min+h_i log kappa_max). For v, s=sqrt(kappa_i), u=||v||, x=tanh(su)v/max(su,eps), t=sqrt(max(1/kappa_i+||x||^2,eps)); then d(r,c)=acosh(max(1+eps,kappa_i*(t_r*t_c-x_r·x_c)))/s. At each level compute logits=-d^2/tau, softmax or argmin as in baseline, and update residual with the selected/soft code using the existing RQ rule. Use curvature -kappa_i (positive kappa_i denotes magnitude).",
+      "spec_inputs_outputs": "Inputs are frozen item embedding/residual r [B,D], current level codebook c [K,D], integer item IDs [B], frozen train-derived h lookup [I], bounds kappa_min/max, and temperature tau. Output per-item-code distances [B,K], assignment probabilities or indices, and the selected quantized vectors/tokens consumed by the unchanged residual stack.",
+      "specification": {
+        "text": "From train.parquet only, count directed consecutive pairs c_ij; let p(j|i)=(c_ij+alpha)/(sum_j c_ij+alpha*N_i), over observed outgoing successors (N_i), and H_i=-sum_j p(j|i)log p(j|i)/log(max(2,N_i)). Set h_i=0 for N_i<2, otherwise clamp H_i to [0,1]. Define kappa_i=exp(log(kappa_min)+(log(kappa_max)-log(kappa_min))*h_i), e.g. [0.25, 4]. For latent residual r_i and code c_k, Lorentz-lift each tangent vector at origin at curvature -kappa_i: spatial(v)=tanh(sqrt(kappa_i)||v||)v/(sqrt(kappa_i)||v||), time(v)=sqrt(1/kappa_i+||spatial(v)||^2); d_i,k=acosh(max(1+eps, kappa_i*(time(r_i)time(c_k)-spatial(r_i)·spatial(c_k))))/sqrt(kappa_i). Assign argmin_k d_i,k^2, then subtract the selected code in the existing residual path; optionally use softmax(-d_i,k^2/tau) as the training assignment probabilities, with the same distance in straight-through quantization. The geometry-off control substitutes ||r_i-c_k||^2 and ignores h_i."
+      },
+      "title": "Let training-only next-item branching set local hyperbolic assignment curvature"
+    }
+  ],
+  "ideas_rejected": [],
+  "implementations": [
+    {
+      "archived_findings": [
+        {
+          "archived_at_revision": 1,
+          "check": "runtime smoke",
+          "correction": "compute the Busemann dot product in one space: project the embedding to the codebook dimension (or lift the code) before the gate multiplies it",
+          "detail": "the one-epoch gradient smoke crashed: RuntimeError: The size of tensor a (32) must match the size of tensor b (768) — the Busemann term mixes a codebook-dim vector with a 768-dim item embedding",
+          "location": "train_rqvae.py",
+          "reproduction": "the one-epoch gradient smoke crashed: RuntimeError: The size of tensor a (32) must match the size of tensor b (768) — the Busemann term mixes a codebook-dim vector with a 768-dim item embedding",
+          "severity": "blocking",
+          "verifier": "smoke"
+        }
+      ],
+      "assumptions": [
+        "Each nonempty training row contributes exactly one directed adjacent transition from the last item in history to target; empty histories contribute no transition, and alpha=1 is used for the specification's otherwise unspecified smoothing constant."
+      ],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "changed_files": [
+        "train_rqvae.py",
+        "model/model.py",
+        "model/layers.py",
+        "smoke_test.py"
+      ],
+      "deviations": [
+        {
+          "item": "Fixed curvature c=0.5 and a radius cap of 0.9/sqrt(c) are used as specified, but the assignment strength lambda is fixed at 0.05 rather than selected from training-only diagnostics",
+          "reason": "no training diagnostic/tuning run was performed during implementation; a small explicit coefficient keeps the directional term bounded and repeatable."
+        },
+        {
+          "item": "The popularity-smoothed successor direction is computed with sparse per-source transition dictionaries and an algebraically equivalent weighted-mean expression instead of materializing the dense n_ij/q_ij matrix",
+          "reason": "a dense item-by-item matrix would require quadratic memory, while preserving the specified q-weighted tangent direction."
+        },
+        {
+          "item": "The requested full 3000-epoch run and Stage3 Recall@10 experiment were not run; the executable smoke is limited to a small CPU model",
+          "reason": "validating the pathway and promoted-root path does not require writing frozen-baseline or other candidate outputs, and this environment run was scoped to the minimal smoke requirement."
+        }
+      ],
+      "failure_signature": "6d72a24f2223aea8",
+      "idea_id": "transition_busemann_gate",
+      "notes": "Training builds behavior statistics only from results/stage0_build_parquet/train.parquet. The first residual quantizer applies Poincare distance plus the centered bounded boundary potential; later stages retain baseline Euclidean RQ. Both behavior-off (behavior=None / gate disabled) and geometry-off (Euclidean distance with directional preference) paths are supported. The trainer preserves the baseline hyperparameters and single-GPU branch via GENREC_SINGLE_GPU; outputs, including logs, derive from REPO_ROOT/results/stage2_RQ-VAE/TIGER_transition_busemann_gate. The smoke validates forward/backward, finite loss, gradients, assignment-score ablation difference, unique extended SID shape, and repository-root discovery; it does not establish Stage3 Recall@10.",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_busemann_gate/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_busemann_gate/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_busemann_gate/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_busemann_gate/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_busemann_gate/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_busemann_gate"
+      },
+      "proposal_sha256": "4e85c32fe858b08d0d87a66d51baaad95762ab7c8acd86fd82f1edacd724eee3",
+      "repairs": [
+        {
+          "remaining_issues": [
+            "Could not run the gradient smoke to confirm runtime behavior because `import torch` fails in the available Python environment"
+          ],
+          "repairs": [
+            {
+              "change": "In model/layers.py, deterministically project transition directions to quantizer dimension with adaptive average pooling before constructing the Poincare boundary anchor; applied the same dimension alignment to the geometry-off directional score so ablations remain runnable",
+              "finding": "Busemann term mixed 32-D codebook vectors with 768-D item transition embeddings",
+              "verification": "Code now aligns direction and latent/codebook dimensions before the relevant operations; static inspection confirms the prior dimension mismatch path is removed, but runtime validation was blocked because the available `python` has no PyTorch installed"
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "`python smoke_test.py` (from the candidate tree)",
+            "result": "Failed before test execution: `ModuleNotFoundError: No module named 'torch'` (exit code 1)"
+          }
+        }
+      ],
+      "revision": 2,
+      "smoke": {
+        "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 smoke_test.py (run from the candidate tree)",
+        "result": "PASS forward/backward finite; encoder+codebook gradients; behavior-curved scores differ from Euclidean; SID export unique; promoted-root discovery OK"
+      },
+      "source_digest": "49dff06732fe18dfbd3868a297f975361eb0b17cf4fd5e30f847089938250d62",
+      "status": "verified",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Source inspection traced training.parquet-only adjacent history[-1] -> target counts into cached direction/confidence; trainer supplies those values at :347-349; first residual VQ layer maps latent/codewords to the fixed-curvature Poincare ball, computes squared geodesic distance and boundary potential, and uses their combined score for argmin. Export reuses the same cached training-derived behavior at train_rqvae.py:445-449. No validation/test behavior input is present on this path.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/train_rqvae.py:262-289 -> model/layers.py:115-147, 324-343",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No defect found. The behavior term is not a suffix or unrelated loss: confidence-weighted successor direction changes the first-stage curved assignment score itself. The code uses fixed c=0.5, exp-at-origin mapping, projected points and a bounded Poisson-kernel potential.",
+                  "location": "none",
+                  "reproduction": "Source trace at the cited lines; no trainer execution attempted.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the forward path from score/argmin through codeword lookup, straight-through quantization and quantization loss, then backward reachability to encoder/codebook parameters. The source smoke exercises forward/backward, checks finite loss/encoder and codebook gradients, checks score differences for behavior/geometry controls, and checks SID shape/uniqueness; it is not run here.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/model/layers.py:115-184, 324-343; smoke_test.py:13-39",
+              "findings": [
+                {
+                  "correction": "None. Runtime GPU smoke remains the stated pre-full-run check.",
+                  "detail": "No code-level dead term or obvious float32 instability found. Scores are bounded by positive denominator floors, projected to radius 0.9/sqrt(c), and the potential is clamped to [-20,20]. Assignment is discrete as in baseline VQ, while the selected codeword's standard quantization loss and straight-through encoder path remain active. Behavior-off uses baseline distance when behavior is absent or gate disabled; geometry-off has a separate Euclidean-plus-direction score.",
+                  "location": "none",
+                  "reproduction": "Inspect model/layers.py:139-147 for finite curved score construction and :169-184 for assignment-to-loss path; inspect smoke_test.py:17-39 for the intended checks. Runtime gradient smoke is not run in this environment.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Source-inspected repository-root discovery and candidate-owned RESULT_DIR; frozen stage1 embedding and stage0 train.parquet inputs; train target-ID validation; rank-0 SID export and collision extension; and torchrun launcher plus SINGLE_GPU_ENV handling. This is a static integration review, not an execution.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/train_rqvae.py:40-67, 233-290, 417-465, 468-496",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No integration defect found. ARM_NAME resolves output to results/stage2_RQ-VAE/TIGER_transition_busemann_gate, matching the promoted tree name; outputs, checkpoint and logs stay under that candidate directory. Export emits one row per embedding row keyed by enumerate(item_id), validates unique extended SIDs, and writes JSON keys as item IDs. The launcher uses torchrun for multi-GPU and bypasses relaunch when GENREC_SINGLE_GPU is set; this honors the required single-card branch. Frozen data paths point to stage1 sentence_t5.npy and stage0 train.parquet.",
+                  "location": "none",
+                  "reproduction": "Follow path constants at :56-67, train input and ID checks at :247-251, export at :453-461, and launcher at :468-496. No trainer execution attempted.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_transition_busemann_gate_r2_1"
+        }
+      ]
+    }
+  ],
+  "issue": "issue121",
+  "matrix": {
+    "dimensions": [
+      "novelty",
+      "scientific_motivation",
+      "feasibility",
+      "downstream_impact",
+      "experimental_distinctness"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "downstream_impact": null,
+          "experimental_distinctness": null,
+          "feasibility": null,
+          "novelty": 0.0,
+          "scientific_motivation": null
+        },
+        "idea_id": "transition_geodesic_residual",
+        "incomplete_scorers": [
+          "scoring_1",
+          "scoring_2",
+          "scoring_3"
+        ],
+        "max_disagreement": 0.0,
+        "means": {
+          "downstream_impact": null,
+          "experimental_distinctness": null,
+          "feasibility": null,
+          "novelty": 4.0,
+          "scientific_motivation": null
+        },
+        "medians": {
+          "downstream_impact": null,
+          "experimental_distinctness": null,
+          "feasibility": null,
+          "novelty": 4.0,
+          "scientific_motivation": null
+        },
+        "overall_mean": 4.0,
+        "overall_median": 4.0,
+        "per_scorer": {
+          "scoring_1": {
+            "novelty": 4.0
+          },
+          "scoring_2": {
+            "novelty": 4.0
+          },
+          "scoring_3": {
+            "novelty": 4.0
+          }
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "The mechanism is a meaningfully different residual assignment path rather than an auxiliary loss; its transition targets address next-item structure and curvature is computationally involved. Directed transitions may be noisy or multimodal, while tangent subtraction and the given map expressions leave implementation details and numerical behavior to validate. It has plausible downstream value and offers clear ablations, but target averaging and geometric approximation temper confidence.",
+          "scoring_2": "Directed transition targets alter the residual assignment pathway and offer a meaningful next-item signal, but the exp/log cancellation and tangent subtraction make the claimed hyperbolic role uncertain or absent. The sparse preprocessing and ordinary VQ losses look implementable, while per-level target shifts and curvature scaling need careful calibration; downstream value is plausible but unverified. Out-of-scope status is not offset by these scores.",
+          "scoring_3": "The residual itself and code ranking are jointly altered by a concrete transition-derived target and curved distance, making the mechanism meaningfully distinct from auxiliary regularization. Directed targets are relevant to next-item prediction and the coarse-to-fine weighting offers plausible downstream value. Implementation is moderately involved: multimodal successors are averaged, tangent residual subtraction is approximate, and the described log_0(exp_0(v)) round trip mathematically returns v (up to numerical effects), so curvature's effective role may principally be in code distance. Expected Stage3 benefit remains uncertain and requires controlled ablations."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only directed adjacent transitions form smoothed outgoing targets, and those targets shift the residual before explicit Poincare geodesic assignment, with tangent residual updates; this is a connected behavior-geometry assignment path. Behavior-off, Euclidean geometry-off, and both-on comparisons are specified, with assignment and Stage3 outcomes testable. The map notation is redundant around the origin and subtracting codes in tangent coordinates is approximate rather than fully intrinsic, but the stated safeguards, work estimate, and recipe are sufficiently implementable.",
+          "scoring_2": "Training-only directed adjacent-item transitions are explicitly computed and coupled to Poincare geodesic code assignment, but the specified geometric pathway collapses: exp_0 followed by log_0 returns the original tangent vector, so curvature has no effect on the shifted point; moreover the stated “geodesic” residual update subtracts codes in Euclidean tangent coordinates without specifying a curved residual operation. Thus the claimed curved assignment is not actually realized as written.",
+          "scoring_3": "Uses training-only directed adjacent-item transitions with smoothed targets, explicitly maps residuals and codes through Poincare operations, and couples the target shift directly to geodesic code assignment and residual recurrence. Both behaviour-off and Euclidean geometry-off comparisons are specified, as are measurable assignment/Recall effects, numerical controls, inputs, and cost. The tangent-shift/subtraction construction is implementable, though it is an approximate rather than fully intrinsic residual quantizer and the stated log/exp round trip makes the exact effect of the curved representation worth verifying."
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Training-only directed adjacent-item transitions are explicitly computed and coupled to Poincare geodesic code assignment, but the specified geometric pathway collapses: exp_0 followed by log_0 returns the original tangent vector, so curvature has no effect on the shifted point; moreover the stated “geodesic” residual update subtracts codes in Euclidean tangent coordinates without specifying a curved residual operation. Thus the claimed curved assignment is not actually realized as written.",
+            "scorer": "scoring_2"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_median_threshold": 3,
+        "unscored_dimensions": [
+          "scientific_motivation",
+          "feasibility",
+          "downstream_impact",
+          "experimental_distinctness"
+        ]
+      },
+      {
+        "disagreement": {
+          "downstream_impact": null,
+          "experimental_distinctness": null,
+          "feasibility": null,
+          "novelty": 0.0,
+          "scientific_motivation": null
+        },
+        "idea_id": "transition_busemann_gate",
+        "incomplete_scorers": [
+          "scoring_1",
+          "scoring_2",
+          "scoring_3"
+        ],
+        "max_disagreement": 0.0,
+        "means": {
+          "downstream_impact": null,
+          "experimental_distinctness": null,
+          "feasibility": null,
+          "novelty": 4.0,
+          "scientific_motivation": null
+        },
+        "medians": {
+          "downstream_impact": null,
+          "experimental_distinctness": null,
+          "feasibility": null,
+          "novelty": 4.0,
+          "scientific_motivation": null
+        },
+        "overall_mean": 4.0,
+        "overall_median": 4.0,
+        "per_scorer": {
+          "scoring_1": {
+            "novelty": 4.0
+          },
+          "scoring_2": {
+            "novelty": 4.0
+          },
+          "scoring_3": {
+            "novelty": 4.0
+          }
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "Directional successor-conditioned scoring is distinct from radial or target-shift mechanisms, and can directly change which code is assigned. The stated behavior signal and curved assignment are well motivated, but the central potential's formula and sign/equivalence issues make its actual computation uncertain; clipping alone does not establish correctness. If repaired, it has a plausible downstream route and useful controls, so the uncertainty is concentrated in implementability and efficacy.",
+          "scoring_2": "Directional successor bias in hyperbolic first-stage assignment is distinctive and directly tied to next-item behavior. The clipped Poisson-kernel potential and confidence weighting are implementable, though its relationship to the stated Busemann expression, sign convention, and boundary stability warrant verification; first-stage-only application limits disruption. Stage3 utility is plausible but uncertain.",
+          "scoring_3": "Directional boundary potential is a distinct and testable way to make successor behaviour affect code ranking, rather than appending a behaviour code or leaving assignments unchanged. The training-only signal is prediction-relevant, and first-stage-only application limits disruption while offering a useful mechanism contrast. Implementation is feasible but requires careful validation of the stable potential, boundary handling, and sign convention; the averaged successor direction can obscure branching, and lambda selection must remain training-only. Stage3 gains are plausible, not assured."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only directed successor counts produce an item direction and confidence that enter the first-stage Poincare codeword score through an explicit Busemann/Poisson-kernel potential; removing either signal or curvature changes assignment. The proposal names behavior-off, Euclidean geometry-off, and both-on comparisons and observable assignment/Recall effects. However, the Busemann expressions are internally inconsistent: the displayed formula cancels its numerator and denominator distance terms, while the purported equivalent stable expression uses a unit direction as if it were a boundary point and has no clear sign/normalization derivation. A valid, numerically safeguarded potential must be resolved before reliable implementation.",
+          "scoring_2": "Training-only directed successor transitions yield a cached successor direction and confidence, which jointly alter first-stage assignments through a Poincare distance plus a curvature-dependent boundary-direction potential. The stable clipped potential, fixed curvature, and behavior-off and geometry-off/both-on comparisons make the coupled computation testable despite the redundant singular expression.",
+          "scoring_3": "Computes a training-only directed successor signal and uses it with confidence in a fixed-negative-curvature Poincare/Busemann score that changes first-stage code assignment. It names behaviour-off and Euclidean/geometry-off controls, assignment and Stage3 effects, clipping/smoothing safeguards, and computational cost. The formula as initially written is singular at the boundary, but the specification supplies a bounded Poisson-kernel-style alternative and clarifies the score sign, so a usable curved directional potential is present."
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_median_threshold": 3,
+        "unscored_dimensions": [
+          "scientific_motivation",
+          "feasibility",
+          "downstream_impact",
+          "experimental_distinctness"
+        ]
+      },
+      {
+        "disagreement": {
+          "downstream_impact": null,
+          "experimental_distinctness": null,
+          "feasibility": null,
+          "novelty": 1.0,
+          "scientific_motivation": null
+        },
+        "idea_id": "branch_curvature_gate",
+        "incomplete_scorers": [
+          "scoring_1",
+          "scoring_2",
+          "scoring_3"
+        ],
+        "max_disagreement": 1.0,
+        "means": {
+          "downstream_impact": null,
+          "experimental_distinctness": null,
+          "feasibility": null,
+          "novelty": 3.6666666666666665,
+          "scientific_motivation": null
+        },
+        "medians": {
+          "downstream_impact": null,
+          "experimental_distinctness": null,
+          "feasibility": null,
+          "novelty": 4.0,
+          "scientific_motivation": null
+        },
+        "overall_mean": 3.6666666666666665,
+        "overall_median": 4.0,
+        "per_scorer": {
+          "scoring_1": {
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "novelty": 4.0
+          },
+          "scoring_3": {
+            "novelty": 4.0
+          }
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "Item-specific curvature driven by branching is a direct and testable coupling, although adapting curvature is less conceptually distinct than changing the residual or using directional scoring. Branching is relevant to continuation structure, but normalized entropy from sparse histories is noisy and one curvature may not correspond to a globally coherent shared geometry. The Lorentz computation is implementable in principle with bounded curvature, while cross-item metric consistency and Stage3 benefit remain uncertain; it nevertheless provides a distinct experimental axis.",
+          "scoring_2": "Item-conditioned curvature makes the behavioural statistic inseparable from the metric used for SID assignment, giving the strongest explicit coupling here and a plausible response to differing continuation branching. Entropy smoothing, shared-codebook consistency, and variable-curvature Lorentz distances create implementation and stability uncertainty, but the bounded range and comparison plan make a test feasible. Stage3 gains remain speculative, and the effect of varying curvature on a globally shared codebook needs empirical validation.**",
+          "scoring_3": "This has the strongest direct coupling: removing the behaviour signal removes item-specific curvature, while removing curved geometry removes the Lorentz distance computation. Branching entropy is a meaningful training-only behaviour statistic and the design tests a different mechanism from directional target shifts or Busemann preference. Practical implementation is moderate rather than trivial because item-varying curvature shares one codebook, entropy is unreliable for sparse items, and Lorentz distance calculations need stable numerical handling. Adaptive geometry could improve assignments useful to generation, but global codebook distortion and Stage3 transfer are substantial uncertainties."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Smoothed training-only outgoing branching entropy determines each item's bounded negative curvature, which is used in the Lorentz lift and code-distance assignment at every residual level. Thus behavior and geometry jointly determine assignments. The proposal explicitly defines a Euclidean geometry-off control and both-on comparison and names assignment/gradient and Stage3 effects; behavior-off is also obtainable by fixing curvature independently of entropy. The varying-curvature shared-codebook metric and its stability need validation, but the operation, inputs, output and cost are specified.",
+          "scoring_2": "It computes training-only outgoing branching entropy and uses it to set curvature inside each item's Lorentz code-distance assignment, so both the behaviour signal and curved geometry directly affect the same core computation. It specifies Euclidean and geometry-off comparisons and observable assignment/gradient effects; the operational distance and safeguards are sufficiently concrete to implement.",
+          "scoring_3": "Computes training-only outgoing branching entropy and uses it to set bounded negative curvature inside Lorentz lifts and code distances at every residual level, directly changing assignment geometry. It specifies Euclidean geometry-off and behaviour/geometry interventions, observable assignment/gradient and Recall effects, entropy smoothing, curvature bounds, numerical safeguards, and cost. The per-item curvature distance and residual assignment are sufficiently explicit to implement."
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_median_threshold": 3,
+        "unscored_dimensions": [
+          "scientific_motivation",
+          "feasibility",
+          "downstream_impact",
+          "experimental_distinctness"
+        ]
+      }
+    ],
+    "scale": [
+      0,
+      5
+    ],
+    "scorers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ]
+  },
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\nOne mechanism per exploration: propose coupled behaviour-hyperbolic mechanisms, keep the single best one, and carry it through implementation, review, the frozen four-card Stage 2 recipe and Stage 3. The target is test_R@10 above 0.065.",
+  "repairs": [
+    {
+      "findings": [
+        {
+          "check": "runtime smoke",
+          "correction": "compute the Busemann dot product in one space: project the embedding to the codebook dimension (or lift the code) before the gate multiplies it",
+          "detail": "the one-epoch gradient smoke crashed: RuntimeError: The size of tensor a (32) must match the size of tensor b (768) — the Busemann term mixes a codebook-dim vector with a 768-dim item embedding",
+          "location": "train_rqvae.py",
+          "reproduction": "the one-epoch gradient smoke crashed: RuntimeError: The size of tensor a (32) must match the size of tensor b (768) — the Busemann term mixes a codebook-dim vector with a 768-dim item embedding",
+          "severity": "blocking",
+          "verifier": "smoke"
+        }
+      ],
+      "idea_id": "transition_busemann_gate",
+      "revision": 0,
+      "signature": "6d72a24f2223aea8"
+    }
+  ],
+  "round_id": "round_20261025_155054_155",
+  "schema": 1,
+  "scores": {
+    "scoring_1": {
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "idea_id": "transition_geodesic_residual",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "The mechanism is a meaningfully different residual assignment path rather than an auxiliary loss; its transition targets address next-item structure and curvature is computationally involved. Directed transitions may be noisy or multimodal, while tangent subtraction and the given map expressions leave implementation details and numerical behavior to validate. It has plausible downstream value and offers clear ablations, but target averaging and geometric approximation temper confidence.",
+          "scope_reason": "Training-only directed adjacent transitions form smoothed outgoing targets, and those targets shift the residual before explicit Poincare geodesic assignment, with tangent residual updates; this is a connected behavior-geometry assignment path. Behavior-off, Euclidean geometry-off, and both-on comparisons are specified, with assignment and Stage3 outcomes testable. The map notation is redundant around the origin and subtracting codes in tangent coordinates is approximate rather than fully intrinsic, but the stated safeguards, work estimate, and recipe are sufficiently implementable.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        },
+        {
+          "idea_id": "transition_busemann_gate",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "Directional successor-conditioned scoring is distinct from radial or target-shift mechanisms, and can directly change which code is assigned. The stated behavior signal and curved assignment are well motivated, but the central potential's formula and sign/equivalence issues make its actual computation uncertain; clipping alone does not establish correctness. If repaired, it has a plausible downstream route and useful controls, so the uncertainty is concentrated in implementability and efficacy.",
+          "scope_reason": "Training-only directed successor counts produce an item direction and confidence that enter the first-stage Poincare codeword score through an explicit Busemann/Poisson-kernel potential; removing either signal or curvature changes assignment. The proposal names behavior-off, Euclidean geometry-off, and both-on comparisons and observable assignment/Recall effects. However, the Busemann expressions are internally inconsistent: the displayed formula cancels its numerator and denominator distance terms, while the purported equivalent stable expression uses a unit direction as if it were a boundary point and has no clear sign/normalization derivation. A valid, numerically safeguarded potential must be resolved before reliable implementation.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 2.0,
+            "novelty": 4.0
+          }
+        },
+        {
+          "idea_id": "branch_curvature_gate",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "Item-specific curvature driven by branching is a direct and testable coupling, although adapting curvature is less conceptually distinct than changing the residual or using directional scoring. Branching is relevant to continuation structure, but normalized entropy from sparse histories is noisy and one curvature may not correspond to a globally coherent shared geometry. The Lorentz computation is implementable in principle with bounded curvature, while cross-item metric consistency and Stage3 benefit remain uncertain; it nevertheless provides a distinct experimental axis.",
+          "scope_reason": "Smoothed training-only outgoing branching entropy determines each item's bounded negative curvature, which is used in the Lorentz lift and code-distance assignment at every residual level. Thus behavior and geometry jointly determine assignments. The proposal explicitly defines a Euclidean geometry-off control and both-on comparison and names assignment/gradient and Stage3 effects; behavior-off is also obtainable by fixing curvature independently of entropy. The varying-curvature shared-codebook metric and its stability need validation, but the operation, inputs, output and cost are specified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    },
+    "scoring_2": {
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "idea_id": "transition_geodesic_residual",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "Directed transition targets alter the residual assignment pathway and offer a meaningful next-item signal, but the exp/log cancellation and tangent subtraction make the claimed hyperbolic role uncertain or absent. The sparse preprocessing and ordinary VQ losses look implementable, while per-level target shifts and curvature scaling need careful calibration; downstream value is plausible but unverified. Out-of-scope status is not offset by these scores.",
+          "scope_reason": "Training-only directed adjacent-item transitions are explicitly computed and coupled to Poincare geodesic code assignment, but the specified geometric pathway collapses: exp_0 followed by log_0 returns the original tangent vector, so curvature has no effect on the shifted point; moreover the stated “geodesic” residual update subtracts codes in Euclidean tangent coordinates without specifying a curved residual operation. Thus the claimed curved assignment is not actually realized as written.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 3.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        },
+        {
+          "idea_id": "transition_busemann_gate",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "Directional successor bias in hyperbolic first-stage assignment is distinctive and directly tied to next-item behavior. The clipped Poisson-kernel potential and confidence weighting are implementable, though its relationship to the stated Busemann expression, sign convention, and boundary stability warrant verification; first-stage-only application limits disruption. Stage3 utility is plausible but uncertain.",
+          "scope_reason": "Training-only directed successor transitions yield a cached successor direction and confidence, which jointly alter first-stage assignments through a Poincare distance plus a curvature-dependent boundary-direction potential. The stable clipped potential, fixed curvature, and behavior-off and geometry-off/both-on comparisons make the coupled computation testable despite the redundant singular expression.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 2.0,
+            "novelty": 4.0
+          }
+        },
+        {
+          "idea_id": "branch_curvature_gate",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "Item-conditioned curvature makes the behavioural statistic inseparable from the metric used for SID assignment, giving the strongest explicit coupling here and a plausible response to differing continuation branching. Entropy smoothing, shared-codebook consistency, and variable-curvature Lorentz distances create implementation and stability uncertainty, but the bounded range and comparison plan make a test feasible. Stage3 gains remain speculative, and the effect of varying curvature on a globally shared codebook needs empirical validation.**",
+          "scope_reason": "It computes training-only outgoing branching entropy and uses it to set curvature inside each item's Lorentz code-distance assignment, so both the behaviour signal and curved geometry directly affect the same core computation. It specifies Euclidean and geometry-off comparisons and observable assignment/gradient effects; the operational distance and safeguards are sufficiently concrete to implement.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 5.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        }
+      ]
+    },
+    "scoring_3": {
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "idea_id": "transition_geodesic_residual",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "The residual itself and code ranking are jointly altered by a concrete transition-derived target and curved distance, making the mechanism meaningfully distinct from auxiliary regularization. Directed targets are relevant to next-item prediction and the coarse-to-fine weighting offers plausible downstream value. Implementation is moderately involved: multimodal successors are averaged, tangent residual subtraction is approximate, and the described log_0(exp_0(v)) round trip mathematically returns v (up to numerical effects), so curvature's effective role may principally be in code distance. Expected Stage3 benefit remains uncertain and requires controlled ablations.",
+          "scope_reason": "Uses training-only directed adjacent-item transitions with smoothed targets, explicitly maps residuals and codes through Poincare operations, and couples the target shift directly to geodesic code assignment and residual recurrence. Both behaviour-off and Euclidean geometry-off comparisons are specified, as are measurable assignment/Recall effects, numerical controls, inputs, and cost. The tangent-shift/subtraction construction is implementable, though it is an approximate rather than fully intrinsic residual quantizer and the stated log/exp round trip makes the exact effect of the curved representation worth verifying.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        },
+        {
+          "idea_id": "transition_busemann_gate",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "Directional boundary potential is a distinct and testable way to make successor behaviour affect code ranking, rather than appending a behaviour code or leaving assignments unchanged. The training-only signal is prediction-relevant, and first-stage-only application limits disruption while offering a useful mechanism contrast. Implementation is feasible but requires careful validation of the stable potential, boundary handling, and sign convention; the averaged successor direction can obscure branching, and lambda selection must remain training-only. Stage3 gains are plausible, not assured.",
+          "scope_reason": "Computes a training-only directed successor signal and uses it with confidence in a fixed-negative-curvature Poincare/Busemann score that changes first-stage code assignment. It names behaviour-off and Euclidean/geometry-off controls, assignment and Stage3 effects, clipping/smoothing safeguards, and computational cost. The formula as initially written is singular at the boundary, but the specification supplies a bounded Poisson-kernel-style alternative and clarifies the score sign, so a usable curved directional potential is present.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 5.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        },
+        {
+          "idea_id": "branch_curvature_gate",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "This has the strongest direct coupling: removing the behaviour signal removes item-specific curvature, while removing curved geometry removes the Lorentz distance computation. Branching entropy is a meaningful training-only behaviour statistic and the design tests a different mechanism from directional target shifts or Busemann preference. Practical implementation is moderate rather than trivial because item-varying curvature shares one codebook, entropy is unreliable for sparse items, and Lorentz distance calculations need stable numerical handling. Adaptive geometry could improve assignments useful to generation, but global codebook distortion and Stage3 transfer are substantial uncertainties.",
+          "scope_reason": "Computes training-only outgoing branching entropy and uses it to set bounded negative curvature inside Lorentz lifts and code distances at every residual level, directly changing assignment geometry. It specifies Euclidean geometry-off and behaviour/geometry interventions, observable assignment/gradient and Recall effects, entropy smoothing, curvature bounds, numerical safeguards, and cost. The per-item curvature distance and residual assignment are sufficiently explicit to implement.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 5.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 5.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        }
+      ]
+    }
+  },
+  "selection": {
+    "disagreement": {
+      "branch_curvature_gate": 1.0,
+      "transition_busemann_gate": 0.0,
+      "transition_geodesic_residual": 0.0
+    },
+    "rejected": [
+      {
+        "idea_id": "transition_geodesic_residual",
+        "overall_median": 4.0,
+        "reasons": [
+          "outside the configured selection cap"
+        ]
+      },
+      {
+        "idea_id": "branch_curvature_gate",
+        "overall_median": 4.0,
+        "reasons": [
+          "outside the configured selection cap"
+        ]
+      }
+    ],
+    "rule": {
+      "fallback_to_best": true,
+      "keep_single_best": true,
+      "max_declared_hours_for_the_frozen_budget": 72.0,
+      "max_selected": 1,
+      "mean_threshold": 3.0,
+      "median_threshold": 3.0,
+      "min_dimension_median": 2.0,
+      "require_min_scorers_above_threshold": 2,
+      "require_scope": true
+    },
+    "selected": [
+      {
+        "idea_id": "transition_busemann_gate",
+        "max_disagreement": 0.0,
+        "overall_mean": 4.0,
+        "overall_median": 4.0
+      }
+    ],
+    "selection_is_multiple": false
+  },
+  "stage2_jobs": [
+    {
+      "attempts": 4,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "transition_busemann_gate",
+      "job_id": "stage2:transition_busemann_gate",
+      "kind": "stage2",
+      "stage3_job_id": "stage3:transition_busemann_gate",
+      "status": "done"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "transition_busemann_gate",
+      "job_id": "stage3:transition_busemann_gate",
+      "kind": "stage3",
+      "stage3_job_id": null,
+      "status": "done"
+    }
+  ],
+  "stage3_jobs": [
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "transition_busemann_gate",
+      "job_id": "stage3:transition_busemann_gate",
+      "kind": "stage3",
+      "stage3_job_id": null,
+      "status": "done"
+    }
+  ],
+  "step": "stage2",
+  "updated_at": 1792907943.908156,
+  "verification": {}
+}

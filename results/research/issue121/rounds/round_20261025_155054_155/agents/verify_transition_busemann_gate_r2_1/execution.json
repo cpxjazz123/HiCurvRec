@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_transition_busemann_gate_r2_1",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792904911.632881,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "verification.txt",
+  "output_sha256": "b354f709e3a15b6c25738bf3ca174ff020adf988f9655ba7813c78dba9343c1d",
+  "pid": 1847137,
+  "project_marker": ".git",
+  "prompt_sha256": "048f91447a17823426fcc2274348a4d4c7c3f169c06c322dd08bd9ec4d950de8",
+  "session_sha256": "efa4617e360961cb8f14b46229da248db7f064043b4afd213fb79e2d02511537",
+  "stderr_present": false,
+  "task_id": "verify_transition_busemann_gate_r2_1",
+  "timed_out": false,
+  "verified": true
+}

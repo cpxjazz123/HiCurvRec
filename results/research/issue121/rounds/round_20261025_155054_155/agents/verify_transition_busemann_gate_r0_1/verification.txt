@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/train_rqvae.py:262-289 -> model/layers.py:115-136,146-156 | Inspected the real trainer dataflow: outgoing directed edges are built from TRAIN_FILE history[-1] -> target counts, then cached direction/confidence tensors are passed to model forward; the first VQ layer uses them in the Poincare-distance plus directional potential assignment score. The same behavior tuple is passed to evaluation/export (train_rqvae.py:391-394,446-449). No runtime training executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No finding.
+FINDING REPRODUCTION: Not applicable; the connected pathway is visible at the cited locations.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/model/layers.py:115-169; smoke_test.py:13-39 | Reviewed forward/backward and switch logic. The smoke test invokes model forward, finite-loss backward, and checks encoder/codebook gradients; it also compares curved scores against Euclidean scores and exercises behavior-off. By inspection, the gate affects argmin code assignment, which selects the code embedding used by the straight-through quantizer and quantization losses. Curved distance and potential use finite projections/clamps and bounded potential. No trainer execution performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No finding. The behavior score itself is used for discrete assignment rather than differentiated as a soft loss; the resulting changed assignment changes the straight-through quantized latent/loss path. Smoke test does not assert assignment changes for a controlled identical latent/codebook under each switch, but code inspection confirms the score-selection dependency and no dead computed term.
+FINDING REPRODUCTION: The supplied smoke_test.py compares score matrices and checks the behavior-off call; a direct assignment comparison can be made by feeding identical latent/direction/confidence to VQLayer with use_transition_gate on/off, and with use_hyperbolic_gate true/false.
+FINDING CORRECTION: None required for correctness; an explicit controlled index assertion would strengthen the smoke test but is not blocking.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_155054_155/transition_busemann_gate/train_rqvae.py:40-68,233-290,417-465,468-496; smoke_test.py:5-9,24-25 | Inspected root discovery, frozen stage0 train parquet path, target-to-embedding indexing, candidate-specific promoted result path, SID extension/JSON enumeration, and top-level launcher/main. Launcher explicitly checks GENREC_SINGLE_GPU at lines 108,472-473 and otherwise invokes four-rank torchrun; the single-GPU branch falls through to main. No runtime trainer/launcher execution performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No finding. The candidate writes under results/stage2_RQ-VAE/TIGER_transition_busemann_gate/, the required promoted candidate directory; exported SID rows are enumerated by embedding item ID and collision extension enforces unique rows.
+FINDING REPRODUCTION: Read the path constants and export loop at the cited lines; smoke_test.py verifies candidate result path and collision extension shape/uniqueness. Runtime integration was not executed.
+FINDING CORRECTION: None.
