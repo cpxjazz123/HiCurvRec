@@ -50,6 +50,12 @@
       "event": "output_paths_rechecked",
       "idea_id": "successor-geodesic-coarse",
       "verdict": "passed"
+    },
+    {
+      "at": 1792935573.6682928,
+      "event": "implementation_verified",
+      "idea_id": "successor-geodesic-coarse",
+      "revision": 1
     }
   ],
   "evidence_bundles": {
@@ -18948,26 +18954,7 @@
       ],
       "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
       "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
-      "blocking_findings": [
-        {
-          "check": "a) behaviour x geometry fidelity",
-          "correction": "Implement and wire training-only adjacent-event successor counts and corrected top-16 neighbors into a first-level 32-prototype Poincare assignment, with the specified geodesic consensus term in the same differentiable assignment/loss pathway. Add explicit behavior-off and Euclidean-distance switches for the required comparisons, retaining the proposed residual levels and collision extension.",
-          "detail": "The stated mechanism is absent. Training loads unique targets at lines 247-254, then model.forward uses RQLayer, whose assignment computes squared Euclidean distances at lines 98-104 and argmin at 106-113. There is no successor-neighbor construction/use, Poincare operation, 32-way T1, or connected behavior-and-geometry pathway. The declared trainer codebook is three levels of 256, and export collision-extension adds a level; this does not implement K1=32 plus the proposed T2/T3/T4 structure.",
-          "location": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:247-320; results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:98-134,273-290",
-          "reproduction": "Inspect the complete candidate model/layers and trace train_rqvae.main's batch call at line 320. Minimal counterexample: with identical embeddings but different adjacent training-event histories, this trainer constructs the same batch/model computation because it never reads event source/target pairs or successor lists. Replacing a hypothetical successor signal or curvature cannot affect its assignments or gradients; assignments remain Euclidean.",
-          "severity": "blocking",
-          "verifier": "verify_successor-geodesic-coarse_r0_1"
-        },
-        {
-          "check": "b) trainability",
-          "correction": "Add the connected Poincare successor-conditioned assignment described in the proposal and ensure its soft assignment/codebook or commitment loss participates in the trainer's loss. Verify finite forward/backward gradients reach the first-level prototypes and encoder, and compare assignments/gradients with behavior disabled and with curved distance replaced by Euclidean distance.",
-          "detail": "The actual baseline forward/backward is structurally differentiable, but there is no coupled term to train: no Poincare prototypes, successor consensus, or behavior-dependent assignment. Thus the required both-on versus behavior-off/Euclidean comparisons cannot change SID assignments or gradients. This is a failure to implement the trainability target, not a claim that the baseline loss itself is dead or unstable.",
-          "location": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:98-134,273-290",
-          "reproduction": "The only assignment distance is the Euclidean matrix in _distances (98-104), and quantizer forward consumes that distance (121). The trainer invokes ordinary model(batch). There is no behavior/geometry switch or parameter in the state to reach; consequently no finite coupled-term gradient can be produced or compared.",
-          "severity": "blocking",
-          "verifier": "verify_successor-geodesic-coarse_r0_1"
-        }
-      ],
+      "blocking_findings": [],
       "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
       "changed_files": [
         "train_rqvae.py"
@@ -19020,60 +19007,60 @@
         "result": "Timed out after 120 seconds; no PASS output, trainer execution, or SID export was verified."
       },
       "source_digest": "8bca50d2dd8b0bdff66c6c5a3042d647487263ca415dc69d7a03b3994a9e371a",
-      "status": "repaired",
+      "status": "verified",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse",
       "tree_exists": true,
       "verdicts": [
         {
           "checks": [
             {
-              "exercised_how": "Traced the actual trainer batch path from loading through forward/loss. It reads item embeddings and training target IDs only; the executed RQ path is the baseline Euclidean residual quantizer. No training-event successor graph, Poincare map/distance, or behavior-conditioned coarse assignment is present.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:247-320 -> model/model.py:26-30 -> model/layers.py:273-290",
+              "exercised_how": "Inspected the real trainer's construction of adjacent per-user successors from the training parquet, popularity-corrected top-16 table and batch lookup, then traced successor embeddings and weights into the T1 cost used for its Poincare assignment. This is source inspection; no runtime execution.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:254-275 -> model/model.py:26-30 -> model/layers.py:292-327",
               "findings": [
                 {
-                  "correction": "Implement and wire training-only adjacent-event successor counts and corrected top-16 neighbors into a first-level 32-prototype Poincare assignment, with the specified geodesic consensus term in the same differentiable assignment/loss pathway. Add explicit behavior-off and Euclidean-distance switches for the required comparisons, retaining the proposed residual levels and collision extension.",
-                  "detail": "The stated mechanism is absent. Training loads unique targets at lines 247-254, then model.forward uses RQLayer, whose assignment computes squared Euclidean distances at lines 98-104 and argmin at 106-113. There is no successor-neighbor construction/use, Poincare operation, 32-way T1, or connected behavior-and-geometry pathway. The declared trainer codebook is three levels of 256, and export collision-extension adds a level; this does not implement K1=32 plus the proposed T2/T3/T4 structure.",
-                  "location": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:247-320; results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:98-134,273-290",
-                  "reproduction": "Inspect the complete candidate model/layers and trace train_rqvae.main's batch call at line 320. Minimal counterexample: with identical embeddings but different adjacent training-event histories, this trainer constructs the same batch/model computation because it never reads event source/target pairs or successor lists. Replacing a hypothetical successor signal or curvature cannot affect its assignments or gradients; assignments remain Euclidean.",
-                  "severity": "blocking"
-                }
-              ],
-              "name": "a) behaviour x geometry fidelity",
-              "verdict": "NEEDS_FIX"
-            },
-            {
-              "exercised_how": "Source-traced the real forward, scalar loss, backward, clipping, and optimizer step; runtime execution is unavailable as stipulated. Existing Euclidean RQ-VAE loss is connected to encoder/decoder and codebooks by straight-through quantization, but the proposed coupled pathway has no parameters or operations in this path.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:317-329 -> model/model.py:26-30,43-50 -> model/layers.py:115-134,273-290",
-              "findings": [
-                {
-                  "correction": "Add the connected Poincare successor-conditioned assignment described in the proposal and ensure its soft assignment/codebook or commitment loss participates in the trainer's loss. Verify finite forward/backward gradients reach the first-level prototypes and encoder, and compare assignments/gradients with behavior disabled and with curved distance replaced by Euclidean distance.",
-                  "detail": "The actual baseline forward/backward is structurally differentiable, but there is no coupled term to train: no Poincare prototypes, successor consensus, or behavior-dependent assignment. Thus the required both-on versus behavior-off/Euclidean comparisons cannot change SID assignments or gradients. This is a failure to implement the trainability target, not a claim that the baseline loss itself is dead or unstable.",
-                  "location": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:98-134,273-290",
-                  "reproduction": "The only assignment distance is the Euclidean matrix in _distances (98-104), and quantizer forward consumes that distance (121). The trainer invokes ordinary model(batch). There is no behavior/geometry switch or parameter in the state to reach; consequently no finite coupled-term gradient can be produced or compared.",
-                  "severity": "blocking"
-                }
-              ],
-              "name": "b) trainability",
-              "verdict": "NEEDS_FIX"
-            },
-            {
-              "exercised_how": "Source-inspected the trainer entry point, path resolution, frozen embedding/train parquet inputs, export and launcher branches. Runtime launch is not claimed. Candidate result output is under results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse; JSON keys enumerate embedding row IDs, and collision extension preserves row order. The GENREC_SINGLE_GPU branch returns to main without torchrun; distributed launch uses four ranks otherwise.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:40-68,233-260,387-434,437-465",
-              "findings": [
-                {
-                  "correction": "none",
-                  "detail": "No integration defect identified from source inspection. The result path is candidate-specific and repository-relative, inputs are the stage1 sentence_t5.npy and stage0 train.parquet, SID export has one row/key per embedding index and enforces uniqueness, and the single-card environment switch is present and honored.",
+                  "correction": "None required.",
+                  "detail": "No blocking defect found. The same T1 assignment cost adds a weighted successor-to-prototype curved-distance consensus to the item's curved distance; both alter the hard argmin SID assignment. The behavior is constructed only from train.parquet.",
                   "location": "none",
-                  "reproduction": "Trace constants at lines 56-68, input loading at 247-254, export at 415-429, and launcher dispatch at 437-465. In particular, setting GENREC_SINGLE_GPU=1 bypasses torchrun and calls main; absent that switch, the top-level path starts four-rank torchrun.",
+                  "reproduction": "Source trace at train_rqvae.py:254-275, 341-345 and layers.py:302-327. The sandbox cannot execute the trainer; the prescribed GPU gradient smoke remains the runtime proof.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
-              "name": "c) integration",
+              "name": "behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Traced T1 projection, curved item/prototype distance, successor/prototype geodesic distances, weighted costs, soft assignment auxiliary term and hard-argmin straight-through quantization through quant_loss to train_rqvae.py:345-352 backward and optimizer step. No runtime execution.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:294-333",
+              "findings": [
+                {
+                  "correction": "None required.",
+                  "detail": "No dead coupled term or apparent float32 overflow/NaN hazard found: inputs and prototypes are projected strictly inside the unit ball; denominator and atanh arguments are clamped; soft probabilities and costs remain in the differentiable loss. T1 prototype embeddings and encoder receive gradients through quantization/soft costs. Turning behavior off removes the additive term and can change costs/argmin; Euclidean mode replaces both item and neighbor curved distances, so both controls affect the connected computation. Actual numeric gradient validation is not possible in this sandbox.",
+                  "location": "none",
+                  "reproduction": "Source-level counterfactuals are layers.py:302-327 (t1_euclidean and t1_behavior_on branches); backward is invoked by train_rqvae.py:350 and gradient clipping precedes optimizer.step at 351-353.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected repository-root/result path resolution, frozen stage0 train parquet and stage1 embedding inputs, single-process/device setup, rank-0 export and DDP launcher including GENREC_SINGLE_GPU handling. Source inspection only; no trainer execution.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:40-67, 233-245, 412-459, 462-490",
+              "findings": [
+                {
+                  "correction": "None required.",
+                  "detail": "No integration defect identified. The candidate writes to its promoted results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse directory, builds an item-indexed SID JSON over all embedding rows with unique collision-extension tokens, and uses the single-card environment branch to bypass torchrun while preserving the standard main path. Multi-card launch uses torchrun and worker rank detection.",
+                  "location": "none",
+                  "reproduction": "Path constants at train_rqvae.py:49-67; input selection at 247-251; export/indexing at 441-453; launcher branches at 462-490.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "integration",
               "verdict": "PASS"
             }
           ],
-          "verdict": "NEEDS_FIX",
-          "verifier": "verify_successor-geodesic-coarse_r0_1"
+          "verdict": "PASS",
+          "verifier": "verify_successor-geodesic-coarse_r1_1"
         }
       ]
     }
@@ -23312,10 +23299,21 @@
       "idea_id"
     ]
   },
-  "stage2_jobs": [],
+  "stage2_jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "successor-geodesic-coarse",
+      "job_id": "stage2:successor-geodesic-coarse",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "running"
+    }
+  ],
   "stage3_jobs": [],
-  "step": "verification",
-  "updated_at": 1792934080.4497771,
+  "step": "stage2",
+  "updated_at": 1792935575.0085232,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261025_235209_10.log",
   "worker_pid": 3379029,
