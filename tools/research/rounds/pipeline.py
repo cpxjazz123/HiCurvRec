@@ -14,6 +14,8 @@ records every rejection, every revision and every failure signature.
 """
 from __future__ import annotations
 
+import re
+
 import json
 import time
 from pathlib import Path
@@ -182,7 +184,14 @@ def _source_digest(tree: Path) -> str:
 
 NON_BLOCKING_SEVERITIES = frozenset({
     "minor", "nit", "style", "cosmetic", "suggestion", "advisory", "info",
-    "informational", "non_blocking", "non-blocking", "optional",
+    "informational", "non_blocking", "non-blocking", "optional", "note",
+    "notes", "none", "harmless",
+})
+
+#: The words that mean the finding stops the work.
+BLOCKING_SEVERITIES = frozenset({
+    "blocking", "blocker", "block", "critical", "correctness", "severe",
+    "fatal", "error", "high", "major", "unsafe", "broken",
 })
 
 
@@ -194,10 +203,20 @@ def _is_blocking(severity) -> bool:
     use, which turned three NEEDS_FIX verdicts into an approval. Everything
     that is not explicitly harmless therefore blocks.
     """
-    text = str(severity or "").strip().lower().replace(" ", "_")
+    text = str(severity or "").strip().lower()
     if not text:
         return True
-    return text not in NON_BLOCKING_SEVERITIES
+    # Reviewers write sentences, not single words: "minor when it does not stop
+    # the work" is a minor finding, and the first word says which it is.
+    first = re.split(r"[\s,;:.()\[\]/]+", text, maxsplit=1)[0]
+    first = first.replace("-", "_")
+    if first in BLOCKING_SEVERITIES:
+        return True
+    if first in NON_BLOCKING_SEVERITIES:
+        return False
+    if text.replace(" ", "_") in NON_BLOCKING_SEVERITIES:
+        return False
+    return True
 
 
 def apply_verification(state: dict, implementation_id: str, reports: list) -> dict:
@@ -235,6 +254,8 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
     earlier = [finding for finding in (record.get("blocking_findings") or [])
                if finding.get("verifier") == "preflight"]
     record["blocking_findings"] = earlier + findings
+    # A failed output-path preflight blocks just as a reviewer's finding does.
+    findings = record["blocking_findings"]
     if findings:
         record["status"] = "needs_repair"
         signature = _failure_signature(findings)
