@@ -7,7 +7,7 @@
         "refused": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/transition_geodesic_codebook"
       },
       "finished_at": null,
-      "gpu": "1",
+      "gpu": null,
       "idea_id": "transition_geodesic_codebook",
       "job_id": "stage2:transition_geodesic_codebook",
       "kind": "stage2",
@@ -37,6 +37,11 @@
           "error": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/transition_geodesic_codebook",
           "finished_at": 1792901321.7971327,
           "status": "failed"
+        },
+        {
+          "status": "pending",
+          "error": "stopped by the operator: the round predates the one-mechanism-per-exploration rule and was cut short",
+          "finished_at": 1792903845.5461628
         }
       ],
       "queued_at": 1792894040.5443628,
@@ -45,7 +50,7 @@
       "round_id": "round_20261025_114110_416",
       "stage2_tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_geodesic_codebook",
       "started_at": 1792901321.7198899,
-      "status": "pending",
+      "status": "stopped",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_geodesic_codebook"
     },
     {
@@ -148,6 +153,11 @@
         {
           "error": "started by the collect path, which bypassed the launch's one-at-a-time allocation; several candidates forked four ranks at once",
           "status": "running"
+        },
+        {
+          "status": "pending",
+          "error": "stopped by the operator: the round predates the one-mechanism-per-exploration rule and was cut short",
+          "finished_at": 1792903845.5461648
         }
       ],
       "queued_at": 1792896400.360401,
@@ -156,7 +166,7 @@
       "round_id": "round_20261025_114110_416",
       "stage2_tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
       "started_at": 1792901079.7451658,
-      "status": "pending",
+      "status": "stopped",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin"
     },
     {
@@ -180,9 +190,14 @@
           "status": "done"
         },
         {
-          "status": "done",
           "error": null,
-          "note": "archived into state.exploratory_runs; re-run under the frozen recipe"
+          "note": "archived into state.exploratory_runs; re-run under the frozen recipe",
+          "status": "done"
+        },
+        {
+          "status": "pending",
+          "error": "stopped by the operator: the round predates the one-mechanism-per-exploration rule and was cut short",
+          "finished_at": 1792903845.5461655
         }
       ],
       "queued_at": 1792894161.932802,
@@ -191,7 +206,7 @@
       "round_id": "round_20261025_114110_416",
       "stage3_job_id": "stage3:branch_shell",
       "started_at": 1792900939.2178094,
-      "status": "pending",
+      "status": "stopped",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell"
     },
     {
@@ -226,6 +241,11 @@
         {
           "error": "started by the collect path, which bypassed the launch's one-at-a-time allocation; several candidates forked four ranks at once",
           "status": "running"
+        },
+        {
+          "status": "pending",
+          "error": "stopped by the operator: the round predates the one-mechanism-per-exploration rule and was cut short",
+          "finished_at": 1792903845.5461662
         }
       ],
       "queued_at": 1792894161.9659545,
@@ -234,7 +254,7 @@
       "round_id": "round_20261025_114110_416",
       "stage2_tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_tangent_codes",
       "started_at": 1792901079.8538883,
-      "status": "pending",
+      "status": "stopped",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_tangent_codes"
     },
     {
@@ -266,6 +286,11 @@
         {
           "error": "started by the collect path, which bypassed the launch's one-at-a-time allocation; several candidates forked four ranks at once",
           "status": "running"
+        },
+        {
+          "status": "pending",
+          "error": "stopped by the operator: the round predates the one-mechanism-per-exploration rule and was cut short",
+          "finished_at": 1792903845.546167
         }
       ],
       "queued_at": 1792896389.3684416,
@@ -274,47 +299,54 @@
       "round_id": "round_20261025_114110_416",
       "stage2_tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_prefix_mass",
       "started_at": 1792901079.966464,
-      "status": "pending",
+      "status": "stopped",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_prefix_mass"
     },
     {
       "attempts": 0,
       "error": null,
-      "finished_at": null,
+      "finished_at": 1792902047.415313,
+      "gpu": null,
       "idea_id": "branch_shell",
       "job_id": "stage3:branch_shell",
       "kind": "stage3",
+      "previous_attempts": [
+        {
+          "error": null,
+          "note": "archived into state.exploratory_runs; re-run under the frozen recipe",
+          "status": "done"
+        }
+      ],
       "queued_at": 1792896551.4322486,
-      "result": null,
+      "result": {
+        "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_branch_shell/ckpt/Amazon_2023_Instruments/Oct-25-2026_13-51-11/HG_Rec_best.pth",
+        "n_eval": 57439,
+        "test_ndcg@10": 0.03135972497952313,
+        "test_ndcg@5": 0.025816501234338922,
+        "test_recall@10": 0.05585055450129703,
+        "test_recall@5": 0.03873674680965894
+      },
       "round_id": "round_20261025_114110_416",
       "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell/item_sids.json",
       "stage2_job_id": "stage2:branch_shell",
       "started_at": null,
-      "status": "pending",
-      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell",
-      "previous_attempts": [
-        {
-          "status": "done",
-          "error": null,
-          "note": "archived into state.exploratory_runs; re-run under the frozen recipe"
-        }
-      ],
-      "gpu": null
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell"
     },
     {
       "attempts": 6,
       "cost_projection": {
         "budget_hours": 48.0,
         "epochs": 3000,
-        "measured_epochs": 629,
-        "per_epoch_s": 0.15934181240063594,
-        "projected_hours": 0.13278484366719662
+        "measured_epochs": 2948,
+        "per_epoch_s": 0.15357835820895524,
+        "projected_hours": 0.12798196517412935
       },
       "error": null,
       "failure_evidence": {
         "refused": "independent executable verification: the implementation recorded no smoke result"
       },
-      "finished_at": null,
+      "finished_at": 1792902124.989329,
       "gpu": "0,1,2,3",
       "idea_id": "branch_shell_behavior_off",
       "job_id": "stage2:branch_shell_behavior_off",
@@ -346,11 +378,42 @@
         }
       ],
       "queued_at": 1792899775.9814801,
-      "result": null,
+      "result": {
+        "metrics": {
+          "full_unique_items": 24587,
+          "level2_distinct_prefixes": 5298,
+          "negative_hits": 9540,
+          "pairs": 52855,
+          "positive_hits": 5385,
+          "valid_l1_hard_er": 5.644654088050315,
+          "valid_l1_negative_hit_rate": 0.01804938038028569,
+          "valid_l1_positive_hit_rate": 0.10188250875035475
+        },
+        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off/item_sids.json",
+        "sid_sha256": "fe50ee86dcae442b1a703f0f5cbf0e820289a2a9d0f16283a0fdee5ecccd76a6",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 5298,
+            "negative_hits": 9540,
+            "pairs": 52855,
+            "positive_hits": 5385,
+            "valid_l1_hard_er": 5.644654088050315,
+            "valid_l1_negative_hit_rate": 0.01804938038028569,
+            "valid_l1_positive_hit_rate": 0.10188250875035475
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off",
       "round_id": "round_20261025_114110_416",
+      "stage3_job_id": "stage3:branch_shell_behavior_off",
       "started_at": 1792901565.5082643,
-      "status": "running",
+      "status": "done",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell_behavior_off"
     },
     {
@@ -387,6 +450,11 @@
         {
           "error": "started by the collect path, which bypassed the launch's one-at-a-time allocation; several candidates forked four ranks at once",
           "status": "running"
+        },
+        {
+          "status": "pending",
+          "error": "stopped by the operator: the round predates the one-mechanism-per-exploration rule and was cut short",
+          "finished_at": 1792903845.5461707
         }
       ],
       "queued_at": 1792899964.0867279,
@@ -395,7 +463,7 @@
       "round_id": "round_20261025_114110_416",
       "stage3_job_id": "stage3:branch_shell_geometry_off",
       "started_at": 1792901080.0778468,
-      "status": "pending",
+      "status": "stopped",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell_geometry_off"
     },
     {
@@ -420,6 +488,30 @@
       "started_at": null,
       "status": "superseded",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell_geometry_off"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": null,
+      "idea_id": "branch_shell_behavior_off",
+      "job_id": "stage3:branch_shell_behavior_off",
+      "kind": "stage3",
+      "queued_at": 1792902125.300506,
+      "result": null,
+      "round_id": "round_20261025_114110_416",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell_behavior_off/item_sids.json",
+      "stage2_job_id": "stage2:branch_shell_behavior_off",
+      "started_at": null,
+      "status": "stopped",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell_behavior_off",
+      "previous_attempts": [
+        {
+          "status": "pending",
+          "error": "stopped by the operator: the round predates the one-mechanism-per-exploration rule and was cut short",
+          "finished_at": 1792903845.5461717
+        }
+      ],
+      "gpu": null
     }
   ],
   "schema": 1
