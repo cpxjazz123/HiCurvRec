@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:84-131 -> model/layers.py:117-145, 164-168 | Static code-path exercise: traced train-only transition count/entropy into per-item curvature, loader batch lookup, first-level curved distance and argmin; confirmed geometry_off falls back to Euclidean distances.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The named behaviour and Poincare geodesic operation are connected in the actual assignment path. Curvature is not merely an appended suffix: changing it can change codeword ranking because each candidate is mapped using that item curvature.
+FINDING REPRODUCTION: Follow train_rqvae.py:332-336 and 391-396 into RQLayer.forward at model/layers.py:332-338, then VQLayer.forward at lines 164-168 and _curved_distances at lines 127-145.
+FINDING CORRECTION: No correction required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/model/layers.py:117-145, 164-181 | Static differentiability/numerical review; runtime execution is not available in this sandbox. Verified bounded positive curvature [0.1,1], guarded denominators/norms and atanh argument, and straight-through quantization loss reaches encoder/codebook parameters for the selected assignment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/model/layers.py:164-181
+FINDING DETAIL: The curved distance selects the discrete codeword; standard VQ straight-through losses then train the encoder/codebook for that selected token. No separate dead curved loss exists. The geometry and behaviour switches each have concrete code paths, so the required matched comparisons can be run. No float32 overflow/NaN hazard is apparent in the bounded-curvature distance implementation. This is a source-level judgement, not a runtime gradient-smoke claim.
+FINDING REPRODUCTION: Compare forward calls with distinct per-item curvature versus a constant curvature from _curvature_from_entropy when BEHAVIOUR_ON is false (train_rqvae.py:124-131), and with geometry_on=False (layers.py:164-168); inspect resulting selected indices and backpropagate the returned reconstruction plus quantization loss. The required GPU smoke remains the runtime proof.
+FINDING CORRECTION: No correction required; run the prescribed one-epoch GPU gradient smoke before a full run.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:41-67, 161-172, 297-337, 464-506, 515-545 | Static integration trace from entry point through frozen Stage0 train.parquet / Stage1 embedding inputs, candidate-specific Stage2 result paths, SID export, and launcher branches.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:59-67, 505-506
+FINDING DETAIL: Trainer resolves its candidate output to results/stage2_RQ-VAE/TIGER_successor_entropy_curvature, reads the frozen Stage0 train.parquet and Stage1 sentence_t5.npy, and exports item IDs as zero-based row indices with integer SID arrays and JSON keys. Collision extension enforces unique tuples. The entry point invokes the four-process launcher unless already launched or GENREC_SINGLE_GPU=1; the single-card branch is explicitly preserved. No trainer execution was possible here, as specified.
+FINDING REPRODUCTION: Static trace: _repository_root and path constants at lines 43-67; data loading at 311-337; export at 493-506; launcher and __main__ at 515-545. With GENREC_SINGLE_GPU=1, _launch_via_torchrun returns and main runs once; under torchrun ranks it skips relaunch; otherwise it launches four workers.
+FINDING CORRECTION: No correction required.

@@ -1,0 +1,7 @@
+{
+  "kind": "source_changed_after_review",
+  "reason": "the one-epoch smoke exposed a real dimension defect (the global curvature vector was fed to a 1024-row batch, and the codebook curvature broadcast against K); the fix changed train_rqvae.py and model/layers.py, so the reviewed digest no longer describes the tree and the verification has to run again",
+  "reviewed_digest": "fca6bcbab4f63d33c04d55c1d717c1f4e656d5456fc7309f64e20388d2b08772",
+  "current_digest": null,
+  "next": "the verifiers review the changed source as a new revision before any Stage 2 launch"
+}

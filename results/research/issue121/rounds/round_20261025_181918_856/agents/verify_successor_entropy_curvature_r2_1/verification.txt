@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:84-121 -> /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/model/layers.py:106-142,153-178 | Traced the training-only train.parquet transitions into item entropy/curvature (trainer.py:327-329), then into the first-level curved distances during forward (layers.py:329-335); the recorded candidate probe reports both controls move assignments and finite gradients (CANDIDATE_CHECK.json:9-19,42-45).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Training-only successor counts determine per-item curvature, which is used inside the Poincare exp-map/geodesic ranking against codewords for first-level assignment. This is one connected computation; later residual levels remain baseline as specified.
+FINDING REPRODUCTION: Source trace at the cited lines; candidate probe records 256 assignment changes under behaviour-off and 256 under geometry-off, with finite gradients.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/model/layers.py:127-142,153-178,317-341 | Followed distance selection into the straight-through quantizer and reconstruction/commitment loss (model/model.py:26-32,48-55; trainer.py:387-397); the supplied candidate probe records finite gradients reaching codebook and encoder (CANDIDATE_CHECK.json:16-19).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No trainability defect found by source inspection. The chosen codeword feeds the straight-through quantized output and standard VQ loss, so assignment changes affect the live training computation. Curvature is bounded to [0.1, 1.0], exp-map inputs are finite-guarded and the atanh argument is capped below one. The recorded comparison covers both-on, behaviour-off and Euclidean geometry-off; executable runtime proof is outside this review environment.
+FINDING REPRODUCTION: Inspect the cited forward/loss path and CANDIDATE_CHECK.json:9-19. That artifact reports assignment changes for both controls and finite nonzero codebook/encoder gradient magnitudes.
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:41-68,297-339,456-504,507-537 | Traced the repository-root and promoted-arm paths, frozen stage0 train.parquet and stage1 embedding inputs, trainer/export flow, and launcher dispatch including SINGLE_GPU_ENV="GENREC_SINGLE_GPU". Runtime execution was not performed, as stipulated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Inputs resolve to the repository's frozen stage0/stage1 locations; output is the candidate's own results/stage2_RQ-VAE/TIGER_successor_entropy_curvature directory. SID export enumerates item IDs in embedding-row order, emits integer SID arrays/JSON keys, and checks uniqueness after collision extension. The launcher skips torchrun when GENREC_SINGLE_GPU=1 and otherwise launches four ranks; main honors the same single-card switch.
+FINDING REPRODUCTION: Source trace at cited lines. The single-card branch is explicit at trainer.py:509-512 and main's DDP initialization branch at 299-308; export/indexing checks are at 485-499.
+FINDING CORRECTION: none

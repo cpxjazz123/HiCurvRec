@@ -60,6 +60,62 @@
       "event": "scoring_complete",
       "rejected": 2,
       "selected": 1
+    },
+    {
+      "at": 1792915776.7055552,
+      "event": "verification_needs_repair",
+      "idea_id": "successor_entropy_curvature",
+      "revision": 0,
+      "signature": "6078eaa1a00c8108"
+    },
+    {
+      "at": 1792915820.074886,
+      "event": "implementation_repaired",
+      "idea_id": "successor_entropy_curvature",
+      "revision": 1
+    },
+    {
+      "at": 1792915820.0810945,
+      "event": "output_paths_rechecked",
+      "idea_id": "successor_entropy_curvature",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792915859.7026558,
+      "event": "verification_needs_repair",
+      "idea_id": "successor_entropy_curvature",
+      "revision": 1,
+      "signature": "8dd7ddac2464f3e7"
+    },
+    {
+      "at": 1792915895.6730778,
+      "event": "implementation_repaired",
+      "idea_id": "successor_entropy_curvature",
+      "revision": 2
+    },
+    {
+      "at": 1792915895.6787748,
+      "event": "output_paths_rechecked",
+      "idea_id": "successor_entropy_curvature",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792915971.3797548,
+      "event": "implementation_verified",
+      "idea_id": "successor_entropy_curvature",
+      "revision": 2
+    },
+    {
+      "at": 1792916486.5789719,
+      "event": "source_changed_before_review",
+      "idea_id": "successor_entropy_curvature",
+      "revision": 3
+    },
+    {
+      "at": 1792916523.6801133,
+      "event": "implementation_verified",
+      "idea_id": "successor_entropy_curvature",
+      "revision": 3
     }
   ],
   "evidence_bundles": {
@@ -6825,56 +6881,30 @@
   "ideas_rejected": [],
   "implementations": [
     {
-      "idea_id": "successor_entropy_curvature",
-      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature",
-      "tree_exists": true,
-      "proposal_sha256": "54c6b4a0c18ac1eadc7e338cacb3485e2404beca76bbafa5ecacce8059002376",
-      "source_digest": "d1226e005c2628d7abe136d756d08ca3b39f36fc3dc07b7f518c75702b9d61bc",
+      "assumptions": [],
       "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
       "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
       "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
-      "changed_files": [
-        "model/layers.py",
-        "model/model.py",
-        "train_rqvae.py"
-      ],
-      "deviations": [],
-      "assumptions": [],
-      "smoke": {},
-      "notes": "authored directly from the fixed read-only baseline by the assistant, not by an implementation agent; the candidate path check ran on this tree and its verdict is in CANDIDATE_CHECK.json",
-      "status": "implemented",
-      "revision": 0,
-      "verdicts": [],
       "candidate_path_check": {
-        "schema": 1,
-        "kind": "candidate_path_check",
-        "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature",
-        "tree_digest": "d1226e005c2628d7abe136d756d08ca3b39f36fc3dc07b7f518c75702b9d61bc",
-        "seed": 20261025,
-        "items": 256,
-        "started_at": 3304483.836503357,
         "behaviour_moved_assignments": 256,
-        "geometry_moved_assignments": 256,
-        "curvature_spread": 0.3837546706199646,
-        "curvature_min": 0.16235969960689545,
-        "curvature_max": 0.5461143851280212,
-        "mean_margin_both_on": 0.2954501807689667,
-        "mean_margin_behavior_off": 0.3956754803657532,
-        "gradients_finite": true,
         "codebook_gradient": 150.12759399414062,
+        "curvature_max": 0.5461143851280212,
+        "curvature_min": 0.16235969960689545,
+        "curvature_spread": 0.3837546706199646,
+        "elapsed_seconds": 7.036,
         "encoder_gradient": 26743.323608398438,
+        "geometry_moved_assignments": 256,
+        "gradients_finite": true,
+        "items": 256,
+        "kind": "candidate_path_check",
+        "mean_margin_behavior_off": 0.3956754803657532,
+        "mean_margin_both_on": 0.2954501807689667,
         "negative_control_rejected": true,
+        "reason": "the behaviour signal moves 256 first-level assignments, the matched Euclidean control moves 256, the codebook receives a finite gradient and the disconnected control is rejected",
+        "report_digest": "3ca0a9147b36e55dba9dbe710cdff8ef59eebc48de0150f32d376fcbff277c2f",
+        "schema": 1,
         "score_margins": {
-          "both_on": [
-            0.3354530334472656,
-            0.3153681755065918,
-            0.373288631439209,
-            0.302670955657959,
-            0.3820486068725586,
-            0.37459802627563477,
-            0.23174571990966797,
-            0.33211755752563477
-          ],
           "behavior_off": [
             0.39026331901550293,
             0.39508914947509766,
@@ -6884,16 +6914,147 @@
             0.3986024856567383,
             0.39784979820251465,
             0.3939223289489746
+          ],
+          "both_on": [
+            0.3354530334472656,
+            0.3153681755065918,
+            0.373288631439209,
+            0.302670955657959,
+            0.3820486068725586,
+            0.37459802627563477,
+            0.23174571990966797,
+            0.33211755752563477
           ]
         },
-        "verdict": "VERIFIED_COUPLING",
-        "reason": "the behaviour signal moves 256 first-level assignments, the matched Euclidean control moves 256, the codebook receives a finite gradient and the disconnected control is rejected",
-        "elapsed_seconds": 7.036,
-        "report_digest": "3ca0a9147b36e55dba9dbe710cdff8ef59eebc48de0150f32d376fcbff277c2f"
-      }
+        "seed": 20261025,
+        "started_at": 3304483.836503357,
+        "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature",
+        "tree_digest": "d1226e005c2628d7abe136d756d08ca3b39f36fc3dc07b7f518c75702b9d61bc",
+        "verdict": "VERIFIED_COUPLING"
+      },
+      "changed_files": [
+        "model/layers.py",
+        "model/model.py",
+        "train_rqvae.py"
+      ],
+      "deviations": [],
+      "failure_signature": "8dd7ddac2464f3e7",
+      "idea_id": "successor_entropy_curvature",
+      "notes": "authored directly from the fixed read-only baseline by the assistant, not by an implementation agent; the candidate path check ran on this tree and its verdict is in CANDIDATE_CHECK.json",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_entropy_curvature"
+      },
+      "output_preflight": "passed",
+      "proposal_sha256": "54c6b4a0c18ac1eadc7e338cacb3485e2404beca76bbafa5ecacce8059002376",
+      "repairs": [
+        {
+          "remaining_issues": [
+            "Could not execute an imported/runtime smoke test because this environment lacks the PyTorch dependency (ModuleNotFoundError: No module named 'torch'); the source-level smoke checks passed."
+          ],
+          "repairs": [
+            {
+              "change": "Changed _successor_entropy to divide by math.log(max(2, item_count)); retained clipping and the existing bounded-curvature mapping",
+              "finding": "Entropy normalization used the number of observed successor IDs instead of catalog item count",
+              "verification": "The smoke contract check verified the source denominator and calculated ln(2)/ln(100)=0.150515 for the reported two-successor example"
+            },
+            {
+              "change": "Added SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\"; when set to \"1\", _launch_via_torchrun calls main() directly, and main bypasses distributed process-group initialization; otherwise the four-card torchrun route remains",
+              "finding": "The launcher ignored GENREC_SINGLE_GPU and always launched four torchrun workers",
+              "verification": "Source contract checks passed for the one-GPU branch, direct invocation and process-group guard"
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "python - <<'PY' [AST/source-contract smoke; imported/runtime smoke was also attempted but could not import train_rqvae.py without torch]",
+            "result": "PASS syntax and contract checks; N=100 entropy=0.150515; single-GPU branch and arm-scoped artifact paths present. Runtime import attempt: ModuleNotFoundError: No module named 'torch'."
+          }
+        },
+        {
+          "remaining_issues": [
+            "None"
+          ],
+          "repairs": [
+            {
+              "change": "Removed the inner main() invocation; the frozen GENREC_SINGLE_GPU branch now returns to the entry point, which invokes main() once",
+              "finding": "In the single-card branch, _launch_via_torchrun() called main() and the module entry point called it again, causing two sequential training runs",
+              "verification": "AST smoke check passed: the single-GPU branch contains no main() call and the module entry point contains exactly one direct main() call"
+            }
+          ],
+          "revision": 2,
+          "smoke": {
+            "command": "python -c 'import ast,pathlib; t=ast.parse(pathlib.Path(\"train_rqvae.py\").read_text()); f=next(n for n in t.body if isinstance(n,ast.FunctionDef) and n.name==\"_launch_via_torchrun\"); single=next(n for n in ast.walk(f) if isinstance(n,ast.If) and isinstance(n.test,ast.Compare) and isinstance(n.test.left,ast.Call) and isinstance(n.test.left.func,ast.Attribute) and n.test.left.func.attr==\"get\"); assert not any(isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id==\"main\" for n in ast.walk(single)); entry=next(n for n in t.body if isinstance(n,ast.If) and isinstance(n.test,ast.Compare) and isinstance(n.test.left,ast.Name) and n.test.left.id==\"__name__\"); calls=[n for n in entry.body if isinstance(n,ast.Expr) and isinstance(n.value,ast.Call) and isinstance(n.value.func,ast.Name) and n.value.func.id==\"main\"]; assert len(calls)==1; print(\"PASS: single-GPU launcher does not call main(); module entry point calls main() exactly once\")'",
+            "result": "PASS: single-GPU launcher does not call main(); module entry point calls main() exactly once"
+          }
+        }
+      ],
+      "revision": 3,
+      "smoke": {},
+      "source_digest": "65e9ad53406fb3a8f049ee5c409a616dd2c7f4c3f3b2ae50d86875c116cdc621",
+      "status": "verified",
+      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Static code-path exercise: traced train-only transition count/entropy into per-item curvature, loader batch lookup, first-level curved distance and argmin; confirmed geometry_off falls back to Euclidean distances.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:84-131 -> model/layers.py:117-145, 164-168",
+              "findings": [
+                {
+                  "correction": "No correction required.",
+                  "detail": "The named behaviour and Poincare geodesic operation are connected in the actual assignment path. Curvature is not merely an appended suffix: changing it can change codeword ranking because each candidate is mapped using that item curvature.",
+                  "location": "none",
+                  "reproduction": "Follow train_rqvae.py:332-336 and 391-396 into RQLayer.forward at model/layers.py:332-338, then VQLayer.forward at lines 164-168 and _curved_distances at lines 127-145.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static differentiability/numerical review; runtime execution is not available in this sandbox. Verified bounded positive curvature [0.1,1], guarded denominators/norms and atanh argument, and straight-through quantization loss reaches encoder/codebook parameters for the selected assignment.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/model/layers.py:117-145, 164-181",
+              "findings": [
+                {
+                  "correction": "No correction required; run the prescribed one-epoch GPU gradient smoke before a full run.",
+                  "detail": "The curved distance selects the discrete codeword; standard VQ straight-through losses then train the encoder/codebook for that selected token. No separate dead curved loss exists. The geometry and behaviour switches each have concrete code paths, so the required matched comparisons can be run. No float32 overflow/NaN hazard is apparent in the bounded-curvature distance implementation. This is a source-level judgement, not a runtime gradient-smoke claim.",
+                  "location": "results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/model/layers.py:164-181",
+                  "reproduction": "Compare forward calls with distinct per-item curvature versus a constant curvature from _curvature_from_entropy when BEHAVIOUR_ON is false (train_rqvae.py:124-131), and with geometry_on=False (layers.py:164-168); inspect resulting selected indices and backpropagate the returned reconstruction plus quantization loss. The required GPU smoke remains the runtime proof.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static integration trace from entry point through frozen Stage0 train.parquet / Stage1 embedding inputs, candidate-specific Stage2 result paths, SID export, and launcher branches.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:41-67, 161-172, 297-337, 464-506, 515-545",
+              "findings": [
+                {
+                  "correction": "No correction required.",
+                  "detail": "Trainer resolves its candidate output to results/stage2_RQ-VAE/TIGER_successor_entropy_curvature, reads the frozen Stage0 train.parquet and Stage1 sentence_t5.npy, and exports item IDs as zero-based row indices with integer SID arrays and JSON keys. Collision extension enforces unique tuples. The entry point invokes the four-process launcher unless already launched or GENREC_SINGLE_GPU=1; the single-card branch is explicitly preserved. No trainer execution was possible here, as specified.",
+                  "location": "results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:59-67, 505-506",
+                  "reproduction": "Static trace: _repository_root and path constants at lines 43-67; data loading at 311-337; export at 493-506; launcher and __main__ at 515-545. With GENREC_SINGLE_GPU=1, _launch_via_torchrun returns and main runs once; under torchrun ranks it skips relaunch; otherwise it launches four workers.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_successor_entropy_curvature_r3_1"
+        }
+      ]
     }
   ],
   "issue": "issue121",
+  "jobs": {},
   "matrix": {
     "dimensions": [
       "behavior_evidence",
@@ -8585,7 +8746,49 @@
     }
   },
   "probe_state": "PROBE_PENDING",
-  "repairs": [],
+  "repairs": [
+    {
+      "findings": [
+        {
+          "check": "behaviour x geometry fidelity",
+          "correction": "Pass the full item_count into the entropy denominator and compute value / math.log(max(2, item_count)); retain the existing [0,1] clipping and bounded-curvature mapping.",
+          "detail": "Entropy normalization uses log(max(2, len(marginal))), where len(marginal) is the number of observed distinct successor IDs, rather than log(max(2, N)) for the item/catalog count specified by the proposal. These denominators differ whenever some catalog items never appear as a successor; this inflates normalized entropy and consequently curvature, with values potentially clipped to 1.0. Thus the implemented behavior-to-curvature signal is not the specified normalized successor entropy.",
+          "location": "results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:120",
+          "reproduction": "Use an item inventory of N=100 with successors observed for only two IDs and an outgoing distribution (0.5, 0.5). The code divides log(2) by log(2), producing H=1; the specified normalization divides by log(100), producing about 0.1505. The resulting curvatures are 1.0 versus about 0.2355 for c_min=0.1,c_max=1.0.",
+          "severity": "blocking",
+          "verifier": "verify_successor_entropy_curvature_r0_1"
+        },
+        {
+          "check": "integration",
+          "correction": "Add SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\" and honor it in the launcher: when enabled, bypass torchrun and call main() directly (or use a one-process launch), while retaining the existing four-card distributed path otherwise and avoiding initialization of a process group in the single-card branch.",
+          "detail": "_launch_via_torchrun unconditionally starts four torchrun workers and never reads SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\". The single-card smoke/launch mode therefore cannot select a one-process training path, contrary to the integration contract; on a one-GPU allocation the hard-coded four-process launch can fail or hang.",
+          "location": "results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature/train_rqvae.py:506-526",
+          "reproduction": "Set GENREC_SINGLE_GPU=1 and invoke the trainer entry point with one visible GPU. The code still builds --nproc_per_node=4 and CUDA_VISIBLE_DEVICES=0,1,2,3 at lines 167-170, 518-524; there is no environment check that changes this behavior.",
+          "severity": "blocking",
+          "verifier": "verify_successor_entropy_curvature_r0_1"
+        }
+      ],
+      "idea_id": "successor_entropy_curvature",
+      "revision": 0,
+      "signature": "6078eaa1a00c8108"
+    },
+    {
+      "findings": [
+        {
+          "check": "integration",
+          "correction": "Make the entry point mutually exclusive, e.g. have _launch_via_torchrun return whether it handled training and call main() only for the torchrun-child path, or remove the main() call from the single-card branch and let the entry point invoke it exactly once.",
+          "detail": "In the single-card branch, _launch_via_torchrun() calls main() and returns, after which the module-level entry point calls main() again. Thus GENREC_SINGLE_GPU=1 runs the complete trainer twice sequentially, reinitializing and overwriting its own outputs rather than running once. This violates the frozen single-card launcher behavior and can double runtime / corrupt the intended run record.",
+          "location": "train_rqvae.py:509-512, 535-537",
+          "reproduction": "Set GENREC_SINGLE_GPU=1 and execute train_rqvae.py: the first main() is called at line 511; on return, execution continues to the unconditional main() at line 537 and starts a second training run.",
+          "severity": "blocking",
+          "verifier": "verify_successor_entropy_curvature_r1_1"
+        }
+      ],
+      "idea_id": "successor_entropy_curvature",
+      "revision": 1,
+      "signature": "8dd7ddac2464f3e7"
+    }
+  ],
   "review_bundles": {
     "coconsume_karcher_assignment": "9f9efc0bf12137b9831fc4206acf6a5c7f23107eba1879afb016056acf6a394b",
     "cooccur_curved_balancer": "8948d6d650b94d638ba0d69389600c62cbd4e0452ff907f1e2e9db9962dbd194",
@@ -9080,9 +9283,20 @@
     "status": "NEEDS_SPEC_REPAIR",
     "written_at": 1792914372.8979053
   },
-  "stage2_jobs": [],
+  "stage2_jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "successor_entropy_curvature",
+      "job_id": "stage2:successor_entropy_curvature",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "running"
+    }
+  ],
   "stage3_jobs": [],
-  "step": "verification",
-  "updated_at": 1792915561.9891868,
+  "step": "stage2",
+  "updated_at": 1792916523.6969817,
   "verification": {}
 }

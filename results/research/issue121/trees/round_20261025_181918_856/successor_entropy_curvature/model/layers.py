@@ -126,13 +126,16 @@ class VQLayer(nn.Module):
         """
         c = curvature.view(-1, 1)
         root = c.sqrt()
+        # The codebook is (B, K, D), so its curvature has to carry the codebook
+        # axis as well; a (B, 1) vector would broadcast against K on the wrong axis.
+        c3 = c.unsqueeze(1)
         z = self._poincare_exp0(latent, c)
         code = self.get_code_embs()
-        a = self._poincare_exp0(code.unsqueeze(0).expand(z.shape[0], -1, -1), c)
+        a = self._poincare_exp0(code.unsqueeze(0).expand(z.shape[0], -1, -1), c3)
         x2 = (z * z).sum(-1, keepdim=True).unsqueeze(1)
         y2 = (a * a).sum(-1, keepdim=True)
         xy = (z.unsqueeze(1) * a).sum(-1, keepdim=True)
-        cc = c.unsqueeze(1)
+        cc = c3
         num = (1 + 2 * cc * xy + cc * y2) * z.unsqueeze(1) + (1 - cc * x2) * a
         den = 1 + 2 * cc * xy + (cc ** 2) * x2 * y2
         delta = num / den.clamp_min(1e-12)
