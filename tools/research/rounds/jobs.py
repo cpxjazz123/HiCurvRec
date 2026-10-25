@@ -47,6 +47,33 @@ def sid_is_technically_valid(sid_path: Path, *, repo: Path = None) -> dict:
             "reference_status": result.get("reference_status", {})}
 
 
+def plan_gpu_allocation(running_jobs: list, usable: list, *, jobs_per_gpu: int = 2) -> dict:
+    """Plan where the next single-card jobs run.
+
+    A card may host several of these trainers, so the capacity is counted per
+    card: the result is the list of free slots, one entry per job that fits, and
+    the cards that hold no job at all, which is what a four-rank trainer needs.
+    """
+    running_per_card = {}
+    for job in running_jobs:
+        for card in str(job.get("gpu", "")).split(","):
+            card = card.strip()
+            if not card:
+                continue
+            running_per_card[card] = running_per_card.get(card, 0) + 1
+    free_slots = []
+    idle_cards = []
+    for card in usable:
+        card = str(card)
+        used = running_per_card.get(card, 0)
+        if used == 0:
+            idle_cards.append(card)
+        free_slots.extend([card] * max(0, int(jobs_per_gpu) - used))
+    return {"free_slots": free_slots, "idle_cards": idle_cards,
+            "running_per_card": running_per_card,
+            "capacity": len(free_slots) + sum(running_per_card.values())}
+
+
 class JobQueue:
     """A durable, resource-aware queue of Stage 2 and Stage 3 jobs."""
 
