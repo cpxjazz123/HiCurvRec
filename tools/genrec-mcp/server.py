@@ -2459,7 +2459,8 @@ def write_round_worker() -> Path:
     return worker
 
 
-def tool_research_round_start(objective: str = "", issue: str = "issue121") -> dict:
+def tool_research_round_start(objective: str = "", issue: str = "issue121",
+                              run: bool = False) -> dict:
     """Start one multi-agent round: three ideation agents, then three scorers.
 
     The round is asynchronous; research_round_status reports where it is. The
@@ -2476,6 +2477,16 @@ def tool_research_round_start(objective: str = "", issue: str = "issue121") -> d
         full_objective = full_objective + "\n\n" + objective
     directory = round_pipeline.new_round(REPO, round_id, objective=full_objective,
                                          issue=issue)
+    state = round_pipeline.load_state(directory)
+    if not run:
+        # Creating a round and running it are two decisions: a caller that
+        # wants to drive the phases one by one starts here and calls the phase
+        # tools it wants.
+        round_pipeline.record_event(state, "round_created", pid=None)
+        round_pipeline.save_state(directory, state)
+        return {"started": True, "round_id": round_id, "directory": str(directory),
+                "worker_pid": None, "worker_log": None, "gpu_launched": False,
+                "next": "research_round_ideate"}
     worker = write_round_worker()
     log = HARNESS_DIR / ("round_" + round_id + ".log")
     with log.open("wb") as sink:
@@ -2487,13 +2498,13 @@ def tool_research_round_start(objective: str = "", issue: str = "issue121") -> d
             stdin=subprocess.DEVNULL,
             start_new_session=True,
         )
-    state = round_pipeline.load_state(directory)
     state["worker_pid"] = process.pid
     state["worker_log"] = str(log)
     round_pipeline.record_event(state, "round_worker_started", pid=process.pid)
     round_pipeline.save_state(directory, state)
     return {"started": True, "round_id": round_id, "directory": str(directory),
-            "worker_pid": process.pid, "worker_log": str(log), "gpu_launched": False}
+            "worker_pid": process.pid, "worker_log": str(log), "gpu_launched": False,
+            "next": "research_round_status"}
 
 
 def _round_directory(round_id: str) -> Path:
@@ -2501,6 +2512,91 @@ def _round_directory(round_id: str) -> Path:
     if not round_id or "/" in round_id:
         raise ValueError("invalid round id")
     return round_pipeline.find_round_directory(REPO, round_id)
+
+
+def _round_phase(round_id: str, phase: str) -> dict:
+    """Run one phase of a round and report what it did.
+
+    Every phase of a round is a tool of its own, so a caller can drive the
+    round one phase at a time, and the detached worker uses the same code
+    instead of a second copy of the sequence. The lock keeps two runners from
+    paying for the same agents twice.
+    """
+    from tools.research.rounds import lock as round_lock
+    from tools.research.rounds import worker as round_worker
+
+    directory = _round_directory(round_id)
+    state = round_pipeline_state(directory)
+    if state.get("step") != phase:
+        return {"round_id": round_id, "phase": phase, "ran": False,
+                "step": state.get("step"),
+                "reason": "the round is at step " + str(state.get("step")) +
+                          ", not " + phase}
+    lock = round_lock.RoundLock(directory)
+    try:
+        lock.acquire(owner="mcp:" + phase)
+    except round_lock.RoundBusy as exc:
+        return {"round_id": round_id, "phase": phase, "ran": False,
+                "step": state.get("step"), "reason": str(exc)}
+    try:
+        result = getattr(round_worker, "phase_" + phase)(REPO, round_id)
+    finally:
+        lock.release()
+    result["round_id"] = round_id
+    result["summary"] = round_pipeline_summary(directory)
+    return result
+
+
+def round_pipeline_state(directory: Path) -> dict:
+    from tools.research.rounds import pipeline as round_pipeline
+    return round_pipeline.load_state(directory)
+
+
+def round_pipeline_summary(directory: Path) -> dict:
+    from tools.research.rounds import pipeline as round_pipeline
+    return round_pipeline.summary(round_pipeline.load_state(directory))
+
+
+def tool_research_round_ideate(round_id: str) -> dict:
+    """Run the three independent ideation agents of a round."""
+    return _round_phase(round_id, "ideation")
+
+
+def tool_research_round_score(round_id: str) -> dict:
+    """Run the three independent scorers over every idea and select the candidates."""
+    return _round_phase(round_id, "scoring")
+
+
+def tool_research_round_implement(round_id: str) -> dict:
+    """Build one isolated candidate tree per selected idea, each from the baseline."""
+    return _round_phase(round_id, "implementation")
+
+
+def tool_research_round_verify(round_id: str) -> dict:
+    """Run the three verifiers per implementation and the dedicated repair loop."""
+    return _round_phase(round_id, "verification")
+
+
+def tool_research_round_run(round_id: str) -> dict:
+    """Run every remaining agent phase of a round in one call.
+
+    This is the one-shot form of the phase tools: it runs the phases in order
+    until the round waits for Stage 2, and it is what the detached worker does.
+    """
+    from tools.research.rounds import lock as round_lock
+    from tools.research.rounds import worker as round_worker
+
+    directory = _round_directory(round_id)
+    lock = round_lock.RoundLock(directory)
+    try:
+        lock.acquire(owner="mcp:run")
+    except round_lock.RoundBusy as exc:
+        return {"round_id": round_id, "ran": False, "reason": str(exc)}
+    try:
+        summary = round_worker.advance(REPO, round_id)
+    finally:
+        lock.release()
+    return {"round_id": round_id, "ran": True, "summary": summary}
 
 
 def tool_research_round_status(round_id: str) -> dict:
@@ -2750,12 +2846,49 @@ def tool_research_round_collect(round_id: str) -> dict:
 TOOLS.update({
     "research_round_start": {
         "fn": tool_research_round_start,
-        "args": {"objective": "string", "issue": "string"},
+        "args": {"objective": "string", "issue": "string", "run": "boolean"},
         "description": "Start one multi-agent research round: three independent "
                        "ideation agents, three independent scorers that judge every "
                        "idea, an explicit multi-candidate selection, one isolated "
                        "implementation per selected idea and three verifiers per "
                        "implementation; no GPU work is started by this call.",
+    },
+    "research_round_ideate": {
+        "fn": tool_research_round_ideate,
+        "args": {"round_id": "string"},
+        "description": "Phase 1 of a round: three independent ideation agents propose "
+                       "one to three coupled behaviour-hyperbolic mechanisms each, and "
+                       "the scope gate checks every proposal. No GPU work is started.",
+    },
+    "research_round_score": {
+        "fn": tool_research_round_score,
+        "args": {"round_id": "string"},
+        "description": "Phase 2 of a round: three independent scorers judge every "
+                       "idea, the matrix with medians, means and disagreement is "
+                       "persisted, and the explicit multi-candidate rule selects the "
+                       "qualified ideas.",
+    },
+    "research_round_implement": {
+        "fn": tool_research_round_implement,
+        "args": {"round_id": "string"},
+        "description": "Phase 3 of a round: one implementation agent per selected "
+                       "idea, each on a fresh copy of the one permitted baseline tree, "
+                       "with the output-path preflight. No GPU work is started.",
+    },
+    "research_round_verify": {
+        "fn": tool_research_round_verify,
+        "args": {"round_id": "string"},
+        "description": "Phase 4 of a round: three independent verifiers per "
+                       "implementation, the dedicated repair loop for real defects, and "
+                       "the distinction between an infrastructure error and a defect. "
+                       "No GPU work is started.",
+    },
+    "research_round_run": {
+        "fn": tool_research_round_run,
+        "args": {"round_id": "string"},
+        "description": "Run every remaining agent phase of a round in one call, "
+                       "until it waits for Stage 2. The one-shot form of the phase "
+                       "tools. No GPU work is started.",
     },
     "research_round_status": {
         "fn": tool_research_round_status,
