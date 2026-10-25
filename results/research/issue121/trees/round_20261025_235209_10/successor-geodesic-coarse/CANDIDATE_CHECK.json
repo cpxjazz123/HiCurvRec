@@ -1,4 +1,12 @@
 {
-  "reason": "the candidate path check crashed: ModuleNotFoundError",
-  "verdict": "INCONCLUSIVE_OR_INFRA_ERROR"
+  "schema": 1,
+  "kind": "candidate_path_check",
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse",
+  "tree_digest": "8bca50d2dd8b0bdff66c6c5a3042d647487263ca415dc69d7a03b3994a9e371a",
+  "seed": 20261025,
+  "items": 256,
+  "started_at": 3324543.590988527,
+  "verdict": "INCONCLUSIVE_OR_INFRA_ERROR",
+  "reason": "the candidate exposes no per-item behaviour signal the checker can drive, so its coupling cannot be tested here",
+  "elapsed_seconds": 45.194
 }

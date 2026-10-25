@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:254-275 -> model/model.py:26-30 -> model/layers.py:292-327 | Inspected the real trainer's construction of adjacent per-user successors from the training parquet, popularity-corrected top-16 table and batch lookup, then traced successor embeddings and weights into the T1 cost used for its Poincare assignment. This is source inspection; no runtime execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The same T1 assignment cost adds a weighted successor-to-prototype curved-distance consensus to the item's curved distance; both alter the hard argmin SID assignment. The behavior is constructed only from train.parquet.
+FINDING REPRODUCTION: Source trace at train_rqvae.py:254-275, 341-345 and layers.py:302-327. The sandbox cannot execute the trainer; the prescribed GPU gradient smoke remains the runtime proof.
+FINDING CORRECTION: None required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:294-333 | Traced T1 projection, curved item/prototype distance, successor/prototype geodesic distances, weighted costs, soft assignment auxiliary term and hard-argmin straight-through quantization through quant_loss to train_rqvae.py:345-352 backward and optimizer step. No runtime execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or apparent float32 overflow/NaN hazard found: inputs and prototypes are projected strictly inside the unit ball; denominator and atanh arguments are clamped; soft probabilities and costs remain in the differentiable loss. T1 prototype embeddings and encoder receive gradients through quantization/soft costs. Turning behavior off removes the additive term and can change costs/argmin; Euclidean mode replaces both item and neighbor curved distances, so both controls affect the connected computation. Actual numeric gradient validation is not possible in this sandbox.
+FINDING REPRODUCTION: Source-level counterfactuals are layers.py:302-327 (t1_euclidean and t1_behavior_on branches); backward is invoked by train_rqvae.py:350 and gradient clipping precedes optimizer.step at 351-353.
+FINDING CORRECTION: None required.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:40-67, 233-245, 412-459, 462-490 | Inspected repository-root/result path resolution, frozen stage0 train parquet and stage1 embedding inputs, single-process/device setup, rank-0 export and DDP launcher including GENREC_SINGLE_GPU handling. Source inspection only; no trainer execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified. The candidate writes to its promoted results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse directory, builds an item-indexed SID JSON over all embedding rows with unique collision-extension tokens, and uses the single-card environment branch to bypass torchrun while preserving the standard main path. Multi-card launch uses torchrun and worker rank detection.
+FINDING REPRODUCTION: Path constants at train_rqvae.py:49-67; input selection at 247-251; export/indexing at 441-453; launcher branches at 462-490.
+FINDING CORRECTION: None required.
