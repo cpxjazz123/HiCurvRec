@@ -37,19 +37,34 @@ from tqdm import tqdm
 from model import RQVAE
 
 
-# === 硬编码路径常量 (CLAUDE.md §1) ===
+# === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
 # Stage0 emits user-event parquet directly into results/stage0_build_parquet/.
-EMBEDDING_FILE = Path(
-    "/home/wlia0047/ar57/wenyu/GeneRec/stage1_GeneEmbedding/output/sentence_t5.npy"  # stage1
-)
-TRAIN_FILE     = Path(
-    "/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet"   # stage0
-)
-OUTPUT_SID     = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/sids_for_hgrec.npy")
-OUTPUT_JSON    = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json")
-CHECKPOINT     = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/rqvae_best.pth")
-METRICS_PATH   = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE/logs/training_metrics.jsonl")
-LOG_DIR        = Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE/logs")
+def _repository_root() -> Path:
+    """The repository root, found by walking up to the stage2_RQ-VAE directory.
+
+    No absolute path and no parent counting: this file is built in the round
+    workspace and copied into stage2_RQ-VAE/ before it trains, so the number of
+    parents differs between the two locations while the marker does not.
+    """
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "stage2_RQ-VAE").is_dir():
+            return parent
+    raise RuntimeError("cannot locate the repository root above " + str(here))
+
+
+REPO_ROOT = _repository_root()
+# The arm name is this tree's promoted name; a candidate copy changes only this line.
+ARM_NAME = "TIGER_RQ-VAE"
+RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
+
+EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
+TRAIN_FILE     = REPO_ROOT / "results" / "stage0_build_parquet" / "train.parquet"
+OUTPUT_SID     = RESULT_DIR / "sids_for_hgrec.npy"
+OUTPUT_JSON    = RESULT_DIR / "item_sids.json"
+CHECKPOINT     = RESULT_DIR / "rqvae_best.pth"
+LOG_DIR        = REPO_ROOT / "stage2_RQ-VAE" / ARM_NAME / "logs"
+METRICS_PATH   = LOG_DIR / "training_metrics.jsonl"
 
 
 # === 硬编码超参 (原 argparse default 值, 保留原 TIGER 默认) ===
@@ -81,7 +96,9 @@ EVAL_INTERVAL       = 50
 
 # === DDP launcher 配置 (与 stage3 不同 master_port 避免冲突) ===
 _LAUNCHER = {
-    "torchrun":    "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun",
+    # torchrun lives next to the interpreter that runs this file: no absolute
+    # path, and the same interpreter the project pins in CLAUDE.md §2.
+    "torchrun":    str(Path(sys.executable).with_name("torchrun")),
     "script":      os.path.abspath(__file__),
     "nproc":       4,
     "master_port": 50202,

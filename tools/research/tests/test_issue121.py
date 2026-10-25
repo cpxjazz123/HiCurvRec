@@ -7,6 +7,7 @@ code that nothing calls. All four have to be out of scope even when they score
 well.
 """
 import pathlib
+import re
 import shutil
 import sys
 import tempfile
@@ -18,6 +19,23 @@ from tools.research.rounds import ideas as ideas_module
 from tools.research.rounds import pipeline as pipeline_module
 from tools.research.rounds import scope as scope_module
 from tools.research.rounds import scoring as scoring_module
+
+
+def _derived_trainer(tree, *, arm, extra=""):
+    """Write a trainer whose paths are derived from the repository marker."""
+    tree = Path(tree)
+    tree.mkdir(parents=True, exist_ok=True)
+    (tree / "train_rqvae.py").write_text(
+        "def _repository_root() -> Path:\n"
+        "    here = Path(__file__).resolve()\n"
+        "    for parent in here.parents:\n"
+        "        if (parent / 'stage2_RQ-VAE').is_dir():\n"
+        "            return parent\n"
+        "    raise RuntimeError('no marker')\n"
+        "REPO_ROOT = _repository_root()\n"
+        f'ARM_NAME = "{arm}"\n'
+        'RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME\n'
+        'OUTPUT_JSON = RESULT_DIR / "item_sids.json"\n' + extra, encoding="utf-8")
 
 
 def _coupled(**overrides):
@@ -238,12 +256,12 @@ class BaselineTests(unittest.TestCase):
                                                other_candidates=[other])
 
     def test_an_isolated_candidate_passes_the_guard(self):
+        (self.root / "stage2_RQ-VAE").mkdir(exist_ok=True)
         candidate = self.root / "candidate"
         baseline_module.copy_baseline(candidate, baseline=self.baseline)
-        (candidate / "train_rqvae.py").write_text(
-            'OUTPUT_JSON = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/'
-            'TIGER_candidate/item_sids.json")\n', encoding="utf-8")
-        resolved = baseline_module.guard_output_paths(candidate, baseline=self.baseline)
+        _derived_trainer(candidate, arm="TIGER_candidate")
+        resolved = baseline_module.guard_output_paths(candidate, baseline=self.baseline,
+                                                      repo_root=self.root)
         self.assertIn("OUTPUT_JSON", resolved)
 
 
@@ -490,9 +508,8 @@ class ReviewContractTests(unittest.TestCase):
             directory = pipeline_module.new_round(root, "round_pre", objective="o")
             tree = root / "coupled"
             tree.mkdir()
-            (tree / "train_rqvae.py").write_text(
-                'OUTPUT_JSON = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/'
-                'stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json")\n', encoding="utf-8")
+            (root / "stage2_RQ-VAE").mkdir(exist_ok=True)
+            _derived_trainer(tree, arm="TIGER_RQ-VAE")
             state = pipeline_module.load_state(directory)
             state["implementations"] = [pipeline_module.implementation_record(
                 _coupled(), {}, tree)]
@@ -503,10 +520,9 @@ class ReviewContractTests(unittest.TestCase):
                  "correction": ""}]
             state["implementations"][0]["status"] = "needs_repair"
             # The repair fixed the path.
-            (tree / "train_rqvae.py").write_text(
-                'OUTPUT_JSON = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/'
-                'stage2_RQ-VAE/TIGER_coupled/item_sids.json")\n', encoding="utf-8")
-            state = pipeline_module.recheck_output_paths(state, "coupled")
+            _derived_trainer(tree, arm="TIGER_coupled")
+            state = pipeline_module.recheck_output_paths(state, "coupled",
+                                                         repo_root=root)
             record = state["implementations"][0]
             self.assertEqual(record["output_preflight"], "passed")
             self.assertEqual(record["blocking_findings"], [])
@@ -520,8 +536,8 @@ class OutputAnchorTests(unittest.TestCase):
             tree = Path(work) / "TIGER_x"
             tree.mkdir()
             (tree / "train_rqvae.py").write_text(
-                'RESULT_DIR = Path(__file__).resolve().parent / '
-                '"results/stage2_RQ-VAE/TIGER_x"\n'
+                'REPO_ROOT = Path(__file__).resolve().parent\n'
+                'RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / "TIGER_x"\n'
                 'OUTPUT_JSON = RESULT_DIR / "item_sids.json"\n', encoding="utf-8")
             declared = baseline_module._declared_paths(tree)
             self.assertIn("OUTPUT_JSON", declared)
@@ -532,10 +548,7 @@ class OutputAnchorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as work:
             tree = Path(work) / "TIGER_ok"
             tree.mkdir()
-            (tree / "train_rqvae.py").write_text(
-                'RESULT_DIR = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/'
-                'stage2_RQ-VAE/TIGER_ok")\nOUTPUT_JSON = RESULT_DIR / "item_sids.json"\n',
-                encoding="utf-8")
+            _derived_trainer(tree, arm="TIGER_ok")
             resolved = baseline_module.guard_output_paths(tree)
             self.assertTrue(resolved["OUTPUT_JSON"].endswith("TIGER_ok/item_sids.json"))
 
@@ -627,3 +640,31 @@ class SingleVerifierTests(unittest.TestCase):
         from tools.research.rounds import agents as agents_module
         self.assertIn("You are the verifier", agents_module.VERIFY_PROMPT)
         self.assertNotIn("one of three", agents_module.VERIFY_PROMPT)
+
+
+class NoAbsolutePathTests(unittest.TestCase):
+    """A trainer must not contain an absolute path anywhere."""
+
+    def test_the_baseline_itself_carries_no_absolute_path(self):
+        text = (baseline_module.baseline_path() / "train_rqvae.py").read_text()
+        self.assertEqual(re.findall(r'["\']/(?:home|fs04|tmp)[^"\']*["\']', text), [])
+        self.assertEqual(re.findall(r"parents\[\d+\]", text), [])
+
+    def test_the_baseline_derives_its_paths_from_the_marker(self):
+        root = baseline_module.baseline_path()
+        resolved = baseline_module.guard_output_paths(
+            root, baseline=root, repo_root=root.parent.parent.resolve(),
+            location=root, check_collision=False)
+        self.assertEqual(resolved["OUTPUT_JSON"].split("GeneRec/")[-1],
+                         "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json")
+
+    def test_a_trainer_with_an_absolute_path_is_refused(self):
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "TIGER_x"
+            tree.mkdir()
+            (tree / "train_rqvae.py").write_text(
+                'EMBEDDING_FILE = Path("/home/wlia0047/ar57/wenyu/GeneRec/'
+                'stage1_GeneEmbedding/output/sentence_t5.npy")\n', encoding="utf-8")
+            with self.assertRaises(baseline_module.BaselineError) as caught:
+                baseline_module._declared_paths(tree)
+            self.assertIn("absolute path", str(caught.exception))
