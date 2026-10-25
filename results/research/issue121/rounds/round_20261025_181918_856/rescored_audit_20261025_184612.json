@@ -1,0 +1,26 @@
+{
+  "audit_hash": "67c9641d0dc22646a54af24e8c45fa46eae01e8163f6a52cc8d60951465d26df",
+  "kind": "rescored_audit",
+  "payload": {
+    "authorized_mechanism": "the scored proposal: c_i = clip(c_min + (c_max - c_min) * H_i) from the train-only successor branching entropy H_i, used in the first-level assignment through the curvature-specific geodesic distance d_{c_i} and maps exp_0^{c_i}",
+    "dropped_from_the_revision": [
+      "the fixed-curvature warp and the unchanged Euclidean RQ assignment, which are a different mechanism"
+    ],
+    "idea_id": "successor_entropy_curvature",
+    "kept_from_the_revision": [
+      "the evaluation refinements: per-bin support, uncertainty intervals, a train-only shuffled-profile control and the norm-matched assignment comparison"
+    ],
+    "kind": "spec_reconciliation_audit",
+    "next": "a fresh proposal revision (hash below) is reviewed by three independent reviewers under the same rubric-2026-10-v1 and the same 3.0 threshold; the completed decision.json is not rewritten, the new decision is recorded beside it",
+    "reason": "the bounded revision (rebuttal) describes a fixed-curvature warp followed by unchanged Euclidean RQ assignments, while the scored proposal describes an item-conditioned curvature c_i used in the first-level assignment. Those are different computations, so the revision cannot silently stand in for the mechanism that was scored.",
+    "rebuttal_revision_sha256": "31ceeff35dff256b0e48405b7f976990ec93866b3a961e21fe05564769165354",
+    "round_id": "round_20261025_181918_856",
+    "schema": 1,
+    "scored_proposal_sha256": "4d4302c7b7f8d2e8aa90a02f6708c3344eb034230fa3cf1379cfd30fe7dc47d5",
+    "status": "NEEDS_SPEC_REPAIR",
+    "written_at": 1792914372.8979053
+  },
+  "reason": "the bounded revision (rebuttal) describes a fixed-curvature warp followed by unchanged Euclidean RQ assignments, while the scored proposal describes an item-conditioned curvature c_i used in the first-level assignment. Those are different computations, so the revision cannot silently stand in for the mechanism that was scored.",
+  "schema": 1,
+  "written_at": 1792914372.8979764
+}

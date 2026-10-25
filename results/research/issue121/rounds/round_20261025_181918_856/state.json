@@ -6594,9 +6594,9 @@
       "leakage_boundary": "Only train user sequences, train item frequencies, and the frozen item embedding/ID inventory are inputs to n_ij, pi, q_ij, and H_i. Hyperparameters and curvature bounds are fixed or selected using train-only diagnostics; validation/test interactions are inaccessible to preprocessing, fitting, and SID assignment, and are used only for the prescribed downstream evaluation.",
       "motivation": "Items with a single reliable continuation and items that branch into several plausible continuations need different quantization geometry: one shared global curvature can either over-compress branching items or fragment predictable chains.",
       "novelty": "Existing candidates use a transition direction/Busemann score, a behavior-driven latent warp, branch-dependent radius, or behavior-edge contrastive loss. This instead makes training-only successor uncertainty determine the negative curvature used in the actual first-stage codeword ranking; no behavior suffix or separate auxiliary objective is added.",
-      "observables": "First-level assignment flips and gradient magnitudes should vary with train-entropy bins; high-branching items should gain train-held-out successor coverage/prefix predictability, with no unacceptable reconstruction degradation. Compare final Stage3 test Recall@10 against behavior-off, geometry-off, and both-on runs.",
+      "observables": "First-level assignment flips and gradient magnitudes should vary with train-entropy bins; report per-bin item and held-out-transition support with uncertainty intervals, and compare the assignment after norm-matching each transformed latent to its base latent, against a train-only shuffled-profile control. Compare the final Stage3 test Recall@10 with the behaviour-off, geometry-off and both-on runs.",
       "origin_agent": "ideation_1",
-      "proposal_revision": 1,
+      "proposal_revision": 2,
       "rebuttal": {
         "change": "Revise the evaluation specification, not the warp: before claiming entropy-stratified transition predictability, report per-bin item and held-out-transition support, uncertainty intervals, and held-out next-item predictability against both behavior-off and a train-only shuffled-profile control; additionally repeat the assignment comparison after norm-matching each transformed latent to its corresponding base latent, and report raw assignments separately. Treat only a shift persisting under norm matching as evidence beyond a simple radial scale change.",
         "remaining": "The supplied proxy still has identical both-on and behavior-off assignments [0,0,0] (E15), so mathematical coupling alone establishes neither assignment change nor improved held-out predictability; if the norm-matched audit does not show a persistent effect, a scale-independent branching-structure benefit remains unsupported.",
@@ -6615,7 +6615,18 @@
         "text": "Count adjacent transitions n_ij within train users' chronologically ordered train events. Let q_ij=(n_ij+alpha*pi_j)/(n_i+alpha), with pi the train next-item frequency, and H_i=-sum_j q_ij log(q_ij+eps)/log(max(2,N)). Set c_i=clamp(c_min+(c_max-c_min)*H_i, c_min,c_max), e.g. c_min=0.1,c_max=1.0. For encoder z_i and codeword a_k, map x_i=exp^{c_i}_0(z_i), y_ik=exp^{c_i}_0(a_k), assign k*=argmin_k d_{c_i}(x_i,y_ik)^2, where d_c(x,y)=2/sqrt(c)*atanh(sqrt(c)*||(-x)⊕_c y||), and train standard reconstruction/VQ commitment losses through the chosen curved quantizer. Use the same c_i for all candidates of item i; later residual levels may remain baseline. Pre-score evidence probe on train only: compare held-out-within-train next-item top-k predictability and branching-bin prefix purity for high- versus low-H items; the hypothesis requires high-H items to have more distinct useful continuation prefixes and expects high-H bin prefix successor coverage to rise under this assignment."
       },
       "title": "Successor-entropy-conditioned curvature for prefix assignment",
-      "unresolved_objection": "The supplied proxy still has identical both-on and behavior-off assignments [0,0,0] (E15), so mathematical coupling alone establishes neither assignment change nor improved held-out predictability; if the norm-matched audit does not show a persistent effect, a scale-independent branching-structure benefit remains unsupported."
+      "unresolved_objection": "The supplied proxy still has identical both-on and behavior-off assignments [0,0,0] (E15), so mathematical coupling alone establishes neither assignment change nor improved held-out predictability; if the norm-matched audit does not show a persistent effect, a scale-independent branching-structure benefit remains unsupported.",
+      "reconciliation": {
+        "authorized_mechanism": "the scored proposal: c_i = clip(c_min + (c_max - c_min) * H_i) from the train-only successor branching entropy H_i, used in the first-level assignment through the curvature-specific geodesic distance d_{c_i} and maps exp_0^{c_i}",
+        "kept_from_the_revision": [
+          "the evaluation refinements: per-bin support, uncertainty intervals, a train-only shuffled-profile control and the norm-matched assignment comparison"
+        ],
+        "dropped_from_the_revision": [
+          "the fixed-curvature warp and the unchanged Euclidean RQ assignment, which are a different mechanism"
+        ],
+        "scored_proposal_sha256": "4d4302c7b7f8d2e8aa90a02f6708c3344eb034230fa3cf1379cfd30fe7dc47d5",
+        "rebuttal_revision_sha256": "31ceeff35dff256b0e48405b7f976990ec93866b3a961e21fe05564769165354"
+      }
     },
     {
       "ablation_behavior_off": "Set lambda=0 and omit profile anchors while retaining identical Poincare costs, Sinkhorn marginals, initialization, and schedule; this isolates geometry plus balancing without behavior.",
@@ -8880,5 +8891,24 @@
   "stage3_jobs": [],
   "step": "implementation",
   "updated_at": 1792913289.2156498,
-  "verification": {}
+  "verification": {},
+  "spec_reconciliation": {
+    "schema": 1,
+    "kind": "spec_reconciliation_audit",
+    "written_at": 1792914372.8979053,
+    "round_id": "round_20261025_181918_856",
+    "idea_id": "successor_entropy_curvature",
+    "status": "NEEDS_SPEC_REPAIR",
+    "reason": "the bounded revision (rebuttal) describes a fixed-curvature warp followed by unchanged Euclidean RQ assignments, while the scored proposal describes an item-conditioned curvature c_i used in the first-level assignment. Those are different computations, so the revision cannot silently stand in for the mechanism that was scored.",
+    "scored_proposal_sha256": "4d4302c7b7f8d2e8aa90a02f6708c3344eb034230fa3cf1379cfd30fe7dc47d5",
+    "rebuttal_revision_sha256": "31ceeff35dff256b0e48405b7f976990ec93866b3a961e21fe05564769165354",
+    "authorized_mechanism": "the scored proposal: c_i = clip(c_min + (c_max - c_min) * H_i) from the train-only successor branching entropy H_i, used in the first-level assignment through the curvature-specific geodesic distance d_{c_i} and maps exp_0^{c_i}",
+    "kept_from_the_revision": [
+      "the evaluation refinements: per-bin support, uncertainty intervals, a train-only shuffled-profile control and the norm-matched assignment comparison"
+    ],
+    "dropped_from_the_revision": [
+      "the fixed-curvature warp and the unchanged Euclidean RQ assignment, which are a different mechanism"
+    ],
+    "next": "a fresh proposal revision (hash below) is reviewed by three independent reviewers under the same rubric-2026-10-v1 and the same 3.0 threshold; the completed decision.json is not rewritten, the new decision is recorded beside it"
+  }
 }

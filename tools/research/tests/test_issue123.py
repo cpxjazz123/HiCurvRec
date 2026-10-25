@@ -90,16 +90,18 @@ class MathCheckTests(unittest.TestCase):
     def test_the_checks_run_on_small_tensors(self):
         report = math_checks_module.run_math_checks(_idea("m1"))
         names = {entry["check"] for entry in report["checks"]}
-        self.assertIn("log0_exp0_round_trip", names)
-        self.assertIn("curvature_is_negative", names)
-        self.assertIn("distance_is_not_euclidean", names)
+        # Issue #124 split the single check into four scoped ones.
+        self.assertEqual(names, {math_checks_module.CHECK_OPERATOR,
+                                 math_checks_module.CHECK_BEHAVIOR,
+                                 math_checks_module.CHECK_GEOMETRY,
+                                 math_checks_module.CHECK_JOINT})
         self.assertEqual(report["tensor_size"], math_checks_module.TENSOR_SIZE)
 
     def test_the_round_trip_is_not_counted_as_curvature_value(self):
         report = math_checks_module.run_math_checks(_idea("m2"))
-        trip = [entry for entry in report["checks"]
-                if entry["check"] == "log0_exp0_round_trip"][0]
-        self.assertIn("NOT", trip["implication"])
+        operator = [entry for entry in report["checks"]
+                    if entry["check"] == math_checks_module.CHECK_OPERATOR][0]
+        self.assertIn("nothing about the coupling", operator["implication"])
 
     def test_a_proposal_without_a_curved_operation_is_not_run(self):
         report = math_checks_module.run_math_checks(_idea(
@@ -109,8 +111,13 @@ class MathCheckTests(unittest.TestCase):
 
     def test_the_proxy_is_labelled_as_a_proxy(self):
         report = math_checks_module.run_math_checks(_idea("m4"))
-        proxy = [entry for entry in report["checks"] if entry.get("proxy")][0]
-        self.assertIn("NOT the candidate", proxy["limitation"])
+        proxy = [entry for entry in report["checks"]
+                 if entry["scope"] == math_checks_module.SCOPE_PROXY]
+        self.assertTrue(proxy)
+        joint = [entry for entry in report["checks"]
+                 if entry["check"] == math_checks_module.CHECK_JOINT][0]
+        self.assertEqual(joint["status"], math_checks_module.STATUS_CANDIDATE_PATH_NOT_RUN)
+        self.assertIn("only the candidate path check", joint["implication"])
 
 
 class LiteratureTests(unittest.TestCase):
