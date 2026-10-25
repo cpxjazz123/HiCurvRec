@@ -164,7 +164,7 @@ separately from the mechanism.
 ```
 
 `rounds/` holds it: `ideas.py` (idea contract, cross-agent duplicates with
-provenance), `scoring.py` (matrix, aggregate, disagreement, multi-select rule),
+provenance), `scoring.py` (matrix, aggregate, disagreement, the one-mechanism rule),
 `pipeline.py` (durable round state machine with every event, rejection, revision
 and failure signature), `worker.py` (the agent stages), `jobs.py` (Stage 2 /
 Stage 3 queue). The research package never trains: it prepares and verifies the
