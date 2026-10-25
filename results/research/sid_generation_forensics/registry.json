@@ -42,5 +42,27 @@
       "test_ndcg@10": 0.030619318694866265
     },
     "family": "coarse first level, curved behaviour-ordered extension"
+  },
+  "r8_control_recovered": {
+    "stage3": "r8_control",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/r8_control/item_sids.json",
+    "sid_origin": "in-repo",
+    "reported": {
+      "test_recall@10": 0.06406796775709883,
+      "test_recall@5": 0.04308919027141837,
+      "test_ndcg@10": 0.03530651701940677
+    },
+    "family": "r8 harness control, recovered from git"
+  },
+  "baseline_control": {
+    "stage3": "TIGER_RQ-VAE",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+    "sid_origin": "in-repo",
+    "reported": {
+      "test_recall@10": 0.05553717857205035,
+      "test_recall@5": 0.037431013771131116,
+      "test_ndcg@10": 0.03070078263209068
+    },
+    "family": "frozen baseline, no mechanism (this round's control)"
   }
 }
