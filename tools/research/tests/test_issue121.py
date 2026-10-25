@@ -555,7 +555,7 @@ class SeveritySentenceTests(unittest.TestCase):
             with self.subTest(severity=severity):
                 self.assertTrue(pipeline_module._is_blocking(severity))
 
-    def test_three_pass_verdicts_with_only_minor_findings_verify(self):
+    def test_a_passing_verdict_with_only_minor_findings_verifies(self):
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
             directory = pipeline_module.new_round(root, "round_minor", objective="o")
@@ -573,11 +573,10 @@ class SeveritySentenceTests(unittest.TestCase):
                                                "detail": "no blocking defect found",
                                                "reproduction": "", "correction": ""}]}]}
             state = pipeline_module.apply_verification(
-                state, "coupled", [dict(minor, verifier="v1"), dict(minor, verifier="v2"),
-                                   dict(minor, verifier="v3")])
+                state, "coupled", [dict(minor, verifier="v1")])
             self.assertEqual(state["implementations"][0]["status"], "verified")
 
-    def test_a_preflight_failure_blocks_even_when_the_reviewers_pass(self):
+    def test_a_preflight_failure_blocks_even_when_the_reviewer_passes(self):
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
             directory = pipeline_module.new_round(root, "round_pre2", objective="o")
@@ -593,7 +592,38 @@ class SeveritySentenceTests(unittest.TestCase):
                  "detail": "writes into the baseline", "reproduction": "", "correction": ""}]
             passing = {"verifier": "v", "verdict": "PASS", "checks": []}
             state = pipeline_module.apply_verification(
-                state, "coupled", [dict(passing, verifier="v1"),
-                                   dict(passing, verifier="v2"),
-                                   dict(passing, verifier="v3")])
+                state, "coupled", [dict(passing, verifier="v1")])
             self.assertEqual(state["implementations"][0]["status"], "needs_repair")
+
+
+class SingleVerifierTests(unittest.TestCase):
+    """One reviewer per mechanism, as the operator decided."""
+
+    def test_one_verifier_is_configured(self):
+        from tools.research.rounds import worker as worker_module
+        self.assertEqual(pipeline_module.VERIFIER_AGENTS, 1)
+        self.assertEqual(worker_module.VERIFIERS, 1)
+
+    def test_a_single_report_is_accepted_and_two_are_not(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_one", objective="o")
+            tree = root / "coupled"
+            tree.mkdir()
+            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [pipeline_module.implementation_record(
+                _coupled(), {"changed_files": ["model.py"]}, tree)]
+            with self.assertRaises(pipeline_module.RoundError):
+                pipeline_module.apply_verification(
+                    state, "coupled",
+                    [{"verifier": "v1", "verdict": "PASS", "checks": []},
+                     {"verifier": "v2", "verdict": "PASS", "checks": []}])
+            state = pipeline_module.apply_verification(
+                state, "coupled", [{"verifier": "v1", "verdict": "PASS", "checks": []}])
+            self.assertEqual(state["implementations"][0]["status"], "verified")
+
+    def test_the_verification_prompt_addresses_one_reviewer(self):
+        from tools.research.rounds import agents as agents_module
+        self.assertIn("You are the verifier", agents_module.VERIFY_PROMPT)
+        self.assertNotIn("one of three", agents_module.VERIFY_PROMPT)

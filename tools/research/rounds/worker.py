@@ -25,7 +25,7 @@ from . import pipeline as pipeline_module
 IDEA_MIN = 1
 IDEA_MAX = 3
 SCORERS = 3
-VERIFIERS = 3
+VERIFIERS = 1
 
 
 def _workspace(root: Path, task_id: str) -> Path:
@@ -265,7 +265,7 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
 
 
 def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
-    """Run the three verifiers per implementation and the repair loop."""
+    """Run the verifier of each implementation and the repair loop."""
     directory = pipeline_module.find_round_directory(root, round_id)
     state = pipeline_module.load_state(directory)
     agent_root = directory

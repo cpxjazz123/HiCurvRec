@@ -186,8 +186,8 @@ IMPLEMENT_PROMPT = (
 )
 
 VERIFY_PROMPT = (
-    "You are one of three independent verifiers of an implementation. Inspect the "
-    "code, do not trust a passing test.\n"
+    "You are the verifier of an implementation. Inspect the code, do not trust a "
+    "passing test.\n"
     "THE RESEARCH OBJECTIVE:\n{objective}\n"
     "THE SCOPE CONTRACT:\n{scope}\n"
     "The idea it implements:\n{idea}\n"

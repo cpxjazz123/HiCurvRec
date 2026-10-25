@@ -30,7 +30,9 @@ DEFAULT_ISSUE = "issue120"
 STATE_ROOT = Path("results/research") / DEFAULT_ISSUE / "rounds"
 IDEAE_AGENTS = 3
 SCORER_AGENTS = 3
-VERIFIER_AGENTS = 3
+#: One reviewer per mechanism. The operator's decision: a single reviewer per
+#: implementation, so the review is one agent's verdict rather than a vote.
+VERIFIER_AGENTS = 1
 #: How many repair rounds one implementation may have. The cap exists so a
 #: candidate that cannot be repaired stops costing agents and is recorded with
 #: its evidence instead of looping forever.
@@ -223,7 +225,8 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
     """Merge the three verdicts of one implementation."""
     record = _implementation(state, implementation_id)
     if len(reports) != VERIFIER_AGENTS:
-        raise RoundError("exactly three verifiers must report, got " + str(len(reports)))
+        raise RoundError("exactly " + str(VERIFIER_AGENTS) +
+                         " verifier(s) must report, got " + str(len(reports)))
     findings = []
     for report in reports:
         verdict = str(report.get("verdict", "")).upper()

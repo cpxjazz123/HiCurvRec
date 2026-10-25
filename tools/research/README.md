@@ -149,7 +149,7 @@ experiment-first pipeline:
   -> 3 independent scorers, each judging EVERY idea (full matrix, medians, disagreement)
   -> explicit, configurable rule selects several ideas (no veto, rejections logged)
   -> one implementation agent per selected idea, in its own tree
-  -> 3 independent verifiers per implementation
+  -> one verifier per implementation
      -> any correctness blocker: a dedicated repair agent, then the three reviews again
      -> no progress after the revision budget: BLOCKED with evidence, other ideas continue
   -> verified implementations enter the Stage 2 queue (resource-aware, deterministic)
@@ -177,7 +177,7 @@ call.
 | `research_round_ideate(round_id)` | three ideation agents, the scope gate | no |
 | `research_round_score(round_id)` | three scorers over every idea, the multi-select | no |
 | `research_round_implement(round_id)` | one implementation agent per selected idea, each on a fresh copy of the one permitted baseline | no |
-| `research_round_verify(round_id)` | three verifiers per implementation and the repair loop | no |
+| `research_round_verify(round_id)` | the verifier of each implementation and the repair loop | no |
 | `research_round_run(round_id)` | every remaining agent phase in one call | no |
 | `research_round_launch(round_id, parallel)` | the Stage 2 queue, two jobs per card | **yes** |
 | `research_round_collect(round_id)` | collect the Stage 2 runs, hand every valid SID to Stage 3 | **yes** |
