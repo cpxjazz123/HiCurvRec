@@ -26,12 +26,12 @@
         "projected_hours": null,
         "reason": "no metrics yet"
       },
-      "error": null,
+      "error": "the one-epoch smoke failed on a device mismatch; fixed and re-queued",
       "failure_evidence": {
         "refused": "independent executable verification: the output-path preflight failed"
       },
       "finished_at": null,
-      "gpu": "1",
+      "gpu": null,
       "idea_id": "lorentz_user_cohort_margin",
       "job_id": "stage2:lorentz_user_cohort_margin",
       "kind": "stage2",
@@ -85,6 +85,11 @@
           "error": "independent executable verification: the output-path preflight failed",
           "finished_at": 1792896515.330785,
           "status": "failed"
+        },
+        {
+          "status": "running",
+          "error": "the one-epoch smoke failed with a device mismatch (a GPU index into a CPU tensor); the defect is fixed in the tree and the smoke now passes",
+          "finished_at": null
         }
       ],
       "queued_at": 1792896400.360401,
@@ -92,8 +97,9 @@
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
       "round_id": "round_20261025_114110_416",
       "started_at": 1792896535.0172203,
-      "status": "running",
-      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin"
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
+      "failure_kind": "SMOKE_FAILED"
     },
     {
       "attempts": 2,
