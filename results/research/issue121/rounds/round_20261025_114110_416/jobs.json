@@ -21,37 +21,126 @@
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_geodesic_codebook"
     },
     {
-      "attempts": 1,
-      "error": "the one-epoch gradient smoke failed (device mismatch)",
+      "attempts": 2,
+      "cost_projection": {
+        "projected_hours": null,
+        "reason": "no metrics yet"
+      },
+      "error": null,
+      "failure_evidence": {
+        "refused": "independent executable verification: the output-path preflight failed"
+      },
       "finished_at": null,
       "gpu": "1",
       "idea_id": "lorentz_user_cohort_margin",
       "job_id": "stage2:lorentz_user_cohort_margin",
       "kind": "stage2",
-      "queued_at": 1792894161.8971162,
+      "previous_attempts": [
+        {
+          "error": "the one-epoch gradient smoke failed (device mismatch)",
+          "finished_at": null,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed",
+          "finished_at": 1792896417.1900642,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed",
+          "finished_at": 1792896424.8383157,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed",
+          "finished_at": 1792896441.0529633,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed",
+          "finished_at": 1792896450.9759479,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed",
+          "finished_at": 1792896450.9759479,
+          "status": "superseded"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed",
+          "finished_at": 1792896450.9759479,
+          "status": "superseded"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed",
+          "finished_at": 1792896450.9759479,
+          "status": "superseded"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed",
+          "finished_at": 1792896450.9759479,
+          "status": "superseded"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed",
+          "finished_at": 1792896515.330785,
+          "status": "failed"
+        }
+      ],
+      "queued_at": 1792896400.360401,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
       "round_id": "round_20261025_114110_416",
-      "started_at": 1792894368.4681609,
-      "status": "failed",
-      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
-      "failure_kind": "SMOKE_FAILED"
+      "started_at": 1792896535.0172203,
+      "status": "running",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin"
     },
     {
       "attempts": 2,
       "error": null,
-      "finished_at": null,
+      "finished_at": 1792896551.1249452,
       "gpu": "0",
       "idea_id": "branch_shell",
       "job_id": "stage2:branch_shell",
       "kind": "stage2",
       "note": "reset after a stale admission error",
       "queued_at": 1792894161.932802,
-      "result": null,
+      "result": {
+        "metrics": {
+          "full_unique_items": 24587,
+          "level2_distinct_prefixes": 3594,
+          "negative_hits": 32101,
+          "pairs": 52855,
+          "positive_hits": 10923,
+          "valid_l1_hard_er": 3.4026977352730445,
+          "valid_l1_negative_hit_rate": 0.06073408381420868,
+          "valid_l1_positive_hit_rate": 0.20665972944849115
+        },
+        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell/item_sids.json",
+        "sid_sha256": "676ab0d09a1291fde28f120fd069d7fa46a023e79df8e413fbbaf5f5d9862263",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 3594,
+            "negative_hits": 32101,
+            "pairs": 52855,
+            "positive_hits": 10923,
+            "valid_l1_hard_er": 3.4026977352730445,
+            "valid_l1_negative_hit_rate": 0.06073408381420868,
+            "valid_l1_positive_hit_rate": 0.20665972944849115
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell",
       "round_id": "round_20261025_114110_416",
+      "stage3_job_id": "stage3:branch_shell",
       "started_at": 1792894368.2539268,
-      "status": "running",
+      "status": "done",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell"
     },
     {
@@ -72,6 +161,45 @@
       "started_at": 1792894368.365043,
       "status": "failed",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_tangent_codes"
+    },
+    {
+      "attempts": 1,
+      "error": null,
+      "finished_at": null,
+      "gpu": null,
+      "idea_id": "lorentz_prefix_mass",
+      "job_id": "stage2:lorentz_prefix_mass",
+      "kind": "stage2",
+      "queued_at": 1792896389.3684416,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass",
+      "round_id": "round_20261025_114110_416",
+      "started_at": 1792896389.4574106,
+      "status": "pending",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_prefix_mass",
+      "previous_attempts": [
+        {
+          "status": "running",
+          "error": "the one-epoch smoke died with an Intel MKL / libtorch load error while the four-card Stage 3 run held every GPU: an infrastructure failure, not a defect of the candidate",
+          "finished_at": null
+        }
+      ]
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": null,
+      "idea_id": "branch_shell",
+      "job_id": "stage3:branch_shell",
+      "kind": "stage3",
+      "queued_at": 1792896551.4322486,
+      "result": null,
+      "round_id": "round_20261025_114110_416",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell/item_sids.json",
+      "stage2_job_id": "stage2:branch_shell",
+      "started_at": null,
+      "status": "pending",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell"
     }
   ],
   "schema": 1

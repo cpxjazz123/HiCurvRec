@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:250-266 -> model/model.py:81-97 -> model/layers.py:98-112,302-321 | Source-level trace of the trainer-built directed adjacent transitions from training history/target rows (top-16 count^0.75 weighted successor embedding means) into the Poincare exp/log-map branch target and then into curvature-aware residual code assignments. The supplied smoke_test.py:79-88 adds both-on/behavior-off/geometry-off assignment comparisons; not executed here because the environment lacks PyTorch and shell.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking defect found. Training-only transition summaries are passed as contexts; when enabled they alter the quantization target through exp/log maps at curvature 0.5, and assignment distance then uses Poincare distance. Behavior and geometry are not detached side losses or unused helpers.
+FINDING REPRODUCTION: Source trace at the cited lines. The included deterministic comparison is in smoke_test.py:79-88; runtime execution is unavailable in this review environment.
+FINDING CORRECTION: None.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:81-100; model/layers.py:98-117,128-161 | Static autograd-path inspection, plus review of the proposed forward/backward smoke at smoke_test.py:90-124: context projections and curved maps remain differentiable; quantization uses straight-through output and a quantization loss; the test checks finite, nonzero context projection gradients, optimizer update, and assignment/gradient changes for both ablations. The test was not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No dead coupled term or evident float32 overflow/NaN hazard found by inspection. Poincare points are projected inside the ball; map denominators and norms have lower bounds; inverse-map arguments are capped below one. The code-level test covers finite losses/gradients and distinct assignments/gradients across modes, but runtime numerical confirmation remains the designated GPU smoke test.
+FINDING REPRODUCTION: Inspect model/model.py:87-97 and model/layers.py:98-117,147-161. The corresponding intended runtime reproduction is smoke_test.py:90-124, unavailable to execute here.
+FINDING CORRECTION: None.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:43-59,228-276,413-460,463-489 | Source-level verification of repository-root/data paths, training-only input construction, per-candidate result paths, item-index-preserving full embedding export and unique SID extension, and launcher dispatch including SINGLE_GPU_ENV='GENREC_SINGLE_GPU' and accepted truthy values. Trainer/runtime not executed, as explicitly excluded by the environment constraint.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found. Inputs resolve to the frozen sentence_t5.npy and stage0 train.parquet; outputs resolve to results/stage2_RQ-VAE/TIGER_branch_tangent_codes, not a baseline or other candidate directory. Export enumerates all embedding rows as item IDs and enforces unique extended SIDs. The launcher recognizes the single-card environment switch and otherwise dispatches torchrun.
+FINDING REPRODUCTION: Source inspection at the cited lines; smoke_test.py:126-130 contains SID shape/uniqueness, output-path, and single-GPU switch assertions but was not run.
+FINDING CORRECTION: None.

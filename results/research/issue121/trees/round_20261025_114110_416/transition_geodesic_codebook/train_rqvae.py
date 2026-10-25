@@ -48,7 +48,7 @@ def _find_repo_root(script_path: Path) -> Path:
 REPO_ROOT = _find_repo_root(Path(__file__))
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
 TRAIN_FILE = REPO_ROOT / "results/stage0_build_parquet/train.parquet"
-ARM_NAME = "TIGER_transition_geodesic_codebook"
+ARM_NAME = "transition_geodesic_codebook"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 OUTPUT_SID     = RESULT_DIR / "sids_for_hgrec.npy"
 OUTPUT_JSON    = RESULT_DIR / "item_sids.json"

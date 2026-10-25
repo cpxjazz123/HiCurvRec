@@ -47,9 +47,10 @@ def _find_repo_root(start: Path) -> Path:
 
 
 REPO_ROOT = _find_repo_root(Path(__file__))
+ARM_NAME = "TIGER_lorentz_prefix_mass"
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding/output/sentence_t5.npy"
 TRAIN_FILE = REPO_ROOT / "results/stage0_build_parquet/train.parquet"
-RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / "TIGER_lorentz_prefix_mass"
+RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 if RESULT_DIR.resolve().parent != (REPO_ROOT / "results/stage2_RQ-VAE").resolve():
     raise RuntimeError("Candidate result directory escaped the repository stage2 output root")
 OUTPUT_SID     = RESULT_DIR / "sids_for_hgrec.npy"

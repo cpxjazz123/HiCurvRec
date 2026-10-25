@@ -678,6 +678,138 @@
       "event": "implementation_reopened",
       "idea_id": "transition_geodesic_codebook",
       "reason": "the remaining finding names the straight-through forward value"
+    },
+    {
+      "at": 1792895757.807485,
+      "event": "verification_needs_repair",
+      "idea_id": "lorentz_prefix_mass",
+      "revision": 5,
+      "signature": "c64733d32e9df190"
+    },
+    {
+      "at": 1792895800.0011408,
+      "event": "implementation_repaired",
+      "idea_id": "lorentz_prefix_mass",
+      "revision": 6
+    },
+    {
+      "at": 1792895800.0133908,
+      "event": "output_paths_rechecked",
+      "idea_id": "lorentz_prefix_mass",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792895800.0299969,
+      "event": "implementation_verified",
+      "idea_id": "lorentz_user_cohort_margin",
+      "revision": 5
+    },
+    {
+      "at": 1792895800.0468984,
+      "event": "verification_needs_repair",
+      "idea_id": "branch_tangent_codes",
+      "revision": 5,
+      "signature": "636f43e3956de84f"
+    },
+    {
+      "at": 1792896065.533995,
+      "event": "implementation_repaired",
+      "idea_id": "branch_tangent_codes",
+      "revision": 6
+    },
+    {
+      "at": 1792896065.5449276,
+      "event": "output_paths_rechecked",
+      "idea_id": "branch_tangent_codes",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792896065.5630095,
+      "event": "verification_needs_repair",
+      "idea_id": "transition_geodesic_codebook",
+      "revision": 5,
+      "signature": "32ed1b2c66588d59"
+    },
+    {
+      "at": 1792896151.695303,
+      "event": "implementation_repaired",
+      "idea_id": "transition_geodesic_codebook",
+      "revision": 6
+    },
+    {
+      "at": 1792896151.7062867,
+      "event": "output_paths_rechecked",
+      "idea_id": "transition_geodesic_codebook",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792896210.4410338,
+      "event": "implementation_verified",
+      "idea_id": "lorentz_prefix_mass",
+      "revision": 6
+    },
+    {
+      "at": 1792896243.2581182,
+      "event": "verification_needs_repair",
+      "idea_id": "branch_tangent_codes",
+      "revision": 6,
+      "signature": "39fdcf70994ca770"
+    },
+    {
+      "at": 1792896300.9270232,
+      "event": "implementation_repaired",
+      "idea_id": "branch_tangent_codes",
+      "revision": 7
+    },
+    {
+      "at": 1792896300.939654,
+      "event": "output_paths_rechecked",
+      "idea_id": "branch_tangent_codes",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792896334.4719024,
+      "event": "verification_needs_repair",
+      "idea_id": "transition_geodesic_codebook",
+      "revision": 6,
+      "signature": "c834fdbba9b13892"
+    },
+    {
+      "at": 1792896389.2262957,
+      "event": "implementation_repaired",
+      "idea_id": "transition_geodesic_codebook",
+      "revision": 7
+    },
+    {
+      "at": 1792896389.2375433,
+      "event": "output_paths_rechecked",
+      "idea_id": "transition_geodesic_codebook",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792896648.307331,
+      "event": "implementation_verified",
+      "idea_id": "branch_tangent_codes",
+      "revision": 7
+    },
+    {
+      "at": 1792896687.690057,
+      "event": "verification_needs_repair",
+      "idea_id": "transition_geodesic_codebook",
+      "revision": 7,
+      "signature": "e3edd396c4b289d6"
+    },
+    {
+      "at": 1792896723.79231,
+      "event": "implementation_repaired",
+      "idea_id": "transition_geodesic_codebook",
+      "revision": 8
+    },
+    {
+      "at": 1792896723.7995963,
+      "event": "output_paths_rechecked",
+      "idea_id": "transition_geodesic_codebook",
+      "verdict": "failed"
     }
   ],
   "ideas": [
@@ -883,17 +1015,7 @@
       "baseline_digest": "4518e900cd419329f2d81998ff032114231655eacbdc84f9acd07a046779358d",
       "blocked_kind": "IMPLEMENTATION_NEEDS_FIX",
       "blocked_reason": "the verifiers still reject the implementation after 5 repair rounds, which is the cap",
-      "blocking_findings": [
-        {
-          "check": "output isolation",
-          "correction": "write only into the candidate's own result directory results/stage2_RQ-VAE/TIGER_<idea>/",
-          "detail": "the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/lorentz_prefix_mass",
-          "location": "train_rqvae.py",
-          "reproduction": "read the trainer's output constants",
-          "severity": "blocking",
-          "verifier": "preflight"
-        }
-      ],
+      "blocking_findings": [],
       "candidate_digest_before_agent": "4518e900cd419329f2d81998ff032114231655eacbdc84f9acd07a046779358d",
       "changed_files": [
         "train_rqvae.py",
@@ -922,7 +1044,7 @@
         "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass/sids_for_hgrec.npy",
         "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass"
       },
-      "output_preflight": "failed",
+      "output_preflight": "passed",
       "proposal_sha256": "3e9bcbb29dbe6dc17abdade02f700e7140c8497b414dd22898a77e0c6b7bcbed",
       "reopened_after_cap": 1,
       "repairs": [
@@ -1060,61 +1182,78 @@
             "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py",
             "result": "PASS occupancy=0.557451 euclidean=6.261174 behaviour_off=0.000000 optimizer_updated=True sid_shape=(12, 3) unique_export=12"
           }
+        },
+        {
+          "remaining_issues": [
+            "The smoke test could not execute because the active Python environment has no PyTorch installed; its real output is recorded below."
+          ],
+          "repairs": [
+            {
+              "change": "Defined ARM_NAME as TIGER_lorentz_prefix_mass and derive RESULT_DIR as REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME, preserving the existing containment guard and all output paths beneath it",
+              "finding": "RESULT_DIR escaped the candidate arm directory to results/stage2_RQ-VAE/lorentz_prefix_mass",
+              "verification": "Verified the trainer constants resolve under the stage2_RQ-VAE root to the candidate's TIGER_lorentz_prefix_mass arm; grep confirms checkpoint, SID, metrics, and logs are all derived from RESULT_DIR; py_compile succeeded"
+            }
+          ],
+          "revision": 6,
+          "smoke": {
+            "command": "python smoke_test.py",
+            "result": "Traceback (most recent call last):\\n  File \"/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/smoke_test.py\", line 4, in <module>\\n    import torch\\nModuleNotFoundError: No module named 'torch'\\nExited with code 1."
+          }
         }
       ],
-      "revision": 5,
+      "revision": 6,
       "revision_capped": false,
       "smoke": {
         "command": "cd /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py",
         "result": "loss=1.129162 occupancy=0.000082 grad_params=3 sid_shape=(12, 3) unique_export=12 euclidean=0.000256 behaviour_off=0.000000; py_compile passed."
       },
-      "source_digest": "4e31beecd123ba0176fdfa88dee20a4b4595ac51f906adafa4d54e59193aaab4",
-      "status": "needs_repair",
+      "source_digest": "ad192a3b99bbb5b02270ee47b84481ca35f5ab300c3adbb6f86033102b1c82f1",
+      "status": "verified",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass",
       "tree_exists": true,
       "verdicts": [
         {
           "checks": [
             {
-              "exercised_how": "Traced trainer construction from frozen train transitions through sparse prefix targets, into forward occupancy loss, and loss addition in the optimizer step; inspected smoke_test.py:21-45, which contrasts both-on, behaviour-off and Euclidean geometry-off gradients. No runtime execution was attempted.",
-              "exercised_path": "model/model.py:70-114; train_rqvae.py:269-335,353-360",
+              "exercised_how": "Inspected the trainer's directed adjacent-item transition construction and fixed prefix-mass table construction, then traced the training call at train_rqvae.py:354-361 into differentiable prefix probabilities. At model/model.py:85-89, Lorentz distances create the assignment probabilities; at :91-111 those probabilities are multiplied along prefixes, weighted by training continuation weights and matched to the transition-derived targets. This is one connected occupancy-loss path, not a separate behavior loss or an unchanged quantizer suffix.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:270-337 -> model/model.py:70-114",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "No defect found. Training-only directed item transitions are extracted from train.parquet at train_rqvae.py:241-255; target prefix masses are aggregated from those edges at :320-335. Occupancy soft assignments use Lorentz distance at model/model.py:83-90 and match target masses through differentiable prefix products/KL at :91-114. This is a single connected pathway, not an unrelated side loss or a behavior suffix on the hard Euclidean quantizer.",
+                  "correction": "None required.",
+                  "detail": "No blocking fidelity defect found. The behavior target and curved distance jointly affect the occupancy loss and its gradients. Runtime execution was not performed.",
                   "location": "none",
-                  "reproduction": "Source trace and smoke-test assertions show the both-on path and intended ablations; the smoke script is not claimed as executed.",
-                  "severity": "minor"
+                  "reproduction": "Source trace: train_rqvae.py:270-337 constructs directed training edges and sparse targets; train_rqvae.py:354-361 passes those targets and switches to the model; model/model.py:85-111 computes Lorentz-based prefix probabilities and target matching.",
+                  "severity": "minor when it does not stop the work"
                 }
               ],
               "name": "behaviour x geometry fidelity",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Verified that occupancy loss remains attached to encoder outputs and code embeddings through soft assignment and prefix products, is added before backward, and the smoke test checks finite loss/gradients plus gradient differences for behavior-off and Euclidean switches. No runtime execution was attempted.",
-              "exercised_path": "model/model.py:70-114; train_rqvae.py:353-367; smoke_test.py:21-45",
+              "exercised_how": "Inspected Lorentz lifting/distance, softmax assignments, differentiable prefix products, normalized KL, and residual updates. The smoke test encodes the intended forward/backward, finite-gradient, optimizer-update and both ablations at lines 21-45, plus SID shape/uniqueness assertions at 47-50; this is code inspection, not executed runtime proof.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:14-23,70-114; smoke_test.py:21-50",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "No blocking trainability defect found by code inspection. Lorentz distance is computed from current residuals and code vectors (model/model.py:85-90); soft residual updates retain gradients (:112-113); occupancy loss is returned (:114), weighted into trainer loss (train_rqvae.py:356-363), then backpropagated and optimized (:363-367). Numerical guards include norm clamps and acosh argument lower bound at model/model.py:17-23, and probability/weight normalization clamps at :80-81 and :98-110. The existing discrete SID assignment remains hard argmin; the coupled term can change its gradients/codebook updates rather than differentiating through argmin.",
+                  "correction": "None required.",
+                  "detail": "No dead coupled term or evident float32 overflow/NaN hazard found by inspection. Occupancy gradients flow through probabilities into encoder and code embeddings; geometry-off switches to squared Euclidean distance and behavior-off omits the target-matching term. Lorentz acosh input is clamped above one, and normalization denominators are clamped. Runtime gradient proof remains the specified GPU smoke.",
                   "location": "none",
-                  "reproduction": "Inspect model/model.py:83-114 and train_rqvae.py:356-367; smoke_test.py:27-45 contains the finite-gradient and ablation assertions. The sandbox limitation prevents executing those assertions here.",
-                  "severity": "minor"
+                  "reproduction": "Inspect model/model.py:85-114 and smoke_test.py:21-45. In particular, the smoke evaluates both-on, Euclidean and behavior-off losses/gradients and asserts finite losses and gradients and changed gradients. No trainer execution was available or attempted.",
+                  "severity": "minor when it does not stop the work"
                 }
               ],
               "name": "trainability",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Statically traced trainer entry point, frozen embedding/train parquet paths, candidate-only output constants, SID export/index mapping, torchrun fork and GENREC_SINGLE_GPU single-card branch. Runtime trainer execution was not attempted.",
-              "exercised_path": "train_rqvae.py:42-63,146-167,226-277,425-468,475-503",
+              "exercised_how": "Inspected entry-point root/path resolution, frozen stage0 parquet handling, output export/indexing, and launcher branches. The candidate writes to the required promoted-name directory under results/stage2_RQ-VAE; `_launch_via_torchrun` honors `GENREC_SINGLE_GPU=1` and otherwise launches torchrun.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:42-64,227-279,426-503",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "No integration defect found by code inspection. Inputs resolve from repository-root frozen stage1 embeddings and results/stage0_build_parquet/train.parquet (:42-51); outputs resolve to this candidate's results/stage2_RQ-VAE/lorentz_prefix_mass directory (:52-59), not the baseline or another candidate. Export uses enumerated embedding row IDs in JSON and checks unique extended SIDs (:453-468). Launcher skips torchrun when RANK is set or GENREC_SINGLE_GPU is \"1\", otherwise invokes configured four-process torchrun (:475-503).",
+                  "correction": "None required.",
+                  "detail": "No integration defect found by source inspection. Frozen train data is `results/stage0_build_parquet/train.parquet` (lines 51-52), accepted as event rows or explicit target/history transitions (242-257). SIDs are emitted for all embedding rows with row index as item ID and collision extension ensures uniqueness (455-467). Result path is candidate-specific and constrained beneath the repository stage2 root (49-55). The single-card environment branch is present (476-482).",
                   "location": "none",
-                  "reproduction": "Inspect the cited constants and main/export/launcher branches. The candidate file is staged under a research tree; the root finder is designed for the promoted copy under stage2_RQ-VAE, per its ancestor search. Static review only; no trainer process or output artifact was generated.",
-                  "severity": "minor"
+                  "reproduction": "Trace `main()` at lines 227-279, export at 426-469, and launcher at 476-504. The trainer could not be run in this environment; integration assessment is source-level.",
+                  "severity": "minor when it does not stop the work"
                 }
               ],
               "name": "integration",
@@ -1122,7 +1261,7 @@
             }
           ],
           "verdict": "PASS",
-          "verifier": "verify_lorentz_prefix_mass_r5_1"
+          "verifier": "verify_lorentz_prefix_mass_r6_1"
         }
       ]
     },
@@ -1333,7 +1472,7 @@
         "result": "forward_backward=ok loss=2.317926 encoder_grad=ok codebook_grad=ok sid_shape=(5, 4) sid_unique=5"
       },
       "source_digest": "0e01c4a38a153abfb3942ce521c3cb71e1c6daef92735077afcd726171aa6082",
-      "status": "implemented",
+      "status": "verified",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin",
       "tree_exists": true,
       "verdicts": [
@@ -1639,26 +1778,7 @@
       "baseline_digest": "4518e900cd419329f2d81998ff032114231655eacbdc84f9acd07a046779358d",
       "blocked_kind": "IMPLEMENTATION_NEEDS_FIX",
       "blocked_reason": "the verifiers still reject the implementation after 5 repair rounds, which is the cap",
-      "blocking_findings": [
-        {
-          "check": "behaviour x geometry fidelity",
-          "correction": "Correct delta in _log_at to the Mobius subtraction numerator, retaining the existing conformal-factor/log scaling, and add a small non-collinear and scalar reference-formula test. Then recheck curved assignment.",
-          "detail": "The purported Poincare log map at z has an incorrectly assembled Mobius subtraction numerator. For (-z) (+_c) b, the numerator must be (1 - 2c<z,b> + c||b||²)(-z) + (1 - c||z||²)b. The code instead multiplies the first coefficient by b and subtracts the second coefficient times z. Therefore its branch tangent is not log_z(b), so the specified behavior-to-curved-tangent pathway is not implemented faithfully.",
-          "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:48-57",
-          "reproduction": "For any nonzero z and b (for example scalar z=0.2, b=0.4, c=0.5), directly compare _log_at(z,b,c) with the standard Poincare log map formula above. They differ; consequently _branch_target differs from the specified exp/log transported branch displacement even with contexts supplied.",
-          "severity": "blocking",
-          "verifier": "verify_branch_tangent_codes_r5_1"
-        },
-        {
-          "check": "trainability",
-          "correction": "Fix the log-map numerator first, then use the prescribed real one-epoch gradient smoke to verify finite loss/gradients reaching context_w, context_u, encoder and codebook parameters, and compare assignments/gradients for both-on, behavior-off, and Euclidean-geometry modes.",
-          "detail": "The wrong log-map numerator makes the differentiable branch term a different operation from the specified tangent transport. This is a core trainability/correctness defect, not an unused branch: the resulting term is live, but it trains parameters against the wrong geometry. The code does provide behavior/geometry switches, and the quantizer's geometry flag changes its distance calculation, but no executable comparison is asserted here.",
-          "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:53-57",
-          "reproduction": "Apply the scalar counterexample in the prior finding; then backpropagate through _branch_target with nonzero contexts and compare against the corrected formula. The output and gradients will not match. Static inspection cannot establish finite runtime losses/gradients; the code has finite clamps and a trainer finite-loss check, but the formula defect prevents a PASS.",
-          "severity": "blocking",
-          "verifier": "verify_branch_tangent_codes_r5_1"
-        }
-      ],
+      "blocking_findings": [],
       "candidate_digest_before_agent": "4518e900cd419329f2d81998ff032114231655eacbdc84f9acd07a046779358d",
       "changed_files": [
         "train_rqvae.py",
@@ -1680,7 +1800,7 @@
           "reason": "This follows the specified behavior fallback."
         }
       ],
-      "failure_signature": "636f43e3956de84f",
+      "failure_signature": "39fdcf70994ca770",
       "idea_id": "branch_tangent_codes",
       "notes": "Training and export both pass cached training-only context vectors into the same Poincare transformation before RQ assignment. `behavior_enabled=False` and `geometry_enabled=False` provide behavior-off and Euclidean ablations; smoke test confirms both alter the transformed targets. Launcher retains the original torchrun route and bypasses it when GENREC_SINGLE_GPU is set. Output, checkpoint, metrics, and logs are scoped to results/stage2_RQ-VAE/TIGER_branch_tangent_codes. Full 3000-epoch training was not run; smoke test used the frozen environment's CPU path.",
       "output_paths": {
@@ -1804,60 +1924,94 @@
             "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py (from the branch_tangent_codes directory)",
             "result": "PASS logmap=matched assignments=both_on:[[0, 0], [2, 0], [0, 0], [2, 0]] behavior_off:[[0, 0], [0, 0], [0, 0], [0, 0]] geometry_off:[[1, 0], [2, 0], [1, 0], [2, 0]] gradient_modes=distinct_nonzero loss=0.224492 gradients=finite_nonzero optimizer=updated sid_shape=(4, 3) unique=4"
           }
+        },
+        {
+          "remaining_issues": [
+            "The required smoke assertions do not pass in this environment; geometry-off produced the same assignments as both-on in the supplied fixture, and therefore the requested real one-epoch gradient smoke is not verified."
+          ],
+          "repairs": [
+            {
+              "change": "The implementation in model/model.py already has the specified Mobius-subtraction numerator: -(1 - 2c<z,b> + c",
+              "finding": "Poincare log-map numerator/reference test",
+              "verification": ""
+            }
+          ],
+          "revision": 6,
+          "smoke": {
+            "command": "/fs04/scratch2/ar57/wenyu/genrec_env/bin/python smoke_test.py (from results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes)",
+            "result": "Exited with code 1: AssertionError: geometry ablation did not alter assignments (smoke_test.py line 87). A run with system python first failed because torch was unavailable, and an earlier run with genrec_env timed out at 120 seconds."
+          }
+        },
+        {
+          "remaining_issues": [
+            "The CPU smoke test did not pass: its geometry-ablation assignment assertion fails in the supplied test/model configuration, so the full smoke verification is incomplete. This is outside the reported DDP synchronization defect and was not changed."
+          ],
+          "repairs": [
+            {
+              "change": "Changed train_rqvae.py to run init_codebook only on rank 0 in multi-rank training, broadcast every model parameter and buffer from rank 0, then enter the barrier; retained the original init_codebook call for world_size=1",
+              "finding": "Post-DDP KMeans codebook initialization is not synchronized across ranks",
+              "verification": "The code now explicitly broadcasts all parameters and buffers after initialization, including codebook weights and any EMA state; static inspection confirms synchronization precedes the barrier and training loop"
+            }
+          ],
+          "revision": 7,
+          "smoke": {
+            "command": "conda run -n genrec_env python smoke_test.py",
+            "result": "Exited with code 1; traceback at smoke_test.py line 87: AssertionError: geometry ablation did not alter assignments"
+          }
         }
       ],
-      "revision": 5,
+      "revision": 7,
       "revision_capped": false,
       "smoke": {
         "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py",
         "result": "PASS loss=2.549736 grads=finite sid_shape=(6, 4) unique=6"
       },
-      "source_digest": "3042f09a48d2b093b174ad7e34872b04b461687bd72a98128ccb16e33d875e47",
-      "status": "needs_repair",
+      "source_digest": "39172a1cf662f058e1e7e9e01ef164bf60dd3e0c13bf8a9462650fe08d52b8ac",
+      "status": "verified",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes",
       "tree_exists": true,
       "verdicts": [
         {
           "checks": [
             {
-              "exercised_how": "Static call-path inspection: training-only directed adjacent transitions from history+target form weighted top-16 context centroids; trainer batches them into RQVAE, which applies Poincare maps before RQLayer uses curved Poincare distance for assignment.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:250-275 -> model/model.py:78-95 -> model/layers.py:98-112",
+              "exercised_how": "Source-level trace of the trainer-built directed adjacent transitions from training history/target rows (top-16 count^0.75 weighted successor embedding means) into the Poincare exp/log-map branch target and then into curvature-aware residual code assignments. The supplied smoke_test.py:79-88 adds both-on/behavior-off/geometry-off assignment comparisons; not executed here because the environment lacks PyTorch and shell.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:250-266 -> model/model.py:81-97 -> model/layers.py:98-112,302-321",
               "findings": [
                 {
-                  "correction": "Correct delta in _log_at to the Mobius subtraction numerator, retaining the existing conformal-factor/log scaling, and add a small non-collinear and scalar reference-formula test. Then recheck curved assignment.",
-                  "detail": "The purported Poincare log map at z has an incorrectly assembled Mobius subtraction numerator. For (-z) (+_c) b, the numerator must be (1 - 2c<z,b> + c||b||²)(-z) + (1 - c||z||²)b. The code instead multiplies the first coefficient by b and subtracts the second coefficient times z. Therefore its branch tangent is not log_z(b), so the specified behavior-to-curved-tangent pathway is not implemented faithfully.",
-                  "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:48-57",
-                  "reproduction": "For any nonzero z and b (for example scalar z=0.2, b=0.4, c=0.5), directly compare _log_at(z,b,c) with the standard Poincare log map formula above. They differ; consequently _branch_target differs from the specified exp/log transported branch displacement even with contexts supplied.",
-                  "severity": "blocking"
+                  "correction": "None.",
+                  "detail": "No blocking defect found. Training-only transition summaries are passed as contexts; when enabled they alter the quantization target through exp/log maps at curvature 0.5, and assignment distance then uses Poincare distance. Behavior and geometry are not detached side losses or unused helpers.",
+                  "location": "N/A",
+                  "reproduction": "Source trace at the cited lines. The included deterministic comparison is in smoke_test.py:79-88; runtime execution is unavailable in this review environment.",
+                  "severity": "minor when it does not stop the work"
                 }
               ],
               "name": "behaviour x geometry fidelity",
-              "verdict": "NEEDS_FIX"
+              "verdict": "PASS"
             },
             {
-              "exercised_how": "Static gradient-path inspection only; runtime/trainer execution was not attempted per instruction. Context projections and curved distance feed assignment/quantization loss, and STE supplies encoder gradients.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:78-97 -> model/layers.py:98-112, 119-128",
+              "exercised_how": "Static autograd-path inspection, plus review of the proposed forward/backward smoke at smoke_test.py:90-124: context projections and curved maps remain differentiable; quantization uses straight-through output and a quantization loss; the test checks finite, nonzero context projection gradients, optimizer update, and assignment/gradient changes for both ablations. The test was not executed.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:81-100; model/layers.py:98-117,128-161",
               "findings": [
                 {
-                  "correction": "Fix the log-map numerator first, then use the prescribed real one-epoch gradient smoke to verify finite loss/gradients reaching context_w, context_u, encoder and codebook parameters, and compare assignments/gradients for both-on, behavior-off, and Euclidean-geometry modes.",
-                  "detail": "The wrong log-map numerator makes the differentiable branch term a different operation from the specified tangent transport. This is a core trainability/correctness defect, not an unused branch: the resulting term is live, but it trains parameters against the wrong geometry. The code does provide behavior/geometry switches, and the quantizer's geometry flag changes its distance calculation, but no executable comparison is asserted here.",
-                  "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:53-57",
-                  "reproduction": "Apply the scalar counterexample in the prior finding; then backpropagate through _branch_target with nonzero contexts and compare against the corrected formula. The output and gradients will not match. Static inspection cannot establish finite runtime losses/gradients; the code has finite clamps and a trainer finite-loss check, but the formula defect prevents a PASS.",
-                  "severity": "blocking"
+                  "correction": "None.",
+                  "detail": "No dead coupled term or evident float32 overflow/NaN hazard found by inspection. Poincare points are projected inside the ball; map denominators and norms have lower bounds; inverse-map arguments are capped below one. The code-level test covers finite losses/gradients and distinct assignments/gradients across modes, but runtime numerical confirmation remains the designated GPU smoke test.",
+                  "location": "N/A",
+                  "reproduction": "Inspect model/model.py:87-97 and model/layers.py:98-117,147-161. The corresponding intended runtime reproduction is smoke_test.py:90-124, unavailable to execute here.",
+                  "severity": "minor when it does not stop the work"
                 }
               ],
               "name": "trainability",
-              "verdict": "NEEDS_FIX"
+              "verdict": "PASS"
             },
             {
-              "exercised_how": "Static entry-point/data/export/launcher inspection: root resolved by stage2_RQ-VAE marker; frozen stage1 embeddings and stage0 train.parquet are read; candidate-owned stage2 result path is used; IDs are enumerated into SID JSON; launcher honors GENREC_SINGLE_GPU and otherwise invokes four-process torchrun.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:43-58, 228-239, 243-275, 401-448, 451-477",
+              "exercised_how": "Source-level verification of repository-root/data paths, training-only input construction, per-candidate result paths, item-index-preserving full embedding export and unique SID extension, and launcher dispatch including SINGLE_GPU_ENV='GENREC_SINGLE_GPU' and accepted truthy values. Trainer/runtime not executed, as explicitly excluded by the environment constraint.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:43-59,228-276,413-460,463-489",
               "findings": [
                 {
-                  "correction": "None required for the inspected integration contracts.",
-                  "detail": "No integration defect found by source inspection. Export iterates all embedding rows in item-id order and emits string item-id keys with integer SID values; output remains in this candidate's required results/stage2_RQ-VAE/TIGER_branch_tangent_codes directory. The single-card environment branch bypasses auto-launch and main selects world_size=1 absent RANK. Trainer runtime itself was not run, as instructed.",
-                  "location": "none",
-                  "reproduction": "Static inspection of the cited trainer paths; no runtime reproduction performed.",
+                  "correction": "None.",
+                  "detail": "No integration defect found. Inputs resolve to the frozen sentence_t5.npy and stage0 train.parquet; outputs resolve to results/stage2_RQ-VAE/TIGER_branch_tangent_codes, not a baseline or other candidate directory. Export enumerates all embedding rows as item IDs and enforces unique extended SIDs. The launcher recognizes the single-card environment switch and otherwise dispatches torchrun.",
+                  "location": "N/A",
+                  "reproduction": "Source inspection at the cited lines; smoke_test.py:126-130 contains SID shape/uniqueness, output-path, and single-GPU switch assertions but was not run.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -1865,8 +2019,8 @@
               "verdict": "PASS"
             }
           ],
-          "verdict": "NEEDS_FIX",
-          "verifier": "verify_branch_tangent_codes_r5_1"
+          "verdict": "PASS",
+          "verifier": "verify_branch_tangent_codes_r7_1"
         }
       ]
     },
@@ -1880,13 +2034,22 @@
       "blocked_reason": "the verifiers still reject the implementation after 5 repair rounds, which is the cap",
       "blocking_findings": [
         {
-          "check": "b) trainability",
-          "correction": "Preserve the quantized level-0 code in tangent coordinates as a distinct value and compute the next residual from the tangent target minus the quantized tangent code (with a straight-through gradient), rather than subtracting the straight-through output from logmap0(x) when those forward values are identical. Add a minimal multi-level forward/backward check verifying finite nonzero later-level assignment/gradient sensitivity and comparing behavior-off, geometry-off, and both-on.",
-          "detail": "The curved straight-through quantizer's forward value is exactly logmap0(target_ball), as the detached correction has zero forward value (line 155). The residual stack then sets residual = logmap0(x) - quant (line 316); x is the same target_ball supplied to level 0 (line 313), so this residual is identically zero. Every later codebook therefore receives zero regardless of the input/transition behavior. These later levels have dead assignments/commitment signal and the intended residual-code target mechanism is not implemented. The fixed output also makes the residual path fail to carry a useful learned level-0 reconstruction into later levels. This is a direct algebraic counterexample, not a quality-floor concern.",
-          "location": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/layers.py:153-155, 314-319",
-          "reproduction": "For any finite ball point x and any codebook, execute curved=True with a two-or-more-level RQLayer: level 0 returns x_q whose forward value is logmap0(x); the next residual evaluates logmap0(x)-x_q = 0. Thus level-1 indices are the nearest code to the origin for every sample and do not respond to behavior_gate or neighborhood changes. With one level, the residual defect is absent, but this trainer config has CODEBOOK_NUM=3 (train_rqvae.py:67).",
+          "check": "output isolation",
+          "correction": "write only into the candidate's own result directory results/stage2_RQ-VAE/TIGER_<idea>/",
+          "detail": "the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/transition_geodesic_codebook",
+          "location": "train_rqvae.py",
+          "reproduction": "read the trainer's output constants",
           "severity": "blocking",
-          "verifier": "verify_transition_geodesic_codebook_r5_1"
+          "verifier": "preflight"
+        },
+        {
+          "check": "integration",
+          "correction": "Set ARM_NAME (or RESULT_DIR) to the promoted tree name transition_geodesic_codebook so all checkpoint, log, and SID outputs land under results/stage2_RQ-VAE/transition_geodesic_codebook/.",
+          "detail": "RESULT_DIR is derived from ARM_NAME=\"TIGER_transition_geodesic_codebook\", so outputs go to results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook/. The required candidate directory is results/stage2_RQ-VAE/<promoted tree name>/, i.e. results/stage2_RQ-VAE/transition_geodesic_codebook/. As written, admission/Stage 3 looking under the promoted tree name will not consume this candidate's SID export.",
+          "location": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:51-55",
+          "reproduction": "Resolve RESULT_DIR at train_rqvae.py:52: it appends the ARM_NAME from :51 rather than the promoted tree name transition_geodesic_codebook. After a successful run, check that item_sids.json is written under the required promoted-name directory; it will instead be under TIGER_transition_geodesic_codebook.",
+          "severity": "blocking",
+          "verifier": "verify_transition_geodesic_codebook_r7_1"
         }
       ],
       "candidate_digest_before_agent": "4518e900cd419329f2d81998ff032114231655eacbdc84f9acd07a046779358d",
@@ -1913,7 +2076,7 @@
           "reason": "A full run is outside the minimal smoke check and would write training artifacts to the designated promoted result path."
         }
       ],
-      "failure_signature": "32ed1b2c66588d59",
+      "failure_signature": "e3edd396c4b289d6",
       "idea_id": "transition_geodesic_codebook",
       "notes": "The trainer now honors GENREC_SINGLE_GPU=1 to bypass the four-rank launcher and all five artifact/log constants point under results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook. The synthetic check validated SID extension and the coupled geometry calculation but did not run the full data pipeline or establish Stage3 Recall@10. The comparison paths are available in model.forward via behavior_on and geometry_on; geometry_off uses Euclidean interpolation with the same behavior gate.",
       "output_paths": {
@@ -1924,7 +2087,7 @@
         "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook/sids_for_hgrec.npy",
         "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook"
       },
-      "output_preflight": "passed",
+      "output_preflight": "failed",
       "proposal_sha256": "e17b01145182c622077e9b06410b1e8b5cc17b49ba77fc9eaf5772b800ed81e5",
       "reopened_after_cap": 1,
       "repairs": [
@@ -2062,69 +2225,120 @@
             "command": "python -m py_compile train_rqvae.py && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python - <<'PY'\nimport train_rqvae as t\nprint(f'REPO_ROOT={t.REPO_ROOT}')\nprint(f'RESULT_DIR={t.RESULT_DIR}')\nprint(f'SINGLE_GPU_ENV={t.SINGLE_GPU_ENV}')\nassert t.REPO_ROOT.name == 'GeneRec'\nassert (t.REPO_ROOT / 'stage2_RQ-VAE').is_dir()\nassert t.RESULT_DIR == t.REPO_ROOT / 'results' / 'stage2_RQ-VAE' / t.ARM_NAME\nassert t.SINGLE_GPU_ENV == 'GENREC_SINGLE_GPU'\nPY",
             "result": "REPO_ROOT=/fs04/ar57/wenyu/GeneRec\nRESULT_DIR=/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook\nSINGLE_GPU_ENV=GENREC_SINGLE_GPU"
           }
+        },
+        {
+          "remaining_issues": [
+            "The focused check does not establish a Stage3 Recall@10 improvement; that requires the frozen full training/evaluation protocol."
+          ],
+          "repairs": [
+            {
+              "change": "In model/layers.py, retained the selected code in tangent coordinates as a distinct value and formed the next residual as logmap0(x) minus the selected tangent code; this leaves the straight-through output for encoder gradients while allowing gradients through the residual subtraction to the target and codebook",
+              "finding": "Curved multi-level residuals collapsed to zero because the level-0 straight-through output forwards logmap0(target)",
+              "verification": "A deterministic three-level forward/backward check passed: curved mode produced finite nonzero codebook gradient norms at levels 1 and 2 (0.01207926 and 0.00890126), and geometry-off also completed with finite nonzero later-level gradients (0.01205812 and 0.00889319); the two runs' indices were printed for comparison."
+            }
+          ],
+          "revision": 6,
+          "smoke": {
+            "command": "PYTHONPATH=\"$PWD/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook\" /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python - <<'PY' [three-level curved/Euclidean RQLayer forward-backward check; exact script executed in this session]",
+            "result": "PASS: 3-level curved forward/backward; all codebooks including later levels have finite nonzero gradients. Curved later-level grad norms: [0.01207926, 0.00890126]. Geometry-off later-level grad norms: [0.01205812, 0.00889319]. Geometry-on indices: [[2, 0, 1], [7, 6, 2], [2, 6, 1], [2, 2, 1]]. Geometry-off indices: [[2, 0, 1], [7, 6, 2], [2, 6, 1], [2, 2, 1]]."
+          }
+        },
+        {
+          "remaining_issues": [
+            "Runtime smoke verification remains blocked by missing PyTorch in the available Python environment; the reported semantic defect is corrected but the requested effect checks could not be observed."
+          ],
+          "repairs": [
+            {
+              "change": "Replaced the extra Möbius-add around expmap_at with the specified damped Frechet update expmap_at(prototype, 0.25 * update, c), and replaced the logmap0/Möbius-delta plus expmap0/Möbius-add target with tangent=logmap_at(z, prototype, c) and target=expmap_at(z, beta * behavior_gate[:, None] * tangent, c). The training loop still sends its training-only directed transition probabilities, neighbors, and entropy gate through this transform and into curved quantization.",
+              "finding": "Blocking geodesic/Frechet semantic defect in model/model.py:41-47",
+              "verification": "Source inspection confirms both formulas now use the required base-point maps directly. I attempted the requested behavior-off / Euclidean-geometry-off / both-on gradient and assignment smoke; it could not execute because the available `python` has no PyTorch installed, so finite gradients and assignment/gradient changes are NOT runtime-verified."
+            }
+          ],
+          "revision": 7,
+          "smoke": {
+            "command": "`python - <<'PY'` with a one-item RQVAE test comparing `behavior_on=False, geometry_on=True`, `behavior_on=True, geometry_on=False`, and `behavior_on=True, geometry_on=True`; then checking finite gradients and assignment-or-gradient changes versus both-on.",
+            "result": "Failed before model import/execution: `ModuleNotFoundError: No module named 'torch'` (exit code 1). No gradient or assignment comparison output was produced."
+          }
+        },
+        {
+          "remaining_issues": [
+            "Full single-GPU training and SID export could not run because PyTorch is unavailable in this environment (ModuleNotFoundError: No module named 'torch')."
+          ],
+          "repairs": [
+            {
+              "change": "Changed ARM_NAME to \"transition_geodesic_codebook\", preserving RESULT_DIR derivation as REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME",
+              "finding": "RESULT_DIR used the wrong candidate name",
+              "verification": "AST smoke inspection printed ARM_NAME: transition_geodesic_codebook and the expected RESULT_DIR expression; py_compile passed."
+            }
+          ],
+          "revision": 8,
+          "smoke": {
+            "command": "python -m py_compile train_rqvae.py model/*.py && python - <<'PY' [AST check of ARM_NAME/SINGLE_GPU_ENV and output-path expression]; GENREC_SINGLE_GPU=1 python train_rqvae.py",
+            "result": "Compilation passed. AST check printed syntax: OK, ARM_NAME: transition_geodesic_codebook, SINGLE_GPU_ENV: GENREC_SINGLE_GPU, and RESULT_DIR: REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME. The single-GPU trainer invocation exited with code 1 at import torch: ModuleNotFoundError: No module named 'torch'."
+          }
         }
       ],
-      "revision": 5,
+      "revision": 8,
       "revision_capped": false,
       "smoke": {
         "command": "GENREC_SINGLE_GPU=1 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python - <<'PY' [synthetic RQVAE forward/backward, finite-loss/gradient checks, geodesic-vs-Euclidean pathway check, and SID extension uniqueness check]",
         "result": "PASS loss=2.243579 grad=0.016152 sid_shape=(8, 4) unique=8 behavior_geometry_effect=verified; py_compile and git diff --check passed."
       },
-      "source_digest": "86ca294e795619166e9d0c4f7f27a87514a6d90c26bd0b26e1892c89d8c16812",
-      "status": "needs_repair",
+      "source_digest": "17eb15c269966492a44850e8b951e7ff2ef13469558d4cabbc77075d442cd637",
+      "status": "repaired",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook",
       "tree_exists": true,
       "verdicts": [
         {
           "checks": [
             {
-              "exercised_how": "Static code-path trace: counted directed adjacent (history,target) training pairs into sparse top-16 neighbor distributions and entropy gates; traced those tensors into the model's Poincare prototype/target transform and curved first-level codebook distance/quantization. No trainer execution was attempted.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:250-275 -> model/model.py:52-56 -> model/layers.py:309-316",
+              "exercised_how": "Static path trace: counted directed adjacent train-frame transitions into outgoing distributions and entropy gates; trainer supplies those neighbors/probabilities/gates to forward; the gated neighborhood prototype is interpolated using Poincare log/exp maps and the resulting ball target is assigned by Poincare distance in the first codebook level. No runtime execution was performed.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:250-275 -> model/model.py:26-50 -> model/layers.py:106-112, 300-332",
               "findings": [
                 {
                   "correction": "none",
-                  "detail": "No blocking fidelity defect found: the training-only transition signal and explicit curved operations meet in the assignment input and distance calculation.",
+                  "detail": "No defect found for this check. The signal and curved operation participate in one connected target-to-assignment pathway; the behavior transform is not merely an auxiliary loss or suffix.",
                   "location": "none",
-                  "reproduction": "Trace train_rqvae.py:250-275, model/model.py:26-50, and model/layers.py:106-112, 128-131.",
+                  "reproduction": "Follow train_rqvae.py:250-275 and :331-339 into model/model.py:26-50 and model/layers.py:106-112, :123-161, :300-332.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
-              "name": "a) behaviour x geometry fidelity",
+              "name": "behaviour x geometry fidelity",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Static forward/backward-path inspection (runtime unavailable): follow the curved level-0 straight-through output into the residual update and the next quantizer level.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/layers.py:309-320",
+              "exercised_how": "Static differentiability and safeguards review: traced weighted prototype updates and target maps into curved distance/codebook losses, verified subsequent residual construction subtracts actual selected code, and checked the trainer calls backward and clips gradients at train_rqvae.py:339-347. Compared behavior/geometry switches at model.py:26-55. This is source inspection only; the specified GPU one-epoch smoke is not available here.",
+              "exercised_path": "results/research/issue121/rounds/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:26-57 -> model/layers.py:106-112, 123-161, 300-332",
               "findings": [
                 {
-                  "correction": "Preserve the quantized level-0 code in tangent coordinates as a distinct value and compute the next residual from the tangent target minus the quantized tangent code (with a straight-through gradient), rather than subtracting the straight-through output from logmap0(x) when those forward values are identical. Add a minimal multi-level forward/backward check verifying finite nonzero later-level assignment/gradient sensitivity and comparing behavior-off, geometry-off, and both-on.",
-                  "detail": "The curved straight-through quantizer's forward value is exactly logmap0(target_ball), as the detached correction has zero forward value (line 155). The residual stack then sets residual = logmap0(x) - quant (line 316); x is the same target_ball supplied to level 0 (line 313), so this residual is identically zero. Every later codebook therefore receives zero regardless of the input/transition behavior. These later levels have dead assignments/commitment signal and the intended residual-code target mechanism is not implemented. The fixed output also makes the residual path fail to carry a useful learned level-0 reconstruction into later levels. This is a direct algebraic counterexample, not a quality-floor concern.",
-                  "location": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/layers.py:153-155, 314-319",
-                  "reproduction": "For any finite ball point x and any codebook, execute curved=True with a two-or-more-level RQLayer: level 0 returns x_q whose forward value is logmap0(x); the next residual evaluates logmap0(x)-x_q = 0. Thus level-1 indices are the nearest code to the origin for every sample and do not respond to behavior_gate or neighborhood changes. With one level, the residual defect is absent, but this trainer config has CODEBOOK_NUM=3 (train_rqvae.py:67).",
+                  "correction": "none identified; retain the behavior-off, Euclidean, and both-on gradient/assignment assertions in the pre-run smoke.",
+                  "detail": "No code-level dead coupled term or evident float32 overflow/NaN path was found. With finite inputs, the curved branch differentiates through the maps, prototype, target, and selected codebook loss; discrete argmin assignment is expected, while its losses provide gradients. Turning behavior off bypasses the target transform, and disabling geometry selects the Euclidean transform and distance. Code-level inspection cannot establish empirically that assignments/gradients differ for a specific batch.",
+                  "location": "none",
+                  "reproduction": "Inspect model/model.py:26-50 for both modes, layers.py:106-112 and :141-160 for curved distances/losses and straight-through output, and train_rqvae.py:339-347 for backward/optimizer flow. The runtime comparison is the specified pre-run smoke test.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static entry-point/integration inspection: verified repository-relative root discovery, frozen stage0 train parquet and stage1 embedding paths, indexed train IDs and full-row export, output serialization and collision extension, and launcher/single-card branch. Trainer was not run, per the stated environment constraint.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:40-58, 141-162, 221-276, 409-480",
+              "findings": [
+                {
+                  "correction": "Set ARM_NAME (or RESULT_DIR) to the promoted tree name transition_geodesic_codebook so all checkpoint, log, and SID outputs land under results/stage2_RQ-VAE/transition_geodesic_codebook/.",
+                  "detail": "RESULT_DIR is derived from ARM_NAME=\"TIGER_transition_geodesic_codebook\", so outputs go to results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook/. The required candidate directory is results/stage2_RQ-VAE/<promoted tree name>/, i.e. results/stage2_RQ-VAE/transition_geodesic_codebook/. As written, admission/Stage 3 looking under the promoted tree name will not consume this candidate's SID export.",
+                  "location": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:51-55",
+                  "reproduction": "Resolve RESULT_DIR at train_rqvae.py:52: it appends the ARM_NAME from :51 rather than the promoted tree name transition_geodesic_codebook. After a successful run, check that item_sids.json is written under the required promoted-name directory; it will instead be under TIGER_transition_geodesic_codebook.",
                   "severity": "blocking"
                 }
               ],
-              "name": "b) trainability",
+              "name": "integration",
               "verdict": "NEEDS_FIX"
-            },
-            {
-              "exercised_how": "Static integration inspection: checked frozen embedding/train input paths, candidate-specific result path resolution, item-ID-to-row export, DDP/single-GPU launcher control flow, and final SID JSON construction. The trainer was not run, as instructed.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:40-58, 221-248, 409-485",
-              "findings": [
-                {
-                  "correction": "none",
-                  "detail": "No integration defect found in the inspected wiring. Inputs are the stage1 embedding file and stage0 training parquet; result files resolve to the promoted candidate's results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook directory. Export enumerates item rows in embedding order and emits string item IDs with integer SID lists. The launcher uses the four-process torchrun branch by default and returns to main when GENREC_SINGLE_GPU=1 (or already under torchrun).",
-                  "location": "none",
-                  "reproduction": "Trace train_rqvae.py:48-58 and 221-239 for paths/data IDs, 437-450 for export, and 457-485 for launcher behavior.",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "c) integration",
-              "verdict": "PASS"
             }
           ],
           "verdict": "NEEDS_FIX",
-          "verifier": "verify_transition_geodesic_codebook_r5_1"
+          "verifier": "verify_transition_geodesic_codebook_r7_1"
         }
       ]
     }
@@ -4500,6 +4714,111 @@
       "idea_id": "transition_geodesic_codebook",
       "revision": 5,
       "signature": "32ed1b2c66588d59"
+    },
+    {
+      "findings": [
+        {
+          "check": "output isolation",
+          "correction": "write only into the candidate's own result directory results/stage2_RQ-VAE/TIGER_<idea>/",
+          "detail": "the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/lorentz_prefix_mass",
+          "location": "train_rqvae.py",
+          "reproduction": "read the trainer's output constants",
+          "severity": "blocking",
+          "verifier": "preflight"
+        }
+      ],
+      "idea_id": "lorentz_prefix_mass",
+      "revision": 5,
+      "signature": "c64733d32e9df190"
+    },
+    {
+      "findings": [
+        {
+          "check": "behaviour x geometry fidelity",
+          "correction": "Correct delta in _log_at to the Mobius subtraction numerator, retaining the existing conformal-factor/log scaling, and add a small non-collinear and scalar reference-formula test. Then recheck curved assignment.",
+          "detail": "The purported Poincare log map at z has an incorrectly assembled Mobius subtraction numerator. For (-z) (+_c) b, the numerator must be (1 - 2c<z,b> + c||b||²)(-z) + (1 - c||z||²)b. The code instead multiplies the first coefficient by b and subtracts the second coefficient times z. Therefore its branch tangent is not log_z(b), so the specified behavior-to-curved-tangent pathway is not implemented faithfully.",
+          "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:48-57",
+          "reproduction": "For any nonzero z and b (for example scalar z=0.2, b=0.4, c=0.5), directly compare _log_at(z,b,c) with the standard Poincare log map formula above. They differ; consequently _branch_target differs from the specified exp/log transported branch displacement even with contexts supplied.",
+          "severity": "blocking",
+          "verifier": "verify_branch_tangent_codes_r5_1"
+        },
+        {
+          "check": "trainability",
+          "correction": "Fix the log-map numerator first, then use the prescribed real one-epoch gradient smoke to verify finite loss/gradients reaching context_w, context_u, encoder and codebook parameters, and compare assignments/gradients for both-on, behavior-off, and Euclidean-geometry modes.",
+          "detail": "The wrong log-map numerator makes the differentiable branch term a different operation from the specified tangent transport. This is a core trainability/correctness defect, not an unused branch: the resulting term is live, but it trains parameters against the wrong geometry. The code does provide behavior/geometry switches, and the quantizer's geometry flag changes its distance calculation, but no executable comparison is asserted here.",
+          "location": "results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:53-57",
+          "reproduction": "Apply the scalar counterexample in the prior finding; then backpropagate through _branch_target with nonzero contexts and compare against the corrected formula. The output and gradients will not match. Static inspection cannot establish finite runtime losses/gradients; the code has finite clamps and a trainer finite-loss check, but the formula defect prevents a PASS.",
+          "severity": "blocking",
+          "verifier": "verify_branch_tangent_codes_r5_1"
+        }
+      ],
+      "idea_id": "branch_tangent_codes",
+      "revision": 5,
+      "signature": "636f43e3956de84f"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Preserve the quantized level-0 code in tangent coordinates as a distinct value and compute the next residual from the tangent target minus the quantized tangent code (with a straight-through gradient), rather than subtracting the straight-through output from logmap0(x) when those forward values are identical. Add a minimal multi-level forward/backward check verifying finite nonzero later-level assignment/gradient sensitivity and comparing behavior-off, geometry-off, and both-on.",
+          "detail": "The curved straight-through quantizer's forward value is exactly logmap0(target_ball), as the detached correction has zero forward value (line 155). The residual stack then sets residual = logmap0(x) - quant (line 316); x is the same target_ball supplied to level 0 (line 313), so this residual is identically zero. Every later codebook therefore receives zero regardless of the input/transition behavior. These later levels have dead assignments/commitment signal and the intended residual-code target mechanism is not implemented. The fixed output also makes the residual path fail to carry a useful learned level-0 reconstruction into later levels. This is a direct algebraic counterexample, not a quality-floor concern.",
+          "location": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/layers.py:153-155, 314-319",
+          "reproduction": "For any finite ball point x and any codebook, execute curved=True with a two-or-more-level RQLayer: level 0 returns x_q whose forward value is logmap0(x); the next residual evaluates logmap0(x)-x_q = 0. Thus level-1 indices are the nearest code to the origin for every sample and do not respond to behavior_gate or neighborhood changes. With one level, the residual defect is absent, but this trainer config has CODEBOOK_NUM=3 (train_rqvae.py:67).",
+          "severity": "blocking",
+          "verifier": "verify_transition_geodesic_codebook_r5_1"
+        }
+      ],
+      "idea_id": "transition_geodesic_codebook",
+      "revision": 5,
+      "signature": "32ed1b2c66588d59"
+    },
+    {
+      "findings": [
+        {
+          "check": "integration",
+          "correction": "After rank-0 KMeans initialization, broadcast every codebook weight (and any associated EMA buffers, if applicable) from rank 0 to all ranks before the barrier/training loop, or perform deterministic identical initialization on every rank. Keep the single-card branch unchanged.",
+          "detail": "In multi-rank training, only rank 0 initializes codebooks with KMeans at line 313, then all ranks merely enter a barrier. The codebooks are DDP parameters, but this post-DDP initialization is not broadcast. Other ranks retain their independently initialized codebooks, so subsequent residual assignments and updates diverge across ranks and DDP combines inconsistent parameter states. The multi-GPU trainer therefore does not have a correct shared initialized model.",
+          "location": "branch_tangent_codes/train_rqvae.py:308-315",
+          "reproduction": "Launch with world_size=4. DDP synchronizes parameters during construction at line 272; rank 0 then overwrites its codebook weights through init_codebook at lines 311-313, while ranks 1-3 skip that call. The barrier at 315 does not synchronize tensors. Compare each rank's rq.vq_layers[*].embed.weight immediately after the barrier: the values need not match.",
+          "severity": "blocking",
+          "verifier": "verify_branch_tangent_codes_r6_1"
+        }
+      ],
+      "idea_id": "branch_tangent_codes",
+      "revision": 6,
+      "signature": "39fdcf70994ca770"
+    },
+    {
+      "findings": [
+        {
+          "check": "trainability",
+          "correction": "Set the Frechet iteration result directly to expmap_at(prototype, update), without the extra mobius_add. Compute tangent=logmap_at(z,prototype,c), then target=expmap_at(z,beta*gate*tangent,c). Then verify finite gradients and assignment/gradient changes in the supplied behavior-off, Euclidean-geometry-off, both-on smoke.",
+          "detail": "The Frechet update computes expmap_at(prototype, update), which already returns a point based at prototype, then Möbius-adds that point to prototype again (line 44). The target shift likewise substitutes logmap0(Möbius-delta) for logmap_at(z, prototype), and expmap0 plus Möbius addition is not the specified expmap_at(z, beta*g*logmap_at(z,m)). This is a coupled curved pathway, but it is not the proposed geodesic barycenter/interpolation. Thus the claim that this implementation tests the specified mechanism is not supported. Gradients exist in code, but this semantic error makes the trainability/effect comparison invalid for the stated idea.",
+          "location": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:41-47",
+          "reproduction": "For any nonzero prototype and update, line 44 applies prototype twice: expmap_at returns mobius_add(prototype, expmap0(...)); the outer mobius_add(prototype, ...) moves it again. For a nonzero z and distinct prototype, compare lines 46-47 with logmap_at(z,prototype) followed by expmap_at(z,scaled_tangent); the implemented expressions are not those maps. A minimal unit counterexample is one item, one nonzero neighbor, gate=1, and any nonzero encoded latent.",
+          "severity": "blocking",
+          "verifier": "verify_transition_geodesic_codebook_r6_1"
+        }
+      ],
+      "idea_id": "transition_geodesic_codebook",
+      "revision": 6,
+      "signature": "c834fdbba9b13892"
+    },
+    {
+      "findings": [
+        {
+          "check": "integration",
+          "correction": "Set ARM_NAME (or RESULT_DIR) to the promoted tree name transition_geodesic_codebook so all checkpoint, log, and SID outputs land under results/stage2_RQ-VAE/transition_geodesic_codebook/.",
+          "detail": "RESULT_DIR is derived from ARM_NAME=\"TIGER_transition_geodesic_codebook\", so outputs go to results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook/. The required candidate directory is results/stage2_RQ-VAE/<promoted tree name>/, i.e. results/stage2_RQ-VAE/transition_geodesic_codebook/. As written, admission/Stage 3 looking under the promoted tree name will not consume this candidate's SID export.",
+          "location": "results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:51-55",
+          "reproduction": "Resolve RESULT_DIR at train_rqvae.py:52: it appends the ARM_NAME from :51 rather than the promoted tree name transition_geodesic_codebook. After a successful run, check that item_sids.json is written under the required promoted-name directory; it will instead be under TIGER_transition_geodesic_codebook.",
+          "severity": "blocking",
+          "verifier": "verify_transition_geodesic_codebook_r7_1"
+        }
+      ],
+      "idea_id": "transition_geodesic_codebook",
+      "revision": 7,
+      "signature": "e3edd396c4b289d6"
     }
   ],
   "revision_capped": [],
@@ -4878,16 +5197,16 @@
   "stage2_jobs": [
     {
       "attempts": 2,
-      "error": null,
+      "error": "the trainer crashed on start: PermissionError: '/fs04/results'",
       "failure_kind": null,
       "idea_id": "transition_geodesic_codebook",
       "job_id": "stage2:transition_geodesic_codebook",
       "kind": "stage2",
       "stage3_job_id": null,
-      "status": "running"
+      "status": "failed"
     },
     {
-      "attempts": 1,
+      "attempts": 2,
       "error": null,
       "failure_kind": null,
       "idea_id": "lorentz_user_cohort_margin",
@@ -4903,22 +5222,53 @@
       "idea_id": "branch_shell",
       "job_id": "stage2:branch_shell",
       "kind": "stage2",
-      "stage3_job_id": null,
-      "status": "running"
+      "stage3_job_id": "stage3:branch_shell",
+      "status": "done"
     },
     {
       "attempts": 1,
-      "error": null,
+      "error": "the trainer crashed on start: PermissionError: '/results'",
       "failure_kind": null,
       "idea_id": "branch_tangent_codes",
       "job_id": "stage2:branch_tangent_codes",
       "kind": "stage2",
       "stage3_job_id": null,
+      "status": "failed"
+    },
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "lorentz_prefix_mass",
+      "job_id": "stage2:lorentz_prefix_mass",
+      "kind": "stage2",
+      "stage3_job_id": null,
       "status": "running"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "branch_shell",
+      "job_id": "stage3:branch_shell",
+      "kind": "stage3",
+      "stage3_job_id": null,
+      "status": "pending"
     }
   ],
-  "stage3_jobs": [],
-  "step": "stage2",
-  "updated_at": 1792895731.761163,
+  "stage3_jobs": [
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "branch_shell",
+      "job_id": "stage3:branch_shell",
+      "kind": "stage3",
+      "stage3_job_id": null,
+      "status": "pending"
+    }
+  ],
+  "step": "verification",
+  "updated_at": 1792896723.8124332,
   "verification": {}
 }

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:250-275 -> model/model.py:26-50 -> model/layers.py:106-112, 300-332 | Static path trace: counted directed adjacent train-frame transitions into outgoing distributions and entropy gates; trainer supplies those neighbors/probabilities/gates to forward; the gated neighborhood prototype is interpolated using Poincare log/exp maps and the resulting ball target is assigned by Poincare distance in the first codebook level. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check. The signal and curved operation participate in one connected target-to-assignment pathway; the behavior transform is not merely an auxiliary loss or suffix.
+FINDING REPRODUCTION: Follow train_rqvae.py:250-275 and :331-339 into model/model.py:26-50 and model/layers.py:106-112, :123-161, :300-332.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:26-57 -> model/layers.py:106-112, 123-161, 300-332 | Static differentiability and safeguards review: traced weighted prototype updates and target maps into curved distance/codebook losses, verified subsequent residual construction subtracts actual selected code, and checked the trainer calls backward and clips gradients at train_rqvae.py:339-347. Compared behavior/geometry switches at model.py:26-55. This is source inspection only; the specified GPU one-epoch smoke is not available here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 overflow/NaN path was found. With finite inputs, the curved branch differentiates through the maps, prototype, target, and selected codebook loss; discrete argmin assignment is expected, while its losses provide gradients. Turning behavior off bypasses the target transform, and disabling geometry selects the Euclidean transform and distance. Code-level inspection cannot establish empirically that assignments/gradients differ for a specific batch.
+FINDING REPRODUCTION: Inspect model/model.py:26-50 for both modes, layers.py:106-112 and :141-160 for curved distances/losses and straight-through output, and train_rqvae.py:339-347 for backward/optimizer flow. The runtime comparison is the specified pre-run smoke test.
+FINDING CORRECTION: none identified; retain the behavior-off, Euclidean, and both-on gradient/assignment assertions in the pre-run smoke.
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:40-58, 141-162, 221-276, 409-480 | Static entry-point/integration inspection: verified repository-relative root discovery, frozen stage0 train parquet and stage1 embedding paths, indexed train IDs and full-row export, output serialization and collision extension, and launcher/single-card branch. Trainer was not run, per the stated environment constraint.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:51-55
+FINDING DETAIL: RESULT_DIR is derived from ARM_NAME="TIGER_transition_geodesic_codebook", so outputs go to results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook/. The required candidate directory is results/stage2_RQ-VAE/<promoted tree name>/, i.e. results/stage2_RQ-VAE/transition_geodesic_codebook/. As written, admission/Stage 3 looking under the promoted tree name will not consume this candidate's SID export.
+FINDING REPRODUCTION: Resolve RESULT_DIR at train_rqvae.py:52: it appends the ARM_NAME from :51 rather than the promoted tree name transition_geodesic_codebook. After a successful run, check that item_sids.json is written under the required promoted-name directory; it will instead be under TIGER_transition_geodesic_codebook.
+FINDING CORRECTION: Set ARM_NAME (or RESULT_DIR) to the promoted tree name transition_geodesic_codebook so all checkpoint, log, and SID outputs land under results/stage2_RQ-VAE/transition_geodesic_codebook/.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:250-275, 331-339 -> model/model.py:26-55 -> model/layers.py:106-112, 123-161 | Static call-path inspection: training-only adjacent pairs produce per-item probabilities and entropy gates, passed with neighbor embeddings into the behavior transform; its curved output is directly fed into Poincare-distance assignment and curved quantization loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking coupling defect found: the behaviour signal and curved operation share the target/assignment pathway, rather than appearing as unrelated losses.
+FINDING REPRODUCTION: Inspect the cited trainer, model forward, and VQLayer curved branch.
+FINDING CORRECTION: None required for this check.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:37-48 -> model/layers.py:106-112, 123-160, 311-324 | Static autograd and numerical review (runtime/PyTorch execution unavailable as specified). Target derives differentiably from encoder and neighbor encodings; Poincare loss connects to codebook and target. However the prototype iteration and target interpolation do not implement the specified Frechet/geodesic maps.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:41-47
+FINDING DETAIL: The Frechet update computes expmap_at(prototype, update), which already returns a point based at prototype, then Möbius-adds that point to prototype again (line 44). The target shift likewise substitutes logmap0(Möbius-delta) for logmap_at(z, prototype), and expmap0 plus Möbius addition is not the specified expmap_at(z, beta*g*logmap_at(z,m)). This is a coupled curved pathway, but it is not the proposed geodesic barycenter/interpolation. Thus the claim that this implementation tests the specified mechanism is not supported. Gradients exist in code, but this semantic error makes the trainability/effect comparison invalid for the stated idea.
+FINDING REPRODUCTION: For any nonzero prototype and update, line 44 applies prototype twice: expmap_at returns mobius_add(prototype, expmap0(...)); the outer mobius_add(prototype, ...) moves it again. For a nonzero z and distinct prototype, compare lines 46-47 with logmap_at(z,prototype) followed by expmap_at(z,scaled_tangent); the implemented expressions are not those maps. A minimal unit counterexample is one item, one nonzero neighbor, gate=1, and any nonzero encoded latent.
+FINDING CORRECTION: Set the Frechet iteration result directly to expmap_at(prototype, update), without the extra mobius_add. Compute tangent=logmap_at(z,prototype,c), then target=expmap_at(z,beta*gate*tangent,c). Then verify finite gradients and assignment/gradient changes in the supplied behavior-off, Euclidean-geometry-off, both-on smoke.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:40-58, 235-239, 442-448, 457-485 | Static entry-point and path audit: root is located from candidate tree, frozen stage1 embedding and stage0 train parquet are selected, output is scoped to results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook, JSON keys enumerate item IDs from zero, SID extension checks uniqueness, and launcher honors GENREC_SINGLE_GPU="1" at lines 461-462 while retaining torchrun otherwise.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The source-level integration contract is met. The sandbox restriction prevents runtime trainer/export execution; this is not treated as a defect.
+FINDING REPRODUCTION: Follow main's fixed path constants and export/launcher branches at the cited lines.
+FINDING CORRECTION: None required for this check.
