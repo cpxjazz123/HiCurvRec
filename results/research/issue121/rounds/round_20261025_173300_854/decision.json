@@ -1,0 +1,1006 @@
+{
+  "decision_at": 1792910444.4035423,
+  "decision_hash": "ceeedf42973b940d80716d9b36e738dda9bcab8f93309f6a47dab20ae1ff8250",
+  "lineage": {},
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 3.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [
+          "exploration_value"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "transition-anchored-hyperbolic-codebook",
+        "max_disagreement": 3.0,
+        "medians": {
+          "behavior_evidence": 2.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E14",
+            "E16",
+            "E19",
+            "E22"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E15",
+            "E16",
+            "E19",
+            "E20",
+            "E22"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E14",
+            "E15",
+            "E16",
+            "E19",
+            "E20",
+            "E21",
+            "E22"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The bundle provides no measured coverage or support for the specific successor-overlap hypothesis, and prior ledger mechanisms already use directed assignment/geometry, making the purported novelty and transfer particularly uncertain.",
+          "scoring_2": "No measured evidence establishes that directed successor-neighborhood overlap is a problem or predicts useful first-token groupings; the bundle labels the behavioral mechanism proposed, while PRIOR_WORK is NOT_CHECKED and the ledger includes several directed-assignment mechanisms with mixed results.",
+          "scoring_3": "The bundles establish the transition signal and computation as proposed, but provide no measured support/coverage statistic for successor-neighborhood overlap; popularity-discounted rare edges may reinforce noise, while the cited directed assignment/geometry experiments make incremental novelty uncertain."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=2 because E1-E3 define the signal and leakage boundary but supply no measured transition statistic or coverage. geometry_necessity=4 because E5-E8 place Poincare distance inside the behavioral assignment term and specify a Euclidean control, though cancellation/necessity is not established. novelty=2 because E9 is NOT_CHECKED and E14/E16/E19 show nearby directed assignment/geometry work. downstream_mechanism=4 because the stated assignment change is first-token grouping and prefix successor predictability is diagnostic, but measured support is absent. falsifiability=3 because three factor conditions and a baseline threshold are named, but matched settings and a discriminating failure diagnostic are incomplete. implementability=3 because sparse costs and update schedule are given, but differentiable/numerical safeguards and total minibatch cost are not fully resolved. exploration_value=1 because directed assignment/geometry is close to measured ledger mechanisms. UNKNOWN on support and prior-art check; bounded resolution: audit transition coverage and inspect the cited mechanism implementations.",
+          "scoring_2": "behavior_evidence=2 because the signal is specified but no measured behavioral statistic or coverage is supplied (E1-E4). geometry_necessity=3: a genuine curved pairwise geodesic term is coupled to behavior in assignment (E5-E8), but the provided material does not establish advantage over a matched Euclidean cost or rule out cancellation. novelty=2: distinct-looking edge-weighted center cost, but directed assignment, codeword geometry and tangent variants already appear in the ledger (E14-E21), and prior-art search is unchecked (E9). downstream_mechanism=4: first-token assignments are directly changed, with prefix predictability and Stage3 Recall named, but no directional diagnostic is fully operationalized. falsifiability=3: both factors are required and three comparisons are implied; matched budgets/seeds and a clear failure criterion are not fully specified. implementability=3: equations and sparse cost are provided, but minibatch/epoch stop-gradient and refresh details leave optimization/gradient implementation risk. exploration_value=2: a small variation within the already measured directed assignment/codeword geometry family. Recall values in the ledger are measurements of other arms, not this proposal.",
+          "scoring_3": "Behavior=3 because the directed signal and construction are explicit and testable (E1-E2), but not measured. Geometry=3: the curved center-to-center pairwise cost is genuinely in the coupled assignment (E5-E7), yet no argument shows a benefit over the matched Euclidean control (E8). Novelty=3 because the computation differs from the named mechanisms, but prior work is NOT_CHECKED and the ledger already includes directed assignment/geometry families (E9-E10, E14-E21). Downstream=4 for an explicit first-token assignment-to-prefix predictability-to-Recall chain; diagnostic direction is specified in the proposal. Falsifiability=3 because both-on and behavior-/geometry-off comparisons and a keep criterion are requested, but exact matched-control settings and a discriminating diagnostic are not fully fixed. Implementability=3: pseudocode and sparse cost are given, but stable Poincare distance safeguards and edge-free item handling are unspecified. Exploration=4 because pairwise successor-code geometry is a distinct mechanism whose failure would test whether transition neighborhoods should constrain codeword layout."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only directed transitions, Poincare distance, and a coupled first-level assignment cost are specified; it changes assignments, and proposes behavior-off, Euclidean, and both-on comparisons, with observable assignment and Stage3 effects.",
+          "scoring_2": "Training-only directed popularity-adjusted successor edges directly weight Poincare center-to-center geodesic cost in first-level hard assignments; both switches affect the same assignment computation. It names behavior-off, Euclidean-geometry-off and both-on comparisons and observable assignment/Recall outcomes, though their matching details and failure threshold are incomplete.",
+          "scoring_3": "Training-only directed transitions weighted by destination popularity directly enter the first-level assignment through Poincare codeword geodesic distances; both behavior and geometry affect the assignment."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.85,
+          "scoring_2": 2.7,
+          "scoring_3": 3.2
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.7
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 1.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "transition_branch_hyperbolic_prototypes",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 2.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E14",
+            "E16",
+            "E19",
+            "E22"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E15",
+            "E16",
+            "E19",
+            "E20",
+            "E22"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E14",
+            "E15",
+            "E16",
+            "E19",
+            "E20",
+            "E21",
+            "E22"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposed transition representation averages successor-item logarithms into a single prototype target, which can erase multimodal successor branches—the very branching structure motivating the mechanism.",
+          "scoring_2": "The specification mixes a Euclidean tangent average q_i with a hyperboloid exp map and does not give sufficient dimensional/coordinate conventions to determine whether log_o(y_j) is a valid vector for the stated exp_o; moreover, branch coherence has no measured statistic in the bundle.",
+          "scoring_3": "The formulation is underspecified for sparse or missing transition rows and mixes a tangent-space average of log-mapped successor points with trainable y_j without stating how the q_i aggregation is kept within a numerically safe range; this could make the purported branch prototype signal unstable."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=2 because E1-E3 specify training-only counts and preprocessing but report no measured support or coverage. geometry_necessity=4 because E5-E8 put Lorentz distance and exp/log maps in the assignment pathway and name a matched Euclidean control, without demonstrating that curvature adds value. novelty=2 because E9 is NOT_CHECKED and E14/E16/E19 document related directed assignment mechanisms; computational distinction is plausible but not audited against prior work. downstream_mechanism=4 because the intended first-level grouping and prefix predictability diagnostic are explicit, though the link to Recall is unmeasured. falsifiability=3 because behavior-off, geometry-off, both-on and a baseline criterion are named, but matching and a decisive diagnostic/failure rule need tightening. implementability=3 because the algorithm and sparse computation are described, but Lorentz projection/normalization, differentiable safeguards, and actual runtime affordability are not fully specified. exploration_value=2 because it is a variation on directed assignment mechanisms, with a distinct distribution-embedding route. UNKNOWN on behavior support and prior-art trace; bounded resolution: measure successor-row coverage/branch entropy and audit the implementation ledger.",
+          "scoring_2": "behavior_evidence=2: successor distributions are specified but no measured branch statistic or coverage supports the hypothesis (E1-E4). geometry_necessity=3: exp/log and Lorentz geodesic distance are in the joint score and selected loss (E5-E8), but no evidence argues curvature beats a matched Euclidean counterpart. novelty=2: a routine prototype/embedding variation among directed assignment and geometry experiments (E14-E21); literature check is explicitly absent (E9). downstream_mechanism=4: the affected first-level assignment and intended prefix branch grouping/Recall are identified, though no measured diagnostic direction is provided. falsifiability=3: behavior and geometry ablations plus both-on are called for, but matching and a precise refutation rule are underspecified. implementability=2: broadly implementable, but Lorentz/tangent dimensional conventions, smoothing support and stable optimization details are incomplete. exploration_value=2: a small variant in the measured directed assignment/hyperbolic family, with no distinct failure mode yet established. Other-arm Recall observations are not proposal outcomes.",
+          "scoring_3": "Behavior=3: transition distributions and their training-only provenance are specified (E1-E3), but no measured branching statistic or coverage is supplied. Geometry=3: Lorentz geodesic distance and maps act inside the first-level coupled score (E5-E7), but superiority to the matched Euclidean analogue is not argued; E8 only says a control is proposed. Novelty=3: behavior embeddings attract prototypes in a distinct computation, though literature is NOT_CHECKED and the ledger contains related directed geometry and assignment experiments (E9-E10, E14-E21). Downstream=4: the proposal names the affected first-level assignments and expected prefix predictability/Recall direction. Falsifiability=3: both factors and a baseline are named, but matching and a discriminating diagnostic/failure threshold beyond the keep condition are incomplete. Implementability=2 because the core algorithm is recognizable but missing-row behavior, smoothing support, and concrete Lorentz normalization/clamping safeguards need specification. Exploration=3: prototype-mediated successor branch assignment is a different variant with an interpretable result, but remains close to measured directed assignment/geometry families."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only successor distributions are embedded and compared with Lorentz geodesic distance inside the first-level assignment and selected loss; both factors affect assignment. Behavior-off, Euclidean, and both-on ablations and observables are described.",
+          "scoring_2": "Training-only successor distributions form a successor embedding that is compared to trainable Lorentz prototypes with squared geodesic distance inside the first-level assignment and selected-code loss. Both behavior and curvature enter the shared score. Behavior-off, Euclidean and both-on comparisons and observable SID/Recall effects are named, but the matched controls are only generally referenced rather than fully parameterized.",
+          "scoring_3": "Training-only successor distributions are embedded by Lorentz log/exp maps and compared with first-level Lorentz prototypes within the same assignment score and selected-code loss."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.9,
+          "scoring_2": 2.6,
+          "scoring_3": 3.05
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.6
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 2.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 1.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [
+          "exploration_value"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "interest_transport_hyp",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 2.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E17",
+            "E18",
+            "E22"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E14",
+            "E17",
+            "E18",
+            "E22"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19",
+            "E20",
+            "E21",
+            "E22"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The Lorentz construction is dimensionally underspecified: it maps both z_i and Euclidean code c_j via exp_o but does not define tangent dimension, coordinate convention, or the relation between Euclidean RQ residuals and the Lorentz points used for assignment.",
+          "scoring_2": "The behavioral signal and its proposed user-interest structure are not measured in the supplied bundle, while minibatch Sinkhorn balancing may dominate the change in assignment; there is no evidence that the mixture captures next-item context rather than user-history/popularity effects.",
+          "scoring_3": "The stated minibatch Sinkhorn balancing imposes uniform code capacity independently of the interest prior, potentially overriding rather than transporting the user-interest signal; the proposal also does not pin down whether the soft responsibilities or the separate argmin assignments define the quantized residual used by the RQ-VAE objective."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=2 because E1-E3 describe a plausible training-only mixture but contain no measured support or coverage. geometry_necessity=4 because E5-E8 place curved distance directly in the behavior-modulated logits and specify a Euclidean control; no evidence yet rules out a matched Euclidean transform. novelty=2 because E9 is NOT_CHECKED and E17/E18 show related capacity-balanced assignment mechanisms. downstream_mechanism=3 because responsibilities alter SID grouping and the hypothesis names next-item separability/Recall, but the chain is not diagnostically pinned to a specific assignment effect. falsifiability=3 because three conditions and a baseline comparison are stated, but matching, a precise failure criterion, and a discriminating diagnostic remain incomplete. implementability=2 because the equations outline a route but leave geometry dimensions and numerical treatment of exp/log, acosh, Sinkhorn, and hard choices underspecified; the cost estimate also conflicts between per-item opportunities and minibatch work. exploration_value=2 because it varies behavior-conditioned balanced assignment with hyperbolic logits rather than presenting a fully distinct family. UNKNOWN on support and prior-art comparison; bounded check: quantify user/interest coverage and verify tensor dimensions and matched compute in a small implementation.",
+          "scoring_2": "behavior_evidence=2 because the training-only construction is specified but no measured statistic/support/coverage is reported (E1-E4). geometry_necessity=3: Lorentz distance and exp map are inside the same combined logits as the behavior prior (E5-E8), but no matched Euclidean result or cancellation analysis supports necessity. novelty=2: the user-interest prior is a variation on assignment balancing/geometry mechanisms in the ledger (E14, E17-E21), and literature is unchecked (E9). downstream_mechanism=3: the chain from interest mixtures to responsibilities and SID grouping is plausible, but next-item separability and Recall lack a sufficiently specific measured diagnostic and expected direction. falsifiability=3: the three factor comparisons and outcome are named, but matched controls and precise failure rule are incomplete. implementability=2: the main computation is given, but q_u soft assignments are underspecified relative to the K-means description, Sinkhorn numerics/capacity behavior are not detailed, and cost estimate is inconsistent between cached minibatch computation and full item-step multiplication. exploration_value=2: interest mixtures are a modest alternative behavior prior in the assignment family, not yet a substantially distinct mechanism. The ledger's Recall values are other arms and are not predictions or measurements for this proposal.",
+          "scoring_3": "Behavior=3: the training-only user-history clustering and event mixture computation are explicit (E1-E3), but the bundle has no measured support/coverage or stability statistic. Geometry=3: Lorentz distance and exp maps enter the interest-modulated assignment logits (E5-E7), but no demonstrated advantage over a matched Euclidean control is given. Novelty=3: the multiplicative interest prior plus balanced assignment is computationally distinct, but literature is NOT_CHECKED and prior ledger includes directed capacity/assignment mechanisms (E9-E10, E17-E18). Downstream=4 because early SID assignments are specifically expected to reflect interest mixtures, with prefix predictability and Stage3 Recall proposed as observables. Falsifiability=3: behavior-off, Euclidean, and both-on comparison is implied by the proposal and baseline criterion, but exact matched controls and a discriminating diagnostic/failure criterion are not fully specified. Implementability=3: the scores, smoothing, Sinkhorn, and cost are provided, but responsibility-versus-argmin use in residual quantization and numerical guards for Lorentz exp/distance and Sinkhorn are incomplete. Exploration=4 because user-context mixture transport is substantially different from the directed transition mechanisms, and a negative result would clarify whether balanced assignments erase useful user-interest structure."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only user-interest mixtures modify soft assignment logits jointly with Lorentz geodesic distance, and Sinkhorn responsibilities drive code updates; the proposal specifies behavior-off, Euclidean, and both-on comparisons and observable assignment/Recall effects.",
+          "scoring_2": "Training-only user-history-derived item-interest mixtures modulate logits that include Lorentz exp-map/geodesic code likelihoods, and those logits jointly determine Sinkhorn responsibilities and hard SID digits. Removing either behavior modulation or hyperbolic distance changes the assignment pathway. The proposal names behavior-off, geometry-off/Euclidean and both-on comparisons, with SID/Recall outcomes, though control details and a failure threshold are not explicit.",
+          "scoring_3": "Training-only user-history-derived item interest mixtures combine multiplicatively with Lorentz geodesic code likelihoods in the Sinkhorn assignment pathway, so removing either changes responsibilities and code updates."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.65,
+          "scoring_2": 2.45,
+          "scoring_3": 3.2
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.45
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": true,
+        "pair": [
+          "interest_transport_hyp",
+          "transition-anchored-hyperbolic-codebook"
+        ],
+        "votes": {
+          "interest_transport_hyp": 1,
+          "transition-anchored-hyperbolic-codebook": 2
+        },
+        "winner": "transition-anchored-hyperbolic-codebook"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "interest_transport_hyp",
+          "transition_branch_hyperbolic_prototypes"
+        ],
+        "votes": {
+          "interest_transport_hyp": 0,
+          "transition_branch_hyperbolic_prototypes": 3
+        },
+        "winner": "transition_branch_hyperbolic_prototypes"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "transition-anchored-hyperbolic-codebook",
+          "transition_branch_hyperbolic_prototypes"
+        ],
+        "votes": {
+          "transition-anchored-hyperbolic-codebook": 3,
+          "transition_branch_hyperbolic_prototypes": 0
+        },
+        "winner": "transition-anchored-hyperbolic-codebook"
+      }
+    ],
+    "copeland": {
+      "interest_transport_hyp": -2,
+      "transition-anchored-hyperbolic-codebook": 2,
+      "transition_branch_hyperbolic_prototypes": 0
+    },
+    "cycles": [],
+    "position_bias": {
+      "first_listed_wins": 7,
+      "second_listed_wins": 2
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "5e980b3aa030b4b848254540d5a287e68b5713626c7f44e594512b80bfb21c2a",
+      "idea_id": "transition-anchored-hyperbolic-codebook",
+      "proposal_sha256": "17744aff4b1624434337a03057e954b63f4be7c710f7e35fa21cf788a4f051a1"
+    },
+    {
+      "evidence_sha256": "50cc939c19d50629a9088aa56066638b03eff594eb8cc7ad52a41e8596aca482",
+      "idea_id": "transition_branch_hyperbolic_prototypes",
+      "proposal_sha256": "edeee5d3dd9d883a624ab9ecd90b4972f19ec71a72564eba0186ce161fdb4c63"
+    },
+    {
+      "evidence_sha256": "9aeb7ee10741354d4646a21cb3b862742afefec7267ec7a26464425899d2c21d",
+      "idea_id": "interest_transport_hyp",
+      "proposal_sha256": "f47d0bfa039b29a73e091197f7fd07fe4cb6db57651e14edb956be8a5fda6c39"
+    }
+  ],
+  "reviews": [
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E14",
+            "E16",
+            "E19",
+            "E22"
+          ],
+          "idea_id": "transition-anchored-hyperbolic-codebook",
+          "missing_dimensions": [],
+          "objection": "The bundle provides no measured coverage or support for the specific successor-overlap hypothesis, and prior ledger mechanisms already use directed assignment/geometry, making the purported novelty and transfer particularly uncertain.",
+          "rationale": "behavior_evidence=2 because E1-E3 define the signal and leakage boundary but supply no measured transition statistic or coverage. geometry_necessity=4 because E5-E8 place Poincare distance inside the behavioral assignment term and specify a Euclidean control, though cancellation/necessity is not established. novelty=2 because E9 is NOT_CHECKED and E14/E16/E19 show nearby directed assignment/geometry work. downstream_mechanism=4 because the stated assignment change is first-token grouping and prefix successor predictability is diagnostic, but measured support is absent. falsifiability=3 because three factor conditions and a baseline threshold are named, but matched settings and a discriminating failure diagnostic are incomplete. implementability=3 because sparse costs and update schedule are given, but differentiable/numerical safeguards and total minibatch cost are not fully resolved. exploration_value=1 because directed assignment/geometry is close to measured ledger mechanisms. UNKNOWN on support and prior-art check; bounded resolution: audit transition coverage and inspect the cited mechanism implementations.",
+          "scope_reason": "Training-only directed transitions, Poincare distance, and a coupled first-level assignment cost are specified; it changes assignments, and proposes behavior-off, Euclidean, and both-on comparisons, with observable assignment and Stage3 effects.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E14",
+            "E16",
+            "E19",
+            "E22"
+          ],
+          "idea_id": "transition_branch_hyperbolic_prototypes",
+          "missing_dimensions": [],
+          "objection": "The proposed transition representation averages successor-item logarithms into a single prototype target, which can erase multimodal successor branches—the very branching structure motivating the mechanism.",
+          "rationale": "behavior_evidence=2 because E1-E3 specify training-only counts and preprocessing but report no measured support or coverage. geometry_necessity=4 because E5-E8 put Lorentz distance and exp/log maps in the assignment pathway and name a matched Euclidean control, without demonstrating that curvature adds value. novelty=2 because E9 is NOT_CHECKED and E14/E16/E19 document related directed assignment mechanisms; computational distinction is plausible but not audited against prior work. downstream_mechanism=4 because the intended first-level grouping and prefix predictability diagnostic are explicit, though the link to Recall is unmeasured. falsifiability=3 because behavior-off, geometry-off, both-on and a baseline criterion are named, but matching and a decisive diagnostic/failure rule need tightening. implementability=3 because the algorithm and sparse computation are described, but Lorentz projection/normalization, differentiable safeguards, and actual runtime affordability are not fully specified. exploration_value=2 because it is a variation on directed assignment mechanisms, with a distinct distribution-embedding route. UNKNOWN on behavior support and prior-art trace; bounded resolution: measure successor-row coverage/branch entropy and audit the implementation ledger.",
+          "scope_reason": "Training-only successor distributions are embedded and compared with Lorentz geodesic distance inside the first-level assignment and selected loss; both factors affect assignment. Behavior-off, Euclidean, and both-on ablations and observables are described.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E17",
+            "E18",
+            "E22"
+          ],
+          "idea_id": "interest_transport_hyp",
+          "missing_dimensions": [],
+          "objection": "The Lorentz construction is dimensionally underspecified: it maps both z_i and Euclidean code c_j via exp_o but does not define tangent dimension, coordinate convention, or the relation between Euclidean RQ residuals and the Lorentz points used for assignment.",
+          "rationale": "behavior_evidence=2 because E1-E3 describe a plausible training-only mixture but contain no measured support or coverage. geometry_necessity=4 because E5-E8 place curved distance directly in the behavior-modulated logits and specify a Euclidean control; no evidence yet rules out a matched Euclidean transform. novelty=2 because E9 is NOT_CHECKED and E17/E18 show related capacity-balanced assignment mechanisms. downstream_mechanism=3 because responsibilities alter SID grouping and the hypothesis names next-item separability/Recall, but the chain is not diagnostically pinned to a specific assignment effect. falsifiability=3 because three conditions and a baseline comparison are stated, but matching, a precise failure criterion, and a discriminating diagnostic remain incomplete. implementability=2 because the equations outline a route but leave geometry dimensions and numerical treatment of exp/log, acosh, Sinkhorn, and hard choices underspecified; the cost estimate also conflicts between per-item opportunities and minibatch work. exploration_value=2 because it varies behavior-conditioned balanced assignment with hyperbolic logits rather than presenting a fully distinct family. UNKNOWN on support and prior-art comparison; bounded check: quantify user/interest coverage and verify tensor dimensions and matched compute in a small implementation.",
+          "scope_reason": "Training-only user-interest mixtures modify soft assignment logits jointly with Lorentz geodesic distance, and Sinkhorn responsibilities drive code updates; the proposal specifies behavior-off, Euclidean, and both-on comparisons and observable assignment/Recall effects.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "UNKNOWN: no mathematical identity or cancellation is asserted. A bounded check is to compute the proposed edge-overlap statistic and coverage on training data, then verify that assignments actually change under behavior-on versus behavior-off.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E15",
+            "E16",
+            "E19",
+            "E20",
+            "E22"
+          ],
+          "idea_id": "transition-anchored-hyperbolic-codebook",
+          "missing_dimensions": [],
+          "objection": "No measured evidence establishes that directed successor-neighborhood overlap is a problem or predicts useful first-token groupings; the bundle labels the behavioral mechanism proposed, while PRIOR_WORK is NOT_CHECKED and the ledger includes several directed-assignment mechanisms with mixed results.",
+          "rationale": "behavior_evidence=2 because the signal is specified but no measured behavioral statistic or coverage is supplied (E1-E4). geometry_necessity=3: a genuine curved pairwise geodesic term is coupled to behavior in assignment (E5-E8), but the provided material does not establish advantage over a matched Euclidean cost or rule out cancellation. novelty=2: distinct-looking edge-weighted center cost, but directed assignment, codeword geometry and tangent variants already appear in the ledger (E14-E21), and prior-art search is unchecked (E9). downstream_mechanism=4: first-token assignments are directly changed, with prefix predictability and Stage3 Recall named, but no directional diagnostic is fully operationalized. falsifiability=3: both factors are required and three comparisons are implied; matched budgets/seeds and a clear failure criterion are not fully specified. implementability=3: equations and sparse cost are provided, but minibatch/epoch stop-gradient and refresh details leave optimization/gradient implementation risk. exploration_value=2: a small variation within the already measured directed assignment/codeword geometry family. Recall values in the ledger are measurements of other arms, not this proposal.",
+          "scope_reason": "Training-only directed popularity-adjusted successor edges directly weight Poincare center-to-center geodesic cost in first-level hard assignments; both switches affect the same assignment computation. It names behavior-off, Euclidean-geometry-off and both-on comparisons and observable assignment/Recall outcomes, though their matching details and failure threshold are incomplete.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "Minimal dimensional check: if latent z_i is d-dimensional but the Lorentz points y_j and prototypes c_k are constructed in a different spatial dimension, exp_o(q_i) is not in the same hyperboloid as c_k and d_L is undefined. The specification must set all spatial dimensions equal and use matching tangent coordinates.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E15",
+            "E16",
+            "E19",
+            "E20",
+            "E22"
+          ],
+          "idea_id": "transition_branch_hyperbolic_prototypes",
+          "missing_dimensions": [],
+          "objection": "The specification mixes a Euclidean tangent average q_i with a hyperboloid exp map and does not give sufficient dimensional/coordinate conventions to determine whether log_o(y_j) is a valid vector for the stated exp_o; moreover, branch coherence has no measured statistic in the bundle.",
+          "rationale": "behavior_evidence=2: successor distributions are specified but no measured branch statistic or coverage supports the hypothesis (E1-E4). geometry_necessity=3: exp/log and Lorentz geodesic distance are in the joint score and selected loss (E5-E8), but no evidence argues curvature beats a matched Euclidean counterpart. novelty=2: a routine prototype/embedding variation among directed assignment and geometry experiments (E14-E21); literature check is explicitly absent (E9). downstream_mechanism=4: the affected first-level assignment and intended prefix branch grouping/Recall are identified, though no measured diagnostic direction is provided. falsifiability=3: behavior and geometry ablations plus both-on are called for, but matching and a precise refutation rule are underspecified. implementability=2: broadly implementable, but Lorentz/tangent dimensional conventions, smoothing support and stable optimization details are incomplete. exploration_value=2: a small variant in the measured directed assignment/hyperbolic family, with no distinct failure mode yet established. Other-arm Recall observations are not proposal outcomes.",
+          "scope_reason": "Training-only successor distributions form a successor embedding that is compared to trainable Lorentz prototypes with squared geodesic distance inside the first-level assignment and selected-code loss. Both behavior and curvature enter the shared score. Behavior-off, Euclidean and both-on comparisons and observable SID/Recall effects are named, but the matched controls are only generally referenced rather than fully parameterized.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "UNKNOWN: no mathematical identity, cancellation, leakage, or dimensional mismatch is claimed. A bounded check is to verify training-only event coverage and compare interest-mixture assignment changes against a shuffled-user-mixture control; the proposal as supplied does not specify that additional diagnostic.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E14",
+            "E17",
+            "E18",
+            "E22"
+          ],
+          "idea_id": "interest_transport_hyp",
+          "missing_dimensions": [],
+          "objection": "The behavioral signal and its proposed user-interest structure are not measured in the supplied bundle, while minibatch Sinkhorn balancing may dominate the change in assignment; there is no evidence that the mixture captures next-item context rather than user-history/popularity effects.",
+          "rationale": "behavior_evidence=2 because the training-only construction is specified but no measured statistic/support/coverage is reported (E1-E4). geometry_necessity=3: Lorentz distance and exp map are inside the same combined logits as the behavior prior (E5-E8), but no matched Euclidean result or cancellation analysis supports necessity. novelty=2: the user-interest prior is a variation on assignment balancing/geometry mechanisms in the ledger (E14, E17-E21), and literature is unchecked (E9). downstream_mechanism=3: the chain from interest mixtures to responsibilities and SID grouping is plausible, but next-item separability and Recall lack a sufficiently specific measured diagnostic and expected direction. falsifiability=3: the three factor comparisons and outcome are named, but matched controls and precise failure rule are incomplete. implementability=2: the main computation is given, but q_u soft assignments are underspecified relative to the K-means description, Sinkhorn numerics/capacity behavior are not detailed, and cost estimate is inconsistent between cached minibatch computation and full item-step multiplication. exploration_value=2: interest mixtures are a modest alternative behavior prior in the assignment family, not yet a substantially distinct mechanism. The ledger's Recall values are other arms and are not predictions or measurements for this proposal.",
+          "scope_reason": "Training-only user-history-derived item-interest mixtures modulate logits that include Lorentz exp-map/geodesic code likelihoods, and those logits jointly determine Sinkhorn responsibilities and hard SID digits. Removing either behavior modulation or hyperbolic distance changes the assignment pathway. The proposal names behavior-off, geometry-off/Euclidean and both-on comparisons, with SID/Recall outcomes, though control details and a failure threshold are not explicit.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "UNKNOWN: no cancellation or mathematical identity is asserted. A bounded check is to calculate the fraction of items with no retained outgoing edge and verify that their assignment reduces to the reconstruction-only term.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E14",
+            "E15",
+            "E16",
+            "E19",
+            "E20",
+            "E21",
+            "E22"
+          ],
+          "idea_id": "transition-anchored-hyperbolic-codebook",
+          "missing_dimensions": [],
+          "objection": "The bundles establish the transition signal and computation as proposed, but provide no measured support/coverage statistic for successor-neighborhood overlap; popularity-discounted rare edges may reinforce noise, while the cited directed assignment/geometry experiments make incremental novelty uncertain.",
+          "rationale": "Behavior=3 because the directed signal and construction are explicit and testable (E1-E2), but not measured. Geometry=3: the curved center-to-center pairwise cost is genuinely in the coupled assignment (E5-E7), yet no argument shows a benefit over the matched Euclidean control (E8). Novelty=3 because the computation differs from the named mechanisms, but prior work is NOT_CHECKED and the ledger already includes directed assignment/geometry families (E9-E10, E14-E21). Downstream=4 for an explicit first-token assignment-to-prefix predictability-to-Recall chain; diagnostic direction is specified in the proposal. Falsifiability=3 because both-on and behavior-/geometry-off comparisons and a keep criterion are requested, but exact matched-control settings and a discriminating diagnostic are not fully fixed. Implementability=3: pseudocode and sparse cost are given, but stable Poincare distance safeguards and edge-free item handling are unspecified. Exploration=4 because pairwise successor-code geometry is a distinct mechanism whose failure would test whether transition neighborhoods should constrain codeword layout.",
+          "scope_reason": "Training-only directed transitions weighted by destination popularity directly enter the first-level assignment through Poincare codeword geodesic distances; both behavior and geometry affect the assignment.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For an item with no observed outgoing edge, p_i is undefined as written, so h_i and its assignment score cannot be computed; a minimal fix is an explicit fallback mask or smoothed distribution with a defined support.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E14",
+            "E15",
+            "E16",
+            "E19",
+            "E20",
+            "E21",
+            "E22"
+          ],
+          "idea_id": "transition_branch_hyperbolic_prototypes",
+          "missing_dimensions": [],
+          "objection": "The formulation is underspecified for sparse or missing transition rows and mixes a tangent-space average of log-mapped successor points with trainable y_j without stating how the q_i aggregation is kept within a numerically safe range; this could make the purported branch prototype signal unstable.",
+          "rationale": "Behavior=3: transition distributions and their training-only provenance are specified (E1-E3), but no measured branching statistic or coverage is supplied. Geometry=3: Lorentz geodesic distance and maps act inside the first-level coupled score (E5-E7), but superiority to the matched Euclidean analogue is not argued; E8 only says a control is proposed. Novelty=3: behavior embeddings attract prototypes in a distinct computation, though literature is NOT_CHECKED and the ledger contains related directed geometry and assignment experiments (E9-E10, E14-E21). Downstream=4: the proposal names the affected first-level assignments and expected prefix predictability/Recall direction. Falsifiability=3: both factors and a baseline are named, but matching and a discriminating diagnostic/failure threshold beyond the keep condition are incomplete. Implementability=2 because the core algorithm is recognizable but missing-row behavior, smoothing support, and concrete Lorentz normalization/clamping safeguards need specification. Exploration=3: prototype-mediated successor branch assignment is a different variant with an interpretable result, but remains close to measured directed assignment/geometry families.",
+          "scope_reason": "Training-only successor distributions are embedded by Lorentz log/exp maps and compared with first-level Lorentz prototypes within the same assignment score and selected-code loss.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "UNKNOWN: no claimed identity, cancellation, leakage, or dimensional mismatch is established by the bundle. A bounded check is to compare the Sinkhorn responsibilities with the pre-Sinkhorn scores on a batch where one code has much larger interest compatibility, and verify the declared quantized residual/update path.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E14",
+            "E15",
+            "E16",
+            "E17",
+            "E18",
+            "E19",
+            "E20",
+            "E21",
+            "E22"
+          ],
+          "idea_id": "interest_transport_hyp",
+          "missing_dimensions": [],
+          "objection": "The stated minibatch Sinkhorn balancing imposes uniform code capacity independently of the interest prior, potentially overriding rather than transporting the user-interest signal; the proposal also does not pin down whether the soft responsibilities or the separate argmin assignments define the quantized residual used by the RQ-VAE objective.",
+          "rationale": "Behavior=3: the training-only user-history clustering and event mixture computation are explicit (E1-E3), but the bundle has no measured support/coverage or stability statistic. Geometry=3: Lorentz distance and exp maps enter the interest-modulated assignment logits (E5-E7), but no demonstrated advantage over a matched Euclidean control is given. Novelty=3: the multiplicative interest prior plus balanced assignment is computationally distinct, but literature is NOT_CHECKED and prior ledger includes directed capacity/assignment mechanisms (E9-E10, E17-E18). Downstream=4 because early SID assignments are specifically expected to reflect interest mixtures, with prefix predictability and Stage3 Recall proposed as observables. Falsifiability=3: behavior-off, Euclidean, and both-on comparison is implied by the proposal and baseline criterion, but exact matched controls and a discriminating diagnostic/failure criterion are not fully specified. Implementability=3: the scores, smoothing, Sinkhorn, and cost are provided, but responsibility-versus-argmin use in residual quantization and numerical guards for Lorentz exp/distance and Sinkhorn are incomplete. Exploration=4 because user-context mixture transport is substantially different from the directed transition mechanisms, and a negative result would clarify whether balanced assignments erase useful user-interest structure.",
+          "scope_reason": "Training-only user-history-derived item interest mixtures combine multiplicatively with Lorentz geodesic code likelihoods in the Sinkhorn assignment pathway, so removing either changes responsibilities and code updates.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    }
+  ],
+  "round_id": "round_20261025_173300_854",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
+  "schema": 1,
+  "scoring_source_commit": null,
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "transition-anchored-hyperbolic-codebook",
+        "status": "BACKUP",
+        "weighted_score": 2.7
+      },
+      {
+        "idea_id": "transition_branch_hyperbolic_prototypes",
+        "status": "BACKUP",
+        "weighted_score": 2.6
+      },
+      {
+        "idea_id": "interest_transport_hyp",
+        "status": "BACKUP",
+        "weighted_score": 2.45
+      }
+    ],
+    "disagreement": {
+      "interest_transport_hyp": 2.0,
+      "transition-anchored-hyperbolic-codebook": 3.0,
+      "transition_branch_hyperbolic_prototypes": 1.0
+    },
+    "disputed": {
+      "interest_transport_hyp": [
+        "exploration_value"
+      ],
+      "transition-anchored-hyperbolic-codebook": [
+        "exploration_value"
+      ],
+      "transition_branch_hyperbolic_prototypes": []
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": true,
+          "pair": [
+            "interest_transport_hyp",
+            "transition-anchored-hyperbolic-codebook"
+          ],
+          "votes": {
+            "interest_transport_hyp": 1,
+            "transition-anchored-hyperbolic-codebook": 2
+          },
+          "winner": "transition-anchored-hyperbolic-codebook"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "interest_transport_hyp",
+            "transition_branch_hyperbolic_prototypes"
+          ],
+          "votes": {
+            "interest_transport_hyp": 0,
+            "transition_branch_hyperbolic_prototypes": 3
+          },
+          "winner": "transition_branch_hyperbolic_prototypes"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "transition-anchored-hyperbolic-codebook",
+            "transition_branch_hyperbolic_prototypes"
+          ],
+          "votes": {
+            "transition-anchored-hyperbolic-codebook": 3,
+            "transition_branch_hyperbolic_prototypes": 0
+          },
+          "winner": "transition-anchored-hyperbolic-codebook"
+        }
+      ],
+      "copeland": {
+        "interest_transport_hyp": -2,
+        "transition-anchored-hyperbolic-codebook": 2,
+        "transition_branch_hyperbolic_prototypes": 0
+      },
+      "cycles": [],
+      "position_bias": {
+        "first_listed_wins": 7,
+        "second_listed_wins": 2
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "transition-anchored-hyperbolic-codebook",
+        "max_disagreement": 3.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.7 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.7
+      },
+      {
+        "idea_id": "transition_branch_hyperbolic_prototypes",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.6 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.6
+      },
+      {
+        "idea_id": "interest_transport_hyp",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.45 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.45
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [],
+    "selection_is_multiple": false,
+    "status": "NO_QUALIFIED_IDEA",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  }
+}
