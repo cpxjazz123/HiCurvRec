@@ -248,7 +248,12 @@ def stage2_child_env(cwd: Path, layout: dict) -> dict:
     """
     env = logical_env(cwd)
     env["GENREC_STAGE2_MODE"] = str(layout.get("mode") or "none")
-    env["GENREC_SINGLE_GPU"] = "1" if layout.get("mode") == "single-gpu" else "0"
+    if layout.get("mode") == "single-gpu":
+        env["GENREC_SINGLE_GPU"] = "1"
+    else:
+        # The trainers test this variable for truthiness, and the string "0" is
+        # truthy: setting it to "0" would silently skip the four-rank launcher.
+        env.pop("GENREC_SINGLE_GPU", None)
     return env
 
 
@@ -494,7 +499,11 @@ def stage3_child_env(cwd: Path, layout: dict) -> dict:
     """
     env = logical_env(cwd)
     env["GENREC_STAGE3_MODE"] = str(layout.get("mode") or "none")
-    env["GENREC_SINGLE_GPU"] = "1" if layout.get("mode") == "single-gpu" else "0"
+    if layout.get("mode") == "single-gpu":
+        env["GENREC_SINGLE_GPU"] = "1"
+    else:
+        # A trainer tests this variable for truthiness, and "0" is truthy.
+        env.pop("GENREC_SINGLE_GPU", None)
     return env
 
 

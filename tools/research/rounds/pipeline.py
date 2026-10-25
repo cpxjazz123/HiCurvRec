@@ -186,6 +186,9 @@ def _source_digest(tree: Path) -> str:
     return digest.hexdigest()
 
 
+#: Findings the framework observed itself, by source. A review never erases one.
+FRAMEWORK_FINDING_SOURCES = frozenset({"preflight", "smoke", "runtime"})
+
 NON_BLOCKING_SEVERITIES = frozenset({
     "minor", "nit", "style", "cosmetic", "suggestion", "advisory", "info",
     "informational", "non_blocking", "non-blocking", "optional", "note",
@@ -256,8 +259,11 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
     record["source_digest"] = _source_digest(Path(record["tree"]))
     # A finding the framework itself raised (the output-path preflight) stays
     # in the list: the repair agent has to fix it as well.
+    # A finding the framework itself observed (the output-path preflight or the
+    # Stage 2 smoke) is not a reviewer's opinion: a later review does not erase
+    # it. Only a source change clears it, because then the code is different.
     earlier = [finding for finding in (record.get("blocking_findings") or [])
-               if finding.get("verifier") == "preflight"]
+               if finding.get("verifier") in FRAMEWORK_FINDING_SOURCES]
     record["blocking_findings"] = earlier + findings
     # A failed output-path preflight blocks just as a reviewer's finding does.
     findings = record["blocking_findings"]
@@ -295,6 +301,17 @@ def apply_repair(state: dict, implementation_id: str, report: dict) -> dict:
         "remaining_issues": report.get("remaining_issues", []),
         "smoke": report.get("smoke", {})}]
     record["source_digest"] = _source_digest(Path(record["tree"]))
+    # A runtime finding described the code before the repair: the repaired tree
+    # is checked again by the runtime itself (the Stage 2 smoke), so the old
+    # observation is archived rather than carried forward.
+    archived = [finding for finding in (record.get("blocking_findings") or [])
+                if finding.get("verifier") in FRAMEWORK_FINDING_SOURCES]
+    if archived:
+        record.setdefault("archived_findings", []).extend(
+            {**finding, "archived_at_revision": record["revision"]} for finding in archived)
+        record["blocking_findings"] = [
+            finding for finding in record["blocking_findings"]
+            if finding.get("verifier") not in FRAMEWORK_FINDING_SOURCES]
     record_event(state, "implementation_repaired", idea_id=implementation_id,
                  revision=record["revision"])
     return state
