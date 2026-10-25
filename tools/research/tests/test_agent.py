@@ -9,24 +9,23 @@ from tools.research.core.evidence import read_json
 
 
 class AgentTests(unittest.TestCase):
-    def test_agent_is_confined_to_its_own_workspace(self):
-        """The permission boundary must deny shell, Code Mode and every escape path."""
+    def test_the_boundary_is_written_in_the_schema_opencode_reads(self):
+        """opencode v2 reads a ``permission`` object, not a rules array.
+
+        The earlier array shape was silently ignored, so every agent kept a full
+        shell; the test now pins the shape the binary actually honours.
+        """
         with tempfile.TemporaryDirectory() as work:
             workspace = Path(work) / "agents" / "task"
-            rules = isolation_permissions(workspace)
-            effects = {(rule["action"], rule["resource"]): rule["effect"]
-                       for rule in rules}
-            self.assertEqual(effects[("shell", "*")], "deny")
-            self.assertEqual(effects[("execute", "*")], "deny")
-            self.assertEqual(effects[("external_directory", "*")], "deny")
-            self.assertEqual(effects[("edit", "*")], "allow")
-            self.assertEqual(effects[("edit", str(settings.ROOT) + "/*")], "deny")
-            self.assertEqual(effects[("edit", str(workspace.resolve()) + "/*")], "allow")
-            # The traversal denies must come last: opencode v2 lets the LAST match win.
-            for action in ("../*", "*/../*", "*..*"):
-                self.assertEqual(effects[("edit", action)], "deny")
-                self.assertEqual([rule["resource"] for rule in rules].index(action),
-                                 len(rules) - 3 + ["../*", "*/../*", "*..*"].index(action))
+            verifier = isolation_permissions(workspace, "verify")
+            self.assertEqual(verifier["bash"], "deny")
+            self.assertEqual(verifier["webfetch"], "deny")
+            self.assertEqual(verifier["external_directory"], "deny")
+            for role in ("implementation", "repair"):
+                worker = isolation_permissions(workspace, role)
+                self.assertEqual(worker["bash"], "allow")
+                self.assertEqual(worker["webfetch"], "deny")
+                self.assertEqual(worker["external_directory"], "deny")
 
     def test_fake_opencode_is_real_subprocess_not_a_marker(self):
         with tempfile.TemporaryDirectory() as work:
@@ -53,8 +52,8 @@ class AgentTests(unittest.TestCase):
             config = receipt.parent / evidence["isolation_config"]
             self.assertTrue(config.is_file())
             written = json.loads(config.read_text(encoding="utf-8"))
-            self.assertIn("permissions", written)
-            self.assertTrue(written["permissions"])
+            self.assertIn("permission", written)
+            self.assertIn("bash", written["permission"])
             # The workspace must be its own opencode project, otherwise opencode
             # resolves the repository as the project and ignores the boundary.
             self.assertEqual(evidence["project_marker"], ".git")

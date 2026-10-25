@@ -9,43 +9,38 @@ from .. import settings
 from ..core.evidence import atomic_json, digest_bytes, digest_file
 
 
-def isolation_permissions(workspace: Path) -> list:
-    """The opencode v2 rules that confine an agent to its own workspace.
+def isolation_permissions(workspace: Path, role: str = "verify") -> dict:
+    """The opencode permission object that confines an agent to its workspace.
 
-    opencode v2 matches permission rules in order and the LAST match wins, so
-    the order here is the policy: the broad edit allow covers the agent's own
-    Location (a relative path inside the workspace), the narrower deny then
-    blocks an absolute write into the repository, and the final allow re-opens
-    the agent's own workspace for absolute paths. external_directory blocks
-    every path outside the repository, and shell plus execute are denied
-    outright, so the agent cannot reach a shell through a tool or through
-    Code Mode.
+    opencode v2 reads a single ``permission`` object whose keys are the tool
+    names and whose values are ``ask``/``allow``/``deny``. An earlier version of
+    this function wrote a ``permissions`` array of action/resource/effect
+    rules; opencode ignores that shape, so every agent kept a full shell and the
+    boundary was never in force. The roles are now stated in the schema the
+    binary actually reads.
+
+    A verifier reviews code and does not run it, so it has no shell. An
+    implementer and a repair engineer must run the smoke test, so they keep the
+    shell but stay inside the workspace by prompt and by the framework's
+    output-path preflight, because this opencode version has no per-path edit
+    rule.
     """
-    workspace = Path(workspace).resolve()
-    return [
-        {"action": "shell", "resource": "*", "effect": "deny"},
-        {"action": "execute", "resource": "*", "effect": "deny"},
-        {"action": "external_directory", "resource": "*", "effect": "deny"},
-        {"action": "edit", "resource": "*", "effect": "allow"},
-        {"action": "edit", "resource": str(settings.ROOT) + "/*", "effect": "deny"},
-        {"action": "edit", "resource": str(workspace) + "/*", "effect": "allow"},
-        # A relative path that climbs out of the workspace escapes every rule
-        # above, because the matcher sees the raw relative string. Deny any
-        # resource containing a parent traversal, and deny it LAST so that it
-        # wins over the workspace allow.
-        {"action": "edit", "resource": "../*", "effect": "deny"},
-        {"action": "edit", "resource": "*/../*", "effect": "deny"},
-        {"action": "edit", "resource": "*..*", "effect": "deny"},
-    ]
+    runs_code = str(role) in ("implementation", "repair")
+    return {
+        "bash": "allow" if runs_code else "deny",
+        "edit": "allow",
+        "webfetch": "deny",
+        "external_directory": "deny",
+    }
 
 
-def write_isolation_config(workspace: Path) -> Path:
+def write_isolation_config(workspace: Path, role: str = "verify") -> Path:
     """Write the agent's private permission boundary next to its session."""
     workspace = Path(workspace)
     workspace.mkdir(parents=True, exist_ok=True)
     path = workspace / "opencode.json"
     config = {"$schema": "https://opencode.ai/config.json",
-              "permissions": isolation_permissions(workspace)}
+              "permission": isolation_permissions(workspace, role)}
     path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -67,7 +62,8 @@ def mark_workspace_project(workspace: Path) -> Path:
 
 
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
-              binary="opencode", model="openai/gpt-6-luna", timeout=900) -> Path:
+              binary="opencode", model="openai/gpt-6-luna", timeout=900,
+              role: str = "verify") -> Path:
     if (not output_name.endswith((".json", ".txt")) or "/" in output_name
             or "\\" in output_name or not task_id.replace("-", "").replace("_", "").isalnum()):
         raise ValueError("unsafe task id or output filename")
@@ -77,7 +73,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     output = workspace / output_name
     if output.exists():
         raise RuntimeError("refuse to overwrite previous role output")
-    isolation = write_isolation_config(workspace)
+    isolation = write_isolation_config(workspace, role)
     marker = mark_workspace_project(workspace)
     cmd = [binary, "run", "--standalone", "--format", "json", "--auto",
            "--model", model, "--title", task_id, prompt]
@@ -156,9 +152,11 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "isolation_config": isolation.name,
         "isolation_config_sha256": digest_file(isolation),
         "project_marker": marker.name,
-        "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, "
-                            "edit limited to the agent workspace; the workspace is its own "
-                            "opencode project so the boundary is the one that applies",
+        "isolation_policy": "opencode v2 permission object: bash " +
+                            ("allowed (this role runs the smoke test)" if role in
+                             ("implementation", "repair") else "denied (this role reviews code)") +
+                            ", webfetch and external_directory denied; the workspace is its "
+                            "own opencode project so its opencode.json applies",
         "stderr_present": bool(stderr), "output_name": output_name,
         "output_sha256": digest_file(output) if output.is_file() else None,
         "verified": valid,

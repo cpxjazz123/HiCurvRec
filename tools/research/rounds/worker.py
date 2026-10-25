@@ -32,7 +32,8 @@ def _workspace(root: Path, task_id: str) -> Path:
     return Path(root) / "agents" / task_id
 
 
-def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser) -> dict:
+def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
+               role: str = "verify") -> dict:
     """Run one agent in its own workspace and parse its plain-text answer.
 
     The agent writes a labelled text file, not JSON: a language model that
@@ -50,7 +51,7 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser) 
               " (this absolute path). Write nowhere else.")
     run_agent(task_id, prompt, output_name, Path(root),
               binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
-              timeout=settings.AGENT_TIMEOUT_SECONDS)
+              timeout=settings.AGENT_TIMEOUT_SECONDS, role=role)
     # run_agent returns its execution receipt, not the answer: locate the file
     # the agent wrote, accepting the same bounded relocation the runner allows.
     workspace = Path(root) / "agents" / task_id
@@ -80,7 +81,8 @@ def run_ideation(root: Path, objective: str) -> list:
                      "\nYour answer must be a different set of ideas from the other two "
                      "agents, which you cannot see.")
         answers.append((task_id, _run_agent(root, task_id, prompt, "ideas.txt",
-                                            plaintext.parse_ideas)))
+                                            plaintext.parse_ideas,
+                                            role="ideate")))
     return answers
 
 
@@ -94,7 +96,8 @@ def run_scoring(root: Path, ideas: list) -> list:
             objective=agent_contracts.RESEARCH_OBJECTIVE,
             scope=agent_contracts.SCOPE_CONTRACT) +
             "\n\nThe ideas to score, all of them:\n" + payload)
-        report = _run_agent(root, task_id, prompt, "scores.txt", plaintext.parse_scores)
+        report = _run_agent(root, task_id, prompt, "scores.txt", plaintext.parse_scores,
+                                role="score")
         report.setdefault("scorer", task_id)
         reports.append(report)
     return reports
@@ -114,7 +117,8 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
         objective=agent_contracts.RESEARCH_OBJECTIVE,
         scope=agent_contracts.SCOPE_CONTRACT))
     report = _run_agent(root, "implementation_" + idea["idea_id"], prompt,
-                        "implementation.txt", plaintext.parse_implementation)
+                        "implementation.txt", plaintext.parse_implementation,
+                        role="implementation")
     report["provenance"] = provenance
     report["baseline"] = provenance["baseline"]
     report["baseline_digest"] = provenance["baseline_digest"]
@@ -135,7 +139,8 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
         # repair must be a fresh agent, never a replay of the previous answer.
         task_id = "verify_" + idea["idea_id"] + "_r" + str(revision) + "_" + str(index)
         report = _run_agent(root, task_id, prompt, "verification.txt",
-                            plaintext.parse_verification)
+                            plaintext.parse_verification,
+                            role="verify")
         report.setdefault("verifier", task_id)
         reports.append(report)
     return reports
@@ -149,7 +154,8 @@ def run_repair(root: Path, idea: dict, tree: Path, findings: list,
         objective=agent_contracts.RESEARCH_OBJECTIVE,
         scope=agent_contracts.SCOPE_CONTRACT))
     return _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),
-                      prompt, "repair.txt", plaintext.parse_repair)
+                      prompt, "repair.txt", plaintext.parse_repair,
+                      role="repair")
 
 
 def phase_ideation(root: Path, round_id: str, *, log=print) -> dict:
