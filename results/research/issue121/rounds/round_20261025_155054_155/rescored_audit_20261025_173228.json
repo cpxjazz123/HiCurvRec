@@ -1,0 +1,30 @@
+{
+  "audit_hash": "6a009a4a46159527185c2e9d60f49b290ede2119840d8109fcc18f2f70ad136d",
+  "kind": "rescored_audit",
+  "payload": {
+    "earlier_ad_hoc_recompute": {
+      "note": "before Issue #122 a run with the six names was recomputed and would have preferred branch_curvature_gate (mean 3.89 over 3.78); that preference is recorded here, and the executed decision is unchanged",
+      "selected_under_six_names": "branch_curvature_gate"
+    },
+    "original_decision": {
+      "executed": true,
+      "result": {
+        "n_eval": 57439,
+        "recipe": "4 GPU DDP, total batch 4096",
+        "test_ndcg@10": 0.03047498281369757,
+        "test_recall@10": 0.0548233778443218
+      },
+      "scored_under": "six-dimension unweighted aggregation whose dimension list did not match the scoring prompt (fixed in 5f9461ae and 4800ef3a)",
+      "selected": [
+        "transition_busemann_gate"
+      ]
+    },
+    "recomputation": {
+      "possible": false,
+      "reason": "the stored reviews use the six old dimension names, so the strict seven-dimension rubric of Issue #122 rejects them. Recomputing under the new rubric would require re-running the three reviewers on the same proposals, which is a new review, not an audit of this one."
+    }
+  },
+  "reason": "Issue #122 non-mutating audit of round_20261025_155054_155: the executed decision and its metrics are preserved; the recomputation is not possible under the new strict rubric and is recorded as such.",
+  "schema": 1,
+  "written_at": 1792909948.8573067
+}
