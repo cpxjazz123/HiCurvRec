@@ -5206,14 +5206,14 @@
       "status": "failed"
     },
     {
-      "attempts": 2,
-      "error": null,
-      "failure_kind": null,
+      "attempts": 3,
+      "error": "independent executable verification: the tree changed after the verifiers saw it (and it is not the reviewed path)",
+      "failure_kind": "SMOKE_FAILED",
       "idea_id": "lorentz_user_cohort_margin",
       "job_id": "stage2:lorentz_user_cohort_margin",
       "kind": "stage2",
       "stage3_job_id": null,
-      "status": "running"
+      "status": "failed"
     },
     {
       "attempts": 2,
@@ -5226,17 +5226,17 @@
       "status": "done"
     },
     {
-      "attempts": 1,
-      "error": "the trainer crashed on start: PermissionError: '/results'",
+      "attempts": 2,
+      "error": null,
       "failure_kind": null,
       "idea_id": "branch_tangent_codes",
       "job_id": "stage2:branch_tangent_codes",
       "kind": "stage2",
       "stage3_job_id": null,
-      "status": "failed"
+      "status": "running"
     },
     {
-      "attempts": 1,
+      "attempts": 2,
       "error": null,
       "failure_kind": null,
       "idea_id": "lorentz_prefix_mass",
@@ -5253,7 +5253,7 @@
       "job_id": "stage3:branch_shell",
       "kind": "stage3",
       "stage3_job_id": null,
-      "status": "pending"
+      "status": "done"
     }
   ],
   "stage3_jobs": [
@@ -5265,10 +5265,10 @@
       "job_id": "stage3:branch_shell",
       "kind": "stage3",
       "stage3_job_id": null,
-      "status": "pending"
+      "status": "done"
     }
   ],
   "step": "verification",
-  "updated_at": 1792896723.8124332,
+  "updated_at": 1792898875.0066822,
   "verification": {}
 }
