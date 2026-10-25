@@ -721,3 +721,30 @@ class OneMechanismPerRoundTests(unittest.TestCase):
             state = pipeline_module.load_state(directory)
             state["step"] = "implementation"
             self.assertEqual(pipeline_module.summary(state)["step"], "implementation")
+
+
+class ScoreDimensionTests(unittest.TestCase):
+    """The matrix must aggregate exactly the dimensions the scorers are asked for."""
+
+    def test_the_matrix_dimensions_match_the_scoring_contract(self):
+        from tools.research.rounds import plaintext as plaintext_module
+        self.assertEqual(tuple(scoring_module.DIMENSIONS),
+                         tuple(plaintext_module._SCORE_DIMENSIONS))
+
+    def test_every_scored_dimension_reaches_the_aggregate(self):
+        ideas = ideas_module.collect_ideas([
+            ("agent1", {"ideas": [_coupled(idea_id="a")]}),
+            ("agent2", {"ideas": [_coupled(idea_id="b", title="beta")]}),
+            ("agent3", {"ideas": [_coupled(idea_id="c", title="gamma")]}),
+        ])
+        reports = []
+        for scorer, value in (("s1", 3), ("s2", 4), ("s3", 5)):
+            reports.append({"scorer": scorer, "scores": [
+                {"idea_id": idea["idea_id"],
+                 "scores": {dimension: value for dimension in scoring_module.DIMENSIONS},
+                 "rationale": "r"} for idea in ideas]})
+        matrix = scoring_module.build_matrix(ideas, reports)
+        row = matrix["rows"][0]
+        self.assertEqual(list(row["medians"].keys()), list(scoring_module.DIMENSIONS))
+        self.assertTrue(all(value is not None for value in row["medians"].values()))
+        self.assertEqual(row["overall_median"], 4.0)

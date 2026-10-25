@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_170003_163/transition_tangent_warp/train_rqvae.py:178-197 -> model/model.py:50-59,61-67 | Statically traced the training-only frame transition-count/profile construction through profile batching into the encoder warp, curved operations, and ordinary RQ-VAE; inspected the concrete forward call at train_rqvae.py:343-349. No runtime was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: None.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_170003_163/transition_tangent_warp/model/model.py:12-29,50-67,82-89 | Source inspection traced autograd from reconstruction/VQ loss through the differentiable Mobius/exp/log warp and behavior_map; inspected the supplied forward/backward/control smoke code at smoke_test.py:13-25 (not executed). The profile and geometry-off code paths are explicitly switchable in _warp at model.py:50-59; the behavior_map is on the standard loss path when profiles are provided.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: None. The bounded exp-map and log-map clamp keep float32 atanh inputs below one, and the Möbius denominator is clamped positive. The smoke source checks a finite loss and nonzero finite behavior-map gradient and checks distinct warped/no-behavior/Euclidean outputs; no runtime claim is made.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_170003_163/transition_tangent_warp/train_rqvae.py:40-67,178-197,256-297,414-457,464-493 | Statically inspected root and input path resolution, frozen train.parquet profile source, training/export indexing, output locations, launcher and the single-card branch. Runtime trainer execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: None. Outputs resolve to results/stage2_RQ-VAE/TIGER_transition_tangent_warp (the promoted arm), input paths use the repository's stage1 embedding and stage0 training parquet, and SID export enumerates every embedding row into matching integer-keyed JSON entries. The launcher honors GENREC_SINGLE_GPU="1" and otherwise invokes the configured four-process torchrun path.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

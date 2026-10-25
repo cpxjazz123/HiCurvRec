@@ -1,10 +1,9 @@
-"""Idea scoring: three independent scorers, a full matrix, and a multi-select.
+"""Idea scoring: three independent scorers, a full matrix, one mechanism.
 
-The issue requires that every scorer judges EVERY idea, that the complete score
-matrix is persisted, that disagreement is visible, that one agent's veto cannot
-decide the round, and that the selection rule is explicit and normally selects
-more than one candidate. Nothing here looks at ER, prefix counts or any other
-Stage 2 diagnostic: selection is innovation-first.
+Every scorer judges EVERY idea, the complete matrix with medians, means and
+disagreement is persisted, one agent's veto cannot decide the round, and the
+selection rule is explicit: it keeps the single best qualified mechanism.
+Nothing here looks at ER, prefix counts or any other Stage 2 diagnostic.
 """
 from __future__ import annotations
 
@@ -12,8 +11,12 @@ import statistics
 
 from . import scope as scope_module
 
-DIMENSIONS = ("novelty", "scientific_motivation", "feasibility",
-              "downstream_impact", "experimental_distinctness")
+#: The dimensions Issue #121 asks the scorers for. They must match the ones the
+#: scoring prompt asks for and the parser reads, otherwise the matrix
+#: aggregates dimensions nobody filled and the selection is decided by the one
+#: name that happens to match.
+DIMENSIONS = ("novelty", "behavior_problem_meaning", "coupling_strength",
+              "implementability", "downstream_potential", "experimental_diversity")
 SCALE = (0, 5)
 
 #: The default rule keeps every idea whose median across the three scorers

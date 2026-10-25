@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "implementation_transition_tangent_warp",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792908479.5971708,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "ab212be6b7c1e4a8b20521f88622d172d47f48ba261035d1181c1969ae693c0c",
+  "isolation_policy": "opencode v2 permission object: bash allowed (this role runs the smoke test), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "implementation.txt",
+  "output_sha256": "baf5ca160e19882cc5f2023fbf46b9faa8d6302f917a3d4907f366589c480689",
+  "pid": 1900378,
+  "project_marker": ".git",
+  "prompt_sha256": "c2961cac2eac083fda8618f942431d88683ebe03c2edfe5f369452800c23b5b5",
+  "session_sha256": "d345007ad1d0dda5564fa9d60dd2d3c8256ebdfcd605ab13133ac6674faa776f",
+  "stderr_present": false,
+  "task_id": "implementation_transition_tangent_warp",
+  "timed_out": false,
+  "verified": true
+}
