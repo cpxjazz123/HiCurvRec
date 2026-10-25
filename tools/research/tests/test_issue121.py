@@ -340,17 +340,18 @@ class DigestLocationTests(unittest.TestCase):
 class GpuCapacityTests(unittest.TestCase):
     """A card may host two of these trainers, so the queue fills the cards."""
 
-    def test_an_idle_host_offers_two_slots_per_card(self):
+    def test_an_idle_host_spreads_the_jobs_over_the_cards(self):
+        """One job per card first: two jobs on one card halve each other."""
         from tools.research.rounds import jobs as jobs_module
         plan = jobs_module.plan_gpu_allocation([], ["0", "1", "2", "3"], jobs_per_gpu=2)
-        self.assertEqual(plan["free_slots"], ["0", "0", "1", "1", "2", "2", "3", "3"])
+        self.assertEqual(plan["free_slots"], ["0", "1", "2", "3", "0", "1", "2", "3"])
         self.assertEqual(plan["idle_cards"], ["0", "1", "2", "3"])
 
     def test_a_running_job_takes_one_slot_of_its_card(self):
         from tools.research.rounds import jobs as jobs_module
         plan = jobs_module.plan_gpu_allocation([{"gpu": "0"}], ["0", "1", "2", "3"],
                                                jobs_per_gpu=2)
-        self.assertEqual(plan["free_slots"], ["0", "1", "1", "2", "2", "3", "3"])
+        self.assertEqual(plan["free_slots"], ["1", "2", "3", "0", "1", "2", "3"])
         self.assertNotIn("0", plan["idle_cards"])
 
     def test_a_full_card_offers_nothing(self):
