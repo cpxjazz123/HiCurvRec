@@ -8,6 +8,7 @@ well.
 """
 import pathlib
 import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -430,3 +431,43 @@ class RepairCapTests(unittest.TestCase):
             state = pipeline_module.mark_revision_capped(state, "coupled", "cap")
             summary = pipeline_module.summary(state)
             self.assertEqual(summary["revision_capped"], 1)
+
+
+class McpProtocolTests(unittest.TestCase):
+    """The server must serve the round tools over the MCP protocol itself."""
+
+    def _serve(self, requests):
+        import json
+        import subprocess
+        server = pathlib.Path(__file__).resolve().parents[2] / "genrec-mcp" / "server.py"
+        payload = "\n".join(json.dumps(request) for request in requests) + "\n"
+        finished = subprocess.run([sys.executable, str(server)], input=payload,
+                                  capture_output=True, text=True, timeout=180)
+        answers = []
+        for line in finished.stdout.splitlines():
+            try:
+                answers.append(json.loads(line))
+            except ValueError:
+                continue
+        return answers
+
+    def test_the_server_lists_the_round_tools(self):
+        answers = self._serve([
+            {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}])
+        listed = [answer for answer in answers if answer.get("id") == 2]
+        self.assertTrue(listed, finished.stderr if 'finished' in dir() else "")
+        names = [tool["name"] for tool in listed[0]["result"]["tools"]]
+        for phase in ("ideate", "score", "implement", "verify"):
+            self.assertIn("research_round_" + phase, names)
+
+    def test_the_server_can_call_a_round_tool(self):
+        answers = self._serve([
+            {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+            {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+             "params": {"name": "research_round_status",
+                        "arguments": {"round_id": "round_that_does_not_exist"}}}])
+        called = [answer for answer in answers if answer.get("id") == 3]
+        self.assertTrue(called)
+        # The tool answers with an error instead of the server dying.
+        self.assertTrue(called[0]["result"].get("isError"))
