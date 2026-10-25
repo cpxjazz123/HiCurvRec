@@ -122,25 +122,36 @@ def build_matrix(ideas: list, reports: list) -> dict:
             if len(per_scorer[scorer]) != len(DIMENSIONS) or \
                     entries[identifier].get("rationale_missing"):
                 incomplete.append(scorer)
-        medians = {dimension: statistics.median(
-            [per_scorer[scorer][dimension] for scorer in sorted(per_scorer)
-             if dimension in per_scorer[scorer]])
-            for dimension in DIMENSIONS}
-        means = {dimension: (sum(per_scorer[scorer][dimension] for scorer in per_scorer
-                                 if dimension in per_scorer[scorer])
-                             / len([scorer for scorer in per_scorer
-                                    if dimension in per_scorer[scorer]]))
-                 for dimension in DIMENSIONS}
-        spreads = {dimension: max(per_scorer[scorer][dimension] for scorer in per_scorer
-                                  if dimension in per_scorer[scorer])
-                   - min(per_scorer[scorer][dimension] for scorer in per_scorer
-                         if dimension in per_scorer[scorer])
-                   for dimension in DIMENSIONS}
-        overall_median = statistics.median(
-            [statistics.median([per_scorer[scorer][dimension] for scorer in per_scorer
-                                 if dimension in per_scorer[scorer]])
-             for dimension in DIMENSIONS])
-        overall_mean = sum(means[dimension] for dimension in DIMENSIONS) / len(DIMENSIONS)
+        # A dimension nobody scored has no median: it is recorded as missing
+        # rather than averaged away, and the selection rule skips it.
+        def _values_for(dimension):
+            return [per_scorer[scorer][dimension] for scorer in sorted(per_scorer)
+                    if dimension in per_scorer[scorer]]
+
+        medians = {}
+        means = {}
+        spreads = {}
+        for dimension in DIMENSIONS:
+            values = _values_for(dimension)
+            if not values:
+                medians[dimension] = None
+                means[dimension] = None
+                spreads[dimension] = None
+                continue
+            medians[dimension] = statistics.median(values)
+            means[dimension] = sum(values) / len(values)
+            spreads[dimension] = max(values) - min(values)
+        per_scorer_medians = []
+        for scorer in sorted(per_scorer):
+            values = [per_scorer[scorer][dimension] for dimension in DIMENSIONS
+                      if dimension in per_scorer[scorer]]
+            if values:
+                per_scorer_medians.append(statistics.median(values))
+        overall_median = statistics.median(per_scorer_medians) if per_scorer_medians else 0.0
+        scored_means = [means[dimension] for dimension in DIMENSIONS
+                        if means[dimension] is not None]
+        overall_mean = (sum(scored_means) / len(scored_means)) if scored_means else 0.0
+        defined_spreads = [value for value in spreads.values() if value is not None]
         row = {
             "idea_id": identifier,
             "per_scorer": per_scorer,
@@ -149,7 +160,7 @@ def build_matrix(ideas: list, reports: list) -> dict:
             "medians": medians,
             "means": means,
             "disagreement": spreads,
-            "max_disagreement": max(spreads.values()),
+            "max_disagreement": max(defined_spreads) if defined_spreads else 0.0,
             "overall_median": overall_median,
             "overall_mean": overall_mean,
             "scorers_above_median_threshold": sum(
@@ -158,6 +169,8 @@ def build_matrix(ideas: list, reports: list) -> dict:
                                       for dimension in DIMENSIONS
                                       if dimension in per_scorer[scorer]])
                 >= DEFAULT_SELECTION["median_threshold"]),
+            "unscored_dimensions": [dimension for dimension in DIMENSIONS
+                                    if medians[dimension] is None],
             "incomplete_scorers": sorted(incomplete),
             "per_scorer_scope": {scorer: by_scorer[scorer][identifier].get("scope_verdict", "")
                                  for scorer in sorted(by_scorer)},
@@ -197,7 +210,8 @@ def select(matrix: dict, *, rule: dict = None) -> dict:
         if row.get("scope_verdict") == "OUT_OF_SCOPE":
             reasons.append("out of scope: " + ", ".join(row.get("scope_reasons", [])[:6]))
         weak_dimension = [dimension for dimension in DIMENSIONS
-                          if row["medians"][dimension] < rule["min_dimension_median"]]
+                          if row["medians"].get(dimension) is not None
+                          and row["medians"][dimension] < rule["min_dimension_median"]]
         if weak_dimension:
             reasons.append("median below the per-dimension floor on " +
                            ", ".join(weak_dimension))
