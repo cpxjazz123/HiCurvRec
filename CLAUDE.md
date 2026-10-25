@@ -31,6 +31,10 @@
 ## 4. 训练与评估
 
 18. Stage2 保持 3000 epochs 的完整训练预算，禁止重新加入基于训练损失或验证指标的提前停止。
+19. **Issue #121 的联合耦合范围门**：任何新机制必须是**训练只行为信号**与**显式曲线运算**在**同一条连通计算通路**上的耦合，去掉任一侧核心计算即改变；仅行为后缀、仅把欧氏距离换成双曲距离、两个互不相干的损失、以及继承但未使用的双曲代码都判 OUT_OF_SCOPE。范围判定检查的是 Agent 写下的**内容**（行为信号与算法、曲线运算与作用位置、耦合通路与方程、三个消融、最小可实现规格），不是布尔标记；范围裁决以提案自身内容为准，单个评分者的主观标签不得单独决定去留，分歧必须留痕。契约硬编码在 `tools/research/rounds/agents.py` 的 `RESEARCH_OBJECTIVE` 与 `SCOPE_CONTRACT`，并传播到全部三个构思、三个评分、实现规格、三个验证与修复提示。
+19b. **Issue #121 的唯一基线**：新机制的**唯一**允许起点是 `/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE`；每个选中想法必须从它**新建独立副本**（禁止从别的候选、变异工作树或历史实验树起步），并记录基线解析路径与基线/副本源码摘要。基线只读：源缺失或不可读即失败关闭（不得静默换基线），候选的输出路径若与基线结果目录或其他候选冲突则在训练前被拒绝。消融对照同样从该基线派生。
+19c. **Issue #121 的四类停止必须分开记账**：`AGENT_INFRA_ERROR`（Agent 崩溃/超时/答案不可用）只重试、**不得**因此 BLOCK 机制；`IMPLEMENTATION_NEEDS_FIX` 是真实缺陷，交专职修复 Agent；`RESOURCE_BLOCKED` 是实测不可行（冻结预算外推超时），保留想法走优化路线；`STAGE2_3_FAILED` 是训练或评估失败。单个候选的修复轮次上限为 5 轮，到顶即带证据记录，不再消耗 Agent。
+19d. **Issue #121 的轮次工具面**：每个 phase 都是独立 MCP 工具（`research_round_ideate` / `_score` / `_implement` / `_verify`，加 `_start` / `_run` / `_status` / `_results` / `_launch` / `_collect`），phase 幂等、每轮一把运行锁；轮次按 issue 归档（`results/research/issue121/rounds/<round_id>/`），候选树在 `results/research/issue121/trees/<round_id>/<idea_id>/`。并发 Stage2 每卡最多 2 个作业、每作业独立 GPU 与输出目录，技术有效即自动进 Stage3。
 19. Stage2→Stage3 的准入只做**技术有效性**判定（Issue #120）：候选 SID 文件可解析、商品映射为规范十进制 id 空间、token 宽度与取值合法、完整 SID（含确定性消歧 token）唯一，即自动进入 Stage 3。**不得**把 Hard-L1 ER、二级前缀数、L3 Collision、码使用率、冗余度等任何质量指标作为准入门槛；这些只作为诊断被测量与记录。Resample 的 ER=16.38953942232631 与 L2=16145 仅为**历史参照**值，不是分界值。Stage3 test_R@10 > 0.065 仍是最终成功条件；实验登记保留所有候选（含低召回与失败分支），不得只留最优。
 20. 所有新 Stage2 机制在正式训练前必须通过独立 Agent 编写的数学、梯度、DDP 和真实入口测试。
 21. 梯度验证必须使用实际模型与训练 batch 检查参与训练的损失、梯度及参数更新，不得只检查合成张量。

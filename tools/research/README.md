@@ -168,11 +168,64 @@ Round state lives in `results/research/issue120/rounds/<round_id>/` (`state.json
 `results/research/issue120/trees/<round_id>/<idea_id>/`, so two candidates can
 never overwrite each other.
 
-MCP tools: `research_round_start`, `research_round_status`,
-`research_round_results`, `research_round_collect`. A Stage 2 launch for a round
+MCP tools: one per phase, so a round can be driven step by step or in one
+call.
+
+| tool | phase | GPU |
+|---|---|---|
+| `research_round_start(objective, issue, run)` | create a round (`run=false` only creates it) | no |
+| `research_round_ideate(round_id)` | three ideation agents, the scope gate | no |
+| `research_round_score(round_id)` | three scorers over every idea, the multi-select | no |
+| `research_round_implement(round_id)` | one implementation agent per selected idea, each on a fresh copy of the one permitted baseline | no |
+| `research_round_verify(round_id)` | three verifiers per implementation and the repair loop | no |
+| `research_round_run(round_id)` | every remaining agent phase in one call | no |
+| `research_round_launch(round_id, parallel)` | the Stage 2 queue, two jobs per card | **yes** |
+| `research_round_collect(round_id)` | collect the Stage 2 runs, hand every valid SID to Stage 3 | **yes** |
+| `research_round_status` / `research_round_results` | where the round stands / the full audit record | no |
+
+A phase is idempotent: a call for a phase the round has left reports the
+current step and does nothing. One lock per round (`rounds/lock.py`) keeps two
+runners from paying for the same agents twice. A Stage 2 launch for a round
 candidate uses the verification id `round:<round_id>:<idea_id>`, whose evidence is
 three verifier verdicts, no unresolved blocker, the source digest they reviewed
 and a real smoke result.
+
+## Joint behaviour x hyperbolic rounds (Issue #121)
+
+The research target is a mechanism in which **training-only user behaviour and
+an explicit curved operation are computationally coupled**, so that removing
+either changes the core computation. The contract is hard coded in
+`rounds/agents.py` (`RESEARCH_OBJECTIVE`, `SCOPE_CONTRACT`) and reaches every
+role: the three ideation prompts, the three scoring prompts, the implementation
+specification, the three verification reports and the repair prompt.
+
+`rounds/scope.py` checks the contract against the **content** an agent wrote,
+not against a flag it set: the behaviour signal and how it is computed, the
+curved operator and where it acts, one connected pathway with the equation that
+connects them, the three ablations and the minimal specification. A behaviour
+suffix on an unchanged Euclidean quantizer, a hyperbolic-only distance swap, two
+unrelated losses and inherited hyperbolic code that nothing calls are all out of
+scope, whatever they score. The scope decision is audited against the
+proposal's own content, so one reviewer's label never decides an idea; a
+disagreement is recorded instead.
+
+`rounds/baseline.py` holds the one permitted source tree,
+`stage2_RQ-VAE/TIGER_RQ-VAE`. Every selected idea gets a **fresh copy** of it,
+with the resolved path and the source digest of both the baseline and the copy
+recorded. The baseline is read-only: a missing or unreadable source fails
+closed, and a candidate whose output paths would write into the baseline's
+result directory or into another candidate is refused before it can train.
+
+The stops are kept apart: `AGENT_INFRA_ERROR` (an agent crashed, timed out or
+wrote an unusable answer) is retried and never blocks a mechanism,
+`IMPLEMENTATION_NEEDS_FIX` is a real defect and goes to the repair agent,
+`RESOURCE_BLOCKED` is a measured infeasibility (the frozen run projects beyond
+the budget) and keeps the idea for an optimisation route, and `STAGE2_3_FAILED`
+is a training or evaluation failure. A candidate stops asking for agents after
+five repair rounds and is recorded with its findings.
+
+Rounds are filed under the issue that opened them: `results/research/issue121/
+rounds/<round_id>/` and `results/research/issue121/trees/<round_id>/<idea_id>/`.
 
 **Admission is technical validity only.** ER, level-two prefix counts, L3
 collision, code usage and redundancy are measured and reported as diagnostics; a
