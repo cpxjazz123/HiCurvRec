@@ -319,6 +319,28 @@ def project_frozen_run_cost(summary: dict | None) -> dict:
             "budget_hours": STAGE2_COST_BUDGET_HOURS}
 
 
+def stage3_running() -> bool:
+    """Whether a Stage 3 run is alive.
+
+    Stage 3 is the frozen four-card DDP run, so a Stage 2 candidate must not
+    start beside it: both would take the whole host.
+    """
+    for path in sorted(STATE_DIR.glob("stage3__*.json")):
+        try:
+            state = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        pid = state.get("pid") or state.get("worker_pid")
+        if not pid:
+            continue
+        try:
+            os.kill(int(pid), 0)
+        except (OSError, ProcessLookupError, ValueError, TypeError):
+            continue
+        return True
+    return False
+
+
 def _stage2_finished(result_dir: Path) -> bool:
     """Whether the Stage 2 run in this result directory reached its last epoch.
 
@@ -2778,6 +2800,13 @@ def tool_research_round_launch(round_id: str, parallel: int = 0) -> dict:
     usable = list(probe.get("visible") or probe.get("physical") or [])
     # The frozen recipe takes every card for one candidate, so at most one job
     # runs at a time; the spread strategy packs several one-card jobs instead.
+    if stage3_running():
+        # The frozen evaluation owns the host; a Stage 2 start waits for it.
+        state["stage2_jobs"] = queue.report()["jobs"]
+        round_pipeline.save_state(directory, state)
+        return {"round_id": round_id, "queued": queued, "launched": [], "refused": [],
+                "waiting_for": "a Stage 3 run is using the four cards",
+                "jobs": queue.report()}
     if STAGE2_LAUNCH_STRATEGY == "ddp4":
         capacity = 1
     else:
