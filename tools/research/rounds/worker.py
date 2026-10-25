@@ -154,7 +154,7 @@ def run_repair(root: Path, idea: dict, tree: Path, findings: list,
 
 def advance(root: Path, round_id: str, *, log=print) -> dict:
     """Run the agent stages of a round until it waits for Stage 2."""
-    directory = pipeline_module.round_root(root) / round_id
+    directory = pipeline_module.find_round_directory(root, round_id)
     state = pipeline_module.load_state(directory)
     # Agent workspaces belong to the round, not to the repository root.
     agent_root = directory
