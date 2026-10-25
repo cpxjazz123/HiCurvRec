@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "kind": "candidate_path_check",
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_181918_856/successor_entropy_curvature",
+  "tree_digest": "d1226e005c2628d7abe136d756d08ca3b39f36fc3dc07b7f518c75702b9d61bc",
+  "seed": 20261025,
+  "items": 256,
+  "started_at": 3304483.836503357,
+  "behaviour_moved_assignments": 256,
+  "geometry_moved_assignments": 256,
+  "curvature_spread": 0.3837546706199646,
+  "curvature_min": 0.16235969960689545,
+  "curvature_max": 0.5461143851280212,
+  "mean_margin_both_on": 0.2954501807689667,
+  "mean_margin_behavior_off": 0.3956754803657532,
+  "gradients_finite": true,
+  "codebook_gradient": 150.12759399414062,
+  "encoder_gradient": 26743.323608398438,
+  "negative_control_rejected": true,
+  "score_margins": {
+    "both_on": [
+      0.3354530334472656,
+      0.3153681755065918,
+      0.373288631439209,
+      0.302670955657959,
+      0.3820486068725586,
+      0.37459802627563477,
+      0.23174571990966797,
+      0.33211755752563477
+    ],
+    "behavior_off": [
+      0.39026331901550293,
+      0.39508914947509766,
+      0.3913724422454834,
+      0.39274144172668457,
+      0.394073486328125,
+      0.3986024856567383,
+      0.39784979820251465,
+      0.3939223289489746
+    ]
+  },
+  "verdict": "VERIFIED_COUPLING",
+  "reason": "the behaviour signal moves 256 first-level assignments, the matched Euclidean control moves 256, the codebook receives a finite gradient and the disconnected control is rejected",
+  "elapsed_seconds": 7.036,
+  "report_digest": "3ca0a9147b36e55dba9dbe710cdff8ef59eebc48de0150f32d376fcbff277c2f"
+}

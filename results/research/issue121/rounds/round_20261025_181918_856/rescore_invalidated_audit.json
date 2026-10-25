@@ -1,0 +1,7 @@
+{
+  "kind": "rescore_invalidated_audit",
+  "reason": "the revision-2 decision reused the pre-revision reviewer answers, because the agent runner reuses an answer file that is already on disk; the reviewers must read the reconciled proposal, so their old answers are archived under agents/rev1_evidence/ and the scoring phase is re-run from scratch",
+  "archived_evidence": "agents/rev1_evidence/",
+  "invalidated_decision": "decision_rev2.json",
+  "next": "a fresh scoring phase over the reconciled proposal; the new decision supersedes decision_rev2.json and decision.json stays untouched"
+}

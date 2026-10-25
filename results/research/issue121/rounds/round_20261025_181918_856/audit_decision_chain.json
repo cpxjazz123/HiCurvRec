@@ -1,0 +1,32 @@
+{
+  "kind": "decision_chain_audit",
+  "round_id": "round_20261025_181918_856",
+  "chain": [
+    {
+      "revision": 1,
+      "decision_hash": "adb2546fbf2769da",
+      "file": "decision.json",
+      "status": "SELECTED",
+      "weighted": 3.35,
+      "note": "the original review of proposal revision 1"
+    },
+    {
+      "revision": 2,
+      "decision_hash": "639d785c34476018",
+      "file": "decision_rev2.json (overwritten)",
+      "status": "SELECTED",
+      "weighted": 3.35,
+      "note": "VOID: produced from the pre-revision reviewer answers, because the agent runner reuses an answer file already on disk; the answers are archived under agents/rev1_evidence/ and it is not evidence of the reconciled proposal"
+    },
+    {
+      "revision": 3,
+      "decision_hash": "f2aeb7de766baecd75c77f951c983d495b280145d05d1ff1f061b4eeb9f30462",
+      "file": "decision_rev3.json",
+      "status": "NO_QUALIFIED_IDEA",
+      "weighted": 2.9,
+      "note": "the fresh review of proposal revision 2 by three new reviewers; the reconciled proposal is IN_SCOPE with geometry 4, downstream 4, behaviour evidence 2 and novelty 2, so the weighted score is below the 3.0 threshold"
+    }
+  ],
+  "numbering_defect": "the revision number was computed from decision.json only, so the second re-review wrote decision_rev2.json again and overwrote the void revision-2 record; latest_snapshot() and an existence check now read the highest revision on disk and refuse to overwrite any completed record",
+  "consequence": "under the round's own rule a proposal below 3.0 is not selected, so this round selects no candidate; the two decisive gaps named by all three reviewers are the unmeasured behaviour premise and the unchecked literature search with existing same-operator hyperbolic VQ prior art"
+}

@@ -65,11 +65,29 @@ def decision_hash(snapshot: dict) -> str:
     return _digest({key: value for key, value in snapshot.items() if key != "decision_hash"})
 
 
+def latest_snapshot(directory: Path) -> dict:
+    """The highest-revision decision on disk, or the original if there is none."""
+    directory = Path(directory)
+    best, best_revision = None, -1
+    for path in sorted(directory.glob("decision*.json")):
+        try:
+            snapshot = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        revision = int(snapshot.get("revision", 1))
+        if revision > best_revision:
+            best, best_revision = snapshot, revision
+    return best
+
+
 def write_revision(directory: Path, snapshot: dict, revision: int) -> Path:
     """Write a later decision beside the first one, never over it."""
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / ("decision_rev" + str(revision) + ".json")
+    if path.exists():
+        raise RuntimeError("decision revision " + str(revision) + " already exists at " +
+                           str(path) + "; a completed decision record is never overwritten")
     from ..core.evidence import atomic_json
     atomic_json(path, snapshot)
     return path
