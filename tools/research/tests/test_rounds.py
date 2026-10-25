@@ -179,7 +179,7 @@ class RoundStateTests(unittest.TestCase):
         self.assertEqual(summary["ideas"], 4)
         self.assertEqual(summary["selected"], 3)
 
-    def test_three_verifiers_with_a_blocker_open_a_repair_round(self):
+    def test_a_verifier_with_a_blocker_opens_a_repair_round(self):
         state = pipeline_module.load_state(self.directory)
         tree = self.root / "tree"
         tree.mkdir()
@@ -192,15 +192,14 @@ class RoundStateTests(unittest.TestCase):
                                              "detail": "NaN loss", "reproduction": "run it",
                                              "correction": "clamp"}]}]}
         passing = {"verifier": "v2", "verdict": "PASS", "checks": []}
-        state = pipeline_module.apply_verification(state, "a", [blocker, passing, dict(passing)])
+        state = pipeline_module.apply_verification(state, "a", [blocker])
         record = state["implementations"][0]
         self.assertEqual(record["status"], "needs_repair")
         self.assertTrue(record["failure_signature"])
         state = pipeline_module.apply_repair(state, "a", {"repairs": [{"finding": "NaN"}]})
         self.assertEqual(state["implementations"][0]["revision"], 1)
         state = pipeline_module.apply_verification(
-            state, "a", [{"verifier": n, "verdict": "PASS", "checks": []}
-                         for n in ("v1", "v2", "v3")])
+            state, "a", [{"verifier": "v1", "verdict": "PASS", "checks": []}])
         self.assertEqual(state["implementations"][0]["status"], "verified")
         self.assertEqual(len(pipeline_module.verified_implementations(state)), 1)
 
@@ -342,9 +341,7 @@ class VerdictSeverityTests(unittest.TestCase):
         for severity in ("blocking", "major", "BLOCKER", "correctness", ""):
             with self.subTest(severity=severity):
                 state = pipeline_module.apply_verification(
-                    self.state, "a", [self._verdict(severity),
-                                      {"verifier": "v2", "verdict": "PASS", "checks": []},
-                                      {"verifier": "v3", "verdict": "PASS", "checks": []}])
+                    self.state, "a", [self._verdict(severity)])
                 self.assertEqual(state["implementations"][0]["status"], "needs_repair")
 
     def test_a_harmless_severity_does_not_block(self):
@@ -353,24 +350,17 @@ class VerdictSeverityTests(unittest.TestCase):
                                 "findings": [{"severity": "minor", "location": "model.py:1",
                                               "detail": "naming", "reproduction": "",
                                               "correction": "rename"}]}]}
-        state = pipeline_module.apply_verification(
-            self.state, "a", [harmless,
-                              {"verifier": "v2", "verdict": "PASS", "checks": []},
-                              {"verifier": "v3", "verdict": "PASS", "checks": []}])
+        state = pipeline_module.apply_verification(self.state, "a", [harmless])
         self.assertEqual(state["implementations"][0]["status"], "verified")
 
     def test_a_needs_fix_verdict_blocks_even_when_the_finding_is_harmless(self):
-        state = pipeline_module.apply_verification(
-            self.state, "a", [self._verdict("minor"),
-                              {"verifier": "v2", "verdict": "PASS", "checks": []},
-                              {"verifier": "v3", "verdict": "PASS", "checks": []}])
+        state = pipeline_module.apply_verification(self.state, "a",
+                                                   [self._verdict("minor")])
         self.assertEqual(state["implementations"][0]["status"], "needs_repair")
 
     def test_a_needs_fix_verdict_without_a_finding_still_blocks(self):
         state = pipeline_module.apply_verification(
-            self.state, "a", [{"verifier": "v1", "verdict": "NEEDS_FIX", "checks": []},
-                              {"verifier": "v2", "verdict": "PASS", "checks": []},
-                              {"verifier": "v3", "verdict": "PASS", "checks": []}])
+            self.state, "a", [{"verifier": "v1", "verdict": "NEEDS_FIX", "checks": []}])
         self.assertEqual(state["implementations"][0]["status"], "needs_repair")
         self.assertTrue(state["implementations"][0]["failure_signature"])
 
