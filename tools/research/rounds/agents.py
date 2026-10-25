@@ -103,6 +103,10 @@ IDEA_PROMPT = (
 )
 
 SCORE_PROMPT = (
+    "This exploration produces ONE mechanism: the scorers judge every idea, the "
+    "explicit rule keeps the single best qualified one, and that mechanism is then "
+    "implemented, reviewed, trained in Stage 2 and evaluated in Stage 3. Do not "
+    "assume that several ideas will be built.\n"
     "You are one of three independent evaluators. Score EVERY idea below on six "
     "dimensions from 0 to 5: novelty, behavior_problem_meaning, coupling_strength, "
     "implementability, downstream_potential, experimental_diversity. "

@@ -118,16 +118,18 @@ class ScoringTests(unittest.TestCase):
         selection = scoring_module.select(matrix)
         self.assertIn("a", [entry["idea_id"] for entry in selection["selected"]])
 
-    def test_selection_can_keep_several_and_records_rejections(self):
+    def test_the_selection_keeps_one_mechanism_and_records_the_rejections(self):
         reports = [
             {"scorer": name, "scores": [_scores("a", 5), _scores("b", 4), _scores("c", 1)]}
             for name in ("s1", "s2", "s3")
         ]
         selection = scoring_module.select(scoring_module.build_matrix(self.ideas, reports))
         selected = [entry["idea_id"] for entry in selection["selected"]]
-        self.assertEqual(selected, ["a", "b"])
-        self.assertTrue(selection["selection_is_multiple"])
-        self.assertEqual([entry["idea_id"] for entry in selection["rejected"]], ["c"])
+        # One mechanism per exploration: the rest are recorded as rejected.
+        self.assertEqual(selected, ["a"])
+        self.assertFalse(selection["selection_is_multiple"])
+        # "b" is rejected by the single-mechanism cap, "c" by the score rule.
+        self.assertEqual([entry["idea_id"] for entry in selection["rejected"]], ["c", "b"])
         self.assertTrue(selection["rejected"][0]["reasons"])
 
     def test_the_rule_is_explicit_and_configurable(self):
@@ -174,10 +176,11 @@ class RoundStateTests(unittest.TestCase):
         state = pipeline_module.apply_scoring(state, reports)
         pipeline_module.save_state(self.directory, state)
         self.assertEqual(state["step"], "implementation")
-        self.assertEqual(len(pipeline_module.selected_ideas(state)), 3)
+        # A round produces exactly one mechanism, even when several qualify.
+        self.assertEqual(len(pipeline_module.selected_ideas(state)), 1)
         summary = pipeline_module.summary(pipeline_module.load_state(self.directory))
         self.assertEqual(summary["ideas"], 4)
-        self.assertEqual(summary["selected"], 3)
+        self.assertEqual(summary["selected"], 1)
 
     def test_a_verifier_with_a_blocker_opens_a_repair_round(self):
         state = pipeline_module.load_state(self.directory)

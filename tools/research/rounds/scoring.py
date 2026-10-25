@@ -23,9 +23,15 @@ DEFAULT_SELECTION = {
     "median_threshold": 3.0,
     "mean_threshold": 3.0,
     "min_dimension_median": 2.0,
-    "max_selected": 6,
+    # One mechanism per exploration. A round is not a shortlist: it produces
+    # exactly one candidate and carries it through implementation, review,
+    # Stage 2 and Stage 3 before the next round proposes the next mechanism.
+    "max_selected": 1,
     "require_min_scorers_above_threshold": 2,
     "fallback_to_best": True,
+    # The rule is "keep the single best qualified idea", never "keep everything
+    # that passes", so the round cannot silently grow into a batch.
+    "keep_single_best": True,
     # A proposal that does not couple behaviour and geometry is never selected,
     # not even as the fallback.
     "require_scope": True,
@@ -240,6 +246,8 @@ def select(matrix: dict, *, rule: dict = None) -> dict:
                              "max_disagreement": row["max_disagreement"]})
     selected.sort(key=lambda entry: (-entry["overall_median"], -entry["overall_mean"],
                                      entry["idea_id"]))
+    if rule.get("keep_single_best"):
+        rule["max_selected"] = 1
     if len(selected) > rule["max_selected"]:
         dropped = selected[rule["max_selected"]:]
         for entry in dropped:
