@@ -346,14 +346,23 @@ def stage3_running() -> bool:
     return False
 
 
-def _stage2_finished(result_dir: Path) -> bool:
-    """Whether the Stage 2 run in this result directory reached its last epoch.
+def _stage2_finished(result_dir: Path, tree: Path = None) -> bool:
+    """Whether the Stage 2 run of this arm reached its last epoch.
 
     The trainer writes one row per epoch, so the last epoch is the proof that
-    the run completed; the exported SID on its own says nothing.
+    the run completed; the exported SID on its own says nothing. The metrics
+    live where the trainer's own LOG_DIR points -- under the tree for the trees
+    that follow the baseline convention, under the result directory for the
+    others -- so both places are read.
     """
-    metrics = Path(result_dir) / "logs" / "training_metrics.jsonl"
-    if not metrics.is_file():
+    candidates = [Path(result_dir) / "logs" / "training_metrics.jsonl"]
+    if tree is not None:
+        try:
+            candidates.append(Path(tree_log_paths(Path(tree))["metrics"]))
+        except (KeyError, OSError):
+            pass
+    metrics = next((path for path in candidates if path.is_file()), None)
+    if metrics is None:
         return False
     last_epoch = 0
     try:
@@ -2978,7 +2987,8 @@ def tool_research_round_collect(round_id: str) -> dict:
             continue
         result_dir = Path(job["result_dir"])
         sid_path = result_dir / "item_sids.json"
-        if sid_path.is_file() and not _stage2_finished(result_dir):
+        if sid_path.is_file() and not _stage2_finished(result_dir, Path(job.get("tree"))):
+
             # A SID file alone does not mean the run finished: a stale or
             # partial export must not start a Stage 3 on half a model.
             continue
