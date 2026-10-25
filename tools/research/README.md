@@ -239,6 +239,38 @@ the budget) and keeps the idea for an optimisation route, and `STAGE2_3_FAILED`
 is a training or evaluation failure. A candidate stops asking for agents after
 five repair rounds and is recorded with its findings.
 
+## Weighted scientific scoring (Issue #122)
+
+Selection is not "0–5 scores, unweighted average, highest wins". A round
+
+1. assembles one **frozen evidence bundle** per proposal (behavioural evidence,
+   geometric necessity, prior work, the experiment ledger with its comparability
+   tags, implementation and cost). A section that cannot be grounded says
+   `UNKNOWN`; a literature search that was not run says `NOT_CHECKED`;
+2. has the three independent reviewers score **every** proposal on the seven
+   dimensions of the versioned rubric, with evidence ids, one objection and a
+   counterexample when they claim a defect;
+3. gives a proposal whose objection names a mathematical identity, a
+   cancellation, a leakage or a dimension mismatch **one bounded revision**, then
+   reviews the revised proposal afresh under a new proposal hash;
+4. compares the finalists head to head (order-balanced A-vs-B), aggregates with
+   Copeland and records ties, cycles and the measured position bias;
+5. writes an **immutable decision record** (`decision.json`) with the rubric
+   version and digest, the proposal and evidence digests, the three raw reviews,
+   the weighted matrix, the pairwise result, the winner and its ordered backups.
+
+The rubric lives in `rounds/rubric_v1.json`: seven dimensions whose weights sum
+to 100% (behaviour evidence 20, geometry necessity 20, novelty 20, downstream
+mechanism 15, falsifiability 10, implementability 10, exploration value 5), each
+with anchored 0–5 meanings. **Change the weights only before a new round
+starts** — a decision is scored with the rubric it pinned. The prompt, the
+parser and the matrix read the same names, and an unknown, renamed or missing
+dimension is a schema error, never a partial average.
+
+There is no automatic fallback: when nobody qualifies the round reports
+`NO_QUALIFIED_IDEA` and goes back to ideation. A later recalculation writes
+`rescored_audit_<timestamp>.json` beside the decision and never rewrites it.
+
 A round dispatches its Stage 2 runs in the frozen recipe's own shape:
 `STAGE2_LAUNCH_STRATEGY = "ddp4"` gives one candidate all four cards, so the
 global batch is 4096 and an epoch costs 0.16 s instead of the 1.5 s a single
