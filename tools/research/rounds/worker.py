@@ -137,6 +137,61 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None) -> dict:
             "finalists": finalists}
 
 
+HARD_OBJECTION_TERMS = ("cancel", "identity", "leak", "dimension", "degenerat",
+                        "counterexample", "equivalence", "invariant")
+
+
+def _hard_objection(report: dict) -> tuple:
+    """The first objection that names a mathematical or leakage defect, if any."""
+    for entry in report.get("scores", []):
+        objection = str(entry.get("objection", "")).lower()
+        counterexample = str(entry.get("counterexample", "")).strip()
+        if counterexample or any(term in objection for term in HARD_OBJECTION_TERMS):
+            return entry["idea_id"], entry.get("objection", ""), counterexample
+    return None
+
+
+def _one_bounded_revision(directory: Path, agent_root: Path, repo: Path, state: dict,
+                          reports: list, outcome: dict) -> tuple:
+    """Give a proposal ONE revision when a reviewer names a hard defect.
+
+    The revised proposal gets a new hash, and the three reviewers see it afresh;
+    the revision and the original objection stay in the state.
+    """
+    for report in reports:
+        found = _hard_objection(report)
+        if not found:
+            continue
+        identifier, objection, counterexample = found
+        idea = ideas_module.idea_index(state["ideas"]).get(identifier)
+        if idea is None:
+            continue
+        revision = int(idea.get("proposal_revision", 0))
+        if revision >= 1:
+            continue                      # the bounded budget is one revision
+        try:
+            answer = run_rebuttal(agent_root, idea, objection, counterexample, revision)
+        except Exception as exc:                            # noqa: BLE001
+            pipeline_module.record_event(state, "rebuttal_failed", idea_id=identifier,
+                                         error=str(exc)[:200])
+            pipeline_module.save_state(directory, state)
+            continue
+        updated = dict(idea)
+        updated["proposal_revision"] = revision + 1
+        updated["rebuttal"] = answer
+        if answer.get("remaining"):
+            updated["unresolved_objection"] = answer["remaining"]
+        pipeline_module.record_event(state, "proposal_revised", idea_id=identifier,
+                                     revision=updated["proposal_revision"],
+                                     objection=objection[:200])
+        state["ideas"] = [updated if entry["idea_id"] == identifier else entry
+                          for entry in state["ideas"]]
+        pipeline_module.save_state(directory, state)
+        outcome = run_scoring(agent_root, state["ideas"], repo=repo)
+        return state, outcome["reports"], outcome
+    return state, reports, outcome
+
+
 def _finalist_ids(ideas: list, reports: list) -> list:
     """The top few proposals by weighted score, computed without mutating state."""
     try:
@@ -274,6 +329,8 @@ def phase_scoring(root: Path, round_id: str, *, log=print) -> dict:
                 "reason": "the round is no longer in the scoring phase"}
     outcome = run_scoring(agent_root, state["ideas"], repo=Path(root))
     reports = outcome["reports"]
+    state, reports, outcome = _one_bounded_revision(
+        directory, agent_root, Path(root), state, reports, outcome)
     state = pipeline_module.apply_scoring(
         state, reports, comparisons=outcome.get("comparisons"),
         bundles=outcome.get("bundles"), directory=directory)
