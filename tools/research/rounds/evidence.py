@@ -12,6 +12,7 @@ import json
 import time
 from pathlib import Path
 
+from . import literature as literature_module
 from . import rubric as rubric_module
 
 #: The frozen data contract the mechanisms are built on. These are facts about
@@ -155,6 +156,65 @@ def build_bundle(idea: dict, *, root: Path, round_state: dict = None,
     bundle["sha256"] = hashlib.sha256(
         json.dumps({k: v for k, v in bundle.items() if k not in ("sha256", "built_at")},
                    sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+    return bundle
+
+
+def merge_probe_evidence(bundle: dict, *, probe: dict = None, literature: dict = None,
+                        math_report: dict = None) -> dict:
+    """Fold the probe outcomes into the bundle the reviewers read.
+
+    The measured statistics replace the proposal's own claims about them, and the
+    literature records replace the ``NOT_CHECKED`` placeholder -- but only when
+    the pass actually ran. Nothing is upgraded to a measurement it did not get.
+    """
+    bundle = json.loads(json.dumps(bundle, ensure_ascii=False, default=str))
+    if probe:
+        for entry in probe.get("metrics", {}).values():
+            if not isinstance(entry, dict):
+                continue
+            bundle["behavioral_evidence"].append(_claim(
+                "measured train-only statistic for this hypothesis", "probe",
+                "probe:" + str(probe.get("idea_id")), entry.get("status", "UNKNOWN"),
+                {key: value for key, value in entry.items()
+                 if key not in ("status", "reason")}))
+    if literature:
+        if literature.get("status") == literature_module.STATUS_OK:
+            for paper in literature.get("papers", []):
+                bundle["prior_work"].append(_claim(
+                    "related work: " + str(paper.get("title")), "literature",
+                    "literature:" + str(paper.get("doi") or paper.get("source_id")),
+                    paper.get("match", "not_established"),
+                    {"title": paper.get("title"), "doi": paper.get("doi"),
+                     "url": paper.get("url"), "year": paper.get("year"),
+                     "match": paper.get("match")}))
+        else:
+            bundle["prior_work"].append(_claim(
+                "the related-work pass did not complete", "literature",
+                "literature:" + str(literature.get("idea_id")),
+                literature.get("status", rubric_module.NOT_CHECKED),
+                literature.get("reason")))
+    if math_report:
+        for check in math_report.get("checks", []):
+            bundle["geometric_necessity"].append(_claim(
+                "sanity check: " + str(check.get("check")), "math",
+                "math:" + str(math_report.get("idea_id")), check.get("status", "UNKNOWN"),
+                {"detail": check.get("detail"), "implication": check.get("implication")}))
+    counter = 1
+    ids = {}
+    for section in ("behavioral_evidence", "geometric_necessity", "prior_work",
+                    "experiment_ledger", "implementation_cost"):
+        for entry in bundle.get(section, []):
+            key = "E" + str(counter)
+            entry["id"] = key
+            ids[key] = section
+            counter += 1
+    bundle["evidence_ids"] = ids
+    bundle["probe_sha256"] = (probe or {}).get("sha256")
+    bundle["literature_sha256"] = (literature or {}).get("sha256")
+    bundle["math_sha256"] = (math_report or {}).get("sha256")
+    bundle["sha256"] = hashlib.sha256(
+        json.dumps({k: v for k, v in bundle.items() if k not in ("sha256", "built_at")},
+                   sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")).hexdigest()
     return bundle
 
 

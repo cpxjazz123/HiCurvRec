@@ -32,7 +32,7 @@ def build_snapshot(*, round_id: str, evaluation: dict, reports: list,
     rubric_version = evaluation.get("rubric_version")
     rubric_sha = evaluation.get("rubric_sha256")
     snapshot = {
-        "schema": 1,
+        "schema": 2,
         "round_id": round_id,
         "decision_at": time.time(),
         "rubric_version": rubric_version,
@@ -45,6 +45,11 @@ def build_snapshot(*, round_id: str, evaluation: dict, reports: list,
         "reviews": [{key: report.get(key) for key in
                      ("scorer", "rubric_version", "rubric_sha256", "scores")}
                     for report in reports],
+        "evidence": {identifier: {"bundle_sha256": (bundle or {}).get("sha256"),
+                                  "probe_sha256": (bundle or {}).get("probe_sha256"),
+                                  "literature_sha256": (bundle or {}).get("literature_sha256"),
+                                  "math_sha256": (bundle or {}).get("math_sha256")}
+                      for identifier, bundle in (bundles or {}).items()},
         "matrix": evaluation.get("matrix"),
         "pairwise": evaluation.get("pairwise"),
         "selection": evaluation.get("selection"),
