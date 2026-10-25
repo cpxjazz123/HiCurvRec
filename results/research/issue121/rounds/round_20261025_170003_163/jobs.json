@@ -3,19 +3,73 @@
     {
       "attempts": 1,
       "error": null,
-      "finished_at": null,
+      "finished_at": 1792909110.3380878,
       "gpu": "0,1,2,3",
       "idea_id": "transition_tangent_warp",
       "job_id": "stage2:transition_tangent_warp",
       "kind": "stage2",
       "launch_mode": "ddp4",
       "queued_at": 1792908512.5950804,
-      "result": null,
+      "result": {
+        "metrics": {
+          "full_unique_items": 24587,
+          "level2_distinct_prefixes": 7450,
+          "negative_hits": 6452,
+          "pairs": 52855,
+          "positive_hits": 4293,
+          "valid_l1_hard_er": 6.653750774953503,
+          "valid_l1_negative_hit_rate": 0.012206981364109356,
+          "valid_l1_positive_hit_rate": 0.08122221171128559
+        },
+        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_tangent_warp/item_sids.json",
+        "sid_sha256": "003d76dd12b1ffb8f58f2619fda587bacde9050aca4b43a3cf77f1cd23668ca3",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 7450,
+            "negative_hits": 6452,
+            "pairs": 52855,
+            "positive_hits": 4293,
+            "valid_l1_hard_er": 6.653750774953503,
+            "valid_l1_negative_hit_rate": 0.012206981364109356,
+            "valid_l1_positive_hit_rate": 0.08122221171128559
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_tangent_warp",
       "round_id": "round_20261025_170003_163",
+      "stage3_job_id": "stage3:transition_tangent_warp",
       "started_at": 1792908512.599772,
-      "status": "running",
+      "status": "done",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_tangent_warp"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": null,
+      "idea_id": "transition_tangent_warp",
+      "job_id": "stage3:transition_tangent_warp",
+      "kind": "stage3",
+      "queued_at": 1792909110.6469078,
+      "result": null,
+      "round_id": "round_20261025_170003_163",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_tangent_warp/item_sids.json",
+      "stage2_job_id": "stage2:transition_tangent_warp",
+      "started_at": null,
+      "status": "stopped",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_tangent_warp",
+      "previous_attempts": [
+        {
+          "status": "pending",
+          "error": "stopped by the operator at the end of the session; Stage 2 had completed (3000 epochs, ws=4, batch 4096, 0.119 s/epoch) and the Stage 3 evaluation was cut before its test metrics were written",
+          "finished_at": 1792909396.5226243
+        }
+      ]
     }
   ],
   "schema": 1

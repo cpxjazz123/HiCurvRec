@@ -29,6 +29,11 @@
       "event": "implementation_verified",
       "idea_id": "transition_tangent_warp",
       "revision": 0
+    },
+    {
+      "event": "round_stopped_by_operator",
+      "at": 1792909396.5247552,
+      "reason": "session ended; Stage 2 complete, Stage 3 cut"
     }
   ],
   "ideas": [
@@ -116,7 +121,7 @@
       "behavior_computation": "Within train split only, group events by user, sort by timestamp, count adjacent ordered item pairs (i,j). Normalize each item's outgoing counts into a successor distribution and its incoming counts into a predecessor distribution; create a sparse concatenated row per item. Do not bridge split boundaries or count non-adjacent events.",
       "behavior_signal": "Per-item sparse directed predecessor and successor co-consumption profiles, representing which items users consume immediately before and after the item in training sequences.",
       "cost_estimate": "Precompute sparse transition profiles once in O(E_train) time and O(E_train) sparse storage; project per batch with sparse matrix multiplies. At 24 steps/epoch x 3000 epochs over 24556 items (about 1024 items/step), added batch work is O(nnz_batch*d_b + B*d_b*d + B*d) for profile projection, learned projection and Poincare maps, plus O(B*d) temporary vectors; no B-by-codebook curved distances and no extra user/item pair sampling. Expect a modest encoder-side overhead; measure actual epoch wall time against matched ablations.",
-      "coupling_equation": "z'_i = log_0^c(exp_0^c(z_i) ⊕_c exp_0^c( rho*tanh(WP[a_i;b_i]) )); the training behaviour profile determines the tangent displacement and the curved Mobius/exp-log operations determine how that displacement changes the encoder latent used for SIDs.",
+      "coupling_equation": "z'_i = log_0^c(exp_0^c(z_i) \u2295_c exp_0^c( rho*tanh(WP[a_i;b_i]) )); the training behaviour profile determines the tangent displacement and the curved Mobius/exp-log operations determine how that displacement changes the encoder latent used for SIDs.",
       "coupling_path": "Training-only directed counts -> sparse item profile -> learned tangent displacement u_i -> Poincare exp-map and Mobius addition with encoded point -> log-map latent z'_i -> ordinary RQ assignments and reconstruction/VQ gradients -> exported SIDs.",
       "duplicate_count": 1,
       "falsifiable_hypothesis": "Directed predecessor/successor context supplies an item-specific tangent correction that makes semantically similar but behaviorally distinct items more separable in the latent codes, while grouping items with compatible continuation context; this improves Stage3 test Recall@10 if the learned warp preserves useful semantic reconstruction. Observe latent displacement norms, SID changes conditioned on transition-profile similarity, and Stage3 test Recall@10; retain only if both-on exceeds 0.065 and both controls.",
@@ -136,7 +141,7 @@
       "safeguards": "Use c>0 fixed and small (e.g. 0.1), clamp ball norms to (1-eps)/sqrt(c), clamp atanh arguments to [-1+eps,1-eps], use stable small-norm limits for exp/log, compute geometry in float32, bound u norm by rho (e.g. rho<=0.25), normalize count rows with eps, use deterministic sparse projection and zero profiles for unseen items, and monitor finite values, latent norms and reconstruction loss. Keep train/validation/test separation and identical seeds/configuration across ablations.",
       "scope_reasons": [],
       "scope_verdict": "IN_SCOPE",
-      "spec_equations": "c_ij=sum_{u,t}1[i_t=i,i_{t+1}=j] over training sequences only. a_i[j]=c_ij/(sum_l c_il+eps), b_i[j]=c_ji/(sum_l c_li+eps). v_i=P[a_i;b_i], u_i=rho*tanh(Wv_i), z_i=Encoder(e_i). For curvature -c, lambda_x=2/(1-c||x||^2); exp_0^c(v)=tanh(sqrt(c)||v||)*v/(sqrt(c)||v||), log_0^c(x)=atanh(sqrt(c)||x||)*x/(sqrt(c)||x||), and x⊕_c y=((1+2c<x,y>+c||y||²)x+(1-c||x||²)y)/(1+2c<x,y>+c²||x||²||y||²). Then z'_i=log_0^c(exp_0^c(z_i)⊕_c exp_0^c(u_i)); apply existing Euclidean RQ-VAE to z'_i.",
+      "spec_equations": "c_ij=sum_{u,t}1[i_t=i,i_{t+1}=j] over training sequences only. a_i[j]=c_ij/(sum_l c_il+eps), b_i[j]=c_ji/(sum_l c_li+eps). v_i=P[a_i;b_i], u_i=rho*tanh(Wv_i), z_i=Encoder(e_i). For curvature -c, lambda_x=2/(1-c||x||^2); exp_0^c(v)=tanh(sqrt(c)||v||)*v/(sqrt(c)||v||), log_0^c(x)=atanh(sqrt(c)||x||)*x/(sqrt(c)||x||), and x\u2295_c y=((1+2c<x,y>+c||y||\u00b2)x+(1-c||x||\u00b2)y)/(1+2c<x,y>+c\u00b2||x||\u00b2||y||\u00b2). Then z'_i=log_0^c(exp_0^c(z_i)\u2295_c exp_0^c(u_i)); apply existing Euclidean RQ-VAE to z'_i.",
       "spec_inputs_outputs": "Inputs are item embedding e_i, item ID, frozen sparse train-profile table, sparse projection P, learned W, rho and curvature c. Outputs are transformed latent z'_i for the existing RQ-VAE, which returns quantized vector, losses and SID tokens.",
       "specification": {
         "text": "Let c_ij be the count of consecutive training-only transitions i->j. For each i, form sparse normalized outgoing and incoming profiles a_i[j]=c_ij/(sum_l c_il+eps) and b_i[j]=c_ji/(sum_l c_li+eps), concatenate them, and apply a fixed-seed sparse random projection P to dimension d_b followed by a learned linear map W: u_i = rho*tanh(W P[a_i;b_i]), where rho bounds tangent norm. Given base encoder vector z_i in R^d, map z_i to the Poincare ball at curvature -c using x_i=exp_0^c(z_i); form y_i=MobiusAdd_c(x_i, exp_0^c(u_i)); return z'_i=log_0^c(y_i) to the unchanged Euclidean residual quantizer and decoder. Optimize ordinary reconstruction and VQ losses only; gradients through z'_i update encoder and W. Set u_i=0 for missing/unknown profiles."
@@ -221,7 +226,7 @@
               "findings": [
                 {
                   "correction": "N/A",
-                  "detail": "None. The bounded exp-map and log-map clamp keep float32 atanh inputs below one, and the Möbius denominator is clamped positive. The smoke source checks a finite loss and nonzero finite behavior-map gradient and checks distinct warped/no-behavior/Euclidean outputs; no runtime claim is made.",
+                  "detail": "None. The bounded exp-map and log-map clamp keep float32 atanh inputs below one, and the M\u00f6bius denominator is clamped positive. The smoke source checks a finite loss and nonzero finite behavior-map gradient and checks distinct warped/no-behavior/Euclidean outputs; no runtime claim is made.",
                   "location": "N/A",
                   "reproduction": "N/A",
                   "severity": "minor when it does not stop the work"
@@ -797,12 +802,37 @@
       "idea_id": "transition_tangent_warp",
       "job_id": "stage2:transition_tangent_warp",
       "kind": "stage2",
+      "stage3_job_id": "stage3:transition_tangent_warp",
+      "status": "done"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "transition_tangent_warp",
+      "job_id": "stage3:transition_tangent_warp",
+      "kind": "stage3",
       "stage3_job_id": null,
-      "status": "running"
+      "status": "pending"
     }
   ],
-  "stage3_jobs": [],
+  "stage3_jobs": [
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "transition_tangent_warp",
+      "job_id": "stage3:transition_tangent_warp",
+      "kind": "stage3",
+      "stage3_job_id": null,
+      "status": "pending"
+    }
+  ],
   "step": "stage2",
-  "updated_at": 1792908591.7095923,
-  "verification": {}
+  "updated_at": 1792909111.1746817,
+  "verification": {},
+  "stopped": {
+    "at": 1792909396.5247557,
+    "by": "operator"
+  }
 }
