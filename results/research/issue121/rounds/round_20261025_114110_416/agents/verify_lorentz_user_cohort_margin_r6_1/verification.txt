@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:109-134, 387-410; model/model.py:26-31, 53-69 | Source inspection: transitions form five-item training-history contexts, cluster contexts into training-only cohorts, create same-target/different-user and distinct-source pairs, select hard RQ-level source code vectors, and add their Lorentzian margin loss to the reconstruction/quantization loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The pair loss uses the cohort labels and Lorentz distance in one connected computation over actual selected RQ code representations, not a detached side loss or a changed Euclidean quantizer.
+FINDING REPRODUCTION: Code path at the cited locations; no trainer execution attempted.
+FINDING CORRECTION: None.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:76-106, 403-415; model/model.py:53-69; smoke_test.py:11-23, 28-54 | Inspected the forward/gradient path and included smoke assertions: pair-only encoder gradient, codebook gradient, finite loss/gradients, behavior-off and Euclidean comparisons, and large-norm projection-boundary gradients. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical blocker found. The selected code's straight-through expression reaches encoder and codebook parameters; the distance projects tangent norms before cosh/sinh, and clamps the acosh argument. The smoke code asserts nonzero gradients and changed pair-only loss/gradients for behavior-off and Euclidean alternatives.
+FINDING REPRODUCTION: Inspect the cited forward path and smoke assertions. Runtime gradient proof is intentionally deferred to the specified GPU smoke.
+FINDING CORRECTION: None.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:43-70, 298-327, 475-518, 525-553 | Inspected the actual trainer entry point, frozen Stage1 embedding and Stage0 train-parquet inputs, candidate-specific result path, item-indexed SID export, DDP launcher and single-card environment branch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Output is under results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin; exported SID rows enumerate embedding item IDs and JSON keys match those IDs. The trainer reads sentence_t5.npy and train.parquet. Launcher checks GENREC_SINGLE_GPU and skips torchrun when set; otherwise it launches four ranks, while an existing RANK also bypasses relaunch.
+FINDING REPRODUCTION: Follow the constants and branches at the cited locations. Trainer execution was not performed.
+FINDING CORRECTION: None.

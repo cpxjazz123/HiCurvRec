@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:250-275 -> model/model.py:26-50 -> model/layers.py:106-112,123-160,300-332 | Static source-path inspection: traced training-only adjacent directed transitions into empirical outgoing probabilities and entropy gates, into three weighted Poincare Karcher updates and the gated geodesic target, then into curved first-level codebook distance and loss/residual path. The trainer passes these tensors in both training and SID export (train_rqvae.py:331-341,379-386,437-442); no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. Behaviour and curved geometry meet in the actual assignment path: entropy-gated transition prototypes alter the target, and curved distance is used to select/learn the first residual code.
+FINDING REPRODUCTION: Source trace from train_rqvae.py:250-275 and 331-341 through model/model.py:26-55 to model/layers.py:300-332.
+FINDING CORRECTION: None required.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:26-57 -> model/layers.py:106-112,123-161,300-332 -> model/utils.py:17-72 | Static forward/backward-path inspection only (the specified GPU smoke is not available here): maps and weighted prototype operations remain differentiable; curved distances feed assignment and differentiable commitment/codebook losses; residual levels use the selected actual tangent code. The trainer calls backward and optimizer step at train_rqvae.py:339-347. No training-time loss term is computed and discarded.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Code inspection shows a differentiable route from the behavior-conditioned curved target to encoder and codebook losses, with finite-domain protections in the Poincare maps (model/utils.py:17-72). Switching behavior off bypasses the target transform; switching geometry off uses the Euclidean weighted-neighbor interpolation and Euclidean quantizer (model/model.py:26-50,55). No definite dead term or float32 overflow/nan defect was found by inspection. Actual numeric gradients and assignment changes are not independently runtime-verified in this environment.
+FINDING REPRODUCTION: Inspect forward/quantization at model/model.py:26-57 and model/layers.py:123-161,300-332; intended runtime comparison is the behavior-on/geometry-on, behavior-off, and geometry-off smoke, which cannot be run here.
+FINDING CORRECTION: None required from code inspection; retain the prescribed one-epoch gradient smoke before a full run.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:40-58,221-276,409-454,457-485 | Static integration inspection: confirmed the repository-relative frozen stage1 embedding and stage0 training-parquet inputs; candidate-specific results/stage2-RQ-VAE/transition_geodesic_codebook outputs; all-item ID-indexed SID export and uniqueness extension; and launcher branches including GENREC_SINGLE_GPU. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The real entry point has no source-visible integration blocker. It loads frozen inputs at train_rqvae.py:48-50,235-239; writes only to the required candidate result directory at lines 51-58 and 416-450; exports one row per embedding/item index with JSON keys enumerated from zero at lines 442-449; and preserves torchrun plus the explicit single-card branch checking GENREC_SINGLE_GPU at lines 457-485. DDP rank setup and barriers are present at lines 221-232,247-249,315-316,452-454.
+FINDING REPRODUCTION: Read the cited constants and main/export/launcher path. Runtime launch, filesystem write verification, and DDP execution were unavailable.
+FINDING CORRECTION: None required.
