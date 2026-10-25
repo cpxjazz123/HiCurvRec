@@ -49,6 +49,16 @@
     "status": "CONSISTENT",
     "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
   },
+  "successor_geodesic_coarse": {
+    "reported": 0.054858197392015876,
+    "reproduced": 0.05499747558279218,
+    "absolute_difference": 0.0001392781907763041,
+    "reported_ndcg@10": 0.030173576832768327,
+    "reproduced_ndcg@10": 0.030307640392664384,
+    "ndcg_absolute_difference": 0.00013406355989605684,
+    "status": "CONSISTENT",
+    "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+  },
   "tangent_successor_residual": {
     "reported": 0.05424885530736956,
     "reproduced": 0.05499747558279218,
