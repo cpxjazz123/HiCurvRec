@@ -350,6 +350,28 @@ def mark_agent_error(state: dict, implementation_id: str, error: str) -> dict:
     return state
 
 
+def record_framework_finding(state: dict, implementation_id: str, *, source: str,
+                             detail: str, correction: str, check: str = "runtime") -> dict:
+    """Record a defect the framework itself observed.
+
+    The output-path preflight and the Stage 2 smoke see things a code review
+    cannot: a path that only breaks after promotion, or a device mismatch that
+    only appears when the trainer runs. Such a finding invalidates the review.
+    """
+    record = _implementation(state, implementation_id)
+    findings = [finding for finding in (record.get("blocking_findings") or [])
+                if finding.get("verifier") != source]
+    findings.insert(0, {"verifier": source, "check": check, "severity": "blocking",
+                        "location": "train_rqvae.py", "detail": detail,
+                        "reproduction": detail, "correction": correction})
+    record["blocking_findings"] = findings
+    record["status"] = "needs_repair"
+    record["failure_signature"] = _failure_signature(findings)
+    record_event(state, "framework_finding", idea_id=implementation_id, source=source,
+                 detail=detail[:200])
+    return state
+
+
 def recheck_output_paths(state: dict, implementation_id: str) -> dict:
     """Re-run the output-path preflight after a repair.
 

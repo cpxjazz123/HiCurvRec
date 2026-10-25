@@ -135,7 +135,7 @@ def _eval_path_expr(expr: str, anchors: dict, tree: Path):
     return str(value) if value is not None else None
 
 
-def _declared_paths(tree: Path) -> dict:
+def _declared_paths(tree: Path, *, location: Path = None) -> dict:
     """The output paths a trainer declares, resolved through its own anchors.
 
     A trainer writes chains such as
@@ -147,33 +147,44 @@ def _declared_paths(tree: Path) -> dict:
     if not entry.is_file():
         return {}
     text = entry.read_text(encoding="utf-8", errors="replace")
+    # The paths are evaluated where the trainer will actually run: the promoted
+    # tree under stage2_RQ-VAE/, whose depth differs from the round tree's.
+    here = Path(location) if location is not None else Path(tree)
     # An output path anchored on the number of parents of this file works in the
     # round tree and breaks after promotion, where the tree sits one level
     # higher. That is a defect, not a style choice.
     for match in re.finditer(r"^(\w+)\s*=\s*Path\(__file__\)(?:\.resolve\(\))?"
                              r"\.parents\[\d+\]", text, re.M):
-        if match.group(1) in _OUTPUT_CONSTANTS or match.group(1).endswith("DIR"):
+        name = match.group(1)
+        path_like = (name in _OUTPUT_CONSTANTS
+                     or re.search(r"(_ROOT|ROOT|_DIR|DIR|_PATH|PATH|_HERE|_TREE)$", name))
+        if path_like:
             raise BaselineError("the output path " + match.group(1) + " depends on the "
                                 "source tree's depth (parents[N]); use REPO_ROOT or an "
                                 "absolute path under results/stage2_RQ-VAE/")
     # The names a trainer may use for the two anchors it is allowed to start
     # from. Anything else has to be resolvable from these.
     anchors: dict[str, str] = {}
+    assignments = re.findall(r"^(\w+)\s*=\s*(.+)$", text, re.M)
+    assigned = {name for name, _ in assignments}
+    # The file's own definition wins: a REPO_ROOT computed from parents[N] must
+    # be evaluated, not shadowed by the fallback.
     for alias in ("REPO_ROOT", "_REPO_ROOT", "ROOT", "_ROOT", "PROJECT_ROOT",
                   "BASE_DIR", "REPO"):
-        anchors[alias] = "/home/wlia0047/ar57/wenyu/GeneRec"
+        if alias not in assigned:
+            anchors[alias] = "/home/wlia0047/ar57/wenyu/GeneRec"
     for alias in ("TREE_ROOT", "_TREE", "_HERE", "TREE_DIR", "THIS_DIR"):
-        anchors[alias] = str(Path(tree))
+        if alias not in assigned:
+            anchors[alias] = str(here)
     # A plain string constant may be interpolated into an f-string path.
     for name, value in re.findall(r"^(\w+)\s*=\s*[\"']([^\"']*)[\"']\s*$", text, re.M):
         anchors.setdefault(name, value)
-    assignments = re.findall(r"^(\w+)\s*=\s*(.+)$", text, re.M)
     for _ in range(6):                       # resolve chains in dependency order
         changed = False
         for name, expr in assignments:
             if name in anchors:
                 continue
-            value = _eval_path_expr(expr.strip(), anchors, Path(tree))
+            value = _eval_path_expr(expr.strip(), anchors, here)
             if value is not None:
                 anchors[name] = value
                 changed = True
@@ -212,7 +223,8 @@ def arm_name(tree: Path) -> str:
 
 
 def guard_output_paths(tree: Path, *, baseline: Path = None,
-                       other_candidates=(), arm: str = None) -> dict:
+                       other_candidates=(), arm: str = None,
+                       location: Path = None) -> dict:
     """Refuse a candidate that would write into the baseline or a sibling.
 
     Returns the resolved output paths when the candidate is isolated, and
@@ -221,7 +233,18 @@ def guard_output_paths(tree: Path, *, baseline: Path = None,
     tree = Path(tree).resolve()
     base = (Path(baseline).resolve() if baseline is not None
             else baseline_path().resolve())
-    declared = {name: value for name, value in _declared_paths(tree).items()
+    promoted = Path(location) if location is not None else (
+        Path("/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE") / (arm or arm_name(tree)))
+    declared_all = _declared_paths(tree, location=promoted)
+    # A repository root that depends on the file's depth is correct in the round
+    # tree and wrong after promotion; it is checked where the trainer will run.
+    for name, value in declared_all.items():
+        if name in ("REPO_ROOT", "_REPO_ROOT", "ROOT", "_ROOT", "PROJECT_ROOT", "REPO"):
+            if Path(value).resolve() != Path("/home/wlia0047/ar57/wenyu/GeneRec").resolve():
+                raise BaselineError("the trainer's " + name + " resolves to " + str(value) +
+                                    " instead of the repository root once the tree is "
+                                    "promoted; use the absolute repository path")
+    declared = {name: value for name, value in declared_all.items()
                 if name in _OUTPUT_CONSTANTS}
     if not declared:
         raise BaselineError("the candidate declares no output path: " + str(tree))
