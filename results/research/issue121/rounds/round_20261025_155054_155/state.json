@@ -336,51 +336,66 @@
   "matrix": {
     "dimensions": [
       "novelty",
-      "scientific_motivation",
-      "feasibility",
-      "downstream_impact",
-      "experimental_distinctness"
+      "behavior_problem_meaning",
+      "coupling_strength",
+      "implementability",
+      "downstream_potential",
+      "experimental_diversity"
     ],
     "rows": [
       {
         "disagreement": {
-          "downstream_impact": null,
-          "experimental_distinctness": null,
-          "feasibility": null,
-          "novelty": 0.0,
-          "scientific_motivation": null
+          "behavior_problem_meaning": 0.0,
+          "coupling_strength": 1.0,
+          "downstream_potential": 0.0,
+          "experimental_diversity": 0.0,
+          "implementability": 0.0,
+          "novelty": 0.0
         },
         "idea_id": "transition_geodesic_residual",
-        "incomplete_scorers": [
-          "scoring_1",
-          "scoring_2",
-          "scoring_3"
-        ],
-        "max_disagreement": 0.0,
+        "incomplete_scorers": [],
+        "max_disagreement": 1.0,
         "means": {
-          "downstream_impact": null,
-          "experimental_distinctness": null,
-          "feasibility": null,
-          "novelty": 4.0,
-          "scientific_motivation": null
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 3.6666666666666665,
+          "downstream_potential": 4.0,
+          "experimental_diversity": 4.0,
+          "implementability": 3.0,
+          "novelty": 4.0
         },
         "medians": {
-          "downstream_impact": null,
-          "experimental_distinctness": null,
-          "feasibility": null,
-          "novelty": 4.0,
-          "scientific_motivation": null
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 4.0,
+          "downstream_potential": 4.0,
+          "experimental_diversity": 4.0,
+          "implementability": 3.0,
+          "novelty": 4.0
         },
-        "overall_mean": 4.0,
+        "overall_mean": 3.7777777777777772,
         "overall_median": 4.0,
         "per_scorer": {
           "scoring_1": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
             "novelty": 4.0
           },
           "scoring_2": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 3.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
             "novelty": 4.0
           },
           "scoring_3": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
             "novelty": 4.0
           }
         },
@@ -410,52 +425,61 @@
         "scope_reasons": [],
         "scope_verdict": "IN_SCOPE",
         "scorers_above_median_threshold": 3,
-        "unscored_dimensions": [
-          "scientific_motivation",
-          "feasibility",
-          "downstream_impact",
-          "experimental_distinctness"
-        ]
+        "unscored_dimensions": []
       },
       {
         "disagreement": {
-          "downstream_impact": null,
-          "experimental_distinctness": null,
-          "feasibility": null,
-          "novelty": 0.0,
-          "scientific_motivation": null
+          "behavior_problem_meaning": 0.0,
+          "coupling_strength": 0.0,
+          "downstream_potential": 0.0,
+          "experimental_diversity": 1.0,
+          "implementability": 1.0,
+          "novelty": 0.0
         },
         "idea_id": "transition_busemann_gate",
-        "incomplete_scorers": [
-          "scoring_1",
-          "scoring_2",
-          "scoring_3"
-        ],
-        "max_disagreement": 0.0,
+        "incomplete_scorers": [],
+        "max_disagreement": 1.0,
         "means": {
-          "downstream_impact": null,
-          "experimental_distinctness": null,
-          "feasibility": null,
-          "novelty": 4.0,
-          "scientific_motivation": null
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 4.0,
+          "downstream_potential": 4.0,
+          "experimental_diversity": 4.333333333333333,
+          "implementability": 2.3333333333333335,
+          "novelty": 4.0
         },
         "medians": {
-          "downstream_impact": null,
-          "experimental_distinctness": null,
-          "feasibility": null,
-          "novelty": 4.0,
-          "scientific_motivation": null
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 4.0,
+          "downstream_potential": 4.0,
+          "experimental_diversity": 4.0,
+          "implementability": 2.0,
+          "novelty": 4.0
         },
-        "overall_mean": 4.0,
+        "overall_mean": 3.777777777777778,
         "overall_median": 4.0,
         "per_scorer": {
           "scoring_1": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 2.0,
             "novelty": 4.0
           },
           "scoring_2": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 2.0,
             "novelty": 4.0
           },
           "scoring_3": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 5.0,
+            "implementability": 3.0,
             "novelty": 4.0
           }
         },
@@ -479,52 +503,61 @@
         "scope_reasons": [],
         "scope_verdict": "IN_SCOPE",
         "scorers_above_median_threshold": 3,
-        "unscored_dimensions": [
-          "scientific_motivation",
-          "feasibility",
-          "downstream_impact",
-          "experimental_distinctness"
-        ]
+        "unscored_dimensions": []
       },
       {
         "disagreement": {
-          "downstream_impact": null,
-          "experimental_distinctness": null,
-          "feasibility": null,
-          "novelty": 1.0,
-          "scientific_motivation": null
+          "behavior_problem_meaning": 0.0,
+          "coupling_strength": 1.0,
+          "downstream_potential": 1.0,
+          "experimental_diversity": 1.0,
+          "implementability": 0.0,
+          "novelty": 1.0
         },
         "idea_id": "branch_curvature_gate",
-        "incomplete_scorers": [
-          "scoring_1",
-          "scoring_2",
-          "scoring_3"
-        ],
+        "incomplete_scorers": [],
         "max_disagreement": 1.0,
         "means": {
-          "downstream_impact": null,
-          "experimental_distinctness": null,
-          "feasibility": null,
-          "novelty": 3.6666666666666665,
-          "scientific_motivation": null
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 4.666666666666667,
+          "downstream_potential": 3.6666666666666665,
+          "experimental_diversity": 4.333333333333333,
+          "implementability": 3.0,
+          "novelty": 3.6666666666666665
         },
         "medians": {
-          "downstream_impact": null,
-          "experimental_distinctness": null,
-          "feasibility": null,
-          "novelty": 4.0,
-          "scientific_motivation": null
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 5.0,
+          "downstream_potential": 4.0,
+          "experimental_diversity": 4.0,
+          "implementability": 3.0,
+          "novelty": 4.0
         },
-        "overall_mean": 3.6666666666666665,
+        "overall_mean": 3.888888888888889,
         "overall_median": 4.0,
         "per_scorer": {
           "scoring_1": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
             "novelty": 3.0
           },
           "scoring_2": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 5.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
             "novelty": 4.0
           },
           "scoring_3": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 5.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 5.0,
+            "implementability": 3.0,
             "novelty": 4.0
           }
         },
@@ -548,12 +581,7 @@
         "scope_reasons": [],
         "scope_verdict": "IN_SCOPE",
         "scorers_above_median_threshold": 3,
-        "unscored_dimensions": [
-          "scientific_motivation",
-          "feasibility",
-          "downstream_impact",
-          "experimental_distinctness"
-        ]
+        "unscored_dimensions": []
       }
     ],
     "scale": [
@@ -787,19 +815,19 @@
   "selection": {
     "disagreement": {
       "branch_curvature_gate": 1.0,
-      "transition_busemann_gate": 0.0,
-      "transition_geodesic_residual": 0.0
+      "transition_busemann_gate": 1.0,
+      "transition_geodesic_residual": 1.0
     },
     "rejected": [
       {
-        "idea_id": "transition_geodesic_residual",
+        "idea_id": "transition_busemann_gate",
         "overall_median": 4.0,
         "reasons": [
           "outside the configured selection cap"
         ]
       },
       {
-        "idea_id": "branch_curvature_gate",
+        "idea_id": "transition_geodesic_residual",
         "overall_median": 4.0,
         "reasons": [
           "outside the configured selection cap"
@@ -819,9 +847,9 @@
     },
     "selected": [
       {
-        "idea_id": "transition_busemann_gate",
-        "max_disagreement": 0.0,
-        "overall_mean": 4.0,
+        "idea_id": "branch_curvature_gate",
+        "max_disagreement": 1.0,
+        "overall_mean": 3.888888888888889,
         "overall_median": 4.0
       }
     ],
@@ -862,6 +890,6 @@
     }
   ],
   "step": "stage2",
-  "updated_at": 1792907943.908156,
+  "updated_at": 1792908591.7197833,
   "verification": {}
 }

@@ -1,0 +1,12 @@
+TREE: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_170003_163/transition_tangent_warp
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: model/model.py
+CHANGED FILE: smoke_test.py
+DEVIATION: The fixed sparse projection uses one seeded signed hash bucket per coordinate rather than a dense random projection matrix | This preserves a fixed-seed sparse projection while avoiding quadratic dense memory and work.
+DEVIATION: Transition profiles use adjacent pairs in each training row's history followed by its target, rather than relying on a separate event-order reconstruction | The provided parquet rows expose ordered histories and targets, and this uses training-only consecutive transitions available in that representation.
+DEVIATION: The projective profile width is fixed to 64 and curvature to c=1 with tangent radius 0.1 | These are concrete defaults absent from the proposed specification, keeping the architecture addition minimal and numerically bounded.
+DEVIATION: The single-GPU launch bypass uses GENREC_SINGLE_GPU=1 | The required environment variable name was specified, but no trigger value was; 1 is used as the explicit opt-in.
+ASSUMPTION: The parquet history arrays are chronological and the target is the next item after the history, so adjacent history elements and the final history-to-target pair represent directed training transitions.
+SMOKE COMMAND: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 smoke_test.py
+SMOKE RESULT: PASS finite_loss=2.028419 behavior_grad=0.004733 sid_shape=(12, 3) geometry_and_behavior_controls=distinct
+NOTES: The model applies the learned behavior tangent correction through Poincare exp-map, Mobius addition and log-map before the unchanged Euclidean RQ module; profiles feed both training and SID inference. The smoke test verifies finite forward/backward loss, nonzero behavior-map gradients, behavior-off/Euclidean-vs-curved pathway distinction, and valid three-level SID indices plus a uniqueness extension shape. The full 3000-epoch trainer and Stage3 Recall@10 were not run. Profile projection is precomputed on CPU from training parquet only. Path constants remain repository-root-derived, and ARM_NAME is TIGER_transition_tangent_warp.

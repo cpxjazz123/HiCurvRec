@@ -1,0 +1,808 @@
+{
+  "blocked": [],
+  "created_at": 1792908003.1644683,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1792908003.1644685,
+      "event": "round_created"
+    },
+    {
+      "at": 1792908003.1861227,
+      "event": "round_created",
+      "pid": null
+    },
+    {
+      "at": 1792908105.4718862,
+      "duplicates": 0,
+      "event": "ideation_complete",
+      "ideas": 3
+    },
+    {
+      "at": 1792908168.4302065,
+      "event": "scoring_complete",
+      "rejected": 2,
+      "selected": 1
+    },
+    {
+      "at": 1792908512.5013633,
+      "event": "implementation_verified",
+      "idea_id": "transition_tangent_warp",
+      "revision": 0
+    }
+  ],
+  "ideas": [
+    {
+      "ablation_behavior_off": "Set lambda=0 and train the same architecture, schedule, seeds, and baseline RQ-VAE objective; no transition edges enter training.",
+      "ablation_both_on": "Use training-only directed edges, Poincare exp map and distance at c=1, and the stated joint objective; compare all three runs using the same Stage3 evaluation protocol.",
+      "ablation_geometry_off": "Keep exactly the same sampled positive/negative edges and lambda, but replace exp_0^c and d_Poincare_c with identity mapping and Euclidean distance; keep architecture and other losses fixed.",
+      "also_proposed_by": [
+        "ideation_1"
+      ],
+      "behavior_computation": "From training split only, count consecutive pairs (i,j) within each user's chronologically ordered training interactions; sample positive edges proportional to counts. For each positive, sample a non-positive catalog item as negative (preferably matched to the positive's log-popularity bin). No validation or test sequences are used.",
+      "behavior_signal": "Directed item-to-next-item transitions from user training sequences.",
+      "cost_estimate": "Precompute deduplicated directed transitions from training events. At 24556 items, 24 steps/epoch, and 3000 epochs there are 72000 updates (about 1024 item examples/update); sample one positive edge and one negative per example, adding two encoder-side hyperbolic maps/distances per pair. Incremental cost is roughly one extra small-batch encoder forward for endpoints plus O(Bd) maps/distances, expected modest versus baseline, with no all-pairs computation.",
+      "coupling_equation": "L = L_RQVAE + lambda * E_(i,j+,j-) [softplus(m + d_Poincare_c(exp_0^c(u_i), exp_0^c(u_j+)) - d_Poincare_c(exp_0^c(u_i), exp_0^c(u_j-)))]; the sampled directed behavior edge (i,j+) selects the positive endpoint, and d_Poincare_c is the curved term.",
+      "coupling_path": "A sampled training edge determines which two encoder outputs are mapped into the curved ball and compared by geodesic distance; this loss updates encoder parameters, which produce the vectors subsequently quantized into SIDs. Removing edges removes the pairwise objective; replacing the curved map/distance removes the hyperbolic computation.",
+      "duplicate_count": 1,
+      "falsifiable_hypothesis": "The encoder can learn a geometry in which observed next-item edges are more locally coherent than popularity-matched non-edges while preserving content reconstruction; this should alter encoder gradients and some SIDs and, if useful, raise Stage3 test Recall@10 above 0.065. Measure against the prescribed three runs and retain only if the both-on result improves on plain baseline 0.063354 and reaches the target.",
+      "fingerprint": "a9ac07d483aea15e",
+      "hyperbolic_location": "Encoder training objective, before unchanged residual quantization and Euclidean codeword assignment.",
+      "hyperbolic_operator": "Poincare-ball exponential map and geodesic distance d_c at fixed c=1 (sectional curvature -1); clamp points inside radius (1-epsilon)/sqrt(c).",
+      "idea_id": "transition_geodesic_encoder",
+      "key_change": "Map encoder outputs to a bounded Poincare ball and optimize a directed transition-ranking objective using Poincare distance, alongside the unchanged reconstruction and RQ-VAE losses. Feed the resulting encoder outputs through the existing Euclidean RQ assignment so any SID change comes from behavior-shaped encoder updates, not curved assignment.",
+      "leakage_boundary": "Construct edge counts and negative-sampling distribution exclusively from the training interaction split. Item content embeddings and catalog IDs are fixed inputs; do not use validation/test transitions, histories, labels, or interaction-derived statistics when training this loss or exporting SIDs.",
+      "motivation": "Static item embeddings can put items with similar content nearby while failing to represent which items users actually move between. Training-only directed transitions provide a next-item signal without involving validation or test histories.",
+      "novelty": "Unlike the existing Busemann transition gate, transition behavior does not score or reweight codeword assignments; it trains the encoder representation via a hyperbolic geodesic objective. Unlike prefix-mass geometry, it acts on individual observed training transitions before quantization.",
+      "observables": "Compare encoder gradient contributions and per-item encoder vectors, SID assignment changes, positive-versus-negative transition geodesic ranking accuracy, and Stage3 test Recall@10. The expected useful effect is improved ranking of held-out next items and Recall, not a required reduction in collisions or prefix statistics.",
+      "origin_agent": "ideation_1",
+      "risks": [
+        "A transition objective may overfit frequent edges, conflict with reconstruction, or make latent representations less discriminative for unseen next items. Euclidean quantization may erase the useful geometry; tuning the loss weight and popularity-matched negatives is necessary. Cost can rise if endpoint embeddings are repeatedly re-encoded rather than cached where gradients permit."
+      ],
+      "safeguards": "Use epsilon-clamped norms and atanh arguments below 1-epsilon; constrain mapped norms below (1-epsilon)/sqrt(c); use stable zero-norm limits; finite-check loss and gradients; cap gradient norm; exclude observed positive targets from negatives; fix random seeds and report multiple seeds. Start with small lambda and tune only on training-side diagnostics, not test Recall.",
+      "scope_reasons": [],
+      "scope_verdict": "IN_SCOPE",
+      "spec_equations": "u_k=f_theta(x_k); z_k=exp_0^c(u_k); d_c(a,b)=(2/sqrt(c))*atanh(sqrt(c)*||(-a) MobiusAdd_c b||); L_trans=mean softplus(m+d_c(z_i,z_j+)-d_c(z_i,z_j-)); L=L_RQVAE+lambda L_trans. For stable exp map use exp_0^c(u)=tanh(sqrt(c)||u||)*u/(sqrt(c)||u||), with the zero-norm limit set to u. Keep baseline quantizer and codebook distances unchanged.",
+      "spec_inputs_outputs": "Inputs are frozen item content vectors, training-only sampled edge triples (i,j+,j-), encoder f_theta, c, m and lambda. Output is scalar training loss and its gradients to encoder parameters; after training, encoder vectors pass to baseline SID construction.",
+      "specification": {
+        "text": "For each training edge (i,j), obtain encoder tangent vectors u_i,u_j; map z=exp_0^c(u), with curvature -c, and minimize softplus(m + d_c(z_i,z_j+) - d_c(z_i,z_neg)). Negatives are training-catalog items sampled uniformly or by popularity, excluding j+. Apply this loss to encoder parameters jointly with baseline RQ-VAE loss; quantizer selection remains baseline Euclidean nearest-codeword."
+      },
+      "title": "Train the encoder in a transition-shaped Poincare latent space"
+    },
+    {
+      "ablation_behavior_off": "Keep Lorentz maps but set b_i=0 for every item, making curvature constant across items; train and evaluate with the same seed/budget.",
+      "ablation_both_on": "Use train-only b_i, learned bounded k_i, and the Lorentz Exp/Log encoder path; train RQ-VAE, emit SIDs, then run the fixed Stage3 protocol and report test Recall@10.",
+      "ablation_geometry_off": "Keep the same computed b_i and curvature head, but replace Lorentz Exp/Log with identity z_i=f_theta(x_i) (flat/Euclidean path); retain parameter-count controls if feasible.",
+      "also_proposed_by": [
+        "ideation_2"
+      ],
+      "behavior_computation": "From train split only, count directed adjacent pairs c_ij across each user's chronologically ordered training interactions. For each source i, smooth its observed outgoing-neighbor distribution with alpha=0.1 pseudocount per observed neighbor, calculate Shannon entropy H_i, and normalize by log(max(2,d_i)); set zero for no observed successors. Compute once before RQ-VAE training; do not include validation/test histories or edges.",
+      "behavior_signal": "Per-item outgoing sequential-transition branching entropy, normalized to [0,1].",
+      "cost_estimate": "Precomputation O(E_train), storage O(24556), plus O(Bd) Lorentz exp/log maps per optimizer step, no additional codebook-distance or graph computation. At the frozen scale this is 24*3000=72,000 training steps; total added arithmetic is O(72,000*B*d) map work (B is the existing step's item batch size), expected modest relative to the MLP and quantizer. Stage3 inference adds the same per-item map used for SID generation only, not recommender inference.",
+      "coupling_equation": "b_i=H_train(next|i)/log(max(2,d_i)); k_i=clip(softplus(a_0+a_1*b_i)+k_min,0.05,5); z_i=Log_o^{K_i}(Exp_o^{K_i}([0,f_theta(x_i)])); SID_i=RQ_Euclidean(z_i). The coupling is the explicit b_i -> K_i -> Log/Exp-mapped z_i path (the quantizer's Euclidean assignment distance itself is unchanged).",
+      "coupling_path": "Training transition entropy b_i determines item-specific negative curvature k_i; k_i determines the Lorentz exp/log transformation of the encoder output; that transformed vector determines residuals, selected codes, quantization/reconstruction gradients, and ultimately the item's SID. Removing b_i fixes curvature; removing the curved map removes the behaviour-conditioned representation change.",
+      "duplicate_count": 1,
+      "falsifiable_hypothesis": "The mapping can distribute high-branching items into encoder representations with useful hierarchy/volume while retaining predictable-item compactness; keep only if fixed-seed Stage3 test Recall@10 exceeds 0.065 and beats the matched Euclidean and behaviour-off runs. Inspect per-item curvature, gradient norms, and SID changes only as diagnostics, not acceptance criteria.",
+      "fingerprint": "868667914aabe84e",
+      "hyperbolic_location": "In the item encoder output path immediately before the first RQ quantization level; the transformed tangent representation becomes the input to all residual quantization levels and reconstruction loss.",
+      "hyperbolic_operator": "Lorentz-model exponential map and origin logarithmic map on constant negative curvature K_i=-k_i, where k_i=clip(softplus(a_0+a_1*b_i)+k_min,0.05,5.0). The operator is a genuine curved manifold map, not a named Euclidean distance.",
+      "idea_id": "branch_curvature_encoder",
+      "key_change": "Precompute each item's smoothed outgoing-transition entropy from training sequences and use it to select item-conditioned negative curvature in the encoder's Lorentz exp-map/log-map path. Quantize the resulting tangent vector with the existing Euclidean RQ-VAE, so behaviour and curvature jointly alter the vectors, residuals, assignments, and encoder updates.",
+      "leakage_boundary": "Build the transition counts exclusively from the training split's interactions and freeze b_i before model fitting. Validation/test are used only for downstream evaluation and never for entropy computation, curvature input, parameter selection, SID assignment, or codebook initialization.",
+      "motivation": "Items with many behaviorally distinct continuations should be represented in a space that can expand those branches, while predictable transitions need less radial expansion; a single global encoder geometry cannot express that difference.",
+      "novelty": "Unlike the measured curved assignment-score approaches, this changes the encoder representation before quantization: training-only transition branching controls the curvature of a Lorentz manifold map, and the resulting mapped vector changes the ordinary RQ-VAE input and its gradients. It does not reweight codeword selection distances.",
+      "observables": "On/off coupling should change encoder gradients and item latent vectors, and consequently potentially SID assignments; quantify changed-code fraction and transition-predictability from prefixes as diagnostics. Primary observable is Stage3 test Recall@10; require >0.065 and report its matched ablations.",
+      "origin_agent": "ideation_2",
+      "risks": [
+        "Entropy may mostly encode item popularity or sparse-count noise; item-conditioned curvature can become a shortcut or destabilize maps; the origin log-map can partly cancel curvature's benefit; Stage3 may prefer semantic reconstruction over transition branching. Tune alpha and curvature bounds on training behavior only, and use identical seeds/training budget for ablations."
+      ],
+      "safeguards": "Compute maps and norms in float32 even under mixed precision; clamp k to [0.05,5], q to at most 10, use eps=1e-6 and stable small-radius Taylor limits (sinh(q)/q and asinh(q)/q); reject non-finite z_i and log curvature/clamp rates. Set b_i=0 for zero-degree items, avoid validation/test edges, and verify the K->0 identity limit in a unit test.",
+      "scope_reasons": [],
+      "scope_verdict": "IN_SCOPE",
+      "spec_equations": "For x_i, let u_i=f_theta(x_i). Compute (in float32) r_i=||u_i||, q_i=sqrt(k_i)*r_i, and Lorentz point v_i=(cosh(q_i)/sqrt(k_i), sinh(q_i)*u_i/(sqrt(k_i)*max(r_i,eps))) under signature (-,+,...,+). Compute tangent log vector z_i=(asinh(sqrt(k_i)*||v_i_spatial||)/(sqrt(k_i)*max(||v_i_spatial||,eps)))*v_i_spatial; feed z_i into the unchanged RQ-VAE. For numerical safety constrain q_i<=10 (scale u_i down before the map when needed), and use series limits near zero; alternatively implement standard tested Lorentz Exp/Log routines. Train with L=L_recon+L_RQ, backpropagating through maps and a_0,a_1; initialize a_1=0.1 and k near 1. At SID export, use the identical frozen encoder/map and deterministic argmin quantization.",
+      "spec_inputs_outputs": "Inputs are the existing item embedding x_i, frozen train-only scalar b_i, encoder parameters theta, and trainable curvature scalars a_0,a_1. Output z_i in R^d, which is consumed by the existing RQ-VAE and yields the usual integer SID; no changes to Stage3 vocabulary format are required.",
+      "specification": {
+        "text": "For training item i, compute b_i=H(p(.|i))/log(max(2,d_i)), with p(j|i) proportional to c_ij+alpha over observed outgoing neighbors and c_ij counts of adjacent item pairs in train only; set b_i=0 when d_i=0. Set k_i=softplus(a_0+a_1*b_i)+k_min, curvature K_i=-k_i (initialize a_1>0; clamp k_i to [0.05,5]). Given encoder output u_i in R^d, map v_i=Exp^K_i_o([0,u_i]) onto the Lorentz hyperboloid, then z_i=Log^K_i_o(v_i) in the origin tangent space; feed z_i to the unchanged Euclidean residual quantizer and decoder. Optimize ordinary reconstruction/VQ losses end-to-end, including gradients through b_i-independent learnable curvature parameters (b_i is fixed). Use the same transformation in get_indices. Costs: precompute O(E_train) once and store one scalar per item; each epoch minibatch adds O(Bd) map operations, no pairwise item matrix. At 24 steps/epoch for 3000 epochs this is 72,000 minibatch passes; additional work is 72,000 Lorentz map evaluations per batch (linear in its item count and d), with no extra graph pass or Stage3 cost. The extra map may add a modest encoder-side overhead; measure wall-clock against baseline."
+      },
+      "title": "Let transition branching set the encoder's local hyperbolic curvature"
+    },
+    {
+      "ablation_behavior_off": "Set all profiles and u_i to zero while retaining the Poincare maps and identical encoder, RQ-VAE, seeds and training budget; this isolates the contribution of training behaviour.",
+      "ablation_both_on": "Use training-only profiles, learned bounded tangent displacement, and Poincare exp-map/Mobius-add/log-map composition; export the resulting SIDs and evaluate unchanged Stage3 test_R@10.",
+      "ablation_geometry_off": "Keep the same training profiles and learned W, but replace exp/log/Mobius composition with Euclidean z'_i=z_i+u_i; retain all other settings to isolate curvature.",
+      "also_proposed_by": [
+        "ideation_3"
+      ],
+      "behavior_computation": "Within train split only, group events by user, sort by timestamp, count adjacent ordered item pairs (i,j). Normalize each item's outgoing counts into a successor distribution and its incoming counts into a predecessor distribution; create a sparse concatenated row per item. Do not bridge split boundaries or count non-adjacent events.",
+      "behavior_signal": "Per-item sparse directed predecessor and successor co-consumption profiles, representing which items users consume immediately before and after the item in training sequences.",
+      "cost_estimate": "Precompute sparse transition profiles once in O(E_train) time and O(E_train) sparse storage; project per batch with sparse matrix multiplies. At 24 steps/epoch x 3000 epochs over 24556 items (about 1024 items/step), added batch work is O(nnz_batch*d_b + B*d_b*d + B*d) for profile projection, learned projection and Poincare maps, plus O(B*d) temporary vectors; no B-by-codebook curved distances and no extra user/item pair sampling. Expect a modest encoder-side overhead; measure actual epoch wall time against matched ablations.",
+      "coupling_equation": "z'_i = log_0^c(exp_0^c(z_i) ⊕_c exp_0^c( rho*tanh(WP[a_i;b_i]) )); the training behaviour profile determines the tangent displacement and the curved Mobius/exp-log operations determine how that displacement changes the encoder latent used for SIDs.",
+      "coupling_path": "Training-only directed counts -> sparse item profile -> learned tangent displacement u_i -> Poincare exp-map and Mobius addition with encoded point -> log-map latent z'_i -> ordinary RQ assignments and reconstruction/VQ gradients -> exported SIDs.",
+      "duplicate_count": 1,
+      "falsifiable_hypothesis": "Directed predecessor/successor context supplies an item-specific tangent correction that makes semantically similar but behaviorally distinct items more separable in the latent codes, while grouping items with compatible continuation context; this improves Stage3 test Recall@10 if the learned warp preserves useful semantic reconstruction. Observe latent displacement norms, SID changes conditioned on transition-profile similarity, and Stage3 test Recall@10; retain only if both-on exceeds 0.065 and both controls.",
+      "fingerprint": "8432d303e30bf9e2",
+      "hyperbolic_location": "Between encoder output and the existing Euclidean RQ-VAE quantizer, where the training-profile-driven tangent vector is composed with the encoded point on the negatively curved ball and mapped back to tangent coordinates.",
+      "hyperbolic_operator": "Poincare-ball exp_0^c and log_0^c maps plus Mobius addition at fixed positive curvature magnitude c (sectional curvature -c).",
+      "idea_id": "transition_tangent_warp",
+      "key_change": "Build a sparse directed transition profile for each training item, project it through a small learned map into a bounded tangent displacement, and combine that displacement with the encoder output by a Poincare exp-map/log-map round trip before ordinary residual quantization; train the map through the standard reconstruction-plus-quantization objective.",
+      "leakage_boundary": "Derive profiles only from training interactions and freeze them before Stage2 SID construction. Validation/test events are not read for the profile, projection, map training, or code export; unseen IDs map to the zero profile, and Stage3 evaluation uses frozen SIDs/model.",
+      "motivation": "Semantic embedding neighborhoods may not preserve which items are likely to follow one another; a recommender benefits when training successor relationships influence the geometry of the encoded items before the unchanged RQ assignment.",
+      "novelty": "This puts the behaviour-geometry coupling in the encoder's latent map, not in codeword distance, assignment weighting, prefix occupancy matching, or a separate behavioural loss. The same training transition-derived vector controls an exp/log-map warp that changes the latent vector presented to the ordinary Euclidean RQ-VAE.",
+      "observables": "Compare latent vectors, SID sequences, quantization/reconstruction gradients, and Stage3 test Recall@10; the coupled run should produce profile-dependent latent/SID changes and improve test_R@10 above 0.065 versus each control.",
+      "origin_agent": "ideation_3",
+      "risks": [
+        "The profile projection can encode popularity or sparse noise rather than transferable continuation structure; the encoder may cancel the warp, or reconstruction loss may overemphasize behaviour at the expense of content. Tune rho and regularize W using train-only diagnostics, not test feedback; include a profile-shuffling diagnostic if feasible."
+      ],
+      "safeguards": "Use c>0 fixed and small (e.g. 0.1), clamp ball norms to (1-eps)/sqrt(c), clamp atanh arguments to [-1+eps,1-eps], use stable small-norm limits for exp/log, compute geometry in float32, bound u norm by rho (e.g. rho<=0.25), normalize count rows with eps, use deterministic sparse projection and zero profiles for unseen items, and monitor finite values, latent norms and reconstruction loss. Keep train/validation/test separation and identical seeds/configuration across ablations.",
+      "scope_reasons": [],
+      "scope_verdict": "IN_SCOPE",
+      "spec_equations": "c_ij=sum_{u,t}1[i_t=i,i_{t+1}=j] over training sequences only. a_i[j]=c_ij/(sum_l c_il+eps), b_i[j]=c_ji/(sum_l c_li+eps). v_i=P[a_i;b_i], u_i=rho*tanh(Wv_i), z_i=Encoder(e_i). For curvature -c, lambda_x=2/(1-c||x||^2); exp_0^c(v)=tanh(sqrt(c)||v||)*v/(sqrt(c)||v||), log_0^c(x)=atanh(sqrt(c)||x||)*x/(sqrt(c)||x||), and x⊕_c y=((1+2c<x,y>+c||y||²)x+(1-c||x||²)y)/(1+2c<x,y>+c²||x||²||y||²). Then z'_i=log_0^c(exp_0^c(z_i)⊕_c exp_0^c(u_i)); apply existing Euclidean RQ-VAE to z'_i.",
+      "spec_inputs_outputs": "Inputs are item embedding e_i, item ID, frozen sparse train-profile table, sparse projection P, learned W, rho and curvature c. Outputs are transformed latent z'_i for the existing RQ-VAE, which returns quantized vector, losses and SID tokens.",
+      "specification": {
+        "text": "Let c_ij be the count of consecutive training-only transitions i->j. For each i, form sparse normalized outgoing and incoming profiles a_i[j]=c_ij/(sum_l c_il+eps) and b_i[j]=c_ji/(sum_l c_li+eps), concatenate them, and apply a fixed-seed sparse random projection P to dimension d_b followed by a learned linear map W: u_i = rho*tanh(W P[a_i;b_i]), where rho bounds tangent norm. Given base encoder vector z_i in R^d, map z_i to the Poincare ball at curvature -c using x_i=exp_0^c(z_i); form y_i=MobiusAdd_c(x_i, exp_0^c(u_i)); return z'_i=log_0^c(y_i) to the unchanged Euclidean residual quantizer and decoder. Optimize ordinary reconstruction and VQ losses only; gradients through z'_i update encoder and W. Set u_i=0 for missing/unknown profiles."
+      },
+      "title": "Train a behaviour-conditioned hyperbolic tangent warp before residual quantization"
+    }
+  ],
+  "ideas_rejected": [],
+  "implementations": [
+    {
+      "assumptions": [
+        "The parquet history arrays are chronological and the target is the next item after the history, so adjacent history elements and the final history-to-target pair represent directed training transitions."
+      ],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "changed_files": [
+        "train_rqvae.py",
+        "model/model.py",
+        "smoke_test.py"
+      ],
+      "deviations": [
+        {
+          "item": "The fixed sparse projection uses one seeded signed hash bucket per coordinate rather than a dense random projection matrix",
+          "reason": "This preserves a fixed-seed sparse projection while avoiding quadratic dense memory and work."
+        },
+        {
+          "item": "Transition profiles use adjacent pairs in each training row's history followed by its target, rather than relying on a separate event-order reconstruction",
+          "reason": "The provided parquet rows expose ordered histories and targets, and this uses training-only consecutive transitions available in that representation."
+        },
+        {
+          "item": "The projective profile width is fixed to 64 and curvature to c=1 with tangent radius 0.1",
+          "reason": "These are concrete defaults absent from the proposed specification, keeping the architecture addition minimal and numerically bounded."
+        },
+        {
+          "item": "The single-GPU launch bypass uses GENREC_SINGLE_GPU=1",
+          "reason": "The required environment variable name was specified, but no trigger value was; 1 is used as the explicit opt-in."
+        }
+      ],
+      "idea_id": "transition_tangent_warp",
+      "notes": "The model applies the learned behavior tangent correction through Poincare exp-map, Mobius addition and log-map before the unchanged Euclidean RQ module; profiles feed both training and SID inference. The smoke test verifies finite forward/backward loss, nonzero behavior-map gradients, behavior-off/Euclidean-vs-curved pathway distinction, and valid three-level SID indices plus a uniqueness extension shape. The full 3000-epoch trainer and Stage3 Recall@10 were not run. Profile projection is precomputed on CPU from training parquet only. Path constants remain repository-root-derived, and ARM_NAME is TIGER_transition_tangent_warp.",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_tangent_warp/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_tangent_warp/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_tangent_warp/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_tangent_warp/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_tangent_warp/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_tangent_warp"
+      },
+      "proposal_sha256": "0a014cfbca905f9bfb8dedaf73acc5f5c8bcf4d57a4c3bef1f1aada66d01c361",
+      "revision": 0,
+      "smoke": {
+        "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 smoke_test.py",
+        "result": "PASS finite_loss=2.028419 behavior_grad=0.004733 sid_shape=(12, 3) geometry_and_behavior_controls=distinct"
+      },
+      "source_digest": "168b8f04f7514297808c02786931cb5ec64b30244889e85e4deea9d5d648377d",
+      "status": "verified",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_170003_163/transition_tangent_warp",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Statically traced the training-only frame transition-count/profile construction through profile batching into the encoder warp, curved operations, and ordinary RQ-VAE; inspected the concrete forward call at train_rqvae.py:343-349. No runtime was run.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_170003_163/transition_tangent_warp/train_rqvae.py:178-197 -> model/model.py:50-59,61-67",
+              "findings": [
+                {
+                  "correction": "N/A",
+                  "detail": "None.",
+                  "location": "N/A",
+                  "reproduction": "N/A",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Source inspection traced autograd from reconstruction/VQ loss through the differentiable Mobius/exp/log warp and behavior_map; inspected the supplied forward/backward/control smoke code at smoke_test.py:13-25 (not executed). The profile and geometry-off code paths are explicitly switchable in _warp at model.py:50-59; the behavior_map is on the standard loss path when profiles are provided.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_170003_163/transition_tangent_warp/model/model.py:12-29,50-67,82-89",
+              "findings": [
+                {
+                  "correction": "N/A",
+                  "detail": "None. The bounded exp-map and log-map clamp keep float32 atanh inputs below one, and the Möbius denominator is clamped positive. The smoke source checks a finite loss and nonzero finite behavior-map gradient and checks distinct warped/no-behavior/Euclidean outputs; no runtime claim is made.",
+                  "location": "N/A",
+                  "reproduction": "N/A",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Statically inspected root and input path resolution, frozen train.parquet profile source, training/export indexing, output locations, launcher and the single-card branch. Runtime trainer execution was not performed.",
+              "exercised_path": "results/research/issue121/trees/round_20261025_170003_163/transition_tangent_warp/train_rqvae.py:40-67,178-197,256-297,414-457,464-493",
+              "findings": [
+                {
+                  "correction": "N/A",
+                  "detail": "None. Outputs resolve to results/stage2_RQ-VAE/TIGER_transition_tangent_warp (the promoted arm), input paths use the repository's stage1 embedding and stage0 training parquet, and SID export enumerates every embedding row into matching integer-keyed JSON entries. The launcher honors GENREC_SINGLE_GPU=\"1\" and otherwise invokes the configured four-process torchrun path.",
+                  "location": "N/A",
+                  "reproduction": "N/A",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_transition_tangent_warp_r0_1"
+        }
+      ]
+    }
+  ],
+  "issue": "issue121",
+  "matrix": {
+    "dimensions": [
+      "novelty",
+      "behavior_problem_meaning",
+      "coupling_strength",
+      "implementability",
+      "downstream_potential",
+      "experimental_diversity"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_problem_meaning": 0.0,
+          "coupling_strength": 1.0,
+          "downstream_potential": 0.0,
+          "experimental_diversity": 1.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "idea_id": "transition_geodesic_encoder",
+        "incomplete_scorers": [],
+        "max_disagreement": 1.0,
+        "means": {
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 2.3333333333333335,
+          "downstream_potential": 3.0,
+          "experimental_diversity": 3.3333333333333335,
+          "implementability": 4.333333333333333,
+          "novelty": 3.0
+        },
+        "medians": {
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 2.0,
+          "downstream_potential": 3.0,
+          "experimental_diversity": 3.0,
+          "implementability": 4.0,
+          "novelty": 3.0
+        },
+        "overall_mean": 3.3333333333333335,
+        "overall_median": 3.0,
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 2.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 4.0,
+            "implementability": 5.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 2.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 3.0,
+            "implementability": 4.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 3.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 3.0,
+            "implementability": 4.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "Directed next-item supervision is meaningful and the encoder ranking objective is straightforward to implement, with explicit sampling and modest stated cost. Its novelty is limited because it adds a familiar auxiliary metric-ranking loss, and the stated separation from assignment means hyperbolic geometry and behavior do not jointly determine a computation. Potential benefit is plausible but uncertain because Euclidean quantization may erase geometry learned by the auxiliary objective; the prescribed comparisons help test it.",
+          "scoring_2": "A standard transition-ranking objective plausibly addresses next-item structure and is implementable with modest cost, but its behavior-geometry coupling is weak under the contract because hyperbolic distances only shape encoder gradients alongside the baseline objective, not a jointly conditioned core computation; Euclidean quantization may discard the geometry. Ablations are asserted generally but their required three-way comparisons are not specified. Scores reflect the idea as written; transfer to Stage3 is uncertain.",
+          "scoring_3": "The transition ranking objective is implementable and targets a meaningful mismatch between content similarity and next-item movement; coupling is real but moderate because hyperbolic geometry only shapes the auxiliary encoder objective while quantization remains Euclidean, leaving room for the quantizer to erase its benefit. Novelty and diversity are moderate relative to other plausible encoder-geometry mechanisms. Main uncertainties are whether the ranking signal transfers beyond observed edges, how negatives and loss weighting are chosen, and whether the Euclidean quantizer preserves useful changes."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It specifies training-only directed transitions and Poincare distance, but the transition ranking objective is an auxiliary loss alongside otherwise unchanged reconstruction/RQ-VAE training, rather than a connected behaviour-conditioned curved computation. The hyperbolic operation does not shape the behaviour signal's use in the quantizer or another shared core pathway; removing either component leaves the other core computation intact. It does name behavior-off, Euclidean/geometry-off and both-on comparisons, observable encoder/SID and Recall effects, safeguards and cost, but those do not supply the missing coupling.",
+          "scoring_2": "Training-only directed transitions and Poincare distance are specified, but the behavior-ranking loss and hyperbolic operation form an auxiliary encoder objective rather than a connected pathway in the core quantization computation; the quantizer remains unchanged Euclidean and does not consume the curved representation. Also missing explicit behavior-off, geometry-off/Euclidean, and both-on comparisons in the implementation specification.",
+          "scoring_3": "Training-only directed adjacent-item transitions are explicitly computed, and Poincare exp-map plus distance-based transition ranking updates encoder parameters before quantization. Behavior and geometry jointly shape encoder representations, so either removal changes the core training computation. The specification includes negatives, safeguards through bounded ball mapping, cost, observable encoder/SID and Recall effects, and behavior-off, geometry-off/Euclidean, and both-on comparisons."
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It specifies training-only directed transitions and Poincare distance, but the transition ranking objective is an auxiliary loss alongside otherwise unchanged reconstruction/RQ-VAE training, rather than a connected behaviour-conditioned curved computation. The hyperbolic operation does not shape the behaviour signal's use in the quantizer or another shared core pathway; removing either component leaves the other core computation intact. It does name behavior-off, Euclidean/geometry-off and both-on comparisons, observable encoder/SID and Recall effects, safeguards and cost, but those do not supply the missing coupling.",
+            "scorer": "scoring_1"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Training-only directed transitions and Poincare distance are specified, but the behavior-ranking loss and hyperbolic operation form an auxiliary encoder objective rather than a connected pathway in the core quantization computation; the quantizer remains unchanged Euclidean and does not consume the curved representation. Also missing explicit behavior-off, geometry-off/Euclidean, and both-on comparisons in the implementation specification.",
+            "scorer": "scoring_2"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_median_threshold": 3,
+        "unscored_dimensions": []
+      },
+      {
+        "disagreement": {
+          "behavior_problem_meaning": 1.0,
+          "coupling_strength": 1.0,
+          "downstream_potential": 1.0,
+          "experimental_diversity": 1.0,
+          "implementability": 2.0,
+          "novelty": 1.0
+        },
+        "idea_id": "branch_curvature_encoder",
+        "incomplete_scorers": [],
+        "max_disagreement": 2.0,
+        "means": {
+          "behavior_problem_meaning": 3.3333333333333335,
+          "coupling_strength": 1.3333333333333333,
+          "downstream_potential": 2.3333333333333335,
+          "experimental_diversity": 3.3333333333333335,
+          "implementability": 1.6666666666666667,
+          "novelty": 3.3333333333333335
+        },
+        "medians": {
+          "behavior_problem_meaning": 3.0,
+          "coupling_strength": 1.0,
+          "downstream_potential": 2.0,
+          "experimental_diversity": 3.0,
+          "implementability": 1.0,
+          "novelty": 3.0
+        },
+        "overall_mean": 2.555555555555556,
+        "overall_median": 2.5,
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 1.0,
+            "downstream_potential": 2.0,
+            "experimental_diversity": 3.0,
+            "implementability": 1.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_problem_meaning": 3.0,
+            "coupling_strength": 1.0,
+            "downstream_potential": 2.0,
+            "experimental_diversity": 3.0,
+            "implementability": 1.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_problem_meaning": 3.0,
+            "coupling_strength": 2.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "Branching entropy is a relevant training-only signal, and item-conditioned curvature is an interesting encoder-side direction. However, the exact same-curvature exp/log round trip is identity, so the central mechanism is not implementable as claimed and the stated expected O(Bd) operations do not remedy this degeneracy. Any measured effect would likely be numerical artifacts rather than meaningful curvature-conditioned representation changes; a non-cancelling curved operation would be needed.",
+          "scoring_2": "Branching entropy as a geometry control is an interesting and behavior-relevant direction, but as specified the Exp/Log round trip cancels and the per-item-curvature construction makes faithful implementation unclear. The fixed-seed three comparisons are mentioned at a high level, but the central operation needs redesign before its claimed effect can be tested. Expected benefit is consequently uncertain and implementability is low.",
+          "scoring_3": "The branching-conditioned curvature concept is novel and has an implementable data statistic, but the exact map composition undermines its claimed geometric effect: the matched exp/log round trip cancels curvature rather than introducing hierarchy or volume into the vector passed to the Euclidean quantizer. This is an implementation-level issue, not merely an unfinished derivation. A non-cancelling curved operation or curved quantization path could make the idea testable; as written, downstream benefit is uncertain and coupling is weak."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It names a training-only outgoing-transition branching statistic and Lorentz exp/log maps, but the specified Exp^K_i followed by Log^K_i at the same curvature and origin returns the original tangent vector (up to numerical error). Thus curvature and branching do not meaningfully alter the vector delivered to the Euclidean quantizer or create the claimed joint pathway. It names behavior-off, Euclidean and both-on comparisons and observable outcomes, but they cannot test the proposed effect as written because the map composition cancels it.",
+          "scoring_2": "Training-only outgoing-transition entropy is computed, but the stated Lorentz Exp followed by Log at the same origin returns the input tangent vector (up to numerical error), so curvature does not create a genuine behavior-geometry computational effect on the quantizer input. The proposed per-item curvature is also not a well-defined single Lorentz manifold operation for vectors on differing-curvature manifolds. Specify a non-cancelling, well-defined curved operation jointly affecting the representation, plus the explicit behavior-off, geometry-off/Euclidean and both-on comparisons.",
+          "scoring_3": "The training-only outgoing-transition branching statistic is explicit, and Lorentz exp/log maps are named in the encoder path. However, as specified, the curvature-dependent Lorentz Exp followed immediately by the corresponding curvature-dependent Log at the origin returns the original tangent vector u_i (up to numerical error); thus curvature does not change the core computation or couple branching to the representation. The required both-on versus geometry-off/Euclidean comparison is proposed, but this round-trip makes geometry-off effectively equivalent and does not provide a genuine curvature effect."
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It names a training-only outgoing-transition branching statistic and Lorentz exp/log maps, but the specified Exp^K_i followed by Log^K_i at the same curvature and origin returns the original tangent vector (up to numerical error). Thus curvature and branching do not meaningfully alter the vector delivered to the Euclidean quantizer or create the claimed joint pathway. It names behavior-off, Euclidean and both-on comparisons and observable outcomes, but they cannot test the proposed effect as written because the map composition cancels it.",
+            "scorer": "scoring_1"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Training-only outgoing-transition entropy is computed, but the stated Lorentz Exp followed by Log at the same origin returns the input tangent vector (up to numerical error), so curvature does not create a genuine behavior-geometry computational effect on the quantizer input. The proposed per-item curvature is also not a well-defined single Lorentz manifold operation for vectors on differing-curvature manifolds. Specify a non-cancelling, well-defined curved operation jointly affecting the representation, plus the explicit behavior-off, geometry-off/Euclidean and both-on comparisons.",
+            "scorer": "scoring_2"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The training-only outgoing-transition branching statistic is explicit, and Lorentz exp/log maps are named in the encoder path. However, as specified, the curvature-dependent Lorentz Exp followed immediately by the corresponding curvature-dependent Log at the origin returns the original tangent vector u_i (up to numerical error); thus curvature does not change the core computation or couple branching to the representation. The required both-on versus geometry-off/Euclidean comparison is proposed, but this round-trip makes geometry-off effectively equivalent and does not provide a genuine curvature effect.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_median_threshold": 1,
+        "unscored_dimensions": []
+      },
+      {
+        "disagreement": {
+          "behavior_problem_meaning": 0.0,
+          "coupling_strength": 0.0,
+          "downstream_potential": 0.0,
+          "experimental_diversity": 0.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "idea_id": "transition_tangent_warp",
+        "incomplete_scorers": [],
+        "max_disagreement": 0.0,
+        "means": {
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 4.0,
+          "downstream_potential": 4.0,
+          "experimental_diversity": 4.0,
+          "implementability": 3.0,
+          "novelty": 4.0
+        },
+        "medians": {
+          "behavior_problem_meaning": 4.0,
+          "coupling_strength": 4.0,
+          "downstream_potential": 4.0,
+          "experimental_diversity": 4.0,
+          "implementability": 3.0,
+          "novelty": 4.0
+        },
+        "overall_mean": 3.8333333333333335,
+        "overall_median": 4.0,
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          },
+          "scoring_2": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          },
+          "scoring_3": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "This provides a concrete, coupled mechanism in which transition context changes a curved latent representation before quantization, with gradients through the warp learned under the baseline objective. The sparse projection and bounded tangent vector make implementation plausible, though profile storage/projection and manifold numerical stability require care, and the claimed cost depends on sparse batch handling. Its impact is uncertain: the encoder may compensate for the warp, while transition profiles may capture popularity or noise; matched ablations and the Stage3 threshold address the key test.",
+          "scoring_2": "The sparse directed profiles and bounded learned tangent warp jointly alter the vector passed to quantization, making this the clearest substantive coupling and a plausible route to behavior-sensitive SIDs and Recall improvement. The operations and safeguards are mostly implementable, though profile projection details, curvature/numerical handling and batch lookup need careful specification. No explicit three-way ablation protocol is given, so it is out of scope despite strong mechanism potential; downstream gains remain uncertain.",
+          "scoring_3": "This provides a direct, differentiable pathway from transition context through curved operations into the quantizer input, with a plausible next-item signal and a distinct experimental mechanism. It is more tightly coupled than a separate ranking loss. Implementability is somewhat reduced by sparse profile projection and the need to specify consistent curvature/map conventions and an effective Euclidean geometry-off control; behavior profiles may encode frequency or sparse noise, and the reconstruction/VQ objective may cancel the learned warp. Stage3 gains remain empirical."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It computes training-only directed incoming/outgoing transition profiles, projects them to a bounded learned tangent displacement, and combines that displacement with the encoder representation using Poincare exp-map, Mobius addition and log-map before Euclidean residual quantization. Behavior and curved geometry share a connected pathway whose removal changes the quantizer input. It specifies behavior-off, geometry-off/Euclidean and both-on comparisons, observable representation/SID and Stage3 Recall effects, bounded displacement, missing-profile handling and computational cost.",
+          "scoring_2": "Training-only directed incoming/outgoing transition profiles condition a tangent displacement that is combined with the encoder vector through Poincare exp, Mobius addition and log before quantization, a genuine connected behavior-geometry pathway. However, the required behavior-off, geometry-off/Euclidean and both-on comparisons are not explicitly specified; add those matched comparisons to satisfy the testable-effect contract.",
+          "scoring_3": "It computes explicit training-only directed incoming and outgoing transition profiles and projects them into a bounded learned tangent displacement. Poincare exp-map, Mobius addition and log-map combine that behavior vector with the encoder output before quantization, so removing behavior removes the displacement and removing geometry changes the combination path. The proposal states ordinary RQ-VAE training, numerical bounding/unknown-profile handling, cost, expected latent/SID and Recall effects, and behavior-off, Euclidean geometry-off and both-on comparisons."
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Training-only directed incoming/outgoing transition profiles condition a tangent displacement that is combined with the encoder vector through Poincare exp, Mobius addition and log before quantization, a genuine connected behavior-geometry pathway. However, the required behavior-off, geometry-off/Euclidean and both-on comparisons are not explicitly specified; add those matched comparisons to satisfy the testable-effect contract.",
+            "scorer": "scoring_2"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_median_threshold": 3,
+        "unscored_dimensions": []
+      }
+    ],
+    "scale": [
+      0,
+      5
+    ],
+    "scorers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ]
+  },
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\nOne mechanism per exploration, carried through to a measured Stage 3 result. Two coupled behaviour-hyperbolic mechanisms have already been measured and BOTH LOST to the plain baseline: shell-calibrated Poincare assignment scored 0.055851 and a successor-direction Busemann gate scored 0.054823, against a baseline of 0.063354. The assignment-score position is therefore exhausted: do NOT propose another re-weighting of the curved distance used for codeword selection. Explore a materially different coupling position instead, for example behaviour-dependent curvature or geometry in the encoder/decoder rather than in the assignment, behaviour-conditioned hierarchical depth allocation, or a curved soft-assignment with a behaviour-derived temperature. The target stays test_R@10 above 0.065.",
+  "repairs": [],
+  "round_id": "round_20261025_170003_163",
+  "schema": 1,
+  "scores": {
+    "scoring_1": {
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "idea_id": "transition_geodesic_encoder",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "Directed next-item supervision is meaningful and the encoder ranking objective is straightforward to implement, with explicit sampling and modest stated cost. Its novelty is limited because it adds a familiar auxiliary metric-ranking loss, and the stated separation from assignment means hyperbolic geometry and behavior do not jointly determine a computation. Potential benefit is plausible but uncertain because Euclidean quantization may erase geometry learned by the auxiliary objective; the prescribed comparisons help test it.",
+          "scope_reason": "It specifies training-only directed transitions and Poincare distance, but the transition ranking objective is an auxiliary loss alongside otherwise unchanged reconstruction/RQ-VAE training, rather than a connected behaviour-conditioned curved computation. The hyperbolic operation does not shape the behaviour signal's use in the quantizer or another shared core pathway; removing either component leaves the other core computation intact. It does name behavior-off, Euclidean/geometry-off and both-on comparisons, observable encoder/SID and Recall effects, safeguards and cost, but those do not supply the missing coupling.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 2.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 4.0,
+            "implementability": 5.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "idea_id": "branch_curvature_encoder",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "Branching entropy is a relevant training-only signal, and item-conditioned curvature is an interesting encoder-side direction. However, the exact same-curvature exp/log round trip is identity, so the central mechanism is not implementable as claimed and the stated expected O(Bd) operations do not remedy this degeneracy. Any measured effect would likely be numerical artifacts rather than meaningful curvature-conditioned representation changes; a non-cancelling curved operation would be needed.",
+          "scope_reason": "It names a training-only outgoing-transition branching statistic and Lorentz exp/log maps, but the specified Exp^K_i followed by Log^K_i at the same curvature and origin returns the original tangent vector (up to numerical error). Thus curvature and branching do not meaningfully alter the vector delivered to the Euclidean quantizer or create the claimed joint pathway. It names behavior-off, Euclidean and both-on comparisons and observable outcomes, but they cannot test the proposed effect as written because the map composition cancels it.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 1.0,
+            "downstream_potential": 2.0,
+            "experimental_diversity": 3.0,
+            "implementability": 1.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "idea_id": "transition_tangent_warp",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "This provides a concrete, coupled mechanism in which transition context changes a curved latent representation before quantization, with gradients through the warp learned under the baseline objective. The sparse projection and bounded tangent vector make implementation plausible, though profile storage/projection and manifold numerical stability require care, and the claimed cost depends on sparse batch handling. Its impact is uncertain: the encoder may compensate for the warp, while transition profiles may capture popularity or noise; matched ablations and the Stage3 threshold address the key test.",
+          "scope_reason": "It computes training-only directed incoming/outgoing transition profiles, projects them to a bounded learned tangent displacement, and combines that displacement with the encoder representation using Poincare exp-map, Mobius addition and log-map before Euclidean residual quantization. Behavior and curved geometry share a connected pathway whose removal changes the quantizer input. It specifies behavior-off, geometry-off/Euclidean and both-on comparisons, observable representation/SID and Stage3 Recall effects, bounded displacement, missing-profile handling and computational cost.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        }
+      ]
+    },
+    "scoring_2": {
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "idea_id": "transition_geodesic_encoder",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "A standard transition-ranking objective plausibly addresses next-item structure and is implementable with modest cost, but its behavior-geometry coupling is weak under the contract because hyperbolic distances only shape encoder gradients alongside the baseline objective, not a jointly conditioned core computation; Euclidean quantization may discard the geometry. Ablations are asserted generally but their required three-way comparisons are not specified. Scores reflect the idea as written; transfer to Stage3 is uncertain.",
+          "scope_reason": "Training-only directed transitions and Poincare distance are specified, but the behavior-ranking loss and hyperbolic operation form an auxiliary encoder objective rather than a connected pathway in the core quantization computation; the quantizer remains unchanged Euclidean and does not consume the curved representation. Also missing explicit behavior-off, geometry-off/Euclidean, and both-on comparisons in the implementation specification.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 2.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 3.0,
+            "implementability": 4.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "idea_id": "branch_curvature_encoder",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "Branching entropy as a geometry control is an interesting and behavior-relevant direction, but as specified the Exp/Log round trip cancels and the per-item-curvature construction makes faithful implementation unclear. The fixed-seed three comparisons are mentioned at a high level, but the central operation needs redesign before its claimed effect can be tested. Expected benefit is consequently uncertain and implementability is low.",
+          "scope_reason": "Training-only outgoing-transition entropy is computed, but the stated Lorentz Exp followed by Log at the same origin returns the input tangent vector (up to numerical error), so curvature does not create a genuine behavior-geometry computational effect on the quantizer input. The proposed per-item curvature is also not a well-defined single Lorentz manifold operation for vectors on differing-curvature manifolds. Specify a non-cancelling, well-defined curved operation jointly affecting the representation, plus the explicit behavior-off, geometry-off/Euclidean and both-on comparisons.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 3.0,
+            "coupling_strength": 1.0,
+            "downstream_potential": 2.0,
+            "experimental_diversity": 3.0,
+            "implementability": 1.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "idea_id": "transition_tangent_warp",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "The sparse directed profiles and bounded learned tangent warp jointly alter the vector passed to quantization, making this the clearest substantive coupling and a plausible route to behavior-sensitive SIDs and Recall improvement. The operations and safeguards are mostly implementable, though profile projection details, curvature/numerical handling and batch lookup need careful specification. No explicit three-way ablation protocol is given, so it is out of scope despite strong mechanism potential; downstream gains remain uncertain.",
+          "scope_reason": "Training-only directed incoming/outgoing transition profiles condition a tangent displacement that is combined with the encoder vector through Poincare exp, Mobius addition and log before quantization, a genuine connected behavior-geometry pathway. However, the required behavior-off, geometry-off/Euclidean and both-on comparisons are not explicitly specified; add those matched comparisons to satisfy the testable-effect contract.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        }
+      ]
+    },
+    "scoring_3": {
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "idea_id": "transition_geodesic_encoder",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "The transition ranking objective is implementable and targets a meaningful mismatch between content similarity and next-item movement; coupling is real but moderate because hyperbolic geometry only shapes the auxiliary encoder objective while quantization remains Euclidean, leaving room for the quantizer to erase its benefit. Novelty and diversity are moderate relative to other plausible encoder-geometry mechanisms. Main uncertainties are whether the ranking signal transfers beyond observed edges, how negatives and loss weighting are chosen, and whether the Euclidean quantizer preserves useful changes.",
+          "scope_reason": "Training-only directed adjacent-item transitions are explicitly computed, and Poincare exp-map plus distance-based transition ranking updates encoder parameters before quantization. Behavior and geometry jointly shape encoder representations, so either removal changes the core training computation. The specification includes negatives, safeguards through bounded ball mapping, cost, observable encoder/SID and Recall effects, and behavior-off, geometry-off/Euclidean, and both-on comparisons.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 3.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 3.0,
+            "implementability": 4.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "idea_id": "branch_curvature_encoder",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "The branching-conditioned curvature concept is novel and has an implementable data statistic, but the exact map composition undermines its claimed geometric effect: the matched exp/log round trip cancels curvature rather than introducing hierarchy or volume into the vector passed to the Euclidean quantizer. This is an implementation-level issue, not merely an unfinished derivation. A non-cancelling curved operation or curved quantization path could make the idea testable; as written, downstream benefit is uncertain and coupling is weak.",
+          "scope_reason": "The training-only outgoing-transition branching statistic is explicit, and Lorentz exp/log maps are named in the encoder path. However, as specified, the curvature-dependent Lorentz Exp followed immediately by the corresponding curvature-dependent Log at the origin returns the original tangent vector u_i (up to numerical error); thus curvature does not change the core computation or couple branching to the representation. The required both-on versus geometry-off/Euclidean comparison is proposed, but this round-trip makes geometry-off effectively equivalent and does not provide a genuine curvature effect.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 3.0,
+            "coupling_strength": 2.0,
+            "downstream_potential": 3.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        },
+        {
+          "idea_id": "transition_tangent_warp",
+          "missing_dimensions": [
+            "scientific_motivation",
+            "feasibility",
+            "downstream_impact",
+            "experimental_distinctness"
+          ],
+          "rationale": "This provides a direct, differentiable pathway from transition context through curved operations into the quantizer input, with a plausible next-item signal and a distinct experimental mechanism. It is more tightly coupled than a separate ranking loss. Implementability is somewhat reduced by sparse profile projection and the need to specify consistent curvature/map conventions and an effective Euclidean geometry-off control; behavior profiles may encode frequency or sparse noise, and the reconstruction/VQ objective may cancel the learned warp. Stage3 gains remain empirical.",
+          "scope_reason": "It computes explicit training-only directed incoming and outgoing transition profiles and projects them into a bounded learned tangent displacement. Poincare exp-map, Mobius addition and log-map combine that behavior vector with the encoder output before quantization, so removing behavior removes the displacement and removing geometry changes the combination path. The proposal states ordinary RQ-VAE training, numerical bounding/unknown-profile handling, cost, expected latent/SID and Recall effects, and behavior-off, Euclidean geometry-off and both-on comparisons.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_problem_meaning": 4.0,
+            "coupling_strength": 4.0,
+            "downstream_potential": 4.0,
+            "experimental_diversity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          }
+        }
+      ]
+    }
+  },
+  "selection": {
+    "disagreement": {
+      "branch_curvature_encoder": 2.0,
+      "transition_geodesic_encoder": 1.0,
+      "transition_tangent_warp": 0.0
+    },
+    "rejected": [
+      {
+        "idea_id": "branch_curvature_encoder",
+        "max_disagreement": 2.0,
+        "overall_median": 2.5,
+        "reasons": [
+          "median below the per-dimension floor on coupling_strength, implementability",
+          "overall median 2.5 below 3.0",
+          "overall mean 2.556 below 3.0",
+          "only 1 scorer(s) reached the median threshold"
+        ]
+      },
+      {
+        "idea_id": "transition_geodesic_encoder",
+        "overall_median": 3.0,
+        "reasons": [
+          "outside the configured selection cap"
+        ]
+      }
+    ],
+    "rule": {
+      "fallback_to_best": true,
+      "keep_single_best": true,
+      "max_declared_hours_for_the_frozen_budget": 72.0,
+      "max_selected": 1,
+      "mean_threshold": 3.0,
+      "median_threshold": 3.0,
+      "min_dimension_median": 2.0,
+      "require_min_scorers_above_threshold": 2,
+      "require_scope": true
+    },
+    "selected": [
+      {
+        "idea_id": "transition_tangent_warp",
+        "max_disagreement": 0.0,
+        "overall_mean": 3.8333333333333335,
+        "overall_median": 4.0
+      }
+    ],
+    "selection_is_multiple": false
+  },
+  "stage2_jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "transition_tangent_warp",
+      "job_id": "stage2:transition_tangent_warp",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "running"
+    }
+  ],
+  "stage3_jobs": [],
+  "step": "stage2",
+  "updated_at": 1792908591.7095923,
+  "verification": {}
+}

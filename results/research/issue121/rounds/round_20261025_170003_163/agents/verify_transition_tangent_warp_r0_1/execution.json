@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_transition_tangent_warp_r0_1",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792908512.4907684,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "verification.txt",
+  "output_sha256": "5b9b1ddcc62558ddd1aadfe3894c1883d423cf991f8155b5e33f0230ce1a9488",
+  "pid": 1907802,
+  "project_marker": ".git",
+  "prompt_sha256": "3629ba1cdb735c348a16b6196c74bac988c7ffd6cfa1d65930e795899103a921",
+  "session_sha256": "589b15917ea61f7bbf79895b9056cbe03d4d72e8c89c5ae25d96ad9ee9b35e5a",
+  "stderr_present": false,
+  "task_id": "verify_transition_tangent_warp_r0_1",
+  "timed_out": false,
+  "verified": true
+}
