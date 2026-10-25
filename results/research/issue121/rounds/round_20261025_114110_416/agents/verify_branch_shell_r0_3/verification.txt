@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:101-115, model/layers.py:126-150, model/layers.py:293-313, train_rqvae.py:237-256, train_rqvae.py:321-325 | Static path inspection; attempted `python smoke_test.py`, but execution stopped at import because this environment has no PyTorch. The trainer counts consecutive target transitions grouped by user, computes smoothed normalized successor entropy, converts it to per-item radii, and passes those to the residual quantizer. Each layer's candidate metric combines squared Poincare distance with the radius penalty; behavior_off removes the penalty and geometry_off selects Euclidean distances.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:237-256
+FINDING DETAIL: The behaviour statistic is computed only if a recognized user column exists; otherwise every item silently receives the same zero-branch radius (0.1), so the asserted behaviour pathway becomes behaviorally inert on such an input. The required schema is not checked.
+FINDING REPRODUCTION: Give main() a valid training frame with target but without user_id, user, or uid. The branch array remains all zeros and line 256 assigns the same radius to every item; the geometry path then has no item-specific training-behaviour input.
+FINDING CORRECTION: Validate that the frozen training parquet has a supported user column (and report a clear error if not), or define and document a valid fallback transition grouping rather than silently disabling the signal.
+VERDICT: NEEDS_FIX
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:101-115, model/layers.py:126-150, model/model.py:26-30, smoke_test.py:16-30 | Inspected the forward/backward and ablation test, then attempted `python smoke_test.py`; it could not execute because PyTorch is unavailable (`ModuleNotFoundError`). Therefore no real loss, gradient, parameter-update, assignment-change, or numerical-stability result was observed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:8
+FINDING DETAIL: The required forward/backward and behavior/geometry ablation evidence is unverified. In particular the smoke assertion only checks that the coupled assignments differ from at least one of the two ablations; it does not independently require a change against behavior-off and against Euclidean geometry, nor check finite gradients or an optimizer parameter update.
+FINDING REPRODUCTION: Run `python smoke_test.py` in the provided environment: import fails with `ModuleNotFoundError: No module named 'torch'`. In an equipped environment, the current line 30 assertion can pass when only one ablation changes assignments.
+FINDING CORRECTION: Run the test in the project runtime with PyTorch installed; assert the coupled assignments/gradients separately against each ablation, check all relevant gradients and losses are finite and nonzero where expected, and perform/check an optimizer update for encoder and codebook parameters.
+VERDICT: NEEDS_FIX
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:39-53, train_rqvae.py:217-267, train_rqvae.py:392-439, train_rqvae.py:442-468 | Static inspection of the trainer, export, and launcher; no trainer run was possible because the environment lacks PyTorch, and the configured absolute data/runtime paths are not exercised here. The single-card branch is present: GENREC_SINGLE_GPU=1 bypasses torchrun and main() uses the non-distributed path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:217-267
+FINDING DETAIL: Real trainer integration against the frozen train parquet and embeddings, indexed SID export, output isolation, and distributed/single-card execution have not been verified. Static source shows hard-coded input and output paths, but cannot establish that those inputs exist, match the expected schema/indexing, or that execution completes without writing elsewhere. This is an evidence gap, not an identified failure of the code path.
+FINDING REPRODUCTION: In this environment, importing/running the trainer fails at its PyTorch import (`ModuleNotFoundError: No module named 'torch'`), so neither the regular trainer entry point nor either launcher branch can be executed. Consequently SID shape/index correspondence and write destinations cannot be checked from generated outputs.
+FINDING CORRECTION: Run the trainer in its declared project runtime on the frozen data, including both `GENREC_SINGLE_GPU=1` and normal torchrun paths; verify exported row i maps to embedding/item i, the expected unique SID shape, and that all writes stay under the configured branch result directory. Preserve the current launcher branch while adding that executable integration check.

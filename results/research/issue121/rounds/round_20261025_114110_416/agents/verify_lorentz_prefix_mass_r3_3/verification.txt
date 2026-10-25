@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:266-330 -> model/model.py:70-113 | Inspected the real trainer path and the occupancy implementation. Directed source-to-target training transitions create fixed prefix-mass tables; the trainer passes them with source continuation weights to `prefix_occupancy_loss`. That function computes level soft assignments using Lorentz distance on residuals and differentiably multiplies assignments to form soft subtree occupancy before matching the transition target.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The behavior target and curved operation participate in one connected occupancy computation; neither is merely appended as an unrelated loss. The Lorentz distance is directly used in the soft assignments that form the prefix probabilities.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:266-274 constructs directed transition-derived weights; lines 314-330 aggregate training-edge mass by hard SID prefix; lines 347-354 pass tables and weights into the model and add occupancy loss. model/model.py:85-90 computes Lorentz-distance soft assignments and lines 106-111 uses their products to calculate the occupancy KL.
+FINDING CORRECTION: No correction required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:70-114; results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/smoke_test.py:21-50 | Inspected the forward/backward smoke-test path (runtime execution is unavailable in this sandbox). The test invokes the coupled loss, backpropagates, asserts finite loss and gradients, steps an optimizer, and compares both-on against behaviour-off and Euclidean ablations for loss and gradients.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking code-level trainability defect found. The occupancy term remains connected through softmax assignment probabilities, products and weighted aggregation to encoder and code embeddings. Lorentz distance clamps the acosh argument above one and has finite norm/time safeguards; occupancy normalization and logs use epsilon clamps. The smoke test asserts finite gradients and checks ablation-dependent gradient differences. It does not explicitly assert that exported hard IDs change between ablations, but the contract accepts a changed gradient or parameter update as observable evidence, and the gradient comparison is present.
+FINDING REPRODUCTION: Inspect model/model.py:85-113 for the differentiable path and smoke_test.py:26-45 for backward, finiteness and both ablation comparisons. The smoke script is not run here, consistent with the stated no-PyTorch constraint.
+FINDING CORRECTION: No correction required.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:42-60,223-275,419-496 | Inspected the actual trainer entry point, frozen stage0 parquet and stage1 embedding inputs, result-root guard, SID export/index mapping, and torchrun/single-card launcher branches. Execution is not possible in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking integration defect found. Inputs point at the frozen embedding and training parquet paths; the derived result path is the candidate-specific `results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass/` and is guarded against escaping the repository stage2 root. Export enumerates embedding rows as item IDs, extends collisions to unique rows, and writes indexed JSON keys. The launcher bypasses relaunch when `GENREC_SINGLE_GPU=1` and otherwise launches four ranks; torchrun child detection is retained.
+FINDING REPRODUCTION: Source inspection: train_rqvae.py:42-53 defines input and candidate output paths and checks containment; lines 237-255 load frozen inputs and validate IDs; lines 447-460 export all-item SIDs keyed by row/item ID; lines 469-497 implement and call the launcher, including the single-GPU environment branch at 473-474.
+FINDING CORRECTION: No correction required.

@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:97-120, 373-389; model/model.py:53-66 | Traced transition preprocessing through same-target/different-user and distinct-source pair formation, training pair lookup, selected-level code-vector extraction, Lorentz margin loss, and addition to the optimized loss. The geometric operation is the Lorentz exp-map/geodesic distance in train_rqvae.py:64-86.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: One connected behavior-and-geometry path is present. Training-only histories determine context means and deterministic k-means cohort labels; those labels select the pairwise margin branch operating on quantized source-item code vectors through Lorentz distance. Neither the cohort labels nor the Lorentz distance are an unrelated auxiliary loss.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:97-120 builds pairs from TRAIN_FILE histories; lines 373-389 gather source embeddings, obtain pair_codes from the RQVAE forward, and add the pair loss. pair_margin_loss at lines 89-94 dispatches to lorentz_distance for the configured geometry.
+FINDING CORRECTION: No correction required.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/model/model.py:26-31, 53-66; train_rqvae.py:64-94, 382-395; smoke_test.py:11-23, 25-52 | Reviewed the real forward/backward wiring and the supplied deterministic gradient smoke, including behavior-off and Euclidean comparisons, coincident-code gradients, and large-norm projection-boundary gradients. Runtime execution is unavailable in this sandbox, as allowed by the request.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The pair loss remains in the backward graph: selected code embeddings are differentiable, the loss is included before backward, and the smoke asserts finite gradients reach encoder and selected codebook parameters. The pair-only comparisons check that both behavior-off and Euclidean substitutions alter gradients; the boundary check covers finite bounded gradients. No dead computed term or evident float32 overflow path was found. The pair loss can update code vectors and thereby affect subsequent nearest-code assignments; it is not a direct assignment override.
+FINDING REPRODUCTION: Inspect smoke_test.py:16-20 and 27-51, and the trainer's loss.backward()/optimizer.step() at train_rqvae.py:386-395. In particular, exp0 projects tangent norms before cosh/sinh at train_rqvae.py:69-76.
+FINDING CORRECTION: No correction required.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:43-57, 283-305, 454-501, 504-532 | Traced the trainer entry point, frozen Stage1 embedding and Stage0 training-parquet inputs, candidate-specific output resolution, indexed SID export, and launcher including the GENREC_SINGLE_GPU branch. Trainer execution is not available in this sandbox; source-level integration review only.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Inputs are the fixed Stage1 sentence_t5.npy and Stage0 train.parquet paths. RESULT_DIR resolves from the candidate tree to repository results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/, not the baseline or another candidate. Export covers all item embedding rows with enumerated integer keys and collision extension, and the single-card environment branch bypasses torchrun before main. No out-of-repository or cross-candidate write was found.
+FINDING REPRODUCTION: Check constants at train_rqvae.py:43-57; export generation and uniqueness check at lines 489-496; and launcher branch at lines 504-532. The normal multi-card path invokes the configured torchrun command; GENREC_SINGLE_GPU=1, true, or yes skips it.
+FINDING CORRECTION: No correction required.

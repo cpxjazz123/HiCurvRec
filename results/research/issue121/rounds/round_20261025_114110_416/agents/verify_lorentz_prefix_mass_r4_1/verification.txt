@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:266-333 -> model/model.py:70-114 | Inspected the training-only adjacent-transition/count construction and its passage into the occupancy loss. Lorentz distances generate soft assignments; their prefix products, weighted by source continuation mass, are compared by KL with sparse targets. This is one connected differentiable behavior/geometry pathway. The smoke test invokes its both-on arm at smoke_test.py:21-26,34.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:317-332
+FINDING DETAIL: No blocking fidelity defect found. Targets use initial hard prefixes and unweighted directed transition counts; per-item occupancy weights use smoothed source outdegree. This is a training-only continuation-mass signal matched to Lorentz-generated occupancy in the same loss. It implements the stated idea, although it does not add the optional frequency-adjusted weighting mentioned in proposal metadata.
+FINDING REPRODUCTION: Trace `edges` from train-only parquet handling (lines 239-253), target aggregation (317-332), and `prefix_occupancy_loss` (model/model.py:83-111). No held-out data enters the pathway.
+FINDING CORRECTION: None required for scope fidelity.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261025_114110_416/agents/verify_lorentz_prefix_mass_r4_1/verification.txt:7 | Code inspection only, as required: model/model.py:75-114 traces differentiable encoder outputs and trainable code vectors through Lorentz soft assignments, prefix products, predicted mass, and KL. smoke_test.py:21-45 defines the prescribed real forward/backward checks for finite losses/gradients, optimizer update, and geometry/behavior ablations. The runtime smoke was not run because this environment has no PyTorch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:18-23
+FINDING DETAIL: No blocking trainability defect found. The acosh argument is clamped to 1+1e-6, avoiding the singular boundary and remaining finite. Distances that land below that threshold can have zero gradient through the clamp, a local saturation case rather than an unstable step; the ordinary nondegenerate occupancy path remains differentiable.
+FINDING REPRODUCTION: Run the supplied smoke test in its specified GPU environment to observe the dynamic checks. Source-level counterexample for the minor saturation is a raw Lorentz inner-product result below 1+1e-6 at line 23, where clamp gradient is zero; this does not make the forward non-finite.
+FINDING CORRECTION: None required absent observed saturation. If the prescribed smoke exposes saturation, use a stable near-one acosh treatment while preserving finite distances.
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:40-60,143-164,223-255,422-499 | Inspected frozen input paths, event-schema handling, output containment, SID export/indexing, and launch branches. The single-card branch reads `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 57-60 and 472-477. Trainer execution was not attempted, as instructed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:48-55
+FINDING DETAIL: The trainer writes under `results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass`, while the promoted tree name is `lorentz_prefix_mass`. The required integration path is `results/stage2_RQ-VAE/<the promoted tree name>/`; this basename mismatch means the expected admission/Stage 3 lookup will not find this export absent an explicit mapping. The path is contained in the repository and does not overwrite the baseline; SID rows are exported by enumerate(item_id) as JSON keys at lines 460-463.
+FINDING REPRODUCTION: Resolve `RESULT_DIR` at line 49: its basename is `TIGER_lorentz_prefix_mass`, not `lorentz_prefix_mass`. The generated `item_sids.json` consequently lands outside the required promoted-name directory.
+FINDING CORRECTION: Set the output directory to `results/stage2_RQ-VAE/lorentz_prefix_mass` (or add and verify an explicit admission/Stage 3 mapping to the actual directory), preserving the repository-root containment check and indexed JSON export.

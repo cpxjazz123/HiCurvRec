@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:97-120, 373-389; model/model.py:53-66 | Static code trace: train-only transition histories and frozen Stage1 embeddings form context vectors; target-grouped, different-user/distinct-source pairs receive cohort-difference labels; trainer obtains selected-level source code vectors and applies those labels in the Lorentz pair-margin loss. The loss differentiates through Lorentz exp/distance into selected codebook vectors, which are the representations used for SID assignment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The actual path is connected: training-only behavior labels choose the positive/negative margin branch for Lorentz distances of selected-level code representations, and gradients update codebook parameters used by hard SID assignment. Cohorts are global training-context k-means labels rather than target-local cohorts, but they are still computed solely from training transitions and are used in the connected pathway.
+FINDING REPRODUCTION: Inspect train_rqvae.py:97-120 and 373-389 together with model/model.py:53-66 and train_rqvae.py:64-94; the pair samples, labels, code vectors, curved distance, and loss accumulation are connected in the trainer.
+FINDING CORRECTION: None required for this check.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/smoke_test.py:11-23, 25-52; train_rqvae.py:64-94, 382-395 | Inspected the real forward/loss/backward path and the supplied smoke's finite-loss/gradient assertions, behavior-off and Euclidean comparisons, coincident-code case, and large-norm case. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The pair term is included in the scalar optimized loss and its selected code vectors retain codebook gradients; the model codebook and encoder also participate in the base forward/backward. The Lorentz helper radially bounds tangent norms before cosh/sinh and clamps the acosh argument, avoiding the identified float32 overflow boundary. The smoke compares isolated pair-loss values and gradients across both-on, behavior-off, and Euclidean settings. No code-level dead term or clear numerical blocker found. Note that the smoke's comparison inputs are standalone tensors, so they do not themselves establish a changed hard SID assignment; however, the trainer's connected codebook gradient path is present.
+FINDING REPRODUCTION: The provided CPU smoke_test.py contains assertions for finite forward/backward, nonzero encoder/codebook gradients, changed pair-loss gradients under both toggles, and bounded gradients at large norms (lines 11-52). Runtime execution is intentionally not required here.
+FINDING CORRECTION: None required for this check.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:43-55, 283-315, 454-501, 504-532 | Static inspection of real trainer entry point, frozen Stage1 embedding/train parquet inputs, result-path derivation, SID export and launcher branches; trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking integration defect found. Inputs point to the frozen Stage1 embedding and Stage0 training parquet; output resolves under the required candidate-specific results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin directory. Export enumerates all embedding rows, emits integer SID arrays and JSON keys by item ID, and extends collisions to unique rows. The launcher honors GENREC_SINGLE_GPU and otherwise invokes its four-rank torchrun command; rank/world-size setup and single-rank path are present.
+FINDING REPRODUCTION: Trace RESULT_DIR and input constants at train_rqvae.py:43-55, main at 283-315, export at 454-501, and launcher/main guard at 504-532. These establish the paths and branches statically; they do not claim an executed trainer or distributed run.
+FINDING CORRECTION: None required for this check.

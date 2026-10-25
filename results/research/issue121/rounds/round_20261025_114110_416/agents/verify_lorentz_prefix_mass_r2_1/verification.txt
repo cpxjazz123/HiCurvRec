@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:70-108 | Static inspection of the real trainer call at train_rqvae.py:344-345: directed item transitions are built from the frozen training parquet at train_rqvae.py:235-250, aggregated into prefix targets at train_rqvae.py:311-324, then the occupancy loss uses Lorentz distances for soft assignments and multiplies per-level probabilities into complete-prefix occupancy at model/model.py:83-102. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: model/model.py:70-108
+FINDING DETAIL: No scope defect found. Behaviour targets and Lorentz distance participate in the same differentiable prefix-occupancy pathway, rather than being separate losses or a behaviour suffix on the ordinary hard Euclidean quantizer.
+FINDING REPRODUCTION: Follow train_rqvae.py:341-345 into RQVAE.forward, then prefix_occupancy_loss. The path forms soft per-level probabilities, their prefix products, and the KL against the transition-derived target; with both flags enabled the Lorentz distance affects those probabilities.
+FINDING CORRECTION: None required.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:70-108; smoke_test.py:20-44 | Source-level inspection of the differentiable operations and the supplied forward/backward ablation smoke. The smoke computes the full loss, calls backward, checks finite gradients, takes an optimizer step, and checks gradient differences for behaviour-off and Euclidean-distance variants. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: smoke_test.py:46-50
+FINDING DETAIL: No blocking trainability defect found by inspection: occupancy is connected to encoder outputs and trainable code embeddings through softmax probabilities, differentiable prefix products and the residual update; stabilized normalizations use positive clamps. However, the smoke's SID assertion checks only shape/uniqueness of an artificially extended export, not whether an actual hard SID changes between both-on and ablation modes. Its gradient comparisons are the only implemented evidence for mode sensitivity. The task allows gradient change as the observable, so this is not a blocking defect.
+FINDING REPRODUCTION: Inspect smoke_test.py:41-49: gradient comparisons cover both ablations, while get_indices is invoked only once after those comparisons and its IDs are not compared to ablated IDs.
+FINDING CORRECTION: None required for the stated trainability criterion; optionally compare hard IDs across controlled trained/updated ablation models if direct assignment-change evidence is desired.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-57, 220-272, 311-324, 413-490 | Static inspection of the real entry point, frozen inputs, output/index mapping, candidate-scoped result paths, and launcher branches. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:40-57
+FINDING DETAIL: No integration defect found by inspection. Inputs are the fixed stage1 embedding file and frozen stage0 training parquet; outputs resolve relative to this candidate's train_rqvae.py into results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass. Export enumerates every embedding row into the JSON key and adds unique collision-extension IDs. The launcher checks GENREC_SINGLE_GPU at lines 463-468 and returns to the single-process main path when it is set to "1"; otherwise it invokes the configured four-process torchrun.
+FINDING REPRODUCTION: Trace RESULT_DIR at train_rqvae.py:48 through OUTPUT_SID/OUTPUT_JSON at lines 49-50 and export at lines 441-455. Check frozen data constants and loading at lines 42-47, 234-250, and the launch branches at lines 463-491.
+FINDING CORRECTION: None required.

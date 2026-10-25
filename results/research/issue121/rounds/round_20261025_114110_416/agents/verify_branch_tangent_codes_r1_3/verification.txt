@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:247-263 -> /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:59-75 -> /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/layers.py:98-116 | Source inspection: training-only directed adjacent transitions produce top-16 weighted context centroids; model maps encoded and context vectors to the Poincare ball, computes a basepoint log map, uses its displacement in the quantizer target, and passes curved distance selection into each residual VQ level. The checked-in smoke test specifies both-on/behavior-off/geometry-off assignment comparisons at smoke_test.py:41-50; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking scope-fidelity defect found: the transition signal and curved operation share the actual quantizer-target/assignment pathway. The specific exp-at-z implementation mismatch is reported under trainability because it invalidates the specified differentiable curved transformation.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:48-69 and /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/layers.py:98-152 | Code inspection only (no PyTorch/shell runtime): the branch has differentiable operations and STE/quantization loss, and smoke_test.py:52-83 contains finite-gradient/update and ablation checks, but the map used to produce the target is not the specified exponential map at z.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:68-69
+FINDING DETAIL: `_log_at(z,b,c)` returns a tangent vector at z, but code forms `exp0(z + alpha*tangent)` and then `log0`. This treats the ball coordinate z as an origin-tangent vector and applies exp at the origin, rather than computing `exp_z(alpha * log_z(b))` as required. Consequently the behavior-conditioned curved displacement and resulting target/gradient are not the proposed geodesic transport. The checked-in smoke only compares `_log_at` to itself algebraically and checks that ablation gradients differ; it does not validate the exp-at-z identity, and therefore does not catch this error.
+FINDING REPRODUCTION: For any nonzero z and nonzero tangent v, compare the implementation's `_log0(_exp0(z + alpha*v,c),c)` against the Poincare expression `log0(mobius_add(z, exp0_at_origin((lambda_z * alpha * v))))`, where `lambda_z=2/(1-c*||z||^2)` and `mobius_add` is the ball Mobius addition. These are generally unequal; a direct test can additionally verify that `d_c(z, exp_z(alpha*v))` equals `alpha * ||v||_z` within tolerance. This is a code-level counterexample, not a runtime claim.
+FINDING CORRECTION: Implement the actual Poincare `exp_z(u) = z (+_c) exp0((lambda_z/2)u)` with a numerically safe Mobius addition and `u=alpha*log_z(b)`, then map the resulting ball point through `log0`; add an identity test comparing the basepoint distance from z to the prescribed tangent length and finite backward checks through this corrected path. Retain both ablation comparisons.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:42-56, 225-280, 398-445, 448-474 | Source inspection: trainer loads the stage1 frozen embedding matrix and stage0 training parquet, derives contexts only from training histories/targets, exports row-indexed SIDs for every embedding row, and resolves output to the dedicated `results/stage2_RQ-VAE/TIGER_branch_tangent_codes/` directory. Checked the DDP launch guard and `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` branch at lines 95-100 and 448-474. Runtime trainer/launcher/export were not run, consistent with the stated sandbox constraint.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect established by inspection. Export extends duplicate rows while preserving item row indices and checks uniqueness; output is scoped to this candidate's required Stage2 result directory. Single-card environment selection is present and bypasses torchrun when requested.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,78 @@
+{
+  "jobs": [
+    {
+      "attempts": 2,
+      "error": "the trainer crashed on start: PermissionError: '/fs04/results'",
+      "failure_evidence": {
+        "log": "stage2_RQ-VAE/TIGER_transition_geodesic_codebook/logs/train_run.log"
+      },
+      "finished_at": 1792894691.250797,
+      "gpu": "1",
+      "idea_id": "transition_geodesic_codebook",
+      "job_id": "stage2:transition_geodesic_codebook",
+      "kind": "stage2",
+      "note": "reset after a stale admission error",
+      "queued_at": 1792894040.5443628,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook",
+      "round_id": "round_20261025_114110_416",
+      "started_at": 1792894368.5787263,
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_geodesic_codebook"
+    },
+    {
+      "attempts": 1,
+      "error": "the one-epoch gradient smoke failed (device mismatch)",
+      "finished_at": null,
+      "gpu": "1",
+      "idea_id": "lorentz_user_cohort_margin",
+      "job_id": "stage2:lorentz_user_cohort_margin",
+      "kind": "stage2",
+      "queued_at": 1792894161.8971162,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
+      "round_id": "round_20261025_114110_416",
+      "started_at": 1792894368.4681609,
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
+      "failure_kind": "SMOKE_FAILED"
+    },
+    {
+      "attempts": 2,
+      "error": null,
+      "finished_at": null,
+      "gpu": "0",
+      "idea_id": "branch_shell",
+      "job_id": "stage2:branch_shell",
+      "kind": "stage2",
+      "note": "reset after a stale admission error",
+      "queued_at": 1792894161.932802,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell",
+      "round_id": "round_20261025_114110_416",
+      "started_at": 1792894368.2539268,
+      "status": "running",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_shell"
+    },
+    {
+      "attempts": 1,
+      "error": "the trainer crashed on start: PermissionError: '/results'",
+      "failure_evidence": {
+        "log": "stage2_RQ-VAE/TIGER_branch_tangent_codes/logs/train_run.log"
+      },
+      "finished_at": 1792894691.2630029,
+      "gpu": "0",
+      "idea_id": "branch_tangent_codes",
+      "job_id": "stage2:branch_tangent_codes",
+      "kind": "stage2",
+      "queued_at": 1792894161.9659545,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_tangent_codes",
+      "round_id": "round_20261025_114110_416",
+      "started_at": 1792894368.365043,
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch_tangent_codes"
+    }
+  ],
+  "schema": 1
+}

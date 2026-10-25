@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:26-50, 52-55; model/layers.py:106-112, 293-304 | Static trace of the training call in train_rqvae.py:327-332: training-derived outgoing transition probabilities and entropy gates enter _behavior_transform; its Poincare prototype and geodesic interpolation feed RQLayer's curved first-level Poincare distance. No runtime execution (sandbox constraint).
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:44
+FINDING DETAIL: The coupled behavior+geometry path calls expmap_at but does not import or define it. Thus any non-empty neighbor input with behavior_on=True raises NameError during the first prototype update; the described integrated pathway cannot execute. The transition signal and curved operation are otherwise connected in code, rather than merely separate losses.
+FINDING REPRODUCTION: Call RQVAE._behavior_transform with encoded [1,d], neighbor_embeddings [1,2,input_dim], behavior_gate [1], transition_probs [1,2] and both flags True. Execution reaches line 44 and raises NameError: expmap_at is not defined.
+FINDING CORRECTION: Import expmap_at from .utils alongside expmap0/logmap0/mobius_add/proj_to_ball, and keep the trainer's pathway covered by the stipulated one-epoch gradient smoke.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:26-55; model/layers.py:106-143, 282-309; model/utils.py:17-64 | Static autograd/numerics inspection of the behavior transform, curved distance assignment, straight-through quantization and losses; no runtime execution. The path currently fails before loss/backward due to the undefined helper above.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:44
+FINDING DETAIL: No real forward/backward can produce finite loss or gradients with behavior enabled because of the NameError. After that is fixed, the intended switched comparisons are represented by behavior_on/geometry_on flags: behavior-off returns encoded unchanged; geometry-off uses a Euclidean neighbor interpolation and Euclidean quantization; both-on uses the curved target and curved first-level distance. But this code inspection cannot establish finite gradients or changed assignments without the supplied smoke, and the broken default path is a hard failure, not a dead-term concern.
+FINDING REPRODUCTION: Invoke forward with non-null neighbors, gate and probabilities (the trainer does so); it raises before quantization, so loss.backward() is unreachable. For the trainer-level minimal failure, its batch loop also references undefined rows at train_rqvae.py:327.
+FINDING CORRECTION: Fix the missing expmap_at import and the trainer's neighbor-row indexing defect reported below, then verify finite loss/gradients on encoder and codebook parameters and behavior-off/Euclidean/both-on assignment or gradient deltas using the prescribed smoke.
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:42-55, 218-240, 247-269, 324-342, 435-477 | Static inspection of the real main/launcher, frozen stage1 embedding and stage0 training parquet inputs, output path/export indexing and launcher branches; no trainer run. Result path resolves under repository results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook, which is the permitted candidate-specific location; single-card opt-in checks GENREC_SINGLE_GPU at lines 454-455.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:327
+FINDING DETAIL: The training batch loop indexes the neighbor matrix with `rows`, which is never defined. The available batch identifiers are `item_ids`; as written, the real trainer raises NameError on its first batch before the model call. Consequently trainer execution, SID export and launcher-driven training cannot complete. The selected frozen inputs, candidate-owned output directory, enumeration-based JSON indexing, collision extension, and SINGLE_GPU_ENV branch show no defect in static inspection; the launcher remains blocked by the trainer failure.
+FINDING REPRODUCTION: Run main past setup to the first `for batch, item_ids in loader` iteration: evaluating `neigh[rows]` raises NameError. Even after correcting that, the model path has the independent missing expmap_at import noted above.
+FINDING CORRECTION: Replace `rows` with `item_ids` when selecting neighbor IDs, then run the prescribed one-epoch trainer/gradient smoke and validate the exported item_sids.json against embedding-row item IDs.

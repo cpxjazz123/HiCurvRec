@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:263-324 -> model/model.py:70-109 | Static inspection traced train-parquet directed source-to-target edges into prefix target tables and per-item weights; model forward calls the prefix occupancy loss, whose soft assignment uses Lorentz distance before multiplying assignment probabilities and matching against those behavior-derived targets. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:316-322
+FINDING DETAIL: The table is described as transition continuation mass, but for every observed edge it adds src_count[src], where src_count is one plus that source's outgoing edge count. Thus a source with d outgoing transitions contributes d*(d+1) mass, rather than d transition counts; this changes the behavior target into an outdegree-squared weighted target. The behavior/geometry path is nevertheless genuinely connected.
+FINDING REPRODUCTION: For two source items with respectively 2 and 1 outgoing transitions and the same level prefix, these lines add 2*3 + 1*2 = 8, although the prefix has 3 source transitions. Put the sources in different prefixes and their target masses become 6 and 2 instead of 2 and 1.
+FINDING CORRECTION: Accumulate one unit per observed transition (or an explicitly specified smoothed transition weight) into the source's hard-prefix bucket; do not multiply each edge by the source's outgoing count. Keep smoothing separate from observed edge mass.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:70-109 | Static differentiability inspection: encoder outputs feed Lorentz distances to trainable code points, softmax assignments and differentiable prefix products; weighted predicted occupancy feeds KL and the trainer adds OCC_WEIGHT * occ_loss before backward at train_rqvae.py:344-354. The supplied smoke_test.py:20-44 describes forward/backward and behavior/geometry ablations, but was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:85-89
+FINDING DETAIL: The curved operation only affects the auxiliary soft occupancy loss; the actual hard RQ assignments and residual quantization remain Euclidean (layers.py:98-113, 283-290). This matches the stated proposal's claim that occupancy gradients change the parameters determining prefixes, and does not constitute a dead or disconnected term. Static code does not establish that the smoke test's asserted nonzero/changed gradients hold for all inputs, but finite safeguards are present in distance and normalization.
+FINDING REPRODUCTION: Compare model.py:85-89 with layers.py:98-113. With behavior enabled the occupancy gradient traverses the Lorentz soft assignments; with behavior off the loss remains initialized at zero, and geometry off uses cdist.
+FINDING CORRECTION: No blocking correction identified for the requested code-level trainability review; the external one-epoch gradient smoke remains the intended runtime validation.
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:42-57, 220-271, 413-490 | Static inspection traced frozen stage1 embedding and stage0 train parquet inputs, trainer main, SID JSON/NPY export and launcher branches. No trainer execution was performed as instructed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:48-51
+FINDING DETAIL: RESULT_DIR is based on the candidate tree's directory (__file__.resolve().parent), yielding <candidate-tree>/results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass rather than the required repository results/stage2_RQ-VAE/<promoted tree name> directory. Stage3/admission will not consume this candidate's exports at the required path. This is not the allowed promoted-tree result directory.
+FINDING REPRODUCTION: Resolve __file__ for this tree: its parent is results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass, so appending results/stage2_RQ-VAE/... nests output under the research tree instead of repository-root results/stage2_RQ-VAE/lorentz_prefix_mass/.
+FINDING CORRECTION: Resolve the repository root explicitly from this script's known location (or a validated repository-root constant), then set RESULT_DIR to repository_root / "results/stage2_RQ-VAE/lorentz_prefix_mass"; retain the candidate-specific directory name and verify it remains within the repository.

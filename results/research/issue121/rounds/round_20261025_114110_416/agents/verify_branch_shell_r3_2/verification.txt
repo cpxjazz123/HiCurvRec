@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:240-261 -> model/model.py:26-29 -> model/layers.py:101-123, 143-158, 310-330 | Traced trainer construction of smoothed successor-entropy radii from train.parquet into batch-aligned model inputs, through expmap-to-Poincare distance plus radius penalty in actual codeword assignment and selected-distance loss; verified the residual code indices are returned as tokens. Static code inspection; no trainer execution.
+FINDING SEVERITY: none
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The training-only directed item-transition statistic is computed by grouping training events by user, ordering by timestamp when available, and counting consecutive items. Its normalized entropy determines cached radii. These radii directly alter codeword selection together with Poincare distance, rather than entering an unrelated loss or suffix.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable; no correction required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:101-123, 143-158, 323-330; model/utils.py:17-23, 25-34, 48-65; smoke_test.py:16-51 | Inspected the real forward/backward graph: selected distance contributes to quant_loss, flows through Poincare maps/distances to encoder and codebook parameters, and quantized values retain the straight-through path. Inspected the supplied smoke test's finite-loss/gradient, parameter-update and curved/Euclidean plus behaviour-on/off comparisons, including near-boundary float32 safeguards; did not execute it or the trainer.
+FINDING SEVERITY: none
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 boundary overflow/NaN hazard found. Behaviour-off removes the radius target; geometry-off switches to Euclidean squared distance while preserving the matched behaviour radial penalty. The smoke test explicitly checks assignments change under the toggles and finite gradients reach encoder/codebook parameters. Runtime execution was not performed, as instructed.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable; no correction required.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:39-56, 220-261, 326-330, 397-440, 447-473; smoke_test.py:53-59 | Inspected the real main/launcher entry path, frozen stage1 embedding and stage0 train.parquet constants, candidate-owned output constants, training and export indexing, SID uniqueness extension, JSON serialization, and torchrun/single-card dispatch. Verified the configured absolute repository path resolves to this repository. No trainer execution.
+FINDING SEVERITY: none
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Training uses the frozen stage1 embeddings and stage0 training parquet only for branch estimation. SIDs are exported for all embedding rows in item-id row order, JSON keys are those item IDs, and the collision extension enforces unique rows. Outputs resolve under results/stage2_RQ-VAE/branch_shell/. The launcher returns for GENREC_SINGLE_GPU=1 or an existing torchrun rank and otherwise launches four ranks.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable; no correction required.

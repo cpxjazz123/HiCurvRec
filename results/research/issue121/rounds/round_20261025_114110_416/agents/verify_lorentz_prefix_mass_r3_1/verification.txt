@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:266-330 -> model/model.py:70-114 | Traced source-to-target directed training edges to sparse per-hard-prefix mass tables, then through soft Lorentz-distance assignments, weighted differentiable prefix occupancy and the occupancy loss added to the trainer objective (train_rqvae.py:347-360). The smoke harness also defines both-on, behaviour-off, and Euclidean variants at smoke_test.py:21-45; I inspected these paths, not executed them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check: the training-only transition signal and Lorentz distance share one differentiable occupancy pathway. The two switches remove the behavior target contribution or replace the curved distance computation.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:246-253 computes directed adjacent-item edges from the frozen training parquet; lines 314-330 build prefix targets; model/model.py:85-111 computes Lorentz-based probabilities and matches weighted soft occupancy to those targets.
+FINDING CORRECTION: none
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:70-114 | Inspected autograd flow from encoder/code vectors through Lorentz distance (14-23), softmax assignments, products, normalized occupancy and KL; trainer adds the loss before backward at train_rqvae.py:350-360. The included forward/backward and ablation assertions are smoke_test.py:21-45, but were not run here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The coupled loss is consumed, not dead-computed, and its operations preserve a differentiable path to encoder and codebook parameters. Epsilon clamps protect normalization and the Lorentz acosh argument is clamped above one; no source-level float32 overflow or NaN hazard was identified in this pathway. Runtime was not available in this review.
+FINDING REPRODUCTION: The smoke harness's evaluate(True, True), evaluate(True, False) and evaluate(False, True) calls at smoke_test.py:34-45 are intended to check finite loss/gradients and differing gradients under ablations. This sandbox did not execute them. Independently, model/model.py:111 adds the KL term to the returned occupancy loss and train_rqvae.py:354 adds OCC_WEIGHT * occ_loss to the objective.
+FINDING CORRECTION: none
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:223-330, 419-497 | Inspected the real main path, frozen train parquet and embedding paths, candidate output path, SID export/index construction, launcher and SINGLE_GPU_ENV branch. Trainer execution is unavailable in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:263-313
+FINDING DETAIL: The model is wrapped in DDP at line 264, then codebook initialization is performed only on rank 0 at lines 307-313. That initialization mutates rank 0 codebook parameters from KMeans centers but does not broadcast them to the other ranks. DDP's initial parameter synchronization occurred before this mutation, so after initialization the ranks have different codebooks. They then derive prefix targets only on rank 0, and training proceeds with inconsistent quantizers; gradient all-reduces do not repair the parameter-value offset. This makes the advertised distributed trainer path invalid. The single-card environment branch itself is present at lines 469-475 and selects ordinary single-process execution when GENREC_SINGLE_GPU=1. Paths and SID export are otherwise correctly scoped: RESULT_DIR resolves under this candidate's results/stage2_RQ-VAE directory (48-55), and export enumerates all embedding rows into item_sids.json (447-460).
+FINDING REPRODUCTION: Launch with world_size=2 or 4. DDP synchronizes initial parameters at construction (263-264); after rank 0 runs raw_module.init_codebook(train_embeddings.to(device)) at 312, compare corresponding rq.vq_layers[*].embed.weight tensors across ranks. Rank 0 contains KMeans centers while nonzero ranks retain their pre-init values. The subsequent training loop at 340 onward consumes these divergent parameters.
+FINDING CORRECTION: Initialize the codebooks identically on every rank from the same deterministic data/seed, or initialize on rank 0 and explicitly broadcast every initialized codebook parameter/buffer to all ranks before deriving targets or entering training (with required synchronization). Ensure any KMeans initialization randomness is consistent if initializing independently.

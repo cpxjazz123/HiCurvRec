@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:239-260 -> model/layers.py:101-110, 126-150, 302-322 | Traced training-parquet-only consecutive per-user transitions into smoothed normalized entropy/radius, then through expmap0/projection, Poincare distance plus radius penalty, argmin assignment, selected-distance loss, and residual update. Cross-checked smoke_test.py:33-38, which compares joint, Euclidean, and behaviour-off assignments; did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. Both the training-only branching signal and curved operation jointly affect the actual codeword distance used for SID assignment; the selected distance is also included in the training loss.
+FINDING REPRODUCTION: Source path at train_rqvae.py:247-260 computes transition entropy/radii only from TRAIN_FILE; layers.py:104-110 uses the radius inside the Poincare assignment metric, and lines 135, 148-150 consume the resulting distance and selected code.
+FINDING CORRECTION: None required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:101-110, 126-150, 302-322 | Inspected the differentiable Poincare distance and radius penalty through selected-distance loss and residual quantization; inspected smoke_test.py:17-38 for real forward/backward, finite nonzero encoder/codebook gradients, optimizer updates, and behaviour/geometry assignment comparisons. Runtime smoke not run in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 instability found in the exercised code path. The distance and radius penalty remain differentiable with respect to encoder/codebook values after discrete index selection; the finite-loss/gradient assertions are present in the smoke test. Assignment-change assertions compare both-on against geometry-off and behaviour-off.
+FINDING REPRODUCTION: Run smoke_test.py in the project runtime to execute the assertions at lines 19-38. Source-level path: layers.py:104-110 calculates the curved behavior-conditioned distance; lines 148-149 gather it into quant_loss and apply straight-through quantization. utils.py:21-28 projects within the ball and lines 55-59 compute the Poincare distance.
+FINDING CORRECTION: None required.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:39-56, 219-260, 396-443, 446-472 | Inspected the trainer entry point, frozen embedding/train-parquet inputs, candidate-owned Stage2 output path, indexed SID JSON export, and torchrun/single-card launcher branch. Runtime execution was not possible here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Inputs are the fixed stage1 embedding and stage0 training parquet; outputs are confined to results/stage2_RQ-VAE/TIGER_branch_shell. Export enumerates embedding row IDs into JSON keys, extends collisions to unique rows, and verifies uniqueness. The launcher honors GENREC_SINGLE_GPU="1" by bypassing torchrun and then calling main; under torchrun it also bypasses relaunch based on RANK.
+FINDING REPRODUCTION: Inspect train_rqvae.py:43-56 for paths, 233-260 for data and training-only radius construction, 425-438 for all-item export and row indexing, and 448-472 for launcher/entry-point logic. smoke_test.py:40-44 checks token extension shape and uniqueness on a small fixture.
+FINDING CORRECTION: None required.

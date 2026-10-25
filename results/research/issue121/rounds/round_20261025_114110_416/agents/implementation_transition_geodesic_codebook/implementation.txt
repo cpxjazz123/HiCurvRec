@@ -1,0 +1,11 @@
+TREE: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: model/model.py
+DEVIATION: Uses a count-weighted outgoing-neighbor mean in the tangent representation instead of a three-step weighted Frechet mean | Keeps the coupling compact and minibatch-computable; avoids a second iterative geometric routine.
+DEVIATION: Uses fixed Poincare curvature c=1 and beta=0.2 | The idea specified negative curvature but no fitted-curvature parameter; fixed positive c denotes curvature -1.
+DEVIATION: Uses up to 16 most frequent outgoing neighbors, padded by the leading neighbor, and computes gate entropy from the observed outgoing distribution | Bounds per-step memory and computation; padded entries only approximate the neighbor mean for degree >16.
+DEVIATION: Smoke test used a small synthetic forward/backward rather than the 3000-epoch dataset run | A full run is outside the minimal smoke check and would write training artifacts to the designated promoted result path.
+ASSUMPTION: train.parquet history order followed by target represents the observed directed next-item event sequence | This is the available training-only sequence field and matches the intended transition signal.
+SMOKE COMMAND: GENREC_SINGLE_GPU=1 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python - <<'PY' [synthetic RQVAE forward/backward, finite-loss/gradient checks, geodesic-vs-Euclidean pathway check, and SID extension uniqueness check]
+SMOKE RESULT: PASS loss=2.243579 grad=0.016152 sid_shape=(8, 4) unique=8 behavior_geometry_effect=verified; py_compile and git diff --check passed.
+NOTES: The trainer now honors GENREC_SINGLE_GPU=1 to bypass the four-rank launcher and all five artifact/log constants point under results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook. The synthetic check validated SID extension and the coupled geometry calculation but did not run the full data pipeline or establish Stage3 Recall@10. The comparison paths are available in model.forward via behavior_on and geometry_on; geometry_off uses Euclidean interpolation with the same behavior gate.

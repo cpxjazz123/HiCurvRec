@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:238-259 -> model/layers.py:101-110,126-150 | Traced training-event successor counting and cached radii into the residual quantizer's expmap/Poincare-distance assignment and selected-distance loss; ran the included smoke test attempt, but this environment lacks PyTorch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:101-110
+FINDING DETAIL: The connected pathway is present: behavior radii alter the actual curved codeword distance used for assignment and its selected distance contributes to quant_loss. No finding for this check.
+FINDING REPRODUCTION: Source trace: train_rqvae.py computes branch_radii from training successors; RQLayer divides these among stages; VQLayer adds the radial penalty to Poincare distance before argmin and gathers the selected combined distance for quantization loss.
+FINDING CORRECTION: None.
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/smoke_test.py:13-45 | Attempted `python smoke_test.py`; execution stopped at import torch because PyTorch is not installed. Inspected forward/backward implementation and its asserted ablations.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_shell/smoke_test.py:8
+FINDING DETAIL: The required finite forward/backward, gradient reach, parameter-update and behavior/geometry ablation assertions could not be executed in the available environment. The source contains a test for these properties, but a passing test cannot be established here; therefore runtime trainability and numerical stability are unverified.
+FINDING REPRODUCTION: From the candidate directory run `python smoke_test.py`; it fails immediately with `ModuleNotFoundError: No module named 'torch'`, before any model computation or assertions.
+FINDING CORRECTION: Run the included smoke test in the project's supported environment with PyTorch (and the model dependencies) installed, and provide its successful output; fix any runtime failures it exposes. No source defect is inferred solely from the unavailable dependency.
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:39-55,218-270,395-470 | Inspected trainer entry point, frozen data paths, training-only transition construction, export/indexing, output constants, and launcher branches; could not execute trainer because PyTorch is unavailable and its production inputs/environment are external.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:218-270
+FINDING DETAIL: Real trainer execution and distributed/single-card launch behavior remain unverified. The single-card branch explicitly checks GENREC_SINGLE_GPU in _launch_via_torchrun (lines 445-448), but inspection alone does not establish that the configured executable, data inputs, training loop, or export work end to end. The source paths point to the expected embedding and Stage0 train parquet, and outputs are scoped to TIGER_branch_shell; no indexing defect is apparent in the export code.
+FINDING REPRODUCTION: Running the supplied smoke test is blocked at `import torch`. Running `train_rqvae.py` likewise cannot reach its entry point here; an end-to-end run must additionally have the configured `/home/wlia0047/...` input files, CUDA/DDP environment and torchrun executable available. No evidence of a completed run or exported SID is present in this candidate tree.
+FINDING CORRECTION: Validate the trainer in the project's supported runtime: run single-card with GENREC_SINGLE_GPU=1 and distributed torchrun, confirm both complete, verify the loaded Stage0 train parquet and embedding row mapping, and inspect that SID rows remain item-indexed and all writes stay under results/stage2_RQ-VAE/TIGER_branch_shell. Address any failures found by those runs.

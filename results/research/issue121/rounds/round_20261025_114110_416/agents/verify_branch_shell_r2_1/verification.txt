@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:239-260 -> model/model.py:26-30 -> model/layers.py:101-110, 126-150, 302-322 | Static source trace. Training transitions are counted per user after stable user/timestamp ordering; smoothed successor entropy becomes branch_radii, indexed by item IDs and supplied in the actual training call. Each residual stage passes radius/stage-count into the same assignment routine that maps latent/codewords with expmap0 and scores Poincare distance plus radius penalty. Selected distance is included in quant_loss; assignment tokens are the exported SID codes. The shell has no PyTorch/runtime, so this is a code-path exercise, not an execution claim.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found: behaviour and curved geometry meet in the actual residual-code assignment pathway, rather than in unrelated losses or unused helpers.
+FINDING REPRODUCTION: Trace train_rqvae.py:239-260 and 327-330 into model/model.py:26-30 and model/layers.py:101-110, 135-150, 316-322.
+FINDING CORRECTION: None required.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:101-110, 135-150 | Static forward/backward dataflow inspection, including model/utils.py:17-19, 42-59. Curved distances feed both argmin selection and a gathered, non-detached distance term in quant_loss; the usual codebook/commitment losses also update encoder/codebook parameters. smoke_test.py:16-38 describes an intended finite-gradient and ablation exercise, but was not run here. The float32 clamp in artanh does not reliably keep its input below one and can produce an infinite distance/loss/gradient on valid near-boundary inputs.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/utils.py:17-19, 55-59
+FINDING DETAIL: artanh clamps to 1 - 1e-10. In float32, 1 - 1e-10 rounds to exactly 1, so torch.log1p(-x) can evaluate to negative infinity. poincare_distance calls this on sqrt(c)*norm(diff); projected float32 points near the ball boundary or Mobius arithmetic rounding can yield an argument rounded to 1. The resulting infinite distance propagates into assignment and the gathered quantization loss. The trainer checks finite loss but will abort rather than train in this case. The coupled distance term is otherwise live and differentiable through the selected distance; codebook selection itself is discrete as expected.
+FINDING REPRODUCTION: Evaluate artanh(torch.tensor([1.0], dtype=torch.float32)) with this implementation: the upper clamp rounds to 1.0 and the result is inf. A minimal path-level counterexample is a float32 Poincare-distance calculation whose sqrt(c)*norm(diff) rounds to 1; it returns inf and makes the selected-distance loss nonfinite. This is a numerical code defect even though no runtime is available in this sandbox.
+FINDING CORRECTION: Clamp using a dtype-aware margin that remains representably below one (for float32, at least torch.finfo(x.dtype).eps, preferably with a documented safety margin), and keep the projected-ball margin consistent with that bound. Add a near-boundary float32 test asserting finite distance, loss, and gradients. Retain behavior-off and geometry-off comparisons to confirm the coupled assignment/gradient changes.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:43-55, 219-260, 396-439, 446-472 | Static entrypoint/config/export/launcher inspection. Trainer reads the frozen stage1 embedding and stage0 train parquet paths; transition statistics use only that train parquet. OUTPUT_DIR resolves under repository results/stage2_RQ-VAE/TIGER_branch_shell, distinct from baseline/other candidates. Export enumerates embedding row IDs into JSON keys and generates unique extended SIDs; the launcher skips for RANK-launched workers or GENREC_SINGLE_GPU=1, otherwise invokes the configured torchrun. Runtime execution was not performed, as specified.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Correct candidate-owned output location is used; no write into the baseline or another candidate directory is apparent. The single-card environment branch explicitly reads SINGLE_GPU_ENV = "GENREC_SINGLE_GPU".
+FINDING REPRODUCTION: Inspect train_rqvae.py:39-55, 233-260, 431-439, and 446-472. Runtime trainer execution/export validation cannot be claimed from this sandbox.
+FINDING CORRECTION: None required.

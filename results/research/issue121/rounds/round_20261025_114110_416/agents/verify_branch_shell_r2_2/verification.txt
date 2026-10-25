@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:239-260 | Source-traced training-only per-user consecutive target transitions to smoothed outgoing entropy and cached branch radii; train_rqvae.py:325-329 passes per-item radii into RQVAE, then model/layers.py:302-322 passes the per-stage radius into VQLayer; model/layers.py:101-110 maps latent/codewords with expmap0, computes squared Poincare distance and adds the radius-shell penalty before argmin at :135-149. Inspected, not runtime-executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The behaviour signal and curved assignment metric meet in one connected code path: branch_radii changes the actual Poincare codeword argmin, rather than acting only through an unrelated loss.
+FINDING REPRODUCTION: Trace train_rqvae.py:327-329 -> model/model.py:26-30 -> model/layers.py:302-322 -> model/layers.py:101-110, 135-149.
+FINDING CORRECTION: No correction required.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:101-115, 126-150, 302-322; smoke_test.py:17-38 | Source-inspected the differentiable selected-distance contribution and straight-through/commitment path; inspected the smoke test assertions for finite nonzero encoder/codebook gradients, updates, and curved+behaviour vs each single-off assignment comparisons. Runtime execution was not available/attempted.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:111-115
+FINDING DETAIL: The Euclidean geometry ablation returns only squared Euclidean distance and ignores target_radius. Thus behavior-on/geometry-off is identical to behavior-off/geometry-off: this does not implement the specified matched geometry-off comparison that retains the same behaviour-derived radius penalty in Euclidean space. The test only compares both-on against Euclidean geometry and behavior-off under curved geometry, so it does not catch this confound.
+FINDING REPRODUCTION: Call VQLayer._distances(latent, target_radius, geometry_on=False) with two different target_radius vectors; its returned distance matrices are identical. Minimal example: any latent/codebook pair and target_radius=[0] versus [1] yields identical output because lines 111-115 never read target_radius.
+FINDING CORRECTION: In the geometry_off branch, retain a matched behaviour-conditioned Euclidean radial penalty (e.g. lambda_r*(||code_embs||-target_radius)^2, with explicit scale matching), and extend the ablation test to assert Euclidean behavior-on differs from Euclidean behavior-off while holding the geometry fixed. Keep the curved behaviour-on/off and both-on/Euclidean comparisons as separate controls.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:39-55, 219-237, 431-439, 446-472 | Statically traced the configured frozen embedding/train inputs, trainer entry point and SINGLE_GPU_ENV="GENREC_SINGLE_GPU" launcher branch, plus SID construction/export and output constants. No trainer execution; inspected repository references for Stage3's item_sids.json location convention.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:49-55
+FINDING DETAIL: The output is configured as results/stage2_RQ-VAE/TIGER_branch_shell/, not the promoted candidate directory results/stage2_RQ-VAE/branch_shell/. Consequently the required item_sids.json is not written where admission/Stage3 resolves the promoted tree's SID file; the trainer can finish and export a valid indexed mapping, but integration will not consume this candidate's export.
+FINDING REPRODUCTION: Evaluate OUTPUT_DIR at line 51: it resolves to /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell; OUTPUT_JSON at line 53 therefore differs from the required .../results/stage2_RQ-VAE/branch_shell/item_sids.json. Stage3/admission lookup of the latter will not find this export.
+FINDING CORRECTION: Set OUTPUT_DIR to the candidate-owned promoted-tree path results/stage2_RQ-VAE/branch_shell (and keep all checkpoint/log/SID files beneath it); do not redirect to a baseline or another candidate directory.

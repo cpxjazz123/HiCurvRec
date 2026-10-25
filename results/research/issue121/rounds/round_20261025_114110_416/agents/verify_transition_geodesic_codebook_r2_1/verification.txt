@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:247-268 -> model/model.py:26-50 -> model/layers.py:106-112, 123-143 | Static trace of the real training path: directed adjacent training pairs produce per-item probabilities/gates; these enter the behavior transform, whose Poincare operations modify the encoding used for curved first-level distance assignment. The connected design is present, but the path fails before completing due to an unresolved function name (see below); no runtime execution was possible or claimed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:44
+FINDING DETAIL: The coupled behavior/geometry path calls expmap_at, but model.py imports only expmap0, logmap0, mobius_add, and proj_to_ball. expmap_at is defined in model/utils.py but is not imported or otherwise in scope. Thus the required three-step curved prototype construction cannot execute, so the proposal's connected pathway is not operational as written.
+FINDING REPRODUCTION: Call RQVAE._behavior_transform with behavior_on=True, a non-None neighbor_embeddings and behavior_gate, and any valid nonempty batch; execution reaches the first prototype update and raises NameError: name 'expmap_at' is not defined.
+FINDING CORRECTION: Import expmap_at from .utils alongside the other helpers, and keep the prototype update on this same behavior-conditioned curved path.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261025_114110_416/agents/verify_transition_geodesic_codebook_r2_1/verification.txt | Code inspection only, as permitted: followed forward, quantizer losses, and backward graph; no PyTorch execution. Forward cannot reach a finite loss while the coupled path raises the NameError at model/model.py:44. The code does route transformed encodings into RQLayer and includes differentiable operations/losses, but parameter-gradient and on/off assignment comparisons therefore cannot be established for this implementation.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:44
+FINDING DETAIL: The actual forward/backward is blocked by the undefined expmap_at call, so there is no real finite loss/gradient on the behavior-on path and no basis to confirm the required switched-on/off gradient or SID assignment changes. This is a concrete execution defect, not a request for the unavailable runtime smoke.
+FINDING REPRODUCTION: Invoke model(batch, neighbor_embeddings, behavior_gate, transition_probs) with valid tensors and behavior_on=True (the default); the prototype iteration raises NameError before quantization, loss, or backward.
+FINDING CORRECTION: Import and use the defined expmap_at helper, then verify the stated behavior-off, Euclidean-geometry-off, and both-on comparisons in the existing one-epoch gradient smoke before admission.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:218-270, 324-343, 429-447, 450-478 | Static trace of main and launcher: the configured input paths point to the Stage1 embedding and Stage0 training parquet; result resolution targets results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook; export enumerates rows into item_sids.json; and the single-GPU environment branch is checked against SINGLE_GPU_ENV at lines 55 and 454-455. However, the training loop has an undefined variable before the model call, so the real trainer cannot complete or export. The runner is not executed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:327
+FINDING DETAIL: The loop indexes neighbor IDs with rows, which is never defined in main or the loop. The intended current batch item IDs are item_ids. The first training batch therefore raises NameError before invoking the model; no trainer run, SID export, or end-to-end integration can succeed. The candidate-specific result directory and the GENREC_SINGLE_GPU=1 bypass are otherwise correctly targeted in the inspected code.
+FINDING REPRODUCTION: Start main with valid frozen inputs and reach the first iteration of `for batch, item_ids in loader`; evaluating `torch.as_tensor(neigh, device=device)[rows]` raises NameError: name 'rows' is not defined.
+FINDING CORRECTION: Index the neighborhood table by item_ids (e.g. `torch.as_tensor(neigh, device=device)[item_ids]`) and rerun the trainer entry-point smoke, including the single-card GENREC_SINGLE_GPU=1 path and validation of exported item-ID indexing.

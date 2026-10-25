@@ -1,0 +1,16 @@
+REPAIR: REPO_ROOT is computed from parents[N] and resolves outside the repository, preventing result-directory creation | Replaced index-based parent lookup with an upward walk that identifies the repository by its stage2_RQ-VAE marker, made input paths repository-relative, and routes this arm's outputs to REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME; changed the launcher to use the active Python interpreter's torch.distributed.run module rather than an absolute executable path | The smoke check resolved REPO_ROOT to /fs04/ar57/wenyu/GeneRec, verified the marker and exact arm-specific RESULT_DIR, and confirmed GENREC_SINGLE_GPU; py_compile also passed
+REMAINING ISSUE: Full RQ-VAE training and Stage3 Recall@10 were not run; the environment available to the initial system Python lacks PyTorch, and this smoke check only validates import/path configuration using the project's environment
+SMOKE COMMAND: python -m py_compile train_rqvae.py && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python - <<'PY'
+import train_rqvae as t
+print(f'REPO_ROOT={t.REPO_ROOT}')
+print(f'RESULT_DIR={t.RESULT_DIR}')
+print(f'SINGLE_GPU_ENV={t.SINGLE_GPU_ENV}')
+assert t.REPO_ROOT.name == 'GeneRec'
+assert (t.REPO_ROOT / 'stage2_RQ-VAE').is_dir()
+assert t.RESULT_DIR == t.REPO_ROOT / 'results' / 'stage2_RQ-VAE' / t.ARM_NAME
+assert t.SINGLE_GPU_ENV == 'GENREC_SINGLE_GPU'
+PY
+SMOKE RESULT: REPO_ROOT=/fs04/ar57/wenyu/GeneRec
+RESULT_DIR=/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook
+SINGLE_GPU_ENV=GENREC_SINGLE_GPU
+NOTES: Existing behaviour-to-hyperbolic computation and the frozen single-card branch were preserved. Outputs remain scoped to this arm, not the baseline or another candidate. The user-requested report is the only file written outside the implementation tree.

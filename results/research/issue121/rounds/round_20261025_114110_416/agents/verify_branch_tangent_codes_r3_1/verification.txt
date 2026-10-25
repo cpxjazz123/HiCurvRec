@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:247-263 -> model/model.py:78-94 -> model/layers.py:98-116,301-320 | Static path trace: trainer builds directed adjacent transitions solely from train.parquet histories/targets, makes count^0.75 top-16 context means, batches those alongside item embeddings; RQVAE projects them, computes Poincare log/exp curved branch target, and passes geometry-enabled distances into each residual VQ assignment. The checked-in smoke test exercises both-on and behavior/geometry-off modes at smoke_test.py:65-75.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No fidelity defect found: behaviour and negative-curvature operations meet in the quantizer's actual assignment input and distance computation.
+FINDING REPRODUCTION: Trace the cited trainer-to-RQVAE-to-VQLayer calls; the context tensor is consumed by _branch_target and its output is consumed by _distances.
+FINDING CORRECTION: No correction required.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:33-45,78-94 -> model/layers.py:98-116,127-160 | Static differentiability trace; inspected smoke_test.py:76-110 for forward/backward/optimizer and ablation assertions. No trainer execution performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/layers.py:103
+FINDING DETAIL: Curved assignment projection divides by the un-clamped latent norm. For a zero latent row, tanh(sqrt(c)*norm)/(sqrt(c)*norm) is 0/0, producing NaN; pairwise distances at lines 107-111 then become non-finite and assignment/quantization is not numerically safe. Zero latent rows are possible (the encoder's hidden ReLUs can output all zeros; the smoke's controlled nonzero inputs do not cover this case). This can poison training assignments/loss and prevents certifying a finite real training step for valid model inputs.
+FINDING REPRODUCTION: Minimal counterexample: call VQLayer._distances(torch.zeros(1, 2), geometry=True, curvature=0.5) with a two-dimensional codebook. At line 103, the zero norm yields a zero denominator and non-finite projected latent/distances. Equivalently, feed an all-zero encoded row through RQVAE with geometry enabled.
+FINDING CORRECTION: Clamp the latent norm in the projection denominator just as the codebook norm is clamped, or use a stable scale with an explicit zero-norm limit of 1 (e.g. torch.where(norm > eps, tanh(sqrt(c)*norm)/(sqrt(c)*norm), 1)); add a finite zero-row distance/forward-backward regression case.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:42-56,225-263,398-445,448-474 | Static inspection only: confirmed frozen stage1 embedding and stage0 train parquet inputs, train-only transition source, isolated repository-root result path, all-row enumerate-based SID JSON export and uniqueness extension, torchrun launcher, and GENREC_SINGLE_GPU branch. Runtime trainer/distributed launch was not run, as stipulated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by code inspection. REPO_ROOT resolves from the candidate file to the repository root; output is results/stage2_RQ-VAE/TIGER_branch_tangent_codes, not the baseline or another candidate. The single-card environment branch is checked by _single_gpu_requested and bypasses torchrun before main runs single-process.
+FINDING REPRODUCTION: Inspect train_rqvae.py:50-56 for output resolution, :239-263 for frozen inputs, :427-439 for export/indexing, and :448-474 plus :95-100 for launch selection. The included smoke contains corresponding path, export-shape, and environment predicate assertions at smoke_test.py:112-116.
+FINDING CORRECTION: No correction required from static review.

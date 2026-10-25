@@ -33,10 +33,12 @@ SCORER_AGENTS = 3
 #: One reviewer per mechanism. The operator's decision: a single reviewer per
 #: implementation, so the review is one agent's verdict rather than a vote.
 VERIFIER_AGENTS = 1
-#: How many repair rounds one implementation may have. The cap exists so a
-#: candidate that cannot be repaired stops costing agents and is recorded with
-#: its evidence instead of looping forever.
-MAX_REVISIONS = 5
+#: How many repair rounds one implementation may have. The cap is a cost guard,
+#: not a scientific gate: a candidate that cannot be repaired stops costing
+#: agents and is recorded with its evidence instead of looping forever. The
+#: operator raised it from 5 to 8 after the first round showed three candidates
+#: one or two concrete defects short of a working trainer.
+MAX_REVISIONS = 8
 
 
 class RoundError(RuntimeError):
@@ -427,6 +429,22 @@ def mark_revision_capped(state: dict, implementation_id: str, reason: str) -> di
          "signature": record.get("failure_signature")})
     record_event(state, "implementation_revision_capped", idea_id=implementation_id,
                  reason=reason, revision=record.get("revision", 0))
+    return state
+
+
+def reopen_capped(state: dict, implementation_id: str, reason: str) -> dict:
+    """Give a capped candidate another repair budget.
+
+    The cap is a cost guard; the operator can raise it for candidates whose
+    findings are concrete. The cap and the reason stay in the record.
+    """
+    record = _implementation(state, implementation_id)
+    record["status"] = "needs_repair"
+    record["revision_capped"] = False
+    record["reopened_after_cap"] = record.get("reopened_after_cap", 0) + 1
+    state["revision_capped"] = [entry for entry in state.get("revision_capped", [])
+                                if entry.get("idea_id") != implementation_id]
+    record_event(state, "implementation_reopened", idea_id=implementation_id, reason=reason)
     return state
 
 

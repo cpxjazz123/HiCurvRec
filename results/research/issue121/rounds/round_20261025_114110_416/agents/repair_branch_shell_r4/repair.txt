@@ -1,0 +1,5 @@
+REPAIR: trainer writes OUTPUT_SID outside its arm directory | Changed OUTPUT_DIR in train_rqvae.py to results/stage2_RQ-VAE/TIGER_branch_shell, so SID, JSON, checkpoint and logs all resolve inside this candidate directory | Confirmed OUTPUT_SID is derived from OUTPUT_DIR and now resolves to /home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_shell/sids_for_hgrec.npy; source constants no longer refer to the other candidate directory.
+REMAINING ISSUE: None of the reported defects remain.
+SMOKE COMMAND: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py
+SMOKE RESULT: PASS loss=1.463667 encoder_grad=finite codebook_grad=finite near_boundary_distance=14.495465 near_boundary_loss_grad=finite ablations=curved_on_off+euclidean_on_off+geometry_control sid_shape=(12, 4) unique=12
+NOTES: Preserved the existing training-only transition branching, connected curved quantization pathway, and SINGLE_GPU_ENV = GENREC_SINGLE_GPU launcher bypass.

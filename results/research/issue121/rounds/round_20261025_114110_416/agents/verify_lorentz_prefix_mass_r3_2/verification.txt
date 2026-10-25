@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:238-274 -> model/model.py:70-114 | Traced the real trainer's frozen parquet transition construction and continuation weights into prefix_occupancy_loss: directed user-adjacent edges create per-source weights and sparse per-prefix targets, while Lorentz distance soft assignments and their prefix products meet in the same KL loss. The training call enables both switches at train_rqvae.py:347-354. Source inspection only; runtime execution is unavailable per the review constraints.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The implementation uses transition counts as prefix targets and smoothed outgoing-source counts as item weights; these are both training-only behavioural quantities, and the curved memberships directly determine the differentiable occupancy compared to those targets.
+FINDING REPRODUCTION: Follow train_rqvae.py:266-329 and model/model.py:83-114; changing either behaviour_on or geometry_on changes the occupancy computation, rather than adding an independent loss beside it.
+FINDING CORRECTION: None required.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:70-114 | Inspected the occupancy forward/backward graph and ablation smoke assertions in smoke_test.py:21-46. The occupancy is added to the trainer loss at train_rqvae.py:350-360; differentiable assignment probabilities feed the prefix products, normalized predicted mass and KL, and gradients can flow through residuals, encoder and codebook embeddings. The Lorentz lift and acosh guard are at model/model.py:14-23. Runtime proof was not run, as permitted by the request.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead occupancy term or evident float32 instability found in the exercised source path. Smoke assertions check finite loss/gradients, optimizer update and different gradients for both-on versus behaviour-off and Euclidean comparisons (smoke_test.py:27-45). Ordinary SID export remains hard argmin through RQLayer/VQLayer (model/layers.py:106-113, 273-290).
+FINDING REPRODUCTION: Read smoke_test.py:21-50 for the intended tiny forward/backward and switches; trace its use of prefix_occupancy_loss to model/model.py:83-114. No runtime claim is made here.
+FINDING CORRECTION: None required.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:42-60, 223-274, 419-497 | Inspected the actual main/trainer path, frozen stage0 train parquet input, repository-root-guarded candidate result path, enumeration-indexed JSON/NumPy exports, and launcher including the GENREC_SINGLE_GPU branch. Code inspection only; no trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Input is the frozen results/stage0_build_parquet/train.parquet (line 46); outputs resolve under the candidate-specific results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass/ directory (lines 48-55), not baseline or another candidate. Export assigns each row to its embedding item index (lines 454-460). The single-card branch reads SINGLE_GPU_ENV at lines 60 and 473-474; otherwise the four-card torchrun launcher is at lines 469-492.
+FINDING REPRODUCTION: Trace main() from lines 223 onward and _launch_via_torchrun() from 469; inspect export generation at 447-460. The SID JSON keys are enumerate(all_embeddings) item IDs and values are integer rows; collision extension is checked for uniqueness at 454-456.
+FINDING CORRECTION: None required.

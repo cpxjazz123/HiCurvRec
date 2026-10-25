@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:247-273 -> model/model.py:78-96 -> model/layers.py:98-117,302-321 | Traced the actual trainer batch path: adjacent directed transitions come only from train.parquet history/target rows, weighted top-16 successor embeddings form contexts, and `model(batch, contexts)` sends those through Poincare exp/log maps and the context-adjusted target into geometry-aware residual code assignment. The candidate smoke source also compares both-on against behavior-off and Euclidean geometry-off assignments at smoke_test.py:76-85. Runtime was not run, as instructed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found for this check. The training-only transition signal and curved operation share the assignment pathway; the behavior adjustment is not an unrelated loss or a suffix applied after unchanged quantization.
+FINDING REPRODUCTION: Follow train_rqvae.py:247-273 and model/model.py:90-96; in VQLayer, model/layers.py:98-117 computes curved Poincare distance for assignment, and RQLayer passes residuals through that layer at lines 302-321. The included deterministic comparison is specified at smoke_test.py:76-85; it was inspected, not executed.
+FINDING CORRECTION: none
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:78-97 -> model/layers.py:98-117,128-161,302-321 | Static forward/backward trace: context projections and smooth exp/log/Mobius operations feed the quantization target; assignment is discrete as expected, while straight-through quantization and quantization/reconstruction losses preserve gradients to encoder, context projections, and codebook parameters. The smoke source defines a backward/update and both ablations at smoke_test.py:87-121, with finite/nonzero gradient assertions and assignment/gradient comparisons. Runtime was not run, per instruction.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No static dead-term or float32 overflow/NaN defect found in the exercised coupled path. The ball projection bounds points; logarithm arguments are capped below one; denominators are lower-bounded; assignment distance arguments are bounded below one. The context transformation remains connected to trainable projection parameters and affects the target used by the quantizer.
+FINDING REPRODUCTION: The supplied source-level smoke counterfactuals are at smoke_test.py:76-106, followed by a finite-loss backward and optimizer update with nonzero context projection gradients at lines 108-121. The required real GPU/MCP smoke is outside this verifier's execution; no runtime result is claimed.
+FINDING CORRECTION: none
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:40-55,225-273,398-445,448-474 | Inspected trainer constants, frozen embedding and training parquet inputs, candidate-specific output derivation, SID export/index mapping, and launcher branches. `RESULT_DIR` resolves from the candidate file to repository `results/stage2_RQ-VAE/TIGER_branch_tangent_codes`; export enumerates embedding rows by item ID and emits matching JSON keys. Launcher checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` and returns without torchrun when that environment variable is enabled. The smoke source asserts these paths and the single-GPU predicate at smoke_test.py:123-127. Static inspection only; trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Inputs are the configured frozen stage1 embedding matrix and stage0 training parquet; outputs are isolated to this candidate's required Stage2 directory. Export extends collisions to unique SIDs while preserving row/item indexing and writes integer rows to both NPY and JSON. The normal torchrun and single-card branches are present.
+FINDING REPRODUCTION: Resolve `Path(__file__).resolve().parents[6]` from train_rqvae.py and append the configured Stage2 candidate path (lines 48-55); inspect training input loading and train-only transition construction at lines 239-263, export at lines 427-441, and launcher condition at lines 448-474. Source smoke assertions cover the intended result path and `_single_gpu_requested` at smoke_test.py:125-127. No execution is claimed.
+FINDING CORRECTION: none

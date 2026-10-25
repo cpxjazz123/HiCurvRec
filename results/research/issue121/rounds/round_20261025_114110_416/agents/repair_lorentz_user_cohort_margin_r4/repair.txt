@@ -1,0 +1,8 @@
+REPAIR: RESULT_DIR depended on source-tree depth | Replaced parents[6] with the explicit REPO_ROOT /fs04/ar57/wenyu/GeneRec; all outputs remain under results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/ | Inspected output constants and confirmed checkpoint, SID, metrics, and log paths are all derived from that candidate-specific RESULT_DIR
+REPAIR: DDP codebook initialization collective mismatch | Kept codebook initialization on every rank, so every rank enters VQLayer.init_codebook's distributed.broadcast before the subsequent barrier | Verified the initialization call is unconditional and the existing SINGLE_GPU_ENV branch still bypasses torchrun for one-GPU runs; CPU smoke test passed (not a full multi-rank training run)
+REMAINING ISSUE: Full normal multi-rank and GENREC_SINGLE_GPU training runs were not executed; the environment's default Python lacks PyTorch, although the project's genrec_env_v2 Python ran the smoke test successfully.
+SMOKE COMMAND: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py
+SMOKE RESULT: forward_backward=ok loss=2.317932 encoder_grad=ok codebook_grad=ok pair_encoder_grad=ok sid_shape=(5, 4) sid_unique=5
+pair_comparisons=ok both=0.062500 behaviour_off=0.000000 euclidean=0.062500 coincident_grad=finite_nonzero
+large_norm_boundary=ok loss=0.042358 gradients=finite_bounded max_grad=0.000061
+NOTES: No model, proposal, frozen protocol, or other candidate behavior was changed. Result file is at /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261025_114110_416/agents/repair_lorentz_user_cohort_margin_r4/repair.txt.

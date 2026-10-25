@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:247-263; results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:59-75; results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/layers.py:98-116 | Static inspection of training-transition aggregation, context-conditioned curved target and curved residual-code distances; smoke_test.py:41-50 defines both-on, behaviour-off and geometry-off assignment comparisons, but was not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected-path requirement. Adjacent directed transitions are counted from training history/target rows, top successors are weighted by count^0.75, and their frozen embedding centroid is passed through context_u. The resulting branch target is formed using Poincare-style exp/log operations and then used by quantizer assignment with curved distance when geometry is enabled.
+FINDING REPRODUCTION: Source path: train_rqvae.py:247-263 -> RQVAE._branch_target at model/model.py:59-69 -> RQLayer/VQLayer distance and assignment at model/layers.py:293-312 and 98-116.
+FINDING CORRECTION: None.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:59-78; results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/layers.py:98-152 | Inspected forward/backward graph and the included smoke_test.py:52-83 checks for finite context-projection gradients and an optimizer update. The smoke script is code evidence, not an executed runtime result.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/layers.py:146-150
+FINDING DETAIL: The quantizer's curved path maps selected codebook vectors into the ball for distance comparison, but maps them back incorrectly for the straight-through reconstruction/quantization loss. Lines 148-149 first compute x_q's norm after projecting it into the ball, then apply atanh to sqrt(c)*that projected norm and multiply by the projected x_q. This is not the inverse of the projection in line 148: it omits the factor 1/sqrt(c) and uses the projected vector rather than the original tangent code. Consequently the selected code's forward quantized value and codebook loss are inconsistent with the curved assignment metric, so the intended curved residual quantizer is not faithfully trained. This is a core-path correctness defect, not a quality-floor concern.
+FINDING REPRODUCTION: For a nonzero code vector q and c=0.5, let p=tanh(sqrt(c)*||q||)*q/(sqrt(c)*||q||), as at line 148. The inverse should return q using p*atanh(sqrt(c)*||p||)/(sqrt(c)*||p||). The implemented line 149 instead returns p*atanh(sqrt(c)*||p||)/(sqrt(c)*||p||), lacking the inverse scale factor and therefore returning p, not q. For sufficiently large q it additionally clamps atanh's input, distorting the code even more. A minimal code-level comparison is to run that projection/inverse pair on q=[0.2,0] and compare the result to q; they differ.
+FINDING CORRECTION: Preserve the original tangent codebook vector for the inverse-map calculation, and use the exact inverse of exp_0: q = p * atanh(sqrt(c)*||p||)/(sqrt(c)*||p||), with a stable small-norm branch and the ball-boundary clamp applied to p. Use that consistent representation in the quantization loss/straight-through path; add a round-trip and finite-gradient check for nonzero codes.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:40-56, 225-263, 398-445, 448-474 | Inspected trainer entry point, frozen Stage0/Stage1 input paths, candidate-owned result path, training-only transition source, enumerate-by-row SID JSON export, and launcher branches. Single-card behavior is checked by smoke_test.py:87-89 at source level; no trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. The candidate writes to results/stage2_RQ-VAE/TIGER_branch_tangent_codes, reads the frozen stage0 train.parquet and stage1 sentence_t5.npy paths, exports one SID row per embedding row with string item IDs matching row indices, and retains the GENREC_SINGLE_GPU branch: when set, launcher recursion is skipped and main selects the single process/device path.
+FINDING REPRODUCTION: Inspect train_rqvae.py:42-56 for inputs/output ownership, 247-263 for train-only context construction, 427-439 for export indexing, and 95-100 plus 448-474 for launcher selection and single-card dispatch.
+FINDING CORRECTION: None.

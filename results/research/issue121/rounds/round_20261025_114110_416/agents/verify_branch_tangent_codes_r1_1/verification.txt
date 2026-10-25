@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:247-263 -> model/model.py:59-69 -> model/layers.py:98-116 | Static trace of training transition construction, batched context propagation, branch target, and curved per-code assignment. Trainer counts directed adjacent pairs only from TRAIN_FILE histories/targets, keeps count^0.75-weighted top-16 frozen-embedding centroids for items with >=2 successors, and passes them into forward. Branch target maps encoded and context vectors with exp0, computes log_at(z,b), displaces on the ball, and maps back; RQLayer forwards geometry=True to every code layer, whose assignment uses Poincare geodesic distance. Runtime execution is unavailable under the stated sandbox constraint; smoke_test.py contains the intended ablation exercise at lines 41-50.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found in the connected training-only behavior-to-curved-assignment pathway.
+FINDING REPRODUCTION: Trace train_rqvae.py:247-263, 327-332 and model/model.py:71-76 into model/layers.py:98-116, 293-312.
+FINDING CORRECTION: None.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/smoke_test.py:41-83 | Code inspection (not executed): the included deterministic smoke sets both ablations, checks distinct/restored assignments and gradients, finite nonzero context projection gradients, finite loss, and an optimizer update. The production pathway remains differentiable through maps and straight-through quantization losses; no detach severs the branch-target path before the quantizer. Float32 safeguards project points inside the ball and clamp arcosh/atanh domains and denominators.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 numerical hazard found by source inspection. Per sandbox instructions, this is not a claim of runtime execution; the GPU one-epoch gradient smoke remains the runtime proof.
+FINDING REPRODUCTION: Inspect smoke_test.py:45-68 and 70-83; production training calls loss.backward() at train_rqvae.py:331-339. Runtime unavailable in this environment.
+FINDING CORRECTION: None.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:42-56, 225-263, 398-445, 448-474 | Static inspection: confirms frozen stage1 embedding and stage0 train parquet paths, repository-root resolution and isolated candidate result path, indexed all-item export with zero-based JSON keys, launcher torchrun branch and GENREC_SINGLE_GPU single-card bypass. Compared JSON structure with stage3_T5Train/data/dataset.py:85-112 loader contract.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Output resolves to results/stage2_RQ-VAE/TIGER_branch_tangent_codes/, as required for this promoted tree; trainer uses frozen inputs and writes outputs only to that candidate directory. SID export enumerates rows by item ID and the JSON loader accepts exactly this integer-keyed format. Launcher retains SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at train_rqvae.py:95; setting it bypasses torchrun and main selects the single-process branch.
+FINDING REPRODUCTION: Resolve Path(__file__).resolve().parents[6] per train_rqvae.py:50; inspect environment branch at 448-474 and export at 427-439. Static review only; no trainer invocation in this sandbox.
+FINDING CORRECTION: None.

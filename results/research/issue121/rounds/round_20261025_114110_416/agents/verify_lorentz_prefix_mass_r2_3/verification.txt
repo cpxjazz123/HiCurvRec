@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:70-108 | Static code trace: prefix_occupancy_loss computes Lorentz distances from residuals to level code vectors, soft assignments, and cumulative differentiable prefix probabilities, then weights predicted prefix mass by training continuation weights and compares against transition-derived target tables. train_rqvae.py:263-323 constructs those training-only transitions and prefix target tables; trainer calls the loss at :344-348.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect identified. The core occupancy pathway genuinely uses training transition mass and Lorentz distances together; it is not an unrelated auxiliary behavior loss or unchanged Euclidean quantizer.
+FINDING REPRODUCTION: Trace train_rqvae.py:263-323 into model/model.py:83-102; geometry_on=False replaces the distance used to produce the same assignment probabilities with Euclidean cdist.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:83-108 | Static forward/backward trace; smoke_test.py:20-44 specifies both-on, Euclidean, and behavior-off backward comparisons, but was not run. The full configured cardinalities and tensor shapes are assessed directly from code.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:94-98
+FINDING DETAIL: The cumulative Cartesian prefix tensor grows to [B, product(K_1..K_L)]. With trainer batch size 1024 and three codebooks of size 256, the final level constructs 1024 x 16,777,216 float32 values (~64 GiB, excluding intermediates/autograd), and the subsequent weighted sum requires this allocation. This cannot execute on the intended GPU and defeats the claimed sparse accumulation. The fixed dense target table itself has 16,777,216 entries as well.
+FINDING REPRODUCTION: Use trainer constants train_rqvae.py:62,67 and follow prefix_probs expansion at model/model.py:94. At level 3, reshape requires 17,179,869,184 float32 elements (~64 GiB). The full trainer's first occupancy forward therefore runs out of memory before backward.
+FINDING CORRECTION: Compute only observed/target prefixes with a sparse or factorized prefix aggregation, or otherwise bound the retained prefix support and calculate corresponding item prefix probabilities without materializing the full item-by-all-prefix Cartesian matrix. Keep exact target cardinalities/indexing consistent and add an exercised full-config shape/memory test.
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:40-58, 220-271, 413-490 | Static path/config inspection of real main entry point, frozen input paths/schema handling, export and launcher branches; no trainer execution. The code checks GENREC_SINGLE_GPU at :57 and :467-468.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:48-53
+FINDING DETAIL: RESULT_DIR is based on Path(__file__).resolve().parent, which is the candidate tree, so output resolves to results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass, not the repository-level results/stage2_RQ-VAE/<promoted tree name>/ consumed by admission/Stage 3. Thus the exported item_sids.json is not at the required integration location. The input paths do point to the frozen repository data, and the launcher does include the required single-GPU environment branch.
+FINDING REPRODUCTION: Resolve train_rqvae.py's RESULT_DIR expression: __file__.resolve().parent is the lorentz_prefix_mass directory; append the configured relative path and compare with repository results/stage2_RQ-VAE. OUTPUT_JSON at :50 consequently lands under the candidate tree.
+FINDING CORRECTION: Resolve the repository root explicitly from the known candidate-tree ancestry (or another stable repository-root mechanism), then set RESULT_DIR to that root's results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass. Preserve candidate isolation; do not write to the baseline or another candidate directory.

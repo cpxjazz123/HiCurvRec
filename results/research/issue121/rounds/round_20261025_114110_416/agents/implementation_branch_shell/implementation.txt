@@ -1,0 +1,13 @@
+TREE: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_shell
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: model/layers.py
+CHANGED FILE: model/model.py
+CHANGED FILE: smoke_test.py
+DEVIATION: Used fixed curvature c=1, shell radii 0.1..1.1 and assignment-distance weight 0.01 (with radial penalty weight 0.1), because the proposal did not give numeric values and stable defaults are needed for a runnable candidate.
+DEVIATION: Branch statistics are computed from consecutive target items grouped by a recognized user column (user_id/user/uid) and sorted by a recognized timestamp when available; entropy uses add-one smoothing over observed successors. If no user column exists, radii fall back to the minimum shell, since transitions cannot be reliably assigned to users.
+DEVIATION: Added a small selected curved-distance term to the quantization loss so the chosen curved metric produces gradients despite argmin being nondifferentiable; the requested assignment metric and radial penalty are still used for code selection.
+DEVIATION: Kept original residual subtraction in tangent/Euclidean coordinates rather than subtracting on the manifold, following the specified existing residual update; branch radius is divided evenly by the three stages as a target, not an additive radius identity.
+ASSUMPTION: The train parquet's target column contains per-event item IDs and its user/time fields, if present, describe event order; this enables training-only sequential co-consumption estimates without validation/test interactions.
+SMOKE COMMAND: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py
+SMOKE RESULT: PASS loss=2.358819 encoder_grad=finite codebook_grad=finite ablations=assignment-path-active sid_shape=(12, 4) unique=12
+NOTES: Added the required GENREC_SINGLE_GPU environment-variable bypass to avoid automatic four-rank launch. The one-batch CPU smoke verified finite forward/backward gradients to encoder and codebook, ablation path activity, and unique extended SID export. Full 3000-epoch training and Stage3 Recall@10 were not run. The trainer outputs (SIDs, JSON, checkpoint, metrics, logs) now target results/stage2_RQ-VAE/TIGER_branch_shell/ only.

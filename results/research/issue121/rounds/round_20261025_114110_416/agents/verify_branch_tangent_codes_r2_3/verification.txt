@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:247-263 -> model/model.py:78-88 -> model/layers.py:98-116 | Source-traced the real trainer path: directed adjacent training history/target transitions are counted, top-16 successors weighted by count^0.75 form per-item contexts, and passed with embeddings into the model. The model maps encoded and context projections into the c=0.5 Poincare ball, forms log_z(b), moves by alpha=0.15 and maps back to the tangent space; this behavior-conditioned target is supplied to residual quantizers whose assignments use squared hyperbolic distance. Inspected smoke_test.py:65-74 for both-on, behavior-off and geometry-off assignment comparisons; runtime execution was unavailable as specified.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The exercised trainer path connects training-only transitions and curved tangent displacement directly to the quantizer assignment metric. No runtime trainer execution was performed.
+FINDING REPRODUCTION: Inspect train_rqvae.py:247-263, model/model.py:78-105 and model/layers.py:98-116. smoke_test.py:65-74 contains a minimal assignment-ablation exercise, but was not run here.
+FINDING CORRECTION: None required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:78-97 -> model/layers.py:127-160 | Source inspection: the context projections and curved maps feed the quantizer target; assignment is discrete, but the straight-through output and quantization/reconstruction losses preserve a differentiable path to the encoder, context_w/context_u, and codebooks. The curved distance is finite-safe for ordinary float32 values through projection/clamped denominators and acosh arguments. Reviewed smoke_test.py:76-110, which specifies finite/distinct gradients and a parameter update, without executing it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 numerical hazard found on the exercised path. Context-off bypasses the context projections; geometry-off selects a distinct Euclidean context transform and Euclidean quantizer metric. The smoke test asserts distinct assignments and context gradients across both ablations. No runtime gradient proof was performed, per instruction.
+FINDING REPRODUCTION: Read model/model.py:78-97 and model/layers.py:98-160; the proposed reproducer is smoke_test.py:65-110. This source-level review did not execute it.
+FINDING CORRECTION: None required.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:42-56, 225-263, 398-445, 448-474 | Source-traced the real trainer entry point, configured frozen embedding and stage0 training parquet inputs, isolated candidate result path, final SID export/indexing, and torchrun/single-GPU launcher branches. Reviewed smoke_test.py:112-116 for SID uniqueness/path and GENREC_SINGLE_GPU branch assertions; no trainer run was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The trainer reads stage1 sentence_t5.npy and stage0_build_parquet/train.parquet, writes under results/stage2_RQ-VAE/TIGER_branch_tangent_codes, emits item-id-keyed JSON for every enumerated embedding row, and extends collisions to unique SIDs. GENREC_SINGLE_GPU is checked at train_rqvae.py:95-100 and bypasses the multi-card relaunch at 448-451, allowing main() to select one device. The actual trainer, data files and distributed launch were not run.
+FINDING REPRODUCTION: Inspect train_rqvae.py:42-56 for paths, 238-263 for frozen training data/context construction, 427-440 for indexed export, and 448-474 for launch behavior. smoke_test.py:112-116 provides source-level assertions only; not executed.
+FINDING CORRECTION: None required.

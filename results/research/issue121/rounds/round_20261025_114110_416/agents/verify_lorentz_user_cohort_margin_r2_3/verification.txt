@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:89-112, train_rqvae.py:365-381, train_rqvae.py:61-86, model/model.py:26-31, model/model.py:53-66 | Source-traced the training pair construction and call path: training-row histories form frozen embedding means, training-only k-means labels cohort pairs for same-target transitions, distinct source item embeddings are fed through the model to select level-0 code vectors, and their pair loss uses Lorentz geodesic distance and is added to the training objective. Confirmed the same path accepts behaviour-off and Euclidean switches in its loss helper.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No finding.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:61-86, train_rqvae.py:374-387, model/model.py:53-66, smoke_test.py:11-20, smoke_test.py:25-40 | Inspected the actual forward/backward path and the supplied gradient smoke. Pair-code selection is discrete, as expected for quantization, but selected embedding vectors retain gradients to the codebook; Lorentz distance and the hinge loss remain differentiable. The smoke checks finite loss, encoder/codebook gradients for the ordinary RQ-VAE path, nonzero finite pair gradients at coincident points, and loss/gradient differences with behaviour off or Euclidean distance. No runtime was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No finding.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:43-58, train_rqvae.py:275-307, train_rqvae.py:446-493, train_rqvae.py:496-524 | Source-traced the trainer entry point, frozen Stage1 embedding and Stage0 training parquet inputs, candidate-specific promoted output path, enumerated item-index JSON export plus unique extended SIDs, and DDP launcher. The GENREC_SINGLE_GPU branch is read at lines 55 and 500-501 and bypasses torchrun so main selects the single available device. No shell/GPU execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No finding.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

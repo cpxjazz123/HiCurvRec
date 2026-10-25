@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:247-263 -> model/model.py:78-97 -> model/layers.py:98-116,301-320 | Inspected the trainer's train-frame-only directed adjacent-transition aggregation and its context tensor input; followed forward into the Poincare exp/log branch adjustment and curved distance used for each residual quantizer assignment. The source-level deterministic comparison in smoke_test.py:65-74 exercises both-on, behavior-off, and geometry-off assignments; not run here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The training-only transition signal modifies the actual quantizer target through Poincare log/exp operations, and the curved distance is used in residual code assignment. The ablations select distinct coupled and Euclidean/behavior-off computations.
+FINDING REPRODUCTION: Source inspection at the cited path; smoke_test.py:69-74 contains deterministic assignment assertions for all three modes.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:78-97 -> model/layers.py:98-116,145-160 | Inspected differentiable context projections and curved maps feeding distance-based discrete assignments, followed by straight-through quantization and reconstruction/quantization losses. smoke_test.py:76-110 specifies backward checks for finite nonzero context_u/context_w gradients and an optimizer update, plus ablation gradient differences; not run here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 overflow/nan hazard found in the exercised path. The Poincare projections, denominators, and inverse-map arguments are clamped; the trainable context projections have a differentiable path through the curved adjustment and straight-through quantization losses. Runtime execution was unavailable and is not required for this review.
+FINDING REPRODUCTION: Inspect model/model.py:82-88 and model/layers.py:98-116,145-160; the specified small deterministic forward/backward and assignment-ablation case is in smoke_test.py:49-110.
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:42-56,225-263,398-445,448-474 | Inspected the real trainer entry point, frozen embedding and stage0 train parquet inputs, transition construction, isolated candidate output path, SID export, and torchrun/single-GPU launcher branches. smoke_test.py:112-116 contains checks for indexed unique SID extension, candidate output resolution, and GENREC_SINGLE_GPU handling; not run here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Output resolves under the required candidate-specific results/stage2_RQ-VAE/TIGER_branch_tangent_codes directory; item rows are enumerated by embedding index in item_sids.json, and collision extension makes rows unique. Launcher recognizes GENREC_SINGLE_GPU and bypasses torchrun in that branch; ordinary invocation launches four ranks.
+FINDING REPRODUCTION: Inspect train_rqvae.py:50-55, 448-474 and export at 427-441; smoke_test.py:112-116 documents the minimal indexing/path/launcher checks.
+FINDING CORRECTION: none

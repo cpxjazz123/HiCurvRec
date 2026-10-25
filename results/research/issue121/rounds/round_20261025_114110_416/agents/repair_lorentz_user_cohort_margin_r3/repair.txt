@@ -1,0 +1,10 @@
+REPAIR: Output directory must be the candidate's own results/stage2_RQ-VAE/TIGER_<idea>/ path | Kept RESULT_DIR rooted at the repository root (parents[6]) and verified it resolves to /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin | Imported RESULT_DIR and inspected its resolved path
+REPAIR: Pair-loss gradients should reach encoder parameters if encoder adaptation is intended | Made the hard selected code the forward value while adding an encoder straight-through gradient, retaining codebook gradients | Smoke test explicitly asserts finite nonzero pair-only encoder gradient and full backward/codebook gradient
+REPAIR: The source/context transition definition should be consistent | Documented in build_transition_pairs that the last eligible history item is the source for the target and the mean of the eligible up-to-five history items forms its training-only context cohort | Source is set to hist[-1] from the same filtered history used to build ctx
+REPAIR: Empty or undersized valid-transition sets must not fail at np.stack/k-means | Return an empty int64 (0,3) pair array when fewer than two valid transitions exist; the training loop already skips optional pair loss when there are no pairs | Direct check printed empty_pairs_shape=(0, 3)
+REMAINING ISSUE: No Stage3 training/evaluation was run, so effect on test Recall@10 remains unverified.
+SMOKE COMMAND: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py
+SMOKE RESULT: forward_backward=ok loss=2.317932 encoder_grad=ok codebook_grad=ok pair_encoder_grad=ok sid_shape=(5, 4) sid_unique=5
+pair_comparisons=ok both=0.062500 behaviour_off=0.000000 euclidean=0.062500 coincident_grad=finite_nonzero
+large_norm_boundary=ok loss=0.042358 gradients=finite_bounded max_grad=0.000061
+NOTES: Inputs and frozen protocol were unchanged. Result path was verified without creating the result directory; no training run was launched.
