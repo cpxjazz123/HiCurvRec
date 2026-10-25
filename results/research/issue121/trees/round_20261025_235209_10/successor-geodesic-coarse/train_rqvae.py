@@ -48,7 +48,9 @@ def _repository_root() -> Path:
     """
     here = Path(__file__).resolve()
     for parent in here.parents:
-        if (parent / "stage2_RQ-VAE").is_dir():
+        # results/ also holds a stage2_RQ-VAE directory, so the git root has to be
+        # part of the marker or a tree under results/research resolves to results/.
+        if (parent / ".git").exists() and (parent / "stage2_RQ-VAE").is_dir():
             return parent
     raise RuntimeError("cannot locate the repository root above " + str(here))
 
@@ -193,8 +195,18 @@ def initialize_tiger_weights(model: RQVAE) -> None:
                 nn.init.zeros_(module.bias)
 
 
-def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndarray:
-    """Match RecBole3.0's extend path with one fixed extra SID level."""
+def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int],
+                       order_key: np.ndarray | None = None) -> np.ndarray:
+    """RecBole's extend path, with the extension ordered by a curved key.
+
+    RecBole orders the items that share a three-token prefix by their id, which
+    makes the fourth token an arbitrary function of the item and costs 68 distinct
+    values and 0.737 top-1 accuracy in the measured arm. Ordering the same bucket
+    by ``order_key`` (the item's geodesic distance to its own first-level
+    prototype under its own curvature) turns the fourth token into a smooth,
+    behaviour-informed rank: ties fall back to the id, so the result is
+    deterministic.
+    """
     if tokens.ndim != 2 or tokens.shape[1] != len(codebook_sizes):
         raise ValueError(f"Token shape {tokens.shape} disagrees with codebook sizes {codebook_sizes}")
     groups: dict[tuple[int, ...], list[int]] = {}
@@ -203,10 +215,44 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
     offsets = np.cumsum([0, *codebook_sizes], dtype=np.int64)
     result = np.empty((len(tokens), tokens.shape[1] + 1), dtype=np.int64)
     for row, item_ids in groups.items():
+        if order_key is not None:
+            item_ids = sorted(item_ids, key=lambda item: (float(order_key[item]), item))
         for occurrence, item_id in enumerate(item_ids):
             result[item_id, :-1] = np.asarray(row, dtype=np.int64)
             result[item_id, -1] = int(offsets[-1] + occurrence)
     return result
+
+
+def _prototype_distance_key(model, embeddings: torch.Tensor) -> np.ndarray:
+    """The per-item geodesic distance to its own first-level prototype.
+
+    The curve is the tree's own Poincare distance at the frozen curvature; the
+    prototypes are the behaviour-trained first-level codebook, so the ordering
+    follows the behaviour-informed partition. The extension token is the rank of
+    the item inside its three-token bucket under this distance.
+    """
+    with torch.no_grad():
+        latent = model.encoder(embeddings).float()
+        layer = model.rq.vq_layers[0]
+        prototypes = layer.get_code_embs().float()
+        c = float(getattr(model.rq, "t1_curvature", 1.0))
+        radius = (1.0 - 1e-5) / (c ** 0.5)
+        project = lambda z: z * torch.clamp(
+            radius / z.norm(dim=-1, keepdim=True).clamp_min(1e-12), max=1.0)
+        xball, pball = project(latent), project(prototypes)
+        if getattr(model.rq, "t1_euclidean", False):
+            distances = torch.cdist(latent, prototypes).square()
+        else:
+            x2 = (xball * xball).sum(-1, keepdim=True)
+            p2 = (pball * pball).sum(-1, keepdim=True).t()
+            dot = xball @ pball.t()
+            delta2 = (x2 - 2 * dot + p2).clamp_min(0)
+            denominator = ((1 - c * x2).clamp_min(1e-7)
+                           * (1 - c * p2).clamp_min(1e-7)).clamp_min(1e-7)
+            argument = (c * delta2 / denominator).sqrt().clamp(max=1 - 1e-6)
+            distances = ((2 / (c ** 0.5)) * torch.atanh(argument)).square()
+        best = distances.argmin(dim=-1)
+    return distances.gather(1, best.unsqueeze(1)).squeeze(1).cpu().numpy().astype(np.float64)
 
 
 def _tokenizer_config() -> SimpleNamespace:
@@ -385,7 +431,10 @@ def main() -> None:
             if rank == 0:
                 with torch.no_grad():
                     raw_tokens = raw_module.get_indices(
-                        all_embeddings.to(device), infer_use_sk=False
+                        all_embeddings.to(device),
+                        all_embeddings.to(device)[torch.from_numpy(succ_ids).to(device)],
+                        torch.from_numpy(succ_weights).to(device),
+                        infer_use_sk=False,
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
@@ -439,12 +488,17 @@ def main() -> None:
         try:
             with torch.no_grad():
                 raw_tokens = raw_module.get_indices(
-                    all_embeddings.to(device), infer_use_sk=False
+                    all_embeddings.to(device),
+                    all_embeddings.to(device)[torch.from_numpy(succ_ids).to(device)],
+                    torch.from_numpy(succ_weights).to(device),
+                    infer_use_sk=False,
                 ).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:
                 layer._skip_ddp_reduce = False
-        sid = _extend_collisions(raw_tokens, codebook_sizes)
+        with torch.no_grad():
+            order_key = _prototype_distance_key(raw_module, all_embeddings.to(device))
+        sid = _extend_collisions(raw_tokens, codebook_sizes, order_key=order_key)
         if len(np.unique(sid, axis=0)) != len(sid):
             raise RuntimeError("RecBole SID extension failed to make item codes unique")
         OUTPUT_SID.parent.mkdir(parents=True, exist_ok=True)

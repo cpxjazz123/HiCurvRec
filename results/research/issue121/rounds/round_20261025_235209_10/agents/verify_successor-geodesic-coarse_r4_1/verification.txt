@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:300-321 -> model/model.py:26-30 -> model/layers.py:292-332 | Traced the real train loop from its Stage2 train.parquet-only adjacent-event successor table (top-16 weighted list), through item-specific successor embedding lookup and model forward, into T1 costs. Those costs combine squared Poincare item-prototype distance with the popularity-weighted squared Poincare prototype-successor distance; the shared cost selects T1 and enters a differentiable soft-assignment term. No trainer execution was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check. Both the behavior signal and curved operation participate in one connected T1 assignment computation.
+FINDING REPRODUCTION: Source trace at the exercised path above.
+FINDING CORRECTION: None.
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:296-338 | Static-traced float32 projected-ball distance, weighted neighbor cost, softmax, hard argmin, codebook/commitment loss and soft cost term. The code path has finite-distance clamps and connects the neighbor term to prototypes and successor encoder latents. The required Euclidean geometry-off comparison, however, is malformed and cannot establish the requested reversible comparison.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:317-318
+FINDING DETAIL: With t1_euclidean=True, torch.cdist(p0, successor_latents) receives [K,D] and [B,N,D] and returns a broadcast batch result shaped [B,K,N]; transpose(0,1) changes this to [K,B,N]. The following multiplication at line 331 expects [B,N,K], so ordinary B>1,K=32 inputs fail to broadcast (or produce an incompatible cost shape). Thus the required geometry-off control does not run, and there is no valid evidence from the implementation that assignments/gradients change back under Euclidean distance. This is an ablation-path correctness defect, not a claim that the curved both-on path is disconnected.
+FINDING REPRODUCTION: In RQLayer.forward, set t1_euclidean=True and pass x with batch B=2, codebook size K=32, and successor_latents [2,16,D] with weights [2,16]. At lines 317-318 the distance tensor is [32,2,16], while line 331 multiplies it by weights shaped [2,16,1], causing a dimension/broadcast error before an optimizer step.
+FINDING CORRECTION: Compute Euclidean neighbor distances with batch-aware broadcasting to produce [B,N,K], e.g. (p0[None,None,:,:] - successor_latents[:,:,None,:]).square().sum(-1), or use torch.cdist(successor_latents.reshape(B*N,D), p0).reshape(B,N,K). Keep the same weights and costs, then verify finite backward gradients and the both-on / behavior-off / Euclidean comparisons.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:42-68, 279-322, 378-401, 461-509, 516-544 | Inspected root resolution and constants, training data construction, optimization, final export, and launcher branches. TRAIN_FILE resolves to the Stage0 frozen results/stage0_build_parquet/train.parquet; RESULT_DIR is repository-root/results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse, the candidate's promoted arm directory. Export enumerates embedding row IDs into JSON keys and writes four integer columns after collision extension. The launcher honors GENREC_SINGLE_GPU=1 at lines 518-519 and skips relaunch in torchrun children.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. All candidate outputs are scoped to its own promoted result directory, and no path resolves outside the repository. Runtime trainer/launcher execution was not attempted.
+FINDING REPRODUCTION: Source trace at the exercised path above; single-card branch is the explicit GENREC_SINGLE_GPU=1 return at lines 518-519.
+FINDING CORRECTION: None.

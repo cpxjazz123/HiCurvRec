@@ -48,7 +48,10 @@ def _repository_root() -> Path:
     """
     here = Path(__file__).resolve()
     for parent in here.parents:
-        if (parent / "stage2_RQ-VAE").is_dir():
+        # results/ also contains a stage2_RQ-VAE directory, so the marker must be
+        # the git root as well; otherwise a tree under results/research resolves
+        # to results/ and the data paths break.
+        if (parent / ".git").exists() and (parent / "stage2_RQ-VAE").is_dir():
             return parent
     raise RuntimeError("cannot locate the repository root above " + str(here))
 

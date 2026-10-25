@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:338-354 -> model/layers.py:140-153 -> model/model.py:26-49 | Traced training-only per-user directed target transitions into cached branching values, through per-item curvature-conditioned Poincare distances used for every residual assignment; also traced sparse successor pairs through curved code-vector distances. Inspected smoke_test.py:40-75, which populates successor edges, executes the model and coupled loss, backpropagates, and compares curved against Euclidean distance/assignment behavior.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: None. The behavior statistic and curved operation are in connected computations, not separate losses or unused helpers.
+FINDING REPRODUCTION: Static path inspection and the source-level smoke assertions at smoke_test.py:40-75.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/model/layers.py:107-129,140-161; model/model.py:26-49; train_rqvae.py:418-432; smoke_test.py:15-20,40-55,94-101 | Inspected the differentiable distances, straight-through quantizer and loss/backward route, and the supplied smoke's finite-gradient and behavior/geometry comparison assertions. No runtime execution is claimed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:253-289,429-432
+FINDING DETAIL: The added balance term constructs pairwise B-by-B prefix affinities for each preceding level and performs affinity-by-probability products, making its compute and retained autograd graph O(B^2 K), not the stated sparse-edge O(B*degree*D) cost. With the configured per-rank batch of 1024, each affinity is 1,048,576 elements, and multiple levels/gradient intermediates are retained. This is a major unaccounted training-time and GPU-memory burden relative to the proposed cost budget; the stated 5-15% overhead is not supported by this implementation. The source smoke uses only B=12 and cannot expose this at trainer batch size.
+FINDING REPRODUCTION: Call _soft_conditional_entropy with a 1024-row batch on the configured GPU and profile peak allocated memory and step time; compare against the trainer with this term disabled. The routine explicitly creates torch.ones((len(embeddings), len(embeddings))) and multiplies pairwise affinities at train_rqvae.py:270-279.
+FINDING CORRECTION: Replace the dense all-pairs soft conditional entropy with a minibatch/sampled-pair or sparse-prefix estimator whose memory and compute are bounded by the configured edge/sample budget, or otherwise explicitly bound batch size and validate the cost on the real trainer smoke before admission. Preserve gradients through the curved soft assignments.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_015406_723/branching-curvature-budget/train_rqvae.py:58-66,323-325,532-540,547-574 | Statically traced the real entry point's frozen stage1 embedding and stage0 train.parquet paths, target-ID validation and all-embedding indexed export, collision extension and item_sids.json keys, candidate-specific result path, and torchrun launcher including GENREC_SINGLE_GPU. The runtime candidate-path check reports ModuleNotFoundError; per instruction, this review is source-based and does not treat unavailable runtime execution as a defect.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: None found in the inspected integration path. The result destination is the required candidate-specific results/stage2_RQ-VAE/TIGER_branching-curvature-budget directory; the input paths are the frozen project paths; the JSON mapping is enumerated by item ID; and the single-GPU branch checks the required GENREC_SINGLE_GPU variable.
+FINDING REPRODUCTION: Source inspection at the listed lines; trainer execution was not performed.
+FINDING CORRECTION: None.

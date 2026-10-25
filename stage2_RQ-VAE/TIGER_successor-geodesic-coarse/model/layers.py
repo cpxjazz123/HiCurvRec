@@ -306,22 +306,33 @@ class RQLayer(nn.Module):
                     x2 = (xball * xball).sum(-1, keepdim=True)
                     p2 = (pball * pball).sum(-1, keepdim=True).t()
                     dot = xball @ pball.t()
-                    numerator = 2 * (x2 - 2 * dot + p2)
-                    denominator = ((1 - x2).clamp_min(1e-7) * (1 - p2).clamp_min(1e-7)).clamp_min(1e-7)
-                    d0 = (torch.atanh((numerator.clamp_min(0).sqrt() / denominator.sqrt()).clamp(max=1-1e-6)) * 2).square()
+                    delta2 = (x2 - 2 * dot + p2).clamp_min(0)
+                    denominator = ((1 - c * x2).clamp_min(1e-7) * (1 - c * p2).clamp_min(1e-7)).clamp_min(1e-7)
+                    argument = (c * delta2 / denominator).sqrt().clamp(max=1 - 1e-6)
+                    d0 = ((2 / (c ** 0.5)) * torch.atanh(argument)).square()
                 costs = d0
                 if self.t1_behavior_on and successor_latents is not None and successor_weights is not None:
                     sb = project(successor_latents.float())
                     # [batch, neighbor, prototype]; weighted geodesic consensus.
                     if self.t1_euclidean:
-                        nd = torch.cdist(p0, successor_latents.float()).square().transpose(0, 1)
+                        # cdist's batched broadcasting is ambiguous for [K,D]
+                        # versus [B,N,D]; flatten the point batch explicitly so
+                        # the result is always [B,N,K], matching the curved path.
+                        batch_size, neighbor_count, dim = successor_latents.shape
+                        nd = torch.cdist(
+                            successor_latents.float().reshape(batch_size * neighbor_count, dim), p0
+                        ).square().reshape(batch_size, neighbor_count, -1)
                     else:
                         pp = pball[None, None, :, :]
                         ss = sb[:, :, None, :]
                         delta2 = (ss - pp).square().sum(-1)
-                        pn = (pp * pp).sum(-1).clamp(max=1-1e-7)
-                        sn = (ss * ss).sum(-1).clamp(max=1-1e-7)
-                        gd = 2 * torch.atanh((2 * delta2 / ((1-pn)*(1-sn)).clamp_min(1e-7)).sqrt().clamp(max=1-1e-6))
+                        pn = (pp * pp).sum(-1)
+                        sn = (ss * ss).sum(-1)
+                        c = self.t1_curvature
+                        denominator = ((1 - c * pn).clamp_min(1e-7)
+                                       * (1 - c * sn).clamp_min(1e-7)).clamp_min(1e-7)
+                        argument = (c * delta2 / denominator).clamp_min(0).sqrt().clamp(max=1 - 1e-6)
+                        gd = (2 / (c ** 0.5)) * torch.atanh(argument)
                         nd = gd.square()
                     costs = costs + self.t1_lambda * (nd * successor_weights.float().unsqueeze(-1)).sum(1)
                 probs = torch.softmax(-costs / max(self.t1_tau, 0.03), dim=-1)

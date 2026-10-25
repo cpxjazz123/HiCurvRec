@@ -31,9 +31,22 @@ class RQVAE(nn.Module):
         return reconstructed, quant_loss, int(unused_codes), tokens
 
     @torch.no_grad()
-    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
+    def get_indices(
+        self,
+        embeddings: torch.Tensor,
+        successor_embeddings: torch.Tensor | None = None,
+        successor_weights: torch.Tensor | None = None,
+        *,
+        infer_use_sk: bool = False,
+    ) -> torch.Tensor:
         encoded = self.encoder(embeddings)
-        _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
+        successor_latents = self.encoder(successor_embeddings) if successor_embeddings is not None else None
+        _, _, _, tokens = self.rq(
+            encoded,
+            infer_use_sk=infer_use_sk,
+            successor_latents=successor_latents,
+            successor_weights=successor_weights,
+        )
         return tokens
 
     @torch.no_grad()

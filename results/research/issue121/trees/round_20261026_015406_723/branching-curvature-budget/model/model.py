@@ -37,7 +37,11 @@ class RQVAE(nn.Module):
         n = len(edge_embeddings) // 2
         curvature = (1.0 - 0.85 * edge_source_branching).clamp(0.15, 1.0)
         distances = []
-        for level, layer in enumerate(self.rq.vq_layers):
+        # The continuation-consistency penalty is defined on the three-token prefix
+        # representatives (T1, T2, T3). The fourth level is the collision-extension
+        # token, not a prefix representative, so it must not enter this average.
+        prefix_levels = self.rq.vq_layers[:3]
+        for level, layer in enumerate(prefix_levels):
             codes = layer.get_code_embs()
             left = codes[edge_tokens[:n, level]]
             right = codes[edge_tokens[n:, level]]
