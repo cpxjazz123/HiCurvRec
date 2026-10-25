@@ -252,15 +252,59 @@
         "sid_generated_dropped_before_top10": 0.019046292588659273
       }
     },
-    "sid_sha256": "741f224d3df0d98725553d65abf5f71dbfd3a26cf0f81f364dea594e1e3fee2f",
-    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor-geodesic-coarse/ckpt/Amazon_2023_Instruments/Oct-26-2026_01-00-54/HG_Rec_best.pth",
+    "sid_sha256": "0172825ae6ec53538761377e83ea3e41fa199de500f36719c832846f19a639ae",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor-geodesic-coarse/ckpt/Amazon_2023_Instruments/Oct-26-2026_04-21-10/HG_Rec_best.pth",
     "reproduction": {
       "reported_test_recall@10": 0.054858197392015876,
       "reproduced_test_recall@10": 0.05499747558279218,
-      "reported_ndcg@10": 0.030173576832768327,
+      "reported_ndcg@10": 0.030619318694866265,
       "reproduced_ndcg@10": 0.030307640392664384,
-      "ndcg_absolute_difference": 0.00013406355989605684,
+      "ndcg_absolute_difference": 0.00031167830220188084,
       "absolute_difference": 0.0001392781907763041
+    }
+  },
+  "successor_geodesic_coarse_v2": {
+    "n_eval": 57439,
+    "beam": {
+      "rows": 57439,
+      "beam_width": 20,
+      "recall@5": 0.03621232960183847,
+      "recall@10": 0.05463187033200439,
+      "ndcg@10": 0.03017278169628209,
+      "raw_beam_coverage": 0.07364334337296963,
+      "gold_prefix_alive_rate": {
+        "depth_1": 0.9954560490259231,
+        "depth_2": 0.3884642838489528,
+        "depth_3": 0.1351172548268598,
+        "depth_4": 0.07364334337296959
+      },
+      "first_drop_depth_histogram": {
+        "0_never_dropped": 4230,
+        "1": 261,
+        "2": 34865,
+        "3": 14552,
+        "4": 3531
+      },
+      "categories": {
+        "sid_absent_from_beams": 53209,
+        "hit_from_beams": 3138,
+        "sid_generated_dropped_before_top10": 1092
+      },
+      "category_share": {
+        "sid_absent_from_beams": 0.9263566566270304,
+        "hit_from_beams": 0.05463187033200439,
+        "sid_generated_dropped_before_top10": 0.019011473040965197
+      }
+    },
+    "sid_sha256": "0172825ae6ec53538761377e83ea3e41fa199de500f36719c832846f19a639ae",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor-geodesic-coarse/ckpt/Amazon_2023_Instruments/Oct-26-2026_04-21-10/HG_Rec_best.pth",
+    "reproduction": {
+      "reported_test_recall@10": 0.05529344173819182,
+      "reproduced_test_recall@10": 0.05463187033200439,
+      "reported_ndcg@10": 0.030619318694866265,
+      "reproduced_ndcg@10": 0.03017278169628209,
+      "ndcg_absolute_difference": 0.00044653699858417453,
+      "absolute_difference": 0.0006615714061874306
     }
   },
   "tangent_successor_residual": {

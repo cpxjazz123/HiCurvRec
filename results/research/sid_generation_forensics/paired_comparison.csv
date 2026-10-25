@@ -54,6 +54,17 @@ successor_geodesic_coarse,l1_br_euclid,gold_nll_T4,0.7749475240707397,1.22575032
 successor_geodesic_coarse,l1_br_euclid,gold_nll_EOS,5.318427429301664e-05,6.101440158090554e-05,-7.8301272878889e-06,,,57439,"teacher forced, oracle prefixes"
 successor_geodesic_coarse,l1_br_euclid,recall@10,0.05499747558279218,0.062065843764689495,-0.007068368181897317,-0.008862010132488378,-0.005326955552847371,57439,"paired per-example hit difference, bootstrap over rows"
 successor_geodesic_coarse,l1_br_euclid,raw_beam_coverage,0.07404376817145142,0.08473336931353259,-0.010689601142081173,,,57439,"share of rows whose target SID is among the twenty beams, before any duplicate/seen/fallback step"
+successor_geodesic_coarse_v2,l1_br_euclid,gold_prefix_alive_L1,0.9954560490259231,1.0,-0.0045439509740768935,,,57439,unpaired rates; the paired test sets are identical rows
+successor_geodesic_coarse_v2,l1_br_euclid,gold_prefix_alive_L2,0.3884642838489528,0.828774874214384,-0.4403105903654312,,,57439,unpaired rates; the paired test sets are identical rows
+successor_geodesic_coarse_v2,l1_br_euclid,gold_prefix_alive_L3,0.1351172548268598,0.16144083288358085,-0.02632357805672106,,,57439,unpaired rates; the paired test sets are identical rows
+successor_geodesic_coarse_v2,l1_br_euclid,gold_prefix_alive_L4,0.07364334337296959,0.08473336931353262,-0.011090025940563034,,,57439,unpaired rates; the paired test sets are identical rows
+successor_geodesic_coarse_v2,l1_br_euclid,gold_nll_T1,2.349882125854492,8.896260987967253e-05,2.3497931957244873,,,57439,"teacher forced, oracle prefixes"
+successor_geodesic_coarse_v2,l1_br_euclid,gold_nll_T2,3.09552001953125,3.2201523780822754,-0.12463235855102539,,,57439,"teacher forced, oracle prefixes"
+successor_geodesic_coarse_v2,l1_br_euclid,gold_nll_T3,2.648069143295288,4.357712745666504,-1.7096436023712158,,,57439,"teacher forced, oracle prefixes"
+successor_geodesic_coarse_v2,l1_br_euclid,gold_nll_T4,0.9168547987937927,1.2257503271102905,-0.3088955283164978,,,57439,"teacher forced, oracle prefixes"
+successor_geodesic_coarse_v2,l1_br_euclid,gold_nll_EOS,5.2943683840567246e-05,6.101440158090554e-05,-8.070717740338296e-06,,,57439,"teacher forced, oracle prefixes"
+successor_geodesic_coarse_v2,l1_br_euclid,recall@10,0.05463187033200439,0.062065843764689495,-0.007433973432685109,-0.009192795835582095,-0.005797454691063563,57439,"paired per-example hit difference, bootstrap over rows"
+successor_geodesic_coarse_v2,l1_br_euclid,raw_beam_coverage,0.07364334337296963,0.08473336931353259,-0.011090025940562964,,,57439,"share of rows whose target SID is among the twenty beams, before any duplicate/seen/fallback step"
 tangent_successor_residual,l1_br_euclid,gold_prefix_alive_L1,0.6429603579449503,1.0,-0.3570396420550497,,,57439,unpaired rates; the paired test sets are identical rows
 tangent_successor_residual,l1_br_euclid,gold_prefix_alive_L2,0.17986037361374677,0.828774874214384,-0.6489145006006373,,,57439,unpaired rates; the paired test sets are identical rows
 tangent_successor_residual,l1_br_euclid,gold_prefix_alive_L3,0.08953846689531503,0.16144083288358085,-0.07190236598826583,,,57439,unpaired rates; the paired test sets are identical rows
@@ -63,5 +74,5 @@ tangent_successor_residual,l1_br_euclid,gold_nll_T2,3.166776418685913,3.22015237
 tangent_successor_residual,l1_br_euclid,gold_nll_T3,1.671723484992981,4.357712745666504,-2.6859893798828125,,,57439,"teacher forced, oracle prefixes"
 tangent_successor_residual,l1_br_euclid,gold_nll_T4,0.2902733385562897,1.2257503271102905,-0.9354770183563232,,,57439,"teacher forced, oracle prefixes"
 tangent_successor_residual,l1_br_euclid,gold_nll_EOS,3.06536749121733e-05,6.101440158090554e-05,-3.036072666873224e-05,,,57439,"teacher forced, oracle prefixes"
-tangent_successor_residual,l1_br_euclid,recall@10,0.05499747558279218,0.062065843764689495,-0.007068368181897317,-0.008809780810947266,-0.0052747262313062575,57439,"paired per-example hit difference, bootstrap over rows"
+tangent_successor_residual,l1_br_euclid,recall@10,0.05499747558279218,0.062065843764689495,-0.007068368181897317,-0.008791935792754052,-0.005413569177736386,57439,"paired per-example hit difference, bootstrap over rows"
 tangent_successor_residual,l1_br_euclid,raw_beam_coverage,0.07306882083601729,0.08473336931353259,-0.011664548477515302,,,57439,"share of rows whose target SID is among the twenty beams, before any duplicate/seen/fallback step"

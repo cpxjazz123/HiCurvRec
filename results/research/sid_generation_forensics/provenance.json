@@ -53,9 +53,19 @@
     "reported": 0.054858197392015876,
     "reproduced": 0.05499747558279218,
     "absolute_difference": 0.0001392781907763041,
-    "reported_ndcg@10": 0.030173576832768327,
+    "reported_ndcg@10": 0.030619318694866265,
     "reproduced_ndcg@10": 0.030307640392664384,
-    "ndcg_absolute_difference": 0.00013406355989605684,
+    "ndcg_absolute_difference": 0.00031167830220188084,
+    "status": "CONSISTENT",
+    "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+  },
+  "successor_geodesic_coarse_v2": {
+    "reported": 0.05529344173819182,
+    "reproduced": 0.05463187033200439,
+    "absolute_difference": 0.0006615714061874306,
+    "reported_ndcg@10": 0.030619318694866265,
+    "reproduced_ndcg@10": 0.03017278169628209,
+    "ndcg_absolute_difference": 0.00044653699858417453,
     "status": "CONSISTENT",
     "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
   },
