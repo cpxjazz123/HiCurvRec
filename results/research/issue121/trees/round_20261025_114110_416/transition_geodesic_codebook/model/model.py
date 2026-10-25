@@ -26,7 +26,7 @@ class RQVAE(nn.Module):
     def _behavior_transform(self, encoded, neighbor_embeddings, behavior_gate, transition_probs, behavior_on, geometry_on):
         if not behavior_on or neighbor_embeddings is None or behavior_gate is None:
             return encoded
-        from .utils import expmap0, expmap_at, logmap0, logmap_at, mobius_add, proj_to_ball
+        from .utils import expmap0, expmap_at, logmap_at, proj_to_ball
         # c=0.5 is the positive magnitude corresponding to sectional curvature -0.5.
         c, beta = 0.5, 0.2
         weights = transition_probs
@@ -41,10 +41,10 @@ class RQVAE(nn.Module):
         for _ in range(3):
             tangent = logmap_at(prototype[:, None, :], points, c)
             update = (tangent * weights[..., None]).sum(dim=1)
-            prototype = proj_to_ball(mobius_add(prototype, expmap_at(prototype, update, c), c), c)
+            prototype = proj_to_ball(expmap_at(prototype, 0.25 * update, c), c)
         if geometry_on:
-            tangent = logmap0(mobius_add(-z, prototype, c), c)
-            target_ball = mobius_add(z, expmap0(beta * behavior_gate[:, None] * tangent, c), c)
+            tangent = logmap_at(z, prototype, c)
+            target_ball = expmap_at(z, beta * behavior_gate[:, None] * tangent, c)
             return proj_to_ball(target_ball, c)
         neighbor_mean = (self.encoder(neighbor_embeddings) * weights[..., None]).sum(dim=1)
         return encoded + beta * behavior_gate[:, None] * (neighbor_mean - encoded)

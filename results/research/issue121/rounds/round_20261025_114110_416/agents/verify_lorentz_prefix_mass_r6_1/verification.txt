@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:270-337 -> model/model.py:70-114 | Inspected the trainer's directed adjacent-item transition construction and fixed prefix-mass table construction, then traced the training call at train_rqvae.py:354-361 into differentiable prefix probabilities. At model/model.py:85-89, Lorentz distances create the assignment probabilities; at :91-111 those probabilities are multiplied along prefixes, weighted by training continuation weights and matched to the transition-derived targets. This is one connected occupancy-loss path, not a separate behavior loss or an unchanged quantizer suffix.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The behavior target and curved distance jointly affect the occupancy loss and its gradients. Runtime execution was not performed.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:270-337 constructs directed training edges and sparse targets; train_rqvae.py:354-361 passes those targets and switches to the model; model/model.py:85-111 computes Lorentz-based prefix probabilities and target matching.
+FINDING CORRECTION: None required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/model/model.py:14-23,70-114; smoke_test.py:21-50 | Inspected Lorentz lifting/distance, softmax assignments, differentiable prefix products, normalized KL, and residual updates. The smoke test encodes the intended forward/backward, finite-gradient, optimizer-update and both ablations at lines 21-45, plus SID shape/uniqueness assertions at 47-50; this is code inspection, not executed runtime proof.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 overflow/NaN hazard found by inspection. Occupancy gradients flow through probabilities into encoder and code embeddings; geometry-off switches to squared Euclidean distance and behavior-off omits the target-matching term. Lorentz acosh input is clamped above one, and normalization denominators are clamped. Runtime gradient proof remains the specified GPU smoke.
+FINDING REPRODUCTION: Inspect model/model.py:85-114 and smoke_test.py:21-45. In particular, the smoke evaluates both-on, Euclidean and behavior-off losses/gradients and asserts finite losses and gradients and changed gradients. No trainer execution was available or attempted.
+FINDING CORRECTION: None required.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass/train_rqvae.py:42-64,227-279,426-503 | Inspected entry-point root/path resolution, frozen stage0 parquet handling, output export/indexing, and launcher branches. The candidate writes to the required promoted-name directory under results/stage2_RQ-VAE; `_launch_via_torchrun` honors `GENREC_SINGLE_GPU=1` and otherwise launches torchrun.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Frozen train data is `results/stage0_build_parquet/train.parquet` (lines 51-52), accepted as event rows or explicit target/history transitions (242-257). SIDs are emitted for all embedding rows with row index as item ID and collision extension ensures uniqueness (455-467). Result path is candidate-specific and constrained beneath the repository stage2 root (49-55). The single-card environment branch is present (476-482).
+FINDING REPRODUCTION: Trace `main()` at lines 227-279, export at 426-469, and launcher at 476-504. The trainer could not be run in this environment; integration assessment is source-level.
+FINDING CORRECTION: None required.

@@ -388,9 +388,15 @@ def main() -> None:
             if PAIR_BEHAVIOUR_ON and len(transition_pairs):
                 chosen = np.random.randint(0, len(transition_pairs), size=min(PAIR_BATCH, len(transition_pairs)))
                 pair_sample = transition_pairs[chosen]
-                ia = torch.as_tensor([train_item_rows[int(i)] for i in pair_sample[:, 0]], device=device)
-                ib = torch.as_tensor([train_item_rows[int(i)] for i in pair_sample[:, 1]], device=device)
+                # The index must live on the same device as the tensor it
+                # indexes: train_embeddings is a CPU tensor, so the indices stay
+                # on the CPU and the gathered rows move to the GPU.
+                ia = torch.as_tensor([train_item_rows[int(i)] for i in pair_sample[:, 0]],
+                                     dtype=torch.long)
+                ib = torch.as_tensor([train_item_rows[int(i)] for i in pair_sample[:, 1]],
+                                     dtype=torch.long)
                 pair_embeddings = torch.cat((train_embeddings[ia], train_embeddings[ib]))
+                pair_embeddings = pair_embeddings.to(device)
             else:
                 pair_sample = np.empty((0, 3), dtype=np.int64)
                 pair_embeddings = batch[:0]

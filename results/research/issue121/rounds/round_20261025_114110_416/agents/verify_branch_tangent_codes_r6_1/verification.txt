@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: branch_tangent_codes/train_rqvae.py:250-266 -> branch_tangent_codes/model/model.py:81-97 -> branch_tangent_codes/model/layers.py:98-117,302-321 | Static source trace; the supplied smoke_test.py:79-89 exercises both-on and both ablations on controlled inputs and asserts changed/restored SID assignments. Runtime was not run in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: branch_tangent_codes/model/model.py:81-97
+FINDING DETAIL: Training-only directed adjacent transitions are counted and used to form context centroids. For active contexts, the model maps encoder/context projections to the Poincare ball, computes a log-map displacement, moves along an exp-map, and feeds the result to residual quantization; each quantizer level uses curved distance for assignment. This is one connected behaviour-and-geometry pathway, not an auxiliary loss or suffix.
+FINDING REPRODUCTION: Follow train_rqvae.py:250-266 into model forward at lines 93-98 and RQLayer/VQLayer at layers.py:98-117,302-321. The smoke test explicitly toggles behaviour and geometry and compares token IDs at lines 79-89.
+FINDING CORRECTION: None required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: branch_tangent_codes/model/model.py:81-100; branch_tangent_codes/model/layers.py:98-117,146-160 | Source-level differentiability review; smoke_test.py:90-124 specifies forward/backward, finite nonzero context projection gradients, ablation gradient comparisons, and a finite optimizer update. Runtime was not run in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: branch_tangent_codes/model/model.py:81-91; branch_tangent_codes/smoke_test.py:90-124
+FINDING DETAIL: No dead coupled term is apparent: context projections feed differentiable curved maps and the quantization/reconstruction losses; selected code IDs are nondifferentiable as expected, while the straight-through quantized output and commitment loss provide gradients. The smoke test checks the intended parameters and differences between both-on, behaviour-off, and Euclidean-geometry modes. Numerical safeguards keep map arguments inside their domains for ordinary finite float32 inputs. No runtime GPU proof was performed, as instructed.
+FINDING REPRODUCTION: Inspect the model path at the cited lines and the deterministic checks at smoke_test.py:90-124. Executing those assertions is not possible in this environment; the code-level path and checks support trainability.
+FINDING CORRECTION: None required.
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: branch_tangent_codes/train_rqvae.py:228-276,308-316,429-444,451-477 | Static inspection of actual trainer entry point, frozen embedding/train parquet paths, output indexing, result-directory resolution, and launcher branches; no trainer execution. The single-card environment branch is read at lines 98-103 and handled at 451-454.
+FINDING SEVERITY: blocking
+FINDING LOCATION: branch_tangent_codes/train_rqvae.py:308-315
+FINDING DETAIL: In multi-rank training, only rank 0 initializes codebooks with KMeans at line 313, then all ranks merely enter a barrier. The codebooks are DDP parameters, but this post-DDP initialization is not broadcast. Other ranks retain their independently initialized codebooks, so subsequent residual assignments and updates diverge across ranks and DDP combines inconsistent parameter states. The multi-GPU trainer therefore does not have a correct shared initialized model.
+FINDING REPRODUCTION: Launch with world_size=4. DDP synchronizes parameters during construction at line 272; rank 0 then overwrites its codebook weights through init_codebook at lines 311-313, while ranks 1-3 skip that call. The barrier at 315 does not synchronize tensors. Compare each rank's rq.vq_layers[*].embed.weight immediately after the barrier: the values need not match.
+FINDING CORRECTION: After rank-0 KMeans initialization, broadcast every codebook weight (and any associated EMA buffers, if applicable) from rank 0 to all ranks before the barrier/training loop, or perform deterministic identical initialization on every rank. Keep the single-card branch unchanged.

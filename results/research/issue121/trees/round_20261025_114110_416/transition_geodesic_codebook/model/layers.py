@@ -148,15 +148,12 @@ class VQLayer(nn.Module):
             codebook_loss = poincare_distance(code_ball, target_ball.detach(), 0.5).square().mean()
             commitment_loss = poincare_distance(code_ball.detach(), target_ball, 0.5).square().mean()
             quant_loss = codebook_loss + self.beta * commitment_loss
-            # Straight-through in ball coordinates, then map the forward value
-            # back to tangent coordinates for the residual stack. The forward
-            # value has to BE the quantized code: a detached correction that
-            # leaves the forward value at logmap0(target_ball) would make the
-            # codebook a no-op in the forward pass.
+            # Keep the actual selected code in tangent coordinates separate
+            # from the straight-through output. The latter carries encoder
+            # gradients, while residual construction must subtract the actual
+            # code so that subsequent levels receive a nonzero residual.
             code_tangent = logmap0(code_ball, 0.5)
             target_tangent = logmap0(target_ball, 0.5)
-            # The same convention as the Euclidean branch: the forward value is
-            # the quantized code, and the gradient reaches the encoder.
             x_q = target_tangent + (code_tangent - target_tangent).detach()
         else:
             quant_loss = F.mse_loss(x_q, x.detach()) + self.beta * F.mse_loss(x, x_q.detach())
@@ -318,7 +315,13 @@ class RQLayer(nn.Module):
                 vq_layer._curved_distance = True
                 quant, quant_loss, unused, indices = vq_layer(layer_input, infer_use_sk)
                 vq_layer._curved_distance = False
-                residual = logmap0(x, 0.5) - quant
+                # Subtract the level's actual tangent-space code, not its
+                # straight-through output (whose forward value equals target).
+                # The subtraction remains differentiable to the target and
+                # codebook, preserving residual-level learning.
+                residual = logmap0(x, 0.5) - logmap0(
+                    vq_layer.get_code_embs()[indices.reshape(-1)], 0.5
+                ).view_as(x)
             else:
                 quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
                 residual = residual - quant

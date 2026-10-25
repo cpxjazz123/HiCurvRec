@@ -22,17 +22,20 @@ def main():
     zero_loss.backward()
     assert zero_latent.grad is not None and torch.isfinite(zero_latent.grad).all()
 
-    # Check the nonzero-basepoint logarithm against its defining expression.
+    # Check scalar and non-collinear logarithms against Mobius subtraction
+    # (-z) (+_c) b, whose two coefficients multiply -z and b respectively.
     c = 0.5
-    z = torch.tensor([[0.2, 0.0]], dtype=torch.float64)
-    b = torch.tensor([[0.0, 0.2]], dtype=torch.float64)
-    actual = RQVAE._log_at(z, b, c)
-    dot = (z * b).sum(-1, keepdim=True)
-    z2, b2 = z.square().sum(-1, keepdim=True), b.square().sum(-1, keepdim=True)
-    delta = ((1 - 2*c*dot + c*b2)*b - (1-c*z2)*z) / (1 - 2*c*dot + c*c*z2*b2)
-    norm = delta.norm(dim=-1, keepdim=True)
-    expected = (2 / ((c**0.5) * (2 / (1-c*z2)))) * torch.atanh((c**0.5)*norm) * delta / norm
-    assert torch.allclose(actual, expected, atol=1e-10, rtol=1e-10)
+    for z, b in (
+        (torch.tensor([[0.2]], dtype=torch.float64), torch.tensor([[0.4]], dtype=torch.float64)),
+        (torch.tensor([[0.2, 0.0]], dtype=torch.float64), torch.tensor([[0.0, 0.2]], dtype=torch.float64)),
+    ):
+        actual = RQVAE._log_at(z, b, c)
+        dot = (z * b).sum(-1, keepdim=True)
+        z2, b2 = z.square().sum(-1, keepdim=True), b.square().sum(-1, keepdim=True)
+        delta = (-(1 - 2*c*dot + c*b2)*z + (1-c*z2)*b) / (1 - 2*c*dot + c*c*z2*b2)
+        norm = delta.norm(dim=-1, keepdim=True)
+        expected = (2 / ((c**0.5) * (2 / (1-c*z2)))) * torch.atanh((c**0.5)*norm) * delta / norm
+        assert torch.allclose(actual, expected, atol=1e-10, rtol=1e-10)
 
     # exp_0/log_0 must round-trip tangent code vectors, including nonzero codes.
     codes = torch.tensor([[0.2, 0.0], [0.0, -0.7]], dtype=torch.float64, requires_grad=True)

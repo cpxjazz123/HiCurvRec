@@ -305,14 +305,26 @@ def main() -> None:
         print(f"[RecBole RQ-VAE] config: epochs={EPOCHS} batch_size_per_rank={BATCH_SIZE_PER_RANK} total_batch={BATCH_SIZE_PER_RANK*world_size} lr={LR}", flush=True)
         _record(rank, "train_start", epochs=EPOCHS, batch_size_per_rank=BATCH_SIZE_PER_RANK, total_batch_size=BATCH_SIZE_PER_RANK*world_size, lr=LR, weight_decay=WEIGHT_DECAY, hidden_sizes=list(HIDDEN_SIZES), codebook_num=CODEBOOK_NUM, codebook_size=list(CODEBOOK_SIZE), codebook_dim=CODEBOOK_DIM, beta=BETA, vq_type=VQ_TYPE, ema_decay=EMA_DECAY, sk_epsilon=SK_EPSILON, sk_iters=SK_ITERS, pca_dim=PCA_DIM, xavier_init=XAVIER_INIT, warmup_epochs=WARMUP_EPOCHS, gradient_clip_norm=GRADIENT_CLIP_NORM, optimizer=OPTIMIZER, seed=SEED, num_workers=NUM_WORKERS, eval_interval=EVAL_INTERVAL, early_stop="disabled", all_items=len(all_embeddings), train_items=len(train_embeddings), embedding_shape=list(embeddings.shape), world_size=world_size)
 
-    # === codebook init: only rank 0 (codebook 不是 DDP 参数, 全 rank 共享) ===
+    # === Initialize on rank 0, then synchronize the complete model state. ===
+    # DDP's construction-time broadcast happened before KMeans overwrote the
+    # codebooks, so explicitly broadcast parameters and buffers afterwards.
     if rank == 0:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     raw_module = model.module if isinstance(model, DDP) else model
-    with torch.no_grad():
-        raw_module.init_codebook(train_embeddings.to(device))
     if world_size > 1:
+        if rank == 0:
+            with torch.no_grad():
+                raw_module.init_codebook(train_embeddings.to(device))
+        with torch.no_grad():
+            for parameter in raw_module.parameters():
+                dist.broadcast(parameter.data, src=0)
+            for buffer in raw_module.buffers():
+                dist.broadcast(buffer, src=0)
         dist.barrier()
+    else:
+        # Preserve the frozen single-card initialization path.
+        with torch.no_grad():
+            raw_module.init_codebook(train_embeddings.to(device))
 
     # Stage3 only consumes the final-epoch weights, so tracking the best
     # collision across epochs would be misleading; keep the last evaluation.
