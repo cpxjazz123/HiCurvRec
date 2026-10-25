@@ -309,7 +309,16 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
                 state = pipeline_module.apply_repair(state, record["idea_id"], repair)
                 # The repair may have fixed the output paths: re-run the
                 # preflight so a stale finding cannot block the candidate.
-                state = pipeline_module.recheck_output_paths(state, record["idea_id"])
+                running = set()
+                job_file = directory / "jobs.json"
+                if job_file.is_file():
+                    import json as _json
+                    jobs = _json.loads(job_file.read_text(encoding="utf-8"))
+                    running = {job["idea_id"] for job in jobs.get("jobs", [])
+                               if job.get("kind") == "stage2"
+                               and job.get("status") == "running"}
+                state = pipeline_module.recheck_output_paths(
+                    state, record["idea_id"], skip_if_running=running)
             except Exception as exc:                       # noqa: BLE001
                 state = pipeline_module.mark_agent_error(
                     state, record["idea_id"], "repair failed: " + str(exc))
