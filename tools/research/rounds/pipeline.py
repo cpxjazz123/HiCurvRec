@@ -326,6 +326,39 @@ def mark_agent_error(state: dict, implementation_id: str, error: str) -> dict:
     return state
 
 
+def recheck_output_paths(state: dict, implementation_id: str) -> dict:
+    """Re-run the output-path preflight after a repair.
+
+    A repaired tree may have moved its outputs to the right place; the earlier
+    preflight finding is replaced by the current verdict so it cannot block a
+    candidate that is now isolated.
+    """
+    from . import baseline as baseline_module
+
+    record = _implementation(state, implementation_id)
+    tree = Path(record["tree"])
+    siblings = [other["tree"] for other in state.get("implementations", [])
+                if other["idea_id"] != implementation_id]
+    findings = [finding for finding in (record.get("blocking_findings") or [])
+                if finding.get("verifier") != "preflight"]
+    try:
+        record["output_paths"] = baseline_module.guard_output_paths(
+            tree, other_candidates=siblings)
+        record["output_preflight"] = "passed"
+    except baseline_module.BaselineError as exc:
+        findings.insert(0, {"verifier": "preflight", "check": "output isolation",
+                            "severity": "blocking", "location": "train_rqvae.py",
+                            "detail": str(exc),
+                            "reproduction": "read the trainer's output constants",
+                            "correction": "write only into the candidate's own result "
+                                          "directory results/stage2_RQ-VAE/TIGER_<idea>/"})
+        record["output_preflight"] = "failed"
+    record["blocking_findings"] = findings
+    record_event(state, "output_paths_rechecked", idea_id=implementation_id,
+                 verdict=record["output_preflight"])
+    return state
+
+
 def mark_revision_capped(state: dict, implementation_id: str, reason: str) -> dict:
     """Stop a candidate that used up its repair rounds.
 
