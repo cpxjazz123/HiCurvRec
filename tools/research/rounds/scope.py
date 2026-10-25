@@ -56,6 +56,11 @@ COUPLING_TERMS = (
     "add", "added", "adds", "into", "turn", "turns", "enter", "enters",
     "same", "mix", "blend", "apply", "applied", "drive", "drives", "inform",
     "shape", "shapes", "affect", "affects", "supply", "supplies", "scale",
+    # the ways agents actually write a chain of consequences
+    "->", "→", "make", "makes", "making", "determines", "determine", "defines",
+    "give", "gives", "yield", "yields", "match", "matches", "align", "aligned",
+    "toward", "towards", "feed", "feeds", "then", "moves", "changes", "change",
+    "select", "selects", "gates", "gate", "compare", "regulate", "scales",
 )
 
 #: Words that place the operation inside the training or quantization path.
@@ -65,8 +70,9 @@ LOCATION_TERMS = (
 )
 
 #: Words that show a signal is kept on the training split.
-EXCLUSION_TERMS = ("only", "no ", "never", "without", "exclusiv", "freeze",
-                   "frozen", "before", "not ")
+EXCLUSION_TERMS = ("only", "no ", "never", "without", "exclusiv", "exclud",
+                   "freeze", "frozen", "before", "not ", "alone", "solely",
+                   "restrict", "strictly", "exclusively", "solely")
 
 #: A field shorter than this is a name, not an explanation.
 MIN_EXPLANATION = 24
@@ -224,7 +230,10 @@ def check_scope(idea: dict) -> dict:
         reasons.append("ablation_geometry_off does not say what replaces the curve")
     if off_behaviour and not _has_any(off_behaviour, ("0", "off", "one", "none", "without",
                                                       "disable", "remove", "zero", "not used",
-                                                      "no ", "ignore", "drop", "uniform")):
+                                                      "no ", "ignore", "drop", "uniform",
+                                                      "shuffle", "random", "destroy",
+                                                      "independent", "uninformative",
+                                                      "mean", "correspond")):
         reasons.append("ablation_behavior_off does not switch the behaviour off")
 
     return {"in_scope": not reasons, "reasons": reasons, "checks": checks}
