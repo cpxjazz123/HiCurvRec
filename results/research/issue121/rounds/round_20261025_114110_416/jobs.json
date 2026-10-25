@@ -21,7 +21,7 @@
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_transition_geodesic_codebook"
     },
     {
-      "attempts": 3,
+      "attempts": 4,
       "cost_projection": {
         "projected_hours": null,
         "reason": "no metrics yet"
@@ -31,7 +31,7 @@
         "refused": "independent executable verification: the tree changed after the verifiers saw it (and it is not the reviewed path)"
       },
       "failure_kind": "SMOKE_FAILED",
-      "finished_at": 1792898717.5553093,
+      "finished_at": 1792898990.3589182,
       "gpu": "1",
       "idea_id": "lorentz_user_cohort_margin",
       "job_id": "stage2:lorentz_user_cohort_margin",
@@ -96,13 +96,18 @@
           "error": "the one-epoch smoke failed on a device mismatch; fixed and re-queued",
           "finished_at": null,
           "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the tree changed after the verifiers saw it (and it is not the reviewed path)",
+          "finished_at": 1792898717.5553093,
+          "status": "failed"
         }
       ],
       "queued_at": 1792896400.360401,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin",
       "round_id": "round_20261025_114110_416",
-      "started_at": 1792898717.4863117,
+      "started_at": 1792898990.2471986,
       "status": "failed",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin"
     },
