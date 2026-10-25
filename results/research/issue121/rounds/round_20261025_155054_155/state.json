@@ -818,6 +818,7 @@
       "transition_busemann_gate": 1.0,
       "transition_geodesic_residual": 1.0
     },
+    "original_decision_preserved": true,
     "rejected": [
       {
         "idea_id": "transition_busemann_gate",
@@ -847,13 +848,14 @@
     },
     "selected": [
       {
-        "idea_id": "branch_curvature_gate",
-        "max_disagreement": 1.0,
-        "overall_mean": 3.888888888888889,
-        "overall_median": 4.0
+        "idea_id": "transition_busemann_gate",
+        "note": "the originally executed decision: selected under the unweighted aggregation whose dimension list did not match the scoring prompt",
+        "status": "SELECTED",
+        "weighted_score": null
       }
     ],
-    "selection_is_multiple": false
+    "selection_is_multiple": false,
+    "status": "SELECTED"
   },
   "stage2_jobs": [
     {
@@ -890,6 +892,6 @@
     }
   ],
   "step": "stage2",
-  "updated_at": 1792908591.7197833,
+  "updated_at": 1792909939.0563085,
   "verification": {}
 }
