@@ -1,0 +1,52 @@
+{
+  "l1_br": {
+    "reported": 0.0406866415,
+    "reproduced": 0.046710423231602224,
+    "absolute_difference": 0.006023781731602222,
+    "reported_ndcg@10": 0.021673569339540715,
+    "reproduced_ndcg@10": 0.025124111105543846,
+    "ndcg_absolute_difference": 0.0034505417660031304,
+    "status": "INCONSISTENT",
+    "note": "reproduced with the frozen evaluator at batch 1024, four ranks, bf16, and confirmed against a single-process pass; the recorded value cannot be reproduced from the checkpoint and SID that survive"
+  },
+  "l1_br_euclid": {
+    "reported": 0.06250108811086544,
+    "reproduced": 0.062065843764689495,
+    "absolute_difference": 0.0004352443461759434,
+    "reported_ndcg@10": 0.03388172223797936,
+    "reproduced_ndcg@10": 0.034032744611630306,
+    "ndcg_absolute_difference": 0.00015102237365094417,
+    "status": "CONSISTENT",
+    "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+  },
+  "l1_only": {
+    "reported": 0.0614042724,
+    "reproduced": 0.062326990372395065,
+    "absolute_difference": 0.0009227179723950638,
+    "reported_ndcg@10": 0.0334570058914946,
+    "reproduced_ndcg@10": 0.034109386583941935,
+    "ndcg_absolute_difference": 0.0006523806924473366,
+    "status": "CONSISTENT",
+    "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+  },
+  "resample": {
+    "reported": 0.0636327234,
+    "reproduced": 0.0636327234109229,
+    "absolute_difference": 1.0922901472198987e-11,
+    "reported_ndcg@10": null,
+    "reproduced_ndcg@10": 0.03502501239941307,
+    "ndcg_absolute_difference": null,
+    "status": "EXACT",
+    "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+  },
+  "successor_entropy": {
+    "reported": 0.05062762234718571,
+    "reproduced": 0.05121955465798499,
+    "absolute_difference": 0.0005919323107992855,
+    "reported_ndcg@10": 0.028021926382601977,
+    "reproduced_ndcg@10": 0.028319735944137003,
+    "ndcg_absolute_difference": 0.0002978095615350264,
+    "status": "CONSISTENT",
+    "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+  }
+}

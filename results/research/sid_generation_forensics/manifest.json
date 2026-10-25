@@ -1,0 +1,247 @@
+{
+  "schema": 1,
+  "issue": 125,
+  "kind": "sid_generation_forensics_manifest",
+  "pairs": {
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+    "exists": true,
+    "sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0"
+  },
+  "stage3_trainer": {
+    "path": "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py",
+    "sha256": "80098a50c62454d0a6d2fd3d8a7abefadae978b51274b8bd0ff768cab5bc03a0"
+  },
+  "protocol": {
+    "beam_size": 20,
+    "n_digit": 4,
+    "n_eval_expected": 57439,
+    "topk": [
+      5,
+      10
+    ],
+    "exclude_history": true,
+    "fallback": "deterministic sorted item ids",
+    "generation": "max_new_tokens = n_digit + 1, no sampling"
+  },
+  "arms": {
+    "l1_br_euclid": {
+      "arm": "l1_br_euclid",
+      "family": "euclidean residual control",
+      "stage3": "tiger_fork_hyper_l1_br_euclid_s42",
+      "reported": {
+        "test_recall@10": 0.06250108811086544,
+        "test_recall@5": 0.04068664148052717,
+        "test_ndcg@10": 0.03388172223797936
+      },
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/hyper_l1_br_euclid_s42/item_sids.json",
+      "sid_origin": "git:19d0d69f^:results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/hyper_l1_br_euclid_s42/item_sids.json",
+      "sid_exists": true,
+      "sid_sha256": "8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541",
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_euclid_s42/ckpt/Amazon_2023_Instruments/Oct-12-2026_09-33-58/HG_Rec_best.pth",
+      "checkpoint_exists": true,
+      "checkpoint_bytes": 18300180,
+      "stage3_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_euclid_s42",
+      "exists": true,
+      "test_final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_euclid_s42/logs/Amazon_2023_Instruments/Oct-12-2026_09-33-58/test_final.json",
+      "test_final_count": 1,
+      "checkpoint_count": 1,
+      "test_final_values": {
+        "test_recall@5": 0.04068664148052717,
+        "test_recall@10": 0.06250108811086544,
+        "test_ndcg@5": 0.026873012891740492,
+        "test_ndcg@10": 0.03388172223797936,
+        "n_eval": 57439
+      },
+      "test_final_sha256": "6031a8356e574dfdafdf51e032f145187b096f07d2a94468306281bc51c9418f",
+      "items": 24587,
+      "sid_width": 4
+    },
+    "l1_only": {
+      "arm": "l1_only",
+      "family": "curved first level",
+      "stage3": "tiger_fork_hyper_l1_s42",
+      "reported": {
+        "test_recall@10": 0.0614042724,
+        "test_recall@5": 0.04091296854053
+      },
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/hyper_l1_s42/item_sids.json",
+      "sid_origin": "git:19d0d69f^:results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/hyper_l1_s42/item_sids.json",
+      "sid_exists": true,
+      "sid_sha256": "e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7",
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_s42/ckpt/Amazon_2023_Instruments/Oct-12-2026_07-31-01/HG_Rec_best.pth",
+      "checkpoint_exists": true,
+      "checkpoint_bytes": 18296596,
+      "stage3_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_s42",
+      "exists": true,
+      "test_final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_s42/logs/Amazon_2023_Instruments/Oct-12-2026_07-31-01/test_final.json",
+      "test_final_count": 1,
+      "checkpoint_count": 1,
+      "test_final_values": {
+        "test_recall@5": 0.040912968540538656,
+        "test_recall@10": 0.061404272358502064,
+        "test_ndcg@5": 0.026876901380031456,
+        "test_ndcg@10": 0.0334570058914946,
+        "n_eval": 57439
+      },
+      "test_final_sha256": "aed346e928eac9c91234cc9955acf926b6711bc27914c6c9ce59440de2a4c66f",
+      "items": 24587,
+      "sid_width": 4
+    },
+    "l1_br": {
+      "arm": "l1_br",
+      "family": "curved first level, branch alternative",
+      "stage3": "tiger_fork_hyper_l1_br_s42",
+      "reported": {
+        "test_recall@10": 0.0406866415,
+        "test_recall@5": 0.02564459687
+      },
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/hyper_l1_br_s42/item_sids.json",
+      "sid_origin": "git:19d0d69f^:results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/hyper_l1_br_s42/item_sids.json",
+      "sid_exists": true,
+      "sid_sha256": "ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969",
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_s42/ckpt/Amazon_2023_Instruments/Oct-12-2026_08-36-27/HG_Rec_best.pth",
+      "checkpoint_exists": true,
+      "checkpoint_bytes": 30865684,
+      "stage3_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_s42",
+      "exists": true,
+      "test_final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_s42/logs/Amazon_2023_Instruments/Oct-12-2026_08-36-27/test_final.json",
+      "test_final_count": 1,
+      "checkpoint_count": 1,
+      "test_final_values": {
+        "test_recall@5": 0.025644596876686573,
+        "test_recall@10": 0.04068664148052717,
+        "test_ndcg@5": 0.016838405948846256,
+        "test_ndcg@10": 0.021673569339540715,
+        "n_eval": 57439
+      },
+      "test_final_sha256": "e69e8f8b0e0617099e42d3c085118dab1cb507e8c378207ed72d872a657c26bf",
+      "items": 24587,
+      "sid_width": 4
+    },
+    "successor_entropy": {
+      "arm": "successor_entropy",
+      "family": "#124 item-conditioned curvature",
+      "stage3": "TIGER_successor_entropy_curvature",
+      "reported": {
+        "test_recall@10": 0.05062762234718571,
+        "test_recall@5": 0.034279844704817285,
+        "test_ndcg@10": 0.028021926382601977
+      },
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/item_sids.json",
+      "sid_origin": "in-repo",
+      "sid_exists": true,
+      "sid_sha256": "3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a",
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor_entropy_curvature/ckpt/Amazon_2023_Instruments/Oct-25-2026_19-35-32/HG_Rec_best.pth",
+      "checkpoint_exists": true,
+      "checkpoint_bytes": 18325268,
+      "stage3_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor_entropy_curvature",
+      "exists": true,
+      "test_final": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor_entropy_curvature/logs/Amazon_2023_Instruments/Oct-25-2026_19-35-32/test_final.json",
+      "test_final_count": 1,
+      "checkpoint_count": 1,
+      "test_final_values": {
+        "test_recall@5": 0.034279844704817285,
+        "test_recall@10": 0.05062762234718571,
+        "test_ndcg@5": 0.02275319175721467,
+        "test_ndcg@10": 0.028021926382601977,
+        "n_eval": 57439
+      },
+      "test_final_sha256": "b5760cb79da3e0c4f347080b5faea9e066a2493a974b86b53cb5e5cd8e4061ac",
+      "items": 24587,
+      "sid_width": 4
+    },
+    "resample": {
+      "arm": "resample",
+      "family": "historical stronger reference",
+      "stage3": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample",
+      "reported": {
+        "test_recall@10": 0.0636327234
+      },
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+      "sid_origin": "in-repo",
+      "sid_exists": true,
+      "sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+      "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample/ckpt/Amazon_2023_Instruments/Oct-15-2026_01-33-53/HG_Rec_best.pth",
+      "checkpoint_exists": true,
+      "checkpoint_bytes": 18282260,
+      "stage3_dir": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample",
+      "exists": true,
+      "test_final": null,
+      "test_final_count": 0,
+      "checkpoint_count": 2,
+      "items": 24587,
+      "sid_width": 4
+    }
+  },
+  "comparability_warnings": [
+    "the three fork arms' SID tables were deleted from the working tree by commit 19d0d69f and are recovered read-only from that commit's parent",
+    "the reported numbers are the original runs' own files; they are re-derived from the checkpoint before any forensic number is interpreted"
+  ],
+  "recovered_inputs": {
+    "hyper_l1_br_euclid_s42": {
+      "sha256": "8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541",
+      "origin": "19d0d69f^:results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/hyper_l1_br_euclid_s42/item_sids.json",
+      "items": 24587,
+      "width": 4
+    },
+    "hyper_l1_s42": {
+      "sha256": "e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7",
+      "origin": "19d0d69f^:results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/hyper_l1_s42/item_sids.json",
+      "items": 24587,
+      "width": 4
+    },
+    "hyper_l1_br_s42": {
+      "sha256": "ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969",
+      "origin": "19d0d69f^:results/stage2_RQ-VAE/TIGER_FORK_RQ-VAE/hyper_l1_br_s42/item_sids.json",
+      "items": 24587,
+      "width": 4
+    }
+  },
+  "provenance": {
+    "l1_br": {
+      "reported": 0.0406866415,
+      "reproduced": 0.046710423231602224,
+      "absolute_difference": 0.006023781731602222,
+      "status": "INCONSISTENT",
+      "note": "reproduced with the frozen evaluator at batch 1024, four ranks, bf16, and confirmed against a single-process pass; the recorded value cannot be reproduced from the checkpoint and SID that survive"
+    },
+    "l1_br_euclid": {
+      "reported": 0.06250108811086544,
+      "reproduced": 0.062065843764689495,
+      "absolute_difference": 0.0004352443461759434,
+      "status": "CONSISTENT",
+      "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+    },
+    "l1_only": {
+      "reported": 0.0614042724,
+      "reproduced": 0.062326990372395065,
+      "absolute_difference": 0.0009227179723950638,
+      "status": "CONSISTENT",
+      "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+    },
+    "resample": {
+      "reported": 0.0636327234,
+      "reproduced": 0.0636327234109229,
+      "absolute_difference": 1.0922901472198987e-11,
+      "status": "EXACT",
+      "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+    },
+    "successor_entropy": {
+      "reported": 0.05062762234718571,
+      "reproduced": 0.05121955465798499,
+      "absolute_difference": 0.0005919323107992855,
+      "status": "CONSISTENT",
+      "note": "single-process pass equals the frozen evaluator bit for bit; the residual against the original four-rank run is bf16 batch-order rounding"
+    }
+  },
+  "deliverables": [
+    "manifest.json",
+    "paired_comparison.csv",
+    "per_model_beam_metrics.json",
+    "per_model_sid_metrics.json",
+    "per_model_token_metrics.json",
+    "provenance.json",
+    "report.md",
+    "strata.csv"
+  ]
+}

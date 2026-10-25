@@ -1,0 +1,45 @@
+arm,reference,metric,arm_value,reference_value,difference,difference_ci95_low,difference_ci95_high,n,note
+l1_br,l1_br_euclid,gold_prefix_alive_L1,1.0,1.0,0.0,,,57439,unpaired rates; the paired test sets are identical rows
+l1_br,l1_br_euclid,gold_prefix_alive_L2,1.0,0.828774874214384,0.171225125785616,,,57439,unpaired rates; the paired test sets are identical rows
+l1_br,l1_br_euclid,gold_prefix_alive_L3,1.0,0.16144083288358085,0.8385591671164192,,,57439,unpaired rates; the paired test sets are identical rows
+l1_br,l1_br_euclid,gold_prefix_alive_L4,0.06777624958651787,0.08473336931353262,-0.016957119727014747,,,57439,unpaired rates; the paired test sets are identical rows
+l1_br,l1_br_euclid,gold_nll_T1,0.0005098965484648943,8.896260987967253e-05,0.00042093393858522177,,,57439,"teacher forced, oracle prefixes"
+l1_br,l1_br_euclid,gold_nll_T2,0.0006865285104140639,3.2201523780822754,-3.219465732574463,,,57439,"teacher forced, oracle prefixes"
+l1_br,l1_br_euclid,gold_nll_T3,0.00037405447801575065,4.357712745666504,-4.357338905334473,,,57439,"teacher forced, oracle prefixes"
+l1_br,l1_br_euclid,gold_nll_T4,9.03074836730957,1.2257503271102905,7.80499792098999,,,57439,"teacher forced, oracle prefixes"
+l1_br,l1_br_euclid,gold_nll_EOS,0.000251465622568503,6.101440158090554e-05,0.00019045121734961867,,,57439,"teacher forced, oracle prefixes"
+l1_br,l1_br_euclid,recall@10,0.046710423231602224,0.062065843764689495,-0.015355420533087276,-0.017044168596249933,-0.013544368808649178,57439,"paired per-example hit difference, bootstrap over rows"
+l1_br,l1_br_euclid,raw_beam_coverage,0.06777624958651784,0.08473336931353259,-0.016957119727014747,,,57439,"share of rows whose target SID is among the twenty beams, before any duplicate/seen/fallback step"
+l1_only,l1_br_euclid,gold_prefix_alive_L1,1.0,1.0,0.0,,,57439,unpaired rates; the paired test sets are identical rows
+l1_only,l1_br_euclid,gold_prefix_alive_L2,0.8292101185605599,0.828774874214384,0.00043524434617592256,,,57439,unpaired rates; the paired test sets are identical rows
+l1_only,l1_br_euclid,gold_prefix_alive_L3,0.15628753982485769,0.16144083288358085,-0.0051532930587231685,,,57439,unpaired rates; the paired test sets are identical rows
+l1_only,l1_br_euclid,gold_prefix_alive_L4,0.08553421891049635,0.08473336931353262,0.0008008495969637347,,,57439,unpaired rates; the paired test sets are identical rows
+l1_only,l1_br_euclid,gold_nll_T1,0.0001180630933959037,8.896260987967253e-05,2.910048351623118e-05,,,57439,"teacher forced, oracle prefixes"
+l1_only,l1_br_euclid,gold_nll_T2,3.2296833992004395,3.2201523780822754,0.009531021118164062,,,57439,"teacher forced, oracle prefixes"
+l1_only,l1_br_euclid,gold_nll_T3,4.377813339233398,4.357712745666504,0.02010059356689453,,,57439,"teacher forced, oracle prefixes"
+l1_only,l1_br_euclid,gold_nll_T4,1.192253828048706,1.2257503271102905,-0.03349649906158447,,,57439,"teacher forced, oracle prefixes"
+l1_only,l1_br_euclid,gold_nll_EOS,7.037007162580267e-05,6.101440158090554e-05,9.355670044897124e-06,,,57439,"teacher forced, oracle prefixes"
+l1_only,l1_br_euclid,recall@10,0.062326990372395065,0.062065843764689495,0.0002611466077055659,-0.001340987830568081,0.0018458712721321725,57439,"paired per-example hit difference, bootstrap over rows"
+l1_only,l1_br_euclid,raw_beam_coverage,0.0855342189104964,0.08473336931353259,0.0008008495969638041,,,57439,"share of rows whose target SID is among the twenty beams, before any duplicate/seen/fallback step"
+resample,l1_br_euclid,gold_prefix_alive_L1,0.4972753703929386,1.0,-0.5027246296070613,,,57439,unpaired rates; the paired test sets are identical rows
+resample,l1_br_euclid,gold_prefix_alive_L2,0.12169431919079371,0.828774874214384,-0.7070805550235904,,,57439,unpaired rates; the paired test sets are identical rows
+resample,l1_br_euclid,gold_prefix_alive_L3,0.09136649314925399,0.16144083288358085,-0.07007433973432686,,,57439,unpaired rates; the paired test sets are identical rows
+resample,l1_br_euclid,gold_prefix_alive_L4,0.08837201204756351,0.08473336931353262,0.003638642734030889,,,57439,unpaired rates; the paired test sets are identical rows
+resample,l1_br_euclid,gold_nll_T1,4.54999303817749,8.896260987967253e-05,4.549903869628906,,,57439,"teacher forced, oracle prefixes"
+resample,l1_br_euclid,gold_nll_T2,3.817187786102295,3.2201523780822754,0.5970354080200195,,,57439,"teacher forced, oracle prefixes"
+resample,l1_br_euclid,gold_nll_T3,0.7318625450134277,4.357712745666504,-3.625850200653076,,,57439,"teacher forced, oracle prefixes"
+resample,l1_br_euclid,gold_nll_T4,0.049400899559259415,1.2257503271102905,-1.176349401473999,,,57439,"teacher forced, oracle prefixes"
+resample,l1_br_euclid,gold_nll_EOS,1.1576774340937845e-05,6.101440158090554e-05,-4.94376290589571e-05,,,57439,"teacher forced, oracle prefixes"
+resample,l1_br_euclid,recall@10,0.0636327234109229,0.062065843764689495,0.0015668796462333953,-0.00013971343512247773,0.0031685788401608662,57439,"paired per-example hit difference, bootstrap over rows"
+resample,l1_br_euclid,raw_beam_coverage,0.08837201204756351,0.08473336931353259,0.003638642734030917,,,57439,"share of rows whose target SID is among the twenty beams, before any duplicate/seen/fallback step"
+successor_entropy,l1_br_euclid,gold_prefix_alive_L1,0.7354236668465677,1.0,-0.2645763331534323,,,57439,unpaired rates; the paired test sets are identical rows
+successor_entropy,l1_br_euclid,gold_prefix_alive_L2,0.39951949024182176,0.828774874214384,-0.42925538397256224,,,57439,unpaired rates; the paired test sets are identical rows
+successor_entropy,l1_br_euclid,gold_prefix_alive_L3,0.13325440902522676,0.16144083288358085,-0.028186423858354098,,,57439,unpaired rates; the paired test sets are identical rows
+successor_entropy,l1_br_euclid,gold_prefix_alive_L4,0.06876860669579903,0.08473336931353262,-0.015964762617733594,,,57439,unpaired rates; the paired test sets are identical rows
+successor_entropy,l1_br_euclid,gold_nll_T1,3.4467148780822754,8.896260987967253e-05,3.4466259479522705,,,57439,"teacher forced, oracle prefixes"
+successor_entropy,l1_br_euclid,gold_nll_T2,2.3252856731414795,3.2201523780822754,-0.8948667049407959,,,57439,"teacher forced, oracle prefixes"
+successor_entropy,l1_br_euclid,gold_nll_T3,2.2880187034606934,4.357712745666504,-2.0696940422058105,,,57439,"teacher forced, oracle prefixes"
+successor_entropy,l1_br_euclid,gold_nll_T4,0.9830343127250671,1.2257503271102905,-0.2427160143852234,,,57439,"teacher forced, oracle prefixes"
+successor_entropy,l1_br_euclid,gold_nll_EOS,2.272596066177357e-05,6.101440158090554e-05,-3.828843910014257e-05,,,57439,"teacher forced, oracle prefixes"
+successor_entropy,l1_br_euclid,recall@10,0.05121955465798499,0.062065843764689495,-0.010846289106704503,-0.01267475060498964,-0.00913926078100246,57439,"paired per-example hit difference, bootstrap over rows"
+successor_entropy,l1_br_euclid,raw_beam_coverage,0.06876860669579898,0.08473336931353259,-0.015964762617733608,,,57439,"share of rows whose target SID is among the twenty beams, before any duplicate/seen/fallback step"

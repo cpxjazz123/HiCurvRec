@@ -1,0 +1,442 @@
+{
+  "l1_br": {
+    "token": {
+      "positions": {
+        "T1": {
+          "n": 57439,
+          "mean_nll": 0.0005098965484648943,
+          "median_nll": 0.0005055579822510481,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.00933779776096344,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        },
+        "T2": {
+          "n": 57439,
+          "mean_nll": 0.0006865285104140639,
+          "median_nll": 0.0006808108882978559,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.012354384176433086,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        },
+        "T3": {
+          "n": 57439,
+          "mean_nll": 0.00037405447801575065,
+          "median_nll": 0.00037079135654494166,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.006962177809327841,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        },
+        "T4": {
+          "n": 57439,
+          "mean_nll": 9.03074836730957,
+          "median_nll": 9.061931610107422,
+          "accuracy_at_1": 0.008443740315813297,
+          "accuracy_at_5": 0.02895245390762374,
+          "accuracy_at_20": 0.06779365936036491,
+          "median_gold_rank": 1584.0,
+          "mean_gold_rank": 4225.4831734535765,
+          "mean_entropy_nats": 8.5475435256958,
+          "gold_token_constant": false,
+          "gold_token_distinct": 16462
+        },
+        "EOS": {
+          "n": 57439,
+          "mean_nll": 0.000251465622568503,
+          "median_nll": 0.00024971229140646756,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.004758913069963455,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        }
+      },
+      "prefix_mean_nll": {
+        "T1": 0.0005098965484648943,
+        "T2": 0.00119642517529428,
+        "T3": 0.001570479478687048,
+        "T4": 9.032318115234375,
+        "T5": 9.032570838928223
+      },
+      "rows": 57439
+    },
+    "reproduction": {
+      "reported_test_recall@10": 0.0406866415,
+      "reproduced_test_recall@10": 0.046710423231602224,
+      "reported_ndcg@10": 0.021673569339540715,
+      "reproduced_ndcg@10": 0.025124111105543846,
+      "ndcg_absolute_difference": 0.0034505417660031304,
+      "absolute_difference": 0.006023781731602222
+    },
+    "n_eval": 57439
+  },
+  "l1_br_euclid": {
+    "token": {
+      "positions": {
+        "T1": {
+          "n": 57439,
+          "mean_nll": 8.896260987967253e-05,
+          "median_nll": 8.868777513271198e-05,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.0014345775125548244,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        },
+        "T2": {
+          "n": 57439,
+          "mean_nll": 3.2201523780822754,
+          "median_nll": 3.0682413578033447,
+          "accuracy_at_1": 0.1782586744198193,
+          "accuracy_at_5": 0.4807534950120998,
+          "accuracy_at_20": 0.8287400546666899,
+          "median_gold_rank": 6.0,
+          "mean_gold_rank": 10.550009575375617,
+          "mean_entropy_nats": 2.8454806804656982,
+          "gold_token_constant": false,
+          "gold_token_distinct": 80
+        },
+        "T3": {
+          "n": 57439,
+          "mean_nll": 4.357712745666504,
+          "median_nll": 4.374411582946777,
+          "accuracy_at_1": 0.11523529309354272,
+          "accuracy_at_5": 0.29817719667821513,
+          "accuracy_at_20": 0.5534567105973294,
+          "median_gold_rank": 16.0,
+          "mean_gold_rank": 36.02797750657219,
+          "mean_entropy_nats": 4.275603771209717,
+          "gold_token_constant": false,
+          "gold_token_distinct": 256
+        },
+        "T4": {
+          "n": 57439,
+          "mean_nll": 1.2257503271102905,
+          "median_nll": 0.9311560392379761,
+          "accuracy_at_1": 0.5499747558279218,
+          "accuracy_at_5": 0.9166420028203833,
+          "accuracy_at_20": 0.9962568986228869,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 2.3933390205261236,
+          "mean_entropy_nats": 1.1540220975875854,
+          "gold_token_constant": false,
+          "gold_token_distinct": 44
+        },
+        "EOS": {
+          "n": 57439,
+          "mean_nll": 6.101440158090554e-05,
+          "median_nll": 6.01988795096986e-05,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.0010284294839948416,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        }
+      },
+      "prefix_mean_nll": {
+        "T1": 8.896260987967253e-05,
+        "T2": 3.220240592956543,
+        "T3": 7.577954292297363,
+        "T4": 8.803705215454102,
+        "T5": 8.803765296936035
+      },
+      "rows": 57439
+    },
+    "reproduction": {
+      "reported_test_recall@10": 0.06250108811086544,
+      "reproduced_test_recall@10": 0.062065843764689495,
+      "reported_ndcg@10": 0.03388172223797936,
+      "reproduced_ndcg@10": 0.034032744611630306,
+      "ndcg_absolute_difference": 0.00015102237365094417,
+      "absolute_difference": 0.0004352443461759434
+    },
+    "n_eval": 57439
+  },
+  "l1_only": {
+    "token": {
+      "positions": {
+        "T1": {
+          "n": 57439,
+          "mean_nll": 0.0001180630933959037,
+          "median_nll": 0.00011753345461329445,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.0018547432264313102,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        },
+        "T2": {
+          "n": 57439,
+          "mean_nll": 3.2296833992004395,
+          "median_nll": 3.0773394107818604,
+          "accuracy_at_1": 0.17500304671042324,
+          "accuracy_at_5": 0.4813976566444402,
+          "accuracy_at_20": 0.8292275283344069,
+          "median_gold_rank": 6.0,
+          "mean_gold_rank": 10.679764619857588,
+          "mean_entropy_nats": 2.8883862495422363,
+          "gold_token_constant": false,
+          "gold_token_distinct": 94
+        },
+        "T3": {
+          "n": 57439,
+          "mean_nll": 4.377813339233398,
+          "median_nll": 4.393474578857422,
+          "accuracy_at_1": 0.1059036543115305,
+          "accuracy_at_5": 0.2912655164609412,
+          "accuracy_at_20": 0.5487560716586292,
+          "median_gold_rank": 17.0,
+          "mean_gold_rank": 36.09340343668936,
+          "mean_entropy_nats": 4.325475692749023,
+          "gold_token_constant": false,
+          "gold_token_distinct": 256
+        },
+        "T4": {
+          "n": 57439,
+          "mean_nll": 1.192253828048706,
+          "median_nll": 0.8897133469581604,
+          "accuracy_at_1": 0.5570779435575132,
+          "accuracy_at_5": 0.9250161040408085,
+          "accuracy_at_20": 0.9960828008844165,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 2.3157436584898763,
+          "mean_entropy_nats": 1.0949162244796753,
+          "gold_token_constant": false,
+          "gold_token_distinct": 37
+        },
+        "EOS": {
+          "n": 57439,
+          "mean_nll": 7.037007162580267e-05,
+          "median_nll": 6.97350042173639e-05,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.0011815609177574515,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        }
+      },
+      "prefix_mean_nll": {
+        "T1": 0.0001180630933959037,
+        "T2": 3.2298009395599365,
+        "T3": 7.607614040374756,
+        "T4": 8.799867630004883,
+        "T5": 8.799939155578613
+      },
+      "rows": 57439
+    },
+    "reproduction": {
+      "reported_test_recall@10": 0.0614042724,
+      "reproduced_test_recall@10": 0.062326990372395065,
+      "reported_ndcg@10": 0.0334570058914946,
+      "reproduced_ndcg@10": 0.034109386583941935,
+      "ndcg_absolute_difference": 0.0006523806924473366,
+      "absolute_difference": 0.0009227179723950638
+    },
+    "n_eval": 57439
+  },
+  "resample": {
+    "token": {
+      "positions": {
+        "T1": {
+          "n": 57439,
+          "mean_nll": 4.54999303817749,
+          "median_nll": 4.597604751586914,
+          "accuracy_at_1": 0.09752955309110535,
+          "accuracy_at_5": 0.2638277128780097,
+          "accuracy_at_20": 0.49739723880986786,
+          "median_gold_rank": 21.0,
+          "mean_gold_rank": 44.08461150089661,
+          "mean_entropy_nats": 4.159048080444336,
+          "gold_token_constant": false,
+          "gold_token_distinct": 241
+        },
+        "T2": {
+          "n": 57439,
+          "mean_nll": 3.817187786102295,
+          "median_nll": 3.6818161010742188,
+          "accuracy_at_1": 0.15181322794616897,
+          "accuracy_at_5": 0.40247915179581817,
+          "accuracy_at_20": 0.7071501941189784,
+          "median_gold_rank": 8.0,
+          "mean_gold_rank": 22.992496387471927,
+          "mean_entropy_nats": 3.820100784301758,
+          "gold_token_constant": false,
+          "gold_token_distinct": 256
+        },
+        "T3": {
+          "n": 57439,
+          "mean_nll": 0.7318625450134277,
+          "median_nll": 0.016407685354351997,
+          "accuracy_at_1": 0.7943209317710963,
+          "accuracy_at_5": 0.9679660161214506,
+          "accuracy_at_20": 0.988474729713261,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 2.352965754974843,
+          "mean_entropy_nats": 0.5004528760910034,
+          "gold_token_constant": false,
+          "gold_token_distinct": 256
+        },
+        "T4": {
+          "n": 57439,
+          "mean_nll": 0.049400899559259415,
+          "median_nll": 3.6954195820726454e-05,
+          "accuracy_at_1": 0.9771583767126865,
+          "accuracy_at_5": 0.9997388533922944,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0289524539076238,
+          "mean_entropy_nats": 0.04849811643362045,
+          "gold_token_constant": false,
+          "gold_token_distinct": 10
+        },
+        "EOS": {
+          "n": 57439,
+          "mean_nll": 1.1576774340937845e-05,
+          "median_nll": 1.1444026313256472e-05,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.00020774875883944333,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        }
+      },
+      "prefix_mean_nll": {
+        "T1": 4.54999303817749,
+        "T2": 8.367180824279785,
+        "T3": 9.099042892456055,
+        "T4": 9.148444175720215,
+        "T5": 9.148456573486328
+      },
+      "rows": 57439
+    },
+    "reproduction": {
+      "reported_test_recall@10": 0.0636327234,
+      "reproduced_test_recall@10": 0.0636327234109229,
+      "reported_ndcg@10": null,
+      "reproduced_ndcg@10": 0.03502501239941307,
+      "ndcg_absolute_difference": null,
+      "absolute_difference": 1.0922901472198987e-11
+    },
+    "n_eval": 57439
+  },
+  "successor_entropy": {
+    "token": {
+      "positions": {
+        "T1": {
+          "n": 57439,
+          "mean_nll": 3.4467148780822754,
+          "median_nll": 2.9738101959228516,
+          "accuracy_at_1": 0.26246975051794075,
+          "accuracy_at_5": 0.5610821915423319,
+          "accuracy_at_20": 0.7356848134542733,
+          "median_gold_rank": 4.0,
+          "mean_gold_rank": 21.115235293093544,
+          "mean_entropy_nats": 3.306103467941284,
+          "gold_token_constant": false,
+          "gold_token_distinct": 250
+        },
+        "T2": {
+          "n": 57439,
+          "mean_nll": 2.3252856731414795,
+          "median_nll": 2.1207845211029053,
+          "accuracy_at_1": 0.33804557878793157,
+          "accuracy_at_5": 0.7122164383084664,
+          "accuracy_at_20": 0.9651108132105364,
+          "median_gold_rank": 3.0,
+          "mean_gold_rank": 5.221574191751249,
+          "mean_entropy_nats": 2.2205734252929688,
+          "gold_token_constant": false,
+          "gold_token_distinct": 211
+        },
+        "T3": {
+          "n": 57439,
+          "mean_nll": 2.2880187034606934,
+          "median_nll": 1.948164701461792,
+          "accuracy_at_1": 0.4123156740193945,
+          "accuracy_at_5": 0.721722174828949,
+          "accuracy_at_20": 0.9109838263200961,
+          "median_gold_rank": 2.0,
+          "mean_gold_rank": 7.767179094343565,
+          "mean_entropy_nats": 2.1351921558380127,
+          "gold_token_constant": false,
+          "gold_token_distinct": 256
+        },
+        "T4": {
+          "n": 57439,
+          "mean_nll": 0.9830343127250671,
+          "median_nll": 0.2671249210834503,
+          "accuracy_at_1": 0.680182454429917,
+          "accuracy_at_5": 0.906735841501419,
+          "accuracy_at_20": 0.9835651734883963,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 2.6618847821166804,
+          "mean_entropy_nats": 0.8862213492393494,
+          "gold_token_constant": false,
+          "gold_token_distinct": 91
+        },
+        "EOS": {
+          "n": 57439,
+          "mean_nll": 2.272596066177357e-05,
+          "median_nll": 2.13382354559144e-05,
+          "accuracy_at_1": 1.0,
+          "accuracy_at_5": 1.0,
+          "accuracy_at_20": 1.0,
+          "median_gold_rank": 1.0,
+          "mean_gold_rank": 1.0,
+          "mean_entropy_nats": 0.0004029508854728192,
+          "gold_token_constant": true,
+          "gold_token_distinct": 1
+        }
+      },
+      "prefix_mean_nll": {
+        "T1": 3.4467148780822754,
+        "T2": 5.772000312805176,
+        "T3": 8.060019493103027,
+        "T4": 9.043052673339844,
+        "T5": 9.043075561523438
+      },
+      "rows": 57439
+    },
+    "reproduction": {
+      "reported_test_recall@10": 0.05062762234718571,
+      "reproduced_test_recall@10": 0.05121955465798499,
+      "reported_ndcg@10": 0.028021926382601977,
+      "reproduced_ndcg@10": 0.028319735944137003,
+      "ndcg_absolute_difference": 0.0002978095615350264,
+      "absolute_difference": 0.0005919323107992855
+    },
+    "n_eval": 57439
+  }
+}
