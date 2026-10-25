@@ -393,3 +393,40 @@ class PhaseToolTests(unittest.TestCase):
                 second.acquire(owner="second")
             first.release()
             second.acquire(owner="second")
+
+
+class RepairCapTests(unittest.TestCase):
+    """A candidate stops asking for agents after the allowed repair rounds."""
+
+    def test_the_cap_is_five_rounds(self):
+        self.assertEqual(pipeline_module.MAX_REVISIONS, 5)
+
+    def test_a_candidate_at_the_cap_is_recorded_instead_of_repaired(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_cap", objective="o")
+            tree = root / "tree"
+            tree.mkdir()
+            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [pipeline_module.implementation_record(
+                _coupled(), {"changed_files": ["model.py"]}, tree)]
+            state["implementations"][0]["revision"] = pipeline_module.MAX_REVISIONS
+            pipeline_module.save_state(directory, state)
+            state = pipeline_module.mark_revision_capped(state, "coupled",
+                                                         "the cap is reached")
+            record = state["implementations"][0]
+            self.assertEqual(record["status"], "blocked")
+            self.assertTrue(record["revision_capped"])
+            self.assertEqual(state["revision_capped"][0]["idea_id"], "coupled")
+
+    def test_the_summary_reports_the_capped_branches(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_cap2", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [pipeline_module.implementation_record(
+                _coupled(), {}, root / "tree")]
+            state = pipeline_module.mark_revision_capped(state, "coupled", "cap")
+            summary = pipeline_module.summary(state)
+            self.assertEqual(summary["revision_capped"], 1)

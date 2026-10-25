@@ -2406,8 +2406,6 @@ def main() -> None:
                 respond(message["id"], error={"code": -32603, "message": str(exc)})
 
 
-if __name__ == "__main__":
-    main()
 
 # --------------------------------------------------------------------------
 # Issue #120: multi-agent research rounds
@@ -2915,3 +2913,7 @@ TOOLS.update({
                        "exported SID to Stage 3 automatically.",
     },
 })
+
+
+if __name__ == "__main__":
+    main()

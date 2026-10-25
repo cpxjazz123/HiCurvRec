@@ -286,6 +286,16 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
         state = pipeline_module.apply_verification(state, record["idea_id"], reports)
         pipeline_module.save_state(directory, state)
         if record.get("blocking_findings"):
+            if int(record.get("revision", 0)) >= pipeline_module.MAX_REVISIONS:
+                # The candidate used up its repair rounds: it is recorded with
+                # its findings instead of asking for another agent.
+                state = pipeline_module.mark_revision_capped(
+                    state, record["idea_id"],
+                    "the verifiers still reject the implementation after " +
+                    str(record.get("revision", 0)) + " repair rounds, which is the cap")
+                pipeline_module.save_state(directory, state)
+                log("%s: revision capped" % record["idea_id"])
+                continue
             try:
                 repair = run_repair(agent_root, idea, Path(record["tree"]),
                                     record.get("blocking_findings", []),
