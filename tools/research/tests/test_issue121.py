@@ -488,7 +488,7 @@ class ReviewContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
             directory = pipeline_module.new_round(root, "round_pre", objective="o")
-            tree = root / "tree"
+            tree = root / "coupled"
             tree.mkdir()
             (tree / "train_rqvae.py").write_text(
                 'OUTPUT_JSON = Path("/home/wlia0047/ar57/wenyu/GeneRec/results/'

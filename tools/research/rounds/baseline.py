@@ -87,33 +87,107 @@ def copy_baseline(destination: Path, *, baseline: Path = None) -> dict:
     return provenance
 
 
+def _split_path_parts(expr: str) -> list:
+    """Split a path expression on ``/`` outside quotes."""
+    parts, current, quote = [], [], None
+    for char in str(expr):
+        if quote:
+            current.append(char)
+            if char == quote:
+                quote = None
+            continue
+        if char in "\"'":
+            quote = char
+            current.append(char)
+            continue
+        if char == "/":
+            parts.append("".join(current).strip())
+            current = []
+            continue
+        current.append(char)
+    parts.append("".join(current).strip())
+    return [part for part in parts if part]
+
+
+def _eval_path_expr(expr: str, anchors: dict, tree: Path):
+    """Evaluate a path expression made of Path literals, anchors and ``/`` joins."""
+    parts = _split_path_parts(expr)
+    value = None
+    for part in parts:
+        piece = None
+        literal = re.fullmatch(r'Path\(\s*["\']([^"\']+)["\']\s*\)', part)
+        if literal:
+            piece = literal.group(1)
+        elif re.fullmatch(r'Path\(__file__\)(?:\.resolve\(\))?\.parent', part):
+            piece = str(tree)
+        elif re.fullmatch(r'f["\']([^"\']+)["\']', part):
+            template = re.fullmatch(r'f["\']([^"\']+)["\']', part).group(1)
+            filled = re.sub(r"\{(\w+)\}", lambda m: str(anchors.get(m.group(1), m.group(0))),
+                            template)
+            piece = filled
+        elif re.fullmatch(r'["\']([^"\']+)["\']', part):
+            piece = re.fullmatch(r'["\']([^"\']+)["\']', part).group(1)
+        elif re.fullmatch(r"[A-Za-z_]\w*", part) and part in anchors:
+            piece = anchors[part]
+        if piece is None:
+            return None
+        value = Path(piece) if value is None else value / piece
+    return str(value) if value is not None else None
+
+
 def _declared_paths(tree: Path) -> dict:
     """The output paths a trainer declares, resolved through its own anchors.
 
-    A trainer often writes ``RESULT_DIR = ... / "results/stage2_RQ-VAE/TIGER_x"``
-    and then ``OUTPUT_JSON = RESULT_DIR / "item_sids.json"``, so reading only
-    literal ``Path("...")`` assignments would miss every output it declares.
+    A trainer writes chains such as
+    ``RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / "TIGER_x"`` and then
+    ``OUTPUT_JSON = RESULT_DIR / "item_sids.json"``, so reading only literal
+    ``Path("...")`` assignments would miss every output it declares.
     """
     entry = Path(tree) / "train_rqvae.py"
     if not entry.is_file():
         return {}
     text = entry.read_text(encoding="utf-8", errors="replace")
+    # An output path anchored on the number of parents of this file works in the
+    # round tree and breaks after promotion, where the tree sits one level
+    # higher. That is a defect, not a style choice.
+    for match in re.finditer(r"^(\w+)\s*=\s*Path\(__file__\)(?:\.resolve\(\))?"
+                             r"\.parents\[\d+\]", text, re.M):
+        if match.group(1) in _OUTPUT_CONSTANTS or match.group(1).endswith("DIR"):
+            raise BaselineError("the output path " + match.group(1) + " depends on the "
+                                "source tree's depth (parents[N]); use REPO_ROOT or an "
+                                "absolute path under results/stage2_RQ-VAE/")
+    # The names a trainer may use for the two anchors it is allowed to start
+    # from. Anything else has to be resolvable from these.
     anchors: dict[str, str] = {}
-    for match in re.finditer(r"^(\w+)\s*=\s*Path\(\s*[\"']([^\"']+)[\"']\s*\)", text, re.M):
-        anchors[match.group(1)] = match.group(2)
-    for match in re.finditer(r"^(\w+)\s*=\s*Path\(__file__\)(?:\.resolve\(\))?\.parent"
-                             r"\s*/\s*[\"']([^\"']+)[\"']", text, re.M):
-        anchors[match.group(1)] = str(Path(tree) / match.group(2))
-    changed = True
-    while changed:
+    for alias in ("REPO_ROOT", "_REPO_ROOT", "ROOT", "_ROOT", "PROJECT_ROOT",
+                  "BASE_DIR", "REPO"):
+        anchors[alias] = "/home/wlia0047/ar57/wenyu/GeneRec"
+    for alias in ("TREE_ROOT", "_TREE", "_HERE", "TREE_DIR", "THIS_DIR"):
+        anchors[alias] = str(Path(tree))
+    # A plain string constant may be interpolated into an f-string path.
+    for name, value in re.findall(r"^(\w+)\s*=\s*[\"']([^\"']*)[\"']\s*$", text, re.M):
+        anchors.setdefault(name, value)
+    assignments = re.findall(r"^(\w+)\s*=\s*(.+)$", text, re.M)
+    for _ in range(6):                       # resolve chains in dependency order
         changed = False
-        for match in re.finditer(r"^(\w+)\s*=\s*(\w+)\s*/\s*[\"']([^\"']+)[\"']",
-                                 text, re.M):
-            name, base, tail = match.group(1), match.group(2), match.group(3)
-            if base in anchors and name not in anchors:
-                anchors[name] = str(Path(anchors[base]) / tail)
+        for name, expr in assignments:
+            if name in anchors:
+                continue
+            value = _eval_path_expr(expr.strip(), anchors, Path(tree))
+            if value is not None:
+                anchors[name] = value
                 changed = True
-    return {name: value for name, value in anchors.items() if name in _OUTPUT_CONSTANTS}
+        if not changed:
+            break
+    declared = {name: value for name, value in anchors.items()
+                if name in _OUTPUT_CONSTANTS or name.endswith("DIR")}
+    if not any(name in declared for name in _OUTPUT_CONSTANTS):
+        # The preflight cannot check what it cannot resolve: a trainer whose
+        # output constants are opaque is refused, not assumed safe.
+        raise BaselineError("the preflight cannot resolve any output path of " +
+                            str(tree) + "; declare RESULT_DIR as an absolute path "
+                            "under results/stage2_RQ-VAE/TIGER_<idea>/")
+    return declared
 
 
 def _resolve(path_text: str, tree: Path) -> Path:
@@ -131,8 +205,14 @@ def results_root(baseline: Path) -> Path:
     return Path("/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE")
 
 
+def arm_name(tree: Path) -> str:
+    """The name this tree gets when it enters the Stage 2 allowlist."""
+    name = Path(tree).name
+    return name if name.startswith("TIGER_") else "TIGER_" + name
+
+
 def guard_output_paths(tree: Path, *, baseline: Path = None,
-                       other_candidates=()) -> dict:
+                       other_candidates=(), arm: str = None) -> dict:
     """Refuse a candidate that would write into the baseline or a sibling.
 
     Returns the resolved output paths when the candidate is isolated, and
@@ -141,7 +221,8 @@ def guard_output_paths(tree: Path, *, baseline: Path = None,
     tree = Path(tree).resolve()
     base = (Path(baseline).resolve() if baseline is not None
             else baseline_path().resolve())
-    declared = _declared_paths(tree)
+    declared = {name: value for name, value in _declared_paths(tree).items()
+                if name in _OUTPUT_CONSTANTS}
     if not declared:
         raise BaselineError("the candidate declares no output path: " + str(tree))
     # The baseline's own results live next to the other trees, so a candidate
@@ -168,9 +249,10 @@ def guard_output_paths(tree: Path, *, baseline: Path = None,
             if path == target or target in path.parents:
                 raise BaselineError("the candidate would write into the baseline or "
                                     "another candidate: " + name + " -> " + str(path))
-        if approved not in path.parents and path != approved:
-            raise BaselineError("the candidate writes outside results/stage2_RQ-VAE/: "
-                                + name + " -> " + str(path))
+        arm_dir = approved / (arm or arm_name(tree))
+        if path != arm_dir and arm_dir not in path.parents:
+            raise BaselineError("the candidate writes outside its arm directory "
+                                + str(arm_dir) + ": " + name + " -> " + str(path))
     return resolved
 
 
