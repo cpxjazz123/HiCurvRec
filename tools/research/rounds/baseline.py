@@ -120,6 +120,8 @@ def _eval_path_expr(expr: str, anchors: dict, tree: Path):
             piece = literal.group(1)
         elif re.fullmatch(r'Path\(__file__\)(?:\.resolve\(\))?\.parent', part):
             piece = str(tree)
+        elif re.fullmatch(r'Path\(__file__\)(?:\.resolve\(\))?', part):
+            piece = str(Path(tree) / "train_rqvae.py")
         elif re.fullmatch(r'f["\']([^"\']+)["\']', part):
             template = re.fullmatch(r'f["\']([^"\']+)["\']', part).group(1)
             filled = re.sub(r"\{(\w+)\}", lambda m: str(anchors.get(m.group(1), m.group(0))),
@@ -200,10 +202,19 @@ def _declared_paths(tree: Path, *, location: Path = None,
             if name in anchors:
                 continue
             stripped = expr.strip()
-            call = re.fullmatch(r"(\w+)\(\)", stripped)
+            # A marker-walking helper: ``_root()`` or ``_root(Path(__file__).parent)``.
+            call = re.fullmatch(r"(\w+)\((.*)\)", stripped)
             if call and call.group(1) in marker_walkers:
-                anchors[name] = str(Path(repo_root).resolve() if repo_root is not None
-                                    else _repo_root())
+                argument = call.group(2).strip()
+                start = here
+                if argument:
+                    start = _eval_path_expr(argument, anchors, here)
+                    if start is None:
+                        continue
+                found = _walk_to_marker(Path(start))
+                if found is None:
+                    continue
+                anchors[name] = str(found)
                 changed = True
                 continue
             value = _eval_path_expr(stripped, anchors, here)
@@ -245,6 +256,17 @@ def _repo_root() -> Path:
         if (parent / "stage2_RQ-VAE").is_dir():
             return parent
     return here.parents[0]
+
+
+def _walk_to_marker(start: Path) -> Path | None:
+    """The nearest directory at or above ``start`` that holds the Stage 2 root."""
+    start = Path(start)
+    candidates = [start] if start.is_dir() else [start.parent]
+    candidates.extend(candidates[0].parents)
+    for candidate in candidates:
+        if (candidate / "stage2_RQ-VAE").is_dir():
+            return candidate
+    return None
 
 
 def arm_name(tree: Path) -> str:

@@ -373,7 +373,7 @@ def record_framework_finding(state: dict, implementation_id: str, *, source: str
 
 
 def recheck_output_paths(state: dict, implementation_id: str,
-                          repo_root: Path = None) -> dict:
+                          repo_root: Path = None, skip_if_running=()) -> dict:
     """Re-run the output-path preflight after a repair.
 
     A repaired tree may have moved its outputs to the right place; the earlier
@@ -383,6 +383,10 @@ def recheck_output_paths(state: dict, implementation_id: str,
     from . import baseline as baseline_module
 
     record = _implementation(state, implementation_id)
+    if implementation_id in set(skip_if_running or ()):
+        # A candidate that is already training keeps its verdict: its record is
+        # not rewritten under a running job.
+        return state
     tree = Path(record["tree"])
     siblings = [other["tree"] for other in state.get("implementations", [])
                 if other["idea_id"] != implementation_id]
