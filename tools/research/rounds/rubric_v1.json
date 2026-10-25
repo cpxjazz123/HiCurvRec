@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "version": "rubric-2026-10-v1",
+  "description": "Weighted scientific rubric for the behaviour x hyperbolic RQ-VAE mechanism selection (Issue #122). Weights are a policy, not a score: change them before a new round starts, never halfway through one.",
+  "scale": [0, 5],
+  "dimensions": [
+    {
+      "name": "behavior_evidence",
+      "weight": 20,
+      "five_of_five": "A concrete training-only behavioural failure or problem with auditable coverage and support, and a specific SID hypothesis about it",
+      "anchors": {
+        "0": "no behavioural problem is named, or the named one is contradicted by the data contract",
+        "1": "unsupported speculation about a behavioural problem",
+        "2": "a vague behavioural claim, or one whose evidence is high-risk and not measured",
+        "3": "a plausible, testable behavioural problem with a stated statistic",
+        "4": "a well-supported behavioural problem with a measured statistic and its coverage",
+        "5": "a strongly supported problem: the statistic is measured, its support and coverage are auditable, and the SID hypothesis follows from it"
+      }
+    },
+    {
+      "name": "geometry_necessity",
+      "weight": 20,
+      "five_of_five": "A genuine curved computation with a credible reason it contributes beyond an appropriately matched Euclidean control",
+      "anchors": {
+        "0": "no curved operation, or the geometry is inherited and unused",
+        "1": "a geometry name without a geometric computation",
+        "2": "a curved operation that a matched Euclidean transform could reproduce",
+        "3": "a curved operation that plausibly does something the Euclidean control cannot",
+        "4": "a curved operation whose added value is argued against a matched control",
+        "5": "a curved operation whose necessity is argued, whose matched Euclidean counterpart is specified, and whose cancellations are ruled out"
+      }
+    },
+    {
+      "name": "novelty",
+      "weight": 20,
+      "five_of_five": "Distinct computation against the cited literature and the actual experiment ledger, not a rename or a routine loss variation",
+      "anchors": {
+        "0": "identical to a mechanism already measured here",
+        "1": "a rename of an existing mechanism",
+        "2": "a routine variation of an existing mechanism",
+        "3": "a distinct computation relative to the cited work",
+        "4": "distinct and argued against the cited work and our own ledger",
+        "5": "distinct, argued against cited work and our ledger, with the prior art traceable and the difference computational"
+      }
+    },
+    {
+      "name": "downstream_mechanism",
+      "weight": 15,
+      "five_of_five": "An explicit causal chain from the changed code assignment or representation to next-item recommendation, with a measurable expected effect",
+      "anchors": {
+        "0": "no chain from the mechanism to recommendation",
+        "1": "a hoped-for effect with no mechanism",
+        "2": "a hand-waved chain with a gap",
+        "3": "a plausible chain with a measurable effect",
+        "4": "a specific chain with the assignment change and the expected effect named",
+        "5": "a specific chain, the affected assignment, the observable and the expected direction, each with a diagnostic"
+      }
+    },
+    {
+      "name": "falsifiability",
+      "weight": 10,
+      "five_of_five": "Clean behaviour-off, geometry-off (matched Euclidean) and both-on controls, failure criteria and discriminating diagnostics",
+      "anchors": {
+        "0": "no controls and no failure criterion",
+        "1": "a single vague control",
+        "2": "controls that differ in more than the intended switch",
+        "3": "three controls and a failure criterion",
+        "4": "three matched controls, a failure criterion and a discriminating diagnostic",
+        "5": "three matched controls, a falsifier, a discriminating diagnostic, and a statement of what would refute the mechanism"
+      }
+    },
+    {
+      "name": "implementability",
+      "weight": 10,
+      "five_of_five": "Correct, differentiable, numerically guarded and practical under the frozen training budget, with specific repairable risks noted",
+      "anchors": {
+        "0": "not implementable as written",
+        "1": "missing the specification needed to implement it",
+        "2": "implementable only with an unspecified redesign",
+        "3": "implementable with the specification given",
+        "4": "implementable, differentiable and numerically guarded",
+        "5": "implementable, differentiable, numerically guarded, affordable in the frozen budget, with the remaining risks named"
+      }
+    },
+    {
+      "name": "exploration_value",
+      "weight": 5,
+      "five_of_five": "Addresses a substantially different mechanism or failure mode and teaches something even if Stage 3 is negative",
+      "anchors": {
+        "0": "repeats a measured negative in the same family",
+        "1": "a near-repeat of a measured mechanism",
+        "2": "a small variation of a measured mechanism",
+        "3": "a different mechanism or failure mode",
+        "4": "a substantially different mechanism with a clear lesson if it fails",
+        "5": "a substantially different mechanism or failure mode whose negative result would be informative on its own"
+      }
+    }
+  ],
+  "selection": {
+    "minimum_weighted_score": 3.0,
+    "minimum_dimension_median": 2.0,
+    "min_reviewers_above_threshold": 2,
+    "pairwise_finalists": 3,
+    "max_selected": 1,
+    "fallback_to_best": false,
+    "declared_hours_budget": 72.0,
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  },
+  "evidence": {
+    "required_sections": [
+      "behavioral_evidence",
+      "geometric_necessity",
+      "prior_work",
+      "experiment_ledger",
+      "implementation_cost"
+    ],
+    "unknown_literal": "UNKNOWN",
+    "not_checked_literal": "NOT_CHECKED"
+  }
+}

@@ -95,7 +95,7 @@ class ScoringTests(unittest.TestCase):
         with self.assertRaises(scoring_module.ScoreError):
             scoring_module.build_matrix(self.ideas, reports)
 
-    def test_the_matrix_carries_medians_means_and_disagreement(self):
+    def test_the_matrix_carries_weighted_medians_and_disagreement(self):
         reports = [
             {"scorer": "s1", "scores": [_scores("a", 5), _scores("b", 2), _scores("c", 4)]},
             {"scorer": "s2", "scores": [_scores("a", 4), _scores("b", 4), _scores("c", 4)]},
@@ -105,7 +105,8 @@ class ScoringTests(unittest.TestCase):
         rows = {row["idea_id"]: row for row in matrix["rows"]}
         self.assertEqual(rows["b"]["medians"]["novelty"], 4)
         self.assertEqual(rows["a"]["max_disagreement"], 4.0)
-        self.assertEqual(len(matrix["scorers"]), 3)
+        self.assertEqual(len(matrix["reviewers"]), 3)
+        self.assertIn("weighted_score", matrix["rows"][0])
 
     def test_one_agent_cannot_veto_an_idea(self):
         # Two scorers like it, one dislikes it: the median keeps it eligible.
@@ -144,14 +145,20 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual([entry["idea_id"] for entry in strict["selected"]], ["a"])
         self.assertEqual(strict["rule"]["median_threshold"], 3.5)
 
-    def test_a_round_with_no_qualified_idea_falls_back_to_the_best(self):
-        reports = [
-            {"scorer": name, "scores": [_scores("a", 1), _scores("b", 0), _scores("c", 0)]}
-            for name in ("s1", "s2", "s3")
-        ]
-        selection = scoring_module.select(scoring_module.build_matrix(self.ideas, reports))
-        self.assertEqual([entry["idea_id"] for entry in selection["selected"]], ["a"])
-        self.assertIn("fallback", selection["selected"][0]["selection_reason"])
+    def test_a_round_with_no_qualified_idea_says_so(self):
+        ideas = ideas_module.collect_ideas([
+            ("agent1", {"ideas": [_idea("a"), _idea("b", title="beta")]}),
+            ("agent2", {"ideas": [_idea("c", title="gamma")]}),
+            ("agent3", {"ideas": [_idea("d", title="delta")]}),
+        ])
+        reports = [{"scorer": name, "scores": [
+            {"idea_id": idea["idea_id"],
+             "scores": {dimension: 1 for dimension in scoring_module.DIMENSIONS},
+             "rationale": "weak"} for idea in ideas]} for name in ("s1", "s2", "s3")]
+        evaluation = scoring_module.evaluate(ideas, reports)
+        self.assertEqual(evaluation["selection"]["status"],
+                         scoring_module.STATUS_NO_QUALIFIED)
+        self.assertEqual(evaluation["selection"]["selected"], [])
 
 
 class RoundStateTests(unittest.TestCase):
@@ -315,7 +322,7 @@ class CostFeasibilityTests(unittest.TestCase):
         selection = scoring_module.select(matrix)
         self.assertNotIn("a", [entry["idea_id"] for entry in selection["selected"]])
         reasons = [entry for entry in selection["rejected"] if entry["idea_id"] == "a"][0]["reasons"]
-        self.assertTrue(any("declared cost" in reason for reason in reasons))
+        self.assertTrue(any("RESOURCE_BLOCKED" in reason for reason in reasons))
 
 
 class VerdictSeverityTests(unittest.TestCase):
@@ -455,43 +462,216 @@ class PlainTextContractTests(unittest.TestCase):
 class IncompleteAnswerTests(unittest.TestCase):
     """One missing line must not throw away a whole agent answer."""
 
-    def test_a_score_without_a_rationale_is_kept_and_flagged(self):
+    def test_a_score_without_a_rationale_is_a_schema_error(self):
         from tools.research.rounds import plaintext
         answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
                   "implementability=2 | downstream_potential=1 | experimental_diversity=1\n")
         parsed = plaintext.parse_scores(answer)
         self.assertTrue(parsed["scores"][0]["rationale_missing"])
-        report = scoring_module.validate_report(parsed, scorer="s1")
-        self.assertTrue(report["scores"][0]["rationale_missing"])
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.validate_report(parsed, scorer="s1")
 
-    def test_a_score_without_one_dimension_is_kept_and_flagged(self):
+    def test_a_score_without_one_dimension_is_a_schema_error(self):
         from tools.research.rounds import plaintext
         answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
                   "implementability=1 | experimental_distinctness=1\nRATIONALE: a | why\n")
         parsed = plaintext.parse_scores(answer)
-        self.assertEqual(parsed["scores"][0]["missing_dimensions"],
-                         ["downstream_potential", "experimental_diversity"])
-        report = scoring_module.validate_report(parsed, scorer="s1")
-        self.assertIn("downstream_potential", report["scores"][0]["missing_dimensions"])
+        self.assertTrue(parsed["scores"][0]["missing_dimensions"])
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.validate_report(parsed, scorer="s1")
 
-    def test_the_matrix_records_the_incomplete_scorers(self):
+    def test_a_missing_dimension_never_becomes_a_partial_average(self):
         ideas = ideas_module.collect_ideas([
             ("agent1", {"ideas": [_idea("a", title="alpha", change="1"),
                                  _idea("b", title="beta", change="2")]}),
             ("agent2", {"ideas": [_idea("c", title="gamma", change="3")]}),
             ("agent3", {"ideas": [_idea("d", title="delta", change="4")]}),
         ])
+        dims = scoring_module.DIMENSIONS
         full = {"scorer": "s1", "scores": [
-            {"idea_id": idea["idea_id"], "scores": {dimension: 4 for dimension in scoring_module.DIMENSIONS},
+            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims},
              "rationale": "because"} for idea in ideas]}
         partial = {"scorer": "s2", "scores": [
-            {"idea_id": idea["idea_id"], "scores": {dimension: 4 for dimension in scoring_module.DIMENSIONS
-                                                   if dimension != "coupling_strength"},
+            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims if d != dims[0]},
              "rationale": "because"} for idea in ideas]}
         third = {"scorer": "s3", "scores": [
-            {"idea_id": idea["idea_id"], "scores": {dimension: 4 for dimension in scoring_module.DIMENSIONS},
+            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims},
              "rationale": "because"} for idea in ideas]}
-        matrix = scoring_module.build_matrix(ideas, [full, partial, third])
-        row = [entry for entry in matrix["rows"] if entry["idea_id"] == "a"][0]
-        self.assertEqual(row["incomplete_scorers"], ["s2"])
-        self.assertIn("coupling_strength", row["medians"])
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.evaluate(ideas, [full, partial, third])
+
+
+class VerdictSeverityTests(unittest.TestCase):
+    """A review that asks for a correction must never be recorded as approval."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.directory = pipeline_module.new_round(self.root, "round_sev", objective="o")
+        tree = self.root / "tree"
+        tree.mkdir()
+        (tree / "model.py").write_text("x = 1\n")
+        self.state = pipeline_module.load_state(self.directory)
+        self.state["implementations"] = [pipeline_module.implementation_record(
+            {"idea_id": "a"}, {"changed_files": ["model.py"]}, tree)]
+
+    def _verdict(self, severity):
+        return {"verifier": "v1", "verdict": "NEEDS_FIX",
+                "checks": [{"name": "mechanism fidelity", "verdict": "NEEDS_FIX",
+                            "findings": [{"severity": severity, "location": "model.py:1",
+                                          "detail": "no implementation", "reproduction": "look",
+                                          "correction": "write it"}]}]}
+
+    def test_an_unlisted_severity_word_still_blocks(self):
+        for severity in ("blocking", "major", "BLOCKER", "correctness", ""):
+            with self.subTest(severity=severity):
+                state = pipeline_module.apply_verification(
+                    self.state, "a", [self._verdict(severity)])
+                self.assertEqual(state["implementations"][0]["status"], "needs_repair")
+
+    def test_a_harmless_severity_does_not_block(self):
+        harmless = {"verifier": "v1", "verdict": "PASS",
+                    "checks": [{"name": "style", "verdict": "PASS",
+                                "findings": [{"severity": "minor", "location": "model.py:1",
+                                              "detail": "naming", "reproduction": "",
+                                              "correction": "rename"}]}]}
+        state = pipeline_module.apply_verification(self.state, "a", [harmless])
+        self.assertEqual(state["implementations"][0]["status"], "verified")
+
+    def test_a_needs_fix_verdict_blocks_even_when_the_finding_is_harmless(self):
+        state = pipeline_module.apply_verification(self.state, "a",
+                                                   [self._verdict("minor")])
+        self.assertEqual(state["implementations"][0]["status"], "needs_repair")
+
+    def test_a_needs_fix_verdict_without_a_finding_still_blocks(self):
+        state = pipeline_module.apply_verification(
+            self.state, "a", [{"verifier": "v1", "verdict": "NEEDS_FIX", "checks": []}])
+        self.assertEqual(state["implementations"][0]["status"], "needs_repair")
+        self.assertTrue(state["implementations"][0]["failure_signature"])
+
+
+class PlainTextContractTests(unittest.TestCase):
+    """The agents answer in plain text; the framework reads it back."""
+
+    def test_an_idea_block_is_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = (
+            "IDEA: whitening\nTITLE: Whitened geometry\nMOTIVATION: m\nNOVELTY: n\n"
+            "CHANGE: c\nSPECIFICATION: s\nCOST: cheap\nHYPOTHESIS: h\nRISKS: r\nEND IDEA\n")
+        parsed = plaintext.parse_ideas(answer)
+        self.assertEqual(len(parsed["ideas"]), 1)
+        self.assertEqual(parsed["ideas"][0]["idea_id"], "whitening")
+        self.assertEqual(parsed["ideas"][0]["key_change"], "c")
+        self.assertEqual(parsed["ideas"][0]["risks"], "r")
+
+    def test_two_idea_blocks_are_separated(self):
+        from tools.research.rounds import plaintext
+        answer = ("IDEA: a\nTITLE: first\nEND IDEA\nIDEA: b\nTITLE: second\nEND IDEA\n")
+        parsed = plaintext.parse_ideas(answer)
+        self.assertEqual([idea["idea_id"] for idea in parsed["ideas"]], ["a", "b"])
+        self.assertEqual(parsed["ideas"][1]["title"], "second")
+
+    def test_a_value_may_span_several_lines(self):
+        from tools.research.rounds import plaintext
+        answer = ("IDEA: a\nTITLE: first\nSPECIFICATION: line one\nline two\nEND IDEA\n")
+        parsed = plaintext.parse_ideas(answer)
+        self.assertIn("line two", parsed["ideas"][0]["specification"])
+
+    def test_scores_are_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = ("SCORE: a | novelty=4 | scientific_motivation=3 | feasibility=5 | "
+                  "downstream_impact=2 | experimental_distinctness=1\n"
+                  "RATIONALE: a | it is new\n")
+        parsed = plaintext.parse_scores(answer)
+        self.assertEqual(parsed["scores"][0]["idea_id"], "a")
+        self.assertEqual(parsed["scores"][0]["scores"]["novelty"], 4)
+        self.assertEqual(parsed["scores"][0]["rationale"], "it is new")
+
+    def test_a_verification_is_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = ("VERDICT: NEEDS_FIX\nCHECK: mechanism fidelity\nCHECK VERDICT: NEEDS_FIX\n"
+                  "FINDING SEVERITY: blocking\nFINDING LOCATION: model.py:42\n"
+                  "FINDING DETAIL: wrong path\nFINDING REPRODUCTION: run it\n"
+                  "FINDING CORRECTION: fix it\n")
+        parsed = plaintext.parse_verification(answer)
+        self.assertEqual(parsed["verdict"], "NEEDS_FIX")
+        self.assertEqual(parsed["checks"][0]["name"], "mechanism fidelity")
+        self.assertEqual(parsed["checks"][0]["findings"][0]["severity"], "blocking")
+        self.assertEqual(parsed["checks"][0]["findings"][0]["location"], "model.py:42")
+
+    def test_an_implementation_report_is_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = ("TREE: /tmp/tree\nCHANGED FILE: model.py\nCHANGED FILE: train_rqvae.py\n"
+                  "DEVIATION: the smoke is small | it only has to prove the path\n"
+                  "SMOKE COMMAND: python smoke_test.py\nSMOKE RESULT: ok\n")
+        parsed = plaintext.parse_implementation(answer)
+        self.assertEqual(parsed["changed_files"], ["model.py", "train_rqvae.py"])
+        self.assertEqual(parsed["deviations"][0]["reason"], "it only has to prove the path")
+        self.assertEqual(parsed["smoke"]["result"], "ok")
+
+    def test_a_repair_report_is_read_from_plain_text(self):
+        from tools.research.rounds import plaintext
+        answer = ("REPAIR: wrong export path | repointed it | the smoke passes\n"
+                  "REMAINING ISSUE: none\n")
+        parsed = plaintext.parse_repair(answer)
+        self.assertEqual(parsed["repairs"][0]["finding"], "wrong export path")
+        self.assertEqual(parsed["repairs"][0]["change"], "repointed it")
+
+    def test_an_agent_answer_without_the_promised_shape_is_refused(self):
+        from tools.research.rounds import plaintext
+        with self.assertRaises(plaintext.PlainTextError):
+            plaintext.parse_ideas("I had a thought but did not write it down.")
+
+    def test_one_malformed_idea_does_not_cost_the_others(self):
+        ideas = ideas_module.collect_ideas([
+            ("agent1", {"ideas": [_idea("a", title="alpha", change="1"),
+                                 {"idea_id": "b", "title": "incomplete"}]}),
+            ("agent2", {"ideas": [_idea("c", title="gamma", change="2")]}),
+            ("agent3", {"ideas": [_idea("d", title="delta", change="3")]}),
+        ])
+        self.assertEqual([idea["idea_id"] for idea in ideas], ["a", "c", "d"])
+        self.assertTrue(ideas[0]["rejected_ideas"])
+        self.assertIn("missing", ideas[0]["rejected_ideas"][0]["reason"])
+
+
+class IncompleteAnswerTests(unittest.TestCase):
+    """One missing line must not throw away a whole agent answer."""
+
+    def test_a_score_without_a_rationale_is_a_schema_error(self):
+        from tools.research.rounds import plaintext
+        answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
+                  "implementability=2 | downstream_potential=1 | experimental_diversity=1\n")
+        parsed = plaintext.parse_scores(answer)
+        self.assertTrue(parsed["scores"][0]["rationale_missing"])
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.validate_report(parsed, scorer="s1")
+
+    def test_a_score_without_one_dimension_is_a_schema_error(self):
+        from tools.research.rounds import plaintext
+        answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
+                  "implementability=1 | experimental_distinctness=1\nRATIONALE: a | why\n")
+        parsed = plaintext.parse_scores(answer)
+        self.assertTrue(parsed["scores"][0]["missing_dimensions"])
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.validate_report(parsed, scorer="s1")
+
+    def test_a_missing_dimension_never_becomes_a_partial_average(self):
+        ideas = ideas_module.collect_ideas([
+            ("agent1", {"ideas": [_idea("a", title="alpha", change="1"),
+                                 _idea("b", title="beta", change="2")]}),
+            ("agent2", {"ideas": [_idea("c", title="gamma", change="3")]}),
+            ("agent3", {"ideas": [_idea("d", title="delta", change="4")]}),
+        ])
+        dims = scoring_module.DIMENSIONS
+        full = {"scorer": "s1", "scores": [
+            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims},
+             "rationale": "because"} for idea in ideas]}
+        partial = {"scorer": "s2", "scores": [
+            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims if d != dims[0]},
+             "rationale": "because"} for idea in ideas]}
+        third = {"scorer": "s3", "scores": [
+            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims},
+             "rationale": "because"} for idea in ideas]}
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.evaluate(ideas, [full, partial, third])

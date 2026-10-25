@@ -130,18 +130,44 @@ def apply_ideation(state: dict, per_agent: list) -> dict:
     return state
 
 
-def apply_scoring(state: dict, reports: list) -> dict:
-    """Validate the scorers, build the matrix and select several ideas."""
-    for report in reports:
-        scoring_module.validate_report(report, scorer=str(report.get("scorer", "")))
-    matrix = scoring_module.build_matrix(state["ideas"], reports)
-    selection = scoring_module.select(matrix)
+def apply_scoring(state: dict, reports: list, *, comparisons: list = None,
+                  bundles: dict = None, directory: Path = None,
+                  source_commit: str = None) -> dict:
+    """Validate the reviews, weigh them, decide, and freeze the decision.
+
+    The decision record is written once, here, and a later recalculation is an
+    additive audit that never rewrites it.
+    """
+    from . import decision as decision_module
+
+    evaluation = scoring_module.evaluate(state["ideas"], reports, comparisons or [])
+    selection = evaluation["selection"]
     state["scores"] = {str(report.get("scorer", "")): report for report in reports}
-    state["matrix"] = matrix
+    state["matrix"] = evaluation["matrix"]
+    state["pairwise"] = evaluation["pairwise"]
     state["selection"] = selection
+    state["rubric_version"] = evaluation["rubric_version"]
+    state["rubric_sha256"] = evaluation["rubric_sha256"]
+    state["review_bundles"] = {identifier: (bundle or {}).get("sha256")
+                               for identifier, bundle in (bundles or {}).items()}
+    if directory is not None:
+        snapshot = decision_module.build_snapshot(
+            round_id=state.get("round_id", ""), evaluation=evaluation, reports=reports,
+            bundles=bundles or {}, proposals=state["ideas"], source_commit=source_commit)
+        decision_module.write_snapshot(Path(directory), snapshot)
+        state["decision_hash"] = snapshot["decision_hash"]
+        state["decision_at"] = snapshot["decision_at"]
+    # NO_QUALIFIED_IDEA stays a visible state: the round asks for refined
+    # ideation and evidence instead of inventing a winner.
+    if selection["status"] == scoring_module.STATUS_NO_QUALIFIED:
+        state["step"] = "ideation"
+        record_event(state, "no_qualified_idea",
+                     rejected=len(selection["rejected"]))
+        return state
     state["step"] = "implementation"
     record_event(state, "scoring_complete", selected=len(selection["selected"]),
-                 rejected=len(selection["rejected"]))
+                 rejected=len(selection["rejected"]),
+                 decision_hash=state.get("decision_hash"))
     return state
 
 

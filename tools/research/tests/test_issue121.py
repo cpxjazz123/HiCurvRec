@@ -139,7 +139,7 @@ class ScopeGateTests(unittest.TestCase):
         selection = scoring_module.select(matrix)
         rejected = [entry for entry in selection["rejected"] if entry["idea_id"] == "a"]
         self.assertTrue(rejected)
-        self.assertTrue(any("out of scope" in reason for reason in rejected[0]["reasons"]))
+        self.assertTrue(any("OUT_OF_SCOPE" in reason for reason in rejected[0]["reasons"]))
         self.assertNotIn("a", [entry["idea_id"] for entry in selection["selected"]])
 
     def test_the_scope_decision_is_audited_against_the_proposal(self):
@@ -747,4 +747,4 @@ class ScoreDimensionTests(unittest.TestCase):
         row = matrix["rows"][0]
         self.assertEqual(list(row["medians"].keys()), list(scoring_module.DIMENSIONS))
         self.assertTrue(all(value is not None for value in row["medians"].values()))
-        self.assertEqual(row["overall_median"], 4.0)
+        self.assertEqual(row["weighted_score"], 4.0)
