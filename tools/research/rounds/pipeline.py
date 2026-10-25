@@ -61,6 +61,15 @@ def find_round_directory(root: Path, round_id: str) -> Path:
     raise RoundError("unknown round: " + str(round_id))
 
 
+#: The pre-score evidence states (Issue #123).
+PROBE_PENDING = "PROBE_PENDING"
+PROBE_RUNNING = "PROBE_RUNNING"
+PROBE_COMPLETE = "PROBE_COMPLETE"
+PROBE_PARTIAL = "PROBE_PARTIAL"
+PROBE_FAILED = "PROBE_FAILED"
+NEEDS_EVIDENCE = "NEEDS_EVIDENCE"
+
+
 def new_round(root: Path, round_id: str, *, objective: str = "",
               issue: str = DEFAULT_ISSUE) -> Path:
     """Create the round directory and its initial state."""
@@ -75,6 +84,7 @@ def new_round(root: Path, round_id: str, *, objective: str = "",
         "objective": objective,
         "created_at": time.time(),
         "step": "ideation",
+        "probe_state": PROBE_PENDING,
         "ideas": [],
         "ideas_rejected": [],
         "duplicates": [],
@@ -124,9 +134,15 @@ def apply_ideation(state: dict, per_agent: list) -> dict:
         {"idea_id": idea["idea_id"], "also_proposed_by": idea["also_proposed_by"],
          "duplicate_count": idea["duplicate_count"]}
         for idea in merged if idea["duplicate_count"] > 1]
-    state["step"] = "scoring"
     record_event(state, "ideation_complete", ideas=len(merged),
                  duplicates=len(state["duplicates"]))
+    # The evidence probe runs before the first score (Issue #123): the reviewers
+    # must see the measured evidence, not only the proposal's own claims.
+    if state.get("probe_enabled", True):
+        state["step"] = "probe"
+        state["probe_state"] = PROBE_PENDING
+    else:
+        state["step"] = "scoring"
     return state
 
 

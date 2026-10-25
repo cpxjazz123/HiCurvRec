@@ -2605,6 +2605,12 @@ def _round_directory(round_id: str) -> Path:
     return round_pipeline.find_round_directory(REPO, round_id)
 
 
+def round_lock(directory: Path):
+    """The round's lock, so two runners cannot work on it at once."""
+    from tools.research.rounds import lock as round_lock_module
+    return round_lock_module.RoundLock(directory)
+
+
 def _round_phase(round_id: str, phase: str) -> dict:
     """Run one phase of a round and report what it did.
 
@@ -2651,6 +2657,36 @@ def round_pipeline_summary(directory: Path) -> dict:
 def tool_research_round_ideate(round_id: str) -> dict:
     """Run the three independent ideation agents of a round."""
     return _round_phase(round_id, "ideation")
+
+
+def tool_research_round_probe(round_id: str) -> dict:
+    """Run the pre-score evidence probe of every proposal.
+
+    The probe measures the train-only behaviour statistics behind each
+    hypothesis, checks the proposed curved operation on small tensors and
+    retrieves the related work. It never trains, never edits a tree and never
+    reads validation or test data.
+    """
+    import sys as _sys
+    from tools.research.rounds import worker as round_worker
+
+    if str(REPO) not in _sys.path:
+        _sys.path.insert(0, str(REPO))
+    directory = _round_directory(round_id)
+    state = round_pipeline_state(directory)
+    if state.get("step") not in ("probe", "scoring"):
+        return {"round_id": round_id, "ran": False, "step": state.get("step"),
+                "reason": "the round is not in the probe phase"}
+    lock = round_lock(directory)
+    if not lock.acquire(owner="mcp:probe"):
+        return {"round_id": round_id, "ran": False, "step": state.get("step"),
+                "reason": "another runner holds this round"}
+    try:
+        result = round_worker.phase_probe(REPO, round_id)
+    finally:
+        lock.release()
+    result["round_id"] = round_id
+    return result
 
 
 def tool_research_round_score(round_id: str) -> dict:
@@ -3080,6 +3116,14 @@ TOOLS.update({
         "description": "Phase 1 of a round: three independent ideation agents propose "
                        "one to three coupled behaviour-hyperbolic mechanisms each, and "
                        "the scope gate checks every proposal. No GPU work is started.",
+    },
+    "research_round_probe": {
+        "fn": tool_research_round_probe,
+        "args": {"round_id": "string"},
+        "description": "Run the pre-score evidence probe: train-only behaviour "
+                       "statistics for each hypothesis, small-tensor sanity checks of the "
+                       "proposed curved operation, and a verified related-work pass. No "
+                       "GPU work, no code changes, no validation or test data.",
     },
     "research_round_score": {
         "fn": tool_research_round_score,

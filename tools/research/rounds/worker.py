@@ -21,6 +21,9 @@ from . import agents as agent_contracts
 from . import baseline as baseline_module
 from . import evidence as evidence_module
 from . import ideas as ideas_module
+from . import literature as literature_module
+from . import math_checks as math_checks_module
+from . import probes as probes_module
 from . import plaintext
 from . import scoring as scoring_module
 from . import pipeline as pipeline_module
@@ -100,7 +103,78 @@ def _rubric_text() -> str:
     return "\n".join(lines)
 
 
-def run_scoring(root: Path, ideas: list, *, repo: Path = None) -> dict:
+def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None) -> dict:
+    """The pre-score evidence probe of every proposal.
+
+    Three bounded measurements per idea: the train-only behaviour statistics of
+    its hypothesis, the sanity of its curved operation on small tensors, and the
+    related work. Nothing here trains, edits a tree or touches validation or
+    test data.
+    """
+    repo = Path(repo)
+    cache_dir = Path(cache_dir) if cache_dir is not None else (repo / "results" /
+                                                            "research" / "issue121" /
+                                                            "literature_cache")
+    outcomes = {}
+    for idea in ideas:
+        identifier = idea["idea_id"]
+        probe = probes_module.run_probe(idea, repo=repo)
+        probe["sha256"] = _probe_digest(probe)
+        literature = literature_module.run_literature(idea, cache_dir=cache_dir)
+        literature["sha256"] = _probe_digest(literature)
+        math_report = math_checks_module.run_math_checks(idea, repo=repo)
+        math_report["sha256"] = _probe_digest(math_report)
+        outcomes[identifier] = {"probe": probe, "literature": literature,
+                                "math": math_report}
+    return outcomes
+
+
+def _probe_digest(payload: dict) -> str:
+    import hashlib
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False,
+                                     default=str).encode("utf-8")).hexdigest()
+
+
+def phase_probe(root: Path, round_id: str, *, log=print) -> dict:
+    """Run the evidence probe of every proposal and freeze the bundles."""
+    directory = pipeline_module.find_round_directory(root, round_id)
+    state = pipeline_module.load_state(directory)
+    if state["step"] not in ("probe", "scoring"):
+        return {"phase": "probe", "ran": False, "step": state["step"],
+                "reason": "the round is not in the probe phase"}
+    ideas = state["ideas"]
+    state["step"] = "probe"
+    pipeline_module.save_state(directory, state)
+    outcomes = run_probes(directory, ideas, repo=Path(root))
+    bundles = {}
+    for idea in ideas:
+        identifier = idea["idea_id"]
+        outcome = outcomes.get(identifier, {})
+        base = evidence_module.build_bundle(idea, root=Path(root))
+        bundles[identifier] = evidence_module.merge_probe_evidence(
+            base, probe=outcome.get("probe"), literature=outcome.get("literature"),
+            math_report=outcome.get("math"))
+    state["probe_results"] = {identifier: {
+        "probe": outcome.get("probe"), "literature": outcome.get("literature"),
+        "math": outcome.get("math")}
+        for identifier, outcome in outcomes.items()}
+    state["evidence_bundles"] = bundles
+    state["step"] = "scoring"
+    pipeline_module.record_event(state, "probe_complete", ideas=len(ideas))
+    pipeline_module.save_state(directory, state)
+    log("probe: %d bundles frozen" % len(bundles))
+    return {"phase": "probe", "ran": True, "step": state["step"],
+            "ideas": len(ideas),
+            "statuses": {identifier: (outcome.get("probe") or {}).get("status")
+                         for identifier, outcome in outcomes.items()},
+            "literature": {identifier: (outcome.get("literature") or {}).get("status")
+                           for identifier, outcome in outcomes.items()},
+            "math": {identifier: (outcome.get("math") or {}).get("status")
+                     for identifier, outcome in outcomes.items()}}
+
+
+def run_scoring(root: Path, ideas: list, *, repo: Path = None,
+                state: dict = None) -> dict:
     """Three independent reviewers over the frozen evidence bundle.
 
     The bundle is assembled once and handed unchanged to all three, so their
@@ -110,7 +184,9 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None) -> dict:
     reviewed afresh under a new proposal hash.
     """
     repo = Path(repo) if repo is not None else Path(root)
-    bundle = {idea["idea_id"]: evidence_module.build_bundle(idea, root=repo)
+    frozen = state.get("evidence_bundles") or {}
+    bundle = {idea["idea_id"]: frozen.get(idea["idea_id"])
+              or evidence_module.build_bundle(idea, root=repo)
               for idea in ideas}
     payload = plaintext.render_ideas(ideas)
     evidence_text = "\n\n".join(
@@ -347,6 +423,11 @@ def phase_ideation(root: Path, round_id: str, *, log=print) -> dict:
             "duplicates": len(state.get("duplicates", []))}
 
 
+def phase_probe_step(root: Path, round_id: str, *, log=print) -> dict:
+    """The pre-score probe: measure, then freeze the evidence bundle."""
+    return phase_probe(root, round_id, log=log)
+
+
 def phase_scoring(root: Path, round_id: str, *, log=print) -> dict:
     """Run the three scorers over every idea and select the qualified ones."""
     directory = pipeline_module.find_round_directory(root, round_id)
@@ -356,7 +437,7 @@ def phase_scoring(root: Path, round_id: str, *, log=print) -> dict:
         return {"phase": "scoring", "ran": False, "step": state["step"],
                 "selected": len((state.get("selection") or {}).get("selected", [])),
                 "reason": "the round is no longer in the scoring phase"}
-    outcome = run_scoring(agent_root, state["ideas"], repo=Path(root))
+    outcome = run_scoring(agent_root, state["ideas"], repo=Path(root), state=state)
     reports = outcome["reports"]
     state, reports, outcome = _one_bounded_revision(
         directory, agent_root, Path(root), state, reports, outcome)
@@ -536,12 +617,12 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
 
 
 #: The phases of a round, in the order they run.
-PHASES = ("ideation", "scoring", "implementation", "verification")
+PHASES = ("ideation", "probe", "scoring", "implementation", "verification")
 
 
 def advance(root: Path, round_id: str, *, log=print) -> dict:
     """Run the agent stages of a round until it waits for Stage 2."""
-    for phase in (phase_ideation, phase_scoring, phase_implementation,
+    for phase in (phase_ideation, phase_probe, phase_scoring, phase_implementation,
                   phase_verification):
         phase(root, round_id, log=log)
     return pipeline_module.summary(
