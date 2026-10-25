@@ -218,5 +218,49 @@
       "ndcg_absolute_difference": 0.0002978095615350264,
       "absolute_difference": 0.0005919323107992855
     }
+  },
+  "tangent_successor_residual": {
+    "n_eval": 57439,
+    "beam": {
+      "rows": 57439,
+      "beam_width": 20,
+      "recall@5": 0.03657793485262627,
+      "recall@10": 0.05499747558279218,
+      "ndcg@10": 0.02991870500655946,
+      "raw_beam_coverage": 0.07306882083601729,
+      "gold_prefix_alive_rate": {
+        "depth_1": 0.6429603579449503,
+        "depth_2": 0.17986037361374677,
+        "depth_3": 0.08953846689531503,
+        "depth_4": 0.07306882083601735
+      },
+      "first_drop_depth_histogram": {
+        "0_never_dropped": 4197,
+        "1": 20508,
+        "2": 26600,
+        "3": 5188,
+        "4": 946
+      },
+      "categories": {
+        "sid_absent_from_beams": 53242,
+        "hit_from_beams": 3159,
+        "sid_generated_dropped_before_top10": 1038
+      },
+      "category_share": {
+        "sid_absent_from_beams": 0.9269311791639827,
+        "hit_from_beams": 0.05499747558279218,
+        "sid_generated_dropped_before_top10": 0.018071345253225162
+      }
+    },
+    "sid_sha256": "7d73b0b626ce651c27798716c590a6820c5ebfddd1478ba686448de50fc3ea21",
+    "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_tangent_successor_residual/ckpt/Amazon_2023_Instruments/Oct-25-2026_23-49-10/HG_Rec_best.pth",
+    "reproduction": {
+      "reported_test_recall@10": 0.05424885530736956,
+      "reproduced_test_recall@10": 0.05499747558279218,
+      "reported_ndcg@10": 0.0295021872542991,
+      "reproduced_ndcg@10": 0.02991870500655946,
+      "ndcg_absolute_difference": 0.0004165177522603633,
+      "absolute_difference": 0.0007486202754226207
+    }
   }
 }

@@ -109,6 +109,44 @@ def _atomic_json(path: Path, payload) -> Path:
     return path
 
 
+def _load_registry() -> dict:
+    """Arms registered by a later run, so every process sees the same table."""
+    path = OUT / "registry.json"
+    if not path.is_file():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _persist_registry() -> None:
+    path = OUT / "registry.json"
+    fixed = ("l1_br_euclid", "l1_only", "l1_br", "successor_entropy", "resample")
+    payload = {}
+    for name, arm in ARMS.items():
+        if name in fixed:
+            continue
+        payload[name] = {"stage3": arm["stage3"], "sid": str(arm["sid"]),
+                         "sid_origin": arm.get("sid_origin", "in-repo"),
+                         "reported": arm.get("reported", {}), "family": arm.get("family", "")}
+    _atomic_json(path, payload)
+
+
+def _apply_registry() -> None:
+    for name, entry in _load_registry().items():
+        if name in ARMS:
+            continue
+        ARMS[name] = {"stage3": entry["stage3"], "sid": Path(entry["sid"]),
+                      "sid_origin": entry.get("sid_origin", "in-repo"),
+                      "reported": entry.get("reported", {}),
+                      "family": entry.get("family", "registered candidate")}
+
+
+#: Arms registered by a later run are merged in, so every process sees one table.
+_apply_registry()
+
+
 def load_sid(path: Path) -> np.ndarray:
     """The SID table as ``(items, width)`` integers, indexed by the raw item id.
 
@@ -1381,6 +1419,7 @@ def register_arm(name: str, *, stage3: str, sid: str, reported: dict = None,
         sid_path = REPO / sid_path
     ARMS[name] = {"stage3": stage3, "sid": sid_path, "sid_origin": sid_origin,
                   "reported": dict(reported or {}), "family": family or "new candidate"}
+    _persist_registry()
     return name
 
 
