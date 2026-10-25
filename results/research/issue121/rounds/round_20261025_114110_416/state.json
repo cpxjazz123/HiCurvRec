@@ -830,6 +830,13 @@
       "event": "implementation_verified",
       "idea_id": "lorentz_user_cohort_margin",
       "revision": 6
+    },
+    {
+      "event": "ablation_registered",
+      "ideas": [
+        "branch_shell_behavior_off",
+        "branch_shell_geometry_off"
+      ]
     }
   ],
   "ideas": [
@@ -1017,6 +1024,40 @@
         "text": "From training sequences count outgoing pairs, compute normalized p_i(j), entropy H_i=-sum_j p_i(j)log(p_i(j)+eps), and gate g_i=clip(H_i/log(max(2,degree_i)),0,1) (set 0 for degree<2). Given encoded z_i=exp^c_0(W e_i), compute neighborhood prototype m_i as the 3-step weighted Frechet mean initialized at weighted Euclidean mean of exp^c_0(W x_j): m <- exp^c_m(eta*sum_j p_i(j)log^c_m(z_j)); eta=0.25. Use target t_i=exp^c_{z_i}(beta*g_i*log^c_{z_i}(m_i)), beta=0.2, then assign first residual code by argmin_k d_c(t_i,q_1k)^2; later levels quantize tangent residual log^c_0(t_i)-sum_{s<l}q_sk. Backpropagate through t_i and maps; update codebooks with baseline commitment/reconstruction losses."
       },
       "title": "Geodesic transition barycenters as residual-code targets"
+    },
+    {
+      "ablation_of": "branch_shell",
+      "ablation_switch": "behavior_on",
+      "cost_estimate": "the same as the mechanism it derives from",
+      "falsifiable_hypothesis": "the both-on run differs from this control in Stage3 test_R@10",
+      "idea_id": "branch_shell_behavior_off",
+      "key_change": "the trainer calls the model with behavior_on=False and nothing else changes",
+      "motivation": "The coupling must be shown to matter: the same mechanism with one side switched off measures what the coupling contributes.",
+      "novelty": "a control, not a new mechanism",
+      "origin_agent": "operator",
+      "risks": [
+        "a control that differs in more than the named switch would not be a control"
+      ],
+      "scope_verdict": "CONTROL",
+      "specification": "the candidate's own tree with exactly one switch off",
+      "title": "Ablation of branch_shell with the behaviour signal off"
+    },
+    {
+      "ablation_of": "branch_shell",
+      "ablation_switch": "geometry_on",
+      "cost_estimate": "the same as the mechanism it derives from",
+      "falsifiable_hypothesis": "the both-on run differs from this control in Stage3 test_R@10",
+      "idea_id": "branch_shell_geometry_off",
+      "key_change": "the trainer calls the model with geometry_on=False and nothing else changes",
+      "motivation": "The coupling must be shown to matter: the same mechanism with one side switched off measures what the coupling contributes.",
+      "novelty": "a control, not a new mechanism",
+      "origin_agent": "operator",
+      "risks": [
+        "a control that differs in more than the named switch would not be a control"
+      ],
+      "scope_verdict": "CONTROL",
+      "specification": "the candidate's own tree with exactly one switch off",
+      "title": "Ablation of branch_shell with the curved operation off (Euclidean)"
     }
   ],
   "ideas_rejected": [],
@@ -2352,6 +2393,46 @@
           "verifier": "verify_transition_geodesic_codebook_r8_1"
         }
       ]
+    },
+    {
+      "assumptions": [],
+      "baseline": null,
+      "baseline_digest": null,
+      "candidate_digest_before_agent": null,
+      "changed_files": [
+        "train_rqvae.py"
+      ],
+      "deviations": [],
+      "idea_id": "branch_shell_behavior_off",
+      "notes": "",
+      "proposal_sha256": "e7e4d63e27ca819feebfad0f1b7d09dcf4732a65aefdb8211c3f3b8550ca2380",
+      "revision": 0,
+      "smoke": {},
+      "source_digest": "673d3b4989808aa0eed398a9d6cbb03e34522f151b3e1dad38a65f5a19a69cbf",
+      "status": "implemented",
+      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_behavior_off",
+      "tree_exists": true,
+      "verdicts": []
+    },
+    {
+      "assumptions": [],
+      "baseline": null,
+      "baseline_digest": null,
+      "candidate_digest_before_agent": null,
+      "changed_files": [
+        "train_rqvae.py"
+      ],
+      "deviations": [],
+      "idea_id": "branch_shell_geometry_off",
+      "notes": "",
+      "proposal_sha256": "e7e4d63e27ca819feebfad0f1b7d09dcf4732a65aefdb8211c3f3b8550ca2380",
+      "revision": 0,
+      "smoke": {},
+      "source_digest": "7a14cf630cf65528da753c85ee51bd8330417e2b61152e663e7538b4505fa90f",
+      "status": "implemented",
+      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/ablations/branch_shell_geometry_off",
+      "tree_exists": true,
+      "verdicts": []
     }
   ],
   "issue": "issue121",
@@ -5303,6 +5384,6 @@
     }
   ],
   "step": "stage2",
-  "updated_at": 1792899140.4934936,
+  "updated_at": 1792899279.2042449,
   "verification": {}
 }
