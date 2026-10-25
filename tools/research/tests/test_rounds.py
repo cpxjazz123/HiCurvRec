@@ -472,7 +472,7 @@ class IncompleteAnswerTests(unittest.TestCase):
         self.assertEqual(parsed["scores"][0]["missing_dimensions"],
                          ["downstream_potential", "experimental_diversity"])
         report = scoring_module.validate_report(parsed, scorer="s1")
-        self.assertIn("downstream_impact", report["scores"][0]["missing_dimensions"])
+        self.assertIn("downstream_potential", report["scores"][0]["missing_dimensions"])
 
     def test_the_matrix_records_the_incomplete_scorers(self):
         ideas = ideas_module.collect_ideas([
@@ -486,7 +486,7 @@ class IncompleteAnswerTests(unittest.TestCase):
              "rationale": "because"} for idea in ideas]}
         partial = {"scorer": "s2", "scores": [
             {"idea_id": idea["idea_id"], "scores": {dimension: 4 for dimension in scoring_module.DIMENSIONS
-                                                   if dimension != "feasibility"},
+                                                   if dimension != "coupling_strength"},
              "rationale": "because"} for idea in ideas]}
         third = {"scorer": "s3", "scores": [
             {"idea_id": idea["idea_id"], "scores": {dimension: 4 for dimension in scoring_module.DIMENSIONS},
@@ -494,4 +494,4 @@ class IncompleteAnswerTests(unittest.TestCase):
         matrix = scoring_module.build_matrix(ideas, [full, partial, third])
         row = [entry for entry in matrix["rows"] if entry["idea_id"] == "a"][0]
         self.assertEqual(row["incomplete_scorers"], ["s2"])
-        self.assertIn("feasibility", row["medians"])
+        self.assertIn("coupling_strength", row["medians"])
