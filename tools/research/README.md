@@ -239,6 +239,42 @@ the budget) and keeps the idea for an optimisation route, and `STAGE2_3_FAILED`
 is a training or evaluation failure. A candidate stops asking for agents after
 five repair rounds and is recorded with its findings.
 
+## Pre-score evidence probe (Issue #123)
+
+Before the reviewers see a proposal, the framework measures it:
+
+```text
+3 ideation agents -> scope screen
+   -> evidence probe (per proposal, bounded):
+        behaviour probe   train-only statistics of the stated hypothesis
+        math checks       small CPU tensors: round trip, curvature sign, domain guard,
+                          matched-Euclidean sensitivity (PASS/FAIL/INCONCLUSIVE/NOT_RUN)
+        literature pass   OpenAlex (Semantic Scholar fallback), 2-3 mechanism queries,
+                          <=15 verified papers, cached
+   -> one bounded evidence-driven revision (new proposal hash, affected probes re-run)
+   -> frozen evidence bundle (same bytes to all three reviewers)
+   -> 3 independent reviews -> pairwise debate -> immutable decision.json
+```
+
+The probe is read-only, CPU-only and capped: **120 s** of data probe per
+proposal, at most **3** literature queries and **15** papers per proposal, at
+most **1** evidence revision per proposal, and **no** Stage 2 or Stage 3 run
+inside the probe. Its artifacts are written per proposal under
+`<round>/probes/<idea_id>/`: `probe.json`, `literature.json`,
+`math_checks.json`, `evidence_bundle.json`.
+
+What the probe cannot establish is stated, never filled in:
+`DATA_UNAVAILABLE` (the train split lacks the field), `UNKNOWN` (not
+established), `NOT_CHECKED` (the literature pass did not run), `NOT_RUN` (the
+check could not execute) and `NOT_IMPLEMENTED` (no diagnostic exists for that
+hypothesis family). A round trip `log_0(exp_0(v)) = v` shows the maps are
+consistent, **not** that the curvature helps; a small proxy assignment is not
+the candidate's own pathway; and a non-Euclidean effect is not evidence that
+Stage 3 Recall will improve.
+
+The probe never rewrites a score. It can lower one: evidence that contradicts a
+hypothesis is evidence, not a promotion.
+
 ## Weighted scientific scoring (Issue #122)
 
 Selection is not "0–5 scores, unweighted average, highest wins". A round
