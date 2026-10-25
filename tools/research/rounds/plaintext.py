@@ -153,14 +153,15 @@ def parse_ideas(text: str) -> dict:
     return {"ideas": ideas}
 
 
-SCORE_KEYS = ("SCORE", "SCOPE", "RATIONALE", "NOTE")
+SCORE_KEYS = ("SCORE", "SCOPE", "RATIONALE", "EVIDENCE", "OBJECTION",
+              "COUNTEREXAMPLE", "NOTE")
 
-#: The dimensions Issue #121 asks for: the coupling gets its own axis, so a
-#: mechanism that is merely behaviour-flavored cannot hide behind a high
-#: novelty score.
-_SCORE_DIMENSIONS = ("novelty", "behavior_problem_meaning", "coupling_strength",
-                     "implementability", "downstream_potential",
-                     "experimental_diversity")
+#: The rubric's dimensions, read from the policy file: the prompt, the parser
+#: and the matrix must agree exactly (Issue #122).
+from . import rubric as _rubric
+
+_RUBRIC = _rubric.load_rubric()
+_SCORE_DIMENSIONS = tuple(_RUBRIC["dimension_names"])
 
 
 def parse_scores(text: str) -> dict:
@@ -173,7 +174,27 @@ def parse_scores(text: str) -> dict:
     scores: list[dict] = []
     rationales: dict[str, str] = {}
     scopes: dict[str, dict] = {}
+    evidence: dict[str, list] = {}
+    objections: dict[str, str] = {}
+    counterexamples: dict[str, str] = {}
     for name, value in fields:
+        if name == "EVIDENCE":
+            head, _, rest = value.partition("|")
+            identifier = head.strip()
+            if identifier:
+                evidence[identifier] = [item.strip() for item in rest.replace(",", " ").split()
+                                        if item.strip()]
+            continue
+        if name == "OBJECTION":
+            head, _, rest = value.partition("|")
+            if head.strip():
+                objections[head.strip()] = rest.strip() or value.strip()
+            continue
+        if name == "COUNTEREXAMPLE":
+            head, _, rest = value.partition("|")
+            if head.strip():
+                counterexamples[head.strip()] = rest.strip() or value.strip()
+            continue
         if name == "SCOPE":
             parts = [part.strip() for part in value.split("|")]
             identifier = parts[0].strip()
@@ -208,6 +229,9 @@ def parse_scores(text: str) -> dict:
         scope = scopes.get(entry["idea_id"])
         entry["scope_verdict"] = (scope or {}).get("verdict", "")
         entry["scope_reason"] = (scope or {}).get("reason", "")
+        entry["evidence_ids"] = evidence.get(entry["idea_id"], [])
+        entry["objection"] = objections.get(entry["idea_id"], "")
+        entry["counterexample"] = counterexamples.get(entry["idea_id"], "")
         entry["missing_dimensions"] = [dimension for dimension in _SCORE_DIMENSIONS
                                        if dimension not in entry["scores"]]
         if not entry["rationale"]:
@@ -367,3 +391,30 @@ def render_findings(findings: list) -> str:
             "FINDING CORRECTION: " + str(finding.get("correction", "")),
         ]))
     return "\n\n".join(blocks)
+
+
+PAIRWISE_KEYS = ("WINNER", "FIRST LISTED", "ARGUMENT", "FAILURE RISK")
+
+
+def parse_pairwise(text: str) -> dict:
+    """Read one reviewer's A-vs-B comparison."""
+    fields = parse_fields(text, PAIRWISE_KEYS)
+    winner = _first(fields, "WINNER").strip()
+    if not winner:
+        raise PlainTextError("the comparison names no winner")
+    return {"winner": winner,
+            "first_listed": _first(fields, "FIRST LISTED").strip(),
+            "argument": _first(fields, "ARGUMENT").strip(),
+            "failure_risk": _first(fields, "FAILURE RISK").strip()}
+
+
+REBUTTAL_KEYS = ("CHANGE", "UNCHANGED", "REMAINING")
+
+
+def parse_rebuttal(text: str) -> dict:
+    """Read the one bounded revision a proposal is allowed."""
+    fields = parse_fields(text, REBUTTAL_KEYS)
+    change, _, why = _first(fields, "CHANGE").partition("|")
+    return {"change": change.strip(), "why": why.strip(),
+            "unchanged": _first(fields, "UNCHANGED").strip(),
+            "remaining": _first(fields, "REMAINING").strip()}

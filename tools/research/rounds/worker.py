@@ -8,6 +8,7 @@ the GPU boundary.
 """
 from __future__ import annotations
 
+import itertools
 import json
 import shutil
 import time
@@ -18,6 +19,7 @@ from ..agents.runner import run_agent
 from ..core.evidence import atomic_json, digest_file, read_json
 from . import agents as agent_contracts
 from . import baseline as baseline_module
+from . import evidence as evidence_module
 from . import ideas as ideas_module
 from . import plaintext
 from . import pipeline as pipeline_module
@@ -86,21 +88,105 @@ def run_ideation(root: Path, objective: str) -> list:
     return answers
 
 
-def run_scoring(root: Path, ideas: list) -> list:
-    """Three independent scorers, each judging every idea."""
+def _rubric_text() -> str:
+    """The rubric as the reviewers read it: names, weights and anchored meanings."""
+    rubric = scoring_module.RUBRIC
+    lines = []
+    for entry in rubric["dimensions"]:
+        lines.append("  " + entry["name"] + " (" + str(int(entry["weight"])) + "%)")
+        for anchor in sorted(entry["anchors"]):
+            lines.append("    " + anchor + ": " + entry["anchors"][anchor])
+    return "\n".join(lines)
+
+
+def run_scoring(root: Path, ideas: list, *, repo: Path = None) -> dict:
+    """Three independent reviewers over the frozen evidence bundle.
+
+    The bundle is assembled once and handed unchanged to all three, so their
+    reviews are independent of each other but not of the evidence. An objection
+    that names a mathematical identity, a cancellation, leakage or a dimension
+    mismatch buys the proposal ONE bounded revision, and the revision is
+    reviewed afresh under a new proposal hash.
+    """
+    repo = Path(repo) if repo is not None else Path(root)
+    bundle = {idea["idea_id"]: evidence_module.build_bundle(idea, root=repo)
+              for idea in ideas}
     payload = plaintext.render_ideas(ideas)
+    evidence_text = "\n\n".join(
+        "### " + identifier + "\n" + evidence_module.render_bundle(item)
+        for identifier, item in bundle.items())
     reports = []
     for index in range(1, SCORERS + 1):
         task_id = "scoring_" + str(index)
         prompt = (agent_contracts.SCORE_PROMPT.format(
             objective=agent_contracts.RESEARCH_OBJECTIVE,
-            scope=agent_contracts.SCOPE_CONTRACT) +
-            "\n\nThe ideas to score, all of them:\n" + payload)
-        report = _run_agent(root, task_id, prompt, "scores.txt", plaintext.parse_scores,
-                                role="score")
+            scope=agent_contracts.SCOPE_CONTRACT,
+            rubric_version=scoring_module.RUBRIC["version"],
+            rubric=_rubric_text()) +
+            "\n\nThe proposals, all of them:\n" + payload +
+            "\n\nThe frozen evidence bundle:\n" + evidence_text)
+        report = _run_agent(root, task_id, prompt, "scores.txt",
+                            plaintext.parse_scores, role="score")
         report.setdefault("scorer", task_id)
+        report["rubric_version"] = scoring_module.RUBRIC["version"]
+        report["rubric_sha256"] = scoring_module.RUBRIC["sha256"]
         reports.append(report)
-    return reports
+    finalists = _finalist_ids(ideas, reports)
+    comparisons = run_pairwise(root, ideas, finalists, evidence_text) if len(finalists) >= 2 else []
+    return {"reports": reports, "bundles": bundle, "comparisons": comparisons,
+            "finalists": finalists}
+
+
+def _finalist_ids(ideas: list, reports: list) -> list:
+    """The top few proposals by weighted score, computed without mutating state."""
+    try:
+        matrix = scoring_module.build_matrix(ideas, reports)
+    except scoring_module.ScoreError:
+        return []
+    rule = scoring_module.DEFAULT_SELECTION
+    rows = [row for row in matrix["rows"] if row.get("weighted_score") is not None]
+    rows.sort(key=lambda row: (-(row["weighted_score"] or 0.0), row["idea_id"]))
+    return [row["idea_id"] for row in rows[:rule["pairwise_finalists"]]]
+
+
+def run_pairwise(root: Path, ideas: list, finalists: list, evidence_text: str) -> list:
+    """Order-balanced A-vs-B comparisons of the finalists, one per reviewer."""
+    by_id = {idea["idea_id"]: idea for idea in ideas}
+    pairs = []
+    for index, (left, right) in enumerate(itertools.combinations(finalists, 2)):
+        # Balance the printed order across the three reviewers.
+        first, second = (left, right) if index % 2 == 0 else (right, left)
+        pairs.append((first, second))
+    comparisons = []
+    for index in range(1, SCORERS + 1):
+        task_id = "pairwise_" + str(index)
+        blocks = []
+        for position, (first, second) in enumerate(pairs):
+            prompt = agent_contracts.PAIRWISE_PROMPT.format(
+                rubric_version=scoring_module.RUBRIC["version"],
+                rubric=_rubric_text(),
+                first=plaintext.render_idea(by_id[first]),
+                second=plaintext.render_idea(by_id[second]),
+                evidence=evidence_text)
+            report = _run_agent(root, task_id + "_" + str(position), prompt,
+                                "pairwise.txt", plaintext.parse_pairwise, role="score")
+            report["reviewer"] = task_id
+            report["first"] = first
+            report["second"] = second
+            comparisons.append(report)
+            blocks.append(report)
+        if not blocks:
+            continue
+    return comparisons
+
+
+def run_rebuttal(root: Path, idea: dict, objection: str, counterexample: str,
+                 revision: int) -> dict:
+    """One bounded repair of a proposal whose objection names a defect."""
+    prompt = agent_contracts.REBUTTAL_PROMPT.format(objection=objection,
+                                                    counterexample=counterexample or "none")
+    return _run_agent(root, "rebuttal_" + idea["idea_id"] + "_r" + str(revision),
+                      prompt, "rebuttal.txt", plaintext.parse_rebuttal, role="score")
 
 
 def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
@@ -186,15 +272,24 @@ def phase_scoring(root: Path, round_id: str, *, log=print) -> dict:
         return {"phase": "scoring", "ran": False, "step": state["step"],
                 "selected": len((state.get("selection") or {}).get("selected", [])),
                 "reason": "the round is no longer in the scoring phase"}
-    reports = run_scoring(agent_root, state["ideas"])
-    state = pipeline_module.apply_scoring(state, reports)
+    outcome = run_scoring(agent_root, state["ideas"], repo=Path(root))
+    reports = outcome["reports"]
+    state = pipeline_module.apply_scoring(
+        state, reports, comparisons=outcome.get("comparisons"),
+        bundles=outcome.get("bundles"), directory=directory)
     pipeline_module.save_state(directory, state)
     selection = state.get("selection") or {}
-    log("selection: %d selected" % len(selection.get("selected", [])))
+    log("selection: %s" % selection.get("status", "?"))
     return {"phase": "scoring", "ran": True, "step": state["step"],
+            "rubric": state.get("rubric_version"),
+            "status": selection.get("status"),
+            "decision_hash": state.get("decision_hash"),
             "scorers": len(reports),
+            "finalists": outcome.get("finalists"),
             "selected": [entry["idea_id"] for entry in selection.get("selected", [])],
-            "rejected": [entry["idea_id"] for entry in selection.get("rejected", [])]}
+            "backups": [entry["idea_id"] for entry in selection.get("backups", [])],
+            "rejected": [(entry["idea_id"], entry.get("status"))
+                         for entry in selection.get("rejected", [])]}
 
 
 def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
