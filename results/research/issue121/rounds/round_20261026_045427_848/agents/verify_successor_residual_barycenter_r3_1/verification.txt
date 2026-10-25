@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:269-297, 353-374 -> results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/layers.py:151-175 | Static call-path inspection: training-only adjacent history→target transitions create top-8 successor IDs/weights; epoch-frozen level residuals are passed into T2/T3 VQLayer calls; the VQLayer applies Poincare exp/projection/log and codeword-dependent geodesic consensus scores before hard argmin. The branch is gated by behavior_on and geometry_on, with a Euclidean consensus branch when geometry_on is false. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/model/layers.py:151-188, 345-356; results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:367-384 | Static forward/backward-path inspection: the behavior/geometry score participates in the distance matrix consumed by argmin, so switching it can change selected SID codes; selected code embeddings flow into the quantization loss, with the straight-through estimator carrying encoder gradients. The geodesic consensus is codeword-dependent, not a row-constant term. Neighbor residuals are detached as specified. Numerical safeguards include norm floors, ball projection, acosh argument floor, and denominator floors; no float32 overflow/NaN path was identified from these operations. Runtime gradient and assignment comparisons are not claimed; the one-epoch GPU smoke remains the specified runtime proof.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_045427_848/successor_residual_barycenter/train_rqvae.py:42-72, 239-287, 441-488, 491-519 | Static integration inspection: root/data constants resolve from repository markers to the frozen stage1 embedding and stage0 training parquet; transition statistics use train.parquet only; exported rows are enumerated by item ID and emitted as integer four-token SIDs in item_sids.json; RESULT_DIR is the candidate-specific results/stage2_RQ-VAE/TIGER_successor_residual_barycenter directory. The launcher skips torchrun when GENREC_SINGLE_GPU is truthy, and main then uses the single-process path; otherwise it respects an existing RANK or starts four torchrun workers. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

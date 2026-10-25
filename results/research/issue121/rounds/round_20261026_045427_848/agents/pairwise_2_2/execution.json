@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "pairwise_2_2",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792951748.841754,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "pairwise.txt",
+  "output_sha256": "0ba4b1103e7eb085248254fdd434e0f8ef301f4ea33e5a0e938e019bebbbc9ed",
+  "pid": 4072979,
+  "project_marker": ".git",
+  "prompt_sha256": "2bbc29f5491a44af4e9382c119af0cfabbb4665244e95b721d521ef153b3373e",
+  "session_sha256": "7f29efa1d6ed42c902ad7045a19c9fea06338e8456b3e92e6c37d716fc356c90",
+  "stderr_present": false,
+  "task_id": "pairwise_2_2",
+  "timed_out": false,
+  "verified": true
+}
