@@ -54,6 +54,18 @@ The single-code arms have exactly one L1 value, so *every* pair shares it: P(pos
 | successor_entropy | 0.05122 | 0.06877 | 0.735 | 0.400 | 0.133 | 0.069 | 0.931 | 0.051 | 0.018 |
 | resample | 0.06363 | 0.08837 | 0.497 | 0.122 | 0.091 | 0.088 | 0.912 | 0.064 | 0.025 |
 
+## Layer D2 — where each example is lost
+
+| arm | hit (beams) | hit share | hit (fallback) | generated, outside top-10 | generated, dropped | generated, seen-filtered | SID never generated |
+|---|---|---|---|---|---|---|---|
+| l1_br_euclid | 3565 | 0.0621 | 0 | 1302 | 0 | 0 | 52572 |
+| l1_only | 3580 | 0.0623 | 0 | 1333 | 0 | 0 | 52526 |
+| l1_br | 2683 | 0.0467 | 0 | 1210 | 0 | 0 | 53546 |
+| successor_entropy | 2942 | 0.0512 | 0 | 1008 | 0 | 0 | 53489 |
+| resample | 3655 | 0.0636 | 0 | 1421 | 0 | 0 | 52363 |
+
+The binding constraint is the last column: for nine examples in ten the target SID never appears among the twenty beams, so duplicate removal, seen filtering and the fallback fill cannot move Recall materially. Those three mechanisms are replayed exactly, and their contribution is at most the few examples in the middle columns.
+
 ## Layer E — paired comparison against `l1_br_euclid`
 
 | arm | metric | arm value | reference | difference | ci95 |
