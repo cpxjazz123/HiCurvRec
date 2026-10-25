@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:238-259 -> model/layers.py:101-110, 126-149, 293-313 | Traced the training-only transition counts and normalized entropy/radii into each residual stage's distance calculation. Inspected the smoke-test ablation calls at smoke_test.py:32-38; attempted `python smoke_test.py`, but execution stopped at import because this environment lacks PyTorch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:101-110
+FINDING DETAIL: Training transition entropy is converted into target radii, and the same assignment distance combines squared Poincare distance after exp-map projection with a radius penalty. That distance selects the codeword and contributes to the selected-distance quantization loss. This is a single connected behaviour/geometry path, not a detached loss or unused helper.
+FINDING REPRODUCTION: Follow `branch_radii` from trainer lines 238-259 through `RQLayer.forward` line 307 and `VQLayer._distances`; runtime confirmation was unavailable because `torch` is not installed here.
+FINDING CORRECTION: None required for scope fidelity. Run the included smoke test in the project PyTorch environment to confirm its runtime assertions.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/smoke_test.py:17-38 | Inspected the forward/backward, finite-loss/gradient/update assertions and behavior-off/Euclidean assignment comparisons. The attempted execution failed before these assertions at `import torch` (ModuleNotFoundError), so this is code-path inspection rather than a successful runtime verification.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_shell/smoke_test.py:8
+FINDING DETAIL: The implementation includes an appropriate finite-loss/gradient and ablation test, but this verifier could not execute it because PyTorch is absent. Source inspection shows selected Poincare/radius distance enters `quant_loss` at layers.py:148 and that straight-through quantization carries gradients to encoder and selected codebook entries; no dead coupled term is apparent. Runtime finiteness and the assertions are not independently confirmed here.
+FINDING REPRODUCTION: `cd results/research/issue121/trees/round_20261025_114110_416/branch_shell && python smoke_test.py` exits immediately with `ModuleNotFoundError: No module named 'torch'` in this environment.
+FINDING CORRECTION: None indicated by the inspected implementation. Execute the smoke test in the intended PyTorch environment before relying on the runtime claims.
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:302-310, 445-470 | Inspected trainer initialization and launcher branches. Identified a deterministic multi-rank initialization deadlock from the rank-0-only codebook-init call paired with an in-function distributed broadcast. Did not run the full trainer: the environment lacks PyTorch and the configured real dataset/runtime is external.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:303-309; results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:155-160
+FINDING DETAIL: The trainer calls `raw_module.init_codebook(...)` only on rank 0, then asks other ranks to wait at a barrier. In a distributed process group, each `VQLayer.init_codebook` performs `distributed.broadcast(centers, 0)`. Rank 0 therefore blocks in the broadcast while the other ranks block at the later barrier; training never starts under the configured four-process launcher. The single-card bypass using `GENREC_SINGLE_GPU` is present at train_rqvae.py:447, and outputs are scoped under the candidate's `TIGER_branch_shell` directory at lines 49-55. SID export enumerates embedding rows and checks uniqueness at lines 423-437, but full export/index integration was not runtime-tested.
+FINDING REPRODUCTION: Launch with world_size=2 or 4 and an initialized process group: rank 0 enters `raw_module.init_codebook` at line 307 and blocks at the first codebook broadcast in `model/layers.py:159`; nonzero ranks skip lines 303-307 and block at `dist.barrier()` line 309. Neither side can proceed.
+FINDING CORRECTION: Make every rank call `raw_module.init_codebook` with the same input while retaining rank-0-only KMeans fitting and broadcasting centers from rank 0, or otherwise remove the broadcast from a rank-0-only call and explicitly distribute initialized codebooks. Then exercise both the single-card environment branch and torchrun multi-rank startup, and validate exported SID row-to-item indexing against the frozen data contract.

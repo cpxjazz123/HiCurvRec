@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:89-112, 367-375; model/model.py:52-65; train_rqvae.py:61-86 | Source-traced the train-only history/context → same-target cross-user distinct-source pairs and cohort labels into code-vector lookup and Lorentz distance margin. The pathway uses the selected RQ codebook vectors and its behavior labels directly determine the Lorentz margin term. Full runtime exercise was blocked by the syntax defect recorded below.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:61-86, 89-112, 367-375
+FINDING DETAIL: The intended connected pathway is present: prior train items form contexts, deterministic training-only clusters form pair labels, selected-level quantized code vectors are compared with Lorentz geodesic distance, and the loss is added to RQ-VAE training. This is not merely an appended behavior suffix on the original assignment. However, the trainer currently cannot parse, so the pathway cannot be exercised end-to-end.
+FINDING REPRODUCTION: Source-trace build_transition_pairs at train_rqvae.py:89-112 and the sampled-pair branch at :367-375; `python -m py_compile train_rqvae.py` fails at line 343 before runtime.
+FINDING CORRECTION: Correct the indentation defect at train_rqvae.py:343-344, then run the trainer/smoke test to validate the described pathway.
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: smoke_test.py:7-23, 25-37; model/model.py:52-65; train_rqvae.py:61-86 | Inspected the forward/backward assertions and pair-only both-on/behavior-off/Euclidean comparisons. Attempted `python smoke_test.py`; execution stopped at import because this environment has no `torch`. Independently, `python -m py_compile train_rqvae.py` reports `IndentationError: unexpected indent` at line 343, preventing the real trainer from reaching forward/backward.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:343-344
+FINDING DETAIL: The `with torch.no_grad():` line is over-indented relative to `raw_module = ...`, making the training entry point syntactically invalid. Thus no real trainer forward/backward or assignment/gradient toggle comparison can be performed. The smoke test's claimed finite gradient and comparison assertions were not actually run here.
+FINDING REPRODUCTION: From the candidate directory run `python -m py_compile train_rqvae.py`; it raises `IndentationError: unexpected indent (train_rqvae.py, line 343)`. Running `python smoke_test.py` here additionally fails immediately with `ModuleNotFoundError: No module named 'torch'`.
+FINDING CORRECTION: Align `with torch.no_grad():` with the initialization statements under the rank-0 block, then run `smoke_test.py` in the project PyTorch environment and exercise both-on, behavior-off, and Euclidean cases through a real optimizer step.
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:41-55, 89-112, 275-300, 343-345, 440-487, 490-518 | Inspected frozen Stage1 embedding and Stage0 train parquet paths, candidate-local RESULT_DIR, export/index construction, torchrun launcher and `GENREC_SINGLE_GPU` branch. Attempted syntax compilation; the trainer fails before entry-point execution, so data loading, export and launcher branches could not be run.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:343-344
+FINDING DETAIL: The syntax error prevents the real trainer entry point from starting; therefore frozen-data loading, valid SID export/indexing, result-directory write behavior, and distributed/single-card launcher operation are unverified in execution. Source inspection shows the configured inputs are Stage1 embeddings and Stage0 train parquet (lines 43-48), output paths are under the candidate's own result directory (line 49 onward), SID rows are enumerated by item ID (475-481), and the single-card environment is read at lines 494-495, but these do not compensate for an un-runnable entry point.
+FINDING REPRODUCTION: `python -m py_compile train_rqvae.py` fails at line 343; consequently invoking the script or testing the `GENREC_SINGLE_GPU=1` path cannot reach `main()`.
+FINDING CORRECTION: Fix the indentation at lines 343-344, then run an integration smoke run in the configured project environment and verify the emitted SID row count/index mapping and that both single-card and torchrun branches write only under RESULT_DIR (launcher log included).

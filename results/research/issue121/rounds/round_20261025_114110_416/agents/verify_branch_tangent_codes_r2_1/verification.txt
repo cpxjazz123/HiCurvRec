@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:247-263, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:78-96, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/layers.py:98-116
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking defect found. Training-only directed adjacent transitions are counted from train histories/targets, top-16 successors are count^0.75 weighted into context vectors, and the branch target is formed with Poincare exp/log operations before the residual quantizer. Its curved Poincare distance is used for code assignment, not merely an auxiliary loss. The behavior-off and Euclidean-geometry-off switches route through corresponding ablations.
+FINDING REPRODUCTION: Source-traced the trainer context construction at train_rqvae.py:247-263 into RQVAE.forward/_branch_target at model.py:78-96 and VQLayer._distances at layers.py:98-116. The provided deterministic smoke test configures both-on, behavior-off and geometry-off modes and asserts distinct/restored assignments at smoke_test.py:65-75.
+FINDING CORRECTION: None required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:78-96, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/smoke_test.py:76-110
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No source-level dead coupled term or obvious float32 numerical hazard found. The mapped context and encoded point feed the curved target, which feeds assignment distances and the straight-through quantization/reconstruction computation. Smoke-test code checks finite nonzero projection gradients, ablation-dependent gradient changes, a finite loss, and an optimizer update. This is code inspection only; no local trainer/runtime execution is claimed.
+FINDING REPRODUCTION: Inspected the forward/backward and optimizer assertions in smoke_test.py:76-110, plus map safeguards in model.py:32-76 and curved-distance denominator/domain safeguards in layers.py:98-111. Per the review constraint, did not run the trainer or claim the GPU MCP smoke result.
+FINDING CORRECTION: None required.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:40-56, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:225-280, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:420-474
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by source inspection. The trainer loads the configured stage1 embedding and stage0 train parquet, checks target item IDs against embedding rows, computes contexts from training sequences, exports a unique collision-extended SID matrix and item-indexed JSON, and resolves output to the candidate-specific results/stage2_RQ-VAE/TIGER_branch_tangent_codes directory. The launcher honors GENREC_SINGLE_GPU and otherwise invokes torchrun; output paths are rooted at the repository derived from the script path.
+FINDING REPRODUCTION: Checked constants and repository-relative output at train_rqvae.py:40-56; frozen input loading and context/data indexing at :225-280; export/index construction at :420-441; launcher and single-card environment branch at :448-474. The source-level smoke assertions cover output path, SID uniqueness/shape and the single-card predicate at smoke_test.py:112-116. Runtime launch was not attempted.
+FINDING CORRECTION: None required.

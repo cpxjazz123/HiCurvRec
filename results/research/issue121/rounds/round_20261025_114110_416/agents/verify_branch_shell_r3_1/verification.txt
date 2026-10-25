@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:240-261 -> /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:101-110, 143 | Static source trace: consecutive targets are counted within training users, smoothed successor entropy becomes per-item radius, and the trainer passes batch-indexed radii to the quantizer. The assignment uses exp-map/projected Poincare squared distance plus the radius-shell penalty.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The one connected pathway couples training-only continuation entropy with curved code assignment; the radius penalty is part of the distance actually used for argmin and is also selected into the differentiable quantization loss.
+FINDING REPRODUCTION: Static pathway inspection at the cited lines; runtime is intentionally not run in this sandbox.
+FINDING CORRECTION: None.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:101-110, 134-158, 323-330 | Inspected the forward/backward graph: Poincare and shell terms are gathered from the selected distance matrix into quant_loss, and the straight-through path plus commitment/codebook losses reach encoder and codebook parameters. smoke_test.py:13-51 specifies finite nonzero-gradient and optimizer-update checks, behavior-off/Euclidean assignment comparisons, and a near-boundary float32 check; it was not executed here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 overflow hazard found. expmap outputs are projected into the ball and artanh uses representable margins. Behavioral and geometric switches feed the assignment distance, and the smoke test compares all relevant assignments.
+FINDING REPRODUCTION: Review the forward and loss path at the cited lines; see smoke_test.py:33-51 for the prescribed checks. No runtime claim is made.
+FINDING CORRECTION: None.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:39-57, 140-161, 220-261, 397-440, 447-473 | Static inspection of trainer entry, fixed embedding/train inputs, candidate-owned output path, export/index mapping and launcher. Single-card branch reads SINGLE_GPU_ENV at lines 39 and 449; externally torchrun-launched processes bypass relaunch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Inputs point to the repository's stage1 embedding and stage0 training parquet. Output resolves to results/stage2_RQ-VAE/branch_shell, not the baseline or another candidate. Export enumerates embedding rows as item IDs, produces collision-extended unique rows, and writes both NPY and string-keyed JSON. The 4-rank launcher and GENREC_SINGLE_GPU=1 branch are present. Trainer execution, actual parquet schema/index agreement, and distributed runtime cannot be verified without the specified runtime proof.
+FINDING REPRODUCTION: Static source inspection at cited lines; no trainer execution performed.
+FINDING CORRECTION: None identified from the available static evidence.

@@ -1,0 +1,10 @@
+TREE: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: model/model.py
+CHANGED FILE: smoke_test.py
+DEVIATION: Prefix mass is accumulated by sparse hard preceding-prefix groups, with soft child assignments at each level, rather than materializing differentiable products over every full prefix | A dense product requires O(B*K^L) memory (256^3 prefixes), so this bounded minibatch approximation preserves codebook gradients without explosive storage.
+DEVIATION: The Lorentz manifold uses fixed curvature c=1 and the added occupancy loss has fixed weight 0.1 | Kept the implementation minimal and did not alter the frozen baseline optimizer, scheduler, batch size, seeds, model dimensions, epochs, split, or exporter.
+ASSUMPTION: Each training row's last history item to its target is a directed transition; smoothed log1p outgoing and target-occurrence counts are suitable source-transition and occupancy weights, respectively.
+SMOKE COMMAND: cd /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/lorentz_prefix_mass && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py
+SMOKE RESULT: loss=1.129162 occupancy=0.000082 grad_params=3 sid_shape=(12, 3) unique_export=12 euclidean=0.000256 behaviour_off=0.000000; py_compile passed.
+NOTES: The training loop calls a coupled occupancy pathway: directed training-transition-derived weights set the prefix target, and Lorentz distances determine differentiable soft assignments that update codebook parameters. Geometry-off uses squared Euclidean distances; behaviour-off yields zero occupancy loss. Single-GPU launch bypass uses SINGLE_GPU_ENV = "GENREC_SINGLE_GPU". All trainer result constants point to results/stage2_RQ-VAE/TIGER_lorentz_prefix_mass/. The full 3000-epoch training and real Stage3 Recall@10 were not run; smoke test used synthetic CPU inputs and verified finite loss, nonzero codebook gradients, and unique valid-shaped exported SIDs.

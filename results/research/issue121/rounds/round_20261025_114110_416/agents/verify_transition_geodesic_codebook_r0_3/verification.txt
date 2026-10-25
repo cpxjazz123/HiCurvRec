@@ -1,0 +1,32 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:244-263 -> model/model.py:26-42 -> model/utils.py:21-59 | Traced the training-only directed adjacent-pair count/entropy gate into the model's Poincare exp/log/Mobius interpolation before RQ quantization. It is one connected pathway; the hyperbolic target depends on the neighborhood embeddings and gate and is the input to the quantizer. The trainer passes these inputs at lines 322-327. This is source inspection only; a runtime exercise was blocked because the available Python has no torch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:34-38
+FINDING DETAIL: The connected pathway is not the specified three-step weighted Frechet prototype: it uses an unweighted arithmetic mean of neighbor points after expmap0. The code nevertheless uses the training-only behavior signal in an explicit curved interpolation that feeds quantization, so this is a proposal-fidelity deviation rather than absence of coupling.
+FINDING REPRODUCTION: Inspect lines 34-35: n.mean(dim=1) ignores transition probabilities and performs no Frechet iterations. Trainer neighbors are also selected by count at train_rqvae.py:251-263.
+FINDING CORRECTION: Build each prototype by the specified three weighted Poincare Frechet updates using normalized outgoing transition probabilities; retain the entropy gate and geodesic target interpolation.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:26-44 | Inspected forward, quantizer, and loss gradient wiring; attempted a finite forward/backward exercise with behavior and geometry toggles, but execution stopped at import torch (ModuleNotFoundError), so finiteness, parameter gradients, and the requested on/off assignment comparisons could not be validated.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:46-50
+FINDING DETAIL: The exported/inference SID path encodes embeddings and calls the RQ quantizer without behavior neighborhoods or geometry. Thus the behavior-geodesic target is present only in training forward; the produced SID assignments are not computed by the coupled pathway. This defeats the intended SID-target mechanism, and the requested observable SID switch comparisons cannot be satisfied by get_indices.
+FINDING REPRODUCTION: Call model(x, neighbors, gate) and then compare its returned tokens with model.get_indices(x): get_indices has no neighbor/gate arguments and lines 48-49 quantizes only encoded x. In the real trainer, export at train_rqvae.py:422-425 calls precisely this behavior-free method.
+FINDING CORRECTION: Make inference/export consume the same training-derived neighbor lists and gates, and apply the same curved target transformation before quantization; add deterministic behavior-off, Euclidean, and both-on assignment/gradient comparisons. Separately run these tests in an environment with torch and verify finite loss and gradients.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:215-264, 394-441, 444-472 | Traced main's frozen absolute embedding/train parquet inputs, train-only transition construction, export/index extension, output paths, and launcher/single-card branch. Could not run the trainer, launcher or inspect an actual exported array because torch is unavailable and the trainer hard-codes a 3,000-epoch run.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:48-52
+FINDING DETAIL: The trainer writes checkpoint, SID, JSON and metrics to the shared absolute results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook directory rather than a result directory under this isolated implementation tree. This violates the explicit own-result-directory requirement and risks clobbering artifacts outside the verification tree. Inputs are explicitly the stage1 embedding and stage0 train parquet at lines 42-46, but frozen-path identity was not independently established by execution.
+FINDING REPRODUCTION: Read OUTPUT_SID, OUTPUT_JSON, CHECKPOINT, METRICS_PATH and LOG_DIR constants at lines 48-52; each resolves outside the implementation tree. Running main would mkdir/write those paths at lines 401-435.
+FINDING CORRECTION: Root all run outputs (including launcher log) under a unique result directory owned by this experiment/tree, and add an integration smoke test asserting resolved output paths remain within it while frozen input paths remain unchanged.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:448-449
+FINDING DETAIL: The literal single-card opt-in correctly checks GENREC_SINGLE_GPU=1, but the requested named contract SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" is not defined; behavior appears preserved but the named integration contract is not implemented.
+FINDING REPRODUCTION: grep the trainer for SINGLE_GPU_ENV; only the direct environment lookup occurs at lines 448-449.
+FINDING CORRECTION: Define SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" and use it in the branch; test unset, 1, and other values as well as torchrun child invocation.

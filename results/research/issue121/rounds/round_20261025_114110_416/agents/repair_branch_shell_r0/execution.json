@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "repair_branch_shell_r0",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792890347.3058956,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "0d964e17bdf9961b0df01b1a4ade4ad5cac03c928dd23545f1e995df9a72aaa0",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "repair.txt",
+  "output_sha256": "c14871085d4e32c8b9c101ffcccb8821786f9bf940dd9fb282cbd3e607f7b0cd",
+  "pid": 1246453,
+  "project_marker": ".git",
+  "prompt_sha256": "cda9d810f020a47cdb74a382d9d829a76b1b4f67c270f970d8d2e1985f2ab38f",
+  "session_sha256": "9e73cfebdbe57f6f506a781b91e2a1b30d990ecf624d06aafcc4d9553ea30f2c",
+  "stderr_present": false,
+  "task_id": "repair_branch_shell_r0",
+  "timed_out": false,
+  "verified": true
+}

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:240-263 -> model/model.py:26-29 -> model/layers.py:101-110, 134-158, 310-330 | Source-inspected the real trainer call path and smoke_test.py:33-41's explicit curved/Euclidean and behaviour-on/off assignment comparisons; did not run code.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect. The trainer derives smoothed successor entropy from consecutive per-user training targets, maps it to branch radii, and passes these radii through the RQ-VAE. Each VQ stage maps encoder/residual vectors and codewords into the Poincare ball and adds the radius-shell penalty to that same curved assignment distance. The selected distance is also included in quantization loss.
+FINDING REPRODUCTION: Source path: train_rqvae.py:240-263 computes branch_radii; train_rqvae.py:326-330 supplies the per-item radii; model/layers.py:103-110 computes Poincare distance plus shell penalty; lines 143-158 select the code and include its distance in loss. smoke_test.py:33-41 encodes the intended comparisons.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:101-110, 143-158, 323-330 | Inspected the differentiable selected-distance and straight-through loss path plus smoke_test.py:19-51, which specifies finite forward/backward gradients, parameter updates, four assignment ablations, and a near-boundary float32 gradient check. No runtime execution performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 overflow/NaN hazard was found in the coupled path. The selected distance remains attached to the computation graph; it can update encoder and codebook parameters through the selected-distance term, while the straight-through commitment/codebook losses provide their usual gradients. The smoke source checks that enabling the branch signal and/or curved distance changes assignments on its fixture.
+FINDING REPRODUCTION: Inspect model/layers.py:156 and follow distances from _distances at lines 101-110 through gather; compare smoke_test.py:33-51 for curved/Euclidean, behaviour-on/off, and boundary checks. This is source inspection only, not an executed proof.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:39-56, 220-245, 397-444, 447-473 | Inspected trainer entry point, fixed input constants, output ownership and SID export/indexing, and launcher branches including SINGLE_GPU_ENV; verified by source only, not by running the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified by inspection. The trainer reads the stated stage1 embedding and stage0 training parquet paths, writes under the branch_shell-specific results/stage2_RQ-VAE/TIGER_branch_shell directory, assigns exported rows by enumerated item ID, extends collisions to unique SIDs, and writes both NPY and JSON. The launcher returns directly when GENREC_SINGLE_GPU=1 or already under torchrun, otherwise launches the configured four-worker torchrun process. Trainer/runtime and distributed execution were not run.
+FINDING REPRODUCTION: See train_rqvae.py:43-56 for paths; lines 233-263 for input and training-only behavior data; lines 425-439 for all-item export and indexed JSON; lines 447-473 for single-card and torchrun branches.
+FINDING CORRECTION: none

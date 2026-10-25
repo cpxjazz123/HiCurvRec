@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:247-273 -> model/model.py:26-50,54-55 -> model/layers.py:106-112,129-155,309-317 | Source-traced the real trainer batch path: directed adjacent training transitions produce normalized neighbor probabilities and entropy gates; the model maps encoded items and neighbors into the Poincare ball, builds weighted three-step prototypes, moves the item latent along a curved map, and uses Poincare distance for first-level code assignment. The trainer passes this behavior data on each training batch and supplies it again for SID export. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. Behavior and curved geometry form one connected pathway that alters the first-level quantizer input and assignment distance; residual levels then consume its tangent-space residual.
+FINDING REPRODUCTION: Static call-path inspection at the cited locations; behavior-off returns the unchanged encoding, while geometry-off uses the behavior-weighted Euclidean interpolation and Euclidean quantizer distance.
+FINDING CORRECTION: None required.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/model.py:37-50,54-57 -> model/layers.py:106-112,141-158,309-324 | Statically traced autograd from the reconstruction/quantization losses through the curved target and maps to encoder/codebook parameters. The behavior gate/probabilities weight prototype construction and target interpolation; the quantizer's Poincare commitment term differentiates through the target, and the codebook term differentiates through the mapped code. No dead coupled term or obvious float32 overflow/NaN step was found. Runtime finite-loss/gradient smoke was not run, consistent with the stated sandbox constraint.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-inspection trainability blocker found. The behavior and geometry switches select distinct computation paths, and disabling behavior also disables curved assignment in the caller; setting geometry off retains behavior but uses Euclidean interpolation and distance.
+FINDING REPRODUCTION: Compare `behavior_on=True, geometry_on=True` against `behavior_on=False` and `behavior_on=True, geometry_on=False` via `RQVAE.forward`/`get_indices`; assignment is selected from the resulting transformed latent and corresponding distance matrix. The code exposes both comparisons, but this review did not execute tensors or assert a particular input changes an argmin.
+FINDING CORRECTION: None required.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:42-56,218-240,247-283,406-447,454-482 | Static inspection of the real `__main__` entry point, frozen embedding/train parquet inputs, candidate-specific result path, ID-indexed export, and launcher branches. `REPO_ROOT` resolves from this tree to the repository root; output goes to `results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook/`. The single-card branch checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 55 and 458-459, while the normal path launches torchrun. Trainer execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No static integration defect found. Inputs are the fixed Stage1 embedding file and Stage0 training parquet; transition counts use training rows only. Export enumerates embedding rows as item IDs and writes both SID array and JSON keyed by those IDs. The candidate writes only to its own promoted-name result directory, not the baseline or another candidate directory.
+FINDING REPRODUCTION: Trace `main()` from `__main__`: the launcher returns directly when `GENREC_SINGLE_GPU=1`, otherwise dispatches four-card torchrun; after training rank 0 exports rows in embedding order and extends collisions to unique IDs. Runtime invocation/export validation was not performed under the stated constraint.
+FINDING CORRECTION: None required.

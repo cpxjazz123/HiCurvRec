@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:250-275 -> model/model.py:52-56 -> model/layers.py:309-316 | Static code-path trace: counted directed adjacent (history,target) training pairs into sparse top-16 neighbor distributions and entropy gates; traced those tensors into the model's Poincare prototype/target transform and curved first-level codebook distance/quantization. No trainer execution was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found: the training-only transition signal and explicit curved operations meet in the assignment input and distance calculation.
+FINDING REPRODUCTION: Trace train_rqvae.py:250-275, model/model.py:26-50, and model/layers.py:106-112, 128-131.
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/layers.py:309-320 | Static forward/backward-path inspection (runtime unavailable): follow the curved level-0 straight-through output into the residual update and the next quantizer level.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/model/layers.py:153-155, 314-319
+FINDING DETAIL: The curved straight-through quantizer's forward value is exactly logmap0(target_ball), as the detached correction has zero forward value (line 155). The residual stack then sets residual = logmap0(x) - quant (line 316); x is the same target_ball supplied to level 0 (line 313), so this residual is identically zero. Every later codebook therefore receives zero regardless of the input/transition behavior. These later levels have dead assignments/commitment signal and the intended residual-code target mechanism is not implemented. The fixed output also makes the residual path fail to carry a useful learned level-0 reconstruction into later levels. This is a direct algebraic counterexample, not a quality-floor concern.
+FINDING REPRODUCTION: For any finite ball point x and any codebook, execute curved=True with a two-or-more-level RQLayer: level 0 returns x_q whose forward value is logmap0(x); the next residual evaluates logmap0(x)-x_q = 0. Thus level-1 indices are the nearest code to the origin for every sample and do not respond to behavior_gate or neighborhood changes. With one level, the residual defect is absent, but this trainer config has CODEBOOK_NUM=3 (train_rqvae.py:67).
+FINDING CORRECTION: Preserve the quantized level-0 code in tangent coordinates as a distinct value and compute the next residual from the tangent target minus the quantized tangent code (with a straight-through gradient), rather than subtracting the straight-through output from logmap0(x) when those forward values are identical. Add a minimal multi-level forward/backward check verifying finite nonzero later-level assignment/gradient sensitivity and comparing behavior-off, geometry-off, and both-on.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/transition_geodesic_codebook/train_rqvae.py:40-58, 221-248, 409-485 | Static integration inspection: checked frozen embedding/train input paths, candidate-specific result path resolution, item-ID-to-row export, DDP/single-GPU launcher control flow, and final SID JSON construction. The trainer was not run, as instructed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found in the inspected wiring. Inputs are the stage1 embedding file and stage0 training parquet; result files resolve to the promoted candidate's results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook directory. Export enumerates item rows in embedding order and emits string item IDs with integer SID lists. The launcher uses the four-process torchrun branch by default and returns to main when GENREC_SINGLE_GPU=1 (or already under torchrun).
+FINDING REPRODUCTION: Trace train_rqvae.py:48-58 and 221-239 for paths/data IDs, 437-450 for export, and 457-485 for launcher behavior.
+FINDING CORRECTION: none

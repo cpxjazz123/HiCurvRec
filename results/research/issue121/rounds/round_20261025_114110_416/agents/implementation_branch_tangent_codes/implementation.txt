@@ -1,0 +1,11 @@
+TREE: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: model/model.py
+CHANGED FILE: smoke_test.py
+DEVIATION: Kept the existing Euclidean residual codebooks and applied the Poincare context-conditioned transform to the encoder output before the residual quantizer, rather than changing each residual quantization operation to a curved residual/codebook metric | This is the smallest integration preserving frozen TIGER codebook and straight-through behavior while changing actual assignments.
+DEVIATION: Used transitions from each training row's history followed by its target, and cached the normalized top-16 weighted context vector for each item | The frozen data provides user histories/targets rather than a separate transition table, so consecutive observed items provide the directed training-only transition counts.
+DEVIATION: One-successor items are left with zero context, matching the requested two-or-more-successor activation rule | This follows the specified behavior fallback.
+ASSUMPTION: The frozen baseline's embedding row IDs correspond directly to item IDs in `history` and `target`, as implied by the existing target-ID range validation.
+SMOKE COMMAND: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python smoke_test.py
+SMOKE RESULT: PASS loss=2.549736 grads=finite sid_shape=(6, 4) unique=6
+NOTES: Training and export both pass cached training-only context vectors into the same Poincare transformation before RQ assignment. `behavior_enabled=False` and `geometry_enabled=False` provide behavior-off and Euclidean ablations; smoke test confirms both alter the transformed targets. Launcher retains the original torchrun route and bypasses it when GENREC_SINGLE_GPU is set. Output, checkpoint, metrics, and logs are scoped to results/stage2_RQ-VAE/TIGER_branch_tangent_codes. Full 3000-epoch training was not run; smoke test used the frozen environment's CPU path.

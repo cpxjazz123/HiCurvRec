@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:240-261 -> model/layers.py:101-110, 142-158, 323-329 | Traced training-only per-user consecutive target transitions into smoothed normalized successor entropy and cached radius, then traced the radius through trainer batch indexing/model forward to per-stage Poincare distance plus radial penalty and selected residual code/SID. Source-level path inspection; no runtime execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. Both the behavior-derived radius and the negatively curved Poincare computation participate in the actual codeword distance used for assignment; selected distances are also included in quantization loss.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:249-261 computes transitions/branch_radii; train_rqvae.py:328-330 passes radii; layers.py:103-110 computes Poincare and shell-calibrated distances; layers.py:143-158 assigns tokens and uses selected distance; layers.py:323-329 applies the choice at each residual level.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:101-123, 142-158 | Inspected curved and Euclidean assignment branches, selected-distance loss, straight-through path and codebook/encoder gradient paths; reviewed smoke_test.py:16-51 for finite forward/backward, nonzero encoder/codebook gradients and updates, paired behavior/geometry ablations, and near-boundary float32 distance-gradient checks. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 instability found. The selected distance is differentiable and contributes to quant_loss (layers.py:156); geometry_off replaces curved distance with Euclidean distance while retaining the behavior radius penalty (layers.py:111-123). The smoke test contains checks for assignments changing under behavior/geometry switches and for finite nonzero gradients/updates.
+FINDING REPRODUCTION: Static reproduction path is smoke_test.py:19-41, 43-51; real training invokes loss.backward() at train_rqvae.py:330-337. As requested, no trainer execution was attempted in this sandbox.
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:39-57, 220-261, 326-330, 397-440, 447-473 | Traced trainer entry/launcher, frozen embedding and training parquet inputs, branch radii batch lookup, candidate-owned output directory, all-item SID export and item-indexed JSON creation; inspected both torchrun launch and GENREC_SINGLE_GPU="1" bypass branch. Source-level integration review; trainer not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Output resolves to the required results/stage2_RQ-VAE/branch_shell directory, not baseline/another candidate or an external path. Inputs point to stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet. Export enumerates every embedding row as item_id, extends collisions to unique rows, and writes matching item_sids.json keys. The launcher bypasses torchrun when GENREC_SINGLE_GPU is "1" or when already under torchrun; otherwise it launches four ranks.
+FINDING REPRODUCTION: Inspect train_rqvae.py:43-57 for paths; :234-263 for loading and ID bounds; :426-440 for all-item export/indexing; :447-473 for launcher and single-GPU branch. No runtime execution was attempted.
+FINDING CORRECTION: none

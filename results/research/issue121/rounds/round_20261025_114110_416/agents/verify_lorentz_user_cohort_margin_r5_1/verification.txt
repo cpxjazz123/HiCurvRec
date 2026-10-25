@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:98-123, train_rqvae.py:376-392, model/model.py:53-69 | Inspected transition construction from the frozen Stage1 embeddings and train parquet rows, pair-label generation for same-target distinct-source examples, model's selected quantized-code output, and the Lorentz distance margin actually added to the training objective. smoke_test.py:28-44 specifies behavior-off and Euclidean comparisons on the same pair inputs; it was inspected, not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking finding. The train-only signal (context cohort disagreement) selects the margin branch for the Lorentz geodesic distance between selected RQ-level code vectors. This is one connected computation, not an unused geometry helper or a separate loss.
+FINDING REPRODUCTION: Follow train_rqvae.py:305 to build_transition_pairs, then lines 376-392 to sample pairs, obtain pair_codes in the model forward, calculate Lorentz pair_margin_loss, and add it to loss.
+FINDING CORRECTION: None.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:53-69, train_rqvae.py:65-95, train_rqvae.py:385-399 | Traced gradients from the hard selected code plus straight-through encoder term through the Lorentz distance and margin into encoder/codebook parameters. Inspected smoke_test.py:13-26 and :28-54 for forward/backward, finite/nonzero gradient, behavior-off/Euclidean contrast, and large-norm safeguards; did not execute them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking finding. The pair term is consumed by loss.backward(); code vectors depend differentiably on encoder output and selected codebook embeddings. Radial projection bounds exp0 inputs before cosh/sinh, acosh input is bounded below, and the coincident-point branch avoids the acosh boundary's singular gradient. Comparisons in the smoke test check distinct losses/gradients when behavior is switched off or geometry is Euclidean. Hard assignment itself is discrete, but updates can affect subsequent SID assignments.
+FINDING REPRODUCTION: Source-level path: train_rqvae.py:391-399; selected representation and gradient path: model/model.py:53-69. The standalone checks are in smoke_test.py:18-23 and :28-54.
+FINDING CORRECTION: None.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:43-56, train_rqvae.py:286-305, train_rqvae.py:457-504, train_rqvae.py:507-535 | Inspected the actual main entry point and launcher, frozen Stage1 embedding plus train parquet inputs, final SID export/index construction, result-directory resolution, and GENREC_SINGLE_GPU branch. Verified by realpath that /fs04/ar57/wenyu/GeneRec resolves to the repository and the requested /home/... output location resolves inside it. Runtime trainer execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking finding. The trainer reads the frozen Stage1 .npy and train.parquet, writes outputs under results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin (the candidate's promoted result directory), exports item_sids.json keyed by enumerated item ID and extends collisions to unique rows. The launcher honors GENREC_SINGLE_GPU and otherwise invokes torchrun; no baseline/other candidate path or repository-escaping output path was found.
+FINDING REPRODUCTION: Inspect train_rqvae.py:43-56 for inputs/output constants, :492-500 for SID array/JSON export, and :507-535 for launcher and single-card branch. The exported JSON is formed as {str(item_id): row} for each row in the full embedding-index order.
+FINDING CORRECTION: None.

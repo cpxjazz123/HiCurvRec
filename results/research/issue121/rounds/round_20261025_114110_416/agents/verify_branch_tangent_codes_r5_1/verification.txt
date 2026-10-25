@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:250-275 -> model/model.py:78-95 -> model/layers.py:98-112 | Static call-path inspection: training-only directed adjacent transitions from history+target form weighted top-16 context centroids; trainer batches them into RQVAE, which applies Poincare maps before RQLayer uses curved Poincare distance for assignment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:48-57
+FINDING DETAIL: The purported Poincare log map at z has an incorrectly assembled Mobius subtraction numerator. For (-z) (+_c) b, the numerator must be (1 - 2c<z,b> + c||b||²)(-z) + (1 - c||z||²)b. The code instead multiplies the first coefficient by b and subtracts the second coefficient times z. Therefore its branch tangent is not log_z(b), so the specified behavior-to-curved-tangent pathway is not implemented faithfully.
+FINDING REPRODUCTION: For any nonzero z and b (for example scalar z=0.2, b=0.4, c=0.5), directly compare _log_at(z,b,c) with the standard Poincare log map formula above. They differ; consequently _branch_target differs from the specified exp/log transported branch displacement even with contexts supplied.
+FINDING CORRECTION: Correct delta in _log_at to the Mobius subtraction numerator, retaining the existing conformal-factor/log scaling, and add a small non-collinear and scalar reference-formula test. Then recheck curved assignment.
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:78-97 -> model/layers.py:98-112, 119-128 | Static gradient-path inspection only; runtime/trainer execution was not attempted per instruction. Context projections and curved distance feed assignment/quantization loss, and STE supplies encoder gradients.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/model/model.py:53-57
+FINDING DETAIL: The wrong log-map numerator makes the differentiable branch term a different operation from the specified tangent transport. This is a core trainability/correctness defect, not an unused branch: the resulting term is live, but it trains parameters against the wrong geometry. The code does provide behavior/geometry switches, and the quantizer's geometry flag changes its distance calculation, but no executable comparison is asserted here.
+FINDING REPRODUCTION: Apply the scalar counterexample in the prior finding; then backpropagate through _branch_target with nonzero contexts and compare against the corrected formula. The output and gradients will not match. Static inspection cannot establish finite runtime losses/gradients; the code has finite clamps and a trainer finite-loss check, but the formula defect prevents a PASS.
+FINDING CORRECTION: Fix the log-map numerator first, then use the prescribed real one-epoch gradient smoke to verify finite loss/gradients reaching context_w, context_u, encoder and codebook parameters, and compare assignments/gradients for both-on, behavior-off, and Euclidean-geometry modes.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_tangent_codes/train_rqvae.py:43-58, 228-239, 243-275, 401-448, 451-477 | Static entry-point/data/export/launcher inspection: root resolved by stage2_RQ-VAE marker; frozen stage1 embeddings and stage0 train.parquet are read; candidate-owned stage2 result path is used; IDs are enumerated into SID JSON; launcher honors GENREC_SINGLE_GPU and otherwise invokes four-process torchrun.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Export iterates all embedding rows in item-id order and emits string item-id keys with integer SID values; output remains in this candidate's required results/stage2_RQ-VAE/TIGER_branch_tangent_codes directory. The single-card environment branch bypasses auto-launch and main selects world_size=1 absent RANK. Trainer runtime itself was not run, as instructed.
+FINDING REPRODUCTION: Static inspection of the cited trainer paths; no runtime reproduction performed.
+FINDING CORRECTION: None required for the inspected integration contracts.

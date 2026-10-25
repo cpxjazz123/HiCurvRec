@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:97-120, train_rqvae.py:373-389, model/model.py:53-66, train_rqvae.py:64-94 | Traced training-only context construction and pair labels into sampled pair inputs; traced selected codebook vectors through Lorentz distance and the pair-margin loss added to the RQ-VAE objective. Inspected smoke_test.py:25-41 for behavior-off and Euclidean-distance comparisons. No runtime execution performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:97-120
+FINDING DETAIL: The implementation uses the mean of the last up-to-five eligible history items for the cohort context, but identifies each transition's source as only hist[-1] (line 106). This is a narrower behavior representation than the stated context-based source/context transition specification. Nonetheless, cohort labels derived from the context do affect the curved pair loss on code vectors of source items, so the coupled pathway is real.
+FINDING REPRODUCTION: For any row with history [a,b,c], the computed context averages a,b,c while the paired source item is c only; inspect build_transition_pairs at lines 102-119.
+FINDING CORRECTION: Confirm and document that the final history item is intentionally the transition source, or derive source and context from the same explicit transition definition.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:53-66, train_rqvae.py:64-94, train_rqvae.py:382-395, smoke_test.py:7-23 and 25-51 | Code inspection shows pair vectors are selected codebook embeddings with gradients, Lorentz distance contributes to loss, and loss is backpropagated before optimizer.step. The smoke source asserts finite loss/encoder and level-0 codebook gradients, nonzero coincident-code gradients, changed loss/gradients for behavior-off and Euclidean toggles, and finite bounded gradients at large tangent norms. Runtime was not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: model/model.py:53-66
+FINDING DETAIL: The pair loss's path from pair vectors does not differentiate through the encoder: hard nearest-code indices are selected from encoded inputs, then only the selected codebook embedding is returned (lines 55-63). Thus pair gradients update codebook parameters but not encoder parameters through this coupled term. Base reconstruction/quantization losses still train the encoder, and codebook updates can change SID assignment, so this is not a dead term or a training blocker.
+FINDING REPRODUCTION: Differentiate pair_margin_loss applied to cohort_code_vectors with respect to encoder parameters: the pair-only contribution is absent/zero because the selected embeddings are discrete-indexed and are not functions of encoder values in autograd.
+FINDING CORRECTION: If encoder adaptation is intended by the specification, return a straight-through quantized representation (or an explicitly differentiable curved residual) so pair-loss gradients reach the encoder as well; otherwise clarify that the intended pair update is to codebooks.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:43-56, train_rqvae.py:283-303, train_rqvae.py:454-497, train_rqvae.py:504-532 | Inspected the real trainer entrypoint, fixed Stage1 embedding and Stage0 train parquet inputs, result path resolution to repository/results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin, indexed item-id JSON export and unique SID extension, and launcher handling including GENREC_SINGLE_GPU at lines 504-509. Trainer was not run, per the stated environment constraint.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:97-110
+FINDING DETAIL: If there are no valid transitions, np.stack on the empty transitions list fails before training (line 107). This is an edge-case data validation issue; normal non-empty training transitions follow the intended data path. Result output is correctly directed to this candidate's promoted result directory, not the baseline or another candidate.
+FINDING REPRODUCTION: Call build_transition_pairs with an empty frame (or a frame where no history item and target both occur in train_ids); np.stack([]) raises ValueError.
+FINDING CORRECTION: Validate that at least one valid transition exists and raise a clear actionable error, or return an empty (0,3) pair array and continue without the optional pair loss.

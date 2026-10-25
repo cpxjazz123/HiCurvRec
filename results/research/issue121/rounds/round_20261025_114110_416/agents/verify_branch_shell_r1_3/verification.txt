@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:101-110, 126-149, 293-313 | Static path inspection: train_rqvae.py:238-259 computes normalized successor entropy from the training parquet only; train_rqvae.py:326-328 passes per-item radii into RQVAE; RQLayer divides those targets per residual level, and VQLayer uses them in the Poincare-distance-plus-radius assignment metric and selected-distance loss. The smoke test intended to exercise this path but could not import PyTorch in this environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: model/layers.py:103-110
+FINDING DETAIL: No code-level scope defect found: when behavior and geometry are both enabled, the training-only radius enters the curved distance used for assignment and the selected-distance quantization term. The geometry-off ablation deliberately omits the radius term, so it is a geometry-off comparison, not a behavior-only Euclidean variant.
+FINDING REPRODUCTION: Inspect the chain at train_rqvae.py:238-259, 326-328 and model/model.py:26-29, then model/layers.py:101-110, 126-149, 293-313. Runtime exercise was blocked by the missing torch dependency noted under check b.
+FINDING CORRECTION: None required for scope fidelity.
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: smoke_test.py:13-38 | Attempted `python smoke_test.py` from the candidate tree; execution stopped at import before the forward/backward and ablation assertions.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:8
+FINDING DETAIL: The required finite forward/backward, intended-parameter gradient/update checks, and behavior-off/Euclidean assignment reversibility were not actually executed. This environment raises ModuleNotFoundError for torch, so the code's trainability and numerical stability cannot be verified rather than demonstrated to fail.
+FINDING REPRODUCTION: Run `python smoke_test.py` in this environment: it fails immediately with `ModuleNotFoundError: No module named 'torch'` at line 8. The test assertions at lines 19-38 therefore do not run.
+FINDING CORRECTION: Run the smoke test and a small real training step in the project's supported PyTorch environment, retaining finite-loss/gradient checks and both assignment ablations; record their successful output before accepting this check.
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:218-250, 395-470 | Static inspection of the trainer, output/export path, and launcher; attempted runtime verification was blocked by the same missing PyTorch dependency. The code reads the configured stage1 embedding NPY and stage0 training parquet, writes checkpoint/SID/JSON/logs under the candidate-specific OUTPUT_DIR, and includes a GENREC_SINGLE_GPU launcher bypass.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:218-233
+FINDING DETAIL: The real trainer entry point, frozen-data compatibility, exported SID indexing, output isolation, and distributed/single-card execution were not runtime-verified. In particular, successful export and launcher behavior cannot be inferred solely from the static path. No specific code defect was established by the available execution.
+FINDING REPRODUCTION: Run the trainer or its integration checks in this environment: import of torch fails (also reproduced by `python smoke_test.py`), preventing entry into `main()`. Static export code enumerates embedding rows at lines 424-436; launcher checks SINGLE_GPU_ENV at lines 445-470.
+FINDING CORRECTION: Run an integration test in the project's supported environment against the frozen stage0/stage1 inputs, verify item IDs map row-for-row to exported SIDs and all writes remain under OUTPUT_DIR, and exercise both GENREC_SINGLE_GPU=1 and the multi-process torchrun branch.

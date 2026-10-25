@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:97-122,375-391; results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/model/model.py:53-69 | Traced the trainer data flow: histories yield frozen-embedding contexts, contexts receive training-only MiniBatchKMeans cohorts, same-target/different-user/distinct-source pairs become labels and source IDs, model produces selected RQ code vectors, and the weighted pair loss applies Lorentz distance to them before the optimizer backward. The geometric operation is the exp-map to the Lorentz hyperboloid and geodesic acosh distance at train_rqvae.py:64-94. This is a connected behaviour-and-geometry loss pathway, not a side loss or suffix on the unchanged assignment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No scope-fidelity defect found in the implemented coupled path.
+FINDING REPRODUCTION: Static trace through the cited caller, pair builder, model code-vector selector and pair loss.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/model/model.py:53-69; results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:64-94,388-397; results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/smoke_test.py:11-26,28-55 | Inspected the differentiable path and the authored CPU smoke assertions (not run here): the pair loss is added to trainer loss, selected code vectors retain codebook and encoder gradients, and backward precedes optimizer.step. The smoke checks finite loss/gradients, nonzero pair encoder gradient, codebook gradient, behaviour-off and Euclidean alternatives, coincident points and large-norm safeguards. The radial projection bounds exp-map cosh/sinh arguments; acosh input is clamped above one and coincident points use a finite local surrogate. Runtime execution was not attempted, consistent with the specified sandbox limitation.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level dead term, disconnected gradient path or evident float32 overflow hazard found. The smoke script asserts differences in loss/gradient for behaviour-off and Euclidean distance; it does not directly demonstrate changed SID assignments, but the requested observable gradient comparison is represented.
+FINDING REPRODUCTION: Inspect smoke_test.py:16-23 and :30-54; the real trainer uses the same pair loss at train_rqvae.py:388-397.
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:285-356,456-503,506-534; results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/model/layers.py:139-145 | Inspected the real trainer entry and launcher statically, including the GENREC_SINGLE_GPU branch, frozen Stage1 .npy and Stage0 train parquet inputs, candidate-specific results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin output, and indexed JSON/SID export. No trainer run was possible in this sandbox. The default multi-GPU initialization path has a collective mismatch: only rank 0 invokes codebook initialization, while that method performs a distributed broadcast.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/train_rqvae.py:351-356; results/research/issue121/trees/round_20261025_114110_416/lorentz_user_cohort_margin/model/layers.py:139-144
+FINDING DETAIL: Under the default four-rank torchrun launch, rank 0 calls raw_module.init_codebook at line 354. Each VQLayer.init_codebook reaches distributed.broadcast(centers, 0) when distributed is initialized (layers.py:143), but ranks 1-3 skip the entire initialization block and go directly to dist.barrier at train_rqvae.py:356. Rank 0 therefore waits in broadcast while the other ranks wait in barrier; training cannot proceed. The claimed rank-0-only initialization is incompatible with its collective broadcast. This prevents the normal trainer entry point from running. The explicit single-card environment branch avoids DDP and this particular hang.
+FINDING REPRODUCTION: Launch the normal entry point without GENREC_SINGLE_GPU under torchrun with multiple ranks. At initialization, rank 0 enters layers.py:143 broadcast; other ranks reach train_rqvae.py:356 barrier, producing a collective mismatch/hang before epoch 1.
+FINDING CORRECTION: Invoke codebook initialization on every rank so all ranks enter the same broadcasts, or compute centers on rank 0 and explicitly broadcast them from a collective executed by every rank. Keep the subsequent barrier only after the matching collectives complete. Confirm both normal multi-rank and GENREC_SINGLE_GPU launch paths.

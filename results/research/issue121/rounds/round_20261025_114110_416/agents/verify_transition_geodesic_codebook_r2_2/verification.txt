@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/model.py:26-50, model/layers.py:106-112 and 282-309 | Static code-path trace only (no trainer execution): training constructs outgoing transitions and entropy gates in train_rqvae.py:247-268; forward passes those values to _behavior_transform and curved first-level assignment. The intended transition-weighted Poincare prototype → entropy-gated curved target → Poincare distance assignment is connected in code, but it raises NameError at expmap_at before it can complete.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/model.py:44
+FINDING DETAIL: expmap_at is called but not imported or defined in model/model.py (the helper exists in model/utils.py). Thus any behavior-on call with neighbors fails at the first Frechet update; the coupled path is not executable. Separately, trainer line 327 indexes undefined `rows`, so the real training pathway also cannot supply neighborhood rows.
+FINDING REPRODUCTION: Call RQVAE.forward with behavior_on=True, non-None neighbor_embeddings and behavior_gate; once it reaches model/model.py:44 it raises NameError: name 'expmap_at' is not defined. Run train_rqvae.main past the first batch setup and train_rqvae.py:327 raises NameError: name 'rows' is not defined.
+FINDING CORRECTION: Import expmap_at from .utils with the other geometry helpers. In the trainer, derive neighbor_ids by indexing the precomputed neighbor table with item_ids (e.g. `neigh[item_ids]`) and consistently gather the associated transition probabilities; add a minimal one-batch path check.
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/model.py:26-57 and model/layers.py:98-143, 282-309 | Static forward/backward dataflow inspection; did not run PyTorch or the trainer. If the missing name and row-index errors are fixed, the target is passed to first-level Poincare distance, quantization loss receives the straight-through target gradient, and reconstruction loss trains the encoder/decoder. Current code cannot produce that forward, so finite loss/gradient and toggled assignment comparisons are not established.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/model.py:44
+FINDING DETAIL: The coupled forward fails with the undefined expmap_at call, preventing any real loss or gradient. Also, the Euclidean behavior-off route at line 50 is an ablation rather than an unchanged baseline target (fine for geometry-off); however no executable result can establish that behavior-off, geometry-off and both-on change assignments/gradients. A runtime execution was not required here; the static blocker alone suffices.
+FINDING REPRODUCTION: A minimal behavior-on forward with a nonempty neighbor tensor reaches line 44 and raises NameError before quantization/backpropagation. In trainer execution, line 327 independently fails first with undefined `rows`.
+FINDING CORRECTION: Fix both undefined names as above, then exercise the prescribed smoke: finite forward losses and gradients to encoder/codebook, compare assignments and gradients for both-on versus behavior-off and Euclidean geometry-off. Ensure the comparisons use identical inputs and initialized weights.
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-55, 218-268, 324-342, 402-447, 450-478 | Static inspection of entry point, path constants, data loading, training loop, export, and launcher; no trainer run. Candidate result destination resolves under repository results/stage2_RQ-VAE/TIGER_transition_geodesic_codebook, appropriate for the promoted candidate; embedding and training inputs point to the frozen Stage1 and Stage0 paths; JSON export enumerates embedding-row item IDs. The entry point nevertheless fails before a training step.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:327
+FINDING DETAIL: `rows` is never defined in this trainer, making `neighbor_ids = ...[rows]` an unconditional NameError in the first training batch. Therefore the real trainer cannot run, and valid trained SID export cannot be produced. The single-card opt-in branch checks the required GENREC_SINGLE_GPU variable correctly at lines 55 and 454-455, and output paths are candidate-specific; these are not defects.
+FINDING REPRODUCTION: Start the trainer through either single-card mode (`GENREC_SINGLE_GPU=1`) or torchrun and reach the first batch: line 327 references undefined `rows`. After correcting it, behavior-on will encounter the independent undefined expmap_at at model/model.py:44. No claim is made about actual generated SID validity because export is unreachable.
+FINDING CORRECTION: Replace `rows` with the batch's item IDs when selecting neighbor rows, e.g. `neigh[item_ids.cpu().numpy()]` or a device-side indexed tensor, preserving item-to-row alignment; fix/import expmap_at and rerun the one-epoch gradient smoke and export/index validation. Keep output under the existing candidate-specific result directory.

@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:240-261 -> model/layers.py:101-110, 143-158, 323-329 | Inspected the real trainer’s training-parquet-only transition counting and per-item branch-radius construction, then followed its batch radii through RQVAE/RQLayer into Poincaré distance plus radius penalty for code assignment and selected-distance quantization loss. The checked-in smoke test at smoke_test.py:33-41 specifies curved+behaviour-on/off and Euclidean+behaviour-on/off comparisons; this is code inspection, not a claimed local execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. Both the training-only behaviour statistic and explicit curved geometry participate in the same assignment-distance computation; that selected distance also contributes to a differentiable training loss.
+FINDING REPRODUCTION: Follow train_rqvae.py:240-261, 328-330; model/model.py:26-29; and model/layers.py:101-110, 143-158, 323-329. The smoke-test ablations are at smoke_test.py:33-41.
+FINDING CORRECTION: None required.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/model/layers.py:48-66, 101-123, 143-158, 310-330; model/utils.py:17-23, 25-34, 48-65 | Statically traced encoder values and codebook parameters through expmap/projection/Poincaré distance, radius penalty, selected-distance gather, quantization loss, and straight-through output. The smoke test at smoke_test.py:19-31 checks finite loss/gradients and optimizer updates; lines 33-51 check assignment ablations and near-boundary float32 gradients. No trainer or smoke test was executed here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No static trainability blocker found. The gathered distance is not detached, and thus its geometry and radius penalty provide gradients through the curved distance to encoder/codebook parameters, in addition to the VQ losses. The geometry and behaviour switches select distinct distance paths. The helper clamps to representable interior values, avoiding the float32 1-1e-10 rounding hazard.
+FINDING REPRODUCTION: Inspect layers.py:103-110 and 143-158 for the curved distance, penalty and differentiable selected-distance term; utils.py:17-23, 25-34, 48-65 for safeguards. The concrete forward/backward and four-way assignment assertions are specified in smoke_test.py:19-51.
+FINDING CORRECTION: None required.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_114110_416/branch_shell/train_rqvae.py:39-57, 87-95, 220-261, 397-443, 447-473 | Inspected the trainer entry point, frozen embedding/train-parquet constants, candidate-owned output paths, rank-zero SID export and automatic torchrun/single-GPU launcher branches. SID rows are enumerated in embedding-row/item-ID order at lines 432-438, and collision extension plus uniqueness validation is at lines 183-196 and 432-434. No runtime launch was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Inputs point to the repository’s stage1 sentence_t5.npy and frozen stage0 train.parquet. Outputs are confined to results/stage2_RQ-VAE/branch_shell, the required candidate-owned result directory. The export emits item_sids.json keyed by embedding-row item ID and checks unique extended SIDs. The launcher returns directly when GENREC_SINGLE_GPU=1 (or already under torchrun), otherwise invokes four-rank torchrun; this preserves the requested single-card branch.
+FINDING REPRODUCTION: Check train_rqvae.py:43-57 for paths; :447-473 for launcher including SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at line 39; and :425-440 for export/indexing. This is static inspection only; runtime execution is not claimed.
+FINDING CORRECTION: None required.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:70-114; train_rqvae.py:269-335,353-360 | Traced trainer construction from frozen train transitions through sparse prefix targets, into forward occupancy loss, and loss addition in the optimizer step; inspected smoke_test.py:21-45, which contrasts both-on, behaviour-off and Euclidean geometry-off gradients. No runtime execution was attempted.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Training-only directed item transitions are extracted from train.parquet at train_rqvae.py:241-255; target prefix masses are aggregated from those edges at :320-335. Occupancy soft assignments use Lorentz distance at model/model.py:83-90 and match target masses through differentiable prefix products/KL at :91-114. This is a single connected pathway, not an unrelated side loss or a behavior suffix on the hard Euclidean quantizer.
+FINDING REPRODUCTION: Source trace and smoke-test assertions show the both-on path and intended ablations; the smoke script is not claimed as executed.
+FINDING CORRECTION: None.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:70-114; train_rqvae.py:353-367; smoke_test.py:21-45 | Verified that occupancy loss remains attached to encoder outputs and code embeddings through soft assignment and prefix products, is added before backward, and the smoke test checks finite loss/gradients plus gradient differences for behavior-off and Euclidean switches. No runtime execution was attempted.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection. Lorentz distance is computed from current residuals and code vectors (model/model.py:85-90); soft residual updates retain gradients (:112-113); occupancy loss is returned (:114), weighted into trainer loss (train_rqvae.py:356-363), then backpropagated and optimized (:363-367). Numerical guards include norm clamps and acosh argument lower bound at model/model.py:17-23, and probability/weight normalization clamps at :80-81 and :98-110. The existing discrete SID assignment remains hard argmin; the coupled term can change its gradients/codebook updates rather than differentiating through argmin.
+FINDING REPRODUCTION: Inspect model/model.py:83-114 and train_rqvae.py:356-367; smoke_test.py:27-45 contains the finite-gradient and ablation assertions. The sandbox limitation prevents executing those assertions here.
+FINDING CORRECTION: None.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-63,146-167,226-277,425-468,475-503 | Statically traced trainer entry point, frozen embedding/train parquet paths, candidate-only output constants, SID export/index mapping, torchrun fork and GENREC_SINGLE_GPU single-card branch. Runtime trainer execution was not attempted.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Inputs resolve from repository-root frozen stage1 embeddings and results/stage0_build_parquet/train.parquet (:42-51); outputs resolve to this candidate's results/stage2_RQ-VAE/lorentz_prefix_mass directory (:52-59), not the baseline or another candidate. Export uses enumerated embedding row IDs in JSON and checks unique extended SIDs (:453-468). Launcher skips torchrun when RANK is set or GENREC_SINGLE_GPU is "1", otherwise invokes configured four-process torchrun (:475-503).
+FINDING REPRODUCTION: Inspect the cited constants and main/export/launcher branches. The candidate file is staged under a research tree; the root finder is designed for the promoted copy under stage2_RQ-VAE, per its ancestor search. Static review only; no trainer process or output artifact was generated.
+FINDING CORRECTION: None.

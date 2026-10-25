@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:89-112, 365-381; model/model.py:53-66 | Source inspection traced train-only transition histories to same-target, different-user pairs and cohort labels, then the selected RQ code vectors to pair_margin_loss's Lorentz distance and its addition to the trainer loss. No runtime exercise was possible in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:61-78
+FINDING DETAIL: None for scope fidelity. The curved operation is actually evaluated on the selected quantized code vectors in a connected behaviour-conditioned pair loss; this is not just a geometry import or a detached auxiliary loss. The Lorentz implementation does, however, have an extreme-input overflow hazard noted under trainability.
+FINDING REPRODUCTION: Inspect train_rqvae.py:294, 365-381 alongside model/model.py:53-66 and train_rqvae.py:61-86. The cohort labels from build_transition_pairs are passed into pair_margin_loss, whose Lorentz distance is computed on the actual selected code vectors returned through the model forward.
+FINDING CORRECTION: No scope correction required. Address the numerical issue described in the trainability finding.
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:61-86, 365-387; model/model.py:53-66 | Source-level trace only; the requested sandbox has no PyTorch/shell runtime. The pair term differentiates through the selected codebook embeddings, and the checked-in smoke test describes finite forward/backward and on/off comparisons, but the Lorentz map itself is not numerically safe for large code vectors.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:66-78
+FINDING DETAIL: exp0 computes cosh(root*norm) and sinh(root*norm) without bounding or a stable distance formulation. In float32, these overflow at sufficiently large tangent norms; then the Minkowski product can become inf-inf/NaN, and the pair loss and gradients become non-finite. The trainer's finite-loss guard catches some outcomes only after the invalid computation, and gradient clipping cannot repair NaN gradients. This violates the stated requirement for a numerically stable trainable path.
+FINDING REPRODUCTION: Minimal counterexample: call lorentz_distance(torch.tensor([[100.0, 0.0]]), torch.tensor([[0.0, 0.0]])) with float32 inputs. exp0's cosh(100) and sinh(100) overflow, so the Lorentz point/distance is non-finite. The function accepts these inputs and has no pre-map bound.
+FINDING CORRECTION: Implement a numerically stable Lorentz distance that avoids materializing overflowing cosh/sinh values, or enforce a documented safe bound on tangent norms before mapping (with a differentiable, finite clamp) and test boundary and out-of-range inputs. Add finite loss and gradient checks for the coupled path at that boundary.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-58, 275-300, 446-523 | Inspected the real main entry point and launcher, including the single-card GENREC_SINGLE_GPU branch; traced stage1 frozen embedding and stage0 training parquet inputs, candidate-specific result path, indexed export, and DDP barriers/teardown. Runtime execution was unavailable.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:43-55, 481-489, 496-523
+FINDING DETAIL: No integration defect found by source inspection. The result path resolves under the repository to results/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin (the candidate-specific promoted-tree directory), inputs are the frozen Stage1 embedding matrix and Stage0 train parquet, item IDs index exported rows, and the launcher preserves the GENREC_SINGLE_GPU single-card bypass.
+FINDING REPRODUCTION: Resolve RESULT_DIR from train_rqvae.py:49 and follow main's input reads at lines 289-294, export at lines 481-489, and launcher logic at lines 496-523. The SID export extends collisions and serializes each row under its enumerated item ID.
+FINDING CORRECTION: No integration correction required based on inspected code.
