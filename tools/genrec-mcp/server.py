@@ -283,6 +283,16 @@ def tree_supports_single_gpu(tree: Path) -> bool:
 #: cards instead of leaving three quarters of the host idle.
 STAGE2_JOBS_PER_GPU = 2
 
+#: How a round dispatches its Stage 2 runs.
+#:
+#: "ddp4" (the frozen recipe): one candidate at a time on all four cards, so the
+#: global batch is 4 x 1024 = 4096 and the measured epoch is the recipe's own.
+#: "spread": one job per card, several candidates at once -- each with a global
+#: batch of 1024, which is a *different* optimisation regime and makes the
+#: comparison to the frozen baseline invalid. The speed difference is large:
+#: 0.14 s/epoch on four cards against 1.5 s/epoch on one.
+STAGE2_LAUNCH_STRATEGY = "ddp4"
+
 #: The frozen Stage2 run: 3000 epochs over 24556 items with 24 steps per epoch.
 STAGE2_FROZEN_EPOCHS = 3000
 STAGE2_FROZEN_STEPS_PER_EPOCH = 24
@@ -2766,8 +2776,12 @@ def tool_research_round_launch(round_id: str, parallel: int = 0) -> dict:
     state = round_pipeline.load_state(directory)
     probe = probe_gpu_layout()
     usable = list(probe.get("visible") or probe.get("physical") or [])
-    # The capacity is a fact about the host: cards times the jobs a card holds.
-    capacity = max(1, len(usable) * STAGE2_JOBS_PER_GPU)
+    # The frozen recipe takes every card for one candidate, so at most one job
+    # runs at a time; the spread strategy packs several one-card jobs instead.
+    if STAGE2_LAUNCH_STRATEGY == "ddp4":
+        capacity = 1
+    else:
+        capacity = max(1, len(usable) * STAGE2_JOBS_PER_GPU)
     budget = capacity if int(parallel) <= 0 else min(int(parallel), capacity)
     queue = round_jobs.JobQueue(directory, max_parallel=max(1, budget))
     queued = []
@@ -2815,6 +2829,47 @@ def tool_research_round_launch(round_id: str, parallel: int = 0) -> dict:
         # so the trees that honour the single-card contract go first.
         batch.sort(key=lambda job: 0 if tree_supports_single_gpu(Path(job["tree"])) else 1)
     for job in batch:
+        if STAGE2_LAUNCH_STRATEGY == "ddp4":
+            # The whole allocation for this candidate: the trainer forks four
+            # ranks itself, so the global batch is the frozen one.
+            if len(usable) < 4:
+                queue.fail(job["job_id"],
+                           "the frozen recipe needs four cards and only " +
+                           str(len(usable)) + " are visible",
+                           evidence={"usable": usable})
+                refused.append({"idea_id": job["idea_id"],
+                                "refused": "needs four visible cards"})
+                continue
+            gpu = ",".join(str(card) for card in usable[:4])
+            previous = os.environ.get("CUDA_VISIBLE_DEVICES")
+            os.environ["CUDA_VISIBLE_DEVICES"] = gpu
+            try:
+                queue.start(job["job_id"])
+                queue._job(job["job_id"])["gpu"] = gpu
+                queue._job(job["job_id"])["launch_mode"] = "ddp4"
+                queue.save()
+                verification = "round:" + round_id + ":" + str(job["idea_id"])
+                try:
+                    outcome = tool_stage2_start(str(job["tree"]), verification)
+                except Exception as exc:               # noqa: BLE001 - recorded
+                    queue.fail(job["job_id"], "the Stage 2 start raised: " + str(exc))
+                    refused.append({"idea_id": job["idea_id"], "refused": str(exc)})
+                    continue
+            finally:
+                if previous is None:
+                    os.environ.pop("CUDA_VISIBLE_DEVICES", None)
+                else:
+                    os.environ["CUDA_VISIBLE_DEVICES"] = previous
+            if outcome.get("started") is False and outcome.get("refused"):
+                queue.fail(job["job_id"], str(outcome["refused"]),
+                           evidence={"refused": outcome["refused"]})
+                refused.append({"idea_id": job["idea_id"], "refused": outcome["refused"]})
+            else:
+                launched.append({"idea_id": job["idea_id"], "tree": job["tree"],
+                                 "gpu": gpu, "launch_mode": "ddp4",
+                                 "worker_pid": outcome.get("worker_pid"),
+                                 "status": outcome.get("status")})
+            break                     # one candidate owns the whole host
         # A trainer that only forks four ranks needs four cards of their own, so
         # it waits for the host to be idle instead of sharing a card.
         if not tree_supports_single_gpu(Path(job["tree"])):

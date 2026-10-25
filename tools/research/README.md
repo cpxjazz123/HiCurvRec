@@ -179,7 +179,7 @@ call.
 | `research_round_implement(round_id)` | one implementation agent per selected idea, each on a fresh copy of the one permitted baseline | no |
 | `research_round_verify(round_id)` | the verifier of each implementation and the repair loop | no |
 | `research_round_run(round_id)` | every remaining agent phase in one call | no |
-| `research_round_launch(round_id, parallel)` | the Stage 2 queue, two jobs per card | **yes** |
+| `research_round_launch(round_id, parallel)` | the Stage 2 queue: one candidate on all four cards, the frozen recipe | **yes** |
 | `research_round_collect(round_id)` | collect the Stage 2 runs, hand every valid SID to Stage 3 | **yes** |
 | `research_round_status` / `research_round_results` | where the round stands / the full audit record | no |
 
@@ -231,6 +231,14 @@ wrote an unusable answer) is retried and never blocks a mechanism,
 the budget) and keeps the idea for an optimisation route, and `STAGE2_3_FAILED`
 is a training or evaluation failure. A candidate stops asking for agents after
 five repair rounds and is recorded with its findings.
+
+A round dispatches its Stage 2 runs in the frozen recipe's own shape:
+`STAGE2_LAUNCH_STRATEGY = "ddp4"` gives one candidate all four cards, so the
+global batch is 4096 and an epoch costs 0.16 s instead of the 1.5 s a single
+card needs. Packing several one-card jobs (`"spread"`) is faster in wall clock
+for many candidates, but their global batch is 1024, which is a different
+optimisation regime and makes the comparison to the frozen baseline invalid --
+that is why it is not the default.
 
 Rounds are filed under the issue that opened them: `results/research/issue121/
 rounds/<round_id>/` and `results/research/issue121/trees/<round_id>/<idea_id>/`.
