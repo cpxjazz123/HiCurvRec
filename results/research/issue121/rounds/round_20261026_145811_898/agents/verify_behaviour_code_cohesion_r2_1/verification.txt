@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:226-291, 344-353, 413-419 | Static path tracing: _successor_pairs reads train.parquet user histories and targets (229-242); the minibatch cohesion call uses those pairs and first-level codewords (418-419); with GEOMETRY_ON=True, both latent and codewords are projected to a Poincare ball and Poincare squared distances produce soft assignments and pair cohesion (281-291). With BEHAVIOUR_ON=False pairs are shuffled; with GEOMETRY_ON=False the same cohesion calculation uses Euclidean cdist. Runtime unavailable/not attempted as instructed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The intended behavior x curved-geometry pathway is present and connected: behavior-derived successor pairs weight code assignments whose scores come from Poincare distances. It is not merely a suffix or unrelated loss.
+FINDING REPRODUCTION: Trace _successor_pairs -> _COHESION_PAIRS -> _cohesion_term -> loss.backward in the cited lines.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:262-291, 409-425 | Static forward/backward trace: the loss is differentiable through softmax assignments, code distances, and projected latent/codewords, then added before backward. However, all valid pairs are mapped and combined into a dense P-by-P pair_cost matrix on every minibatch.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:290
+FINDING DETAIL: `assignment[left_rows] @ code_distance @ assignment[right_rows].t()` constructs a dense matrix quadratic in the number of valid successor pairs. `_successor_pairs` allows up to 200,000 pairs (line 227), so this can require tens of billions of entries and cannot run as intended; `COHESION_BATCH_PAIRS = 4096` is declared but never used to bound this computation. Thus finite trainable gradients for the configured real path cannot be established and the likely allocation failure blocks training.
+FINDING REPRODUCTION: Use 4096 or more valid behavior pairs in a minibatch: `pair_cost` has shape [P,P] (at P=4096, 16,777,216 elements; at the allowed 200,000, 40 billion elements) before taking its diagonal. The fixed pair limit permits the latter, and the batch-pair constant does not cap P.
+FINDING CORRECTION: Sample or deterministically select at most `COHESION_BATCH_PAIRS` pairs per minibatch and compute per-pair expected code distance directly (e.g. `(assignment[left] @ code_distance * assignment[right]).sum(-1).mean()`), avoiding the P-by-P matrix. Then confirm finite loss/gradients and behavior/geometry switch effects in the specified GPU smoke.
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:40-70, 315-355, 484-527, 534-563 | Static integration inspection: paths resolve from repository marker; training reads stage0 train.parquet and stage1 sentence_t5.npy; exported SIDs enumerate all embedding rows and JSON keys; result directory is candidate-specific. Launcher flow inspected for torchrun and GENREC_SINGLE_GPU branches; trainer was not run per instruction.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:538-540, 561-563
+FINDING DETAIL: In the single-card branch, `_launch_via_torchrun()` calls `main()` when `GENREC_SINGLE_GPU` is set, returns, and then the module-level code calls `main()` again. A single-GPU invocation therefore runs the complete training/export twice sequentially instead of once.
+FINDING REPRODUCTION: Set `GENREC_SINGLE_GPU=1` and execute train_rqvae.py: `_launch_via_torchrun` enters lines 538-540 and completes main; control returns to line 563, which invokes main a second time. The second pass reinitializes and retrains, overwriting candidate outputs.
+FINDING CORRECTION: Make the entry point invoke `main()` only when `_launch_via_torchrun()` indicates that it did not already run it (for example, have the launcher return a boolean), or make the single-card branch launch/return from the entry point so the unconditional second call cannot happen. Preserve the existing torchrun child behavior.
