@@ -1,0 +1,37 @@
+{
+  "ablation_behavior_off": "Set h_i=0 and hence v_i=0 while retaining identical curved quantization and all other settings.",
+  "ablation_both_on": "Use training-derived h_i and the curvature -0.5 Poincare displacement and assignment as specified.",
+  "ablation_geometry_off": "Replace exp/log/d_c with identity maps and squared Euclidean distance, preserving h_i and the behavior-dependent displacement formula in Euclidean space.",
+  "also_proposed_by": [
+    "ideation_3"
+  ],
+  "behavior_computation": "From training-only user sequences in timestamp order, count adjacent item pairs (i,j); discard self-loops, retain top 16 outgoing successors by count, apply count^0.75 normalization, and average corresponding frozen item embeddings to form h_i.",
+  "behavior_signal": "Directed next-item transition distribution, preserving branching rather than reducing each item to one neighbor.",
+  "cost_estimate": "Precompute sparse transition summaries once; per epoch batch cost is O(B*16*d + B*L*K*d) with the extra O(B*d) map operations; codebook comparison already dominates. At frozen scale (24,556 items, 24 steps/epoch, 3,000 epochs), this adds 24*3,000*B*16*d arithmetic for context aggregation (or cache h_i and pay O(24,556*16*d) once), plus O(24*3,000*B*L*d) curved maps; no extra model passes. Expect roughly 5-15% step time depending on batch and codebook sizes.",
+  "coupling_equation": "y_i=log^c_0(exp^c_{z_i}(alpha*log^c_{z_i}(b_i))); k_i^l=argmin_k d_c(y_i-r_i^l,q_lk)^2, where b_i=exp^c_0(U*sum_j p_i(j)x_j).",
+  "coupling_path": "Training transition counts make h_i; h_i determines b_i; the curved log map from z_i to b_i determines y_i; y_i changes the distances and chosen residual code at every level.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "Items with branching successor distributions need a context-aware residual direction; the coupled assignment should improve Stage3 test Recall@10, targeting >0.065, and make leading SID prefixes more predictive of the training successor distribution. Keep only if both-on beats baseline and both ablations.",
+  "fingerprint": "da19cc9d9a3cfcef",
+  "hyperbolic_location": "The behavior-conditioned displacement is formed in the Poincare tangent space before each RQ-VAE residual quantizer assignment.",
+  "hyperbolic_operator": "Poincare-ball exp^c and log^c maps plus geodesic distance, fixed sectional curvature -0.5.",
+  "idea_id": "branch_tangent_codes",
+  "key_change": "Build a sparse distribution over next-item contexts for each item from training sequences, map its context centroid to the Poincare ball, and use that point to define a context-dependent tangent displacement before every residual quantizer assignment.",
+  "leakage_boundary": "Construct all counts from the training interaction split only, freeze h_i before RQ-VAE fitting, and never read validation/test sequences when creating transition statistics or SIDs.",
+  "motivation": "A single item embedding may participate in distinct next-item contexts; ordinary residual quantization can average those contexts and obscure which continuation a prefix implies.",
+  "novelty": "Unlike a graph-denoised residual or behavior-only SID suffix, this changes the actual residual codebook assignment metric by transporting a train-only, context-conditioned direction through a negatively curved latent space.",
+  "observables": "Changed code assignments and encoder/codebook gradients for branching items; compare successor-distribution predictability from SID prefixes and Stage3 test Recall@10.",
+  "origin_agent": "ideation_3",
+  "risks": [
+    "Sparse or noisy transitions may overfit; frequent successors may dominate; curvature/maps can destabilize mixed precision; the context adjustment may hurt semantic reconstruction and create worse prefixes."
+  ],
+  "safeguards": "Clip tangent norms to 3/sqrt(c), project ball points to norm <=(1-1e-5)/sqrt(c), compute maps/distances in float32 with eps=1e-6, normalize only nonempty transition rows, use zero context for unsupported items, and clamp distance arguments to valid domains.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "p_i(j)=count_train(i,j)^0.75/sum_{u in Top16(i)}count_train(i,u)^0.75; h_i=sum_j p_i(j)x_j; z_i=exp^c_0(W e_i); b_i=exp^c_0(U h_i); y_i=log^c_0(exp^c_{z_i}(alpha log^c_{z_i}(b_i))); k_i^l=argmin_k d_c(y_i-r_i^l,q_lk)^2. Use baseline STE and reconstruction/commitment losses; do not add a separate behavior-only objective.",
+  "spec_inputs_outputs": "Inputs: frozen item embeddings, training-split sequences, encoder outputs, residual codebooks. Output: per-item residual code indices/SIDs and the unchanged reconstruction loss path.",
+  "specification": {
+    "text": "Let x_i be the frozen item embedding and e_i its encoder output. For each item i, compute p_i(j) proportional to count(i->j)^0.75 over outgoing training transitions, retaining top 16 successors; let h_i be their mean frozen embeddings. Map z_i=exp^c_0(W e_i) and b_i=exp^c_0(U h_i) into the ball of curvature -c (c=0.5). Define v_i=log^c_{z_i}(b_i), and transformed residual target y_i=log^c_0(exp^c_{z_i}(alpha v_i)), alpha=0.15. At quantizer level l choose k=argmin_k d_c(y_i-r_i^l, q_lk)^2, then r_i^(l+1)=r_i^l+q_lk in tangent coordinates; retain baseline straight-through update and reconstruction loss. Apply behavior through v_i only for items with at least two observed successors; otherwise set v_i=0."
+  },
+  "title": "User-branch tangent prototypes for residual code assignment"
+}

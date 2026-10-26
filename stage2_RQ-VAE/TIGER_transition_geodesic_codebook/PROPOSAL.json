@@ -1,0 +1,37 @@
+{
+  "ablation_behavior_off": "Set p_i uniform-independent by setting g_i=0 and disable transition-derived m_i; retain curved quantization and baseline target z_i.",
+  "ablation_both_on": "Use training transition probabilities, entropy gate, curved Frechet mean, geodesic interpolation and Poincare assignment with curvature -0.5.",
+  "ablation_geometry_off": "Retain training p_i and g_i but replace the Frechet/geodesic operations with weighted Euclidean neighbor mean and linear interpolation and squared Euclidean assignment.",
+  "also_proposed_by": [
+    "ideation_3"
+  ],
+  "behavior_computation": "On training-only chronological user sequences, count each adjacent pair; form p_i over top 16 successors using add-one smoothing followed by renormalization; compute normalized entropy and weighted successor embedding mean.",
+  "behavior_signal": "Per-item directed next-item neighborhood distribution and its normalized branching entropy.",
+  "cost_estimate": "Precompute sparse neighbor lists and entropy once. Cache item z_j and m_i once per epoch (one batched 3-iteration neighborhood aggregation, O(24,556*16*d) map work); per training step add O(B*L*d) maps and no additional codebook scan beyond existing comparisons. Across 3,000 epochs/24 steps, cached neighbor update is 3,000*24,556*16*d scalar operations, while step overhead is about O(24*3,000*B*L*d), approximately 5-12% wall-clock if the codebook search dominates.",
+  "coupling_equation": "m_i=FrechetMean_c({z_j,p_i(j)}); t_i=exp^c_{z_i}(beta*g_i*log^c_{z_i}(m_i)); k_i^1=argmin_k d_c(t_i,q_1k)^2, with p_i and g_i computed from training transitions.",
+  "coupling_path": "The directed transition distribution defines the curved Frechet mean; its entropy gates a geodesic move from each encoded item toward that mean; the moved point is then directly quantized, changing code indices and gradients.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "High-entropy transition neighborhoods are better represented by a curved local continuation barycenter than by a Euclidean reconstruction-only code; the effect should improve next-item prefix utility and Stage3 test Recall@10, with target above 0.065.",
+  "fingerprint": "b75d8265def7e0af",
+  "hyperbolic_location": "A transition-neighborhood Frechet mean and entropy-gated geodesic target shift are computed inside the quantization forward path before the first residual assignment.",
+  "hyperbolic_operator": "Poincare geodesic interpolation via log^c_z, exp^c_z and distance d_c, with fixed curvature -0.5.",
+  "idea_id": "transition_geodesic_codebook",
+  "key_change": "Maintain a slowly updated Poincare prototype for each item’s observed next-item neighborhood and interpolate the item latent toward that prototype along the geodesic before residual quantization; the interpolation weight is the item’s empirical transition entropy, so highly branching items receive more continuation structure.",
+  "leakage_boundary": "Training interactions alone produce graph, probabilities, entropy and neighbor lists; validation/test interactions are excluded from statistics, prototype initialization, training, and SID export.",
+  "motivation": "Next-item prediction depends on local directed transitions, but ordinary codebook centroids are optimized to reconstruct item embeddings rather than to preserve the geometry of likely continuations.",
+  "novelty": "Rather than attach graph regularization to an otherwise standard quantizer, this uses the training-only transition graph to construct geodesic barycentric targets that directly determine the RQ-VAE codebook assignment and its gradient.",
+  "observables": "Assignment changes should concentrate among high-entropy items; test whether SID-prefix next-item ranking and Stage3 Recall@10 improve, and report assignment/gradient changes relative to baseline.",
+  "origin_agent": "ideation_3",
+  "risks": [
+    "Neighborhood barycenters can collapse unrelated branches; popularity bias may pull prototypes toward hubs; stale cached embeddings can make means inconsistent; small item support makes entropy unreliable."
+  ],
+  "safeguards": "Float32 map calculations; clamp ball norms below (1-1e-5)/sqrt(c), tangent norms below 3/sqrt(c), normalize probabilities with eps, skip unsupported/degree-one nodes (g=0), use three damped mean steps eta=0.25, and fall back to z_i if a mean becomes nonfinite.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "p_i(j) from training counts; H_i=-sum_j p_i(j)log(p_i(j)+eps); g_i=H_i/log(max(2,degree_i)); m_i <- exp^c_{m_i}(eta sum_j p_i(j)log^c_{m_i}(z_j)) for 3 iterations; t_i=exp^c_{z_i}(beta*g_i*log^c_{z_i}(m_i)); quantize t_i by nearest geodesic code then quantize tangent residuals.",
+  "spec_inputs_outputs": "Inputs: train-split sequences, frozen item embeddings, current encoder outputs and residual codebooks. Outputs: curved neighborhood targets, residual code assignments/SIDs, and gradients through the target path.",
+  "specification": {
+    "text": "From training sequences count outgoing pairs, compute normalized p_i(j), entropy H_i=-sum_j p_i(j)log(p_i(j)+eps), and gate g_i=clip(H_i/log(max(2,degree_i)),0,1) (set 0 for degree<2). Given encoded z_i=exp^c_0(W e_i), compute neighborhood prototype m_i as the 3-step weighted Frechet mean initialized at weighted Euclidean mean of exp^c_0(W x_j): m <- exp^c_m(eta*sum_j p_i(j)log^c_m(z_j)); eta=0.25. Use target t_i=exp^c_{z_i}(beta*g_i*log^c_{z_i}(m_i)), beta=0.2, then assign first residual code by argmin_k d_c(t_i,q_1k)^2; later levels quantize tangent residual log^c_0(t_i)-sum_{s<l}q_sk. Backpropagate through t_i and maps; update codebooks with baseline commitment/reconstruction losses."
+  },
+  "title": "Geodesic transition barycenters as residual-code targets"
+}

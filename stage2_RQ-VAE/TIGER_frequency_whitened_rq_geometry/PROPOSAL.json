@@ -1,0 +1,21 @@
+{
+  "also_proposed_by": [
+    "ideation_1"
+  ],
+  "cost_estimate": "One covariance/eigendecomposition costs O(N*d^2+d^3) once; for the baseline embedding dimension (typically a few hundred), this is seconds to minutes on CPU and small relative to tokenizer training. Transform adds O(B*d^2) per step for batch B if implemented naively, or precompute y_i once and index it, yielding effectively zero added per-step cost across 24 steps/epoch and 3,000 epochs. No change to RQ-VAE compute thereafter.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "At least one identical Stage 3 run using whitened-coordinate SIDs exceeds test_R@10 0.06335, with improvement concentrated among items whose baseline embedding error aligns with top-variance axes. Log per-axis variance captured by residual codebooks and compare next-item recall for those items; if whitening changes the geometry but neither that slice nor overall recall improves, reject it.",
+  "fingerprint": "5705eec7d7617131",
+  "idea_id": "frequency_whitened_rq_geometry",
+  "key_change": "Estimate a shrinkage covariance from training-item embeddings once, transform embeddings by its inverse square root before RQ-VAE training, and keep that transform fixed. Quantize transformed vectors with the baseline model and assign every item one global SID as usual.",
+  "motivation": "A few high-variance embedding directions can dominate Euclidean residual assignment even when those directions reflect broad metadata/style variation rather than distinctions that help separate candidate items. This can waste successive codebooks modeling the same dominant axes and leave finer discriminative structure unresolved.",
+  "novelty": "This is a fixed, train-only coordinate preconditioner of the input space, not a new curved geometry, balanced assignment, behavior auxiliary target, or learned graph residual. The ordinary RQ-VAE objective, architecture, and hard nearest-code assignment remain unchanged in the transformed coordinates.",
+  "origin_agent": "ideation_1",
+  "risks": [
+    "Embedding anisotropy may encode real useful semantic structure, and whitening can amplify low-variance noise despite shrinkage; it may also distort distances relevant to the pretrained embedding space. Covariance must be estimated over training items only, and identical normalization and frozen transform must be used for every item at assignment time."
+  ],
+  "specification": {
+    "text": "Given train item embeddings x_i in R^d, compute mean mu and covariance Sigma=(1/N)sum_i (x_i-mu)(x_i-mu)^T. Use shrinkage Sigma_s=(1-rho)Sigma+rho*(tr(Sigma)/d)I with rho=0.1, eigendecompose Sigma_s=U diag(s) U^T, and define A=U diag(1/sqrt(max(s_k, 0.01*mean(s)))) U^T. Transform all train item vectors as y_i=A(x_i-mu); fit the unmodified baseline RQ-VAE on y_i. Apply the same frozen mu,A to validation/test item embeddings before SID assignment. Export the exact single hard code tuple per item; no split-specific fitting or per-user code variant."
+  },
+  "title": "Whiten embedding axes by train-item covariance before quantization"
+}

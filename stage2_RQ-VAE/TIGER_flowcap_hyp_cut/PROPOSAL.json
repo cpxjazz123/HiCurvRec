@@ -1,0 +1,44 @@
+{
+  "ablation_behavior_off": "Set r_ij=0 in the flow term (retain reconstruction, capacities K1=16/K2=96/K3=256, Lorentz geometry); this tests whether successor flow determines useful sharing.",
+  "ablation_both_on": "Use train-only directed r_ij, Lorentz curvature -0.5 in both item and flow costs, and capacities 16/96/256/collision-extension, with deterministic T4.",
+  "ablation_geometry_off": "Replace exp/log/Lorentz distance by matched-scale Euclidean mapping and norms (retain the same r_ij and capacities K1=16/K2=96/K3=256).",
+  "also_proposed_by": [
+    "ideation_2"
+  ],
+  "behavior_computation": "On training split only, order each user's training events chronologically and count consecutive item pairs; use additive smoothing over observed successor support, normalize per source, and retain at most 16 successors by n_ij/sqrt((n_i+1)(n_j+1)).",
+  "behavior_signal": "Directed adjacent-item successor transition frequencies, popularity-adjusted per source.",
+  "cost_estimate": "One O(E_train) count pass; retain at most 16 outgoing successors per item. The added train cost is roughly O(B*16*16 + B*96*96) transition pair terms if naively dense, so implement sparse edge minibatch evaluation O(E_batch*(K1+K2)) and streamed Sinkhorn O(B*K_l); use only the 16-code T1 and 96-code T2, and disable full pairwise code-pair expansion. Target one-epoch smoke within 0.13 s/epoch (no more than about 10% overhead); at 24,556 items, 24 steps/epoch, 3,000 epochs this is 73,668,000 item-step assignments per level, with cached sparse edges and no graph traversal in the loop. Reject if measured smoke exceeds baseline by >10%.",
+  "coupling_equation": "J(P)=Σ_i,a P_ia d_L(X_i,C_a)^2 + λΣ_i,j,a,b r_ij P_iaP_jb d_L(C_a,C_b)^2, subject to Σ_a P_ia=1 and Σ_i P_ia=N/K_l; the behavior r_ij directly weights the curved d_L term.",
+  "coupling_path": "Train transitions set r_ij, which weights Lorentz distances between candidate prefix codes during capacity-constrained assignment; changing r or replacing Lorentz distance changes the optimal soft and hard assignments, hence exported T1/T2.",
+  "duplicate_count": 1,
+  "evidence_revision": {
+    "answers": "answers the behavior_dependency gap",
+    "evidence_note": "Measured: positive row scalar leaves every arg-min unchanged (True); codeword-dependent weight moved False of the top-1",
+    "revision": "Withdraw the claim that a codeword-dependent transition weight changes assignments: the evidence says it moved 0 top-1 assignments, and the row-scalar behavior cannot move any arg-min; the proposal therefore has no demonstrated assignment-changing behavior effect",
+    "withdrawn": "The claim that transition flow changes the assignment cost in a way that alters assignments, and the associated expectation that this yields improved prefix survival or downstream recall"
+  },
+  "falsifiable_hypothesis": "Directed successors have coherent, learnable coarse destinations: with K1=16 and K2=96 the gold prefix should survive depth 1 at ≥0.995 and depth 2 at ≥0.80, while T3 top-1 rises above the 0.11-0.16 range of current high-recall arms. Keep only if canonical L1 Hard ER (52,855 pairs, ten fixed negatives) moves favorably and frozen Stage3 test_R@10 exceeds the untouched 0.055537 control, ideally >0.065. Expected L1 Hard ER is lower (better pair ranking) than behavior-off; expected survival: depth1 ≳.995, depth2 ≳.80, depth3 ≈.10-.16, depth4 ≈.08-.09; T3 teacher-forced top1 increases, T4 stays near deterministic/collision-extension accuracy (about .98); Stage3 Recall@10 should increase toward and above .065.",
+  "fingerprint": "f833e0037ccf28de",
+  "hyperbolic_location": "In both the per-item code assignment cost and the successor flow cost for T1/T2, before discrete hardening; Lorentz prototypes are the actual candidates whose indices become SID prefixes.",
+  "hyperbolic_operator": "Lorentz exp map and geodesic distance d_L(X,Y)=acosh(max(1,-κ<X,Y>_L))/sqrt(κ), with fixed negative curvature -κ=-0.5.",
+  "idea_id": "flowcap_hyp_cut",
+  "key_change": "Use K1=16, K2=96, K3=256, with T4 solely deterministic collision extension; fit the first two assignments jointly to directed train-transition flow using a negative-curvature Lorentz dissimilarity, then residual-quantize within each parent at T3. Capacity constraints apply to every training-item assignment, not merely as a usage penalty.",
+  "leakage_boundary": "Build the transition table only from training user histories before Stage2. Do not read validation/test events, labels, or sequences; export SIDs from the fixed item catalog and train-only statistics. Validation may not choose parameters and test is used only for the frozen final Stage3 measurement.",
+  "motivation": "Likely next items need to share early prefixes often enough to survive beam pruning, without spending early-token capacity on distinctions that belong at T3.",
+  "novelty": "This makes the discrete assignment a capacity-constrained directed graph partition, rather than adding a successor-neighbour term to a fixed-size quantizer. Unlike existing unconstrained successor-geodesic proposals, the explicit small K1/K2 budgets are enforced by a differentiable balanced assignment, and the transition flow changes the assignment cost itself.",
+  "observables": "Report L1 Hard ER on canonical 52,855 pairs with ten fixed negatives; gold-prefix survival at depths 1,2,3,4; teacher-forced top-1 accuracy at T3/T4; and Stage3 test_R@10. Expected ER decreases, depth1 remains near 1.0, depth2 survival rises to ≥0.80, depth3 survival is roughly .10-.16 and depth4 roughly .08-.09; T3 accuracy improves and T4 remains high; Stage3 should exceed 0.055537 and target >0.065.",
+  "origin_agent": "ideation_2",
+  "proposal_revision": 1,
+  "risks": [
+    "Balanced mass can force implausible assignments for hubs or disconnected items; joint edge costs may make optimization unstable or wash out reconstruction geometry. K2 parent-conditioned code utilization and hardening may diverge from soft Sinkhorn; if T2 is not predictable despite 96 groups, beam survival will still fail. Sparse edge cost must be profiled to meet smoke limit."
+  ],
+  "safeguards": "Use float32/64 acosh argument clamp to ≥1+ε, project points to the Lorentz sheet after updates, clip tangent norms before exp map, clamp P and Sinkhorn kernels, and stop gradients through r. Ignore unsupported sources; cap popularity weights and per-source degree; initialize prototypes inside a bounded radius. Track finite losses and hard occupancy; if invalid values occur, abort rather than silently emit SIDs. Keep Sinkhorn iterations and edge samples fixed across arms.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "n_ij=Σ_u,t 1[i_t=i,i_{t+1}=j] over train histories; r_ij=normalized((n_ij+α)/sqrt((n_i+1)(n_j+1))) over retained top-16 successors. X_i=exp_o^{-κ}(W e_i). For l∈{1,2}, minimize J_l(P)=Σ_i,a P_ia d_L(X_i^l,C_a^l)^2 + λ_lΣ_(i,j) r_ijΣ_(a,b)P_iaP_jb d_L(C_a^l,C_b^l)^2 with row stochastic P and column sums N/K_l; Sinkhorn-soften then straight-through argmax. Set K1=16, K2=96, K3=256; perform baseline residual quantization at T3 inside selected T2 parent; assign T4 by the existing deterministic collision extension. Train with baseline decoder, reconstruction and commitment objectives plus the assignment objective. Three arms hold all capacity and training settings fixed and toggle only behavior and geometry as specified.",
+  "spec_inputs_outputs": "Inputs are frozen Stage1 item embeddings, training-only sparse directed transition rows, trainable Lorentz item/prototype parameters, and baseline RQ-VAE decoder. Outputs are four integer SID tokens per item, where T1/T2 are capacity-constrained flow-geodesic prefixes, T3 is 256-way residual code, and T4 is deterministic collision extension.",
+  "specification": {
+    "text": "Let n_ij count adjacent i->j events in training users' training histories; define r_ij=(n_ij+α)/(Σ_j n_ij+α|N_i|) on observed successors and set r_i=0 if unsupported. Map encoder z_i to Lorentz point X_i=exp_o^{-κ}(z_i), curvature -κ with κ=0.5. For level l and candidate code a, let D^l_ia=d_L(X_i,C^l_a)^2 and F^l_ab=Σ_ij r_ij 1[a_i^l=a]1[a_j^l=b]. Minimize Σ_i,a P^l_ia D^l_ia + λ Σ_i,j,a,b r_ij P^l_ia P^l_jb d_L(C^l_a,C^l_b)^2, subject to row sums 1 and column sums N/K_l (balanced Sinkhorn; hard argmax at export); optimize the soft objective with straight-through assignments and baseline reconstruction/commitment losses. K2 prototypes are parent-conditioned; K3 uses the baseline Euclidean residual quantizer of width 256 within each K2 parent. Repeated runs: both-on (flow term and Lorentz distances), behavior-off (r_i term set to zero, same curvature/capacity), geometry-off (replace all Lorentz operations with matched-scale Euclidean norms, same flow/capacity)."
+  },
+  "title": "Successor-flow constrained Lorentz cuts for a coarse-to-fine SID"
+}

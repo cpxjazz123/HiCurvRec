@@ -1,0 +1,23 @@
+{
+  "test_recall@5": 0.0425494872821602,
+  "test_recall@10": 0.06373718205400512,
+  "test_ndcg@5": 0.028301633075589208,
+  "test_ndcg@10": 0.03511031834988592,
+  "n_eval": 57439,
+  "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_sample_resample/ckpt/Amazon_2023_Instruments/Oct-12-2026_17-28-43/HG_Rec_best.pth",
+  "paired_sid": {
+    "sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+    "file": "results__stage2_RQ-VAE__TIGER_BEHAVIOR_SAMPLE_RQ-VAE__L2COND_CTRL__item_sids__d97d24a7a638.json",
+    "paths": [
+      "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/L2COND_CTRL/item_sids.json",
+      "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/_evidence/pre_single_gpu_run/item_sids.json",
+      "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json"
+    ],
+    "code_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+    "resolution": "working_tree"
+  },
+  "stage3_run": {
+    "variant": "tiger_sample_resample",
+    "run_dir": "results/stage3_T5Train/tiger_sample_resample/logs/Amazon_2023_Instruments/Oct-12-2026_17-28-43"
+  }
+}

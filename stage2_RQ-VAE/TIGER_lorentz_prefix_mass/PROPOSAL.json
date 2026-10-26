@@ -1,0 +1,37 @@
+{
+  "ablation_behavior_off": "Set t_beh to the baseline empirical occupancy target independent of transition weights (or w_i=1 and t from item-uniform mass), while retaining Lorentz distances, soft occupancy, and loss weight.",
+  "ablation_both_on": "Use train-only transition-mass targets and Lorentzian soft code assignments/prefix occupancy; export ordinary hard RQ SIDs and evaluate the locked Stage3 protocol.",
+  "ablation_geometry_off": "Replace exp_o and d_L by matched-dimensional Euclidean squared distances in assignment probabilities; retain identical transition-derived targets, τ, objective and parameter budget.",
+  "also_proposed_by": [
+    "ideation_1"
+  ],
+  "behavior_computation": "On train.parquet only, form within-user chronological adjacent pairs i→j. Set q_i=log(1+outdegree_i) and edge weight a_ij=count(i→j)/(sqrt(1+train_item_frequency(j))); define w_i=1+q_i and prefix target t_p^l proportional to Σ_i w_i·Σ_j a_ij for items i assigned under the current prefix p, with targets updated only from training-derived counts and frozen baseline prefix assignments (recommended to avoid target drift). Normalize targets separately per level.",
+  "behavior_signal": "Training-only outgoing continuation mass per source item and per resulting SID prefix.",
+  "cost_estimate": "One training adjacency pass O(E_train), sparse prefix-target tables, plus soft assignment already comparable to baseline. At frozen full-item scale 24,556×24×3,000=1,768,032,000 item-stage evaluations; the added operation is O(BLK) for minibatch B, L levels, K codes, plus O(number of observed prefixes) target aggregation. Expect about 5–15% tokenizer wall-clock overhead with sparse prefix accumulation; Stage3 unchanged.",
+  "coupling_equation": "p_i^l(k)=softmax_k[-d_L(exp_o(r_i^l),exp_o(c_k^l))²/τ]; m_p^l=Σ_i w_i Π_{s≤l}p_i^s(p_s); L_occ=Σ_l KL(t_beh^l || m_Lorentz^l). The behavior target t_beh and curved-distance-generated occupancy m_Lorentz meet in the same differentiable objective.",
+  "coupling_path": "Train transition mass defines the target distribution over prefixes; Lorentzian distances define soft code memberships and their multi-level prefix occupancy; the KL gradient moves code parameters until geometry-induced memberships better match behavior mass.",
+  "duplicate_count": 1,
+  "falsifiable_hypothesis": "Training continuation mass has useful hierarchical structure that static content loss underrepresents; both-on should shift codebook gradients and prefix populations toward predictive continuation regions and improve validation-selected Stage3 test Recall@10, with target >0.065. Verify changed prefix occupancies and parameter updates, not just SID quality.",
+  "fingerprint": "b5c22611814df185",
+  "hyperbolic_location": "The soft code assignment probabilities used to compute differentiable subtree occupancies, and thus the prefix-mass training gradient in Stage2 RQ-VAE.",
+  "hyperbolic_operator": "Lorentz-hyperboloid geodesic distance d_L at fixed curvature -κ, κ>0; use Lorentz exponential map at the origin for residual and code points.",
+  "idea_id": "lorentz_prefix_mass",
+  "key_change": "At each RQ level, derive a fixed continuation-mass target for each partial SID prefix from training transitions, and train prefix prototypes so their Lorentzian soft occupancy matches that distribution. The occupancy gradient changes the codebook parameters that determine the discrete prefixes.",
+  "leakage_boundary": "All edge counts, item frequencies, source weights, and baseline assignments are constructed from training rows only; validation/test interactions are not used in target formation, SID fitting, or cache updates. Evaluate held-out Stage3 splits only after the tokenizer and SIDs are frozen.",
+  "motivation": "Flat item reconstruction allocates RQ capacity without regard to how much next-item probability a prefix needs to distinguish; popular continuation regions can consume disproportionate prediction mass.",
+  "novelty": "This does not add successor geometry to each item's code score or steer residuals. It uses training-only continuation probability mass as a differentiable target for the occupancy of *entire code-prefix subtrees*, and matches that mass using Lorentzian subtree prototypes.",
+  "observables": "Nonzero, finite gradients to codebooks/encoder; changed per-level hard prefixes relative to baseline; closer training-only prefix mass calibration; and, decisively, matched Stage3 test Recall@10. Compare all three required arms under identical selection and seeds.",
+  "origin_agent": "ideation_1",
+  "risks": [
+    "Mass matching may merely encode popularity, overwhelm reconstruction, or create a few overloaded prefixes; soft products can vanish at deep levels; target counts may be sparse. Tune a small loss-weight grid on validation and report popularity-stratified recall."
+  ],
+  "safeguards": "Compute Lorentz vectors in float32/64; project to future hyperboloid after updates; clamp acosh argument to ≥1+ε and exp-map tangent norms; use log-domain products or clamp p≥ε at deeper levels; normalize t/m with epsilon and smooth rare prefixes; cap w_i and λ; monitor gradient norms, occupancy entropy and reconstruction; deterministic tie-breaking. Keep target table frozen to baseline assignments to prevent feedback loops.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "For hyperboloid signature (-,+,...), <X,Y>_L=-X0Y0+Σ_{d>0}XdYd; d_L(X,Y)=acosh(max(1,-κ<X,Y>_L))/sqrt(κ). For each level l, x_i^l=exp_o(r_i^l), q_k^l=exp_o(c_k^l), p_i^l=softmax(-d_L(x_i^l,q_k^l)^2/τ). For prefix p=(k1,...,kl), m_p^l=ε+Σ_i w_i∏_{s=1}^l p_i^s(ks), normalize m over p. Freeze t_p^l from train-only baseline hard SID assignments and transition masses; L=L_base+λΣ_l KL(t^l||m^l). Stop gradient through t. Use straight-through hard argmin for normal RQ forward/export; soft occupancy is a training auxiliary directly shaping the same code vectors.",
+  "spec_inputs_outputs": "Inputs: training sequences, frozen baseline SIDs for target aggregation, train item frequencies, current residuals and codebooks, κ, τ, λ. Outputs: frozen per-level prefix target tables, differentiable occupancy loss and gradients, then hard per-item RQ digits/SIDs.",
+  "specification": {
+    "text": "Build assignments p_i^l(k) with a temperature-softmax of negative Lorentz distances from current residual points to level-l code points; define soft prefix mass m_p^l as the sum over items of w_i times the product of their assignments along prefix p. Set w_i to a smoothed training continuation mass (defined below), normalize w to mean one, and minimize L_occ=Σ_l KL(stopgrad(t^l)||m^l), where t_p^l is the normalized training-only probability mass of transitions whose source item has prefix p. Compute m with differentiable products and normalize with epsilon. Keep baseline reconstruction and commitment losses; hard SID export remains ordinary argmin RQ."
+  },
+  "title": "Fit hierarchical code occupancy to training continuation mass in Lorentz space"
+}

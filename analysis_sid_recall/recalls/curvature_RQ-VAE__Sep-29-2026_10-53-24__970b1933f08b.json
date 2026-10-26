@@ -1,0 +1,21 @@
+{
+  "test_recall@5": 0.030554153101551212,
+  "test_recall@10": 0.046693013457755186,
+  "test_ndcg@5": 0.0201391554772743,
+  "test_ndcg@10": 0.025333631826747104,
+  "n_eval": 57439,
+  "best_checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/curvature_RQ-VAE_iter48/ckpt/ablation/Baseline/Amazon_2023_Instruments/Sep-29-2026_10-53-24/HG_Rec_best.pth",
+  "paired_sid": {
+    "sha256": "970b1933f08b88a6ee6cff54d1d02db8b50828a2aacfafae3912f89b63d00547",
+    "file": "results__stage2_RQ-VAE__curvature_RQ-VAE__versions__Baseline__item_sids__076c38e0c10b.json",
+    "paths": [
+      "results/stage2_RQ-VAE/curvature_RQ-VAE/versions/Baseline/item_sids.json"
+    ],
+    "code_path": "results/stage2_RQ-VAE/curvature_RQ-VAE_iter48/versions/Baseline/item_sids.json",
+    "resolution": "earliest_surviving"
+  },
+  "stage3_run": {
+    "variant": "curvature_RQ-VAE",
+    "run_dir": "results/stage3_T5Train/curvature_RQ-VAE/logs/ablation/Baseline/Amazon_2023_Instruments/Sep-29-2026_10-53-24"
+  }
+}

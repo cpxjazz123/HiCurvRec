@@ -650,13 +650,3 @@ results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
 
 # Archived issue #116 runs stay untracked and remain isolated
 /results/research/issue116/
-
-# Issue #125: recovered read-only from git history by recover_inputs();
-# re-adding them would undo the deletion that freed the space.
-/results/research/sid_generation_forensics/inputs/
-
-# Issue #125: the raw SID tables and the copied recall files are large and
-# regenerable with `python analysis_sid_recall/collect.py`; the paired table,
-# the inventory and the script are tracked.
-/analysis_sid_recall/sids/
-/analysis_sid_recall/recalls/
