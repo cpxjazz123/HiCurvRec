@@ -339,7 +339,7 @@ def _contrastive_term(model, tuple_encoded: torch.Tensor, device: torch.device) 
     rows, positives, negatives = _PAIR_CACHE
     if len(rows) == 0:
         raise RuntimeError("behaviour-on NCE has no mined source-positive pairs")
-    count = len(rows)
+    count = tuple_encoded.shape[0] // (2 + NCE_NEGATIVES)
     encoded = tuple_encoded
     encoded = encoded.reshape(count, 2 + NCE_NEGATIVES, -1)
     usable = [(i, i, list(range(i, i + NCE_NEGATIVES))) for i in range(count)]

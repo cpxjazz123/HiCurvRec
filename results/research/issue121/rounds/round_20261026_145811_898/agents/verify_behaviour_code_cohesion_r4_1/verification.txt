@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:227-242, 262-299, 421-427 | Traced training batches from item IDs through train.parquet-derived directed successor pairs, pair-to-row lookup, Poincare projection/distances and soft assignment, into the added optimizer loss. This is one connected pathway: behavior chooses the paired item assignments and hyperbolic distance scores their codewords.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No fidelity defect found. The successor relation is sourced only from train.parquet seen_history and target; the curved operation is computed on both latent vectors and first-level codewords in the pair loss. Neither is merely imported or an unrelated side loss.
+FINDING REPRODUCTION: Inspect train_rqvae.py:229-242 for successor extraction, :283-299 for pair-indexed Poincare soft assignments and expected codeword distance, and :426-427 for addition to the training objective. The behavior-off pair shuffle is at :354-361; geometry-off selects Euclidean cdist at :292-294.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:245-299, 421-433 | Source-level forward/backward trace: the cohesion scalar is added to loss before backward; projection, squared Poincare distance, softmax, and matrix operations remain differentiable with respect to encoder latent and codeword parameters. Runtime execution is not required in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead term or evident non-finite arithmetic defect found. The projection bounds norms, the distance denominator has a positive floor, the acosh argument is floored above one, and the trainer checks loss finiteness before backward. The behavior and geometry switches select distinct computations feeding the loss and gradients. Source inspection supports that comparisons change the computational objective; no runtime gradient or SID comparison is claimed.
+FINDING REPRODUCTION: Trace _cohesion_term at :287-299 into loss.backward() at :430. Set BEHAVIOUR_ON=False to shuffle successor targets (:354-361), or GEOMETRY_ON=False to use torch.cdist (:292-294), and compare the resulting pair objective/gradient pathway. External GPU smoke remains the runtime proof.
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:45-70, 323-362, 492-539, 542-571; stage3_T5Train/data/dataset.py:92-111 | Traced repository-root and arm result path resolution, frozen stage1 embedding and stage0 parquet inputs, trainer and export flow, numeric item-ID JSON keys, and both distributed launcher branches including SINGLE_GPU_ENV = "GENREC_SINGLE_GPU".
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. The trainer uses the frozen sentence_t5.npy and train.parquet; outputs are isolated to results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion, the required candidate result directory. It exports one SID per embedding row, extends collisions to uniqueness, and writes contiguous zero-based string item keys. The launcher bypasses torchrun for an existing torchrun rank or a set GENREC_SINGLE_GPU variable, and otherwise retains the four-process torchrun launch.
+FINDING REPRODUCTION: Check paths at :45-70, frozen inputs and IDs at :337-341, SID/JSON export at :527-533, and launch branching at :542-566. Stage3's loader's indexed-key handling is at stage3_T5Train/data/dataset.py:92-111.
+FINDING CORRECTION: none

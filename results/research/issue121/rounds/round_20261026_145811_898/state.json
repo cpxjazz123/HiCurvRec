@@ -1,0 +1,369 @@
+{
+  "blocked": [],
+  "created_at": 1792987091.8997571,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1792987091.8997574,
+      "event": "round_created"
+    },
+    {
+      "at": 1792987091.9051802,
+      "event": "round_created",
+      "pid": null
+    },
+    {
+      "at": 1792987102.6606889,
+      "event": "implementation_authored",
+      "idea_id": "behaviour_code_cohesion",
+      "reason": "the cohesion class was never tested on the baseline; the mechanism is authored from the measured rule"
+    },
+    {
+      "at": 1792987136.29874,
+      "event": "verification_needs_repair",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 0,
+      "signature": "deb3eb8bc7a75f20"
+    },
+    {
+      "at": 1792987206.9649124,
+      "event": "implementation_repaired",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 1
+    },
+    {
+      "at": 1792987206.97119,
+      "event": "output_paths_rechecked",
+      "idea_id": "behaviour_code_cohesion",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792987290.4994528,
+      "event": "verification_needs_repair",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 1,
+      "signature": "d6281ba3b0626a72"
+    },
+    {
+      "at": 1792987342.198102,
+      "event": "implementation_repaired",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 2
+    },
+    {
+      "at": 1792987342.203903,
+      "event": "output_paths_rechecked",
+      "idea_id": "behaviour_code_cohesion",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792987400.1195743,
+      "event": "verification_needs_repair",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 2,
+      "signature": "fc867cc65cff312c"
+    },
+    {
+      "at": 1792987772.8518372,
+      "event": "implementation_repaired",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 3
+    },
+    {
+      "at": 1792987772.857637,
+      "event": "output_paths_rechecked",
+      "idea_id": "behaviour_code_cohesion",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792987846.2542894,
+      "event": "implementation_verified",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 3
+    },
+    {
+      "at": 1792988890.3736548,
+      "event": "launcher_entry_restored",
+      "idea_id": "behaviour_code_cohesion",
+      "reason": "a repair made the torchrun entry relative, so the four-rank launcher could not find it",
+      "revision": 4
+    },
+    {
+      "at": 1792988940.4768872,
+      "event": "implementation_verified",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 4
+    }
+  ],
+  "ideas": [
+    {
+      "ablation_behavior_off": "shuffle the successors of every pair, keeping the pair count",
+      "ablation_geometry_off": "act on the raw encoder output instead of the assigned codeword",
+      "behavior_computation": "adjacent pairs inside training histories, capped and shuffled for the behaviour-off arm",
+      "behavior_signal": "train-only directed successor pairs (item, observed next target)",
+      "coupling_equation": "L = L_rqvae + w * mean ||q_i - q_j||^2 over train-only successor pairs (i, j), q the assigned codeword",
+      "hyperbolic_location": "the first-level assignment of the RQ-VAE, through the assigned codeword",
+      "hyperbolic_operator": "none: the term acts on the assigned first-level codeword of the frozen quantizer",
+      "idea_id": "behaviour_code_cohesion"
+    }
+  ],
+  "ideas_rejected": [],
+  "implementations": [
+    {
+      "assumptions": [],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": null,
+      "changed_files": [
+        "train_rqvae.py"
+      ],
+      "deviations": [],
+      "failure_signature": "fc867cc65cff312c",
+      "idea_id": "behaviour_code_cohesion",
+      "notes": "authored directly from the frozen read-only baseline by the assistant, following the measured rule of Issue #125",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion"
+      },
+      "output_preflight": "passed",
+      "proposal_sha256": null,
+      "repairs": [
+        {
+          "remaining_issues": [
+            "Could not run the requested tensor-level smoke/backpropagation or the actual single-GPU training smoke because PyTorch is unavailable in the execution environment; finite loss/gradient behavior therefore remains to be verified in the prescribed runtime."
+          ],
+          "repairs": [
+            {
+              "change": "Replaced hard, no-grad code lookup cohesion with train-only observed per-user adjacent successor pairs, differentiable soft assignment of encoder latents to first-level codewords, and expected pairwise codeword distance; both the assignment and pair cost use projected Poincare-ball points and squared Poincare distance when GEOMETRY_ON=True, while GEOMETRY_ON=False uses Euclidean squared distances. Projection is smooth into radius 0.9/sqrt(curvature), curvature is fixed at 1.0, denominator is clamped to 1e-6 and acosh input above 1; pair cost is O(P*K^2), P sampled minibatch pairs and K first codebook size",
+              "finding": "Behaviour × hyperbolic geometry was not connected and cohesion lacked encoder gradients",
+              "verification": "Static smoke confirms syntax, connected soft-assignment expression and Euclidean/curved and single-card switches; full gradient/runtime smoke could not execute because this environment has no PyTorch (ModuleNotFoundError). Behaviour-off remains the shuffled-successor control."
+            },
+            {
+              "change": "Added SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\" and directly call main() before torchrun setup when set; otherwise the existing four-worker torchrun branch remains",
+              "finding": "Missing one-GPU launcher branch",
+              "verification": "Static smoke confirms the constant and branch are present; runtime launcher validation was blocked by missing PyTorch."
+            },
+            {
+              "change": "Retained repository-root discovery by walking to stage2_RQ-VAE marker, removed absolute launcher script path, and placed logs under RESULT_DIR alongside the candidate outputs (results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion)",
+              "finding": "Path/artifact isolation requirements",
+              "verification": "Static smoke confirms relative launcher script construction and source contains no hard-coded machine absolute path."
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "PYTHONDONTWRITEBYTECODE=1 python - <<'PY' ... AST parse; assert single-GPU marker, no no-grad encoder cohesion, coupled assignment expression, and relative launcher path ... PY",
+            "result": "PASS: syntax; differentiable soft assignment pathway; curved-vs-Euclidean branch; single-GPU launcher marker; relative script path. Separate tensor smoke exited with ModuleNotFoundError: No module named 'torch'."
+          }
+        },
+        {
+          "remaining_issues": [
+            "The requested one-epoch gradient smoke (finite reconstruction/cohesion losses and gradients to encoder/codebook) remains unverified because `import torch` fails with `ModuleNotFoundError: No module named 'torch'` in the available runtime."
+          ],
+          "repairs": [
+            {
+              "change": "Replaced both device references with `latent.device`; retained the behaviour-to-Poincare-geometric cohesion pathway and training-loop call unchanged",
+              "finding": "_cohesion_term used undefined `codes` for both successor-row index tensors (blocking NameError)",
+              "verification": "Source check confirms both index tensors now use `latent.device`, and no `codes.device` references remain in this function. A runtime smoke could not execute because the available `python` lacks PyTorch."
+            }
+          ],
+          "revision": 2,
+          "smoke": {
+            "command": "`python - <<'PY'` (inline one-minibatch training/gradient smoke: import `train_rqvae`, compute encoder reconstruction loss plus `_cohesion_term` on two valid successor pairs, backpropagate, assert finite losses and nonzero encoder/codebook gradients, then optimizer step; complete script was submitted)",
+            "result": "Printed traceback: `ModuleNotFoundError: No module named 'torch'`; exited with status 1 before test execution."
+          }
+        },
+        {
+          "remaining_issues": [
+            "The GPU smoke printed all expected PASS/effect values, but the command exceeded its 120-second timeout during interpreter shutdown (exit status timeout); the complete 3,000-epoch training/export and Stage3 Recall were not run."
+          ],
+          "repairs": [
+            {
+              "change": "In results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py, deterministically cap valid pairs at COHESION_BATCH_PAIRS and compute each pair's expected code distance elementwise, without constructing a pair-by-pair matrix",
+              "finding": "Blocking finding: pair cohesion allocated a P-by-P matrix",
+              "verification": "GPU smoke with 5,000 input pairs reported cap=4096, finite_loss_gradients=PASS; behaviour-on/geometry-on, behaviour-off/geometry-on, and behaviour-on/geometry-off produced distinct losses and finite gradients. Python compilation also passed."
+            },
+            {
+              "change": "_launch_via_torchrun now returns True when the GENREC_SINGLE_GPU branch runs main(), and the module entry point only calls main() when the launcher returns False; torchrun children still run main()",
+              "finding": "Blocking finding: single-card launch ran main() twice",
+              "verification": "The repaired control flow returns the single-card run status and the entry point guards the fallback call; compilation passed. The full training entry point was not run."
+            }
+          ],
+          "revision": 3,
+          "smoke": {
+            "command": "PYTHONDONTWRITEBYTECODE=1 /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python - <<'PY' (GPU helper smoke: 5,000 pairs, all three behaviour/geometry settings; exact inline script is in the session log)",
+            "result": "Printed: GPU=NVIDIA L40S pairs_input=5000 cap=4096 finite_loss_gradients=PASS behavior_on_geometry_on=(19.54999351501465, 33.59929180145264) behavior_off_geometry_on=(18.743858337402344, 21.353782176971436) behavior_on_geometry_off=(13.563695907592773, 15.158098697662354) effects=True. The shell subsequently reported timeout at 120 seconds. py_compile exited 0."
+          }
+        }
+      ],
+      "revision": 4,
+      "smoke": {
+        "epoch_seconds": 1.226,
+        "passed": true,
+        "steps": 24
+      },
+      "source_digest": "9eafae230cd98326584a9fdbd3c0da68b5fe8b691eee5d30d3e9e37eb6eb1498",
+      "status": "verified",
+      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Traced training batches from item IDs through train.parquet-derived directed successor pairs, pair-to-row lookup, Poincare projection/distances and soft assignment, into the added optimizer loss. This is one connected pathway: behavior chooses the paired item assignments and hyperbolic distance scores their codewords.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:227-242, 262-299, 421-427",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "No fidelity defect found. The successor relation is sourced only from train.parquet seen_history and target; the curved operation is computed on both latent vectors and first-level codewords in the pair loss. Neither is merely imported or an unrelated side loss.",
+                  "location": "none",
+                  "reproduction": "Inspect train_rqvae.py:229-242 for successor extraction, :283-299 for pair-indexed Poincare soft assignments and expected codeword distance, and :426-427 for addition to the training objective. The behavior-off pair shuffle is at :354-361; geometry-off selects Euclidean cdist at :292-294.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Source-level forward/backward trace: the cohesion scalar is added to loss before backward; projection, squared Poincare distance, softmax, and matrix operations remain differentiable with respect to encoder latent and codeword parameters. Runtime execution is not required in this sandbox.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:245-299, 421-433",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "No dead term or evident non-finite arithmetic defect found. The projection bounds norms, the distance denominator has a positive floor, the acosh argument is floored above one, and the trainer checks loss finiteness before backward. The behavior and geometry switches select distinct computations feeding the loss and gradients. Source inspection supports that comparisons change the computational objective; no runtime gradient or SID comparison is claimed.",
+                  "location": "none",
+                  "reproduction": "Trace _cohesion_term at :287-299 into loss.backward() at :430. Set BEHAVIOUR_ON=False to shuffle successor targets (:354-361), or GEOMETRY_ON=False to use torch.cdist (:292-294), and compare the resulting pair objective/gradient pathway. External GPU smoke remains the runtime proof.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Traced repository-root and arm result path resolution, frozen stage1 embedding and stage0 parquet inputs, trainer and export flow, numeric item-ID JSON keys, and both distributed launcher branches including SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\".",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:45-70, 323-362, 492-539, 542-571; stage3_T5Train/data/dataset.py:92-111",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "No integration defect found. The trainer uses the frozen sentence_t5.npy and train.parquet; outputs are isolated to results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion, the required candidate result directory. It exports one SID per embedding row, extends collisions to uniqueness, and writes contiguous zero-based string item keys. The launcher bypasses torchrun for an existing torchrun rank or a set GENREC_SINGLE_GPU variable, and otherwise retains the four-process torchrun launch.",
+                  "location": "none",
+                  "reproduction": "Check paths at :45-70, frozen inputs and IDs at :337-341, SID/JSON export at :527-533, and launch branching at :542-566. Stage3's loader's indexed-key handling is at stage3_T5Train/data/dataset.py:92-111.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_behaviour_code_cohesion_r4_1"
+        }
+      ]
+    }
+  ],
+  "issue": "issue121",
+  "matrix": null,
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\n## The measured rule, restated as the mechanism this round implements\n\nSix mechanisms measured on the frozen baseline (Stage 2: 3000 epochs, four cards;\nStage 3: 150 epochs, width-20 beam, 57,439 rows) all land at or below the baseline's own\n0.055537. The per-position forensics say why: they changed the *structure* of the SID\nspace, while Recall@10 is ordered by **coverage** (whether the target's complete SID is\namong the twenty beams), and coverage is decided by the *semantic partition* -- which\nitems share a prefix with which other items. The arms that reach 0.062-0.064 have a\nbehaviourally coherent partition, not a different bucket statistic.\n\nThis round therefore implements the one class that was never tested on the baseline: a\n**behaviour-cohesion term in the quantised code space**. The train-only directed successor\npairs (an item and an observed next target) are pulled into the same *assigned first-level\ncodeword*, so behaviour neighbours end up sharing a prefix, while the reconstruction loss\nkeeps the space alive. Nothing about the assignment geometry, the codebook capacity or the\nSinkhorn path changes, which is deliberate: every mechanism that perturbed them was\nunstable or neutral in the measurements.\n\nRequirements:\n\n* the cohesion term must act on the *assigned codeword* of the first level, so its gradient\n  reaches the codebook and, through the straight-through estimator, the encoder;\n* the term must be scale-matched to the reconstruction loss (the code distance is O(1) and\n  the reconstruction is ~1e-4), otherwise the encoder collapses within one epoch;\n* behaviour-off must keep the number of pairs but destroy the item-successor relation\n  (the successors are shuffled), and geometry-off must act on the raw encoder output\n  instead of the assigned codeword, so the two ablations separate \"behaviour\" from\n  \"quantised geometry\";\n* the codebook capacity stays the baseline's (256, 256, 256): the coarse first level must\n  come from the behaviour structure concentrating the *usage*, not from shrinking the\n  codebook (a 32-code first level leaves the last level's residual distances constant and\n  the Sinkhorn path refuses to train).\n\n## Required measurement contract\n\nState the predicted direction of: `L1 Hard ER` (canonical 52,855 pairs, ten fixed\nnegatives), gold-prefix survival at depths 1-4, teacher-forced top-1 accuracy of T1..T4, and\nStage 3 `test_R@10`. The reference to beat is 0.055537 (the baseline control, measured with\nthe identical frozen protocol) and the target is 0.065.\n\n## Frozen constraints\n\nFour tokens (three learned levels plus the deterministic collision-extension token), 3000\nStage 2 epochs on four cards, no early stopping, no test-time tuning, the frozen Stage 3\nprotocol, no validation or test behaviour in SID construction, and a one-epoch smoke close\nto the baseline's cost.\n",
+  "probe_state": "PROBE_PENDING",
+  "repairs": [
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Put an explicit curved operation (for example, map encoder vectors and trainable codewords to the Poincare ball and compute Poincare-distance-based assignment/cohesion) directly in the same successor-pair pathway; retain a true Euclidean geometry-off comparison and document safe curvature/projection bounds.",
+          "detail": "The implementation does not implement the stated behaviour × hyperbolic coupling. GEOMETRY_ON changes the cohesion representation between looked-up first-level code vectors and raw encoder outputs, not between curved and Euclidean geometry. VQLayer assignment and its distances remain Euclidean. The Poincare helpers in model/utils.py are not used by the trainer/model path. Thus this is not one connected behaviour-and-curvature computation.",
+          "location": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:390-398",
+          "reproduction": "Follow main's BEHAVIOUR_ON=True, GEOMETRY_ON=True path: _cohesion_term compares code vectors by squared Euclidean difference (train_rqvae.py:264-265); assignment uses the Euclidean squared-distance expression (model/layers.py:98-104). Replacing or removing model/utils.py's Poincare helpers cannot affect this execution. The declared GEOMETRY_ON=False branch merely switches codes to encoder(batch) (train_rqvae.py:396-398).",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_code_cohesion_r0_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Make the behaviour-conditioned curved computation differentiable with respect to the intended encoder and codebook parameters (for example, a distance-based soft/straight-through assignment or a curved pairwise latent/code objective), then verify finite loss/gradients and behaviour-off plus Euclidean controls in the prescribed smoke.",
+          "detail": "The enabled cohesion term has no differentiable path to the encoder: latent is computed inside torch.no_grad at lines 391-392, then converted by hard argmin to indices and used only for embedding lookup at lines 393-395. The cohesion term can update the codebook embeddings, but cannot update encoder parameters through that branch. In addition, there is no curved-vs-Euclidean switch comparison because GEOMETRY_ON is not a geometry switch. The required coupled pathway's intended gradient/assignment effects therefore are not established.",
+          "location": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:391-398",
+          "reproduction": "With BEHAVIOUR_ON=True and GEOMETRY_ON=True, take loss.backward(): the cohesion contribution is constructed solely from embedding lookup vectors after the encoder forward was under no_grad, so its encoder gradient contribution is absent. Set GEOMETRY_ON=False and the term instead operates on encoder(batch), which does yield an encoder path, but this is not a curved-distance ablation. The ordinary reconstruction/quantization losses may still train; that does not repair this defect in the proposed term.",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_code_cohesion_r0_1"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Restore the launcher's GENREC_SINGLE_GPU branch: when SINGLE_GPU_ENV is set, run the script as one process without spawning four workers; preserve the existing torchrun branch otherwise.",
+          "detail": "The launcher has only a fixed four-process torchrun path and no single-card branch consulting SINGLE_GPU_ENV=\"GENREC_SINGLE_GPU\". This fails the explicitly required distributed-launcher compatibility. The visible paths otherwise resolve to the repository's frozen sentence_t5.npy and train.parquet (lines 64-67), candidate-named results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion (lines 59-70), and the export assigns rows by enumerate(item_id) across all embedding rows (lines 491-504); no contrary path/index defect is evident from inspection.",
+          "location": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:513-539",
+          "reproduction": "Set GENREC_SINGLE_GPU in the environment and invoke the script directly: _launch_via_torchrun does not inspect it and still builds --nproc_per_node=4 with CUDA_VISIBLE_DEVICES=0,1,2,3 (lines 107-117, 515-530), rather than taking the single-card route.",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_code_cohesion_r0_1"
+        }
+      ],
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 0,
+      "signature": "deb3eb8bc7a75f20"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Replace both `codes.device` references with a defined tensor device, e.g. `latent.device` (or `codewords.device`), and then run the required one-epoch gradient smoke to verify finite cohesion/reconstruction losses and gradients to encoder and codebook. The current defect prevents testing whether assignments/gradients change under behaviour-off and geometry-off controls.",
+          "detail": "_cohesion_term references `codes.device`, but no variable named `codes` exists in the function or module. Any batch with at least one valid successor pair reaches this line and raises NameError before producing the cohesion loss, so no real forward/backward or optimizer step can complete. The behaviour-on configuration creates exactly this case when a batch contains a transition endpoint pair.",
+          "location": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:277-280",
+          "reproduction": "Call _cohesion_term(latent, item_rows, np.array([[item_rows[0], item_rows[1]]]), codewords) with distinct valid item IDs and a non-empty batch; execution reaches `device=codes.device` and raises NameError. The trainer invokes this term every minibatch with BEHAVIOUR_ON=True and the loaded successor pairs.",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_code_cohesion_r1_1"
+        }
+      ],
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 1,
+      "signature": "d6281ba3b0626a72"
+    },
+    {
+      "findings": [
+        {
+          "check": "trainability",
+          "correction": "Sample or deterministically select at most `COHESION_BATCH_PAIRS` pairs per minibatch and compute per-pair expected code distance directly (e.g. `(assignment[left] @ code_distance * assignment[right]).sum(-1).mean()`), avoiding the P-by-P matrix. Then confirm finite loss/gradients and behavior/geometry switch effects in the specified GPU smoke.",
+          "detail": "`assignment[left_rows] @ code_distance @ assignment[right_rows].t()` constructs a dense matrix quadratic in the number of valid successor pairs. `_successor_pairs` allows up to 200,000 pairs (line 227), so this can require tens of billions of entries and cannot run as intended; `COHESION_BATCH_PAIRS = 4096` is declared but never used to bound this computation. Thus finite trainable gradients for the configured real path cannot be established and the likely allocation failure blocks training.",
+          "location": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:290",
+          "reproduction": "Use 4096 or more valid behavior pairs in a minibatch: `pair_cost` has shape [P,P] (at P=4096, 16,777,216 elements; at the allowed 200,000, 40 billion elements) before taking its diagonal. The fixed pair limit permits the latter, and the batch-pair constant does not cap P.",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_code_cohesion_r2_1"
+        },
+        {
+          "check": "integration",
+          "correction": "Make the entry point invoke `main()` only when `_launch_via_torchrun()` indicates that it did not already run it (for example, have the launcher return a boolean), or make the single-card branch launch/return from the entry point so the unconditional second call cannot happen. Preserve the existing torchrun child behavior.",
+          "detail": "In the single-card branch, `_launch_via_torchrun()` calls `main()` when `GENREC_SINGLE_GPU` is set, returns, and then the module-level code calls `main()` again. A single-GPU invocation therefore runs the complete training/export twice sequentially instead of once.",
+          "location": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:538-540, 561-563",
+          "reproduction": "Set `GENREC_SINGLE_GPU=1` and execute train_rqvae.py: `_launch_via_torchrun` enters lines 538-540 and completes main; control returns to line 563, which invokes main a second time. The second pass reinitializes and retrains, overwriting candidate outputs.",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_code_cohesion_r2_1"
+        }
+      ],
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 2,
+      "signature": "fc867cc65cff312c"
+    }
+  ],
+  "round_id": "round_20261026_145811_898",
+  "schema": 1,
+  "scores": {},
+  "selection": null,
+  "stage2_jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "behaviour_code_cohesion",
+      "job_id": "stage2:behaviour_code_cohesion",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "running"
+    }
+  ],
+  "stage3_jobs": [],
+  "step": "stage2",
+  "updated_at": 1792988940.4806955,
+  "verification": {}
+}

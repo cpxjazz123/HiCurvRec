@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:227-242, 417-427; results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:245-299 | Traced trainer minibatches from encoder/batch IDs through the filtered observed successor-pair computation, then through Poincare-projected soft assignments and expected Poincare codeword distance, into the added training loss. The behaviour signal is built from train.parquet seen_history/target only; geometry is used directly in the pair loss, not merely imported or appended to an unchanged quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. With behaviour on, observed directed item successors determine which row assignments are compared, and those assignments and codeword distances are computed in the Poincare ball. Either input therefore changes the cohesion computation.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:229-242 extracts successors; :283-299 maps valid pair IDs to minibatch rows, computes geometric soft assignments, and returns their expected code distance; :426 adds that term to the optimized loss.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:262-299, 421-433 | Performed a source-level forward/backward trace (runtime training is unavailable in this sandbox): the pair loss is included before loss.backward(), and uses differentiable projection, Poincare distance, softmax and matrix operations on latent values and codebook parameters. Checked switch branches at :287-299, behavior shuffling at :354-361, and finite-value safeguards at :247-259 and :428-429.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead term or evident float32 overflow/NaN hazard found. In the curved path, inputs are projected to radius 0.9/sqrt(c); the distance denominator is floored, and acosh's argument is floored above one. In the geometry-off path, Euclidean cdist remains differentiable. Behaviour-off shuffles successor targets while preserving source items. Thus the switches alter the pair term and its gradients, and replacing the curve changes its assignments/distances. The sandbox limitation means no runtime gradient or SID-difference claim is made.
+FINDING REPRODUCTION: Follow _cohesion_term at train_rqvae.py:287-299 into loss.backward() at :430. To compare modes, set BEHAVIOUR_ON false (pair targets shuffled) or GEOMETRY_ON false (torch.cdist branch); each changes the loss computation feeding backward. Runtime proof remains the specified external one-epoch GPU smoke.
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:45-70, 323-362, 492-539, 542-571; stage3_T5Train/data/dataset.py:85-112 | Traced repository/result path resolution, frozen stage0 train.parquet and stage1 embedding inputs, trainer/export entry points, JSON indexing contract, DDP launch branch and the exact GENREC_SINGLE_GPU branch. Compared exported JSON's zero-based enumerate keys with Stage3's required contiguous 0..N-1 numeric keys.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Inputs resolve to the frozen train.parquet and sentence_t5.npy; output is scoped to this arm's required results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion directory. SID rows are exported for all embedding item IDs and JSON keys are contiguous zero-based IDs, with a uniqueness extension. The launcher detects torchrun children and routes GENREC_SINGLE_GPU to main() without spawning multi-GPU torchrun.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:61-68 defines arm-local outputs; :337-341 loads frozen inputs and checks target IDs; :527-533 exports unique SID rows and numeric keys; :542-548 implements torchrun-child and GENREC_SINGLE_GPU paths. Stage3's dataset loader validates the key/index contract at dataset.py:92-111.
+FINDING CORRECTION: none

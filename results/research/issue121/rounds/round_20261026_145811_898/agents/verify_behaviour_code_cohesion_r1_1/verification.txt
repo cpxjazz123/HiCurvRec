@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:227-291 | Static call-path inspection: training loads train.parquet successor transitions via _successor_pairs (229-242), calls _cohesion_term from the minibatch training loss (416-419), and that term jointly uses train-item-to-codeword assignments and Poincare squared distances between codewords (281-291). This is a real connected behaviour-conditioned curved assignment/cohesion pathway, not an unused import or separate loss. Runtime execution was not available/required in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No scope defect found for the requested behaviour/geometry coupling. The behaviour signal is directed consecutive item transitions from the training split, and curved geometry enters both soft assignments and code-to-code cost.
+FINDING REPRODUCTION: Inspect _successor_pairs and the _cohesion_term call/path at the referenced lines.
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:262-291, 411-425 | Static forward/backward trace of the real minibatch path; no PyTorch/shell available for execution.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:277-280
+FINDING DETAIL: _cohesion_term references `codes.device`, but no variable named `codes` exists in the function or module. Any batch with at least one valid successor pair reaches this line and raises NameError before producing the cohesion loss, so no real forward/backward or optimizer step can complete. The behaviour-on configuration creates exactly this case when a batch contains a transition endpoint pair.
+FINDING REPRODUCTION: Call _cohesion_term(latent, item_rows, np.array([[item_rows[0], item_rows[1]]]), codewords) with distinct valid item IDs and a non-empty batch; execution reaches `device=codes.device` and raises NameError. The trainer invokes this term every minibatch with BEHAVIOUR_ON=True and the loaded successor pairs.
+FINDING CORRECTION: Replace both `codes.device` references with a defined tensor device, e.g. `latent.device` (or `codewords.device`), and then run the required one-epoch gradient smoke to verify finite cohesion/reconstruction losses and gradients to encoder and codebook. The current defect prevents testing whether assignments/gradients change under behaviour-off and geometry-off controls.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:59-70, 329-334, 486-532; results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/model/layers.py:95-104 | Static inspection of entry-point, data, output, and launcher paths; execution unavailable by instruction.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the frozen Stage1 embedding and Stage0 train parquet paths; writes checkpoint, logs, SID array, and item_sids.json beneath its own results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion directory; exports rows by zero-based item ID and extends collisions to unique SIDs. The torchrun branch uses 4 processes and the single-card branch checks SINGLE_GPU_ENV = "GENREC_SINGLE_GPU". No source-level path or launcher defect identified. Actual training/export cannot be verified here; the blocking training defect is reported under check b.
+FINDING REPRODUCTION: Trace constants and output construction at lines 59-70, training input load at 329-334, export at 486 onward, and _launch_via_torchrun at 518-532. The single-card test is `if os.environ.get(SINGLE_GPU_ENV): main()` at 522-523.
+FINDING CORRECTION: none for integration based on source inspection. After fixing the blocking NameError, use the prescribed one-epoch GPU smoke before full training and confirm the promoted tree name/path is what the Stage3 admission consumes.

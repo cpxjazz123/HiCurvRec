@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:390-398 | Static trace of the trainer's enabled path: it obtains train-only successor item pairs at lines 223-238, then computes cohesion over first-level codebook embeddings at lines 393-398; the actual assignment distances are Euclidean in model/layers.py:98-104. No curved operation is on this behaviour pathway.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:390-398
+FINDING DETAIL: The implementation does not implement the stated behaviour × hyperbolic coupling. GEOMETRY_ON changes the cohesion representation between looked-up first-level code vectors and raw encoder outputs, not between curved and Euclidean geometry. VQLayer assignment and its distances remain Euclidean. The Poincare helpers in model/utils.py are not used by the trainer/model path. Thus this is not one connected behaviour-and-curvature computation.
+FINDING REPRODUCTION: Follow main's BEHAVIOUR_ON=True, GEOMETRY_ON=True path: _cohesion_term compares code vectors by squared Euclidean difference (train_rqvae.py:264-265); assignment uses the Euclidean squared-distance expression (model/layers.py:98-104). Replacing or removing model/utils.py's Poincare helpers cannot affect this execution. The declared GEOMETRY_ON=False branch merely switches codes to encoder(batch) (train_rqvae.py:396-398).
+FINDING CORRECTION: Put an explicit curved operation (for example, map encoder vectors and trainable codewords to the Poincare ball and compute Poincare-distance-based assignment/cohesion) directly in the same successor-pair pathway; retain a true Euclidean geometry-off comparison and document safe curvature/projection bounds.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:390-405 | Static forward/backward trace of the enabled branch; runtime execution is unavailable as specified.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:391-398
+FINDING DETAIL: The enabled cohesion term has no differentiable path to the encoder: latent is computed inside torch.no_grad at lines 391-392, then converted by hard argmin to indices and used only for embedding lookup at lines 393-395. The cohesion term can update the codebook embeddings, but cannot update encoder parameters through that branch. In addition, there is no curved-vs-Euclidean switch comparison because GEOMETRY_ON is not a geometry switch. The required coupled pathway's intended gradient/assignment effects therefore are not established.
+FINDING REPRODUCTION: With BEHAVIOUR_ON=True and GEOMETRY_ON=True, take loss.backward(): the cohesion contribution is constructed solely from embedding lookup vectors after the encoder forward was under no_grad, so its encoder gradient contribution is absent. Set GEOMETRY_ON=False and the term instead operates on encoder(batch), which does yield an encoder path, but this is not a curved-distance ablation. The ordinary reconstruction/quantization losses may still train; that does not repair this defect in the proposed term.
+FINDING CORRECTION: Make the behaviour-conditioned curved computation differentiable with respect to the intended encoder and codebook parameters (for example, a distance-based soft/straight-through assignment or a curved pairwise latent/code objective), then verify finite loss/gradients and behaviour-off plus Euclidean controls in the prescribed smoke.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:45-70, 303-329, 463-506, 513-539 | Static integration trace of root/path derivation, data loading, export indexing, output paths and launcher.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:513-539
+FINDING DETAIL: The launcher has only a fixed four-process torchrun path and no single-card branch consulting SINGLE_GPU_ENV="GENREC_SINGLE_GPU". This fails the explicitly required distributed-launcher compatibility. The visible paths otherwise resolve to the repository's frozen sentence_t5.npy and train.parquet (lines 64-67), candidate-named results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion (lines 59-70), and the export assigns rows by enumerate(item_id) across all embedding rows (lines 491-504); no contrary path/index defect is evident from inspection.
+FINDING REPRODUCTION: Set GENREC_SINGLE_GPU in the environment and invoke the script directly: _launch_via_torchrun does not inspect it and still builds --nproc_per_node=4 with CUDA_VISIBLE_DEVICES=0,1,2,3 (lines 107-117, 515-530), rather than taking the single-card route.
+FINDING CORRECTION: Restore the launcher's GENREC_SINGLE_GPU branch: when SINGLE_GPU_ENV is set, run the script as one process without spawning four workers; preserve the existing torchrun branch otherwise.
