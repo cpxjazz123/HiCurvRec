@@ -77,7 +77,10 @@ LR                  = 1e-3
 WEIGHT_DECAY        = 1e-4
 HIDDEN_SIZES        = (512, 256, 128)
 CODEBOOK_NUM        = 3
-CODEBOOK_SIZE       = (256, 256, 256)
+# The third codebook is widened so that three-token prefixes are nearly unique: the
+# measured arms lose most of their coverage at depth 4, where the collision-extension
+# token has to be predicted (109 distinct values here, 10 in the best measured arm).
+CODEBOOK_SIZE       = (256, 256, 1024)
 CODEBOOK_DIM        = 32
 BETA                = 0.25
 VQ_TYPE             = "vq"

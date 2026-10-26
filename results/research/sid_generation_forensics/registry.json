@@ -64,5 +64,16 @@
       "test_ndcg@10": 0.03070078263209068
     },
     "family": "frozen baseline, no mechanism (this round's control)"
+  },
+  "behaviour_code_cohesion": {
+    "stage3": "TIGER_behaviour_code_cohesion",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/item_sids.json",
+    "sid_origin": "in-repo",
+    "reported": {
+      "test_recall@10": 0.054562231236616236,
+      "test_recall@5": 0.03694354010341406,
+      "test_ndcg@10": 0.030372693416861364
+    },
+    "family": "behaviour cohesion in the quantised code space"
   }
 }

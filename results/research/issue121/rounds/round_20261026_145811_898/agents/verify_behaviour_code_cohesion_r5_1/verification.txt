@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:230-245,265-302,427-430 | Source-traced the training-only user successor-pair construction from train.parquet through the minibatch cohesion loss; verified the `geometry_on=True` branch projects both encoder latents and first-level codewords into the bounded Poincare ball, uses Poincare squared distances for soft assignments and code-to-code pair scoring, and adds that term to the loss used for backward. This is one connected pathway; `model/utils.py`'s other hyperbolic implementation is not relied on for this finding.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking defect found. The exercised pathway uses adjacent item pairs from each user's training-only `seen_history` plus `target` sequence (train_rqvae.py:230-245); those pairs select the minibatch items whose soft code assignments are compared under the curved code distance (265-302), and the resulting cohesion term is included in the optimized loss (427-430).
+FINDING REPRODUCTION: Static source trace: follow `_successor_pairs()`'s train.parquet read and pair generation at lines 230-245, then `_cohesion_term()` at lines 265-302, and its loss addition at lines 427-430. No trainer execution was performed.
+FINDING CORRECTION: N/A
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:248-302,427-437 | Inspected differentiable forward-to-loss and backward path. The cohesion calculations remain in PyTorch autograd; the detached item-row indexing only selects rows. The resulting term differentiates through the encoder latent and first-level codebook weights. Compared the code branches: `BEHAVIOUR_ON=False` shuffles successor targets at lines 357-364; `GEOMETRY_ON=False` replaces the curved distances with Euclidean `cdist` at lines 295-297.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No dead cohesion term or evident float32 numerical hazard found. With the configured positive curvature, `_project_ball` bounds norms to radius 0.9/sqrt(c) (248-252); the Poincare distance denominator is clamped positive and the `acosh` argument is clamped above 1 (255-262). The expected pair-distance expression (298-302) depends on both soft assignments and code distances. Static inspection supports finite differentiable gradients to encoder and codebook; runtime gradient/assignment comparisons were not executed in this sandbox.
+FINDING REPRODUCTION: Source-level counterfactual check: `GEOMETRY_ON=True` selects Poincare assignment and pair distances, while false selects Euclidean distances; `BEHAVIOUR_ON=False` retains pair count but shuffles right-hand item IDs. In either case the loss is added before `loss.backward()` (427-437). No GPU smoke was run.
+FINDING CORRECTION: N/A
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:45-70,326-375,495-538,545-574 | Inspected repository-root and artifact path resolution, frozen stage0 train parquet and stage1 embedding inputs, trainer setup, final SID export, and both launcher branches. The output arm is `results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/`; JSON IDs enumerate embedding rows, and collision extension checks uniqueness. The single-card branch tests the exact `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` constant.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by source inspection. Inputs resolve to the repository's `stage0_build_parquet/train.parquet` and frozen sentence-T5 embedding file (64-67); outputs and logs/checkpoint resolve only beneath this candidate's Stage2 result directory (61-70). The exported `item_sids.json` maps each zero-based embedding/item row ID to an integer SID (523-536), with uniqueness checked (531-532). `_launch_via_torchrun()` avoids relaunch when already under torchrun and calls `main()` when the configured single-GPU environment variable is set (545-574). The trainer was not run.
+FINDING REPRODUCTION: Static path/branch trace at the cited lines: root is found by walking to the repository marker (45-59); `TRAIN_FILE` is the stage0 train parquet (65); `OUTPUT_JSON` is candidate-specific (62,67); export creates an enumerated item-ID mapping (523-536); launcher handles torchrun, single-card, and default multi-card dispatch (545-574).
+FINDING CORRECTION: N/A
