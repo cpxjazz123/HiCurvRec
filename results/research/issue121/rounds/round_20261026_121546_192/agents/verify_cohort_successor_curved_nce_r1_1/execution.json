@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_cohort_successor_curved_nce_r1_1",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792981999.7247376,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "verification.txt",
+  "output_sha256": "b678297ec22213d37b35a15515151cdfe80a59baca61e0344fe02bc0bdd8d67b",
+  "pid": 690148,
+  "project_marker": ".git",
+  "prompt_sha256": "2483947f78702d46718e3904d3511ebf52d6ae404d754ec7c35227cc931a822c",
+  "session_sha256": "128a8f2cc38d67329c8b4e636b7daf2adeb28e8fa99657f24f77614675346752",
+  "stderr_present": false,
+  "task_id": "verify_cohort_successor_curved_nce_r1_1",
+  "timed_out": false,
+  "verified": true
+}

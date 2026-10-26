@@ -1,0 +1,13 @@
+{
+  "kind": "implementation_abandoned_audit",
+  "idea_id": "cohort_successor_curved_nce",
+  "measured_history": [
+    "revision 0-2: the verifier asked for cosine overlap on row-normalised successor supports; the repair changed the mining accordingly",
+    "revision 3: the smoke collapsed the representation (the CE term at weight 0.05 is ~300x the reconstruction loss); the weight was scaled to 1e-4 and the smoke passed",
+    "the full Stage 2 run then produced a five-token SID because a repair had raised CODEBOOK_NUM to 4; the frozen protocol is three levels plus the extension",
+    "revision 4-5: with the width restored, the verifier found the global pair cap left almost no pairs inside a minibatch; the repair rewrote the NCE term with eight negatives per source and, in doing so, introduced self-pairs (positive = source), which is not the specified mechanism"
+  ],
+  "reason": "the repair loop rewrote the mechanism instead of fixing the reported defect, so the tree no longer implements the scored proposal; continuing would need a fresh implementation cycle rather than another repair",
+  "state_of_the_art": "six mechanisms measured on the frozen baseline, all at or below the baseline's own 0.055537",
+  "next": "a new round with the contrastive mechanism specified tightly enough that a repair cannot change its meaning"
+}

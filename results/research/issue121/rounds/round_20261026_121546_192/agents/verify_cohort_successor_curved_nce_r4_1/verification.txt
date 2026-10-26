@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:231-373 | Static trace of the training-only successor-support/pair mining into the differentiable prefix and Poincare NCE call at train_rqvae.py:494. The contrastive term uses training adjacent-transition supports (232-254), overlap-derived pairs (257-293), train branching to set curvature (295-307), and geodesic distances on the two-level soft prefix (309-373). Geometry-off selects Euclidean distances within that same pathway (365-368); behaviour-off returns zero (341-342). No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:95-105
+FINDING DETAIL: The declared codebook configuration is three learned levels with sizes [32,256,256], whereas the idea explicitly specifies four codebooks [256,256,256,256] plus the existing deterministic collision-extension token. The coupled pathway itself is present, but this is not the requested capacity/configuration.
+FINDING REPRODUCTION: Read CODEBOOK_NUM/CODEBOOK_SIZE at lines 84-85 and the exported extension at lines 594-600: it produces three learned tokens plus one extension, not four learned codebooks plus extension.
+FINDING CORRECTION: Set CODEBOOK_NUM=4 and CODEBOOK_SIZE=(256,256,256,256), and retain the deterministic extension after those four learned levels, ensuring the downstream SID consumer accepts the resulting width.
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:257-293, 339-373, 487-499 | Static forward/backward trace. The loss is attached to encoder(batch) and the first two codebooks through _soft_prefix, then added before loss.backward(); however pair usability is filtered to anchors, positives, and negatives present in the same shuffled minibatch.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:257-293 and train_rqvae.py:343-350
+FINDING DETAIL: Pair mining caps the entire dataset's pair list at 512 (NCE_MAX_PAIRS), then each minibatch discards every pair unless both source and positive and at least one negative occur in that same batch. With item-level shuffled batches, a valid mined pair need not ever co-occur; when none does, _contrastive_term returns encoded.sum()*0 and the purported mechanism has no gradient/update for that step. The specification calls for a positive and eight negatives per anchor in the minibatch prefix path, not a globally capped sparse subset that can silently become a dead term. A zero contrastive term is finite, so the existing finite-loss check does not detect this failure.
+FINDING REPRODUCTION: Minimal counterexample: _PAIR_CACHE contains (source=10, positive=11, negatives=[20,...]) while a shuffled batch contains source 10 but not item 11. The pair is removed at lines 345-350; if this holds for all cached pairs in a batch, the function returns an exact zero and no contrastive gradient reaches encoder/T1/T2. A batch containing only items outside the 512 cached anchors has the same result.
+FINDING CORRECTION: Build minibatches of mined source-positive pairs (and sampled negatives) or otherwise ensure each training step draws usable pairs from the whole precomputed list; avoid the global 512-anchor truncation as the only source of behavior supervision. Add a guard/metric that detects zero usable pairs and verify gradients on encoder and both prefix codebooks in the prescribed smoke.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:47-71, 396-433, 559-636 | Static inspection of root/path derivation, frozen embedding and stage0 train paths, export/index construction, and launcher branches. Result paths resolve under results/stage2_RQ-VAE/TIGER_cohort_successor_curved_nce (the candidate's own arm); export enumerates embedding rows into item-ID keys, checks uniqueness after deterministic extension, and writes NPY/JSON. _launch_via_torchrun explicitly honors SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at lines 103, 611-614 while retaining the multi-card torchrun branch at 615-632. Trainer execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:84-85
+FINDING DETAIL: See the capacity/configuration mismatch above: integration exports a valid indexed SID array, but its learned-level count/capacity does not match the stated proposal.
+FINDING REPRODUCTION: Inspect _tokenizer_config at lines 375-393 and export at 594-600; three learned token columns are extended to four total columns.
+FINDING CORRECTION: Use the proposal's four 256-entry codebooks before collision extension, and retain the existing row-indexed JSON/NPY export and candidate-specific result directory.

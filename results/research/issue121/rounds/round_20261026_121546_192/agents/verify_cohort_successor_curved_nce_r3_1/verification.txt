@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:230-371 | Source inspected end-to-end: training transitions become sparse successor distributions and cosine-overlap positive/zero-overlap negative pairs (230-291); training entropy conditions curvature (293-305); those same pairs index differentiable first-two-level soft prefixes and feed symmetric Poincare-geodesic NCE (307-371), added to the actual trainer loss at 492. This is a connected behavior-to-prefix-geodesic computation, not an imported helper or separate loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found.
+FINDING REPRODUCTION: Static inspection of the path above; runtime execution was not performed.
+FINDING CORRECTION: None.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:321-371, 489-499 | Traced forward/backward statically: encoder output passes through differentiable two-level hard-forward/soft-backward prefix quantization; Poincare distance (or the explicit Euclidean control) produces cross-entropy; this term is added before backward and optimizer.step. The distance protects norms/denominators and bounds atanh's argument below 1. BEHAVIOUR_ON false returns a graph-connected zero at 339-340; GEOMETRY_ON false selects Euclidean distances at 362-365. These switches therefore respectively remove the behaviour term or replace its geometry, with no dead computed term. Actual gradient smoke is not available in this review environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking code-level trainability or numerical defect found. By construction, disabling either switch changes the contrastive computation; exact numeric gradient/SID deltas require the stated runtime smoke and are not claimed as executed here.
+FINDING REPRODUCTION: Static trace at train_rqvae.py:337-371 and 489-499; the runtime one-epoch gradient smoke was not run.
+FINDING CORRECTION: None.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:47-71, 394-431, 557-635 | Verified source-level trainer entry: root is discovered by repository marker, data reads frozen stage1 embeddings and stage0 train parquet, output resolves under results/stage2_RQ-VAE/TIGER_cohort_successor_curved_nce; exported rows enumerate item IDs and collision extension checks uniqueness. Launcher dispatches torchrun unless already under rank or GENREC_SINGLE_GPU is set (607-635), with the single-card branch going directly to main.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking integration defect found. The candidate-specific output path is distinct from the baseline and remains inside the repository.
+FINDING REPRODUCTION: Static inspection at train_rqvae.py:47-71, 394-431, 557-635; no trainer was executed.
+FINDING CORRECTION: None.
