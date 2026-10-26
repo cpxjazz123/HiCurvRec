@@ -1,0 +1,11 @@
+{
+  "kind": "balance_term_abandoned_audit",
+  "attempt": "a weighted usage-entropy term on the third level, to shrink the collision buckets and therefore the extension-token alphabet",
+  "measured": [
+    "at BALANCE_WEIGHT 1e-5 the one-epoch smoke reported 3 distinct SIDs out of 24587",
+    "at BALANCE_WEIGHT 1e-8 the same smoke reported 1 distinct SID and the same total loss, so the collapse is not attributable to the term's weight",
+    "the term's own value is bounded by ln(1024) = 6.9, and at either weight it contributes at most 7e-5 to a loss of 2.4e-2, so the collapse is a side effect of the extra forward the term needs, not of the penalty itself"
+  ],
+  "decision": "the tree was restored to the last verified revision (cohesion + wide L3) and the balance variable is recorded as unstable in this implementation",
+  "state_of_the_art": "eight arms measured, all at or below the frozen baseline's 0.055537"
+}
