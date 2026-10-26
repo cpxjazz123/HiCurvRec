@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:439-449, 207-291, 130-182, 563-571; model/layers.py:307-319 | Traced code path: training parquet histories create directed predecessor counts; each epoch these counts select predecessor code regions and build detached Poincare Frechet barycentres; candidate code scores combine positive and hard-negative Poincare squared distances and feed the first VQ layer's assignment logits. Inspected the accompanying forward/backward and switch comparison in smoke_test.py:28-51; did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The behavior statistics are built solely from the training parquet, the curved distance and both behavior destinations enter the candidate logits, and those logits control first-level assignment. The barycentres are detached epoch caches rather than differentiable means, but the live score remains differentiable through current code prototypes and is used by the assignment loss.
+FINDING REPRODUCTION: Source trace at the cited lines. The included smoke test asserts candidate-score and assignment changes under behavior-off and Euclidean-distance comparisons, but was not executed.
+FINDING CORRECTION: None.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:120-182, 551-579; model/layers.py:115-156, 307-319; smoke_test.py:8-18, 34-51 | Inspected forward/backward wiring and the provided smoke test's finite coincident-distance gradient, behavior/geometry contrasts, finite loss, first-codebook gradient and assignment assertions. No runtime execution performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 overflow/nan step was found in the inspected path. Scores are passed into first-level quantization; the soft assignment also contributes a loss and straight-through decoder path. Curved coordinates are projected inside the ball, and the stable squared-distance helper caps its argument and handles exact zero. The smoke test checks nonzero finite gradients to the first codebook. This is a source-level assessment, not a runtime claim.
+FINDING REPRODUCTION: Review smoke_test.py:34-51 for the intended both-on, behavior-off, and Euclidean comparisons; lines 8-18 cover the coincidence edge case. The user's stated GPU one-epoch smoke remains the runtime proof.
+FINDING CORRECTION: None.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:41-68, 336-357, 416-449, 638-715 | Inspected repository-root/path resolution, frozen embedding and stage0 training parquet paths, row-indexed SID export, candidate-specific output directory, trainer entry point and launcher branches. The single-card branch checks os.environ.get(SINGLE_GPU_ENV) with SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at lines 117, 688-694. Also inspected smoke_test.py:52-55 for SID shape/uniqueness assertions; no trainer or launcher was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Outputs resolve to results/stage2_RQ-VAE/TIGER_incoming_context_barycenter, not the baseline or another arm; input paths point to stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet. Export enumerates rows as item IDs and writes JSON keys by those row IDs; collision extension preserves row order and makes codes unique. Torchrun's already-launched and GENREC_SINGLE_GPU branches are present. CANDIDATE_CHECK.json records an inconclusive environment import failure, not a source-level integration defect.
+FINDING REPRODUCTION: Inspect the cited constants and main/export/launcher branches. The included smoke test checks an extended SID matrix of shape (12, 4) with unique rows. Runtime integration is not claimed.
+FINDING CORRECTION: None.

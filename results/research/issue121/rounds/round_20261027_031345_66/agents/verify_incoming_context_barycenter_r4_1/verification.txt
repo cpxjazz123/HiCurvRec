@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:374-385, 432-434, 487-506, 120-163, model/layers.py:122-155 | Static trace of training-only adjacent history->target count construction, cached predecessor/negative context generation, and first-level logits flowing into VQLayer; smoke_test.py:19-36 specifies both-on, behavior-off, and Euclidean comparisons (not run here).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:188-227, train_rqvae.py:120-163
+FINDING DETAIL: A connected training-only behavior × Poincare-distance path does exist: candidate scoring compares code prototypes geodesically to train-derived positive and hard-negative predecessor-context barycenters, and the logits feed first-level assignment. However, the implemented method is materially narrower than the stated specification: barycenters average log0-projected hard-assigned regions rather than performing the stated current-iterate Frechet/Karcher mean, the entropy gate and curved base-score mixture are absent, and the hard-negative similarity is Jaccard rather than co-consumption cosine. This is still a genuine coupled path, not a suffix or unrelated loss.
+FINDING REPRODUCTION: Compare PROPOSAL.json:10-12, 23, 38-41 with train_rqvae.py:188-227 and 120-163. The code has no entropy/g_i computation and refresh_context_barycentres has no Karcher iteration; its geometry argument does not affect region assignment at lines 214-217.
+FINDING CORRECTION: Implement the specified entropy gate and curved base-score mixture, use the specified co-consumption cosine negative selection, and compute the stated weighted curved Frechet mean (or explicitly revise the proposal and its tested controls to match this simpler implementation).
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:120-163, model/model.py:26-30, model/layers.py:122-155 | Static differentiation trace; smoke_test.py:19-36 contains finite-loss, finite/nonzero first-codebook-gradient, and assignment-change assertions for both-on versus behavior-off and Euclidean controls (not executed).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:134-163
+FINDING DETAIL: The active score is differentiable through candidate code prototypes and encoder latents; VQLayer consumes its softmax in the soft quantization loss and straight-through decoder path, so it is not a dead term. The Poincare projection keeps norms strictly inside the unit ball; distance denominators are positive-clamped and acosh input is at least one and capped, avoiding the identified float32 overflow/NaN hazards. The supplied smoke test asserts assignment changes for both controls. Caveat: incoming_assignment_loss computes logits, but the actual hard token is argmax(logits), and gradients through that hard index are absent; optimization signal is through the soft assignment loss/path, as expected for this implementation.
+FINDING REPRODUCTION: Inspect model/layers.py:131-155: hard indices are argmax, while soft=softmax(assignment_logits) @ codebook and its MSE loss propagate gradients. The smoke test checks finite/nonzero codebook gradients and distinct assignments at smoke_test.py:22-36.
+FINDING CORRECTION: No blocking trainability correction. Run the specified GPU one-epoch gradient smoke before a full run; revise smoke coverage if asserting encoder gradients is also required.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-68, 352-374, 574-621, 624-652 | Static integration trace of repository-root discovery, frozen train parquet input, training-ID validation, item-indexed SID export, result-directory destinations, and launcher/single-card branch (runtime not exercised).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:112-117, train_rqvae.py:624-652
+FINDING DETAIL: Candidate output is resolved under the repository's promoted candidate result directory, train input is the frozen stage0 train.parquet, and export enumerates all embedding rows into a JSON mapping keyed by matching item IDs. The launcher honors SINGLE_GPU_ENV == "GENREC_SINGLE_GPU" and otherwise launches torchrun; the trainer's paths remain within the repository. Runtime integration cannot be confirmed from this tree: CANDIDATE_CHECK.json records a ModuleNotFoundError, and this review does not execute the trainer. No code-level integration defect is established.
+FINDING REPRODUCTION: See CANDIDATE_CHECK.json:1-4 for the recorded inconclusive path check; verify the static path/launcher branches at train_rqvae.py:57-68 and 624-652. At export, _extend_collisions preserves each row's item position and JSON keys are enumerated at train_rqvae.py:609-615.
+FINDING CORRECTION: No blocking integration correction identified. Resolve the recorded dependency/import failure in the candidate-check environment and run the real trainer smoke before admission; retain the GENREC_SINGLE_GPU=1 path.

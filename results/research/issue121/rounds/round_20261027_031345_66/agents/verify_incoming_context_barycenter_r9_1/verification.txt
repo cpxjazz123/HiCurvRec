@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:130-182, 207-291, 551-571 | Static trace from train-only history transitions at lines 439-449 through per-epoch Poincare predecessor barycentres and co-consumption negatives, then positive-minus-negative curved candidate scores fed as first-level assignment logits. The pathway is connected in intent, but tracing its forward call exposes the interface failure at layers.py:308.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/model/layers.py:308-310
+FINDING DETAIL: RQLayer forwards the keyword `first_assignment_logits` to each VQLayer, whose `forward` signature names that argument `assignment_logits` (lines 115-120). Consequently the claimed connected candidate-assignment path cannot execute, despite the behavior and Poincare calculations being present. No successful exercised path reaches assignment.
+FINDING REPRODUCTION: Run the smoke test's model call at smoke_test.py:41-42 with first_assignment_logits set (or invoke RQLayer.forward with that input). Python raises TypeError: VQLayer.forward() got an unexpected keyword argument 'first_assignment_logits'.
+FINDING CORRECTION: In RQLayer.forward, pass `assignment_logits=first_assignment_logits if level == 0 else None` to VQLayer, or consistently rename the VQLayer parameter and its internal references. Re-run forward/backward after correcting the interface.
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/smoke_test.py:34-50 | Inspected the prescribed forward/backward smoke path and traced the actual keyword call through model.py:26-29 and layers.py:296-316. The smoke cannot complete: it reaches the same mismatched VQLayer keyword before computing losses or gradients.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/model/layers.py:308-310
+FINDING DETAIL: A real forward/backward is blocked by the argument mismatch. Therefore the claimed finite loss, gradients reaching the encoder/codebook through the behavior-conditioned logits, and reversible behavior-off/Euclidean comparisons are not established by this implementation. The standalone score calculation is differentiable in code, and the coincidence safeguard is explicit, but these do not compensate for the broken model call.
+FINDING REPRODUCTION: The smoke's `model(emb[ids], first_assignment_logits=logits)` at smoke_test.py:42 passes through RQLayer and raises the unexpected-keyword TypeError. Minimal correction is the keyword rename noted above; until then no loss.backward() or comparison assertions execute.
+FINDING CORRECTION: Fix the RQLayer-to-VQLayer keyword interface, then ensure the smoke completes and checks finite gradients and assignment changes for both-on, behavior-off, and Euclidean controls. Do not treat the currently unreachable gradient assertions as evidence of trainability.
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:43-68, 110-117, 416-449, 638-681, 688-716 | Static inspection of trainer entry point, frozen embedding/train parquet paths, result path, SID serialization, and launcher branches; the launcher recognizes GENREC_SINGLE_GPU at lines 690-693 and otherwise invokes torchrun. Runtime is blocked by the forward-call defect above.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/model/layers.py:308-310
+FINDING DETAIL: The trainer cannot complete a training batch because model forward raises the mismatched-keyword TypeError, so it cannot write a trained checkpoint or valid indexed SID export. The configured data inputs are the expected stage1 sentence_t5.npy and stage0 train.parquet, and output is scoped to the candidate's required results/stage2_RQ-VAE/TIGER_incoming_context_barycenter directory; SID export enumerates embedding row IDs and extends collisions. The single-card environment branch is present, but it does not bypass the broken forward.
+FINDING REPRODUCTION: With GENREC_SINGLE_GPU=1 to avoid torchrun, enter main and execute the first training batch: the call at train_rqvae.py:571 reaches layers.py:308 and errors before optimizer.step or export. The same failure occurs in the one-epoch gradient smoke.
+FINDING CORRECTION: Correct the VQLayer keyword at layers.py:308, then run the designated one-epoch GPU gradient smoke and verify the candidate-local checkpoint and item_sids.json export. Preserve the current frozen data paths, candidate result directory, and GENREC_SINGLE_GPU launcher branch.

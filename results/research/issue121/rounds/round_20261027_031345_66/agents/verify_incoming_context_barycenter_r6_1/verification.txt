@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:409-420,193-262,120-168,535-542 | Static trace of train-only adjacent-event predecessor counts through cached Poincare predecessor barycentres and co-consumption hard-negative barycentres into code-candidate scores, then into the first-level assignment logits consumed by the real RQ-VAE forward; reviewed the smoke test's behaviour-off and Euclidean controls at smoke_test.py:19-36. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:171-190
+FINDING DETAIL: The documented “at most 8” predecessor cache truncates the already top-8 incoming list, as intended; no coupling defect found. The actual connected path uses transition counts, contextual barycentres and curved candidate distances, rather than an unrelated auxiliary loss.
+FINDING REPRODUCTION: Follow train_rqvae.py:413-420 into refresh_context_barycentres at :228-262 and incoming_assignment_loss at :159-168; its resulting logits are passed to the model at :542 and consumed by VQLayer at model/layers.py:122-155.
+FINDING CORRECTION: None required.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:140-168 | Source-level forward/backward trace; checked the coupled scores reach the soft assignment loss and codebook at model/layers.py:142-155. Reviewed, but did not execute, the proposed comparisons in smoke_test.py:19-36.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:156-157
+FINDING DETAIL: The Poincare distance evaluates acosh(1 + arg) and squares it without protecting the zero-distance derivative. At arg == 0, acosh'(1) is infinite; the subsequent square's zero multiplier can yield NaN gradients in float32. Exact coincidence is reachable (for example, a candidate code equals a cached barycentre), so this can poison candidate-score gradients and fail the required finite-gradient training path. The finite clamp on the upper argument does not address this lower-bound singularity. The small smoke test's randomly initialized values do not establish safety for this case.
+FINDING REPRODUCTION: Minimal counterexample: evaluate this distance with a.requires_grad_(True), a = [[0, 0]], b = [[0, 0]], then backpropagate the squared distance. This reaches arg=0 and the acosh boundary; inspect a.grad for non-finite values. The same case can arise when a prototype coincides with a context barycentre.
+FINDING CORRECTION: Implement squared Poincare distance with a numerically stable zero-limit formulation (for example, a stable asinh-based expression or a carefully bounded positive argument with a correct near-zero limit), and add a coincident-point forward/backward finite-gradient check. Preserve finite gradients at zero rather than merely clamping the final distance.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:43-68,387-420,609-652,659-687 | Static inspection of repository-root/path derivation, frozen stage1 embedding and stage0 training parquet inputs, trainer/export flow, result paths, and launcher including the GENREC_SINGLE_GPU branch; no trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:57-68,659-687
+FINDING DETAIL: No integration defect found by inspection. Output is rooted under the repository's results/stage2_RQ-VAE/TIGER_incoming_context_barycenter directory; export enumerates item IDs as JSON keys and rejects duplicate extended SIDs. The single-card environment switch is checked before spawning torchrun.
+FINDING REPRODUCTION: Inspect :43-68 for root and file paths, :401-402 for loading the frozen inputs, :644-650 for unique SID export/indexing, and :661-687 for distributed and single-card launcher behavior. This is source inspection, not a claim that the trainer or launcher was executed.
+FINDING CORRECTION: None identified.

@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:439-446,207-288,130-182,560-568; model/layers.py:115-156 | Traced training parquet adjacent history→target counts and co-consumption negatives into per-epoch predecessor-region Poincare barycentres, then squared geodesic positive-minus-negative candidate scores and concentration-gated baseline scores into first-level VQ assignment logits. The logits are consumed by the actual VQ layer and its soft assignment loss. Inspected smoke_test.py:29-51 for both-on versus behaviour-off and Euclidean comparisons.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The behavior is derived from the training parquet only (train_rqvae.py:428-485); the curved candidate score and its resulting assignment are connected to the quantizer (train_rqvae.py:173-182; model/layers.py:131-155).
+FINDING REPRODUCTION: Source trace as cited; the smoke test supplies distinct barycentres/negatives and asserts changed assignments/logits for both-on, behaviour-off and Euclidean modes (smoke_test.py:29-51). Runtime execution is not claimed.
+FINDING CORRECTION: None required.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:120-127,130-182,207-288,560-578; model/layers.py:131-155 | Static forward/backward trace: candidate scores remain differentiable through encoder/codebook distances and softmax, and VQLayer adds the soft code expectation to quantization loss. The smoke test checks finite forward loss, finite nonzero first-codebook gradients, coincidence stability, and assignment/logit changes for controls.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 numerical hazard found. Cached barycentres/concentration are intentionally detached, while the candidate score's code and baseline encoder paths remain differentiable. The squared-distance helper bounds its argument and handles exact zero (train_rqvae.py:120-127). Runtime smoke was not executed.
+FINDING REPRODUCTION: Inspect smoke_test.py:8-18 and 34-51; the actual training use is at train_rqvae.py:560-578 and model/layers.py:142-155. Per instruction, no trainer runtime was attempted.
+FINDING CORRECTION: None required.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-68,117,413-446,493-505,635-712 | Inspected the real entry path, repository-root/data/result constants, train parquet loading and train-only statistics, distributed setup/launcher including the GENREC_SINGLE_GPU branch, and indexed SID export with fixed collision extension. No trainer execution performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Source inspection shows the frozen Stage1 embedding and Stage0 training parquet paths, candidate-specific promoted result directory, export of item-indexed N×4 unique SIDs to NPY and JSON, and the single-card launcher bypass. Writes are routed beneath RESULT_DIR. No integration defect identified from the inspected code.
+FINDING REPRODUCTION: Follow constants at train_rqvae.py:57-68; execution loads TRAIN_FILE at 427-429, computes training-only context at 435-485, exports rows keyed by enumerated item ID at 670-676, and dispatches through _launch_via_torchrun at 685-712. GENREC_SINGLE_GPU="1" returns from launcher at line 689 and proceeds to main.
+FINDING CORRECTION: None required.

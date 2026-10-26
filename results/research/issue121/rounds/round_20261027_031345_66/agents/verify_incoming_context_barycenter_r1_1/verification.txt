@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:120-183, train_rqvae.py:422-425 | Static trace of the training-only incoming counts and co-consumption negative into incoming_assignment_loss, then its use in the training objective; compared with the actual RQVAE/VQ assignment path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:180-183; model/layers.py:119-125
+FINDING DETAIL: A behavior-conditioned Poincare-distance contrast is calculated, but it is an auxiliary cross-entropy loss against a detached Euclidean nearest-code target. It never supplies candidate logits/indices to the first-level quantizer, so it does not implement the specified behavior-and-geometry-coupled candidate assignment. The actual quantizer still selects with Euclidean distances. In addition, its `project` multiplies by 1.999, placing many outputs outside the unit Poincare ball, so the claimed curved distance is not reliably a valid Poincare operation.
+FINDING REPRODUCTION: Trace `incoming_assignment_loss`: scores at line 180 are consumed only by cross-entropy at line 183; target is Euclidean argmin at line 182. Trace `VQLayer.forward` at model/layers.py:121-125: its assignment comes from `assignment_logits` only if supplied, otherwise `_indices(distances, ...)`; no logits are passed by RQLayer/model. For a sufficiently large norm z, `project(z)` at train_rqvae.py:136 has norm approaching 1.999 (>1).
+FINDING CORRECTION: Feed behavior-curved candidate logits into first-level quantization/straight-through assignment (and use those indices in the actual SID path), preserving explicit behavior-off and Euclidean controls. Project every point strictly inside radius 1/sqrt(c) (for c=1, remove the 1.999 factor) and use a consistent valid Poincare distance/barycenter calculation.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/model.py:26-30, model/layers.py:282-301, train_rqvae.py:419-428, smoke_test.py:13-30 | Static forward/backward trace and inspection of the included smoke test; runtime execution was unavailable as specified.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:292-296
+FINDING DETAIL: The ordinary model forward raises NameError because `first_assignment_logits` is referenced but is never defined in RQLayer.forward. Thus real trainer batches cannot reach loss/backward. Separately, the smoke test asserts a gradient exists but does not assert it is finite and nonzero, nor that behavior/geometry controls change assignments or gradients; the candidate auxiliary loss itself has an unstable/off-manifold Poincare projection described in check a.
+FINDING REPRODUCTION: Call `model(emb)` with the smoke test's configured model: RQLayer.forward reaches `first_assignment_logits if level == 0 else None` and raises NameError. Minimal correction is to remove this unsupported argument until implemented, or define/pass it through the full RQLayer interface.
+FINDING CORRECTION: Fix the undefined variable and implement the connected assignment path; then verify finite loss and finite, nonzero intended-parameter gradients in forward/backward, plus assignment/gradient differences for behavior-off and Euclidean controls.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:43-68, train_rqvae.py:322-341, train_rqvae.py:490-533, train_rqvae.py:540-568 | Static inspection of repository-root resolution, frozen stage0 input, output/export locations and both launcher branches; trainer execution was not available.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:292-296
+FINDING DETAIL: The trainer entry point cannot complete its first batch because model forward hits the undefined `first_assignment_logits` NameError (see check b). The inspected integration wiring otherwise resolves input to the frozen `results/stage0_build_parquet/train.parquet`, writes outputs only under the promoted candidate arm `results/stage2_RQ-VAE/TIGER_incoming_context_barycenter/`, enumerates SID rows by item ID, and retains the `GENREC_SINGLE_GPU` branch plus torchrun path. Actual export and distributed execution cannot be confirmed from this blocked trainer path.
+FINDING REPRODUCTION: Run the real entry point or the minimal `model(emb)` forward: it fails at model/layers.py:295 before training, so no checkpoint/SID export can be produced. Static launcher branch at train_rqvae.py:544 returns for `GENREC_SINGLE_GPU=1`; otherwise torchrun is invoked at lines 554-563.
+FINDING CORRECTION: Resolve the forward NameError, then run the prescribed real-trainer gradient smoke and verify export/index contract and both launcher branches before admission.

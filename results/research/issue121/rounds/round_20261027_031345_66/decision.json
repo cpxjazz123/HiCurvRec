@@ -1,0 +1,1397 @@
+{
+  "decision_at": 1793032733.6589947,
+  "decision_hash": "bbf010a2dd05cb2b26eb0f6be30eced6aa734ce1af22f91f598be82db93a4cfa",
+  "evidence": {
+    "curved_follow_gap": {
+      "bundle_sha256": "7da68443d8108a34e4840314687ecb50fb190b1109b1ebfbd3abac91208689a0",
+      "literature_sha256": "f88bf8d433a282418b89da8ae8913e5e768e5dc8c3569cd184231c00b4679f29",
+      "math_sha256": "3cb0dbcaa6d27e92bdf5b7bfa274a1d518f56949204701f6e31920314d71d864",
+      "probe_sha256": "01fd3d29e6d902fa6c08102930782f88ee80bbb1343db971ad54cd72b409d3df"
+    },
+    "curved_follow_margin": {
+      "bundle_sha256": "8fe55153ebc67f7b09e68ce6c12b2f613944d71e27b295a48033b8c3e86e906b",
+      "literature_sha256": "9454c6d9aaa380b70da17bc974af679bcfe04368572c7d99f28734e20b39cd6a",
+      "math_sha256": "99d3ebd8443ac2f83446571dabf7f2edd701b0708b71d7697977509876d06255",
+      "probe_sha256": "33130f038e2be6d0636dfab607ad413321b3d0c7c57b0dfaa12b30aaaff9ef21"
+    },
+    "incoming_ball_sink": {
+      "bundle_sha256": "879387744def37c659b8d6c95b9b41f8239c34baae77f20183ce440d2a9813a1",
+      "literature_sha256": "a2d773296081e39378b1bbd3fb5f03beb3677fa26063d9c32764c2543bec8a65",
+      "math_sha256": "5e3ee634956f8a347b718155a2ff32e5c92057e44100e15fb0cc6ab7c5c3df41",
+      "probe_sha256": "ce511ebe3cf8d558432aba0911450ec3d87b0403587fa1e7193db4b91a96aacd"
+    },
+    "incoming_barycenter_sink": {
+      "bundle_sha256": "cec2e9652a2479d669eba8ee6dac0a568a2efff8c9d32f6a88a810cc51ce7896",
+      "literature_sha256": "ab56483dbfcc5e1ffa8ebceed1c5eed88b733c21e81ab4498fc0b0b45fcdc989",
+      "math_sha256": "628c7e75807652b2c7ae165e01b047f8b2e161a7df19a5a4b2454a9f7d39d77d",
+      "probe_sha256": "4f49c3bfdcd9000ee76060062463a149bf3c9b155847e4c7a2bb9adb1aaed56a"
+    },
+    "incoming_context_barycenter": {
+      "bundle_sha256": "26b0c7f1824153ae988e38b96577196ee657d65c145944e2d5b7d58ef64566c3",
+      "literature_sha256": "fd7bd295a721acdd4cc0d2ab13d3e2e7925045b1e7538f7baaeea579a2da010c",
+      "math_sha256": "542f3626af7896817626e48030d63ae64737cfffb7325398bcf665f9307b88ed",
+      "probe_sha256": "8a119768af48d7c919e0fccf83398865b46563002f5243718bc706fb85d2add8"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 1.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "incoming_ball_sink",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 4.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "879387744def37c6/E2",
+            "879387744def37c6/E5",
+            "879387744def37c6/E6",
+            "879387744def37c6/E12",
+            "879387744def37c6/E13",
+            "879387744def37c6/E14"
+          ],
+          "scoring_2": [
+            "E2",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E4",
+            "E5",
+            "E6",
+            "E8",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposed q_i is a Euclidean weighted average of ball coordinates followed by projection, not the curved barycenter implied by the motivation; with sparse/top-32 support plus global usage marginals, Sinkhorn can override the context tilt or exclude its useful code.",
+          "scoring_2": "The stated q_i pools predecessor soft code assignments, but the specification then says the hard argmin of C selects the token; it never defines which assignment distribution feeds the next level or Sinkhorn. Sparse support can also omit the code required by context.",
+          "scoring_3": "The balanced normalization appears not to affect the emitted token: the specification says to take hard argmin of C after Sinkhorn, so the balancing step may be computationally disconnected from hard assignments except indirectly through later soft predecessor assignments."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 gives measured, stratified successor concentration, supporting a testable incoming-context hypothesis and broad item-level coverage, hence 4 rather than 5 because the exact proposed edge/context statistic and its coverage are not audited here. E12-E14 establish curved distance inside assignment, but fixed curvature and distance weighting could be matched by a Euclidean cost, with no necessity argument (3). The sparse behavior-conditioned assignment differs computationally from the listed successor-geodesic and resampling results (E6), but no literature/ledger trace (3). Assignment and prefix effects are explicit (4). Controls and failure rule are not specified as matched ablations (2). Projection, sparse Sinkhorn and edge aggregation are implementable, but numerical/gradient safeguards and cost accounting are incomplete or inconsistent (3). It is a meaningful assignment-level variation, not clearly a substantially distinct family (3).",
+          "scoring_2": "E5 supports a substantial, measured successor-entropy/top-1 relationship and E10 gives train-edge coverage, supporting 4 rather than 5 because the exact proposed incoming-context statistic and item coverage are not audited here. E12-E14 establish an actual curved assignment operation, but no matched Euclidean result or cancellation analysis is supplied, so 4. E6 records related successor-geodesic mechanisms already measured; the cost-level change is distinct but not traceably compared with the full ledger, so novelty 3. The cost directly affects tokens and predicts prefix/discrimination changes (4). No specified three-arm controls/failure criterion (2). Ambiguous assignment semantics and no demonstrated budget fit (2). Different assignment pathway, but overlap with measured geodesic successor work limits exploration value (3). No Recall prediction is treated as evidence.",
+          "scoring_3": "The measured train successor-entropy gradient and its coverage support a testable incoming-context hypothesis (E5, E10), but do not directly measure incoming-context barycenter utility, so 4 rather than 5. Curved distance is inside assignment (E12-E14), but there is no matched Euclidean argument or cancellation analysis, hence 3. It is distinct in computation from the measured successor-geodesic and resampling mechanisms in E6, but a traceable prior-art/ledger comparison is unavailable: 3. Assignment and prefix effects are named, though the final mechanism and expected direction lack a fully discriminating diagnostic: 4. The proposal gives broad keep criteria but not three matched controls and a failure criterion: 2. Sparse implementation is specified, but projection/boundary safeguards, Sinkhorn stability, and reconciled cost are incomplete: 3. A different assignment mechanism with an informative failure mode: 3."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It couples train-only incoming transitions to Poincare assignment costs, but does not explicitly name matched behavior-off and Euclidean/geometry-off comparisons or their controlled setup; those are required by the testable-effect contract.",
+          "scoring_2": "It couples train-only predecessor context to Poincare-distance assignment, but does not specify the required behavior-off, matched Euclidean/geometry-off, and both-on comparisons. It also leaves sparse Sinkhorn's hard-argmin output versus its soft assignments used for q_i unclear.",
+          "scoring_3": "Training-only directed predecessors form q_i, which participates with item content in the curved per-code assignment cost; Poincare distance determines the actual token. Sinkhorn's role in the final token selection is unclear because hard argmin is stated on C, not the Sinkhorn output."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.25,
+          "scoring_2": 3.35,
+          "scoring_3": 3.25
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It couples train-only incoming transitions to Poincare assignment costs, but does not explicitly name matched behavior-off and Euclidean/geometry-off comparisons or their controlled setup; those are required by the testable-effect contract.",
+            "scorer": "scoring_1"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It couples train-only predecessor context to Poincare-distance assignment, but does not specify the required behavior-off, matched Euclidean/geometry-off, and both-on comparisons. It also leaves sparse Sinkhorn's hard-argmin output versus its soft assignments used for q_i unclear.",
+            "scorer": "scoring_2"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.25
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "curved_follow_gap",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "7da68443d8108a34/E2",
+            "7da68443d8108a34/E5",
+            "7da68443d8108a34/E6",
+            "7da68443d8108a34/E9",
+            "7da68443d8108a34/E12",
+            "7da68443d8108a34/E13",
+            "7da68443d8108a34/E14"
+          ],
+          "scoring_2": [
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The assignment correction is not operationally clear: the specified score contribution s(u,i) compares source-prefix to target latent, but the candidate codeword variable k does not appear in that correction, so it may be constant across candidate tokens and cancel in argmin.",
+          "scoring_2": "The objective mixes source-prefix scores s(u,v) with an assignment correction that is not operationally defined: the formula's score contribution, gradients, and how s(u,i) changes a target codeword choice are unspecified, making it unclear that the proposed ranking signal changes emitted SIDs as claimed.",
+          "scoring_3": "The score contribution used to adjust final-level assignment is s(u,i)-mean_n s(u,n), which has no dependence on k; subtracting it from every candidate cost cannot change the argmin, so the claimed direct assignment correction is inert."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 and E9 provide measured behavioral structure (entropy stratification and positive-versus-negative cohort-profile difference), but the proposal's precise hard-negative/prefix-diversity statistic is not itself reported (4). Curved distance is in ranking and claimed assignment, yet a matched Euclidean control could reproduce a ranking transform absent a necessity argument (3). It differs from prior successor-geodesic results in using positive-vs-hard-negative contrast, but no traceable literature/ledger analysis is supplied (3). The intended chain to candidate reassignment and prefix discrimination is stated (4), subject to the cancellation objection. No explicit matched controls or falsifier (2). ST candidate term, alpha, distances and sampled negatives are insufficiently reconciled for a uniquely implementable update; numerical safeguards are limited (2). Distinct enough to test, with an informative cancellation/gradient failure mode (3).",
+          "scoring_2": "E5 and E10 support a measured behavioral pattern and train graph coverage, but do not directly measure the proposed hard-negative/prefix-entropy statistic (4). Curved distances act in ranking and assignment (E12-E14), but no matched Euclidean control establishes non-reproducibility (3). The contrast is distinguishable from measured successor-geodesic mechanisms in E6, though prior-work/ledger distinction is not fully argued (3). Assignment and discrimination-gap chain is named but implementation of the correction is unclear (4). Three arms and criterion are gestured at, but controls are not specified or shown matched (3). The score/gradient semantics and stated cost accounting are inconsistent enough to keep implementability at 2. It is a distinct contrast mechanism with a useful hard-negative failure lesson (3). No Agent prediction is measurement.",
+          "scoring_3": "Train-only transitions/negative construction is plausible and the bundle measures successor structure and positive-vs-negative profile signal (E5, E9), but the exact proposed hard-negative relation is not itself audited: 3. Poincare distances act in the ranking loss (E12-E14), yet matched Euclidean necessity is not argued: 3. Distinctive components are combined, but measured successor-geodesic mechanisms already exist (E6) and no cited-work/ledger trace is supplied: 2. There is a plausible ranking-to-codebook-to-SID chain, but the explicit assignment correction cancels and diagnostics do not isolate that chain: 3. The proposal states both-on/control language but not three matched controls or a precise falsifier: 2. Sampling is implementable in principle, but the chosen source-prefix point, score gradients, gamma, and numerical safeguards are underspecified: 2. This is near existing successor-geodesic work (E6), with the cancellation itself a useful implementation lesson: 2."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It combines train-only transitions/co-consumption with curved candidate scoring and ST assignment, but omits explicit matched behavior-off and geometry-off/Euclidean comparison definitions; costs/state must be held fixed across them.",
+          "scoring_2": "It couples transition/co-consumption behavior with Poincare scoring and assignment, but does not actually specify the behavior-off, geometry-off/Euclidean, and both-on comparisons. “Matched controls” in the retention sentence are not defined. The final assignment correction's differentiable score contribution is also underspecified.",
+          "scoring_3": "Train transitions and training-only co-consumption negatives enter a Poincare-distance ranking loss; that loss updates the prefix code point/codebook and is intended to affect assignments. However, the stated assignment correction is constant across candidate code k and therefore does not itself re-rank candidates."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.15,
+          "scoring_2": 3.25,
+          "scoring_3": 2.55
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It combines train-only transitions/co-consumption with curved candidate scoring and ST assignment, but omits explicit matched behavior-off and geometry-off/Euclidean comparison definitions; costs/state must be held fixed across them.",
+            "scorer": "scoring_1"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It couples transition/co-consumption behavior with Poincare scoring and assignment, but does not actually specify the behavior-off, geometry-off/Euclidean, and both-on comparisons. “Matched controls” in the retention sentence are not defined. The final assignment correction's differentiable score contribution is also underspecified.",
+            "scorer": "scoring_2"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.15
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "incoming_barycenter_sink",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "cec2e9652a2479d6/E2",
+            "cec2e9652a2479d6/E5",
+            "cec2e9652a2479d6/E6",
+            "cec2e9652a2479d6/E12",
+            "cec2e9652a2479d6/E13",
+            "cec2e9652a2479d6/E14"
+          ],
+          "scoring_2": [
+            "E2",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The stated cost is not an assignment distribution despite the Sinkhorn title/mechanism, and its explanation says context-diverse targets are pulled more strongly while beta=beta0(1-h) gives smaller weight to diffuse contexts and stronger weight to concentrated ones.",
+          "scoring_2": "The claimed direction of the concentration weighting is internally inconsistent: beta_i=beta0*(1-h_i) makes diffuse contexts receive more barycenter pull, while the prose says to weight inversely by incoming-context concentration and the motivation says compact incoming context should be inherited. This could reverse which targets are changed.",
+          "scoring_3": "The claimed rule that context-diverse targets are pulled more strongly is questionable: beta_i=beta0*(1-h_i) is largest for diffuse incoming weights, but a barycenter can lie between distinct predecessor regions and be far from all of them, making the extra cost favor an unrepresentative compromise code."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 supports successor concentration variation, but it does not directly measure incoming predecessor-region concentration; score 4 reflects a plausible train-only behavioral problem, not direct confirmation of the exact hypothesis. E12-E14 place Poincare barycenter/distance in assignment, but a matched Euclidean counterpart might reproduce the weighted cost and necessity is not argued (3). Per-item curved barycenter assignment is computationally distinct from listed global balancing and successor losses, without traceable prior art/ledger comparison (3). It specifies the affected first-level assignment and intended prefix/gap direction (4). Three-way matched controls and explicit falsifier absent (2). Operations and sparse cap are given, but differentiability/gradient path through discrete predecessor assignments and boundary safeguards are not fully specified (3). A useful assignment-level failure mode, though in the incoming-context family (3).",
+          "scoring_2": "E5/E10 indicate a measured train behavior signal and coverage, but do not audit the proposed incoming concentration statistic by itself (4). Frechet/geodesic operations directly enter assignment (E12-E14), yet a Euclidean counterpart and necessity argument are absent (3). It differs from global balancing and measured successor-geodesic variants but is close to other incoming-context barycenter proposals in this bundle and lacks traceable ledger comparison (3). The barycenter changes candidate costs and predicts assignment/prefix effects (4). Only a keep criterion is given, not three controls or a failure criterion (1). Inputs, iterations, sampling, and cost are specified, though numerical safeguards/differentiability details are limited (3). It is a distinct assignment prior with an informative weighting-direction failure mode (3).",
+          "scoring_3": "The behavior statistic supports successor predictability stratification (E5), but the bundle does not report incoming-predecessor concentration or its assignment relation: 3. The curved barycenter/distance directly affects assignment (E12-E14), though no matched Euclidean control is analyzed: 3. The assignment-time barycenter is distinct from measured coarse successor-geodesic mechanisms (E6), but no traceable prior-art/ledger audit: 3. It names the affected first-level assignment and expected prefix/gap effects; the expected direction is plausible but not assured by the barycenter geometry: 4. A keep criterion exists but three matched controls and a falsifier are not fully specified: 2. Iterative maps and sparse sampling are given, but projection/clipping safeguards and cost accounting need clarification: 3. Different mechanism and a meaningful negative lesson about averaging heterogeneous contexts: 3."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It uses train-only directed incoming counts in a curved barycenter-based assignment cost, but does not explicitly specify matched behavior-off and Euclidean/geometry-off comparisons and their failure criterion.",
+          "scoring_2": "It specifies train-only directed incoming counts and a hyperbolic Frechet barycenter in the candidate assignment cost, but omits the required behavior-off, geometry-off/Euclidean, and both-on comparisons. It also describes a leave-one-edge-out barycenter without specifying how edge exclusion is done for item-level cached context.",
+          "scoring_3": "Train-only incoming predecessor counts determine a weighted predecessor-code barycenter, and its Poincare distance to candidate codewords enters the item assignment cost. The proposal couples behavior and curvature in the quantizer itself."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.25,
+          "scoring_2": 3.15,
+          "scoring_3": 3.05
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It uses train-only directed incoming counts in a curved barycenter-based assignment cost, but does not explicitly specify matched behavior-off and Euclidean/geometry-off comparisons and their failure criterion.",
+            "scorer": "scoring_1"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It specifies train-only directed incoming counts and a hyperbolic Frechet barycenter in the candidate assignment cost, but omits the required behavior-off, geometry-off/Euclidean, and both-on comparisons. It also describes a leave-one-edge-out barycenter without specifying how edge exclusion is done for item-level cached context.",
+            "scorer": "scoring_2"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.25
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "curved_follow_margin",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "8fe55153ebc67f7b/E2",
+            "8fe55153ebc67f7b/E5",
+            "8fe55153ebc67f7b/E6",
+            "8fe55153ebc67f7b/E9",
+            "8fe55153ebc67f7b/E12",
+            "8fe55153ebc67f7b/E13",
+            "8fe55153ebc67f7b/E14"
+          ],
+          "scoring_2": [
+            "E2",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "With hard/straight-through a_i1, the ranking gradient may not reach the assignment logits/code choice as claimed; the loss may only move encoder/codebook representations, and its very small initialized coefficient is fixed thereafter.",
+          "scoring_2": "The negative pool treats co-consumption zeros as negatives; with sparse training histories, many can be unobserved positives, so the margin may repel valid recommendation targets rather than distinguish behaviorally wrong neighbors.",
+          "scoring_3": "The margin loss is an auxiliary ranking objective rather than the same score used by the baseline quantizer's candidate assignment; whether its straight-through gradient materially changes assignments is uncertain, and the stated initial scale is very small."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5/E9 show measurable train-only behavioral structure, but not the exact co-consumption hard-negative ranking statistic or its coverage (4). Poincare geodesic distance is explicitly used, but no argument shows curvature adds beyond an appropriately matched Euclidean metric (3). The assignment-level positive/negative ranking is distinct from listed successor-geodesic mechanisms, but lacks prior-art/ledger traceability (3). Prefix discrimination is plausible, but no precise expected assignment change or diagnostic isolates it (3). No explicit three matched controls/falsifier (2). Sampling, maps, distances and scale initialization are implementable, though gradient path and calibration remain risks (3). Its hard-negative failure mode is informative but a variation of ranking-based behavior shaping (3).",
+          "scoring_2": "E5 and E10 show measured behavior structure and train coverage, although not the exact proposed positive/negative pool statistic (4). Poincare distance is applied to assignment-linked ranking gradients (E12-E14); without a matched Euclidean control its added necessity is not established (3). It is distinct from measured successor-geodesic work in E6, but is a fairly routine assignment-level contrast and not fully compared to the ledger (3). The first token is explicitly affected and prefix survival/gap are named (4). Three comparisons are requested and a failure condition is stated, but controls are not concretely matched (3). Sampling, loss, and maps are specified; numerical clipping and the cost claim are not fully substantiated (3). Negative results would test whether curved assignment-level exclusion helps over positive cohesion (3).",
+          "scoring_3": "Train-only co-consumption positives and mined negatives are a plausible, testable signal, but the bundle's measured profile contrast is related rather than a direct audit of this cosine mining rule (E9): 3. Curved distance acts on assigned first-level points in the ranking loss (E12-E14), but no evidence establishes superiority to a matched Euclidean margin: 3. Similarity to existing successor-geodesic/behavioral objectives is substantial (E6); no cited-work trace: 2. A plausible margin-to-first-token-to-prefix survival chain is given, but exact expected effect is not established: 3. Both-on versus controls and a retain condition are stated, though matching and a specific failure threshold are weak: 3. Sampling and cost are implementable, but curvature/map clipping safeguards and gradient-through-hard-assignment details need care: 3. It is a small variation on behavior ranking/geodesic mechanisms already measured: 2."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It names train-only co-consumption positives/near negatives and curved distances on the assigned first-level point, but does not state matched behavior-off and Euclidean/geometry-off controls; it also describes an auxiliary ranking objective without ensuring it changes the candidate assignment itself.",
+          "scoring_2": "It couples train-only co-consumption positives/hard negatives to curved distances at the actual first-token assignment, but does not name the required behavior-off, Euclidean/geometry-off, and both-on comparisons. Requiring that “both-on beats each control” does not define matched control implementations.",
+          "scoring_3": "Training-only co-consumption positives and hard negatives define a Poincare-distance margin against the actual first-level quantized point; gradients through the straight-through assignment can change emitted tokens."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.1,
+          "scoring_2": 3.35,
+          "scoring_3": 2.75
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It names train-only co-consumption positives/near negatives and curved distances on the assigned first-level point, but does not state matched behavior-off and Euclidean/geometry-off controls; it also describes an auxiliary ranking objective without ensuring it changes the candidate assignment itself.",
+            "scorer": "scoring_1"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It couples train-only co-consumption positives/hard negatives to curved distances at the actual first-token assignment, but does not name the required behavior-off, Euclidean/geometry-off, and both-on comparisons. Requiring that “both-on beats each control” does not define matched control implementations.",
+            "scorer": "scoring_2"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.2
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "incoming_context_barycenter",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "26b0c7f1824153ae/E2",
+            "26b0c7f1824153ae/E5",
+            "26b0c7f1824153ae/E6",
+            "26b0c7f1824153ae/E9",
+            "26b0c7f1824153ae/E12",
+            "26b0c7f1824153ae/E13",
+            "26b0c7f1824153ae/E14"
+          ],
+          "scoring_2": [
+            "E2",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The written score uses b_i and b_r as candidate-independent scalars for each target; the displayed S_g mixes S with S_base-curved but does not define candidate dependence of the negative barycenter term or the base term sufficiently to guarantee it changes candidate rankings.",
+          "scoring_2": "The candidate score S(i,k)=d(v_k,b_i)^2-eta*d(v_k,b_r)^2 rewards proximity to the negative's barycenter as written: minimizing S subtracts the negative distance, so increasing distance to b_r lowers S and attracts candidates toward the negative context rather than rejecting it.",
+          "scoring_3": "The assignment score is not fully specified: S_base-curved is undefined, the negative barycenter's construction is ambiguous, and the entropy gate is described both as current-assignment-derived and train-count-derived, so distinct implementations can produce materially different tokens."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 supports heterogeneous successor behavior and E9 supports non-degenerate cohort profiles, but neither directly audits this proposal's predecessor-region entropy (4). Curved Fréchet mean and distance act inside candidate scores, but there is no matched Euclidean result or cancellation analysis (3). The joint positive-context/negative-context candidate score is a distinct proposed computation relative to the listed methods, but no traceable prior-art/ledger comparison (3). It names first-token assignment and concentration-stratified prefix/gap observables (4). Controls and a direct refutation criterion are missing (2). The score has unresolved symbols/pathways, and the purported cached barycenter conflicts with current assignment-dependent inputs; cost is not fully reconciled (2). Its failure could distinguish incoming-context attraction from explicit rejection pressure, a useful diagnostic lesson (4).",
+          "scoring_2": "E5/E10 support the broad train behavior signal and coverage, but not the exact proposed predecessor-region entropy/gating statistic (4). E12/E13 identify curved barycenters/distances in assignment; no matched Euclidean control argues necessity (3). The joint barycenter-plus-negative assignment score is a distinct computation, but closely related to the other incoming-barycenter proposals and not traced against the full ledger (3). Assignment, prefix survival, and gap effects are named (4). A both-controls criterion and stratified diagnostic are given, but no specified matched three-arm protocol or explicit refutation is supplied (3). The cached barycenter/soft assignment semantics, sign issue, and numerical safeguards leave substantial implementation ambiguity (2). It offers a useful independent test of incoming-context scoring and rejection sign (3). No predicted Recall value is treated as measurement.",
+          "scoring_3": "The train-only incoming-transition signal is plausible and successor structure is measured (E5), but no statistic audits this proposal's incoming-region concentration/hard-negative coverage: 3. Poincare barycenters and distances enter candidate scoring (E12-E14), but the matched Euclidean alternative and necessity argument are absent: 3. It combines assignment-time incoming barycenters and rejection contrast, distinct from the measured mechanisms in E6, but prior-art/ledger traceability is missing: 3. First-token assignment and gold-prefix survival are named with concentration strata and a proposed direction: 4. Controls and diagnostic dimensions are named, but explicit matched three-arm definitions and a crisp refutation criterion are incomplete: 3. As written it is not fully implementable without defining S_base-curved, gate timing, and negative-barycenter inputs; risks and cost are also not convincingly resolved: 2. A distinct coupled failure mode (barycenter attraction plus rejection) would be informative if it fails: 3."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It directly couples train-only incoming transitions and hard negatives to curved candidate scores, but lacks explicit matched behavior-off and Euclidean/geometry-off comparisons. The candidate score/base-score interpolation and barycenter inputs also need a fully specified non-circular computation.",
+          "scoring_2": "It explicitly combines training-only incoming transitions and hard negatives with curved candidate assignment scores, but does not specify the required behavior-off, geometry-off/Euclidean, and both-on comparisons. In addition, the score uses a barycenter for the negative item but does not define the negative item's role as a destination/context in enough detail to disambiguate the intended contrast.",
+          "scoring_3": "Train-only directed predecessor distributions and co-consumption hard negatives contribute to candidate scores built from Poincare barycenters/distances; behavior and geometry enter the actual first-token assignment computation. The definition of S_base-curved and gating equation is incomplete, limiting reproducibility but not removing the stated coupling."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.2,
+          "scoring_2": 3.25,
+          "scoring_3": 3.05
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It directly couples train-only incoming transitions and hard negatives to curved candidate scores, but lacks explicit matched behavior-off and Euclidean/geometry-off comparisons. The candidate score/base-score interpolation and barycenter inputs also need a fully specified non-circular computation.",
+            "scorer": "scoring_1"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It explicitly combines training-only incoming transitions and hard negatives with curved candidate assignment scores, but does not specify the required behavior-off, geometry-off/Euclidean, and both-on comparisons. In addition, the score uses a barycenter for the negative item but does not define the negative item's role as a destination/context in enough detail to disambiguate the intended contrast.",
+            "scorer": "scoring_2"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.25
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": false,
+        "pair": [
+          "incoming_ball_sink",
+          "incoming_barycenter_sink"
+        ],
+        "votes": {
+          "incoming_ball_sink": 3,
+          "incoming_barycenter_sink": 0
+        },
+        "winner": "incoming_ball_sink"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "incoming_ball_sink",
+          "incoming_context_barycenter"
+        ],
+        "votes": {
+          "incoming_ball_sink": 0,
+          "incoming_context_barycenter": 3
+        },
+        "winner": "incoming_context_barycenter"
+      },
+      {
+        "disagreement": true,
+        "pair": [
+          "incoming_barycenter_sink",
+          "incoming_context_barycenter"
+        ],
+        "votes": {
+          "incoming_barycenter_sink": 1,
+          "incoming_context_barycenter": 2
+        },
+        "winner": "incoming_context_barycenter"
+      }
+    ],
+    "copeland": {
+      "curved_follow_gap": 0,
+      "curved_follow_margin": 0,
+      "incoming_ball_sink": 0,
+      "incoming_barycenter_sink": -2,
+      "incoming_context_barycenter": 2
+    },
+    "cycles": [],
+    "position_bias": {
+      "first_listed_wins": 7,
+      "second_listed_wins": 2
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "879387744def37c659b8d6c95b9b41f8239c34baae77f20183ce440d2a9813a1",
+      "idea_id": "incoming_ball_sink",
+      "proposal_sha256": "77ef957d05cdd5c0c78b8ce492055e2f2c186c7d3d6bd4e6e5a45643832a9349"
+    },
+    {
+      "evidence_sha256": "7da68443d8108a34e4840314687ecb50fb190b1109b1ebfbd3abac91208689a0",
+      "idea_id": "curved_follow_gap",
+      "proposal_sha256": "ce563abc14eb282faf9cc0eae856c0b90454a4591eb7da3540e06b51ae0b7c42"
+    },
+    {
+      "evidence_sha256": "cec2e9652a2479d669eba8ee6dac0a568a2efff8c9d32f6a88a810cc51ce7896",
+      "idea_id": "incoming_barycenter_sink",
+      "proposal_sha256": "fa35196dc63cb2942dd1c4c7b7a4d04cad69b7b5fa66c8f0ee7c15bc3bab96bf"
+    },
+    {
+      "evidence_sha256": "8fe55153ebc67f7b09e68ce6c12b2f613944d71e27b295a48033b8c3e86e906b",
+      "idea_id": "curved_follow_margin",
+      "proposal_sha256": "6622eb3d31af6b645972a02b5eb99f4d0272972a0fc3d0ead2d006dbec1573f4"
+    },
+    {
+      "evidence_sha256": "26b0c7f1824153ae988e38b96577196ee657d65c145944e2d5b7d58ef64566c3",
+      "idea_id": "incoming_context_barycenter",
+      "proposal_sha256": "a9984af5659121ef61568ae78d33dc7db1cfa272ed84ee16f27a1a9b06df4dce"
+    }
+  ],
+  "reviews": [
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "In one dimension, predecessor points +0.9 and -0.9 with equal weights have Euclidean mean 0 and projected mean 0, while the Poincare Fréchet mean is also 0 by symmetry; this does not validate the general approximation. For an asymmetric pair, projection of the Euclidean mean need not equal the Poincare Fréchet mean.",
+          "evidence_ids": [
+            "879387744def37c6/E2",
+            "879387744def37c6/E5",
+            "879387744def37c6/E6",
+            "879387744def37c6/E12",
+            "879387744def37c6/E13",
+            "879387744def37c6/E14"
+          ],
+          "idea_id": "incoming_ball_sink",
+          "missing_dimensions": [],
+          "objection": "The proposed q_i is a Euclidean weighted average of ball coordinates followed by projection, not the curved barycenter implied by the motivation; with sparse/top-32 support plus global usage marginals, Sinkhorn can override the context tilt or exclude its useful code.",
+          "rationale": "E5 gives measured, stratified successor concentration, supporting a testable incoming-context hypothesis and broad item-level coverage, hence 4 rather than 5 because the exact proposed edge/context statistic and its coverage are not audited here. E12-E14 establish curved distance inside assignment, but fixed curvature and distance weighting could be matched by a Euclidean cost, with no necessity argument (3). The sparse behavior-conditioned assignment differs computationally from the listed successor-geodesic and resampling results (E6), but no literature/ledger trace (3). Assignment and prefix effects are explicit (4). Controls and failure rule are not specified as matched ablations (2). Projection, sparse Sinkhorn and edge aggregation are implementable, but numerical/gradient safeguards and cost accounting are incomplete or inconsistent (3). It is a meaningful assignment-level variation, not clearly a substantially distinct family (3).",
+          "scope_reason": "It couples train-only incoming transitions to Poincare assignment costs, but does not explicitly name matched behavior-off and Euclidean/geometry-off comparisons or their controlled setup; those are required by the testable-effect contract.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If the “differentiable score contribution” is identical for every candidate k, then argmin_k[d(y_i,c_k)^2 - gamma*g] = argmin_k d(y_i,c_k)^2; the added term cannot change the SID assignment, even though its separate ranking loss can update parameters.",
+          "evidence_ids": [
+            "7da68443d8108a34/E2",
+            "7da68443d8108a34/E5",
+            "7da68443d8108a34/E6",
+            "7da68443d8108a34/E9",
+            "7da68443d8108a34/E12",
+            "7da68443d8108a34/E13",
+            "7da68443d8108a34/E14"
+          ],
+          "idea_id": "curved_follow_gap",
+          "missing_dimensions": [],
+          "objection": "The assignment correction is not operationally clear: the specified score contribution s(u,i) compares source-prefix to target latent, but the candidate codeword variable k does not appear in that correction, so it may be constant across candidate tokens and cancel in argmin.",
+          "rationale": "E5 and E9 provide measured behavioral structure (entropy stratification and positive-versus-negative cohort-profile difference), but the proposal's precise hard-negative/prefix-diversity statistic is not itself reported (4). Curved distance is in ranking and claimed assignment, yet a matched Euclidean control could reproduce a ranking transform absent a necessity argument (3). It differs from prior successor-geodesic results in using positive-vs-hard-negative contrast, but no traceable literature/ledger analysis is supplied (3). The intended chain to candidate reassignment and prefix discrimination is stated (4), subject to the cancellation objection. No explicit matched controls or falsifier (2). ST candidate term, alpha, distances and sampled negatives are insufficiently reconciled for a uniquely implementable update; numerical safeguards are limited (2). Distinct enough to test, with an informative cancellation/gradient failure mode (3).",
+          "scope_reason": "It combines train-only transitions/co-consumption with curved candidate scoring and ST assignment, but omits explicit matched behavior-off and geometry-off/Euclidean comparison definitions; costs/state must be held fixed across them.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For equal incoming weights on two distinct predecessors, h=sum w^2=1/2, so beta=beta0/2; for a single predecessor h=1, beta=0. Thus the formula downweights the single concentrated context and does not implement a concentration-increasing prior.",
+          "evidence_ids": [
+            "cec2e9652a2479d6/E2",
+            "cec2e9652a2479d6/E5",
+            "cec2e9652a2479d6/E6",
+            "cec2e9652a2479d6/E12",
+            "cec2e9652a2479d6/E13",
+            "cec2e9652a2479d6/E14"
+          ],
+          "idea_id": "incoming_barycenter_sink",
+          "missing_dimensions": [],
+          "objection": "The stated cost is not an assignment distribution despite the Sinkhorn title/mechanism, and its explanation says context-diverse targets are pulled more strongly while beta=beta0(1-h) gives smaller weight to diffuse contexts and stronger weight to concentrated ones.",
+          "rationale": "E5 supports successor concentration variation, but it does not directly measure incoming predecessor-region concentration; score 4 reflects a plausible train-only behavioral problem, not direct confirmation of the exact hypothesis. E12-E14 place Poincare barycenter/distance in assignment, but a matched Euclidean counterpart might reproduce the weighted cost and necessity is not argued (3). Per-item curved barycenter assignment is computationally distinct from listed global balancing and successor losses, without traceable prior art/ledger comparison (3). It specifies the affected first-level assignment and intended prefix/gap direction (4). Three-way matched controls and explicit falsifier absent (2). Operations and sparse cap are given, but differentiability/gradient path through discrete predecessor assignments and boundary safeguards are not fully specified (3). A useful assignment-level failure mode, though in the incoming-context family (3).",
+          "scope_reason": "It uses train-only directed incoming counts in a curved barycenter-based assignment cost, but does not explicitly specify matched behavior-off and Euclidean/geometry-off comparisons and their failure criterion.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If a_i1 is detached after hard argmin, then the derivative of L_i with respect to all candidate assignment logits is zero; the ranking term cannot change which first token is emitted through the assignment pathway.",
+          "evidence_ids": [
+            "8fe55153ebc67f7b/E2",
+            "8fe55153ebc67f7b/E5",
+            "8fe55153ebc67f7b/E6",
+            "8fe55153ebc67f7b/E9",
+            "8fe55153ebc67f7b/E12",
+            "8fe55153ebc67f7b/E13",
+            "8fe55153ebc67f7b/E14"
+          ],
+          "idea_id": "curved_follow_margin",
+          "missing_dimensions": [],
+          "objection": "With hard/straight-through a_i1, the ranking gradient may not reach the assignment logits/code choice as claimed; the loss may only move encoder/codebook representations, and its very small initialized coefficient is fixed thereafter.",
+          "rationale": "E5/E9 show measurable train-only behavioral structure, but not the exact co-consumption hard-negative ranking statistic or its coverage (4). Poincare geodesic distance is explicitly used, but no argument shows curvature adds beyond an appropriately matched Euclidean metric (3). The assignment-level positive/negative ranking is distinct from listed successor-geodesic mechanisms, but lacks prior-art/ledger traceability (3). Prefix discrimination is plausible, but no precise expected assignment change or diagnostic isolates it (3). No explicit three matched controls/falsifier (2). Sampling, maps, distances and scale initialization are implementable, though gradient path and calibration remain risks (3). Its hard-negative failure mode is informative but a variation of ranking-based behavior shaping (3).",
+          "scope_reason": "It names train-only co-consumption positives/near negatives and curved distances on the assigned first-level point, but does not state matched behavior-off and Euclidean/geometry-off controls; it also describes an auxiliary ranking objective without ensuring it changes the candidate assignment itself.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If d(v_k,b_i)^2-d(v_k,b_r)^2 is constant over k (for example all candidate prototypes coincide), then S(i,k) is constant and softmax assignment is uniform; the behavior/geometry contrast supplies no discriminative token choice.",
+          "evidence_ids": [
+            "26b0c7f1824153ae/E2",
+            "26b0c7f1824153ae/E5",
+            "26b0c7f1824153ae/E6",
+            "26b0c7f1824153ae/E9",
+            "26b0c7f1824153ae/E12",
+            "26b0c7f1824153ae/E13",
+            "26b0c7f1824153ae/E14"
+          ],
+          "idea_id": "incoming_context_barycenter",
+          "missing_dimensions": [],
+          "objection": "The written score uses b_i and b_r as candidate-independent scalars for each target; the displayed S_g mixes S with S_base-curved but does not define candidate dependence of the negative barycenter term or the base term sufficiently to guarantee it changes candidate rankings.",
+          "rationale": "E5 supports heterogeneous successor behavior and E9 supports non-degenerate cohort profiles, but neither directly audits this proposal's predecessor-region entropy (4). Curved Fréchet mean and distance act inside candidate scores, but there is no matched Euclidean result or cancellation analysis (3). The joint positive-context/negative-context candidate score is a distinct proposed computation relative to the listed methods, but no traceable prior-art/ledger comparison (3). It names first-token assignment and concentration-stratified prefix/gap observables (4). Controls and a direct refutation criterion are missing (2). The score has unresolved symbols/pathways, and the purported cached barycenter conflicts with current assignment-dependent inputs; cost is not fully reconciled (2). Its failure could distinguish incoming-context attraction from explicit rejection pressure, a useful diagnostic lesson (4).",
+          "scope_reason": "It directly couples train-only incoming transitions and hard negatives to curved candidate scores, but lacks explicit matched behavior-off and Euclidean/geometry-off comparisons. The candidate score/base-score interpolation and barycenter inputs also need a fully specified non-circular computation.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "With one predecessor and a one-hot assignment, q_i equals that predecessor's codepoint; if x_i is already closest to that codepoint, lambda changes no token. This is a concrete case where the behavior pathway has no assignment effect.",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "incoming_ball_sink",
+          "missing_dimensions": [],
+          "objection": "The stated q_i pools predecessor soft code assignments, but the specification then says the hard argmin of C selects the token; it never defines which assignment distribution feeds the next level or Sinkhorn. Sparse support can also omit the code required by context.",
+          "rationale": "E5 supports a substantial, measured successor-entropy/top-1 relationship and E10 gives train-edge coverage, supporting 4 rather than 5 because the exact proposed incoming-context statistic and item coverage are not audited here. E12-E14 establish an actual curved assignment operation, but no matched Euclidean result or cancellation analysis is supplied, so 4. E6 records related successor-geodesic mechanisms already measured; the cost-level change is distinct but not traceably compared with the full ledger, so novelty 3. The cost directly affects tokens and predicts prefix/discrimination changes (4). No specified three-arm controls/failure criterion (2). Ambiguous assignment semantics and no demonstrated budget fit (2). Different assignment pathway, but overlap with measured geodesic successor work limits exploration value (3). No Recall prediction is treated as evidence.",
+          "scope_reason": "It couples train-only predecessor context to Poincare-distance assignment, but does not specify the required behavior-off, matched Euclidean/geometry-off, and both-on comparisons. It also leaves sparse Sinkhorn's hard-argmin output versus its soft assignments used for q_i unclear.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 4.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If gamma=0 (an allowed but unspecified setting), the final token rule reduces to minimizing d_c(y_i,c_k)^2; the ranking loss may update other quantities, but this stated assignment correction cannot change the token.",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "curved_follow_gap",
+          "missing_dimensions": [],
+          "objection": "The objective mixes source-prefix scores s(u,v) with an assignment correction that is not operationally defined: the formula's score contribution, gradients, and how s(u,i) changes a target codeword choice are unspecified, making it unclear that the proposed ranking signal changes emitted SIDs as claimed.",
+          "rationale": "E5 and E10 support a measured behavioral pattern and train graph coverage, but do not directly measure the proposed hard-negative/prefix-entropy statistic (4). Curved distances act in ranking and assignment (E12-E14), but no matched Euclidean control establishes non-reproducibility (3). The contrast is distinguishable from measured successor-geodesic mechanisms in E6, though prior-work/ledger distinction is not fully argued (3). Assignment and discrimination-gap chain is named but implementation of the correction is unclear (4). Three arms and criterion are gestured at, but controls are not specified or shown matched (3). The score/gradient semantics and stated cost accounting are inconsistent enough to keep implementability at 2. It is a distinct contrast mechanism with a useful hard-negative failure lesson (3). No Agent prediction is measurement.",
+          "scope_reason": "It couples transition/co-consumption behavior with Poincare scoring and assignment, but does not actually specify the behavior-off, geometry-off/Euclidean, and both-on comparisons. “Matched controls” in the retention sentence are not defined. The final assignment correction's differentiable score contribution is also underspecified.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For two equally weighted predecessors, h_i=1/2 and beta_i=beta0/2; for one predecessor, h_i=1 and beta_i=0. Thus the formula gives zero context pull to the maximally concentrated case and positive pull to the more diffuse case, contrary to a concentrated-context-prior reading.",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "incoming_barycenter_sink",
+          "missing_dimensions": [],
+          "objection": "The claimed direction of the concentration weighting is internally inconsistent: beta_i=beta0*(1-h_i) makes diffuse contexts receive more barycenter pull, while the prose says to weight inversely by incoming-context concentration and the motivation says compact incoming context should be inherited. This could reverse which targets are changed.",
+          "rationale": "E5/E10 indicate a measured train behavior signal and coverage, but do not audit the proposed incoming concentration statistic by itself (4). Frechet/geodesic operations directly enter assignment (E12-E14), yet a Euclidean counterpart and necessity argument are absent (3). It differs from global balancing and measured successor-geodesic variants but is close to other incoming-context barycenter proposals in this bundle and lacks traceable ledger comparison (3). The barycenter changes candidate costs and predicts assignment/prefix effects (4). Only a keep criterion is given, not three controls or a failure criterion (1). Inputs, iterations, sampling, and cost are specified, though numerical safeguards/differentiability details are limited (3). It is a distinct assignment prior with an informative weighting-direction failure mode (3).",
+          "scope_reason": "It specifies train-only directed incoming counts and a hyperbolic Frechet barycenter in the candidate assignment cost, but omits the required behavior-off, geometry-off/Euclidean, and both-on comparisons. It also describes a leave-one-edge-out barycenter without specifying how edge exclusion is done for item-level cached context.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "No mathematical identity, cancellation, leakage, or dimensional mismatch is asserted; no counterexample is applicable.",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "curved_follow_margin",
+          "missing_dimensions": [],
+          "objection": "The negative pool treats co-consumption zeros as negatives; with sparse training histories, many can be unobserved positives, so the margin may repel valid recommendation targets rather than distinguish behaviorally wrong neighbors.",
+          "rationale": "E5 and E10 show measured behavior structure and train coverage, although not the exact proposed positive/negative pool statistic (4). Poincare distance is applied to assignment-linked ranking gradients (E12-E14); without a matched Euclidean control its added necessity is not established (3). It is distinct from measured successor-geodesic work in E6, but is a fairly routine assignment-level contrast and not fully compared to the ledger (3). The first token is explicitly affected and prefix survival/gap are named (4). Three comparisons are requested and a failure condition is stated, but controls are not concretely matched (3). Sampling, loss, and maps are specified; numerical clipping and the cost claim are not fully substantiated (3). Negative results would test whether curved assignment-level exclusion helps over positive cohesion (3).",
+          "scope_reason": "It couples train-only co-consumption positives/hard negatives to curved distances at the actual first-token assignment, but does not name the required behavior-off, Euclidean/geometry-off, and both-on comparisons. Requiring that “both-on beats each control” does not define matched control implementations.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "With eta>0, d(v_k,b_i)^2 fixed, candidate A at d(v_A,b_r)=2 has S_A lower by 4*eta than candidate B at d(v_B,b_r)=0. Minimizing S therefore selects A, which is farther from the negative; this demonstrates the sign rewards negative separation, not rejection. If the intended meaning was attraction/rejection in the opposite direction, the equation and prose need reconciliation.",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13"
+          ],
+          "idea_id": "incoming_context_barycenter",
+          "missing_dimensions": [],
+          "objection": "The candidate score S(i,k)=d(v_k,b_i)^2-eta*d(v_k,b_r)^2 rewards proximity to the negative's barycenter as written: minimizing S subtracts the negative distance, so increasing distance to b_r lowers S and attracts candidates toward the negative context rather than rejecting it.",
+          "rationale": "E5/E10 support the broad train behavior signal and coverage, but not the exact proposed predecessor-region entropy/gating statistic (4). E12/E13 identify curved barycenters/distances in assignment; no matched Euclidean control argues necessity (3). The joint barycenter-plus-negative assignment score is a distinct computation, but closely related to the other incoming-barycenter proposals and not traced against the full ledger (3). Assignment, prefix survival, and gap effects are named (4). A both-controls criterion and stratified diagnostic are given, but no specified matched three-arm protocol or explicit refutation is supplied (3). The cached barycenter/soft assignment semantics, sign issue, and numerical safeguards leave substantial implementation ambiguity (2). It offers a useful independent test of incoming-context scoring and rejection sign (3). No predicted Recall value is treated as measurement.",
+          "scope_reason": "It explicitly combines training-only incoming transitions and hard negatives with curved candidate assignment scores, but does not specify the required behavior-off, geometry-off/Euclidean, and both-on comparisons. In addition, the score uses a barycenter for the negative item but does not define the negative item's role as a destination/context in enough detail to disambiguate the intended contrast.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "If hard argmin of C is the only exported assignment and all later q_i use those hard assignments, changing Sinkhorn marginals while keeping C fixed leaves every token unchanged; this does not establish that Sinkhorn itself changes SID assignment.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E4",
+            "E5",
+            "E6",
+            "E8",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "incoming_ball_sink",
+          "missing_dimensions": [],
+          "objection": "The balanced normalization appears not to affect the emitted token: the specification says to take hard argmin of C after Sinkhorn, so the balancing step may be computationally disconnected from hard assignments except indirectly through later soft predecessor assignments.",
+          "rationale": "The measured train successor-entropy gradient and its coverage support a testable incoming-context hypothesis (E5, E10), but do not directly measure incoming-context barycenter utility, so 4 rather than 5. Curved distance is inside assignment (E12-E14), but there is no matched Euclidean argument or cancellation analysis, hence 3. It is distinct in computation from the measured successor-geodesic and resampling mechanisms in E6, but a traceable prior-art/ledger comparison is unavailable: 3. Assignment and prefix effects are named, though the final mechanism and expected direction lack a fully discriminating diagnostic: 4. The proposal gives broad keep criteria but not three matched controls and a failure criterion: 2. Sparse implementation is specified, but projection/boundary safeguards, Sinkhorn stability, and reconciled cost are incomplete: 3. A different assignment mechanism with an informative failure mode: 3.",
+          "scope_reason": "Training-only directed predecessors form q_i, which participates with item content in the curved per-code assignment cost; Poincare distance determines the actual token. Sinkhorn's role in the final token selection is unclear because hard argmin is stated on C, not the Sinkhorn output.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For any two codewords k=1,2 with base costs A_1=1 and A_2=2, adding the same scalar g=s(u,i)-mean_n s(u,n) gives A_1-g=1-g and A_2-g=2-g; argmin remains k=1 for every g.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "curved_follow_gap",
+          "missing_dimensions": [],
+          "objection": "The score contribution used to adjust final-level assignment is s(u,i)-mean_n s(u,n), which has no dependence on k; subtracting it from every candidate cost cannot change the argmin, so the claimed direct assignment correction is inert.",
+          "rationale": "Train-only transitions/negative construction is plausible and the bundle measures successor structure and positive-vs-negative profile signal (E5, E9), but the exact proposed hard-negative relation is not itself audited: 3. Poincare distances act in the ranking loss (E12-E14), yet matched Euclidean necessity is not argued: 3. Distinctive components are combined, but measured successor-geodesic mechanisms already exist (E6) and no cited-work/ledger trace is supplied: 2. There is a plausible ranking-to-codebook-to-SID chain, but the explicit assignment correction cancels and diagnostics do not isolate that chain: 3. The proposal states both-on/control language but not three matched controls or a precise falsifier: 2. Sampling is implementable in principle, but the chosen source-prefix point, score gradients, gamma, and numerical safeguards are underspecified: 2. This is near existing successor-geodesic work (E6), with the cancellation itself a useful implementation lesson: 2.",
+          "scope_reason": "Train transitions and training-only co-consumption negatives enter a Poincare-distance ranking loss; that loss updates the prefix code point/codebook and is intended to affect assignments. However, the stated assignment correction is constant across candidate code k and therefore does not itself re-rank candidates.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "With two equally weighted predecessor points at opposite locations on a geodesic, the Fréchet mean is the midpoint; if candidate prototypes are only at the two predecessor locations, both pay the same positive context penalty, so the term does not select a predecessor region or resolve the stated ambiguity.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "incoming_barycenter_sink",
+          "missing_dimensions": [],
+          "objection": "The claimed rule that context-diverse targets are pulled more strongly is questionable: beta_i=beta0*(1-h_i) is largest for diffuse incoming weights, but a barycenter can lie between distinct predecessor regions and be far from all of them, making the extra cost favor an unrepresentative compromise code.",
+          "rationale": "The behavior statistic supports successor predictability stratification (E5), but the bundle does not report incoming-predecessor concentration or its assignment relation: 3. The curved barycenter/distance directly affects assignment (E12-E14), though no matched Euclidean control is analyzed: 3. The assignment-time barycenter is distinct from measured coarse successor-geodesic mechanisms (E6), but no traceable prior-art/ledger audit: 3. It names the affected first-level assignment and expected prefix/gap effects; the expected direction is plausible but not assured by the barycenter geometry: 4. A keep criterion exists but three matched controls and a falsifier are not fully specified: 2. Iterative maps and sparse sampling are given, but projection/clipping safeguards and cost accounting need clarification: 3. Different mechanism and a meaningful negative lesson about averaging heterogeneous contexts: 3.",
+          "scope_reason": "Train-only incoming predecessor counts determine a weighted predecessor-code barycenter, and its Poincare distance to candidate codewords enters the item assignment cost. The proposal couples behavior and curvature in the quantizer itself.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If the straight-through path is detached or the sampled loss gradient is zero for a minibatch, the ranking term updates no assignment logits/codebook for that minibatch, leaving the quantizer's assignments exactly at their reconstruction-only values.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "curved_follow_margin",
+          "missing_dimensions": [],
+          "objection": "The margin loss is an auxiliary ranking objective rather than the same score used by the baseline quantizer's candidate assignment; whether its straight-through gradient materially changes assignments is uncertain, and the stated initial scale is very small.",
+          "rationale": "Train-only co-consumption positives and mined negatives are a plausible, testable signal, but the bundle's measured profile contrast is related rather than a direct audit of this cosine mining rule (E9): 3. Curved distance acts on assigned first-level points in the ranking loss (E12-E14), but no evidence establishes superiority to a matched Euclidean margin: 3. Similarity to existing successor-geodesic/behavioral objectives is substantial (E6); no cited-work trace: 2. A plausible margin-to-first-token-to-prefix survival chain is given, but exact expected effect is not established: 3. Both-on versus controls and a retain condition are stated, though matching and a specific failure threshold are weak: 3. Sampling and cost are implementable, but curvature/map clipping safeguards and gradient-through-hard-assignment details need care: 3. It is a small variation on behavior ranking/geodesic mechanisms already measured: 2.",
+          "scope_reason": "Training-only co-consumption positives and hard negatives define a Poincare-distance margin against the actual first-level quantized point; gradients through the straight-through assignment can change emitted tokens.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "No mathematical identity, cancellation, leakage, or dimensional mismatch is asserted here; the concrete failure case is diffuse-context cancellation: if b_i=b_r, then S(i,k)=0 for every k, so the contrast provides no candidate discrimination regardless of eta.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "incoming_context_barycenter",
+          "missing_dimensions": [],
+          "objection": "The assignment score is not fully specified: S_base-curved is undefined, the negative barycenter's construction is ambiguous, and the entropy gate is described both as current-assignment-derived and train-count-derived, so distinct implementations can produce materially different tokens.",
+          "rationale": "The train-only incoming-transition signal is plausible and successor structure is measured (E5), but no statistic audits this proposal's incoming-region concentration/hard-negative coverage: 3. Poincare barycenters and distances enter candidate scoring (E12-E14), but the matched Euclidean alternative and necessity argument are absent: 3. It combines assignment-time incoming barycenters and rejection contrast, distinct from the measured mechanisms in E6, but prior-art/ledger traceability is missing: 3. First-token assignment and gold-prefix survival are named with concentration strata and a proposed direction: 4. Controls and diagnostic dimensions are named, but explicit matched three-arm definitions and a crisp refutation criterion are incomplete: 3. As written it is not fully implementable without defining S_base-curved, gate timing, and negative-barycenter inputs; risks and cost are also not convincingly resolved: 2. A distinct coupled failure mode (barycenter attraction plus rejection) would be informative if it fails: 3.",
+          "scope_reason": "Train-only directed predecessor distributions and co-consumption hard negatives contribute to candidate scores built from Poincare barycenters/distances; behavior and geometry enter the actual first-token assignment computation. The definition of S_base-curved and gating equation is incomplete, limiting reproducibility but not removing the stated coupling.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    }
+  ],
+  "round_id": "round_20261027_031345_66",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "incoming_ball_sink",
+        "status": "BACKUP",
+        "weighted_score": 3.25
+      },
+      {
+        "idea_id": "incoming_barycenter_sink",
+        "status": "BACKUP",
+        "weighted_score": 3.25
+      },
+      {
+        "idea_id": "curved_follow_margin",
+        "status": "BACKUP",
+        "weighted_score": 3.2
+      }
+    ],
+    "disagreement": {
+      "curved_follow_gap": 1.0,
+      "curved_follow_margin": 1.0,
+      "incoming_ball_sink": 1.0,
+      "incoming_barycenter_sink": 1.0,
+      "incoming_context_barycenter": 1.0
+    },
+    "disputed": {
+      "curved_follow_gap": [],
+      "curved_follow_margin": [],
+      "incoming_ball_sink": [],
+      "incoming_barycenter_sink": [],
+      "incoming_context_barycenter": []
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": false,
+          "pair": [
+            "incoming_ball_sink",
+            "incoming_barycenter_sink"
+          ],
+          "votes": {
+            "incoming_ball_sink": 3,
+            "incoming_barycenter_sink": 0
+          },
+          "winner": "incoming_ball_sink"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "incoming_ball_sink",
+            "incoming_context_barycenter"
+          ],
+          "votes": {
+            "incoming_ball_sink": 0,
+            "incoming_context_barycenter": 3
+          },
+          "winner": "incoming_context_barycenter"
+        },
+        {
+          "disagreement": true,
+          "pair": [
+            "incoming_barycenter_sink",
+            "incoming_context_barycenter"
+          ],
+          "votes": {
+            "incoming_barycenter_sink": 1,
+            "incoming_context_barycenter": 2
+          },
+          "winner": "incoming_context_barycenter"
+        }
+      ],
+      "copeland": {
+        "curved_follow_gap": 0,
+        "curved_follow_margin": 0,
+        "incoming_ball_sink": 0,
+        "incoming_barycenter_sink": -2,
+        "incoming_context_barycenter": 2
+      },
+      "cycles": [],
+      "position_bias": {
+        "first_listed_wins": 7,
+        "second_listed_wins": 2
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "incoming_ball_sink",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.25
+      },
+      {
+        "idea_id": "incoming_barycenter_sink",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.25
+      },
+      {
+        "idea_id": "curved_follow_margin",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.2
+      },
+      {
+        "idea_id": "curved_follow_gap",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.15
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "copeland": 2,
+        "idea_id": "incoming_context_barycenter",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "weighted_score": 3.25
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  }
+}

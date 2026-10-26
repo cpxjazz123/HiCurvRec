@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "repair_incoming_context_barycenter_r7",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1793037864.6049101,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "ab212be6b7c1e4a8b20521f88622d172d47f48ba261035d1181c1969ae693c0c",
+  "isolation_policy": "opencode v2 permission object: bash allowed (this role runs the smoke test), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "repair.txt",
+  "output_sha256": "43e0b41d2db244e7311f23bf75d279fcc96bb4be32be015e1d22fbd7a547f031",
+  "pid": 3294258,
+  "project_marker": ".git",
+  "prompt_sha256": "8219b27ca546f83f79aa9f20537208d64b239e237cae5826f37acfafd7406bd0",
+  "session_sha256": "f9bb7faedb1e26dfee82a956d65dde2b25727b6b2204888e17f4ce77f50db1af",
+  "stderr_present": false,
+  "task_id": "repair_incoming_context_barycenter_r7",
+  "timed_out": false,
+  "verified": true
+}

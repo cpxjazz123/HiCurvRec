@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:331-352,120-183,423-425 | Traced training-parquet transition/co-consumption construction into barycenter contrast candidate logits and trainer loss; smoke_test.py:19-26 exercises behavior/geometry controls.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The train-only signal and Poincare distance meet in the actual candidate-score pathway. No fidelity defect found.
+FINDING REPRODUCTION: Read train_rqvae.py:331-352 and 150-183, then follow its call at 423-425.
+FINDING CORRECTION: none
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:120-183,423-431 | Static forward/backward trace; smoke_test.py:21-30 asserts finite loss and first codebook gradient, and compares behavior-off/Euclidean outputs.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:176-183
+FINDING DETAIL: The coupled candidate score's assignment target is computed as nearest Euclidean code to x (line 182), and cross-entropy trains logits to reproduce that target. The soft candidate distribution does not drive the RQ-VAE straight-through assignment or replace its hard quantizer; the model's actual SID assignment remains the unchanged Euclidean VQLayer at model/layers.py:98-113,121. Thus the behavior/geometry term updates prototype parameters but does not make a coupled assignment pathway govern SID selection. Also the supplied smoke's Euclidean and behavior-off comparisons compare scalar losses only; it does not establish assignment/gradient changes and reversibility as requested.
+FINDING REPRODUCTION: Counterexample: hold x and codes fixed, change incoming contexts or geometry. The RQ-VAE `get_indices` path still selects via Euclidean `_distances`/argmin in model/layers.py:106-113, independent of incoming_assignment_loss. In the auxiliary loss, target remains Euclidean argmin (train_rqvae.py:182), so it is explicitly self-distillation of that assignment.
+FINDING CORRECTION: Integrate coupled logits/probabilities into the first-level quantizer's forward/straight-through assignment used by RQVAE.forward and get_indices, with a differentiable training path and matching deterministic inference assignment; add controls that compare SID assignments and gradients for both-on, behavior-off, and Euclidean modes.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:41-68,308-360,490-533,540-568 | Inspected trainer entry/launcher, frozen train parquet path, candidate-specific result root, indexed export loop, collision extension, and GENREC_SINGLE_GPU branch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Trainer resolves its own promoted candidate output under results/stage2_RQ-VAE/TIGER_incoming_context_barycenter; reads the frozen stage0 train parquet; exports rows keyed by enumerated item ID with unique extension; launcher honors GENREC_SINGLE_GPU="1" and otherwise retains torchrun. No integration defect found by static inspection. Runtime execution was not performed.
+FINDING REPRODUCTION: Inspect constants and path resolution at train_rqvae.py:43-68, data loading at 322-324, SID export at 519-531, and launcher at 540-568.
+FINDING CORRECTION: none

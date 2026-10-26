@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:120-183, 419-424; model/layers.py:187-218, 282-302 | Static source trace: train.parquet adjacent history→target counts and co-consumption negatives are constructed at train_rqvae.py:330-352. The helper calculates Poincare candidate contrast logits, and the trainer passes them as first_assignment_logits at :419-422. However, the receiving quantizer never reads that argument: VQLayer.forward calls _indices(self._distances(latent), ...) at model/layers.py:194; ResidualVQ forwards the argument but its consumption does not alter indices (:293-302).
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:187-218
+FINDING DETAIL: The declared behaviour×geometry pathway is computed but disconnected from the actual SID assignment and quantization loss. Thus it is not behaviorally/geometrically coupled in the exercised mechanism; the model continues using its ordinary Euclidean quantizer. The candidate's smoke test only asserts that its helper logits have differing argmaxes and then separately backpropagates standard reconstruction/VQ losses; it does not establish that those logits control the model assignment.
+FINDING REPRODUCTION: In the trainer pass arbitrary assignment_logits to model(..., first_assignment_logits=...). At model/layers.py:194 the chosen indices are still _indices(_distances(latent), infer_use_sk); first_assignment_logits is unused. Therefore replacing logits with any values leaves the quantizer's index selection unchanged. smoke_test.py:24-27 checks helper logits independently and should fail its assigned==hyperbolic.argmax assertion once actual assignment wiring is enforced.
+FINDING CORRECTION: Wire first_assignment_logits into VQLayer's first-level candidate index/soft assignment computation and ensure its differentiable objective contributes to optimized loss; keep subsequent residual levels and controls consistent. Update smoke to prove both-on changes actual assigned first SID and gradients, and that behavior-off and Euclidean geometry restore their corresponding control paths.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:120-183, 419-430; model/layers.py:187-218, 282-302 | Static autograd/path trace and inspection of provided smoke_test.py:17-30. The score helper can differentiate through code embeddings, but its output does not reach the actual quantizer indices or loss. The real model loss backward therefore trains only existing reconstruction/VQ paths, not this intended assignment mechanism.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:194-218
+FINDING DETAIL: No effective assignment gradient/path exists from incoming_assignment_loss logits into the real forward/backward: the optional parameter is ignored. The smoke is invalid evidence for this claim: it separately checks the logits' argmax and then computes a loss without using the logits to select codes (and its assertion comparing assigned[:,0] to the independent logits would not be supported by this implementation). The required both-on versus behavior-off/Euclidean effects on real SID assignment and gradients are therefore absent. Numerical stability of the isolated helper does not remedy the dead integration.
+FINDING REPRODUCTION: Follow the supplied smoke invocation into VQLayer.forward: indices are calculated exclusively from _distances(latent), so changing helper logits cannot affect output tokens. Run smoke_test.py after fixing its path/import setup; its assertion at line 27 exposes the ignored logits.
+FINDING CORRECTION: First connect logits to the actual candidate assignment and optimized loss; then make the smoke compare actual model assignments and finite backward gradients across both-on, behavior-off, and Euclidean settings. Runtime GPU execution is not requested here.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:48-68, 308-352, 539-567; train_rqvae.py:517-530 | Static entry-point and path audit: repository root is found by stage2_RQ-VAE marker; embedding input is stage1 sentence_t5.npy and training behavior derives from stage0 train.parquet. Results/checkpoint/SID outputs resolve to results/stage2_RQ-VAE/TIGER_incoming_context_barycenter, the required candidate-specific promoted path. Export enumerates SID rows as item ids 0..N-1 and writes JSON plus NPY. Top-level entry invokes _launch_via_torchrun then main; the launcher honors RANK and GENREC_SINGLE_GPU, otherwise starts the configured four-rank torchrun.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by static inspection. Output is candidate-scoped and inside repository; frozen training data, indexed export, and distributed/single-card branches are present. Trainer execution was not attempted, consistent with the stated sandbox limitation.
+FINDING REPRODUCTION: Trace _repository_root/RESULT_DIR and inputs at train_rqvae.py:48-68; export at :517-530; launcher env branch at :539-567. Set GENREC_SINGLE_GPU=1 to bypass subprocess launch and enter main directly.
+FINDING CORRECTION: No correction required.

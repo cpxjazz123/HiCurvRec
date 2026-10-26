@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:331-352,120-183,419-422; model/layers.py:115-156 | Inspected the train-parquet transition/co-consumption construction, traced incoming_assignment_loss into RQVAE's first VQ layer, and inspected smoke_test.py:17-23,25-36 for both-on, behavior-off, and Euclidean comparisons. The smoke script is present but was not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking finding. Training-only directed incoming predecessors and co-consumption negatives produce barycenters from first-level code prototypes; Poincare projection/geodesic distance jointly scores each candidate, and these logits are consumed by first-level quantization and its soft assignment loss. This is one coupled assignment pathway, not an auxiliary behavior loss.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:334-352 builds counts/negative items from TRAIN_FILE; :151-173 forms targets; :179-183 computes curved candidate logits; :419-422 passes them into the model; model/layers.py:123-156 uses them for hard and soft first-level assignments.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/smoke_test.py:19-36; train_rqvae.py:120-183,419-430; model/layers.py:123-156 | Performed a source-level forward/backward trace (runtime unavailable as specified). The smoke script explicitly compares assignment outputs under both-on/behavior-off/Euclidean modes, checks finite loss and nonzero finite first-codebook gradients, and calls backward; these assertions were inspected, not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The coupled logits remain connected to prototype parameters through barycenter construction and geodesic scoring, and VQLayer consumes their softmax in both quantization and quantization loss. Detached predecessor-region selection is intentional; it does not detach the resulting prototype barycenter. Projection bounds Poincare points inside the ball and the acosh argument is capped, avoiding the identified float32 overflow hazard. The source provides explicit control comparisons.
+FINDING REPRODUCTION: Inspect train_rqvae.py:163-183 and model/layers.py:142-156 for the differentiable score-to-loss path; inspect smoke_test.py:19-36 for the minimal runtime assertions intended to exercise it.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:41-68,308-353,489-566; stage3_T5Train/train_HG-Rec.py:88 | Inspected the trainer entry point, path derivation, frozen embedding/train inputs, export/index construction and launcher branches. Verified the candidate output resolves beneath results/stage2_RQ-VAE/TIGER_incoming_context_barycenter, the candidate's own promoted directory; checked the single-card environment variable name against the Stage3 trainer. Runtime execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the repository's stage1 sentence_t5.npy and stage0 train.parquet, derives its result path from the repository root and its candidate-specific ARM_NAME, and exports rows keyed by zero-based item ID with collision extension. The torchrun launch has both an already-launched and GENREC_SINGLE_GPU="1" bypass branch. No out-of-repository or baseline-output write was found.
+FINDING REPRODUCTION: Trace train_rqvae.py:43-68 for path resolution; :322-353 for frozen data and training-only signal; :517-530 for full embedding-order export and JSON keys; :539-567 for launcher behavior. Stage3 SINGLE_GPU_ENV is declared at stage3_T5Train/train_HG-Rec.py:88.
+FINDING CORRECTION: Not applicable.
