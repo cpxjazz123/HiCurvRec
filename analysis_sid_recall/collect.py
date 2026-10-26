@@ -221,6 +221,69 @@ def collect_stage3_runs() -> list:
     return runs
 
 
+
+def history_stage3_runs() -> list:
+    """Stage 3 runs that only exist in the git history.
+
+    The working tree keeps a fraction of the runs: ``results/stage3_T5Train`` is
+    large and mostly untracked. The history has both the per-run
+    ``training_metrics.jsonl`` (which names the ``code_path`` a run generated from)
+    and, for many runs, the ``test_final.json`` beside it.
+    """
+    import re
+
+    entries: dict[str, dict] = {}
+    for line in git("rev-list", "--all", "--objects").splitlines():
+        parts = line.split(" ", 1)
+        if len(parts) != 2:
+            continue
+        blob, path = parts
+        if not re.search(r"stage3_T5Train/.+/(training_metrics\.jsonl|test_final\.json)$", path):
+            continue
+        run_dir = str(Path(path).parent)
+        entry = entries.setdefault(run_dir, {})
+        kind = "metrics" if path.endswith("training_metrics.jsonl") else "final"
+        entry.setdefault(kind, blob)
+
+    runs = []
+    for run_dir, blobs in entries.items():
+        code_path = None
+        metrics = {}
+        if blobs.get("metrics"):
+            for line in git("cat-file", "blob", blobs["metrics"]).splitlines():
+                if '"train_start"' in line and code_path is None:
+                    try:
+                        code_path = json.loads(line).get("code_path")
+                    except ValueError:
+                        pass
+                elif '"test"' in line and not metrics:
+                    try:
+                        event = json.loads(line)
+                    except ValueError:
+                        continue
+                    metrics = {"test_recall@5": event.get("test_recall_at_5"),
+                               "test_recall@10": event.get("test_recall_at_10"),
+                               "test_ndcg@5": event.get("test_ndcg_at_5"),
+                               "test_ndcg@10": event.get("test_ndcg_at_10"),
+                               "n_eval": event.get("n_eval")}
+        if blobs.get("final"):
+            try:
+                final = json.loads(git("cat-file", "blob", blobs["final"]))
+            except ValueError:
+                final = {}
+            for key in ("test_recall@5", "test_recall@10", "test_ndcg@5", "test_ndcg@10",
+                        "n_eval"):
+                if final.get(key) is not None:
+                    metrics[key] = final[key]
+            code_path = code_path or final.get("code_path")
+        if not code_path or metrics.get("test_recall@10") is None:
+            continue
+        relative = run_dir.split("results/", 1)[-1]
+        variant = relative.split("/")[1] if "/" in relative else ""
+        runs.append({"variant": variant, "run_dir": "results/" + relative,
+                     "code_path": code_path, "metrics": metrics})
+    return runs
+
 def write_sid_files(blobs: dict) -> dict:
     """Write every distinct SID table into ``sids/`` and report the file name."""
     SID_DIR.mkdir(parents=True, exist_ok=True)
@@ -264,6 +327,13 @@ def main() -> int:
     blobs = collect_sid_blobs()
     collect_working_tree_sids(blobs)
     runs = collect_stage3_runs()
+    known = {(run["variant"], run["run_dir"]) for run in runs}
+    for run in history_stage3_runs():
+        if (run["variant"], run["run_dir"]) in known:
+            continue
+        runs.append(run)
+        known.add((run["variant"], run["run_dir"]))
+    print(f"Stage 3 runs considered  : {len(runs)}")
 
     by_sha = {entry["sha256"]: digest for digest, entry in blobs.items()}
     pairs = []
@@ -373,52 +443,46 @@ def main() -> int:
         path.unlink()
     for pair in pairs:
         run = REPO / pair["run_dir"]
-        source = run / "test_final.json"
-        if not source.is_file():
-            source = run / "training_metrics.jsonl"
-        if not source.is_file():
-            continue
-        target = recalls / (pair["variant"].replace("/", "__") + "__" +
-                            Path(pair["run_dir"]).name + ".json")
-        # Each recall file states the SID it was produced from, so the pairing is
-        # verifiable inside the file and a recall without its SID can be dropped.
-        payload = {}
-        if source.name == "test_final.json":
+        # The metrics live in the pair already (they came from the run's own record).
+        # The raw file is merged in when the run still exists locally, so the
+        # checkpoint path and any extra field survive; a history-only run has no
+        # local file and its recall is written from the pair itself.
+        payload = {"test_recall@5": pair.get("test_recall@5"),
+                   "test_recall@10": pair.get("test_recall@10"),
+                   "test_ndcg@5": pair.get("test_ndcg@5"),
+                   "test_ndcg@10": pair.get("test_ndcg@10"),
+                   "n_eval": pair.get("n_eval")}
+        final = run / "test_final.json"
+        metrics_file = run / "training_metrics.jsonl"
+        if final.is_file():
             try:
-                payload = json.loads(source.read_text())
+                payload.update(json.loads(final.read_text()))
             except ValueError:
-                payload = {}
-        else:
-            for line in source.read_text(errors="replace").splitlines():
+                pass
+        elif metrics_file.is_file():
+            for line in metrics_file.read_text(errors="replace").splitlines():
+                if '"train_start"' in line:
+                    try:
+                        payload.setdefault("train_start", json.loads(line))
+                    except ValueError:
+                        pass
                 if '"test"' in line:
                     try:
-                        payload = json.loads(line)
+                        payload.setdefault("test_event", json.loads(line))
                     except ValueError:
-                        payload = {}
-                    break
+                        pass
+        target = recalls / (pair["variant"].replace("/", "__") + "__" +
+                            Path(pair["run_dir"]).name + "__" +
+                            pair["sid_sha256"][:12] + ".json")
         payload["paired_sid"] = {
             "sha256": pair["sid_sha256"],
             "file": names[pair["sid_sha256"]],
             "paths": pair["sid_paths"],
             "code_path": pair["code_path"],
+            "resolution": pair.get("sid_resolution"),
         }
         payload["stage3_run"] = {"variant": pair["variant"], "run_dir": pair["run_dir"]}
         target.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
-    with (OUT / "sid_recall_alternatives.csv").open("w", newline="", encoding="utf-8") as handle:
-        fields = ["sid_sha256", "variant", "run_dir", "test_recall@5", "test_recall@10",
-                  "test_ndcg@10", "n_eval", "note"]
-        writer = csv.DictWriter(handle, fieldnames=fields)
-        writer.writeheader()
-        for row in alternatives:
-            writer.writerow({key: row.get(key) for key in fields})
-    if unpaired_runs:
-        with (OUT / "stage3_runs_without_sid.csv").open("w", newline="", encoding="utf-8") as handle:
-            fields = ["variant", "run_dir", "code_path", "test_recall@5", "test_recall@10",
-                      "test_ndcg@5", "test_ndcg@10", "n_eval", "reason"]
-            writer = csv.DictWriter(handle, fieldnames=fields)
-            writer.writeheader()
-            for run in unpaired_runs:
-                writer.writerow({key: run.get(key) for key in fields})
     (OUT / "sid_recall.json").write_text(json.dumps(
         {"pairs": pairs, "inventory": inventory}, indent=2, ensure_ascii=False),
         encoding="utf-8")

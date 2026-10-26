@@ -9,9 +9,9 @@ generated from it. Collected read-only by `collect.py` (re-runnable).
 |---|---|
 | SID files in `sids/` (paired only) | 25 |
 | SID contents seen in the history (577 in total) | 577 |
-| SID + recall pairs (one per SID) | 25 |
-| Stage 3 runs the pairs were chosen from | 32 |
-| Stage 3 runs whose SID table no longer exists | 66 (in `stage3_runs_without_sid.csv`) |
+| SID + recall pairs (one per SID) | 67 |
+| Stage 3 runs the pairs were chosen from | 88 |
+| Stage 3 runs whose SID table no longer exists | 127 (in `stage3_runs_without_sid.csv`) |
 | recall source files copied to `recalls/` | 92 |
 
 `sid_recall.csv` / `sid_recall.json` hold one row per (SID content, Stage 3 run) pair with
@@ -21,7 +21,7 @@ event. `sid_inventory.csv` holds one row per **paired** SID content with its pre
 the best recall it ever reached.
 
 The directory keeps **only the paired** SIDs and **only recalls that name a paired SID**:
-25 SID files and 25 recall files — **one SID paired with exactly one recall** — and every
+67 SID files and 67 recall files — **one SID paired with exactly one recall** — and every
 recall file carries the `paired_sid` block
 (the SID's sha256, its file name, its paths and the run's own `code_path`), so the pairing
 is verifiable inside the file.
@@ -39,10 +39,14 @@ still exists (`working_tree`) and the earliest surviving version for a path comm
 after the run (`earliest_surviving`).
 
 That correction is why the numbers are much smaller than a naive path-based pairing:
-66 of the 98 Stage 3 runs used a table that exists neither in the working tree nor in the
+127 of the 215 Stage 3 runs used a table that exists neither in the working tree nor in the
 history, so they cannot be paired at all -- their recalls are listed separately in
 `stage3_runs_without_sid.csv` (the best of them is 0.064068) rather than being attributed
-to a table they did not use. The 498 unpaired tables
+to a table they did not use.
+
+39 of the 67 pairs resolve through the `earliest_surviving` fallback: the table was committed
+after the run, so the file is the only surviving copy of it but not provably the exact
+version the run read. Those rows say so in `sid_resolution`. The 498 unpaired tables
 that the history also contains were pruned; they stay recoverable from the git history, and
 `python analysis_sid_recall/collect.py` (without `--paired-only`) writes them again.
 
