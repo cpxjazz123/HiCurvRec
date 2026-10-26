@@ -425,11 +425,14 @@ def main():
         "single_historical_sid_version",
     }
     strict = [r for r in resolved if r.get("sid_status") in strict_status]
+    fingerprinted = [r for r in resolved if r.get("sid_status") == "inventory_sha16_match"]
     unique = unique_sids(resolved)
+    unique_fingerprinted = unique_sids(fingerprinted)
     corr = (
         correlations(resolved, "all_run_selected_sid")
         + correlations(unique, "unique_sid_mean_recall")
         + correlations(strict, "inventory_or_unique_version")
+        + correlations(unique_fingerprinted, "inventory_fingerprint_unique_sid")
     )
     write_csv(OUT / "historical_87_pairs.csv", rows)
     write_csv(OUT / "sid_recall_correlations.csv", corr)
@@ -443,6 +446,8 @@ def main():
         "rows_with_logged_code_path": sum(bool(r.get("code_path_logged")) for r in rows),
         "rows_with_selected_sid_blob": len(resolved),
         "inventory_or_unique_version_rows": len(strict),
+        "inventory_sha16_match_rows": len(fingerprinted),
+        "unique_inventory_fingerprint_sid_hashes": len(unique_fingerprinted),
         "ambiguous_version_rows": sum(str(r.get("sid_status", "")).startswith("ambiguous") for r in rows),
         "unresolved_rows": sum(not r.get("sid_sha256") for r in rows),
         "unique_selected_sid_hashes": len(unique),
@@ -457,13 +462,14 @@ def main():
         f"- Numeric Recall@10: {len(numeric)}",
         f"- SID blobs selected from Git history: {len(resolved)}",
         f"- Inventory fingerprint or unique configuration/version matches: {len(strict)}",
+        f"- Stored 16-character inventory fingerprint matches: {len(fingerprinted)} rows / {len(unique_fingerprinted)} unique SIDs",
         f"- Ambiguous version choices: {summary['ambiguous_version_rows']}; unresolved rows: {summary['unresolved_rows']}",
         f"- Unique selected SID SHA-256 values: {len(unique)}", "",
         "The pair CSV contains one row per historical test_final path, with Recall@10, "
         "SID path, selected SID SHA-256, resolution status, and derived structural features. "
         "The artifact includes the selected historical SID JSON files under sid_blobs/.", "",
     ]
-    for scope in ("all_run_selected_sid", "unique_sid_mean_recall", "inventory_or_unique_version"):
+    for scope in ("all_run_selected_sid", "unique_sid_mean_recall", "inventory_or_unique_version", "inventory_fingerprint_unique_sid"):
         subset = [r for r in corr if r["scope"] == scope]
         report.extend([f"## {scope.replace('_', ' ')}", ""])
         if not subset:
@@ -504,6 +510,24 @@ def main():
         report.append("The discovered run count differs from 87; do not describe this as a complete 87-run analysis.")
     if len(resolved) != EXPECTED_RUNS:
         report.append("Some runs lack a recoverable SID blob; inspect sid_status before claiming full SID coverage.")
+    fingerprint_sig = [
+        r for r in corr
+        if r["scope"] == "inventory_fingerprint_unique_sid"
+        and finite(r.get("spearman_q_bh")) and float(r["spearman_q_bh"]) < 0.05
+    ]
+    if fingerprint_sig:
+        report.append(
+            "Within the stored-inventory-fingerprint-only unique-SID subset, BH-adjusted "
+            "q < 0.05 for: " + "; ".join(
+                f"{r['feature']} (rho={fmt(r['spearman_rho'])}, q={fmt(r['spearman_q_bh'])})"
+                for r in fingerprint_sig[:5]
+            ) + "."
+        )
+    else:
+        report.append(
+            f"In the {len(unique_fingerprinted)} unique SIDs matched to the stored 16-character "
+            "inventory fingerprint, no tested structural feature has BH-adjusted q < 0.05."
+        )
     report.extend([
         "",
         "An inventory SHA-prefix match is direct fingerprint evidence. A unique SID "
