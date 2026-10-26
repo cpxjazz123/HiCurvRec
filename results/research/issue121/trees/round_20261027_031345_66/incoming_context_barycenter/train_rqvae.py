@@ -113,7 +113,7 @@ BEHAVIOUR_ON = True
 GEOMETRY = "poincare"
 CURVATURE = 1.0
 CONTEXT_WEIGHT = 0.10
-BALANCED_ASSIGNMENT = True   # iteration 3: Sinkhorn-balance the coupled assignment
+BALANCED_ASSIGNMENT = False  # iteration 4: the offset keeps the spread, the balance is off
 CONTEXT_TEMPERATURE = 0.2
 SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"
 
@@ -202,13 +202,25 @@ def incoming_assignment_loss(model: RQVAE, batch_ids: torch.Tensor,
     bias = bias / bias.abs().mean(dim=-1, keepdim=True).clamp_min(eps)
     gate = (concentration[batch_ids].unsqueeze(-1) if concentration is not None
             else torch.ones_like(bias[:, :1]))
-    # Iteration 3: with the Sinkhorn balance active on the assignment the
-    # behaviour/curvature cost can enter at full strength; the balance, not a
-    # small weight, is what prevents the collapse.
+    # Iteration 4. Iterations 1-3 all let the shared context decide the
+    # assignment, and the shared context has only as many outcomes as the
+    # behaviour signal has regions (a few hundred) while a usable SID needs
+    # about 20k triples -- so the partition collapsed no matter the weight or
+    # the balancing. The context now enters as an OFFSET on the item's own
+    # latent: the item is shifted towards its positive predecessor barycentre
+    # and away from its co-consumption hard negative by a bounded fraction of
+    # that direction, and the code is still chosen by the squared Euclidean
+    # cost of the shifted latent. Two items with the same context keep their
+    # own embedding and therefore keep separating, so the outcome count stays
+    # at the item level while the behaviour signal still moves the assignment.
+    displacement = (positive - x) - 0.5 * (negative - x)
+    shifted = x + CONTEXT_WEIGHT * gate * displacement
+    shifted_cost = (shifted.square().sum(-1)[:, None] + codes.square().sum(-1)[None, :]
+                    - 2.0 * (shifted @ codes.t())).clamp_min(0.0)
     if BALANCED_ASSIGNMENT:
-        scores = gate * behaviour_cost + (1.0 - gate) * euclidean_cost
+        scores = shifted_cost + CONTEXT_WEIGHT * gate * bias
     else:
-        scores = euclidean_cost + CONTEXT_WEIGHT * gate * bias
+        scores = shifted_cost
     return -scores / CONTEXT_TEMPERATURE
 
 

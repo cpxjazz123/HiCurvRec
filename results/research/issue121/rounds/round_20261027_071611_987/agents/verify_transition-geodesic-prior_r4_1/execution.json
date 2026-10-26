@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_transition-geodesic-prior_r4_1",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1793047264.5802321,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "verification.txt",
+  "output_sha256": "4e1b320f3077cdcc789bda3fa28f81359b6d3616433810932433017ffa478053",
+  "pid": 3753795,
+  "project_marker": ".git",
+  "prompt_sha256": "ff6f005895ffba3cf1a8750fabfb324a5105d05ab3007d4afdb6ce6c75855f07",
+  "session_sha256": "11a5abd0675e9c3982ea15cfe3dfb229ec435b6e076997d6ed8e4a9820c3a155",
+  "stderr_present": false,
+  "task_id": "verify_transition-geodesic-prior_r4_1",
+  "timed_out": false,
+  "verified": true
+}

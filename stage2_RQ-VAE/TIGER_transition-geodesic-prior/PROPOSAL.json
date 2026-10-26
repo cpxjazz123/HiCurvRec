@@ -1,0 +1,44 @@
+{
+  "ablation_behavior_off": "Set eta=0 and use exact baseline plain squared Euclidean scores of attached x_i; no transition matrix influences assignment.",
+  "ablation_both_on": "Use the train-only region transition table smoothed by c=1 Poincare geodesic kernel in the first-level logits; run full four-card 3,000-epoch Stage2 and frozen Stage3 protocol.",
+  "ablation_geometry_off": "Replace exp(-d_P^2/sigma^2) with its parameter-matched Euclidean counterpart exp(-||v_s-v_k||^2/sigma_E^2), matched on median pairwise kernel value; preserve train-only transition counts and all other settings.",
+  "also_proposed_by": [
+    "ideation_2"
+  ],
+  "behavior_computation": "Count consecutive item transitions j->i from each ordered user's training sequence only; within each epoch map source and target items to their current first-level code IDs and accumulate weighted region edges. No validation/test transitions enter.",
+  "behavior_signal": "Directed predecessor-to-target item transitions, mapped to assigned first-level code regions.",
+  "cost_estimate": "Build frozen sparse transition edges once; per epoch aggregate at most P predecessor regions per item and evaluate candidate compatibility O(NPK), with cached code-distance kernel O(K^2 d) once per epoch. At N=24,556, 24 steps and 3,000 epochs, use compact KxK cache and sparse rows; likely extra cost versus baseline is one O(K^2d) distance refresh and O(NPK) gathers, target near 0.15 s/epoch on four GPUs requires profiling and P cap (e.g. 8).",
+  "coupling_equation": "l_ik=-||x_i-v_k||^2/tau + eta sum_r u_ir log[sum_s A_{rs} exp(-d_{P,c=1}(v_s,v_k)^2/sigma^2)+alpha]/Z_r; code_i=argmax_k l_ik.",
+  "coupling_path": "Training predecessor region masses select rows of the learned transition table; each table entry is smoothed according to the Poincare distance between the corresponding codepoints; this behavior-and-geometry probability adjusts each item's own-latent candidate logits.",
+  "duplicate_count": 1,
+  "evidence_revision": {
+    "answers": "answers the gap about whether the weighting can move assignments",
+    "evidence_note": "A positive row scalar left every arg-min unchanged (True); a codeword-dependent weight moved 0 top-1 assignments (False)",
+    "revision": "The proposal does not claim that the transition prior moves top-1 assignments or changes code frequencies; the evidence shows no top-1 movement for the tested codeword-dependent weight, so the proposed behavioral effect is unestablished",
+    "withdrawn": "The claim that this prior should alter level-one code frequencies toward empirically plausible successors"
+  },
+  "falsifiable_hypothesis": "If training transition dynamics are predictive and nearby Poincare code regions represent related branches, this prior should alter level-one code frequencies toward empirically plausible successors without destroying item-specific distinctions; retain only if Stage3 Recall@10 rises above 0.065.",
+  "fingerprint": "70d4c9c365fb7d99",
+  "hyperbolic_location": "In the first-level candidate-assignment logits, as the curved kernel that smooths the behavior-derived code-region transition probabilities.",
+  "hyperbolic_operator": "Squared Poincare geodesic distance d_P^2(v_r,v_k) at fixed c=1, converted into a normalized radial transition kernel exp(-d_P^2/sigma^2).",
+  "idea_id": "transition-geodesic-prior",
+  "key_change": "Form a train-only directed transition matrix between current code regions, score item-to-code candidates with own-latent Euclidean distortion plus a scaled Poincare geodesic transition penalty from incoming predecessor regions, and use the resulting soft assignment for the existing straight-through code choice.",
+  "leakage_boundary": "Freeze training sequences and transition counts before quantizer training. The epoch matrix is an aggregation of those fixed edges through current model assignments only; it never consumes held-out interactions or future sequences.",
+  "motivation": "A next-item model benefits when the first code expresses the item's own semantics while remaining compatible with where training predecessors tend to lead; direct context replacement risks collapsing many items onto a few regions.",
+  "novelty": "This couples behavior to curved code-to-code transition geometry in the assignment posterior rather than shifting the encoder latent by a context barycentre. A sparse per-item transition prior modifies candidate probabilities, while the hard code still depends on the item's own latent.",
+  "observables": "With both-on, first-level assignments and transition-conditioned prefix predictability should change, and Stage3 test Recall@10 should improve; also check finite logits and SID diversity as diagnostics, not admission criteria.",
+  "origin_agent": "ideation_2",
+  "proposal_revision": 1,
+  "risks": [
+    "Epoch-wise hard assignments make A noisy; popular transitions can dominate despite smoothing; the extra candidate-score term may overwhelm reconstruction or make distributed updates inconsistent. Curvature kernel bandwidth and temperature require fixed, small calibration."
+  ],
+  "safeguards": "Clamp ball norms below 1/sqrt(c), clamp distance/kernel exponents, add alpha smoothing and epsilon before logs/normalizers, accumulate A in fp32 and all-reduce it across ranks, deterministic edge order/ties, clip eta and logits, and cap predecessor support. Geometry-off matches kernel scale by a training-only median-distance calibration, never held-out data.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "Initialize A_{rk}=alpha/K. For each fixed training edge j->i with weight c_ji, add c_ji to A_{a(j),a(i)}; row-normalize. Compute u_ir from weighted incoming predecessor code IDs. Let G_{sk}=exp(-min(d_P(v_s,v_k)^2,Dmax)/sigma^2); T_{rk}=sum_s A_{rs}G_{sk}, row-normalize T with epsilon. Then l_ik=-||x_i-v_k||^2/tau+eta sum_r u_ir log(T_{rk}+eps). Return argmax and baseline-compatible straight-through embedding. Cache G once per epoch; gradient through x_i and assignment logits, with codebook gradients as baseline.",
+  "spec_inputs_outputs": "Inputs: attached item latents x[N,d], first-level codes v[K,d], frozen training edge list (j,i,count), current hard assignments a[N], c=1 and scalars alpha, sigma, eta, tau. Output: score/logit matrix [N,K] and code IDs; optionally sparse A/T for diagnostics.",
+  "specification": {
+    "text": "Let A_{rk}=sum_{j->i} count(j,i) 1[a(j)=r] 1[a(i)=k], smoothed and row-normalized each epoch. For item i, let u_ir be its normalized incoming predecessor-region mass. Set logits l_ik=-||x_i-v_k||^2/tau + eta sum_r u_ir log((A_{rk}+alpha exp(-d_P(v_r,v_k)^2/sigma^2))/(sum_q A_{rq}+alpha Z_r)); choose argmax l_ik. Thus behavior transitions gate a curved geodesic compatibility kernel without replacing x_i."
+  },
+  "title": "Sparse predecessor-conditioned geodesic prior on item-preserving soft assignments"
+}

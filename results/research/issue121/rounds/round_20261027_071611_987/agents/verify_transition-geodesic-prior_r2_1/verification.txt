@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: transition-geodesic-prior/train_rqvae.py:250-255,335-344 -> transition-geodesic-prior/model/layers.py:106-125 | Traced training-only adjacent history-target transitions into incoming predecessor assignments and then through the Poincare kernel into first-level candidate distances; smoke_test.py:21-42 checks a geometry-on assignment flip against zero-prior and Euclidean-kernel controls.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The exercised training pathway couples directed training transitions and Poincare code geodesics in candidate scoring; the retained hard code still uses the item's own latent distortion. This is not a control/ablation proposal.
+FINDING REPRODUCTION: Inspect the cited trainer and quantizer path; the included boundary smoke constructs predecessor mass on region 1 and confirms the coupled choice differs from Euclidean and zero-prior choices.
+FINDING CORRECTION: No correction required for scope fidelity.
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: transition-geodesic-prior/model/layers.py:106-132,134-154 | Static forward/backward path inspection; consulted transition-geodesic-prior/smoke_test.py:14-19,21-47 as the intended numerical/gradient smoke, not executed here.
+FINDING SEVERITY: blocking
+FINDING LOCATION: transition-geodesic-prior/model/layers.py:121-125
+FINDING DETAIL: The behavior score is not the specified predecessor-mass-weighted transition compatibility. It computes log(u) @ kernel, rather than u @ log transition-geodesic probability (or an equivalent expectation). In particular, zero-mass predecessor regions are clamped to 1e-8 and contribute large negative terms weighted by their kernel, so regions absent from the item's history affect its candidate ranking. This creates a spurious geometry-driven assignment signal and can overwhelm the intended sparse behavior prior. The added score also influences the hard argmin only; its direct derivative is necessarily absent, though the selected-code VQ loss can still update parameters.
+FINDING REPRODUCTION: Set transition_prior=[0,1] and use two candidate codes with unequal Poincare affinities to regions 0 and 1. The current expression includes log(1e-8)*kernel[0,:] despite region 0 having zero mass; varying only kernel[0,:] can change the selected candidate. A mass-weighted expectation should be invariant to region 0 in this setup.
+FINDING CORRECTION: Compute an actual mass-weighted expected log compatibility, e.g. transition_prior @ (log_transition_prob + poincare_log_kernel), with zero-mass entries contributing exactly zero (mask them rather than clamping u before taking its logarithm). Normalize/define transition probabilities consistently with the specified A and smoothing, and add an assignment-invariance regression for zero-mass regions. Retain the existing selected-code gradient test, while documenting that gradients arise through the selected VQ code, not through argmin.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: transition-geodesic-prior/train_rqvae.py:40-67,91-92,233-270,411-454,461-489 | Static integration trace of root/path constants, frozen Stage0 train.parquet input, output indexing/export, and launcher branches; no trainer runtime was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads results/stage0_build_parquet/train.parquet, writes its promoted arm under results/stage2_RQ-VAE/TIGER_transition-geodesic-prior, exports each embedding row under its enumerated item ID, and preserves the GENREC_SINGLE_GPU bypass branch. The normal branch invokes four-rank torchrun. The candidate-check record says the candidate path check crashed with ModuleNotFoundError, but that is not itself evidence of an integration defect; runtime is unavailable for this review.
+FINDING REPRODUCTION: Follow constants at train_rqvae.py:56-67 and export construction at 439-452; inspect launcher conditions at 461-489, including SINGLE_GPU_ENV at 91 and its check at 465.
+FINDING CORRECTION: No code correction identified from static inspection. Run the prescribed GPU one-epoch trainer/export smoke in the target environment before full training.

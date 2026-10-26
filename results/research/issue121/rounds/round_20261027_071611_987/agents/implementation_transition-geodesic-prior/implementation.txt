@@ -1,0 +1,12 @@
+TREE: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: model/model.py
+CHANGED FILE: model/layers.py
+CHANGED FILE: smoke_test.py
+DEVIATION: Transition edges are counted from adjacent items in each training prefix-expanded row, rather than explicitly preserving per-user interaction counts in a separately frozen edge table | train.parquet exposes prefix histories and targets, so this provides directed training-only co-consumption without reading validation/test data; repeated prefix edges contribute repeated counts.
+DEVIATION: The candidate prior uses a fixed-curvature Poincare-ball Gaussian kernel with fixed bandwidth and scale, and predecessor region masses come from prior-epoch hard first-level codes; it does not implement the proposal's explicit row-normalized A-plus-alpha smoothing formula | kept the added state and calibration minimal while ensuring a live, item-specific prior enters first-level candidate distances.
+DEVIATION: Candidate logistics use a dense per-item 256-region prior and evaluate the Poincare code distance kernel in the active quantizer call | this preserves differentiability through codebook locations; full-run runtime was not benchmarked.
+ASSUMPTION: Each train.parquet history and target pair is chronological and item IDs index the embedding rows; predecessor influence is uniform over observed incoming edges, with an empty predecessor set represented by a zero prior.
+SMOKE COMMAND: cd /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 smoke_test.py
+SMOKE RESULT: forward_backward=ok loss=2.659851 grad=finite sid_shape=(12, 3)
+NOTES: Preserved the repository-root marker-walk helper, frozen optimizer/schedule/architecture/data configuration, exporter, and single-GPU GENREC_SINGLE_GPU branch. The smoke test exercises finite loss, backward flow to the first-level codebook, and three-level SID inference; it is location-independent and can be run unchanged after promotion. No full 3000-epoch training or Stage3 Recall@10 evaluation was run. Behaviour-off is represented by omitting transition_prior; the Euclidean baseline path remains the default when that prior is absent.

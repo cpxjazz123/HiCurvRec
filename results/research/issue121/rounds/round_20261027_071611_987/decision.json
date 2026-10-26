@@ -1,0 +1,981 @@
+{
+  "decision_at": 1793046512.8132637,
+  "decision_hash": "3d1444e52ca96619350ec35c19bc037378158261c7262fb7095fd0c490147bb6",
+  "evidence": {
+    "pred_offset": {
+      "bundle_sha256": "f936ce81a31fccc5b387e6dfba1596e5dd06335a653513f43baecc3b0054fe8b",
+      "literature_sha256": "0959bfabe9e011ddba4c37c9de678c86024099df99cf243077136db79c6fc14e",
+      "math_sha256": "7a6f2db18c8b4d0ae8ca9f4fdef9024b0348c11b28a0c148a7db9b2fc3355758",
+      "probe_sha256": "321e4f4812edeb97569f69a1751a4fecc10303df38a280afaef8fc454c5f1a1d"
+    },
+    "predecessor_contrast_offset": {
+      "bundle_sha256": "04d9f645caa0efca9259668e9dc5b7028fa90e041d66202d0d528e41b1380767",
+      "literature_sha256": "8d45cb2478b50ba162b633ea021d4793689f638045611668933de0ad86e10ae4",
+      "math_sha256": "bac3801ca5ac8a39b01b3e894a0dad2deca7ef3c8aa4629bfac6aa2323760166",
+      "probe_sha256": "b361910db692dae86f755f40f4293db3c98da0a4b11df28b6db48473bb7360b3"
+    },
+    "transition-geodesic-prior": {
+      "bundle_sha256": "03af50402a113231ea27a599bf2cc61095b33f593ab62a56cce874b1349aa8a1",
+      "literature_sha256": "ceee4fe0441200823cf0335379419bb79d223eb3d75d35b48451ae1692242a55",
+      "math_sha256": "f4f722eea64bcc79582fe72bae7c88819a17b28b198b31c9a5cd3b7b059b35fb",
+      "probe_sha256": "785daf6c7371808a8acdb086483d3931d9a3579f12b45ab5c6af9419c574c389"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 0.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "disputed": [
+          "falsifiability"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "predecessor_contrast_offset",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 2.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "04d9f645caa0efca:E1",
+            "04d9f645caa0efca:E2",
+            "04d9f645caa0efca:E3",
+            "04d9f645caa0efca:E5",
+            "04d9f645caa0efca:E6",
+            "04d9f645caa0efca:E8",
+            "04d9f645caa0efca:E9",
+            "04d9f645caa0efca:E10",
+            "04d9f645caa0efca:E12",
+            "04d9f645caa0efca:E13",
+            "04d9f645caa0efca:E14"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The stated hyperbolic barycentres are subtracted directly from x_i, but the proposal does not establish that codepoints and x_i share the Poincare chart/scale; moreover the final nearest-code decision is Euclidean, so a matched Euclidean barycentre offset may reproduce the effect and geometric necessity is weak.",
+          "scoring_2": "The curved barycentres are subsequently treated as ordinary coordinate vectors and assignment uses squared Euclidean distance; without a demonstrated geometric advantage over the matched Euclidean barycentre, curvature may be an expensive way to generate an ordinary offset.",
+          "scoring_3": "The geometric barycentre is converted into an ordinary coordinate difference and then scored by Euclidean distance; without a matched Euclidean-barycentre ablation, it is unclear whether curvature changes assignments rather than merely providing a different coordinate average, and the proposed offset may damage content reconstruction."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4: E5 gives measured successor-entropy/top-1 coverage, while E10 reports train-only edge support; these support a plausible signal but do not directly validate this exact hard-negative hypothesis. geometry_necessity=2: curved Frechet means are specified, but the assignment is Euclidean and a matched Euclidean transformation could reproduce the offset. novelty=2: distinct from the listed successor-geodesic mechanisms in computation, yet close to known context-offset proposals and no traceable literature/ledger comparison is supplied. downstream_mechanism=4: the shifted latent can change first-level assignments and therefore SID prefixes; expected benefit is improved next-item beam survival/Recall, but a per-assignment diagnostic is not fully spelled out. falsifiability=2: behavior-off and geometry-off are implied, but matched controls and a discriminating failure criterion are incomplete. implementability=3: algorithm and approximate cost are given; Frechet convergence, coordinate compatibility, boundedness details, and runtime remain risks. exploration_value=2: a relatively small variant of context-offset mechanisms.",
+          "scoring_2": "Behavior is well supported by train-only successor entropy and cohort-profile statistics with stated coverage (E5, E9, E10), but the evidence is not specifically about the proposed hard-negative offset. Curved barycentre construction is explicit and coupled, yet the coordinate-space shift and Euclidean nearest-code decision leave its necessity unestablished (E12-E13). The offset affects actual first-level assignment, plausibly changing prefix survival and recommendation (E6, E8); the proposal names behavior-off/geometry-off/both-on but lacks a precise failure criterion and matched-control details. It is implementable in principle, but Frechet iteration cost and numerical safeguards are acknowledged risks rather than fully specified; overlap with measured successor/geodesic and tangent-residual families limits novelty and exploration value (E6-E7). UNKNOWN: whether hard-negative Jaccard relations have adequate coverage and stability; bounded check: report nonempty P/hard-negative coverage and epoch-to-epoch negative stability using training-only data.",
+          "scoring_3": "Behavior=3: E5 and E9 provide measured train-only successor/profile signals, but E10's sampled coverage and absence of a measured Jaccard-hard-negative result prevent a stronger score. Geometry=2: a curved barycentre is explicit, but the downstream Euclidean shift/quantizer has no matched-control argument showing a non-reproducible effect. Novelty=2: latent offset is distinct in placement, but closely related geodesic/cohort mechanisms are already measured in E6-E7. Downstream=3: changed first-level assignments could change prefixes and beam survival, but no assignment diagnostic/direction is specified. Falsifiability=1: behavior-off is mentioned, but geometry-off and a failure criterion/discriminating diagnostic are not. Implementability=3: equations and sparse caching are given, but Frechet numerical safeguards and affordability are not established; the proposal itself flags runtime risk. Exploration=2: a small variation on measured successor-geodesic/cohort families. No Recall prediction is treated as measurement."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only directed predecessors and Jaccard hard negative are computed; fixed-curvature Poincare Frechet barycentres form a latent offset before first-level assignment, so both behavior and geometry affect that assignment. It names observable assignment/Recall effects, controls, safeguards and cost. Behavior-off/geometry-off/both-on controls are mentioned, but exact matching and failure criteria are not fully specified.",
+          "scoring_2": "Training-only directed predecessors and co-consumption Jaccard hard negative determine Poincare barycentres and the latent offset before first-level assignment; removing behavior or curvature changes the assignment input. It specifies behavior-off, Euclidean geometry-off, and both-on comparisons, though matched controls and a clear falsification threshold beyond the Stage3 objective need fuller operational detail.",
+          "scoring_3": "It specifies training-only predecessors and Jaccard hard negatives and uses Poincare Frechet barycentres in the offset feeding first-level assignment, so the computational pathway is coupled. It names behavior-off and both-on in the hypothesis, but not the required geometry-off/Euclidean comparison."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.8,
+          "scoring_2": 3.1,
+          "scoring_3": 2.35
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It specifies training-only predecessors and Jaccard hard negatives and uses Poincare Frechet barycentres in the offset feeding first-level assignment, so the computational pathway is coupled. It names behavior-off and both-on in the hypothesis, but not the required geometry-off/Euclidean comparison.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.8
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "transition-geodesic-prior",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "03af50402a113231:E1",
+            "03af50402a113231:E2",
+            "03af50402a113231:E3",
+            "03af50402a113231:E5",
+            "03af50402a113231:E6",
+            "03af50402a113231:E8",
+            "03af50402a113231:E9",
+            "03af50402a113231:E10",
+            "03af50402a113231:E12",
+            "03af50402a113231:E13",
+            "03af50402a113231:E14"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E9",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposal provides no evidence that Poincare smoothing contributes beyond an ordinary matched Euclidean distance kernel; the behavioral transition prior may account for the effect by itself.",
+          "scoring_2": "The proposal is close to the already measured successor-geodesic-coarse family (E6-E7); the stated change from coarse successor geometry to a transition-kernel prior is not yet argued computationally against that ledger result.",
+          "scoring_3": "The behavior-derived transition matrix is already doing the main compatibility work, while the curved kernel's incremental value is untested; prior measured successor-geodesic variants in E6-E7 underperform the listed Euclidean/resampling alternatives."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4: E5 measures successor predictability across train items and E10 reports transition edge coverage; the proposed transition aggregation fits this signal, though not directly measured for the proposed code regions. geometry_necessity=3: geodesic distance enters a transition kernel in the assignment logits, plausibly non-Euclidean at substantial curvature/radius, but no matched control establishes added value. novelty=2: transition-conditioned code scoring is distinct in form, but overlaps prior successor-geodesic mechanisms in E6/E7 and is a routine kernel/prior variation absent cited-work or ledger differentiation. downstream_mechanism=4: changed candidate logits can change first-level assignment frequencies and prefix compatibility, with intended benefit to beam survival; per-item change diagnostics are underspecified. falsifiability=2: controls and failure threshold are not explicitly fully matched. implementability=3: formulas and complexity are given, but normalization details (including Z_r) and distributed consistency/noise risks need resolving. exploration_value=2: related to already measured successor-geodesic family, not a substantially new failure mode.",
+          "scoring_2": "Train-only successor statistics support predictive transition structure (E5), and observed geodesic-coarse variants provide relevant but mixed downstream results (E6-E7). The curved distance is explicitly inside a behavior-conditioned prior, but a Euclidean transition kernel could plausibly reproduce much of the smoothing, so necessity is not demonstrated (E12-E14). The intended assignment change and recommendation pathway are named, but the proposal lacks the requested three controlled comparisons and a defined falsifier. Its epoch aggregation and kernel cache are specified, though normalized-kernel details, numerical guards, and runtime affordability remain uncertain. UNKNOWN: whether this exact transition prior differs materially from the measured geodesic-coarse mechanisms; bounded check: inspect the cited mechanism definitions and compare logits/assignments on a fixed training-only batch.",
+          "scoring_3": "Behavior=3: E5/E9 support structured transitions, though they do not directly establish predictive value of this region transition prior. Geometry=3: squared Poincare distances shape the transition smoothing kernel and could differ from Euclidean distances, but there is no matched Euclidean argument demonstrating added value. Novelty=2: this is a routine region-transition/kernel variation near the already measured successor_geodesic_coarse family (E6-E7). Downstream=3: altered candidate logits can alter assignments and prefix behavior, but direction and diagnostic are not nailed down. Falsifiability=1: no explicit three-way controls or failure criterion. Implementability=2: broad algorithm/cost is given, but normalizer Z_r and exact log-probability construction are underspecified, and the O(NPK) work / required P cap are not verified against budget. Exploration=2: close to measured geodesic successor variants. E6's Stage3 values are evidence about prior mechanisms, not a prediction for this proposal."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only directed transitions are aggregated by current first-level assignments; Poincare geodesic distances form a kernel inside the behavior-conditioned assignment logits, so either switch changes the assignment computation. It specifies observable SID/Recall changes and gives cost, though explicit matched behavior-off, Euclidean and both-on protocols and failure criteria are not fully detailed.",
+          "scoring_2": "Training-only directed transitions are aggregated into assigned code-region transition counts; incoming predecessor-region mass gates a Poincare geodesic kernel in the first-level candidate logits used for the hard code choice. Both behavior and geometry are on the core assignment path. It needs explicit behavior-off, Euclidean-kernel, and both-on matched runs plus a failure criterion to satisfy the full testability contract.",
+          "scoring_3": "It computes training-only directed transitions, maps them to current regions, and applies a Poincare-distance kernel to transition probabilities inside assignment logits, so the behavior and geometry are directly coupled. It does not name the required behavior-off and geometry-off/Euclidean matched comparisons."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.0,
+          "scoring_2": 3.0,
+          "scoring_3": 2.45
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It computes training-only directed transitions, maps them to current regions, and applies a Poincare-distance kernel to transition probabilities inside assignment logits, so the behavior and geometry are directly coupled. It does not name the required behavior-off and geometry-off/Euclidean matched comparisons.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.0
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "pred_offset",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 2.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "f936ce81a31fccc5:E1",
+            "f936ce81a31fccc5:E2",
+            "f936ce81a31fccc5:E3",
+            "f936ce81a31fccc5:E5",
+            "f936ce81a31fccc5:E6",
+            "f936ce81a31fccc5:E8",
+            "f936ce81a31fccc5:E9",
+            "f936ce81a31fccc5:E11",
+            "f936ce81a31fccc5:E12",
+            "f936ce81a31fccc5:E13",
+            "f936ce81a31fccc5:E14",
+            "f936ce81a31fccc5:E15"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The specification combines Poincare-valued barycentres with x_i and then uses Euclidean nearest-code assignment without defining a common coordinate mapping; the fixed w and gamma do not by themselves guarantee a valid bounded shift or preserve reconstruction.",
+          "scoring_2": "Its curved barycentres are converted into coordinate offsets and fed to an unchanged Euclidean quantizer, so a matched Euclidean barycentre may yield the same useful assignment bias without the added geometric computation; the bundle itself says operator validity alone does not establish coupling value (E15).",
+          "scoring_3": "The c=1 Frechet barycentres are used as ordinary coordinate vectors in d_i and then the candidate is selected by Euclidean distance; the proposal does not show that this specific curved averaging, rather than a matched Euclidean average, contributes useful assignment changes."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4: E5 has measured train successor-entropy stratification and E9 supports non-degenerate behavior profiles; E10 is explicitly NOT_IMPLEMENTED, so exact support/coverage for this proposal is less auditable. geometry_necessity=2: a valid Poincare operator is proposed (E15), but the Euclidean assignment and unclarified mapping leave a matched Euclidean transform able to reproduce the effect. novelty=2: the proposal is a close variant of predecessor_contrast_offset and context-offset mechanisms; no traceable cited-work/ledger distinction is provided. downstream_mechanism=4: offset changes first-level code assignments and hence SID prefixes, with expected better next-item compatibility; a detailed assignment diagnostic is absent. falsifiability=2: behavior/geometry switches are contemplated, but matched-control details and a clear refutation criterion are insufficient. implementability=3: the procedural specification is largely actionable, but coordinate conventions, Frechet numerics, exact bounding and cost validation remain. exploration_value=2: small variation of the same offset family, with no distinct failure mode established.",
+          "scoring_2": "Train-only transition and successor-entropy evidence supports the behavior signal (E5, E9), although the bundle marks the proposed statistic as not implemented (E10), and support/coverage for Jaccard hard negatives is not established. The Poincare barycentre is explicitly on the assignment path, but the subsequent coordinate subtraction and Euclidean assignment leave a plausible Euclidean substitute; the matched control exists in the bundle (E14) but cancellations/advantage are not resolved. Assignment can change and the intended route to next-item prefix behavior is plausible (E6, E8), but no explicit three-arm comparison or falsification rule is given. Implementation details are fairly concrete, while boundary safeguards and budget evidence are incomplete; prior measured geodesic/tangent mechanisms constrain novelty (E6-E7). UNKNOWN: coverage and numerical stability of the proposed predecessor/hard-negative barycentres; bounded check: measure empty-set rates, ball-boundary proximity, and finite barycentre outputs over one training-only refresh.",
+          "scoring_3": "Behavior=3: train-only successor entropy/profile evidence exists (E5/E9), but E10's sampling-limited coverage and E10 being NOT_IMPLEMENTED leave support for this exact hypothesis incomplete. Geometry=2: Frechet means are explicit but no matched Euclidean counterpart or cancellation analysis is supplied. Novelty=2: it is closely related to predecessor_contrast_offset and measured successor-geodesic/cohort mechanisms (E6-E7), rather than a clearly distinct computation. Downstream=3: the offset changes first-level assignments and could affect prefix survival, but expected direction and diagnostic are not specified. Falsifiability=1: neither the three required comparisons nor an explicit failure criterion is named. Implementability=3: the algorithm, w, entropy factor, caching and epoch refresh are specified; numerical safeguards for ball-boundary behavior and verified budget are missing. Exploration=2: a small variation of the same predecessor-offset family. E11 is a sanity check, not evidence of this mechanism's effect."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only predecessor edges and co-consumption Jaccard choose context barycentres; fixed-curvature Poincare Frechet operations feed the shifted latent used in first-level assignment. The connected behavior/geometry path and expected assignment/Stage3 effect are specified. The proposal names behavior-off and Euclidean/both-on comparisons generally, but matched controls and an explicit failure criterion are not adequately spelled out.",
+          "scoring_2": "Training-only immediate predecessors and Jaccard co-consumption hard negatives determine Poincare Frechet barycentres, which form a concentration-scaled offset to the live item latent before first-level Euclidean nearest-code assignment. This is a connected behavior/geometry pathway. The text gives a hypothesis but not explicit behavior-off, Euclidean-geometry-off, and both-on comparisons or a failure criterion.",
+          "scoring_3": "Training-only directed predecessors and co-consumption Jaccard feed Poincare Frechet barycentres which shift the latent used for first-level assignment, establishing a connected behavior/curvature pathway. The hypothesis does not specify the required behavior-off and geometry-off/Euclidean comparisons."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.8,
+          "scoring_2": 3.0,
+          "scoring_3": 2.35
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Training-only directed predecessors and co-consumption Jaccard feed Poincare Frechet barycentres which shift the latent used for first-level assignment, establishing a connected behavior/curvature pathway. The hypothesis does not specify the required behavior-off and geometry-off/Euclidean comparisons.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.8
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": true,
+        "pair": [
+          "pred_offset",
+          "predecessor_contrast_offset"
+        ],
+        "votes": {
+          "pred_offset": 2,
+          "predecessor_contrast_offset": 1
+        },
+        "winner": "pred_offset"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "pred_offset",
+          "transition-geodesic-prior"
+        ],
+        "votes": {
+          "pred_offset": 0,
+          "transition-geodesic-prior": 3
+        },
+        "winner": "transition-geodesic-prior"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "predecessor_contrast_offset",
+          "transition-geodesic-prior"
+        ],
+        "votes": {
+          "predecessor_contrast_offset": 3,
+          "transition-geodesic-prior": 0
+        },
+        "winner": "predecessor_contrast_offset"
+      }
+    ],
+    "copeland": {
+      "pred_offset": 0,
+      "predecessor_contrast_offset": 0,
+      "transition-geodesic-prior": 0
+    },
+    "cycles": [
+      [
+        "pred_offset",
+        "predecessor_contrast_offset",
+        "transition-geodesic-prior"
+      ]
+    ],
+    "position_bias": {
+      "first_listed_wins": 8,
+      "second_listed_wins": 1
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "04d9f645caa0efca9259668e9dc5b7028fa90e041d66202d0d528e41b1380767",
+      "idea_id": "predecessor_contrast_offset",
+      "proposal_sha256": "2ec9478e85d4b6a7bb280ab0426d925eb23c4b137c03f609ce6dbf540a1d897d"
+    },
+    {
+      "evidence_sha256": "03af50402a113231ea27a599bf2cc61095b33f593ab62a56cce874b1349aa8a1",
+      "idea_id": "transition-geodesic-prior",
+      "proposal_sha256": "fe8837893bad9d915843f487a7e9546b24af095d845f2aa399840912b7cb9b7c"
+    },
+    {
+      "evidence_sha256": "f936ce81a31fccc5b387e6dfba1596e5dd06335a653513f43baecc3b0054fe8b",
+      "idea_id": "pred_offset",
+      "proposal_sha256": "0a5f6b0bdb6d1d20ac8ad642e55229e0f5b0976568504656f0c7cefac90f6de4"
+    }
+  ],
+  "reviews": [
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "If all relevant codepoints lie in an arbitrarily small neighborhood of the origin, Poincare distances and the Euclidean metric agree to first order; the barycentres and resulting offsets can then approach their Euclidean counterparts, leaving no material curved-geometry effect.",
+          "evidence_ids": [
+            "04d9f645caa0efca:E1",
+            "04d9f645caa0efca:E2",
+            "04d9f645caa0efca:E3",
+            "04d9f645caa0efca:E5",
+            "04d9f645caa0efca:E6",
+            "04d9f645caa0efca:E8",
+            "04d9f645caa0efca:E9",
+            "04d9f645caa0efca:E10",
+            "04d9f645caa0efca:E12",
+            "04d9f645caa0efca:E13",
+            "04d9f645caa0efca:E14"
+          ],
+          "idea_id": "predecessor_contrast_offset",
+          "missing_dimensions": [],
+          "objection": "The stated hyperbolic barycentres are subtracted directly from x_i, but the proposal does not establish that codepoints and x_i share the Poincare chart/scale; moreover the final nearest-code decision is Euclidean, so a matched Euclidean barycentre offset may reproduce the effect and geometric necessity is weak.",
+          "rationale": "behavior_evidence=4: E5 gives measured successor-entropy/top-1 coverage, while E10 reports train-only edge support; these support a plausible signal but do not directly validate this exact hard-negative hypothesis. geometry_necessity=2: curved Frechet means are specified, but the assignment is Euclidean and a matched Euclidean transformation could reproduce the offset. novelty=2: distinct from the listed successor-geodesic mechanisms in computation, yet close to known context-offset proposals and no traceable literature/ledger comparison is supplied. downstream_mechanism=4: the shifted latent can change first-level assignments and therefore SID prefixes; expected benefit is improved next-item beam survival/Recall, but a per-assignment diagnostic is not fully spelled out. falsifiability=2: behavior-off and geometry-off are implied, but matched controls and a discriminating failure criterion are incomplete. implementability=3: algorithm and approximate cost are given; Frechet convergence, coordinate compatibility, boundedness details, and runtime remain risks. exploration_value=2: a relatively small variant of context-offset mechanisms.",
+          "scope_reason": "Training-only directed predecessors and Jaccard hard negative are computed; fixed-curvature Poincare Frechet barycentres form a latent offset before first-level assignment, so both behavior and geometry affect that assignment. It names observable assignment/Recall effects, controls, safeguards and cost. Behavior-off/geometry-off/both-on controls are mentioned, but exact matching and failure criteria are not fully specified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If all codepoints are near the Poincare origin, d_P(v_r,v_k) is approximately a constant-scaled Euclidean distance; choosing the Euclidean kernel bandwidth to absorb that scale makes the curved and Euclidean kernels effectively identical.",
+          "evidence_ids": [
+            "03af50402a113231:E1",
+            "03af50402a113231:E2",
+            "03af50402a113231:E3",
+            "03af50402a113231:E5",
+            "03af50402a113231:E6",
+            "03af50402a113231:E8",
+            "03af50402a113231:E9",
+            "03af50402a113231:E10",
+            "03af50402a113231:E12",
+            "03af50402a113231:E13",
+            "03af50402a113231:E14"
+          ],
+          "idea_id": "transition-geodesic-prior",
+          "missing_dimensions": [],
+          "objection": "The proposal provides no evidence that Poincare smoothing contributes beyond an ordinary matched Euclidean distance kernel; the behavioral transition prior may account for the effect by itself.",
+          "rationale": "behavior_evidence=4: E5 measures successor predictability across train items and E10 reports transition edge coverage; the proposed transition aggregation fits this signal, though not directly measured for the proposed code regions. geometry_necessity=3: geodesic distance enters a transition kernel in the assignment logits, plausibly non-Euclidean at substantial curvature/radius, but no matched control establishes added value. novelty=2: transition-conditioned code scoring is distinct in form, but overlaps prior successor-geodesic mechanisms in E6/E7 and is a routine kernel/prior variation absent cited-work or ledger differentiation. downstream_mechanism=4: changed candidate logits can change first-level assignment frequencies and prefix compatibility, with intended benefit to beam survival; per-item change diagnostics are underspecified. falsifiability=2: controls and failure threshold are not explicitly fully matched. implementability=3: formulas and complexity are given, but normalization details (including Z_r) and distributed consistency/noise risks need resolving. exploration_value=2: related to already measured successor-geodesic family, not a substantially new failure mode.",
+          "scope_reason": "Training-only directed transitions are aggregated by current first-level assignments; Poincare geodesic distances form a kernel inside the behavior-conditioned assignment logits, so either switch changes the assignment computation. It specifies observable SID/Recall changes and gives cost, though explicit matched behavior-off, Euclidean and both-on protocols and failure criteria are not fully detailed.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For codepoints confined near the origin, the Poincare Frechet mean approaches the Euclidean mean (up to negligible curvature corrections); a Euclidean context offset can produce the same z_i and assignments, so curvature need not be causal.",
+          "evidence_ids": [
+            "f936ce81a31fccc5:E1",
+            "f936ce81a31fccc5:E2",
+            "f936ce81a31fccc5:E3",
+            "f936ce81a31fccc5:E5",
+            "f936ce81a31fccc5:E6",
+            "f936ce81a31fccc5:E8",
+            "f936ce81a31fccc5:E9",
+            "f936ce81a31fccc5:E11",
+            "f936ce81a31fccc5:E12",
+            "f936ce81a31fccc5:E13",
+            "f936ce81a31fccc5:E14",
+            "f936ce81a31fccc5:E15"
+          ],
+          "idea_id": "pred_offset",
+          "missing_dimensions": [],
+          "objection": "The specification combines Poincare-valued barycentres with x_i and then uses Euclidean nearest-code assignment without defining a common coordinate mapping; the fixed w and gamma do not by themselves guarantee a valid bounded shift or preserve reconstruction.",
+          "rationale": "behavior_evidence=4: E5 has measured train successor-entropy stratification and E9 supports non-degenerate behavior profiles; E10 is explicitly NOT_IMPLEMENTED, so exact support/coverage for this proposal is less auditable. geometry_necessity=2: a valid Poincare operator is proposed (E15), but the Euclidean assignment and unclarified mapping leave a matched Euclidean transform able to reproduce the effect. novelty=2: the proposal is a close variant of predecessor_contrast_offset and context-offset mechanisms; no traceable cited-work/ledger distinction is provided. downstream_mechanism=4: offset changes first-level code assignments and hence SID prefixes, with expected better next-item compatibility; a detailed assignment diagnostic is absent. falsifiability=2: behavior/geometry switches are contemplated, but matched-control details and a clear refutation criterion are insufficient. implementability=3: the procedural specification is largely actionable, but coordinate conventions, Frechet numerics, exact bounding and cost validation remain. exploration_value=2: small variation of the same offset family, with no distinct failure mode established.",
+          "scope_reason": "Training-only predecessor edges and co-consumption Jaccard choose context barycentres; fixed-curvature Poincare Frechet operations feed the shifted latent used in first-level assignment. The connected behavior/geometry path and expected assignment/Stage3 effect are specified. The proposal names behavior-off and Euclidean/both-on comparisons generally, but matched controls and an explicit failure criterion are not adequately spelled out.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "With a singleton predecessor set {j}, the Frechet barycentre is exactly v_a1(j) for both Poincare and Euclidean definitions; for this case geometry contributes no distinct averaging effect, although the nonzero offset may still alter assignment.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13"
+          ],
+          "idea_id": "predecessor_contrast_offset",
+          "missing_dimensions": [],
+          "objection": "The curved barycentres are subsequently treated as ordinary coordinate vectors and assignment uses squared Euclidean distance; without a demonstrated geometric advantage over the matched Euclidean barycentre, curvature may be an expensive way to generate an ordinary offset.",
+          "rationale": "Behavior is well supported by train-only successor entropy and cohort-profile statistics with stated coverage (E5, E9, E10), but the evidence is not specifically about the proposed hard-negative offset. Curved barycentre construction is explicit and coupled, yet the coordinate-space shift and Euclidean nearest-code decision leave its necessity unestablished (E12-E13). The offset affects actual first-level assignment, plausibly changing prefix survival and recommendation (E6, E8); the proposal names behavior-off/geometry-off/both-on but lacks a precise failure criterion and matched-control details. It is implementable in principle, but Frechet iteration cost and numerical safeguards are acknowledged risks rather than fully specified; overlap with measured successor/geodesic and tangent-residual families limits novelty and exploration value (E6-E7). UNKNOWN: whether hard-negative Jaccard relations have adequate coverage and stability; bounded check: report nonempty P/hard-negative coverage and epoch-to-epoch negative stability using training-only data.",
+          "scope_reason": "Training-only directed predecessors and co-consumption Jaccard hard negative determine Poincare barycentres and the latent offset before first-level assignment; removing behavior or curvature changes the assignment input. It specifies behavior-off, Euclidean geometry-off, and both-on comparisons, though matched controls and a clear falsification threshold beyond the Stage3 objective need fuller operational detail.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If eta=0, the assignment is exactly the own-latent Euclidean nearest candidate regardless of A or Poincare distances; this illustrates why a nonzero, calibrated eta and a matched Euclidean-kernel ablation are essential, not evidence that the proposed fixed eta cancels.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "transition-geodesic-prior",
+          "missing_dimensions": [],
+          "objection": "The proposal is close to the already measured successor-geodesic-coarse family (E6-E7); the stated change from coarse successor geometry to a transition-kernel prior is not yet argued computationally against that ledger result.",
+          "rationale": "Train-only successor statistics support predictive transition structure (E5), and observed geodesic-coarse variants provide relevant but mixed downstream results (E6-E7). The curved distance is explicitly inside a behavior-conditioned prior, but a Euclidean transition kernel could plausibly reproduce much of the smoothing, so necessity is not demonstrated (E12-E14). The intended assignment change and recommendation pathway are named, but the proposal lacks the requested three controlled comparisons and a defined falsifier. Its epoch aggregation and kernel cache are specified, though normalized-kernel details, numerical guards, and runtime affordability remain uncertain. UNKNOWN: whether this exact transition prior differs materially from the measured geodesic-coarse mechanisms; bounded check: inspect the cited mechanism definitions and compare logits/assignments on a fixed training-only batch.",
+          "scope_reason": "Training-only directed transitions are aggregated into assigned code-region transition counts; incoming predecessor-region mass gates a Poincare geodesic kernel in the first-level candidate logits used for the hard code choice. Both behavior and geometry are on the core assignment path. It needs explicit behavior-off, Euclidean-kernel, and both-on matched runs plus a failure criterion to satisfy the full testability contract.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For a singleton predecessor set, the Frechet barycentre equals its sole codepoint under either geometry. Thus on such an input the curved averaging operation itself provides no advantage over the Euclidean counterpart.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "pred_offset",
+          "missing_dimensions": [],
+          "objection": "Its curved barycentres are converted into coordinate offsets and fed to an unchanged Euclidean quantizer, so a matched Euclidean barycentre may yield the same useful assignment bias without the added geometric computation; the bundle itself says operator validity alone does not establish coupling value (E15).",
+          "rationale": "Train-only transition and successor-entropy evidence supports the behavior signal (E5, E9), although the bundle marks the proposed statistic as not implemented (E10), and support/coverage for Jaccard hard negatives is not established. The Poincare barycentre is explicitly on the assignment path, but the subsequent coordinate subtraction and Euclidean assignment leave a plausible Euclidean substitute; the matched control exists in the bundle (E14) but cancellations/advantage are not resolved. Assignment can change and the intended route to next-item prefix behavior is plausible (E6, E8), but no explicit three-arm comparison or falsification rule is given. Implementation details are fairly concrete, while boundary safeguards and budget evidence are incomplete; prior measured geodesic/tangent mechanisms constrain novelty (E6-E7). UNKNOWN: coverage and numerical stability of the proposed predecessor/hard-negative barycentres; bounded check: measure empty-set rates, ball-boundary proximity, and finite barycentre outputs over one training-only refresh.",
+          "scope_reason": "Training-only immediate predecessors and Jaccard co-consumption hard negatives determine Poincare Frechet barycentres, which form a concentration-scaled offset to the live item latent before first-level Euclidean nearest-code assignment. This is a connected behavior/geometry pathway. The text gives a hypothesis but not explicit behavior-off, Euclidean-geometry-off, and both-on comparisons or a failure criterion.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "None claimed.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "predecessor_contrast_offset",
+          "missing_dimensions": [],
+          "objection": "The geometric barycentre is converted into an ordinary coordinate difference and then scored by Euclidean distance; without a matched Euclidean-barycentre ablation, it is unclear whether curvature changes assignments rather than merely providing a different coordinate average, and the proposed offset may damage content reconstruction.",
+          "rationale": "Behavior=3: E5 and E9 provide measured train-only successor/profile signals, but E10's sampled coverage and absence of a measured Jaccard-hard-negative result prevent a stronger score. Geometry=2: a curved barycentre is explicit, but the downstream Euclidean shift/quantizer has no matched-control argument showing a non-reproducible effect. Novelty=2: latent offset is distinct in placement, but closely related geodesic/cohort mechanisms are already measured in E6-E7. Downstream=3: changed first-level assignments could change prefixes and beam survival, but no assignment diagnostic/direction is specified. Falsifiability=1: behavior-off is mentioned, but geometry-off and a failure criterion/discriminating diagnostic are not. Implementability=3: equations and sparse caching are given, but Frechet numerical safeguards and affordability are not established; the proposal itself flags runtime risk. Exploration=2: a small variation on measured successor-geodesic/cohort families. No Recall prediction is treated as measurement.",
+          "scope_reason": "It specifies training-only predecessors and Jaccard hard negatives and uses Poincare Frechet barycentres in the offset feeding first-level assignment, so the computational pathway is coupled. It names behavior-off and both-on in the hypothesis, but not the required geometry-off/Euclidean comparison.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "None claimed.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E9",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "transition-geodesic-prior",
+          "missing_dimensions": [],
+          "objection": "The behavior-derived transition matrix is already doing the main compatibility work, while the curved kernel's incremental value is untested; prior measured successor-geodesic variants in E6-E7 underperform the listed Euclidean/resampling alternatives.",
+          "rationale": "Behavior=3: E5/E9 support structured transitions, though they do not directly establish predictive value of this region transition prior. Geometry=3: squared Poincare distances shape the transition smoothing kernel and could differ from Euclidean distances, but there is no matched Euclidean argument demonstrating added value. Novelty=2: this is a routine region-transition/kernel variation near the already measured successor_geodesic_coarse family (E6-E7). Downstream=3: altered candidate logits can alter assignments and prefix behavior, but direction and diagnostic are not nailed down. Falsifiability=1: no explicit three-way controls or failure criterion. Implementability=2: broad algorithm/cost is given, but normalizer Z_r and exact log-probability construction are underspecified, and the O(NPK) work / required P cap are not verified against budget. Exploration=2: close to measured geodesic successor variants. E6's Stage3 values are evidence about prior mechanisms, not a prediction for this proposal.",
+          "scope_reason": "It computes training-only directed transitions, maps them to current regions, and applies a Poincare-distance kernel to transition probabilities inside assignment logits, so the behavior and geometry are directly coupled. It does not name the required behavior-off and geometry-off/Euclidean matched comparisons.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "None claimed.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "pred_offset",
+          "missing_dimensions": [],
+          "objection": "The c=1 Frechet barycentres are used as ordinary coordinate vectors in d_i and then the candidate is selected by Euclidean distance; the proposal does not show that this specific curved averaging, rather than a matched Euclidean average, contributes useful assignment changes.",
+          "rationale": "Behavior=3: train-only successor entropy/profile evidence exists (E5/E9), but E10's sampling-limited coverage and E10 being NOT_IMPLEMENTED leave support for this exact hypothesis incomplete. Geometry=2: Frechet means are explicit but no matched Euclidean counterpart or cancellation analysis is supplied. Novelty=2: it is closely related to predecessor_contrast_offset and measured successor-geodesic/cohort mechanisms (E6-E7), rather than a clearly distinct computation. Downstream=3: the offset changes first-level assignments and could affect prefix survival, but expected direction and diagnostic are not specified. Falsifiability=1: neither the three required comparisons nor an explicit failure criterion is named. Implementability=3: the algorithm, w, entropy factor, caching and epoch refresh are specified; numerical safeguards for ball-boundary behavior and verified budget are missing. Exploration=2: a small variation of the same predecessor-offset family. E11 is a sanity check, not evidence of this mechanism's effect.",
+          "scope_reason": "Training-only directed predecessors and co-consumption Jaccard feed Poincare Frechet barycentres which shift the latent used for first-level assignment, establishing a connected behavior/curvature pathway. The hypothesis does not specify the required behavior-off and geometry-off/Euclidean comparisons.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    }
+  ],
+  "round_id": "round_20261027_071611_987",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "pred_offset",
+        "status": "BACKUP",
+        "weighted_score": 2.8
+      },
+      {
+        "idea_id": "predecessor_contrast_offset",
+        "status": "BACKUP",
+        "weighted_score": 2.8
+      }
+    ],
+    "disagreement": {
+      "pred_offset": 1.0,
+      "predecessor_contrast_offset": 2.0,
+      "transition-geodesic-prior": 1.0
+    },
+    "disputed": {
+      "pred_offset": [],
+      "predecessor_contrast_offset": [
+        "falsifiability"
+      ],
+      "transition-geodesic-prior": []
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": true,
+          "pair": [
+            "pred_offset",
+            "predecessor_contrast_offset"
+          ],
+          "votes": {
+            "pred_offset": 2,
+            "predecessor_contrast_offset": 1
+          },
+          "winner": "pred_offset"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "pred_offset",
+            "transition-geodesic-prior"
+          ],
+          "votes": {
+            "pred_offset": 0,
+            "transition-geodesic-prior": 3
+          },
+          "winner": "transition-geodesic-prior"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "predecessor_contrast_offset",
+            "transition-geodesic-prior"
+          ],
+          "votes": {
+            "predecessor_contrast_offset": 3,
+            "transition-geodesic-prior": 0
+          },
+          "winner": "predecessor_contrast_offset"
+        }
+      ],
+      "copeland": {
+        "pred_offset": 0,
+        "predecessor_contrast_offset": 0,
+        "transition-geodesic-prior": 0
+      },
+      "cycles": [
+        [
+          "pred_offset",
+          "predecessor_contrast_offset",
+          "transition-geodesic-prior"
+        ]
+      ],
+      "position_bias": {
+        "first_listed_wins": 8,
+        "second_listed_wins": 1
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "predecessor_contrast_offset",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.8 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.8
+      },
+      {
+        "idea_id": "pred_offset",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.8 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.8
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "copeland": 0,
+        "idea_id": "transition-geodesic-prior",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "weighted_score": 3.0
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  }
+}

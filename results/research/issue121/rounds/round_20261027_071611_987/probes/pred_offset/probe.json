@@ -1,0 +1,39 @@
+{
+  "budget_seconds": 120.0,
+  "elapsed_seconds": 1.019,
+  "hypothesis_family": "other",
+  "idea_id": "pred_offset",
+  "metrics": {
+    "note": {
+      "reason": "this probe has no diagnostic for the hypothesis family of this proposal; the proposal must name the statistic it needs",
+      "status": "NOT_IMPLEMENTED"
+    }
+  },
+  "reason": "no diagnostic could be measured for this hypothesis",
+  "schema": 1,
+  "schema_discovery": {
+    "columns": {
+      "history": "object",
+      "seen_history": "object",
+      "target": "int64",
+      "user": "int64"
+    },
+    "distinct_items_seen": 23782,
+    "has_ordered_history": true,
+    "has_target": true,
+    "has_user": true,
+    "leakage_note": "the train split only; validation, test and the Stage 3 labels are never read here",
+    "rows": 396958,
+    "source": "results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "status": "OK",
+    "unique_users": 57439
+  },
+  "seed": 20261025,
+  "sequences_read": 20000,
+  "sha256": "321e4f4812edeb97569f69a1751a4fecc10303df38a280afaef8fc454c5f1a1d",
+  "started_at": 3435023.887486508,
+  "status": "PARTIAL",
+  "users_read": 20000,
+  "within_budget": true
+}

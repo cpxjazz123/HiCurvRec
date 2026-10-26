@@ -1,0 +1,37 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: transition-geodesic-prior/train_rqvae.py:247-255,321-343 -> transition-geodesic-prior/model/layers.py:106-125 | Source inspection traced training.parquet history/target adjacent directed transitions into per-item predecessor-region masses, supplied to the level-one candidate assignment path; that path evaluates the Poincare-like pairwise kernel before assignment. No runtime execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: transition-geodesic-prior/model/layers.py:108-118
+FINDING DETAIL: The behaviour and curved code-distance do meet in one connected assignment computation, but the claimed curvature-c=.1 Poincare distance is calculated with denominators (1-||z||^2), not (1-c||z||^2). Its point projection is also not a projection to the radius 1/sqrt(c) ball. Consequently this is not the stated curvature-.1 Poincare geometry; the geometry term is numerically bounded but geometrically inconsistent with its declared c.
+FINDING REPRODUCTION: For any nonzero code vectors z_i,z_j, compare line 115 against d=acosh(1+2*c*||z_i-z_j||^2/((1-c||z_i||^2)*(1-c||z_j||^2)))/sqrt(c). With c=.1 these differ (even for small vectors); the current expression instead uses unit-curvature denominator factors while retaining c only in the numerator and scale.
+FINDING CORRECTION: Project code vectors into the c=.1 ball (radius 1/sqrt(c), with a safety margin) and use the consistent Poincare distance formula with (1-c||z||^2) factors throughout. Keep the transition prior multiplying/gating that corrected pairwise kernel in the candidate score.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: transition-geodesic-prior/model/layers.py:106-147 and :287-305; transition-geodesic-prior/train_rqvae.py:343-351 | Static forward/backward trace: `_indices` applies the behavior-conditioned curved score to candidate distances, selects indices, and `forward` constructs selected code embeddings and the straight-through quantized output; quantization and reconstruction losses then backpropagate through encoder/codebook parameters. The choice can change with transition_prior because the prior is added before argmin/Sinkhorn. With no prior the branch is skipped; replacing the Poincare score with Euclidean distance would remove that score contribution and may change selected indices/gradients. Did not execute due to the stated environment limitation; smoke_test.py:13-19 asserts only finite loss/codebook gradient and does not itself compare on/off assignments.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: transition-geodesic-prior/smoke_test.py:13-19
+FINDING DETAIL: No blocking trainability defect found by inspection: the discrete prior affects selected codes, and the straight-through/quantization losses produce gradients for model parameters. The checked-in smoke test does not establish the requested on/off assignment or gradient contrast; this is a coverage limitation, not evidence that the pathway is dead. The geometry inconsistency is reported under check (a).
+FINDING REPRODUCTION: Inspect the smoke: it runs one prior-enabled forward/backward and finite-gradient assertions, but has no behavior-off or Euclidean-distance baseline comparison. A minimal stronger smoke would clone identical weights/inputs and compare codes and gradients in three modes.
+FINDING CORRECTION: Optionally extend smoke_test.py with identical-parameter behavior-off, geometry-off, and both-on runs, asserting at least one expected assignment/gradient difference while retaining finite loss/gradient checks.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: transition-geodesic-prior/train_rqvae.py:42-65,247-255,439-453,460-488 | Inspected root/path resolution, frozen input constants, training entry point, SID export/index construction, and launcher branches. No trainer execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: transition-geodesic-prior/train_rqvae.py:49-53
+FINDING DETAIL: Repository-root discovery accepts the first ancestor containing `stage2_RQ-VAE`. For a trainer copied to the promoted location under `stage2_RQ-VAE/TIGER_transition-geodesic-prior`, this correctly finds the repository root. But from the supplied candidate-tree location, an ancestor `results/` also contains `stage2_RQ-VAE`, so this discovery resolves to `REPO_ROOT=.../GeneRec/results`, yielding `RESULT_DIR=.../GeneRec/results/results/stage2_RQ-VAE/...` and similarly misresolving frozen inputs. This violates root/path containment if this tree is run directly and can prevent correct promotion/integration.
+FINDING REPRODUCTION: Evaluate `_repository_root()` with `__file__` at `results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py`: its upward walk encounters `results/stage2_RQ-VAE` before the repository root's marker, satisfying line 51 prematurely.
+FINDING CORRECTION: Require both the repository marker and an unambiguous repository-root marker (for example `.git` plus `stage2_RQ-VAE`), as used by robust root discovery elsewhere; verify the resulting root is the checkout root before defining paths.
+FINDING SEVERITY: blocking
+FINDING LOCATION: transition-geodesic-prior/train_rqvae.py:463-465
+FINDING DETAIL: The single-card bypass checks a literal `GENREC_SINGLE_GPU` rather than defining and reading the required `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` contract. The MCP single-card entrypoint marker therefore does not recognize this trainer. Its intended one-card behavior is otherwise apparent: with that environment variable present and no RANK, the launcher returns and `main()` selects cuda:0.
+FINDING REPRODUCTION: Search the trainer for `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"`: there is no match. Set `GENREC_SINGLE_GPU=1` and inspect launcher behavior; it bypasses torchrun, but the required declared contract is absent and the MCP entrypoint detector rejects it.
+FINDING CORRECTION: Define `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` and use `os.environ.get(SINGLE_GPU_ENV)` in the launcher branch; preserve the four-process torchrun branch when it is unset.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: transition-geodesic-prior/train_rqvae.py:63-67,445-453
+FINDING DETAIL: The export itself is correctly shaped and indexed by embedding-row item ID: `enumerate(sid)` writes integer SID rows and collision extension ensures uniqueness. However the bad root resolution above means its nominal candidate-specific output location can resolve under an unintended nested results path. The SID construction is not independently defective.
+FINDING REPRODUCTION: Given the candidate-tree execution context, substitute the prematurely selected `REPO_ROOT=.../GeneRec/results` into lines 59 and 63-65; output resolves under `.../GeneRec/results/results/stage2_RQ-VAE/...` rather than the required promoted result directory.
+FINDING CORRECTION: Correct root discovery as above, retaining `RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME`; do not redirect artifacts into the candidate tree.

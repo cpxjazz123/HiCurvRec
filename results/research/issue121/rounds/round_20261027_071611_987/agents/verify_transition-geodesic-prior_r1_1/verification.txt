@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:250-255, 321-343 -> model/layers.py:106-122 | Traced directed adjacent history/target pairs into `incoming`, previous-epoch level-one regions into normalized `predecessor`, then through `_indices`; the transition prior weights a Poincare-distance kernel which changes the level-one candidate distortion before argmin/Sinkhorn. This is a single connected training-only behavior/curved-geometry pathway, not an unused helper or separate loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in this check. The transition signal is computed from the training parquet only and is used jointly with the curved code-to-code compatibility score while preserving the item latent's Euclidean distortion term.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:250-255 builds the directed edges; :321-343 builds and passes predecessor masses; model/layers.py:106-122 combines those masses with the Poincare kernel and base distortion.
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:106-151, 291-309; smoke_test.py:11-22 | Inspected the forward assignment and straight-through VQ loss and the included forward/backward smoke source. The smoke source exercises only one prior-on forward; it does not compare prior-off, Euclidean-curve, and coupled modes or establish that the coupled path changes the assignment/gradient and changes back under either control.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:106-129; smoke_test.py:13-19
+FINDING DETAIL: The curve/prior affects only discrete `embed_ind` selection. There is no differentiable gradient through the Poincare score itself; gradients reach codebook/encoder through the selected quantized code's existing VQ straight-through/reconstruction path, so this is not by itself a dead term. But the required switch-effect behavior is not demonstrated, and the current smoke's fixed prior (line 13) plus merely non-None codebook gradient assertion (line 18) cannot distinguish a live coupled assignment from an unchanged Euclidean assignment. No implementation-level evidence in this tree verifies that assignment or gradient changes with the prior on, and returns when prior is off or the curve is Euclidean. Numerical safeguards in the Poincare calculation (radial projection and clamps at :110-120) appear finite for finite float32 codebooks; no specific overflow/NaN defect is evident from inspection.
+FINDING REPRODUCTION: Run the same deterministic input/codebook through `_indices` four ways (nonzero predecessor prior with Poincare kernel; zero/no prior; nonzero prior with the kernel replaced by Euclidean distance; prior restored). The supplied smoke_test.py does not perform these comparisons: it asserts only finite scalar loss and a finite gradient tensor, so it passes even if assignments are identical in every mode.
+FINDING CORRECTION: Extend the smoke test with a deterministic boundary case where the transition score changes the winning code, assert coupled assignment differs from both controls and reverts when each switch is disabled, and compare finite parameter gradients (or explicitly document that the hard assignment is nondifferentiable and verify the changed selected-code gradient). Keep the real trainer's forward/backward path in that check.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-67, 232-270, 410-457, 460-488 | Traced repository-root discovery, frozen stage0 `train.parquet` and stage1 embedding inputs, promoted-arm result paths, train/export indexing, and launcher branches from source; no trainer execution performed. The single-card branch checks `os.environ.get("GENREC_SINGLE_GPU")` at :464 and returns before spawning another torchrun.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Outputs resolve under `results/stage2_RQ-VAE/TIGER_transition-geodesic-prior/`, not the baseline or another candidate; item IDs in `item_sids.json` are enumerated in embedding-row order, with collision extension ensuring unique rows. Training inputs resolve to the frozen stage0 train parquet and stage1 embedding file. The launcher retains four-card torchrun and honors the `GENREC_SINGLE_GPU` environment switch.
+FINDING REPRODUCTION: Inspect train_rqvae.py:49-67 for repository/result/input paths, :247-261 for training data and IDs, :439-453 for export, and :460-488 for launcher and single-card behavior.
+FINDING CORRECTION: none

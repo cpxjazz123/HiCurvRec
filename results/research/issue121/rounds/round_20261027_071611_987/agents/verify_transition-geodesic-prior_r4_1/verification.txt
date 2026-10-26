@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:251-256,335-344 -> results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/model/layers.py:106-140 | Traced construction of directed adjacent train-sequence predecessors, their mapping to previous-epoch regions, passing the per-item predecessor mass into first-level quantization, and the Poincare kernel's effect on candidate distances. Compared this implemented equation with PROPOSAL.json:38-41.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/model/layers.py:120-133
+FINDING DETAIL: The connected path does use training-only predecessor-region masses and a Poincare geodesic kernel together, but it does not implement the proposed region transition matrix A. The code scores a predecessor region using log_softmax of its direct geodesic kernel row (lines 125-133); it never counts or uses outgoing region transitions A[r,k]. Thus this is a different mechanism from the specified sparse predecessor-conditioned transition prior, despite satisfying the basic behaviour/geometry coupling criterion.
+FINDING REPRODUCTION: Read the actual path at train_rqvae.py:251-256 and :335-344, then inspect VQLayer._indices at layers.py:120-133: its only inputs are transition_prior and the codepoint kernel, and no A/table is built or passed. A minimal counterexample is two models with identical code embeddings and identical incoming predecessor mass but different training outgoing transition counts; the implemented logits are identical, whereas the specified A-based logits should differ.
+FINDING CORRECTION: Aggregate the frozen train-only directed edges into the epoch's code-region A using the current assignments, smooth and row-normalize it as specified, and combine A with the Poincare kernel to form candidate transition probabilities before applying the predecessor mass. Pass/use that table in the assignment scoring, retaining the item's own-latent Euclidean distortion and numerical safeguards.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/smoke_test.py:11-19,21-60 -> results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/model/layers.py:106-118,120-162 | Inspected the authored forward/backward and controlled assignment smoke: it asserts finite loss and codebook gradients, constructs a case where Poincare coupling changes code 0 to code 1, and verifies zero-prior and Euclidean-kernel controls return code 0. The geodesic score affects the hard selected code, whose existing quantization loss and straight-through output train the selected codebook/encoder path. Kernel ball projection and denominator clamps bound the Poincare calculation; acosh's argument is clamped above one and the log affinity is floored, avoiding the stated float32 hazards. Runtime execution is unavailable as specified.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No trainability defect found in the implemented coupled path. The argmin is discrete and does not backpropagate through the prior itself, but the prior changes selection and therefore changes the ordinary selected-code VQ gradients; the smoke explicitly checks this distinction.
+FINDING REPRODUCTION: The controlled counterexample and gradient assertions are in smoke_test.py:21-60; the full model forward/backward is in :11-19.
+FINDING CORRECTION: None required for this check. The A-table fidelity correction in check (a) remains required to implement the proposed mechanism.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:40-67,91-108,233-270,411-458,461-489 | Source-inspected the trainer entry point, repository-root marker resolution, frozen stage0 train.parquet and stage1 embedding paths, arm-specific promoted result path, indexed SID export, and launcher branches. Confirmed SINGLE_GPU_ENV is exactly GENREC_SINGLE_GPU at line 91; with that variable set the auto-launcher returns at lines 463-466 and main runs single-process. DDP launches four ranks otherwise. Runtime execution was not attempted, as instructed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Data inputs are the frozen train.parquet and sentence_t5.npy; outputs resolve under results/stage2_RQ-VAE/TIGER_transition-geodesic-prior, not a baseline or another candidate directory. Export enumerates every embedding row as its item ID (lines 440-452), appends unique collision suffixes, and verifies uniqueness (lines 446-448). The single-card environment branch is present. Trainer runtime and the MCP GPU smoke were not available here.
+FINDING REPRODUCTION: Inspect the constants at train_rqvae.py:56-67, train-only loading at :247-260, export at :439-453, and launcher at :461-489.
+FINDING CORRECTION: None required for this check.

@@ -1,0 +1,9 @@
+REPAIR: The quantizer omitted the training code-region transition matrix A | Aggregated directed adjacent-item edges from training prefixes into a smoothed, row-normalized 256x256 transition matrix from previous-epoch level-one assignments; passed it through the RQVAE forward path and combined log A with the Poincare geodesic log affinity before predecessor-mass weighting, retaining Euclidean latent distortion and clamps | Added smoke assertions specifying different outputs for different outgoing transition rows under identical embedding and predecessor mass; source path confirms the epoch table is handed to the training forward. Runtime smoke could not execute because this environment lacks PyTorch (actual output below).
+REMAINING ISSUE: Smoke execution and runtime validation remain unverified because Python reports `ModuleNotFoundError: No module named 'torch'`.
+SMOKE COMMAND: python smoke_test.py
+SMOKE RESULT: Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/smoke_test.py", line 4, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'
+Exited with code 1
+NOTES: Existing root discovery, result output location under `REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME`, and `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` branch were preserved. Table build cost is O(training edges + 256^2) once per epoch, on each training rank. No changes were made outside the requested candidate tree, except this required report file.

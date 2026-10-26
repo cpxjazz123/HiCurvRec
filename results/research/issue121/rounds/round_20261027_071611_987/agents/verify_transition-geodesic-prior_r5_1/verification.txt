@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:250-261,327-355 -> results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/model/layers.py:106-144,154 | Inspected directed adjacent pairs formed only from train.parquet history/target, previous-epoch level-one item regions aggregated into a predecessor mass, and the transition/geodesic combination used in level-one candidate distances before hard code choice. The checked-in smoke_test.py:21-45 specifies explicit behavior-off and Euclidean-geometry controls that distinguish assignment outcomes; it was not runtime-executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/model/layers.py:106-144,146-167,308-327; results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:355-363 | Static trace confirms finite safeguarded Poincare computation feeds the actual candidate-distance argmin; selected indices feed the quantized forward and quantization loss, which backpropagates through codebook/encoder/decoder parameters. smoke_test.py:7-19,21-45,59-63 contains forward/backward, finite-gradient and assignment-control assertions, but was not run. The hard argmin has no derivative, as expected for this straight-through quantizer; the prior/curve acts by changing selected code and thus the downstream VQ gradient rather than by a direct derivative through argmin.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No dead coupled term or static numerical hazard found. The smoke test does not itself check that behavior/geometry-off gradients differ; its deterministic assignment control plus selected-code VQ path make the mechanism's gradient effect inspectable from code.
+FINDING REPRODUCTION: The checked-in test's assignment counterexample is at smoke_test.py:21-45; the selected-code backward is at :59-63. Runtime proof is unavailable here as stipulated.
+FINDING CORRECTION: No blocking correction required. For stronger smoke coverage, compare the actual codebook gradients from identical forward/backward inputs with prior enabled, prior disabled, and Euclidean kernel substituted.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:40-67,91-107,233-276,422-500 | Inspected the trainer entry point, frozen Stage0 train.parquet / Stage1 embedding paths, candidate-specific promoted output directory, SID export/index construction, four-process launcher, and GENREC_SINGLE_GPU bypass branch. The export enumerates all embedding rows as item IDs and writes N-by-(levels+1) integer SIDs plus stringified zero-based item keys. No trainer execution was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found. RESULT_DIR resolves to results/stage2_RQ-VAE/TIGER_transition-geodesic-prior under the repository root, consistent with the required candidate-owned Stage2 path; writes shown are confined to that directory. SINGLE_GPU_ENV is exactly GENREC_SINGLE_GPU and its launcher branch is present.
+FINDING REPRODUCTION: Static path and control-flow inspection at train_rqvae.py:40-67,472-500; export inspection at :457-465.
+FINDING CORRECTION: N/A
