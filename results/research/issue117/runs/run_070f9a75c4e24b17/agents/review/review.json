@@ -1,0 +1,40 @@
+{
+  "candidate_id": "geometry_poincare_residual_sid",
+  "candidate_sha256": "96cda17723f742d4e29d41c98a018a1c593a315726bdf30bbbc78be60bd1cd99",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "issue": "The causal link to next-item behavior is indirect and the proposed falsifier only decides a Stage2 representation effect.",
+      "evidence": "The observed 92.66% directed-pair asymmetry is explicitly not evidence of hierarchy or geometry. The builder consumes item content embeddings only; it has no transition-conditioned supervision or ranking evaluation. Its proposed outcomes (Hard-L1 ER, prefix diversity, and L3 statistics) can establish a code-construction effect, but cannot establish that the effect improves next-item prediction. The proposal appropriately limits its claim, but the next-item causal motivation remains unverified.",
+      "required_for_cpu_study": "Frame any result strictly as a Stage2 SID diagnostic result; no next-item improvement or causal behavior claim follows without a separate Stage3 evaluation."
+    },
+    {
+      "issue": "The falsifier lacks a fully specified decision rule for combining outcomes across seeds and diagnostics.",
+      "evidence": "It says to reject if there is no improvement in ER and no increase in prefixes or L3 statistics, and also requires 'no consistent curvature-minus-flat difference across the frozen seeds.' It does not define consistency, a minimum effect, or how the multiple directional L3 statistics are combined. Paired measurements can be produced, but the stated wording does not uniquely classify mixed or noisy outcomes.",
+      "required_for_cpu_study": "Predeclare a deterministic per-seed aggregation and decision rule for ER, prefix diversity, and each exact existing L3 statistic (including handling of mixed directions); retain the frozen seeds and avoid tuning on validation outcomes."
+    },
+    {
+      "issue": "The directed-graph control does not test whether a benefit is specific to geometry rather than graph signal.",
+      "evidence": "The control keeps the candidate's Poincare distance and training recipe, adds no graph input or loss, and uses edges only to calculate a diagnostic weighted endpoint distance. Since it does not alter training or SID assignment, it cannot compare a graph-informed signal against a geometry-only signal or rule out graph leakage as an explanation. The no-graph-input rule itself is clear and compliant.",
+      "required_for_cpu_study": "Treat this as a post-hoc diagnostic only, not as evidence that geometry rather than graph supervision caused an effect; do not feed its score or edges into training or SID assignment."
+    }
+  ],
+  "reproducible_evidence": [
+    {
+      "check": "Next-item link and leakage",
+      "result": "The proposal explicitly restricts SID construction to item content embeddings and the frozen Stage2 data/recipe; it excludes users, transition edges, and future/test interactions from the builder. The behavior evidence is train-only and is motivation, not supervision. This is consistent with the frozen current-only constraint, but the observed asymmetry alone does not establish a causal next-item benefit."
+    },
+    {
+      "check": "Math, curvature effect, and domain",
+      "result": "The stated origin exponential map and Poincare distance are mathematically coherent for c>0. The distance convention gives d_c^2 -> 4||x-y||^2 as c->0, matching the specified flat control. With radial projection to (1-epsilon)/sqrt(c), mapped points remain strictly inside the ball; positive denominator clamping and float64 are specified as numerical safeguards. The map is nontrivial at c=1 and epsilon=1e-5, so this is not a nominal zero-curvature change."
+    },
+    {
+      "check": "Same-capacity control and frozen protocol",
+      "result": "The Euclidean arm is specified to retain the same encoder, latent dimension, codebooks, objective, parameter count, initialization, temperature, schedule, epochs, and seeds, changing only the metric and using the exact flat-limit scaling. The candidate binds training to the existing frozen 3000-epoch recipe rather than inventing missing optimizer or batch values. This is implementable provided the executable run binds to the recorded frozen recipe values."
+    },
+    {
+      "check": "Novelty and scope",
+      "result": "The literature evidence explicitly describes a bounded scan and does not claim the three-way intersection as established novelty. The proposal is a testable geometry hypothesis, not a supported necessity claim."
+    }
+  ]
+}

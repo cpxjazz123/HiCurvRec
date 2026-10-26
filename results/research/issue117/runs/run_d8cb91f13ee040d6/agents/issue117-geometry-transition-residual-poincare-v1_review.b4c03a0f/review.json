@@ -1,0 +1,13 @@
+{
+  "candidate_id": "issue117-geometry-transition-residual-poincare-v1",
+  "source_sha256": "a8066ae1bc72e944a345290505f78fce67c73da3e69775b6768adbdb581cd136",
+  "proposal_sha256": "94ca0360e8757cf445e2b3a0bf3c370054d88cb5dd8c56e3a4b6fd33f6f9469c",
+  "test_sha256": {
+    "ddp": "7d3df98d28902999dd84158c38cda858a08d5a26a0e9cb341fd20b2287031cbd",
+    "entrypoint": "edffe88efcd5a01f96451cfd6a838da973df0d9a870961bdd4344a5ffc866b3e",
+    "gradient": "e5e0f29f5f3f83394cb158965ef0cbc389a30d709a97e9a436983dbdc6d061e5",
+    "math": "afb8062c4d1668a8cd75f780f4643d7c52db86146aa285b44a97f56793111982"
+  },
+  "verdict": "APPROVE_TESTS",
+  "rationale": "Recomputed source_sha256 from the manifest’s sorted path/NUL/per-file-SHA256 recipe; it matches the manifest digest and all six listed file hashes. All four current reviewed test hashes match their materialised entries. Static inspection confirms the math oracle uses independent closed-form expected values and explicit residual fixtures; DDP spawns two ranks on RQVAE, supplies distinct rank batches/edges, and gathers gradients and updated parameters; entrypoint invokes trainer.main() and checks its produced checkpoint, SIDs, and transition log. Current author reports are the applicable evidence; older Agent logs are archived history. No suites were executed here: verification_check must establish nonzero, non-skipped passing execution with the Stage2 interpreter, including real DDP runtime behavior."
+}

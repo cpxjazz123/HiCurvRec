@@ -1,0 +1,21 @@
+{
+  "candidate_id": "geometry-poincare-squared-balanced-residual-v1",
+  "candidate_sha256": "75d1adb1cff8d98e2d24a84d0fbb50d32e4a718c1c23533526ceab72df15ce99",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "severity": "MATERIAL",
+      "issue": "The registered falsifier is not fully mechanically decidable from this candidate: stage3_behavioral_test.seed_rule requires a 'pre-registered aggregate' and the global falsifier applies aggregate criteria, but neither specifies the aggregation operation (for example, mean paired difference versus another statistic). This leaves the pass/mixed/falsified classification ambiguous even if every per-seed result is available.",
+      "evidence": "candidate.falsifier.stage3_behavioral_test.seed_rule: 'report each paired curved-minus-flat result and the pre-registered aggregate'; candidate.falsifier.classification applies registered criteria to 'the aggregate'. No aggregate formula or aggregation rule is present in the manifest.",
+      "required_resolution": "Specify the exact aggregate calculation for test_R@10 and for any other comparison to which aggregate criteria apply, including how missing or non-finite seed values are handled (consistent with the NULL rule)."
+    }
+  ],
+  "evidence": {
+    "causal_link": "The next-item rationale is appropriately framed as a falsifiable design hypothesis, not an inferred causal result: train-only directed transitions motivate testing whether a geometry changes content-derived indexing, while the registered Stage3 test_R@10 comparison tests downstream behavior. The manifest explicitly says observed directionality and entropy do not establish negative curvature or causal improvement.",
+    "math_and_domain": "The stated c=1 squared Poincare distance is well-typed for projected operands in the fixed radius-0.9 ball, with positive denominators and the acosh lower clamp. The c->0 limit 4*||x-y||^2 is correct. The fixed projection radius in both arms avoids a curvature-dependent projection confound; exp maps are absent in both arms. No fatal math or flat-limit defect identified.",
+    "capacity_control": "The control holds architecture, parameter count, initialization, optimizer, schedule, seeds, codebook initialization, epochs, batches, compute budget, projection radius, assignments, supervision, and residual chain fixed; only the scored distance operator changes. This is a metric-only control as declared.",
+    "leakage_and_targets": "Stage2 inputs are limited to training-item content and train-split transitions/longest-prefix counts. Validation pairs are specified only for diagnostics; test is evaluation-only. No validation/test behavior, future events, prediction-time user context, or batch-composition signal is declared for assignment, targets, or losses. The epoch assignment target is detached and its finite scaling procedure, population, iteration count, order, and tie rule are stated. No loss/target leakage or circular target dependency identified.",
+    "frozen_protocol_and_behavior_test": "The candidate registers test_R@10, curved>flat, minimum effect 0.001, paired per-seed differences using the same frozen Stage3 seeds, and NULL/mixed/falsified/pass rules. The unresolved aggregate definition prevents a fully mechanical final classification. Stage2 leading indicators include validation Hard-L1 ER, distinct two-token prefixes, and L3 collision/refinement statistics, along with additional diagnostics. The frozen external thresholds supplied in the review request are valid_l1_hard_er strictly >10.0 and level2_distinct_prefixes strictly >16145; the candidate requires the external gates to pass and uses schema 1.",
+    "scope": "This review evaluates only the supplied manifest. It does not require an implementation in a repository tree and makes no claim about execution evidence, GPU approval, or results from independent suites."
+  }
+}

@@ -1,0 +1,227 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "5e38653cfc5141d52c0159a1d40db9282b9b1d7ea7fe363b335e49662b3e699a",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Long-tail next-item behavior under sparse user-item interactions",
+        "evidence": "HypRQ-VAE explicitly motivates hyperbolic item indexing using the power-law structure and niche preferences reflected in long-tail user-item interactions, but the record does not verify ordered next-item conditioning.",
+        "source_arxiv": "2609.03369",
+        "status": "candidate; not verified as an explicit sequence-generation objective"
+      },
+      {
+        "candidate": "Temporal preference evolution and sequential next-item prediction",
+        "evidence": "HMamba frames sequential recommendation as modeling temporal evolution of preferences from interaction sequences; its contribution is hyperbolic sequence modeling, not semantic-ID generation.",
+        "source_arxiv": "2505.09205",
+        "status": "behavior-first adjacent evidence"
+      },
+      {
+        "candidate": "Next-location choice from user mobility trajectories",
+        "evidence": "GTR-Mamba explicitly targets next-POI prediction and hyperbolic sequence modeling; semantic-ID generation is not reported in the inspected record.",
+        "source_arxiv": "2510.22942",
+        "status": "behavior-first adjacent evidence"
+      },
+      {
+        "candidate": "Joint temporal and hierarchical structure in sequential interactions",
+        "evidence": "PHGR models sequential patterns and hierarchy in sequential recommendation using Poincaré geometry; no generative semantic IDs are reported.",
+        "source_arxiv": "2205.11233",
+        "status": "behavior-first adjacent evidence"
+      }
+    ],
+    "limitations": [
+      "No independently verified source in the inspected records establishes all three elements together: ordered user next-item behavior, hyperbolic geometry, and generative semantic IDs. HypRQ-VAE is the closest indexed match, but its surfaced abstract confirms hyperbolic generative item indexing and interaction long-tail motivation, not explicit next-item sequence conditioning.",
+      "FULL_TEXT means a full-text PDF is linked from the identified arXiv record; claims above are conservative and based on the record/abstract text inspected, not a page-by-page audit of every PDF.",
+      "No DOI was exposed for the listed arXiv records except the separately identified ICDM DOI attached to the behavior-anchor paper; arXiv IDs and canonical records are supplied for independent verification.",
+      "Search coverage is not exhaustive. This result supports a research gap hypothesis, not a proof that no triple-intersection work exists.",
+      "Only work available by the frozen current date (2026-10-24) is considered; later-announced search-index records are excluded."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+      "task_id": "literature"
+    },
+    "sources": [
+      {
+        "arxiv": "2609.03369",
+        "doi": null,
+        "evidence_basis": "arXiv record provides a PDF full-text link; abstract explicitly describes generative recommendation, hyperbolic item indexing, and user-item interaction power-law/long-tail structure.",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Directly overlaps hyperbolic geometry and generative semantic/item indexing; motivated by the long-tail distribution of user-item interactions and evaluates recommendation. The available record/abstract does not establish that the model explicitly conditions next-item generation on an ordered user behavior sequence, so this is not verified as the full three-way intersection.",
+        "full_text_url": "https://arxiv.org/pdf/2609.03369",
+        "publication_date": "2026-09-03",
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+        "url": "https://arxiv.org/abs/2609.03369",
+        "verification_note": "arXiv search record title, identifier, abstract, submission date, and PDF link independently visible at https://arxiv.org/abs/2609.03369."
+      },
+      {
+        "arxiv": "2510.22942",
+        "doi": null,
+        "evidence_basis": "arXiv record supplies PDF; abstract explicitly identifies next-POI recommendation and hyperbolic sequence modeling.",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Direct user next-item/next-location behavior plus hyperbolic geometry. It does not describe generative semantic IDs or semantic-ID generation; therefore only two dimensions overlap.",
+        "full_text_url": "https://arxiv.org/pdf/2510.22942",
+        "publication_date": "2025-10-26",
+        "title": "GTR-Mamba: Geometry-to-Tangent Routing Mamba for Hyperbolic POI Recommendation",
+        "url": "https://arxiv.org/abs/2510.22942",
+        "verification_note": "arXiv record title, identifier, abstract, v1 date, and later revision date visible at https://arxiv.org/abs/2510.22942."
+      },
+      {
+        "arxiv": "2505.09205",
+        "doi": null,
+        "evidence_basis": "arXiv record has a PDF full-text link; abstract states sequential recommendation, temporal user preferences, and a hyperbolic sequence model.",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Directly addresses user behavioral sequences/next-item sequential recommendation and hyperbolic geometry. It does not report generative semantic IDs; only two dimensions overlap.",
+        "full_text_url": "https://arxiv.org/pdf/2505.09205",
+        "publication_date": "2025-05-14",
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+        "url": "https://arxiv.org/abs/2505.09205",
+        "verification_note": "arXiv record title, identifier, abstract, and PDF link visible at https://arxiv.org/abs/2505.09205."
+      },
+      {
+        "arxiv": "2205.11233",
+        "doi": null,
+        "evidence_basis": "arXiv record links a PDF; abstract explicitly discusses sequential recommendation from user behavior, temporal dependency, and Poincaré-ball representations.",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "User behavior/sequence recommendation plus hyperbolic geometry; no generative semantic-ID item representation is identified. Two dimensions overlap.",
+        "full_text_url": "https://arxiv.org/pdf/2205.11233",
+        "publication_date": "2022-05-23",
+        "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+        "url": "https://arxiv.org/abs/2205.11233",
+        "verification_note": "arXiv record title, identifier, abstract, and PDF link visible at https://arxiv.org/abs/2205.11233."
+      },
+      {
+        "arxiv": "1808.09781",
+        "doi": "10.1109/ICDM.2018.00035",
+        "evidence_basis": "arXiv-hosted paper PDF; included as a behavior-problem anchor, not evidence for hyperbolic geometry or semantic IDs.",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Models user interaction sequences to predict the next item. Neither hyperbolic geometry nor generative semantic IDs are part of the identified method; one dimension overlaps.",
+        "full_text_url": "https://arxiv.org/pdf/1808.09781",
+        "publication_date": "2018-08-29",
+        "title": "Sequential Recommendation with Self-Attentive Networks",
+        "url": "https://arxiv.org/abs/1808.09781",
+        "verification_note": "arXiv record exposes the paper and PDF at https://arxiv.org/abs/1808.09781."
+      }
+    ]
+  },
+  "literature_evidence_sha256": "6bffacb2a111633af4ebaa5325eacd3ad2185c9d135220c2f27a9088d4332978",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

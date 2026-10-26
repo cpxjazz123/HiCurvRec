@@ -1,0 +1,18 @@
+{
+  "candidate_id": "geometry_hyperbolic_residual_sid_v1",
+  "candidate_sha256": "b5f30dd3f5d7bc4c2403264c57169a44ab5243b3a99bcf24d8afa5cce93bee77",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "issue": "The geometry-matched control is not specified consistently with the claim that only the assignment metric differs",
+      "evidence": "The candidate says the Euclidean control replaces only the assignment metric, while also specifying that the candidate applies exp0_c and P_c and the Euclidean control uses the identity map and omits projection. These alter the vectors presented to assignment and the residual chart, not merely the distance metric. Thus the registered paired comparison cannot mechanically isolate the claimed negative-curvature assignment geometry under the stated 'differs only' control requirement. The control is same nominal latent/codebook capacity, but not metric-only as claimed."
+    }
+  ],
+  "reproducible_evidence": [
+    "The math defines c=1, a nonzero negative-curvature Poincare-ball distance and nontrivial exp0/projection operations; the distance has the stated 4||x-y||^2 flat limit. Codewords are constrained within the open ball via radius (1-epsilon)/sqrt(c), making distance and inverse exp0 arguments defined. The separate Euclidean arm explicitly uses identity mapping and no projection.",
+    "Stage3 behavioral test is registered as test_R@10, increase versus Euclidean, minimum relative effect 0.01, paired frozen seeds with median aggregation; test labels are reserved for final evaluation.",
+    "Stage2 registers validation Hard-L1 ER and distinct two-token prefixes, plus L3 collision, refinement gain and conditional G3, with direction, 0.02 minimum effects and paired-seed median rules. Stage3 pass additionally requires at least three diagnostics to meet their minima.",
+    "Stage2 emits one global item SID and has no ranking objective. Training-only inputs are content embeddings and train-split item transitions only for the separately labeled graph control; validation/test behavior, future events and prediction-time user context are prohibited. Validation is reserved for diagnostics and test for the registered Stage3 test.",
+    "The falsifier is mechanically classifiable: behavioral effect below 0.01 is falsified; effect at least 0.01 plus at least three diagnostic minima passes; otherwise it is mixed."
+  ]
+}

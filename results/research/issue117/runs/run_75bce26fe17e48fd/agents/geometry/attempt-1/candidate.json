@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "candidate_id": "issue117_geometry_balanced_poincare_metric",
+  "behavior_problem_id": "long_tail_directional_next_item_transitions",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "3465e7358b4aaf7be57181b663924f349bb86549a11b3792e9b638aa9f87732e",
+  "next_item_hypothesis": "For long-tail next-item prediction, a content-derived item index should preserve niche and directional successor distinctions better when residual code assignment uses negatively curved squared distance: hierarchical neighborhoods can represent unevenly branching item families more economically than a flat metric. This is a testable hypothesis, not a causal conclusion from the measured edge direction/entropy or the cited paper. Stage2 builds one global three-token SID per item from item content only; Stage3 T5 ranks next items and is not part of this candidate's Stage2 mechanism.",
+  "math_definition": {
+    "geometry_constants": "Freeze c=1, tau=0.1, epsilon=0.001, R=0.999, arcosh argument lower clamp=1.0. All vector norms are Euclidean norms in R^32. Use the same fixed projection radius R in both arms.",
+    "operator": {
+      "family": "poincare_squared_distance",
+      "curvature_c": 1.0,
+      "temperature_tau": 0.1,
+      "epsilon": 0.001,
+      "projection_radius_R": 0.999,
+      "arcosh_argument_clamp_min": 1.0,
+      "squared_distance": "For x,y in R^32 with ||x||,||y||<=R, define q=1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)); qbar=max(q,1.0); D_c^2(x,y)=(1/c)*arcosh(qbar)^2, where arcosh(qbar)=log1p((qbar-1)+sqrt((qbar-1)*(qbar+1))). The scored quantity is squared distance, not distance.",
+      "flat_limit": "As c->0, D_c^2(x,y)->4*||x-y||^2; the unsquared distance tends to 2*||x-y||.",
+      "c_dependent_rules_at_zero": "Use the continuous c->0 limit in this same implementation: scored squared distance is 4*||x-y||^2; the exponential map is the identity; the curvature-dependent radius (1-epsilon)/sqrt(c) is undefined and is not applied. The common fixed projection ||x||<=R remains active unchanged, so the flat arm uses this same fixed bounded domain and representation map. No other c-dependent operation is used."
+    },
+    "architecture_and_assignment": "The frozen content encoder maps each item to z_i in R^32. Three residual levels have codebooks C_l in R^(256x32), l=1,2,3. For each level, apply the identical fixed projection P_R(v)=v*min(1,R/||v||) (with P_R(0)=0) to every vector entering a distance. In order, for level l: map the current residual through the frozen-in-protocol level map (identity unless the existing implementation has its already-frozen map), project the mapped residual with P_R, project each code vector with P_R, compute the selected arm's squared distance, compute a balanced Sinkhorn soft assignment over the batch using logits -D^2/tau and the unchanged calibrated row/column marginals, take the hard code as the maximum-mass code for the stored SID, then subtract the soft-assignment-weighted projected code vector from the projected residual and project that residual with P_R before it is scored at the next level. The soft assignment is retained for losses and gradients; hard SID extraction uses the corresponding argmax. Later levels condition exactly on earlier levels 1..l-1 through this residual only. Sinkhorn preserves prefix diversity by enforcing the existing calibrated balanced code marginals rather than replacing them with unconstrained distance argmin. Same initialization, including KMeans-initialized codebooks, and same balancing implementation in both arms. The sole arm difference is the distance formula. Every item is encoded independently for the global SID; no user/bootstrap or candidate-ranking components enter Stage2.",
+    "objective": {
+      "anti_collapse": "The content reconstruction term L_rec below is the explicit anti-collapse mechanism: an all-items-identical latent/SID cannot reconstruct distinct frozen item content embeddings and incurs nonzero reconstruction error. It enters additively with positive unit weight in the total loss, alongside commitment and codebook terms; balanced Sinkhorn marginals additionally prevent a batch from assigning all items to one code.",
+      "loss_equations": [
+        "Let B be a training minibatch of N item ids, E=[e_i] in R^(Nxd) their frozen content embedding targets (d is the existing fixed content dimension), z_i=f_theta(e_i) in R^(N x 32), and zhat_i=g_phi(r_i^(4)) in R^(Nxd), where r_i^(4) is the final residual after the three levels and g_phi is the existing decoder. L_rec=(1/N) sum_{i in B} ||zhat_i-e_i||_2^2. Reduction is mean over items and sum over embedding coordinates; N=0 is invalid and aborts the batch. This target is frozen input content, not a parameter-dependent target.",
+        "For level l in {1,2,3}, let U_l in R^(N x 256) be the balanced Sinkhorn assignment with row sums 1 and the unchanged calibrated code marginals, V_l in R^(N x 32) the projected residuals entering that level, and W_l=P_R(C_l) in R^(256 x 32). Let stopgrad denote stop-gradient. L_commit=(1/(3N)) sum_{l=1}^3 sum_{i in B} ||V_l[i]-stopgrad(sum_{k=1}^{256} U_l[i,k] W_l[k])||_2^2. Reduce by mean over level and item, sum coordinates; empty batch is invalid. L_commit updates encoder/residual inputs but not codebooks through its target.",
+        "L_code=(1/(3N)) sum_{l=1}^3 sum_{i in B} ||stopgrad(V_l[i])-sum_{k=1}^{256} U_l[i,k] W_l[k]||_2^2. Reduce by mean over level and item, sum coordinates; empty batch is invalid. L_code updates codebook parameters through W_l but not encoder/residual inputs through its stopped target.",
+        "L_total=L_rec+L_commit+L_code. The reconstruction term differentiates through the soft assignments and residual updates; commitment and codebook terms have the explicitly stated gradient paths. No loss is computed solely on one-hot argmin assignments. Sinkhorn U_l is a differentiable relaxed assignment, with gradients through its finite, frozen-configuration normalization iterations; the hard argmax is used only for emitted SID tokens and diagnostics, not as the sole training path."
+      ],
+      "target_circularity": "The content targets e_i are frozen and independent of theta and phi. Commitment targets stop-gradient the assignment-weighted code vectors; codebook targets stop-gradient the residuals. No target is constructed from a validation/test event or from a current parameter-dependent output without an explicit stop-gradient."
+    },
+    "loss_equations": [
+      "L_total=L_rec+L_commit+L_code, with component equations and shapes defined in objective.loss_equations above."
+    ],
+    "diagnostic_expectations": "The intended Stage2 movements are valid_l1_hard_er upward and level2_distinct_prefixes upward, while retaining non-collapsed three-level refinement measured by L3 collision and L3 refinement gain; report valid L1 positive hit rate and conditional G3 using the exact supplied estimators. These are diagnostics, not substitutes for the registered falsifier."
+  },
+  "hyperbolic_necessity": "The measured train-only transition population is highly directional (314605 of 339519 transitions have no observed reverse event; mean next-item entropy is 4.844072338042215 bits), so the selected demonstrated failure is loss of long-tail/directional successor distinctions under a flat content-derived item index. Negative curvature is justified as a structural hypothesis for uneven branching and niche neighborhoods, consistent with the verified HypRQ-VAE paper's hyperbolic semantic-ID construction and reported tail analysis. Neither directional counts nor that paper proves curvature is necessary here; the matched flat arm directly tests that claim.",
+  "euclidean_control": "One implementation, same architecture and parameter count, same fixed projection radius R=0.999 for both arms, same initialization (including KMeans codebook initialization), optimizer, schedule, seeds, batch construction, epochs and training budget, and same Sinkhorn-balanced assignment; the only replacement is D_c^2 by its c->0 limit 4*||x-y||^2. All pre-existing frozen protocol values are inherited unchanged; no sweep or new training protocol is introduced. Any graph arm, if used by the frozen experiment, receives the same train-only graph signal in both arms.",
+  "effect_site": "Stage2 item-SID assignment and residual codebook geometry; Stage3 is downstream and consumes the emitted global SIDs without modification.",
+  "real_trigger_measurement": "Use only the supplied frozen behavior manifest and train-only longest-prefix-per-user transitions to motivate this candidate. For evaluation, valid L1 positive hit rate is over the 52855 frozen validation pairs (one positive and ten negatives per anchor, seed 42, history[-1] -> target): share where anchor item's first SID token equals positive's first token. valid Hard-L1 ER=10*positive_hits/negative_hits, counting negatives the same way. level2_distinct_prefixes=|{(k1,k2)}| over all items. L3 collision is share of items whose complete three-code tuple is shared by another item. L3 refinement gain is mean_i log2(|bucket(k1,k2)|/|bucket(k1,k2,k3)|). Conditional G3 uses alpha=1 and K=256: for each validation pair (anchor,target), p_pref(l)=(number of items sharing target's level-two prefix and third code l, minus one if l is target's own third code, plus alpha)/(bucket size minus one plus alpha*K); p_hist(l)=(train-only longest-prefix successor count for anchor restricted to successors sharing target's level-two prefix and third code l, plus alpha*p_pref(l))/(restricted successor total plus alpha). G3 is the pair mean log2(p_hist(target third code)/p_pref(target third code)); no restricted successor contributes zero and a non-finite pair is NULL. No validation/test behavior, future event, prediction-time user context, or batch composition is a training input.",
+  "training_only_inputs": "Frozen item content embeddings and train-split item transitions only where the already-frozen protocol uses them (CLAUDE.md rule 16). No validation/test behavior, future events, prediction-time user context, or batch composition as a training signal. Validation pairs are used only for the stated diagnostics; test outcomes only for the registered Stage3 behavioral test.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {
+        "name": "valid_l1_hard_er",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 0.1,
+        "seed_rule": "For every paired frozen seed, compute curved-minus-flat using the exact valid Hard-L1 ER definition; aggregate as the arithmetic mean of paired seed differences."
+      },
+      {
+        "name": "level2_distinct_prefixes",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 1,
+        "seed_rule": "For every paired frozen seed, compute curved-minus-flat over the full item set; aggregate as the arithmetic mean of paired seed differences."
+      }
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "curved minus flat > 0",
+      "minimum_effect": 0.005,
+      "seed_rule": "Use the unchanged Stage3 T5 evaluation and paired frozen seeds; compute curved-minus-flat per seed and aggregate as the arithmetic mean of paired differences. Stage3 ranks next items; Stage2 does not."
+    },
+    "classification": {
+      "falsified_if": "any registered stage2 diagnostic or stage3 behavioral test is defined for all paired seeds and its aggregate does not meet its registered direction and minimum_effect",
+      "passed_if": "every registered stage2 diagnostic and the stage3 behavioral test is defined for all paired seeds and each aggregate meets its registered direction and minimum_effect",
+      "mixed_if": "otherwise, including any seed-wise or aggregated NULL; if a seed-wise or aggregated change is undefined or non-finite (zero denominator, missing evaluation, or empty stratum), classify that result NULL, and any comparison containing a NULL seed is inconclusive rather than passed or falsified"
+    }
+  }
+}

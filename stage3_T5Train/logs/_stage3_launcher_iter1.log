@@ -1,0 +1,288 @@
+W0924 16:16:43.857000 118127 /fs04/scratch2/ar57/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/run.py:874] 
+W0924 16:16:43.857000 118127 /fs04/scratch2/ar57/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/run.py:874] *****************************************
+W0924 16:16:43.857000 118127 /fs04/scratch2/ar57/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/run.py:874] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0924 16:16:43.857000 118127 /fs04/scratch2/ar57/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/run.py:874] *****************************************
+[RecBole-aligned] train=396958 valid=skipped num_items=24587 vocab=791 eos=790 n_digit=4 beam=20 topk=[5, 10] exclude_history=True
+[AMP] BF16 autocast enabled for train/eval
+#Embedding parameters: 101248
+#Non-embedding parameters: 4459648
+#Total trainable parameters: 4560896
+
+NCCL version 2.29.7+cuda13.2
+[1;35mTraining Epoch 1[0m:   0%|                                                      | 0/25 [00:00<?, ?it/s][0m[1;35mTraining Epoch 1[0m:   0%|                                                      | 0/25 [00:00<?, ?it/s][0m[1;35mTraining Epoch 1[0m:   0%|                                                      | 0/25 [00:00<?, ?it/s][0m[1;35mTraining Epoch 1[0m:   0%|                                                      | 0/25 [00:00<?, ?it/s][0m[rank1]:[W924 16:16:58.550147938 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 1 while trying to allocate 687865856 bytes (free: 436076544, total: 47665709056).
+[rank3]:[W924 16:16:58.604067188 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 3 while trying to allocate 687865856 bytes (free: 436076544, total: 47665709056).
+[rank0]:[W924 16:16:58.649462243 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 687865856 bytes (free: 436076544, total: 47665709056).
+[rank2]:[W924 16:16:58.650878584 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 2 while trying to allocate 687865856 bytes (free: 436076544, total: 47665709056).
+[rank1]:[W924 16:16:58.745820389 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 1 while trying to allocate 687865856 bytes (free: 79560704, total: 47665709056).
+[rank1]:[W924 16:16:58.745941411 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 1 while trying to allocate 687865856 bytes (free: 79560704, total: 47665709056).
+[1;35mTraining Epoch 1[0m:   0%|                                                      | 0/25 [00:00<?, ?it/s][0m
+[rank3]:[W924 16:16:58.800575727 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 3 while trying to allocate 687865856 bytes (free: 79560704, total: 47665709056).
+[rank3]:[W924 16:16:58.800751852 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 3 while trying to allocate 687865856 bytes (free: 79560704, total: 47665709056).
+[1;35mTraining Epoch 1[0m:   0%|                                                      | 0/25 [00:00<?, ?it/s][0m
+[rank2]:[W924 16:16:58.851296786 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 2 while trying to allocate 687865856 bytes (free: 79560704, total: 47665709056).
+[rank2]:[W924 16:16:58.851490547 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 2 while trying to allocate 687865856 bytes (free: 79560704, total: 47665709056).
+[rank0]:[W924 16:16:58.853906733 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 687865856 bytes (free: 79560704, total: 47665709056).
+[rank0]:[W924 16:16:58.854077760 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 687865856 bytes (free: 79560704, total: 47665709056).
+[1;35mTraining Epoch 1[0m:   0%|                                                      | 0/25 [00:01<?, ?it/s][0m
+[1;35mTraining Epoch 1[0m:   0%|                                                      | 0/25 [00:01<?, ?it/s][0m
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 1222, in <module>
+[rank2]:     main()
+[rank2]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 855, in main
+[rank2]:     train_loss = train(
+[rank2]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 318, in train
+[rank2]:     loss, _ = model(
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/model/hg_rec.py", line 49, in forward
+[rank2]:     outputs = self.model(
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 1703, in forward
+[rank2]:     encoder_outputs = self.encoder(
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 1107, in forward
+[rank2]:     layer_outputs = layer_module(
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 747, in forward
+[rank2]:     hidden_states = self.layer[-1](hidden_states)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 336, in forward
+[rank2]:     forwarded_states = self.DenseReluDense(forwarded_states)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 283, in forward
+[rank2]:     hidden_states = self.dropout(hidden_states)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/dropout.py", line 73, in forward
+[rank2]:     return F.dropout(input, self.p, self.training, self.inplace)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/functional.py", line 1491, in dropout
+[rank2]:     _VF.dropout_(input, p, training) if inplace else _VF.dropout(input, p, training)
+[rank2]: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 656.00 MiB. GPU 2 has a total capacity of 44.39 GiB of which 75.88 MiB is free. Process 115016 has 27.67 GiB memory in use. Including non-PyTorch memory, this process has 16.63 GiB memory in use. Of the allocated memory 14.42 GiB is allocated by PyTorch, and 1.55 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 1222, in <module>
+[rank1]:     main()
+[rank1]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 855, in main
+[rank1]:     train_loss = train(
+[rank1]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 318, in train
+[rank1]:     loss, _ = model(
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/model/hg_rec.py", line 49, in forward
+[rank1]:     outputs = self.model(
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 1703, in forward
+[rank1]:     encoder_outputs = self.encoder(
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 1107, in forward
+[rank1]:     layer_outputs = layer_module(
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 747, in forward
+[rank1]:     hidden_states = self.layer[-1](hidden_states)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 336, in forward
+[rank1]:     forwarded_states = self.DenseReluDense(forwarded_states)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 283, in forward
+[rank1]:     hidden_states = self.dropout(hidden_states)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/dropout.py", line 73, in forward
+[rank1]:     return F.dropout(input, self.p, self.training, self.inplace)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/functional.py", line 1491, in dropout
+[rank1]:     _VF.dropout_(input, p, training) if inplace else _VF.dropout(input, p, training)
+[rank1]: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 656.00 MiB. GPU 1 has a total capacity of 44.39 GiB of which 75.88 MiB is free. Process 115015 has 27.67 GiB memory in use. Including non-PyTorch memory, this process has 16.63 GiB memory in use. Of the allocated memory 14.42 GiB is allocated by PyTorch, and 1.55 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 1222, in <module>
+[rank3]:     main()
+[rank3]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 855, in main
+[rank3]:     train_loss = train(
+[rank3]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 318, in train
+[rank3]:     loss, _ = model(
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/model/hg_rec.py", line 49, in forward
+[rank3]:     outputs = self.model(
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 1703, in forward
+[rank3]:     encoder_outputs = self.encoder(
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 1107, in forward
+[rank3]:     layer_outputs = layer_module(
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 747, in forward
+[rank3]:     hidden_states = self.layer[-1](hidden_states)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 336, in forward
+[rank3]:     forwarded_states = self.DenseReluDense(forwarded_states)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 283, in forward
+[rank3]:     hidden_states = self.dropout(hidden_states)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/dropout.py", line 73, in forward
+[rank3]:     return F.dropout(input, self.p, self.training, self.inplace)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/functional.py", line 1491, in dropout
+[rank3]:     _VF.dropout_(input, p, training) if inplace else _VF.dropout(input, p, training)
+[rank3]: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 656.00 MiB. GPU 3 has a total capacity of 44.39 GiB of which 75.88 MiB is free. Process 115017 has 27.67 GiB memory in use. Including non-PyTorch memory, this process has 16.63 GiB memory in use. Of the allocated memory 14.42 GiB is allocated by PyTorch, and 1.55 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 1222, in <module>
+[rank0]:     main()
+[rank0]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 855, in main
+[rank0]:     train_loss = train(
+[rank0]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py", line 318, in train
+[rank0]:     loss, _ = model(
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/fs04/ar57/wenyu/GeneRec/stage3_T5Train/model/hg_rec.py", line 49, in forward
+[rank0]:     outputs = self.model(
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 1703, in forward
+[rank0]:     encoder_outputs = self.encoder(
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 1107, in forward
+[rank0]:     layer_outputs = layer_module(
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 747, in forward
+[rank0]:     hidden_states = self.layer[-1](hidden_states)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 336, in forward
+[rank0]:     forwarded_states = self.DenseReluDense(forwarded_states)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/transformers/models/t5/modeling_t5.py", line 283, in forward
+[rank0]:     hidden_states = self.dropout(hidden_states)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/modules/dropout.py", line 73, in forward
+[rank0]:     return F.dropout(input, self.p, self.training, self.inplace)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/nn/functional.py", line 1491, in dropout
+[rank0]:     _VF.dropout_(input, p, training) if inplace else _VF.dropout(input, p, training)
+[rank0]: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 656.00 MiB. GPU 0 has a total capacity of 44.39 GiB of which 75.88 MiB is free. Process 115014 has 27.67 GiB memory in use. Including non-PyTorch memory, this process has 16.63 GiB memory in use. Of the allocated memory 14.42 GiB is allocated by PyTorch, and 1.55 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+W0924 16:17:01.582000 118127 /fs04/scratch2/ar57/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py:1028] Sending process 118223 closing signal SIGTERM
+W0924 16:17:01.582000 118127 /fs04/scratch2/ar57/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py:1028] Sending process 118224 closing signal SIGTERM
+W0924 16:17:01.583000 118127 /fs04/scratch2/ar57/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py:1028] Sending process 118226 closing signal SIGTERM
+E0924 16:17:02.349000 118127 /fs04/scratch2/ar57/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py:1002] failed (exitcode: 1) local_rank: 2 (pid: 118225) of binary: /home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10
+Traceback (most recent call last):
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 367, in wrapper
+    return f(*args, **kwargs)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/run.py", line 1028, in main
+    run(args)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/run.py", line 1019, in run
+    elastic_launch(
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 194, in __call__
+    return launch_agent(
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 383, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/fs04/ar57/wenyu/GeneRec/stage3_T5Train/train_HG-Rec.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-09-24_16:17:02
+  host      : m3g116.massive.org.au
+  rank      : 0 (local_rank: 0)
+  exitcode  : -15 (pid: 118223)  (SIGTERM)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 118223
+[2]:
+  time      : 2026-09-24_16:17:02
+  host      : m3g116.massive.org.au
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 118224) 
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[3]:
+  time      : 2026-09-24_16:17:02
+  host      : m3g116.massive.org.au
+  rank      : 3 (local_rank: 3)
+  exitcode  : 1 (pid: 118226) 
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-09-24_16:17:01
+  host      : m3g116.massive.org.au
+  rank      : 2 (local_rank: 2)
+  exitcode  : 1 (pid: 118225) 
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

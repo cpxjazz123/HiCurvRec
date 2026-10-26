@@ -1,0 +1,50 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    {
+      "action": "shell",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "execute",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "edit",
+      "resource": "/fs04/ar57/wenyu/GeneRec/*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_f8049f2ce2774d7c/agents/geometry-asymmetric-next-item-hyperbolic-semantic-id_runtime/*",
+      "effect": "allow"
+    },
+    {
+      "action": "edit",
+      "resource": "../*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "*/../*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "*..*",
+      "effect": "deny"
+    }
+  ]
+}

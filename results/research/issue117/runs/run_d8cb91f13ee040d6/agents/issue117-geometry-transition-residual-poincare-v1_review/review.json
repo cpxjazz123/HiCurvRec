@@ -1,0 +1,13 @@
+{
+  "candidate_id": "issue117-geometry-transition-residual-poincare-v1",
+  "source_sha256": "1c053a982c4cc116378d5b7404a599f9bc1827bc703e489e92336cb252b516e0",
+  "proposal_sha256": "94ca0360e8757cf445e2b3a0bf3c370054d88cb5dd8c56e3a4b6fd33f6f9469c",
+  "test_sha256": {
+    "ddp": "7d3df98d28902999dd84158c38cda858a08d5a26a0e9cb341fd20b2287031cbd",
+    "entrypoint": "226089ac8be74d08050d481deabfff018986201ae9e30383e3a7f927c54d990c",
+    "gradient": "dbc28e440c7289fa1ace304c1170047d7d2063c9ee095eba2f30752c36f58fbd",
+    "math": "9f454803c1bcab9fd6817855617b8fd71cf5ecb4bc83098fab16de57f6b7b6c4"
+  },
+  "verdict": "APPROVE_TESTS",
+  "rationale": "The math suite has independent numeric references for Exp, projection, curved/flat squared distance and residual assignment. Gradient tests exercise the real RQVAE with actual embeddings and transitions, alongside independent oracle and gradient checks. DDP spawns two Gloo ranks, runs the candidate model on rank-distinct batches/edges, and gathers each rank's gradients and post-step parameters. Entrypoint calls trainer.main on a temporary dataset and checks emitted checkpoint, SID, metrics and nonzero transition loss; its sampler test uses independent expected frequencies. Source uses the proposed curvature map, projected residual assignment, squared distance and train-only transition objective. Caveat: trainer transition averaging is implemented via sampling rather than the proposal's explicit exact row/source sum, but this does not invalidate these implementation tests. No suite is trivially skipped or self-oracling."
+}

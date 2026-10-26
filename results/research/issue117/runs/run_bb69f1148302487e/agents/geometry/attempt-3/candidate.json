@@ -1,0 +1,85 @@
+{
+  "candidate_id": "issue117-geometry-hypvq-01",
+  "behavior_problem_id": "train-only-directed-next-item-transitions",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "b56b2c6080edfc8f2ebf7334ba75d770d855f6695a54a363dfbeacced46309b6",
+  "next_item_hypothesis": "One demonstrated failure to test is first-token collision among a history anchor, its observed next item, and sampled negatives: frozen valid L1 positive hit rate directly measures whether item identity codes expose next-item affinity at the coarsest level. Train-only evidence contains directed edges and 0.9266197178950221 of directed pairs have no observed reverse event. A flat content quantizer may spend coarse code capacity on globally common directions and fail to place asymmetric related transitions into useful shared coarse regions. Test whether negative-curvature residual quantization improves coarse assignment while preserving item reconstruction. This is a hypothesis, not a causal conclusion.",
+  "math_definition": {
+    "mechanism": "Three-stage residual vector quantization in a fixed-radius Poincare-ball coordinate domain. Each level chooses from its own learned table of 256 32-dimensional code vectors. Only squared assignment distance D_c^2 differs between arms. Each item receives one global ordered SID (k1,k2,k3), independent of user and time.",
+    "frozen_geometry": {
+      "curvature_parameter_c": 1.0,
+      "temperature_tau": 0.1,
+      "epsilon": 1e-05,
+      "projection_radius_R": 0.99,
+      "scored_power": "Squared distance only in both arms.",
+      "arcosh_numerics": "For u>=1 let z=max(u-1,0); evaluate arcosh(u)=log1p(z+sqrt(z*(z+2))) in float64, with delta=1e-7 used only as the frozen roundoff tolerance when clamping a computed u below 1 back to 1 (no positive offset is added for valid u). Score the squared result.",
+      "domain_policy": "Every vector entering a scored distance is projected into ||x||<=R by P_R(x)=x*min(1,R/||x||), with P_R(0)=0. This identical fixed region and projection applies in both arms. Do not use (1-epsilon)/sqrt(c): it is undefined at c=0, where the flat arm instead continues to use P_R with the same R.",
+      "distance_equation": "D^2(x,y)=d_c(x,y)^2=(1/c)*arcosh(1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)))^2, c>0 and ||x||,||y||<=R.",
+      "flat_limit": "As c->0, squared distance tends exactly to 4*||x-y||^2, unsquared distance tends to 2*||x-y||, and the exponential map tends to identity. The objective uses the squared power in both arms.",
+      "exponential_map": "For c>0, Exp_0^c(v)=tanh(sqrt(c)*||v||)*v/(sqrt(c)*||v||), with value 0 at v=0; at c=0, Exp_0^0(v)=v. Map then project before any distance or assignment.",
+      "operator": "poincare_squared_distance",
+      "delta": 1e-07
+    },
+    "latent_and_residual_assignment": "For item i, content embedding e_i is mapped by the unchanged Stage2 encoder f_theta to h_i in R^32; set r_i^0=h_i. At each l=1,2,3 in order: map v_i^l=Exp_0^c(r_i^(l-1)); project x_i^l=P_R(v_i^l); assign k_i^l=argmin over j=1,...,256 of D^2(x_i^l,P_R(Exp_0^c(q_lj))), breaking exact ties by lowest index; let a_i^l=P_R(Exp_0^c(q_l,k_i^l)); then subtract in pre-map latent coordinates r_i^l=r_i^(l-1)-q_l,k_i^l. Thus operation order is map, project, assign, subtract; next residual is mapped and projected before scoring. The SID is (k_i^1,k_i^2,k_i^3); decoder reconstruction uses sum_l q_l,k_i^l.",
+    "named_tensors": "Let I be train-split item indices; E in R^(|I| x d_e) be content embeddings; H=f_theta(E) in R^(|I| x 32); Q_l in R^(256 x 32); K_l in {1,...,256}^|I| be hard assignments; sg(.) stop gradients; xhat_i=g_phi(sum_{l=1}^3 Q_l[k_i^l,:]) in R^d_e. Norms below sum over coordinates.",
+    "objective": {
+      "equation": "L=(1/|I|) sum_{i in I} ||xhat_i-e_i||_2^2 + (beta/|I|) sum_{i in I} sum_{l=1}^3 ||sg(r_i^(l-1))-Q_l[k_i^l,:]||_2^2 + (gamma/|I|) sum_{i in I} sum_{l=1}^3 ||r_i^(l-1)-sg(Q_l[k_i^l,:])||_2^2.",
+      "normalization_reduction": "Each squared norm sums its feature coordinates; each sum is divided by |I|, with no additional level normalization. I contains all train-split items.",
+      "empty_group_rule": "There are no grouped reductions; I is nonempty, and all train items participate. If I is empty, training is invalid and produces NULL, not a zero loss.",
+      "anti_collapse": "The decoder content-reconstruction term (1/|I|) sum_i ||xhat_i-e_i||_2^2 is the explicit anti-collapse mechanism and enters additively as the first term of L. It keeps the latent/code representation informative by requiring reconstruction of item-specific content; an all-items-same-code assignment cannot attain the item-specific reconstruction of distinct embeddings. Commitment terms alone are not relied upon to prevent collapse.",
+      "gradient_and_circularity": "Hard assignments K_l are detached; reconstruction uses straight-through hard quantization for encoder gradients. Assignment targets are computed from the current forward pass and detached before loss computation, so target dependence on parameters is broken at the stop-gradient boundary. beta and gamma are the unchanged frozen Stage2 commitment coefficients, not tuned."
+    },
+    "target_distributions": "No learned or parameter-dependent target distribution is introduced; assignment is the deterministic nearest-code rule above.",
+    "conditioning": "Level 1 conditions on no earlier codes; level 2 conditions on exactly k1 via residual r^1; level 3 conditions on exactly (k1,k2) via residual r^2."
+  },
+  "hyperbolic_necessity": "Negative curvature is motivated as a geometry ablation, not established as necessary. Directed train-only transitions with no observed reverse event are compatible with asymmetric multi-scale organization; coarse-to-fine codes may represent this, and negative curvature is worth testing for reduced coarse crowding and improved first-token positive alignment. Direction and entropy do not prove hierarchy, curvature benefit, or causal improvement. Literature only establishes neighboring components, not this combined method.",
+  "euclidean_control": "One implementation with c as parameter; flat arm is exact c->0 limit of the same squared-distance and exponential-map code path. Keep identical fixed projection, architecture, parameter count, initialization, optimizer, schedule, seeds, batch, epochs, codebook initialization and budget. No graph arm. All existing frozen Stage2 settings remain unchanged; no new training protocol or sweep.",
+  "effect_site": "Stage2 assignment, codebook geometry and shared reconstruction/commitment objective at all three residual levels. Stage2 creates global item SIDs and does not rank or predict next items. Frozen downstream T5 Stage3 is the only next-item ranker.",
+  "real_trigger_measurement": "Train-only manifest: directed_pairs=323633, transitions=339519, no_reverse_fraction=0.9266197178950221, mean_next_item_entropy_bits=4.844072338042215, population=train_only_longest_prefix_per_user. Trigger measurement is frozen validation first-token positive-hit / hard-L1 evaluation; validation is never training supervision.",
+  "training_only_inputs": "Content embeddings and train-split item transitions are legal (CLAUDE.md rule 16); this candidate uses content embeddings only, not transition edges. No validation/test behavior, future events, prediction-time user context or batch-composition signal enters training, assignment, targets or codebook updates.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false
+  },
+  "null_outcome_rule": "If a seed-wise or aggregated change is undefined or non-finite (zero denominator, missing evaluation, or empty stratum), it is NULL. Any comparison containing a NULL seed is inconclusive, not passed or falsified; overall classification is NULL/inconclusive.",
+  "falsifier": {
+    "stage2_diagnostics": [
+      {
+        "name": "valid_l1_hard_er",
+        "direction": "increase; strictly above frozen Resample reference",
+        "minimum_effect": {
+          "operator": ">",
+          "value": 16.38953942232631
+        },
+        "seed_rule": "Evaluate each preregistered seed on exactly the frozen 52855 validation pairs (one positive and ten negatives per anchor, seed 42, history[-1] -> target); aggregate by frozen Stage2 evaluation aggregation rule."
+      },
+      {
+        "name": "level2_distinct_prefixes",
+        "direction": "increase; strictly above frozen reference",
+        "minimum_effect": {
+          "operator": ">",
+          "value": 16145
+        },
+        "seed_rule": "Count unique (k1,k2) over all items per seed; aggregate by frozen Stage2 evaluation aggregation rule."
+      }
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "increase versus matched Euclidean control",
+      "minimum_effect": {
+        "operator": ">",
+        "value": 0
+      },
+      "seed_rule": "Evaluate unchanged downstream T5 Stage3 test_R@10 for preregistered matched seeds; compare paired per-seed candidate-minus-control and apply frozen aggregation rule. Test data is evaluation only."
+    },
+    "classification": {
+      "falsified_if": "all registered comparisons are defined and finite, and at least one registered stage2 diagnostic or the stage3 behavioral test fails its registered minimum_effect",
+      "passed_if": "all registered comparisons are defined and finite, and every registered stage2 diagnostic and the stage3 behavioral test satisfies its registered minimum_effect",
+      "mixed_if": "all registered comparisons are defined and finite, and at least one registered threshold passes while another fails"
+    }
+  }
+}

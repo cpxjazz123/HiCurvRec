@@ -1,0 +1,209 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "70f8f4243f522441f4674bdffd104c20bd711c0f2e03fb54acb1437240603535",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "basis": "TIGER independently verifies personalized sequential next-item generation with Semantic IDs, but the inspected full text does not study hyperbolic geometry. This is a research question/hypothesis, not an established finding.",
+        "candidate": "Does representing item content and/or user histories in hyperbolic geometry improve personalized next-item prediction when the target is generated as a semantic ID?",
+        "evidence_label": "UNKNOWN",
+        "needed_evidence": "A full-text paper explicitly combining hyperbolic representations or hyperbolic distance with autoregressive Semantic-ID prediction on user interaction sequences, or a controlled experiment testing that combination."
+      },
+      {
+        "basis": "TIGER reports hierarchical RQ-VAE codewords and sequence-based next-item prediction, but does not attribute the hierarchy to hyperbolic geometry or analyze preference evolution as a hyperbolic structure.",
+        "candidate": "Can hyperbolic hierarchical structure help model user preference evolution or long-/short-term intent while generating the next Semantic ID?",
+        "evidence_label": "UNKNOWN",
+        "needed_evidence": "Full-text methods and results that define the user-behavior hierarchy, its hyperbolic embedding, and its effect on next-item outcomes."
+      }
+    ],
+    "limitations": [
+      "The independently verified full text supports only two sides of the requested three-way intersection: user next-item behavior and generative Semantic IDs. No source in this result is verified to cover all three together.",
+      "FULL_TEXT means the linked arXiv HTML full text was inspected, not merely its abstract. The hyperbolic non-overlap statement is scoped to that inspected paper; it is not proof that no such paper exists.",
+      "Search integration attempts were unavailable, so this is not an exhaustive systematic review. Do not interpret absence of a verified intersection as evidence of nonexistence.",
+      "The arXiv DOI identifies the preprint record; the paper reports acceptance to NeurIPS 2023."
+    ],
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "authors": [
+          "Shashank Rajput",
+          "Nikhil Mehta",
+          "Anima Singh",
+          "Raghunandan Keshavan",
+          "Trung Vu",
+          "Lukasz Heldt",
+          "Lichan Hong",
+          "Yi Tay",
+          "Vinh Q. Tran",
+          "Jonah Samost",
+          "Maciej Kula",
+          "Ed H. Chi",
+          "Maheswaran Sathiamoorthy"
+        ],
+        "doi": "10.48550/arXiv.2305.05065",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": {
+          "all_three_intersection": false,
+          "generative_semantic_ids": "Direct: autoregressive generative retrieval predicts tuples of semantic codewords assigned to items.",
+          "hyperbolic_geometry": "No evidence found in inspected full text; semantic embeddings are quantized via RQ-VAE and no hyperbolic space/geometry is claimed.",
+          "user_next_item_behavior": "Direct: predicts the next item from an individual user's ordered interaction history; user-specific tokens are additionally used for personalization."
+        },
+        "limitations": [
+          "Does not establish that hyperbolic geometry improves or is used in generative Semantic-ID next-item recommendation.",
+          "Experiments use three Amazon product-review categories; transfer to other domains/user behavior is not established by this citation."
+        ],
+        "links": {
+          "arxiv_record": "https://arxiv.org/abs/2305.05065",
+          "full_text_html": "https://arxiv.org/html/2305.05065v3",
+          "full_text_pdf": "https://arxiv.org/pdf/2305.05065v3"
+        },
+        "relevance": "Strong evidence for the user-next-item plus generative-semantic-ID pair, but not the hyperbolic component.",
+        "title": "Recommender Systems with Generative Retrieval",
+        "venue": "NeurIPS 2023",
+        "verified_evidence": "Inspected the public arXiv HTML full text (v3, 2023-11-03), including abstract, method, and experiments. Section 3.1 generates item Semantic IDs by residual quantization of content embeddings; Section 3.2 trains a sequence-to-sequence model to predict the next item Semantic ID from a chronological user interaction sequence, with user-ID token personalization described in the experimental implementation. The abstract explicitly states prediction of the next item a user will interact with.",
+        "year": 2023
+      }
+    ]
+  },
+  "literature_evidence_sha256": "27bad3997b847df166b9ec6587cf03370519acd2ed19e7f01f5b7e205c421f36",
+  "research": "issue117-behavior-first",
+  "revision_feedback": {
+    "blockers": [
+      {
+        "code": "REFINEMENT_DIAGNOSTIC_DIRECTION_CONFLICT",
+        "evidence": "falsifier.stage2_diagnostics[L3_refinement_gain] requires curved-minus-flat <= -0.01, while hyperbolic_necessity says the prespecified expectation is explicitly no material increase. These are not the same registered claim: the former requires a decrease, and the latter permits unchanged refinement. The explanatory text also says lower refinement is interpreted jointly with collision reduction, so the rationale does not establish why a decrease of at least 0.01 is a necessary pass condition.",
+        "mechanical_resolution": "Align the registered direction and minimum effect with the stated hypothesis (or explicitly justify and state that a decrease of at least 0.01 is required).",
+        "severity": "MATERIAL"
+      }
+    ],
+    "reproducible_evidence": {
+      "causal_link": "The training-only transition asymmetry is explicitly limited to motivation, not causal evidence. The proposed prefix-conflation mechanism is a testable design hypothesis: Stage2 emits global content-derived SIDs and Stage3 alone evaluates next-item ranking. This is appropriately scoped as a hypothesis, not an established causal link.",
+      "hyperbolic_effect_and_control": "At c=0.1 the operator is non-flat on nonzero distances; at c=0 the exact stated limit is used. Both arms retain the same fixed projection, encoder/codebooks, initialization, assignment/refresh, objective, optimizer, schedule, epochs, batches, paired seeds, and capacity; the stated change is the scored squared-distance metric only. No exp map or curvature-dependent projection creates an extra arm difference.",
+      "leakage_and_recomputation": "Stage2 assignment population is the frozen 24556-item training inventory; interaction targets/counts are train-only. Validation is diagnostic-only and test is reserved for the final Stage3 comparison. No prediction-time user context or future events enter Stage2. Loss targets, refresh cadence, and deterministic hard-label tie-breaking/capacities are specified sufficiently to define the registered calculations.",
+      "math_and_types": "The squared Poincare distance is typed on projected 32-dimensional vectors strictly inside the ball; its stated c-to-zero limit is 4*||x-y||^2. The projection uses the same fixed R in both arms, avoiding the singular curvature-dependent radius at c=0. The residual chain, soft assignment shapes, loss normalizations, stop-gradient targets, and finite-iteration normalization are specified. No ill-typed or algebraically unsound equation was identified.",
+      "numerical_domain": "Scored vectors are projected to norm <=0.999 and sqrt(0.1)*0.999<1; unprojected residuals are not scored. The distance clamp and arcosh stabilization are given, and non-finite values/zero normalizers are declared fatal. The stated flat limit and its implementation branch are defined.",
+      "protocol_and_behavior_test": "Frozen protocol specifies 3000 epochs, levels/codes/dimension, initialization, optimizer/schedule, paired seeds [42,43,44], and no sweep. The candidate registers Stage3 test_R@10, direction curved-flat > 0, minimum effect 0.005, all three seed differences and their arithmetic mean finite and strictly exceeding the threshold, on the frozen evaluation/test split without tuning. The falsifier classifies non-finite/missing/NULL comparisons as inconclusive and finite failed thresholds as falsified. Stage2 leading indicators include validation Hard-L1 ER, distinct two-token prefixes, and L3 statistics; strict floors are consistent with the supplied frozen thresholds: ER >10.0 and prefixes >16145; schema_version is 1."
+    },
+    "review_sha256": "df8d6265f61db36160b4c68d6830351db9e66d4dbe5c14e4ecc5e4f72ead75db",
+    "review_verdict": "MATERIAL"
+  },
+  "revision_feedback_sha256": "b2696fc09459d044ea8780c0541e8d6645dc1ea28c600bbddd0d477031da7beb",
+  "task_id": "geometry"
+}

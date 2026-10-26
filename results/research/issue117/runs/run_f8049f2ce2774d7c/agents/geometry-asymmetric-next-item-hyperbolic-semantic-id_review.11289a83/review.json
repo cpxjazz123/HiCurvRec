@@ -1,0 +1,17 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "source_sha256": "3e91364af58e820c71cb4bc2ae461aabab73eb3792442770ed1be7460066731c",
+  "proposal_sha256": "c8701416d4b694141d60366f61d3b70b4fbbc958f8188447d822f8d36e6a283d",
+  "test_sha256": {
+    "math": "78f88f7746946ef4d327b7cddf281b05b7041ce546ba099df3a32e88902061fb",
+    "gradient": "1bdea35fa8a523897a06b5c3187d6125e727650c1200385e75a837cdaeccb3e9",
+    "ddp": "bbad0f1ca18f548da870fe12ce0ec59bfb9d35f7253ac4c920d9a7c1694386dc",
+    "entrypoint": "4af27be399c0f3a4d8f10df342b9605c0bfe5616cd157a7accfe8775377da08f"
+  },
+  "verdict": "BLOCK",
+  "rationale": [
+    "Independently recomputed the source digest using the manifest recipe and all six listed source-file hashes; it matches 3e91364af58e820c71cb4bc2ae461aabab73eb3792442770ed1be7460066731c. The four committed and materialised reviewed test files are byte-identical and each SHA-256 matches the manifest.",
+    "Source inspection confirms production hyperbolic operators/RQ layer, the trainer config selecting hyperbolic geometry, checkpoint save, and SID export. The provided tests are not mock-only: the entrypoint test invokes trainer.main and exercises save/export/reload (with small patched data/config), and the DDP test launches two spawned Gloo ranks with distinct rank-local inputs and gathers gradients/parameters.",
+    "Cannot approve execution evidence: running unittest discovery for the four reviewed files fails at import because this environment has no torch module (all four imports error before tests run). Thus the required actual gradient, math, two-rank DDP, and trainer-entrypoint checks have not been independently executed here. BLOCK pending execution in a compatible PyTorch environment and successful results."
+  ]
+}

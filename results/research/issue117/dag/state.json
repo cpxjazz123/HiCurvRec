@@ -1,0 +1,1831 @@
+{
+  "schema": 2,
+  "tasks": {
+    "run_02a51e9d83af4700__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_02a51e9d83af4700/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792820854.9860125,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_02a51e9d83af4700__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_02a51e9d83af4700__behavior",
+        "run_02a51e9d83af4700__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_02a51e9d83af4700/agents/geometry/execution.json",
+        "sha256": "f8ff2892905eb72e4ba99d31a1fc13e8c8169f0c9ef73402be66aadedbbc3ae2"
+      },
+      "finished_at": 1792820875.6660333,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_02a51e9d83af4700__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_02a51e9d83af4700/agents/literature/execution.json",
+        "sha256": "6a874d793d1e82e9ff6afc290abe7a2935b99908b78fa5bc28d7d050fa0b52fa"
+      },
+      "finished_at": 1792820841.6145952,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_02a51e9d83af4700__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_02a51e9d83af4700__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by MATERIAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_0329029125b144e8__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_0329029125b144e8/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792826621.2301857,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_0329029125b144e8__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_0329029125b144e8__behavior",
+        "run_0329029125b144e8__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_0329029125b144e8/agents/geometry/execution.json",
+        "sha256": "6c55cfa01d230d25a3fa9a68e156a31b7037dc72581863229629abca3d414184"
+      },
+      "finished_at": 1792826696.1744764,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_0329029125b144e8__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_0329029125b144e8/agents/literature/execution.json",
+        "sha256": "e9a0f1e5b64951aa411270fc94c7077b4a7d02bfff4b97848dafd7ab6ede16c3"
+      },
+      "finished_at": 1792826656.8924036,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_0329029125b144e8__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_0329029125b144e8__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_070f9a75c4e24b17__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_070f9a75c4e24b17/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792825185.429303,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_070f9a75c4e24b17__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_070f9a75c4e24b17__behavior",
+        "run_070f9a75c4e24b17__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_070f9a75c4e24b17/agents/geometry/execution.json",
+        "sha256": "86b705b67720477f0ffbc635d0b32c5cdbfa60615e9f422493b8d9d3e002bfbf"
+      },
+      "finished_at": 1792825248.9462938,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_070f9a75c4e24b17__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_070f9a75c4e24b17/agents/literature/execution.json",
+        "sha256": "3c79400e0044f0b91f382901486c838e3b5e99be355c3ce52a909bad68bc7295"
+      },
+      "finished_at": 1792825213.1875274,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_070f9a75c4e24b17__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_070f9a75c4e24b17__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by MATERIAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_2643e391a27b4ecf__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2643e391a27b4ecf/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792840629.2824519,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_2643e391a27b4ecf__geometry": {
+      "attempts": 2,
+      "dependencies": [
+        "run_2643e391a27b4ecf__behavior",
+        "run_2643e391a27b4ecf__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2643e391a27b4ecf/agents/geometry/execution.json",
+        "sha256": "ffcb943eb4872aad7a28611e32dddfcd5e4192c8818a512331b75e9467f3901a"
+      },
+      "failure": "review blocked the proposal: MATERIAL",
+      "finished_at": 1792840836.2107658,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_2643e391a27b4ecf__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2643e391a27b4ecf/agents/literature/execution.json",
+        "sha256": "9f4b8736c66b7c8eef1bfbba841191f9015eeedb90ba1bbabf5e6d86aff5c367"
+      },
+      "finished_at": 1792840653.7280114,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_2643e391a27b4ecf__review": {
+      "attempts": 2,
+      "dependencies": [
+        "run_2643e391a27b4ecf__geometry"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2643e391a27b4ecf/agents/review/execution.json",
+        "sha256": "2c65e83077ef4c984aff6eb088549e6ec3d58d321b4bf192f0f81059708fa0d2"
+      },
+      "failure": "scientific revision: MATERIAL",
+      "finished_at": 1792840856.244275,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "done"
+    },
+    "run_27b0213b51c146c1__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_27b0213b51c146c1/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792828209.5064003,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_27b0213b51c146c1__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_27b0213b51c146c1__behavior",
+        "run_27b0213b51c146c1__literature"
+      ],
+      "evidence": null,
+      "failure": "ValueError: classification references unregistered diagnostics: OR, direction/minimum_effect, falsified_if, passed_if, stage2_diagnostics, stage3_behavioral_test.mean_difference, stage3_behavioral_test.minimum_effect",
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "blocked"
+    },
+    "run_27b0213b51c146c1__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_27b0213b51c146c1/agents/literature/execution.json",
+        "sha256": "196252dcd6edac5e8f1f9bf81be3d408f35422c3c66ca5f3f84bd6c5e169e138"
+      },
+      "finished_at": 1792828220.038348,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_27b0213b51c146c1__review": {
+      "attempts": 0,
+      "dependencies": [
+        "run_27b0213b51c146c1__geometry"
+      ],
+      "evidence": null,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "pending"
+    },
+    "run_2b579f1172754102__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2b579f1172754102/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792851115.0575309,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_2b579f1172754102__geometry": {
+      "attempts": 3,
+      "dependencies": [
+        "run_2b579f1172754102__behavior",
+        "run_2b579f1172754102__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2b579f1172754102/agents/geometry/execution.json",
+        "sha256": "7f5ad52594f0ab9dc5044f878e85bd4e4cdfdd27fecd34d03d0feeabf7ed3f8a"
+      },
+      "failure": "review blocked the proposal: MATERIAL",
+      "finished_at": 1792851382.3411696,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_2b579f1172754102__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2b579f1172754102/agents/literature/execution.json",
+        "sha256": "d4e17fbc1fc23c1ef72099783dc74827bee9451d9d599cf506caab461c164b88"
+      },
+      "finished_at": 1792851111.095686,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_2b579f1172754102__review": {
+      "attempts": 3,
+      "dependencies": [
+        "run_2b579f1172754102__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_2d84ba77647b4008__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2d84ba77647b4008/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792837396.996136,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_2d84ba77647b4008__geometry": {
+      "attempts": 2,
+      "dependencies": [
+        "run_2d84ba77647b4008__behavior",
+        "run_2d84ba77647b4008__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2d84ba77647b4008/agents/geometry/execution.json",
+        "sha256": "699c8070d9194c63e7fdc67746b72490c7e789359656010cd687be79e65d6452"
+      },
+      "failure": "review blocked the proposal: MATERIAL",
+      "finished_at": 1792837716.0773025,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_2d84ba77647b4008__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2d84ba77647b4008/agents/literature/execution.json",
+        "sha256": "470b6420fdc277f6697e225220f8e1f86ee26529f3843b83847b752ddde2505e"
+      },
+      "finished_at": 1792837428.6026254,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_2d84ba77647b4008__review": {
+      "attempts": 2,
+      "dependencies": [
+        "run_2d84ba77647b4008__geometry"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2d84ba77647b4008/agents/review/execution.json",
+        "sha256": "5d04715601db3457c4373adf8c75c49f950fae04efe8f09ae77c568edaa68fe3"
+      },
+      "failure": "scientific revision: MATERIAL",
+      "finished_at": 1792837740.0995266,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "done"
+    },
+    "run_2f4348aa17bd4256__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2f4348aa17bd4256/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792826757.7998326,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_2f4348aa17bd4256__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_2f4348aa17bd4256__behavior",
+        "run_2f4348aa17bd4256__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2f4348aa17bd4256/agents/geometry/execution.json",
+        "sha256": "7a0da8bd3c5cd36d4891a859e4c1dd10c377a04ce0c17fb6c34d4e96fe4faf7f"
+      },
+      "finished_at": 1792826833.1651623,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_2f4348aa17bd4256__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_2f4348aa17bd4256/agents/literature/execution.json",
+        "sha256": "f96dbcb5cc86b46b48c4659f82dee83433f323f2532708ab345a5bb02357f919"
+      },
+      "finished_at": 1792826796.7281728,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_2f4348aa17bd4256__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_2f4348aa17bd4256__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_3050496488e34160__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_3050496488e34160/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792810296.192304,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_3050496488e34160__geometry": {
+      "attempts": 0,
+      "dependencies": [
+        "run_3050496488e34160__behavior",
+        "run_3050496488e34160__literature"
+      ],
+      "evidence": null,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "pending"
+    },
+    "run_3050496488e34160__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": null,
+      "failure": "RuntimeError: OpenCode failed, cancelled, timed out or returned invalid JSON: /fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_3050496488e34160/agents/literature/execution.json",
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "blocked"
+    },
+    "run_3050496488e34160__review": {
+      "attempts": 0,
+      "dependencies": [
+        "run_3050496488e34160__geometry"
+      ],
+      "evidence": null,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "pending"
+    },
+    "run_37ce8fa9c9f24c3d__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_37ce8fa9c9f24c3d/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792851503.1489563,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_37ce8fa9c9f24c3d__geometry": {
+      "attempts": 2,
+      "dependencies": [
+        "run_37ce8fa9c9f24c3d__behavior",
+        "run_37ce8fa9c9f24c3d__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_37ce8fa9c9f24c3d/agents/geometry/execution.json",
+        "sha256": "2ef8708d8bd2ebd57ed99c70d68d1fd7b7e9c532247c7f1bd5fc704db4e376e9"
+      },
+      "failure": "review blocked the proposal: MATERIAL",
+      "finished_at": 1792851735.1097603,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_37ce8fa9c9f24c3d__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_37ce8fa9c9f24c3d/agents/literature/execution.json",
+        "sha256": "cb65697134c7a7aa9ee6da289fac0a3d5175a62b91390d42f366d9ec50249a15"
+      },
+      "finished_at": 1792851540.8520026,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_37ce8fa9c9f24c3d__review": {
+      "attempts": 2,
+      "dependencies": [
+        "run_37ce8fa9c9f24c3d__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_3f9f039f463c4c84__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_3f9f039f463c4c84/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792852050.6085684,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_3f9f039f463c4c84__geometry": {
+      "attempts": 3,
+      "dependencies": [
+        "run_3f9f039f463c4c84__behavior",
+        "run_3f9f039f463c4c84__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_3f9f039f463c4c84/agents/geometry/execution.json",
+        "sha256": "372165eb157040a2deaf58c5143b00b4ec3f97e876edfb6495691a6b38e9a453"
+      },
+      "failure": "review blocked the proposal: MATERIAL",
+      "finished_at": 1792852620.418006,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_3f9f039f463c4c84__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_3f9f039f463c4c84/agents/literature/execution.json",
+        "sha256": "ee460956f37b91275c3d6ad9c9fe6aaf2a8c41fcac2921ec6cbadcb1634d7b7e"
+      },
+      "finished_at": 1792852086.9227798,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_3f9f039f463c4c84__review": {
+      "attempts": 3,
+      "dependencies": [
+        "run_3f9f039f463c4c84__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_4053f2250f914d4e__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_4053f2250f914d4e/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792836465.6479661,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_4053f2250f914d4e__geometry": {
+      "attempts": 3,
+      "dependencies": [
+        "run_4053f2250f914d4e__behavior",
+        "run_4053f2250f914d4e__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_4053f2250f914d4e/agents/geometry/execution.json",
+        "sha256": "7000b03f7f2eea6179afe4d99557141a411807ac17a9850a8e0af8a7c09d1c7f"
+      },
+      "failure": "review blocked the proposal: MATERIAL",
+      "finished_at": 1792836842.8746285,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_4053f2250f914d4e__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_4053f2250f914d4e/agents/literature/execution.json",
+        "sha256": "38e86274b61a104fa4e8ea1f4a0215655a8ba538916676ca82a031a0f874a2b9"
+      },
+      "finished_at": 1792836457.1354144,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_4053f2250f914d4e__review": {
+      "attempts": 3,
+      "dependencies": [
+        "run_4053f2250f914d4e__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_53b3f13468974407__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_53b3f13468974407/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792825013.0625956,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_53b3f13468974407__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_53b3f13468974407__behavior",
+        "run_53b3f13468974407__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_53b3f13468974407/agents/geometry/execution.json",
+        "sha256": "0103e1cb5ae78d7bc33780554846f984c215dc622fd69cd2d3a43bf3a44a8c09"
+      },
+      "finished_at": 1792825087.1061926,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_53b3f13468974407__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_53b3f13468974407/agents/literature/execution.json",
+        "sha256": "d5ed38bc25c00c6864a6de7f1f5b9185107a3fd9c0ae8d498dbc3dd7b52ea435"
+      },
+      "finished_at": 1792825050.7863147,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_53b3f13468974407__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_53b3f13468974407__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by MATERIAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_547c6b9292624d2a__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_547c6b9292624d2a/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792829462.7530122,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_547c6b9292624d2a__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_547c6b9292624d2a__behavior",
+        "run_547c6b9292624d2a__literature"
+      ],
+      "evidence": null,
+      "failure": "ValueError: classification references unregistered diagnostics: stage2_diagnostics, stage3_behavioral_test",
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "blocked"
+    },
+    "run_547c6b9292624d2a__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_547c6b9292624d2a/agents/literature/execution.json",
+        "sha256": "063b6ca718ababb48faafccf06b7990a7738859cffb745d740de45038d335a0a"
+      },
+      "finished_at": 1792829473.3918273,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_547c6b9292624d2a__review": {
+      "attempts": 0,
+      "dependencies": [
+        "run_547c6b9292624d2a__geometry"
+      ],
+      "evidence": null,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "pending"
+    },
+    "run_60a74aee1ec74901__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_60a74aee1ec74901/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792826496.582805,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_60a74aee1ec74901__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_60a74aee1ec74901__behavior",
+        "run_60a74aee1ec74901__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_60a74aee1ec74901/agents/geometry/execution.json",
+        "sha256": "6457e04d5922980ad55247c527795da0c7d830c8f191a78525b93fa25bd69806"
+      },
+      "finished_at": 1792826557.2916305,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_60a74aee1ec74901__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_60a74aee1ec74901/agents/literature/execution.json",
+        "sha256": "8a585853ace3b0b55d88113b453c168bb4097016c9ccc3c8ca5bdd7d64e46ee4"
+      },
+      "finished_at": 1792826528.8259013,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_60a74aee1ec74901__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_60a74aee1ec74901__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_7041e5466e33474c__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_7041e5466e33474c/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792825333.2812307,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_7041e5466e33474c__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_7041e5466e33474c__behavior",
+        "run_7041e5466e33474c__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_7041e5466e33474c/agents/geometry/execution.json",
+        "sha256": "d6d34270ae9f048ddab1b5676773aa80a0274218298c8e89076af2f6138ab8e8"
+      },
+      "finished_at": 1792825395.0706747,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_7041e5466e33474c__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_7041e5466e33474c/agents/literature/execution.json",
+        "sha256": "56f448b41330c1d7c5ba6bd2e5aa7ebde15a99bde560dee11f5fb4d272bb9c12"
+      },
+      "finished_at": 1792825359.323265,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_7041e5466e33474c__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_7041e5466e33474c__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by MATERIAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_75bce26fe17e48fd__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_75bce26fe17e48fd/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792839913.6926372,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_75bce26fe17e48fd__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_75bce26fe17e48fd__behavior",
+        "run_75bce26fe17e48fd__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_75bce26fe17e48fd/agents/geometry/execution.json",
+        "sha256": "023b608441e442266fee7e136e67c40882b5d4c0bc62b4bb66d34650edcf1a3e"
+      },
+      "finished_at": 1792840016.2712178,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_75bce26fe17e48fd__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_75bce26fe17e48fd/agents/literature/execution.json",
+        "sha256": "1e58a66340e12356ff5228f1b37307cf5bdf88ceb221eec7e68781d847c35059"
+      },
+      "finished_at": 1792839948.6949852,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_75bce26fe17e48fd__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_75bce26fe17e48fd__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_8a5453d8e5f04d4d__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_8a5453d8e5f04d4d/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792826368.8260632,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_8a5453d8e5f04d4d__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_8a5453d8e5f04d4d__behavior",
+        "run_8a5453d8e5f04d4d__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_8a5453d8e5f04d4d/agents/geometry/execution.json",
+        "sha256": "747182d27e91901cdd747f7ada5d2d64cdd962969437854a7f1920a3550bf322"
+      },
+      "finished_at": 1792826443.052969,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_8a5453d8e5f04d4d__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_8a5453d8e5f04d4d/agents/literature/execution.json",
+        "sha256": "7ddaa461eaa922dfd875944608637f56da71a6b331a0c7d0f2256238e22146fe"
+      },
+      "finished_at": 1792826399.0282676,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_8a5453d8e5f04d4d__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_8a5453d8e5f04d4d__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_910e706db9bb4172__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_910e706db9bb4172/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792820964.829731,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_910e706db9bb4172__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_910e706db9bb4172__behavior",
+        "run_910e706db9bb4172__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_910e706db9bb4172/agents/geometry/execution.json",
+        "sha256": "383a8c88da0abb0ccab3f92cb02a98085f1b4aca8248a6f854ca96ede9609292"
+      },
+      "finished_at": 1792821072.8194528,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_910e706db9bb4172__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_910e706db9bb4172/agents/literature/execution.json",
+        "sha256": "2807d796d5681ae9a6c57d3c2e711a50f046b0a6072268b072948e531edc8821"
+      },
+      "finished_at": 1792821040.771778,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_910e706db9bb4172__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_910e706db9bb4172__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by MATERIAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_9cca6c9326cc4d56__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_9cca6c9326cc4d56/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792825964.1155818,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_9cca6c9326cc4d56__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_9cca6c9326cc4d56__behavior",
+        "run_9cca6c9326cc4d56__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_9cca6c9326cc4d56/agents/geometry/execution.json",
+        "sha256": "3b055cec13045c92cad5533e518146e7749e4a71f4b01e3dbb50c634898a46ac"
+      },
+      "finished_at": 1792826021.1993885,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_9cca6c9326cc4d56__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_9cca6c9326cc4d56/agents/literature/execution.json",
+        "sha256": "e031da4336583c87481a060f3081a5fc097624ef8d5a1cb9cc4c0c24f48383d1"
+      },
+      "finished_at": 1792825990.4339488,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_9cca6c9326cc4d56__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_9cca6c9326cc4d56__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by MATERIAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_a009dd2392a949e3__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_a009dd2392a949e3/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792826246.3862307,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_a009dd2392a949e3__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_a009dd2392a949e3__behavior",
+        "run_a009dd2392a949e3__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_a009dd2392a949e3/agents/geometry/execution.json",
+        "sha256": "e4e6378fbf453c0c22762c4c8c2b71c0536b4eb745077c36f65d85f2c1901788"
+      },
+      "finished_at": 1792826313.2571,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_a009dd2392a949e3__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_a009dd2392a949e3/agents/literature/execution.json",
+        "sha256": "7e92c6a0d86a0d69349ad1e4982a5bdf21e2c64c9439915303ffcd2f380cb9db"
+      },
+      "finished_at": 1792826271.2192888,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_a009dd2392a949e3__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_a009dd2392a949e3__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by MATERIAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_a7094d686c4d417f__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_a7094d686c4d417f/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792824845.7674356,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_a7094d686c4d417f__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_a7094d686c4d417f__behavior",
+        "run_a7094d686c4d417f__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_a7094d686c4d417f/agents/geometry/execution.json",
+        "sha256": "486bca391e1d7a68a57d0137f9fa93f84c02361652fe7f2b828fedb2b92b8ac7"
+      },
+      "finished_at": 1792824954.03705,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_a7094d686c4d417f__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_a7094d686c4d417f/agents/literature/execution.json",
+        "sha256": "0343f9ce1d699aaaa5735db6b5a93ed32f814e459275652b948430a85fcfe22d"
+      },
+      "finished_at": 1792824907.5265286,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_a7094d686c4d417f__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_a7094d686c4d417f__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by MATERIAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_a92cba2cea334be1__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_a92cba2cea334be1/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792825452.01207,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_a92cba2cea334be1__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_a92cba2cea334be1__behavior",
+        "run_a92cba2cea334be1__literature"
+      ],
+      "evidence": null,
+      "failure": "RuntimeError: OpenCode failed, cancelled, timed out or returned invalid JSON: /fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_a92cba2cea334be1/agents/geometry/execution.json",
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "blocked"
+    },
+    "run_a92cba2cea334be1__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_a92cba2cea334be1/agents/literature/execution.json",
+        "sha256": "83f2ff8eb046ec186b2a6d693ac761baa879739e2e253549f74245b82c210aa5"
+      },
+      "finished_at": 1792825485.6345227,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_a92cba2cea334be1__review": {
+      "attempts": 0,
+      "dependencies": [
+        "run_a92cba2cea334be1__geometry"
+      ],
+      "evidence": null,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "pending"
+    },
+    "run_aa0a1b2ec8eb4543__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_aa0a1b2ec8eb4543/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792826889.895302,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_aa0a1b2ec8eb4543__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_aa0a1b2ec8eb4543__behavior",
+        "run_aa0a1b2ec8eb4543__literature"
+      ],
+      "evidence": null,
+      "failure": "RuntimeError: OpenCode failed, cancelled, timed out or returned invalid JSON: /fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_aa0a1b2ec8eb4543/agents/geometry/execution.json",
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "blocked"
+    },
+    "run_aa0a1b2ec8eb4543__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_aa0a1b2ec8eb4543/agents/literature/execution.json",
+        "sha256": "e41e225fa8b609c7104db23be3e47b1c486f92bf131f05f77f3e48f699238897"
+      },
+      "finished_at": 1792826930.293271,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_aa0a1b2ec8eb4543__review": {
+      "attempts": 0,
+      "dependencies": [
+        "run_aa0a1b2ec8eb4543__geometry"
+      ],
+      "evidence": null,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "pending"
+    },
+    "run_b9ea52a272334f37__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_b9ea52a272334f37/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792840357.8633249,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_b9ea52a272334f37__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_b9ea52a272334f37__behavior",
+        "run_b9ea52a272334f37__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_b9ea52a272334f37/agents/geometry/execution.json",
+        "sha256": "7b16244e12bd9a31e9bed734cea564560738e7d7488cb482b7ac2d3e345c014c"
+      },
+      "finished_at": 1792840570.0531745,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_b9ea52a272334f37__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_b9ea52a272334f37/agents/literature/execution.json",
+        "sha256": "3d191bce3cca948c76bdbe1bd1af22abb3da5fb2c164b74d41ff5e8d19d30fdf"
+      },
+      "finished_at": 1792840399.0258157,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_b9ea52a272334f37__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_b9ea52a272334f37__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_bb69f1148302487e__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_bb69f1148302487e/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792835666.7499552,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_bb69f1148302487e__geometry": {
+      "attempts": 2,
+      "dependencies": [
+        "run_bb69f1148302487e__behavior",
+        "run_bb69f1148302487e__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_bb69f1148302487e/agents/geometry/execution.json",
+        "sha256": "a28e24582c08320819400ccd42ea76db2c2649420289761d43ec4c69b335b23b"
+      },
+      "failure": "review blocked the proposal: MATERIAL",
+      "finished_at": 1792836341.888725,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_bb69f1148302487e__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_bb69f1148302487e/agents/literature/execution.json",
+        "sha256": "cda0fdf66f9232a2d8f0dba9d07b606fa1e036518d2dd155bb1ccb4095ecd85d"
+      },
+      "finished_at": 1792835713.8961096,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_bb69f1148302487e__review": {
+      "attempts": 2,
+      "dependencies": [
+        "run_bb69f1148302487e__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_c9a67f49496a4ab5__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_c9a67f49496a4ab5/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792851857.0862055,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_c9a67f49496a4ab5__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_c9a67f49496a4ab5__behavior",
+        "run_c9a67f49496a4ab5__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_c9a67f49496a4ab5/agents/geometry/execution.json",
+        "sha256": "e359e7ced20ee331295f306180c06b5d357f9039f9f9cd1ef569e6144b1ba09f"
+      },
+      "finished_at": 1792851979.349342,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_c9a67f49496a4ab5__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_c9a67f49496a4ab5/agents/literature/execution.json",
+        "sha256": "3837bb16928b39411614b152f7f3780e406f8a03cb964377d2127c42d3086e2b"
+      },
+      "finished_at": 1792851912.387875,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_c9a67f49496a4ab5__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_c9a67f49496a4ab5__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_caa321851a0f49f5__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_caa321851a0f49f5/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792829569.2787495,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_caa321851a0f49f5__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_caa321851a0f49f5__behavior",
+        "run_caa321851a0f49f5__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_caa321851a0f49f5/agents/geometry/execution.json",
+        "sha256": "9129f4150326a8253d108d4199283b04b544133e7c73f7ecbc5b130e98776dde"
+      },
+      "finished_at": 1792829649.91338,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_caa321851a0f49f5__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_caa321851a0f49f5/agents/literature/execution.json",
+        "sha256": "8afe1bb09304ebafedca62dbbe608fad83ba5936a6294b42168ab1403e5287a8"
+      },
+      "finished_at": 1792829605.2933142,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_caa321851a0f49f5__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_caa321851a0f49f5__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_ce07294bb41149ad__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_ce07294bb41149ad/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792810688.013766,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_ce07294bb41149ad__geometry": {
+      "attempts": 0,
+      "dependencies": [
+        "run_ce07294bb41149ad__behavior",
+        "run_ce07294bb41149ad__literature"
+      ],
+      "evidence": null,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "pending"
+    },
+    "run_ce07294bb41149ad__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": null,
+      "failure": "RuntimeError: OpenCode failed, cancelled, timed out or returned invalid JSON: /fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_ce07294bb41149ad/agents/literature/execution.json",
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "blocked"
+    },
+    "run_ce07294bb41149ad__review": {
+      "attempts": 0,
+      "dependencies": [
+        "run_ce07294bb41149ad__geometry"
+      ],
+      "evidence": null,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "pending"
+    },
+    "run_d026791351654137__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d026791351654137/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792836952.7886262,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_d026791351654137__geometry": {
+      "attempts": 3,
+      "dependencies": [
+        "run_d026791351654137__behavior",
+        "run_d026791351654137__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d026791351654137/agents/geometry/execution.json",
+        "sha256": "24dccec35fb5e1bab994e777ef9a13629a52ffec353d3e9728e6165d0ad8fcab"
+      },
+      "failure": "review blocked the proposal: MATERIAL",
+      "finished_at": 1792837329.2082698,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_d026791351654137__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d026791351654137/agents/literature/execution.json",
+        "sha256": "4de6a96a08aec96183258d23a8cbf730a66736fc254707599335bfc367c70124"
+      },
+      "finished_at": 1792836989.0206754,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_d026791351654137__review": {
+      "attempts": 3,
+      "dependencies": [
+        "run_d026791351654137__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_d7e3d8e2b2634292__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d7e3d8e2b2634292/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792824685.3669717,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_d7e3d8e2b2634292__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_d7e3d8e2b2634292__behavior",
+        "run_d7e3d8e2b2634292__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d7e3d8e2b2634292/agents/geometry/execution.json",
+        "sha256": "6b04ae949619dccae2f82df96a395bb978f24fc8b58334da40074f57a67f335a"
+      },
+      "finished_at": 1792824738.6979365,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_d7e3d8e2b2634292__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d7e3d8e2b2634292/agents/literature/execution.json",
+        "sha256": "5eb1e937cefc62c3a626a6118ec1a361a0dc4562399418e9618bfc73771eda0d"
+      },
+      "finished_at": 1792824718.0816557,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_d7e3d8e2b2634292__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_d7e3d8e2b2634292__geometry"
+      ],
+      "evidence": null,
+      "failure": "ValueError: scientific admission BLOCKED by FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_d8cb91f13ee040d6__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d8cb91f13ee040d6/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792830003.3291106,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_d8cb91f13ee040d6__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_d8cb91f13ee040d6__behavior",
+        "run_d8cb91f13ee040d6__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d8cb91f13ee040d6/agents/geometry/execution.json",
+        "sha256": "6e17db1e04b22da8091c15f4bd450a0c400e1f2d04a68cab38b6058353ea2d81"
+      },
+      "finished_at": 1792830077.952572,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_d8cb91f13ee040d6__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d8cb91f13ee040d6/agents/literature/execution.json",
+        "sha256": "e79fb7206504013e7a22876f9fe7377c59620e663a7df254c88fc7b5500e8a69"
+      },
+      "finished_at": 1792830037.926958,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_d8cb91f13ee040d6__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_d8cb91f13ee040d6__geometry"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_d8cb91f13ee040d6/agents/review/execution.json",
+        "sha256": "9c74942344b1407c4ec85f4e9d62aca7a14fdd4a89b17c2ed8209da1bcbbe76a"
+      },
+      "finished_at": 1792830119.3986762,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "done"
+    },
+    "run_df9becd937e2410c__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_df9becd937e2410c/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792840080.2395883,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_df9becd937e2410c__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_df9becd937e2410c__behavior",
+        "run_df9becd937e2410c__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_df9becd937e2410c/agents/geometry/execution.json",
+        "sha256": "d73efbd8e2de13fa085991dfa615d40f63779fd2e4a74ce0a500fd2fc8591965"
+      },
+      "finished_at": 1792840283.8898826,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_df9becd937e2410c__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_df9becd937e2410c/agents/literature/execution.json",
+        "sha256": "d007a31097912905e91e10ad16c6c4371b283d2c8a4ed8de0ae23697e7d603ad"
+      },
+      "finished_at": 1792840104.5023983,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_df9becd937e2410c__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_df9becd937e2410c__geometry"
+      ],
+      "evidence": null,
+      "failure": "scientific rejection: FATAL",
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "blocked"
+    },
+    "run_f8049f2ce2774d7c__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_f8049f2ce2774d7c/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1792810893.5995812,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_f8049f2ce2774d7c__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_f8049f2ce2774d7c__behavior",
+        "run_f8049f2ce2774d7c__literature"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_f8049f2ce2774d7c/agents/geometry/execution.json",
+        "sha256": "63bc3239b93597c9980ed370240f40a4cd2e236b6127b61a299fefbaf843c3b1"
+      },
+      "finished_at": 1792810953.1126988,
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "done"
+    },
+    "run_f8049f2ce2774d7c__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_f8049f2ce2774d7c/agents/literature/execution.json",
+        "sha256": "736fad22fffa2a3cd5dac41942806b024186c532bcbb95fcf46553f9f1f26686"
+      },
+      "finished_at": 1792810933.1231308,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_f8049f2ce2774d7c__review": {
+      "attempts": 1,
+      "dependencies": [
+        "run_f8049f2ce2774d7c__geometry"
+      ],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_f8049f2ce2774d7c/agents/review/execution.json",
+        "sha256": "8685bd9ae83ddbfa0470f88632ffb1e9e1cb25f4c165feea5b1c2fec7c229148"
+      },
+      "finished_at": 1792810971.106537,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "done"
+    }
+  }
+}

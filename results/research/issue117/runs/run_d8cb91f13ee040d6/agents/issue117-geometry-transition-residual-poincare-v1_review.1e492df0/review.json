@@ -1,0 +1,13 @@
+{
+  "candidate_id": "issue117-geometry-transition-residual-poincare-v1",
+  "source_sha256": "a8066ae1bc72e944a345290505f78fce67c73da3e69775b6768adbdb581cd136",
+  "proposal_sha256": "94ca0360e8757cf445e2b3a0bf3c370054d88cb5dd8c56e3a4b6fd33f6f9469c",
+  "test_sha256": {
+    "math": "9f454803c1bcab9fd6817855617b8fd71cf5ecb4bc83098fab16de57f6b7b6c4",
+    "gradient": "dbc28e440c7289fa1ace304c1170047d7d2063c9ee095eba2f30752c36f58fbd",
+    "ddp": "7d3df98d28902999dd84158c38cda858a08d5a26a0e9cb341fd20b2287031cbd",
+    "entrypoint": "242e3e2108afc594fa9d34c40e9c5ae76e90637c582d28d12218480288ed52ac"
+  },
+  "verdict": "BLOCK",
+  "rationale": "Static inspection confirms the math tests use closed-form reference values rather than only duplicating implementation, the gradient suite exercises candidate RQVAE, the entrypoint invokes trainer.main() and checks artifacts/transition loss, and DDP spawns two gloo ranks with rank-distinct data and all_gather of gradients and post-step parameters. Trainer source visibly uses DDP and has a torchrun entrypoint. However, manifest math falsifiers claim residual reconstruction 0.7 (the listed codebooks and [1,0,1] actually sum to 1.0) and coincident distance approximately 4e-7, while the correct frozen clamp formula/test expectation is approximately 2e-7. This evidence inconsistency blocks approval. I did not execute suites; Stage2 verification_check must prove four nonzero, skip-free passes. The supplied digests are echoed, not independently recomputed here."
+}

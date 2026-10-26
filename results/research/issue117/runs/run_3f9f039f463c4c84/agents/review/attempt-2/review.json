@@ -1,0 +1,21 @@
+{
+  "candidate_id": "issue117_geometry_poincare_global_balanced_r3",
+  "candidate_sha256": "1d274ee7a9090af77da8f4ec1e9fd2fb5a3cb71e079cac862bcc329c99e6d769",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "code": "REFINEMENT_DIAGNOSTIC_DIRECTION_CONFLICT",
+      "severity": "MATERIAL",
+      "evidence": "falsifier.stage2_diagnostics[L3_refinement_gain] requires curved-minus-flat <= -0.01, while hyperbolic_necessity says the prespecified expectation is explicitly no material increase. These are not the same registered claim: the former requires a decrease, and the latter permits unchanged refinement. The explanatory text also says lower refinement is interpreted jointly with collision reduction, so the rationale does not establish why a decrease of at least 0.01 is a necessary pass condition.",
+      "mechanical_resolution": "Align the registered direction and minimum effect with the stated hypothesis (or explicitly justify and state that a decrease of at least 0.01 is required)."
+    }
+  ],
+  "reproducible_evidence": {
+    "causal_link": "The training-only transition asymmetry is explicitly limited to motivation, not causal evidence. The proposed prefix-conflation mechanism is a testable design hypothesis: Stage2 emits global content-derived SIDs and Stage3 alone evaluates next-item ranking. This is appropriately scoped as a hypothesis, not an established causal link.",
+    "math_and_types": "The squared Poincare distance is typed on projected 32-dimensional vectors strictly inside the ball; its stated c-to-zero limit is 4*||x-y||^2. The projection uses the same fixed R in both arms, avoiding the singular curvature-dependent radius at c=0. The residual chain, soft assignment shapes, loss normalizations, stop-gradient targets, and finite-iteration normalization are specified. No ill-typed or algebraically unsound equation was identified.",
+    "hyperbolic_effect_and_control": "At c=0.1 the operator is non-flat on nonzero distances; at c=0 the exact stated limit is used. Both arms retain the same fixed projection, encoder/codebooks, initialization, assignment/refresh, objective, optimizer, schedule, epochs, batches, paired seeds, and capacity; the stated change is the scored squared-distance metric only. No exp map or curvature-dependent projection creates an extra arm difference.",
+    "numerical_domain": "Scored vectors are projected to norm <=0.999 and sqrt(0.1)*0.999<1; unprojected residuals are not scored. The distance clamp and arcosh stabilization are given, and non-finite values/zero normalizers are declared fatal. The stated flat limit and its implementation branch are defined.",
+    "leakage_and_recomputation": "Stage2 assignment population is the frozen 24556-item training inventory; interaction targets/counts are train-only. Validation is diagnostic-only and test is reserved for the final Stage3 comparison. No prediction-time user context or future events enter Stage2. Loss targets, refresh cadence, and deterministic hard-label tie-breaking/capacities are specified sufficiently to define the registered calculations.",
+    "protocol_and_behavior_test": "Frozen protocol specifies 3000 epochs, levels/codes/dimension, initialization, optimizer/schedule, paired seeds [42,43,44], and no sweep. The candidate registers Stage3 test_R@10, direction curved-flat > 0, minimum effect 0.005, all three seed differences and their arithmetic mean finite and strictly exceeding the threshold, on the frozen evaluation/test split without tuning. The falsifier classifies non-finite/missing/NULL comparisons as inconclusive and finite failed thresholds as falsified. Stage2 leading indicators include validation Hard-L1 ER, distinct two-token prefixes, and L3 statistics; strict floors are consistent with the supplied frozen thresholds: ER >10.0 and prefixes >16145; schema_version is 1."
+  }
+}

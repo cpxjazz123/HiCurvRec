@@ -1,0 +1,107 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": "10.48550/arXiv.2305.05065",
+      "arxiv": "2305.05065",
+      "links": ["https://arxiv.org/abs/2305.05065", "https://arxiv.org/html/2305.05065v3"],
+      "evidence_label": "FULL_TEXT",
+      "evidence_checked": "arXiv record and full-text HTML v3",
+      "exact_overlap": {
+        "user_next_item_behavior": "YES — explicitly trains a Transformer sequence-to-sequence model on Semantic IDs in a user session to predict the Semantic ID of the next item the user will interact with.",
+        "hyperbolic_geometry": "NO — the accessible abstract and full-text framing describe semantic codeword tuples and generative retrieval, not hyperbolic geometry.",
+        "generative_semantic_ids": "YES — creates semantically meaningful tuples of codewords as item Semantic IDs and autoregressively decodes target identifiers."
+      },
+      "relevance": "Strong evidence for next-item user behavior plus generative Semantic IDs, but not for the hyperbolic component."
+    },
+    {
+      "title": "Time-aware Hyperbolic Graph Attention Network for Session-based Recommendation",
+      "doi": null,
+      "arxiv": "2301.03780",
+      "links": ["https://arxiv.org/abs/2301.03780"],
+      "evidence_label": "ABSTRACT",
+      "evidence_checked": "arXiv record abstract; full text not independently inspected",
+      "exact_overlap": {
+        "user_next_item_behavior": "YES — abstract defines session-based recommendation as predicting users' next interested items from previous browsing sessions and describes prediction based on timestamp.",
+        "hyperbolic_geometry": "YES — proposes a time-aware hyperbolic graph attention model and learns hierarchical session graphs in hyperbolic space.",
+        "generative_semantic_ids": "NO in the checked abstract — no generative retrieval or Semantic IDs are described."
+      },
+      "relevance": "Directly relevant to behavior-first next-item modeling and hyperbolic session representation; does not establish generative Semantic IDs."
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2108.08134",
+      "links": ["https://arxiv.org/abs/2108.08134"],
+      "evidence_label": "ABSTRACT",
+      "evidence_checked": "arXiv record abstract; full text not independently inspected",
+      "exact_overlap": {
+        "user_next_item_behavior": "PARTIAL — sequential recommendation with multi-scale temporal item embeddings is explicit, but the checked abstract does not state the precise next-item target in those words.",
+        "hyperbolic_geometry": "YES — uses hyperbolic-space hypergraph convolution to learn dynamic item embeddings.",
+        "generative_semantic_ids": "NO in the checked abstract — no generative retrieval or Semantic IDs are described."
+      },
+      "relevance": "Adjacent evidence for sequential behavior and hyperbolic representation, not the generative-ID intersection."
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2505.09205",
+      "links": ["https://arxiv.org/abs/2505.09205"],
+      "evidence_label": "ABSTRACT",
+      "evidence_checked": "arXiv record abstract; full text not independently inspected",
+      "exact_overlap": {
+        "user_next_item_behavior": "PARTIAL — explicitly addresses sequential recommendation and dynamic interaction sequences; checked abstract does not specifically assert Semantic-ID next-item decoding.",
+        "hyperbolic_geometry": "YES — proposes curvature-aware hyperbolic selective state-space sequence modeling.",
+        "generative_semantic_ids": "NO in the checked abstract — no Semantic IDs or generative retrieval are described."
+      },
+      "relevance": "Recent hyperbolic sequential-recommendation comparator; it does not document generative Semantic IDs."
+    },
+    {
+      "title": "Hyperbolic Social Recommender",
+      "doi": null,
+      "arxiv": "2102.09389",
+      "links": ["https://arxiv.org/abs/2102.09389"],
+      "evidence_label": "ABSTRACT",
+      "evidence_checked": "arXiv record abstract; full text not independently inspected",
+      "exact_overlap": {
+        "user_next_item_behavior": "NO explicit next-item prediction in the checked abstract; evaluates click-through-rate prediction and top-K recommendation.",
+        "hyperbolic_geometry": "YES — models user/item representations and social relations in hyperbolic geometry.",
+        "generative_semantic_ids": "NO in the checked abstract."
+      },
+      "relevance": "Background on hyperbolic recommendation only; not evidence for the requested full intersection."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Behavior-conditioned next-item generation with hierarchical (hyperbolic) Semantic-ID structure",
+      "grounding": "Combine the explicitly observed user-session-to-next-Semantic-ID task in Recommender Systems with Generative Retrieval (FULL_TEXT) with the hyperbolic session/sequence modeling direction in TA-HGAT and HMamba (ABSTRACT).",
+      "evidence_status": "SYNTHESIS / research gap, not a method already verified in one source",
+      "behavior_first_question": "Does representing item-ID hierarchy in a negatively curved space improve prediction of the user's next interacted item from their observed session, compared with Euclidean Semantic IDs, while retaining autoregressive decoding?"
+    },
+    {
+      "candidate": "Temporal intent evolution and branching next-item choices in short sessions",
+      "grounding": "TA-HGAT's abstract explicitly identifies temporal intervals/current interests and next-interested-item prediction; H2SeqRec's abstract describes multi-timescale sequence modeling and dynamic social information.",
+      "evidence_status": "SYNTHESIS / candidate problem framing; no checked source tests these behaviors with generative Semantic IDs",
+      "behavior_first_question": "Which temporal transitions or session-intent branches are lost when the next item is represented by a flat code sequence, and can hierarchical geometry improve behaviorally valid branching?"
+    },
+    {
+      "candidate": "Long-tail and cold-start next-item behavior",
+      "grounding": "Generative Retrieval reports improved retrieval for items with no prior interaction history in its abstract; hyperbolic recommendation abstracts motivate hierarchy/long-tail structure. Their combination remains unverified.",
+      "evidence_status": "SYNTHESIS / candidate; avoid claiming the combined effect is established",
+      "behavior_first_question": "Do generative Semantic IDs plus hyperbolic structure improve next-item prediction for rare or unseen items without reducing accuracy on frequent-item behavior?"
+    }
+  ],
+  "limitations": [
+    "No independently verified source among those checked demonstrates all three elements together: user next-item behavior, hyperbolic geometry, and generative Semantic IDs. The evidence supports two-element overlaps and a research gap, not an existing integrated result.",
+    "FULL_TEXT is assigned only to the arXiv Semantic-ID paper whose experimental HTML was accessible and inspected; the other labels indicate abstract-only evidence, not full-text verification.",
+    "Negative claims are scoped to the evidence inspected (primarily abstracts); they do not prove a term or technique is absent from every version or appendix.",
+    "arXiv-issued DOI is provided for Recommender Systems with Generative Retrieval. For the remaining entries, arXiv identifiers are supplied and DOI is null rather than guessed.",
+    "The behavior problem candidates are proposed synthesis from the cited evidence, not claims made or validated by those papers."
+  ]
+}

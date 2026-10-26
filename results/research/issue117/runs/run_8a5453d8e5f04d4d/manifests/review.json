@@ -1,0 +1,261 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "shared_prefix_user_preference_rank_reversal",
+    "candidate_id": "geometry_hyperbolic_residual_sid_v1",
+    "effect_site": "Stage2 item-code assignment and residual codebook geometry. Expected diagnostic movement: lower validation Hard-L1 ER, more distinct two-token prefixes, lower L3 collision, higher refinement gain, and higher conditional G3. These are evaluation diagnostics only and do not enter Stage2 training.",
+    "euclidean_control": "Use the identical residual quantizer with the same three levels and 256 codewords per level, replacing only the assignment metric by 4*||x-y||_2^2. The exponential map is identity and the projection is omitted; all other architecture, parameter count, initialization, optimizer, schedule, seeds and compute budget are identical.",
+    "falsifier": {
+      "classification": {
+        "falsified_if": "stage3_behavioral_test_effect < stage3_behavioral_test.minimum_effect",
+        "mixed_if": "NOT falsified_if AND NOT passed_if",
+        "passed_if": "stage3_behavioral_test_effect >= stage3_behavioral_test.minimum_effect AND count(stage2_diagnostics_effect >= corresponding_minimum_effect) >= 3"
+      },
+      "stage2_diagnostics": [
+        {
+          "direction": "decrease_vs_Euclidean_control",
+          "minimum_effect": 0.02,
+          "name": "validation_Hard-L1_ER",
+          "seed_rule": "Paired difference per frozen seed; aggregate by median across the complete frozen seed set."
+        },
+        {
+          "direction": "increase_vs_Euclidean_control",
+          "minimum_effect": 0.02,
+          "name": "distinct_two-token_prefixes",
+          "seed_rule": "Paired relative difference per frozen seed; aggregate by median across the complete frozen seed set."
+        },
+        {
+          "direction": "decrease_vs_Euclidean_control",
+          "minimum_effect": 0.02,
+          "name": "L3_collision",
+          "seed_rule": "Paired difference per frozen seed; aggregate by median across the complete frozen seed set."
+        },
+        {
+          "direction": "increase_vs_Euclidean_control",
+          "minimum_effect": 0.02,
+          "name": "refinement_gain",
+          "seed_rule": "Paired relative difference per frozen seed; aggregate by median across the complete frozen seed set."
+        },
+        {
+          "direction": "increase_vs_Euclidean_control",
+          "minimum_effect": 0.02,
+          "name": "conditional_G3",
+          "seed_rule": "Paired difference per frozen seed; aggregate by median across the complete frozen seed set."
+        }
+      ],
+      "stage3_behavioral_test": {
+        "direction": "increase_vs_Euclidean_control",
+        "metric": "test_R@10",
+        "minimum_effect": 0.01,
+        "seed_rule": "Use the frozen Stage3 protocol and paired frozen seeds; aggregate the candidate-minus-control relative difference by median across the complete frozen seed set. Test labels are used only for this final registered evaluation."
+      }
+    },
+    "hyperbolic_necessity": "Negative curvature is a falsifiable design hypothesis, not a conclusion from the evidence. The observed transitions are directed in aggregate, while literature identifies shared-prefix preference rank reversals as a concrete next-item expressiveness failure. Negative curvature may allocate more representational separation to branching directions at increasing residual depth, potentially allowing similarly embedded items with different transition neighborhoods to receive distinct two-token prefixes. Neither the transition statistics nor the cited literature prove this geometry is necessary; failure to improve registered diagnostics or Stage3 behavior rejects the hypothesis.",
+    "literature_evidence_sha256": "ad2fa95101fd9dcfb9945badd2abc32b5247d72bdc23d955a1e866e424a388d6",
+    "math_definition": {
+      "architecture": "For each item i, a frozen-protocol content encoder produces z_i in R^32. Quantize it with three residual levels, each having 256 trainable codewords, and emit exactly one global SID (k_i1,k_i2,k_i3) per item, shared across all users. No user input is accepted by Stage2. Stage3 T5 consumes these SIDs and ranks next items; Stage2 has no ranking objective or recommender component.",
+      "assignment_and_losses": "For item minibatch B, i in B, define q_il=argmin over j in {1,...,256} of d_c(P_c(exp0_c(r_il)),e_lj)^2 (lowest-index tie break), x_il=P_c(exp0_c(r_il)), a_il=invexp0_c(e_l,q_il), r_i1=z_i, and r_i,l+1=r_il-a_il. Stop-gradient through q_il. The per-item reconstruction and commitment objective is one equation: L_item=(1/|B|)*sum_{i in B}[||r_i4||_2^2+beta*sum_{l=1}^3 ||sg(r_il)-a_il||_2^2+gamma*sum_{l=1}^3 ||r_il-sg(a_il)||_2^2], with beta=0.25 and gamma=1.0; reductions are sums over latent dimensions and levels, then mean over items. The target code q_il is the argmin under current parameters but is treated as a stopped discrete index in the loss; the straight-through assignment estimator is used for the encoder path. Empty B is prohibited; an empty minibatch is skipped. All model, optimizer, epoch, batch, schedule, seed and initialization settings are inherited unchanged from the frozen Stage2 protocol, not tuned here.",
+      "controls": "Three runnable arms: (1) candidate hyperbolic geometry; (2) Euclidean metric control, identical architecture, parameter count, initialization, optimizer, schedule, seeds, batch and budget, differing only by replacing every code-assignment distance with 4*||x-y||_2^2, using identity map, identity projection (no projection), and the corresponding identity residual chart; (3) graph-supervision control, same architecture, parameter count, initialization, optimizer, schedule, seeds and budget, trained with the train-split transition graph loss specified above, to distinguish a geometry effect from simply using graph signal. The graph arm is reported separately and does not replace the geometry-matched Euclidean comparison.",
+      "fixed_constants": {
+        "arcosh_form": "arcosh(u)=log(u+sqrt(max(u-1,0))*sqrt(u+1)); evaluate both square roots in float64 after clamping u to at least 1+1e-12, then cast the distance to the model dtype.",
+        "curvature_c": 1.0,
+        "distance_clamp": 1e-06,
+        "domain_policy": "The hyperbolic arm maps tangent vectors with exp0, then projects to the closed Poincare ball of radius (1-epsilon)/sqrt(c). Distances use the stated stable arcosh form and clamp the arcosh argument to at least 1+distance_clamp. The flat arm never applies this projection; its Euclidean vectors and codewords are unconstrained. No runtime-selected curvature or alternate domain policy is permitted.",
+        "epsilon": 1e-06
+      },
+      "operations_and_geometry": "Let exp0_c(v)=tanh(sqrt(c)*||v||)*v/(sqrt(c)*||v||), with the ratio defined as 1 at zero; its c->0 limit is the identity. Let P_c(x)=x*min(1,((1-epsilon)/sqrt(c))/||x||), with scale 1 at zero. Its c->0 limit is undefined because the radius diverges; the flat arm instead applies the identity (no projection). For any residual r, each level performs exactly: map x=exp0_c(r); project xbar=P_c(x); assign k=argmin_j d_c(xbar,e_cj)^2 (ties choose lowest j); subtract r_next=r-invexp0_c(e_c,k), where invexp0_c(y)=atanh(sqrt(c)*||y||)*y/(sqrt(c)*||y||), ratio 1 at zero. The next residual is not projected or remapped until the next level. The squared distance is d_c(x,y)^2=[2/sqrt(c)*arcosh(1+2c*||x-y||^2/((1-c||x||^2)*(1-c||y||^2)))]^2, using the fixed stable arcosh policy above. Its c->0 limit is 4*||x-y||^2. All codewords are constrained to the same ball after each optimizer update in the hyperbolic arm; the flat arm has no codeword projection.",
+      "transition_auxiliary": "The graph-control arm alone uses train-split directed transitions E={(i,j): i immediately precedes j in a user's train-split sequence}, with multiplicity w_ij equal to observed train-split count. Define s_i as the concatenation of the three selected code vectors a_i1,a_i2,a_i3, and p(j|i)=exp(-||s_i-s_j||_2^2/tau)/sum_{v in N(i)}exp(-||s_i-s_v||_2^2/tau), tau=1.0, N(i)={v:(i,v) in E}. The graph target distribution is one-hot t_ij=1[j is the observed successor], normalized over outgoing observed edges with multiplicity: t_ij=w_ij/sum_{v in N(i)}w_iv. Its loss is L_graph=-(1/|I_E|)*sum_{i in I_E}sum_{j in N(i)}t_ij*log p(j|i), where I_E={i: N(i) nonempty}; duplicate edges are represented by their counts. Empty I_E gives L_graph=0 and contributes no gradient. Targets depend only on frozen train-split transitions, never on learned parameters, so there is no target/parameter circularity. Total graph-arm objective is L_item+L_graph; the hyperbolic and Euclidean arms use L_item only. The graph arm is a supervision control, not the proposed candidate mechanism."
+    },
+    "next_item_hypothesis": "A single shared item SID can force distinct, semantically close items to share an early prefix. A downstream next-item model with a fixed user context may then be unable to express opposite preferences for those items. This candidate tests whether negatively curved residual code assignment separates such items into more discriminative prefixes; it does not claim that the supplied aggregate transition counts demonstrate rank reversals or establish a causal benefit.",
+    "protocol": {
+      "codes_per_level": 256,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "The supplied train-only manifest measures directed transitions and next-item entropy, not rank reversals or code-prefix failures. Before interpreting a behavioral mechanism, measure on validation only whether distinct ground-truth next items that are close in content/code-prefix space exhibit user-specific preference rank reversals, using the fixed Stage3 evaluation procedure; do not use these measurements as Stage2 supervision or to alter the frozen protocol. The manifest's aggregate statistics alone do not establish this trigger.",
+    "stable_global_sid": true,
+    "training_only_inputs": "Stage2 content embeddings and train-split item transitions only. Transitions are permitted supervision under CLAUDE.md rule 16, but are used only in the explicitly labeled graph control. No validation/test behavior, future events, prediction-time user context, or batch-composition signal may enter any training input, target, loss, code assignment or adaptation. Validation is used only for registered diagnostics; test is used only for the registered Stage3 behavioral test."
+  },
+  "candidate_id": "geometry_hyperbolic_residual_sid_v1",
+  "candidate_sha256": "b5f30dd3f5d7bc4c2403264c57169a44ab5243b3a99bcf24d8afa5cce93bee77",
+  "inputs_sha256": "83d91bc38cbc22bcffe9244001405797161cbbe3fa23367940c776bf0547bbbe",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "User-specific rank reversals among semantically or code-prefix-near items",
+        "evidence_label": "FULL_TEXT",
+        "hyperbolic_necessity": "Not established. A hypothesis that hyperbolic code geometry improves this behavior would require direct comparisons and behavioral diagnostics; hierarchical code capacity alone is insufficient evidence.",
+        "source": "Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation",
+        "support": "Latte reports that shared-prefix autoregressive semantic-ID generation can couple item probabilities across users, making it difficult to express users who prefer different items within a similar item group."
+      },
+      {
+        "candidate": "Rare-item or deep-hierarchy next-item discrimination under sparse histories",
+        "evidence_label": "FULL_TEXT",
+        "hyperbolic_necessity": "Plausible design hypothesis only; not demonstrated as a necessary geometry for any identified user behavior.",
+        "source": "Hyperbolic RQ-VAE enhanced Generative Recommendation with Differential-Length Codebook Strategy",
+        "support": "HG-Rec motivates hyperbolic codebooks through hierarchy and codebook-use/collision properties and reports downstream recommendation results. The inspected evidence does not demonstrate that the improvement specifically addresses a user-level next-item failure among tail items."
+      }
+    ],
+    "limitations": [
+      "No independently verified full-text work found in the inspected material that establishes all three elements together: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+      "HG-Rec is the closest geometry-plus-generative-code work, but its stated motivation and analyses center on codebook hierarchy, collision, utilization and efficiency; these do not by themselves establish a behavior-grounded need for negative curvature.",
+      "Latte supplies a concrete next-item preference-expressiveness problem for semantic-ID generation but contains no hyperbolic mechanism.",
+      "The HG-Rec local metadata does not provide a usable DOI or standard arXiv identifier. Its title and ICML/PMLR venue details are available in the parsed manuscript, but the exact persistent identifier remains unverified.",
+      "The TIGER entry is only a lead in this response and has UNKNOWN full-text evidence status; it must not be treated as independently verified evidence.",
+      "No local behavioral candidate or project-specific prompt was used as literature evidence. The claims above are limited to the stated research question and inspected paper text."
+    ],
+    "sources": [
+      {
+        "arxiv": null,
+        "doi": null,
+        "evidence_basis": "Full parsed manuscript available locally at papers/HG-Rec.md; title, abstract, methods and experiments inspected. Independently citable persistent identifier was not verified.",
+        "evidence_label": "FULL_TEXT",
+        "identifier_note": "Local full-text metadata identifies this as ICML 2026, PMLR 306; the local metadata field labelled arxiv_id is a nonstandard filename-like value, not a verifiable arXiv identifier. Do not treat it as an arXiv ID.",
+        "overlap": "Hyperbolic geometry is used in residual quantization to construct hierarchical discrete item codes for generative recommendation. The paper evaluates downstream recommendation, but the inspected text does not establish a user-behavior-specific geometric claim or isolate next-item behavior as the target of the geometry.",
+        "relevance": "Direct hyperbolic + generative discrete-code overlap; incomplete evidence for behavior-specific motivation.",
+        "title": "Hyperbolic RQ-VAE enhanced Generative Recommendation with Differential-Length Codebook Strategy"
+      },
+      {
+        "arxiv": "https://arxiv.org/abs/2605.06331",
+        "doi": null,
+        "evidence_basis": "Full parsed manuscript available locally at papers/latte_2605.06331.md; arXiv identifier is encoded in the local metadata and filename. Full text inspected.",
+        "evidence_label": "FULL_TEXT",
+        "overlap": "Studies autoregressive semantic-ID generation for predicting a user's next item from interaction history and identifies preference rank-reversal limitations induced by shared decoding prefixes. It does not use hyperbolic geometry.",
+        "relevance": "Strong behavior-first evidence for a generative semantic-ID failure mode, but no hyperbolic component.",
+        "title": "Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation"
+      },
+      {
+        "arxiv": "https://arxiv.org/abs/2305.05065",
+        "doi": null,
+        "evidence_basis": "Identifier/title and commonly reported method details are supplied as a potentially relevant lead, but no full text was independently inspected in this task. Verify the arXiv record and paper before relying on this entry.",
+        "evidence_label": "UNKNOWN",
+        "overlap": "Generates semantic item identifiers autoregressively to recommend a next item from user interaction history. No hyperbolic geometry is part of the method.",
+        "relevance": "Generative semantic-ID next-item baseline; no geometry overlap.",
+        "title": "TIGER: Transformer-based Item Generation for Explainable and Robust Recommendation"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "ad2fa95101fd9dcfb9945badd2abc32b5247d72bdc23d955a1e866e424a388d6",
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

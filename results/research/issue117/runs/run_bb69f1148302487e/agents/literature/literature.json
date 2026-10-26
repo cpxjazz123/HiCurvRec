@@ -1,0 +1,85 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "task_id": "literature"
+  },
+  "scope": "Search for research at the intersection of (1) user next-item/sequential behavior, (2) hyperbolic geometry, and (3) generative semantic IDs. Evidence labels indicate the evidence level actually inspected here, not merely whether a PDF URL exists.",
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": "10.52202/075280-0452",
+      "arxiv": "2305.05065",
+      "year": 2023,
+      "full_text_url": "https://arxiv.org/pdf/2305.05065",
+      "evidence_label": "ABSTRACT",
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — frames recommendation as generative retrieval and uses user interaction sequences / next-item recommendation settings.",
+        "hyperbolic_geometry": "UNKNOWN — no full-text verification of hyperbolic geometry; not indicated by indexed abstract.",
+        "generative_semantic_ids": "ABSTRACT — introduces semantic IDs for items and autoregressive generation of IDs."
+      },
+      "assessment": "Strong two-way neighbor (behavior + generative semantic IDs), not verified as hyperbolic."
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "doi": "10.1145/3459637.3482351",
+      "year": 2021,
+      "full_text_url": "https://dl.acm.org/doi/10.1145/3459637.3482351",
+      "evidence_label": "ABSTRACT",
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — sequential recommendation models user-item interaction histories.",
+        "hyperbolic_geometry": "ABSTRACT — hyperbolic hypergraph representation is central to the method.",
+        "generative_semantic_ids": "UNKNOWN — no semantic-ID generation indicated in the indexed abstract."
+      },
+      "assessment": "Strong two-way neighbor (sequential behavior + hyperbolic geometry), not verified as generative semantic-ID work."
+    },
+    {
+      "title": "Self-Attentive Sequential Recommendations with Hyperbolic Representations",
+      "doi": "10.1145/3640457.3688180",
+      "year": 2024,
+      "full_text_url": "https://dl.acm.org/doi/10.1145/3640457.3688180",
+      "evidence_label": "ABSTRACT",
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — sequential recommendation from user interaction sequences.",
+        "hyperbolic_geometry": "ABSTRACT — uses hyperbolic representations in self-attentive sequential recommendation.",
+        "generative_semantic_ids": "UNKNOWN — indexed abstract does not establish generative semantic IDs."
+      },
+      "assessment": "Additional two-way neighbor (behavior + hyperbolic geometry); not an established triple-overlap source."
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": "10.48550/arXiv.2505.09205",
+      "arxiv": "2505.09205",
+      "year": 2025,
+      "full_text_url": "https://arxiv.org/pdf/2505.09205",
+      "evidence_label": "ABSTRACT",
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — sequential recommendation from behavior sequences.",
+        "hyperbolic_geometry": "ABSTRACT — hyperbolic Mamba sequence modeling.",
+        "generative_semantic_ids": "UNKNOWN — semantic-ID generation is not established by the abstract."
+      },
+      "assessment": "Recent two-way neighbor (behavior + hyperbolic sequence modeling); no verified semantic-ID component."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Representing user preference evolution and next-item transitions in a hierarchy-aware latent space, then decoding candidate item semantic IDs autoregressively.",
+      "motivation": "The generative-retrieval line establishes semantic-ID generation over interaction sequences; hyperbolic sequential recommenders establish hyperbolic sequence representations. The combination itself is a research gap hypothesis, not a verified prior method.",
+      "evidence_label": "ABSTRACT",
+      "status": "candidate_not_claimed_as_existing"
+    },
+    {
+      "candidate": "Test whether hyperbolic distances improve next-item prediction for users with sparse histories or multi-level interests, while retaining semantic-ID generation as the item-output interface.",
+      "motivation": "A plausible behavior-focused evaluation question linking hierarchy-sensitive geometry to sequence-conditioned generative retrieval; the reviewed records do not establish this exact experiment.",
+      "evidence_label": "UNKNOWN",
+      "status": "candidate_not_claimed_as_existing"
+    }
+  ],
+  "limitations": [
+    "No independently verified paper was found in this search that establishes all three components together; do not describe the intersection as an existing method on this evidence.",
+    "Evidence labels are conservative: abstracts and bibliographic metadata were cross-checked via OpenAlex records; full texts were not successfully text-inspected in this run. A PDF URL alone does not qualify as FULL_TEXT evidence.",
+    "The search is a targeted discovery search rather than a systematic review; terminology varies (generative retrieval, semantic IDs, sequential recommendation, hyperbolic representation).",
+    "UNKNOWN means the accessible evidence did not establish the component, not proof that the full paper lacks it. Check full text before making a definitive negative claim.",
+    "The two behavior_problem_candidates are derived research directions, not claims of novelty or verified empirical findings."
+  ]
+}

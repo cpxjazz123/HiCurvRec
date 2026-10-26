@@ -1,0 +1,167 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "859399108604728d3feeb6b9a1134c5b4ebe840265bd93779c6543cee40db9a2",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Session-conditioned next-item prediction using generative Semantic IDs, with hyperbolic geometry as a proposed representation/regularization choice.",
+        "evidence_status": "PARTIAL_INTERSECTION_ONLY",
+        "research_gap": "A direct three-way intersection is not verified; do not represent hyperbolic geometry as part of TIGER or as an established combined method.",
+        "supported_overlap": "The TIGER abstract directly supports session-based next-item prediction and generative Semantic IDs.",
+        "unsupported_overlap": "No independently verified source in this evidence set establishes that the same method uses hyperbolic geometry."
+      }
+    ],
+    "limitations": [
+      "No source was independently verified here that combines all three elements: user next-item behavior, hyperbolic geometry, and generative Semantic IDs.",
+      "The only included paper is verified from its arXiv abstract page; despite the linked HTML/PDF, no claim from its full text is labeled FULL_TEXT.",
+      "The absence of a verified combined paper in this small evidence set is not proof that none exists.",
+      "No prior-candidate prompt or unseen future/test interaction was used."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+      "task_id": "literature"
+    },
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "bibliographic_note": "NeurIPS 2023; arXiv version v3, revised 2023-11-03.",
+        "doi": "10.48550/arXiv.2305.05065",
+        "evidence_basis": "ArXiv landing page abstract explicitly says that the model takes Semantic IDs for items in a user session and predicts the Semantic ID of the next item the user will interact with. The landing page provides full-text links, but the full text itself was not inspected for this report.",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "Direct: autoregressive generative retrieval decodes semantically meaningful codeword tuples (Semantic IDs).",
+          "hyperbolic_geometry": "Not evidenced in the checked abstract.",
+          "user_next_item_behavior": "Direct: next-item prediction from a user session."
+        },
+        "links": {
+          "abstract": "https://arxiv.org/abs/2305.05065",
+          "full_text_html": "https://arxiv.org/html/2305.05065v3",
+          "pdf": "https://arxiv.org/pdf/2305.05065"
+        },
+        "title": "Recommender Systems with Generative Retrieval"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "94cc35dd40713b83e6f605fb32cf4440770d5398d8d68a6d9d4b231629355917",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

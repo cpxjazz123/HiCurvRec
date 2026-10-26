@@ -1,0 +1,38 @@
+{
+  "candidate_id": "geometry_poincare_balanced_global_sid",
+  "candidate_sha256": "5a7a99f9d0071eb06f03a82ea77aad0487d8e1c511379c67653da5f57b150a34",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "id": "B1",
+      "category": "loss_target_not_recomputable",
+      "finding": "The registered L_trans and conditional_G3 depend on a 'frozen estimator in the request' that is not defined in this current-only manifest. In particular, p_pref and p_hist are referenced but no equations, smoothing/normalization details, or treatment of zero counts are supplied. Thus the transition loss and its diagnostic cannot be independently and uniquely recomputed from the candidate specification.",
+      "evidence": "math_definition.objective.loss_equations[3]: 'p_pref and p_hist be exactly the frozen estimator in the request'; falsifier.stage2_diagnostics conditional_G3: 'Use the exact alpha=1, K=256 estimator ... in the request'. The only estimator parameters stated here are alpha=1 and K=256."
+    },
+    {
+      "id": "B2",
+      "category": "falsifier_not_mechanically_decidable",
+      "finding": "The falsifier relies on an unspecified paired frozen-seed set and an external 'exact 52855 validation-pair definition'. A seed rule is described, but the actual seed identities and the validation-pair construction are absent from the candidate manifest. Consequently an auditor restricted to this manifest cannot decide the registered per-seed outcomes or classification mechanically.",
+      "evidence": "falsifier.stage2_diagnostics[0].seed_rule references 'the exact 52855 validation-pair definition'; all seed rules reference 'paired frozen seeds' without listing seed identities; stage3_behavioral_test.seed_rule references an 'identical frozen Stage3 protocol' without specifying it here."
+    },
+    {
+      "id": "B3",
+      "category": "leading_indicator_threshold_not_registered",
+      "finding": "The registered stage2 thresholds are only paired curved-minus-flat deltas. They do not require the frozen absolute gates valid_l1_hard_er > 10.0 and level2_distinct_prefixes > 16145, so the registered diagnostic pass condition does not enforce the supplied frozen thresholds.",
+      "evidence": "FROZEN_THRESHOLDS supplied with the review request; falsifier.stage2_diagnostics registers valid_l1_hard_er delta > 0 with minimum_effect 0.1 and level2_distinct_prefixes delta > 0 with minimum_effect 1, but no absolute-value gate."
+    },
+    {
+      "id": "B4",
+      "category": "anti_collapse_claim_unsound",
+      "finding": "The anti-collapse term cannot provide the claimed prevention of a constant representation. Its target is the detached distance from the same current representation, so at every nonnegative distance the hinge is max(0, d_detached - d)=0 in the forward pass; at collapse the detached target is also zero. It therefore supplies no positive anti-collapse penalty or useful restoring gradient.",
+      "evidence": "math_definition.objective.anti_collapse and loss_equations[2] define t_ij=min(1, ||stopgrad(h_i-h_j)||) and penalize max(0,t_ij-||h_i-h_j||)^2 using the same h_i,h_j in both terms."
+    }
+  ],
+  "evidence_summary": {
+    "causal_link": "The manifest appropriately frames directional train-only transitions as motivation, not proof of curvature benefit; the registered Stage3 test_R@10 is the downstream behavioral test, with higher being better and minimum effect 0.005. Mixed and NULL outcomes are explicitly classified.",
+    "math_and_domain": "The stated Poincare squared distance is well-typed for projected vectors inside radius R=0.99 at c=1, and its stated c->0 limit 4||x-y||^2 is correct. The common fixed-radius projection avoids applying the c-dependent projection at c=0. No exponential map is used.",
+    "control": "The flat arm is specified as changing only the distance formula while retaining the shared radius, assignment method, architecture, initialization, optimizer, schedule, seeds, and budget.",
+    "leakage_and_protocol": "Declared fitting inputs are training items, frozen content embeddings, and train-only transitions; validation is diagnostic-only and test evaluation-only. No future events or prediction-time user context are declared. Stable global three-token SIDs are the Stage2 output; Stage2 is not represented as a ranker.",
+    "stage2_indicators": "The candidate registers valid_l1_hard_er, distinct level-2 prefixes, and conditional_G3, but the first two omit their frozen absolute gates and the estimator/validation references are not self-contained."
+  }
+}

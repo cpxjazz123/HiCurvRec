@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "review",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792829670.323474,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "4d09a00902241a65a97ff05587587879365870c9c34f3ff99759be5f15646547",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "review.json",
+  "output_sha256": "2bee43186d8223a3e70677cdd97b647c190e936a09cf2fb743f09b3a93262200",
+  "pid": 2492692,
+  "project_marker": ".git",
+  "prompt_sha256": "65cf2b5939ac1cc8b7e93abe4c1ea85ea9ccc567c4c608a9b63f3ab35f8c3f5f",
+  "session_sha256": "6784983d22409484cb433fb8496d15f44bdc5c491d4ceaad83d3cd97f5f0b010",
+  "stderr_present": false,
+  "task_id": "review",
+  "timed_out": false,
+  "verified": true
+}

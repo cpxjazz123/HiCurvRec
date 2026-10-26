@@ -1,0 +1,294 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "directed_train_transition_next_item_asymmetry",
+    "candidate_id": "geometry_residual_vq_metric_only",
+    "effect_site": "Hard nearest-code assignments at each residual level. Registered Stage2 leading indicators are valid Hard-L1 ER, level2 distinct prefixes, and the frozen L3 statistics (collision, refinement gain, conditional G3). Stage3 test_R@10 is the downstream behavioral test; Stage2 does not rank.",
+    "euclidean_control": "Single implementation with c as the sole arm parameter: c=1 versus its c->0 limit. Both arms use identical content embeddings, latent vectors, codebooks and initialization, code coordinates, fixed P_R, residual operations, hard assignment and tie-breaking, squared objective, optimizer, schedule, seeds and budget. No exponential map is applied. Therefore the compared vectors and feasible region are identical and only the distance formula changes; the flat arm uses the continuous squared-distance limit in the same code path. No graph arm is used.",
+    "falsifier": {
+      "classification": {
+        "falsified_if": "All values are defined and finite AND any registered diagnostic fails its registered direction/minimum_effect criterion.",
+        "mixed_if": "All values are defined and finite AND at least one registered diagnostic satisfies and at least one fails its registered criterion, without all satisfying. NULL outcome rule: any undefined or non-finite seed-wise or aggregate value (including zero denominator, missing evaluation, or empty stratum) is NULL; comparison with any NULL seed is inconclusive, not passed, falsified, or mixed.",
+        "passed_if": "All values are defined and finite AND every registered diagnostic satisfies its registered direction/minimum_effect criterion."
+      },
+      "stage2_diagnostics": [
+        {
+          "direction": "absolute_strictly_above_frozen_reference",
+          "minimum_effect": 16.38953942232631,
+          "name": "valid_l1_hard_er",
+          "seed_rule": "Per matched seed compute frozen valid Hard-L1 ER; arithmetic-mean aggregate over the same preregistered matched seeds; require strict exceedance."
+        },
+        {
+          "direction": "absolute_strictly_above_frozen_reference",
+          "minimum_effect": 16145,
+          "name": "level2_distinct_prefixes",
+          "seed_rule": "Count distinct (k1,k2) over all items per matched seed; arithmetic-mean aggregate over the same preregistered matched seeds; require strict exceedance."
+        },
+        {
+          "direction": "decrease_vs_flat_control",
+          "minimum_effect": 0.01,
+          "name": "l3_collision",
+          "seed_rule": "Use the frozen item-share definition; paired candidate-minus-flat per matched seed and arithmetic-mean aggregate; require change strictly less than negative registered minimum_effect."
+        },
+        {
+          "direction": "increase_vs_flat_control",
+          "minimum_effect": 0.01,
+          "name": "l3_refinement_gain_bits",
+          "seed_rule": "Use the frozen item-mean log2 bucket ratio; paired candidate-minus-flat per matched seed and arithmetic-mean aggregate; require change strictly greater than registered minimum_effect."
+        },
+        {
+          "direction": "increase_vs_flat_control",
+          "minimum_effect": 0.01,
+          "name": "conditional_l3_gain",
+          "seed_rule": "Use the frozen validation-pair conditional G3; paired candidate-minus-flat per matched seed and arithmetic-mean aggregate; require change strictly greater than registered minimum_effect."
+        }
+      ],
+      "stage3_behavioral_test": {
+        "direction": "increase_vs_flat_control",
+        "metric": "test_R@10",
+        "minimum_effect": 0.001,
+        "seed_rule": "Use the frozen downstream Stage3 protocol and preregistered matched seeds; paired candidate-minus-flat test_R@10 per seed and arithmetic-mean aggregate across the same seeds; require aggregate change strictly greater than this registered minimum_effect. No Stage3 component is introduced into Stage2."
+      }
+    },
+    "hyperbolic_necessity": "Train-only directed transitions are strongly asymmetric, while mean next-item entropy is 4.844072338042215 bits. Negative curvature is a falsifiable inductive-bias hypothesis: negatively curved geometry may allocate coarse capacity to branching/asymmetric neighborhoods and leave later residual codes to refine items more efficiently than a flat metric. Neither the measured directionality nor the literature abstracts establish hierarchy, curvature necessity, or causal improvement.",
+    "literature_evidence_sha256": "b56b2c6080edfc8f2ebf7334ba75d770d855f6695a54a363dfbeacced46309b6",
+    "math_definition": {
+      "assignment_target": "For each level l, T_l in {0,1}^(N x 256) is T_l[i,k]=1[k=A_l[i]], where A_l[i]=argmin_{k in {0,...,255}} D^2(P_R(R_l[i]),P_R(C_l[k])) and ties go to smallest k. Each row sums to one; the empty-group rule is that N=0 is an error and no target is emitted. Hard assignments are detached immediately after deterministic assignment; no gradient flows through them, breaking target/parameter circularity.",
+      "diagnostics_frozen_definitions": "Use exactly these definitions: valid L1 positive hit rate is over the 52855 frozen validation pairs (one positive plus ten negatives per anchor, seed 42, history[-1] -> target), the share where anchor item's first SID token equals the positive's first token. valid Hard-L1 ER=10*positive_hits/negative_hits, with negative_hits counted the same way over the ten negatives. level2_distinct_prefixes=|{(k1,k2)}| over all items. L3 collision is the share of items whose (k1,k2,k3) is shared with another item. L3 refinement gain is the mean over items of log2(|bucket(k1,k2)|/|bucket(k1,k2,k3)|). conditional G3 is the mean over validation pairs of log2(p_hist(L3 target|anchor)/p_pref(L3 target|target prefix2)), with the train-transition history term mixed into a Laplace-smoothed prefix prior (alpha=1 over 256 codes). Validation diagnostics are evaluation only, never training inputs.",
+      "frozen_geometry": "c=1.0 for the curved arm; flat arm uses c=0 in the same implementation. tau=1.0 (reserved, no soft weighting or effect on hard assignments); epsilon=1e-5; delta=1e-15. For c>0, R=0.9 and require c*R^2<1; every scored vector is projected by the same fixed P_R(v)=v*min(1,R/max(||v||_2,1e-30)) in both arms. No exponential map or other c-dependent representation map is applied: the input vectors, projection, code coordinates, and assignments' coordinate conventions are identical. The radius (1-epsilon)/sqrt(c) is undefined at c=0 and is not used; the flat arm uses the same P_R and R. All scored vectors therefore satisfy ||x||,||y||<=R in both arms.",
+      "mechanism": "Content embedding -> frozen 32-dimensional latent -> three-level residual vector quantization with 256 codes at each level. Curvature changes only the assignment/reconstruction squared-distance formula; there is no prefix Transformer, beam search, recommender loss, user bootstrap, or Stage2 ranking.",
+      "objective": {
+        "anti_collapse": "The first, content reconstruction term in loss is the anti-collapse mechanism and enters additively in L. It preserves item-specific latent information: assigning every item the same SID cannot minimize reconstruction unless the fixed content latents themselves are identical. Commitment terms additionally anchor encoder residuals and selected code vectors. Assignments and the opposite-side commitment targets are stop-gradient; no target is differentiated through. No validation/test or batch-composition signal enters the objective.",
+        "loss": "L=(1/(32N))*sum_{i in I_train}||P_R(Z[i])-sum_{l=1}^3 P_R(C_l[A_l[i]])||_2^2 + (beta/(96N))*sum_{i in I_train}sum_{l=1}^3(||stopgrad(P_R(R_l[i]))-P_R(C_l[A_l[i]])||_2^2 + gamma*||P_R(R_l[i])-stopgrad(P_R(C_l[A_l[i]]))||_2^2).",
+        "shapes_reduction_empty_rule": "Z[i], R_l[i], and each selected code are 32-vectors; I_train indexes the N nonempty train-split items; each squared norm sums its 32 coordinates, and the two sums are normalized by 32N and 96N as shown. Empty I_train is an error. beta=1.0 and gamma=1.0, frozen."
+      },
+      "residual_operation_order": "Initialize R_1[i]=P_R(Z[i]). For each level l=1,2,3 and item i, in this exact order: map V_l[i]=R_l[i] (identity); project V_l[i]=P_R(V_l[i]); assign A_l[i]=argmin_k D^2(V_l[i],P_R(C_l[k])); select Q_l[i]=P_R(C_l[A_l[i]]); subtract to form R_(l+1)[i]=P_R(R_l[i]-Q_l[i]). Thus subtraction is followed immediately by projection, before any later use or scoring. Both arms execute this identical order; only D^2 differs. The residual update is not an exponential-map operation.",
+      "scored_distance": "D^2(x,y)=d_c(x,y)^2=(1/c)*arcosh(1+2c*||x-y||_2^2/((1-c*||x||_2^2)*(1-c*||y||_2^2)))^2. Compute u in float64, clamp only by u=max(u,1), and evaluate arcosh(u)=log1p((u-1)+sqrt((u-1)*(u+1))) with the product evaluated in float64; delta is the frozen near-one branch threshold, using the algebraically equivalent stable log1p form when u-1<delta. No positive offset is added. The exact c->0 limit of D^2 is 4*||x-y||_2^2; the unsquared distance tends to 2*||x-y||_2. The objective and assignment score use the squared power in both arms. The exponential map, if considered, has c->0 identity limit but is not applied. The projection radius (1-epsilon)/sqrt(c) has no c=0 value, so the flat arm uses P_R instead.",
+      "tensors_and_shapes": "For nonempty train-split item set I_train, N=|I_train|, content embeddings E in R^(N x d_e), latent Z in R^(N x 32), codebooks C_l in R^(256 x 32), residuals R_l in R^(N x 32), and assignments A_l in {0,...,255}^N for l in {1,2,3}. The stable SID of item i is (A_1[i],A_2[i],A_3[i]); ties choose the smallest code index."
+    },
+    "next_item_hypothesis": "A demonstrated train-only failure pattern is directional next-item behavior: 314605 of 339519 observed transitions have no observed reverse event. This motivates testing whether early residual SID assignments over-merge asymmetric transition neighborhoods, causing histories with different directional successors to share a coarse prefix. This is a hypothesis, not evidence that the observed asymmetry is caused by code assignment or that curvature improves prediction. Stage2 builds one global three-token SID per item; downstream T5 Stage3 ranks next items and is not part of this candidate.",
+    "protocol": {
+      "codes_per_level": 256,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "The trigger is the supplied train-only longest-prefix-per-user measurement: 314605 of 339519 directed transitions have no observed reverse event (fraction 0.9266197178950221), with mean next-item entropy 4.844072338042215 bits. This measures a directional next-item hypothesis, not an observed Stage2 failure or causal result.",
+    "schema_version": 1,
+    "stable_global_sid": true,
+    "training_only_inputs": "Only content embeddings and train-split item transitions may supervise fitting (train transitions are legal under CLAUDE.md rule 16). No validation/test behavior, future events, prediction-time user context, or batch-composition signal enters training, assignment targets, codebook updates, or loss. Frozen validation diagnostics are evaluation only; test is used only for the registered Stage3 evaluation."
+  },
+  "candidate_id": "geometry_residual_vq_metric_only",
+  "candidate_sha256": "abc68bd944f9e875df443d8258bfdf7fd5d3aa93634ec4462b0f565d908fb2c1",
+  "contract_sha256": "ab5758738a11ff2cc292c26b2561c580b4c2ac8235cc0f7ffcd016204bf9f958",
+  "inputs_sha256": "ed4d7ae4207d7f0f332ed13e85b0b0cd90fafaa0815584fb9b769d067ca91177",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Representing user preference evolution and next-item transitions in a hierarchy-aware latent space, then decoding candidate item semantic IDs autoregressively.",
+        "evidence_label": "ABSTRACT",
+        "motivation": "The generative-retrieval line establishes semantic-ID generation over interaction sequences; hyperbolic sequential recommenders establish hyperbolic sequence representations. The combination itself is a research gap hypothesis, not a verified prior method.",
+        "status": "candidate_not_claimed_as_existing"
+      },
+      {
+        "candidate": "Test whether hyperbolic distances improve next-item prediction for users with sparse histories or multi-level interests, while retaining semantic-ID generation as the item-output interface.",
+        "evidence_label": "UNKNOWN",
+        "motivation": "A plausible behavior-focused evaluation question linking hierarchy-sensitive geometry to sequence-conditioned generative retrieval; the reviewed records do not establish this exact experiment.",
+        "status": "candidate_not_claimed_as_existing"
+      }
+    ],
+    "limitations": [
+      "No independently verified paper was found in this search that establishes all three components together; do not describe the intersection as an existing method on this evidence.",
+      "Evidence labels are conservative: abstracts and bibliographic metadata were cross-checked via OpenAlex records; full texts were not successfully text-inspected in this run. A PDF URL alone does not qualify as FULL_TEXT evidence.",
+      "The search is a targeted discovery search rather than a systematic review; terminology varies (generative retrieval, semantic IDs, sequential recommendation, hyperbolic representation).",
+      "UNKNOWN means the accessible evidence did not establish the component, not proof that the full paper lacks it. Check full text before making a definitive negative claim.",
+      "The two behavior_problem_candidates are derived research directions, not claims of novelty or verified empirical findings."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "task_id": "literature"
+    },
+    "scope": "Search for research at the intersection of (1) user next-item/sequential behavior, (2) hyperbolic geometry, and (3) generative semantic IDs. Evidence labels indicate the evidence level actually inspected here, not merely whether a PDF URL exists.",
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "assessment": "Strong two-way neighbor (behavior + generative semantic IDs), not verified as hyperbolic.",
+        "doi": "10.52202/075280-0452",
+        "evidence_label": "ABSTRACT",
+        "full_text_url": "https://arxiv.org/pdf/2305.05065",
+        "overlap": {
+          "generative_semantic_ids": "ABSTRACT — introduces semantic IDs for items and autoregressive generation of IDs.",
+          "hyperbolic_geometry": "UNKNOWN — no full-text verification of hyperbolic geometry; not indicated by indexed abstract.",
+          "user_next_item_behavior": "ABSTRACT — frames recommendation as generative retrieval and uses user interaction sequences / next-item recommendation settings."
+        },
+        "title": "Recommender Systems with Generative Retrieval",
+        "year": 2023
+      },
+      {
+        "assessment": "Strong two-way neighbor (sequential behavior + hyperbolic geometry), not verified as generative semantic-ID work.",
+        "doi": "10.1145/3459637.3482351",
+        "evidence_label": "ABSTRACT",
+        "full_text_url": "https://dl.acm.org/doi/10.1145/3459637.3482351",
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN — no semantic-ID generation indicated in the indexed abstract.",
+          "hyperbolic_geometry": "ABSTRACT — hyperbolic hypergraph representation is central to the method.",
+          "user_next_item_behavior": "ABSTRACT — sequential recommendation models user-item interaction histories."
+        },
+        "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+        "year": 2021
+      },
+      {
+        "assessment": "Additional two-way neighbor (behavior + hyperbolic geometry); not an established triple-overlap source.",
+        "doi": "10.1145/3640457.3688180",
+        "evidence_label": "ABSTRACT",
+        "full_text_url": "https://dl.acm.org/doi/10.1145/3640457.3688180",
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN — indexed abstract does not establish generative semantic IDs.",
+          "hyperbolic_geometry": "ABSTRACT — uses hyperbolic representations in self-attentive sequential recommendation.",
+          "user_next_item_behavior": "ABSTRACT — sequential recommendation from user interaction sequences."
+        },
+        "title": "Self-Attentive Sequential Recommendations with Hyperbolic Representations",
+        "year": 2024
+      },
+      {
+        "arxiv": "2505.09205",
+        "assessment": "Recent two-way neighbor (behavior + hyperbolic sequence modeling); no verified semantic-ID component.",
+        "doi": "10.48550/arXiv.2505.09205",
+        "evidence_label": "ABSTRACT",
+        "full_text_url": "https://arxiv.org/pdf/2505.09205",
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN — semantic-ID generation is not established by the abstract.",
+          "hyperbolic_geometry": "ABSTRACT — hyperbolic Mamba sequence modeling.",
+          "user_next_item_behavior": "ABSTRACT — sequential recommendation from behavior sequences."
+        },
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+        "year": 2025
+      }
+    ]
+  },
+  "literature_evidence_sha256": "b56b2c6080edfc8f2ebf7334ba75d770d855f6695a54a363dfbeacced46309b6",
+  "preflight_verdict": "SCIENTIFIC_REVIEW_REQUIRED",
+  "preflight_warnings": [],
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

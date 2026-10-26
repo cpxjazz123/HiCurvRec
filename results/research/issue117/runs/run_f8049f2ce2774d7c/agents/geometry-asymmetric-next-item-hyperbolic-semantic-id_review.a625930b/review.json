@@ -1,0 +1,13 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "source_sha256": "9826b56cb3842e1956f53ae8586cc48d563d3918086eea8b3aeb309eae55bd8a",
+  "proposal_sha256": "c8701416d4b694141d60366f61d3b70b4fbbc958f8188447d822f8d36e6a283d",
+  "test_sha256": {
+    "ddp": "5e5deab184d4453e5d25aea7b889d46a68e0bc6b773b02275c919d344d905911",
+    "entrypoint": "bc4f356762a520289d0b40fdf7f7bf2a8815553c8677551c588a36d0976b5bf5",
+    "gradient": "d003c6df4df36a80be1e9fa462dabc85a9300d5acc8c2dbe4c7b225223326fe8",
+    "math": "929d11f53d11533a4e2e5bae28eb57baec232e3fbf46186be1d2cec01aee83fb"
+  },
+  "verdict": "BLOCK",
+  "rationale": "Static inspection supports the test design: the frozen hyperbolic operators implement the stated radial exp/log maps, Mobius addition, distance and boundary clamp; the math oracle includes independent closed forms (including a correct multidimensional radial exp case); the gradient suite includes a separately written Mobius-offset central-difference oracle and invokes the model and trainer imports; the DDP suite spawns two ranks with rank-distinct data, gathers each rank's gradients and post-step parameters with all_gather, and checks the persisted per-rank observations; and the entrypoint suite calls trainer.main(), witnesses its compute_loss path, and checks checkpoint/SID/JSON artifacts. The trainer source itself contains the claimed DDP launcher and train/optimizer/export flow. However, this sandbox has no shell or torch and offers no file-byte/hash computation facility. I therefore could not recompute the source digest using the manifest's sorted-path/NUL/per-file-hash recipe, nor independently verify the reviewed test files' SHA-256 values against their bytes. This leaves required hash/test drift evidence unresolved, so I cannot approve. No suites were executed: Stage2 verification_check must run all four against the project interpreter and establish nonzero tests, no skips, and no failures. Static review does not substitute for that execution proof."
+}

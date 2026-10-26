@@ -1,0 +1,13 @@
+{
+  "candidate_id": "geometry-global-sinkhorn-poincare-squared",
+  "source_sha256": "a822d4f243e069f8095bffbca17cf5c9b9d5f9396766cfd30cdb5177a149ae51",
+  "proposal_sha256": "0c6b6869c70f00f5ed4c434e4b2facaf7c3e7850b133d007170dc1e676e138ea",
+  "test_sha256": {
+    "ddp": "f67ce6459903c69dd644924cdc8ffae76b6f1cebc3744bc680accdc00de46897",
+    "entrypoint": "50bcac08d4454bae3a10c09e4238c0b62397b447cf6b587cb9e162b002f799c0",
+    "gradient": "8415eb1c9a86edad987ec24c5fe1354987637bf33b4c2734a13b13162c10cd61",
+    "math": "187e2b2b4222ffe1ebf422f52642aa3c0d9f7e82d090c0df646f18e08d482bbc"
+  },
+  "verdict": "BLOCK",
+  "rationale": "The actual source does not implement the frozen proposal: model.RQVAE.forward computes L_tr as -(r * soft_target).sum(...), not the specified negative log of sum_k(r*s); its objective also totals only rec + assign + batch-zero balance + transition, not the stated full objective semantics. More decisively, the hard assignment is not exact: poincare_residual.py uses auction plus single-item/two-item repairs, not exact min-cost transport or lexicographic tie resolution (the trainer comments acknowledge this). The math suite tests geometry against independent formulas, but Sinkhorn and assignment tests chiefly check implementation constants/properties, not the frozen transport and exact optimal labels against an independent oracle. DDP uses real ranks/model and entrypoint invokes trainer.main; these do not cure the substantive mechanism mismatch."
+}

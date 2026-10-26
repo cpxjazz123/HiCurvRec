@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "geometry_asymmetric_successor_branches_hyp_gradient",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792838922.9334297,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "f68753f4059ea1b890ad9a562de6b9b95400451c89cfeba515dd539375f6a088",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "gradient.json",
+  "output_sha256": "1bfbbe6d4b8865fe902844eee0fbe2e8046821d41346ef10bb3a8aaede057893",
+  "pid": 2754598,
+  "project_marker": ".git",
+  "prompt_sha256": "885187f295f83aa5564ac2111642f7250dbb3e885f51566b4d145f4d119f295e",
+  "session_sha256": "a484343e9feec6b51712183d2a0d38260146bbd34b99d594bf3851877da2036e",
+  "stderr_present": false,
+  "task_id": "geometry_asymmetric_successor_branches_hyp_gradient",
+  "timed_out": false,
+  "verified": true
+}

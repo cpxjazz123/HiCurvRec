@@ -1,0 +1,232 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "2dd1bb32cd5df8af5c78a0e9e15c473f59699430afc02589b98c3e4760da1d07",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Representing user preference evolution and next-item transitions in a hierarchy-aware latent space, then decoding candidate item semantic IDs autoregressively.",
+        "evidence_label": "ABSTRACT",
+        "motivation": "The generative-retrieval line establishes semantic-ID generation over interaction sequences; hyperbolic sequential recommenders establish hyperbolic sequence representations. The combination itself is a research gap hypothesis, not a verified prior method.",
+        "status": "candidate_not_claimed_as_existing"
+      },
+      {
+        "candidate": "Test whether hyperbolic distances improve next-item prediction for users with sparse histories or multi-level interests, while retaining semantic-ID generation as the item-output interface.",
+        "evidence_label": "UNKNOWN",
+        "motivation": "A plausible behavior-focused evaluation question linking hierarchy-sensitive geometry to sequence-conditioned generative retrieval; the reviewed records do not establish this exact experiment.",
+        "status": "candidate_not_claimed_as_existing"
+      }
+    ],
+    "limitations": [
+      "No independently verified paper was found in this search that establishes all three components together; do not describe the intersection as an existing method on this evidence.",
+      "Evidence labels are conservative: abstracts and bibliographic metadata were cross-checked via OpenAlex records; full texts were not successfully text-inspected in this run. A PDF URL alone does not qualify as FULL_TEXT evidence.",
+      "The search is a targeted discovery search rather than a systematic review; terminology varies (generative retrieval, semantic IDs, sequential recommendation, hyperbolic representation).",
+      "UNKNOWN means the accessible evidence did not establish the component, not proof that the full paper lacks it. Check full text before making a definitive negative claim.",
+      "The two behavior_problem_candidates are derived research directions, not claims of novelty or verified empirical findings."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "task_id": "literature"
+    },
+    "scope": "Search for research at the intersection of (1) user next-item/sequential behavior, (2) hyperbolic geometry, and (3) generative semantic IDs. Evidence labels indicate the evidence level actually inspected here, not merely whether a PDF URL exists.",
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "assessment": "Strong two-way neighbor (behavior + generative semantic IDs), not verified as hyperbolic.",
+        "doi": "10.52202/075280-0452",
+        "evidence_label": "ABSTRACT",
+        "full_text_url": "https://arxiv.org/pdf/2305.05065",
+        "overlap": {
+          "generative_semantic_ids": "ABSTRACT — introduces semantic IDs for items and autoregressive generation of IDs.",
+          "hyperbolic_geometry": "UNKNOWN — no full-text verification of hyperbolic geometry; not indicated by indexed abstract.",
+          "user_next_item_behavior": "ABSTRACT — frames recommendation as generative retrieval and uses user interaction sequences / next-item recommendation settings."
+        },
+        "title": "Recommender Systems with Generative Retrieval",
+        "year": 2023
+      },
+      {
+        "assessment": "Strong two-way neighbor (sequential behavior + hyperbolic geometry), not verified as generative semantic-ID work.",
+        "doi": "10.1145/3459637.3482351",
+        "evidence_label": "ABSTRACT",
+        "full_text_url": "https://dl.acm.org/doi/10.1145/3459637.3482351",
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN — no semantic-ID generation indicated in the indexed abstract.",
+          "hyperbolic_geometry": "ABSTRACT — hyperbolic hypergraph representation is central to the method.",
+          "user_next_item_behavior": "ABSTRACT — sequential recommendation models user-item interaction histories."
+        },
+        "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+        "year": 2021
+      },
+      {
+        "assessment": "Additional two-way neighbor (behavior + hyperbolic geometry); not an established triple-overlap source.",
+        "doi": "10.1145/3640457.3688180",
+        "evidence_label": "ABSTRACT",
+        "full_text_url": "https://dl.acm.org/doi/10.1145/3640457.3688180",
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN — indexed abstract does not establish generative semantic IDs.",
+          "hyperbolic_geometry": "ABSTRACT — uses hyperbolic representations in self-attentive sequential recommendation.",
+          "user_next_item_behavior": "ABSTRACT — sequential recommendation from user interaction sequences."
+        },
+        "title": "Self-Attentive Sequential Recommendations with Hyperbolic Representations",
+        "year": 2024
+      },
+      {
+        "arxiv": "2505.09205",
+        "assessment": "Recent two-way neighbor (behavior + hyperbolic sequence modeling); no verified semantic-ID component.",
+        "doi": "10.48550/arXiv.2505.09205",
+        "evidence_label": "ABSTRACT",
+        "full_text_url": "https://arxiv.org/pdf/2505.09205",
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN — semantic-ID generation is not established by the abstract.",
+          "hyperbolic_geometry": "ABSTRACT — hyperbolic Mamba sequence modeling.",
+          "user_next_item_behavior": "ABSTRACT — sequential recommendation from behavior sequences."
+        },
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+        "year": 2025
+      }
+    ]
+  },
+  "literature_evidence_sha256": "b56b2c6080edfc8f2ebf7334ba75d770d855f6695a54a363dfbeacced46309b6",
+  "research": "issue117-behavior-first",
+  "revision_feedback": {
+    "blockers": [
+      {
+        "evidence": "The manifest says only squared assignment distance differs, but its frozen geometry also makes Exp_0^c(v)=tanh(sqrt(c)||v||)v/(sqrt(c)||v||) for c>0 and Exp_0^0(v)=v. Thus the candidate at c=1 and flat arm transform/project the latent vectors differently before assignment; the stated c->0 limit confirms this change. The control consequently changes both geometry/distance and the embedding map, contrary to the requirement that the control differ only in the metric. Same architecture and parameter count do not remove this confound.",
+        "issue": "The registered Euclidean control is not a metric-only ablation.",
+        "required_resolution": "Specify a matched control in which the compared arms differ only in the assignment metric while preserving the same input vectors, projection, assignments' coordinate conventions, and all other operations; otherwise the behavioral contrast cannot isolate the claimed geometry effect."
+      },
+      {
+        "evidence": "The registered stage2_diagnostics contains valid_l1_hard_er and level2_distinct_prefixes only. It registers no L3 statistics, despite the review contract explicitly requiring validation Hard-L1 ER, distinct two-token prefixes, and L3 statistics as leading indicators. The falsifier therefore cannot mechanically classify the required L3 indicator.",
+        "issue": "The required L3 leading-indicator diagnostic is absent.",
+        "required_resolution": "Register the frozen L3 statistic(s), their evaluation population, direction, minimum effect, seed aggregation, and NULL/mixed classification rule."
+      }
+    ],
+    "reproducible_evidence": {
+      "behavioral_registration": "Registers Stage3 test_R@10, increase versus matched control, strict minimum effect >0, paired per-seed candidate-minus-control, preregistered matched seeds, and frozen aggregation. Classification specifies passed/falsified/mixed and treats undefined or non-finite values and any NULL seed as inconclusive. Behavioral test registration is present, subject to resolving the invalidly confounded control.",
+      "causal_link": "The train-only directed-transition evidence motivates a testable next-item hypothesis but does not establish hierarchy, negative curvature, or causality; the candidate correctly labels those as hypotheses. The stated path from item-code geometry to downstream next-item behavior is a design claim, not evidence of a gain.",
+      "math_and_domain": "The squared Poincare distance is well-typed for the stated projected domain: c>0, ||x||,||y||<=R=0.99<1/sqrt(c) at the candidate c=1. The stated arcosh argument is at least 1, the clamp policy does not add an offset to valid values, and the stated c->0 squared-distance limit 4||x-y||^2 and Exp identity limit are consistent. The shared fixed-radius projection is defined at zero. No math-type, numerical-domain, or flat-limit blocker identified.",
+      "other_scope_checks": "No validation/test behavior, future events, prediction-time user context, or batch-composition signal is declared as training/assignment/target/codebook input. The reconstruction-plus-commitment loss is specified over the nonempty train-item set with coordinate-summed norms and explicit reductions; hard nearest-code assignment and tie-breaking are deterministic. Frozen Stage2 protocol is declared unchanged, with no sweep. Stage2 diagnostic thresholds match the supplied strict frozen thresholds: valid_l1_hard_er >16.38953942232631 and level2_distinct_prefixes >16145; schema_version 1 is represented in the supplied evidence."
+    },
+    "review_sha256": "cc846aea99aebee9d2ad2416f59d4fb0928cfca466ba1fe3330b8406557c7abe",
+    "review_verdict": "MATERIAL"
+  },
+  "revision_feedback_sha256": "1f2c42789058200c78008c2b8e940d051365ca933c32a05bc7aaedfce5d461f8",
+  "task_id": "geometry"
+}

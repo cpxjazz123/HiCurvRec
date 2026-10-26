@@ -1,0 +1,29 @@
+{
+  "candidate_id": "issue117-geometry-global-balanced-poincare-rq",
+  "candidate_sha256": "cd94df85abc85615dd8ce3c6095a90123454201494a062c74f84e5f806f4dcd8",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "issue": "The falsifier/registered metric set does not include the declared L3 collision statistic (or an explicit definition/threshold for it), despite claiming L3 statistics as leading indicators and describing L3 collision as an expected diagnostic. This is a scope/registration inconsistency, not by itself evidence against the geometry mechanism; clarify whether collision is a required registered diagnostic or remove the claim.",
+      "evidence": "hyperbolic_necessity lists 'L3 collision'; falsifier.stage2_diagnostics registers L3_refinement_gain and conditional_G3, but no L3 collision. The frozen rule requires L3 statistics as leading indicators.",
+      "classification": "MATERIAL"
+    },
+    {
+      "issue": "The direction for L3_refinement_gain is positive with minimum_effect 0.01, but the supplied preflight warning says evidence expects lower and provides no justification reconciling the direction. More refinement (larger mean log2(b12/b123)) can indicate reduced collisions but can also indicate fragmentation; this direction is not mechanically grounded by the stated trigger. Revise the direction/effect rationale or register an unambiguous L3 statistic direction.",
+      "evidence": "preflight_warnings[0]: DIRECTION_CONFLICTS_WITH_EVIDENCE, expected lower, actual curved minus flat > 0; diagnostic formula is mean_i log2(b12(i)/b123(i)).",
+      "classification": "MATERIAL"
+    }
+  ],
+  "reproducible_evidence": {
+    "schema_version": 1,
+    "frozen_thresholds": {
+      "valid_l1_hard_er_strictly_above": 10.0,
+      "level2_distinct_prefixes_strictly_above": 16145
+    },
+    "causal_link": "The train-only directed transition counts motivate a testable hypothesis about content-derived SID prefix conflation, not a demonstrated causal next-item gain. Stage3 test_R@10 is correctly registered as final behavioral comparison (curved-flat > 0, minimum 0.005, paired seeds [42,43,44], all per-seed and arithmetic mean finite and above threshold). Null/missing outcomes are classified inconclusive; finite threshold failure falsifies.",
+    "math_and_domain": "Squared Poincare distance is well typed for projected 32-D vectors with c=0.1 and c||x||\u00b2<1; fixed-radius projection R=0.999 is within the ball. The stated c\u21920 distance limit 4||x-y||\u00b2 is correct. Flat arm uses same fixed-radius projection and shared path, differing only in scored distance as declared. Fixed-iteration Sinkhorn procedure and deterministic rank hard-label rule are specified; no optimal-transport claim is made.",
+    "loss_recomputation": "Loss terms, nonempty domains, population sizes, target stop-gradient, codebook selection and Q gradient pathway are substantially specified. One caveat: full-set anti-collapse L_ac(I) is said to enter every minibatch, but gradient accumulation/weighting across minibatches is not operationally defined; clarify whether it is recomputed once per optimizer step over all N items or accumulated in a specified way, to ensure the declared scalar objective is uniquely reproduced.",
+    "leakage_and_protocol": "Training/assignment use frozen training item inventory/content only; validation pairs are diagnostics only, test only Stage3 final comparison. No future events or prediction-time user context enter Stage2. 32-D, 3x256, global SID, no sweep, paired seeds, 3000 epochs, frozen Stage3 protocol are registered.",
+    "mechanical_falsifier": "Finite paired outcomes and strict promotion floors are specified, while null/missing/empty/zero-denominator cases are inconclusive. The L3 direction and omitted collision registration prevent a fully coherent mechanical all-diagnostics decision, hence MATERIAL rather than CPU_ELIGIBLE."
+  }
+}

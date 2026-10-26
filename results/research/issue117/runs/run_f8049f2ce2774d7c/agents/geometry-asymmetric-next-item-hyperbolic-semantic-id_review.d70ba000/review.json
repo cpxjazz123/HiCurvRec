@@ -1,0 +1,20 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "source_sha256": "3e91364af58e820c71cb4bc2ae461aabab73eb3792442770ed1be7460066731c",
+  "proposal_sha256": "c8701416d4b694141d60366f61d3b70b4fbbc958f8188447d822f8d36e6a283d",
+  "test_sha256": {
+    "gradient": "87302635a0be6d78fa21a9534d6504e3556f5202dc2c76a05ed3489bf5ed2f8b",
+    "math": "4121d8aa2d2c733dc7a1059d63f023d76b717f6d49697a88c3460d3691cca89e",
+    "ddp": "164f7be99641e6494bb80bacb47170a45e1e787b5d966c3d354b8b01ba7e865d",
+    "entrypoint": "1e09f013eae8b9e5682a03e238326641ebb0ae93040d788290e6de85ccc638e"
+  },
+  "verdict": "BLOCK",
+  "rationale": [
+    "Recomputed source digest using the manifest recipe and listed per-file SHA-256 values: it matches source_sha256 exactly. The six source files also individually match the manifest hashes, so frozen-source identity passes.",
+    "The exact current author_reports entrypoint test_source is not the source represented by the listed entrypoint test hash: it omits sys.path.insert(0, str(ROOT)), while the runtime report\u2019s alternate source includes that correction. Since trainer imports top-level `model`, the author-reports version imports the candidate trainer without making its top-level model import resolvable. This is test/hash drift in the CURRENT evidence.",
+    "The listed four concrete test files are not present in the run tree, so their exact bytes and SHA-256 hashes cannot be independently matched to the provided test_sha256 mapping or executed as concrete reviewed files. The tests are embedded as report strings rather than independently materialized reviewed artifacts.",
+    "The supplied DDP test does attempt two real spawned Gloo ranks, but DDP acceptance is not established for the frozen evidence: the entrypoint path discrepancy is unresolved and no independently hashed/executed concrete test artifact is available. The rank-equality checks broadcast rank 0 values and compare them, but do not gather/independently compare rank values (broadcast overwrites the receiver buffer), so those assertions are not a sound cross-rank equality oracle.",
+    "The independent math test has useful closed-form references (tanh values, ln(2), and distance 1.4), not merely self-referential math; gradient checks include finite differences. These positives do not cure the evidence-provenance/drift and DDP verification gaps.",
+    "The entrypoint test also performs a manually reconstructed model/optimizer step rather than invoking trainer main/training loop; source substring checks are not proof the actual trainer entrypoint executes. Independent trainer-entrypoint evidence is therefore insufficient."
+  ]
+}

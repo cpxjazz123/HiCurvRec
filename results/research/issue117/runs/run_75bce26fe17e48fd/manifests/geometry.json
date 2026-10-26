@@ -1,0 +1,163 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "6f5c8f45ca9300de1eebfda39a0f7f90913ee97a6740ad45328f109136f344dc",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Long-tail next-item prediction from chronological user interaction histories using hyperbolically constructed generative semantic IDs.",
+        "evidence_label": "FULL_TEXT",
+        "grounding": "The paper explicitly models next-item prediction from user history (§III-C) and reports head/tail analyses including tail-item gains (§IV-C). It directly motivates this as retaining niche preferences poorly represented by Euclidean item indexing.",
+        "research_gap_or_extension": "Test whether the observed gains persist when the hyperbolic semantic-ID tokenizer is trained or evaluated under behavior-aware objectives, rather than deriving IDs from item text and then learning behavior-to-ID generation in a second stage. This is a suggested follow-up, not a claim made by the source.",
+        "source_doi": "10.48550/arXiv.2609.03369"
+      }
+    ],
+    "limitations": [
+      "The search identified one directly verified paper for the exact three-way intersection; this does not establish that it is the only such work.",
+      "The arXiv paper is dated 2026-09-03 and the record notes acceptance at ICDM 2026; publication proceedings metadata/DOI beyond the arXiv DOI were not independently established here.",
+      "The paper's stated pipeline first learns IDs from item textual features, then trains the generative recommender on behavior sequences. It does not establish that user behavior itself is embedded in hyperbolic geometry or used to construct the semantic IDs.",
+      "Evidence labels describe inspected source content: FULL_TEXT means the cited paper's accessible HTML full text was inspected. No ABSTRACT or UNKNOWN sources are included because no additional candidates were sufficiently verified for this output.",
+      "Reported experiments use MovieLens, Amazon Instruments, and Amazon Arts with a leave-one-out evaluation; generalization to other domains, online behavior, or production settings remains unverified."
+    ],
+    "sources": [
+      {
+        "arxiv": "2609.03369v1",
+        "doi": "10.48550/arXiv.2609.03369",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": {
+          "generative_semantic_ids": "Full text §III-B explicitly calls the learned quantized item code sequences Semantic IDs; §III-C fine-tunes a generative recommender to autoregressively generate the next item's Semantic ID.",
+          "hyperbolic_geometry": "Full text §§II–III defines Poincaré-ball hyperbolic operations and uses hyperbolic residual quantization (HypRQ-VAE) to generate each item's code sequence.",
+          "intersection_assessment": "Direct three-way intersection, not merely adjacent themes: user histories are the conditioning behavior, hyperbolic geometry is used to construct item semantic IDs, and next-item recommendation is performed by generating those IDs.",
+          "user_next_item_behavior": "Full text §III-C explicitly formulates next-item prediction as generation of the target item's semantic-ID sequence from the chronologically ordered semantic IDs of the user's interaction history; §IV-A describes chronological interaction sequences and leave-one-out evaluation."
+        },
+        "full_text_url": "https://arxiv.org/html/2609.03369",
+        "independent_verification": {
+          "full_text_checked": "HTML full text inspected, including §§III-B, III-C, IV-A and IV-C: https://arxiv.org/html/2609.03369",
+          "metadata": "arXiv abstract record and paper title/identifier: https://arxiv.org/abs/2609.03369",
+          "verification_scope": "The source is independently retrievable from arXiv; claims here are grounded in the paper text, not inferred from search snippets."
+        },
+        "publication_status": "arXiv preprint; arXiv record says accepted for ICDM 2026",
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "3465e7358b4aaf7be57181b663924f349bb86549a11b3792e9b638aa9f87732e",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

@@ -1,0 +1,26 @@
+{
+  "candidate_id": "geometry_global_balanced_poincare_residual_v1",
+  "candidate_sha256": "e0ac418254309244a4c35f86a9c0afd112dc156eab694f45a77c0c079087928d",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "issue": "The registered differentiable objective does not specify one consistent residual/code scoring path, so its assignment targets and losses are not uniquely recomputable from the manifest.",
+      "evidence": [
+        "math_definition.assignment.residual_chain says each residual is mapped by learned M and tanh, projected, and assigned against projected code vectors P_R(M e_lk); subtraction is of raw e_lk.",
+        "math_definition.assignment.rule instead defines transport costs against P_R(e_k), without M, tanh, or a clear residual mapping, and later describes level-2 splitting within each level-1 group despite defining one global transport over the complete item population with column sums 1/256.",
+        "math_definition.objective.L_rec scores P_R(M r_i^3) against P_R(M e_i), omitting the tanh specified in the chain and not defining how e_i relates to the level-3 selected code/residual reconstruction.",
+        "The assignment transport-gradient paragraph refers to projected residuals and projected selected code vectors, but the transport rule's cost uses a different code projection. These differences change assignments and gradients; no single loss/target computation follows uniquely."
+      ],
+      "required_resolution": "Specify one exact per-level assignment cost and residual transform, reconcile global versus within-parent level-2 capacities, and define the reconstruction target/path consistently across the chain, transport, and loss equations."
+    }
+  ],
+  "reproducible_evidence": {
+    "math_review": "For c=1 and vectors projected to norm <=0.99999, the stated squared Poincare distance has positive denominators; its c->0 squared-distance limit is 4*||x-y||^2, as declared. No flat-limit blocker found.",
+    "numerical_domain": "The stated scored-vector closed ball is inside the unit ball for c=1, and the stable arcosh clamp is defined. No independent numerical-domain blocker found.",
+    "causal_link": "The manifest frames directed successor-role conflation as a hypothesis, explicitly limits what observed direction/entropy establish, and registers downstream test_R@10 rather than claiming Stage2 diagnostics prove a recommendation gain.",
+    "control": "The declared curved/flat arms share architecture, fixed radius, parameters, initialization, optimization, budget, assignments and loss powers, differing in the distance metric. The listed flat squared-distance limit is mathematically correct.",
+    "leakage_and_protocol": "Training inputs are declared as content embeddings, training item IDs and train-split adjacent transitions; uses_future_events is false. Validation/test behavior is not declared as a training input; validation diagnostics and the registered Stage3 test are evaluation measurements. The frozen protocol and no-sweep condition are registered.",
+    "behavioral_test": "Stage3 registers test_R@10, direction curved-minus-flat > 0, minimum effect 0.005, paired seed differences averaged over the complete registered seed set, and NULL handling for missing/non-finite differences. The falsifier defines passed/falsified/mixed outcomes mechanically, subject to the unresolved objective ambiguity above.",
+    "stage2_indicators_and_thresholds": "Registers valid_l1_hard_er, level2_distinct_prefixes, L3_refinement_gain and conditional_G3. Frozen thresholds supplied by the reviewer are valid_l1_hard_er strictly above 10.0, level2_distinct_prefixes strictly above 16145, schema_version 1; candidate schema_version is 1. The preflight warning records an unresolved direction conflict for L3_refinement_gain (curved-minus-flat > 0 versus expected lower), which also needs scientific justification but is not the primary fatal blocker."
+  }
+}

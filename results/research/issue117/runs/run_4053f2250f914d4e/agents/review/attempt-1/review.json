@@ -1,0 +1,34 @@
+{
+  "candidate_id": "geometry_hyp_residual_v1",
+  "candidate_sha256": "6b7b91c04386e4a646b06ca6a4bdf3a5650115bf53f2ffaa75fb1966d7582883",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "category": "unsound_math / loss-target ambiguity",
+      "finding": "The reconstruction term is specified as ||z_i - sum_l stopgrad(e_{l,k_il})||^2, while the code vectors actually used for assignment and commitment are q_lk=P_R(Exp_0^c(e_lk)). The text does not state that e is a tangent-space parameter and that the decoder reconstructs from those raw tangent parameters rather than from the mapped code vectors. Those are materially different objectives, and the claim that the selected code sum reconstructs content is not well-defined against the described geometry. Moreover, the claimed anti-collapse mechanism is not guaranteed by reconstruction: with hard detached assignments and stopped code targets, it can train the encoder toward a shared selected sum without necessarily preventing code-use collapse; L_usage has no gradient through assignment indices and therefore does not itself update assignments under the stated stop-gradient rule.",
+      "evidence": "math_definition.builder defines e as code parameters and maps them by P_R(Exp_0^c(e)); loss_equations.L_reconstruction_commitment instead reconstructs z from the sum of raw e. anti_collapse.circularity_break explicitly detaches histogram indices."
+    },
+    {
+      "category": "control mismatch",
+      "finding": "The flat arm is not shown to differ only in the metric. It uses a different projection radius (0.99 versus (1-1e-5)/sqrt(0.1), approximately 3.162), so the feasible representation region and projection behavior differ substantially. It also uses identity map instead of the curved arm's exponential map (even though the curved arm's map approaches identity as c tends to zero), and the fixed R=0.99 exception is not the limit of the curved arm's stated R(c). These are changes in representation/projection, not merely the distance metric.",
+      "evidence": "geometry.domain_policy and candidate.euclidean_control explicitly set R=0.99 for c=0; geometry.projection_radius gives R=(1-epsilon)/sqrt(c), which diverges as c->0. The map is stated as P_R composed with Exp in both arms, but the two R values differ."
+    },
+    {
+      "category": "falsifier not mechanically decidable",
+      "finding": "The registered Stage2 reference gate says 'must satisfy the frozen Resample admission comparison' but provides neither its numerical threshold nor the comparison rule. FROZEN_THRESHOLDS supplies only strict lower bounds for valid_l1_hard_er and level2_distinct_prefixes; it does not define the Resample admission comparison. Consequently passed/falsified classification cannot be reproduced from this manifest for those diagnostics.",
+      "evidence": "falsifier.stage2_diagnostics minimum_effect for valid_l1_hard_er and level2_distinct_prefixes; frozen thresholds in the prompt give valid_l1_hard_er > 16.38953942232631 and level2_distinct_prefixes > 16145, with schema_version 1, but no Resample comparison definition."
+    },
+    {
+      "category": "numerical-domain / flat-limit inconsistency",
+      "finding": "The listed c->0 limit for D_c^2 is valid for fixed x,y, but the full candidate representation map includes a radius R(c)=(1-epsilon)/sqrt(c), which is not defined at c=0 and whose feasible ball expands without bound as c approaches zero. The designated flat arm instead imposes R=0.99. Thus the full representation-and-distance operator has no specified continuous flat limit matching the implemented control, despite separately asserting a distance/map limit.",
+      "evidence": "geometry.projection_radius, geometry.domain_policy, geometry.maps, and candidate.euclidean_control."
+    }
+  ],
+  "reproducible_evidence": {
+    "scope": "Reviewed only the candidate and evidence included in the supplied current-only manifest; no repository tree, prior-candidate prompt, validation/test interactions, future events, or execution evidence was used.",
+    "causal_link": "Train-only transition directionality and successor entropy are explicitly framed as motivation/hypothesis, with an interpretation limit that they do not establish negative curvature or causal next-item improvement. This is appropriately a design claim, not a demonstrated result.",
+    "behavioral_test": "Registers test_R@10, increase direction, strictly positive paired aggregate curvature-minus-flat minimum effect, and paired same-seed comparisons after Stage2 proposals/diagnostics are locked. Mixed and NULL/inconclusive outcomes are explicitly classified. Stage2 leading indicators include validation Hard-L1 ER, level2_distinct_prefixes, and L3 statistics (collision, refinement gain, conditional G3); frozen thresholds for ER and distinct prefixes are present in the prompt.",
+    "leakage_and_protocol": "Declares training-only inputs, no future events or prediction-time user context, no validation/test behavior as features/targets, a stable global SID, and frozen model/training protocol (3 levels, 256 codes, latent dimension 32, no sweep). No leakage blocker found in the declaration.",
+    "hash": "candidate_sha256 copied exactly from the manifest; no independent canonical serialization was supplied to recompute it."
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "issue117-geometry-transition-residual-poincare-v1_review",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792832022.7622383,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "2e7753fa6fc60037038a2557154b3fff7a6537fadf525379f473c5b25c8c227c",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "review.json",
+  "output_sha256": "a181a552a7e038920676f9abea7f0f9ef6e0ab656868721f5f1a437caf0d1bcf",
+  "pid": 2526409,
+  "project_marker": ".git",
+  "prompt_sha256": "70ee1a14ca589c30356d0c9cdd6081a9fcac9b6e17da1de2e3bdccf50e0cca1c",
+  "session_sha256": "6a33061a7580301ae141a1a8e56ad32a4c2587a5bed79e744ce93ada1acb25ee",
+  "stderr_present": false,
+  "task_id": "issue117-geometry-transition-residual-poincare-v1_review",
+  "timed_out": false,
+  "verified": true
+}

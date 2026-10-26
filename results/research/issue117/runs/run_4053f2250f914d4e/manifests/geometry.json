@@ -1,0 +1,212 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "6f85a67d7ca985c13c280ed4413b8d5c084b9eb4c9c61ca8ab7dfbf29f0cf0ac",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "User-conditioned next-item generation with a hierarchical semantic-ID decoder whose code-tree geometry is explicitly hyperbolic.",
+        "status": "Synthesis / research gap, not a claim made by a cited paper",
+        "supporting_overlap": [
+          "Recommender Systems with Generative Retrieval (arXiv:2305.05065)"
+        ]
+      },
+      {
+        "candidate": "Test whether hyperbolic distances between item semantic IDs improve modeling of long-tail and multi-interest transition structure in user histories.",
+        "status": "Hypothesis requiring literature and empirical verification",
+        "supporting_overlap": [
+          "Generative semantic-ID recommendation is represented in the arXiv source; hyperbolic recommendation overlap remains unverified"
+        ]
+      }
+    ],
+    "limitations": [
+      "The requested three-way intersection (user next-item behavior, hyperbolic geometry, generative semantic IDs) was not verified in a single independently confirmed full-text research paper.",
+      "The search integration returned a cancellation/error, preventing systematic CrossRef/arXiv/OpenAlex cross-checking; only the identified arXiv record is treated as full-text evidence.",
+      "Do not infer hyperbolic geometry from hierarchical semantic IDs: tree-like codes and hyperbolic embeddings are distinct technical choices.",
+      "The hyperbolic sequential recommendation entry is deliberately marked UNKNOWN and is not a verified citation; exclude it from citation or novelty claims until its metadata and full text are checked.",
+      "No prior-candidate prompts or unseen future/test interactions were used."
+    ],
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "doi": null,
+        "evidence_basis": "An arXiv full-text preprint is provided; the paper describes semantic IDs and generative retrieval for recommendation.",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Generative retrieval for recommendation using semantic IDs (hierarchical item codes) and autoregressive decoding; directly overlaps generative semantic IDs and recommendation, but does not establish hyperbolic geometry as a component.",
+        "title": "Recommender Systems with Generative Retrieval",
+        "url": "https://arxiv.org/abs/2305.05065"
+      },
+      {
+        "arxiv": null,
+        "doi": null,
+        "evidence_basis": "Search endpoint unavailable; title is a search lead, not a verified citation.",
+        "evidence_label": "UNKNOWN",
+        "exact_overlap": "Potentially relevant hyperbolic sequential/next-item recommendation line of work, but an exact bibliographic record and accessible full text could not be independently confirmed in this run. No claim of overlap is counted as verified.",
+        "title": "Hyperbolic Representation Learning for Sequential Recommendation",
+        "url": null
+      },
+      {
+        "arxiv": null,
+        "doi": "10.1145/3292500.3330967",
+        "evidence_basis": "Bibliographic identification only; no verified full-text inspection performed here.",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": "Relevant as foundational hyperbolic graph representation learning, but not evidence for user next-item behavior or generative semantic IDs in the same work.",
+        "title": "Hyperbolic Graph Convolutional Networks",
+        "url": "https://doi.org/10.1145/3292500.3330967"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "8ba6837c216074f407682b678f8b30acb30e89d57086da57dd7a4d6a599d9d0d",
+  "research": "issue117-behavior-first",
+  "revision_feedback": {
+    "blockers": [
+      {
+        "evidence": "math_definition.geometry.map: Exp_0^c(v)=tanh(sqrt(c)||v||)v/(sqrt(c)||v||), with Exp_0^0(v)=v; M_c=P_R composed with Exp_0^c. math_definition.geometry.flat_arm: 'Only the distance expression changes by its exact c->0 limit.' math_definition.builder and loss_equations use M_c outputs in assignments and losses.",
+        "finding": "The curved and flat arms are not matched except for the distance metric. The defined shared map M_c=P_R composed with Exp_0^c is curvature-dependent: for c=0.1 it applies a non-identity exponential map, while for c=0 it is the identity before projection. This changes vectors entering assignment, code vectors, residual-level assignments, and reconstruction/commitment targets, in addition to changing the distance. The later statement that 'Only the distance expression changes' contradicts the displayed definition of M_c and the earlier control statement. Consequently a curved-vs-flat difference cannot be attributed to the metric alone.",
+        "id": "control_changes_more_than_metric"
+      },
+      {
+        "evidence": "math_definition.diagnostics lists L3 collision, L3 refinement gain, and conditional G3. falsifier.stage2_diagnostics contains only valid_l1_hard_er and level2_distinct_prefixes.",
+        "finding": "L3 collision, L3 refinement gain, and conditional G3 are described as frozen diagnostics, and the review contract specifically requires the L3 statistics as leading indicators, but they have no registered direction, minimum effect, seed-combination rule, or defined/failing classification in falsifier.stage2_diagnostics. The falsifier's generic references to 'any registered diagnostic' do not supply those missing decision rules. Thus the registered diagnostic decision cannot mechanically assess the declared L3 indicators.",
+        "id": "incomplete_registered_stage2_falsifier"
+      },
+      {
+        "evidence": "falsifier.stage3_behavioral_test.seed_rule says to 'aggregate the paired per-seed differences'; no aggregation formula or weighting is stated.",
+        "finding": "The behavioural test is registered with metric test_R@10, direction curved > flat, and a strictly positive paired aggregate change, and it specifies the same seeds and frozen protocol. However, 'aggregate the paired per-seed differences' does not define the aggregation operation (for example, arithmetic mean versus another aggregate), so the minimum-effect comparison is not uniquely reproducible from this manifest. The stated NULL handling does not resolve that ambiguity.",
+        "id": "stage3_aggregate_not_fully_specified"
+      }
+    ],
+    "reproducible_evidence": {
+      "candidate_sha256_as_supplied": "fc151c2830c4f3cde823d8b9a86d4f9fbce3253ca422db41d4c04f654aea20f5",
+      "checks": {
+        "falsifier": "Thresholds are strict and supplied for the two registered Stage2 comparisons; mixed, passed, falsified, and NULL concepts are described. The omissions/ambiguity listed as blockers prevent a fully mechanical decision across all declared indicators and Stage3 aggregation.",
+        "loss_and_target_recomputability": "The finite sets, hard assignments, stop-gradient placement, losses, transition negative selection, and empty-transition-term behavior are specified sufficiently to identify targets and scalar objective from the stated inputs.",
+        "math_types_and_effect": "Vectors and code parameters are specified in R^32; squared Poincare distance and its 4||x-y||^2 flat limit are dimensionally consistent. c=0.1 with a non-identity exponential map and curved distance is a nontrivial geometric arm, but the matched-control defect above prevents isolating the distance effect.",
+        "next_item_causal_link": "Explicitly framed as a hypothesis; descriptive train-only directionality/entropy are not asserted as causal proof. Stage3 test_R@10 is registered as the downstream behavioral test.",
+        "numerical_domain": "Curved scored vectors are projected to the fixed radius R=0.99<1, inside the c=0.1 ball domain; c=0 is separately defined. Exact coincidence bypasses the delta clamp. For nonzero separations below the clamp threshold, max(u_raw,delta) creates a positive distance floor and a discontinuity at exact coincidence; this is an explicit numerical convention, not an undefined domain or flat-limit formula.",
+        "user_future_leakage": "The manifest restricts fitting and SID creation to content embeddings and train-split transitions, and states no validation/test behavior, future event, or prediction-time user context enters fitting or SID inputs. Validation pairs are declared diagnostic-only; Stage3 test interactions evaluation-only."
+      },
+      "scope": "Assessment is limited to the supplied current-only manifest; no repository implementation or unprovided behavior was considered."
+    },
+    "review_sha256": "1ac44b171ad376fb9f97be89ceea92c44c2806530c0a98591408f7bc52b2b9b8",
+    "review_verdict": "MATERIAL"
+  },
+  "revision_feedback_sha256": "ac4037cca05b47e2f7f9828411121f7fed10189fe38d3a94c47e090373d300d3",
+  "task_id": "geometry"
+}

@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "candidate_id": "geometry_asymmetric_successor_branches_hyp",
+  "behavior_problem_id": "directional_successor_branching",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "8ecdc8d852135d738d1b97d9d8559779e4648da966a0365b244c99fd4160e763",
+  "next_item_hypothesis": "The one demonstrated behavior pattern selected is directed transition asymmetry: among the train-only longest-prefix transitions, 314605 of 339519 directed pairs (0.9266197178950221) have no observed reverse event. This is evidence of directional successor structure, not evidence that any current SID actually fails or that curvature improves prediction. Hypothesis: content-only flat item code assignment can place items from distinct directional successor branches in an insufficiently refined shared hierarchy; a negatively curved reconstruction geometry may preserve coarse shared semantic neighborhoods while allowing finer branch separation. This is a Stage2 item-SID hypothesis to be tested by the registered Stage2 diagnostics and downstream Stage3 behavioral test; Stage2 itself does not rank or predict next items.",
+  "math_definition": {
+    "architecture": "For each item, map its content embedding through the frozen encoder to a 32-dimensional latent, then quantize with three residual codebooks, each containing 256 codes. Emit exactly one global three-token SID per item, shared across all users and contexts.",
+    "geometry_constants": "Freeze curvature c=1.0 for the curved arm, epsilon=0.00001, fixed projection radius R=0.9, and arcosh argument clamp floor 1.0. The flat arm uses c=0 as the exact limit of the same implementation. No constant is tuned. Use arcosh(z)=log1p((z-1)+sqrt((z-1)*(z+1))) after clamping z to at least 1.0; evaluate the product/square-root stably in the implementation. Do not use a floor greater than 1.0.",
+    "operator": {
+      "family": "poincare_squared_distance",
+      "curvature_c": 1.0,
+      "epsilon": 1e-05,
+      "projection_radius_R": 0.9,
+      "arcosh_argument_clamp_min": 1.0,
+      "scored_distance": "D_c^2(x,y)=d_c(x,y)^2=(1/c)*arcosh(1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)))^2 for c>0; clamp only the arcosh argument from below at 1.0 and compute arcosh with the stated log1p form.",
+      "flat_limit": "As c->0, D_c^2(x,y)->4*||x-y||^2, while d_c(x,y)->2*||x-y||. The objective uses the squared power D_c^2 in both arms.",
+      "c_dependent_rules_at_zero": "Distance: replace the c>0 expression by its exact limit 4*||x-y||^2. Exponential map: identity. Curvature projection radius (1-epsilon)/sqrt(c): undefined at c=0 and is not applied; the flat arm instead applies the identical fixed shared projection ||x||<=R used by the curved arm. No other curvature-dependent operation is used.",
+      "domain_policy": "Every vector entering a scored distance, including an item latent and each residual reconstruction, is projected to the same closed Euclidean ball ||x||<=R before scoring in both arms. For c>0 this ball is strictly inside the Poincare unit ball. Curvature-dependent projection is never applied in the scored region. The same fixed projection and representation map apply in both arms; only the distance formula changes.",
+      "residual_operation_order": "At level j, map the item's content embedding to the initial latent at j=1, or take the current residual at later levels; project that vector to ||x||<=R; assign the nearest code using the arm's D_c^2 to projected vector and code; project the selected code to ||x||<=R; score the projected code; then subtract the projected selected code from the projected current residual to form the next residual. Before the next distance, project that residual to ||x||<=R. Reconstruction sums are likewise projected before any distance is scored. This fixed map -> project -> assign -> project code -> score -> subtract -> project residual order applies to both arms.",
+      "assignment_gradient": "Nearest-code argmin is used only to select discrete SID tokens and is not treated as a differentiable loss path. For reconstruction and commitment losses, use an explicit straight-through estimator: forward values are hard projected nearest-code vectors; backward, the gradient of the projected continuous input is passed unchanged through the hard assignment, while the selected codebook vector receives its direct reconstruction/commitment gradient. Projection uses its ordinary piecewise differentiable projection Jacobian. Thus the losses have declared gradient paths to encoder latents and selected codebook vectors; no loss relies on gradients through one-hot argmin alone.",
+      "delta": 0.0
+    },
+    "objective": {
+      "anti_collapse": "The normalized content-reconstruction term L_rec below is the anti-collapse mechanism and enters the total objective with fixed coefficient 1. It requires the sum of the three selected projected code vectors to reconstruct the frozen projected content latent; mapping every item to the same code cannot in general minimize this term when the frozen content latents differ. It uses the straight-through gradient path declared above. No parameter-dependent target is constructed: content targets are frozen encoder inputs, and discrete assignments are stop-gradient in target construction.",
+      "loss_equations": [
+        {
+          "name": "content_reconstruction",
+          "equation": "L_rec = (1/(N*32)) * sum_{i in I} || stopgrad(x_i) - project_R(sum_{j=1..3} q_{i,j}) ||_2^2",
+          "tensors_and_shapes": "x:[N,32] is the content encoder latent projected to radius R; q:[N,3,32] are selected projected code vectors; I={1,...,N} indexes training items in the current frozen Stage2 batch.",
+          "normalization_and_reduction": "Mean over items and latent dimensions; sum the three code vectors before projecting the reconstruction.",
+          "empty_group_rule": "N=0 is an invalid training batch; do not evaluate a loss for it.",
+          "target_circularity": "The target stopgrad(x_i) is content-derived and assignment-independent; no target depends on current code parameters."
+        },
+        {
+          "name": "commitment",
+          "equation": "L_commit = (1/(3*N*32)) * sum_{i in I} sum_{j=1..3} || project_R(r_{i,j}) - stopgrad(project_R(q_{i,j})) ||_2^2",
+          "tensors_and_shapes": "r:[N,3,32] are the projected residual vectors immediately before each level's assignment; q:[N,3,32] are selected projected code vectors; I indexes training items.",
+          "normalization_and_reduction": "Mean over items, levels, and latent dimensions.",
+          "empty_group_rule": "N=0 is an invalid training batch; do not evaluate a loss for it.",
+          "target_circularity": "Selected-code targets are hard assignments and stop-gradient; the residual input receives the straight-through gradient, so no derivative through argmin is required."
+        },
+        {
+          "name": "codebook_reconstruction",
+          "equation": "L_code = (1/(3*N*32)) * sum_{i in I} sum_{j=1..3} || stopgrad(project_R(r_{i,j})) - project_R(q_{i,j}) ||_2^2",
+          "tensors_and_shapes": "r:[N,3,32] are pre-assignment projected residuals; q:[N,3,32] are selected projected code vectors; I indexes training items.",
+          "normalization_and_reduction": "Mean over items, levels, and latent dimensions.",
+          "empty_group_rule": "N=0 is an invalid training batch; do not evaluate a loss for it.",
+          "target_circularity": "The assigned residual target is stop-gradient; selected code vectors receive direct gradients. Assignments are recomputed from current parameters but are not differentiated through."
+        },
+        {
+          "name": "total_stage2_objective",
+          "equation": "L_total = L_rec + beta_commit*L_commit + beta_code*L_code",
+          "tensors_and_shapes": "Scalar losses are as defined above; beta_commit and beta_code are the exact frozen coefficients from the existing Stage2 configuration, not newly selected or swept here.",
+          "normalization_and_reduction": "Scalar sum of the frozen Stage2 loss components using the existing frozen coefficients.",
+          "empty_group_rule": "Inherits the invalid-empty-batch rule of its component losses.",
+          "target_circularity": "All targets are stop-gradient content latents or hard assigned vectors as declared above; there is no parameter-dependent target gradient cycle."
+        }
+      ]
+    }
+  },
+  "hyperbolic_necessity": "The measured motivation is directional asymmetry in train-only successor edges, not proof of hierarchy or curvature. Negative curvature is a falsifiable geometric inductive-bias hypothesis: it can represent nested coarse semantic neighborhoods with finer-separated branches, potentially accommodating high shared-parent structure alongside branch-specific successors. The source evidence itself cautions that observed direction and entropy do not establish negative curvature or causal improvement. The literature supports separate overlaps (generative Semantic-ID next-item prediction and hyperbolic session/sequential modeling), not a verified combined method. This candidate therefore asserts no necessity as an established fact; it tests whether curved squared reconstruction geometry improves the specified diagnostics and held-out Stage3 behavior over the matched flat limit.",
+  "euclidean_control": "Both arms use the identical implementation, encoder, latent dimension, residual quantizers, parameter count, initialization, codebook initialization, optimizer, schedule, epochs, batch size, seeds, training budget, and fixed projection radius R. The flat arm is c=0 in the same code path and replaces only D_c^2 by 4*||x-y||^2. No graph arm is used. All training settings and initialization remain exactly those of the frozen Stage2 run; no new training protocol or hyperparameter sweep is introduced.",
+  "effect_site": "Stage2 code assignment, codebook geometry, and the squared-distance reconstruction/commitment objective only. The item SID is global and content-derived. Stage2 does not consume user context for prediction and does not rank candidates.",
+  "real_trigger_measurement": "Use only the frozen train-only longest-prefix transition population for the mechanism's supervision/diagnostic rationale. Any transition-derived training signal, if present in the frozen Stage2 setup, is restricted to train-split item transitions. The specified test_R@10 comparison is performed only by downstream Stage3 using its permitted evaluation split and is never fed back into Stage2.",
+  "training_only_inputs": "Allowed Stage2 inputs are frozen item content embeddings and train-split item transitions under CLAUDE.md rule 16. Excluded: validation/test behavior for fitting, future events, prediction-time user context, batch composition as a signal, user bootstrap, or any test/validation target used to form assignments or objective targets.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false,
+    "sid_scope": "one global three-token SID per item",
+    "stage3_role": "downstream T5 ranks next items; Stage2 does not rank",
+    "training_configuration": "inherit epochs, batch size, schedule, seeds, optimizer, budget, and codebook initialization verbatim from the frozen Stage2 configuration; change only the distance geometry parameter between matched arms"
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {
+        "name": "valid_l1_hard_er",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 16.38953942232631,
+        "seed_rule": "Compute each arm using the frozen 52855 validation pairs (one positive and ten negatives per anchor, seed 42, history[-1] -> target); valid L1 positive hit means anchor first SID token equals the positive first token, negative_hits uses the same equality on the ten negatives, and valid Hard-L1 ER=10*positive_hits/negative_hits. Aggregate paired seed-wise curved-minus-flat changes using the frozen experiment seeds; any zero negative-hit denominator is NULL. This registered minimum is the strict-above FROZEN_THRESHOLDS valid_l1_hard_er reference."
+      },
+      {
+        "name": "level2_distinct_prefixes",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 16145,
+        "seed_rule": "For each seed count |{(k1,k2)}| over all items in each arm and compute paired curved-minus-flat change. This registered minimum is the strict-above FROZEN_THRESHOLDS reference; comparison uses the observed curved count and requires a positive paired change."
+      },
+      {
+        "name": "l3_refinement_gain",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 0.01,
+        "seed_rule": "For each seed and arm compute the mean over items of log2(|bucket(k1,k2)|/|bucket(k1,k2,k3)|); compare paired curved-minus-flat changes. Empty buckets or non-finite values are NULL."
+      }
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "curved minus flat > 0",
+      "minimum_effect": 0.005,
+      "seed_rule": "Evaluate downstream T5 Stage3 next-item ranking on the frozen test protocol with paired identical seeds and all other settings fixed; report paired curved-minus-flat test_R@10. No test events enter Stage2."
+    },
+    "classification": {
+      "falsified_if": "any registered Stage2 diagnostic change is at or below its registered minimum_effect, or the registered Stage3 behavioral change is at or below its registered minimum_effect, with all required seed-wise and aggregate values finite and defined",
+      "passed_if": "every registered Stage2 diagnostic change is strictly above its own registered minimum_effect and the registered Stage3 behavioral change is strictly above its registered minimum_effect, for all required seeds and the aggregate, with no NULL outcome",
+      "mixed_if": "otherwise, including conflicting registered outcomes or any seed-wise or aggregated change that is undefined or non-finite"
+    },
+    "null_outcome_rule": "If a seed-wise or aggregated change is undefined or non-finite (including zero denominator, missing evaluation, or empty stratum), classify that outcome NULL. A comparison with any NULL seed is inconclusive and cannot be classified as passed or falsified."
+  }
+}\n

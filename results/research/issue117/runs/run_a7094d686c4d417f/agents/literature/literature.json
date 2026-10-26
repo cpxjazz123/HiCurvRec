@@ -1,0 +1,89 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": "10.48550/arXiv.2609.03369",
+      "arxiv": "2609.03369",
+      "full_text_url": "https://arxiv.org/pdf/2609.03369",
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Strongest apparent intersection: explicitly combines hyperbolic-space item indexing with a residual-quantized VAE for generative recommendation, motivated by sequential recommendation and users' niche/long-tail preferences. The indexed metadata and abstract establish those themes, but do not establish that its evaluated task is specifically autoregressive user next-item prediction using generated semantic IDs; therefore it is not confirmed as a full three-way match.",
+      "verified_metadata": "OpenAlex work record and arXiv identifier/title agree; OpenAlex lists the arXiv PDF as an open full-text location.",
+      "evidence_url": "https://arxiv.org/abs/2609.03369"
+    },
+    {
+      "title": "Generative Next POI Recommendation with Semantic ID",
+      "doi": "10.1145/3711896.3736981",
+      "arxiv": null,
+      "full_text_url": "https://dl.acm.org/doi/pdf/10.1145/3711896.3736981",
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Directly addresses next-POI prediction from user preferences and historical check-ins, and proposes a generative semantic-ID representation constructed with residual quantization. No hyperbolic geometry is indicated in the abstract or indexed metadata, so this is a two-way behavior + generative-SID match, not the requested intersection.",
+      "verified_metadata": "OpenAlex record supplies DOI, title, abstract and an ACM PDF URL listed as full text.",
+      "evidence_url": "https://doi.org/10.1145/3711896.3736981"
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "doi": "10.1145/3459637.3482351",
+      "arxiv": null,
+      "full_text_url": "https://dl.acm.org/doi/pdf/10.1145/3459637.3482351",
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Sequential recommendation from interaction histories is modeled with hyperbolic geometry and multi-scale sequence information. The abstract does not describe generative semantic IDs; this is a behavior + hyperbolic-geometry comparator, not a three-way match.",
+      "verified_metadata": "OpenAlex record supplies DOI, title, abstract and ACM PDF URL listed as full text.",
+      "evidence_url": "https://doi.org/10.1145/3459637.3482351"
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": "10.48550/arXiv.2505.09205",
+      "arxiv": "2505.09205",
+      "full_text_url": "https://arxiv.org/pdf/2505.09205",
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Models user preference evolution from interaction sequences using hyperbolic geometry and a Mamba sequential recommender. No semantic-ID generation is indicated in the abstract; this is a behavior + hyperbolic-geometry comparator only.",
+      "verified_metadata": "OpenAlex record and arXiv identifier/title agree; OpenAlex lists the arXiv PDF as open full text.",
+      "evidence_url": "https://arxiv.org/abs/2505.09205"
+    },
+    {
+      "title": "Hyperbolic Multi-semantic Transition for Next POI Recommendation",
+      "doi": "10.1145/3701716.3717802",
+      "arxiv": null,
+      "full_text_url": "https://dl.acm.org/doi/pdf/10.1145/3701716.3717802",
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Explicitly predicts users' next POI from check-in mobility patterns and models multi-semantic transitions in hyperbolic space. No generative semantic IDs are described in the abstract; behavior + hyperbolic comparator only.",
+      "verified_metadata": "OpenAlex record supplies DOI, title, abstract and ACM PDF URL listed as full text.",
+      "evidence_url": "https://doi.org/10.1145/3701716.3717802"
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Long-tail user intent / niche preference prediction",
+      "basis": "HypRQ-VAE frames head-versus-tail item imbalance and niche user preferences as a challenge for generative recommenders; its abstract motivates hyperbolic item indexing as a fit for power-law interactions.",
+      "evidence_label": "ABSTRACT",
+      "source_doi": "10.48550/arXiv.2609.03369",
+      "caveat": "The available abstract does not establish sequence-conditioned next-item generation as the evaluated objective. Treat this as a problem candidate, not a verified finding about next-item behavior."
+    },
+    {
+      "candidate": "Semantic generalization in next-POI prediction from historical check-ins",
+      "basis": "GNPR-SID identifies random numeric POI IDs as limiting semantic relationships and constructs semantic IDs from collaborative and semantic features for generative next-POI recommendation.",
+      "evidence_label": "ABSTRACT",
+      "source_doi": "10.1145/3711896.3736981",
+      "caveat": "This source does not establish a hyperbolic representation."
+    },
+    {
+      "candidate": "Hierarchical and multi-timescale structure in sequential user behavior",
+      "basis": "H2SeqRec and HMamba motivate hyperbolic representations for hierarchical structure in sequential recommendation; HMST applies hyperbolic geometry to next-POI transition semantics.",
+      "evidence_label": "ABSTRACT",
+      "source_dois": ["10.1145/3459637.3482351", "10.48550/arXiv.2505.09205", "10.1145/3701716.3717802"],
+      "caveat": "These works do not establish generative semantic-ID decoding."
+    }
+  ],
+  "limitations": [
+    "No independently verified source in this search establishes all three elements together: user next-item behavior, hyperbolic geometry, and generative semantic IDs. HypRQ-VAE is the nearest apparent intersection, but the available evidence does not resolve whether next-item prediction with generated SIDs is its precise task.",
+    "Evidence labels are ABSTRACT because claims above were checked against indexed abstracts and metadata, not by reading and verifying the papers' body text. PDF/full-text URLs indicate discoverable full-text locations; they are not a claim that the full text was inspected.",
+    "FULL_TEXT means inspected full-text evidence; no source is assigned that label here. UNKNOWN would mean the relevant feature could not be determined from accessible evidence; where the abstract affirmatively omits a feature, it is described as not indicated rather than asserted absent from the entire paper.",
+    "OpenAlex was used for discovery and cross-checking bibliographic metadata/open-access locations; this is a targeted search, not an exhaustive systematic review."
+  ]
+}

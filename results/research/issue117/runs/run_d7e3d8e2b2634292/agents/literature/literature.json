@@ -1,0 +1,74 @@
+{
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": null,
+      "arxiv": "2305.05065v3",
+      "full_text_url": "https://arxiv.org/pdf/2305.05065v3",
+      "metadata_url": "https://arxiv.org/abs/2305.05065v3",
+      "evidence_label": "ABSTRACT",
+      "evidence_note": "The arXiv abstract explicitly states that semantic IDs are tuples of codewords, and that a Transformer predicts the next item a user will interact with from item Semantic IDs in a user session. No hyperbolic geometry is stated in the abstract; full-text overlap on geometry was not independently confirmed.",
+      "overlap": {
+        "user_next_item_behavior": "YES",
+        "hyperbolic_geometry": "NO_EVIDENCE_IN_ABSTRACT",
+        "generative_semantic_ids": "YES"
+      }
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2505.09205v1",
+      "full_text_url": "https://arxiv.org/pdf/2505.09205v1",
+      "metadata_url": "https://arxiv.org/abs/2505.09205v1",
+      "evidence_label": "ABSTRACT",
+      "evidence_note": "The arXiv abstract describes hyperbolic sequence modeling for sequential recommendation and user preference evolution. It does not mention generative retrieval or semantic IDs. The abstract alone does not establish that the objective specifically predicts each user's next item.",
+      "overlap": {
+        "user_next_item_behavior": "PARTIAL_SEQUENTIAL_PREFERENCE",
+        "hyperbolic_geometry": "YES",
+        "generative_semantic_ids": "NO_EVIDENCE_IN_ABSTRACT"
+      }
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2108.08134v1",
+      "full_text_url": "https://arxiv.org/pdf/2108.08134v1",
+      "metadata_url": "https://arxiv.org/abs/2108.08134v1",
+      "evidence_label": "ABSTRACT",
+      "evidence_note": "The arXiv abstract names H2SeqRec, hyperbolic-space hypergraph convolution, multi-scale item embeddings and sequential recommendation. It does not state generative Semantic IDs or an explicit next-item prediction objective.",
+      "overlap": {
+        "user_next_item_behavior": "PARTIAL_SEQUENTIAL_RECOMMENDATION",
+        "hyperbolic_geometry": "YES",
+        "generative_semantic_ids": "NO_EVIDENCE_IN_ABSTRACT"
+      }
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Predicting a user's next interacted-with item from a session sequence, with item identity represented as a generated tuple of semantic codewords.",
+      "source_arxiv": "2305.05065v3",
+      "evidence_label": "ABSTRACT",
+      "support": "Directly stated in arXiv abstract: given Semantic IDs for items in a user session, train a Transformer seq2seq model to predict the Semantic ID of the next item the user will interact with.",
+      "geometry_connection": "No hyperbolic component evidenced by inspected abstract; do not attribute the geometry from separate sequential recommendation papers to this method."
+    },
+    {
+      "candidate": "Model sequential user preference evolution using hyperbolic sequence representations / hyperbolic selective state-space dynamics.",
+      "source_arxiv": "2505.09205v1",
+      "evidence_label": "ABSTRACT",
+      "support": "Abstract supports hyperbolic Mamba for sequential recommendation and evolving user preferences; it does not establish semantic-ID generation or explicit next-item target in the evidence inspected."
+    },
+    {
+      "candidate": "Use hyperbolic hypergraph representations and multi-scale item embeddings in sequential recommendation of interaction sequences.",
+      "source_arxiv": "2108.08134v1",
+      "evidence_label": "ABSTRACT",
+      "support": "Abstract supports hyperbolic hypergraph convolution and sequential recommendation; no generative Semantic ID mechanism evidenced."
+    }
+  ],
+  "limitations": [
+    "No independently verified source in this evidence set demonstrates all three components—user next-item behavior, hyperbolic geometry, and generative Semantic IDs—in one method.",
+    "Evidence labels indicate the inspected arXiv abstract/metadata evidence, not a full-text audit. Full-text PDFs are linked but their contents were not inspected here; therefore no FULL_TEXT label is assigned.",
+    "Sequential recommendation may use next-item prediction commonly, but that objective should not be asserted for a cited paper unless explicitly verified from its full text or abstract.",
+    "No DOI was verified for the listed records; arXiv identifiers and canonical arXiv links are supplied instead.",
+    "The sources are complementary adjacent work, not proof of a unified intersection or novelty claim. Use the PDFs to check task formulation, geometry placement, and whether semantic identifiers are generated rather than merely used as labels/features."
+  ]
+}

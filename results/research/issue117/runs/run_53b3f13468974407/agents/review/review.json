@@ -1,0 +1,34 @@
+{
+  "candidate_id": "geometry-negative-curvature-branching-v1",
+  "candidate_sha256": "58134fbcfc4e0654bb5f8c92999715b03df89939e41c5d1b677a5fc310aad218",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "issue": "The prescribed flat-control boundary policy is undefined at c=0, so the primary curvature-vs-flat comparison is not fully specified numerically.",
+      "evidence": "math_definition.distance says to project coordinates to norm <= (1-epsilon)/sqrt(c), and explicitly says 'the same radial rule applies to flat-control coordinates.' At c=0 this bound divides by zero. The control separately requires the analytic limit exp0_0(u)=u, but does not state whether projection is omitted, replaced by a finite bound, or interpreted as an infinite-radius limit. These choices can produce different optimization behavior, so the matched c=0 run is not reproducibly defined as written.",
+      "required_resolution": "Specify the c=0 limit of the projection explicitly (e.g. no projection / infinite-radius limit), or state a finite flat-control bound and justify how it matches the candidate's policy."
+    }
+  ],
+  "reproducible_evidence": [
+    {
+      "check": "Next-item causal link",
+      "result": "Motivating evidence is train-only and appropriately caveated: entropy and directed-pair asymmetry do not establish curvature benefit. The item-only SID mechanism has no user-prefix/next-item predictor, so the proposed Stage2 effect is representational and the downstream Stage3 prediction is explicitly directional and separately testable. This is a plausible but indirect causal hypothesis, not an established causal link."
+    },
+    {
+      "check": "Math types and nontrivial hyperbolic effect",
+      "result": "The stated Poincare distance, origin exponential map, squared-distance logits, and 32-dimensional item/code vectors are type-consistent for c=1. The hyperbolic path is nontrivial: exp0 maps tangent vectors into the ball and d_c differs from the stated c->0 limit. Curvature is fixed rather than swept."
+    },
+    {
+      "check": "Numerical domain",
+      "result": "For c=1, the open-ball margin and stable arcosh expression address boundary and roundoff issues. The c=0 projection ambiguity identified above remains an implementation-level numerical specification gap in the key ablation."
+    },
+    {
+      "check": "Capacity and frozen protocol",
+      "result": "The proposal fixes 3 levels, 256 codes per level, latent dimension 32, tensor-shape parameter matching, seeds, optimizer/schedule, batch, and 3000 epochs with no sweep. Its metric-only control changes only squared metric terms and uses the correctly scaled 4*||x-y||^2 limit. Once the flat projection is specified, the primary comparison and falsifier are decidable using validation Hard-L1 ER and the stated diagnostics."
+    },
+    {
+      "check": "Leakage and novelty",
+      "result": "The training inputs exclude user prefixes and validation/test interactions; the graph comparator is restricted to training transitions. Validation ER is evaluation, not candidate training input. Novelty is framed cautiously as a possible three-way intersection, with explicitly limited abstract/metadata-level evidence; it is not independently established, but this does not make the proposal unimplementable."
+    }
+  ]
+}

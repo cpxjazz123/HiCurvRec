@@ -1,0 +1,46 @@
+{
+  "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+  "research": "issue117-behavior-first",
+  "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+  "task_id": "literature",
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": null,
+      "arxiv": "2609.03369",
+      "links": {
+        "full_text_html": "https://arxiv.org/html/2609.03369",
+        "abstract": "https://arxiv.org/abs/2609.03369",
+        "pdf": "https://arxiv.org/pdf/2609.03369"
+      },
+      "evidence_label": "FULL_TEXT",
+      "full_text_basis": "Read the arXiv HTML full text, including Methodology III-B/III-C and Experiments IV. The paper explicitly defines hyperbolic residual quantization to form semantic IDs and autoregressively predicts the next item's ID from the chronologically ordered semantic-ID sequence of a user's interaction history.",
+      "exact_overlap": "Direct intersection of all three concepts: user behavior appears as chronologically ordered interaction history and next-item target; hyperbolic geometry is used in HypRQ-VAE's item indexing; learned discrete semantic IDs are generated autoregressively for next-item recommendation. Section III-C specifies the input as prior interacted-item IDs and target as the next item's semantic-ID token sequence. The paper also evaluates head/tail next-item performance.",
+      "scope_caveat": "The hyperbolic stage encodes item textual content into IDs; the user-history-conditioned next-item model is a separate generative stage fine-tuned over those IDs. The work is an arXiv preprint (v1 dated 2026-09-03; accepted-for-publication comment states ICDM 2026), not evidence of a mature body of independent replications.",
+      "verification_notes": "The HTML page exposes the complete article sections and references. Relevant explicit statements include III-B (Semantic ID generated in Poincare-ball hyperbolic space), III-C (next-item prediction from user interaction-history semantic IDs), and IV-A (chronological interactions and leave-one-out evaluation)."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Use the user's ordered interaction history to generate a semantic ID for the next item, and test whether the hyperbolic code geometry preserves sparse/niche preference signals rather than simply increasing aggregate accuracy.",
+      "evidence_label": "FULL_TEXT",
+      "source_arxiv": "2609.03369",
+      "basis": "Section III-C formulates next-item sequence generation conditional on historical semantic IDs; Sections IV-A and IV-C evaluate next-item ranking and divide target items into head and tail groups.",
+      "possible_behavior-focused angle": "Measure gains separately for users whose histories indicate specialized or low-frequency interests, and test whether the model's tail-item improvements reflect preference-conditioned retrieval rather than popularity redistribution."
+    },
+    {
+      "candidate": "Distinguish user-level behavioral structure from item-level semantic hierarchy when attributing gains to hyperbolic semantic IDs.",
+      "evidence_label": "FULL_TEXT",
+      "source_arxiv": "2609.03369",
+      "basis": "The method uses textual item features for hyperbolic ID construction, then uses interaction sequences to train next-item generation. This separation is explicit in Sections III-B and III-C.",
+      "possible_behavior-focused angle": "Ablate or control item text, interaction-history length/order, and user-specific history signals independently; avoid interpreting item hierarchy alone as a model of user behavior."
+    }
+  ],
+  "limitations": [
+    "The verified direct intersection is represented here by one directly overlapping paper; this supports an existence claim, not a broad consensus or independent replication claim.",
+    "HypRQ-VAE's semantic-ID encoder is trained from item titles/descriptions, while user behavior enters in the separate autoregressive next-item stage. Claims should not conflate hyperbolic encoding of item content with direct hyperbolic modeling of user trajectories.",
+    "The reported long-tail results concern item popularity partitions and benchmark next-item metrics; they do not establish causal evidence about user intent, satisfaction, novelty, or individual-level preference formation.",
+    "The article is a recent 2026 arXiv preprint and its reported experiments need independent reproduction. No DOI was identified in the verified arXiv record; arXiv:2609.03369 is the stable identifier.",
+    "No prior-candidate prompts or unseen future/test interactions were used. The literature claims are based on the publicly accessible paper text and its stated experimental setup only."
+  ]
+}

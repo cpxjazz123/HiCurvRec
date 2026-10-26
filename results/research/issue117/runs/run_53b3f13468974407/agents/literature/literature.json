@@ -1,0 +1,78 @@
+{
+  "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+  "research": "issue117-behavior-first",
+  "task_id": "literature",
+  "sources": [
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": "10.48550/arXiv.2505.09205",
+      "arxiv": "2505.09205",
+      "url": "https://arxiv.org/abs/2505.09205",
+      "full_text_url": "https://arxiv.org/pdf/2505.09205",
+      "evidence_label": "FULL_TEXT",
+      "verification": "PDF endpoint returned HTTP 200 and application/pdf; title/identifier discoverable via OpenAlex.",
+      "exact_overlap": "User behavior as sequential recommendation and hyperbolic representation are directly studied. No generative semantic-ID item tokenization/generation found in the title/abstract-level description; therefore partial overlap, not the full three-way intersection."
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "doi": "10.1145/3459637.3482351",
+      "url": "https://doi.org/10.1145/3459637.3482351",
+      "full_text_url": "https://dl.acm.org/doi/pdf/10.1145/3459637.3482351",
+      "evidence_label": "ABSTRACT",
+      "verification": "OpenAlex indexed metadata and listed ACM PDF; direct PDF request returned HTTP 403, so full text was not independently inspected.",
+      "exact_overlap": "Sequential user-item behavior plus hyperbolic hypergraph modeling; no generative semantic IDs established."
+    },
+    {
+      "title": "Generative Next POI Recommendation with Semantic ID",
+      "doi": "10.1145/3711896.3736981",
+      "url": "https://doi.org/10.1145/3711896.3736981",
+      "full_text_url": "https://dl.acm.org/doi/pdf/10.1145/3711896.3736981",
+      "evidence_label": "ABSTRACT",
+      "verification": "OpenAlex indexed title/DOI and listed ACM PDF; direct PDF request returned HTTP 403, so full text was not independently inspected.",
+      "exact_overlap": "Generative recommendation with semantic IDs and next-POI behavior; hyperbolic geometry not established."
+    },
+    {
+      "title": "Self-Attentive Sequential Recommendations with Hyperbolic Representations",
+      "doi": "10.1145/3640457.3688180",
+      "url": "https://doi.org/10.1145/3640457.3688180",
+      "full_text_url": "https://dl.acm.org/doi/pdf/10.1145/3640457.3688180",
+      "evidence_label": "ABSTRACT",
+      "verification": "OpenAlex indexed title/DOI and listed ACM PDF; direct full-text access not verified in this check.",
+      "exact_overlap": "Sequential recommendation behavior and hyperbolic representations; no generative semantic IDs established."
+    },
+    {
+      "title": "Hyperbolic Translation-Based Sequential Recommendation",
+      "doi": "10.1109/TCSS.2024.3409711",
+      "url": "https://doi.org/10.1109/TCSS.2024.3409711",
+      "evidence_label": "ABSTRACT",
+      "verification": "OpenAlex indexed metadata; no accessible full-text URL was established.",
+      "exact_overlap": "Sequential recommendation with hyperbolic translation; generative semantic-ID intersection unverified."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Sequential next-item recommendation under hierarchical/long-tail behavior",
+      "evidence": "HMamba and Hyperbolic Hypergraphs directly frame sequential recommendation and hyperbolic modeling.",
+      "supporting_sources": [
+        "10.48550/arXiv.2505.09205",
+        "10.1145/3459637.3482351"
+      ],
+      "status": "supported partial intersection; semantic-ID generation absent"
+    },
+    {
+      "candidate": "Generative next-POI prediction using semantic IDs",
+      "evidence": "Generative Next POI Recommendation with Semantic ID explicitly combines next-POI recommendation and semantic-ID generation.",
+      "supporting_sources": [
+        "10.1145/3711896.3736981"
+      ],
+      "status": "supported partial intersection; hyperbolic geometry absent"
+    }
+  ],
+  "limitations": [
+    "No independently verified source located in this search establishes all three elements together: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+    "ACM PDF endpoints for the two ACM sources returned HTTP 403; their classifications are ABSTRACT/metadata-level only, not full-text-verified.",
+    "The only FULL_TEXT label is limited to an HTTP-200 arXiv PDF endpoint; it supports the hyperbolic sequential-recommendation overlap, not the complete three-way claim.",
+    "Search discovery used OpenAlex metadata and public PDF endpoint checks; absence claims are bounded to retrieved records and are not proof that no such work exists.",
+    "Do not treat “semantic” representations or hyperbolic sequential recommenders as evidence of generative semantic-ID decoding unless the paper explicitly describes that mechanism."
+  ]
+}

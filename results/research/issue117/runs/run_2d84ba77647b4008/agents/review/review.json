@@ -1,0 +1,52 @@
+{
+  "candidate_id": "geometry_asymmetric_successor_branches_hyp",
+  "candidate_sha256": "3618a28dd7c21e738e54410ce92843c1f9bc953cd5cb9a4d24197788d658a6c9",
+  "verdict": "CPU_ELIGIBLE",
+  "blockers": [],
+  "reproducible_evidence": [
+    {
+      "check": "next-item causal link as a design claim",
+      "result": "PASS",
+      "evidence": "The candidate explicitly frames train-only directional transition asymmetry as motivation, states it does not establish negative curvature, SID failure, or causal gain, and treats the next-item benefit as a hypothesis. It reserves behavioral evaluation for downstream Stage3 test_R@10."
+    },
+    {
+      "check": "math types and operator",
+      "result": "PASS",
+      "evidence": "Distance inputs, residuals, projected code vectors, and reconstruction tensors are specified as 32-dimensional vectors; loss reductions and stop-gradient/STE paths are specified. The Poincare squared-distance formula is dimensionally consistent, and the stated c->0 limit follows from arcosh(1+u)^2 ~ 2u, yielding 4*||x-y||^2. Residual update and reconstruction operations are specified."
+    },
+    {
+      "check": "nontrivial hyperbolic effect and numerical domain",
+      "result": "PASS",
+      "evidence": "Curved arm uses c=1 and the curved distance for assignment/scoring, while the flat arm uses the exact flat limit; therefore the metric difference is nontrivial at c=1. Both arms project distance operands into ||x||<=0.9; for c=1 each denominator factor is at least 1-0.9^2=0.19. The arcosh argument is clamped to at least 1 and a stable log1p form is specified. c=0 projection behavior is explicitly defined separately."
+    },
+    {
+      "check": "same-capacity control",
+      "result": "PASS",
+      "evidence": "The control holds implementation, architecture, parameter count, initialization, codebook initialization, optimizer, schedule, epochs, batch size, seeds, budget, projection radius, and operation order fixed; the only arm-specific change is the scored squared-distance formula."
+    },
+    {
+      "check": "future leakage and frozen protocol",
+      "result": "PASS",
+      "evidence": "Stage2 fitting inputs are frozen content embeddings and train-split item transitions. Validation is diagnostic only; test behavior is reserved for Stage3. The manifest excludes future events, prediction-time user context, and batch-composition signals, and specifies inherited Stage2 settings without a sweep."
+    },
+    {
+      "check": "registered behavioral test",
+      "result": "PASS",
+      "evidence": "Stage3 registers test_R@10, direction curved minus flat > 0, minimum effect 0.005, paired seed set {42}, and arithmetic-mean aggregation over the enumerated set. Seed-wise and aggregate values are required. The falsifier mechanically classifies finite oriented changes meeting all thresholds as passed, a defined change at/below a minimum or failed absolute Stage2 admission threshold as falsified, and undefined/non-finite changes or missing/empty evaluations as NULL/inconclusive."
+    },
+    {
+      "check": "Stage2 leading indicators and frozen admissions",
+      "result": "PASS",
+      "evidence": "Registered diagnostics include validation Hard-L1 ER with the frozen 52,855-pair/seed-42 construction, distinct two-token prefixes, and L3 refinement/collision statistics; conditional_g3 is also fully defined. Absolute admission comparisons use strict greater-than thresholds valid_l1_hard_er > 16.38953942232631 and level2_distinct_prefixes > 16145. Schema version is 1."
+    },
+    {
+      "check": "recomputability and falsifier decisiveness",
+      "result": "PASS",
+      "evidence": "Losses specify shapes, reductions, empty-batch rules, and gradient breaks. The conditional_g3 distributions specify catalog buckets, leave-target-out additive-one smoothing, train-only successor counts, the C=0 contribution, target code, averaging set, and seed aggregation. Falsifier comparisons, seed handling, aggregation, NULL cases, and absolute thresholds are explicit."
+    }
+  ],
+  "limitations": [
+    "CPU_ELIGIBLE is not GPU approval and is not evidence that the candidate has been implemented or executed.",
+    "The train-only transition statistic motivates a falsifiable geometry hypothesis but does not itself establish a causal next-item gain; the registered downstream Stage3 test is the behavioral test."
+  ]
+}

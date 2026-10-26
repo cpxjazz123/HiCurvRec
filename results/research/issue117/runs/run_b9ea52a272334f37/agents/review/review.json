@@ -1,0 +1,27 @@
+{
+  "candidate_id": "geometry_global_balanced_poincare_sq_v1",
+  "candidate_sha256": "e21d6ff5f1a1b5c45bad2585f761e0ee04915743030a1e36c0fc0f02b48d6a34",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "code": "CONTROL_CHANGES_MORE_THAN_METRIC",
+      "claim": "The declared Euclidean control differs only by replacing scored Poincare squared distances with their flat limit.",
+      "evidence": "The control declaration explicitly says it uses exp_0 identity. The operator's projection procedure says the curved arm maps each residual by exp_0^c, while at c=0 the map is identity. For c=1, exp_0^c(v)=tanh(||v||)v/||v|| (under the standard Poincare exponential-map definition), which is not identity for nonzero v. The training-item residuals therefore enter projection and subsequent assignments differently even apart from the scored distance. This violates the required same-capacity control differing only in metric, so a curved-minus-flat contrast cannot isolate the proposed metric effect."
+    }
+  ],
+  "reproducible_evidence": {
+    "manifest_fields": [
+      "candidate.euclidean_control",
+      "candidate.math_definition.operator.projection",
+      "candidate.math_definition.operator.curvature_c",
+      "candidate.math_definition.operator.flat_limit"
+    ],
+    "reproduction": "Compare the control text ('exp_0 identity') with the prescribed curved projection sequence ('map residual by exp_0^c') and the operator's c=0 identity rule. For any nonzero residual, the curved map and identity map differ; hence assignment inputs differ independently of D_c^2 versus 4*||x-y||^2."
+  },
+  "audit_notes": {
+    "next_item_causal_link": "Registered as a falsifiable design hypothesis, not an established causal fact; it gives train-only directional-transition motivation and appropriately defers behavioral evidence to Stage3.",
+    "stage3_behavioral_test": "Registered: test_R@10, curved minus flat > 0, minimum effect 0.005, paired seeds {42,43,44}, arithmetic mean paired difference, NULL seed makes comparison inconclusive. The classification rules distinguish passed, falsified, mixed, and NULL/inconclusive outcomes.",
+    "stage2_diagnostics": "Registers validation Hard-L1 ER, distinct two-token prefixes, and L3 collision/refinement statistics, alongside hit rate and conditional G3. Frozen Resample gates are stated as strict thresholds: valid_l1_hard_er > 16.38953942232631 and level2_distinct_prefixes > 16145; schema_version is 1.",
+    "leakage_and_protocol": "Declared inputs are frozen item embeddings and train.parquet; validation is limited to frozen diagnostics and test interactions are reserved for Stage3 after SID freeze. It declares no future events or prediction-time context. Stage2 protocol and paired Stage3 seeds/protocol are registered. No blocker identified here under the stated design claims."
+  }
+}

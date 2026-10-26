@@ -1,0 +1,37 @@
+{
+  "candidate_id": "geometry-global-sinkhorn-poincare-squared",
+  "candidate_sha256": "0c6b6869c70f00f5ed4c434e4b2facaf7c3e7850b133d007170dc1e676e138ea",
+  "verdict": "CPU_ELIGIBLE",
+  "blockers": [],
+  "reproducible_evidence": [
+    {
+      "check": "next-item causal link as a design claim",
+      "result": "Pass as a falsifiable hypothesis, not as established causality. The manifest explicitly limits the train-only directional/sparse-transition evidence and acknowledges it does not establish negative curvature or recommendation gain."
+    },
+    {
+      "check": "math types, curvature effect, and numerical domain",
+      "result": "Pass. The scored quantities are squared distances; c=1 uses the Poincare squared distance and the c-to-zero arm uses its stated limit 4*||x-y||^2. The common radius 0.9 keeps projected vectors strictly inside the c=1 ball, the arcosh argument is floored at 1, and the stable arcosh form is specified. This is a non-flat, nontrivial curved arm; the exponential map is not in the scoring path."
+    },
+    {
+      "check": "same-capacity control",
+      "result": "Pass by registration: architecture, parameter count, initialization, optimizer, schedule, seeds, budget, assignment procedure and projection radius are held fixed; the declared arm switch is the squared-distance operator and its exact flat limit."
+    },
+    {
+      "check": "future leakage, frozen protocol, and recomputable targets",
+      "result": "Pass by registration. Training/assignment inputs are frozen content embeddings and train-split items/transitions only; validation is diagnostic only, and test/future events and prediction-time context are excluded. The frozen protocol specifies 3 levels, 256 codes per level, latent dimension 32, no sweep, and seeds [42,43,44]. Epoch-boundary q/Q and transition targets are detached and frozen; population, ordering, smoothing, normalization, iteration count, and tie-breaking are specified."
+    },
+    {
+      "check": "Stage2 leading indicators and frozen admission gates",
+      "result": "Pass by registration: validation Hard-L1 ER, distinct two-token prefixes, L3 collision, L3 refinement gain, and conditional G3 are included. The valid_l1_hard_er and level2_distinct_prefixes gates use strict per-arm/per-seed thresholds 16.38953942232631 and 16145, respectively; schema_version is 1."
+    },
+    {
+      "check": "downstream behavioral test and mechanical outcome classification",
+      "result": "Pass by registration: frozen Stage3 test_R@10, direction curved-minus-flat > 0, minimum effect 0.005, exact paired seeds [42,43,44], and arithmetic mean of paired differences are specified. Non-NULL comparisons failing direction/effect falsify; NULL is metric-local and inconclusive; pass requires all registered comparisons and both gates."
+    },
+    {
+      "check": "preflight direction warnings",
+      "result": "Not a blocker. The registered l3_refinement_gain is a bucket-refinement quantity (mean log2(level-2 bucket size/full-SID bucket size)), for which a positive curved-minus-flat direction is coherent with greater refinement; the warning's expected-lower direction is not supported by that definition. The collision direction is explicitly lower."
+    }
+  ],
+  "scope_note": "CPU_ELIGIBLE means eligible for the independent CPU study only; it is not GPU approval and does not assert implementation identity or execution evidence."
+}

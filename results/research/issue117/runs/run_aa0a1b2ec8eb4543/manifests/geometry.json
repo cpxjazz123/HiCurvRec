@@ -1,0 +1,265 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "fc8e6b209d9981a63178b0cd2f951131bc33bc3f31d4e9c8d4b0ccdd646a895f",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Behavior-conditioned hyperbolic Semantic-ID generation for next-item recommendation",
+        "evidence_basis": [
+          "TIGER establishes autoregressive generation of the next item's Semantic ID from a user session (FULL_TEXT link; DOI 10.52202/075280-0452, arXiv:2305.05065).",
+          "HTSR establishes hyperbolic modeling of user, latest-item, and next-item behavior (ABSTRACT; DOI 10.1109/TCSS.2024.3409711)."
+        ],
+        "status": "Synthesis/opportunity, not a verified existing paper combining all three axes."
+      },
+      {
+        "candidate": "Hyperbolic, behavior-aware Semantic ID construction",
+        "evidence_basis": [
+          "GNPR-SID reports IDs constructed from semantic and collaborative features and next-POI generation (ABSTRACT; DOI 10.1145/3711896.3736981).",
+          "Hyperbolic sequential recommendation papers model hierarchical behavioral structure, but the located evidence does not connect their geometry to Semantic-ID construction."
+        ],
+        "status": "Candidate gap; do not claim prior art already implements the three-way intersection."
+      },
+      {
+        "candidate": "Jointly evaluate behavior fidelity and geometric hierarchy in generative next-item retrieval",
+        "evidence_basis": [
+          "Generative retrieval provides a next-item generation setup; hyperbolic sequential methods motivate hierarchical behavior representations."
+        ],
+        "status": "Research question only; no located source verifies a unified evaluation/model."
+      }
+    ],
+    "limitations": [
+      "No independently verified source located in this search explicitly combines user next-item behavior, hyperbolic geometry, and generative semantic item IDs in one method.",
+      "FULL_TEXT is reserved for the TIGER arXiv item because a public arXiv PDF/full-text endpoint is independently identified and the indexed abstract explicitly confirms the relevant method; the PDF was not downloaded for line-by-line audit in this run. Other works are conservatively labeled ABSTRACT even where a publisher PDF endpoint is listed.",
+      "Search evidence used Crossref/OpenAlex-indexed bibliographic records and abstracts plus canonical DOI/arXiv URLs. OpenAlex is an independent discovery/indexing source, not a substitute for publisher peer review or a full-text audit.",
+      "The set is a focused discovery sample, not an exhaustive systematic review. Search-engine/tool availability was limited; websearch calls were cancelled, so metadata/API discovery was used.",
+      "Some records have publication dates later than the current date indicated by this environment or may reflect indexing anomalies; do not rely on those records unless independently checked at the publisher/arXiv. They were excluded as support for the central overlap claim.",
+      "An abstract's omission of hyperbolic geometry or Semantic IDs does not prove the full paper omits the concept; the stated missing axis is limited to what was verified in the available abstract/record."
+    ],
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "doi": "10.52202/075280-0452",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": [
+          "user next-item behavior",
+          "generative Semantic IDs"
+        ],
+        "independent_verification": "arXiv full-text PDF and Crossref/OpenAlex DOI record; abstract explicitly describes Semantic IDs, user-session sequences, and autoregressive next-item prediction.",
+        "links": {
+          "full_text": "https://arxiv.org/pdf/2305.05065",
+          "record": "https://arxiv.org/abs/2305.05065"
+        },
+        "missing_axis": "No hyperbolic geometry identified in the method or abstract; Semantic IDs are constructed from item content embeddings, not described as hyperbolic codes.",
+        "title": "Recommender Systems with Generative Retrieval"
+      },
+      {
+        "doi": "10.1109/TCSS.2024.3409711",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": [
+          "user next-item behavior",
+          "hyperbolic geometry"
+        ],
+        "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex). Full text was not verified open and read for this report.",
+        "links": {
+          "publisher": "https://doi.org/10.1109/TCSS.2024.3409711"
+        },
+        "missing_axis": "No generative Semantic IDs reported; paper describes personalized hyperbolic translations for the user/latest-item/next-item relation.",
+        "title": "Hyperbolic Translation-Based Sequential Recommendation"
+      },
+      {
+        "doi": "10.1145/3459637.3482351",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": [
+          "sequential user-item behavior",
+          "hyperbolic geometry"
+        ],
+        "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); publisher PDF endpoint is linked, but full-text content was not independently retrieved/read here.",
+        "links": {
+          "doi": "https://doi.org/10.1145/3459637.3482351",
+          "publisher_full_text_pdf": "https://dl.acm.org/doi/pdf/10.1145/3459637.3482351"
+        },
+        "missing_axis": "No generative Semantic IDs reported; method uses hyperbolic hypergraph convolution and hierarchical item embeddings.",
+        "title": "Hyperbolic Hypergraphs for Sequential Recommendation"
+      },
+      {
+        "doi": "10.1145/3568395",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": [
+          "user behavior sequences",
+          "Poincaré/hyperbolic geometry"
+        ],
+        "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); full-text contents not retrieved/read for this report.",
+        "links": {
+          "doi": "https://doi.org/10.1145/3568395",
+          "publisher_full_text_pdf": "https://dl.acm.org/doi/pdf/10.1145/3568395"
+        },
+        "missing_axis": "No generative Semantic IDs reported; uses Poincaré user-item heterogeneous graphs and temporal attention.",
+        "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation"
+      },
+      {
+        "doi": "10.1145/3711896.3736981",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": [
+          "user next-POI behavior",
+          "generative Semantic IDs"
+        ],
+        "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); PDF endpoint is listed, but its text was not retrieved/read here.",
+        "links": {
+          "doi": "https://doi.org/10.1145/3711896.3736981",
+          "publisher_full_text_pdf": "https://dl.acm.org/doi/pdf/10.1145/3711896.3736981"
+        },
+        "missing_axis": "No hyperbolic geometry identified. The abstract says semantic and collaborative features inform discrete POI IDs and the generative model predicts the next POI.",
+        "title": "Generative Next POI Recommendation with Semantic ID"
+      },
+      {
+        "doi": "10.1145/3637528.3671775",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": [
+          "sequential generative recommendation",
+          "behavior tokens and semantic tokens"
+        ],
+        "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); full-text content not retrieved/read here.",
+        "links": {
+          "doi": "https://doi.org/10.1145/3637528.3671775",
+          "publisher_full_text_pdf": "https://dl.acm.org/doi/pdf/10.1145/3637528.3671775"
+        },
+        "missing_axis": "Hyperbolic geometry is not reported. The abstract does not establish that its semantic tokens are the same item-level generative Semantic IDs used by TIGER.",
+        "title": "EAGER: Two-Stream Generative Recommender with Behavior-Semantic Collaboration"
+      },
+      {
+        "doi": "10.1145/3627673.3679730",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": [
+          "multi-behavior sequential recommendation",
+          "autoregressive next-behavior and next-item generation"
+        ],
+        "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); full text not retrieved/read here.",
+        "links": {
+          "publisher": "https://doi.org/10.1145/3627673.3679730"
+        },
+        "missing_axis": "No hyperbolic geometry reported; abstract describes behavior/item tokens but does not establish generative semantic item IDs.",
+        "title": "Multi-Behavior Generative Recommendation"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "7f1fa27fa7ab0cbba5b5580baf8b0475c801b15487c07b61a6a854340e756a81",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

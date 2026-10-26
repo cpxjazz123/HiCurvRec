@@ -1,0 +1,125 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "as_of": "2026-10-25",
+  "method": "Verified records against arXiv Atom metadata and independently opened the arXiv HTML full-text endpoints. Labels describe evidence inspected, not merely the abstract record.",
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "arxiv": "2609.03369v1",
+      "doi": null,
+      "links": {
+        "abstract": "https://arxiv.org/abs/2609.03369v1",
+        "full_text": "https://arxiv.org/html/2609.03369"
+      },
+      "evidence_label": "FULL_TEXT",
+      "overlap": {
+        "user_next_item_behavior": "YES — frames sequential recommendation as user behavior represented by item-ID sequences; generative recommendation predicts items.",
+        "hyperbolic_geometry": "YES — proposes Hyperbolic Residual-Quantized VAE item indexing in hyperbolic space.",
+        "generative_semantic_ids": "YES — hyperbolic item indices/SIDs are used by generative recommendation."
+      },
+      "exact_overlap": "Directly addresses all three requested components: sequential user behavior, hyperbolic item indexing, and generative item identifiers. The abstract and full-text HTML identify HypRQ-VAE as hyperbolic item indexing for generative recommenders, and discuss sequential recommendation/user behavior item sequences.",
+      "qualification": "The work is listed as accepted for ICDM 2026 by its arXiv record; this is an arXiv preprint, not evidence of a DOI assignment. Full-text HTML was directly accessible and checked.",
+      "publication_date": "2026-09-03"
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "arxiv": "2505.09205v1",
+      "doi": null,
+      "links": {
+        "abstract": "https://arxiv.org/abs/2505.09205v1",
+        "full_text": "https://arxiv.org/html/2505.09205"
+      },
+      "evidence_label": "FULL_TEXT",
+      "overlap": {
+        "user_next_item_behavior": "YES — sequential recommendation and temporal evolution of user preferences/interaction sequences.",
+        "hyperbolic_geometry": "YES — curvature-aware hyperbolic sequence modeling.",
+        "generative_semantic_ids": "NO evidence found — paper describes hyperbolic Mamba sequence modeling, not semantic-ID generation."
+      },
+      "exact_overlap": "Evidence for the behavioral-sequential + hyperbolic pair only; it is not an all-three intersection source.",
+      "publication_date": "2025-05-14"
+    },
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "arxiv": "2305.05065v3",
+      "doi": null,
+      "links": {
+        "abstract": "https://arxiv.org/abs/2305.05065v3",
+        "full_text": "https://arxiv.org/html/2305.05065"
+      },
+      "evidence_label": "FULL_TEXT",
+      "overlap": {
+        "user_next_item_behavior": "YES — predicts the next item from items in a user session.",
+        "hyperbolic_geometry": "NO evidence found — method uses semantic codeword tuples; no hyperbolic geometry claim in inspected text.",
+        "generative_semantic_ids": "YES — semantically meaningful codeword tuples are Semantic IDs generated autoregressively."
+      },
+      "exact_overlap": "Foundational direct evidence for next-item behavior + generative semantic IDs, but not hyperbolic geometry. NeurIPS 2023 per arXiv record.",
+      "publication_date": "2023-05-08"
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "arxiv": "2108.08134v1",
+      "doi": null,
+      "links": {
+        "abstract": "https://arxiv.org/abs/2108.08134v1",
+        "full_text": "https://arxiv.org/pdf/2108.08134v1"
+      },
+      "evidence_label": "ABSTRACT",
+      "overlap": {
+        "user_next_item_behavior": "YES — sequential recommendation modeling user/item interactions and temporal dynamics.",
+        "hyperbolic_geometry": "YES — hyperbolic-space hypergraph convolution.",
+        "generative_semantic_ids": "NO evidence in abstract — embeddings/recommendation architecture, not generative semantic IDs."
+      },
+      "exact_overlap": "Behavior + hyperbolic recommendation evidence only. Abstract inspected; full-text content was not inspected, so absence of SID evidence is limited to abstract.",
+      "publication_date": "2021-08-18"
+    },
+    {
+      "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+      "arxiv": "2205.11233v1",
+      "doi": null,
+      "links": {
+        "abstract": "https://arxiv.org/abs/2205.11233v1",
+        "full_text": "https://arxiv.org/pdf/2205.11233v1"
+      },
+      "evidence_label": "ABSTRACT",
+      "overlap": {
+        "user_next_item_behavior": "YES — explicitly models sequential patterns from user behavior evolution.",
+        "hyperbolic_geometry": "YES — Poincaré ball representations and hyperbolic operators.",
+        "generative_semantic_ids": "NO evidence in abstract — no semantic-ID generative retrieval described."
+      },
+      "exact_overlap": "Behavior + hyperbolic sequential recommendation evidence only. Abstract inspected; do not infer full-text absence of semantic IDs.",
+      "publication_date": "2022-05-16"
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Long-tail/niche next-item behavior under sparse interaction histories",
+      "basis": "HypRQ-VAE (FULL_TEXT) directly links hyperbolic indexing to the power-law/long-tail structure and reports tail-item recommendation; TIGER (FULL_TEXT) reports improved retrieval for items with no prior interaction history.",
+      "evidence_label": "FULL_TEXT",
+      "research_gap": "Test whether hyperbolic semantic-ID code assignment improves behavior-conditioned next-item prediction for sparse/tail users and items over Euclidean SID baselines, separating item-indexing gains from sequence-model gains."
+    },
+    {
+      "candidate": "Preserving hierarchical and temporal preference structure in next-item prediction",
+      "basis": "HMamba and PHGR/H2SeqRec address hierarchical/temporal structure in sequential behavior with hyperbolic representations; TIGER supplies autoregressive SID next-item generation, but the cited sources do not jointly establish this combination apart from HypRQ-VAE's broader intersection.",
+      "evidence_label": "FULL_TEXT for HMamba/TIGER; ABSTRACT for PHGR/H2SeqRec",
+      "research_gap": "Evaluate whether hyperbolic geometry should parameterize semantic-ID construction, user-state representation, or both, using time-aware next-item metrics and hierarchy-sensitive analyses."
+    },
+    {
+      "candidate": "Reducing mismatch between user behavior sequences and generated item identifiers",
+      "basis": "TIGER generates item Semantic IDs from session sequences; HypRQ-VAE brings hyperbolic item indexing to generative recommenders.",
+      "evidence_label": "FULL_TEXT",
+      "research_gap": "Measure validity/collision, semantic and behavioral neighborhood preservation, and next-item ranking jointly; do not assume geometry improves user-state modeling merely because item indexing is hyperbolic."
+    }
+  ],
+  "limitations": [
+    "Only HypRQ-VAE is a verified all-three intersection in the examined records. Its abstract/full-text HTML supports the overlap, but this search does not establish that it is the only such work globally.",
+    "The explicit full-text checks were arXiv HTML for HypRQ-VAE, HMamba, and TIGER. H2SeqRec and PHGR evidence here is abstract-level only; their lack of semantic-ID terminology is not a full-text negative finding.",
+    "No DOI was verified for the listed arXiv records; arXiv identifiers and canonical record links are provided instead. Do not invent DOI values.",
+    "HypRQ-VAE is very recent (September 2026) and listed as accepted for ICDM 2026. Independent replication, peer-reviewed version metadata, and long-term impact are not assessed.",
+    "This report uses published research sources only and does not use or infer any prior-candidate prompts or unseen future/test interactions."
+  ]
+}

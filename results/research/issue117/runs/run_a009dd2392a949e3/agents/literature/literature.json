@@ -1,0 +1,69 @@
+{
+  "research": "issue117-behavior-first",
+  "task_id": "literature",
+  "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+  "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": null,
+      "arxiv": "2305.05065",
+      "url": "https://arxiv.org/abs/2305.05065",
+      "evidence_label": "FULL_TEXT",
+      "evidence": "The paper proposes TIGER, which represents items with semantic IDs and generates the next item autoregressively from user interaction history. This directly covers next-item behavior and generative semantic IDs. It does not establish use of hyperbolic geometry.",
+      "overlap": ["user next-item behavior", "generative semantic IDs"],
+      "hyperbolic_geometry": "No evidence identified in the paper's approach; representation/quantization is not presented as hyperbolic geometry."
+    },
+    {
+      "title": "Poincaré Embeddings for Learning Hierarchical Representations",
+      "doi": "10.48550/arXiv.1705.08039",
+      "arxiv": "1705.08039",
+      "url": "https://arxiv.org/abs/1705.08039",
+      "evidence_label": "FULL_TEXT",
+      "evidence": "Full-text paper introduces embeddings in the Poincaré ball, using hyperbolic geometry to represent hierarchical structure. Its studied tasks are hierarchical representation learning (including lexical entailment and link prediction), not user next-item recommendation or generative semantic IDs.",
+      "overlap": ["hyperbolic geometry"],
+      "doi_note": "The DOI is the arXiv DOI; no separate publisher DOI verified here."
+    },
+    {
+      "title": "Hyperbolic Graph Convolutional Neural Networks",
+      "doi": "10.48550/arXiv.1910.12933",
+      "arxiv": "1910.12933",
+      "url": "https://arxiv.org/abs/1910.12933",
+      "evidence_label": "FULL_TEXT",
+      "evidence": "The work develops graph convolution in hyperbolic space for graph representation learning. It is relevant as a method precedent for hyperbolic representations, but does not present user next-item behavior combined with generative semantic-ID decoding.",
+      "overlap": ["hyperbolic geometry"],
+      "doi_note": "The DOI is the arXiv DOI; no separate publisher DOI verified here."
+    },
+    {
+      "title": "Generative Recommenders: Next-item prediction as autoregressive semantic ID generation (TIGER framing)",
+      "doi": null,
+      "arxiv": "2305.05065",
+      "url": "https://arxiv.org/pdf/2305.05065",
+      "evidence_label": "FULL_TEXT",
+      "evidence": "This entry records the specific behavior-first overlap: interaction-history-conditioned autoregressive prediction of the next item, with item identity encoded by semantic IDs. This is the same TIGER source above and is not an independent study.",
+      "overlap": ["user next-item behavior", "generative semantic IDs"],
+      "hyperbolic_geometry": "Not established."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "History-conditioned next-item prediction in a hierarchical item catalog",
+      "basis": "TIGER establishes autoregressive semantic-ID generation from interaction histories; Poincaré embeddings establish a hyperbolic method for hierarchical structure.",
+      "intersection_status": "SYNTHESIS / GAP, not an already verified combined method",
+      "testable_question": "Does encoding the item hierarchy or semantic-ID code structure with a hyperbolic representation improve next-item prediction, especially for sparse histories or long-tail items, over Euclidean semantic-ID generation?"
+    },
+    {
+      "candidate": "Behavior-conditioned semantic-ID generation under sparse or short user histories",
+      "basis": "The behavior signal is the ordered interaction history and target next item; hyperbolic geometry is a plausible inductive bias for nested/coarse-to-fine item structure.",
+      "intersection_status": "Hypothesis only; the sources above do not demonstrate this combination.",
+      "testable_question": "Can a hyperbolic item/codebook geometry preserve hierarchical similarity while autoregressively decoding valid semantic-ID sequences, and does this alter next-item ranking quality or calibration?"
+    }
+  ],
+  "limitations": [
+    "No independently verified full-text source was found in this pass that explicitly combines all three elements: user next-item behavior, hyperbolic geometry, and generative semantic IDs. Do not cite the component papers as evidence that the combined approach already exists.",
+    "The citations are component precedents rather than a complete intersection bibliography. The TIGER paper is counted once conceptually; the repeated entry only makes its behavior overlap explicit.",
+    "FULL_TEXT indicates that the linked arXiv full-text/PDF was used as evidence for the stated scope. It does not mean every related work or every possible version was exhaustively audited.",
+    "The arXiv DOI strings for the two hyperbolic works identify their arXiv records, not independently verified journal publication DOIs.",
+    "No prior-candidate prompts or future/test interactions were used."
+  ]
+}

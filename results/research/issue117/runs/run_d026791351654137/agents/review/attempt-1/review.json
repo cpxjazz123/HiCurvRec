@@ -1,0 +1,25 @@
+{
+  "candidate_id": "geometry_hyprq_transition_residual_poincare_v1",
+  "candidate_sha256": "c5adb4c8037ddee699e6c36f0449622d89b1071c31c7a9e37f6c86e78990cec9",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "issue": "The falsifier does not identify a mechanically fixed seed set or aggregation rule.",
+      "evidence": "The Stage2 and Stage3 seed rules say 'every registered seed' and refer to a curved-arm aggregate, but the candidate's protocol_freeze only says seeds are frozen and gives no seed values, number of seeds, or definition of the aggregate across seeds. Thus the set of comparisons and the strict-above-reference aggregate cannot be independently determined from this manifest. The Stage2 validation diagnostic's seed 42 is specified, but that does not specify training/evaluation seeds for the registered paired comparisons.",
+      "required_resolution": "Register the exact paired seed list/count and define the aggregation function (including how each frozen reference is compared) for every criterion before execution."
+    },
+    {
+      "issue": "The held-out behavioral evaluation is not named precisely enough to make the behavioral falsifier reproducible from the candidate contract.",
+      "evidence": "The Stage3 criterion names test_R@10 and forbids tuning on test data, but directs evaluation to 'the already authorized held-out evaluation' without identifying its split/manifest, aggregation across eligible examples, or any evaluation artifact/version in this candidate. The metric and direction are registered, but which exact test evaluation produces the comparison is not uniquely pinned down here.",
+      "required_resolution": "Bind the criterion to the authorized held-out evaluation definition/artifact and specify its example-level and seed-level aggregation without exposing or using test interactions for training or selection."
+    }
+  ],
+  "reproducible_evidence": {
+    "math_and_domain": "The stated squared Poincare distance is well-typed for projected vectors in R^32 and the closed radius-0.9 ball; at c=0.5, c*R^2=0.405<1, so denominators remain positive. The stated clamp has delta=0 and the exact c->0 limit D_0^2=4||x-y||^2 is defined. No fatal math/domain defect identified.",
+    "causal_design_claim": "The train-only asymmetric transition evidence is explicitly qualified as motivation rather than proof. A global item SID with train-transition successor supervision is a plausible design test of the stated global hierarchy/geometry mismatch, but cannot itself be read as proof of user-conditioned causality; downstream Stage3 test_R@10 is registered as the behavioral test.",
+    "capacity_control": "The c=0 arm is specified to share architecture, dimensions, parameters, initialization, codebooks, losses, optimizer, schedule, seeds, data, budget, and code path, changing the geometry through the declared flat distance/identity exponential-map limit. No additional arm is introduced.",
+    "leakage_and_targets": "The manifest restricts optimization/targets to content and train-split transitions, specifies detached empirical successor targets, and excludes validation/test behavior, future events, prediction-time user context, and batch-dependent negatives from training. The loss terms and target definitions are sufficiently explicit to recompute given the frozen data and implementation protocol.",
+    "registered_tests": "The manifest registers Stage2 valid_l1_hard_er, level2_distinct_prefixes, L3_refinement_gain, conditional_G3, and L3_collision, including directions and minimum effects; it also registers Stage3 test_R@10, increase direction, and 0.005 minimum effect. It states passed/mixed/falsified/NULL handling. The outstanding reproducibility gaps are the exact seed universe/aggregate and exact behavioral evaluation binding noted above.",
+    "frozen_thresholds": "The candidate repeats schema_version 1 and strict Stage2 references valid_l1_hard_er > 16.38953942232631 and level2_distinct_prefixes > 16145, matching the supplied frozen thresholds."
+  }
+}

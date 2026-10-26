@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "candidate_id": "issue117_geometry_directed_successor_poincare_global_sid_v2",
+  "behavior_problem_id": "directed_train_transition_next_item_prediction",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "4e57e01a1f56a276ef41bddb49e91e4d842622e102de11b937c7eef98dc0b446",
+  "next_item_hypothesis": "The demonstrated failure is treating a user's chronological next item as an undirected semantic-neighbour relation: in train-only longest-prefix transitions there are 323633 directed pairs and 314605 pairs without an observed reverse, so reconstructing content alone may merge distinct successor roles. This motivates testing a directed train-transition objective; the asymmetry is not evidence that negative curvature is necessary or causally beneficial. Stage2 emits only one global three-token SID per item; Stage3 T5 does the next-item ranking.",
+  "math_definition": {
+    "architecture": "Frozen content embedding x_i in R^768 -> encoder 768-512-256-128-32 with ReLU on the hidden layers and linear 32-D output; three residual quantization levels, each with 256 learned code vectors in R^32. The only behavioral map is a shared trainable linear A in R^(32x32), applied to the source representation only in the directed successor loss. No user representation or prediction-time context.",
+    "tensor_gradient_policy": {
+      "content_embeddings": "frozen stop-gradient",
+      "encoder_parameters": "differentiable",
+      "A_source_map": "differentiable",
+      "code_vectors": "differentiable",
+      "epoch_assignment_Q": "frozen stop-gradient for the entire epoch; computed once from all 24556 training items, never from batches",
+      "residuals_and_projected_vectors": "differentiable",
+      "validation_and_test_tensors": "read-only stop-gradient"
+    },
+    "geometry_constants": {
+      "curvature_c": 0.5,
+      "tau": 0.1,
+      "epsilon": 0.1,
+      "projection_radius_R": 0.9,
+      "arcosh_clamp_minimum": 1.0,
+      "arcosh_stable_form": "for u>=0, acosh(1+u)=log1p(u+sqrt(u*(u+2))); clamp the computed argument to >=1.0 only, never 1+delta",
+      "domain_policy": "All scored vectors are Euclidean-projected to norm <= R=0.9 before distance evaluation. Thus c*||x||^2<=0.405<1 for the curved arm and denominators are positive. If roundoff produces a ratio below 1, clamp only to 1.0. Invalid/non-finite values are NULL diagnostics, not silently repaired.",
+      "flat_limit": "D_c^2 tends to 4*||x-y||^2 as c->0; unsquared d_c tends to 2*||x-y||. The exponential map tends to identity and is not used in either scoring path. The curved projection radius (1-epsilon)/sqrt(c) is undefined at c=0; the flat arm instead uses the same fixed Euclidean projection norm<=R=0.9 as the curved arm.",
+      "scored_distance_squared": "For c>0, D_c^2(x,y)=(1/c)*acosh(1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)))^2. The objective uses this squared power in the curved arm and 4*||x-y||^2, also squared-distance power, in the flat arm."
+    },
+    "assignment": {
+      "rule": "For each level, use deterministic full-training-population entropic Sinkhorn with uniform row mass 1/N and column mass 1/256 on the N=24556 ordered training item IDs. Cost is the scored squared distance from the current level's projected residual to each projected code vector. Run exactly 50 alternating row/column scalings in float64, fixed item/code order, epsilon=0.003, no batch partition. Q is the resulting frozen [N,256] transport mass, scaled to row sum 1 for losses. Hard code is argmax_k Q[i,k], ties to smallest integer code. This is a fixed finite sequence of arithmetic operations, not an optimal-transport solve, and is exactly reproducible under the stated order and precision.",
+      "prefix_diversity": "At levels one and two, construct the next level's ordered training population separately within each existing prefix, and run the same deterministic global-within-prefix balanced transport with uniform code mass over that prefix; prefixes are retained, never merged by assignment. Level-one balancing distributes items across all codes; level-two balancing distributes within each first-code bucket, preserving up to all 256x256 ordered prefixes. Level three is likewise balanced within each level-two prefix. If a prefix has fewer than 256 members, assign deterministically by nearest cost with code-index tie break; empty groups are skipped.",
+      "gradient_path": "Hard labels are export/diagnostic only. Reconstruction and commitment use the frozen soft Q weights, so gradients flow through projected vectors and code vectors, not through Q. Directed transition loss uses soft target SID distributions formed by products of the three frozen per-level Q tensors; its distance operands remain differentiable. No loss is claimed to differentiate through argmax."
+    },
+    "operation_order": "At each level l: encode content; form residual r_l=z-sum_{j<l} q_j; map the residual through the identity map; Euclidean-project that residual to norm<=R; Euclidean-project every code vector to the same norm<=R; compute assignment costs and the epoch-frozen balanced Q; choose the diagnostic/export hard code; subtract the selected/soft-expected code from the unprojected residual to form the next residual. For transition scoring, map the source z through A, then project; project target z; score directly with D_c^2. No exp map is applied.",
+    "objective": {
+      "anti_collapse": "The reconstruction term below compares each projected latent to the soft-quantized reconstruction and the directed successor term distinguishes source and observed successor using fixed train-only transition targets. Full-population balanced assignments prevent all items choosing one code; the differentiable reconstruction and transition losses have gradient paths to encoder/code parameters. The epoch assignment itself is constant in the loss and is not presented as a trainable anti-collapse gradient.",
+      "loss_equations": [
+        "Let I={1,...,N}, N=24556 train items; l in {1,2,3}; Q_l in [0,1]^(N x 256) be the frozen row-normalized assignments; z_i in R^32 be encoder output; C_l in R^(256 x 32) be code vectors; P_R(v)=v*min(1,R/(||v||+1e-12)); qbar_{i,l}=sum_k Q_l[i,k] P_R(C_l[k]); r_{i,1}=z_i and r_{i,l}=z_i-sum_{j<l}qbar_{i,j}. L_rec=(1/N)sum_i D_c^2(P_R(z_i),P_R(sum_l qbar_{i,l})); L_commit=(1/(3N))sum_{i,l}||P_R(r_{i,l})-stopgrad(qbar_{i,l})||_2^2. Empty item set is invalid and yields NULL; reductions are arithmetic means."
+        ,
+        "Let T be the multiset of directed train-only longest-prefix successor pairs (s,t), preserving multiplicity, with s!=t; J_s={t' in train items:t'!=s} is the fixed candidate set. Let pi_t(v)=product_{l=1}^3 Q_l[t,v_l] on v in {0,...,255}^3, normalized to sum one; define source a_s=P_R(A z_s), target y_t=P_R(z_t), logits g(s,t')=-D_c^2(a_s,y_{t'})/tau, p(t'|s)=softmax over J_s. L_tr=-(1/|T|)sum_(s,t in T) sum_{t' in J_s} pi_t SID mass target weighted by -log p(t'|s), equivalently target is uniform over exact observed successor item t and loss=-log p(t|s). Use L_tr=-(1/|T|)sum_(s,t in T)log p(t|s); the target is parameter-independent train event identity, transition multiplicities retained. Empty T or J_s is NULL; exclude pairs with empty J_s before reduction and report NULL if none remain."
+        ,
+        "L=L_rec+0.25*L_commit+0.1*L_tr. The transition coefficient is fixed, not tuned. Targets, candidate sets, and frozen Q are determined from training items/transitions only. No target depends on current parameters except assignments, whose circularity is broken by computing Q once at the start of each epoch from the epoch-start parameters, then stop-gradient freezing it for that full epoch."
+      ]
+    },
+    "residual_order": "For every level: map residual -> project residual and code vectors -> assign -> subtract code from the unprojected residual. The resulting residual is mapped/projected only when it enters the next level's assignment; no post-subtraction projection is inserted. In transition scoring: source map -> project, target project -> distance."
+  },
+  "hyperbolic_necessity": "Negative curvature is a hypothesis for this directed next-item failure, not inferred from the evidence. A tree-like branching successor structure can make a constant-curvature negative metric worth testing because it changes relative distances on the exact same bounded coordinates and can accommodate hierarchical branching with less distortion than a flat metric. Literature evidence is partial: HypRQ-VAE reports hyperbolic item indexing for long-tail generative recommendation but does not establish individualized next-item semantic-ID generation; other cited works establish only partial intersections. The matched flat arm and downstream test can falsify necessity.",
+  "euclidean_control": "One implementation, same architecture, parameters, content and train-transition inputs, full-population assignment, code initialization, optimizer, schedule, seeds and budget. Both arms apply the same fixed Euclidean projection radius R=0.9 to every vector entering a distance; the sole scored-distance change is D_c^2 replaced by its exact c->0 limit 4*||x-y||^2. No exponential map in either arm.",
+  "effect_site": "The candidate changes the metric used for residual code assignment, reconstruction/commitment, and directed train-successor scores. Stage2 diagnostics expected to move are valid_l1_positive_hit_rate, valid_l1_hard_er, level2_distinct_prefixes, L3 collision, L3 refinement gain, and conditional_G3. These are diagnostics only; Stage2 does not rank.",
+  "real_trigger_measurement": "Train-only longest-prefix per-user transitions contain 339519 transitions over 323633 directed pairs, with no observed reverse for 314605 pairs (fraction 0.9266197178950221); mean next-item entropy is 4.844072338042215 bits. This motivates directional modeling but does not prove curvature or causal gain.",
+  "training_only_inputs": "Frozen content embeddings for items, train split item IDs, and train-only directed transitions. No validation/test behavior, future event, prediction-time user context, or batch-composition-derived target is used for optimization. Validation pairs are read-only diagnostics; test is used once for the registered Stage3 behavioral comparison, with no fitting, selection, or threshold adjustment.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false,
+    "stage2_training_protocol": {
+      "epochs": 3000,
+      "batch_size_per_rank": 1024,
+      "world_size": 4,
+      "global_batch_size": 4096,
+      "optimizer": "AdamW",
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "warmup_epochs": 50,
+      "gradient_clip_norm": 1.0,
+      "seed": 42,
+      "transition_sampler_seed_base": 42,
+      "workers": 0,
+      "early_stopping": false,
+      "evaluation_interval_epochs": 50,
+      "codebook_initialization": "For each of three levels, sklearn KMeans(n_clusters=256,n_init=10,random_state=0), fit on that level's full training residual population in ascending training-item ID order; initialize centroids in code-index order. Xavier initialization enabled for neural layers. No other initialization or protocol changes."
+    },
+    "stage3_T5_protocol": {
+      "paired_seed_set": [42],
+      "epochs": 150,
+      "train_batch_size": 4096,
+      "inference_batch_size": 1024,
+      "optimizer": "AdamW",
+      "learning_rate": 0.003,
+      "weight_decay": 0.05,
+      "scheduler": "linear warmup for 10% of total steps then linear decay to minimum factor 0.2",
+      "model": "T5 encoder 4 layers, decoder 4 layers, d_model=128, d_ff=1024, 6 heads, d_kv=64, dropout=0.1, ReLU",
+      "beam_size": 20,
+      "seed": 42,
+      "evaluation": "no validation-based checkpoint selection; evaluate test once after fixed training, report test_R@10",
+      "early_stopping": false
+    }
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {"name":"valid_l1_hard_er","direction":"curved minus flat > 0","minimum_effect":0.1,"seed_rule":"single paired initialization seed 42; compute both arms on identical frozen 52855 validation pairs (seed 42) and use paired difference"},
+      {"name":"level2_distinct_prefixes","direction":"curved minus flat > 0","minimum_effect":1,"seed_rule":"single paired initialization seed 42; deterministic SID export on all items"},
+      {"name":"conditional_G3","direction":"curved minus flat > 0","minimum_effect":0.01,"seed_rule":"single paired initialization seed 42; prescribed estimator on the same validation pairs; NULL for non-finite pair, average finite pairs"}
+    ],
+    "stage3_behavioral_test": {"metric":"test_R@10","direction":"curved minus flat > 0","minimum_effect":0.005,"seed_rule":"paired seed set is exactly [42]. Train each arm once with the Stage3 protocol specified in protocol.stage3_T5_protocol, using corresponding global SIDs; arithmetic paired difference across the registered set (therefore its single paired value), no test-based fitting, selection, or threshold adjustment."},
+    "classification": {
+      "falsified_if":"any registered stage2 diagnostic comparison or stage3_behavioral_test comparison is finite and <= its registered minimum_effect",
+      "passed_if":"every registered stage2 diagnostic comparison and stage3_behavioral_test comparison is finite and > its registered minimum_effect, and the admission gates valid_l1_hard_er > 10.0 and level2_distinct_prefixes > 16145 hold",
+      "mixed_if":"otherwise, including any NULL outcome; NULL means a seed-wise or aggregated change is undefined/non-finite (zero denominator, missing evaluation, or empty stratum), and any comparison with any NULL seed is inconclusive rather than passed or falsified"
+    }
+  }
+}

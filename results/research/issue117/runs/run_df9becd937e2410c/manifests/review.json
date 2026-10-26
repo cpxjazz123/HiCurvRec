@@ -1,0 +1,331 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "asymmetric_train_only_successor_transitions",
+    "candidate_id": "geometry_global_balanced_poincare_transition_sid_v1",
+    "effect_site": "Squared-distance evaluation in the levelwise global assignment costs and transition edge distributions; same metric substitution in reconstruction and commitment. No Stage3 component is changed.",
+    "euclidean_control": "Both arms use the same implementation, architecture, 32-dimensional representations, codebooks, initialization, global full-training-set balanced assignments, fixed norm projection radius R=0.99999, residual ordering, loss terms, training inputs, and frozen training protocol; only the scored operator changes from D_c^2 to its exact c->0 limit 4*||x-y||^2. The flat arm uses the same projection (not the undefined (1-epsilon)/sqrt(c) expression).",
+    "falsifier": {
+      "classification": {
+        "falsified_if": "any registered Stage2 admission diagnostic fails its stated strict gate, OR every defined Stage2 geometry diagnostic is not in its registered direction, OR stage3_behavioral_test is defined and is not in its registered direction",
+        "mixed_if": "otherwise; this includes any NULL outcome or comparison containing a NULL seed, which is inconclusive and is neither passed nor falsified",
+        "passed_if": "both registered Stage2 admission diagnostics pass their strict gates AND every other registered Stage2 diagnostic and stage3_behavioral_test meet their registered direction and minimum_effect, with no NULL seed"
+      },
+      "null_outcome_rule": "If any seed-wise or aggregated change is undefined or non-finite (including zero denominator, missing evaluation, or empty stratum), classify that outcome NULL. Any comparison with any NULL seed is inconclusive, not passed or falsified.",
+      "stage2_diagnostics": [
+        {
+          "direction": "curved strictly above frozen Resample gate",
+          "minimum_effect": 16.38953942232631,
+          "name": "valid_l1_hard_er",
+          "seed_rule": "Compute on the frozen validation pairs: 52855 anchors, one positive and ten negatives per anchor, seed 42, history[-1] to target. Use valid Hard-L1 ER=10*positive_hits/negative_hits with negative hits counted over the same ten negatives. Gate is strict > registered minimum_effect."
+        },
+        {
+          "direction": "curved strictly above frozen Resample gate",
+          "minimum_effect": 16145,
+          "name": "level2_distinct_prefixes",
+          "seed_rule": "Count unique (k1,k2) over all items for each arm; gate is strict > registered minimum_effect."
+        },
+        {
+          "direction": "curved minus flat > 0",
+          "minimum_effect": 0.001,
+          "name": "valid_l1_positive_hit_rate",
+          "seed_rule": "On the same frozen 52855 validation pairs, report the share where anchor first SID token equals positive first SID token; compare paired seed-wise curved minus flat."
+        },
+        {
+          "direction": "curved minus flat < 0",
+          "minimum_effect": 0.001,
+          "name": "l3_collision",
+          "seed_rule": "Share of all items whose full three-code SID is shared with another item; compare paired seed-wise curved minus flat."
+        },
+        {
+          "direction": "curved minus flat > 0",
+          "minimum_effect": 0.01,
+          "name": "l3_refinement_gain",
+          "seed_rule": "Mean over items of log2(|bucket(k1,k2)|/|bucket(k1,k2,k3)|); compare paired seed-wise curved minus flat."
+        },
+        {
+          "direction": "curved minus flat > 0",
+          "minimum_effect": 0.01,
+          "name": "conditional_g3",
+          "seed_rule": "Use exactly alpha=1 and K=256. For each validation pair compute p_pref(l)=(target-prefix bucket items with third code l, minus one if l is target's own third code, plus alpha)/(bucket size minus one plus alpha*K); p_hist(l)=(train-only longest-prefix successor count restricted to target's level-two prefix and third code l plus alpha*p_pref(l))/(restricted successor total plus alpha). Average log2(p_hist(target third code)/p_pref(target third code)); pair with no restricted successor contributes 0; non-finite pair is NULL. Compare paired seed-wise curved minus flat."
+        }
+      ],
+      "stage3_behavioral_test": {
+        "direction": "paired-seed mean(curved test_R@10 - flat test_R@10) >= minimum_effect",
+        "metric": "test_R@10",
+        "minimum_effect": 0.005,
+        "seed_rule": "After both arms pass Stage2 admission, run unchanged Stage3 T5 for every paired frozen seed; evaluate test_R@10 on the existing held-out test split, compute the paired per-seed curved-minus-flat differences and their arithmetic mean, and compare that mean to this registered minimum_effect. Stage3 is evaluation only; test data never informs Stage2 training or choices."
+      }
+    },
+    "hyperbolic_necessity": "The selected measured failure is directed successor-branch conflation: 92.66197178950221% of observed directed pairs lack a reverse event, with highly repeated directional edges alongside a few reciprocal pairs. Negative curvature is justified as a testable inductive bias because a tree-like, expanding neighborhood geometry can represent shared coarse identity followed by increasingly separated asymmetric branches, matching three-level residual codes and avoiding a single flat neighborhood's pressure to conflate branches. The evidence establishes directional structure only; it does not establish that negative curvature improves prediction, that the structure is intrinsically hierarchical, or that the literature combines hyperbolic geometry with TIGER. The verified TIGER abstract supports session next-item prediction with generative Semantic IDs only.",
+    "literature_evidence_sha256": "94cc35dd40713b83e6f605fb32cf4440770d5398d8d68a6d9d4b231629355917",
+    "math_definition": {
+      "balanced_assignment": "At each epoch and level, compute costs for every training item in a fixed canonical item-ID order, never per minibatch. Compute the entropic transport matrix A_l over the entire training item set I_train by Sinkhorn scaling exp(-cost/tau), with each item row sum 1 and each of 256 code-column sums |I_train|/256; use 50 deterministic alternating row/column normalizations in float64, then cast the resulting matrix to model dtype. Freeze A_l for that epoch; minibatch composition never enters it. No validation/test item or behavior enters this assignment. For level 2, compute assignment after the level-1 residuals using the same global population. Global column balance at both levels and the fixed full-population assignment avoid the batch-hard-argmin diversity collapse; the level-two anti-collapse term explicitly rewards broad joint (k1,k2) occupancy. No claim of guaranteed prefix threshold is made; it is an evaluated gate.",
+      "geometry_constants": "Freeze curvature c=1.0 for the curved arm, tau=0.1 for the global Sinkhorn kernel, epsilon=1e-5 for the common projection radius R=1-epsilon=0.99999, clamp arcosh input to at least exactly 1.0, and use the stable arcosh(z)=log1p((z-1)+sqrt((z-1)*(z+1))). No clamp to 1+delta is used (delta=0). The scored distance is squared in both arms.",
+      "loss_equations": "The complete minimized objective is exactly L_rc + 0.1*L_edge + L_pc as defined in objective.loss_equations.",
+      "objective": {
+        "anti_collapse": "The differentiable anti-collapse mechanism is a joint level-one/level-two occupancy entropy reward, plus global balanced assignment. It enters the minimized objective as -lambda_pc*H(p12), where p12 is the normalized soft joint assignment mass over all training items and 256^2 pairs; lambda_pc=0.01. Because H is maximized, mapping every item to one code pair cannot minimize this term. The same term and coefficient are used in both geometry arms.",
+        "lambda_commitment": 0.25,
+        "lambda_prefix_entropy": 0.01,
+        "lambda_transition": 0.1,
+        "loss_equations": [
+          {
+            "empty_group_rule": "I_train is the fixed nonempty training item population; an empty level/group is a fatal invalid run, not silently skipped.",
+            "equation": "For level l and i in I_train, C_l[i,k]=D_c^2(project(r_il),project(e_lk)); K_l=exp(-C_l/tau); A_l=Sinkhorn50(K_l; row_sum=1, column_sum=|I_train|/256), where assignments are computed on the entire canonical-order training item set in float64 and frozen for the epoch. q_il=sum_{k=1}^{256} A_l[i,k]*project(e_lk).",
+            "gradient_and_circularity": "The costs and learned code vectors have gradients through the exponential kernel and differentiable Sinkhorn normalizations. For stable epoch-frozen assignments, A_l is stop-gradient after whole-population computation; reconstruction and commitment losses still train encoder/codebook via their explicit paths. The assignment is computed from current-epoch parameters before that epoch's minibatch updates, so no target depends circularly on the same minibatch's update.",
+            "name": "global_balanced_soft_assignment",
+            "shapes_and_indices": "C_l,K_l,A_l: [N_train,256]; r_il and q_il: [N_train,32]; e_lk: [256,32]; l in {1,2,3}."
+          },
+          {
+            "empty_group_rule": "N_train=0 is fatal; otherwise ordinary arithmetic mean.",
+            "equation": "L_rc=(1/N_train)*sum_{i in I_train}[D_c^2(project(h_i),project(sum_{l=1}^3 q_il)) + 0.25*sum_{l=1}^3 D_c^2(project(r_il),stopgrad(project(q_il)))].",
+            "gradient_and_circularity": "Reconstruction differentiates through encoder, soft assignment and code vectors; commitment differentiates through residual/encoder but stops the q target. q is formed from the epoch-frozen global assignment table, so no same-step target-parameter circularity.",
+            "name": "reconstruction_commitment",
+            "shapes_and_indices": "h_i,r_il,q_il in R^32; one scalar per item, averaged over I_train; levels l={1,2,3}."
+          },
+          {
+            "empty_group_rule": "If E_train is empty, define L_edge=0 and record no edge supervision; otherwise normalize by total unique edge count for the outer mean and by total train transition count for w.",
+            "equation": "For E_train={(i,j): count_train(i->j)>0}, define t_ij=softmax_k(-stopgrad(D_c^2(project(h_i),project(e_1k)))/tau) and s_ij=softmax_k(-D_c^2(project(h_j),project(e_1k))/tau); L_edge=-(1/|E_train|)*sum_{(i,j) in E_train} w_ij*sum_{k=1}^{256} t_ij[k]*log(max(s_ij[k],1e-12)), with w_ij=count_train(i->j)/sum_{(a,b) in E_train}count_train(a->b).",
+            "gradient_and_circularity": "The source target t is stop-gradient; the destination distribution s differentiates through destination representation, code vectors and D. This target is based only on the source item representation and is detached, preventing target-prediction circularity. No validation/test interactions, future events, prediction-time user context or batch composition are used.",
+            "name": "train_successor_edge_loss",
+            "shapes_and_indices": "h_i,h_j,e_1k in R^32; t_ij,s_ij in R^256; E_train contains unique directed transitions derived only from legal train-split interactions; counts are train-only."
+          },
+          {
+            "empty_group_rule": "N_train=0 is fatal; zero-mass cells contribute zero by 0*log(max(0,1e-12))=0.",
+            "equation": "p12[a,b]=(1/N_train)*sum_{i in I_train} A_1[i,a]*A_2[i,b]; L_pc=-0.01*H(p12)=0.01*sum_{a=1}^{256}sum_{b=1}^{256}p12[a,b]*log(max(p12[a,b],1e-12)).",
+            "gradient_and_circularity": "Gradients pass through soft A_1 and A_2 to encoder and codebooks. The assignments are the frozen epoch-level global transport plan, not a target estimated from the current minibatch; no circular minibatch target.",
+            "name": "level2_prefix_anti_collapse",
+            "shapes_and_indices": "A_1,A_2 in R^(N_train x 256); p12 in R^(256 x 256); sum over all 65536 pairs."
+          },
+          {
+            "empty_group_rule": "Uses the explicit L_edge empty-set rule above; other empty training populations are fatal.",
+            "equation": "L=L_rc+0.1*L_edge+L_pc.",
+            "gradient_and_circularity": "All terms have explicit differentiable parameter paths as specified above; no loss is computed solely from one-hot argmin codes.",
+            "name": "total_stage2_loss",
+            "shapes_and_indices": "Scalar objective; all item and edge index sets are defined above."
+          }
+        ]
+      },
+      "operator": {
+        "arcosh_clamp_min": 1.0,
+        "arcosh_stable_form": "log1p((z-1)+sqrt((z-1)*(z+1))) after z=max(1.0,z_raw)",
+        "c_to_zero_rules": "For every distance invocation use the explicit continuous branch D_0^2=4*||x-y||^2; the distance itself tends to 2*||x-y||. The exponential map exp_0(v)=v (identity); the projection-radius expression (1-epsilon)/sqrt(c) is undefined at c=0, so the flat arm instead applies the identical fixed Euclidean norm projection ||x||<=R to every scored vector. No curvature-dependent projection occurs inside the scored region.",
+        "curvature_c": 1.0,
+        "delta": 0.0,
+        "epsilon": 1e-05,
+        "family": "poincare_squared_distance",
+        "flat_limit": "4*||x-y||^2",
+        "radius": 0.99999,
+        "scored_distance_squared": "D_c^2(x,y)=(1/c)*arcosh(max(1,1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2))))^2",
+        "temperature_tau": 0.1
+      },
+      "shared_representation_and_operation_order": "Content embedding e_i is mapped by the same learned 32-dimensional map to h_i and projected to norm <=R. At each level l=1,2,3: map the current residual to the common tangent-coordinate representation; project that mapped vector to norm <=R; compute squared distances to all 256 level-l code vectors (each code vector is projected to norm <=R before scoring); compute full-training-population balanced soft assignments; form quantized vector q_il as the assignment-weighted sum of projected code vectors; subtract q_il from the current residual; project the residual to norm <=R before it is used by the next level. Thus every residual step is exactly map, project, assign, subtract, project-residual. The final exported SID is the global argmax code at each level from the frozen whole-training-item assignment table, one three-token SID per item, reused identically in all contexts. The soft assignment used in training is differentiable; the exported hard codes do not define a loss."
+    },
+    "next_item_hypothesis": "A demonstrated failure mode is collapsing directed next-item transitions into item-similarity neighborhoods: the train-only population has 339519 directed transitions and 314605 with no observed reverse event (0.9266197178950221), while some frequent edges are reciprocal (22372↔22639; 9218↔22372). A single flat metric can spend code capacity on broad near-neighbor structure and fail to preserve the many one-way successor branches. Stage2 will encode item content plus train-only successor structure in a globally balanced, three-level residual SID; hyperbolic squared distance is hypothesized to better separate distinct outward branches while retaining shared broad prefixes. This is a hypothesis, not a causal conclusion from the manifest. Stage3 T5 alone ranks next items; Stage2 emits fixed item SIDs and does not rank.",
+    "protocol": {
+      "codes_per_level": 256,
+      "epochs": 3000,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "optimizer_schedule_batch_seed_codebook_initialization": "exactly the existing frozen Stage2 run settings and KMeans-initialized codebook initialization, identical in both arms; do not alter or tune any of them",
+      "stage2_role": "build one global three-token SID per item only; no prefix Transformer, beam search, recommendation ranking, Recall/NDCG computation, or user bootstrap",
+      "stage3_role": "downstream frozen Stage3 T5 ranks next items after Stage2 admission",
+      "training_budget": "unchanged full Stage2 budget; no early stopping",
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "The behavior-trigger measurement is train-only directed successor asymmetry: no_reverse_fraction=0.9266197178950221 among 339519 directed transitions, from train_only_longest_prefix_per_user. It motivates a branch-encoding test, not a causal claim. Validation diagnostics use the prescribed frozen 52855-pair sample only; validation interactions never supervise training.",
+    "schema_version": 1,
+    "stable_global_sid": true,
+    "training_only_inputs": "Stage2 consumes content embeddings and train-split item transitions only. No validation/test behavior, unseen future/test interactions, prediction-time user context, user bootstrap, or minibatch composition signal is allowed. The deterministic global assignment population is the full training item set, computed and frozen per epoch."
+  },
+  "candidate_id": "geometry_global_balanced_poincare_transition_sid_v1",
+  "candidate_sha256": "839d55836464064d93584ab0ec526b2eb9c8ffc6c2f8570e3059894fffeca529",
+  "contract_sha256": "a4caf6b12ad1388ceae9ab51ff69fedb04d38f42b064ebb6e0feda6c32b3c27f",
+  "inputs_sha256": "7504a33554c7c5c6139519984b3f6de38f07d5cc6d76f0f5d41f01e299d4830c",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Session-conditioned next-item prediction using generative Semantic IDs, with hyperbolic geometry as a proposed representation/regularization choice.",
+        "evidence_status": "PARTIAL_INTERSECTION_ONLY",
+        "research_gap": "A direct three-way intersection is not verified; do not represent hyperbolic geometry as part of TIGER or as an established combined method.",
+        "supported_overlap": "The TIGER abstract directly supports session-based next-item prediction and generative Semantic IDs.",
+        "unsupported_overlap": "No independently verified source in this evidence set establishes that the same method uses hyperbolic geometry."
+      }
+    ],
+    "limitations": [
+      "No source was independently verified here that combines all three elements: user next-item behavior, hyperbolic geometry, and generative Semantic IDs.",
+      "The only included paper is verified from its arXiv abstract page; despite the linked HTML/PDF, no claim from its full text is labeled FULL_TEXT.",
+      "The absence of a verified combined paper in this small evidence set is not proof that none exists.",
+      "No prior-candidate prompt or unseen future/test interaction was used."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+      "task_id": "literature"
+    },
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "bibliographic_note": "NeurIPS 2023; arXiv version v3, revised 2023-11-03.",
+        "doi": "10.48550/arXiv.2305.05065",
+        "evidence_basis": "ArXiv landing page abstract explicitly says that the model takes Semantic IDs for items in a user session and predicts the Semantic ID of the next item the user will interact with. The landing page provides full-text links, but the full text itself was not inspected for this report.",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "Direct: autoregressive generative retrieval decodes semantically meaningful codeword tuples (Semantic IDs).",
+          "hyperbolic_geometry": "Not evidenced in the checked abstract.",
+          "user_next_item_behavior": "Direct: next-item prediction from a user session."
+        },
+        "links": {
+          "abstract": "https://arxiv.org/abs/2305.05065",
+          "full_text_html": "https://arxiv.org/html/2305.05065v3",
+          "pdf": "https://arxiv.org/pdf/2305.05065"
+        },
+        "title": "Recommender Systems with Generative Retrieval"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "94cc35dd40713b83e6f605fb32cf4440770d5398d8d68a6d9d4b231629355917",
+  "preflight_verdict": "SCIENTIFIC_REVIEW_REQUIRED",
+  "preflight_warnings": [
+    {
+      "actual": "curved minus flat < 0",
+      "code": "DIRECTION_CONFLICTS_WITH_EVIDENCE",
+      "expected": "lower",
+      "layer": "falsifier",
+      "location": "falsifier.stage2_diagnostics[l3_collision].direction",
+      "repair": "justify the direction against the measured evidence",
+      "verdict": null
+    },
+    {
+      "actual": "curved minus flat > 0",
+      "code": "DIRECTION_CONFLICTS_WITH_EVIDENCE",
+      "expected": "lower",
+      "layer": "falsifier",
+      "location": "falsifier.stage2_diagnostics[l3_refinement_gain_bits].direction",
+      "repair": "justify the direction against the measured evidence",
+      "verdict": null
+    }
+  ],
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

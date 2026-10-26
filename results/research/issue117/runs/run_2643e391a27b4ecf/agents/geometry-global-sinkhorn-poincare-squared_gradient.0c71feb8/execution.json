@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "geometry-global-sinkhorn-poincare-squared_gradient",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792842198.315642,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "aa8aead8d7898466e5a5360b36971998f85396165501dbd968fdc4fb4daae75f",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "gradient.json",
+  "output_sha256": "3b28f3472b01c400206e31eff4c968f14098447e5c708db54f3493ac6f50ca55",
+  "pid": 2884890,
+  "project_marker": ".git",
+  "prompt_sha256": "8e06cc784d00d30466c9e835807c0b7d0a6b92161e932695fbcaf233e5b349f7",
+  "session_sha256": "700bb05cfa94a8bdcdfa00577e70e763745aa35fd87fc1be3adbbacc4bd72594",
+  "stderr_present": false,
+  "task_id": "geometry-global-sinkhorn-poincare-squared_gradient",
+  "timed_out": false,
+  "verified": true
+}

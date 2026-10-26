@@ -1,0 +1,70 @@
+{
+  "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+  "research": "issue117-behavior-first",
+  "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+  "task_id": "literature",
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": "10.48550/arXiv.2609.03369",
+      "arxiv": "2609.03369",
+      "url": "https://arxiv.org/abs/2609.03369",
+      "full_text_url": "https://arxiv.org/html/2609.03369",
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": "Strongest direct intersection: explicitly describes sequential recommenders as modeling user behavior with item-ID sequences; proposes hyperbolic residual-quantized item indexing for generative recommendation (a semantic/discrete item code sequence). The full paper describes next-item recommendation experiments and autoregressive recommendation. It does not establish that a user's behavior encoder itself is hyperbolic; hyperbolic geometry is used for item indexing/tokenization.",
+      "verification": "Read arXiv HTML full text and its abstract. The paper title, abstract, and full text identify hyperbolic item indexing, generative recommendation, user-item interaction long-tail structure, and sequential/next-item setting.",
+      "caveat": "Preprint; verify publication/version status before treating claims as peer-reviewed. Semantic IDs are represented as learned quantized item codes; terminology can differ across papers."
+    },
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": "10.52202/075280-0452",
+      "arxiv": "2305.05065",
+      "url": "https://arxiv.org/abs/2305.05065",
+      "full_text_url": "https://arxiv.org/html/2305.05065",
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": "Covers user next-item behavior and generative semantic IDs: it assigns items semantically meaningful tuples of codewords (Semantic IDs), then trains a sequence-to-sequence Transformer on Semantic IDs in a user session to predict the next interacted item. It does not use hyperbolic geometry.",
+      "verification": "Read the full arXiv HTML. The method and abstract explicitly state Semantic IDs for items in a user session and prediction of the next item; a full-text search for 'hyperbolic' returned no matches.",
+      "caveat": "This is a two-axis predecessor/baseline, not evidence for the three-way intersection."
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "doi": "10.1145/3459637.3482351",
+      "url": "https://doi.org/10.1145/3459637.3482351",
+      "open_access_full_text": "https://dl.acm.org/doi/pdf/10.1145/3459637.3482351",
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Covers sequential recommendation and hyperbolic geometry: proposes hyperbolic hypergraph convolution and multi-scale/hierarchical item representations for sequential recommendation. The available verified abstract does not report generative semantic IDs or autoregressive code-token generation.",
+      "verification": "Cross-checked title, DOI, year and abstract via OpenAlex metadata; abstract describes the hyperbolic hypergraph sequential recommender.",
+      "caveat": "ACM PDF link is listed as open access by metadata, but its full text was not inspected for this evidence record; therefore no claim of absence of semantic IDs is made beyond the abstract."
+    },
+    {
+      "title": "Self-Attentive Sequential Recommendations with Hyperbolic Representations",
+      "doi": "10.1145/3640457.3688180",
+      "url": "https://doi.org/10.1145/3640457.3688180",
+      "open_access_full_text": "https://dl.acm.org/doi/pdf/10.1145/3640457.3688180",
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Abstract explicitly frames self-attentive sequential learning as next-item recommendation and replaces the final Euclidean output with a predictor in nonlinear hyperbolic space. The abstract does not mention generative Semantic IDs.",
+      "verification": "Cross-checked title, DOI, year and abstract via OpenAlex metadata.",
+      "caveat": "The full text was not inspected for this evidence record; do not infer from abstract alone that no semantic-ID variant appears in the paper."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Long-tail next-item prediction with hyperbolic semantic item codes",
+      "basis": "HypRQ-VAE is direct evidence that hyperbolic quantized item indexing can support generative recommendation and tail-item recovery; TIGER establishes Semantic-ID autoregressive next-item prediction. The synthesis is a promising behavior-first research question, not a claim that these independent results already prove the combined design.",
+      "testable_question": "Does hyperbolic generative item indexing improve next-item hit-rate/recall and calibration specifically for users whose recent behavior indicates niche or long-tail preference, compared with Euclidean semantic IDs under identical sequence models and candidate vocabularies?",
+      "required_evidence": "Evaluate temporal next-item prediction with user-level and popularity-stratified metrics; report item-code collisions/decodability, head-versus-tail results, and ablations separating hyperbolic geometry from tokenizer and sequence-model effects."
+    },
+    {
+      "candidate": "Behavior-conditioned hierarchy and preference-depth modeling",
+      "basis": "Hyperbolic sequential recommenders motivate hierarchical representations of behavior, while generative Semantic-ID models predict next-item codes from a user session. Their integration is not demonstrated by the sequential hyperbolic abstracts verified here.",
+      "testable_question": "Can a user's changing sequence context be modeled as movement across levels of a hyperbolic item hierarchy, and does generating the next item's code preserve both short-term transition intent and longer-term preference?",
+      "required_evidence": "Compare transition-sensitive and long-horizon metrics, test sequence truncation and preference-shift cases, and validate that code-tree proximity corresponds to meaningful behavior rather than only item content/popularity."
+    }
+  ],
+  "limitations": [
+    "No independently verified source inspected here demonstrates all three elements together with direct full-text evidence. HypRQ-VAE is the closest verified three-way candidate, but its hyperbolic component is item indexing, not necessarily the user-state/behavior encoder.",
+    "The evidence labels describe what was inspected: FULL_TEXT means arXiv HTML text was read; ABSTRACT means bibliographic abstract was checked, not the paper body. No UNKNOWN source is included because the listed records have at least abstract-level verifiable evidence.",
+    "Do not collapse sequential recommendation, user-behavior generation, generative retrieval, and Semantic-ID generation into identical tasks. TIGER specifically predicts the next interacted item from a user session; other generative retrieval settings may instead map queries to item IDs.",
+    "Preprint status and publication records can change. DOI/arXiv identifiers and linked source pages are supplied for independent verification; this search establishes candidate overlap, not causal evidence that hyperbolic codes improve user behavior outcomes."
+  ]
+}

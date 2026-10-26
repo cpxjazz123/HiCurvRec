@@ -1,0 +1,32 @@
+{
+  "candidate_id": "geometry_content_rq_poincare_sq_v1",
+  "candidate_sha256": "52e13a5bded5ba9cbf4ee6b90dfe075a3dfcba177d7915109cc3886cd82e8981",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "id": "anti_collapse_gradient_claim_is_false_at_exact_collapse",
+      "severity": "FATAL",
+      "finding": "The objective specifies V=mean_d max(0, 1-sqrt(var_d+1e-8))^2 and claims that at exact representation collapse V has strictly positive value and gradients flow through z and encoder parameters, thereby preventing collapse. The value is indeed positive (approximately 0.9998 per dimension), but at z[i]=z0 for every item, the derivative of each dimension's variance with respect to every z[i,d] is zero because z[i,d]-mean_i(z[:,d])=0. Consequently the derivative of V with respect to z is exactly zero at the claimed collapse point, so the stated gradient-based prevention does not follow. This is an explicitly asserted mathematical property of a loss term, not an implementation requirement. The loss may still exert gradients away from exact collapse, but the registered justification that it prevents an all-identical representation by a nonzero gradient at collapse is unsound.",
+      "evidence": "math_definition.objective.anti_collapse states both the variance-floor formula and that at exact representation collapse V=1.0, strictly positive; gradients flow through z and encoder parameters; this prevents mapping all items to one code. Differentiating the stated centered variance at z[i]=z0 gives d(var_d)/d(z[i,d])=0 for all i,d, hence dV/dz=0 at that point."
+    },
+    {
+      "id": "stage2_minimum_effects_not_enforced_by_registered_seed_rules",
+      "severity": "MATERIAL",
+      "finding": "The Stage2 comparison rules do not consistently require the declared minimum_effect. valid_l1_hard_er declares minimum_effect 0.01 but its seed_rule requires only curved-minus-flat > 0; level2_distinct_prefixes declares 1.0 but likewise requires only > 0; L3_collision declares -0.001 but its seed_rule requires only the registered direction (< 0). Thus a result can mechanically pass those rules while missing the registered effect threshold. The falsifier does not resolve this: it refers to each comparison's registered direction and minimum_effect but gives no unambiguous operational precedence over the conflicting seed_rule. This prevents a reproducible pass/fail classification for those outcomes as written.",
+      "evidence": "falsifier.stage2_diagnostics entries for valid_l1_hard_er (minimum_effect 0.01), level2_distinct_prefixes (1.0), and L3_collision (-0.001) compared with their seed_rule strings, which respectively require differences >0, >0, and merely satisfy direction."
+    }
+  ],
+  "reproducible_evidence": {
+    "math_checks": {
+      "curvature_domain": "Defined on projected operands with norms <=0.999 and c=0.1: both denominator factors 1-c||x||^2 are positive (at least 0.900199); the arcosh argument is >=1. The stated lower clamp and stable arcosh expression are consistent with the domain.",
+      "flat_limit": "The stated D_c^2 tends to 4||x-y||^2 as c->0, consistent with the declared flat arm and squared-distance use.",
+      "nontrivial_curved_effect": "At c=0.1 the distance depends on operand norms as well as ||x-y||, so it is not a constant rescaling of the flat metric on the shared projected ball. The declared comparison can test a genuine geometry change."
+    },
+    "design_checks": {
+      "same_capacity_control": "The manifest specifies same implementation, codebooks, parameter count, initialization, projection, assignment, objective, optimizer, schedule, epochs, batches, seeds, and budget; only D_c^2 versus its stated flat limit changes operationally.",
+      "leakage": "The specified Stage2 training/assignment inputs are training inventory content embeddings and train-only transitions. Validation is described as diagnostic-only; test is reserved for one final Stage3 evaluation. No future events or prediction-time user context are declared as inputs.",
+      "causal_claim": "The asymmetric-transition evidence is appropriately framed as motivation rather than proof of curvature benefit; the candidate registers downstream Stage3 test_R@10 as the behavioural test, with higher being better, minimum effect 0.005, paired seeds [42,43,44], per-seed plus arithmetic-mean comparisons, and no user bootstrap. Stage2 diagnostic choices (validation Hard-L1 ER, distinct two-token prefixes, and L3 collision/refinement statistics) are leading indicators, not substitutes for Stage3 behaviour.",
+      "loss_and_targets": "The equations largely specify deterministic finite assignment updates, tie-breaking, frozen targets, and train-transition weights. The fatal finding concerns the claimed anti-collapse gradient property, not missing implementation identity or execution evidence."
+    }
+  }
+}

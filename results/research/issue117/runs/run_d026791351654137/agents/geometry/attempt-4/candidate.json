@@ -1,0 +1,110 @@
+{
+  "candidate_id": "issue117-geometry-global-transition-residual-v1",
+  "behavior_problem_id": "train-only asymmetric next-item transitions may be poorly represented by a single global Euclidean hierarchy",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "e5005b69310b036daba89277b11803927a6a04edd999e63afb272d116de82e27",
+  "next_item_hypothesis": "For the demonstrated failure, an anchor item's frequent train-only successor can be pushed out of its shared first-level SID neighborhood by content-only global quantization, even when the directed anchor-to-successor relation is observed. Train-transition-informed residual code assignment should make that positive more likely to share level one with its anchor, without turning Stage2 into a ranker. The manifest's 0.9266197178950221 no-reverse fraction and listed directed edges motivate this as a testable failure mode only; they do not prove curvature or causal improvement.",
+  "math_definition": {
+    "mechanism": "One global residual vector-quantized item SID builder. A content encoder maps each item to z_i in R^32. A shared train-transition successor objective shapes the continuous item representations; three residual codebooks each contain 256 vectors. For assignment, at each level choose the nearest code under the declared geometry and subtract the corresponding code in the common tangent coordinate representation. The single global SID is (k1,k2,k3); it is not user-conditioned.",
+    "geometry": {
+      "curved_c": 0.5,
+      "flat_c": 0.0,
+      "epsilon": 0.1,
+      "projection_radius_R": 0.9,
+      "scored_distance": "D^2(x,y) = d_c(x,y)^2 = (1/c) * arcosh(1 + 2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)))^2",
+      "stable_arcosh": "For u = 2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)), compute arcosh(1+u) as log1p(u + sqrt(u*(u+2))); clamp the arcosh argument to max(1.0, 1.0+u), equivalently u to max(0,u), with no positive floor. The scored objective uses squared distance D^2 in both arms.",
+      "domain_and_maps": "All distance inputs in either arm are projected to the same closed Euclidean ball ||x||<=R=0.9. Curved projection is x <- x*min(1, ((1-epsilon)/sqrt(c))/||x||); zero vectors remain zero. Curved exponential map at the origin is exp_0(v)=tanh(sqrt(c)*||v||)*v/(sqrt(c)*||v||), with its zero-vector limit 0. At c->0, the scored squared distance limit is 4*||x-y||^2 (the unsquared distance tends to 2*||x-y||), exp_0 is the identity, and the curvature-dependent projection radius (1-epsilon)/sqrt(c) is undefined; the flat arm therefore applies the common fixed-ball projection ||x||<=R instead, not a divergent-curvature-radius expression. In the curved arm the fixed ball is applied after the curvature-dependent projection as well, so both arms' final feasible domain is identical.",
+      "residual_operation_order": "At every level l, in order: map current residual r to the arm's scored space (curved exp_0 for c>0, identity for c=0); project the mapped vector into the common fixed ball (and in the curved arm also enforce the curvature projection radius); assign k_l=argmin_j D^2(mapped_projected_residual,e_lj), with ties resolved by lowest code index; subtract the selected code in the same tangent-coordinate representation to obtain the next residual; before any later scoring, map and project that residual again. Thus residual update order is map, project, assign, subtract; no residual is scored before projection. Codebook updates use the same straight-through assignment rule in both arms.",
+      "shared_domain_control": "The code path, encoder, codebooks, parameter count, initialization, optimizer, schedule, data, minibatch order, seeds, and training budget are identical. Only c in the distance/map geometry changes; both arms use the same final bounded region and representation-map interface."
+    },
+    "assignment_gradient": "Hard argmin is used only for the forward SID. Use an explicit straight-through estimator: forward assignment is the one-hot argmin; backward derivative of the selected code vector with respect to the mapped residual is identity, and the hard assignment's derivative is zero. Thus reconstruction and transition losses backpropagate through mapped residuals and encoder parameters; commitment/codebook losses have explicit gradients to encoder and selected codebook entries. No loss is differentiated through a bare one-hot argmin.",
+    "objective": {
+      "anti_collapse": "The train-transition successor-distribution loss below is the anti-collapse mechanism and enters the total loss with coefficient 1. It requires item representations/SIDs to preserve distinguishable train-only successor distributions: collapsing every item to one representation makes all predicted successor distributions identical and cannot fit non-identical detached targets. A reconstruction term also anchors representations to content.",
+      "losses": [
+        {
+          "name": "content_reconstruction",
+          "equation": "L_rec = (1/N) * sum_{i in I} D^2(z_i, Dec(q_i))",
+          "tensors_and_shapes": "z, Dec(q) in R^{N x 32}; q_i is the three-level residual quantization output; I is the frozen training item index set, N=|I|.",
+          "normalization_and_empty_rule": "Mean over training items; if I is empty, loss is 0 and the run is invalid. D^2 uses the same arm geometry and projected distance inputs.",
+          "gradient_and_target_rule": "Decoder output and z are mapped and projected before scoring. q uses straight-through assignments. No target is computed from validation or test data."
+        },
+        {
+          "name": "train_successor_distribution",
+          "equation": "L_succ = -(1/|A|) * sum_{a in A} sum_{t in T_a} stopgrad(P_a(t)) * log softmax_{u in T_a}(s(a,u)/tau)_t, where s(a,u)=-D^2(z_a,z_u), tau=1.0, and P_a(t)=C_a(t)/sum_{v in T_a} C_a(v).",
+          "tensors_and_shapes": "z in R^{N x 32}; C_a(t) are counts of train-split transitions a->t from the frozen train-only longest-prefix-per-user transition population; A={a: sum_t C_a(t)>0}; T_a={t:C_a(t)>0}; score and target vectors have shape |T_a| for each a.",
+          "normalization_and_empty_rule": "Normalize P_a over each nonempty T_a, then average uniformly over A. Anchors with no train successor are excluded; if A is empty, this term is 0 and the run is invalid. Count ties are retained as their empirical probabilities.",
+          "gradient_and_target_rule": "C and P are fixed, detached train-split statistics, not functions of model parameters. The target cannot be circular. Only train-split transitions are inputs; no batch-composition negatives are used. Scores backpropagate through both item representations with the stated straight-through estimator."
+        },
+        {
+          "name": "commitment_and_codebook",
+          "equation": "L_vq = (1/N) * sum_{i in I} sum_{l=1}^3 [||stopgrad(h_il)-e_l,k_il||_2^2 + ||h_il-stopgrad(e_l,k_il)||_2^2]",
+          "tensors_and_shapes": "h_il and selected code e_l,k_il are in R^32; i ranges over N training items and l over the three levels.",
+          "normalization_and_empty_rule": "Sum the three levels per item, average over I; empty I gives 0 and invalid run.",
+          "gradient_and_target_rule": "The first term trains selected codebook entries; the second trains h via straight-through. stopgrad explicitly breaks assignment/code target circularity."
+        }
+      ],
+      "total": "L = L_rec + L_succ + 0.25*L_vq. All coefficients, tau, and reductions are frozen; no sweep."
+    },
+    "objective.anti_collapse": "L_succ is the anti-collapse mechanism, included in L with coefficient 1, and L_rec separately anchors content."
+  },
+  "hyperbolic_necessity": "Negative curvature is a motivated geometry hypothesis, not an established necessity: the observed directed train transitions suggest a branching, non-reversible successor neighborhood that a single global hierarchy may compress poorly. A negatively curved space can allocate expanding volume to distinguish diverging successor directions while retaining shared coarse prefixes. This is not inferred causally from aggregate asymmetry; the paired c=0 arm tests whether curvature itself helps under the same domain and capacity.",
+  "euclidean_control": "The c=0 arm runs the exact same implementation and objective with the exact flat limits: D_0^2=4||x-y||^2, exp_0 identity, and common fixed-ball projection. Same 32-dimensional encoder, three 256-entry codebooks, parameter count, initialization, codebook initialization, optimizer, schedule, seed list, data, and budget. No graph arm is introduced.",
+  "effect_site": "Stage2 item-code assignment and geometry, specifically shared first-level codes for train-transition anchor/positive pairs and usable residual refinement at levels two and three. Stage2 produces item SIDs only; Stage3 T5 alone ranks next items.",
+  "real_trigger_measurement": "The measured behavior trigger is the frozen train-only longest-prefix-per-user transition population: 339519 transitions, 323633 directed pairs, 24556 distinct items, 57439 users, mean next-item entropy 4.844072338042215 bits, and no observed reverse events for 314605 directed pairs (fraction 0.9266197178950221). This motivates testing first-token transition alignment. It is not validation/test supervision and does not establish curvature benefit.",
+  "training_only_inputs": "Frozen item content plus train-split item transitions from results/stage0_build_parquet/train.parquet (SHA-256 80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815). No validation/test behavior, future events, prediction-time user context, or batch composition enters Stage2 training or targets.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false,
+    "protocol_freeze": "Use the repository's already frozen Stage2 epochs, batch size, optimizer schedule, and codebook initialization unchanged; no new protocol or tuning. Paired training/evaluation seed list is exactly [42] (one seed); aggregate across seeds by the arithmetic mean over this registered list, which for one seed is that seed's value. No seed may be dropped. Stage2 validation diagnostics use the frozen 52855 validation pairs, one positive plus ten negatives per anchor, seed 42, history[-1] -> target. Stage3 evaluation is read-only and uses results/stage0_build_parquet/test.parquet from the same frozen Stage0 build manifest and its file SHA-256 recorded by that build; it is not a Stage2 input and must not be used for selection. For each test example, compute hit@10 from the frozen authorized Stage3 T5 ranking protocol, average the binary hit indicators uniformly over all eligible examples in that test split for each arm and seed, then take the paired curved-minus-flat difference and arithmetic mean across the registered seed list. Missing manifest/hash or missing authorized T5 ranking protocol means Stage3 outcome is NULL, not permission to substitute another evaluation."
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {
+        "name": "valid_l1_hard_er",
+        "direction": "curved arm strictly above frozen Resample reference 16.38953942232631",
+        "minimum_effect": "strictly greater than zero difference versus the paired flat arm",
+        "seed_rule": "Compute the frozen diagnostic per registered seed on the frozen validation-pair set; arithmetic-mean the per-seed curved values and compare strictly to the named frozen reference. For paired geometry effect, arithmetic-mean (curved minus flat) over exactly seeds [42]; pass this criterion only when both reference comparison and positive paired effect hold."
+      },
+      {
+        "name": "level2_distinct_prefixes",
+        "direction": "curved arm strictly above frozen reference 16145",
+        "minimum_effect": "strictly greater than zero prefix-count difference versus paired flat arm",
+        "seed_rule": "Count unique (k1,k2) across all frozen items per seed; arithmetic-mean curved counts and compare strictly to the named frozen reference. Paired difference is arithmetic mean (curved minus flat) over exactly seeds [42]."
+      },
+      {
+        "name": "L3_refinement_gain",
+        "direction": "increase",
+        "minimum_effect": "at least 0.01 bits paired curved-minus-flat",
+        "seed_rule": "Compute the defined per-item log2 bucket ratio and average over all frozen items per seed; compare the arithmetic mean paired difference over exactly seeds [42]."
+      },
+      {
+        "name": "conditional_G3",
+        "direction": "increase",
+        "minimum_effect": "at least 0.01 bits paired curved-minus-flat",
+        "seed_rule": "Use precisely the supplied alpha=1, K=256 estimator on each frozen validation pair; aggregate finite pair values by arithmetic mean per seed, then arithmetic-mean paired differences over exactly seeds [42]. No restricted-successor pair contributes zero as specified; non-finite pair is NULL under the outcome rule."
+      },
+      {
+        "name": "L3_collision",
+        "direction": "decrease",
+        "minimum_effect": "at least 0.001 absolute share decrease paired curved-minus-flat",
+        "seed_rule": "Compute item share with a repeated full three-code SID per seed, then arithmetic-mean the paired flat-minus-curved share over exactly seeds [42]."
+      }
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "increase",
+      "minimum_effect": "at least 0.005 absolute paired curved-minus-flat",
+      "seed_rule": "Use only the bound frozen Stage0 test.parquet artifact and frozen authorized Stage3 T5 ranking protocol identified in protocol.protocol_freeze; eligible-example binary hit@10 is uniformly averaged within each arm and seed, then paired curved-minus-flat differences are arithmetic-mean aggregated over exactly seeds [42]. No test interactions are used for fitting, target construction, threshold selection, or tuning."
+    },
+    "classification": {
+      "falsified_if": "Any required registered Stage2 diagnostic is finite and fails its registered direction/minimum_effect, or stage3_behavioral_test is finite and fails its registered direction/minimum_effect.",
+      "passed_if": "Every registered Stage2 diagnostic and stage3_behavioral_test is finite and satisfies its registered direction/minimum_effect, and valid_l1_hard_er and level2_distinct_prefixes also satisfy their named frozen-reference comparisons.",
+      "mixed_if": "At least one registered criterion satisfies its registered direction/minimum_effect and at least one other finite registered criterion fails it, while no criterion or seed comparison is NULL."
+    }
+  },
+  "null_outcome_rule": "If a seed-wise or aggregated change is undefined or non-finite (including zero denominator, missing evaluation, or empty stratum), classify that outcome NULL. Any comparison containing a NULL seed is inconclusive, neither passed nor falsified; do not omit that seed."
+}

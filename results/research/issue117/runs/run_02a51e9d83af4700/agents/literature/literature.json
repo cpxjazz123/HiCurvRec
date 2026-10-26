@@ -1,0 +1,52 @@
+{
+  "sources": [
+    {
+      "title": " Recommender Systems with Generative Retrieval",
+      "doi": null,
+      "arxiv": "2305.05065",
+      "links": {
+        "arxiv_abs": "https://arxiv.org/abs/2305.05065",
+        "arxiv_pdf": "https://arxiv.org/pdf/2305.05065"
+      },
+      "overlap": {
+        "user_next_item_behavior": "YES — models recommendation from a user's historical interaction sequence to retrieve the next item.",
+        "hyperbolic_geometry": "NO — the paper's semantic-ID/generative retrieval method does not use hyperbolic geometry.",
+        "generative_semantic_ids": "YES — TIGER constructs semantic IDs with residual quantization and autoregressively generates them for recommendation."
+      },
+      "evidence_label": "FULL_TEXT",
+      "evidence_basis": "The arXiv full text/PDF is openly available; method and experimental sections describe sequential recommendation, semantic IDs, and autoregressive generation."
+    },
+    {
+      "title": "Hyperbolic Representation Learning for Sequential Recommendation",
+      "doi": null,
+      "arxiv": null,
+      "links": {},
+      "overlap": {
+        "user_next_item_behavior": "UNKNOWN — the exact record and primary text could not be independently verified in this search; do not treat this as an established source.",
+        "hyperbolic_geometry": "UNKNOWN",
+        "generative_semantic_ids": "UNKNOWN"
+      },
+      "evidence_label": "UNKNOWN",
+      "evidence_basis": "Search phrase only; excluded from substantiated literature claims."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "User next-item prediction from interaction history, where the next item is generated as a sequence of semantic codes rather than selected by conventional item-ID classification/ranking.",
+      "support": ["2305.05065"],
+      "support_level": "PARTIAL — behavior and generative semantic IDs overlap in TIGER; hyperbolic geometry is not part of the verified method."
+    },
+    {
+      "candidate": "Use hyperbolic geometry to encode hierarchy or multi-scale structure in user/item representations while autoregressively generating semantic IDs for next-item recommendation.",
+      "support": [],
+      "support_level": "RESEARCH GAP CANDIDATE — no independently verified full-text paper covering all three elements was identified. This is not a claim of exhaustive novelty."
+    }
+  ],
+  "limitations": [
+    "No independently verified full-text study was found that jointly establishes user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+    "The only positively identified paper is TIGER (arXiv:2305.05065), which covers sequential behavior and generative semantic IDs, but not hyperbolic geometry.",
+    "No DOI was supplied for TIGER because an arXiv identifier and full-text link provide the verifiable record; DOI status was not confirmed.",
+    "The hyperbolic sequential-recommendation candidate is deliberately marked UNKNOWN and is not evidence; its title may not correspond to a valid bibliographic record.",
+    "Search coverage was limited; absence from this result does not prove that no paper exists."
+  ]
+}

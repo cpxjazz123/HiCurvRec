@@ -1,0 +1,53 @@
+{
+  "diagnostic": "sid_quality_vs_stage3_r10",
+  "recorded_at_utc": "2026-10-24T06:20:00Z",
+  "method": "For every Stage2 item_sids.json on disk, recompute the frozen gate's validation metrics with tools/genrec-mcp/stage2_quality_gate.py against the pinned pairs (results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz, 52855 pairs, 1 positive + 10 negatives, seed 42) and join by Stage2 arm name to the Stage3 test_final.json test_recall@10 of the same arm.",
+  "pinned_artifacts": {
+    "validation_pairs_git_blob": "11d76dd452f3a27d1f6bf79fe7673bc6505733ef",
+    "validation_meta_git_blob": "a0121691dc95168169bffdc3b6018608580468da",
+    "frozen_baseline_sid_git_blob": "4743e45db263a40e044ab8af8da1abc0ca95b54c",
+    "all_three_blobs_verified_match": true
+  },
+  "gate_thresholds_as_pulled": {
+    "valid_l1_hard_er_strict_gt": 16.38953942232631,
+    "valid_l1_positive_hit_rate_min": null,
+    "level2_prefixes_strict_gt": 7414
+  },
+  "reference_arm_that_equals_the_er_cutoff": {
+    "arm": "resample",
+    "valid_l1_hard_er": 16.38953942232631,
+    "valid_l1_positive_hit_rate": 0.07944,
+    "level2_distinct_prefixes": 16145,
+    "note": "The frozen ER cutoff is exactly this arm's measured value, which is why the gate demands strictly greater."
+  },
+  "joined_arms": [
+    {"arm": "STE_FIX", "level2_prefixes": 369, "valid_l1_hard_er": 1.634, "stage3_test_recall@10": 0.05921},
+    {"arm": "resample_proj_sym", "level2_prefixes": 6376, "valid_l1_hard_er": 4.001, "stage3_test_recall@10": 0.05453},
+    {"arm": "MARGIN", "level2_prefixes": 4831, "valid_l1_hard_er": 4.942, "stage3_test_recall@10": 0.05601},
+    {"arm": "resample_proj_dir", "level2_prefixes": 5919, "valid_l1_hard_er": 3.924, "stage3_test_recall@10": 0.05484},
+    {"arm": "TIGER_c117_hyperbolic_item_semantic_id", "level2_prefixes": 6233, "valid_l1_hard_er": 6.089, "stage3_test_recall@10": 0.05557},
+    {"arm": "resample_l1only", "level2_prefixes": 14832, "valid_l1_hard_er": 14.727, "stage3_test_recall@10": 0.06283},
+    {"arm": "crowd_posattract_w3", "level2_prefixes": 14996, "valid_l1_hard_er": 15.356, "stage3_test_recall@10": 0.06426},
+    {"arm": "resample_s44", "level2_prefixes": 15734, "valid_l1_hard_er": 15.787, "stage3_test_recall@10": 0.06238},
+    {"arm": "resample_s43", "level2_prefixes": 15851, "valid_l1_hard_er": 15.617, "stage3_test_recall@10": 0.06302},
+    {"arm": "resample", "level2_prefixes": 16145, "valid_l1_hard_er": 16.38953942232631, "stage3_test_recall@10": 0.06374},
+    {"arm": "resample_fn_mask", "level2_prefixes": 16190, "valid_l1_hard_er": 16.435, "stage3_test_recall@10": 0.06356},
+    {"arm": "crowd_couser_w3", "level2_prefixes": 16686, "valid_l1_hard_er": 16.516, "stage3_test_recall@10": 0.06353}
+  ],
+  "n_joined": 12,
+  "spearman": {
+    "level2_prefixes_vs_stage3_r10": 0.72,
+    "valid_l1_hard_er_vs_stage3_r10": 0.755
+  },
+  "separation": {
+    "high_group": {"arms": 6, "level2_prefixes": "14832-16686", "hard_er": "14.727-16.516", "stage3_r10": "0.06238-0.06426"},
+    "low_group": {"arms": 6, "level2_prefixes": "369-6376", "hard_er": "1.634-6.089", "stage3_r10": "0.05453-0.05921"}
+  },
+  "claim": "Within the same data, capacity and frozen Stage3 protocol, the SID's independent-validation discriminability and prefix diversity order the downstream Stage3 R@10 almost perfectly: every arm above L2 14800 and ER 14.7 scored 0.0624-0.0643, every arm below L2 6400 and ER 6.1 scored 0.0545-0.0560.",
+  "claim_boundary": "Spearman on 12 arms is a directional diagnostic, not a causal model; arm names are joined heuristically and several arms differ in auxiliary objectives. Compare only within this table.",
+  "next_candidate_target": "Beat the reference arm on the same pinned validation pairs: Hard-L1 ER > 16.3895, L2 prefixes above the 16145 reference band, HitRate at least the reference 0.07944.",
+  "blockers_for_stage3_admission": [
+    "MIN_VALID_L1_HITRATE is None in tools/genrec-mcp/stage2_quality_gate.py, so stage3_start refuses every SID regardless of quality.",
+    "The ER cutoff equals the resample arm exactly and is strict-greater, so the frozen baseline TIGER_RQ-VAE (ER 6.468) and the rejected c117 SID (ER 6.089) are both refused."
+  ]
+}

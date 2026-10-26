@@ -1,0 +1,49 @@
+{
+  "candidate_id": "geometry_directed_transition_hyperbolic_sid_v1",
+  "candidate_sha256": "566f59a8fae4ac9ba7b354722b9952abde596f9c1a81a22356a3b1ee8010e86e",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "id": "control_logit_scale",
+      "severity": "MATERIAL",
+      "finding": "The Euclidean control uses squared Euclidean distance while the hyperbolic model uses geodesic distance, both divided by the same fixed tau=0.1. These are different distance powers and have different scale/gradient behavior; sharing tau does not make the comparison calibrated or isolate curvature. The Euclidean control can be arbitrarily over- or under-sharp relative to the hyperbolic logits, affecting both optimization and ranking learned under the token-softmax loss.",
+      "evidence": "Manifest candidate.euclidean_control.architecture specifies logits -||q-z||^2/tau; candidate.math_definition.operator specifies -d_c(q,z)/tau, with tau=0.1 frozen for both."
+    },
+    {
+      "id": "curvature_effect_not_established",
+      "severity": "MATERIAL",
+      "finding": "The stated exponential-volume rationale is plausible, but the candidate does not define or test a measurable hierarchical/branch-allocation property that distinguishes its learned codes from an equally sized Euclidean codebook. Three independently scored Poincare code levels are not by themselves evidence that the representation uses negative curvature nontrivially. The proposed ranking comparison can show a performance difference, but without a geometry-use diagnostic or controlled distance-scale comparison, attributing it specifically to curvature remains weak.",
+      "evidence": "The manifest explicitly says asymmetry does not establish negative curvature; hyperbolic_necessity presents capacity allocation as a hypothesis and notes distance is symmetric. The protocol has no specified curvature/geometry-use diagnostic or curvature ablation."
+    },
+    {
+      "id": "novelty_overlap_and_scope",
+      "severity": "MATERIAL",
+      "finding": "The research synthesis has credible overlap with prior work but its novelty is incremental and needs a sharper distinction: the supplied evidence identifies HypRQ-VAE as hyperbolic quantized item indexing for generative/next-item recommendation, while TIGER supplies autoregressive Semantic-ID next-item prediction and prior sequential hyperbolic recommenders supply hyperbolic next-item scoring. The candidate's primary stated distinction is the reverse-unobserved-transition stratum and a fixed-capacity comparison; this is a test design, not yet a clearly novel modeling contribution.",
+      "evidence": "Manifest literature_evidence.sources for arXiv:2609.03369, arXiv:2305.05065, DOI 10.1145/3459637.3482351, and DOI 10.1145/3640457.3688180; literature_evidence.limitations cautions that no independently verified source establishes the full combination."
+    }
+  ],
+  "reproducible_evidence": {
+    "behavior_source": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256_verified": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "checks": {
+      "rows_events": 396958,
+      "nonempty_history_transitions": 339519,
+      "distinct_directed_pairs": 323633,
+      "distinct_items_in_edges": 24556,
+      "event_count_on_pairs_with_no_reverse": 314605,
+      "event_fraction_on_pairs_with_no_reverse": 0.9266197178950221,
+      "mean_next_item_entropy_bits": 4.844072338034251
+    },
+    "procedure": "Read only train.parquet. For each row with nonempty history, count edge (history[-1], target). Count transitions/pairs/items from those edges; sum edge event counts whose reversed edge has zero count; compute source-conditioned next-item entropy weighted by transition frequency. The manifest quantities reproduce (entropy differs only at floating-point rounding).",
+    "scope_note": "No validation, test, future interactions, or other candidate prompts were inspected."
+  },
+  "audit": {
+    "actual_behavior_source": "PASS: source digest and the supplied transition/event/entropy measurements reproduce; directionality is descriptive and does not establish a causal model benefit.",
+    "next_item_causal_link": "PARTIAL: the model is trained on causal prefixes and next-item targets, and the reverse-unobserved test stratum is defined from training edges only. This is an evaluation association, not causal identification; user-clustered paired intervals are appropriate for uncertainty but cannot establish causal mechanism.",
+    "math_types_and_domain": "PASS WITH IMPLEMENTATION CHECK: the stated Poincare distance and exp_0 formulas are standard for curvature -c, and radial projection with epsilon gives positive denominators. Confirm implementation uses stable norms/acosh and projection after every optimizer update as specified.",
+    "same_capacity": "MOSTLY PASS: exact trainable-parameter matching is specified for the learned Euclidean SID; graph control is appropriately separate and parameter-free. The distance/logit-scale mismatch remains a material control-design flaw.",
+    "user_future_leakage": "PASS BY SPECIFICATION: training-only vocabulary/graph/stratum definition, validation-only stopping, and no test/future fitting or model selection are specified. Must be enforced in implementation.",
+    "frozen_model_protocol": "PASS BY SPECIFICATION: seeds, shared splits/objective/optimizer/steps/stopping, fixed tau and no tuning are specified. No GPU authorization is implied."
+  },
+  "reproducible_recommendation": "Before any study, align the Euclidean-vs-hyperbolic output calibration (for example, predeclare a matched distance/logit parameterization or justify the fixed scale with validation-only calibration shared by both) and add a prespecified diagnostic/ablation that demonstrates geometry is actually used. Then rerun the frozen CPU-level protocol; this review does not authorize GPU use."
+}

@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "candidate_id": "geometry_poincare_balanced_global_sid",
+  "behavior_problem_id": "long_tail_niche_next_item_sparse_histories",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "570dbc6de5282525bafd44a1e4ab4aef218086e3617d12829e16e3d7f9b972db",
+  "next_item_hypothesis": "Demonstrated failure: a sparse-history user's long-tail/niche next item can be assigned to an item-code neighborhood dominated by frequent, generic transitions, so the item SID loses a useful distinction before Stage3 ranks candidates. The observed transition graph is strongly directional (314605 of 323633 directed pairs have no observed reverse), with nonzero next-item entropy; this demonstrates asymmetric, multi-successor behavior, not causation or curvature. Negative curvature is a motivated hypothesis because hierarchical branching and long-tail item structure can be represented with less distortion than a flat space; HypRQ-VAE provides direct precedent, but these measurements alone do not prove that curvature helps.",
+  "math_definition": {
+    "geometry_constants": "Freeze c=1.0, tau=0.10, epsilon=1e-5, R=0.99, Sinkhorn iterations=100, Sinkhorn marginal tolerance=1e-8, and stable arcosh evaluation as log1p(u + sqrt(u*(u+2))) for u=max(z-1,0), where z is the raw arcosh argument. Clamp z to at least exactly 1.0. Invalid/non-finite values fail closed; no 1+delta clamp. At c=0 use the exact flat formulas: D^2=4||x-y||^2, projection is the Euclidean radius-R projection, and exp_0 is the identity (the exponential map is not used in this candidate). The Poincare projection radius (1-epsilon)/sqrt(c) is undefined at c=0 and is not applied; the common fixed-radius projection at R applies instead.",
+    "operator": {
+      "family": "poincare_squared_distance",
+      "curvature_c": 1.0,
+      "delta": 0.0,
+      "tau": 0.10,
+      "epsilon": 0.00001,
+      "radius": 0.99,
+      "distance_squared": "D_c^2(x,y)=(1/c)*[log1p(u+sqrt(u*(u+2)))]^2, u=max(z-1,0), z=max(1, 1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2))). The same scored quantity is squared distance in both arms. At c->0 this tends exactly to 4*||x-y||^2; unsquared distance tends to 2*||x-y||.",
+      "flat_limit": "4*||x-y||^2",
+      "projection": "Pi_R(v)=v*min(1,R/||v||), with scale 1 when v=0; applied identically to all distance inputs in both arms.",
+      "exponential_map": "Not used anywhere in the scoring path or residual path."
+    },
+    "assignment_algorithm": {
+      "population": "Exactly the 24556 distinct training-split items, in ascending immutable item-id order; no validation/test items or batch-dependent population.",
+      "conditioning": "Residual level l conditions only on the already frozen hard codes k1,...,k(l-1); level one conditions on none. No user context.",
+      "cost_and_transport": "For each level separately form all N-by-256 costs C_ij=D_c^2(Pi_R(r_i),Pi_R(e_j)), with raw residual r_i and raw code vector e_j. Compute a uniquely reproducible entropic balanced transport Q on the entire ordered training item population: K_ij=exp(-C_ij/tau - max_j(-C_ij/tau)); initialize a_i=b_j=1; perform exactly 100 alternating updates a_i=1/(sum_j K_ij*b_j), b_j=(N/256)/(sum_i a_i*K_ij), using float64, fixed item/code order and no randomization; Q_ij=a_i*K_ij*b_j. The column marginal is N/256 and rows are normalized to unit mass. This is finite deterministic Sinkhorn normalization, not an optimal-transport solver. If row/column marginal residual exceeds 1e-8 or any value is non-finite, fail closed; do not repair or replace Q. Level 2/3 full-population costs use residuals resulting from earlier hard codes.",
+      "discrete_label_extraction": "For each item choose k_i=argmax_j Q_ij; exact ties choose the smallest code index. This is the sole hard-label rule; no argmin-cost labels, greedy repair, auction, local swaps, or second assignment rule. Balanced global Q supplies calibrated competition across every code, while all 256 columns have equal mass; the hard labels and level-two prefixes are measured and retained as output diagnostics, not altered by a post-hoc prefix repair.",
+      "arm_and_refresh": "One shared implementation parameterized only by c. Initialize code vectors with the frozen existing KMeans initialization; do not change initialization, optimizer, training protocol or budget. At each epoch boundary recompute the deterministic full-population Q and hard labels for all levels from current model parameters, then freeze assignments throughout that epoch. Recompute only at the next boundary. Flat control uses c=0 through this same algorithm.",
+      "gradient_rule": "Frozen Q and hard labels are stop-gradient for the epoch. For differentiable reconstruction and commitment paths use straight-through code selection: q_st=q_hard+q_soft-stopgrad(q_soft), where q_soft=softmax(-C/tau) row-wise from the current projected residual and projected code vectors. This passes the identity gradient of q_soft to costs, residual encoders and code vectors; labels themselves receive no gradient. Anti-collapse acts on differentiable pre-quantization residual representations, not frozen assignments."
+    },
+    "projection_order": "At each level, in order: (1) take the current raw residual r_i; (2) map it by common Pi_R to x_i; (3) map each raw code vector e_lj by common Pi_R to y_lj; (4) score D_c^2(x_i,y_lj), compute full-training Q, and freeze the argmax hard label; (5) use q_st for differentiable losses; (6) subtract the raw code vector e_l,k_i from the raw residual r_i, not its projected image and not the residual itself; (7) apply Pi_R to this updated residual before its next-level assignment/scoring. Repeat for all levels. Item SID is the one globally frozen tuple (k1,k2,k3).",
+    "tensor_gradient_rules": {
+      "content_embedding_and_encoder_parameters": "Differentiable; frozen content embedding inputs are stop-gradient.",
+      "raw_code_vectors": "Differentiable in reconstruction, commitment, and soft-assignment paths.",
+      "projected_latents_and_projected_code_vectors": "Differentiable through Pi_R except at the standard norm/projection boundary subgradient.",
+      "residuals": "Differentiable through each raw-vector subtraction and projection.",
+      "full_population_Q_and_hard_labels": "Frozen/stop-gradient for the epoch; neither has a gradient.",
+      "q_soft_and_q_st": "Differentiable; q_st passes q_soft's gradient by the explicit straight-through expression.",
+      "transition_target_counts": "Stop-gradient, computed solely from train-split transitions at epoch boundary.",
+      "anti_collapse_pair_mask": "Stop-gradient; fixed deterministic pair selection from training item IDs."
+    },
+    "objective": {
+      "anti_collapse": "A differentiable pairwise latent-preservation term prevents a constant representation: for every fixed pair (i,j) selected deterministically from training item IDs, target t_ij=min(1, ||stopgrad(h_i-h_j)||_2), and penalize [max(0,t_ij-||h_i-h_j||_2)]^2. It is computed on the differentiable 32-dimensional encoder outputs before quantization and is added positively to the objective with coefficient 0.1; a constant encoding incurs positive loss for pairs whose stopped target is nonzero. Empty pair set yields zero and is recorded as NULL diagnostic, not silently resampled.",
+      "loss_equations": [
+        "Let x_i be the frozen content embedding, h_i=f_theta(x_i) in R^32, r_i^1=h_i, and r_i^(l+1)=Pi_R(r_i^l-e_l,k_i^l). Let q_i^l be q_st over 256 projected code vectors at level l. L_rec=(1/(N*3)) * sum_{i in I_train,l=1..3} ||Pi_R(r_i^l)-sum_{j=1..256} q_ij^l*Pi_R(e_lj)||_2^2; normalization is N*3, empty N is invalid/fail-closed.",
+        "L_commit=(1/(N*3)) * sum_{i in I_train,l=1..3} ||stopgrad(Pi_R(r_i^l))-sum_j q_ij^l*Pi_R(e_lj)||_2^2 + ||Pi_R(r_i^l)-stopgrad(sum_j q_ij^l*Pi_R(e_lj))||_2^2; the first term updates code vectors only and second updates encoder/residual only, with stated stop-gradients.",
+        "L_anti=(1/|P|) * sum_{(i,j) in P} max(0,min(1,||stopgrad(h_i-h_j)||_2)-||h_i-h_j||_2)^2; P is the deterministic set of unordered training-item pairs with lexicographically first 4096 pairs in item-id order; if P is empty L_anti=0. The target is detached, breaking target/parameter circularity.",
+        "For train-only ordered transitions (a,t) in T, define S(a,t)={items sharing t's frozen level-two prefix}; n(a,t,l) counts train-only longest-prefix successors of a in S(a,t) with third code l, and m(a,t)=sum_l n(a,t,l). Let p_pref and p_hist be exactly the frozen estimator in the request with alpha=1 and K=256, based only on the frozen global SID and training transitions. L_trans=-(1/|T|) * sum_{(a,t) in T, m(a,t)>0} log p_hist(k3(t)); an empty contributing set gives L_trans=0 and is NULL for this diagnostic. Counts and target distributions are stop-gradient, so no target/parameter circularity; q_st reconstruction/commitment paths remain differentiable.",
+        "L_total=L_rec+0.25*L_commit+0.1*L_anti+0.05*L_trans, with all coefficients frozen; same objective and squared-distance power in curved and flat arms."
+      ]
+    },
+    "loss_equations": [
+      "L_rec=(1/(N*3))*sum_{i in I_train,l=1..3} ||Pi_R(r_i^l)-sum_{j=1..256}q_ij^l Pi_R(e_lj)||_2^2.",
+      "L_total=L_rec+0.25*L_commit+0.1*L_anti+0.05*L_trans; all sums, normalization, empty-set rules, and stop-gradients are fully specified in objective.loss_equations above."
+    ]
+  },
+  "hyperbolic_necessity": "The targeted failure is directional sparse-history transitions into niche items being blurred by a flat, frequency-dominated code neighborhood. Negative curvature is a falsifiable inductive bias for hierarchical branching and long-tail structure, supported as motivation by HypRQ-VAE, not asserted as proven by observed transition directionality. The assignment calibration is held fixed between arms to avoid the known prefix-collapse failure mode of distance-based hard argmin.",
+  "euclidean_control": "The flat arm is the c->0 limit of the identical implementation, architecture, parameter count, initialization, optimizer, training schedule, seeds and budget, using the same fixed Pi_R radius R=0.99 on every scored latent and code vector; the sole geometry change is replacing D_c^2 with 4*||x-y||^2. No exponential map is used in either arm.",
+  "effect_site": "Stage2 item-code assignment geometry and reconstruction/commitment distances only; Stage3 T5 is unchanged and ranks next items from the resulting global three-token item SIDs.",
+  "real_trigger_measurement": "The frozen current-only behavior manifest records 323633 directed train-only item pairs, 314605 with no observed reverse (fraction 0.9266197178950221), and mean next-item entropy 4.844072338042215 bits. Use the supplied fixed validation-pair definition for valid L1 positive hit rate and valid Hard-L1 ER, global all-item level2 distinct prefixes, L3 collision/refinement and specified conditional G3. These are measurements/diagnostics, not evidence of causal benefit.",
+  "training_only_inputs": "Frozen content embeddings and distinct training-split item IDs; train-split transitions only for L_trans and train-only successor counts. No validation/test behavior, future events, prediction-time user context, or batch composition enters fitting, assignment or loss targets. Validation pairs are used only for registered Stage2 diagnostics; test is only used for the registered Stage3 behavioral test.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {"name": "valid_l1_hard_er", "direction": "curved minus flat > 0", "minimum_effect": 0.1, "seed_rule": "Paired frozen seeds; compute using the exact 52855 validation-pair definition and ten negatives per anchor. NULL if undefined/non-finite."},
+      {"name": "level2_distinct_prefixes", "direction": "curved minus flat > 0", "minimum_effect": 1, "seed_rule": "Count unique (k1,k2) over every item for each paired seed; NULL if missing/non-finite."},
+      {"name": "conditional_G3", "direction": "curved minus flat > 0", "minimum_effect": 0.01, "seed_rule": "Use the exact alpha=1, K=256 estimator and train-only successor counts in the request; aggregate finite pairs only; NULL if no finite pairs."}
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "curved minus flat > 0",
+      "minimum_effect": 0.005,
+      "seed_rule": "Paired frozen seeds with the identical frozen Stage3 protocol and test evaluation; NULL if evaluation is absent or non-finite. Test is evaluation only and never a training input."
+    },
+    "classification": {
+      "falsified_if": "any registered stage2 diagnostic or stage3 behavioral test fails its direction and minimum_effect for every paired seed with defined values",
+      "passed_if": "every registered stage2 diagnostic and the stage3 behavioral test meets its direction and minimum_effect for every paired seed, with no NULL seed",
+      "mixed_if": "otherwise, including any NULL seed or disagreement among registered outcomes"
+    }
+  }
+}

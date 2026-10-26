@@ -1,0 +1,29 @@
+{
+  "candidate_id": "geometry_poincare_residual_vq_v1",
+  "candidate_sha256": "48bc54be45bf82fe08a885a00bfeccb2d6ab09804ef07715ad1ec1413799fa60",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "issue": "Incorrect flat-limit distance",
+      "evidence": "The manifest defines d_c(x,y)=arcosh(1+2c||x-y||^2/((1-c||x||^2)(1-c||y||^2)))/sqrt(c), but states its c->0 limit is 4||x-y||^2. For fixed x,y, arcosh(1+2c a)/sqrt(c) -> 2*sqrt(a)=2||x-y||, not 4||x-y||^2. The stated c=0 scoring function is therefore neither the mathematical limit nor dimensionally the same quantity. This makes the curved-vs-flat comparison not a well-defined curvature ablation as registered.",
+      "location": "candidate.math_definition.curvature_and_constants; candidate.math_definition.flat_arm"
+    },
+    {
+      "issue": "Undefined positive-curvature scoring domain for residuals",
+      "evidence": "Residual updates explicitly subtract code vectors without projecting/normalizing, and residuals are explicitly not required to remain in the ball. Assignment then applies d_c directly to the current residual. Its denominator contains (1-c||r||^2), which is zero at the ball boundary and changes sign outside it. The manifest specifies clamping the arcosh argument below to 1, but does not define a denominator/domain repair or a valid extension when a residual is outside the ball. Thus the registered assignment score can be undefined or cease to be a Poincare distance on reachable inputs; the phrase 'stated stable distance denominator/domain clamp' does not specify an operation that resolves this.",
+      "location": "candidate.math_definition.residual_order; candidate.math_definition.curvature_and_constants"
+    },
+    {
+      "issue": "Control differs by more than the metric",
+      "evidence": "The curved arm maps encoder outputs through exp_0^c and projects them into a bounded ball, while the flat arm uses identity coordinates and omits projection. These alter the representation map and feasible coordinate domain, not only the distance metric. The control claim says 'only' curvature-dependent map/projection limits and distance change; that is more than the metric and conflicts with the requested same-capacity metric-only control criterion.",
+      "location": "candidate.math_definition.encoder_coordinates; candidate.math_definition.flat_arm; candidate.euclidean_control"
+    }
+  ],
+  "reproducible_evidence": {
+    "scope": "Review is limited to the supplied frozen current-only manifest; no repository implementation or future/test interactions were inspected.",
+    "behavioral_registration": "Stage3 test_R@10 is registered as an increase, minimum paired mean effect 0.005, aggregated curved-minus-flat over the same pre-registered paired seeds and frozen protocol. Nulls are inconclusive; mixed and pass/falsification rules are mechanically stated. This portion is not a blocker.",
+    "stage2_indicators": "Registered validation Hard-L1 ER, distinct two-token prefixes, L3 collision rate, refinement gain, and conditional G3, with paired seed aggregation and directions/minima. These are appropriate registered leading diagnostics under the stated Stage2-only role; no ranking capability is imputed to Stage2.",
+    "leakage_protocol": "Manifest states fitting uses training-only inputs, validation only for Stage2 diagnostics, test only for the registered Stage3 test, and excludes future events and prediction-time user context. No leakage blocker identified from the declaration.",
+    "causal_link": "The train-only asymmetry/sparsity is explicitly presented as motivation rather than proof; the next-item benefit is registered as a downstream falsifiable Stage3 test. This is a testable design hypothesis, not evidence of an established causal gain."
+  }
+}

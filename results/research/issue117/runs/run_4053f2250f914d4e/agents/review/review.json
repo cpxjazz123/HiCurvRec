@@ -1,0 +1,21 @@
+{
+  "candidate_id": "geometry-poincare-residual-sid-v2",
+  "candidate_sha256": "bb9370cf8dc1285b7b6159198871ce9e69ea4d8a0594e9763ff50fbb57c0ac61",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "id": "clamp-breaks-distance-and-flat-limit",
+      "finding": "The stated clamp is not a numerically harmless stabilization: for every distinct pair with 0 < t < delta, it replaces the Poincare distance by the positive constant-like floor obtained from arcosh(1+delta), while an exactly coincident pair bypasses the clamp and has distance zero. Thus the scored function is discontinuous at coincidence and is not a distance metric. Moreover, with fixed delta=1e-7, its c->0 behavior for nonidentical sufficiently close points is not the declared exact 4*||x-y||^2 limit. This invalidates the claimed metric and flat-limit definition over the declared domain, which includes arbitrarily close distinct vectors. The finite-vector domain bound ||x||<=0.99 does not resolve this issue.",
+      "evidence": "math_definition.geometry.clamp_domain_policy; math_definition.geometry.scored_distance; math_definition.geometry.c_dependent_rules_and_limits"
+    },
+    {
+      "id": "transition-objective-has-no-gradient-path",
+      "finding": "L_trans is computed solely from one-hot encodings of hard argmin assignments, and the manifest explicitly treats those assignments as nondifferentiable. No differentiable relaxation or other gradient path from L_trans to encoder/code parameters is specified. Consequently L_trans is piecewise constant with respect to the trainable parameters and cannot provide the declared train-transition assignment supervision through optimization. This leaves the proposed next-item causal mechanism unsupported by its registered training objective, even though the downstream behavioral test is correctly registered.",
+      "evidence": "math_definition.objective.loss_equations: L_trans uses s_i=concat(onehot(k_i1),onehot(k_i2),onehot(k_i3)); math_definition.objective.assignment_target_circularity: hard argmin indices are nondifferentiable"
+    }
+  ],
+  "reproducible_evidence": {
+    "numerical_check": "For distinct x,y with t=2*c*||x-y||^2/((1-c||x||^2)(1-c||y||^2)) in (0,delta), the specified branch evaluates arcosh(1+delta)^2/c, whereas exact coincidence returns 0. As ||x-y|| tends to 0 through nonzero values, the first expression does not tend to 0. The declared domain permits such pairs (for example x=0, y=(h,0,...,0) with 0<2*c*h^2<delta and h<=0.99).",
+    "scope_checks": "The manifest registers Stage3 test_R@10, direction curved>flat, minimum mean paired increase >=0.005, paired equal-weight seed aggregation, and explicit mixed/null classification. It also registers the requested Stage2 leading indicators (valid Hard-L1 ER, distinct two-token prefixes, L3 collision/refinement gain/conditional G3). No validation/test fitting, future-event input, or prediction-time user context is declared. These checks do not cure the blockers above."
+  }
+}

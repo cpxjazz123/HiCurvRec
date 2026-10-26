@@ -1,0 +1,63 @@
+{
+  "candidate_id": "issue117-geometry-poincare-residual-vq",
+  "candidate_sha256": "de7254505b9e2934b5c231399e3997dbbdf7d3caa3f4721580a4034c3052aa47",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "id": "B1",
+      "severity": "MATERIAL",
+      "claim": "The Poincare maps and residual assignment are not consistently specified at the declared curvature and projection boundary.",
+      "evidence": "With c=1 and radius r=(1-epsilon)/sqrt(c), projection sends points to norm at most 1-epsilon. However, exp^c_0(v)=tanh(sqrt(c)||v||)v/(sqrt(c)||v||) already maps finite vectors strictly inside the unit ball, and the subsequent projection is redundant for exp but not for Mobius operations. The manifest says project after every exp/map/add operation without defining the operation order for residual assignment beyond projection, and the Mobius addition denominator can become numerically ill-conditioned near the boundary. No stable denominator policy or finite-precision failure behavior is specified. This is a material numerical reproducibility gap for the requested CPU study, not evidence that the conceptual method is invalid.",
+      "reproducible_evidence": "Frozen constants specify epsilon=1e-6, c=1, projection radius 1-epsilon, and the Mobius denominator 1+2c<x,y>+c^2||x||^2||y||^2, but provide no denominator clamp/precision policy."
+    },
+    {
+      "id": "B2",
+      "severity": "MATERIAL",
+      "claim": "The Stage3 behavioral pass criterion is internally inconsistent, so its outcome is not uniquely classifiable from the registration.",
+      "evidence": "real_trigger_measurement requires at least 2/3 seed differences meeting +0.005 and the three-seed mean merely positive; falsifier.stage3_behavioral_falsifier instead requires the three-seed mean to be at least +0.005. The manifest also says the primary is test_R@10 or, if explicitly registered before runs, NDCG@10, while the falsifier wording says test_R@10 or NDCG@10 criterion. The pre-run metric choice is directionally covered, but the inconsistent mean threshold yields different success outcomes for valid observed differences.",
+      "reproducible_evidence": "Example paired deltas [+0.006,+0.006,-0.009] satisfy the real_trigger_measurement seed count and positive mean (+0.001), but fail the falsifier's +0.005 mean requirement."
+    },
+    {
+      "id": "B3",
+      "severity": "MATERIAL",
+      "claim": "The Stage2 diagnostic falsifier's null/opposite classification is not fully mechanical for multi-seed results.",
+      "evidence": "The classification says falsified if all five diagnostics are null/opposite, defined parenthetically as no seed reaches the directional minimum for any diagnostic, or pooled means are zero/opposite. The phrase 'or pooled means' does not state whether all five pooled means must be zero/opposite, nor how mixed per-seed and pooled signs combine. The per-diagnostic pass rule is explicit, but the overall falsified-versus-mixed classification is not.",
+      "reproducible_evidence": "A case with no diagnostic passing, two pooled means positive but below threshold, and three pooled means opposite has no unambiguous mapping under the stated disjunction."
+    }
+  ],
+  "non_blocking_findings": [
+    {
+      "topic": "next_item_causal link",
+      "finding": "The candidate frames asymmetry and entropy as motivation rather than proof. It explicitly limits the evidence and registers a downstream next-item test; the causal link remains a falsifiable design hypothesis, not an established causal claim."
+    },
+    {
+      "topic": "math types and objective",
+      "finding": "The tensor dimensions, codebook cardinality, assignments, tie-break, stop-gradient convention, objective coefficients, empty-set conventions, and transition target/prediction are substantially specified. The loss can be recomputed from the stated train-only inputs, subject to the numerical stability gap above."
+    },
+    {
+      "topic": "nontrivial hyperbolic effect",
+      "finding": "The c=1 ball metric, exponential map, Mobius residuals/additions, and projection differ nontrivially from the flat arm. The flat limiting metric is correctly stated as 4||x-y||^2 and exp tends to identity; c=0 itself is handled separately rather than applying the singular radius formula."
+    },
+    {
+      "topic": "same-capacity control",
+      "finding": "The geometry-only Euclidean control matches latent dimension, three 256x32 codebooks, encoder, auxiliary loss, initialization tensors, optimizer, schedule, seeds, split, budget, and stopping rule, changing the geometry operations/metric. The graph-signal arm is distinguished and not substituted for the geometry-only control."
+    },
+    {
+      "topic": "leakage and frozen protocol",
+      "finding": "The manifest restricts content and transition supervision to training, bars validation/test behavior and prediction-time user context from Stage2, reserves validation for diagnostics and test for the final Stage3 evaluation, and freezes the main optimizer, schedule, batch size, epochs, seeds, and initialization with no sweep. No leakage blocker identified from the manifest."
+    },
+    {
+      "topic": "leading indicators and behavioral registration",
+      "finding": "The registered Stage2 diagnostics include validation Hard-L1 ER, distinct two-token prefixes, L3 collision/statistics, refinement gain, and conditional G3; Stage3 test_R@10 is primary with direction, minimum effect, and paired seed rule. Stage2 diagnostics are correctly treated as leading indicators, not proof of ranking gain."
+    }
+  ],
+  "reproducible_evidence": {
+    "source_scope": "Only the user-provided frozen current-only manifest was reviewed; no repository implementation or unseen validation/test interactions were inspected.",
+    "candidate_sha256_as_provided": "de7254505b9e2934b5c231399e3997dbbdf7d3caa3f4721580a4034c3052aa47",
+    "checks": [
+      "Compared Stage3 thresholds in real_trigger_measurement and falsifier.stage3_behavioral_falsifier.",
+      "Compared Stage2 diagnostic per-seed pass rule with overall classification language.",
+      "Checked stated map, metric, residual, loss, shape, domain, flat-limit, control, data split, and frozen protocol definitions for internal consistency."
+    ]
+  }
+}

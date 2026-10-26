@@ -1,0 +1,93 @@
+{
+  "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+  "research": "issue117-behavior-first",
+  "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+  "task_id": "literature",
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": null,
+      "arxiv": "2609.03369v1",
+      "authors": ["Longfeng Wu", "Tong Zeng", "Giovanni Seni", "Zhimin Peng", "Bhanu Pratap Singh Rawat", "Si Zhang", "Yao Zhou", "Lecheng Zheng", "Bo Ji", "Yujun Yan", "Dawei Zhou"],
+      "published": "2026-09-03",
+      "full_text_url": "https://arxiv.org/html/2609.03369",
+      "full_text_status": "FULL_TEXT_VERIFIED",
+      "evidence": [
+        {
+          "label": "FULL_TEXT",
+          "location": "Section III-C, Generative Recommender with Semantic IDs",
+          "claim": "The paper explicitly formulates next-item prediction from a chronologically ordered sequence of a user's prior interaction semantic IDs, with the target being the next item's semantic-ID token sequence, generated autoregressively."
+        },
+        {
+          "label": "FULL_TEXT",
+          "location": "Section III-B, Generation of Semantic IDs",
+          "claim": "Items' textual representations are quantized into discrete semantic IDs using residual quantization in the Poincare hyperbolic ball; the paper defines hyperbolic codebooks and Mobius residual subtraction."
+        },
+        {
+          "label": "FULL_TEXT",
+          "location": "Section IV-A, Experimental Settings; Section IV-C, Analysis of Long-Tail Performance",
+          "claim": "Evaluation forms chronological user behavior sequences, truncates histories, and uses leave-one-out next-item ranking. Hyperbolic HypRQ-VAE is compared with Euclidean TIGER; reported gains are especially pronounced for tail-item recommendations."
+        }
+      ],
+      "exact_overlap": "Direct intersection of all three requested concepts: sequential user interaction history / next-item prediction, hyperbolic item indexing, and generative semantic IDs. This is not merely a paper combining hyperbolic recommendation with generation in unrelated components: its semantic-ID generator is hyperbolic and those IDs are the autoregressive next-item output."
+    },
+    {
+      "title": "HCGR: Hyperbolic Contrastive Graph Representation Learning for Session-based Recommendation",
+      "doi": null,
+      "arxiv": "2107.05366v1",
+      "full_text_url": "https://arxiv.org/pdf/2107.05366v1",
+      "full_text_status": "FULL_TEXT_LINK_VERIFIED; claim based on abstract metadata only",
+      "evidence": [
+        {
+          "label": "ABSTRACT",
+          "location": "arXiv abstract",
+          "claim": "Session-based recommendation captures short-term sequential patterns from evolving user behavior; HCGR uses Lorentz hyperbolic representations and hyperbolic attention/contrastive learning. The abstract does not describe generative semantic IDs."
+        }
+      ],
+      "exact_overlap": "Behavior + hyperbolic geometry only; useful as adjacent prior art for sequential/session preference modeling, not evidence of the full three-way intersection."
+    },
+    {
+      "title": "Poincare Heterogeneous Graph Neural Networks for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2205.11233v1",
+      "full_text_url": "https://arxiv.org/pdf/2205.11233v1",
+      "full_text_status": "FULL_TEXT_LINK_VERIFIED; claim based on abstract metadata only",
+      "evidence": [
+        {
+          "label": "ABSTRACT",
+          "location": "arXiv abstract",
+          "claim": "Sequential recommendation models evolving user behavior; PHGR models sequential dependencies and hierarchical information using Poincare-ball graph representations and temporal attention. Generative semantic IDs are not reported in the abstract."
+        }
+      ],
+      "exact_overlap": "Behavior + hyperbolic geometry, without generative semantic-ID modeling in the available abstract evidence."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Next-item prediction conditioned on a user's chronologically ordered interaction history, with each historical item and the target represented by generated semantic IDs.",
+      "evidence_source": "HypRQ-VAE, arXiv:2609.03369v1",
+      "evidence_label": "FULL_TEXT",
+      "assessment": "Directly established in Section III-C."
+    },
+    {
+      "candidate": "Tail/niche next-item recommendation under sparse user-item interactions.",
+      "evidence_source": "HypRQ-VAE, arXiv:2609.03369v1",
+      "evidence_label": "FULL_TEXT",
+      "assessment": "Explicitly evaluated by popularity-splitting head and tail items and reporting next-item metrics; paper's motivation links niche preferences and sparsity to long-tail items."
+    },
+    {
+      "candidate": "Session-based next-item preference from short-term behavior sequences.",
+      "evidence_source": "HCGR, arXiv:2107.05366v1",
+      "evidence_label": "ABSTRACT",
+      "assessment": "Adjacent behavioral framing; not evidence for generative semantic IDs."
+    }
+  ],
+  "limitations": [
+    "The search identified one directly verified three-way intersection, HypRQ-VAE. Do not infer that it is definitively the first or only such work; the paper itself makes a first-work claim, but a finite search cannot establish priority.",
+    "HypRQ-VAE has an openly accessible arXiv HTML full text, and the cited overlap claims were checked in its full text. It reports benchmarks and offline leave-one-out ranking, not causal evidence about real-time user behavior or online user outcomes.",
+    "The full-text links for HCGR and PHGR establish accessible PDFs, but only their abstract text was examined for the adjacent-work claims; therefore those claims are labeled ABSTRACT, not FULL_TEXT.",
+    "No DOI was supplied in the arXiv metadata for HypRQ-VAE, HCGR, or PHGR in the records checked; arXiv identifiers are provided instead. No DOI is guessed.",
+    "The directly matching work is recent (2026 preprint, with an arXiv comment stating acceptance at ICDM 2026); the preprint's results and claims should be treated as author-reported pending independent replication.",
+    "The evidence supports modeling logged interaction sequences and benchmark next-item prediction. It does not establish that semantic IDs faithfully encode latent user intent, that hyperbolic geometry is universally superior, or that generated recommendations are relevant beyond the reported datasets and protocol."
+  ]
+}

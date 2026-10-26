@@ -1,0 +1,50 @@
+{
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": null,
+      "arxiv": "2305.05065",
+      "url": "https://arxiv.org/abs/2305.05065",
+      "exact_overlap": "Generative retrieval for recommendation using semantic IDs (hierarchical item codes) and autoregressive decoding; directly overlaps generative semantic IDs and recommendation, but does not establish hyperbolic geometry as a component.",
+      "evidence_label": "FULL_TEXT",
+      "evidence_basis": "An arXiv full-text preprint is provided; the paper describes semantic IDs and generative retrieval for recommendation."
+    },
+    {
+      "title": "Hyperbolic Representation Learning for Sequential Recommendation",
+      "doi": null,
+      "arxiv": null,
+      "url": null,
+      "exact_overlap": "Potentially relevant hyperbolic sequential/next-item recommendation line of work, but an exact bibliographic record and accessible full text could not be independently confirmed in this run. No claim of overlap is counted as verified.",
+      "evidence_label": "UNKNOWN",
+      "evidence_basis": "Search endpoint unavailable; title is a search lead, not a verified citation."
+    },
+    {
+      "title": "Hyperbolic Graph Convolutional Networks",
+      "doi": "10.1145/3292500.3330967",
+      "arxiv": null,
+      "url": "https://doi.org/10.1145/3292500.3330967",
+      "exact_overlap": "Relevant as foundational hyperbolic graph representation learning, but not evidence for user next-item behavior or generative semantic IDs in the same work.",
+      "evidence_label": "ABSTRACT",
+      "evidence_basis": "Bibliographic identification only; no verified full-text inspection performed here."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "User-conditioned next-item generation with a hierarchical semantic-ID decoder whose code-tree geometry is explicitly hyperbolic.",
+      "supporting_overlap": ["Recommender Systems with Generative Retrieval (arXiv:2305.05065)"],
+      "status": "Synthesis / research gap, not a claim made by a cited paper"
+    },
+    {
+      "candidate": "Test whether hyperbolic distances between item semantic IDs improve modeling of long-tail and multi-interest transition structure in user histories.",
+      "supporting_overlap": ["Generative semantic-ID recommendation is represented in the arXiv source; hyperbolic recommendation overlap remains unverified"],
+      "status": "Hypothesis requiring literature and empirical verification"
+    }
+  ],
+  "limitations": [
+    "The requested three-way intersection (user next-item behavior, hyperbolic geometry, generative semantic IDs) was not verified in a single independently confirmed full-text research paper.",
+    "The search integration returned a cancellation/error, preventing systematic CrossRef/arXiv/OpenAlex cross-checking; only the identified arXiv record is treated as full-text evidence.",
+    "Do not infer hyperbolic geometry from hierarchical semantic IDs: tree-like codes and hyperbolic embeddings are distinct technical choices.",
+    "The hyperbolic sequential recommendation entry is deliberately marked UNKNOWN and is not a verified citation; exclude it from citation or novelty claims until its metadata and full text are checked.",
+    "No prior-candidate prompts or unseen future/test interactions were used."
+  ]
+}

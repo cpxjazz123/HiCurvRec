@@ -1,0 +1,21 @@
+{
+  "candidate_id": "geometry_residual_vq_metric_only",
+  "candidate_sha256": "abc68bd944f9e875df443d8258bfdf7fd5d3aa93634ec4462b0f565d908fb2c1",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "id": "conditional_g3_not_mechanically_defined",
+      "claim": "The registered conditional_l3_gain diagnostic and thus the all-diagnostics falsifier cannot be recomputed uniquely from this manifest.",
+      "evidence": "math_definition.diagnostics_frozen_definitions defines conditional G3 as mean log2(p_hist(L3 target|anchor)/p_pref(L3 target|target prefix2)), then says only that the train-transition history term is mixed into a Laplace-smoothed prefix prior (alpha=1 over 256 codes). It does not define the history conditional estimator, the mixing operation/weight, what constitutes the history context, or how the anchor/history and prefix distributions are combined. These choices can change conditional_l3_gain and its paired difference against the flat control. The falsifier requires every registered diagnostic to satisfy a numerical criterion, so the missing definition prevents a mechanical passed/falsified/mixed decision."
+    }
+  ],
+  "reproducible_evidence": {
+    "scope": "Reviewed only the candidate and evidence included in the supplied current-only manifest. No repository candidate implementation, prior-candidate prompt, or unseen future/test interaction was used.",
+    "identity": "candidate_id and candidate_sha256 are copied from the manifest; the supplied digest was not independently recomputed from a candidate file.",
+    "next_item_causal_link": "The design claim is appropriately framed as a hypothesis: train-only directionality (314605/339519 transitions without an observed reverse; fraction 0.9266197178950221) motivates a possible coarse-prefix over-merging mechanism, but does not establish that mechanism or a causal next-item gain. Stage2 is correctly described as SID construction rather than ranking; the downstream Stage3 test_R@10 is registered.",
+    "math_and_domain": "The stated c=1 squared Poincare-ball distance is defined for the projected scored vectors because c*R^2=0.81<1. Its c->0 squared-distance limit is 4*||x-y||_2^2, as declared. The distance is nontrivial at c=1 (not the flat formula), and both arms retain the same projection, coordinates, residual order and feasible vectors; c changes the assignment distance only. No undefined c=0 radius is used.",
+    "control_and_leakage": "The declared flat control changes only the distance formula, with the continuous flat limit in the same code path. Training-only inputs are declared; validation diagnostics are evaluation-only, and test behavior is restricted to the registered Stage3 evaluation. No user-future or prediction-time user context is declared.",
+    "registered_tests": "Stage2 registers valid_l1_hard_er and level2_distinct_prefixes with strict absolute thresholds 16.38953942232631 and 16145 respectively, plus L3 collision decrease, refinement-gain increase, and conditional-G3 increase each by more than 0.01 versus flat. Stage3 registers test_R@10 increase strictly above 0.001, paired per matched seed then arithmetic-mean aggregated. Outcomes define passed, falsified, mixed, and NULL/inconclusive. The absolute Stage2 thresholds agree with FROZEN_THRESHOLDS (schema_version 1).",
+    "protocol_observation": "The manifest freezes dimensions, levels, code counts, curvature, projection, residual operation order, loss coefficients and says no hyperparameter sweep. It does not enumerate the preregistered matched seed set or give the exact initialization/training optimizer and schedule needed to reproduce runs; this further limits execution reproducibility, but the fatal blocker above is the mechanically underdefined registered statistic."
+  }
+}

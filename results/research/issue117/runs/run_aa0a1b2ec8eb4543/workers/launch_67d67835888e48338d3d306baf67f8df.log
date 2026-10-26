@@ -1,0 +1,9 @@
+{"evidence": true, "role": "LITERATURE", "task": "literature"}
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/mcp/worker.py", line 17, in main
+    outcome = process_next(run_id)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/workflows/pipeline.py", line 119, in process_next
+    evidence = run_agent(task, prompt, OUTPUTS[task], root,
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/agents/runner.py", line 158, in run_agent
+    raise RuntimeError("OpenCode failed, cancelled, timed out or returned invalid JSON: " + str(receipt))
+RuntimeError: OpenCode failed, cancelled, timed out or returned invalid JSON: /fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_aa0a1b2ec8eb4543/agents/geometry/execution.json

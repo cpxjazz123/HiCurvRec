@@ -1,0 +1,13 @@
+{"evidence": true, "role": "LITERATURE", "task": "literature"}
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/mcp/worker.py", line 17, in main
+    outcome = process_next(run_id)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/workflows/pipeline.py", line 123, in process_next
+    verify_science_output(task, root, manifest)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/workflows/pipeline.py", line 78, in verify_science_output
+    check_candidate(output)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/science/contracts.py", line 29, in check_candidate
+    check_falsifier(candidate)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/science/contracts.py", line 94, in check_falsifier
+    raise ValueError("classification references unregistered diagnostics: "
+ValueError: classification references unregistered diagnostics: stage2_diagnostics, stage3_behavioral_test

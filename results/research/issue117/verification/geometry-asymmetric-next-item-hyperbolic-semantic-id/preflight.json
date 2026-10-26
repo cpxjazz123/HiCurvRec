@@ -1,0 +1,73 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "note": "All four reviewed test suites actually ran; the existing MCP one-epoch trainer smoke still follows before official training.",
+  "passed": true,
+  "recorded_at_epoch": 1792817872.5347733,
+  "review": "APPROVE_TESTS",
+  "source_sha256": "9826b56cb3842e1956f53ae8586cc48d563d3918086eea8b3aeb309eae55bd8a",
+  "suites": {
+    "ddp": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "07c5f5f1028dce98fcaf61cb21b3421466c3cfe3da64f12ec402a4c0ccfddaf7",
+      "output_tail": "test_two_real_ranks_gather_independent_gradients_and_updates (test_ddp.RealDDPConsistencyTest) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 3.488s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "ddp"
+      ],
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "entrypoint": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "9f9cb80ee4edc2ec8b42207e64b8f4b099c35bdb844df2dc3324aafc01883637",
+      "output_tail": "test_main_trains_hyperbolic_path_and_exports_actual_artifacts (test_entrypoint.RealTrainerEntrypointTest) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 2.987s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "entrypoint"
+      ],
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "gradient": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "515479e4795448547cdb2f531591c2190c79e6ab3dd7d3792646febf078db11c",
+      "output_tail": "test_disconnected_and_nan_paths_are_detected (test_gradient.HyperbolicGradientTests) ... ok\ntest_distance_gradient_matches_independent_central_difference (test_gradient.HyperbolicGradientTests) ... ok\ntest_exp_log_and_distance_gradcheck (test_gradient.HyperbolicGradientTests) ... ok\ntest_quantizer_training_loss_reaches_input_and_selected_code (test_gradient.HyperbolicGradientTests) ... ok\ntest_trainer_model_forward_loss_and_optimizer_step (test_gradient.HyperbolicGradientTests) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 1.962s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "math",
+        "gradient"
+      ],
+      "skipped": 0,
+      "tests_run": 5,
+      "unexpected_successes": 0
+    },
+    "math": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "98ff9fabfb79122ce69a476296857190059849cedf18b6578c0b9dad6e4caa51",
+      "output_tail": "test_collinear_distance_identity (test_math.HyperbolicReferenceTests) ... ok\ntest_distance_is_symmetric_and_origin_distance (test_math.HyperbolicReferenceTests) ... ok\ntest_mobius_add_collinear_closed_form (test_math.HyperbolicReferenceTests) ... ok\ntest_origin_exp_log_axis_closed_form (test_math.HyperbolicReferenceTests) ... ok\ntest_origin_exp_log_closed_form (test_math.HyperbolicReferenceTests) ... ok\ntest_projection_and_boundary_clamp (test_math.HyperbolicReferenceTests) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.005s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "math",
+        "gradient"
+      ],
+      "skipped": 0,
+      "tests_run": 6,
+      "unexpected_successes": 0
+    }
+  },
+  "verified_at_epoch": 1792817872.5343354
+}

@@ -1,0 +1,44 @@
+{
+  "candidate_id": "issue117-hyp-residual-sid-v1",
+  "candidate_sha256": "8117f3e755936af157ba451d2c170c3f9d9f50afb7d0045819a743939d7d7fd3",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "issue": "The proposed causal/behavioral link is not tested by the declared outcomes.",
+      "detail": "The candidate motivates reducing collisions between items with different train-observed outgoing neighborhoods, but its five outcomes are quantizer reconstruction/structure diagnostics. It explicitly excludes Stage3 ranking metrics and does not evaluate whether a next item can be predicted more accurately. A change in those diagnostics therefore cannot establish a next-item improvement or that the SID is more discriminative for the next-item target.",
+      "evidence": "effect_site says the diagnostics are not Stage3 ranking metrics; falsifier arms says no arm uses recommendation components or Stage3 metrics; next_item_hypothesis selects neighborhood collision as the failure."
+    },
+    {
+      "issue": "The falsifier is not reproducibly decidable from the specification because its diagnostic definitions are incomplete.",
+      "detail": "Hard-L1 reconstruction error, L3 collision rate, refinement gain, and conditional G3 have no operational formulas, aggregation rules, or precise definition of which validation items/groups enter their calculations. The relative-change and absolute-change thresholds cannot be independently applied until these quantities are defined. The prefix-count diagnostic is clearer, but does not resolve the other four.",
+      "evidence": "effect_site names the five diagnostics without defining them; falsifier.thresholds gives thresholds but no diagnostic calculation definitions."
+    },
+    {
+      "issue": "The frozen training protocol is not fully instantiated.",
+      "detail": "The matched-control text requires identical initialization tensors/seed, optimizer, schedule, training budget, and numerical settings, but the manifest does not provide the actual initialization procedure/tensors, optimizer and schedule values, stopping/batch policy, or numerical precision. Thus the arms are described as matched but are not yet uniquely reproducible under the frozen contract.",
+      "evidence": "euclidean_control and falsifier.arms require matching these settings; protocol only fixes latent_dim, levels, code count, sweep policy, and future-use flag."
+    }
+  ],
+  "reproducible_evidence": [
+    {
+      "finding": "The train-only transition source and validation-only diagnostic boundary are explicit; no user-future leakage is specified.",
+      "evidence": "training_only_inputs restricts signals to training content and adjacent transitions wholly inside training sequences; real_trigger_measurement forbids validation/test transitions and future events as candidate/loss inputs."
+    },
+    {
+      "finding": "A nontrivial hyperbolic geometry and a same-capacity flat control are specified in principle.",
+      "evidence": "c=1 fixes nonzero curvature and uses Poincare exp/log and d_c^2/c; the Euclidean control retains the 32-dimensional latent, three 256-entry codebooks, residual structure, loss, and matched capacity while replacing the metric and maps."
+    },
+    {
+      "finding": "The principal geometry equations have compatible stated domains, with a specified flat-limit policy.",
+      "evidence": "The radius R=(1-epsilon)/sqrt(c) keeps projected points inside the ball for c=1; exp/log define zero-vector values and the c=0 arm explicitly avoids the undefined radius and uses unconstrained Euclidean vectors."
+    },
+    {
+      "finding": "The transition objective's target is fixed rather than parameter-dependent, so the stated target/parameter circularity concern is addressed.",
+      "evidence": "training_tensors_and_losses defines a one-hot target from E_train and states assignments are stop-gradient."
+    },
+    {
+      "finding": "The novelty claim is appropriately bounded as a hypothesis, not a literature-established method or result.",
+      "evidence": "literature_evidence limitations and hyperbolic_necessity explicitly say the cited source supports next-item prediction with generative SIDs but not hyperbolic geometry or the three-way intersection."
+    }
+  ]
+}

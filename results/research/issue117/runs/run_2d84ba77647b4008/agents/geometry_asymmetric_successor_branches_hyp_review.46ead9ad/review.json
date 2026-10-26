@@ -1,0 +1,13 @@
+{
+  "candidate_id": "geometry_asymmetric_successor_branches_hyp",
+  "source_sha256": "fb3c50f77f895a3d6255544d1ad6b42daf0ca2544fa5d5264dc52d60397ee5ef",
+  "proposal_sha256": "3618a28dd7c21e738e54410ce92843c1f9bc953cd5cb9a4d24197788d658a6c9",
+  "test_sha256": {
+    "ddp": "6cb9f9b51d5b4037046c30092520d1aeb04dec5c6a059df983b31f4fd18efc49",
+    "entrypoint": "918c37ea58e04aa02c8b00c6e9a0a5c60d9ddb9cd3811d7a5033b252803bae24",
+    "gradient": "b401864508fb707e31be11933c138ae378096d540053934e40005906a82c5d16",
+    "math": "691de25b593d87894203fac53e482053e38e3905bcae8d2bfd7b663b6182d3f9"
+  },
+  "verdict": "BLOCK",
+  "rationale": "The real-model gradient, two-rank DDP, and trainer-entrypoint suites do exercise candidate code and check nonzero outcomes; the math suite supplies independent distance/projection references. However, the frozen mechanism is not what the source implements: proposal requires reconstruction to carry the STE identity gradient from selected-code output to the projected assignment input. In poincare_residual.py the reconstruction uses raw projected selections, while the STE value is used only in residual subtraction; model.py therefore has no reconstruction-through-STE path. The gradient suite checks that encoder gradients exist but does not establish that they come from reconstruction, so it misses this central mismatch. The entrypoint test's transition_loss is merely commit+code, not transition supervision; it does not itself prove proposal-equivalent objective semantics."
+}

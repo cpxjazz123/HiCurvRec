@@ -1,0 +1,73 @@
+{
+  "candidate_id": "issue117-geometry-hyperbolic-residual-sid-v2",
+  "behavior_problem_id": "issue117-behavior-first",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "8ba6837c216074f407682b678f8b30acb30e89d57086da57dd7a4d6a599d9d0d",
+  "next_item_hypothesis": "Demonstrated failure target: an item whose semantic embedding lies near the shared first-level code boundary of multiple distinct successor branches can receive an L1 token that groups it with unrelated successors, so a global SID offers a poor first-token partition for next-item ranking. Train-only transitions show strong directionality (314605 of 339519 transitions have no observed reverse) and mean next-item entropy of 4.844072338042215 bits. These are descriptive motivation only: they do not prove that this boundary failure occurs in validation, that negative curvature is necessary, or that curvature improves ranking. Hypothesis: negative curvature's distance geometry better separates increasingly fine residual branches under a shared bounded domain, improving first-token positive alignment and later prefix refinement. Stage2 builds stable global item SIDs only; downstream T5 Stage3 ranks next items.",
+  "math_definition": {
+    "builder": "For each item i, content embedding a_i is mapped by the frozen content encoder f_theta to z_i in R^32. For each of three levels l, use trainable tangent code parameters e_lk in R^32. Define the shared representation map M_c(v)=P_R(Exp_0^c(v)); q_lk=M_c(e_lk). Initialize residual r_i1=z_i. At each level, in this exact order: map v_i,l=M_c(r_i,l); project the mapped vector with P_R (M_c includes that projection); assign k_i,l=argmin over k in {1,...,256} of D_c^2(v_i,l,q_lk), ties to the smallest index; subtract in the ambient coordinates r_i,l+1=r_i,l-stopgrad(q_l,k_i,l). The resulting global SID is (k_i1,k_i2,k_i3). No user, batch, prefix decoder, beam search, or ranking component is in this builder.",
+    "geometry": {
+      "curved_arm": "c=0.1, epsilon=0.00001, R=0.99, tau=0.1, arcosh_argument_floor=1.0, delta=0.00000001.",
+      "flat_arm": "c=0, using exactly the same code path, architecture, parameter count, initialization, optimizer, schedule, seeds, data, projection P_R, R=0.99, tau, and budget. Only the distance expression changes by its exact c->0 limit.",
+      "map": "For c>0, Exp_0^c(v)=tanh(sqrt(c)*||v||)*v/(sqrt(c)*||v||), with the zero-norm value 0. At c=0, Exp_0^0(v)=v. P_R(x)=x*min(1,R/||x||), with the zero-norm value 0. Thus M_c=P_R composed with Exp_0^c in both arms; the fixed ball ||x||<=R is identical. The exponential map tends to identity as c->0.",
+      "projection_and_domain": "Every vector entering any distance, including each mapped residual and each mapped code vector, is projected by the same P_R before scoring. R=0.99 is fixed independently of c and is strictly less than 1. The scored Poincare-ball domain is therefore the same closed ball in both arms and lies inside the curvature-c domain for the curved arm. At c->0 the projection remains P_R with that same R; no radius is obtained by taking a divergent curvature-dependent limit. Projection of residuals occurs after mapping and before assignment/scoring; assignment occurs before ambient-coordinate subtraction; the updated residual is mapped and projected on the next level before it is scored.",
+      "distance_squared": "D^2(x,y)=d_c(x,y)^2=(1/c) * arcosh(1 + 2c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)))^2, for c>0, where x and y are already projected. Let u=2c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)); numerically evaluate arcosh(1+u) as log1p(u+sqrt(u*(u+2))), with u clamped below at delta and the argument correspondingly at least 1.0; exact x=y uses u=0 and distance zero (the clamp is bypassed for exact zero). The scored objective uses the squared distance D^2 in both arms. Its exact c->0 limit is 4*||x-y||^2; the unsquared distance tends to 2*||x-y||.",
+      "c_dependent_limits": "As c->0, D^2 tends to 4*||x-y||^2; Exp_0^c tends to the identity; the expression (1-epsilon)/sqrt(c) is undefined at c=0 and is not used as the projection radius. The flat arm instead applies the same fixed P_R with R=0.99. Every other c-dependent operation is the distance formula and its stated flat limit; the fixed region and projection do not change.",
+      "operator": {
+        "family": "poincare_squared_distance",
+        "c": 0.1,
+        "delta": 1e-08,
+        "delta_policy": "For c>0, use u=max(u_raw,delta) only when x != y; exact x=y bypasses the clamp and returns zero. Numerically evaluate arcosh(1+u) as log1p(u+sqrt(u*(u+2))). The flat arm is the exact c->0 limit and does not use delta."
+      }
+    },
+    "loss_equations": {
+      "tensors_and_sets": "Training items I are the distinct items in the training split; S is the multiset of directed train-split item transitions (a,t) only. z_i=f_theta(a_i) in R^32; q_lk=M_c(e_lk) in R^32; k_i,l are hard assignments from the stated levelwise rule; Q_i=sum_{l=1}^3 stopgrad(q_l,k_i,l). All means below are uniform over the explicitly stated finite index set. Empty set means its term is defined as zero and omitted from the weighted sum normalization.",
+      "content_reconstruction_and_commitment": "L_rc = (1/|I|) sum_{i in I} [||z_i-stopgrad(Q_i)||_2^2 + ||stopgrad(z_i)-Q_i||_2^2]. Decoder target and selected code vectors are the actual mapped, projected q vectors used by assignment, not raw tangent parameters. The first term updates the content encoder; the second updates selected code parameters. Hard assignment indices and the target in each opposite-side term are stop-gradient, so no implicit target differentiation is used.",
+      "anti_collapse": "L_ac = (1/|I|) sum_{i in I} (||z_i||_2-1)^2 + (1/|I|) sum_{i in I} max(0, 1-||z_i-mean_{j in I}(z_j)||_2)^2 + (1/|P|) sum_{(a,t) in P} max(0, 1 + D_c^2(M_c(z_a),M_c(z_t)) - D_c^2(M_c(z_a),M_c(z_n(a,t)))). Here I is the distinct training-item set, S is the multiset of train-only directed transitions, P={(a,t) in S: I excluding {a,t} is nonempty}, and n(a,t) is the smallest-index item in I excluding {a,t}. Each term is a uniform mean over its displayed set; the transition term is defined as zero when P is empty. z_i=f_theta(a_i) in R^32, all M_c outputs are projected before distance scoring, and the fixed margin is 1. This encoder-side objective has direct gradients through z and no dependence on code indices: the first term prevents zero latents, the second penalizes collapse to a common vector, and the train-only transition margin supplies successor structure. Thus anti-collapse enters L directly and cannot be lowered by mapping every item to the same code while keeping encoder representations collapsed.",
+      "total": "L=L_rc+L_ac. Each term is a scalar mean as specified; there are no other losses or batch-dependent targets. For the transition term, P empty implies that term is zero. No validation/test events or behavior are used."
+    },
+    "target_circularity": "The hard assignment indices are computed from current parameters, then treated as stop-gradient constants for the entire optimizer step. In L_rc each side's target is explicitly stop-gradient, while gradients flow only through the non-stopped side. L_ac is independent of assignments. Therefore no target distribution or histogram is differentiated through its own parameter-dependent assignment, and there is no circular target update.",
+    "diagnostics": "Use the frozen definitions without alteration: valid L1 positive hit rate and valid Hard-L1 ER over the 52855 frozen validation pairs (one positive plus ten negatives per anchor, seed 42, history[-1] to target); level2_distinct_prefixes over all items; L3 collision, L3 refinement gain, and conditional G3 using the supplied alpha=1, K=256 estimator, train-only longest-prefix successor counts, and its specified empty/non-finite rules. Validation pairs are diagnostics only, never training inputs or targets."
+  },
+  "hyperbolic_necessity": "Negative curvature is a motivated geometry hypothesis, not established by the supplied literature or behavior manifest. The descriptive train-only directed transition structure suggests successor branches may be asymmetric; hyperbolic distance may allocate more separation to fine branches while preserving coarse proximity. The cited generative semantic-ID work establishes semantic-ID retrieval overlap only; neither it nor the supplied evidence proves hyperbolic necessity. The matched flat arm tests whether the curvature distance, rather than projection/domain or protocol changes, produces any gain.",
+  "euclidean_control": "The single implementation uses c as a parameter: c=0.1 uses the stated squared Poincare distance and c=0 uses the exact 4*||x-y||^2 limit. Both arms use identical M_c definition (the exponential map, whose c=0 value is identity), fixed P_R with R=0.99, assignments, residual operation order, model, code parameters, initialization, objective, optimizer, schedule, seeds, and compute budget. No separate graph arm is proposed.",
+  "effect_site": "Change only the metric used for code assignment and distance terms in the reconstruction/commitment and train-transition anti-collapse objective. The intended Stage2 movement is improved valid L1 positive hit rate and valid Hard-L1 ER, more level-two prefixes, and better L3 refinement/collision/conditional successor structure; downstream Stage3 is the sole next-item ranker.",
+  "real_trigger_measurement": "The registered trigger is the frozen train-only directed transition asymmetry and successor entropy in behavior evidence, used solely as motivation. These measurements establish neither a demonstrated validation failure nor a causal benefit. The proposal's falsification requires the frozen validation Stage2 diagnostics and a paired Stage3 test evaluation; neither is claimed to have been run.",
+  "training_only_inputs": "Content embeddings and train-split item transitions only. Train transitions are legal supervision. No validation/test behavior, future event, prediction-time user context, or batch composition enters fitting, target construction, assignment, or Stage3 inputs for SID creation.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {
+        "name": "valid_l1_hard_er",
+        "direction": "curved arm exceeds frozen strict lower bound",
+        "minimum_effect": "strictly above FROZEN_THRESHOLDS.valid_l1_hard_er",
+        "seed_rule": "For each preregistered existing training seed, evaluate both arms on the same frozen 52855 validation pairs and seed-42 negative sets; report per-seed values and paired differences. The admission gate is the frozen strict lower bound, with no additional Resample comparison."
+      },
+      {
+        "name": "level2_distinct_prefixes",
+        "direction": "curved arm exceeds frozen strict lower bound",
+        "minimum_effect": "strictly above FROZEN_THRESHOLDS.level2_distinct_prefixes",
+        "seed_rule": "For each same paired seed, count distinct (k1,k2) over all items; report per-seed values and paired differences."
+      }
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "curved arm greater than flat arm",
+      "minimum_effect": "strictly positive paired aggregate curvature-minus-flat change",
+      "seed_rule": "Use the same preregistered seeds, frozen Stage3 protocol and test evaluation for both arms after Stage2 proposals and diagnostics are locked; aggregate the paired per-seed differences. Test interactions are evaluation-only and never builder inputs."
+    },
+    "classification": {
+      "falsified_if": "any registered diagnostic or behavioral comparison is defined and fails its registered direction/minimum_effect",
+      "passed_if": "all registered diagnostic and behavioral comparisons are defined and satisfy their registered direction/minimum_effect",
+      "mixed_if": "at least one registered comparison satisfies its registered direction/minimum_effect and at least one defined registered comparison fails its registered direction/minimum_effect, with no NULL seed"
+    }
+  },
+  "null_outcome_rule": "If a seed-wise or aggregated change is undefined or non-finite (including zero denominator, missing evaluation, or empty stratum), classify that comparison as NULL. Any comparison containing a NULL seed is inconclusive, not passed or falsified."
+}

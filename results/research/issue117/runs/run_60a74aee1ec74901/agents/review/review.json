@@ -1,0 +1,25 @@
+{
+  "candidate_id": "geometry-negative-curvature-global-sid-v1",
+  "candidate_sha256": "04c76c23c6312328f9f41819d6ae18248546974005cea443b7ab1611eb135829",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "id": "control_changes_more_than_metric",
+      "severity": "fatal",
+      "evidence": "The declared Euclidean control sets c=0, making exp_0 identity and omitting projection, while the curvature arm uses exp_c and P_c. The manifest explicitly says the arms differ through the curvature-dependent map, projection, and distance. Thus this is not a control differing only by the metric, as required; any measured contrast would conflate the distance with the mapping/projection changes.",
+      "reproducible_evidence": "candidate.euclidean_control; candidate.math_definition.fixed_geometry; candidate.math_definition.residual_assignment_order"
+    },
+    {
+      "id": "null_outcome_classification_undefined",
+      "severity": "fatal",
+      "evidence": "The behavioural test registers test_R@10, higher-is-better, minimum relative effect 0.01, and paired identical frozen seeds with median relative change. However, neither the test protocol nor falsifier defines what happens if a seed-wise relative change or the aggregated relative change is undefined/non-finite (for example, a zero flat-arm denominator or missing evaluation). The mixed rule only negates passed_if and falsified_if and does not provide a null outcome rule. Consequently the registered falsifier is not mechanically decidable for null outcomes.",
+      "reproducible_evidence": "candidate.falsifier.stage3_behavioral_test; candidate.falsifier.classification"
+    }
+  ],
+  "reproducible_evidence": {
+    "causal_link": "The next-item rationale is explicitly framed as a hypothesis: the train-only directed-transition statistic motivates, but does not establish, branch-prefix collision as the failure mode. This is an acceptable design claim, not causal evidence. No validation/test behavior, future events, or prediction-time user context is used for Stage2 training or assignment.",
+    "math_and_domain": "For fixed c=1, the stated origin exponential map, open-ball projection, and arcosh distance are defined with zero-norm conventions; projection places mapped points strictly inside the ball because epsilon is positive. The c=0 definitions are the stated flat limits for the map and distance, and projection is explicitly omitted at c=0. Residual subtraction and the two stop-gradient losses are specified in Euclidean tangent coordinates, with hard assignments treated as nondifferentiable constants. No independent ill-typed or undefined-domain defect is apparent from the manifest.",
+    "capacity_and_protocol": "Both arms specify 3 levels x 256 code vectors in R^32, and claim identical architecture, parameter count, initialization, optimizer, schedule, seeds, and budget. The frozen protocol fixes latent dimension 32, levels 3, codes per level 256, no hyperparameter sweep, and no future events. Capacity/protocol are specified, but do not cure the control-confounding blocker.",
+    "registered_tests": "Stage2 registers the required leading indicators: validation Hard-L1 ER, distinct two-token prefixes, and L3 collision, with refinement gain and conditional G3 also specified. Their directions, 0.02 minimum effects, paired frozen seeds, and median seed-wise relative aggregation are given. The downstream behavioural test is registered as test_R@10, higher-is-better, minimum relative effect 0.01, paired identical frozen seeds, median relative change, using the existing held-out test protocol only for final evaluation. The pass/falsify rules require both the behavioural threshold and at least 3 of 5 Stage2 diagnostics, and define mixed as neither pass nor falsified; nulls remain unspecified as noted above."
+  }
+}

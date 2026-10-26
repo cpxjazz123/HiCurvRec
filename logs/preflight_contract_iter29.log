@@ -1,0 +1,7 @@
+STATUS=BLOCKED
+RESULT=NOT_RUN
+STAGE_ID=S07_PREFLIGHT
+ROUND=1
+REASON=Judge rejected both round-1 audits as canonical approval and found the applied consumer does not pin the formula-input vectors to the registered S02/S03 values. It recomputes the mapping and checks the final curvature, but the official checker does not inspect the formula-input JSON or validate runtime loader use. An official MECHANISM_CONTRACT_PASS has not been observed and is not asserted.
+EVIDENCE=stage2_RQ-VAE/curvature_RQ-VAE_iter29/curvature_RQ-VAE.py:290-350; stage2_RQ-VAE/curvature_RQ-VAE_iter29/logs/mechanism_manifest_iter29.md:22-27; stage2_RQ-VAE/curvature_RQ-VAE_iter29/logs/one_factor_diff_iter29.md:54-70; .claude/skills/curvature-rqvae-iter/scripts/preflight_contract.py:38-50,152-197
+NEXT=Keep Stage2/Stage3 blocked. Complete S07 round-2 independent corrective proposals, adjudicate and apply only a canonical fail-closed exact input-vector identity check, then repeat S07 audit. Run the official preflight only after the accepted source audit authorizes it; preserve its actual output.

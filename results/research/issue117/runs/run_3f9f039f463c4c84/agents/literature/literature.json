@@ -1,0 +1,47 @@
+{
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": "10.48550/arXiv.2305.05065",
+      "arxiv": "2305.05065",
+      "year": 2023,
+      "authors": ["Shashank Rajput", "Nikhil Mehta", "Anima Singh", "Raghunandan Keshavan", "Trung Vu", "Lukasz Heldt", "Lichan Hong", "Yi Tay", "Vinh Q. Tran", "Jonah Samost", "Maciej Kula", "Ed H. Chi", "Maheswaran Sathiamoorthy"],
+      "venue": "NeurIPS 2023",
+      "links": {
+        "arxiv_record": "https://arxiv.org/abs/2305.05065",
+        "full_text_html": "https://arxiv.org/html/2305.05065v3",
+        "full_text_pdf": "https://arxiv.org/pdf/2305.05065v3"
+      },
+      "evidence_label": "FULL_TEXT",
+      "verified_evidence": "Inspected the public arXiv HTML full text (v3, 2023-11-03), including abstract, method, and experiments. Section 3.1 generates item Semantic IDs by residual quantization of content embeddings; Section 3.2 trains a sequence-to-sequence model to predict the next item Semantic ID from a chronological user interaction sequence, with user-ID token personalization described in the experimental implementation. The abstract explicitly states prediction of the next item a user will interact with.",
+      "exact_overlap": {
+        "user_next_item_behavior": "Direct: predicts the next item from an individual user's ordered interaction history; user-specific tokens are additionally used for personalization.",
+        "hyperbolic_geometry": "No evidence found in inspected full text; semantic embeddings are quantized via RQ-VAE and no hyperbolic space/geometry is claimed.",
+        "generative_semantic_ids": "Direct: autoregressive generative retrieval predicts tuples of semantic codewords assigned to items.",
+        "all_three_intersection": false
+      },
+      "relevance": "Strong evidence for the user-next-item plus generative-semantic-ID pair, but not the hyperbolic component.",
+      "limitations": ["Does not establish that hyperbolic geometry improves or is used in generative Semantic-ID next-item recommendation.", "Experiments use three Amazon product-review categories; transfer to other domains/user behavior is not established by this citation."]
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Does representing item content and/or user histories in hyperbolic geometry improve personalized next-item prediction when the target is generated as a semantic ID?",
+      "evidence_label": "UNKNOWN",
+      "basis": "TIGER independently verifies personalized sequential next-item generation with Semantic IDs, but the inspected full text does not study hyperbolic geometry. This is a research question/hypothesis, not an established finding.",
+      "needed_evidence": "A full-text paper explicitly combining hyperbolic representations or hyperbolic distance with autoregressive Semantic-ID prediction on user interaction sequences, or a controlled experiment testing that combination."
+    },
+    {
+      "candidate": "Can hyperbolic hierarchical structure help model user preference evolution or long-/short-term intent while generating the next Semantic ID?",
+      "evidence_label": "UNKNOWN",
+      "basis": "TIGER reports hierarchical RQ-VAE codewords and sequence-based next-item prediction, but does not attribute the hierarchy to hyperbolic geometry or analyze preference evolution as a hyperbolic structure.",
+      "needed_evidence": "Full-text methods and results that define the user-behavior hierarchy, its hyperbolic embedding, and its effect on next-item outcomes."
+    }
+  ],
+  "limitations": [
+    "The independently verified full text supports only two sides of the requested three-way intersection: user next-item behavior and generative Semantic IDs. No source in this result is verified to cover all three together.",
+    "FULL_TEXT means the linked arXiv HTML full text was inspected, not merely its abstract. The hyperbolic non-overlap statement is scoped to that inspected paper; it is not proof that no such paper exists.",
+    "Search integration attempts were unavailable, so this is not an exhaustive systematic review. Do not interpret absence of a verified intersection as evidence of nonexistence.",
+    "The arXiv DOI identifies the preprint record; the paper reports acceptance to NeurIPS 2023."
+  ]
+}

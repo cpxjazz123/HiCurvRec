@@ -1,0 +1,53 @@
+{
+  "candidate_id": "geometry-hyperbolic-asymmetric-transition-item-sid",
+  "candidate_sha256": "2b8345c9fc7fe894d3b22ed64c4f44f014a4807912bbb0a11bef5cd888990a02",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "severity": "MATERIAL",
+      "topic": "candidate/source identity and frozen definition",
+      "finding": "The only apparent implementation tree is stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id. Its source comments identify a different candidate/run and hash (geometry-asymmetric-next-item-hyperbolic-semantic-id; c8701416...). It does not identify the manifest candidate/hash. Thus code-level claims below describe the present tree, not a proven byte-identity match to this manifest candidate.",
+      "evidence": "train_rqvae.py:3-11 and model/hyperbolic.py:1-5. Reproduce with: sed -n '1,12p' stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/train_rqvae.py; sed -n '1,8p' stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/model/hyperbolic.py"
+    },
+    {
+      "severity": "MATERIAL",
+      "topic": "math and objective mismatch",
+      "finding": "The manifest freezes d_c squared for both assignment and the existing quantization objective, float64 distance evaluation, and a tangent-radius boundary policy using epsilon=1e-5. The implementation assigns by unsquared hyperbolic_distance in the Poincare ball, calculates the quantization/commitment terms as ordinary tangent-space MSE, and performs no float64 conversion. exp_0 only clamps tanh(norm) to 1-epsilon with module EPSILON=1e-6; it does not implement the declared smooth tangent-radius clip. Although curvature -1 and a genuinely non-Euclidean distance operator are implemented, this is not the frozen mathematical treatment or loss.",
+      "evidence": "model/layers.py:255-258, 267-277 and 274-276; model/hyperbolic.py:28-29, 43-51, 81-94. Reproduce with: nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/model/layers.py | sed -n '251,287p'; nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/model/hyperbolic.py | sed -n '28,95p'"
+    },
+    {
+      "severity": "MATERIAL",
+      "topic": "next-item causal link and effect claim",
+      "finding": "The model is an item-content-only RQ-VAE: the encoder receives embeddings and quantization has no user prefix, transition-edge signal, or next-item target. The described pathway is indirect SID representation -> frozen Stage3 ranking, not a learned directional transition mechanism. The supplied reverse-event fraction and entropy are descriptive aggregate train-prefix statistics and cannot establish either a geometry effect or causal next-item improvement. No reproducible Stage3 asymmetric-and-tail comparison against both controls is supplied here; Hard-L1 ER and code-prefix diagnostics would remain Stage2 representation outcomes, not next-item evidence.",
+      "evidence": "train_rqvae.py:246-255 and model/model.py:30-40 show item embedding input and SID assignment; manifest behavior_evidence.interpretation_limit and candidate.next_item_hypothesis explicitly constrain inference. Reproduction: nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/train_rqvae.py | sed -n '246,255p'; nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/model/model.py | sed -n '30,40p'"
+    },
+    {
+      "severity": "MATERIAL",
+      "topic": "same-capacity and frozen protocol",
+      "finding": "The candidate tree hardcodes 32-D, 3x256, 3000 epochs, seed 42, AdamW, and four-rank launcher settings, and uses the same parameterized RQ-VAE shape. However, its training recipe includes SK settings (last-level Sinkhorn) and its training input is unique training target-item embeddings; no matched factor-four Euclidean metric-only implementation or graph-control implementation is bound to the supplied candidate in the inspected tree. Therefore the manifest's exact matched-control claim is not independently reproducible from this candidate source.",
+      "evidence": "train_rqvae.py:70-105, 215-230, 247-263; layers.py:108-115 and 312-317. Reproduction: nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/train_rqvae.py | sed -n '70,105p;215,263p'; nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/model/layers.py | sed -n '108,115p;290,343p'"
+    },
+    {
+      "severity": "MATERIAL",
+      "topic": "novelty and interpretation",
+      "finding": "The supplied literature review is explicitly abstract-only, targeted rather than exhaustive, and identifies HypRQ-VAE as a close apparent intersection without verifying its precise next-item/SID task. The proposed contribution is presently a testable fixed-capacity geometry comparison and subgroup evaluation design, not an established novel method. No novelty claim should be treated as verified from this evidence.",
+      "evidence": "Manifest literature_evidence.limitations and sources[0].exact_overlap; sources label all evidence ABSTRACT."
+    }
+  ],
+  "checks": {
+    "actual_behavior": "Item-content RQ-VAE assigns three global residual code tokens; no per-user or per-prefix conditioning is present.",
+    "math_types": "Hyperbolic ball points and unsquared distance are used for assignment, but the quantization loss is tangent-space Euclidean MSE; does not match manifest's squared-distance objective or float64/boundary specification.",
+    "nontrivial_hyperbolic_effect": "The operator is genuinely non-Euclidean at curvature -1, but no controlled metric-only result establishes an effect; implementation and manifest definitions differ.",
+    "numerical_domain": "Distance clamps Mobius-offset norm below 1; mapped points are bounded by tanh clamp. This avoids boundary infinities but differs from the specified epsilon and smooth tangent-radius policy; non-finite inputs are not explicitly rejected in exp_0/distance.",
+    "same_capacity_control": "Nominal RQ-VAE dimensions match; exact candidate-vs-factor-four-Euclidean control and graph control are not evidenced by this source tree.",
+    "user_future_leakage": "The inspected Stage2 fitter uses Stage1 item embeddings and training target IDs only for fitting. It exports SIDs for all embedding rows, including non-training IDs; this is not event-label leakage by itself, but the manifest's exact Stage1/frozen vocabulary provenance cannot be confirmed from this tree alone.",
+    "frozen_model_protocol": "Several frozen constants are present, but candidate-source identity and exact controls are unresolved. CPU eligibility is not established; this verdict grants no GPU approval."
+  },
+  "reproducible_evidence": [
+    "nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/model/layers.py | sed -n '240,287p'",
+    "nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/model/hyperbolic.py | sed -n '28,95p'",
+    "nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/train_rqvae.py | sed -n '70,105p;215,263p'",
+    "nl -ba stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/model/model.py | sed -n '14,45p'"
+  ],
+  "recommendation": "Do not start a CPU study under this manifest yet. First bind the exact candidate source to the supplied candidate_id/hash and reconcile the code with the frozen distance-squared loss, numerical-domain policy, and explicit metric-matched Euclidean control. Only then can a CPU study be considered; no GPU approval is implied."
+}

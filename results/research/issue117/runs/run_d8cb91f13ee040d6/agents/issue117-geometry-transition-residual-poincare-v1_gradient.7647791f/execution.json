@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "issue117-geometry-transition-residual-poincare-v1_gradient",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792832159.9094732,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "095cfdf4566d66b6d7c4292228d3c018d5a088c97c64c7a2422f6ef38d7490d3",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "gradient.json",
+  "output_sha256": "752443c5f183784d799ed74bdbeaf0670166ffac65dead27db9ed165886e98d9",
+  "pid": 2528347,
+  "project_marker": ".git",
+  "prompt_sha256": "4985cacc99a08f3af931547dd7404d75ec0f7e969f77ce669018c7b002b5fe05",
+  "session_sha256": "c2625792f1fa73a4a6fbd78a6885db40d24a324cbfd8bc5cd754380ca1654f1c",
+  "stderr_present": false,
+  "task_id": "issue117-geometry-transition-residual-poincare-v1_gradient",
+  "timed_out": false,
+  "verified": true
+}

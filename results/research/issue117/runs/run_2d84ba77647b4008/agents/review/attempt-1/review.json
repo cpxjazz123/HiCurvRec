@@ -1,0 +1,26 @@
+{
+  "candidate_id": "geometry_asymmetric_successor_branches_hyp",
+  "candidate_sha256": "18b5c0f856214badcbb1a0508c5afafe3722b269d212d9caf6d94afe10bf4a73",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "issue": "The conditional_g3 diagnostic cannot be recomputed uniquely from the registered rule.",
+      "evidence": "Its seed_rule refers to prescribed p_pref and p_hist, alpha=1 and K=256, but does not define either probability distribution, the conditioning/counting population and smoothing denominator, or precisely how the target third code is obtained for the two distributions. The frozen validation pairs and train-only successor counts alone do not resolve these definitions.",
+      "required_resolution": "Specify exact count sets, conditioning keys, smoothing formula and denominators for both distributions, plus handling of unseen target codes."
+    },
+    {
+      "issue": "The registered behavioral seed combination and the falsifier's aggregate/per-seed decision are not mechanically specified.",
+      "evidence": "Stage3 says paired identical seeds and requires reporting paired differences, but does not enumerate the frozen seeds or define how paired test_R@10 changes are combined into the registered effect. The classification simultaneously refers to changes for every required seed and aggregate, while the Stage3 seed_rule defines no aggregate statistic. Stage2 rules also vary between per-seed calculation and paired aggregate change, while passed_if requires both every seed and aggregate to clear threshold.",
+      "required_resolution": "Enumerate the inherited seed set and define the aggregate operator and exact pass/falsified/null decision for each seed and aggregate, including the Stage3 behavioral metric."
+    }
+  ],
+  "reproducible_evidence": {
+    "math_and_domain": "The scored c>0 expression is well-typed for x,y in R^32 and c=1; the shared radius ||x||,||y||<=0.9 keeps 1-c||x||^2 and 1-c||y||^2 positive (at least 0.19). The arcosh argument is at least 1. The stated c=0 limit 4||x-y||^2 is correct. The fixed shared projection avoids a singular curvature-dependent projection at c=0. The geometry therefore has a non-flat, numerically defined scored-distance effect; epsilon is declared but unused, which is not itself a domain failure. The objective tensors and reductions are shape-consistent, and the target/assignment stop-gradient and STE paths are explicitly described. Reconstruction and commitment losses themselves use Euclidean norms, so the curvature acts through assignment distances rather than replacing those loss norms. This is consistent with the explicitly matched distance-only control, though it narrows the causal claim to geometry-induced assignments."
+    ,
+    "next_item_causal_claim": "The train-only directional successor asymmetry motivates a testable hypothesis but does not establish hierarchy, negative curvature, SID failure, or a causal gain. The candidate explicitly acknowledges these limits and registers downstream Stage3 test_R@10 as the behavioral test, with higher being better and minimum effect 0.005. Stage2 diagnostics are leading indicators, not substitutes for that behavioral outcome. The missing seed-combination rule prevents a fully mechanical behavioral verdict."
+    ,
+    "control_and_leakage": "The stated flat arm changes only the scored distance formula to its exact flat limit, retaining the same fixed projection, architecture, parameters, initialization, training configuration and budget. Stage2 assignment inputs are global item content and train-split transitions; validation is named for diagnostics only, test behavior is reserved for downstream Stage3, and no prediction-time user context or future events are specified as Stage2 inputs. No leakage blocker is evident from this manifest."
+    ,
+    "diagnostics_and_falsifier": "The required leading-indicator families are present: validation Hard-L1 ER, distinct two-token prefixes, and L3 statistics (refinement gain and collision), alongside conditional_g3. Frozen absolute admission thresholds are referenced. However, conditional_g3's probability definitions and the per-seed/aggregate outcome rules are not sufficiently specified for unique recomputation and mechanical classification. The preflight direction warnings for L3 are not, by themselves, blockers: the candidate gives an explicit hypothesis and registered directions, and the directions are falsifiable rather than claimed as measured facts."
+  }
+}

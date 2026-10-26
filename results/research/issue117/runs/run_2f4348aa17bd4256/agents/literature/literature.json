@@ -1,0 +1,66 @@
+{
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": null,
+      "arxiv": "2609.03369v1",
+      "links": {"arxiv_abs": "https://arxiv.org/abs/2609.03369v1", "full_text_html": "https://arxiv.org/html/2609.03369"},
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": "Direct three-way intersection. Full text §III-C formulates next-item prediction: chronological user interaction-history semantic IDs are input, and the next item's semantic ID is autoregressively generated. §§II–III-B specify Poincaré-ball hyperbolic residual quantization to construct those semantic IDs; §IV evaluates sequential recommendation and head/tail behavior. The HTML full text was inspected, including those sections. arXiv metadata lists acceptance to ICDM 2026; no DOI was displayed in the inspected record.",
+      "evidence_locations": ["Abstract and Introduction", "§III-B Generation of Semantic IDs", "§III-C Generative Recommender with Semantic IDs", "§IV Experiments"],
+      "caveat": "The behavioral target is next-item prediction from an ordered interaction history; the paper emphasizes long-tail item representation rather than a detailed causal or psychological account of user behavior."
+    },
+    {
+      "title": "Learning Variable-Length Tokenization for Generative Recommendation",
+      "doi": null,
+      "arxiv": "2605.17779v2",
+      "links": {"arxiv_abs": "https://arxiv.org/abs/2605.17779v2", "full_text_html": "https://arxiv.org/html/2605.17779"},
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": "Direct three-way intersection. Full text describes generative recommendation as predicting the next item from a user's semantic-ID interaction history; introduces hyperbolic residual quantization (HARQ) for variable-length semantic IDs; and links popularity/interaction frequency to differing representational requirements for head versus tail target items. The HTML full text was inspected, including §I, §§III-C–D. This is an arXiv preprint (v2 dated 2026-06-12 in the record), not a DOI-verified publication here.",
+      "evidence_locations": ["Abstract and §I Introduction", "§III-C HARQ Architecture", "§III-D Variable-Length ID Integration"],
+      "caveat": "Behavior is represented operationally as interaction history and item popularity; claims about information budgets and geometric capacity are the authors' modeling/theoretical claims, not independently validated behavioral laws."
+    },
+    {
+      "title": "Generative Next POI Recommendation with Semantic ID",
+      "doi": "10.1145/3711896.3736981",
+      "arxiv": "2506.01375v2",
+      "links": {"doi": "https://doi.org/10.1145/3711896.3736981", "arxiv_abs": "https://arxiv.org/abs/2506.01375v2", "full_text_html": "https://arxiv.org/html/2506.01375"},
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": "Strong next-item-behavior + generative semantic-ID evidence, but NOT hyperbolic geometry: it predicts a user's next POI from historical check-ins and generates semantic IDs constructed with Euclidean residual quantization. Full text §3 defines next POI prediction from a user's recent visit sequence; §§4.1–4.2 build SIDs from semantic, temporal, spatial, and collaborative signals and generate the next POI SID. The inspected full text explicitly gives a Euclidean quantization formulation, so this is a near-neighbor/counterexample, not a full three-way match.",
+      "evidence_locations": ["§3 Problem Definition", "§4.1 Semantic ID Construction", "§4.2 Generative POI Recommendation"],
+      "caveat": "Do not cite as evidence that hyperbolic geometry and generative SIDs intersect: the inspected quantizer is standard Euclidean RQ-VAE."
+    },
+    {
+      "title": "Music Recommendations in Hyperbolic Space: An Application of Empirical Bayes and Hierarchical Poincaré Embeddings",
+      "doi": "10.1145/3298689.3347029",
+      "arxiv": "1907.12378v1",
+      "links": {"doi": "https://doi.org/10.1145/3298689.3347029", "arxiv_abs": "https://arxiv.org/abs/1907.12378v1", "full_text_html": "https://arxiv.org/html/1907.12378"},
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": "Hyperbolic recommendation grounded in actual user listening/engagement behavior: the paper embeds a hierarchy of music entities in Poincaré space and tests personalized playlist recommendations with an A/B experiment. It does NOT use generative semantic IDs or next-item sequence generation. Full text §§2.5–2.6 and §3 describe hyperbolic recommendations based on listening history and measured user listening time.",
+      "evidence_locations": ["§2.5 Link creation and Poincaré embeddings", "§2.6 Personalized playlist experiment", "§3 Results"],
+      "caveat": "Relevant for behavioral grounding and hyperbolic recommendation only; not a sequential next-item or semantic-ID method."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Personalized next-item prediction conditioned on chronological user interaction history, with semantic IDs generated autoregressively in hyperbolic item-index space.",
+      "support": ["HypRQ-VAE (arXiv:2609.03369v1), FULL_TEXT", "VarLenRec (arXiv:2605.17779v2), FULL_TEXT"],
+      "behavior_focus": "Next interaction/consumption conditional on recent ordered history; assess whether hyperbolic encoding changes predictions for sparse, niche, or tail items rather than merely aggregate accuracy.",
+      "testable_questions": ["Are gains concentrated on tail next-items, or do they improve calibrated user-specific transitions across popularity strata?", "Does the hyperbolic SID geometry preserve behaviorally predictive transition neighborhoods beyond semantic similarity?", "Do conclusions persist under user-level and temporal splits, against matched-capacity Euclidean SIDs and sequence-model baselines?"]
+    },
+    {
+      "candidate": "Next-POI prediction from a user's chronological check-in trajectory, with semantic IDs that incorporate spatial, temporal, and collaborative behavior; hyperbolic geometry is an open extension rather than established by this source.",
+      "support": ["GNPR-SID (DOI:10.1145/3711896.3736981), FULL_TEXT"],
+      "behavior_focus": "Context-rich user mobility behavior and next destination; compare a proposed hyperbolic SID extension against the paper's Euclidean quantization baseline.",
+      "testable_questions": ["Does hyperbolic quantization improve next-location performance after controlling for spatial distance, time-of-day, and popularity?", "Are apparent gains attributable to user-level history signals or to the SID geometry?"]
+    }
+  ],
+  "limitations": [
+    "Only HypRQ-VAE and VarLenRec are direct verified intersections among the examined sources. The literature set is a targeted discovery, not evidence that these are the only relevant papers.",
+    "The two direct-intersection papers are very recent arXiv works (2026); HypRQ-VAE's record reports ICDM 2026 acceptance, while VarLenRec's inspected record did not establish a DOI or peer-reviewed venue. Treat novelty and priority claims cautiously.",
+    "FULL_TEXT means the arXiv HTML full text was fetched and the cited sections inspected; it does not mean results, code, data, or theoretical claims were independently replicated.",
+    "The direct papers operationalize user behavior primarily as historical item-ID/check-in sequences and next-item labels. They do not establish a rich behavioral theory of intent, choice, causal preference change, or user welfare.",
+    "Hyperbolic geometry and semantic IDs co-occur directly in HypRQ-VAE and VarLenRec; next-item behavior is also described explicitly. This supports an algorithmic intersection, not proof that hyperbolic structure is intrinsically a faithful model of human preference.",
+    "Search results are restricted to accessible arXiv HTML and bibliographic DOI metadata. The source search was not exhaustive across subscription databases, non-English literature, or all recent conference proceedings."
+  ]
+}

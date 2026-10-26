@@ -1,0 +1,122 @@
+{
+  "issue": 117,
+  "run_id": "run_f8049f2ce2774d7c",
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "decision": "REJECT",
+  "recorded_at_utc": "2026-10-24T05:40:00Z",
+  "business_problem": {
+    "source": "results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "population": "train_only_longest_prefix_per_user",
+    "users": 57439,
+    "events": 396958,
+    "transitions": 339519,
+    "distinct_items": 24556,
+    "directed_pairs": 323633,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "claim_boundary": "Direction and entropy do NOT establish negative curvature or a causal next-item improvement."
+  },
+  "frozen_evidence": {
+    "behavior_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "literature_sha256": "736fad22fffa2a3cd5dac41942806b024186c532bcbb95fcf46553f9f1f26686",
+    "geometry_sha256": "63bc3239b93597c9980ed370240f40a4cd2e236b6127b61a299fefbaf843c3b1",
+    "review_sha256": "8685bd9ae83ddbfa0470f88632ffb1e9e1cb25f4c165feea5b1c2fec7c229148",
+    "review_verdict": "CPU_ELIGIBLE",
+    "review_material_blockers": 5
+  },
+  "verification": {
+    "source_sha256": "9826b56cb3842e1956f53ae8586cc48d563d3918086eea8b3aeb309eae55bd8a",
+    "reviewer_verdict": "APPROVE_TESTS",
+    "suites": {
+      "math": {"tests_run": 6, "passed": true, "output_sha256": "98ff9fabfb79122ce69a476296857190059849cedf18b6578c0b9dad6e4caa51"},
+      "gradient": {"tests_run": 5, "passed": true, "output_sha256": "515479e4795448547cdb2f531591c2190c79e6ab3dd7d3792646febf078db11c"},
+      "ddp": {"tests_run": 1, "passed": true, "output_sha256": "07c5f5f1028dce98fcaf61cb21b3421466c3cfe3da64f12ec402a4c0ccfddaf7"},
+      "entrypoint": {"tests_run": 1, "passed": true, "output_sha256": "9f9cb80ee4edc2ec8b42207e64b8f4b099c35bdb844df2dc3324aafc01883637"}
+    },
+    "skipped": 0,
+    "failures": 0,
+    "errors": 0
+  },
+  "stage2": {
+    "mode": "ddp_4gpu_port_50202",
+    "epochs": 3000,
+    "seed": 42,
+    "first_loss": 0.00048788,
+    "final_loss": 0.00032479,
+    "final_recon": 6.7633e-05,
+    "greedy_collision_by_epoch": {"300": 0.164274, "600": 0.184244, "900": 0.20397, "1200": 0.206857, "1500": 0.203441, "1800": 0.206247, "2100": 0.203482, "2400": 0.207793, "2700": 0.203888, "3000": 0.206288},
+    "smoke": "SMOKE_PASS: base losses total/recon carry parameter gradient 0.0195546, 8/8 applied grad norms positive, no dead/non-finite terms",
+    "artifacts": {
+      "item_sids_json": "results/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/item_sids.json",
+      "item_sids_json_sha256": "9e1a7c3fc3e709ac7834219693330525bf41d6564b505661994671ccad10b5ae",
+      "rqvae_best_pth_sha256": "4481cab042d1f82e573e8be903bee1aa880ea61289d75d17b5b572a55810d047",
+      "sids_for_hgrec_npy_sha256": "b21aea65e59c9904e6446e06c32f7f2d1cfbe5d1ed636952eb5a76b6a1932d51",
+      "training_metrics_jsonl_sha256": "26db035c55587f2b7bbf124445bb3ec3c073f2bc368bd177d93e455752c5ffe8"
+    },
+    "sid_structure": {
+      "items": 24587,
+      "levels": 4,
+      "unique": 24587,
+      "L0_distinct": 240,
+      "L0_entropy_normalised": 0.8141,
+      "L1_distinct": 256,
+      "L1_entropy_normalised": 0.8138,
+      "L2_distinct": 256,
+      "prefix1_distinct": 240,
+      "prefix2_distinct": 6233,
+      "L3_top1_share": 0.7937
+    },
+    "baseline_sid_structure_frozen_TIGER_RQ_VAE": {
+      "items": 24587,
+      "unique": 24587,
+      "L0_distinct": 247,
+      "L0_entropy_normalised": 0.8635,
+      "L1_entropy_normalised": 0.8202,
+      "prefix2_distinct": 7414,
+      "L3_top1_share": 0.8225
+    }
+  },
+  "stage3": {
+    "mode": "ddp_4gpu_port_50201",
+    "variant": "TIGER_c117_hyperbolic_item_semantic_id",
+    "protocol": {"NUM_EPOCHS": 150, "NO_EVAL": true, "SKIP_TEST": false, "SEED": 42, "BEAM_SIZE": 20, "early_stop": false},
+    "epochs_completed": 150,
+    "final_train_loss": 1.840602,
+    "n_eval": 57439,
+    "test_recall@5": 0.0372395062588137,
+    "test_recall@10": 0.05557199811974443,
+    "test_ndcg@5": 0.024465239883884344,
+    "test_ndcg@10": 0.030364774529014066,
+    "test_final_json_sha256": "af5b781ffe3f76e2907599a239acaef6dd4db18509983d0f7e8827ae51b77e93",
+    "hg_rec_best_pth_sha256": "caeb6e356d0de6a7eb511d0d1257b68da6ca010343a8b3f8bfa03d670b663dc6",
+    "checkpoint": "results/stage3_T5Train/TIGER_c117_hyperbolic_item_semantic_id/ckpt/Amazon_2023_Instruments/Oct-24-2026_16-10-20/HG_Rec_best.pth"
+  },
+  "reference_band_same_protocol_history": {
+    "best": {"test_recall@10": 0.06426, "arm": "tiger_sample_crowd_posattract_w3"},
+    "r8_control": 0.06407,
+    "tiger_sample_resample": 0.06374,
+    "tiger": 0.05367,
+    "unknown_variant": 0.05522,
+    "note": "Read from existing results/stage3_T5Train/*/logs/*/test_final.json; read-only historical values, same frozen Stage3 protocol and n_eval=57439."
+  },
+  "attribution": {
+    "claim": "The hyperbolic origin exp-map with three-level residual quantisation reduced prefix discriminability of the item semantic IDs, and Stage3 beam search lost next-item ranking accordingly.",
+    "measured_support": [
+      "prefix2_distinct 6233 versus 7414 for the frozen TIGER_RQ-VAE baseline (-16.0%)",
+      "L0 entropy 0.8141 versus 0.8635, L0 distinct codes 240 versus 247",
+      "greedy collision stayed at 0.203-0.208 from epoch 900 to 3000 instead of falling further",
+      "test_R@10 0.05557 versus the 0.0637-0.0643 band of the same-protocol behaviour-sampled arms"
+    ],
+    "falsification_target_for_next_run": "A candidate must raise distinct level-2 prefixes above the baseline 7414 before it can plausibly beat the 0.0637-0.0643 band on the same data and capacity; if it cannot, the geometry change is not buying next-item information.",
+    "not_established": [
+      "No capacity-matched Euclidean or transition-graph control was trained, so the specific contribution of negative curvature is not isolated by this run.",
+      "The 92.66% asymmetric-transition statistic remains descriptive and is not a per-example trigger."
+    ]
+  },
+  "next_action": {
+    "mcp": "research_start",
+    "target": "next hypothesis must address prefix discriminability loss measured here"
+  }
+}

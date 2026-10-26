@@ -1,0 +1,39 @@
+{
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": "10.48550/arXiv.2609.03369",
+      "arxiv": "2609.03369v1",
+      "publication_status": "arXiv preprint; arXiv record says accepted for ICDM 2026",
+      "full_text_url": "https://arxiv.org/html/2609.03369",
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": {
+        "user_next_item_behavior": "Full text §III-C explicitly formulates next-item prediction as generation of the target item's semantic-ID sequence from the chronologically ordered semantic IDs of the user's interaction history; §IV-A describes chronological interaction sequences and leave-one-out evaluation.",
+        "hyperbolic_geometry": "Full text §§II–III defines Poincaré-ball hyperbolic operations and uses hyperbolic residual quantization (HypRQ-VAE) to generate each item's code sequence.",
+        "generative_semantic_ids": "Full text §III-B explicitly calls the learned quantized item code sequences Semantic IDs; §III-C fine-tunes a generative recommender to autoregressively generate the next item's Semantic ID.",
+        "intersection_assessment": "Direct three-way intersection, not merely adjacent themes: user histories are the conditioning behavior, hyperbolic geometry is used to construct item semantic IDs, and next-item recommendation is performed by generating those IDs."
+      },
+      "independent_verification": {
+        "metadata": "arXiv abstract record and paper title/identifier: https://arxiv.org/abs/2609.03369",
+        "full_text_checked": "HTML full text inspected, including §§III-B, III-C, IV-A and IV-C: https://arxiv.org/html/2609.03369",
+        "verification_scope": "The source is independently retrievable from arXiv; claims here are grounded in the paper text, not inferred from search snippets."
+      }
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Long-tail next-item prediction from chronological user interaction histories using hyperbolically constructed generative semantic IDs.",
+      "evidence_label": "FULL_TEXT",
+      "source_doi": "10.48550/arXiv.2609.03369",
+      "grounding": "The paper explicitly models next-item prediction from user history (§III-C) and reports head/tail analyses including tail-item gains (§IV-C). It directly motivates this as retaining niche preferences poorly represented by Euclidean item indexing.",
+      "research_gap_or_extension": "Test whether the observed gains persist when the hyperbolic semantic-ID tokenizer is trained or evaluated under behavior-aware objectives, rather than deriving IDs from item text and then learning behavior-to-ID generation in a second stage. This is a suggested follow-up, not a claim made by the source."
+    }
+  ],
+  "limitations": [
+    "The search identified one directly verified paper for the exact three-way intersection; this does not establish that it is the only such work.",
+    "The arXiv paper is dated 2026-09-03 and the record notes acceptance at ICDM 2026; publication proceedings metadata/DOI beyond the arXiv DOI were not independently established here.",
+    "The paper's stated pipeline first learns IDs from item textual features, then trains the generative recommender on behavior sequences. It does not establish that user behavior itself is embedded in hyperbolic geometry or used to construct the semantic IDs.",
+    "Evidence labels describe inspected source content: FULL_TEXT means the cited paper's accessible HTML full text was inspected. No ABSTRACT or UNKNOWN sources are included because no additional candidates were sufficiently verified for this output.",
+    "Reported experiments use MovieLens, Amazon Instruments, and Amazon Arts with a leave-one-out evaluation; generalization to other domains, online behavior, or production settings remains unverified."
+  ]
+}

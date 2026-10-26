@@ -1,0 +1,13 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "source_sha256": "9826b56cb3842e1956f53ae8586cc48d563d3918086eea8b3aeb309eae55bd8a",
+  "proposal_sha256": "c8701416d4b694141d60366f61d3b70b4fbbc958f8188447d822f8d36e6a283d",
+  "test_sha256": {
+    "math": "929d11f53d11533a4e2e5bae28eb57baec232e3fbf46186be1d2cec01aee83fb",
+    "gradient": "d003c6df4df36a80be1e9fa462dabc85a9300d5acc8c2dbe4c7b225223326fe8",
+    "ddp": "5e5deab184d4453e5d25aea7b889d46a68e0bc6b773b02275c919d344d905911",
+    "entrypoint": "bc4f356762a520289d0b40fdf7f7bf2a8815553c8677551c588a36d0976b5bf5"
+  },
+  "verdict": "APPROVE_TESTS",
+  "rationale": "Recomputed the manifest recipe: all six source-file hashes match and their sorted path/NUL/hash digest equals source_sha256. All four reviewed tests' hashes match both committed and materialised files. Static inspection finds independent closed-form math/finite-difference oracles (not implementation-only comparisons); DDP spawns two ranks with rank-distinct inputs, all-gathers each rank's gradients and updated parameters, and checks both; entrypoint invokes trainer.main(), witnesses its hyperbolic quantizer/loss path and checks checkpoint/SID exports. No mock-only substitute. Static review cannot establish runtime success: verification_check must run all four suites with Stage2 interpreter and enforce nonzero tests/no skips/no failures."
+}

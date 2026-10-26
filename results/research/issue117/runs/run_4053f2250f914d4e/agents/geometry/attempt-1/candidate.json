@@ -1,0 +1,76 @@
+{
+  "candidate_id": "geometry_hyp_residual_v1",
+  "behavior_problem_id": "train_transition_directional_asymmetry",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "8ba6837c216074f407682b678f8b30acb30e89d57086da57dd7a4d6a599d9d0d",
+  "next_item_hypothesis": "A demonstrated failure mode is representing a directed, branching next-item transition structure with a flat additive residual quantizer: many observed transitions have no observed reverse, while successors have nonzero entropy. This may cause first-level buckets to mix items with different successor roles and reduce positive-versus-negative L1 separation. This is a hypothesis about the measured train-only pattern, not a claim that curvature is causally beneficial. Build one global content-derived three-token SID per item; Stage2 does not rank candidates.",
+  "math_definition": {
+    "builder": "An encoder maps each item's content embedding to z_i in R^32. Initialize residual r_i^(0)=z_i. At each level l=1,2,3, map the current residual using the exponential map, project to the shared bounded ball, assign the nearest of 256 projected code vectors under D_c^2, then subtract the selected code in the original Euclidean latent coordinates to form the next residual. The resulting (k_i1,k_i2,k_i3) is the single global SID for item i.",
+    "geometry": {
+      "curvature": "c=0.1",
+      "epsilon": "epsilon=1e-5",
+      "projection_radius": "R=(1-epsilon)/sqrt(c), fixed in both arms; thus R=(1-1e-5)/sqrt(0.1)<1/sqrt(c).",
+      "projection": "P_R(v)=v if ||v||<=R, else R*v/||v||.",
+      "arcosh": "For u>=1, arcosh(u)=log1p((u-1)+sqrt((u-1)*(u+1))); compute u-1 directly as 2*c*||x-y||^2/((1-c||x||^2)*(1-c||y||^2)) to avoid cancellation, and clamp this nonnegative increment to at least zero before log1p.",
+      "scored_distance_squared": "D_c^2(x,y)=d_c(x,y)^2=(1/c)*arcosh(1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)))^2.",
+      "power_and_flat_limit": "The assignment and code-fit objective use the squared distance D_c^2. Its exact c->0 limit is 4*||x-y||^2; the unsquared distance tends to 2*||x-y||.",
+      "maps": "For tangent vector v at origin, Exp_0^c(v)=tanh(sqrt(c)*||v||)*v/(sqrt(c)*||v||), with value 0 at ||v||=0. Its c->0 limit is the identity map.",
+      "domain_policy": "All vectors entering D_c^2, including mapped residuals and mapped code vectors, are projected by the same P_R; no distance is evaluated outside ||x||<=R. At c=0, use the same P_R with a separately fixed R=0.99 (the common feasible region for that arm); D_0^2=4||x-y||^2, Exp_0^0(v)=v, and the curvature projection radius formula (1-epsilon)/sqrt(c) is undefined, so the flat arm uses P_0.99 instead. The representation map is P_R composed with the exponential map in both arms, with the arm's fixed R, and all other code is shared."
+    },
+    "assignment_and_residual_order": "For each item i and level l: (1) map the current residual, u_i^l=Exp_0^c(r_i^(l-1)); (2) project, x_i^l=P_R(u_i^l); (3) project each code parameter e_lk by q_lk=P_R(Exp_0^c(e_lk)); (4) assign k_il=argmin_k D_c^2(x_i^l,q_lk), ties to lowest k; (5) subtract in latent coordinates, r_i^l=r_i^(l-1)-stopgrad(e_l,k_il). The residual subtraction occurs only after assignment and projection/scoring; the updated residual is mapped and projected before its next-level score. At level one the named conditioned-code set is empty; level two conditions on exactly k_i1 through the residual subtraction; level three conditions on exactly (k_i1,k_i2) through the two preceding residual subtractions. No other prefix conditioning is used.",
+    "loss_equations": [
+      {
+        "name": "L_reconstruction_commitment",
+        "equation": "L_rc=(1/N) sum_{i in I} [ ||z_i - sum_{l=1}^3 stopgrad(e_{l,k_il})||_2^2 + beta * sum_{l=1}^3 D_c^2(P_R(Exp_0^c(r_i^(l-1))), P_R(Exp_0^c(e_{l,k_il}))) ]",
+        "tensors_and_shapes": "I is the nonempty set of distinct train-split items in the batch, N=|I|; z:[N,32], e:[3,256,32], k:[N,3], and each distance operand:[32]. beta=0.25. The reconstruction term trains the encoder against the stopped selected code sum; the commitment term trains residuals/encoder toward selected code vectors. The existing optimizer and codebook update rule are unchanged.",
+        "normalization_and_empty_rule": "Mean over items, with the three commitment terms summed within each item. Empty I is skipped and contributes no update.",
+        "target_circularity": "Hard assignments are computed from current parameters and detached; all assignment indices and selected code targets in the reconstruction/commitment terms are stop-gradient, so no derivative passes through argmin."
+      },
+      {
+        "name": "L_usage_anti_collapse",
+        "equation": "L_usage=(1/3) sum_{l=1}^3 sum_{k=1}^{256} p_lk * log(256*p_lk), where p_lk=(sum_{i in I} 1[k_il=k])/N",
+        "tensors_and_shapes": "k:[N,3] are hard batch assignments; p:[3,256]. This is the KL divergence of each level's batch marginal code distribution from uniform. Add it to the loss as L_total=L_rc+0.01*L_usage.",
+        "normalization_and_empty_rule": "Each level marginal sums to one; use 0*log(0)=0. Empty I skips the term. The term is bounded below by zero and penalizes batchwise code collapse; it enters the Stage2 training loss, not SID assignment at inference.",
+        "target_circularity": "The histogram is formed from detached hard assignment indices; gradients do not pass through indices. The statistic is a loss on the batch marginal, not a target distribution inferred from train transitions."
+      }
+    ],
+    "anti_collapse": "L_usage is the explicit anti-collapse mechanism and enters additively in L_total alongside content reconstruction and commitment. A constant-code solution incurs positive marginal KL and cannot minimize this term; the reconstruction term independently requires item content to be represented. No validation behavior is used to form its targets.",
+    "transition_supervision": "None: the frozen mechanism uses content reconstruction/commitment and marginal code-use regularization only. Train-split transitions are legal supervision but are not required by this candidate."
+  },
+  "hyperbolic_necessity": "Negative curvature is a geometry hypothesis motivated by directed, branching train transitions: hyperbolic volume growth can allocate separation to increasingly diverse branches while preserving compact shared prefixes. The measured asymmetry and entropy motivate the test but do not prove curvature is necessary; only the same-capacity flat control and registered outcomes can assess whether this geometry helps.",
+  "euclidean_control": "The flat arm is the c->0 limit of the identical implementation: same encoder, codebook parameter count, initial values, optimizer, code initialization, schedule, epochs, batch, seeds, assignment, losses, and budget. It uses D_0^2=4||x-y||^2 and identity exponential map, with the specified common-form projection operation instantiated at fixed R=0.99 because the curvature-radius formula is undefined at zero. No graph arm is used.",
+  "effect_site": "Hard residual code assignment and code-fit distance at all three levels; the anti-collapse marginal code-use term protects informative assignments. Expected Stage2 diagnostic movement: valid L1 positive hit rate upward, valid Hard-L1 ER upward, level2_distinct_prefixes upward, L3 collision downward, L3 refinement gain upward, and conditional G3 upward. These are predictions, not guaranteed effects.",
+  "real_trigger_measurement": "The trigger is the frozen train-only observation of directed transitions: 314605 directed pairs have no observed reverse (fraction 0.9266197178950221), alongside mean next-item entropy 4.844072338042215 bits. This supports testing separation of directional successor roles, not a claim about validation/test behavior or causal impact.",
+  "training_only_inputs": "Item content embeddings and train-split item transitions only (the latter are not consumed by this mechanism). Do not use validation/test behavior, future events, prediction-time user context, candidate lists, or batch composition as a feature or target. The frozen valid-L1, Hard-L1 ER, level-two-prefix, L3, and conditional-G3 diagnostics are evaluation measurements only.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false,
+    "training_protocol": "Preserve the frozen Stage2 epochs, batch size, schedule, seeds, optimizer, codebook initialization and total budget exactly; no new training protocol or recommender component is introduced."
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {"name": "valid_l1_hard_er", "direction": "increase versus same-seed flat arm and strictly above the frozen Resample reference", "minimum_effect": "strictly greater than 0 versus flat; additionally must satisfy the frozen Resample admission comparison", "seed_rule": "paired same-seed curvature-versus-flat runs; every registered seed must be finite and the aggregate paired change must be positive"},
+      {"name": "level2_distinct_prefixes", "direction": "increase versus same-seed flat arm and strictly above the frozen Resample reference", "minimum_effect": "strictly greater than 0 versus flat; additionally must satisfy the frozen Resample admission comparison", "seed_rule": "paired same-seed runs; every registered seed must be finite and aggregate paired change must be positive"},
+      {"name": "valid_l1_positive_hit_rate", "direction": "increase", "minimum_effect": "strictly greater than 0 versus flat", "seed_rule": "paired same-seed runs; every registered seed must be finite and aggregate paired change must be positive"},
+      {"name": "L3_collision", "direction": "decrease", "minimum_effect": "strictly less than 0 paired curvature-minus-flat change", "seed_rule": "paired same-seed runs; every registered seed must be finite and aggregate paired change must be negative"},
+      {"name": "L3_refinement_gain", "direction": "increase", "minimum_effect": "strictly greater than 0 paired curvature-minus-flat change", "seed_rule": "paired same-seed runs; every registered seed must be finite and aggregate paired change must be positive"},
+      {"name": "conditional_G3", "direction": "increase", "minimum_effect": "strictly greater than 0 paired curvature-minus-flat change", "seed_rule": "paired same-seed runs; every registered seed must be finite and aggregate paired change must be positive"}
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "increase for curvature versus flat under the frozen Stage3 protocol",
+      "minimum_effect": "strictly greater than 0 paired curvature-minus-flat aggregate change",
+      "seed_rule": "paired same-seed Stage3 comparisons, using only the frozen Stage3 test evaluation after Stage2 proposals and diagnostics are locked; aggregate the paired change over the registered seeds"
+    },
+    "classification": {
+      "falsified_if": "any registered stage2_diagnostics minimum_effect predicate fails, or stage3_behavioral_test minimum_effect predicate fails",
+      "passed_if": "all registered stage2_diagnostics minimum_effect predicates and the stage3_behavioral_test minimum_effect predicate hold, including the frozen Resample admission comparisons",
+      "mixed_if": "at least one registered predicate holds and at least one registered predicate fails"
+    },
+    "null_outcome_rule": "If any seed-wise or aggregated change is undefined or non-finite (including zero denominator, missing evaluation, or empty stratum), classify that result NULL. Any comparison containing a NULL seed is inconclusive, not passed or falsified; overall classification is NULL/inconclusive rather than mixed."
+  }
+}

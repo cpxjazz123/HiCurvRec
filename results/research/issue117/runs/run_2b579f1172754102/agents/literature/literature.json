@@ -1,0 +1,109 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": null,
+      "arxiv": "2609.03369",
+      "urls": ["https://arxiv.org/abs/2609.03369", "https://arxiv.org/pdf/2609.03369"],
+      "evidence_label": "FULL_TEXT",
+      "full_text_basis": "arXiv provides a linked PDF; title and abstract metadata retrieved from arXiv API. PDF availability is independently checkable at the linked source; this audit did not inspect the full PDF contents.",
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — frames sequential recommendation as item-ID sequences and evaluates a generative recommender; does not establish that the method specifically models a user's next-item transition beyond that framing.",
+        "hyperbolic_geometry": "ABSTRACT — explicitly proposes hyperbolic residual-quantized VAE for item indexing and motivates it via hierarchy and long-tail structure.",
+        "generative_semantic_ids": "ABSTRACT — item indexing/vocabulary for generative recommender; semantically informed item representations are described, but the abstract does not explicitly call the codes Semantic IDs (SIDs).",
+        "all_three": "PARTIAL; not verified as an exact three-way intersection."
+      },
+      "publication_note": "arXiv record reports acceptance at ICDM 2026."
+    },
+    {
+      "title": "Generative Next POI Recommendation with Semantic ID",
+      "doi": null,
+      "arxiv": "2506.01375",
+      "urls": ["https://arxiv.org/abs/2506.01375", "https://arxiv.org/pdf/2506.01375"],
+      "evidence_label": "FULL_TEXT",
+      "full_text_basis": "arXiv record exposes a linked PDF; metadata and abstract retrieved from arXiv API. Full PDF contents not independently inspected in this audit.",
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — predicts a user's next destination from preferences and historical check-ins.",
+        "hyperbolic_geometry": "UNKNOWN — retrieved abstract describes semantic/collaborative features and residual quantization, not hyperbolic geometry.",
+        "generative_semantic_ids": "ABSTRACT — explicitly constructs semantic POI IDs and generates next POIs using those IDs.",
+        "all_three": "NO evidence of hyperbolic geometry in retrieved abstract; not a verified intersection."
+      },
+      "publication_note": "arXiv record states accepted by KDD 2025."
+    },
+    {
+      "title": "Hyperbolic Mamba for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2505.09205",
+      "urls": ["https://arxiv.org/abs/2505.09205", "https://arxiv.org/pdf/2505.09205"],
+      "evidence_label": "FULL_TEXT",
+      "full_text_basis": "arXiv record exposes a linked PDF; metadata and abstract retrieved from arXiv API. Full PDF contents not independently inspected in this audit.",
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — sequential recommendation modeling temporal evolution of user preferences from interaction sequences.",
+        "hyperbolic_geometry": "ABSTRACT — curvature-aware hyperbolic selective state-space sequence modeling.",
+        "generative_semantic_ids": "UNKNOWN — retrieved abstract describes Mamba-based sequential recommendation, not generative semantic-ID indexing or generation.",
+        "all_three": "No evidence of semantic IDs in retrieved abstract; not a verified intersection."
+      }
+    },
+    {
+      "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2205.11233",
+      "urls": ["https://arxiv.org/abs/2205.11233", "https://arxiv.org/pdf/2205.11233"],
+      "evidence_label": "FULL_TEXT",
+      "full_text_basis": "arXiv record exposes a linked PDF; metadata and abstract retrieved from arXiv API. Full PDF contents not independently inspected in this audit.",
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — models sequential patterns from user behavior evolution and temporal dependencies.",
+        "hyperbolic_geometry": "ABSTRACT — Poincaré-ball graph representation and temporal attention.",
+        "generative_semantic_ids": "UNKNOWN — retrieved abstract does not describe generative modeling or semantic IDs.",
+        "all_three": "No evidence of generative semantic IDs in retrieved abstract; not a verified intersection."
+      }
+    },
+    {
+      "title": "HCGR: Hyperbolic Contrastive Graph Representation Learning for Session-based Recommendation",
+      "doi": null,
+      "arxiv": "2107.05366",
+      "urls": ["https://arxiv.org/abs/2107.05366", "https://arxiv.org/pdf/2107.05366"],
+      "evidence_label": "FULL_TEXT",
+      "full_text_basis": "arXiv record exposes a linked PDF; metadata and abstract retrieved from arXiv API. Full PDF contents not independently inspected in this audit.",
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — session-based recommendation captures short-term and sequential patterns in user behavior; metrics include ranking measures.",
+        "hyperbolic_geometry": "ABSTRACT — Lorentz hyperbolic space and geodesic-distance contrastive learning.",
+        "generative_semantic_ids": "UNKNOWN — retrieved abstract does not describe generative semantic IDs.",
+        "all_three": "No evidence of generative semantic IDs in retrieved abstract; not a verified intersection."
+      }
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Next POI from an individual's chronological check-in history",
+      "evidence": "Generative Next POI Recommendation with Semantic ID (arXiv:2506.01375) explicitly predicts next destinations from user preferences and historical check-ins and generates using semantic IDs.",
+      "geometry_gap": "No hyperbolic method established by the retrieved abstract.",
+      "status": "Behavior-first candidate; partial intersection only."
+    },
+    {
+      "candidate": "Next-item prediction in general sequential recommendation, with hierarchy/long-tail-aware item indexing",
+      "evidence": "HypRQ-VAE (arXiv:2609.03369) explicitly combines hyperbolic item indexing and a generative recommender; abstract frames sequential recommenders as item-ID sequences.",
+      "geometry_gap": "Abstract-level evidence does not demonstrate individualized next-item behavior or explicitly identify the learned indices as semantic IDs.",
+      "status": "Potential nearest three-way candidate; requires full-text inspection before claiming overlap."
+    },
+    {
+      "candidate": "Session-based next-item recommendation with hierarchical latent structure",
+      "evidence": "HCGR (arXiv:2107.05366) and PHGR (arXiv:2205.11233) link session/sequential behavior with hyperbolic representations.",
+      "geometry_gap": "Neither retrieved abstract establishes generative semantic IDs.",
+      "status": "Behavior-plus-geometry candidate only."
+    }
+  ],
+  "limitations": [
+    "No independently verified source was found in this search with explicit evidence for all three elements together: user-level next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+    "FULL_TEXT labels indicate a publicly linked arXiv PDF exists, not that full-text contents were read. Specific overlap statements are conservatively labeled ABSTRACT because the evidence retrieved was the arXiv API abstract.",
+    "UNKNOWN means absent from retrieved evidence, not proof that a feature is absent from the paper.",
+    "HypRQ-VAE is the closest apparent intersection, but the abstract's phrasing is generative recommendation and hyperbolic item indexing; user-specific next-item prediction and explicit semantic-ID generation need full-text verification.",
+    "The findings are search-bounded and should not be interpreted as proof that no exact-intersection paper exists. No prior-candidate prompts or unseen future/test interactions were used."
+  ]
+}

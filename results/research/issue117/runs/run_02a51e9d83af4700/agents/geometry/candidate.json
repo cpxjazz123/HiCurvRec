@@ -1,0 +1,26 @@
+{
+  "candidate_id": "geometry-directional-branching-hypothesis-01",
+  "behavior_problem_id": "directional-next-item-branching-under-low-reversibility",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "17cd3479cc0915dda3b7a56905f24a6808b79bae296c6f93bd32921816b1fb4a",
+  "next_item_hypothesis": "In the train-only longest-prefix population, 92.66% of directed item pairs have no observed reverse event (314605/339519), so treating transitions as largely symmetric neighborhood similarity may confuse a history item's incoming and outgoing roles. Hypothesis: for next-item prediction, a fixed-dimensional negatively curved representation can better separate multiple outgoing successor directions from a shared history context, improving next-item semantic-code prediction on held-out transitions, especially for histories whose observed transitions have no reverse counterpart. This is a testable hypothesis, not evidence that the measured graph is hierarchical or that curvature is causal.",
+  "math_definition": "Use the Poincare ball of curvature -c, c>0, with dimension 32 and radius bound 1/sqrt(c). Map unconstrained vectors u to the ball by x = tanh(sqrt(c)||u||)u/(sqrt(c)||u||), with x=0 when u=0. For sequence context h and semantic-code token k at autoregressive level l, map context and token vectors to x_h and x_{l,k}; define logit z_{l,k} = b_{l,k} - d_c(x_h,x_{l,k})^2/tau, where tau>0 is a fixed temperature and d_c(x,y) = (1/sqrt(c)) arcosh(1 + 2c||x-y||^2/((1-c||x||^2)(1-c||y||^2))). Normalize logits with softmax and train by next-token cross-entropy over three semantic-ID levels (256 codes per level). Context is computed from the current interaction prefix only. The same operator is used for every code level; candidate item scores are the summed autoregressive log probabilities of their three codes.",
+  "hyperbolic_necessity": "Negative curvature is motivated narrowly by the measured directional asymmetry: a shared context may need to distinguish several outgoing successor directions without making those successors mutually similar merely because they share a predecessor. Negative curvature offers greater representational volume with radius for separating branches at fixed latent dimension. The evidence does not establish branching degree distributions, hierarchy, or superiority; this is a geometry-specific hypothesis requiring a matched control.",
+  "euclidean_control": "Use identical 32-dimensional context and code encoders, three-level 256-way semantic-ID decoder, training data, optimization, parameter count, and ranking procedure, but replace d_c with squared Euclidean distance between norm-bounded 32D vectors and logits b - ||x_h-x_{l,k}||^2/tau. Include a fixed-capacity directed-graph control with the same context/item parameter budget and directed transition inputs, but no hyperbolic distance. No control receives extra parameters, interaction history, or tuning budget.",
+  "effect_site": "At next-item ranking after encoding the current prefix: autoregressive semantic-code token probabilities and the resulting candidate-item ranking, not the observed interaction graph or the input history encoder's available information.",
+  "real_trigger_measurement": "On a temporally held-out split, report Recall@K and NDCG@K overall and for prefix contexts whose last observed transition belongs to a pair with no reverse event in training. Also stratify by the training-measured number of distinct outgoing successors of the context item, reporting the counts per stratum; compute these strata from training only. Compare against the capacity-matched Euclidean and directed-graph controls with identical candidate sets and seeds. The claimed trigger is supported only if the target subset has enough held-out examples and the hyperbolic advantage is reproducible there.",
+  "training_only_inputs": [
+    "Training interaction prefixes and next-item targets only",
+    "Semantic IDs/code assignments fitted using training items only",
+    "Training-only directed transition counts for defining reverse-absence and outgoing-successor strata"
+  ],
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false
+  },
+  "falsifier": "The hypothesis is falsified if, under the matched fixed-capacity protocol and identical held-out candidate sets, the hyperbolic model does not improve held-out Recall@K and NDCG@K over both Euclidean and directed-graph controls on the predeclared reverse-absent / higher-outdegree subset, or if any apparent gain disappears across repeated fixed seeds. It is also falsified as a curvature-specific claim if the gain is reproduced by the Euclidean control without a statistically distinguishable hyperbolic advantage."
+}

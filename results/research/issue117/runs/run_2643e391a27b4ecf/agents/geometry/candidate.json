@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "candidate_id": "geometry-global-sinkhorn-poincare-squared",
+  "behavior_problem_id": "sparse-tail-next-item-transition",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "dbd4163af61e659c8d6ede3ed14e948f7c1d745bfbabe32539ad36b3a4e4e799",
+  "next_item_hypothesis": "The selected demonstrated failure is sparse/tail next-item transitions: 339519 train transitions are distributed over 323633 directed pairs, and 314605 pairs (0.9266197178950221) have no observed reverse event. This motivates testing whether a negatively curved metric represents uneven, branching transition neighborhoods; it does not establish hierarchy, negative curvature, or causal improvement. The verified literature supports sequential next-item recommendation with generative semantic IDs only, not hyperbolic geometry.",
+  "math_definition": {
+    "geometry_constants": "Freeze curved c=1, flat c=0, delta=0.0, shared projection radius R=0.9, epsilon=1e-6, tau_assign=0.05, and 100 Sinkhorn iterations. No sweep. For c>0 define u=1+2c||x-y||^2/((1-c||x||^2)(1-c||y||^2)); clamp u from below to 1.0 only, then arcosh(u)=log1p((u-1)+sqrt((u-1)(u+1))). The scored quantity is squared distance D_c^2=(1/c)*arcosh(u)^2. Both arms project to the same fixed ball before scoring; for c=1 this lies strictly inside the Poincare domain. At c=0 use the exact limit D_0^2=4||x-y||^2; unsquared distance tends to 2||x-y||. The exponential map's c-to-zero limit is identity but it is not used. The curvature-dependent radius (1-epsilon)/sqrt(c) is undefined at c=0; use the same fixed-radius projection in both arms instead.",
+    "operator": {
+      "family": "poincare_squared_distance",
+      "curvature_c": 1.0,
+      "delta": 0.0,
+      "flat_arm_curvature_c": 0.0,
+      "epsilon": 1e-06,
+      "radius": 0.9,
+      "arcosh_argument_floor": 1.0,
+      "arcosh_stable_form": "log1p((u-1)+sqrt((u-1)*(u+1)))",
+      "flat_limit": "4*||x-y||^2",
+      "c_dependent_rules_flat_limits": {
+        "scored_squared_distance": "4*||x-y||^2",
+        "exponential_map": "identity; not used in scoring",
+        "curvature_dependent_projection_radius_(1-epsilon)/sqrt(c)": "undefined at c=0; both arms instead use the same fixed-radius projection norm<=0.9"
+      },
+      "scoring": "Use D_c^2, not unsquared distance. Score projected latent and projected code vectors directly; no exponential map. Curvature is the only arm switch in the scoring metric."
+    },
+    "assignment_algorithm": {
+      "population": "All and only frozen training-split items in ascending immutable item-ID order; no minibatch, validation or test items.",
+      "conditioning": "At level l, independently within each nonempty group defined by exactly the already frozen labels (k1,...,k(l-1)); level 1 has no conditioning labels.",
+      "cost_and_transport": "In each group compute C[i,k]=D_c^2(P(z_i),P(e[l,k])) using that arm's metric on identically projected coordinates. Set logK[i,k]=-C[i,k]/0.05, row marginal a_i=1/n_group, column marginal b_k=1/256. In ascending item-ID/code-ID order initialize logv[k]=0 and perform exactly 100 log-domain iterations logu[i]=log(a_i)-LSE_k(logK[i,k]+logv[k]), then logv[k]=log(b_k)-LSE_i(logK[i,k]+logu[i]). Q[i,k]=exp(logK[i,k]+logu[i]+logv[k]) is the resulting deterministic soft transport target.",
+      "discrete_label_extraction": "Convert Q to a hard feasible assignment minimizing sum_i -log(Q[i,k_i]) subject to each code count being floor(n_group/256) or ceil(n_group/256); assign the remainder to lower code IDs. Solve the finite transportation problem exactly; among equal-cost optima choose the lexicographically smallest label vector in ascending item-ID order, with code-ID ascending as the final tie-break. This fixes every label deterministically. Empty parent groups are skipped; groups smaller than 256 still assign every item. Within each occupied parent group this maintains balanced child-code use, while global full-population soft-assignment entropy regularization prevents collapse of the level-one and level-two populations and directly preserves level-two prefix diversity.",
+      "arm_and_refresh": "Both arms use exactly this procedure, with only D_c^2 replaced by its c-to-zero limit in the flat arm; no shared curved labels. Use the frozen KMeans codebook initialization unchanged. At epoch zero calculate labels and Q from initialized parameters. At each subsequent epoch boundary calculate labels and Q from the current detached snapshot over the entire training item population; freeze q, Q for that whole epoch. No batch-dependent normalization.",
+      "gradient_rule": "Hard labels q and transport targets Q are stop-gradient. Differentiable logits and soft assignments s are recomputed from current parameters in the losses below; no loss relies on gradients through the frozen assignment."
+    },
+    "objective": {
+      "anti_collapse": "L_bal is the full-training-population marginal KL-to-uniform of differentiable soft assignments, evaluated once per epoch and included in L_total with coefficient 1.0. It has gradients through s and penalizes unused codes, so assigning every item to one code cannot lower the objective; it supports global level-two prefix diversity rather than acting on frozen one-hot labels.",
+      "loss_equations": [
+        {
+          "name": "reconstruction",
+          "equation": "L_rec=(1/(3*N)) sum_{i in I_train} sum_{l=1}^3 D_c^2(P(z_i),P(e[l,q[i,l]]))",
+          "tensors_and_shapes": "z[N,32], e[3,256,32], q[N,3] frozen discrete labels; P is the shared fixed-radius projection.",
+          "index_normalization_reduction": "Mean over training items and three levels; summed squared distances.",
+          "empty_group_rule": "Absent items contribute nothing; N=0 makes the objective invalid and NULL.",
+          "gradient_and_circularity": "Gradient flows through projected z and e. q is computed from the detached epoch-boundary snapshot and frozen for the epoch, breaking target circularity."
+        },
+        {
+          "name": "assignment",
+          "equation": "L_assign=-(1/(3*N)) sum_{i in I_train,l=1..3,k=1..256} Q[i,l,k]*log softmax_k(-D_c^2(P(z_i),P(e[l,k]))/0.05)",
+          "tensors_and_shapes": "Q[N,3,256] is the detached soft transport target defined by the global assignment algorithm; logits[N,3,256] are differentiable.",
+          "index_normalization_reduction": "Mean over N items and three levels; sum over 256 codes.",
+          "empty_group_rule": "Empty parent groups contribute no assignment; N=0 is invalid and NULL.",
+          "gradient_and_circularity": "Gradient flows through differentiable logits to z,e. Q is from the detached epoch-boundary snapshot, including the explicitly initialized epoch-zero snapshot, and is frozen throughout the epoch; no same-step target dependence."
+        },
+        {
+          "name": "global_balance_anti_collapse",
+          "equation": "s[i,l,:]=softmax_k(-D_c^2(P(z_i),P(e[l,k]))/0.05); m[l,k]=(1/N)sum_{i in I_train}s[i,l,k]; L_bal=(1/3)sum_{l=1}^3 sum_{k=1}^{256}m[l,k]*log(256*m[l,k])",
+          "tensors_and_shapes": "s[N,3,256] and m[3,256] are differentiable and computed in one deterministic full-training-population pass per epoch.",
+          "index_normalization_reduction": "Mean marginal KL over three levels; sum over codes; coefficient 1.0 in L_total.",
+          "empty_group_rule": "No parent grouping is used; N=0 invalidates objective and yields NULL. All codes are included.",
+          "gradient_and_circularity": "Gradient flows through m and s to z,e; fixed uniform reference is parameter-independent. This term is not calculated from q and therefore is not constant."
+        },
+        {
+          "name": "train_transition_prefix",
+          "equation": "L_tr=-(1/|T|)sum_{(a,t) in T}log(sum_{k=1}^{256}r[a,t,k]*s[t,3,k]); p_pref[t,k]=(n_items(prefix2(t),k)-1[k=q[t,3]]+1)/(n_items(prefix2(t))-1+256); r[a,t,k]=(n_train(a,t,k)+p_pref[t,k])/(n_train(a,t)+1)",
+          "tensors_and_shapes": "T is the multiset of train-only observed directed item transitions, counted once per event; s[N,3,256] is differentiable. prefix2(t)=(q[t,1],q[t,2]); counts use frozen q and only successors of a sharing that prefix, with third code k.",
+          "index_normalization_reduction": "Mean over T; sum over 256 codes. This is Stage2 item supervision, not ranking.",
+          "empty_group_rule": "If T is empty L_tr=0 and omitted. A zero restricted successor count uses the smoothed p_pref distribution.",
+          "gradient_and_circularity": "r and q are detached epoch-boundary targets, computed from training transitions only and frozen for the epoch. Gradient flows through s[t,3,:] to target z and level-three code vectors. No validation/test behavior enters."
+        }
+      ],
+      "total": "L_total=L_rec+L_assign+1.0*L_bal+L_tr; no other losses."
+    },
+    "tensor_gradient_rules": {
+      "content_embedding_input": "frozen; stop-gradient",
+      "item_projection_and_latent_parameters": "differentiable",
+      "latent_z": "differentiable",
+      "codebook_vectors_e": "differentiable",
+      "projected_latent_and_code_vectors": "differentiable through projection",
+      "epoch_boundary_discrete_q_and_transport_Q_targets": "frozen; stop-gradient",
+      "full_population_soft_assignment_s_and_marginals": "differentiable",
+      "train_transition_counts_and_r_targets": "frozen; stop-gradient"
+    },
+    "projection_order": "For every vector: map (and apply any existing residual update), project to radius R, then assign/score. If subtractive residual operation is used: map residual input -> project residual input -> assign detached q -> subtract selected projected code -> project residual output -> score that projected residual. Projection is never deferred until after scoring. This candidate adds no residual architecture.",
+    "loss_equations": "See objective.loss_equations; each equation names tensors, shapes, indices, normalization, empty-group rule, gradient path and target-detachment rule."
+  },
+  "hyperbolic_necessity": "The selected failure is the strongly directed, sparse/tail next-item transition pattern evidenced by the train-only reverse-event fraction and directed-pair count. Negative curvature is a falsifiable hypothesis for representing uneven branching neighborhoods with less metric distortion than a flat metric; the supplied behavior aggregates do not prove hierarchy or recommendation gain.",
+  "euclidean_control": "One implementation with identical architecture, parameter count, KMeans codebook initialization, initialization, optimizer, schedule, seeds, budget, assignment procedure and fixed projection radius R=0.9 in both arms. The sole arm switch is the squared-distance operator: c=1 Poincare squared distance versus its exact c->0 replacement 4*||x-y||^2. No exponential map in either scoring path.",
+  "effect_site": "Stage2 item-code geometry, global training-population assignment, reconstruction and commitment-style losses only. Stage2 emits one global three-token SID per item. No prefix Transformer, beam search, ranking metric or user bootstrap; frozen downstream T5 Stage3 ranks next items.",
+  "real_trigger_measurement": "Use the frozen validation diagnostic definitions: over 52855 validation pairs (one positive and ten negatives per anchor, seed 42, history[-1] to target), valid L1 positive hit rate is the share where anchor and positive first SID tokens match; valid Hard-L1 ER=10*positive_hits/negative_hits with negatives counted on the same ten negatives. level2_distinct_prefixes is the number of distinct (k1,k2) over all items. L3 collision is the share whose full SID is shared; L3 refinement gain is mean log2(level-2 bucket size/full-SID bucket size). Conditional G3 uses alpha=1,K=256: p_pref(l)=(items sharing target level-two prefix and third code l, minus one for target's own code, plus alpha)/(prefix bucket size minus one plus alpha*K); p_hist(l)=(train-only longest-prefix anchor successor count restricted to target prefix and third code l plus alpha*p_pref(l))/(restricted successor total plus alpha). G3 is mean log2(p_hist(target code)/p_pref(target code)); no restricted successor contributes zero, non-finite pair is NULL. Validation diagnostics never train Stage2.",
+  "training_only_inputs": "Frozen content embeddings and train-split item transitions only. Whole-population assignment uses training item vectors/code vectors. Validation is diagnostic only; test/future events, prediction-time user context and batch composition are excluded from training and assignment targets.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {
+        "name": "valid_l1_hard_er",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 0.1,
+        "seed_rule": "Exact paired seeds [42,43,44]. For this metric independently compute each seed's curved-minus-flat value from the same validation pairs, then arithmetic mean the three differences. If any seed value is undefined/non-finite, the aggregate is NULL; otherwise compare aggregate strictly with this effect and apply the frozen admission gate valid_l1_hard_er strictly above 16.38953942232631 in each arm and seed."
+      },
+      {
+        "name": "level2_distinct_prefixes",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 1,
+        "seed_rule": "Exact paired seeds [42,43,44]. For this metric independently compute each seed's curved-minus-flat count over all items, then arithmetic mean the three differences. If any seed value is undefined/non-finite, the aggregate is NULL; otherwise compare strictly with this effect and apply the frozen admission gate level2_distinct_prefixes strictly above 16145 in each arm and seed."
+      },
+      {
+        "name": "l3_collision",
+        "direction": "curved minus flat < 0",
+        "minimum_effect": 0.01,
+        "seed_rule": "Exact paired seeds [42,43,44]; compute this metric's curved-minus-flat value per seed and arithmetic-mean all three. Any undefined/non-finite seed makes only this metric aggregate NULL; otherwise compare strictly with its registered direction/effect."
+      },
+      {
+        "name": "l3_refinement_gain",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 0.05,
+        "seed_rule": "Exact paired seeds [42,43,44]; compute this metric's curved-minus-flat value per seed and arithmetic-mean all three. Any undefined/non-finite seed makes only this metric aggregate NULL; otherwise compare strictly with its registered direction/effect."
+      },
+      {
+        "name": "conditional_g3",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 0.01,
+        "seed_rule": "Exact paired seeds [42,43,44]; compute this metric's curved-minus-flat value per seed and arithmetic-mean all three. Any undefined/non-finite seed makes only this metric aggregate NULL; otherwise compare strictly with its registered direction/effect."
+      }
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "curved minus flat > 0",
+      "minimum_effect": 0.005,
+      "seed_rule": "Exact paired seeds [42,43,44], using frozen T5 Stage3 on the held-out test split. For each seed compute curved-minus-flat test_R@10, then arithmetic mean the three paired differences. If either arm's result for any seed is undefined/non-finite, this metric aggregate alone is NULL; otherwise compare strictly with its registered effect."
+    },
+    "classification": {
+      "falsified_if": "Any non-NULL registered diagnostic or behavioral aggregate fails its registered direction and minimum_effect comparison, or either frozen Stage2 admission gate is false in either arm for any seed.",
+      "passed_if": "Every registered diagnostic and behavioral aggregate is non-NULL and meets its registered direction and minimum_effect comparison, and both frozen Stage2 admission gates are true in both arms for every seed.",
+      "mixed_if": "Otherwise: in particular, any metric whose seed result or aggregate is undefined/non-finite (including zero denominator, missing evaluation or empty required stratum) is NULL and makes that metric comparison inconclusive. NULL propagation is metric-local: it neither passes nor falsifies that metric, and does not affect other metrics; any NULL comparison prevents overall passed classification."
+    }
+  }
+}

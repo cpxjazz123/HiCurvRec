@@ -1,0 +1,176 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "e34e46fd673954d9f8dd6b236061992db8b96a6ce50bd143a0035443fbd04058",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Long-tail user next-item prediction with geometry-aware generative item indices",
+        "evidence": "HypRQ-VAE describes sequential user-behavior item-ID histories, hyperbolic item indexing, and generative recommendation; GNPR-SID directly predicts next POI from user history with semantic IDs.",
+        "status": "Plausible research framing, not established as a single already-validated intersection."
+      },
+      {
+        "candidate": "Preserve sequential/session hierarchy while generating semantic IDs for the next item",
+        "evidence": "HCGR motivates hierarchical structure among consecutive items/session behavior in hyperbolic space; GNPR-SID supplies semantic-ID generation and next-POI prediction.",
+        "status": "Synthesis across separate papers; neither citation alone verifies the combined method."
+      }
+    ],
+    "limitations": [
+      "No source in this independently checked set conclusively verifies all three axes—user next-item behavior, hyperbolic geometry, and generative semantic IDs—as an integrated method. HypRQ-VAE is the closest candidate, but its item-indexing terminology and exact next-item generation semantics should be checked against its methods and experiments before claiming a full match.",
+      "FULL_TEXT means the linked arXiv full-text HTML was successfully retrieved; it is not a claim that every result, equation, or implementation detail was independently reproduced.",
+      "DOI values are null because DOI identifiers were not verified. The arXiv identifiers and linked full texts are the independently checkable records.",
+      "The source set is a targeted search, not an exhaustive systematic review. No prior-candidate prompts or unseen future/test interactions were used."
+    ],
+    "sources": [
+      {
+        "arxiv": "https://arxiv.org/abs/2609.03369v1",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Strongest three-way candidate: the paper explicitly discusses sequential recommenders modeling user behavior as item-ID sequences, generative recommendation/item indexing, and proposes hyperbolic residual-quantized VAE item indices. This establishes behavior + hyperbolic geometry + generative semantic-ID-like indexing. It describes item indexing rather than proving that each index has the specific status/semantics of a conventional semantic ID in all formulations.",
+        "full_text": "https://arxiv.org/html/2609.03369v1",
+        "scope_caveat": "Abstract/full-text wording calls it item indexing; do not overstate it as a demonstrated user-conditioned next-item semantic-ID decoder without confirming the method and evaluation details in the paper.",
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+        "verified_basis": "Full arXiv HTML text (HTTP 200; 284,387 characters) was retrievable, not merely the abstract."
+      },
+      {
+        "arxiv": "https://arxiv.org/abs/2506.01375v2",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Direct evidence for user next-item behavior plus generative semantic IDs: models predict a user's next POI from preferences/history, build semantic IDs from semantic and collaborative features, and generate next POIs using those IDs. No hyperbolic geometry is reported in the available paper description; this is a two-axis comparator, not a verified three-way match.",
+        "full_text": "https://arxiv.org/html/2506.01375v2",
+        "scope_caveat": "POI/destination recommendation is a specific next-item domain.",
+        "title": "Generative Next POI Recommendation with Semantic ID",
+        "verified_basis": "Full arXiv HTML text (HTTP 200; 246,033 characters) was retrievable."
+      },
+      {
+        "arxiv": "https://arxiv.org/abs/2107.05366v1",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Directly treats short-term user behavior/sequential session patterns and uses Lorentz hyperbolic space for hierarchical item/session representations. It is not a generative semantic-ID method: the available description centers on graph representation learning and contrastive learning. Two-axis comparator only.",
+        "full_text": "https://arxiv.org/html/2107.05366v1",
+        "scope_caveat": "Session-based recommendation behavior is relevant, but it does not supply the semantic-ID/generative axis.",
+        "title": "HCGR: Hyperbolic Contrastive Graph Representation Learning for Session-based Recommendation",
+        "verified_basis": "Full arXiv HTML text (HTTP 200; 470,704 characters) was retrievable."
+      }
+    ]
+  },
+  "literature_evidence_sha256": "9c222420020eb1c4c9c44b373ec1d6a53ec23390e6ef451be7d56c2106b1a4f4",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

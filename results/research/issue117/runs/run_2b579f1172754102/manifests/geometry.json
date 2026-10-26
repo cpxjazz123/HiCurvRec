@@ -1,0 +1,269 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "5935bdbe61d22078c50ecaa6f9f427ddb67e96642333fc60a8cf4061ad98a114",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Next POI from an individual's chronological check-in history",
+        "evidence": "Generative Next POI Recommendation with Semantic ID (arXiv:2506.01375) explicitly predicts next destinations from user preferences and historical check-ins and generates using semantic IDs.",
+        "geometry_gap": "No hyperbolic method established by the retrieved abstract.",
+        "status": "Behavior-first candidate; partial intersection only."
+      },
+      {
+        "candidate": "Next-item prediction in general sequential recommendation, with hierarchy/long-tail-aware item indexing",
+        "evidence": "HypRQ-VAE (arXiv:2609.03369) explicitly combines hyperbolic item indexing and a generative recommender; abstract frames sequential recommenders as item-ID sequences.",
+        "geometry_gap": "Abstract-level evidence does not demonstrate individualized next-item behavior or explicitly identify the learned indices as semantic IDs.",
+        "status": "Potential nearest three-way candidate; requires full-text inspection before claiming overlap."
+      },
+      {
+        "candidate": "Session-based next-item recommendation with hierarchical latent structure",
+        "evidence": "HCGR (arXiv:2107.05366) and PHGR (arXiv:2205.11233) link session/sequential behavior with hyperbolic representations.",
+        "geometry_gap": "Neither retrieved abstract establishes generative semantic IDs.",
+        "status": "Behavior-plus-geometry candidate only."
+      }
+    ],
+    "limitations": [
+      "No independently verified source was found in this search with explicit evidence for all three elements together: user-level next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+      "FULL_TEXT labels indicate a publicly linked arXiv PDF exists, not that full-text contents were read. Specific overlap statements are conservatively labeled ABSTRACT because the evidence retrieved was the arXiv API abstract.",
+      "UNKNOWN means absent from retrieved evidence, not proof that a feature is absent from the paper.",
+      "HypRQ-VAE is the closest apparent intersection, but the abstract's phrasing is generative recommendation and hyperbolic item indexing; user-specific next-item prediction and explicit semantic-ID generation need full-text verification.",
+      "The findings are search-bounded and should not be interpreted as proof that no exact-intersection paper exists. No prior-candidate prompts or unseen future/test interactions were used."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+      "task_id": "literature"
+    },
+    "sources": [
+      {
+        "arxiv": "2609.03369",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "full_text_basis": "arXiv provides a linked PDF; title and abstract metadata retrieved from arXiv API. PDF availability is independently checkable at the linked source; this audit did not inspect the full PDF contents.",
+        "overlap": {
+          "all_three": "PARTIAL; not verified as an exact three-way intersection.",
+          "generative_semantic_ids": "ABSTRACT — item indexing/vocabulary for generative recommender; semantically informed item representations are described, but the abstract does not explicitly call the codes Semantic IDs (SIDs).",
+          "hyperbolic_geometry": "ABSTRACT — explicitly proposes hyperbolic residual-quantized VAE for item indexing and motivates it via hierarchy and long-tail structure.",
+          "user_next_item_behavior": "ABSTRACT — frames sequential recommendation as item-ID sequences and evaluates a generative recommender; does not establish that the method specifically models a user's next-item transition beyond that framing."
+        },
+        "publication_note": "arXiv record reports acceptance at ICDM 2026.",
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+        "urls": [
+          "https://arxiv.org/abs/2609.03369",
+          "https://arxiv.org/pdf/2609.03369"
+        ]
+      },
+      {
+        "arxiv": "2506.01375",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "full_text_basis": "arXiv record exposes a linked PDF; metadata and abstract retrieved from arXiv API. Full PDF contents not independently inspected in this audit.",
+        "overlap": {
+          "all_three": "NO evidence of hyperbolic geometry in retrieved abstract; not a verified intersection.",
+          "generative_semantic_ids": "ABSTRACT — explicitly constructs semantic POI IDs and generates next POIs using those IDs.",
+          "hyperbolic_geometry": "UNKNOWN — retrieved abstract describes semantic/collaborative features and residual quantization, not hyperbolic geometry.",
+          "user_next_item_behavior": "ABSTRACT — predicts a user's next destination from preferences and historical check-ins."
+        },
+        "publication_note": "arXiv record states accepted by KDD 2025.",
+        "title": "Generative Next POI Recommendation with Semantic ID",
+        "urls": [
+          "https://arxiv.org/abs/2506.01375",
+          "https://arxiv.org/pdf/2506.01375"
+        ]
+      },
+      {
+        "arxiv": "2505.09205",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "full_text_basis": "arXiv record exposes a linked PDF; metadata and abstract retrieved from arXiv API. Full PDF contents not independently inspected in this audit.",
+        "overlap": {
+          "all_three": "No evidence of semantic IDs in retrieved abstract; not a verified intersection.",
+          "generative_semantic_ids": "UNKNOWN — retrieved abstract describes Mamba-based sequential recommendation, not generative semantic-ID indexing or generation.",
+          "hyperbolic_geometry": "ABSTRACT — curvature-aware hyperbolic selective state-space sequence modeling.",
+          "user_next_item_behavior": "ABSTRACT — sequential recommendation modeling temporal evolution of user preferences from interaction sequences."
+        },
+        "title": "Hyperbolic Mamba for Sequential Recommendation",
+        "urls": [
+          "https://arxiv.org/abs/2505.09205",
+          "https://arxiv.org/pdf/2505.09205"
+        ]
+      },
+      {
+        "arxiv": "2205.11233",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "full_text_basis": "arXiv record exposes a linked PDF; metadata and abstract retrieved from arXiv API. Full PDF contents not independently inspected in this audit.",
+        "overlap": {
+          "all_three": "No evidence of generative semantic IDs in retrieved abstract; not a verified intersection.",
+          "generative_semantic_ids": "UNKNOWN — retrieved abstract does not describe generative modeling or semantic IDs.",
+          "hyperbolic_geometry": "ABSTRACT — Poincaré-ball graph representation and temporal attention.",
+          "user_next_item_behavior": "ABSTRACT — models sequential patterns from user behavior evolution and temporal dependencies."
+        },
+        "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+        "urls": [
+          "https://arxiv.org/abs/2205.11233",
+          "https://arxiv.org/pdf/2205.11233"
+        ]
+      },
+      {
+        "arxiv": "2107.05366",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "full_text_basis": "arXiv record exposes a linked PDF; metadata and abstract retrieved from arXiv API. Full PDF contents not independently inspected in this audit.",
+        "overlap": {
+          "all_three": "No evidence of generative semantic IDs in retrieved abstract; not a verified intersection.",
+          "generative_semantic_ids": "UNKNOWN — retrieved abstract does not describe generative semantic IDs.",
+          "hyperbolic_geometry": "ABSTRACT — Lorentz hyperbolic space and geodesic-distance contrastive learning.",
+          "user_next_item_behavior": "ABSTRACT — session-based recommendation captures short-term and sequential patterns in user behavior; metrics include ranking measures."
+        },
+        "title": "HCGR: Hyperbolic Contrastive Graph Representation Learning for Session-based Recommendation",
+        "urls": [
+          "https://arxiv.org/abs/2107.05366",
+          "https://arxiv.org/pdf/2107.05366"
+        ]
+      }
+    ]
+  },
+  "literature_evidence_sha256": "4e57e01a1f56a276ef41bddb49e91e4d842622e102de11b937c7eef98dc0b446",
+  "research": "issue117-behavior-first",
+  "revision_feedback": {
+    "blockers": [
+      {
+        "evidence": "protocol.training_protocol refers to the 'exact frozen admission-reference ... seeds' without identifying that reference or enumerating seeds, epochs, batch size/order, optimizer schedule, and KMeans initialization. falsifier.stage3_behavioral_test.seed_rule likewise says 'paired frozen seeds' and 'frozen downstream T5 Stage3 protocol' without defining either. The test is properly registered as test_R@10, curved-minus-flat > 0, minimum effect 0.005, arithmetic mean paired difference, once per arm/seed, with no test-based fitting/selection/threshold adjustment; however, an independent evaluator cannot determine the registered seed combination or reproduce the frozen protocol from this candidate manifest alone.",
+        "issue": "The registered comparisons are not mechanically reproducible from this manifest because the frozen paired seed set and the exact referenced admission-reference/Stage3 protocol are not specified here.",
+        "severity": "MATERIAL"
+      }
+    ],
+    "reproducible_evidence": {
+      "causal_link_design_claim": "The train-only transition population and stated no-reverse fraction motivate a directional next-item problem, but do not establish negative curvature or causal improvement. The learned shared map A is applied only to the source representation in the directed successor loss, so the source/target scoring roles differ. The candidate appropriately frames negative curvature as a hypothesis and registers a flat matched control and downstream behavioral falsification rather than claiming the observed asymmetry proves hyperbolic necessity.",
+      "leakage_and_stage2_role": "The manifest prohibits validation/test behavior and prediction-time user context from Stage2 optimization; validation pairs are read-only diagnostics, train transitions are the only behavioral Stage2 targets, and test is reserved for one downstream Stage3 evaluation without fitting or selection. Stage2 emits global item SIDs and does not rank. The registered leading diagnostics include validation Hard-L1 ER, distinct ordered two-token prefixes, and L3/conditional-G3 statistics; the behavioral question is separately registered downstream as test_R@10.",
+      "loss_and_targets": "L_q has compatible [N,256] assignment weights and vector-valued projected distance operands; its epoch-frozen Q is explicitly stop-gradient. L_tr has a fixed train-item candidate universe, includes the observed successor, excludes the source, retains transition multiplicity, and defines a source-only learned map. The target and candidate set are train-only and parameter-independent. The combined objective and empty/invalid handling are stated sufficiently to determine its targets and reductions.",
+      "math_and_numerics": "The stated Poincare squared distance is well-typed for 32-vectors and, for c=0.5 and projected norms at most R=0.9, denominators are positive because cR^2=0.405<1. The acosh argument is at least 1; the declared stable expression log1p(u+sqrt(u*(u+2))) is the acosh(1+u) identity for u>=0. The c->0 squared-distance limit 4*||x-y||^2 is correct, and the stated unsquared limit is 2*||x-y||. The flat arm explicitly bypasses the singular curved projection radius and retains the common fixed projection. No undefined numerical domain or non-flat-limit defect is apparent in the specified distance.",
+      "same_capacity_control": "The control specifies one implementation, identical architecture and parameter count, inputs, train-only transition signal, fixed projection, assignment procedure, initialization and optimizer/protocol, with the sole scored-distance substitution being D_c^2 versus its c->0 limit. This is an appropriate same-capacity metric control as designed; it is not a GPU-approval finding.",
+      "schema_and_identity": "schema_version is 1, matching the frozen schema version. candidate_id and candidate_sha256 are copied from the current-only manifest.",
+      "thresholds_and_classification": "Admission gates name valid_l1_hard_er and level2_distinct_prefixes and refer to the frozen strict thresholds (>10.0 and >16145); the comparative falsifier separately gives positive directions and minimum effects for those metrics and conditional_G3. The Stage3 test registers direction and a 0.005 minimum effect. Pass/falsified/mixed classifications explicitly account for NULL seeds, missing/undefined evaluations, and empty strata. The classification rules are intelligible, but their seed/protocol inputs are not recoverable as noted in the blocker."
+    },
+    "review_sha256": "39527516b53bce96ca3054b289aa5683dec9f1b46e2206e63bae389654469a50",
+    "review_verdict": "MATERIAL"
+  },
+  "revision_feedback_sha256": "c3358ef8605767ce874cc846c437bb3fe863615d7718729333ed506512fe40cd",
+  "task_id": "geometry"
+}

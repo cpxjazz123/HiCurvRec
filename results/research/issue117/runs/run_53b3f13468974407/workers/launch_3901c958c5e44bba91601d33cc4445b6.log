@@ -1,0 +1,10 @@
+{"evidence": true, "role": "LITERATURE", "task": "literature"}
+{"evidence": true, "role": "GEOMETRY", "task": "geometry"}
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/mcp/worker.py", line 17, in main
+    outcome = process_next(run_id)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/workflows/pipeline.py", line 123, in process_next
+    verify_science_output(task, root, manifest)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/workflows/pipeline.py", line 89, in verify_science_output
+    raise ValueError("scientific admission BLOCKED by " + output["verdict"])
+ValueError: scientific admission BLOCKED by MATERIAL

@@ -1,0 +1,13 @@
+{
+  "candidate_id": "issue117-geometry-transition-residual-poincare-v1",
+  "source_sha256": "a8066ae1bc72e944a345290505f78fce67c73da3e69775b6768adbdb581cd136",
+  "proposal_sha256": "94ca0360e8757cf445e2b3a0bf3c370054d88cb5dd8c56e3a4b6fd33f6f9469c",
+  "test_sha256": {
+    "ddp": "7d3df98d28902999dd84158c38cda858a08d5a26a0e9cb341fd20b2287031cbd",
+    "entrypoint": "242e3e2108afc594fa9d34c40e9c5ae76e90637c582d28d12218480288ed52ac",
+    "gradient": "dbc28e440c7289fa1ace304c1170047d7d2063c9ee095eba2f30752c36f58fbd",
+    "math": "9f454803c1bcab9fd6817855617b8fd71cf5ecb4bc83098fab16de57f6b7b6c4"
+  },
+  "verdict": "BLOCK",
+  "rationale": "Static inspection confirms substantive independent math references (including fixed analytic values), candidate-model gradient tests, a two-process/two-rank Gloo DDP test gathering gradients and post-step parameters, and an entrypoint test that calls trainer.main() and checks artifacts and nonzero transition loss. Source inspection confirms the proposed assignment, geometry, training transition path, and launcher are present. However, in this no-shell sandbox I could not recompute the source file hashes/digest or independently hash the materialised tests; matching manifest-provided values is not hash verification. Execution of all four suites, with nonzero tests and no skips/failures under the Stage2 interpreter, remains for verification_check. Hash identity is therefore unverified, so block." 
+}

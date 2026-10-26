@@ -1,0 +1,93 @@
+{
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": "10.52202/075280-0452",
+      "arxiv": "2305.05065",
+      "links": {"full_text": "https://arxiv.org/pdf/2305.05065", "record": "https://arxiv.org/abs/2305.05065"},
+      "evidence_label": "FULL_TEXT",
+      "independent_verification": "arXiv full-text PDF and Crossref/OpenAlex DOI record; abstract explicitly describes Semantic IDs, user-session sequences, and autoregressive next-item prediction.",
+      "exact_overlap": ["user next-item behavior", "generative Semantic IDs"],
+      "missing_axis": "No hyperbolic geometry identified in the method or abstract; Semantic IDs are constructed from item content embeddings, not described as hyperbolic codes."
+    },
+    {
+      "title": "Hyperbolic Translation-Based Sequential Recommendation",
+      "doi": "10.1109/TCSS.2024.3409711",
+      "links": {"publisher": "https://doi.org/10.1109/TCSS.2024.3409711"},
+      "evidence_label": "ABSTRACT",
+      "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex). Full text was not verified open and read for this report.",
+      "exact_overlap": ["user next-item behavior", "hyperbolic geometry"],
+      "missing_axis": "No generative Semantic IDs reported; paper describes personalized hyperbolic translations for the user/latest-item/next-item relation."
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "doi": "10.1145/3459637.3482351",
+      "links": {"publisher_full_text_pdf": "https://dl.acm.org/doi/pdf/10.1145/3459637.3482351", "doi": "https://doi.org/10.1145/3459637.3482351"},
+      "evidence_label": "ABSTRACT",
+      "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); publisher PDF endpoint is linked, but full-text content was not independently retrieved/read here.",
+      "exact_overlap": ["sequential user-item behavior", "hyperbolic geometry"],
+      "missing_axis": "No generative Semantic IDs reported; method uses hyperbolic hypergraph convolution and hierarchical item embeddings."
+    },
+    {
+      "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+      "doi": "10.1145/3568395",
+      "links": {"publisher_full_text_pdf": "https://dl.acm.org/doi/pdf/10.1145/3568395", "doi": "https://doi.org/10.1145/3568395"},
+      "evidence_label": "ABSTRACT",
+      "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); full-text contents not retrieved/read for this report.",
+      "exact_overlap": ["user behavior sequences", "Poincaré/hyperbolic geometry"],
+      "missing_axis": "No generative Semantic IDs reported; uses Poincaré user-item heterogeneous graphs and temporal attention."
+    },
+    {
+      "title": "Generative Next POI Recommendation with Semantic ID",
+      "doi": "10.1145/3711896.3736981",
+      "links": {"publisher_full_text_pdf": "https://dl.acm.org/doi/pdf/10.1145/3711896.3736981", "doi": "https://doi.org/10.1145/3711896.3736981"},
+      "evidence_label": "ABSTRACT",
+      "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); PDF endpoint is listed, but its text was not retrieved/read here.",
+      "exact_overlap": ["user next-POI behavior", "generative Semantic IDs"],
+      "missing_axis": "No hyperbolic geometry identified. The abstract says semantic and collaborative features inform discrete POI IDs and the generative model predicts the next POI."
+    },
+    {
+      "title": "EAGER: Two-Stream Generative Recommender with Behavior-Semantic Collaboration",
+      "doi": "10.1145/3637528.3671775",
+      "links": {"publisher_full_text_pdf": "https://dl.acm.org/doi/pdf/10.1145/3637528.3671775", "doi": "https://doi.org/10.1145/3637528.3671775"},
+      "evidence_label": "ABSTRACT",
+      "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); full-text content not retrieved/read here.",
+      "exact_overlap": ["sequential generative recommendation", "behavior tokens and semantic tokens"],
+      "missing_axis": "Hyperbolic geometry is not reported. The abstract does not establish that its semantic tokens are the same item-level generative Semantic IDs used by TIGER."
+    },
+    {
+      "title": "Multi-Behavior Generative Recommendation",
+      "doi": "10.1145/3627673.3679730",
+      "links": {"publisher": "https://doi.org/10.1145/3627673.3679730"},
+      "evidence_label": "ABSTRACT",
+      "independent_verification": "DOI/publisher record and independently indexed abstract (OpenAlex); full text not retrieved/read here.",
+      "exact_overlap": ["multi-behavior sequential recommendation", "autoregressive next-behavior and next-item generation"],
+      "missing_axis": "No hyperbolic geometry reported; abstract describes behavior/item tokens but does not establish generative semantic item IDs."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Behavior-conditioned hyperbolic Semantic-ID generation for next-item recommendation",
+      "evidence_basis": ["TIGER establishes autoregressive generation of the next item's Semantic ID from a user session (FULL_TEXT link; DOI 10.52202/075280-0452, arXiv:2305.05065).", "HTSR establishes hyperbolic modeling of user, latest-item, and next-item behavior (ABSTRACT; DOI 10.1109/TCSS.2024.3409711)."],
+      "status": "Synthesis/opportunity, not a verified existing paper combining all three axes."
+    },
+    {
+      "candidate": "Hyperbolic, behavior-aware Semantic ID construction",
+      "evidence_basis": ["GNPR-SID reports IDs constructed from semantic and collaborative features and next-POI generation (ABSTRACT; DOI 10.1145/3711896.3736981).", "Hyperbolic sequential recommendation papers model hierarchical behavioral structure, but the located evidence does not connect their geometry to Semantic-ID construction."],
+      "status": "Candidate gap; do not claim prior art already implements the three-way intersection."
+    },
+    {
+      "candidate": "Jointly evaluate behavior fidelity and geometric hierarchy in generative next-item retrieval",
+      "evidence_basis": ["Generative retrieval provides a next-item generation setup; hyperbolic sequential methods motivate hierarchical behavior representations."],
+      "status": "Research question only; no located source verifies a unified evaluation/model."
+    }
+  ],
+  "limitations": [
+    "No independently verified source located in this search explicitly combines user next-item behavior, hyperbolic geometry, and generative semantic item IDs in one method.",
+    "FULL_TEXT is reserved for the TIGER arXiv item because a public arXiv PDF/full-text endpoint is independently identified and the indexed abstract explicitly confirms the relevant method; the PDF was not downloaded for line-by-line audit in this run. Other works are conservatively labeled ABSTRACT even where a publisher PDF endpoint is listed.",
+    "Search evidence used Crossref/OpenAlex-indexed bibliographic records and abstracts plus canonical DOI/arXiv URLs. OpenAlex is an independent discovery/indexing source, not a substitute for publisher peer review or a full-text audit.",
+    "The set is a focused discovery sample, not an exhaustive systematic review. Search-engine/tool availability was limited; websearch calls were cancelled, so metadata/API discovery was used.",
+    "Some records have publication dates later than the current date indicated by this environment or may reflect indexing anomalies; do not rely on those records unless independently checked at the publisher/arXiv. They were excluded as support for the central overlap claim.",
+    "An abstract's omission of hyperbolic geometry or Semantic IDs does not prove the full paper omits the concept; the stated missing axis is limited to what was verified in the available abstract/record."
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "candidate_id": "issue117_geometry_transition_residual_poincare_v2",
+  "candidate_sha256": "9ca2916dac00c7661f149ea0b41f703a4953fe2569b2af1b147852b327eb30c8",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "issue": "The declared curved-versus-flat control changes the feasible domain/projection as well as the metric, contrary to the required metric-only control.",
+      "evidence": "math_definition.geometry.projection specifies common P_R in both arms, then an additional curved-arm projection to (1-epsilon)/sqrt(c); at c=0 the flat arm explicitly applies P_R only. math_definition.shared_domain_control says only D^2 and its c-dependent exp-map/domain operation vary, which confirms the domain operation also differs. Therefore this is not a control differing only in the metric.",
+      "reproducible_check": "Compare the projection clauses for c=0.5 and c=0: curved applies P_R followed by radius (1-1e-6)/sqrt(0.5), whereas flat applies P_R only."
+    }
+  ],
+  "reproducible_evidence": {
+    "identity": "Candidate ID and SHA-256 are copied from the supplied current-only manifest; no repository implementation or prior candidate was consulted.",
+    "next_item_link": "The train-only transition asymmetry motivates a directional-structure hypothesis, and the manifest explicitly disclaims causal proof. The claim is testable rather than established.",
+    "math_and_domain": "The Poincare squared-distance expression uses u>=0 and log1p(u+sqrt(u*(u+2))), with a continuous stated c->0 limit D^2=4||x-y||^2 and exp-map identity. The stated c=0.5, R=0.9 curved radius is greater than R, so the extra projection is numerically redundant after P_R for scored vectors, but it remains a different declared domain operation/control. No independent fatal math-type or flat-limit defect identified from the manifest.",
+    "future_leakage_and_targets": "Fit inputs are frozen content embeddings and train transitions only; validation is diagnostic-only and test is read-only. The item-to-SID mapping is declared global and independent of user/request. Reconstruction targets are frozen inputs; transition labels are train-derived. No user-future leakage, prediction-time user context, or non-unique target was identified in the stated protocol.",
+    "registered_tests": "Stage2 registers valid_l1_hard_er, distinct level-two prefixes, positive-hit rate, L3 refinement gain, conditional G3, and L3 collision with directions and thresholds. Stage3 registers test_R@10, increase direction, minimum effect 0.005, seed 42, and paired curved-minus-flat classification. Falsifier defines passed, falsified, mixed, and NULL handling mechanically. These behavioral/diagnostic registrations do not cure the control mismatch."
+  }
+}

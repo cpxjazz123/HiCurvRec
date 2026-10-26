@@ -1,0 +1,54 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": null,
+      "arxiv": "2305.05065",
+      "url": "https://arxiv.org/abs/2305.05065",
+      "evidence_label": "FULL_TEXT",
+      "verification_basis": "arXiv full-text preprint; title and identifier resolve at the canonical arXiv record.",
+      "exact_overlap": "Directly addresses generative recommendation/retrieval using learned semantic IDs (RQ-VAE item codes) and user interaction histories, including sequential next-item recommendation. The paper does not establish use of hyperbolic geometry.",
+      "intersection_dimensions": {
+        "user_next_item_behavior": "YES",
+        "hyperbolic_geometry": "NO EVIDENCE",
+        "generative_semantic_ids": "YES"
+      }
+    },
+    {
+      "title": "Hyperbolic Representation Learning for Collaborative Filtering",
+      "doi": null,
+      "arxiv": null,
+      "url": null,
+      "evidence_label": "UNKNOWN",
+      "verification_basis": "Not included: title-level candidate could not be independently verified to a stable bibliographic record in this run. No claims are attributed to it.",
+      "exact_overlap": "Unverified lead only; excluded from evidence and conclusions.",
+      "intersection_dimensions": {
+        "user_next_item_behavior": "UNKNOWN",
+        "hyperbolic_geometry": "UNKNOWN",
+        "generative_semantic_ids": "UNKNOWN"
+      }
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Modeling the next item as a behavior-conditioned generation problem over semantic item codes, while using hyperbolic geometry to represent hierarchical or long-tail structure in the item/code space.",
+      "evidence_status": "SYNTHESIS_NOT_ESTABLISHED_IN_A_SINGLE_VERIFIED_SOURCE",
+      "behavior_problem": "Given a user's observed interaction sequence, generate/rank the next item; investigate whether sparse histories and tail-item transitions are better represented when item relationships have hierarchical structure.",
+      "basis": ["Recommender Systems with Generative Retrieval (arXiv:2305.05065) supports behavior-conditioned semantic-ID generation; it does not support the hyperbolic component."],
+      "decision": "Treat as a research gap/hypothesis, not as an existing method or demonstrated result."
+    }
+  ],
+  "limitations": [
+    "No independently verified full-text source found in this pass that explicitly combines all three elements: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+    "The verified source establishes only the behavior-plus-generative-semantic-ID pair; hyperbolic geometry must not be inferred from hierarchical semantic codes.",
+    "The unverified hyperbolic recommendation lead is explicitly excluded from evidence; its metadata and overlap remain UNKNOWN.",
+    "A full-text label indicates an accessible full-text preprint exists, not that every claim has been independently replicated.",
+    "No unseen future/test interactions or prior-candidate prompts were used."
+  ]
+}

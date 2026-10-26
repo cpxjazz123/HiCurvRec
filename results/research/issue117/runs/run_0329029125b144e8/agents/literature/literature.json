@@ -1,0 +1,103 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": null,
+      "arxiv": "2609.03369",
+      "url": "https://arxiv.org/abs/2609.03369",
+      "full_text_url": "https://arxiv.org/pdf/2609.03369",
+      "evidence_label": "FULL_TEXT",
+      "evidence_basis": "arXiv record provides a PDF full-text link; abstract explicitly describes generative recommendation, hyperbolic item indexing, and user-item interaction power-law/long-tail structure.",
+      "exact_overlap": "Directly overlaps hyperbolic geometry and generative semantic/item indexing; motivated by the long-tail distribution of user-item interactions and evaluates recommendation. The available record/abstract does not establish that the model explicitly conditions next-item generation on an ordered user behavior sequence, so this is not verified as the full three-way intersection.",
+      "publication_date": "2026-09-03",
+      "verification_note": "arXiv search record title, identifier, abstract, submission date, and PDF link independently visible at https://arxiv.org/abs/2609.03369."
+    },
+    {
+      "title": "GTR-Mamba: Geometry-to-Tangent Routing Mamba for Hyperbolic POI Recommendation",
+      "doi": null,
+      "arxiv": "2510.22942",
+      "url": "https://arxiv.org/abs/2510.22942",
+      "full_text_url": "https://arxiv.org/pdf/2510.22942",
+      "evidence_label": "FULL_TEXT",
+      "evidence_basis": "arXiv record supplies PDF; abstract explicitly identifies next-POI recommendation and hyperbolic sequence modeling.",
+      "exact_overlap": "Direct user next-item/next-location behavior plus hyperbolic geometry. It does not describe generative semantic IDs or semantic-ID generation; therefore only two dimensions overlap.",
+      "publication_date": "2025-10-26",
+      "verification_note": "arXiv record title, identifier, abstract, v1 date, and later revision date visible at https://arxiv.org/abs/2510.22942."
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2505.09205",
+      "url": "https://arxiv.org/abs/2505.09205",
+      "full_text_url": "https://arxiv.org/pdf/2505.09205",
+      "evidence_label": "FULL_TEXT",
+      "evidence_basis": "arXiv record has a PDF full-text link; abstract states sequential recommendation, temporal user preferences, and a hyperbolic sequence model.",
+      "exact_overlap": "Directly addresses user behavioral sequences/next-item sequential recommendation and hyperbolic geometry. It does not report generative semantic IDs; only two dimensions overlap.",
+      "publication_date": "2025-05-14",
+      "verification_note": "arXiv record title, identifier, abstract, and PDF link visible at https://arxiv.org/abs/2505.09205."
+    },
+    {
+      "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2205.11233",
+      "url": "https://arxiv.org/abs/2205.11233",
+      "full_text_url": "https://arxiv.org/pdf/2205.11233",
+      "evidence_label": "FULL_TEXT",
+      "evidence_basis": "arXiv record links a PDF; abstract explicitly discusses sequential recommendation from user behavior, temporal dependency, and Poincaré-ball representations.",
+      "exact_overlap": "User behavior/sequence recommendation plus hyperbolic geometry; no generative semantic-ID item representation is identified. Two dimensions overlap.",
+      "publication_date": "2022-05-23",
+      "verification_note": "arXiv record title, identifier, abstract, and PDF link visible at https://arxiv.org/abs/2205.11233."
+    },
+    {
+      "title": "Sequential Recommendation with Self-Attentive Networks",
+      "doi": "10.1109/ICDM.2018.00035",
+      "arxiv": "1808.09781",
+      "url": "https://arxiv.org/abs/1808.09781",
+      "full_text_url": "https://arxiv.org/pdf/1808.09781",
+      "evidence_label": "FULL_TEXT",
+      "evidence_basis": "arXiv-hosted paper PDF; included as a behavior-problem anchor, not evidence for hyperbolic geometry or semantic IDs.",
+      "exact_overlap": "Models user interaction sequences to predict the next item. Neither hyperbolic geometry nor generative semantic IDs are part of the identified method; one dimension overlaps.",
+      "publication_date": "2018-08-29",
+      "verification_note": "arXiv record exposes the paper and PDF at https://arxiv.org/abs/1808.09781."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Long-tail next-item behavior under sparse user-item interactions",
+      "evidence": "HypRQ-VAE explicitly motivates hyperbolic item indexing using the power-law structure and niche preferences reflected in long-tail user-item interactions, but the record does not verify ordered next-item conditioning.",
+      "source_arxiv": "2609.03369",
+      "status": "candidate; not verified as an explicit sequence-generation objective"
+    },
+    {
+      "candidate": "Temporal preference evolution and sequential next-item prediction",
+      "evidence": "HMamba frames sequential recommendation as modeling temporal evolution of preferences from interaction sequences; its contribution is hyperbolic sequence modeling, not semantic-ID generation.",
+      "source_arxiv": "2505.09205",
+      "status": "behavior-first adjacent evidence"
+    },
+    {
+      "candidate": "Next-location choice from user mobility trajectories",
+      "evidence": "GTR-Mamba explicitly targets next-POI prediction and hyperbolic sequence modeling; semantic-ID generation is not reported in the inspected record.",
+      "source_arxiv": "2510.22942",
+      "status": "behavior-first adjacent evidence"
+    },
+    {
+      "candidate": "Joint temporal and hierarchical structure in sequential interactions",
+      "evidence": "PHGR models sequential patterns and hierarchy in sequential recommendation using Poincaré geometry; no generative semantic IDs are reported.",
+      "source_arxiv": "2205.11233",
+      "status": "behavior-first adjacent evidence"
+    }
+  ],
+  "limitations": [
+    "No independently verified source in the inspected records establishes all three elements together: ordered user next-item behavior, hyperbolic geometry, and generative semantic IDs. HypRQ-VAE is the closest indexed match, but its surfaced abstract confirms hyperbolic generative item indexing and interaction long-tail motivation, not explicit next-item sequence conditioning.",
+    "FULL_TEXT means a full-text PDF is linked from the identified arXiv record; claims above are conservative and based on the record/abstract text inspected, not a page-by-page audit of every PDF.",
+    "No DOI was exposed for the listed arXiv records except the separately identified ICDM DOI attached to the behavior-anchor paper; arXiv IDs and canonical records are supplied for independent verification.",
+    "Search coverage is not exhaustive. This result supports a research gap hypothesis, not a proof that no triple-intersection work exists.",
+    "Only work available by the frozen current date (2026-10-24) is considered; later-announced search-index records are excluded."
+  ]
+}

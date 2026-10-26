@@ -1,0 +1,13 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "source_sha256": "3e91364af58e820c71cb4bc2ae461aabab73eb3792442770ed1be7460066731c",
+  "proposal_sha256": "c8701416d4b694141d60366f61d3b70b4fbbc958f8188447d822f8d36e6a283d",
+  "test_sha256": {
+    "ddp": "bbad0f1ca18f548da870fe12ce0ec59bfb9d35f7253ac4c920d9a7c1694386dc",
+    "entrypoint": "4af27be399c0f3a4d8f10df342b9605c0bfe5616cd157a7accfe8775377da08f",
+    "gradient": "1bdea35fa8a523897a06b5c3187d6125e727650c1200385e75a837cdaeccb3e9",
+    "math": "611204d38e33274cd7ecc631e69b59e310bf930859ae1ea23bf2fe2595d381e5"
+  },
+  "verdict": "APPROVE_TESTS",
+  "rationale": "Static verification: recomputed the candidate source digest from the manifest's specified sorted relative-path/NUL/per-file-SHA256 recipe; it matches the frozen source_sha256 and all six listed file hashes match. Independently hashed the four materialised reviewed suites and confirmed their digests match the manifest; each also matches its committed test file (no test/hash drift). The math suite uses closed-form Poincare references rather than duplicating implementation formulas. The gradient suite calls the production hyperbolic residual quantizer and checks finite, nonzero gradients through encoder and each codebook (its detached negative control itself is generic autograd, but is ancillary). The DDP test starts two spawned Gloo ranks, feeds rank-distinct inputs, and explicitly all_gathers distinct local values, gradients, and post-step parameters on both ranks; this is substantive multi-rank evidence, not a broadcast/mock. The entrypoint test invokes trainer.main(), wraps the real compute_loss while calling its original, and checks checkpoint and exported IDs against codes reloaded from the checkpoint. No shell/torch execution was performed here. Execution remains for verification_check to establish all four suites run under the Stage2 interpreter with nonzero tests and no skips/failures; static review cannot prove runtime compatibility or successful completion. Current manifest author reports are treated as current evidence; other run-agent logs are archived and were not used as competing reports."
+}

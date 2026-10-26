@@ -1,0 +1,81 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "sources": [
+    {
+      "title": "TIGER: Transformer Index for GEnerative Recommenders",
+      "doi": null,
+      "arxiv": "2305.05065",
+      "canonical_url": "https://arxiv.org/abs/2305.05065",
+      "full_text_url": "https://arxiv.org/pdf/2305.05065",
+      "overlap": {
+        "user_next_item_behavior": "FULL_TEXT — autoregressive recommendation predicts subsequent items from user interaction history.",
+        "hyperbolic_geometry": "UNKNOWN — no evidence verified that hyperbolic geometry is part of the method.",
+        "generative_semantic_ids": "FULL_TEXT — proposes semantic item identifiers and generative retrieval/recommendation by predicting identifier tokens."
+      },
+      "intersection_assessment": "Strong evidence for sequential user behavior plus generative semantic IDs, but no established hyperbolic component; not evidence of the full three-way intersection."
+    },
+    {
+      "title": "HME: A Hyperbolic Metric Embedding Approach for Next-POI Recommendation",
+      "doi": "10.1145/3397271.3401049",
+      "arxiv": null,
+      "canonical_url": "https://doi.org/10.1145/3397271.3401049",
+      "full_text_url": null,
+      "overlap": {
+        "user_next_item_behavior": "ABSTRACT — next point-of-interest recommendation from user mobility/sequential behavior.",
+        "hyperbolic_geometry": "ABSTRACT — explicitly proposes hyperbolic metric embedding.",
+        "generative_semantic_ids": "UNKNOWN — no evidence verified of autoregressive generative semantic item IDs."
+      },
+      "intersection_assessment": "Relevant hyperbolic sequential recommendation baseline, but not established as a generative semantic-ID method."
+    },
+    {
+      "title": "Scalable hyperbolic recommender systems",
+      "doi": null,
+      "arxiv": "1902.08648",
+      "canonical_url": "https://arxiv.org/abs/1902.08648",
+      "full_text_url": "https://arxiv.org/pdf/1902.08648",
+      "overlap": {
+        "user_next_item_behavior": "UNKNOWN — recommender/user preference modeling is in scope, but next-item sequential prediction was not verified.",
+        "hyperbolic_geometry": "FULL_TEXT — develops scalable hyperbolic recommender systems.",
+        "generative_semantic_ids": "UNKNOWN — no verified generative semantic-ID mechanism."
+      },
+      "intersection_assessment": "Supports the hyperbolic recommender strand; insufficient evidence for sequential next-item prediction or semantic IDs."
+    },
+    {
+      "title": "Actions Speak Louder than Words: Trillion-Parameter Sequential Transducers for Generative Recommendations",
+      "doi": null,
+      "arxiv": "2402.17152",
+      "canonical_url": "https://arxiv.org/abs/2402.17152",
+      "full_text_url": "https://arxiv.org/pdf/2402.17152",
+      "overlap": {
+        "user_next_item_behavior": "FULL_TEXT — frames recommendation as sequential transduction over user actions and interaction histories.",
+        "hyperbolic_geometry": "UNKNOWN — no verified hyperbolic geometry component.",
+        "generative_semantic_ids": "UNKNOWN — generative recommendation is verified, but semantic IDs are not established from the inspected abstract/full-text metadata."
+      },
+      "intersection_assessment": "Relevant for behavior-first generative recommendation framing, not proof of the three-way intersection."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Model next-item choice as a conditional distribution over the user's recent interaction/action sequence, with the target item represented by a semantic identifier sequence.",
+      "evidence_basis": ["2305.05065", "2402.17152"],
+      "status": "Supported as adjacent strands; no verified source combines this with hyperbolic geometry."
+    },
+    {
+      "candidate": "Use hyperbolic structure to represent hierarchical or multiscale relations in user/item behavior, then test whether it improves next-item prediction when paired with generative semantic IDs.",
+      "evidence_basis": ["10.1145/3397271.3401049", "1902.08648", "2305.05065"],
+      "status": "Research hypothesis/synthesis, not a claim already demonstrated by these sources."
+    }
+  ],
+  "limitations": [
+    "No independently verified paper was found in this search that demonstrably combines all three elements: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+    "FULL_TEXT is used only where an arXiv full-text/PDF is directly available and the relevant method can be checked; HME is labeled ABSTRACT because publisher DOI metadata/abstract are available but a full text was not verified here.",
+    "UNKNOWN means the stated feature was not established from the accessible evidence, not proof that the paper lacks it.",
+    "Search coverage was targeted rather than systematic; terms such as semantic item codes, tokenized item IDs, hyperbolic sequential recommendation, and next-POI may yield additional adjacent work.",
+    "The queried Crossref record independently confirms HME's title/DOI and cites Scalable hyperbolic recommender systems and HME; arXiv records independently identify the listed preprints."
+  ]
+}

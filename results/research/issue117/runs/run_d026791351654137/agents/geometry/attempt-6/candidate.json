@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "candidate_id": "issue117_geometry_transition_residual_poincare_v2",
+  "behavior_problem_id": "asymmetric_train_successor_transitions_need_hierarchical_item_codes",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "e5005b69310b036daba89277b11803927a6a04edd999e63afb272d116de82e27",
+  "next_item_hypothesis": "One demonstrated failure is that a globally content-quantized first SID token can fail to identify the train-observed successor neighborhood of a given anchor: the measured train-only longest-prefix population has 323633 directed pairs, and 314605 lack an observed reverse event (fraction 0.9266197178950221). This is evidence of directional structure, not proof that curvature or any intervention improves prediction. Hypothesis: packing anchor-conditioned successor groups into curved coarse neighborhoods and using residual levels for within-neighborhood distinctions can improve Stage2 valid L1 successor alignment and Stage3 next-item ranking. Each item nevertheless receives one content-derived global SID, independent of user and request.",
+  "math_definition": {
+    "mechanism": "Transition-conditioned residual Poincare vector quantization (T-RPQ). A frozen-dimensional item content vector e_i in R^d is encoded by an affine/ReLU MLP with widths [512,256,64,32] to z_i in R^32; layer weights use PyTorch Kaiming-uniform, biases zero, with initialization seed 42. A mirrored affine/ReLU decoder has widths [32,64,256,512,d], linear final layer, same initialization rule and seed. Fixed content inputs are the row-normalized Stage1 item embedding matrix; item row order is the frozen item-ID order. Trainable tensors are encoder, decoder and three [256,32] codebooks. Codebooks are initialized by sequential KMeans (k-means++, n_init=10, random_state=0) on encoded train-item vectors and successive residuals; initialization uses only train-split items, and the identical initial tensors are copied to both arms. No learned user or prefix network is present.",
+    "geometry": {
+      "parameter": "c=0.5, corresponding to sectional curvature -c",
+      "epsilon": 0.000001,
+      "R": 0.9,
+      "stable_squared_distance": "For ||x||,||y||<=R, u=2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)); a=log1p(u+sqrt(u*(u+2))); D^2(x,y)=d_c(x,y)^2=(1/c)*max(a,0)^2. This is the single scored distance, squared; the objective uses D^2 in both arms.",
+      "arcosh_policy": "The equivalent arcosh argument is 1+u; clamp it monotonically to at least 1.0 and never to 1+delta. Compute arcosh(1+u) using log1p(u+sqrt(u*(u+2))); clamp u below at zero only for roundoff. Use float64 for the scalar distance calculation, then cast back.",
+      "exp_map": "For tangent v, exp_0^c(v)=tanh(sqrt(c)*||v||)*v/(sqrt(c)*||v||), with scale 1 at ||v||=0; at c=0 it is exactly v.",
+      "projection": "P_R(x)=x*min(1,R/||x||), with factor 1 when ||x||=0. This common Euclidean ball projection applies in both arms to every vector entering D^2. The curvature feasibility radius (1-epsilon)/sqrt(c) is an additional curved-arm projection after P_R; it is not part of scored-region monotonicity. At c=0 that radius is undefined and the flat arm applies P_R only, not a curvature-radius projection.",
+      "limits": "As c->0, D^2(x,y)->4*||x-y||^2 (the unsquared distance tends to 2*||x-y||); exp_0^c is the identity; the curvature projection radius (1-epsilon)/sqrt(c) is undefined, so only the common P_R applies. All c-dependent operations use this continuous flat branch."
+    },
+    "residual_assignment_order": "For each item i, initialize r_i^0=z_i. For level l=1,2,3 in order: map r_i^(l-1) with exp_0^c, then project by P_R and (curved arm only) curvature-domain projection; map each codebook row with exp_0^c then apply the same projections; assign k_il=argmin over 256 rows of D^2 between these mapped/projected vectors (ties choose the lowest code index); select that code vector q_il; subtract in tangent coordinates r_i^l=r_i^(l-1)-q_il. The residual update is thus map, project, assign, subtract; the next iteration maps and projects the updated residual before scoring. The final global SID is exactly (k_i1,k_i2,k_i3). No beam search or ranking occurs.",
+    "objective": {
+      "anti_collapse": "Content reconstruction is the anti-collapse term: mapping every item to the same code cannot reconstruct the distinct frozen item embeddings and incurs positive reconstruction error. It enters as L_rec in the total loss and has a gradient through the decoder and straight-through quantized representation into the encoder.",
+      "assignment_gradient": "Hard argmin determines exported SID only. During training use soft assignment per level p_ilj=softmax_j(-D^2(x_il,c_lj)/tau), tau=0.1, and qbar_il=sum_j p_ilj*c_lj; hard q_il is the argmin code. Straight-through value qST_il=q_il+qbar_il-stop_gradient(qbar_il) gives hard forward values and soft-assignment backward gradients to residuals and codebooks. No loss is computed solely on detached one-hot assignments.",
+      "losses": [
+        {
+          "name": "content_reconstruction",
+          "equation": "L_rec=(1/(N*d))*sum_{i in I_train} ||Dec(sum_{l=1}^3 qST_il)-e_i||_2^2",
+          "tensors_and_shapes": "e:[N,d] frozen row-normalized content embeddings; qST:[N,3,32]; Dec is the specified shared MLP; I_train is all train-split item rows, N=|I_train|.",
+          "reduction_empty_rule": "Mean over N*d scalar elements; N=0 is invalid and yields NULL, never zero.",
+          "circularity": "Targets e_i are frozen inputs independent of all trainable parameters; no target is derived from assignment or prediction."
+        },
+        {
+          "name": "quantization_commitment",
+          "equation": "L_q=(1/(3N*32))*sum_{i in I_train,l in {1,2,3}} [D^2(x_il,stopgrad(q_il))+D^2(stopgrad(x_il),q_il)]",
+          "tensors_and_shapes": "x_il is exp-map then common/domain-projected residual at assignment level l, shape [N,32]; q_il is the selected projected code vector [N,32].",
+          "reduction_empty_rule": "Mean over 3*N*32; empty I_train is invalid/NULL.",
+          "circularity": "The hard selected index is treated constant in this term; the first summand trains residual/encoder, the second trains selected codebook rows, and the separate L_rec uses the declared straight-through estimator."
+        },
+        {
+          "name": "train_successor_prefix_alignment",
+          "equation": "For each train-only ordered transition (a,t) in T, let h_at=1 if k_a1=k_t1 else 0; L_tr=-(1/|T|)*sum_(a,t in T) log(sigmoid(s_at)), where s_at=logsumexp_j(-D^2(x_a1,c_1j)/tau) + logsumexp_j(-D^2(x_t1,c_1j)/tau) - D^2(x_a1,x_t1)/tau; optimize a pair logit over all ordered train transitions using h_at as binary label: L_tr=-(1/|T|)*sum_[h_at log(sigmoid(s_at))+(1-h_at)log(1-sigmoid(s_at))].",
+          "tensors_and_shapes": "T is the multiset of ordered adjacent item transitions from train.parquet, one transition per adjacent event; a,t item indices; x_a1,x_t1 are level-one mapped/projected vectors [32]; c_1j are projected first-level code vectors [256,32].",
+          "reduction_empty_rule": "Mean over transition records, including repeated records; if T is empty, L_tr=0 by explicit no-supervision rule.",
+          "circularity": "Labels h_at are computed once from train item IDs and are parameter-independent; sigmoid BCE retains gradients through the soft differentiable logsumexp score."
+        }
+      ],
+      "total_loss": "L=L_rec+0.25*L_q+0.1*L_tr; all coefficients are frozen and identical across arms.",
+      "training_protocol": "Both arms use the frozen Stage2 baseline protocol values: 3000 epochs; per-rank batch 1024 (global batch 4096 on four ranks); AdamW learning rate 0.001, weight decay 0.0001; linear warmup for 50 epochs then linear decay to zero; gradient clip norm 1.0; seed 42 (rank seed 42+rank); no early stopping; identical shuffled sampler and data ordering. Codebook KMeans initialization is as specified above and is performed once on the same train embeddings. The only intervention is c=0.5 versus its exact c->0 limit. Hyperparameters are not swept. These literal protocol values are binding for this candidate, not a reference to an unspecified repository default."
+    },
+    "shared_domain_control": "One parameterized implementation evaluates the same mapped vectors, codebooks, assignment, residual procedure, loss, and projection P_R in both arms; only D^2 and its c-dependent exp-map/domain operation vary with c. Both arms have identical architecture, trainable parameter count, data, initialization, optimizer, schedule, seeds, batch composition and training budget. Any residual is updated by subtraction only after assignment and the update is projected before it is scored at the next level."
+  },
+  "hyperbolic_necessity": "The train-only evidence demonstrates strongly directional transitions, not curvature necessity. Negative curvature is a mechanistic hypothesis because exponentially expanding volume can allocate many fine successor distinctions under a coarse shared prefix while preserving hierarchical neighborhoods; residual codes then refine within that prefix. A Euclidean arm with identical feasible ball and representation map tests whether curvature geometry, rather than capacity or domain, matters. Failure to improve registered diagnostics or Stage3 behavior falsifies this proposal.",
+  "euclidean_control": "The same executable model sets c=0 in the shared formulas: D^2=4||x-y||^2, exp map identity, common P_R only. Parameter count, initialization, assignment relaxation, objective, architecture and training protocol are unchanged.",
+  "effect_site": "Stage2 first-level assignment aligns train-observed anchor-successor relationships; later residual assignments encode within-prefix distinctions. Stage2 emits one global content-derived SID per item. Stage3 T5 alone evaluates next-item ranking; Stage2 does not rank.",
+  "real_trigger_measurement": "The proposed failure is motivated by the supplied train-only longest-prefix statistics (no reverse observed event for 314605 of 339519 transitions) and is tested on the frozen 52855 validation pairs. Validation is diagnostic-only and never enters fitting. The frozen valid L1 positive hit rate is the share of pairs where anchor first token equals positive first token; valid Hard-L1 ER=10*positive_hits/negative_hits, with negative hits counted on the ten negatives the same way. level2_distinct_prefixes=number of distinct (k1,k2) pairs over all items. L3 collision is item fraction whose full (k1,k2,k3) occurs on another item. L3 refinement gain is item-mean log2(bucket_size(k1,k2)/bucket_size(k1,k2,k3)). Conditional G3 uses alpha=1,K=256: for each pair (anchor,target), p_pref(l)=(count of items sharing target's level-two prefix with third code l - 1[target third code=l] + alpha)/(bucket size - 1 + alpha*K); p_hist(l)=(train-only longest-prefix successor count of anchor restricted to target's level-two prefix and third code l + alpha*p_pref(l))/(restricted successor total + alpha); mean log2(p_hist(target third code)/p_pref(target third code)); no restricted successor contributes 0 and non-finite pair is NULL. Exactly 52855 fixed valid pairs, one positive and ten negatives per anchor, seed 42, history[-1] -> target. Empty item buckets/pair set or zero negative-hit denominator produce NULL, not zero. Stage3 uses test_R@10 only, computed once on frozen test protocol, no test fitting or model selection."
+  ,
+  "training_only_inputs": {
+    "fit_inputs": "Frozen item content embeddings and train.parquet item transitions only. Transition supervision is legal under CLAUDE.md rule 16. No validation/test behavior, future events, prediction-time user context, or batch-composition-derived targets.",
+    "diagnostic_inputs": "Frozen validation pairs only for registered Stage2 diagnostics; no gradients or model selection. Test behavior is read-only for the registered Stage3 behavioral test.",
+    "global_sid": "The mapping from item content row to three-code SID is deterministic and identical across users, batches and requests."
+  },
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false,
+    "protocol_freeze": "3000 epochs; batch 1024/rank, four ranks; AdamW lr 0.001, weight_decay 0.0001; 50-epoch linear warmup then linear decay; gradient clip 1.0; seed 42 plus rank offset; deterministic sequential KMeans++ initialization n_init=10 random_state=0 on train embeddings/residuals; no early stop. Full literal encoder/decoder, objective, geometry, initialization and optimizer specification is in math_definition."
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {"name": "valid_l1_hard_er", "direction": "curved strictly greater than the frozen Resample reference", "minimum_effect": 16.38953942232631, "seed_rule": "Compute exactly as defined in real_trigger_measurement on the 52855 seed-42 frozen validation pairs; aggregate raw positive and negative hits across all pairs, then 10*positive_hits/negative_hits. Compare each arm's result to this strict cutoff; zero negative hits or non-finite result is NULL."},
+      {"name": "level2_distinct_prefixes", "direction": "curved strictly greater than the frozen Resample reference", "minimum_effect": 16145, "seed_rule": "Count unique (k1,k2) over every item from the single seed-42 trained model; compare to strict cutoff. Missing SID or non-finite/undefined count is NULL."},
+      {"name": "valid_l1_positive_hit_rate", "direction": "increase curved versus flat", "minimum_effect": 0.005, "seed_rule": "On the exact frozen validation pairs, count positive anchor-first-token matches divided by 52855 independently per arm; paired curved-minus-flat difference. Undefined denominator is NULL."},
+      {"name": "L3_refinement_gain", "direction": "increase curved versus flat", "minimum_effect": 0.01, "seed_rule": "For each arm count bucket sizes over all items, compute per item log2(|bucket(k1,k2)|/|bucket(k1,k2,k3)|), then arithmetic mean over items; paired curved-minus-flat difference. Empty item set or non-finite value is NULL."},
+      {"name": "conditional_G3", "direction": "increase curved versus flat", "minimum_effect": 0.01, "seed_rule": "Use the exact alpha=1,K=256 estimator stated in real_trigger_measurement on the fixed pairs; arithmetic mean of pair log-ratios, assigning 0 to pairs with no restricted successor and marking any non-finite pair/result NULL. Paired curved-minus-flat difference; any undefined aggregate is NULL."},
+      {"name": "L3_collision", "direction": "decrease curved versus flat", "minimum_effect": 0.005, "seed_rule": "Count items whose complete triple is shared by another item divided by all items, independently per arm; paired flat-minus-curved difference. Empty item set is NULL."}
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "increase curved versus flat",
+      "minimum_effect": 0.005,
+      "seed_rule": "Use the frozen Stage3 test protocol, seed 42 only, uniform eligible-example hit@10 averaged across examples; compute curved-minus-flat paired difference. Test is read-only and cannot fit/select. Missing evaluation or non-finite result is NULL."
+    },
+    "classification": {
+      "falsified_if": "any registered mandatory diagnostic fails its direction/minimum_effect, or stage3_behavioral_test fails its direction/minimum_effect, with no NULL comparison",
+      "passed_if": "all registered mandatory diagnostic comparisons and stage3_behavioral_test comparison meet their direction/minimum_effect, with no NULL comparison",
+      "mixed_if": "at least one registered comparison meets its direction/minimum_effect and at least one fails, with no NULL comparison"
+    },
+    "null_outcome_rule": "If any seed-wise or aggregated change is undefined or non-finite (including zero denominator, missing evaluation, or empty stratum), classify that comparison NULL. Any comparison containing a NULL seed is inconclusive and cannot be classified passed or falsified; report NULL separately from mixed."
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "bd2fb691993dcc7bec48366b40d36e01dc786c58dfc9e03d60be21545c98b079",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "basis": "TIGER establishes autoregressive semantic-ID generation from interaction histories; Poincaré embeddings establish a hyperbolic method for hierarchical structure.",
+        "candidate": "History-conditioned next-item prediction in a hierarchical item catalog",
+        "intersection_status": "SYNTHESIS / GAP, not an already verified combined method",
+        "testable_question": "Does encoding the item hierarchy or semantic-ID code structure with a hyperbolic representation improve next-item prediction, especially for sparse histories or long-tail items, over Euclidean semantic-ID generation?"
+      },
+      {
+        "basis": "The behavior signal is the ordered interaction history and target next item; hyperbolic geometry is a plausible inductive bias for nested/coarse-to-fine item structure.",
+        "candidate": "Behavior-conditioned semantic-ID generation under sparse or short user histories",
+        "intersection_status": "Hypothesis only; the sources above do not demonstrate this combination.",
+        "testable_question": "Can a hyperbolic item/codebook geometry preserve hierarchical similarity while autoregressively decoding valid semantic-ID sequences, and does this alter next-item ranking quality or calibration?"
+      }
+    ],
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "limitations": [
+      "No independently verified full-text source was found in this pass that explicitly combines all three elements: user next-item behavior, hyperbolic geometry, and generative semantic IDs. Do not cite the component papers as evidence that the combined approach already exists.",
+      "The citations are component precedents rather than a complete intersection bibliography. The TIGER paper is counted once conceptually; the repeated entry only makes its behavior overlap explicit.",
+      "FULL_TEXT indicates that the linked arXiv full-text/PDF was used as evidence for the stated scope. It does not mean every related work or every possible version was exhaustively audited.",
+      "The arXiv DOI strings for the two hyperbolic works identify their arXiv records, not independently verified journal publication DOIs.",
+      "No prior-candidate prompts or future/test interactions were used."
+    ],
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "doi": null,
+        "evidence": "The paper proposes TIGER, which represents items with semantic IDs and generates the next item autoregressively from user interaction history. This directly covers next-item behavior and generative semantic IDs. It does not establish use of hyperbolic geometry.",
+        "evidence_label": "FULL_TEXT",
+        "hyperbolic_geometry": "No evidence identified in the paper's approach; representation/quantization is not presented as hyperbolic geometry.",
+        "overlap": [
+          "user next-item behavior",
+          "generative semantic IDs"
+        ],
+        "title": "Recommender Systems with Generative Retrieval",
+        "url": "https://arxiv.org/abs/2305.05065"
+      },
+      {
+        "arxiv": "1705.08039",
+        "doi": "10.48550/arXiv.1705.08039",
+        "doi_note": "The DOI is the arXiv DOI; no separate publisher DOI verified here.",
+        "evidence": "Full-text paper introduces embeddings in the Poincaré ball, using hyperbolic geometry to represent hierarchical structure. Its studied tasks are hierarchical representation learning (including lexical entailment and link prediction), not user next-item recommendation or generative semantic IDs.",
+        "evidence_label": "FULL_TEXT",
+        "overlap": [
+          "hyperbolic geometry"
+        ],
+        "title": "Poincaré Embeddings for Learning Hierarchical Representations",
+        "url": "https://arxiv.org/abs/1705.08039"
+      },
+      {
+        "arxiv": "1910.12933",
+        "doi": "10.48550/arXiv.1910.12933",
+        "doi_note": "The DOI is the arXiv DOI; no separate publisher DOI verified here.",
+        "evidence": "The work develops graph convolution in hyperbolic space for graph representation learning. It is relevant as a method precedent for hyperbolic representations, but does not present user next-item behavior combined with generative semantic-ID decoding.",
+        "evidence_label": "FULL_TEXT",
+        "overlap": [
+          "hyperbolic geometry"
+        ],
+        "title": "Hyperbolic Graph Convolutional Neural Networks",
+        "url": "https://arxiv.org/abs/1910.12933"
+      },
+      {
+        "arxiv": "2305.05065",
+        "doi": null,
+        "evidence": "This entry records the specific behavior-first overlap: interaction-history-conditioned autoregressive prediction of the next item, with item identity encoded by semantic IDs. This is the same TIGER source above and is not an independent study.",
+        "evidence_label": "FULL_TEXT",
+        "hyperbolic_geometry": "Not established.",
+        "overlap": [
+          "user next-item behavior",
+          "generative semantic IDs"
+        ],
+        "title": "Generative Recommenders: Next-item prediction as autoregressive semantic ID generation (TIGER framing)",
+        "url": "https://arxiv.org/pdf/2305.05065"
+      }
+    ],
+    "task_id": "literature"
+  },
+  "literature_evidence_sha256": "a5f8291155fd0d4f46a5d2367d08508bd644e06a18b160ac668200beaa7aeaf7",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

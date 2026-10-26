@@ -1,0 +1,50 @@
+{
+  "candidate_id": "geometry-directional-branching-hypothesis-01",
+  "candidate_sha256": "5d2b11f5cfdbe790e0465e56bcf830907a2d26b5f95219a1ca63304388354ecc",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "severity": "MATERIAL",
+      "issue": "The formal scoring rule does not implement the stated autoregressive semantic-code model. z_{l,k} depends on h and the level/token but not on previously emitted code tokens, so the specified three-level likelihood factorizes by level conditional on h. It is not a next-token conditional model as described, and the prefix context alone cannot provide the claimed autoregressive dependency.",
+      "evidence": "Candidate math_definition defines z_{l,k}=b_{l,k}-d_c(x_h,x_{l,k})^2/tau and sums three code log probabilities. In contrast, stage3_T5Train/model/hg_rec.py:49-54 uses T5ForConditionalGeneration with decoder labels/logits, i.e. a decoder with autoregressive token inputs. Reconcile the candidate's equations and control with the actual intended behavior before testing."
+    },
+    {
+      "severity": "MATERIAL",
+      "issue": "The geometric equations are mathematically well-formed for c>0 and vectors strictly inside the ball, but the candidate does not freeze c or give a numerical stabilization/domain policy. Near the boundary, 1-c||x||^2 approaches zero; near x=y, arcosh(1+epsilon) is numerically delicate. An unspecified fixed tau and unspecified c also leave the actual effect size and reproducible model underdefined.",
+      "evidence": "Candidate math_definition specifies c>0 and tau>0 but gives no values, precision, clamp/epsilon, stable arcosh implementation, or boundary margin. The stated tanh map is interior in exact arithmetic; finite-precision saturation can still violate the strict denominator domain."
+    },
+    {
+      "severity": "MATERIAL",
+      "issue": "The equal-capacity comparison is not yet operationally frozen. Parameter-count parity alone does not establish equal training/tuning budget, and the directed-graph control is described by name rather than a concrete model/objective/input construction. Different capacity allocation among context, item, and token representations could confound geometry.",
+      "evidence": "Candidate euclidean_control gives a broad budget statement, but no executable architecture, initialization, optimizer schedule, stopping rule, seed list, or exact directed-graph scoring/training definition. hyperparameter_sweep=false does not specify the fixed values."
+    },
+    {
+      "severity": "MATERIAL",
+      "issue": "The behavior statistic motivates testing directionality but does not establish that the proposed representation improves next-item prediction or that negative curvature is necessary. The explicit falsifier appropriately acknowledges this; the claim remains a hypothesis, not an evidenced effect.",
+      "evidence": "Manifest interpretation_limit explicitly says observed direction and entropy do not establish negative curvature or causal next-item improvement. Reported no-reverse fraction is 314605/339519 in the train-only population."
+    }
+  ],
+  "reproducible_evidence": [
+    {
+      "claim": "The available stage-0 split reserves the final two sequence events for validation and test; training-prefix construction excludes them.",
+      "source": "stage0_build_parquet/build_recbole_parquet.py:_build_splits",
+      "detail": "prefix_end=n-2; train rows iterate range(prefix_end); validation target is session[-2], test target session[-1]."
+    },
+    {
+      "claim": "The stage-3 dataset loader uses the supplied history and target and can retain complete seen history for evaluation; no evidence here requires using future/test interactions as model inputs.",
+      "source": "stage3_T5Train/data/dataset.py:process_data and GenRecDataset._prepare_data",
+      "detail": "process_data reads row.history and row.target, and preserves seen_history separately; _prepare_data maps only supplied history/target to SIDs."
+    },
+    {
+      "claim": "The actual available stage-3 model is an autoregressive T5 conditional generator, not the candidate's specified context-to-code distance softmax.",
+      "source": "stage3_T5Train/model/hg_rec.py:43-54",
+      "detail": "forward passes input_ids, attention_mask, labels to T5ForConditionalGeneration and returns decoder loss/logits."
+    },
+    {
+      "claim": "Novelty is plausible only as a research-gap candidate, not established novelty.",
+      "source": "Manifest literature_evidence",
+      "detail": "TIGER (arXiv:2305.05065) supports sequential recommendation and generative semantic IDs but not hyperbolic geometry; search limitations explicitly do not prove absence of prior work."
+    }
+  ],
+  "review_scope": "Reviewed only the supplied candidate and current source behavior. No future/test interaction values were inspected or used. This verdict does not approve GPU execution; at most it supports revising the specification before a bounded CPU study."
+}

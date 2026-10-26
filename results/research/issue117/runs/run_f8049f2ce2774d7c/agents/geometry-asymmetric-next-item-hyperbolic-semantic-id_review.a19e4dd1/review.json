@@ -1,0 +1,18 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "source_sha256": "3e91364af58e820c71cb4bc2ae461aabab73eb3792442770ed1be7460066731c",
+  "proposal_sha256": "c8701416d4b694141d60366f61d3b70b4fbbc958f8188447d822f8d36e6a283d",
+  "test_sha256": {
+    "math": "a3898fa7ac179060e12776819bebe98d0b786ea93bcaa553bf15582c61d216dc",
+    "gradient": "9f854b5ef0aa4f16ce4069cec9162c0ac3554c22b4d97b1dd9b3f3b9f4f00a90",
+    "ddp": "219f4793db37ab48ab85a052083496775e4cd1c90f8ab16a1fdcfba42897be9d",
+    "entrypoint": "cfcf996ecffc1cd396ce1092d8449c75bb0a6185e96d134dcb0a1a7c59077464"
+  },
+  "verdict": "BLOCK",
+  "rationale": [
+    "The frozen candidate source_sha256 is 3e91364af58e820c71cb4bc2ae461aabab73eb3792442770ed1be7460066731c, while all author/independent-agent reports bind their evidence to 8e962bf56e385381cd03d9c0e77057655314e5634c628130e4d8aa8988258288. This source identity drift prevents attributing the reviewed evidence to the frozen source.",
+    "The four concrete draft test files hash to the candidate manifest's test_sha256 values, but their contents are not the same as the separate test_source/entrypoint_test_source/ddp_test_source strings in the author reports. The evidence therefore has multiple test variants and is not a single frozen, independently executed test set.",
+    "The recorded independent runtime artifacts contain agent-produced test-source strings, not execution results demonstrating that these concrete files ran against the frozen trainer. No verified pass/fail output for all four reviewed concrete tests is present in the inspected artifacts.",
+    "The concrete tests do provide non-self-referential reference values, call a real two-rank DDP model path, and call trainer.main with a synthetic fixture; these strengths do not resolve the source/test identity and execution-evidence gaps."
+  ]
+}

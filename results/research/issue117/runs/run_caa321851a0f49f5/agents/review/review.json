@@ -1,0 +1,25 @@
+{
+  "candidate_id": "issue117-geometry-hyp001",
+  "candidate_sha256": "f142b716e4d0b39095993ed872defcccc0f649db59ad2f2c271e20e2a21d07f9",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "issue": "Scored distance does not have the declared continuous flat limit because of the arcosh clamp.",
+      "evidence": "math_definition.scored_squared_distance clamps the arcosh input to at least 1+tau for c>0 (tau=1e-6), while defining D_0^2(x,y)=4||x-y||^2. For x=y and any c>0 this yields D_c^2=(arcosh(1+tau))^2/c > 0; as c->0 this diverges rather than tending to zero. More generally, sufficiently small nonzero separations are floored. Thus the stated c->0 limit is false, and the curved and flat arms do not differ only by the intended distance/map curvature limit. The claim that both optimize squared distance with the exact continuous flat limit is unsound as specified.",
+      "reproducible_check": "Substitute x=y into the stated c>0 formula: the unclamped arcosh argument is 1, then clamp gives 1+tau. With tau=1e-6, arcosh(1+tau)>0, so D_c^2=(arcosh(1+tau))^2/c; this is nonzero for c>0 and unbounded as c approaches 0, whereas D_0^2(x,x)=0."
+    },
+    {
+      "issue": "Falsifier outcome classes overlap at the registered minimum-effect boundary.",
+      "evidence": "falsifier.classification.falsified_if classifies any aggregate at or below its minimum_effect as falsified; mixed_if classifies one comparison at or above and another below as mixed; passed_if accepts every aggregate at or above. An aggregate exactly equal to its threshold therefore satisfies both the falsified condition and the passed condition (and can also participate in mixed), so classification is not mechanically unique.",
+      "reproducible_check": "Set one registered comparison aggregate exactly to its minimum_effect and all other comparisons above threshold, with no NULL seeds. Both falsified_if and passed_if are true under the literal inequalities."
+    }
+  ],
+  "reproducible_evidence": {
+    "scope": "Review is limited to the candidate and frozen manifest supplied in this request. No repository implementation or execution evidence was used.",
+    "causal_link": "The candidate presents directional train-only successor structure as motivation, explicitly treats curvature benefit as a hypothesis rather than demonstrated causation, and registers downstream Stage3 test_R@10 as the behavioral test. No blocker on causal proof is inferred from Stage2 diagnostics.",
+    "behavioral_test": "Registered metric test_R@10; direction increase versus paired flat arm; minimum effect 0.005; paired frozen seeds and arithmetic mean; Stage3 test results are reserved for this final test and not tuning/Stage2 decisions.",
+    "stage2_leading_indicators": "Registers validation Hard-L1 ER, distinct level-2 prefixes and L3 statistics (collision, refinement gain, conditional_G3), alongside L1 positive-hit rate. These are specified as Stage2 diagnostics, not as proof of ranking improvement.",
+    "control_and_protocol": "Declares same model, bounded representation/projection, codebooks, initialization, optimizer, schedule, seeds, budget, losses and update ordering, with c=0 as flat arm. However the distance-clamp discontinuity above violates the stated exact flat-limit/same-geometry-only claim. Existing frozen protocol is retained; no sweep is declared.",
+    "leakage_and_targets": "Stage2 inputs are restricted to item content and frozen train split; validation is diagnostics-only; test behavior, future events and prediction-time user context are expressly excluded. Quantization assignments are specified as current-parameter argmins stop-gradient per update; reconstruction targets are fixed content features; the loss reductions and residual update order are specified. No leakage or target-recomputation blocker identified from the manifest."
+  }
+}

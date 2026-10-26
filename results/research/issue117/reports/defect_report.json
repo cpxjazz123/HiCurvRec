@@ -1,0 +1,203 @@
+{
+  "all_defects_detected": true,
+  "defect_classes": [
+    {
+      "defect": "MISSING_OUTPUT",
+      "detected_at_expected_layer": true,
+      "expected_code": "MISSING_KEYS",
+      "expected_layer": "output",
+      "observed_codes": [
+        "MISSING_KEYS"
+      ],
+      "observed_layer": "output",
+      "passed": true,
+      "verdict": "MACHINE_INVALID"
+    },
+    {
+      "defect": "CAPACITY",
+      "detected_at_expected_layer": true,
+      "expected_code": "CAPACITY_MISMATCH",
+      "expected_layer": "contract",
+      "observed_codes": [
+        "CAPACITY_MISMATCH"
+      ],
+      "observed_layer": "contract",
+      "passed": true,
+      "verdict": "MACHINE_INVALID"
+    },
+    {
+      "defect": "FUTURE_LEAKAGE",
+      "detected_at_expected_layer": true,
+      "expected_code": "FUTURE_LEAKAGE",
+      "expected_layer": "contract",
+      "observed_codes": [
+        "FUTURE_LEAKAGE"
+      ],
+      "observed_layer": "contract",
+      "passed": true,
+      "verdict": "MACHINE_INVALID"
+    },
+    {
+      "defect": "D_VS_D2_LIMIT",
+      "detected_at_expected_layer": true,
+      "expected_code": "FLAT_LIMIT_DECLARATION_MISMATCH",
+      "expected_layer": "math",
+      "observed_codes": [
+        "FLAT_LIMIT_DECLARATION_MISMATCH"
+      ],
+      "observed_layer": "math",
+      "passed": true,
+      "verdict": "MATH_COUNTEREXAMPLE"
+    },
+    {
+      "defect": "CLAMP_DOMINATES",
+      "detected_at_expected_layer": true,
+      "expected_code": "CLAMP_DOMINATES_DOMAIN",
+      "expected_layer": "math",
+      "observed_codes": [
+        "FLOOR_LIFTS_DISTANCE",
+        "CLAMP_DOMINATES_DOMAIN"
+      ],
+      "observed_layer": "math",
+      "passed": true,
+      "verdict": "MATH_COUNTEREXAMPLE"
+    },
+    {
+      "defect": "DOMAIN_ESCAPE",
+      "detected_at_expected_layer": true,
+      "expected_code": "DOMAIN_ESCAPE",
+      "expected_layer": "math",
+      "observed_codes": [
+        "DOMAIN_ESCAPE"
+      ],
+      "observed_layer": "math",
+      "passed": true,
+      "verdict": "MATH_COUNTEREXAMPLE"
+    },
+    {
+      "defect": "UNREGISTERED_METRIC",
+      "detected_at_expected_layer": true,
+      "expected_code": "UNREGISTERED_METRIC",
+      "expected_layer": "falsifier",
+      "observed_codes": [
+        "UNREGISTERED_METRIC"
+      ],
+      "observed_layer": "falsifier",
+      "passed": true,
+      "verdict": "MACHINE_INVALID"
+    },
+    {
+      "defect": "MISSING_NULL",
+      "detected_at_expected_layer": true,
+      "expected_code": "NULL_OUTCOME_MISSING",
+      "expected_layer": "falsifier",
+      "observed_codes": [
+        "NULL_OUTCOME_MISSING"
+      ],
+      "observed_layer": "falsifier",
+      "passed": true,
+      "verdict": "MACHINE_INVALID"
+    },
+    {
+      "defect": "BEHAVIOURAL_AS_STAGE2",
+      "detected_at_expected_layer": true,
+      "expected_code": "BEHAVIOURAL_AS_STAGE2",
+      "expected_layer": "falsifier",
+      "observed_codes": [
+        "BEHAVIOURAL_AS_STAGE2"
+      ],
+      "observed_layer": "falsifier",
+      "passed": true,
+      "verdict": "MACHINE_INVALID"
+    },
+    {
+      "defect": "COLLAPSE_UNGUARDED",
+      "detected_at_expected_layer": true,
+      "expected_code": "COLLAPSE_UNGUARDED",
+      "expected_layer": "math",
+      "observed_codes": [
+        "COLLAPSE_UNGUARDED"
+      ],
+      "observed_layer": "math",
+      "passed": true,
+      "verdict": "MACHINE_INVALID"
+    },
+    {
+      "defect": "DUPLICATED_THRESHOLD",
+      "detected_at_expected_layer": true,
+      "expected_code": "THRESHOLD_DUPLICATED",
+      "expected_layer": "falsifier",
+      "observed_codes": [
+        "THRESHOLD_DUPLICATED"
+      ],
+      "observed_layer": "falsifier",
+      "passed": true,
+      "verdict": "MACHINE_INVALID"
+    },
+    {
+      "defect": "LEGAL_CANDIDATE",
+      "detected_at_expected_layer": true,
+      "expected_code": null,
+      "expected_layer": null,
+      "observed_codes": [],
+      "observed_layer": null,
+      "passed": true,
+      "verdict": "SCIENTIFIC_REVIEW_REQUIRED"
+    },
+    {
+      "defect": "FALSE_POSITIVE_ALIAS",
+      "detected_at_expected_layer": true,
+      "expected_code": null,
+      "expected_layer": null,
+      "observed_codes": [],
+      "observed_layer": null,
+      "passed": true,
+      "verdict": "SCIENTIFIC_REVIEW_REQUIRED"
+    },
+    {
+      "defect": "FALSE_POSITIVE_CONTAINER_NAMES",
+      "detected_at_expected_layer": true,
+      "expected_code": null,
+      "expected_layer": null,
+      "observed_codes": [],
+      "observed_layer": null,
+      "passed": true,
+      "verdict": "SCIENTIFIC_REVIEW_REQUIRED"
+    },
+    {
+      "defect": "FALSE_POSITIVE_DIRECTION_WARNING",
+      "detected_at_expected_layer": true,
+      "expected_code": null,
+      "expected_layer": null,
+      "observed_codes": [
+        "DIRECTION_CONFLICTS_WITH_EVIDENCE"
+      ],
+      "observed_layer": null,
+      "passed": true,
+      "verdict": "SCIENTIFIC_REVIEW_REQUIRED"
+    }
+  ],
+  "dod": {
+    "avoidable_review_calls": 16,
+    "known_failure_recurrence": 1,
+    "machine_repair_attempts": 41,
+    "registry_entries": 14,
+    "review_verdicts": {
+      "CPU_ELIGIBLE": 2,
+      "FATAL": 8,
+      "MATERIAL": 8,
+      "none": 6
+    },
+    "runs": 24,
+    "science_rejections": 16,
+    "stage2_runs": 3,
+    "time_to_verified_candidate_seconds": 23364.98502588272
+  },
+  "generated_at_epoch": 1792836936.2563045,
+  "issue": 118,
+  "published_thresholds": {
+    "level2_prefixes_strict_gt": 16145,
+    "valid_l1_hard_er_strict_gt": 16.38953942232631
+  },
+  "schema_version": 1
+}

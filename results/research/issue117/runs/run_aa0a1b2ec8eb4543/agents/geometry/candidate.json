@@ -1,0 +1,81 @@
+{
+  "candidate_id": "geometry_poincare_transition_residual_sid_v1",
+  "behavior_problem_id": "asymmetric_train_transition_branching",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "7f1fa27fa7ab0cbba5b5580baf8b0475c801b15487c07b61a6a854340e756a81",
+  "next_item_hypothesis": "The demonstrated failure target is loss of next-item discrimination among items sharing broad content semantics: a next item reached through a directed transition can be forced into the same coarse semantic region as unrelated items, so a single global semantic partition may not preserve useful transition neighborhoods at its early SID level. The train-only evidence establishes directed transitions and many unobserved reverse pairs, but does not itself establish that this failure occurs in the frozen recommender, that its cause is geometry, or that a curvature change improves held-out behavior. Hypothesis: negative curvature gives the content latent room to represent broad, branching transition neighborhoods with less distortion than a flat metric, while residual levels preserve item-specific detail. This is a testable geometry hypothesis, not a claim implied by the evidence.",
+  "math_definition": {
+    "representation": "For each item i, a shared content encoder produces h_i in R^d_content; a shared projection produces z_i in R^32. The bounded representation is u_i = P_R(z_i), where P_R(v)=v if ||v||<=R and P_R(v)=R*v/||v|| otherwise, with frozen R=0.9. The same encoder, projection, bounded region, and P_R are used in both arms. The encoder is trained jointly with the quantizer under the unchanged Stage2 protocol.",
+    "curvature_and_distance": "Curvature c is one scalar parameter of one implementation: hyperbolic arm c=1.0; flat arm is the exact c->0 limit of the same code path. Assignment temperature tau=1.0 is frozen but unused because assignment is hard nearest-code argmin (no soft assignment). Numerical epsilon=1e-12 is the denominator/arcosh roundoff floor: replace either positive denominator factor by max(factor,epsilon), and clamp computed t below at zero; these safeguards do not alter values on the feasible domain. For vectors x,y already projected by P_R, the sole scored distance is squared: D_c^2(x,y)=d_c(x,y)^2=(1/c)*arcosh(1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)))^2 for c>0, and D_0^2(x,y)=4*||x-y||^2. Numerically evaluate arcosh(1+t) as log1p(t+sqrt(t*(t+2))) for t>=0; compute t from the displayed ratio, clamp t below at zero only to remove floating-point negative roundoff, and use float64 for t and the arcosh expression. Domain policy: always apply P_R before scoring; R<1 guarantees both arguments remain inside the unit ball for the selected positive c. At c=0 the distance is the stated squared flat limit, the exponential map is the identity, and the positive-curvature projection radius (1-epsilon)/sqrt(c) is undefined and is not applied; P_R remains the common bounded representation map. The unsquared distance tends to 2*||x-y||, but the objective uses D^2 in both arms.",
+    "residual_sid_assignment": "Let q_{l,k} in R^32 be trainable code vectors for level l in {1,2,3}, k in {1,...,256}; initialize them with the already frozen codebook initialization, unchanged. For each item, set r_i^(1)=u_i. For each level l, in this exact order: (1) map v_i^(l)=Exp_0^c(r_i^(l)) using the Poincare exponential map at the origin for c>0 and the identity at c=0; (2) project x_i^(l)=P_R(v_i^(l)); (3) assign k_i,l=argmin_k D_c^2(x_i^(l),P_R(Exp_0^c(q_{l,k}))) with deterministic lowest-index tie breaking; (4) form mapped code a_{i,l}=P_R(Exp_0^c(q_{l,k_i,l})); (5) subtract in the common tangent coordinates r_i^(l+1)=P_R(r_i^(l)-a_{i,l}). The projection of each residual is before it is mapped/scored at the next level; the final level residual is not scored. No level conditions on earlier codes: each level's codebook is global and assignment is solely to the current residual. The item SID is the single global tuple (k_i,1,k_i,2,k_i,3). No user-, session-, batch-, or candidate-dependent SID is constructed.",
+    "exponential_map": "For c>0 and tangent vector v at origin, Exp_0^c(v)=tanh(sqrt(c)*||v||)*v/(sqrt(c)*||v||), with value 0 at ||v||=0; at c=0 it is identity. Its c->0 limit is identity. The P_R projection, not a c-dependent radius projection, is used in both arms.",
+    "losses": [
+      {
+        "name": "content_residual_quantization_loss",
+        "equation": "L_quant = (1/(N*3)) * sum_{i in I} sum_{l=1}^3 [ D_c^2(P_R(Exp_0^c(r_i^(l))), P_R(Exp_0^c(stopgrad(q_{l,k_i,l})))) + beta*D_c^2(P_R(Exp_0^c(stopgrad(r_i^(l)))), P_R(Exp_0^c(q_{l,k_i,l}))) ]",
+        "tensor_contract": "I is the set of N training-split items in the current unchanged Stage2 batch; r_i^(l) and q_{l,k} are 32-dimensional tangent vectors; k_i,l is the nearest-code assignment defined above. Sum over all batch items and all residual levels, then divide by N*3. beta=0.25. The first term is the commitment term and the second is the codebook term; stopgrad is identity in the forward pass and zero derivative in the backward pass. If I is empty, define L_quant=0 and perform no optimizer step for this loss. Assignment is a discrete argmin and is detached. All distance arguments are projected exactly as specified before scoring.",
+        "circularity_break": "The code target k_i,l is computed by detached nearest-code argmin from the current forward representation; no target distribution depends differentiably on parameters, and gradients do not flow through assignment."
+      },
+      {
+        "name": "train_transition_neighborhood_loss",
+        "equation": "L_transition = (1/sum_{(i,j) in E_train} w_ij) * sum_{(i,j) in E_train} w_ij * D_c^2(P_R(Exp_0^c(u_i)), P_R(Exp_0^c(u_j)))",
+        "tensor_contract": "E_train is the set of directed consecutive-item pairs extracted only from the training split, retaining observed direction and aggregating duplicate pairs into count n_ij; w_ij=1+log(1+n_ij). Each endpoint tensor u_i,u_j is 32-dimensional and receives gradients through the same encoder. Normalize by the sum of weights. If E_train is empty, define L_transition=0. This is a Stage2 geometric regularizer on item representations, not a next-item predictor or a Stage3 ranking loss. It is used identically in both geometry arms."
+        "circularity_break": "The pair set and weights are fixed from train-split events before optimization and do not depend on model parameters; there is no learned or parameter-derived target distribution."
+      }
+    ],
+    "combined_objective": "L = L_quant + lambda_transition*L_transition, where lambda_transition=0.05. The optimization schedule, epochs, batch size, optimizer, seeds, initialization, and total training budget are exactly the already frozen Stage2 protocol and are not changed by this candidate."
+  },
+  "hyperbolic_necessity": "The proposed mechanism addresses a specific geometric limitation: a flat latent space has polynomial volume growth, whereas a negatively curved space has expanding volume with radius, which can represent a branching hierarchy of distinct transition neighborhoods while preserving local distances. Directional train transitions with a large fraction of pairs lacking observed reversals motivate testing branching/asymmetric neighborhoods, but do not prove hierarchical organization or require negative curvature. Negative curvature is therefore necessary only as the candidate's falsifiable modeling premise: if the same bounded representation map and transition signal under the flat limit match or exceed the hyperbolic arm on registered diagnostics and behavior, this premise is rejected. Literature supports the separate ingredients (TIGER-style generative Semantic IDs; hyperbolic sequential behavior models), not this combined mechanism.",
+  "euclidean_control": "Run the identical implementation with c=0, thereby taking the exact flat limit of the same squared distance and exponential map. Keep the architecture, parameter count, P_R and fixed R, codebooks, assignment and residual operation order, train-transition signal, loss weights, initialization, optimizer, schedule, seeds, and budget identical. No graph arm is included; if one is later added, it must receive the identical train-only graph signal in both curvature settings. The arms differ only in the distance formula and its mathematically linked exponential map limit; no arm-specific representation domain or projection is permitted.",
+  "effect_site": "Stage2 item-only quantizer and its shared content latent: train-transition neighborhoods shape the latent geometry, while residual nearest-code assignments determine the three global SID tokens. The downstream frozen Stage3 T5 consumes those SIDs and ranks next items; Stage2 performs no ranking, retrieval, beam search, or user-conditioned generation.",
+  "real_trigger_measurement": "Use only the frozen validation-pair definition: 52,855 pairs, one positive and ten negatives per anchor, seed 42, history[-1] as anchor and target as positive. Record valid L1 positive hit rate as the share of pairs for which anchor item's first SID token equals the positive item's first token; valid Hard-L1 ER=10*positive_hits/negative_hits with negative hits counted over the ten negatives in the same way (Resample reference 16.38953942232631); level2_distinct_prefixes=|{(k1,k2)}| over all items (reference 16145); L3 collision as the share of items whose full three-token tuple is shared by another item; L3 refinement gain as the item mean log2(|bucket(k1,k2)|/|bucket(k1,k2,k3)|); and conditional G3 as the validation-pair mean log2(p_hist(L3 target|anchor)/p_pref(L3 target|target prefix2)), with train-transition history term mixed into the Laplace-smoothed prefix prior using alpha=1 over 256 codes. These definitions and evaluation splits are frozen and are not training inputs. Stage3 test_R@10 is evaluated only by the unchanged downstream T5 protocol; no test event or prediction-time user context enters Stage2.",
+  "training_only_inputs": "Stage2 receives item content embeddings and directed consecutive-item transitions from the training split only. The train transition pair set and aggregated counts are fixed before training. It receives no validation/test behavior, future events, prediction-time user context, or batch-composition signal. Validation metrics are used only for evaluation. Stage3 uses its existing protocol and is not part of this Stage2 candidate.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {
+        "name": "valid_L1_positive_hit_rate",
+        "direction": "increase",
+        "minimum_effect": 0.01,
+        "seed_rule": "For each paired frozen seed, candidate minus flat-control validation metric; pass this threshold only if the mean paired difference across all registered seeds is at least minimum_effect and its sign is positive in every seed."
+      },
+      {
+        "name": "level2_distinct_prefixes",
+        "direction": "increase",
+        "minimum_effect": 100,
+        "seed_rule": "For each paired frozen seed, candidate minus flat-control all-item count; pass this threshold only if the mean paired difference across all registered seeds is at least minimum_effect and its sign is positive in every seed."
+      },
+      {
+        "name": "L3_refinement_gain",
+        "direction": "increase",
+        "minimum_effect": 0.05,
+        "seed_rule": "For each paired frozen seed, candidate minus flat-control item-mean value; pass this threshold only if the mean paired difference across all registered seeds is at least minimum_effect and its sign is positive in every seed."
+      },
+      {
+        "name": "conditional_G3",
+        "direction": "increase",
+        "minimum_effect": 0.02,
+        "seed_rule": "For each paired frozen seed, candidate minus flat-control validation-pair mean; pass this threshold only if the mean paired difference across all registered seeds is at least minimum_effect and its sign is positive in every seed."
+      }
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "increase",
+      "minimum_effect": 0.005,
+      "seed_rule": "For each paired frozen seed, candidate minus flat-control test_R@10 under the unchanged Stage3 protocol; pass this threshold only if the mean paired difference across all registered seeds is at least minimum_effect and its sign is positive in every seed."
+    },
+    "classification": {
+      "falsified_if": "stage3_behavioral_test fails its registered threshold OR all stage2_diagnostics fail their registered thresholds",
+      "passed_if": "stage3_behavioral_test passes its registered threshold AND at least one stage2_diagnostics entry passes its registered threshold",
+      "mixed_if": "NOT falsified_if AND NOT passed_if"
+    }
+  },
+  "null_outcome_rule": "If any seed-wise or aggregated change required by the falsifier is undefined or non-finite (including zero denominator, missing evaluation, or empty stratum), classify the affected comparison as NULL. A comparison with any NULL seed is inconclusive, not passed or falsified; report the overall candidate as inconclusive if a required registered comparison is NULL."
+}

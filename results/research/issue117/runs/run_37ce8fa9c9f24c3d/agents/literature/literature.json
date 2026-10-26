@@ -1,0 +1,106 @@
+{
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": null,
+      "arxiv": "2609.03369v1",
+      "links": {
+        "arxiv": "https://arxiv.org/abs/2609.03369v1",
+        "full_text_html": "https://ar5iv.labs.arxiv.org/html/2609.03369",
+        "pdf": "https://arxiv.org/pdf/2609.03369v1"
+      },
+      "evidence_label": "FULL_TEXT",
+      "independent_verification": "arXiv record and its full-text HTML were retrieved; full text contains the model formulation and task description.",
+      "exact_overlap": "Strongest direct match. The abstract explicitly proposes hyperbolic item indexing using HypRQ-VAE for generative recommendation and identifies sequential recommender systems as modeling user behavior as item-ID sequences. Full-text method states that the model is trained autoregressively to generate the ID of the next item from a prompt containing historical item IDs. Thus it covers user-history next-item generation, hyperbolic geometry in item/SID indexing, and a generative recommendation framework.",
+      "scope_caveat": "Hyperbolic geometry is applied to item indexing/quantization; this does not establish that the sequential user-state encoder or the autoregressive generator itself operates in hyperbolic space. The paper treats semantic representations in item indexing, but verify the precise SID construction before claiming every generated token is itself a coordinate in hyperbolic space.",
+      "full_text_evidence_quote": "The full text describes the model input as a prompt containing historical item IDs and says the model is trained autoregressively to generate the ID of the next item; its abstract calls the method the first framework to learn item indexing in hyperbolic space.",
+      "publication_status": "arXiv preprint; abstract reports acceptance for ICDM 2026.",
+      "date": "2026-09-03"
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2505.09205v1",
+      "links": {
+        "arxiv": "https://arxiv.org/abs/2505.09205v1",
+        "full_text_html": "https://ar5iv.labs.arxiv.org/html/2505.09205",
+        "pdf": "https://arxiv.org/pdf/2505.09205v1"
+      },
+      "evidence_label": "FULL_TEXT",
+      "independent_verification": "arXiv record and full-text HTML retrieved; full text and abstract cover hyperbolic sequential recommendation.",
+      "exact_overlap": "Covers sequential user behavior/next-item recommendation and hyperbolic geometry through curvature-aware sequence modeling and a hyperbolic selective state-space mechanism. No semantic IDs or generative item-token prediction were found in the full text; it is a neighboring behavior-plus-geometry line, not the three-way intersection.",
+      "full_text_evidence_quote": "The abstract says the framework unifies Mamba selective state space modeling with hyperbolic geometry for sequential recommendation; the full paper describes sequential recommendation experiments.",
+      "publication_status": "arXiv preprint.",
+      "date": "2025-05-14"
+    },
+    {
+      "title": "HCGR: Hyperbolic Contrastive Graph Representation Learning for Session-based Recommendation",
+      "doi": null,
+      "arxiv": "2107.05366v1",
+      "links": {
+        "arxiv": "https://arxiv.org/abs/2107.05366v1",
+        "full_text_html": "https://ar5iv.labs.arxiv.org/html/2107.05366",
+        "pdf": "https://arxiv.org/pdf/2107.05366v1"
+      },
+      "evidence_label": "FULL_TEXT",
+      "independent_verification": "arXiv record and full-text HTML retrieved; method details available in full text.",
+      "exact_overlap": "Covers session-based next-item behavior (short-term sequential user behavior) and Lorentz hyperbolic item representations/attention and contrastive learning. No semantic IDs or generative semantic-ID prediction identified; relevant as adjacent evidence only.",
+      "full_text_evidence_quote": "The abstract defines session-based recommendation as learning preferences from short-term sequential behavior and describes a Lorentz-hyperbolic framework with adaptive hyperbolic attention.",
+      "publication_status": "arXiv preprint.",
+      "date": "2021-07-06"
+    },
+    {
+      "title": "Semantic IDs for Joint Generative Search and Recommendation",
+      "doi": null,
+      "arxiv": "2508.10478v1",
+      "links": {
+        "arxiv": "https://arxiv.org/abs/2508.10478v1",
+        "pdf": "https://arxiv.org/pdf/2508.10478v1"
+      },
+      "evidence_label": "ABSTRACT",
+      "independent_verification": "arXiv API metadata and abstract retrieved; no full-text content inspected for this entry.",
+      "exact_overlap": "Generative recommendation and semantic IDs are explicit. Abstract discusses recommendation/search task design, but does not establish hyperbolic geometry or user-history next-item behavior. Two-way/partial overlap only.",
+      "publication_status": "Accepted RecSys 2025 Late-Breaking Results track (per arXiv record).",
+      "date": "2025-08-14"
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "User-history-conditioned next-item generation using hyperbolically learned item semantic codes",
+      "basis": "HypRQ-VAE is the closest verified work: full text explicitly conditions on historical item IDs and autoregressively predicts the next item while learning item indexing in hyperbolic space.",
+      "research_gap": "Disentangle gains from hyperbolic SID construction versus the user-sequence model, then test whether preference hierarchies and long-tail intent are better retained when the history encoder and/or generator also use hyperbolic geometry.",
+      "evidence_label": "FULL_TEXT",
+      "sources": [
+        "2609.03369v1"
+      ]
+    },
+    {
+      "candidate": "Session/sequence intent encoded in a hyperbolic latent state, decoded into generative semantic IDs",
+      "basis": "HMamba and HCGR support hyperbolic sequential/session behavior modeling; generative semantic-ID recommendation works establish the separate SID generation paradigm. The reviewed sources do not demonstrate this combination beyond the HypRQ-VAE indexing approach.",
+      "research_gap": "Compare hyperbolic user-state modeling plus semantic-ID decoding against Euclidean sequence encoders and against hyperbolic item quantization alone; report next-item ranking, valid-code rate, calibration, and tail-item performance.",
+      "evidence_label": "FULL_TEXT",
+      "sources": [
+        "2505.09205v1",
+        "2107.05366v1",
+        "2609.03369v1"
+      ]
+    },
+    {
+      "candidate": "Behavior-aware / session-conditioned hyperbolic semantic-ID assignment rather than content-only item indexing",
+      "basis": "HypRQ-VAE describes hyperbolic item indexing and generation from history, but the evidence reviewed does not show that individual SID assignments are conditioned on the active user's recent behavior.",
+      "research_gap": "Evaluate whether behavior- or context-sensitive codes improve next-item generation without making item identity unstable across users/sessions.",
+      "evidence_label": "FULL_TEXT",
+      "sources": [
+        "2609.03369v1"
+      ]
+    }
+  ],
+  "limitations": [
+    "Only HypRQ-VAE is a strong candidate for the complete three-way overlap; do not inflate adjacent papers into full matches.",
+    "FULL_TEXT means full-text HTML was retrieved and searched for the stated claims; ABSTRACT means only the abstract/metadata was inspected. UNKNOWN is not used because these included records have at least abstract evidence.",
+    "This is a focused discovery, not an exhaustive systematic review. arXiv search and HTML retrieval were used; DOI/Crossref and publisher indexing were not independently audited, so DOI is null where not verified.",
+    "The wording 'generative semantic IDs' may encompass generated item identifiers broadly. Distinguish hyperbolic item-index learning from hyperbolic decoding/sequence-state geometry; these are not automatically equivalent.",
+    "Publication and acceptance status is reported as stated by arXiv and was not separately checked against proceedings/publisher records.",
+    "Dates and candidate set are bounded to current literature available by the stated session date; no prior-candidate prompts or user test interactions were used."
+  ]
+}

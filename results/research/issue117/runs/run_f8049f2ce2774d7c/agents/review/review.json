@@ -1,0 +1,40 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "candidate_sha256": "c8701416d4b694141d60366f61d3b70b4fbbc958f8188447d822f8d36e6a283d",
+  "verdict": "CPU_ELIGIBLE",
+  "blockers": [
+    {
+      "severity": "MATERIAL",
+      "issue": "The provided behavior statistic is descriptive and does not establish a causal next-item benefit or a hyperbolic/tree structure.",
+      "evidence": "Manifest reports 314605/339519 directed pairs without an observed reverse event (0.9266197), and explicitly limits interpretation: direction and entropy do NOT establish negative curvature or causal improvement. The hypothesis is appropriately conditional, but needs held-out controlled results."
+    },
+    {
+      "severity": "MATERIAL",
+      "issue": "The actual model/training/evaluation protocol is under-specified for a reproducible comparison.",
+      "evidence": "The manifest specifies a 32-dimensional Poincare ball, three quantizer levels with 256 codes each, and next-code prediction, but does not define the sequence encoder architecture, autoregressive code-generation details, quantizer objective/assignment and residual construction, loss weighting, optimizer settings, candidate sampling or full-ranking procedure, split construction, or stopping rule. It also names a primary validation ranking metric without selecting Recall@K/NDCG@K or K."
+    },
+    {
+      "severity": "MATERIAL",
+      "issue": "The matched-control claim is a requirement, not yet an operationally demonstrated match.",
+      "evidence": "The Euclidean control is described as the same encoder, 32-dimensional embeddings, three-level 256-code quantizer, objective, optimizer, data and parameter/compute budget. The graph control is only described as a fixed-capacity directed-graph control on training-prefix edges with a matched budget and ranking head; graph construction, features, scoring, and exact capacity/compute matching are unspecified. Report actual parameter counts and enforce equal tuning budgets before interpreting differences."
+    },
+    {
+      "severity": "MATERIAL",
+      "issue": "The proposed asymmetric-transition stratum is not yet a fully reproducible per-example evaluation definition.",
+      "evidence": "The manifest proposes stratifying by whether a source-destination pair has an observed reverse transition in training, but does not specify how the source-destination pair is selected for each validation history (for example, the last observed source item and held-out destination), minimum-support handling, or stratum thresholds. The aggregate reverse fraction is explicitly not a per-example trigger and must not be used as one."
+    },
+    {
+      "severity": "MATERIAL",
+      "issue": "Novelty and the full literature intersection are unverified.",
+      "evidence": "Literature evidence says no full three-way intersection was confirmed, full texts were not inspected, hyperbolic candidates are title/metadata matches, and search was targeted rather than exhaustive. It supports a research question, not a novelty claim."
+    }
+  ],
+  "reproducible_evidence": {
+    "math_types_and_domain": "The stated curvature -1 Poincare ball B^32, origin exponential map x=tanh(||v||)v/||v||, and distance D=2 artanh(||(-x)⊕y||) are mathematically type-consistent for tangent vectors v in R^32 and ball points x,y in B^32. The stated norm clamp below 1-epsilon and stable artanh address the boundary numerically. Implementation still needs safeguards for the zero-norm limit, floating-point denominator/roundoff, and finite gradients near the boundary; no implementation or numerical test is supplied, so numerical stability is not established by the manifest alone.",
+    "nontrivial_hyperbolic_effect": "A potentially nontrivial effect is specified: negatively curved distance-based item/query scoring and hyperbolic semantic-ID geometry, with a conditional branching/multi-scale rationale. This is more than merely labeling the task hyperbolic, but no hierarchy measurement or result demonstrates that the effect is real on this data. The stated falsifier appropriately requires gains over both controls and on the prespecified asymmetry stratum.",
+    "next_item_causal_link": "The task is next-item prediction and the proposed ranking evaluation can test predictive utility. The evidence is observational train-only transition asymmetry; it does not identify why transitions are asymmetric and cannot support a causal claim that hyperbolic geometry improves prediction. Treat any result as a controlled predictive comparison, not a causal mechanism claim.",
+    "future_leakage_and_frozen_protocol": "The manifest declares uses_future_events=false and requires training-only inputs for representations, graph, fitting and strata thresholds; it prohibits validation/test interactions in representation construction and test/future events in selection. This is a sound frozen-current-only constraint on paper. Compliance cannot be verified without training/evaluation artifacts. Keep validation solely for the predeclared metric/model selection and test untouched until final evaluation; do not use prior-candidate prompts or unseen future/test interactions.",
+    "aggregate_evidence_scope": "Behavior evidence is described as train-only longest-prefix-per-user: 396958 events, 57439 users, 339519 transitions, 323633 directed pairs, 24556 distinct items, mean next-item entropy 4.8440723 bits. It establishes only the supplied descriptive statistics, not generalization or the proposed effect."
+  },
+  "cpu_study_boundary": "Eligible only for a preregistered CPU feasibility/protocol study and implementation validation. This verdict is not GPU approval, does not authorize a large-scale run, and does not endorse a novelty or efficacy claim. Resolve the material reproducibility items and demonstrate numerical correctness and leakage-safe splits before any larger compute request."
+}

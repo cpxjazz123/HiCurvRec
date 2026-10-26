@@ -1,0 +1,19 @@
+{
+  "candidate_id": "geometry_global_balanced_poincare_transition_sid_v1",
+  "candidate_sha256": "839d55836464064d93584ab0ec526b2eb9c8ffc6c2f8570e3059894fffeca529",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "issue": "The registered level-two anti-collapse objective has contradictory gradient semantics and, under the stated epoch-frozen stop-gradient rule, cannot provide the claimed training signal.",
+      "evidence": "The global_balanced_soft_assignment entry says assignments A_l are stop-gradient after whole-population computation and frozen for the epoch. The level2_prefix_anti_collapse entry then says gradients pass through soft A_1 and A_2. If the stated stop-gradient/frozen assignment rule is applied, p12 and L_pc are constant with respect to model parameters during that epoch, so -lambda_pc*H(p12) does not discourage joint-prefix collapse through optimization. If gradients are instead propagated through A_l, that contradicts the registered frozen-assignment gradient rule and specifies a different objective/training procedure. The contract therefore does not uniquely define the operative loss gradient; moreover its claimed differentiable anti-collapse mechanism is absent under its explicit stop-gradient interpretation."
+    }
+  ],
+  "reproducible_evidence": {
+    "source_scope": "Review is limited to the supplied current-only manifest; no repository implementation or execution evidence was used.",
+    "math_and_domain": "For the curved arm c=1 and projected norms <=0.99999, the stated squared Poincare distance has positive denominators. The explicit c->0 branch 4*||x-y||^2 is the continuous squared-distance limit. The projection and arcosh clamp are specified. No separate numerical-domain blocker identified.",
+    "causal_link_and_effect": "Train-only directed successor asymmetry is presented as a hypothesis-generating rationale, not proof of a causal next-item gain. The proposed successor-edge loss is train-only and nontrivial; the manifest correctly leaves ranking benefit to downstream Stage3 test_R@10.",
+    "control": "The flat arm is registered with the same architecture, dimension, codebooks, initialization, assignments, projection, losses, inputs, and protocol, changing only the scored distance operator to its explicit flat limit. No capacity mismatch identified.",
+    "leakage_and_protocol": "The manifest excludes validation/test behavior, future events, prediction-time user context, and minibatch-composition signals from Stage2 training. It freezes the Stage2 protocol and leaves Stage3 ranking/evaluation downstream.",
+    "registered_behavioral_test": "Stage3 test_R@10 is registered with higher-is-better paired-seed mean curved-minus-flat minimum effect 0.005; Stage2 admission requires valid_l1_hard_er > 16.38953942232631 and level2_distinct_prefixes > 16145. Other Stage2 diagnostics include validation positive-hit rate and L3 collision/refinement statistics, plus conditional_g3. The falsifier defines passed, falsified, mixed, and NULL handling mechanically. The two preflight direction warnings do not themselves make those metrics undecidable; their outcomes and directions are explicitly registered."
+  }
+}

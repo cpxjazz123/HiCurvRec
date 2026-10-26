@@ -1,0 +1,73 @@
+{
+  "candidate_id": "geometry_asymmetric_successor_branches_hyp",
+  "note": "All four reviewed test suites actually ran; the existing MCP one-epoch trainer smoke still follows before official training.",
+  "passed": true,
+  "recorded_at_epoch": 1792839437.8391304,
+  "review": "APPROVE_TESTS",
+  "source_sha256": "69bcde2ed9c45d123d1908a4bb319dbbc6662ad386c000bcf3cafc1fc9ee40de",
+  "suites": {
+    "ddp": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "8b55ae83f7a9f34119723f4067f91ae470d6a3217dc63ca5b488e5d4177624f3",
+      "output_tail": "test_two_real_ranks_train_the_candidate_model (test_ddp.DistributedConsistencyTests) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 3.482s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "ddp"
+      ],
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "entrypoint": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "337398ca6d5113029e77fc2dd3535b85518a423efb8073e796e301c0fc9a7bcb",
+      "output_tail": "test_main_trains_the_frozen_objective_and_writes_real_artifacts (test_entrypoint.RealTrainerEntrypointTests) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 3.833s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "entrypoint"
+      ],
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "gradient": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "35ae01d01331e2e94208daefd548038a8f7945f31ab46cf4300daf7a08697f97",
+      "output_tail": "test_curved_distance_gradcheck_and_finite_difference (test_gradient.GradientFlowTests) ... ok\ntest_disconnected_graph_is_detected (test_gradient.GradientFlowTests) ... ok\ntest_flat_distance_has_real_gradient (test_gradient.GradientFlowTests) ... ok\ntest_nan_loss_is_rejected_explicitly (test_gradient.GradientFlowTests) ... ok\ntest_projection_backward_matches_finite_difference_inside_ball (test_gradient.GradientFlowTests) ... ok\ntest_trainer_forward_backward_reaches_encoder_and_codebooks (test_gradient.GradientFlowTests) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 1.654s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "math",
+        "gradient"
+      ],
+      "skipped": 0,
+      "tests_run": 6,
+      "unexpected_successes": 0
+    },
+    "math": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "79eb8258d7d45611f2e6a689d8293289c4a84bc9131de4cfd0557c6e9269c032",
+      "output_tail": "test_curved_distance_is_symmetric_and_matrix_matches_pairwise (test_math.HyperbolicReferenceTests) ... ok\ntest_curved_origin_to_point_reference_value (test_math.HyperbolicReferenceTests) ... ok\ntest_flat_limit_is_four_times_euclidean_squared_distance (test_math.HyperbolicReferenceTests) ... ok\ntest_projection_enforces_closed_radius_and_preserves_inside_point (test_math.HyperbolicReferenceTests) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.004s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "math",
+        "gradient"
+      ],
+      "skipped": 0,
+      "tests_run": 4,
+      "unexpected_successes": 0
+    }
+  },
+  "verified_at_epoch": 1792839437.8386867
+}

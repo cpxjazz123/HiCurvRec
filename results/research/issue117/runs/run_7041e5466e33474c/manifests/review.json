@@ -1,0 +1,207 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "train-only-directed-next-item-transitions",
+    "candidate_id": "issue117-negative-curvature-transition-aware-rq",
+    "effect_site": "Stage2 item code assignment and codebook geometry, through the fixed train-transition preservation term and hyperbolic residual-code distances. Predicted diagnostics versus the matched flat transition-aware arm: lower validation Hard-L1 ER (minimum 1% relative reduction); more distinct two-token SID prefixes (minimum +1% relative); among the three L3 statistics, higher L3 code utilization (minimum +1 percentage point) and no worse L3 assignment entropy or L3 commitment error (each within +1% relative non-inferiority margin). The intended signature is improved transition-relevant coarse SID structure without a collapsed or pathological final level. Validation diagnostics are measurement only and never training inputs.",
+    "euclidean_control": {
+      "control_and_ablation": "The primary Euclidean control is the c=0 flat-limit arm, with exactly the candidate architecture, train-only data, transition loss, parameter count, initialization, objective weights, optimizer, schedule, batch size, frozen 3000 epochs, and seeds. Its only geometric change is replacing each d_c(x,y)^2 with 4*||x-y||^2 on the same coordinates. It uses no projection and Exp0 is identity. This is also the explicit curvature ablation; compare it directly with c=1.0.",
+      "fixed_protocol": "Use the existing frozen Stage2 3000-epoch recipe, batch, optimizer/schedule, codebook initialization, and the repository's predeclared seeds unchanged in every arm; no sweep or early stopping. Parameter counts must be identical across curvature and flat arms. Evaluate the frozen checkpoint at epoch 3000."
+    },
+    "falsifier": {
+      "graph_control": "No separate directed-graph control is claimed: the candidate and the required Euclidean/curvature-ablation control both consume exactly the same train-only directed transition counts and transition objective. Thus the geometry comparison isolates metric/curvature from graph information.",
+      "minimum_and_directions": "Support requires validation Hard-L1 ER at least 1% lower and distinct two-token prefixes at least 1% higher for every seed; L3 utilization at least +1 percentage point for every seed; L3 assignment entropy and commitment error each no more than 1% relatively worse for every seed.",
+      "reject_rule": "Reject the negative-curvature mechanism if, for any seed, the curvature arm fails either primary minimum (ER reduction or prefix increase), or violates either L3 non-inferiority bound; in particular, equal or worse ER/prefix measurements versus the matched flat-limit arm reject it. A mixed-sign seed set, an effect below any stated minimum, or a null change is classified as inconclusive/no support, not as success. Report all three L3 statistics separately; the statistic names are utilization, assignment entropy, and commitment error.",
+      "seeds": "Run all repository-frozen seeds with identical initializations paired by seed across c=1.0 and c=0. Compute per-seed relative changes for ER, distinct two-token prefixes, L3 utilization, L3 entropy, and L3 commitment error. A claimed positive result requires every seed to meet the ER and prefix thresholds in the stated directions and every seed to satisfy the L3 non-inferiority bounds; summarize the paired per-seed changes and their full min-to-max interval. No seed averaging may hide a sign reversal."
+    },
+    "hyperbolic_necessity": "The measured asymmetry motivates preserving direction-specific successor neighborhoods, while the high entropy cautions against collapsing all successors into a single code. Negative curvature is a testable geometric inductive bias for representing branching neighborhoods at multiple scales in a fixed 32-D, three-level, 256-code-per-level budget; it is not implied by the counts. The literature evidence establishes one abstract/full-text-reported intersection of hyperbolic item indexing, semantic IDs, and separate next-item generation, but does not establish this three-way mechanism or its benefit. Only a better transition-aware SID diagnostic outcome versus the exact flat limit would support the proposed geometric necessity.",
+    "literature_evidence_sha256": "1297c7448cb3575de65886135c9afcbacaf2e333a1efe56954200a2b68f5ab8c",
+    "math_definition": {
+      "embedding_and_codes": "For each item i, use its Stage2 content embedding z_i in R^32. At level l=1,2,3, let residual r_i^(1)=z_i and choose code k_i^l from 256 learned tangent-coordinate code vectors e_(l,k) in R^32. Set q_i^l=e_(l,k_i^l), update r_i^(l+1)=r_i^l-q_i^l, and reconstruct zhat_i=sum_l q_i^l. The global SID is (k_i^1,k_i^2,k_i^3); assignments are deterministic nearest-code assignments in the specified metric, not a user-conditioned decoder.",
+      "flat_limit_for_all_curvature_rules": "The explicit curvature ablation uses the identical 32-D parameters and assignment/objective with c=0. For every c-dependent distance use the exact limit d_0(x,y)^2=4*||x-y||^2, on the same tangent coordinates, preserving tau=0.1. Exp0_0(v)=v (identity); the boundary projection is omitted entirely at c=0 because (1-epsilon)/sqrt(c) is undefined. The arcosh expression and its numerical clamp are not evaluated in the flat arm. No other metric, scale, or rule changes.",
+      "hyperbolic_operator": "For c=1.0, map a tangent vector v to the Poincare ball by Exp0_c(v)=tanh(sqrt(c)*||v||)*v/(sqrt(c)*||v||), with Exp0_c(0)=0. Define d_c(x,y)=2/sqrt(c)*arcosh(1+2c*||x-y||^2/((1-c||x||^2)(1-c||y||^2))). For assignment, minimize d_c(Exp0_c(r_i^l),Exp0_c(e_(l,k)))^2. Project every mapped point to radius (1-epsilon)/sqrt(c), epsilon=1e-5: if its norm exceeds that radius, scale radially to the radius; apply this projection to residual and code points before distance evaluation. Use tau=0.1 in the soft assignment/transition logits. Numerically evaluate arcosh(u) as log1p((u-1)+sqrt((u-1)*(u+1))); clamp u-1 below by 1e-12 before the square root and log1p, so the argument is at least 1+1e-12. The stated projection ensures both denominator factors remain positive.",
+      "objective_and_train_transition_signal": "Use the frozen Stage2 reconstruction and commitment terms, replacing their Euclidean squared distances by d_c^2 on the same mapped residual/code points. Add a fixed-weight directed transition-preservation term (weight 1.0): construct the train-only directed item transition counts n_ij and row-normalized p(j|i); for each observed edge, define a soft target-code distribution at each level from the target item's quantizer distances, conditioned only on its already assigned target prefix (levels 1-3 condition on no target token, k_i^1, and (k_i^1,k_i^2), respectively). Minimize the count-weighted cross-entropy between p(j|i) aggregated over sources sharing each source two-token prefix and the empirical target next-code distributions, with logits -d_c(Exp0_c(r_j^l),Exp0_c(e_(l,k)) )^2/tau. Here r_j^l is the target item residual after its preceding assigned codes; this is an assignment/codebook regularizer over globally indexed items, not a user-prefix model or a Stage2 next-item recommender. No train transition involving validation/test events is included. The weight and tau are fixed, not tuned."
+    },
+    "next_item_hypothesis": "The demonstrated failure target is that observed next-item transitions are strongly directional: 314605/339519 directed transitions (0.9266) have no observed reverse event, despite mean next-item entropy of 4.8441 bits. A content-only, globally assigned SID can therefore merge items that look semantically similar while failing to preserve the train-observed successor neighborhoods needed by Stage3. The hypothesis is that a train-transition-aware residual quantizer with negative-curvature code geometry will better preserve these asymmetric source-to-successor neighborhoods in coarse SID prefixes than a capacity-matched flat quantizer. This is a falsifiable SID-construction hypothesis, not a claim that curvature itself models direction or causally improves ranking.",
+    "protocol": {
+      "codes_per_level": 256,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "The frozen behavior manifest reports 0.9266197 of observed directed transitions without an observed reverse event (314605/339519), plus mean next-item entropy 4.8440723 bits over 323633 directed pairs and 24556 distinct items. This supports testing asymmetric train-observed successor structure, not asserting a causal failure or a curvature explanation.",
+    "stable_global_sid": true,
+    "training_only_inputs": "Only item content embeddings and train.parquet interactions in the supplied train-only longest-prefix-per-user population. Directed transitions are chronological adjacent item pairs from those training histories. No validation/test behavior, future events, prediction-time user context, evaluation batch composition, or user-prefix Transformer is used. SIDs remain one global three-token assignment per item."
+  },
+  "candidate_id": "issue117-negative-curvature-transition-aware-rq",
+  "candidate_sha256": "d87e8bb192427c3fcbaf26a6e8a7c87f5d0679e7d7aa0aad7a0e786b538b4b8e",
+  "inputs_sha256": "193addf2706abd697df39b61a56b8e1ec8b8c60cabf771b3bd68145f6db869b0",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "basis": "Section III-C formulates next-item sequence generation conditional on historical semantic IDs; Sections IV-A and IV-C evaluate next-item ranking and divide target items into head and tail groups.",
+        "candidate": "Use the user's ordered interaction history to generate a semantic ID for the next item, and test whether the hyperbolic code geometry preserves sparse/niche preference signals rather than simply increasing aggregate accuracy.",
+        "evidence_label": "FULL_TEXT",
+        "possible_behavior-focused angle": "Measure gains separately for users whose histories indicate specialized or low-frequency interests, and test whether the model's tail-item improvements reflect preference-conditioned retrieval rather than popularity redistribution.",
+        "source_arxiv": "2609.03369"
+      },
+      {
+        "basis": "The method uses textual item features for hyperbolic ID construction, then uses interaction sequences to train next-item generation. This separation is explicit in Sections III-B and III-C.",
+        "candidate": "Distinguish user-level behavioral structure from item-level semantic hierarchy when attributing gains to hyperbolic semantic IDs.",
+        "evidence_label": "FULL_TEXT",
+        "possible_behavior-focused angle": "Ablate or control item text, interaction-history length/order, and user-specific history signals independently; avoid interpreting item hierarchy alone as a model of user behavior.",
+        "source_arxiv": "2609.03369"
+      }
+    ],
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "limitations": [
+      "The verified direct intersection is represented here by one directly overlapping paper; this supports an existence claim, not a broad consensus or independent replication claim.",
+      "HypRQ-VAE's semantic-ID encoder is trained from item titles/descriptions, while user behavior enters in the separate autoregressive next-item stage. Claims should not conflate hyperbolic encoding of item content with direct hyperbolic modeling of user trajectories.",
+      "The reported long-tail results concern item popularity partitions and benchmark next-item metrics; they do not establish causal evidence about user intent, satisfaction, novelty, or individual-level preference formation.",
+      "The article is a recent 2026 arXiv preprint and its reported experiments need independent reproduction. No DOI was identified in the verified arXiv record; arXiv:2609.03369 is the stable identifier.",
+      "No prior-candidate prompts or unseen future/test interactions were used. The literature claims are based on the publicly accessible paper text and its stated experimental setup only."
+    ],
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "sources": [
+      {
+        "arxiv": "2609.03369",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Direct intersection of all three concepts: user behavior appears as chronologically ordered interaction history and next-item target; hyperbolic geometry is used in HypRQ-VAE's item indexing; learned discrete semantic IDs are generated autoregressively for next-item recommendation. Section III-C specifies the input as prior interacted-item IDs and target as the next item's semantic-ID token sequence. The paper also evaluates head/tail next-item performance.",
+        "full_text_basis": "Read the arXiv HTML full text, including Methodology III-B/III-C and Experiments IV. The paper explicitly defines hyperbolic residual quantization to form semantic IDs and autoregressively predicts the next item's ID from the chronologically ordered semantic-ID sequence of a user's interaction history.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2609.03369",
+          "full_text_html": "https://arxiv.org/html/2609.03369",
+          "pdf": "https://arxiv.org/pdf/2609.03369"
+        },
+        "scope_caveat": "The hyperbolic stage encodes item textual content into IDs; the user-history-conditioned next-item model is a separate generative stage fine-tuned over those IDs. The work is an arXiv preprint (v1 dated 2026-09-03; accepted-for-publication comment states ICDM 2026), not evidence of a mature body of independent replications.",
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+        "verification_notes": "The HTML page exposes the complete article sections and references. Relevant explicit statements include III-B (Semantic ID generated in Poincare-ball hyperbolic space), III-C (next-item prediction from user interaction-history semantic IDs), and IV-A (chronological interactions and leave-one-out evaluation)."
+      }
+    ],
+    "task_id": "literature"
+  },
+  "literature_evidence_sha256": "1297c7448cb3575de65886135c9afcbacaf2e333a1efe56954200a2b68f5ab8c",
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

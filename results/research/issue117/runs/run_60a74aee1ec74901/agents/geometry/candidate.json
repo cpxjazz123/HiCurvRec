@@ -1,0 +1,47 @@
+{
+  "candidate_id": "geometry-negative-curvature-global-sid-v1",
+  "behavior_problem_id": "asymmetric-next-item-transition-branching",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "ebc38007e9694228f2ebb5681a5310b47f5ec5c692cfa9ccb9878b8ec5097246",
+  "next_item_hypothesis": "Train-only transitions exhibit strongly directed item flow: 314605 of 339519 directed transition observations have no observed reverse event (fraction 0.9266197178950221). A demonstrated failure to target is therefore Euclidean residual quantization collapsing distinct outgoing next-item branches into shared early prefixes, leaving downstream next-item ranking with less separable item identifiers. This statistic motivates but does not establish the failure; validation Hard-L1 error and prefix/collision diagnostics test whether it occurs. Stage2 builds item SIDs only; downstream T5 Stage3 ranks next items.",
+  "math_definition": {
+    "architecture": "For each item i, content embedding e_i is passed through the existing content encoder to h_i in R^32. Quantize h_i into exactly three residual levels, each with 256 learned code vectors a[l,k] in R^32. The one global item SID is (k[i,1],k[i,2],k[i,3]); it is not user- or event-specific.",
+    "fixed_geometry": "Set c=1.0, tau=1.0, epsilon=1e-5. For c>0 define exp_c(v)=tanh(sqrt(c)*||v||)/(sqrt(c)*||v||) v, with multiplier 1 when ||v||=0. Define P_c(x)=x*min(1,(1-epsilon)/(sqrt(c)*||x||)), with scale 1 at ||x||=0. Define u_c(x,y)=2c||x-y||^2/((1-c||x||^2)(1-c||y||^2)); d_c^2(x,y)=[log1p(u_c+sqrt(u_c*(u_c+2)))]^2/c, the numerically stable arcosh(1+u) squared distance. Inputs to d must lie in the open ball; all mapped points are projected first. At c=0 define exp_0(v)=v, omit P_0 entirely because its radius (1-epsilon)/sqrt(c) is undefined, and define d_0^2(x,y)=4||x-y||^2. These are the explicit c->0 limits of the same parameterized code path; there is no separate flat implementation.",
+    "residual_assignment_order": "For each item i and level l=1,2,3, initialize r[i,1]=h_i. At each level, in this exact order: map q=P_c(exp_c(r[i,l])); map every level-l code b[l,k]=P_c(exp_c(a[l,k])); assign k[i,l]=argmin over k in {1,...,256} of d_c^2(q,b[l,k]), breaking ties by smallest k; subtract in the original tangent coordinates r[i,l+1]=r[i,l]-a[l,k[i,l]]. No projection is applied after subtraction; the next level maps and projects its new residual. The level-l assigned reconstruction contribution is a[l,k[i,l]], and the complete tangent reconstruction is sum over l of those three contributions.",
+    "conditioning": "No level conditions on earlier discrete codes. Residual levels condition only on the continuous residual formed by subtracting the previously assigned code vectors in level order.",
+    "training_loss": "Let I be the train-split item index set and n=|I|. Let h_i in R^32 be encoder outputs, and let Q_i=sum_{l=1}^3 a[l,k[i,l]]. Define L=(1/n) sum_{i in I} [||sg(h_i)-Q_i||_2^2 + ||h_i-sg(Q_i)||_2^2], where sg is stop-gradient and the two terms are respectively codebook and commitment losses with coefficient 1.0 each; the first updates code vectors only and the second encoder only. Reduction is the item mean, with all train items included, so the group is nonempty; if I is empty the training step is skipped and loss is zero. There is no parameter-dependent target distribution: assignments are hard argmin indices computed from the current forward pass and treated as nondifferentiable constants, so no target/parameter circularity arises. Validation/test events and transitions are never used in this loss."
+  },
+  "hyperbolic_necessity": "The observed directedness is consistent with branching, non-reciprocal transitions: a negatively curved hierarchy can provide increasing representational capacity for separated branches as codes refine, rather than forcing all branches into a uniformly scaled Euclidean neighborhood. This is a geometric hypothesis for reducing prefix collisions, not a causal conclusion from the manifest and not a claim that asymmetry mathematically proves negative curvature is necessary.",
+  "euclidean_control": "Use this exact parameterized implementation with c=0: exp_0 is identity, projection is omitted, and squared distance is 4 times squared Euclidean distance. All architecture, parameter count, initialization, optimizer, schedule, seeds and training budget are identical to the curvature arm. The arms therefore differ through the curvature-dependent map, projection and distance, not through metric alone. No graph arm is included.",
+  "effect_site": "Stage2 assignment and quantization only; expected diagnostic movement is lower validation Hard-L1 ER, more distinct two-token prefixes, lower L3 collision, positive refinement gain, and improved conditional G3. Stage3 next-item ranking is a separate behavioral test and is not part of Stage2 training.",
+  "real_trigger_measurement": "On the fixed validation item set, measure Hard-L1 reconstruction error over the three-level global SID, number of distinct two-token prefixes, L3 collision rate, refinement gain from adding L3, and conditional G3 as defined by the existing Stage2 evaluator. Report each against the matched c=0 arm. Test next-item ranking only in the frozen Stage3 evaluation; never use validation/test outcomes to train or choose Stage2 assignments.",
+  "training_only_inputs": "Content embeddings and train-split item transitions only. Train-split transitions may be used as legal supervision under CLAUDE.md rule 16, but this candidate does not add a transition loss. No validation/test behavior, future events, prediction-time user context, or batch-composition signal is used.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {"name": "validation_Hard-L1_ER_relative_reduction_vs_flat", "direction": "higher_is_better", "minimum_effect": 0.02, "seed_rule": "paired identical frozen seeds; aggregate seed-wise relative reductions by median"},
+      {"name": "distinct_two-token_prefixes_relative_increase_vs_flat", "direction": "higher_is_better", "minimum_effect": 0.02, "seed_rule": "paired identical frozen seeds; aggregate seed-wise relative increases by median"},
+      {"name": "L3_collision_relative_reduction_vs_flat", "direction": "higher_is_better", "minimum_effect": 0.02, "seed_rule": "paired identical frozen seeds; aggregate seed-wise relative reductions by median"},
+      {"name": "refinement_gain_relative_increase_vs_flat", "direction": "higher_is_better", "minimum_effect": 0.02, "seed_rule": "paired identical frozen seeds; aggregate seed-wise relative increases by median"},
+      {"name": "conditional_G3_relative_increase_vs_flat", "direction": "higher_is_better", "minimum_effect": 0.02, "seed_rule": "paired identical frozen seeds; aggregate seed-wise relative increases by median"}
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "higher_is_better",
+      "minimum_effect": 0.01,
+      "seed_rule": "paired identical frozen seeds; report median relative change on the existing held-out test protocol, used only for final evaluation"
+    },
+    "classification": {
+      "falsified_if": "stage3_behavioral_test.relative_change < stage3_behavioral_test.minimum_effect OR count(stage2_diagnostics where measured_effect >= minimum_effect) < 3",
+      "passed_if": "stage3_behavioral_test.relative_change >= stage3_behavioral_test.minimum_effect AND count(stage2_diagnostics where measured_effect >= minimum_effect) >= 3",
+      "mixed_if": "NOT falsified_if AND NOT passed_if"
+    }
+  }
+}

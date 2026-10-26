@@ -1,0 +1,624 @@
+{
+  "analysis": "l3_predictive_analysis",
+  "feature_correlations": {
+    "conditional_l3_gain": {
+      "pearson_vs_er": 0.6212545845070009,
+      "pearson_vs_recall": 0.23751968073995597
+    },
+    "l3_collision": {
+      "pearson_vs_er": -0.7155753435463802,
+      "pearson_vs_recall": -0.4140975864651738
+    },
+    "l3_refinement_gain": {
+      "pearson_vs_er": -0.9491210430366792,
+      "pearson_vs_recall": -0.726124216217752
+    },
+    "valid_l1_hard_er": {
+      "pearson_vs_er": 1.0,
+      "pearson_vs_recall": 0.8997100314171663
+    }
+  },
+  "frozen_inputs": {
+    "l3_alpha": 1.0,
+    "pairs_npz": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+    "prob_floor": 1e-06,
+    "reference_sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+    "tokens_used": "first three codes; a trailing sentinel token is ignored",
+    "train_parquet": "results/stage0_build_parquet/train.parquet"
+  },
+  "lofo_scheme": "leave-one-family-out; families are name stems of the Stage2 arm",
+  "models": {
+    "M0_er_only": {
+      "delta_rmse_vs_M0": 0.0,
+      "features": [
+        "valid_l1_hard_er"
+      ],
+      "oof_mae": 0.0014912956091885311,
+      "oof_max_abs": 0.006573184382802452,
+      "oof_r2": 0.6739012401613887,
+      "oof_rmse": 0.0022413877255781215,
+      "residuals": {
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/MARGIN": 0.00045555289350732164,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/STE_FIX": -0.006573184382802452,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_couser_w3": -0.0003523641428245794,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_posattract_w3": -0.0017660517207012394,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample": -0.000490753569382274,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask": -0.0002896438816908792,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only": -0.0005822111530572882,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir": 0.0015500356368456439,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym": 0.0019068654830906445,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43": -0.0002401726557602346,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44": 0.0005060444976717551,
+        "TIGER_RQ-VAE": 0.002934094578580043,
+        "TIGER_c117_hyperbolic_item_semantic_id": 0.0017398683235365503
+      }
+    },
+    "M1_er_plus_collision": {
+      "delta_rmse_vs_M0": 0.0006735058828731526,
+      "features": [
+        "valid_l1_hard_er",
+        "l3_collision"
+      ],
+      "oof_mae": 0.0020058984891810467,
+      "oof_max_abs": 0.006357349691884395,
+      "oof_r2": 0.44848086556342937,
+      "oof_rmse": 0.002914893608451274,
+      "residuals": {
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/MARGIN": 0.0019364000740514226,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/STE_FIX": -0.006357349691884395,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_couser_w3": -0.00017364371460744377,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_posattract_w3": -0.0017182382296579285,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample": -4.621992226223892e-05,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask": 0.00018154713077683793,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only": -0.0004397893154535204,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir": -0.00515754090689978,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym": -0.005249241044342608,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43": 4.507916848114912e-05,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44": 0.0008328479166492056,
+        "TIGER_RQ-VAE": 0.0024551292510211695,
+        "TIGER_c117_hyperbolic_item_semantic_id": 0.0014836539932659085
+      }
+    },
+    "M2_er_plus_refinement": {
+      "delta_rmse_vs_M0": -0.0011516378460415878,
+      "features": [
+        "valid_l1_hard_er",
+        "l3_refinement_gain"
+      ],
+      "oof_mae": 0.0009002671763952424,
+      "oof_max_abs": 0.0022423306449638053,
+      "oof_r2": 0.9229151861544412,
+      "oof_rmse": 0.0010897498795365338,
+      "residuals": {
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/MARGIN": 0.0005672796053542012,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/STE_FIX": -0.0022423306449638053,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_couser_w3": 1.249344160583754e-05,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_posattract_w3": -0.0014068610337988618,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample": 0.0004362898460451847,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask": 0.0006515501354453918,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only": -0.0004306773920043777,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir": -0.0010879700826888217,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym": -0.0017821509963025922,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43": 0.00016470093765255656,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44": 0.0011228593872538231,
+        "TIGER_RQ-VAE": 0.001047405225201227,
+        "TIGER_c117_hyperbolic_item_semantic_id": 0.000750904564821471
+      }
+    },
+    "M3_er_plus_conditional": {
+      "delta_rmse_vs_M0": -0.0014025637447836678,
+      "features": [
+        "valid_l1_hard_er",
+        "conditional_l3_gain"
+      ],
+      "oof_mae": 0.0006797856698481364,
+      "oof_max_abs": 0.001502334070673822,
+      "oof_r2": 0.9543272833813984,
+      "oof_rmse": 0.0008388239807944537,
+      "residuals": {
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/MARGIN": 0.00013462454337631602,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/STE_FIX": 0.0010218627861676918,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_couser_w3": 8.323396618799273e-05,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_posattract_w3": -0.001502334070673822,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample": 0.00034100066576625565,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask": 0.0005760740774266027,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only": -0.00011977982106722851,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir": -0.0009852412058076118,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym": -0.0010226374573369251,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43": 0.00036550782233409074,
+        "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44": 0.0012068529476598963,
+        "TIGER_RQ-VAE": 0.0013132560535476234,
+        "TIGER_c117_hyperbolic_item_semantic_id": 0.00016480829067371666
+      }
+    }
+  },
+  "paired_bootstrap_abs_error": {
+    "M2_vs_M0": {
+      "ci95": [
+        -0.0013586399501768329,
+        -3.096960171293676e-05
+      ],
+      "draws": 2000,
+      "mean_delta_abs_error": -0.0005910284327932888,
+      "share_draws_better": 0.984
+    },
+    "M3_vs_M0": {
+      "ci95": [
+        -0.0017738791833245872,
+        -0.00013885178605844536
+      ],
+      "draws": 2000,
+      "mean_delta_abs_error": -0.0008115099393403948,
+      "share_draws_better": 0.9965
+    }
+  },
+  "per_family_oof_rmse": {
+    "MARGIN": {
+      "M0_er_only": {
+        "n": 1,
+        "rmse": 0.00045555289350732164
+      },
+      "M1_er_plus_collision": {
+        "n": 1,
+        "rmse": 0.0019364000740514226
+      },
+      "M2_er_plus_refinement": {
+        "n": 1,
+        "rmse": 0.0005672796053542012
+      },
+      "M3_er_plus_conditional": {
+        "n": 1,
+        "rmse": 0.00013462454337631602
+      }
+    },
+    "STE_FIX": {
+      "M0_er_only": {
+        "n": 1,
+        "rmse": 0.006573184382802452
+      },
+      "M1_er_plus_collision": {
+        "n": 1,
+        "rmse": 0.006357349691884395
+      },
+      "M2_er_plus_refinement": {
+        "n": 1,
+        "rmse": 0.0022423306449638053
+      },
+      "M3_er_plus_conditional": {
+        "n": 1,
+        "rmse": 0.0010218627861676918
+      }
+    },
+    "TIGER_RQ-VAE": {
+      "M0_er_only": {
+        "n": 1,
+        "rmse": 0.002934094578580043
+      },
+      "M1_er_plus_collision": {
+        "n": 1,
+        "rmse": 0.0024551292510211695
+      },
+      "M2_er_plus_refinement": {
+        "n": 1,
+        "rmse": 0.001047405225201227
+      },
+      "M3_er_plus_conditional": {
+        "n": 1,
+        "rmse": 0.0013132560535476234
+      }
+    },
+    "TIGER_c117_hyperbolic_item_semantic_id": {
+      "M0_er_only": {
+        "n": 1,
+        "rmse": 0.0017398683235365503
+      },
+      "M1_er_plus_collision": {
+        "n": 1,
+        "rmse": 0.0014836539932659085
+      },
+      "M2_er_plus_refinement": {
+        "n": 1,
+        "rmse": 0.000750904564821471
+      },
+      "M3_er_plus_conditional": {
+        "n": 1,
+        "rmse": 0.00016480829067371666
+      }
+    },
+    "crowd": {
+      "M0_er_only": {
+        "n": 2,
+        "rmse": 0.0012734007949856772
+      },
+      "M1_er_plus_collision": {
+        "n": 2,
+        "rmse": 0.001221166400102927
+      },
+      "M2_er_plus_refinement": {
+        "n": 2,
+        "rmse": 0.0009948402018678077
+      },
+      "M3_er_plus_conditional": {
+        "n": 2,
+        "rmse": 0.0010639397428977733
+      }
+    },
+    "resample": {
+      "M0_er_only": {
+        "n": 5,
+        "rmse": 0.00044214622219475823
+      },
+      "M1_er_plus_collision": {
+        "n": 5,
+        "rmse": 0.0004299251254793513
+      },
+      "M2_er_plus_refinement": {
+        "n": 5,
+        "rmse": 0.0006462645011374822
+      },
+      "M3_er_plus_conditional": {
+        "n": 5,
+        "rmse": 0.0006407152265606972
+      }
+    },
+    "resample_proj": {
+      "M0_er_only": {
+        "n": 2,
+        "rmse": 0.0017376343755367521
+      },
+      "M1_er_plus_collision": {
+        "n": 2,
+        "rmse": 0.005203592977354958
+      },
+      "M2_er_plus_refinement": {
+        "n": 2,
+        "rmse": 0.001476438463744467
+      },
+      "M3_er_plus_conditional": {
+        "n": 2,
+        "rmse": 0.0010041134404960845
+      }
+    }
+  },
+  "population": {
+    "families": [
+      "MARGIN",
+      "STE_FIX",
+      "TIGER_RQ-VAE",
+      "TIGER_c117_hyperbolic_item_semantic_id",
+      "crowd",
+      "resample",
+      "resample_proj"
+    ],
+    "note": "Only arms whose Stage2 item_sids.json still exists on disk and whose Stage3 run recorded test_recall@10 can enter a predictive comparison.",
+    "stage3_runs_with_sid_on_disk": 13
+  },
+  "power_warning": "n=13 arms over 7 families; every OOF comparison here is a direction, not a significance test.",
+  "rows": [
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/MARGIN",
+      "conditional_l3_gain": -0.1391501951012035,
+      "detail_colliding_items": 12855,
+      "detail_cond_mean_log2_likelihood_ratio": -0.1391501951012035,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 43821,
+      "detail_cond_pairs_with_train_successors": 43689,
+      "detail_cond_share_pairs_history_helps": 0.8420163848383195,
+      "detail_cond_share_pairs_prefix_helps": 0.9337304032313275,
+      "detail_distinct_three_token_sids": 14336,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.5228372717289624,
+      "detail_max_bucket": 1403,
+      "detail_ref_distinct_prefix2": 4831,
+      "detail_ref_distinct_prefix3": 14336,
+      "detail_ref_mean_gain_bits": 2.881403638441925,
+      "detail_ref_median_gain_bits": 2.700439718141092,
+      "family": "MARGIN",
+      "l3_collision": 0.5228372717289624,
+      "l3_refinement_gain": 2.881403638441925,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/MARGIN/item_sids.json",
+      "stage3_recall@10": 0.05600724246592037,
+      "valid_l1_hard_er": 4.942374097493161
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/STE_FIX",
+      "conditional_l3_gain": -0.4944808628271569,
+      "detail_colliding_items": 21865,
+      "detail_cond_mean_log2_likelihood_ratio": -0.4944808628271569,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 52689,
+      "detail_cond_pairs_with_train_successors": 52538,
+      "detail_cond_share_pairs_history_helps": 0.6205659625348745,
+      "detail_cond_share_pairs_prefix_helps": 0.8904894759817039,
+      "detail_distinct_three_token_sids": 5528,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.8892910887867572,
+      "detail_max_bucket": 226,
+      "detail_ref_distinct_prefix2": 369,
+      "detail_ref_distinct_prefix3": 5528,
+      "detail_ref_mean_gain_bits": 4.535272810774269,
+      "detail_ref_median_gain_bits": 4.459431618637297,
+      "family": "STE_FIX",
+      "l3_collision": 0.8892910887867572,
+      "l3_refinement_gain": 4.535272810774269,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/STE_FIX/item_sids.json",
+      "stage3_recall@10": 0.05921064085377531,
+      "valid_l1_hard_er": 1.6335063346219092
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_couser_w3",
+      "conditional_l3_gain": -0.020862280609027853,
+      "detail_colliding_items": 1345,
+      "detail_cond_mean_log2_likelihood_ratio": -0.020862280609027853,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 26693,
+      "detail_cond_pairs_with_train_successors": 26622,
+      "detail_cond_share_pairs_history_helps": 0.9718278200277226,
+      "detail_cond_share_pairs_prefix_helps": 0.9977147566777806,
+      "detail_distinct_three_token_sids": 23842,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.05470370521007036,
+      "detail_max_bucket": 7,
+      "detail_ref_distinct_prefix2": 16686,
+      "detail_ref_distinct_prefix3": 23842,
+      "detail_ref_mean_gain_bits": 0.7469808247455479,
+      "detail_ref_median_gain_bits": 0.0,
+      "family": "crowd",
+      "l3_collision": 0.05470370521007036,
+      "l3_refinement_gain": 0.7469808247455479,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_couser_w3/item_sids.json",
+      "stage3_recall@10": 0.06352826476784067,
+      "valid_l1_hard_er": 16.516129032258064
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_posattract_w3",
+      "conditional_l3_gain": -0.026550855950938278,
+      "detail_colliding_items": 1781,
+      "detail_cond_mean_log2_likelihood_ratio": -0.026550855950938278,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 30655,
+      "detail_cond_pairs_with_train_successors": 30558,
+      "detail_cond_share_pairs_history_helps": 0.9651932800521937,
+      "detail_cond_share_pairs_prefix_helps": 0.9970641004730061,
+      "detail_distinct_three_token_sids": 23581,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.07243665351608573,
+      "detail_max_bucket": 9,
+      "detail_ref_distinct_prefix2": 14996,
+      "detail_ref_distinct_prefix3": 23581,
+      "detail_ref_mean_gain_bits": 0.9657463945420338,
+      "detail_ref_median_gain_bits": 1.0,
+      "family": "crowd",
+      "l3_collision": 0.07243665351608573,
+      "l3_refinement_gain": 0.9657463945420338,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/crowd_posattract_w3/item_sids.json",
+      "stage3_recall@10": 0.06425947526941625,
+      "valid_l1_hard_er": 15.355854378484748
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample",
+      "conditional_l3_gain": -0.02142474626283252,
+      "detail_colliding_items": 1594,
+      "detail_cond_mean_log2_likelihood_ratio": -0.02142474626283252,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 27626,
+      "detail_cond_pairs_with_train_successors": 27532,
+      "detail_cond_share_pairs_history_helps": 0.9685441250995439,
+      "detail_cond_share_pairs_prefix_helps": 0.9969955838702671,
+      "detail_distinct_three_token_sids": 23695,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.06483100825639565,
+      "detail_max_bucket": 10,
+      "detail_ref_distinct_prefix2": 16145,
+      "detail_ref_distinct_prefix3": 23695,
+      "detail_ref_mean_gain_bits": 0.8156370193585311,
+      "detail_ref_median_gain_bits": 1.0,
+      "family": "resample",
+      "l3_collision": 0.06483100825639565,
+      "l3_refinement_gain": 0.8156370193585311,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+      "stage3_recall@10": 0.06373718205400512,
+      "valid_l1_hard_er": 16.38953942232631
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask",
+      "conditional_l3_gain": -0.022724573947342626,
+      "detail_colliding_items": 1642,
+      "detail_cond_mean_log2_likelihood_ratio": -0.022724573947342626,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 28760,
+      "detail_cond_pairs_with_train_successors": 28676,
+      "detail_cond_share_pairs_history_helps": 0.9581710709318498,
+      "detail_cond_share_pairs_prefix_helps": 0.9945062586926287,
+      "detail_distinct_three_token_sids": 23666,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.06678325944604872,
+      "detail_max_bucket": 8,
+      "detail_ref_distinct_prefix2": 16190,
+      "detail_ref_distinct_prefix3": 23666,
+      "detail_ref_mean_gain_bits": 0.8099157753249275,
+      "detail_ref_median_gain_bits": 0.5849625007211562,
+      "family": "resample",
+      "l3_collision": 0.06678325944604872,
+      "l3_refinement_gain": 0.8099157753249275,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_fn_mask/item_sids.json",
+      "stage3_recall@10": 0.06356308431553474,
+      "valid_l1_hard_er": 16.434583014537107
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only",
+      "conditional_l3_gain": -0.025938693622378467,
+      "detail_colliding_items": 1958,
+      "detail_cond_mean_log2_likelihood_ratio": -0.025938693622378467,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 30777,
+      "detail_cond_pairs_with_train_successors": 30684,
+      "detail_cond_share_pairs_history_helps": 0.9631867953341782,
+      "detail_cond_share_pairs_prefix_helps": 0.9961659680930565,
+      "detail_distinct_three_token_sids": 23471,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.07963557977793143,
+      "detail_max_bucket": 24,
+      "detail_ref_distinct_prefix2": 14832,
+      "detail_ref_distinct_prefix3": 23471,
+      "detail_ref_mean_gain_bits": 0.9710297221820193,
+      "detail_ref_median_gain_bits": 1.0,
+      "family": "resample",
+      "l3_collision": 0.07963557977793143,
+      "l3_refinement_gain": 0.9710297221820193,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_l1only/item_sids.json",
+      "stage3_recall@10": 0.06283187381395916,
+      "valid_l1_hard_er": 14.727389352148814
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir",
+      "conditional_l3_gain": -0.08356202261595594,
+      "detail_colliding_items": 3495,
+      "detail_cond_mean_log2_likelihood_ratio": -0.08356202261595594,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 48635,
+      "detail_cond_pairs_with_train_successors": 48489,
+      "detail_cond_share_pairs_history_helps": 0.9241081525650252,
+      "detail_cond_share_pairs_prefix_helps": 0.9977999383160275,
+      "detail_distinct_three_token_sids": 22672,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.14214828974661406,
+      "detail_max_bucket": 22,
+      "detail_ref_distinct_prefix2": 5919,
+      "detail_ref_distinct_prefix3": 22672,
+      "detail_ref_mean_gain_bits": 2.7598778714674217,
+      "detail_ref_median_gain_bits": 3.0,
+      "family": "resample_proj",
+      "l3_collision": 0.14214828974661406,
+      "l3_refinement_gain": 2.7598778714674217,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_dir/item_sids.json",
+      "stage3_recall@10": 0.05484078761816884,
+      "valid_l1_hard_er": 3.9235836627140976
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym",
+      "conditional_l3_gain": -0.06042036486961489,
+      "detail_colliding_items": 2722,
+      "detail_cond_mean_log2_likelihood_ratio": -0.06042036486961489,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 48696,
+      "detail_cond_pairs_with_train_successors": 48550,
+      "detail_cond_share_pairs_history_helps": 0.9441432561195992,
+      "detail_cond_share_pairs_prefix_helps": 0.9986241169705931,
+      "detail_distinct_three_token_sids": 23122,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.11070891121324276,
+      "detail_max_bucket": 12,
+      "detail_ref_distinct_prefix2": 6376,
+      "detail_ref_distinct_prefix3": 23122,
+      "detail_ref_mean_gain_bits": 2.5399742053379217,
+      "detail_ref_median_gain_bits": 2.807354922057604,
+      "family": "resample_proj",
+      "l3_collision": 0.11070891121324276,
+      "l3_refinement_gain": 2.5399742053379217,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_proj_sym/item_sids.json",
+      "stage3_recall@10": 0.05452741168892216,
+      "valid_l1_hard_er": 4.001274291175534
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43",
+      "conditional_l3_gain": -0.02029047361732402,
+      "detail_colliding_items": 1704,
+      "detail_cond_mean_log2_likelihood_ratio": -0.02029047361732402,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 28020,
+      "detail_cond_pairs_with_train_successors": 27932,
+      "detail_cond_share_pairs_history_helps": 0.9692005710206995,
+      "detail_cond_share_pairs_prefix_helps": 0.9967880085653105,
+      "detail_distinct_three_token_sids": 23625,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.06930491723268394,
+      "detail_max_bucket": 12,
+      "detail_ref_distinct_prefix2": 15851,
+      "detail_ref_distinct_prefix3": 23625,
+      "detail_ref_mean_gain_bits": 0.8522667702198488,
+      "detail_ref_median_gain_bits": 1.0,
+      "family": "resample",
+      "l3_collision": 0.06930491723268394,
+      "l3_refinement_gain": 0.8522667702198488,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s43/item_sids.json",
+      "stage3_recall@10": 0.06302338132627658,
+      "valid_l1_hard_er": 15.617100371747211
+    },
+    {
+      "arm": "TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44",
+      "conditional_l3_gain": -0.023230889564892318,
+      "detail_colliding_items": 1700,
+      "detail_cond_mean_log2_likelihood_ratio": -0.023230889564892318,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 28159,
+      "detail_cond_pairs_with_train_successors": 28071,
+      "detail_cond_share_pairs_history_helps": 0.9675414609893818,
+      "detail_cond_share_pairs_prefix_helps": 0.9969104016477858,
+      "detail_distinct_three_token_sids": 23628,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.06914222963354619,
+      "detail_max_bucket": 9,
+      "detail_ref_distinct_prefix2": 15734,
+      "detail_ref_distinct_prefix3": 23628,
+      "detail_ref_mean_gain_bits": 0.8655110237183125,
+      "detail_ref_median_gain_bits": 1.0,
+      "family": "resample",
+      "l3_collision": 0.06914222963354619,
+      "l3_refinement_gain": 0.8655110237183125,
+      "sid": "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample_s44/item_sids.json",
+      "stage3_recall@10": 0.06237921969393618,
+      "valid_l1_hard_er": 15.787282361847085
+    },
+    {
+      "arm": "TIGER_RQ-VAE",
+      "conditional_l3_gain": -0.043235114268204713,
+      "detail_colliding_items": 6750,
+      "detail_cond_mean_log2_likelihood_ratio": -0.043235114268204713,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 46523,
+      "detail_cond_pairs_with_train_successors": 46385,
+      "detail_cond_share_pairs_history_helps": 0.9337746920877845,
+      "detail_cond_share_pairs_prefix_helps": 0.9902843754701975,
+      "detail_distinct_three_token_sids": 20223,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.2745353235449628,
+      "detail_max_bucket": 42,
+      "detail_ref_distinct_prefix2": 7414,
+      "detail_ref_distinct_prefix3": 20223,
+      "detail_ref_mean_gain_bits": 2.175863011620384,
+      "detail_ref_median_gain_bits": 2.169925001442312,
+      "family": "TIGER_RQ-VAE",
+      "l3_collision": 0.2745353235449628,
+      "l3_refinement_gain": 2.175863011620384,
+      "sid": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+      "stage3_recall@10": 0.054736328975086616,
+      "valid_l1_hard_er": 6.468338291542711
+    },
+    {
+      "arm": "TIGER_c117_hyperbolic_item_semantic_id",
+      "conditional_l3_gain": -0.05637013629221869,
+      "detail_colliding_items": 7711,
+      "detail_cond_mean_log2_likelihood_ratio": -0.05637013629221869,
+      "detail_cond_median_log2_likelihood_ratio": 0.0,
+      "detail_cond_pairs_scored": 47658,
+      "detail_cond_pairs_with_train_successors": 47515,
+      "detail_cond_share_pairs_history_helps": 0.9226782491921608,
+      "detail_cond_share_pairs_prefix_helps": 0.9898443073565824,
+      "detail_distinct_three_token_sids": 19515,
+      "detail_items": 24587,
+      "detail_l3_collision": 0.3136210192378086,
+      "detail_max_bucket": 33,
+      "detail_ref_distinct_prefix2": 6233,
+      "detail_ref_distinct_prefix3": 19515,
+      "detail_ref_mean_gain_bits": 2.445835529608628,
+      "detail_ref_median_gain_bits": 2.4594316186372973,
+      "family": "TIGER_c117_hyperbolic_item_semantic_id",
+      "l3_collision": 0.3136210192378086,
+      "l3_refinement_gain": 2.445835529608628,
+      "sid": "results/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/item_sids.json",
+      "stage3_recall@10": 0.05557199811974443,
+      "valid_l1_hard_er": 6.088513981973654
+    }
+  ]
+}

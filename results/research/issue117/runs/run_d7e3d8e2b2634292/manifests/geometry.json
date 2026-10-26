@@ -1,0 +1,198 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "027871fdb3f66cd8ed49221e9971383241482b585a50b9d5d3d83cb3bd9e9e3f",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Predicting a user's next interacted-with item from a session sequence, with item identity represented as a generated tuple of semantic codewords.",
+        "evidence_label": "ABSTRACT",
+        "geometry_connection": "No hyperbolic component evidenced by inspected abstract; do not attribute the geometry from separate sequential recommendation papers to this method.",
+        "source_arxiv": "2305.05065v3",
+        "support": "Directly stated in arXiv abstract: given Semantic IDs for items in a user session, train a Transformer seq2seq model to predict the Semantic ID of the next item the user will interact with."
+      },
+      {
+        "candidate": "Model sequential user preference evolution using hyperbolic sequence representations / hyperbolic selective state-space dynamics.",
+        "evidence_label": "ABSTRACT",
+        "source_arxiv": "2505.09205v1",
+        "support": "Abstract supports hyperbolic Mamba for sequential recommendation and evolving user preferences; it does not establish semantic-ID generation or explicit next-item target in the evidence inspected."
+      },
+      {
+        "candidate": "Use hyperbolic hypergraph representations and multi-scale item embeddings in sequential recommendation of interaction sequences.",
+        "evidence_label": "ABSTRACT",
+        "source_arxiv": "2108.08134v1",
+        "support": "Abstract supports hyperbolic hypergraph convolution and sequential recommendation; no generative Semantic ID mechanism evidenced."
+      }
+    ],
+    "limitations": [
+      "No independently verified source in this evidence set demonstrates all three components—user next-item behavior, hyperbolic geometry, and generative Semantic IDs—in one method.",
+      "Evidence labels indicate the inspected arXiv abstract/metadata evidence, not a full-text audit. Full-text PDFs are linked but their contents were not inspected here; therefore no FULL_TEXT label is assigned.",
+      "Sequential recommendation may use next-item prediction commonly, but that objective should not be asserted for a cited paper unless explicitly verified from its full text or abstract.",
+      "No DOI was verified for the listed records; arXiv identifiers and canonical arXiv links are supplied instead.",
+      "The sources are complementary adjacent work, not proof of a unified intersection or novelty claim. Use the PDFs to check task formulation, geometry placement, and whether semantic identifiers are generated rather than merely used as labels/features."
+    ],
+    "sources": [
+      {
+        "arxiv": "2305.05065v3",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "The arXiv abstract explicitly states that semantic IDs are tuples of codewords, and that a Transformer predicts the next item a user will interact with from item Semantic IDs in a user session. No hyperbolic geometry is stated in the abstract; full-text overlap on geometry was not independently confirmed.",
+        "full_text_url": "https://arxiv.org/pdf/2305.05065v3",
+        "metadata_url": "https://arxiv.org/abs/2305.05065v3",
+        "overlap": {
+          "generative_semantic_ids": "YES",
+          "hyperbolic_geometry": "NO_EVIDENCE_IN_ABSTRACT",
+          "user_next_item_behavior": "YES"
+        },
+        "title": "Recommender Systems with Generative Retrieval"
+      },
+      {
+        "arxiv": "2505.09205v1",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "The arXiv abstract describes hyperbolic sequence modeling for sequential recommendation and user preference evolution. It does not mention generative retrieval or semantic IDs. The abstract alone does not establish that the objective specifically predicts each user's next item.",
+        "full_text_url": "https://arxiv.org/pdf/2505.09205v1",
+        "metadata_url": "https://arxiv.org/abs/2505.09205v1",
+        "overlap": {
+          "generative_semantic_ids": "NO_EVIDENCE_IN_ABSTRACT",
+          "hyperbolic_geometry": "YES",
+          "user_next_item_behavior": "PARTIAL_SEQUENTIAL_PREFERENCE"
+        },
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation"
+      },
+      {
+        "arxiv": "2108.08134v1",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "The arXiv abstract names H2SeqRec, hyperbolic-space hypergraph convolution, multi-scale item embeddings and sequential recommendation. It does not state generative Semantic IDs or an explicit next-item prediction objective.",
+        "full_text_url": "https://arxiv.org/pdf/2108.08134v1",
+        "metadata_url": "https://arxiv.org/abs/2108.08134v1",
+        "overlap": {
+          "generative_semantic_ids": "NO_EVIDENCE_IN_ABSTRACT",
+          "hyperbolic_geometry": "YES",
+          "user_next_item_behavior": "PARTIAL_SEQUENTIAL_RECOMMENDATION"
+        },
+        "title": "Hyperbolic Hypergraphs for Sequential Recommendation"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "68ca1d47e911aabd7d04ebc3a2be402bca4b3b6564a295eaeee817a65f94e6c4",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

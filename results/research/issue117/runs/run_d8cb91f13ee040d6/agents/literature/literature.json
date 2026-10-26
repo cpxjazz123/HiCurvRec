@@ -1,0 +1,68 @@
+{
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": "10.48550/arXiv.2609.03369",
+      "arxiv": "2609.03369v1",
+      "url": "https://arxiv.org/html/2609.03369v1",
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": "Directly addresses all three dimensions: sequential user behavior / next-item prediction, hyperbolic geometry, and generated semantic IDs. The full text says in III-C that chronological interaction-history semantic IDs are input and the next item's semantic ID is generated autoregressively; III-B defines the semantic ID as residual-quantization code indices in hyperbolic space. The abstract and experiments explicitly concern generative recommendation and long-tail items.",
+      "independently_verifiable_basis": "Public arXiv HTML full text was inspected, including sections III-B and III-C; arXiv page identifies version/date and links the PDF. DOI is the arXiv/DataCite DOI.",
+      "notes": "Current as of the frozen run date; arXiv v1 posted 2026-09-03. The paper itself claims this is the first hyperbolic item-indexing framework for generative recommendation; treat that as an author claim, not an independently established priority fact."
+    },
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": "10.48550/arXiv.2305.05065",
+      "arxiv": "2305.05065v3",
+      "url": "https://arxiv.org/html/2305.05065v3",
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": "Supports the behavior-plus-generative-semantic-ID intersection: the abstract and full text describe a Transformer sequence-to-sequence model predicting the next item a user interacts with from a session, using semantically meaningful tuples of codewords (Semantic IDs). It does not use hyperbolic geometry; it is the Euclidean/generative-retrieval baseline rather than a full three-way overlap.",
+      "independently_verifiable_basis": "Public arXiv abstract page and linked full-text HTML/PDF; version 3 lists NeurIPS 2023 acceptance."
+    },
+    {
+      "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+      "doi": "10.48550/arXiv.2205.11233",
+      "arxiv": "2205.11233",
+      "url": "https://arxiv.org/abs/2205.11233",
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Adjacent evidence for sequential user-behavior recommendation with Poincaré/hyperbolic geometry: its abstract describes sequential recommendation, user-item behavior, Poincaré-space graph representation, and temporal attention. It does not describe generative semantic IDs or autoregressive semantic-ID decoding. No claim of three-way overlap.",
+      "independently_verifiable_basis": "Public arXiv record and abstract; full text not independently inspected for this run."
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": "10.48550/arXiv.2505.09205",
+      "arxiv": "2505.09205",
+      "url": "https://arxiv.org/abs/2505.09205",
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Adjacent evidence for sequential recommendation in hyperbolic geometry, modeling temporal interaction sequences and preference hierarchies. The abstract does not establish semantic IDs or generative next-item ID decoding; therefore it is not evidence for the full intersection.",
+      "independently_verifiable_basis": "Public arXiv record and abstract; full text not independently inspected for this run."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Hyperbolic semantic-ID generation for next-item prediction from chronological user interaction histories",
+      "evidence": "FULL_TEXT",
+      "source_arxiv": "2609.03369v1",
+      "assessment": "The direct, already-published match: history is represented as ordered semantic IDs and a generative model predicts the next item's semantic ID; the item codebook is learned in hyperbolic space."
+    },
+    {
+      "candidate": "Behavior-aware collaborative signals in hyperbolic semantic-ID assignment, beyond item-text quantization",
+      "evidence": "FULL_TEXT (as a gap/motivation in 2609.03369v1)",
+      "source_arxiv": "2609.03369v1",
+      "assessment": "The inspected HypRQ-VAE full text generates codes from item textual features and then conditions next-item generation on histories. It discusses collaborative semantics and compares against methods incorporating them, but its described ID encoder is text-feature based. A distinct behavior-first or interaction-conditioned hyperbolic code assignment is therefore a plausible follow-up, not a demonstrated result of that paper."
+    },
+    {
+      "candidate": "Hyperbolic sequential behavior modeling without generative semantic IDs",
+      "evidence": "ABSTRACT",
+      "source_arxiv": "2205.11233; 2505.09205",
+      "assessment": "Established neighboring problem family, but these records do not support claims about semantic-ID generation."
+    }
+  ],
+  "limitations": [
+    "The direct triple-overlap result is HypRQ-VAE (arXiv:2609.03369v1); it was independently checked against public arXiv full text. Other papers are included only as clearly labeled adjacent evidence, not as triple-overlap claims.",
+    "The HypRQ-VAE record is a 2026 arXiv preprint (v1), despite arXiv's page/comment metadata reporting acceptance for ICDM 2026; distinguish preprint availability from final proceedings publication and verify final bibliographic metadata separately before citation.",
+    "The HypRQ-VAE paper evaluates standard sequential/generative recommendation benchmarks and reports gains, especially for tail items; this is evidence about its reported experiments, not independent replication or proof of deployment impact.",
+    "The exact triple-overlap literature appears extremely sparse in the verified sample. Do not infer that no other work exists or repeat the paper's priority claim without a systematic database search.",
+    "ABSTRACT labels mean only the public abstract was used to establish the adjacent claim. No unseen future/test interactions, prompts, or datasets were accessed or inferred."
+  ]
+}

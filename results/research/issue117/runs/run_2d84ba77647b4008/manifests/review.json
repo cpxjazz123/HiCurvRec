@@ -1,0 +1,391 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "directional_successor_branching",
+    "candidate_id": "geometry_asymmetric_successor_branches_hyp",
+    "effect_site": "Code assignment, codebook geometry, and squared-distance reconstruction/commitment objective; no Stage2 ranking, prefix Transformer, beam search, NDCG/Recall, or user bootstrap.",
+    "euclidean_control": "Both arms use the same implementation, architecture, parameter count, initialization, codebook initialization, optimizer, schedule, epochs, batch size, seeds, and budget. The only arm-specific change is the scored squared-distance formula: curved D_c^2 versus its c->0 limit 4*||x-y||^2. Both use the same fixed projection radius R=0.9 and identical operation order. No graph arm or new training protocol.",
+    "falsifier": {
+      "classification": {
+        "falsified_if": "At least one registered diagnostic or Stage3 metric has a defined finite oriented paired change at or below its registered minimum_effect for any seed or its arithmetic-mean aggregate; OR either absolute Stage2 admission condition fails its referenced FROZEN_THRESHOLDS comparison.",
+        "mixed_if": "Otherwise. Any undefined/non-finite seed-wise or aggregate change (including zero denominator, missing evaluation, or empty stratum) is NULL; any comparison involving any NULL seed is inconclusive and cannot count as passed or falsified.",
+        "passed_if": "Every registered diagnostic and the Stage3 metric has a defined finite oriented paired change strictly beyond its registered minimum_effect for every seed and the arithmetic-mean aggregate; AND both absolute Stage2 admission conditions pass their referenced FROZEN_THRESHOLDS comparisons."
+      },
+      "stage2_diagnostics": [
+        {
+          "direction": "curved minus flat > 0",
+          "minimum_effect": 0.01,
+          "name": "valid_l1_hard_er",
+          "seed_rule": "Use the frozen validation pairs: 52855 pairs, one positive and ten negatives per anchor, seed 42, history[-1] -> target. A hit means anchor first SID token equals candidate first token; ER=10*positive_hits/negative_hits with negatives counted across the ten negatives. Compute paired curved-minus-flat effects for every inherited Stage2 training seed and their arithmetic mean. Separately require curved absolute ER to be strictly above FROZEN_THRESHOLDS.valid_l1_hard_er. A zero negative-hit denominator is NULL. The inherited Stage2 seed set is the frozen protocol seed set, used unchanged in both arms."
+        },
+        {
+          "direction": "curved minus flat > 0",
+          "minimum_effect": 1,
+          "name": "level2_distinct_prefixes",
+          "seed_rule": "For each inherited Stage2 seed and arm count |{(k1,k2)}| over all items; compute curved-minus-flat paired changes and their arithmetic mean. Separately require curved absolute count to be strictly above FROZEN_THRESHOLDS.level2_distinct_prefixes."
+        },
+        {
+          "direction": "curved minus flat > 0",
+          "minimum_effect": 0.01,
+          "name": "l3_refinement_gain",
+          "seed_rule": "For each inherited Stage2 seed and arm compute the mean over items of log2(|bucket(k1,k2)|/|bucket(k1,k2,k3)|), then curved-minus-flat; aggregate paired changes by arithmetic mean over the same inherited seed set."
+        },
+        {
+          "direction": "curved minus flat < 0",
+          "minimum_effect": 0.01,
+          "name": "l3_collision",
+          "seed_rule": "For each inherited Stage2 seed and arm compute the share of items whose complete SID is shared with another item, then curved-minus-flat; aggregate paired changes by arithmetic mean over the same inherited seed set."
+        },
+        {
+          "direction": "curved minus flat > 0",
+          "minimum_effect": 0.01,
+          "name": "conditional_g3",
+          "seed_rule": "For each arm/seed and frozen validation pair (anchor a,target t) with target SID (u,v,w), let B_uv be all catalog items with first two codes (u,v), n=|B_uv|, and n_l the count in B_uv with third code l. Define p_pref(l)=(n_l-1[l=w]+1)/(n-1+256), for every l in {0,...,255}; this is leave-target-out additive-one smoothing and p_pref(w) remains defined even if its leave-one-out count is zero. From train-only longest-prefix successor occurrences of anchor a, count C_l occurrences whose successor item is in B_uv and has third code l; C=sum_l C_l. Define p_hist(l)=(C_l+p_pref(l))/(C+1), over the same 256 codes and conditioning prefix (u,v). The target code for both distributions is the item's assigned third code w in that arm/seed. If C=0, contribution is exactly 0; otherwise contribution is log2(p_hist(w)/p_pref(w)). Average over all frozen validation pairs. Compute paired curved-minus-flat per inherited Stage2 seed and arithmetic mean across that same seed set."
+        }
+      ],
+      "stage3_behavioral_test": {
+        "direction": "curved minus flat > 0",
+        "metric": "test_R@10",
+        "minimum_effect": 0.005,
+        "seed_rule": "Use the frozen paired Stage3 seed set {42}, identically in both arms and with all other Stage3 settings frozen. For that seed compute curved test_R@10 minus flat test_R@10. The aggregate is the arithmetic mean of paired differences across the enumerated seed set. Report seed-wise and aggregate values; test events are never Stage2 inputs."
+      }
+    },
+    "hyperbolic_necessity": "Negative curvature is a testable inductive-bias hypothesis, not a conclusion from observed directionality or literature. Nested shared neighborhoods with finer directional branches may suit negative curvature. The inspected literature supports separate overlaps (next-item behavior plus generative Semantic IDs; hyperbolic sequential recommendation), but explicitly does not verify their combined efficacy. Stage2 diagnostics are leading indicators; only downstream Stage3 tests behavior.",
+    "literature_evidence_sha256": "8ecdc8d852135d738d1b97d9d8559779e4648da966a0365b244c99fd4160e763",
+    "math_definition": {
+      "architecture": "Frozen content embedding maps to a 32-dimensional latent, quantized by three residual codebooks of 256 codes each; emit one global three-token SID per item.",
+      "geometry_constants": "Curved c=1.0; epsilon=0.00001; clamp arcosh argument to at least 1.0; shared fixed projection radius R=0.9. Flat arm uses c=0 in the same implementation.",
+      "objective": {
+        "anti_collapse": "Content reconstruction L_rec enters L_total with coefficient one and has a straight-through encoder gradient path. It penalizes mapping different frozen content targets to the same three-code reconstruction, keeping the latent informative.",
+        "loss_equations": [
+          {
+            "empty_group_rule": "N=0 is invalid; do not evaluate.",
+            "equation": "L_rec=(1/(N*32))*sum_{i in I} ||stopgrad(x_i)-project_R(sum_{j=1..3} q_ij)||_2^2",
+            "name": "content_reconstruction",
+            "normalization_and_reduction": "Mean over items and dimensions.",
+            "target_circularity": "x is a frozen content-derived target and stop-gradient breaks parameter dependence; STE supplies the assignment-input gradient.",
+            "tensors_and_shapes": "x:[N,32] frozen content-derived latent targets; q:[N,3,32] selected projected codes; I is the batch item index set."
+          },
+          {
+            "empty_group_rule": "N=0 is invalid; do not evaluate.",
+            "equation": "L_commit=(1/(3*N*32))*sum_{i in I,j in {1,2,3}} ||r_ij-stopgrad(q_ij)||_2^2",
+            "name": "commitment",
+            "normalization_and_reduction": "Mean over items, levels, and dimensions.",
+            "target_circularity": "Hard code target is stop-gradient; STE supplies the input gradient.",
+            "tensors_and_shapes": "r,q:[N,3,32]; r is the projected pre-assignment residual and q the selected projected code."
+          },
+          {
+            "empty_group_rule": "N=0 is invalid; do not evaluate.",
+            "equation": "L_code=(1/(3*N*32))*sum_{i in I,j in {1,2,3}} ||stopgrad(r_ij)-q_ij||_2^2",
+            "name": "codebook_reconstruction",
+            "normalization_and_reduction": "Mean over items, levels, and dimensions.",
+            "target_circularity": "Residual target is stop-gradient; selected codes receive direct gradient.",
+            "tensors_and_shapes": "r,q:[N,3,32] as above."
+          },
+          {
+            "empty_group_rule": "Invalid if any component has an empty batch.",
+            "equation": "L_total=L_rec+beta_commit*L_commit+beta_code*L_code",
+            "name": "total_stage2_objective",
+            "normalization_and_reduction": "Scalar sum using frozen coefficients.",
+            "target_circularity": "Targets and gradient breaks are specified above; no parameter-dependent target cycle.",
+            "tensors_and_shapes": "Scalar component losses and the frozen Stage2 coefficients beta_commit,beta_code."
+          }
+        ]
+      },
+      "operator": {
+        "arcosh_argument_clamp_min": 1.0,
+        "assignment_gradient": "Hard argmin determines emitted SID tokens. An explicit straight-through estimator is used: forward uses the hard selected projected code; backward sends the identity derivative from the selected code output to the projected continuous assignment input (then through the projection Jacobian), while direct codebook losses update selected code vectors. No objective relies on gradients through one-hot argmin.",
+        "c_dependent_rules_at_zero": "At c=0 the scored squared-distance rule is its exact limit 4*||x-y||^2; the exponential map is the identity. The curvature projection radius (1-epsilon)/sqrt(c) is undefined at c=0 and is not applied; the flat arm instead applies the same fixed projection ||x||<=R as the curved arm. No other c-dependent rule is used.",
+        "curvature_c": 1.0,
+        "delta": 0.0,
+        "domain_policy": "Every vector entering a distance in either arm is projected into the same closed ball ||x||<=R=0.9<1. For c=1 this keeps both Poincare denominator factors at least 0.19. The arcosh argument is clamped at 1.0, not 1+delta; curvature-dependent projection is outside the scored region's monotonicity.",
+        "epsilon": 1e-05,
+        "family": "poincare_squared_distance",
+        "flat_limit": "4*||x-y||^2",
+        "projection_radius_R": 0.9,
+        "residual_operation_order": "For level one map content to initial latent; for each level map the current residual, project the vector to radius R, assign the nearest code using the arm's squared distance, project the selected code to radius R, score those projected vectors, subtract the projected selected code from the projected current residual, then project the residual before the next level. Project the sum of selected codes before reconstruction scoring. Thus every residual step is map -> project -> assign -> project selected code -> score -> subtract -> project residual; identical order in both arms.",
+        "scored_distance": "D^2(x,y)=d_c(x,y)^2=(1/c)*arcosh(1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)))^2 for c>0; clamp the argument to max(argument,1.0). With u=z-1>=0, compute arcosh(z)=log1p(u+sqrt(u*(u+2))). The objective uses squared distance in both arms.",
+        "unsquared_distance_flat_limit": "The unsquared distance d_c tends to 2*||x-y|| as c->0."
+      }
+    },
+    "next_item_hypothesis": "The measured train-only behavior pattern is directed transition asymmetry: 314605 of 339519 directed pairs have no observed reverse event (no_reverse_fraction 0.9266197178950221; mean next-item entropy 4.844072338042215 bits). This motivates, but does not establish, failure of flat item IDs. Hypothesis: flat content-only quantization can under-refine distinct directional successor branches sharing coarse semantic neighborhoods; negative curvature may retain shared coarse structure while separating finer branches. This is one proposed failure, not a causal finding. Stage2 builds item SIDs only; downstream T5 Stage3 ranks next items.",
+    "protocol": {
+      "codes_per_level": 256,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "sid_scope": "one global three-token SID per item",
+      "stage3_role": "downstream T5 ranks next items; Stage2 does not rank",
+      "training_configuration": "inherit frozen Stage2 epochs, batch, schedule, seeds, optimizer, budget, and codebook initialization verbatim",
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "The supplied behavior evidence is train-only longest-prefix-per-user transition evidence: 323633 directed pairs, 24556 distinct items, 396958 events, 339519 transitions, 57439 users; 314605 pairs have no observed reverse event. Evidence is directional asymmetry only and does not establish hierarchy, negative curvature, SID failure, or causal gain. The supplied literature is a research-gap synthesis: arXiv:2305.05065 supports user next-item behavior plus generative Semantic IDs, while the checked abstracts for 2301.03780, 2108.08134, and 2505.09205 support adjacent hyperbolic sequential/session recommendation, not the full intersection. Frozen literature manifest research=issue117-behavior-first (schema 1): source 2305.05065 is FULL_TEXT evidence for user-session next-item prediction with generative Semantic IDs and no hyperbolic geometry; 2301.03780, 2108.08134, and 2505.09205 provide ABSTRACT-level hyperbolic sequential/session recommendation evidence without the full generative-SID intersection. This is a proposed synthesis/research gap, not established combined efficacy.",
+    "schema_version": 1,
+    "stable_global_sid": true,
+    "training_only_inputs": "Frozen content embeddings and train-split item transitions only (train-split transitions are legal supervision). Validation pairs are diagnostic only; test behavior is reserved for downstream Stage3. No future events, prediction-time user context, or batch-composition signal is used for Stage2 fitting."
+  },
+  "candidate_id": "geometry_asymmetric_successor_branches_hyp",
+  "candidate_sha256": "3618a28dd7c21e738e54410ce92843c1f9bc953cd5cb9a4d24197788d658a6c9",
+  "contract_sha256": "9061bc8fad026669ae3fe790b427204329bf6ef12af621e3dd4b671a39520221",
+  "inputs_sha256": "debccd0730f93851f59ca44db7729e0a2ff580a909ce3b77efa6edbc90edda69",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "behavior_first_question": "Does representing item-ID hierarchy in a negatively curved space improve prediction of the user's next interacted item from their observed session, compared with Euclidean Semantic IDs, while retaining autoregressive decoding?",
+        "candidate": "Behavior-conditioned next-item generation with hierarchical (hyperbolic) Semantic-ID structure",
+        "evidence_status": "SYNTHESIS / research gap, not a method already verified in one source",
+        "grounding": "Combine the explicitly observed user-session-to-next-Semantic-ID task in Recommender Systems with Generative Retrieval (FULL_TEXT) with the hyperbolic session/sequence modeling direction in TA-HGAT and HMamba (ABSTRACT)."
+      },
+      {
+        "behavior_first_question": "Which temporal transitions or session-intent branches are lost when the next item is represented by a flat code sequence, and can hierarchical geometry improve behaviorally valid branching?",
+        "candidate": "Temporal intent evolution and branching next-item choices in short sessions",
+        "evidence_status": "SYNTHESIS / candidate problem framing; no checked source tests these behaviors with generative Semantic IDs",
+        "grounding": "TA-HGAT's abstract explicitly identifies temporal intervals/current interests and next-interested-item prediction; H2SeqRec's abstract describes multi-timescale sequence modeling and dynamic social information."
+      },
+      {
+        "behavior_first_question": "Do generative Semantic IDs plus hyperbolic structure improve next-item prediction for rare or unseen items without reducing accuracy on frequent-item behavior?",
+        "candidate": "Long-tail and cold-start next-item behavior",
+        "evidence_status": "SYNTHESIS / candidate; avoid claiming the combined effect is established",
+        "grounding": "Generative Retrieval reports improved retrieval for items with no prior interaction history in its abstract; hyperbolic recommendation abstracts motivate hierarchy/long-tail structure. Their combination remains unverified."
+      }
+    ],
+    "limitations": [
+      "No independently verified source among those checked demonstrates all three elements together: user next-item behavior, hyperbolic geometry, and generative Semantic IDs. The evidence supports two-element overlaps and a research gap, not an existing integrated result.",
+      "FULL_TEXT is assigned only to the arXiv Semantic-ID paper whose experimental HTML was accessible and inspected; the other labels indicate abstract-only evidence, not full-text verification.",
+      "Negative claims are scoped to the evidence inspected (primarily abstracts); they do not prove a term or technique is absent from every version or appendix.",
+      "arXiv-issued DOI is provided for Recommender Systems with Generative Retrieval. For the remaining entries, arXiv identifiers are supplied and DOI is null rather than guessed.",
+      "The behavior problem candidates are proposed synthesis from the cited evidence, not claims made or validated by those papers."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+      "task_id": "literature"
+    },
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "doi": "10.48550/arXiv.2305.05065",
+        "evidence_checked": "arXiv record and full-text HTML v3",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": {
+          "generative_semantic_ids": "YES — creates semantically meaningful tuples of codewords as item Semantic IDs and autoregressively decodes target identifiers.",
+          "hyperbolic_geometry": "NO — the accessible abstract and full-text framing describe semantic codeword tuples and generative retrieval, not hyperbolic geometry.",
+          "user_next_item_behavior": "YES — explicitly trains a Transformer sequence-to-sequence model on Semantic IDs in a user session to predict the Semantic ID of the next item the user will interact with."
+        },
+        "links": [
+          "https://arxiv.org/abs/2305.05065",
+          "https://arxiv.org/html/2305.05065v3"
+        ],
+        "relevance": "Strong evidence for next-item user behavior plus generative Semantic IDs, but not for the hyperbolic component.",
+        "title": "Recommender Systems with Generative Retrieval"
+      },
+      {
+        "arxiv": "2301.03780",
+        "doi": null,
+        "evidence_checked": "arXiv record abstract; full text not independently inspected",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "NO in the checked abstract — no generative retrieval or Semantic IDs are described.",
+          "hyperbolic_geometry": "YES — proposes a time-aware hyperbolic graph attention model and learns hierarchical session graphs in hyperbolic space.",
+          "user_next_item_behavior": "YES — abstract defines session-based recommendation as predicting users' next interested items from previous browsing sessions and describes prediction based on timestamp."
+        },
+        "links": [
+          "https://arxiv.org/abs/2301.03780"
+        ],
+        "relevance": "Directly relevant to behavior-first next-item modeling and hyperbolic session representation; does not establish generative Semantic IDs.",
+        "title": "Time-aware Hyperbolic Graph Attention Network for Session-based Recommendation"
+      },
+      {
+        "arxiv": "2108.08134",
+        "doi": null,
+        "evidence_checked": "arXiv record abstract; full text not independently inspected",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "NO in the checked abstract — no generative retrieval or Semantic IDs are described.",
+          "hyperbolic_geometry": "YES — uses hyperbolic-space hypergraph convolution to learn dynamic item embeddings.",
+          "user_next_item_behavior": "PARTIAL — sequential recommendation with multi-scale temporal item embeddings is explicit, but the checked abstract does not state the precise next-item target in those words."
+        },
+        "links": [
+          "https://arxiv.org/abs/2108.08134"
+        ],
+        "relevance": "Adjacent evidence for sequential behavior and hyperbolic representation, not the generative-ID intersection.",
+        "title": "Hyperbolic Hypergraphs for Sequential Recommendation"
+      },
+      {
+        "arxiv": "2505.09205",
+        "doi": null,
+        "evidence_checked": "arXiv record abstract; full text not independently inspected",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "NO in the checked abstract — no Semantic IDs or generative retrieval are described.",
+          "hyperbolic_geometry": "YES — proposes curvature-aware hyperbolic selective state-space sequence modeling.",
+          "user_next_item_behavior": "PARTIAL — explicitly addresses sequential recommendation and dynamic interaction sequences; checked abstract does not specifically assert Semantic-ID next-item decoding."
+        },
+        "links": [
+          "https://arxiv.org/abs/2505.09205"
+        ],
+        "relevance": "Recent hyperbolic sequential-recommendation comparator; it does not document generative Semantic IDs.",
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation"
+      },
+      {
+        "arxiv": "2102.09389",
+        "doi": null,
+        "evidence_checked": "arXiv record abstract; full text not independently inspected",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "NO in the checked abstract.",
+          "hyperbolic_geometry": "YES — models user/item representations and social relations in hyperbolic geometry.",
+          "user_next_item_behavior": "NO explicit next-item prediction in the checked abstract; evaluates click-through-rate prediction and top-K recommendation."
+        },
+        "links": [
+          "https://arxiv.org/abs/2102.09389"
+        ],
+        "relevance": "Background on hyperbolic recommendation only; not evidence for the requested full intersection.",
+        "title": "Hyperbolic Social Recommender"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "8ecdc8d852135d738d1b97d9d8559779e4648da966a0365b244c99fd4160e763",
+  "preflight_verdict": "SCIENTIFIC_REVIEW_REQUIRED",
+  "preflight_warnings": [
+    {
+      "actual": "curved minus flat > 0",
+      "code": "DIRECTION_CONFLICTS_WITH_EVIDENCE",
+      "expected": "lower",
+      "layer": "falsifier",
+      "location": "falsifier.stage2_diagnostics[l3_refinement_gain_bits].direction",
+      "repair": "justify the direction against the measured evidence",
+      "verdict": null
+    },
+    {
+      "actual": "curved minus flat < 0",
+      "code": "DIRECTION_CONFLICTS_WITH_EVIDENCE",
+      "expected": "lower",
+      "layer": "falsifier",
+      "location": "falsifier.stage2_diagnostics[l3_collision].direction",
+      "repair": "justify the direction against the measured evidence",
+      "verdict": null
+    }
+  ],
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

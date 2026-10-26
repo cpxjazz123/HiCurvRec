@@ -1,0 +1,73 @@
+{
+  "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+  "research": "issue117-behavior-first",
+  "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+  "task_id": "literature",
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": null,
+      "arxiv": "2609.03369",
+      "links": {"abstract": "https://arxiv.org/abs/2609.03369", "full_text_html": "https://arxiv.org/html/2609.03369", "pdf": "https://arxiv.org/pdf/2609.03369"},
+      "evidence_label": "FULL_TEXT",
+      "verification": "The arXiv full-text HTML was fetched successfully (HTTP 200; substantial article body, not only the abstract). The arXiv API record identifies the paper as HypRQ-VAE and its abstract describes sequential recommendation, generative recommendation using LLMs and discrete item indices, and proposed hyperbolic item indexing. The full text is the primary source to inspect for the exact tokenizer/generation details and experimental scope.",
+      "exact_overlap": "Strongest direct candidate for all three axes: next-item/sequence recommendation behavior; hyperbolic geometry applied to item indexing; and generative recommender systems that use discrete item IDs. The stated emphasis is long-tail-aware item indexing. Do not assume the generated index is specifically called a semantic ID unless confirmed in the full text; the abstract evidence alone says discrete item indices."
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2505.09205",
+      "links": {"abstract": "https://arxiv.org/abs/2505.09205", "pdf": "https://arxiv.org/pdf/2505.09205"},
+      "evidence_label": "ABSTRACT",
+      "verification": "ArXiv API search record provides title, identifier, and abstract. Full-text article was not independently inspected for this report.",
+      "exact_overlap": "Sequential recommendation and hyperbolic geometry are explicit in the title/abstract. No generative semantic-ID mechanism is established by the inspected abstract; this is a behavior-plus-geometry comparator, not a demonstrated triple-intersection match."
+    },
+    {
+      "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2205.11233",
+      "links": {"abstract": "https://arxiv.org/abs/2205.11233", "pdf": "https://arxiv.org/pdf/2205.11233"},
+      "evidence_label": "ABSTRACT",
+      "verification": "ArXiv API search record provides title, identifier, and abstract. Full-text article was not independently inspected for this report.",
+      "exact_overlap": "Sequential user behavior and Poincaré/hyperbolic representation are the relevant overlap. The inspected abstract does not establish generative semantic IDs."
+    },
+    {
+      "title": "PLUM: Adapting Pre-trained Language Models for Industrial-scale Generative Recommendations",
+      "doi": "10.1145/3774904.3792802",
+      "arxiv": "2510.07784",
+      "links": {"abstract": "https://arxiv.org/abs/2510.07784", "pdf": "https://arxiv.org/pdf/2510.07784", "doi_url": "https://doi.org/10.1145/3774904.3792802"},
+      "evidence_label": "ABSTRACT",
+      "verification": "ArXiv API record supplies title, abstract, DOI, and WWW '26 journal reference. Article full text not independently inspected here.",
+      "exact_overlap": "Generative recommendation that predicts Semantic IDs from user context is explicit. No hyperbolic geometry is established in the inspected abstract; useful as the semantic-ID/user-context comparator, not a triple-intersection result."
+    },
+    {
+      "title": "Pctx: Tokenizing Personalized Context for Generative Recommendation",
+      "doi": null,
+      "arxiv": "2510.21276",
+      "links": {"abstract": "https://arxiv.org/abs/2510.21276", "pdf": "https://arxiv.org/pdf/2510.21276"},
+      "evidence_label": "ABSTRACT",
+      "verification": "ArXiv API record supplies title, abstract, and identifier. Full-text article not independently inspected here.",
+      "exact_overlap": "The abstract explicitly identifies next-action/next-item prediction via generated semantic IDs and argues that static item tokenization omits user-specific perspectives; its proposed context-aware tokenizer uses a user's historical interactions. No hyperbolic geometry is established in the inspected abstract. Strong behavior-first comparator, not a triple-intersection match."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "User-conditioned hierarchy/geometry mismatch in next-item prediction",
+      "basis": "HypRQ-VAE is the direct candidate to verify: determine whether its hyperbolic item indexing represents user behavior-conditioned transitions or only global item hierarchy/long-tail structure. Pctx explicitly motivates that user intent changes item interpretation, while using semantic IDs without stated hyperbolic geometry.",
+      "evidence_label": "ABSTRACT",
+      "testable_question": "Do hyperbolic neighborhoods or hierarchical codes learned globally preserve the user-specific transition neighborhood needed to predict the next item, or do they impose a global similarity prior that conflicts with individual intent?"
+    },
+    {
+      "candidate": "Long-tail next-item behavior under hyperbolic generative indexing",
+      "basis": "HypRQ-VAE's title/abstract scope combines hyperbolic indexing and long-tail-aware generative recommendation; HMamba and Poincaré sequential recommendation provide behavior-plus-geometry comparators.",
+      "evidence_label": "ABSTRACT",
+      "testable_question": "Does hyperbolic indexing improve next-item recall for sparse-history users and tail items without degrading head-item accuracy or user-specific ranking?"
+    }
+  ],
+  "limitations": [
+    "Only HypRQ-VAE's arXiv full-text HTML was directly fetched; the other papers are supported here by arXiv API metadata/abstracts, not independent full-text inspection.",
+    "The direct triple-intersection claim is provisional: HypRQ-VAE appears to combine sequential recommendation, hyperbolic indexing, and generative discrete item indices, but whether those indices are semantic IDs and how user behavior conditions their generation must be checked in the full text.",
+    "No inspected source proves that hyperbolic geometry itself improves user next-item behavior in a semantic-ID generation pipeline; the comparator papers each omit at least one axis.",
+    "ArXiv identifier links are independently resolvable source records; DOI absence is represented as null rather than inferred."
+  ]
+}

@@ -1,0 +1,343 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "asymmetric_train_successor_transitions_need_hierarchical_item_codes",
+    "candidate_id": "issue117_geometry_transition_residual_poincare_v2",
+    "effect_site": "Stage2 first-level assignment aligns train-observed anchor-successor relationships; later residual assignments encode within-prefix distinctions. Stage2 emits one global content-derived SID per item. Stage3 T5 alone evaluates next-item ranking; Stage2 does not rank.",
+    "euclidean_control": "The same executable model sets c=0 in the shared formulas: D^2=4||x-y||^2, exp map identity, common P_R only. Parameter count, initialization, assignment relaxation, objective, architecture and training protocol are unchanged.",
+    "falsifier": {
+      "classification": {
+        "falsified_if": "any registered mandatory diagnostic fails its direction/minimum_effect, or stage3_behavioral_test fails its direction/minimum_effect, with no NULL comparison",
+        "mixed_if": "at least one registered comparison meets its direction/minimum_effect and at least one fails, with no NULL comparison",
+        "passed_if": "all registered mandatory diagnostic comparisons and stage3_behavioral_test comparison meet their direction/minimum_effect, with no NULL comparison"
+      },
+      "null_outcome_rule": "If any seed-wise or aggregated change is undefined or non-finite (including zero denominator, missing evaluation, or empty stratum), classify that comparison NULL. Any comparison containing a NULL seed is inconclusive and cannot be classified passed or falsified; report NULL separately from mixed.",
+      "stage2_diagnostics": [
+        {
+          "direction": "curved strictly greater than the frozen Resample reference",
+          "minimum_effect": 16.38953942232631,
+          "name": "valid_l1_hard_er",
+          "seed_rule": "Compute exactly as defined in real_trigger_measurement on the 52855 seed-42 frozen validation pairs; aggregate raw positive and negative hits across all pairs, then 10*positive_hits/negative_hits. Compare each arm's result to this strict cutoff; zero negative hits or non-finite result is NULL."
+        },
+        {
+          "direction": "curved strictly greater than the frozen Resample reference",
+          "minimum_effect": 16145,
+          "name": "level2_distinct_prefixes",
+          "seed_rule": "Count unique (k1,k2) over every item from the single seed-42 trained model; compare to strict cutoff. Missing SID or non-finite/undefined count is NULL."
+        },
+        {
+          "direction": "increase curved versus flat",
+          "minimum_effect": 0.005,
+          "name": "valid_l1_positive_hit_rate",
+          "seed_rule": "On the exact frozen validation pairs, count positive anchor-first-token matches divided by 52855 independently per arm; paired curved-minus-flat difference. Undefined denominator is NULL."
+        },
+        {
+          "direction": "increase curved versus flat",
+          "minimum_effect": 0.01,
+          "name": "L3_refinement_gain",
+          "seed_rule": "For each arm count bucket sizes over all items, compute per item log2(|bucket(k1,k2)|/|bucket(k1,k2,k3)|), then arithmetic mean over items; paired curved-minus-flat difference. Empty item set or non-finite value is NULL."
+        },
+        {
+          "direction": "increase curved versus flat",
+          "minimum_effect": 0.01,
+          "name": "conditional_G3",
+          "seed_rule": "Use the exact alpha=1,K=256 estimator stated in real_trigger_measurement on the fixed pairs; arithmetic mean of pair log-ratios, assigning 0 to pairs with no restricted successor and marking any non-finite pair/result NULL. Paired curved-minus-flat difference; any undefined aggregate is NULL."
+        },
+        {
+          "direction": "decrease curved versus flat",
+          "minimum_effect": 0.005,
+          "name": "L3_collision",
+          "seed_rule": "Count items whose complete triple is shared by another item divided by all items, independently per arm; paired flat-minus-curved difference. Empty item set is NULL."
+        }
+      ],
+      "stage3_behavioral_test": {
+        "direction": "increase curved versus flat",
+        "metric": "test_R@10",
+        "minimum_effect": 0.005,
+        "seed_rule": "Use the frozen Stage3 test protocol, seed 42 only, uniform eligible-example hit@10 averaged across examples; compute curved-minus-flat paired difference. Test is read-only and cannot fit/select. Missing evaluation or non-finite result is NULL."
+      }
+    },
+    "hyperbolic_necessity": "The train-only evidence demonstrates strongly directional transitions, not curvature necessity. Negative curvature is a mechanistic hypothesis because exponentially expanding volume can allocate many fine successor distinctions under a coarse shared prefix while preserving hierarchical neighborhoods; residual codes then refine within that prefix. A Euclidean arm with identical feasible ball and representation map tests whether curvature geometry, rather than capacity or domain, matters. Failure to improve registered diagnostics or Stage3 behavior falsifies this proposal.",
+    "literature_evidence_sha256": "e5005b69310b036daba89277b11803927a6a04edd999e63afb272d116de82e27",
+    "math_definition": {
+      "geometry": {
+        "R": 0.9,
+        "arcosh_policy": "The equivalent arcosh argument is 1+u; clamp it monotonically to at least 1.0 and never to 1+delta. Compute arcosh(1+u) using log1p(u+sqrt(u*(u+2))); clamp u below at zero only for roundoff. Use float64 for the scalar distance calculation, then cast back.",
+        "delta": 0.0,
+        "epsilon": 1e-06,
+        "exp_map": "For tangent v, exp_0^c(v)=tanh(sqrt(c)*||v||)*v/(sqrt(c)*||v||), with scale 1 at ||v||=0; at c=0 it is exactly v.",
+        "limits": "As c->0, D^2(x,y)->4*||x-y||^2 (the unsquared distance tends to 2*||x-y||); exp_0^c is the identity; the curvature projection radius (1-epsilon)/sqrt(c) is undefined, so only the common P_R applies. All c-dependent operations use this continuous flat branch.",
+        "parameter": "c=0.5, corresponding to sectional curvature -c; delta=0.0, so the arcosh argument is clamped to at least 1.0 and never to 1+delta",
+        "projection": "P_R(x)=x*min(1,R/||x||), with factor 1 when ||x||=0. This common Euclidean ball projection applies in both arms to every vector entering D^2. The curvature feasibility radius (1-epsilon)/sqrt(c) is an additional curved-arm projection after P_R; it is not part of scored-region monotonicity. At c=0 that radius is undefined and the flat arm applies P_R only, not a curvature-radius projection.",
+        "stable_squared_distance": "For ||x||,||y||<=R, u=2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2)); a=log1p(u+sqrt(u*(u+2))); D^2(x,y)=d_c(x,y)^2=(1/c)*max(a,0)^2. This is the single scored distance, squared; the objective uses D^2 in both arms."
+      },
+      "mechanism": "Transition-conditioned residual Poincare vector quantization (T-RPQ). A frozen-dimensional item content vector e_i in R^d is encoded by an affine/ReLU MLP with widths [512,256,64,32] to z_i in R^32; layer weights use PyTorch Kaiming-uniform, biases zero, with initialization seed 42. A mirrored affine/ReLU decoder has widths [32,64,256,512,d], linear final layer, same initialization rule and seed. Fixed content inputs are the row-normalized Stage1 item embedding matrix; item row order is the frozen item-ID order. Trainable tensors are encoder, decoder and three [256,32] codebooks. Codebooks are initialized by sequential KMeans (k-means++, n_init=10, random_state=0) on encoded train-item vectors and successive residuals; initialization uses only train-split items, and the identical initial tensors are copied to both arms. No learned user or prefix network is present.",
+      "objective": {
+        "anti_collapse": "Content reconstruction is the anti-collapse term: mapping every item to the same code cannot reconstruct the distinct frozen item embeddings and incurs positive reconstruction error. It enters as L_rec in the total loss and has a gradient through the decoder and straight-through quantized representation into the encoder.",
+        "assignment_gradient": "Hard argmin determines exported SID only. During training use soft assignment per level p_ilj=softmax_j(-D^2(x_il,c_lj)/tau), tau=0.1, and qbar_il=sum_j p_ilj*c_lj; hard q_il is the argmin code. Straight-through value qST_il=q_il+qbar_il-stop_gradient(qbar_il) gives hard forward values and soft-assignment backward gradients to residuals and codebooks. No loss is computed solely on detached one-hot assignments.",
+        "losses": [
+          {
+            "circularity": "Targets e_i are frozen inputs independent of all trainable parameters; no target is derived from assignment or prediction.",
+            "equation": "L_rec=(1/(N*d))*sum_{i in I_train} ||Dec(sum_{l=1}^3 qST_il)-e_i||_2^2",
+            "name": "content_reconstruction",
+            "reduction_empty_rule": "Mean over N*d scalar elements; N=0 is invalid and yields NULL, never zero.",
+            "tensors_and_shapes": "e:[N,d] frozen row-normalized content embeddings; qST:[N,3,32]; Dec is the specified shared MLP; I_train is all train-split item rows, N=|I_train|."
+          },
+          {
+            "circularity": "The hard selected index is treated constant in this term; the first summand trains residual/encoder, the second trains selected codebook rows, and the separate L_rec uses the declared straight-through estimator.",
+            "equation": "L_q=(1/(3N*32))*sum_{i in I_train,l in {1,2,3}} [D^2(x_il,stopgrad(q_il))+D^2(stopgrad(x_il),q_il)]",
+            "name": "quantization_commitment",
+            "reduction_empty_rule": "Mean over 3*N*32; empty I_train is invalid/NULL.",
+            "tensors_and_shapes": "x_il is exp-map then common/domain-projected residual at assignment level l, shape [N,32]; q_il is the selected projected code vector [N,32]."
+          },
+          {
+            "circularity": "Labels h_at are computed once from train item IDs and are parameter-independent; sigmoid BCE retains gradients through the soft differentiable logsumexp score.",
+            "equation": "For each train-only ordered transition (a,t) in T, let h_at=1 if k_a1=k_t1 else 0; L_tr=-(1/|T|)*sum_(a,t in T) log(sigmoid(s_at)), where s_at=logsumexp_j(-D^2(x_a1,c_1j)/tau) + logsumexp_j(-D^2(x_t1,c_1j)/tau) - D^2(x_a1,x_t1)/tau; optimize a pair logit over all ordered train transitions using h_at as binary label: L_tr=-(1/|T|)*sum_[h_at log(sigmoid(s_at))+(1-h_at)log(1-sigmoid(s_at))].",
+            "name": "train_successor_prefix_alignment",
+            "reduction_empty_rule": "Mean over transition records, including repeated records; if T is empty, L_tr=0 by explicit no-supervision rule.",
+            "tensors_and_shapes": "T is the multiset of ordered adjacent item transitions from train.parquet, one transition per adjacent event; a,t item indices; x_a1,x_t1 are level-one mapped/projected vectors [32]; c_1j are projected first-level code vectors [256,32]."
+          }
+        ],
+        "total_loss": "L=L_rec+0.25*L_q+0.1*L_tr; all coefficients are frozen and identical across arms.",
+        "training_protocol": "Both arms use the frozen Stage2 baseline protocol values: 3000 epochs; per-rank batch 1024 (global batch 4096 on four ranks); AdamW learning rate 0.001, weight decay 0.0001; linear warmup for 50 epochs then linear decay to zero; gradient clip norm 1.0; seed 42 (rank seed 42+rank); no early stopping; identical shuffled sampler and data ordering. Codebook KMeans initialization is as specified above and is performed once on the same train embeddings. The only intervention is c=0.5 versus its exact c->0 limit. Hyperparameters are not swept. These literal protocol values are binding for this candidate, not a reference to an unspecified repository default."
+      },
+      "operator": "poincare_squared_distance",
+      "residual_assignment_order": "For each item i, initialize r_i^0=z_i. For level l=1,2,3 in order: map r_i^(l-1) with exp_0^c, then project by P_R and (curved arm only) curvature-domain projection; map each codebook row with exp_0^c then apply the same projections; assign k_il=argmin over 256 rows of D^2 between these mapped/projected vectors (ties choose the lowest code index); select that code vector q_il; subtract in tangent coordinates r_i^l=r_i^(l-1)-q_il. The residual update is thus map, project, assign, subtract; the next iteration maps and projects the updated residual before scoring. The final global SID is exactly (k_i1,k_i2,k_i3). No beam search or ranking occurs.",
+      "shared_domain_control": "One parameterized implementation evaluates the same mapped vectors, codebooks, assignment, residual procedure, loss, and projection P_R in both arms; only D^2 and its c-dependent exp-map/domain operation vary with c. Both arms have identical architecture, trainable parameter count, data, initialization, optimizer, schedule, seeds, batch composition and training budget. Any residual is updated by subtraction only after assignment and the update is projected before it is scored at the next level."
+    },
+    "next_item_hypothesis": "One demonstrated failure is that a globally content-quantized first SID token can fail to identify the train-observed successor neighborhood of a given anchor: the measured train-only longest-prefix population has 323633 directed pairs, and 314605 lack an observed reverse event (fraction 0.9266197178950221). This is evidence of directional structure, not proof that curvature or any intervention improves prediction. Hypothesis: packing anchor-conditioned successor groups into curved coarse neighborhoods and using residual levels for within-neighborhood distinctions can improve Stage2 valid L1 successor alignment and Stage3 next-item ranking. Each item nevertheless receives one content-derived global SID, independent of user and request.",
+    "protocol": {
+      "codes_per_level": 256,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "protocol_freeze": "3000 epochs; batch 1024/rank, four ranks; AdamW lr 0.001, weight_decay 0.0001; 50-epoch linear warmup then linear decay; gradient clip 1.0; seed 42 plus rank offset; deterministic sequential KMeans++ initialization n_init=10 random_state=0 on train embeddings/residuals; no early stop. Full literal encoder/decoder, objective, geometry, initialization and optimizer specification is in math_definition.",
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "The proposed failure is motivated by the supplied train-only longest-prefix statistics (no reverse observed event for 314605 of 339519 transitions) and is tested on the frozen 52855 validation pairs. Validation is diagnostic-only and never enters fitting. The frozen valid L1 positive hit rate is the share of pairs where anchor first token equals positive first token; valid Hard-L1 ER=10*positive_hits/negative_hits, with negative hits counted on the ten negatives the same way. level2_distinct_prefixes=number of distinct (k1,k2) pairs over all items. L3 collision is item fraction whose full (k1,k2,k3) occurs on another item. L3 refinement gain is item-mean log2(bucket_size(k1,k2)/bucket_size(k1,k2,k3)). Conditional G3 uses alpha=1,K=256: for each pair (anchor,target), p_pref(l)=(count of items sharing target's level-two prefix with third code l - 1[target third code=l] + alpha)/(bucket size - 1 + alpha*K); p_hist(l)=(train-only longest-prefix successor count of anchor restricted to target's level-two prefix and third code l + alpha*p_pref(l))/(restricted successor total + alpha); mean log2(p_hist(target third code)/p_pref(target third code)); no restricted successor contributes 0 and non-finite pair is NULL. Exactly 52855 fixed valid pairs, one positive and ten negatives per anchor, seed 42, history[-1] -> target. Empty item buckets/pair set or zero negative-hit denominator produce NULL, not zero. Stage3 uses test_R@10 only, computed once on frozen test protocol, no test fitting or model selection.",
+    "schema_version": 1,
+    "stable_global_sid": true,
+    "training_only_inputs": {
+      "diagnostic_inputs": "Frozen validation pairs only for registered Stage2 diagnostics; no gradients or model selection. Test behavior is read-only for the registered Stage3 behavioral test.",
+      "fit_inputs": "Frozen item content embeddings and train.parquet item transitions only. Transition supervision is legal under CLAUDE.md rule 16. No validation/test behavior, future events, prediction-time user context, or batch-composition-derived targets.",
+      "global_sid": "The mapping from item content row to three-code SID is deterministic and identical across users, batches and requests."
+    }
+  },
+  "candidate_id": "issue117_geometry_transition_residual_poincare_v2",
+  "candidate_sha256": "9ca2916dac00c7661f149ea0b41f703a4953fe2569b2af1b147852b327eb30c8",
+  "contract_sha256": "49aa906c026ec9841bccdfac401e9c95dc51a82e204c2f930cb7d5fb55c0b16a",
+  "inputs_sha256": "06a2e54919b08470ffe80c7a8f1cff2cd180c08126694763466588e0dcb52ccc",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "basis": "HypRQ-VAE is the direct candidate to verify: determine whether its hyperbolic item indexing represents user behavior-conditioned transitions or only global item hierarchy/long-tail structure. Pctx explicitly motivates that user intent changes item interpretation, while using semantic IDs without stated hyperbolic geometry.",
+        "candidate": "User-conditioned hierarchy/geometry mismatch in next-item prediction",
+        "evidence_label": "ABSTRACT",
+        "testable_question": "Do hyperbolic neighborhoods or hierarchical codes learned globally preserve the user-specific transition neighborhood needed to predict the next item, or do they impose a global similarity prior that conflicts with individual intent?"
+      },
+      {
+        "basis": "HypRQ-VAE's title/abstract scope combines hyperbolic indexing and long-tail-aware generative recommendation; HMamba and Poincaré sequential recommendation provide behavior-plus-geometry comparators.",
+        "candidate": "Long-tail next-item behavior under hyperbolic generative indexing",
+        "evidence_label": "ABSTRACT",
+        "testable_question": "Does hyperbolic indexing improve next-item recall for sparse-history users and tail items without degrading head-item accuracy or user-specific ranking?"
+      }
+    ],
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "limitations": [
+      "Only HypRQ-VAE's arXiv full-text HTML was directly fetched; the other papers are supported here by arXiv API metadata/abstracts, not independent full-text inspection.",
+      "The direct triple-intersection claim is provisional: HypRQ-VAE appears to combine sequential recommendation, hyperbolic indexing, and generative discrete item indices, but whether those indices are semantic IDs and how user behavior conditions their generation must be checked in the full text.",
+      "No inspected source proves that hyperbolic geometry itself improves user next-item behavior in a semantic-ID generation pipeline; the comparator papers each omit at least one axis.",
+      "ArXiv identifier links are independently resolvable source records; DOI absence is represented as null rather than inferred."
+    ],
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "sources": [
+      {
+        "arxiv": "2609.03369",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Strongest direct candidate for all three axes: next-item/sequence recommendation behavior; hyperbolic geometry applied to item indexing; and generative recommender systems that use discrete item IDs. The stated emphasis is long-tail-aware item indexing. Do not assume the generated index is specifically called a semantic ID unless confirmed in the full text; the abstract evidence alone says discrete item indices.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2609.03369",
+          "full_text_html": "https://arxiv.org/html/2609.03369",
+          "pdf": "https://arxiv.org/pdf/2609.03369"
+        },
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+        "verification": "The arXiv full-text HTML was fetched successfully (HTTP 200; substantial article body, not only the abstract). The arXiv API record identifies the paper as HypRQ-VAE and its abstract describes sequential recommendation, generative recommendation using LLMs and discrete item indices, and proposed hyperbolic item indexing. The full text is the primary source to inspect for the exact tokenizer/generation details and experimental scope."
+      },
+      {
+        "arxiv": "2505.09205",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": "Sequential recommendation and hyperbolic geometry are explicit in the title/abstract. No generative semantic-ID mechanism is established by the inspected abstract; this is a behavior-plus-geometry comparator, not a demonstrated triple-intersection match.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2505.09205",
+          "pdf": "https://arxiv.org/pdf/2505.09205"
+        },
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+        "verification": "ArXiv API search record provides title, identifier, and abstract. Full-text article was not independently inspected for this report."
+      },
+      {
+        "arxiv": "2205.11233",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": "Sequential user behavior and Poincaré/hyperbolic representation are the relevant overlap. The inspected abstract does not establish generative semantic IDs.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2205.11233",
+          "pdf": "https://arxiv.org/pdf/2205.11233"
+        },
+        "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+        "verification": "ArXiv API search record provides title, identifier, and abstract. Full-text article was not independently inspected for this report."
+      },
+      {
+        "arxiv": "2510.07784",
+        "doi": "10.1145/3774904.3792802",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": "Generative recommendation that predicts Semantic IDs from user context is explicit. No hyperbolic geometry is established in the inspected abstract; useful as the semantic-ID/user-context comparator, not a triple-intersection result.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2510.07784",
+          "doi_url": "https://doi.org/10.1145/3774904.3792802",
+          "pdf": "https://arxiv.org/pdf/2510.07784"
+        },
+        "title": "PLUM: Adapting Pre-trained Language Models for Industrial-scale Generative Recommendations",
+        "verification": "ArXiv API record supplies title, abstract, DOI, and WWW '26 journal reference. Article full text not independently inspected here."
+      },
+      {
+        "arxiv": "2510.21276",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": "The abstract explicitly identifies next-action/next-item prediction via generated semantic IDs and argues that static item tokenization omits user-specific perspectives; its proposed context-aware tokenizer uses a user's historical interactions. No hyperbolic geometry is established in the inspected abstract. Strong behavior-first comparator, not a triple-intersection match.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2510.21276",
+          "pdf": "https://arxiv.org/pdf/2510.21276"
+        },
+        "title": "Pctx: Tokenizing Personalized Context for Generative Recommendation",
+        "verification": "ArXiv API record supplies title, abstract, and identifier. Full-text article not independently inspected here."
+      }
+    ],
+    "task_id": "literature"
+  },
+  "literature_evidence_sha256": "e5005b69310b036daba89277b11803927a6a04edd999e63afb272d116de82e27",
+  "preflight_verdict": "SCIENTIFIC_REVIEW_REQUIRED",
+  "preflight_warnings": [],
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

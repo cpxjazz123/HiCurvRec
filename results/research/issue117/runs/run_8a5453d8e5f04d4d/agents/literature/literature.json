@@ -1,0 +1,56 @@
+{
+  "sources": [
+    {
+      "title": "Hyperbolic RQ-VAE enhanced Generative Recommendation with Differential-Length Codebook Strategy",
+      "doi": null,
+      "arxiv": null,
+      "identifier_note": "Local full-text metadata identifies this as ICML 2026, PMLR 306; the local metadata field labelled arxiv_id is a nonstandard filename-like value, not a verifiable arXiv identifier. Do not treat it as an arXiv ID.",
+      "overlap": "Hyperbolic geometry is used in residual quantization to construct hierarchical discrete item codes for generative recommendation. The paper evaluates downstream recommendation, but the inspected text does not establish a user-behavior-specific geometric claim or isolate next-item behavior as the target of the geometry.",
+      "evidence_label": "FULL_TEXT",
+      "evidence_basis": "Full parsed manuscript available locally at papers/HG-Rec.md; title, abstract, methods and experiments inspected. Independently citable persistent identifier was not verified.",
+      "relevance": "Direct hyperbolic + generative discrete-code overlap; incomplete evidence for behavior-specific motivation."
+    },
+    {
+      "title": "Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation",
+      "doi": null,
+      "arxiv": "https://arxiv.org/abs/2605.06331",
+      "overlap": "Studies autoregressive semantic-ID generation for predicting a user's next item from interaction history and identifies preference rank-reversal limitations induced by shared decoding prefixes. It does not use hyperbolic geometry.",
+      "evidence_label": "FULL_TEXT",
+      "evidence_basis": "Full parsed manuscript available locally at papers/latte_2605.06331.md; arXiv identifier is encoded in the local metadata and filename. Full text inspected.",
+      "relevance": "Strong behavior-first evidence for a generative semantic-ID failure mode, but no hyperbolic component."
+    },
+    {
+      "title": "TIGER: Transformer-based Item Generation for Explainable and Robust Recommendation",
+      "doi": null,
+      "arxiv": "https://arxiv.org/abs/2305.05065",
+      "overlap": "Generates semantic item identifiers autoregressively to recommend a next item from user interaction history. No hyperbolic geometry is part of the method.",
+      "evidence_label": "UNKNOWN",
+      "evidence_basis": "Identifier/title and commonly reported method details are supplied as a potentially relevant lead, but no full text was independently inspected in this task. Verify the arXiv record and paper before relying on this entry.",
+      "relevance": "Generative semantic-ID next-item baseline; no geometry overlap."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "User-specific rank reversals among semantically or code-prefix-near items",
+      "support": "Latte reports that shared-prefix autoregressive semantic-ID generation can couple item probabilities across users, making it difficult to express users who prefer different items within a similar item group.",
+      "evidence_label": "FULL_TEXT",
+      "source": "Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation",
+      "hyperbolic_necessity": "Not established. A hypothesis that hyperbolic code geometry improves this behavior would require direct comparisons and behavioral diagnostics; hierarchical code capacity alone is insufficient evidence."
+    },
+    {
+      "candidate": "Rare-item or deep-hierarchy next-item discrimination under sparse histories",
+      "support": "HG-Rec motivates hyperbolic codebooks through hierarchy and codebook-use/collision properties and reports downstream recommendation results. The inspected evidence does not demonstrate that the improvement specifically addresses a user-level next-item failure among tail items.",
+      "evidence_label": "FULL_TEXT",
+      "source": "Hyperbolic RQ-VAE enhanced Generative Recommendation with Differential-Length Codebook Strategy",
+      "hyperbolic_necessity": "Plausible design hypothesis only; not demonstrated as a necessary geometry for any identified user behavior."
+    }
+  ],
+  "limitations": [
+    "No independently verified full-text work found in the inspected material that establishes all three elements together: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+    "HG-Rec is the closest geometry-plus-generative-code work, but its stated motivation and analyses center on codebook hierarchy, collision, utilization and efficiency; these do not by themselves establish a behavior-grounded need for negative curvature.",
+    "Latte supplies a concrete next-item preference-expressiveness problem for semantic-ID generation but contains no hyperbolic mechanism.",
+    "The HG-Rec local metadata does not provide a usable DOI or standard arXiv identifier. Its title and ICML/PMLR venue details are available in the parsed manuscript, but the exact persistent identifier remains unverified.",
+    "The TIGER entry is only a lead in this response and has UNKNOWN full-text evidence status; it must not be treated as independently verified evidence.",
+    "No local behavioral candidate or project-specific prompt was used as literature evidence. The claims above are limited to the stated research question and inspected paper text."
+  ]
+}

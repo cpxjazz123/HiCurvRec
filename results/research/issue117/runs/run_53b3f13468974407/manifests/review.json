@@ -1,0 +1,240 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "high-next-item-entropy-with-most-directed-pairs-not-observed-in-reverse",
+    "candidate_id": "geometry-negative-curvature-branching-v1",
+    "effect_site": "Stage2 item content embedding -> hierarchical levelwise code assignment and codebook geometry, through squared Poincare distance in quantization/reconstruction and commitment terms. No user-conditioned component.",
+    "euclidean_control": {
+      "curvature_ablation": "Also run the identical parameterization and recipe with c driven to its flat limit c=0, evaluating the analytic limit d_0^2=4*||x-y||^2 and exp0_0(u)=u followed by the same norm-bound policy. This is the curvature ablation and is identical to the metric-only Euclidean control, not an additional architecture or protocol.",
+      "directed_graph_control": "Fit a directed weighted graph only from observed training transitions among the training items. Edge weight w(i,j) is transition count; score each item j for source item i by log(1+w(i,j)) (unobserved edges score 0; deterministic ties by item ID). For the Stage2 representation comparison, construct a 32-dimensional item feature input by concatenating the graph's 16-dimensional outgoing and 16-dimensional incoming truncated-SVD coordinates of the training-only log1p(weight) adjacency matrix, with singular vectors/signs fixed deterministically by the stated seeds; feed these features through the same encoder, codebooks, SID objective, optimiser/schedule and 3000-epoch stopping rule. The graph never receives validation/test transitions or user-prefix data. Its Stage3-facing prediction is strictly a diagnostic comparator, not part of the hyperbolic candidate.",
+      "metric_only_control": "Use exactly the candidate's encoder, conditioning offsets, code parameterization, loss, tau, initialization, optimizer, schedule, batch, frozen 3000 epochs and stopping-at-epoch-3000 rule, data, and seeds. Change only every squared metric term d_c(x,y)^2 to 4*||x-y||^2 on the same 32-dimensional coordinates. This is the exact c->0 limit of the stated formula and preserves temperature scale; do not use bare squared Euclidean distance."
+    },
+    "falsifier": "Reject the negative-curvature mechanism if, under the matched frozen recipe and seeds, the c=1 candidate does not improve validation Hard-L1 ER over the c=0 flat run, or if it improves ER only by collapsing SID diversity (fewer distinct two-token prefixes) or worsening any of the three existing L3 statistics relative to flat. The primary curvature-specific falsifier is no favorable measured difference in validation Hard-L1 ER between c=1 and the identical c=0 run; report paired seed-wise differences descriptively, without a user bootstrap. The three L3 statistics and distinct two-token-prefix count are diagnostics, not post-hoc tuning targets. For the downstream hypothesis, a Stage3 test is separate and must use its established evaluation protocol; this Stage2 proposal makes no claim of measured ranking gains.",
+    "hyperbolic_necessity": "The claim is a geometry hypothesis, not a conclusion from entropy or literature. Negative curvature offers distance expansion toward the boundary, potentially allowing coarse shared semantic regions and finer-separated branches to coexist in the fixed 32-dimensional, fixed-code-capacity quantizer. That is pertinent to diverse, predominantly non-reversed observed transitions only insofar as semantic branching in item content reflects successor-relevant distinctions. A Euclidean/graph result matching or exceeding it would reject the claimed necessity. Literature evidence supports only partial overlaps: hyperbolic sequential recommendation and semantic-ID next-POI generation are separately represented; it does not establish their three-way intersection or novelty.",
+    "literature_evidence_sha256": "dd1a949a6f07182fdaf2e6e588cb97b5ffc2c795a23442a0069025e074a76136",
+    "math_definition": {
+      "distance": "For x,y in B_c={v in R^32: ||v||<1/sqrt(c)}, d_c(x,y)=(2/sqrt(c))*arcosh(1+2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2))). Candidate curvature c=1.0 (fixed, no sweep); tau=0.1; epsilon=1e-6. Numerically stable arcosh(z)=log1p((z-1)+sqrt((z-1)*(z+1))) for z>=1, with z-1 computed from the nonnegative fraction above and clamped below at 0 against roundoff. Before exp0 and for any learned code point, radially project to norm <= (1-epsilon)/sqrt(c); this closed interior margin is the boundary policy, and the same radial rule applies to flat-control coordinates. Similarity logits are -d_c^2/tau.",
+      "embedding_and_codes": "For each item's training-available content embedding x, use the shared candidate encoder f_theta(x) in R^32. At level l, encode a global SID token k_l in {0,...,255}. Define u_1=f_theta(x); for l>1 define u_l=f_theta(x)+sum_{j<l} a_{l,j}(k_j), where a_{l,j} are learned 32-dimensional token-conditioning offsets. Map each u_l to the Poincare ball by exp0_c(u)=tanh(sqrt(c)*||u||)*u/(sqrt(c)*||u||), with value 0 at u=0. Level 1 scores its 256 learned code points p_{1,k}; level 2 scores p_{2,k|k1}; level 3 scores p_{3,k|k1,k2}. All code points lie in the open ball. Assignment is sequential argmin of squared distance (ties choose lowest code index). Thus level 2 conditions on token 1 and level 3 conditions on tokens 1 and 2; this is an ITEM encoder, not a user-prefix or next-item predictor.",
+      "objective": "Train the frozen Stage2 item-SID objective with the same data recipe: differentiable soft assignment q_l(k|x,prefix)=softmax_k(-d_c(z_l,p_l)^2/tau), straight-through hard argmin for emitted SID, and summed levelwise quantization/reconstruction loss L=sum_l E_q[d_c(z_l,p_l)^2] plus the recipe's existing commitment term using the same distance and coefficient. No added data, losses, or training stages. Decoder/reconstruction and commitment terms use only the item's content embedding and its emitted code sequence."
+    },
+    "next_item_hypothesis": "The measured train-only next-item distribution has mean entropy 4.844 bits, and 314605/323633 directed item pairs (0.9266) have no observed reverse event. This is evidence of heterogeneous, asymmetric transitions, not evidence that negative curvature itself improves prediction. Hypothesis: if item-content embeddings contain broad-to-specific semantic organization relevant to these diverse successors, negatively curved code geometry can allocate representational capacity to coarse shared regions while separating specialized branches, yielding SIDs that preserve item distinctions useful to Stage3. Stage3 T5, not this Stage2 candidate, ranks next items. The proposed falsifiable downstream prediction is directional only: with Stage3 otherwise frozen and trained on the resulting SIDs, next-item ranking quality on the same predeclared validation split should improve versus the matched flat metric; no magnitude or significance is assumed here.",
+    "protocol": {
+      "batch": "use the frozen Stage2 batch size",
+      "codebook_initialisation": "use the frozen Stage2 codebook initialisation unchanged",
+      "codes_per_level": 256,
+      "epochs": 3000,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "parameter_count_target": "exactly matched across hyperbolic and Euclidean runs by identical encoder, conditioning-offset and codebook tensor shapes",
+      "schedule": "use the frozen Stage2 optimizer and learning-rate schedule unchanged",
+      "seeds": "use the frozen Stage2 seed set unchanged",
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "The trigger is the supplied train-only behavior measurement: mean next-item entropy 4.844072338042215 bits; 323633 directed pairs, of which 314605 (0.9266197) have no observed reverse events. It motivates heterogeneous/asymmetric next-item behavior, but does not identify semantic hierarchy, causality, or curvature benefit. The supporting training population is longest-prefix-per-user only; use no future/test interactions.",
+    "stable_global_sid": true,
+    "training_only_inputs": "Only each item's content embedding and the frozen Stage2 training split's item/content inputs and recipe are used to build SIDs. No user prefixes, future events, validation/test interactions, prior-candidate prompts, or downstream ranking labels enter candidate training. The directed graph control uses training transitions only as explicitly specified."
+  },
+  "candidate_id": "geometry-negative-curvature-branching-v1",
+  "candidate_sha256": "58134fbcfc4e0654bb5f8c92999715b03df89939e41c5d1b677a5fc310aad218",
+  "inputs_sha256": "608b926d40181800eb2c266d370297cb0d993b515667230754ed3bc858c8ef6d",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Sequential next-item recommendation under hierarchical/long-tail behavior",
+        "evidence": "HMamba and Hyperbolic Hypergraphs directly frame sequential recommendation and hyperbolic modeling.",
+        "status": "supported partial intersection; semantic-ID generation absent",
+        "supporting_sources": [
+          "10.48550/arXiv.2505.09205",
+          "10.1145/3459637.3482351"
+        ]
+      },
+      {
+        "candidate": "Generative next-POI prediction using semantic IDs",
+        "evidence": "Generative Next POI Recommendation with Semantic ID explicitly combines next-POI recommendation and semantic-ID generation.",
+        "status": "supported partial intersection; hyperbolic geometry absent",
+        "supporting_sources": [
+          "10.1145/3711896.3736981"
+        ]
+      }
+    ],
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "limitations": [
+      "No independently verified source located in this search establishes all three elements together: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+      "ACM PDF endpoints for the two ACM sources returned HTTP 403; their classifications are ABSTRACT/metadata-level only, not full-text-verified.",
+      "The only FULL_TEXT label is limited to an HTTP-200 arXiv PDF endpoint; it supports the hyperbolic sequential-recommendation overlap, not the complete three-way claim.",
+      "Search discovery used OpenAlex metadata and public PDF endpoint checks; absence claims are bounded to retrieved records and are not proof that no such work exists.",
+      "Do not treat “semantic” representations or hyperbolic sequential recommenders as evidence of generative semantic-ID decoding unless the paper explicitly describes that mechanism."
+    ],
+    "research": "issue117-behavior-first",
+    "sources": [
+      {
+        "arxiv": "2505.09205",
+        "doi": "10.48550/arXiv.2505.09205",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "User behavior as sequential recommendation and hyperbolic representation are directly studied. No generative semantic-ID item tokenization/generation found in the title/abstract-level description; therefore partial overlap, not the full three-way intersection.",
+        "full_text_url": "https://arxiv.org/pdf/2505.09205",
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+        "url": "https://arxiv.org/abs/2505.09205",
+        "verification": "PDF endpoint returned HTTP 200 and application/pdf; title/identifier discoverable via OpenAlex."
+      },
+      {
+        "doi": "10.1145/3459637.3482351",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": "Sequential user-item behavior plus hyperbolic hypergraph modeling; no generative semantic IDs established.",
+        "full_text_url": "https://dl.acm.org/doi/pdf/10.1145/3459637.3482351",
+        "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+        "url": "https://doi.org/10.1145/3459637.3482351",
+        "verification": "OpenAlex indexed metadata and listed ACM PDF; direct PDF request returned HTTP 403, so full text was not independently inspected."
+      },
+      {
+        "doi": "10.1145/3711896.3736981",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": "Generative recommendation with semantic IDs and next-POI behavior; hyperbolic geometry not established.",
+        "full_text_url": "https://dl.acm.org/doi/pdf/10.1145/3711896.3736981",
+        "title": "Generative Next POI Recommendation with Semantic ID",
+        "url": "https://doi.org/10.1145/3711896.3736981",
+        "verification": "OpenAlex indexed title/DOI and listed ACM PDF; direct PDF request returned HTTP 403, so full text was not independently inspected."
+      },
+      {
+        "doi": "10.1145/3640457.3688180",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": "Sequential recommendation behavior and hyperbolic representations; no generative semantic IDs established.",
+        "full_text_url": "https://dl.acm.org/doi/pdf/10.1145/3640457.3688180",
+        "title": "Self-Attentive Sequential Recommendations with Hyperbolic Representations",
+        "url": "https://doi.org/10.1145/3640457.3688180",
+        "verification": "OpenAlex indexed title/DOI and listed ACM PDF; direct full-text access not verified in this check."
+      },
+      {
+        "doi": "10.1109/TCSS.2024.3409711",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": "Sequential recommendation with hyperbolic translation; generative semantic-ID intersection unverified.",
+        "title": "Hyperbolic Translation-Based Sequential Recommendation",
+        "url": "https://doi.org/10.1109/TCSS.2024.3409711",
+        "verification": "OpenAlex indexed metadata; no accessible full-text URL was established."
+      }
+    ],
+    "task_id": "literature"
+  },
+  "literature_evidence_sha256": "dd1a949a6f07182fdaf2e6e588cb97b5ffc2c795a23442a0069025e074a76136",
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

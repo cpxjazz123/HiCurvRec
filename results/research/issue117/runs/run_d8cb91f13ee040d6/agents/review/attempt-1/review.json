@@ -1,0 +1,22 @@
+{
+  "candidate_id": "issue117-geometry-transition-residual-poincare-v1",
+  "candidate_sha256": "94ca0360e8757cf445e2b3a0bf3c370054d88cb5dd8c56e3a4b6fd33f6f9469c",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "issue": "The registered falsifier is not mechanically classifiable: its `falsified_if` condition (any registered effect misses its threshold) also holds whenever `mixed_if` holds (at least one effect meets and another misses). No precedence or mutually exclusive classification rule resolves this overlap.",
+      "evidence": "candidate.falsifier.classification.falsified_if and mixed_if"
+    },
+    {
+      "issue": "At least two Stage2 diagnostic computations are not specified sufficiently to reproduce uniquely. `valid Hard-L1 ER` does not define the Hard-L1 hit criterion or the construction/identity of the ten negatives; `conditional G3` refers to a history-term mixture into a prefix prior without defining the mixture formula/weight or the resulting score and hit calculation. Thus their registered effects and thresholds cannot be mechanically evaluated from this manifest alone.",
+      "evidence": "candidate.falsifier.stage2_diagnostics entries `valid Hard-L1 ER` and `conditional G3`; the former only states ER=10*positive_hits/negative_hits and points to frozen validation pairs, while the latter only names a train-transition history term mixed into a Laplace-smoothed prior. Neither entry defines the missing computation."
+    }
+  ],
+  "reproducible_evidence": {
+    "causal_link": "The design claim is plausible but explicitly hypothetical: the train-only transition evidence shows asymmetry/branching (314605/339519 transitions have no observed reverse; mean entropy 4.844 bits), and the proposal applies a training-only transition objective to global SID assignment. This is a mechanism rationale, not evidence that curvature causes a next-item gain. Stage2 not ranking is correctly acknowledged; the registered downstream test is test_R@10, curved-minus-flat > 0.005, paired frozen Stage3 seeds with arithmetic mean of per-seed differences and no test-based tuning.",
+    "math_and_domain": "The stated Poincare squared-distance expression is well-typed for projected vectors in B_(1-epsilon), c=1; denominators remain positive. Exp_0 maps 32-vectors to 32-vectors, and Euclidean residual subtraction/reconstruction is dimensionally consistent. The stated c->0 squared-distance limit 4||x-y||^2 is correct for fixed projected x,y, and the flat arm uses that limit with the same fixed projection ball. No undefined scored-distance domain or missing flat limit is apparent.",
+    "control": "The declared control holds architecture, parameters, initialization, targets, losses, inputs, projection ball, optimizer, schedule, seeds and budget fixed, varying only c/distance through the same path. No capacity mismatch is apparent from the design claim.",
+    "leakage_and_protocol": "Inputs and transition targets are declared training-only; assignment is global per item and excludes user/history/request context. Validation and test are declared diagnostic/evaluation-only, not fitting or selection. The frozen Stage2 protocol specifies 3000 epochs, no sweep/early stopping, 256 codes at each of three levels and latent dimension 32. No user-future leakage is specified.",
+    "registered_indicators": "The manifest registers valid L1 positive hit rate, Hard-L1 ER, distinct two-token prefixes, L3 collision, L3 refinement gain and conditional G3 with directions, minimum effects and paired-seed aggregation. This is the appropriate kind of Stage2 leading-indicator set under the scope rule, but the noted diagnostic definitions prevent reproducible evaluation. Stage3 behavioral metric/direction/effect/seed aggregation are registered."
+  }
+}

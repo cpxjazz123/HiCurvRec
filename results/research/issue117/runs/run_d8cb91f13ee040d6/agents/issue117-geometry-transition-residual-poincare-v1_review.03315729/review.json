@@ -1,0 +1,13 @@
+{
+  "candidate_id": "issue117-geometry-transition-residual-poincare-v1",
+  "source_sha256": "a8066ae1bc72e944a345290505f78fce67c73da3e69775b6768adbdb581cd136",
+  "proposal_sha256": "94ca0360e8757cf445e2b3a0bf3c370054d88cb5dd8c56e3a4b6fd33f6f9469c",
+  "test_sha256": {
+    "test_gradient.py": "dbc28e440c7289fa1ace304c1170047d7d2063c9ee095eba2f30752c36f58fbd",
+    "test_math.py": "9f454803c1bcab9fd6817855617b8fd71cf5ecb4bc83098fab16de57f6b7b6c4",
+    "test_ddp.py": "7d3df98d28902999dd84158c38cda858a08d5a26a0e9cb341fd20b2287031cbd",
+    "test_entrypoint.py": "242e3e2108afc594fa9d34c40e9c5ae76e90637c582d28d12218480288ed52ac"
+  },
+  "verdict": "APPROVE_TESTS",
+  "rationale": "Recomputed the source digest from the manifest recipe and per-file hashes; it matches a8066a…136. All four reviewed test files match their listed SHA-256 values. Static inspection confirms independent numeric math references (including residual codes that sum to 1.0), real candidate RQVAE gradient checks, two spawned DDP ranks gathering rank-local gradients and post-step parameters, and entrypoint coverage invoking trainer.main() without mocking training. The math author-report's residual reconstruction value of 0.7 conflicts with the concrete reviewed test's 1.0, which is the correct sum for its stated selected code vectors; the executable oracle is explicit. No suites were executed here. verification_check must still establish nonzero, zero-skip passing execution under the Stage2 interpreter."
+}

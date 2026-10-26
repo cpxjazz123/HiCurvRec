@@ -1,0 +1,265 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "979ef91607e45b5913a770471312f17bed4288a86480fed39f110c7568315a37",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "behavior_first_question": "Does representing item-ID hierarchy in a negatively curved space improve prediction of the user's next interacted item from their observed session, compared with Euclidean Semantic IDs, while retaining autoregressive decoding?",
+        "candidate": "Behavior-conditioned next-item generation with hierarchical (hyperbolic) Semantic-ID structure",
+        "evidence_status": "SYNTHESIS / research gap, not a method already verified in one source",
+        "grounding": "Combine the explicitly observed user-session-to-next-Semantic-ID task in Recommender Systems with Generative Retrieval (FULL_TEXT) with the hyperbolic session/sequence modeling direction in TA-HGAT and HMamba (ABSTRACT)."
+      },
+      {
+        "behavior_first_question": "Which temporal transitions or session-intent branches are lost when the next item is represented by a flat code sequence, and can hierarchical geometry improve behaviorally valid branching?",
+        "candidate": "Temporal intent evolution and branching next-item choices in short sessions",
+        "evidence_status": "SYNTHESIS / candidate problem framing; no checked source tests these behaviors with generative Semantic IDs",
+        "grounding": "TA-HGAT's abstract explicitly identifies temporal intervals/current interests and next-interested-item prediction; H2SeqRec's abstract describes multi-timescale sequence modeling and dynamic social information."
+      },
+      {
+        "behavior_first_question": "Do generative Semantic IDs plus hyperbolic structure improve next-item prediction for rare or unseen items without reducing accuracy on frequent-item behavior?",
+        "candidate": "Long-tail and cold-start next-item behavior",
+        "evidence_status": "SYNTHESIS / candidate; avoid claiming the combined effect is established",
+        "grounding": "Generative Retrieval reports improved retrieval for items with no prior interaction history in its abstract; hyperbolic recommendation abstracts motivate hierarchy/long-tail structure. Their combination remains unverified."
+      }
+    ],
+    "limitations": [
+      "No independently verified source among those checked demonstrates all three elements together: user next-item behavior, hyperbolic geometry, and generative Semantic IDs. The evidence supports two-element overlaps and a research gap, not an existing integrated result.",
+      "FULL_TEXT is assigned only to the arXiv Semantic-ID paper whose experimental HTML was accessible and inspected; the other labels indicate abstract-only evidence, not full-text verification.",
+      "Negative claims are scoped to the evidence inspected (primarily abstracts); they do not prove a term or technique is absent from every version or appendix.",
+      "arXiv-issued DOI is provided for Recommender Systems with Generative Retrieval. For the remaining entries, arXiv identifiers are supplied and DOI is null rather than guessed.",
+      "The behavior problem candidates are proposed synthesis from the cited evidence, not claims made or validated by those papers."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+      "task_id": "literature"
+    },
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "doi": "10.48550/arXiv.2305.05065",
+        "evidence_checked": "arXiv record and full-text HTML v3",
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": {
+          "generative_semantic_ids": "YES — creates semantically meaningful tuples of codewords as item Semantic IDs and autoregressively decodes target identifiers.",
+          "hyperbolic_geometry": "NO — the accessible abstract and full-text framing describe semantic codeword tuples and generative retrieval, not hyperbolic geometry.",
+          "user_next_item_behavior": "YES — explicitly trains a Transformer sequence-to-sequence model on Semantic IDs in a user session to predict the Semantic ID of the next item the user will interact with."
+        },
+        "links": [
+          "https://arxiv.org/abs/2305.05065",
+          "https://arxiv.org/html/2305.05065v3"
+        ],
+        "relevance": "Strong evidence for next-item user behavior plus generative Semantic IDs, but not for the hyperbolic component.",
+        "title": "Recommender Systems with Generative Retrieval"
+      },
+      {
+        "arxiv": "2301.03780",
+        "doi": null,
+        "evidence_checked": "arXiv record abstract; full text not independently inspected",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "NO in the checked abstract — no generative retrieval or Semantic IDs are described.",
+          "hyperbolic_geometry": "YES — proposes a time-aware hyperbolic graph attention model and learns hierarchical session graphs in hyperbolic space.",
+          "user_next_item_behavior": "YES — abstract defines session-based recommendation as predicting users' next interested items from previous browsing sessions and describes prediction based on timestamp."
+        },
+        "links": [
+          "https://arxiv.org/abs/2301.03780"
+        ],
+        "relevance": "Directly relevant to behavior-first next-item modeling and hyperbolic session representation; does not establish generative Semantic IDs.",
+        "title": "Time-aware Hyperbolic Graph Attention Network for Session-based Recommendation"
+      },
+      {
+        "arxiv": "2108.08134",
+        "doi": null,
+        "evidence_checked": "arXiv record abstract; full text not independently inspected",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "NO in the checked abstract — no generative retrieval or Semantic IDs are described.",
+          "hyperbolic_geometry": "YES — uses hyperbolic-space hypergraph convolution to learn dynamic item embeddings.",
+          "user_next_item_behavior": "PARTIAL — sequential recommendation with multi-scale temporal item embeddings is explicit, but the checked abstract does not state the precise next-item target in those words."
+        },
+        "links": [
+          "https://arxiv.org/abs/2108.08134"
+        ],
+        "relevance": "Adjacent evidence for sequential behavior and hyperbolic representation, not the generative-ID intersection.",
+        "title": "Hyperbolic Hypergraphs for Sequential Recommendation"
+      },
+      {
+        "arxiv": "2505.09205",
+        "doi": null,
+        "evidence_checked": "arXiv record abstract; full text not independently inspected",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "NO in the checked abstract — no Semantic IDs or generative retrieval are described.",
+          "hyperbolic_geometry": "YES — proposes curvature-aware hyperbolic selective state-space sequence modeling.",
+          "user_next_item_behavior": "PARTIAL — explicitly addresses sequential recommendation and dynamic interaction sequences; checked abstract does not specifically assert Semantic-ID next-item decoding."
+        },
+        "links": [
+          "https://arxiv.org/abs/2505.09205"
+        ],
+        "relevance": "Recent hyperbolic sequential-recommendation comparator; it does not document generative Semantic IDs.",
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation"
+      },
+      {
+        "arxiv": "2102.09389",
+        "doi": null,
+        "evidence_checked": "arXiv record abstract; full text not independently inspected",
+        "evidence_label": "ABSTRACT",
+        "exact_overlap": {
+          "generative_semantic_ids": "NO in the checked abstract.",
+          "hyperbolic_geometry": "YES — models user/item representations and social relations in hyperbolic geometry.",
+          "user_next_item_behavior": "NO explicit next-item prediction in the checked abstract; evaluates click-through-rate prediction and top-K recommendation."
+        },
+        "links": [
+          "https://arxiv.org/abs/2102.09389"
+        ],
+        "relevance": "Background on hyperbolic recommendation only; not evidence for the requested full intersection.",
+        "title": "Hyperbolic Social Recommender"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "8ecdc8d852135d738d1b97d9d8559779e4648da966a0365b244c99fd4160e763",
+  "research": "issue117-behavior-first",
+  "revision_feedback": {
+    "blockers": [
+      {
+        "evidence": "Its seed_rule refers to prescribed p_pref and p_hist, alpha=1 and K=256, but does not define either probability distribution, the conditioning/counting population and smoothing denominator, or precisely how the target third code is obtained for the two distributions. The frozen validation pairs and train-only successor counts alone do not resolve these definitions.",
+        "issue": "The conditional_g3 diagnostic cannot be recomputed uniquely from the registered rule.",
+        "required_resolution": "Specify exact count sets, conditioning keys, smoothing formula and denominators for both distributions, plus handling of unseen target codes."
+      },
+      {
+        "evidence": "Stage3 says paired identical seeds and requires reporting paired differences, but does not enumerate the frozen seeds or define how paired test_R@10 changes are combined into the registered effect. The classification simultaneously refers to changes for every required seed and aggregate, while the Stage3 seed_rule defines no aggregate statistic. Stage2 rules also vary between per-seed calculation and paired aggregate change, while passed_if requires both every seed and aggregate to clear threshold.",
+        "issue": "The registered behavioral seed combination and the falsifier's aggregate/per-seed decision are not mechanically specified.",
+        "required_resolution": "Enumerate the inherited seed set and define the aggregate operator and exact pass/falsified/null decision for each seed and aggregate, including the Stage3 behavioral metric."
+      }
+    ],
+    "reproducible_evidence": {
+      "control_and_leakage": "The stated flat arm changes only the scored distance formula to its exact flat limit, retaining the same fixed projection, architecture, parameters, initialization, training configuration and budget. Stage2 assignment inputs are global item content and train-split transitions; validation is named for diagnostics only, test behavior is reserved for downstream Stage3, and no prediction-time user context or future events are specified as Stage2 inputs. No leakage blocker is evident from this manifest.",
+      "diagnostics_and_falsifier": "The required leading-indicator families are present: validation Hard-L1 ER, distinct two-token prefixes, and L3 statistics (refinement gain and collision), alongside conditional_g3. Frozen absolute admission thresholds are referenced. However, conditional_g3's probability definitions and the per-seed/aggregate outcome rules are not sufficiently specified for unique recomputation and mechanical classification. The preflight direction warnings for L3 are not, by themselves, blockers: the candidate gives an explicit hypothesis and registered directions, and the directions are falsifiable rather than claimed as measured facts.",
+      "math_and_domain": "The scored c>0 expression is well-typed for x,y in R^32 and c=1; the shared radius ||x||,||y||<=0.9 keeps 1-c||x||^2 and 1-c||y||^2 positive (at least 0.19). The arcosh argument is at least 1. The stated c=0 limit 4||x-y||^2 is correct. The fixed shared projection avoids a singular curvature-dependent projection at c=0. The geometry therefore has a non-flat, numerically defined scored-distance effect; epsilon is declared but unused, which is not itself a domain failure. The objective tensors and reductions are shape-consistent, and the target/assignment stop-gradient and STE paths are explicitly described. Reconstruction and commitment losses themselves use Euclidean norms, so the curvature acts through assignment distances rather than replacing those loss norms. This is consistent with the explicitly matched distance-only control, though it narrows the causal claim to geometry-induced assignments.",
+      "next_item_causal_claim": "The train-only directional successor asymmetry motivates a testable hypothesis but does not establish hierarchy, negative curvature, SID failure, or a causal gain. The candidate explicitly acknowledges these limits and registers downstream Stage3 test_R@10 as the behavioral test, with higher being better and minimum effect 0.005. Stage2 diagnostics are leading indicators, not substitutes for that behavioral outcome. The missing seed-combination rule prevents a fully mechanical behavioral verdict."
+    },
+    "review_sha256": "8facb336a876d372303704f719bebfc91668a121b643fc60a029e0442c4f7aca",
+    "review_verdict": "MATERIAL"
+  },
+  "revision_feedback_sha256": "db0ce592b8dce8650379376a583e62a2d9f88df79f96ecc0bfe57010352d16ee",
+  "task_id": "geometry"
+}

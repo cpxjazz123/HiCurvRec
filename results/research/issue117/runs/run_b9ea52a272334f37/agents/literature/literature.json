@@ -1,0 +1,52 @@
+{
+  "sources": [
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": null,
+      "arxiv": "https://arxiv.org/abs/2609.03369v1",
+      "full_text": "https://arxiv.org/html/2609.03369v1",
+      "evidence_label": "FULL_TEXT",
+      "verified_basis": "Full arXiv HTML text (HTTP 200; 284,387 characters) was retrievable, not merely the abstract.",
+      "exact_overlap": "Strongest three-way candidate: the paper explicitly discusses sequential recommenders modeling user behavior as item-ID sequences, generative recommendation/item indexing, and proposes hyperbolic residual-quantized VAE item indices. This establishes behavior + hyperbolic geometry + generative semantic-ID-like indexing. It describes item indexing rather than proving that each index has the specific status/semantics of a conventional semantic ID in all formulations.",
+      "scope_caveat": "Abstract/full-text wording calls it item indexing; do not overstate it as a demonstrated user-conditioned next-item semantic-ID decoder without confirming the method and evaluation details in the paper."
+    },
+    {
+      "title": "Generative Next POI Recommendation with Semantic ID",
+      "doi": null,
+      "arxiv": "https://arxiv.org/abs/2506.01375v2",
+      "full_text": "https://arxiv.org/html/2506.01375v2",
+      "evidence_label": "FULL_TEXT",
+      "verified_basis": "Full arXiv HTML text (HTTP 200; 246,033 characters) was retrievable.",
+      "exact_overlap": "Direct evidence for user next-item behavior plus generative semantic IDs: models predict a user's next POI from preferences/history, build semantic IDs from semantic and collaborative features, and generate next POIs using those IDs. No hyperbolic geometry is reported in the available paper description; this is a two-axis comparator, not a verified three-way match.",
+      "scope_caveat": "POI/destination recommendation is a specific next-item domain."
+    },
+    {
+      "title": "HCGR: Hyperbolic Contrastive Graph Representation Learning for Session-based Recommendation",
+      "doi": null,
+      "arxiv": "https://arxiv.org/abs/2107.05366v1",
+      "full_text": "https://arxiv.org/html/2107.05366v1",
+      "evidence_label": "FULL_TEXT",
+      "verified_basis": "Full arXiv HTML text (HTTP 200; 470,704 characters) was retrievable.",
+      "exact_overlap": "Directly treats short-term user behavior/sequential session patterns and uses Lorentz hyperbolic space for hierarchical item/session representations. It is not a generative semantic-ID method: the available description centers on graph representation learning and contrastive learning. Two-axis comparator only.",
+      "scope_caveat": "Session-based recommendation behavior is relevant, but it does not supply the semantic-ID/generative axis."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Long-tail user next-item prediction with geometry-aware generative item indices",
+      "evidence": "HypRQ-VAE describes sequential user-behavior item-ID histories, hyperbolic item indexing, and generative recommendation; GNPR-SID directly predicts next POI from user history with semantic IDs.",
+      "status": "Plausible research framing, not established as a single already-validated intersection."
+    },
+    {
+      "candidate": "Preserve sequential/session hierarchy while generating semantic IDs for the next item",
+      "evidence": "HCGR motivates hierarchical structure among consecutive items/session behavior in hyperbolic space; GNPR-SID supplies semantic-ID generation and next-POI prediction.",
+      "status": "Synthesis across separate papers; neither citation alone verifies the combined method."
+    }
+  ],
+  "limitations": [
+    "No source in this independently checked set conclusively verifies all three axes—user next-item behavior, hyperbolic geometry, and generative semantic IDs—as an integrated method. HypRQ-VAE is the closest candidate, but its item-indexing terminology and exact next-item generation semantics should be checked against its methods and experiments before claiming a full match.",
+    "FULL_TEXT means the linked arXiv full-text HTML was successfully retrieved; it is not a claim that every result, equation, or implementation detail was independently reproduced.",
+    "DOI values are null because DOI identifiers were not verified. The arXiv identifiers and linked full texts are the independently checkable records.",
+    "The source set is a targeted search, not an exhaustive systematic review. No prior-candidate prompts or unseen future/test interactions were used."
+  ]
+}

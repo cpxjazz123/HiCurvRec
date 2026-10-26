@@ -1,0 +1,307 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "directed-next-item-transition-neighborhoods",
+    "candidate_id": "geometry-directed-transition-hyperbolic-rq-v1",
+    "effect_site": "Code assignment and codebook geometry, with the same squared-distance reconstruction, commitment, and train-transition objective in both arms. Expected Stage2 movement: validation Hard-L1 ER decreases; distinct two-token prefixes increase; L3 collision decreases; refinement gain increases; conditional G3 increases. These are diagnostics, not training targets or Stage3 ranking metrics. Stage3 is the existing downstream T5 next-item ranker and is not part of this candidate mechanism.",
+    "euclidean_control": "The flat arm is exactly the same code path and objective with c=0, replacing D_c² by its exact limit 4||x−y||². It has the same encoder, three codebooks, dimensions, parameter count, shared P_R map and R, assignments, train-only transition target, initialization, optimizer, schedule, seeds, epochs, batches, and compute budget. It is not an unbounded or differently parameterized Euclidean model. No graph arm is included.",
+    "falsifier": {
+      "classification": {
+        "falsified_if": "any registered non-NULL stage2_diagnostic effect is below its own minimum_effect OR the non-NULL stage3_behavioral_test effect is below its own minimum_effect",
+        "mixed_if": "at least one registered effect is at least its own minimum_effect AND at least one registered effect is below its own minimum_effect, with no NULL effect",
+        "null_outcome": "If any seed-wise or aggregated change is undefined or non-finite because of a zero denominator, missing evaluation, or empty stratum, that effect is NULL; comparison with any NULL seed is inconclusive and the run is neither passed nor falsified.",
+        "passed_if": "every registered stage2_diagnostic effect and stage3_behavioral_test effect is non-NULL and is at least its own minimum_effect"
+      },
+      "stage2_diagnostics": [
+        {
+          "direction": "decrease_vs_flat",
+          "minimum_effect": 0.01,
+          "name": "validation_Hard-L1_ER",
+          "seed_rule": "paired identical frozen seeds; effect is flat minus hyperbolic relative ER, then arithmetic mean across registered seeds"
+        },
+        {
+          "direction": "increase_vs_flat",
+          "minimum_effect": 0.01,
+          "name": "distinct_two-token_prefixes",
+          "seed_rule": "paired identical frozen seeds; effect is hyperbolic minus flat fraction of distinct prefixes, then arithmetic mean across registered seeds"
+        },
+        {
+          "direction": "decrease_vs_flat",
+          "minimum_effect": 0.01,
+          "name": "L3_collision",
+          "seed_rule": "paired identical frozen seeds; effect is flat minus hyperbolic collision rate, then arithmetic mean across registered seeds"
+        },
+        {
+          "direction": "increase_vs_flat",
+          "minimum_effect": 0.01,
+          "name": "refinement_gain",
+          "seed_rule": "paired identical frozen seeds; effect is hyperbolic minus flat refinement gain, then arithmetic mean across registered seeds"
+        },
+        {
+          "direction": "increase_vs_flat",
+          "minimum_effect": 0.01,
+          "name": "conditional_G3",
+          "seed_rule": "paired identical frozen seeds; effect is hyperbolic minus flat conditional G3, then arithmetic mean across registered seeds"
+        }
+      ],
+      "stage3_behavioral_test": {
+        "direction": "increase_vs_flat",
+        "metric": "test_R@10",
+        "minimum_effect": 0.005,
+        "seed_rule": "paired identical frozen seeds and identical existing Stage3 protocol; effect is hyperbolic minus flat test_R@10, then arithmetic mean across registered seeds"
+      }
+    },
+    "hyperbolic_necessity": "The hypothesized failure is specifically about representing a branching, asymmetric successor neighborhood under a fixed-length SID, not merely fitting semantic content. Negative curvature is a motivated, falsifiable inductive bias because it can allocate representational separation across nested/unevenly populated neighborhoods while preserving a common bounded representation domain. Train-only directed transitions provide the permitted behavioral signal. The observed asymmetry and cited HypRQ-VAE/VarLenRec intersection motivate this test but establish neither that the item space is truly hyperbolic nor that hyperbolic encoding improves ranking. A matched flat limit is therefore essential.",
+    "literature_evidence_sha256": "4cc3a2a41798a1021c2ba891a650c2a5d116f284c040996c5a50aca697cf1653",
+    "math_definition": {
+      "architecture_and_assignment": "For item i, content encoder fθ maps its content embedding e_i to h_i∈R^32. The shared bounded representation map is P_R(v)=v·min(1,R/||v||₂), with P_R(0)=0 and R=0.9. Set residual r_{i,0}=P_R(h_i). For levels l=1,2,3, let codebook C_l={c_{l,k}∈R^32:k∈{0,…,255}}. Compute u_{i,l}=P_R(r_{i,l−1}); assign a_{i,l}=argmin_k D_c²(u_{i,l},P_R(c_{l,k})), ties by lowest k; set q_{i,l}=P_R(c_{l,a_{i,l}}); then update residual in this exact order: map u_{i,l}=P_R(r_{i,l−1}), project codewords q_{i,l}=P_R(c_{l,a_{i,l}}), assign using the scored distance, subtract r_{i,l}=P_R(u_{i,l}−q_{i,l}). The global item SID is exactly (a_{i,1},a_{i,2},a_{i,3}), with no user or context input. Every vector entering a distance is projected by P_R first; residual updates are projected before any subsequent scoring.",
+      "curvature_and_stability": "Use a single scalar parameter c∈[0,0.1], with hyperbolic arm c=0.1 and flat control c=0 as the continuous limit of the same implementation. For x,y∈R^32 already projected into ||·||₂≤R, define A=||x−y||₂², B=(1−c||x||₂²)(1−c||y||₂²), z=1+2cA/B, w=z−1, and the stable arcosh(z)=log1p(w+sqrt(w(w+2))). The single scored squared distance is D_c²(x,y)=d_c(x,y)²=(1/c)·[log1p(w+sqrt(w(w+2)))]² for c>0. Its exact c→0 limit is D_0²(x,y)=4||x−y||₂²; the unsquared distance tends to 2||x−y||₂. All objectives use the squared power D² in both arms. Domain policy: reject non-finite inputs; project all distance arguments to ||x||≤R; require c∈[0,0.1], so B>0 and z≥1; clamp only roundoff in w to max(w,0) before sqrt, and do not clamp distances or logits otherwise. For the c-dependent exponential map use exp^c_0(v)=tanh(sqrt(c)||v||₂)·v/(sqrt(c)||v||₂), with value 0 at v=0; its c→0 limit is the identity v. If used to map a vector into the ball, apply P_R immediately after the map before scoring. The c-dependent open-ball radius (1−epsilon)/sqrt(c), with epsilon=0.001, has no defined c=0 value; the flat arm does not use that radius or a ball projection and instead uses the shared P_R with R=0.9. Thus both arms have the same fixed bounded feasible region and representation map.",
+      "quantization_objective": "For training item minibatch I, define stop-gradient assignments a_{i,l} by the assignment rule above, q_{i,l}=P_R(c_{l,a_{i,l}}), and u_{i,l}=P_R(r_{i,l−1}). Define L_rec=(1/(|I|·3))Σ_{i∈I}Σ_{l=1}^3 D_c²(u_{i,l},q_{i,l}); define L_commit=(1/(|I|·3))Σ_{i∈I}Σ_{l=1}^3 D_c²(u_{i,l},sg(q_{i,l})); total L=L_rec+0.25L_commit+0.1L_trans. Each level/item term is averaged uniformly; no code-frequency reweighting. Empty I is an invalid training batch, not assigned a zero loss. The empirical p target is label-derived and frozen, while assignments are stop-gradient for discrete code selection, which breaks target/parameter circularity. Existing Stage2 epochs, batch size, schedule, seeds, optimizer, and codebook initialization remain exactly as configured; no new training protocol is introduced.",
+      "train_transition_target": "Let V be the fixed set of train-split item IDs, M=|V|, and n_{ij} the count of consecutive directed transitions i→j computed only from train split. For source i with m_i=Σ_{j∈V}n_{ij}>0 define the frozen empirical target p_{ij}=n_{ij}/m_i for j∈V; sources with m_i=0 are excluded. This target is computed from labels and counts before training, contains no model parameter, and is not recomputed from predictions. For item vectors z_i=P_R(h_i), transition loss is L_trans=−(1/|S|)Σ_{i∈S}Σ_{j∈V}p_{ij} log softmax_{j∈V}(−D_c²(z_i,z_j)/τ), where S={i∈V:m_i>0}, τ=0.07, softmax is normalized over the full fixed train-item set V, and the reduction is the mean over eligible sources and sum over each source's target distribution. If S is empty, L_trans=0 and the transition term is disabled for that run. This is train-transition supervision only; no validation/test event or batch-derived target is used."
+    },
+    "next_item_hypothesis": "A demonstrated asymmetry is the train-only directed pair 22372→9218 (32 occurrences) versus 9218→22372 (21 occurrences); more broadly, 314605/339519 observed transitions have no observed reverse event. This is not itself proof that an existing recommender fails. The one failure hypothesis is that a content-only, fixed three-token SID can assign items with different directed successor neighborhoods to indistinguishable two-token prefixes, thereby losing the directional neighborhood signal needed to distinguish their next-item targets. Stage2 should reduce this representational collision; Stage3 alone tests whether that helps next-item ranking. The behavior counts are evidence for the trigger, not evidence of a measured SID failure or causal gain.",
+    "protocol": {
+      "codes_per_level": 256,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "The observed directed-pair table gives one concrete asymmetry: 22372→9218 occurs 32 times and its reverse occurs 21 times; 314605 of 339519 observed transitions have no observed reverse. Mean next-item entropy is 4.844072338042215 bits. These train-only aggregate measurements identify directional next-item structure worth testing, but do not establish that this model currently fails on those transitions. Do not inspect or use validation/test behavior to choose items, targets, parameters, or the mechanism.",
+    "stable_global_sid": true,
+    "training_only_inputs": "Item content embeddings and consecutive item transitions from train split only. No validation/test behavior, future events, prediction-time user context, or batch composition enters targets, assignments, or loss definitions. Train-split transitions are permitted supervision under CLAUDE.md rule 16."
+  },
+  "candidate_id": "geometry-directed-transition-hyperbolic-rq-v1",
+  "candidate_sha256": "24414a6084df9e893614852ba767f6ffa9a77dd60f692cdf828a382fa7c5f3e5",
+  "inputs_sha256": "42b32e49b31486c9d4492f85091f2c3d7eb12a9be819c36f32dac635a821b955",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "behavior_focus": "Next interaction/consumption conditional on recent ordered history; assess whether hyperbolic encoding changes predictions for sparse, niche, or tail items rather than merely aggregate accuracy.",
+        "candidate": "Personalized next-item prediction conditioned on chronological user interaction history, with semantic IDs generated autoregressively in hyperbolic item-index space.",
+        "support": [
+          "HypRQ-VAE (arXiv:2609.03369v1), FULL_TEXT",
+          "VarLenRec (arXiv:2605.17779v2), FULL_TEXT"
+        ],
+        "testable_questions": [
+          "Are gains concentrated on tail next-items, or do they improve calibrated user-specific transitions across popularity strata?",
+          "Does the hyperbolic SID geometry preserve behaviorally predictive transition neighborhoods beyond semantic similarity?",
+          "Do conclusions persist under user-level and temporal splits, against matched-capacity Euclidean SIDs and sequence-model baselines?"
+        ]
+      },
+      {
+        "behavior_focus": "Context-rich user mobility behavior and next destination; compare a proposed hyperbolic SID extension against the paper's Euclidean quantization baseline.",
+        "candidate": "Next-POI prediction from a user's chronological check-in trajectory, with semantic IDs that incorporate spatial, temporal, and collaborative behavior; hyperbolic geometry is an open extension rather than established by this source.",
+        "support": [
+          "GNPR-SID (DOI:10.1145/3711896.3736981), FULL_TEXT"
+        ],
+        "testable_questions": [
+          "Does hyperbolic quantization improve next-location performance after controlling for spatial distance, time-of-day, and popularity?",
+          "Are apparent gains attributable to user-level history signals or to the SID geometry?"
+        ]
+      }
+    ],
+    "limitations": [
+      "Only HypRQ-VAE and VarLenRec are direct verified intersections among the examined sources. The literature set is a targeted discovery, not evidence that these are the only relevant papers.",
+      "The two direct-intersection papers are very recent arXiv works (2026); HypRQ-VAE's record reports ICDM 2026 acceptance, while VarLenRec's inspected record did not establish a DOI or peer-reviewed venue. Treat novelty and priority claims cautiously.",
+      "FULL_TEXT means the arXiv HTML full text was fetched and the cited sections inspected; it does not mean results, code, data, or theoretical claims were independently replicated.",
+      "The direct papers operationalize user behavior primarily as historical item-ID/check-in sequences and next-item labels. They do not establish a rich behavioral theory of intent, choice, causal preference change, or user welfare.",
+      "Hyperbolic geometry and semantic IDs co-occur directly in HypRQ-VAE and VarLenRec; next-item behavior is also described explicitly. This supports an algorithmic intersection, not proof that hyperbolic structure is intrinsically a faithful model of human preference.",
+      "Search results are restricted to accessible arXiv HTML and bibliographic DOI metadata. The source search was not exhaustive across subscription databases, non-English literature, or all recent conference proceedings."
+    ],
+    "sources": [
+      {
+        "arxiv": "2609.03369v1",
+        "caveat": "The behavioral target is next-item prediction from an ordered interaction history; the paper emphasizes long-tail item representation rather than a detailed causal or psychological account of user behavior.",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "evidence_locations": [
+          "Abstract and Introduction",
+          "§III-B Generation of Semantic IDs",
+          "§III-C Generative Recommender with Semantic IDs",
+          "§IV Experiments"
+        ],
+        "exact_overlap": "Direct three-way intersection. Full text §III-C formulates next-item prediction: chronological user interaction-history semantic IDs are input, and the next item's semantic ID is autoregressively generated. §§II–III-B specify Poincaré-ball hyperbolic residual quantization to construct those semantic IDs; §IV evaluates sequential recommendation and head/tail behavior. The HTML full text was inspected, including those sections. arXiv metadata lists acceptance to ICDM 2026; no DOI was displayed in the inspected record.",
+        "links": {
+          "arxiv_abs": "https://arxiv.org/abs/2609.03369v1",
+          "full_text_html": "https://arxiv.org/html/2609.03369"
+        },
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems"
+      },
+      {
+        "arxiv": "2605.17779v2",
+        "caveat": "Behavior is represented operationally as interaction history and item popularity; claims about information budgets and geometric capacity are the authors' modeling/theoretical claims, not independently validated behavioral laws.",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "evidence_locations": [
+          "Abstract and §I Introduction",
+          "§III-C HARQ Architecture",
+          "§III-D Variable-Length ID Integration"
+        ],
+        "exact_overlap": "Direct three-way intersection. Full text describes generative recommendation as predicting the next item from a user's semantic-ID interaction history; introduces hyperbolic residual quantization (HARQ) for variable-length semantic IDs; and links popularity/interaction frequency to differing representational requirements for head versus tail target items. The HTML full text was inspected, including §I, §§III-C–D. This is an arXiv preprint (v2 dated 2026-06-12 in the record), not a DOI-verified publication here.",
+        "links": {
+          "arxiv_abs": "https://arxiv.org/abs/2605.17779v2",
+          "full_text_html": "https://arxiv.org/html/2605.17779"
+        },
+        "title": "Learning Variable-Length Tokenization for Generative Recommendation"
+      },
+      {
+        "arxiv": "2506.01375v2",
+        "caveat": "Do not cite as evidence that hyperbolic geometry and generative SIDs intersect: the inspected quantizer is standard Euclidean RQ-VAE.",
+        "doi": "10.1145/3711896.3736981",
+        "evidence_label": "FULL_TEXT",
+        "evidence_locations": [
+          "§3 Problem Definition",
+          "§4.1 Semantic ID Construction",
+          "§4.2 Generative POI Recommendation"
+        ],
+        "exact_overlap": "Strong next-item-behavior + generative semantic-ID evidence, but NOT hyperbolic geometry: it predicts a user's next POI from historical check-ins and generates semantic IDs constructed with Euclidean residual quantization. Full text §3 defines next POI prediction from a user's recent visit sequence; §§4.1–4.2 build SIDs from semantic, temporal, spatial, and collaborative signals and generate the next POI SID. The inspected full text explicitly gives a Euclidean quantization formulation, so this is a near-neighbor/counterexample, not a full three-way match.",
+        "links": {
+          "arxiv_abs": "https://arxiv.org/abs/2506.01375v2",
+          "doi": "https://doi.org/10.1145/3711896.3736981",
+          "full_text_html": "https://arxiv.org/html/2506.01375"
+        },
+        "title": "Generative Next POI Recommendation with Semantic ID"
+      },
+      {
+        "arxiv": "1907.12378v1",
+        "caveat": "Relevant for behavioral grounding and hyperbolic recommendation only; not a sequential next-item or semantic-ID method.",
+        "doi": "10.1145/3298689.3347029",
+        "evidence_label": "FULL_TEXT",
+        "evidence_locations": [
+          "§2.5 Link creation and Poincaré embeddings",
+          "§2.6 Personalized playlist experiment",
+          "§3 Results"
+        ],
+        "exact_overlap": "Hyperbolic recommendation grounded in actual user listening/engagement behavior: the paper embeds a hierarchy of music entities in Poincaré space and tests personalized playlist recommendations with an A/B experiment. It does NOT use generative semantic IDs or next-item sequence generation. Full text §§2.5–2.6 and §3 describe hyperbolic recommendations based on listening history and measured user listening time.",
+        "links": {
+          "arxiv_abs": "https://arxiv.org/abs/1907.12378v1",
+          "doi": "https://doi.org/10.1145/3298689.3347029",
+          "full_text_html": "https://arxiv.org/html/1907.12378"
+        },
+        "title": "Music Recommendations in Hyperbolic Space: An Application of Empirical Bayes and Hierarchical Poincaré Embeddings"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "4cc3a2a41798a1021c2ba891a650c2a5d116f284c040996c5a50aca697cf1653",
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

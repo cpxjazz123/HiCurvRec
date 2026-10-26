@@ -1,0 +1,28 @@
+{
+  "candidate_id": "issue117-geometry-global-transition-residual-v1",
+  "candidate_sha256": "aad966a6dc5960598bc9e752ed8d44381c1f06df73426875ca4ed245dea57915",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "category": "reproducibility / uniquely recomputable target",
+      "finding": "The registered objective is not sufficiently specified to reconstruct a unique training run or all diagnostics. The candidate defines L_rec using Dec(q_i), but does not define the decoder, content-embedding function, or their parameterization/initialization. It refers to repository-frozen Stage2 epochs, batch size, schedule and codebook initialization without identifying those values or a frozen protocol artifact/hash. Consequently the stated 'same implementation' and same-capacity control cannot be independently established from this manifest alone.",
+      "evidence": "math_definition.mechanism; math_definition.objective.losses[content_reconstruction]; protocol.protocol_freeze; math_definition.geometry.shared_domain_control"
+    },
+    {
+      "category": "mechanically undecidable falsifier",
+      "finding": "Several registered Stage2 criteria are named but not defined precisely enough to compute from outputs. In particular, valid_l1_hard_er refers to a 'frozen validation definition' without giving the ER equation/aggregation; L3_refinement_gain says 'defined log2 bucket ratio' without defining the ratio; conditional_G3 refers to a 'supplied alpha=1,K=256 estimator' that is not supplied in this manifest. The frozen 52855 validation pairs alone do not define these metrics. Thus a reviewer/test author cannot decide these criteria from this candidate manifest without importing unspecified definitions.",
+      "evidence": "falsifier.stage2_diagnostics[valid_l1_hard_er].seed_rule; falsifier.stage2_diagnostics[L3_refinement_gain].seed_rule; falsifier.stage2_diagnostics[conditional_G3].seed_rule; protocol.protocol_freeze"
+    }
+  ],
+  "reproducible_evidence": {
+    "scope": "Reviewed only the current-only manifest supplied in the prompt; no repository candidate implementation, prior candidate, or validation/test interactions were consulted.",
+    "sha256": "aad966a6dc5960598bc9e752ed8d44381c1f06df73426875ca4ed245dea57915",
+    "causal_link": "The proposed link is a falsifiable design hypothesis: train-only successor-distribution shaping may improve first-level anchor/successor alignment and residual SID refinement, while Stage3 alone tests next-item ranking. The manifest explicitly limits the asymmetric-transition statistics to motivation and does not claim they prove curvature necessity or causal gain. This is appropriately scoped; Stage2 is not being mistaken for a ranker.",
+    "math_and_domain": "The stated squared Poincare distance is the standard curvature -c distance squared; the exp_0 expression and continuous c->0 limit are sound. With c=0.5, the common norm bound 0.9 is strictly inside the Poincare radius 1/sqrt(c), so scored vectors remain in-domain. The stable arcosh expression has the correct nonnegative-u form and does not introduce a positive floor. Flat limit is explicitly given as 4||x-y||^2 for D^2 and identity exp map. No math/domain blocker found.",
+    "control": "The declared arms differ by curvature only and specify common fixed-ball projection, architecture, parameter count, initialization, objective, optimizer, data and budget. Curved-only curvature-domain projection is a necessary domain safeguard rather than a declared capacity/objective change. However, the missing frozen protocol/architecture details listed above prevent independent confirmation that the control is actually executable as stated.",
+    "leakage": "No use of validation/test behavior, future events, prediction-time user context, or batch composition is declared for fitting. Training inputs are limited to frozen item content and train transitions; validation is diagnostic-only and test is read-only Stage3 evaluation.",
+    "behavioral_test": "Registered test_R@10, increase, minimum paired effect 0.005 absolute, uniform eligible-example hit@10 averaging per arm/seed and arithmetic mean paired difference over exactly [42], with test artifact/protocol binding and no test fitting/selection. Null/mixed/pass/falsified classification is stated. It satisfies the required behavioral-test registration, subject to the frozen authorized Stage3 protocol/artifact being available to the independent test authors.",
+    "leading_indicators": "The candidate registers valid_l1_hard_er, level2_distinct_prefixes, and L3 statistics (L3_refinement_gain, conditional_G3, L3_collision), matching the requested Stage2 leading-indicator families. Their numerical definitions are incomplete as noted above.",
+    "thresholds": "The two frozen thresholds are reproduced exactly and comparisons are declared strictly above: 16.38953942232631 and 16145. Schema version is 1."
+  }
+}

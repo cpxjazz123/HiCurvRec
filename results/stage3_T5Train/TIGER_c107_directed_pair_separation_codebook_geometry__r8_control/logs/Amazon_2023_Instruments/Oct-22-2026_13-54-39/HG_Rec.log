@@ -1,0 +1,64 @@
+2026-10-22 13:54:39,606 - INFO - Configuration: {'batch_size': 4096, 'infer_size': 1024, 'num_epochs': 150, 'eval_interval': 5, 'eval_start_epoch': 75, 'early_eval_epochs': (25, 50, 75, 100, 125), 'fast': True, 'bf16': True, 'use_lr_scheduler': True, 'lr_warmup_pct': 0.1, 'lr_min_factor': 0.2, 'compile': False, 'compile_mode': 'default', 'num_layers': 4, 'num_decoder_layers': 4, 'd_model': 128, 'd_ff': 1024, 'num_heads': 6, 'd_kv': 64, 'dropout_rate': 0.1, 'activation_function': 'relu', 'feed_forward_proj': 'relu', 'device': 'cuda', 'lr': 0.003, 'weight_decay': 0.05, 'vocab_size': 785, 'eos_token_id': 784, 'pad_token_id': 0, 'n_user_tokens': 1, 'max_len': 20, 'dataset_name': 'Amazon_2023_Instruments', 'dataset_path': '/home/wlia0047/ar57/wenyu/GeneRec/results/stage0_build_parquet/', 'codebook_size': [256, 256, 256, 1], 'code_path': '/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_c107_directed_pair_separation_codebook_geometry/r8_control/item_sids.json', 'train_file': 'train.parquet', 'valid_file': 'valid.parquet', 'test_file': 'test.parquet', 'log_path': '/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/logs/', 'save_path': '/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/', 'seed': 42, 'topk_list': [5, 10], 'beam_size': 20, 'no_eval': True, 'skip_test': False, 'screen_baseline_log': '', 'screen_start_epoch': 40, 'screen_window': 5, 'screen_min_ndcg_gain': 0.001, 'screen_min_recall_gain': 0.001, 'num_workers': 4, 'prefetch_factor': 8, 'exclude_history': True, 'no_exclude_history': False, 'pin_memory': True, 'no_pin_memory': False, 'sid_length': 4, 'max_token_seq_len': 82, 'decoder_start_token_id': 0}
+2026-10-22 13:54:41,894 - INFO - #Embedding parameters: 100480
+#Non-embedding parameters: 4459648
+#Total trainable parameters: 4560128
+
+2026-10-22 13:55:23,374 - INFO - Epoch 1/150 train_loss=4.777503395080567
+2026-10-22 13:55:23,696 - INFO - Best train loss=4.777503395080567; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 13:55:41,600 - INFO - Epoch 2/150 train_loss=4.108341474533081
+2026-10-22 13:55:41,638 - INFO - Best train loss=4.108341474533081; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 13:55:59,298 - INFO - Epoch 3/150 train_loss=3.9205119609832764
+2026-10-22 13:55:59,450 - INFO - Best train loss=3.9205119609832764; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 13:56:17,714 - INFO - Epoch 4/150 train_loss=3.770097408294678
+2026-10-22 13:56:17,817 - INFO - Best train loss=3.770097408294678; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 13:56:35,393 - INFO - Epoch 5/150 train_loss=3.6458659172058105
+2026-10-22 13:56:35,574 - INFO - Best train loss=3.6458659172058105; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 13:56:53,325 - INFO - Epoch 6/150 train_loss=3.529476900100708
+2026-10-22 13:56:53,394 - INFO - Best train loss=3.529476900100708; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 13:57:11,576 - INFO - Epoch 7/150 train_loss=3.4002833652496336
+2026-10-22 13:57:11,675 - INFO - Best train loss=3.4002833652496336; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 13:57:31,466 - INFO - Epoch 8/150 train_loss=3.2737302875518797
+2026-10-22 13:57:31,521 - INFO - Best train loss=3.2737302875518797; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 13:57:50,999 - INFO - Epoch 9/150 train_loss=3.8451567459106446
+2026-10-22 13:58:10,536 - INFO - Epoch 10/150 train_loss=3.542008514404297
+2026-10-22 13:58:30,268 - INFO - Epoch 11/150 train_loss=3.4619051456451415
+2026-10-22 13:58:49,956 - INFO - Epoch 12/150 train_loss=3.404906234741211
+2026-10-22 13:59:09,537 - INFO - Epoch 13/150 train_loss=3.3295052814483643
+2026-10-22 13:59:29,187 - INFO - Epoch 14/150 train_loss=3.2417812728881836
+2026-10-22 13:59:29,235 - INFO - Best train loss=3.2417812728881836; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 13:59:48,745 - INFO - Epoch 15/150 train_loss=3.160873670578003
+2026-10-22 13:59:48,791 - INFO - Best train loss=3.160873670578003; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:00:08,465 - INFO - Epoch 16/150 train_loss=3.0851645851135254
+2026-10-22 14:00:08,504 - INFO - Best train loss=3.0851645851135254; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:00:27,867 - INFO - Epoch 17/150 train_loss=3.020078392028809
+2026-10-22 14:00:27,929 - INFO - Best train loss=3.020078392028809; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:00:48,176 - INFO - Epoch 18/150 train_loss=2.9547880363464354
+2026-10-22 14:00:48,217 - INFO - Best train loss=2.9547880363464354; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:01:07,665 - INFO - Epoch 19/150 train_loss=2.890609064102173
+2026-10-22 14:01:07,716 - INFO - Best train loss=2.890609064102173; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:01:27,312 - INFO - Epoch 20/150 train_loss=2.8261295986175536
+2026-10-22 14:01:27,349 - INFO - Best train loss=2.8261295986175536; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:01:46,817 - INFO - Epoch 21/150 train_loss=2.774386386871338
+2026-10-22 14:01:46,856 - INFO - Best train loss=2.774386386871338; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:02:06,415 - INFO - Epoch 22/150 train_loss=2.724994649887085
+2026-10-22 14:02:06,460 - INFO - Best train loss=2.724994649887085; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:02:25,892 - INFO - Epoch 23/150 train_loss=2.676109571456909
+2026-10-22 14:02:25,940 - INFO - Best train loss=2.676109571456909; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:02:45,308 - INFO - Epoch 24/150 train_loss=2.638258247375488
+2026-10-22 14:02:45,352 - INFO - Best train loss=2.638258247375488; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:03:04,708 - INFO - Epoch 25/150 train_loss=2.599784812927246
+2026-10-22 14:03:04,749 - INFO - Best train loss=2.599784812927246; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:03:24,170 - INFO - Epoch 26/150 train_loss=2.5539446258544922
+2026-10-22 14:03:24,217 - INFO - Best train loss=2.5539446258544922; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:03:42,871 - INFO - Epoch 27/150 train_loss=2.5239423942565917
+2026-10-22 14:03:42,909 - INFO - Best train loss=2.5239423942565917; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:04:00,963 - INFO - Epoch 28/150 train_loss=2.4923344326019286
+2026-10-22 14:04:01,014 - INFO - Best train loss=2.4923344326019286; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:04:19,132 - INFO - Epoch 29/150 train_loss=2.460593433380127
+2026-10-22 14:04:19,195 - INFO - Best train loss=2.460593433380127; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:04:37,006 - INFO - Epoch 30/150 train_loss=2.434750490188599
+2026-10-22 14:04:37,049 - INFO - Best train loss=2.434750490188599; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:04:54,924 - INFO - Epoch 31/150 train_loss=2.4145993423461913
+2026-10-22 14:04:55,020 - INFO - Best train loss=2.4145993423461913; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth
+2026-10-22 14:05:15,799 - INFO - Epoch 32/150 train_loss=2.3887986183166503
+2026-10-22 14:05:16,461 - INFO - Best train loss=2.3887986183166503; saved /home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_c107_directed_pair_separation_codebook_geometry__r8_control/ckpt/Amazon_2023_Instruments/Oct-22-2026_13-54-39/HG_Rec_best.pth

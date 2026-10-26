@@ -1,0 +1,40 @@
+{
+  "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+  "research": "issue117-behavior-first",
+  "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+  "task_id": "literature",
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": "10.48550/arXiv.2305.05065",
+      "arxiv": "2305.05065",
+      "full_text_url": "https://arxiv.org/html/2305.05065v3",
+      "evidence_label": "FULL_TEXT",
+      "verified_overlap": {
+        "user_next_item_behavior": "Direct: the abstract states that a Transformer sequence-to-sequence model predicts the Semantic ID of the next item a user will interact with, given Semantic IDs in the user's session.",
+        "generative_semantic_ids": "Direct: items receive semantically meaningful tuples of codewords serving as Semantic IDs, which the retrieval model autoregressively decodes.",
+        "hyperbolic_geometry": "No evidence located in the inspected arXiv record/full-text-linked material; do not treat this paper as hyperbolic evidence."
+      },
+      "scope_note": "Strong verified evidence for the behavior + generative semantic-ID pair, not the three-way intersection."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Predict the next item from the ordered item interactions in a user's session, using semantic IDs as the autoregressively generated target.",
+      "evidence_label": "FULL_TEXT",
+      "source_arxiv": "2305.05065",
+      "status": "Established behavior task in the cited work; hyperbolic modeling is not established by this source."
+    },
+    {
+      "candidate": "Test whether hyperbolic representations of user/session behavior improve next-item prediction while retaining generative semantic-ID decoding.",
+      "evidence_label": "UNKNOWN",
+      "status": "Research hypothesis only. No independently verified full-text source demonstrating this combined design was found in this bounded search."
+    }
+  ],
+  "limitations": [
+    "The verified source directly supports next-item prediction and generative Semantic IDs, but does not establish hyperbolic geometry; therefore it must not be cited as evidence for the full intersection.",
+    "No independently verified source establishing all three elements together is included. The absence of such a source in this search is not proof that none exists.",
+    "FULL_TEXT is used only for the arXiv-hosted full text that is directly linked from the verified record. No claim about unseen future/test interactions is made.",
+    "The hyperbolic next-item + generative semantic-ID combination is presented solely as an UNKNOWN research candidate, not as a result reported in prior literature."
+  ]
+}

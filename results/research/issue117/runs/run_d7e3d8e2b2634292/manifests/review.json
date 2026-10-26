@@ -1,0 +1,235 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "directed_sparse_transition_asymmetry",
+    "candidate_id": "geometry_hyperbolic_autoregressive_sid_v1",
+    "effect_site": "Primary effect site is held-out next-item ranking from the causal prefix-conditioned autoregressive SID decoder; report NDCG@10 and Recall@10 overall and separately for transitions whose training direction has no observed reverse. The latter subgroup is defined using training data only.",
+    "euclidean_control": {
+      "curvature_ablation": "Run the identical hyperbolic parameterization and code, with c annealed to its flat limit c->0 in the distance formula; use the continuous limit d_0(x,y)^2=4||x-y||^2. Keep all other settings fixed.",
+      "definition": "Identical architecture, parameter count, code vectors/coordinates, objective, initialization, optimizer, schedule, stopping rule, seeds, batch order, and tuning budget as the candidate. Change only the metric: replace every d_c(x,y)^2 with ||x-y||_2^2 on those same 32-dimensional coordinates. No dot-product or other scoring-family substitution.",
+      "parameter_count_target": "Exactly equal to candidate; no additional trainable parameters in either arm."
+    },
+    "falsifier": {
+      "directed_graph_control": "Construct a directed weighted graph from training transitions only: nodes are training-seen items; edge u->v weight is its training transition count. For each prefix, use its final item u and score candidate item v by log(1+count(u,v)); unseen outgoing edges receive score 0. Rank all eligible training-seen items, excluding items already in that prefix; ties break by ascending item ID. This is a fixed non-neural control with no learned parameters, uses exactly the same training transitions, candidate set, held-out examples, ranking metrics, and no validation tuning. Report its parameter count as zero and do not compare it as capacity-matched; capacity matching applies to the learned metric controls.",
+      "prediction": "Against the fixed-capacity Euclidean metric control, the curvature candidate will improve test NDCG@10 by at least 1% relative and have a paired user-bootstrap 95% confidence interval for the difference strictly above zero; the gain will be positive in the training-defined no-reverse transition subgroup.",
+      "rejection": "Reject the mechanism if this predeclared ranking prediction fails. In particular, reject curvature-specific support if the c=1 run does not outperform the identical c->0 flat-limit ablation on test NDCG@10 (paired user-bootstrap 95% interval includes zero or favors flat). A gain shared equally by curved and flat runs is not evidence for negative curvature."
+    },
+    "hyperbolic_necessity": "Negative curvature is motivated specifically by the measured high fraction of directed transitions without observed reverses, not by an assumed tree or taxonomy. It may allocate distances asymmetrically around shared code representations through learned context-conditioned query points while retaining the same code inventory and decoder capacity. This does not establish that the data are intrinsically hyperbolic; only a controlled held-out gain over the flat metric would support the proposed utility.",
+    "literature_evidence_sha256": "68ca1d47e911aabd7d04ebc3a2be402bca4b3b6564a295eaeee817a65f94e6c4",
+    "math_definition": {
+      "distance": "d_c(x,y)=arcosh(1+2c||x-y||^2/((1-c||x||^2)(1-c||y||^2)))/sqrt(c). Compute arcosh(u)=log(u+sqrt((u-1)(u+1))); clamp u to at least 1+1e-7 before evaluation. Project vectors to norm <= (1-1e-5)/sqrt(c) after every optimizer update; this is the boundary policy, and all distance inputs must be in the open ball.",
+      "optimization": "Initialize shared Transformer and codebook parameters with the same seeded Xavier uniform scheme in all metric arms; initialize code vectors from N(0,0.01^2) then project into the ball. AdamW, learning rate 1e-3, weight decay 1e-4, batch size 256, 100 epochs maximum, cosine decay to 1e-5, validation next-item NDCG@10 early stopping with patience 10; fixed seed set {11,22,33,44,55}.",
+      "score_and_temperature": "Use tau=1.0. At autoregressive level l, condition on the entire observed prefix and the previously emitted target codes y_1,...,y_{l-1}. A shared causal Transformer decoder consumes prefix item codes and these target-code tokens with distinct level embeddings; its state h_l scores candidate code k by s_l(k)=-d_c(tanh(W_l h_l), v_{l,k})^2/tau, where both vectors are projected into the ball. Normalize with a 256-way softmax. Train with the sum of the three teacher-forced next-code cross-entropies. At inference beam-search the three levels in order, feeding each selected code back before scoring the next; item score is the sum of conditional log probabilities. Thus levels 2 and 3 explicitly condition on earlier emitted codes.",
+      "space": "For curvature c=1, use the 32-dimensional Poincare ball B_c={x in R^32: c||x||^2<1}; represent each item by three ordered code vectors z_{i,l} in B_c, l=1..3. Each level has 256 learned code vectors. Encode each observed item as its three code indices."
+    },
+    "next_item_hypothesis": "The measured training-prefix transitions are strongly directed: 314605 of 339519 transitions (0.9266) have no observed reverse event, alongside mean next-item entropy 4.8441 bits. Hypothesis: a negatively curved product-code space can represent unequal hierarchical/generalization distances for these directional transitions and improve held-out next-item ranking over an otherwise identical flat metric model. This is a testable proposal, not a conclusion from direction counts; unobserved reverse events may reflect sparsity.",
+    "protocol": {
+      "codes_per_level": 256,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "Use only training-derived behavior evidence to motivate the trigger: no-observed-reverse fraction 0.9266197178950221 (314605/339519) and mean next-item entropy 4.844072338042215 bits in the specified train-only longest-prefix-per-user population. Do not use these statistics as test labels or claim causality. Evaluate on a user/time-held-out validation/test split using only each example's preceding events.",
+    "stable_global_sid": true,
+    "training_only_inputs": "Training split only: observed item sequences and next-item targets, derived item/code assignments, and training-only transition counts for subgroup definitions. Validation is used only for the stated early stopping and model selection. No future events, test interactions, prior-candidate prompts, or test-derived graph statistics are inputs or tuning signals."
+  },
+  "candidate_id": "geometry_hyperbolic_autoregressive_sid_v1",
+  "candidate_sha256": "6b6a8b5563ef7e533de5cdfab65f802d5c80aa2d89b23f9d100a3bdbf9a682b2",
+  "inputs_sha256": "a4cb3908591ee0086efe72d56c9c19457e8fda5b64bf2134bc3b5e58648ecfab",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Predicting a user's next interacted-with item from a session sequence, with item identity represented as a generated tuple of semantic codewords.",
+        "evidence_label": "ABSTRACT",
+        "geometry_connection": "No hyperbolic component evidenced by inspected abstract; do not attribute the geometry from separate sequential recommendation papers to this method.",
+        "source_arxiv": "2305.05065v3",
+        "support": "Directly stated in arXiv abstract: given Semantic IDs for items in a user session, train a Transformer seq2seq model to predict the Semantic ID of the next item the user will interact with."
+      },
+      {
+        "candidate": "Model sequential user preference evolution using hyperbolic sequence representations / hyperbolic selective state-space dynamics.",
+        "evidence_label": "ABSTRACT",
+        "source_arxiv": "2505.09205v1",
+        "support": "Abstract supports hyperbolic Mamba for sequential recommendation and evolving user preferences; it does not establish semantic-ID generation or explicit next-item target in the evidence inspected."
+      },
+      {
+        "candidate": "Use hyperbolic hypergraph representations and multi-scale item embeddings in sequential recommendation of interaction sequences.",
+        "evidence_label": "ABSTRACT",
+        "source_arxiv": "2108.08134v1",
+        "support": "Abstract supports hyperbolic hypergraph convolution and sequential recommendation; no generative Semantic ID mechanism evidenced."
+      }
+    ],
+    "limitations": [
+      "No independently verified source in this evidence set demonstrates all three components—user next-item behavior, hyperbolic geometry, and generative Semantic IDs—in one method.",
+      "Evidence labels indicate the inspected arXiv abstract/metadata evidence, not a full-text audit. Full-text PDFs are linked but their contents were not inspected here; therefore no FULL_TEXT label is assigned.",
+      "Sequential recommendation may use next-item prediction commonly, but that objective should not be asserted for a cited paper unless explicitly verified from its full text or abstract.",
+      "No DOI was verified for the listed records; arXiv identifiers and canonical arXiv links are supplied instead.",
+      "The sources are complementary adjacent work, not proof of a unified intersection or novelty claim. Use the PDFs to check task formulation, geometry placement, and whether semantic identifiers are generated rather than merely used as labels/features."
+    ],
+    "sources": [
+      {
+        "arxiv": "2305.05065v3",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "The arXiv abstract explicitly states that semantic IDs are tuples of codewords, and that a Transformer predicts the next item a user will interact with from item Semantic IDs in a user session. No hyperbolic geometry is stated in the abstract; full-text overlap on geometry was not independently confirmed.",
+        "full_text_url": "https://arxiv.org/pdf/2305.05065v3",
+        "metadata_url": "https://arxiv.org/abs/2305.05065v3",
+        "overlap": {
+          "generative_semantic_ids": "YES",
+          "hyperbolic_geometry": "NO_EVIDENCE_IN_ABSTRACT",
+          "user_next_item_behavior": "YES"
+        },
+        "title": "Recommender Systems with Generative Retrieval"
+      },
+      {
+        "arxiv": "2505.09205v1",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "The arXiv abstract describes hyperbolic sequence modeling for sequential recommendation and user preference evolution. It does not mention generative retrieval or semantic IDs. The abstract alone does not establish that the objective specifically predicts each user's next item.",
+        "full_text_url": "https://arxiv.org/pdf/2505.09205v1",
+        "metadata_url": "https://arxiv.org/abs/2505.09205v1",
+        "overlap": {
+          "generative_semantic_ids": "NO_EVIDENCE_IN_ABSTRACT",
+          "hyperbolic_geometry": "YES",
+          "user_next_item_behavior": "PARTIAL_SEQUENTIAL_PREFERENCE"
+        },
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation"
+      },
+      {
+        "arxiv": "2108.08134v1",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "The arXiv abstract names H2SeqRec, hyperbolic-space hypergraph convolution, multi-scale item embeddings and sequential recommendation. It does not state generative Semantic IDs or an explicit next-item prediction objective.",
+        "full_text_url": "https://arxiv.org/pdf/2108.08134v1",
+        "metadata_url": "https://arxiv.org/abs/2108.08134v1",
+        "overlap": {
+          "generative_semantic_ids": "NO_EVIDENCE_IN_ABSTRACT",
+          "hyperbolic_geometry": "YES",
+          "user_next_item_behavior": "PARTIAL_SEQUENTIAL_RECOMMENDATION"
+        },
+        "title": "Hyperbolic Hypergraphs for Sequential Recommendation"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "68ca1d47e911aabd7d04ebc3a2be402bca4b3b6564a295eaeee817a65f94e6c4",
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

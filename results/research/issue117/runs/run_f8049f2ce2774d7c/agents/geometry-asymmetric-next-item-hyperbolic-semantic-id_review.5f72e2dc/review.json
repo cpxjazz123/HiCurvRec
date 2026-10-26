@@ -1,0 +1,13 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "source_sha256": "3e91364af58e820c71cb4bc2ae461aabab73eb3792442770ed1be7460066731c",
+  "proposal_sha256": "c8701416d4b694141d60366f61d3b70b4fbbc958f8188447d822f8d36e6a283d",
+  "test_sha256": {
+    "math": "78f88f7746946ef4d327b7cddf281b05b7041ce546ba099df3a32e88902061fb",
+    "gradient": "1bdea35fa8a523897a06b5c3187d6125e727650c1200385e75a837cdaeccb3e9",
+    "ddp": "bbad0f1ca18f548da870fe12ce0ec59bfb9d35f7253ac4c920d9a7c1694386dc",
+    "entrypoint": "4af27be399c0f3a4d8f10df342b9605c0bfe5616cd157a7accfe8775377da08f"
+  },
+  "verdict": "BLOCK",
+  "rationale": "Static verification: independently recomputed the source digest using the manifest recipe and all six listed per-file SHA-256 values match; the resulting digest matches source_sha256. Independently hashed all four materialised reviewed tests and their hashes match the manifest. The gradient suite exercises production hyperbolic operators and the residual quantizer; the math suite uses closed-form numerical references rather than implementation-derived expected values; the DDP suite spawns two real ranks, all-gathers distinct local values, gradients, and post-step parameters; and the entrypoint suite calls trainer.main(), observes the real compute_loss path, then checks checkpoint and SID exports. However, the reviewed math test resolves its candidate path as Path(__file__).resolve().parents[5] / \"stage2_RQ-VAE\" / ... . From the stated materialised test path, parents[5] is the results directory, so it looks for results/stage2_RQ-VAE/... rather than the candidate under the workspace root. This makes the test unable to load the candidate in the designated reviewed location and is a static path defect. Suites were not executed here; execution proof is still required from verification_check, which must run all four with the Stage2 interpreter and require nonzero tests with no skips or failures. Fix the math-test source resolution, then regenerate/verify its hash before approval."
+}

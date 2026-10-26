@@ -1,0 +1,19 @@
+{
+  "candidate_id": "geometry-directed-transition-hyperbolic-rq-v1",
+  "candidate_sha256": "24414a6084df9e893614852ba767f6ffa9a77dd60f692cdf828a382fa7c5f3e5",
+  "verdict": "FATAL",
+  "blockers": [
+    {
+      "issue": "The registered Stage2 falsifier is not mechanically decidable from the candidate specification because several named diagnostics lack operational definitions and denominators.",
+      "evidence": "The falsifier assigns thresholds and directions to validation_Hard-L1_ER, L3_collision, refinement_gain, and conditional_G3, but the manifest does not define their formulas, evaluated populations/strata, or the relevant denominators. distinct_two-token_prefixes is described as a fraction of distinct prefixes without defining its denominator or whether it is computed over all items, eligible items, or another fixed population. The generic zero-denominator/empty-stratum NULL rule does not resolve these missing definitions.",
+      "required_to_clear": "Register an exact deterministic formula, population, and denominator for each Stage2 diagnostic (including the distinct-prefix fraction), plus the aggregation behavior when a seed has an undefined diagnostic."
+    }
+  ],
+  "reproducible_evidence": {
+    "scope": "Review is limited to the supplied frozen-current-only manifest; no repository candidate implementation or validation/test behavior was inspected.",
+    "causal_link": "The train-only directed-transition hypothesis is coherent as a design claim: fixed-length two-token prefix collisions may erase distinctions among items with different successor neighborhoods. The specified Stage3 test_R@10 is correctly registered as the downstream behavioral test, with increase_vs_flat direction, minimum effect 0.005, paired identical frozen seeds and existing Stage3 protocol, and arithmetic-mean seed aggregation. Stage2 diagnostics are treated as leading indicators rather than proof of ranking gain.",
+    "math_and_domain": "The squared Poincare distance definition and its c→0 limit are mathematically consistent for the stated projected inputs. With c≤0.1 and ||x||,||y||≤0.9, each denominator factor is at least 0.919, so B>0; A≥0 implies z≥1. The stated arcosh stabilization and roundoff-only w clamp are compatible with this domain. The objective terms, stop-gradient assignment, fixed train-transition target, and empty-source-set policy are sufficiently specified to define their losses. The c=0 arm uses the stated exact distance limit.",
+    "nontrivial_effect_and_control": "For c=0.1 the distance is not merely a constant rescaling of Euclidean squared distance: its denominator depends on both point norms, so it can change relative pairwise distances and code assignments. The control specifies the same architecture, parameterization, shared bounded map, targets, initialization, optimizer, schedule, seeds, batches, epochs, and budget, differing in the metric via c=0 versus c=0.1.",
+    "leakage_and_protocol": "The manifest restricts inputs and transition targets to train-split content and consecutive transitions, specifies global item SIDs without user/context input, and explicitly excludes validation/test behavior, future events, and prediction-time context from target/mechanism selection. It declares no hyperparameter sweep and freezes levels, code count, and latent dimension."
+  }
+}

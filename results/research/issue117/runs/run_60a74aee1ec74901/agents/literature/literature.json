@@ -1,0 +1,80 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": "10.48550/arXiv.2305.05065",
+      "arxiv": "2305.05065",
+      "links": {"abstract": "https://arxiv.org/abs/2305.05065", "full_text": "https://arxiv.org/html/2305.05065v3"},
+      "evidence_label": "FULL_TEXT",
+      "exact_overlap": "Directly covers user next-item behavior and generative semantic IDs: a Transformer sequence-to-sequence model predicts the Semantic ID for the next item from a user's chronologically ordered interaction history. Full text describes content embeddings quantized into residual-quantized codeword tuples (RQ-VAE) and the next-item training objective (Sections 3.1–3.2). It does not use or report hyperbolic geometry; semantic hierarchy is learned with RQ-VAE, not a demonstrated hyperbolic manifold.",
+      "verification_note": "Inspected the arXiv HTML full text, not merely the abstract. The abstract explicitly states the next-item Semantic ID prediction task; Sections 3.1–3.2 detail the representation and training setup."
+    },
+    {
+      "title": "Hyperbolic Mamba for Sequential Recommendation",
+      "doi": "10.48550/arXiv.2505.09205",
+      "arxiv": "2505.09205",
+      "links": {"abstract": "https://arxiv.org/abs/2505.09205", "full_text": "https://arxiv.org/html/2505.09205"},
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Overlaps user sequential behavior and hyperbolic geometry: abstract says sequential recommendation models temporal evolution of user preferences from interaction sequences and proposes Hyperbolic Mamba to represent hierarchy-aware sequence dynamics. The inspected abstract does not establish generative retrieval or generative semantic IDs.",
+      "verification_note": "arXiv search result/abstract text verified; full text was not inspected for this report."
+    },
+    {
+      "title": "Poincaré Heterogeneous Graph Neural Networks for Sequential Recommendation",
+      "doi": "10.48550/arXiv.2205.11233",
+      "arxiv": "2205.11233",
+      "links": {"abstract": "https://arxiv.org/abs/2205.11233", "full_text": "https://arxiv.org/pdf/2205.11233"},
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Overlaps sequential user preference/behavior and hyperbolic geometry: abstract describes sequential recommendation, user-item interaction hierarchies, and Poincaré-space graph representations with temporal attention. The inspected abstract does not mention generative recommendation or semantic IDs.",
+      "verification_note": "arXiv search result/abstract text verified; full text was not inspected for this report."
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "doi": "10.48550/arXiv.2108.08134",
+      "arxiv": "2108.08134",
+      "links": {"abstract": "https://arxiv.org/abs/2108.08134", "full_text": "https://arxiv.org/pdf/2108.08134"},
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Overlaps sequential user-item interaction behavior and hyperbolic geometry: abstract presents H2SeqRec, using hyperbolic hypergraph convolution and temporal/hierarchical item representations for sequential recommendation. The inspected abstract does not establish generative semantic IDs.",
+      "verification_note": "arXiv search result/abstract text verified; full text was not inspected for this report."
+    },
+    {
+      "title": "HCGR: Hyperbolic Contrastive Graph Representation Learning for Session-based Recommendation",
+      "doi": "10.48550/arXiv.2107.05366",
+      "arxiv": "2107.05366",
+      "links": {"abstract": "https://arxiv.org/abs/2107.05366", "full_text": "https://arxiv.org/pdf/2107.05366"},
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Overlaps session-based user behavior and hyperbolic geometry: abstract says it models user preferences from behavior sequences using Lorentz hyperbolic representations and adaptive hyperbolic attention. The inspected abstract does not establish generative retrieval or semantic IDs.",
+      "verification_note": "arXiv search result/abstract text verified; full text was not inspected for this report."
+    },
+    {
+      "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems",
+      "doi": "10.48550/arXiv.2609.03369",
+      "arxiv": "2609.03369",
+      "links": {"abstract": "https://arxiv.org/abs/2609.03369", "full_text": "https://arxiv.org/pdf/2609.03369"},
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "The abstract describes hyperbolic item indexing for generative recommendation, encoding item semantics and long-tail structure in hyperbolic space. It is a very close hyperbolic-plus-generative-indexing match, but the inspected abstract does not specifically establish user next-item behavioral conditioning or confirm that its generated index is the same Semantic ID formulation used by TIGER. Treat as a promising near-match, not verified complete three-way overlap.",
+      "verification_note": "arXiv search result/abstract text verified. This work was announced September 2026, before the frozen report date (2026-10-24). Full text was not inspected."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Behavior-first next-item modeling with hyperbolic state/sequence representations and generative semantic-ID decoding",
+      "basis": "TIGER (FULL_TEXT) provides an explicit behavioral target and semantic-ID decoder; HMamba and the listed hyperbolic sequential/session papers (ABSTRACT) provide evidence that hyperbolic representations are used for sequential preference or interaction behavior. HypRQ-VAE (ABSTRACT) suggests a current bridge between hyperbolic item indexing and generative recommendation.",
+      "overlap_status": "No independently verified source inspected here demonstrates all three elements together: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+      "testable_question": "Does replacing Euclidean item semantic-ID quantization and/or the sequence state space with a hyperbolic hierarchy improve next-item ranking and tail-item generalization, compared with TIGER-style Euclidean RQ-VAE semantic IDs and hyperbolic sequential baselines?",
+      "behavioral_evaluation": "Evaluate next-item Recall/NDCG or MRR, separately reporting head/tail and cold-start items; compare against both a generative-SID baseline and hyperbolic sequential baseline. Avoid claiming behavior improvement from geometric fit alone."
+    }
+  ],
+  "limitations": [
+    "No verified full-text paper in this search directly establishes the complete three-way intersection. The strongest evidence is complementary: TIGER directly verifies next-item behavior plus generative semantic IDs, while the hyperbolic sequential papers verify the geometry/behavior side only at abstract level.",
+    "FULL_TEXT means an arXiv HTML full-text page was opened and relevant sections inspected; ABSTRACT means only arXiv abstract/search-result text was inspected. A listed PDF/full-text URL is a locator, not evidence that its content was read.",
+    "HypRQ-VAE appears highly relevant but abstract-level evidence alone does not establish next-item conditioning or a precise equivalence between its item index and TIGER-style semantic IDs. Verify its full text before asserting the full overlap.",
+    "The source set is a targeted intersection search, not a systematic review; absence of a full three-way match here is not proof that none exists.",
+    "No prior-candidate prompts, unseen future interactions, or test interactions were used."
+  ]
+}

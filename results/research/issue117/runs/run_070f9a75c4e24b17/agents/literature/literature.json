@@ -1,0 +1,54 @@
+{
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": null,
+      "arxiv": "2305.05065",
+      "links": {"full_text": "https://arxiv.org/html/2305.05065", "abstract": "https://arxiv.org/abs/2305.05065", "pdf": "https://arxiv.org/pdf/2305.05065"},
+      "evidence_label": "FULL_TEXT",
+      "verified_from": "arXiv API record (title/abstract/PDF links); full-text HTML endpoint",
+      "exact_overlap": "Generative retrieval for recommendation: user interaction histories are used to generate item identifiers (semantic IDs) as recommendations. Direct overlap with user next-item behavior and generative IDs.",
+      "not_established": "No hyperbolic geometry is identified as a method in this work; therefore it does not establish the three-way intersection."
+    },
+    {
+      "title": "Hyperbolic Graph Convolutional Neural Networks",
+      "doi": null,
+      "arxiv": "1909.03303",
+      "links": {"abstract": "https://arxiv.org/abs/1909.03303", "pdf": "https://arxiv.org/pdf/1909.03303"},
+      "evidence_label": "ABSTRACT",
+      "verified_from": "arXiv abstract record; full text not independently inspected for this task",
+      "exact_overlap": "Uses hyperbolic geometry for graph representation learning, relevant as a geometric-method precedent for hierarchical graph data.",
+      "not_established": "Not evidence of generative semantic IDs or user next-item recommendation; the overlap is only the geometry component."
+    },
+    {
+      "title": "Bridging Search and Recommendation in Generative Retrieval: Does One Task Help the Other?",
+      "doi": null,
+      "arxiv": "2410.16823",
+      "links": {"full_text": "https://arxiv.org/html/2410.16823", "abstract": "https://arxiv.org/abs/2410.16823", "pdf": "https://arxiv.org/pdf/2410.16823"},
+      "evidence_label": "FULL_TEXT",
+      "verified_from": "arXiv API record (title/abstract/PDF links); full-text HTML endpoint",
+      "exact_overlap": "Generative recommendation directly associates model inputs with item IDs and studies joint generative search/recommendation; relevant to generative-ID recommendation and behavioral recommendation settings.",
+      "not_established": "Abstract does not establish hyperbolic geometry or specifically next-item prediction."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Given a user's chronologically ordered interaction history, predict the next item by autoregressively generating its semantic ID.",
+      "support": ["2305.05065"],
+      "evidence_label": "FULL_TEXT",
+      "hyperbolic_connection": "Potential research question, not an established result: place items or semantic-ID prefixes in a hyperbolic space to represent hierarchical item/category structure, then test whether this improves next-item generation."
+    },
+    {
+      "candidate": "Model user-specific transitions and multi-level item hierarchy jointly, rather than only modeling item content or global popularity.",
+      "support": ["2305.05065", "1909.03303"],
+      "evidence_label": "ABSTRACT",
+      "hyperbolic_connection": "A synthesis/hypothesis across distinct literatures; neither cited source verifies the combined method."
+    }
+  ],
+  "limitations": [
+    "No independently verified source located here demonstrates all three elements together: user next-item behavior, hyperbolic geometry, and generative semantic IDs. Treat the intersection as an apparent research gap, not a novelty claim.",
+    "FULL_TEXT labels indicate an arXiv full-text HTML/PDF is openly linked and the record supports the stated overlap; the hyperbolic source is labeled ABSTRACT because its full text was not independently inspected in this run.",
+    "Semantic IDs are sometimes called item IDs or code/token sequences; do not assume every generative-retrieval paper uses semantic IDs in the same technical sense.",
+    "This is a bounded literature scan, not an exhaustive systematic review; absence of a direct intersection paper is not proof none exists."
+  ]
+}

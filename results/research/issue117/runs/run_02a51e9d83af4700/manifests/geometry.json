@@ -1,0 +1,178 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "160eb183460624f7ccf00dd658a3706d56de7809ecd8952372c8e502f1cb1ac3",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "User next-item prediction from interaction history, where the next item is generated as a sequence of semantic codes rather than selected by conventional item-ID classification/ranking.",
+        "support": [
+          "2305.05065"
+        ],
+        "support_level": "PARTIAL — behavior and generative semantic IDs overlap in TIGER; hyperbolic geometry is not part of the verified method."
+      },
+      {
+        "candidate": "Use hyperbolic geometry to encode hierarchy or multi-scale structure in user/item representations while autoregressively generating semantic IDs for next-item recommendation.",
+        "support": [],
+        "support_level": "RESEARCH GAP CANDIDATE — no independently verified full-text paper covering all three elements was identified. This is not a claim of exhaustive novelty."
+      }
+    ],
+    "limitations": [
+      "No independently verified full-text study was found that jointly establishes user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+      "The only positively identified paper is TIGER (arXiv:2305.05065), which covers sequential behavior and generative semantic IDs, but not hyperbolic geometry.",
+      "No DOI was supplied for TIGER because an arXiv identifier and full-text link provide the verifiable record; DOI status was not confirmed.",
+      "The hyperbolic sequential-recommendation candidate is deliberately marked UNKNOWN and is not evidence; its title may not correspond to a valid bibliographic record.",
+      "Search coverage was limited; absence from this result does not prove that no paper exists."
+    ],
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "doi": null,
+        "evidence_basis": "The arXiv full text/PDF is openly available; method and experimental sections describe sequential recommendation, semantic IDs, and autoregressive generation.",
+        "evidence_label": "FULL_TEXT",
+        "links": {
+          "arxiv_abs": "https://arxiv.org/abs/2305.05065",
+          "arxiv_pdf": "https://arxiv.org/pdf/2305.05065"
+        },
+        "overlap": {
+          "generative_semantic_ids": "YES — TIGER constructs semantic IDs with residual quantization and autoregressively generates them for recommendation.",
+          "hyperbolic_geometry": "NO — the paper's semantic-ID/generative retrieval method does not use hyperbolic geometry.",
+          "user_next_item_behavior": "YES — models recommendation from a user's historical interaction sequence to retrieve the next item."
+        },
+        "title": " Recommender Systems with Generative Retrieval"
+      },
+      {
+        "arxiv": null,
+        "doi": null,
+        "evidence_basis": "Search phrase only; excluded from substantiated literature claims.",
+        "evidence_label": "UNKNOWN",
+        "links": {},
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN",
+          "hyperbolic_geometry": "UNKNOWN",
+          "user_next_item_behavior": "UNKNOWN — the exact record and primary text could not be independently verified in this search; do not treat this as an established source."
+        },
+        "title": "Hyperbolic Representation Learning for Sequential Recommendation"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "17cd3479cc0915dda3b7a56905f24a6808b79bae296c6f93bd32921816b1fb4a",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

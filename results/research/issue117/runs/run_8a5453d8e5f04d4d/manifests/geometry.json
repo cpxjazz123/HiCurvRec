@@ -1,0 +1,180 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "f7f17d503a121c0285e5f24ae4890f4ac20fe247c1aa442d4783c1d626c0ae42",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "User-specific rank reversals among semantically or code-prefix-near items",
+        "evidence_label": "FULL_TEXT",
+        "hyperbolic_necessity": "Not established. A hypothesis that hyperbolic code geometry improves this behavior would require direct comparisons and behavioral diagnostics; hierarchical code capacity alone is insufficient evidence.",
+        "source": "Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation",
+        "support": "Latte reports that shared-prefix autoregressive semantic-ID generation can couple item probabilities across users, making it difficult to express users who prefer different items within a similar item group."
+      },
+      {
+        "candidate": "Rare-item or deep-hierarchy next-item discrimination under sparse histories",
+        "evidence_label": "FULL_TEXT",
+        "hyperbolic_necessity": "Plausible design hypothesis only; not demonstrated as a necessary geometry for any identified user behavior.",
+        "source": "Hyperbolic RQ-VAE enhanced Generative Recommendation with Differential-Length Codebook Strategy",
+        "support": "HG-Rec motivates hyperbolic codebooks through hierarchy and codebook-use/collision properties and reports downstream recommendation results. The inspected evidence does not demonstrate that the improvement specifically addresses a user-level next-item failure among tail items."
+      }
+    ],
+    "limitations": [
+      "No independently verified full-text work found in the inspected material that establishes all three elements together: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+      "HG-Rec is the closest geometry-plus-generative-code work, but its stated motivation and analyses center on codebook hierarchy, collision, utilization and efficiency; these do not by themselves establish a behavior-grounded need for negative curvature.",
+      "Latte supplies a concrete next-item preference-expressiveness problem for semantic-ID generation but contains no hyperbolic mechanism.",
+      "The HG-Rec local metadata does not provide a usable DOI or standard arXiv identifier. Its title and ICML/PMLR venue details are available in the parsed manuscript, but the exact persistent identifier remains unverified.",
+      "The TIGER entry is only a lead in this response and has UNKNOWN full-text evidence status; it must not be treated as independently verified evidence.",
+      "No local behavioral candidate or project-specific prompt was used as literature evidence. The claims above are limited to the stated research question and inspected paper text."
+    ],
+    "sources": [
+      {
+        "arxiv": null,
+        "doi": null,
+        "evidence_basis": "Full parsed manuscript available locally at papers/HG-Rec.md; title, abstract, methods and experiments inspected. Independently citable persistent identifier was not verified.",
+        "evidence_label": "FULL_TEXT",
+        "identifier_note": "Local full-text metadata identifies this as ICML 2026, PMLR 306; the local metadata field labelled arxiv_id is a nonstandard filename-like value, not a verifiable arXiv identifier. Do not treat it as an arXiv ID.",
+        "overlap": "Hyperbolic geometry is used in residual quantization to construct hierarchical discrete item codes for generative recommendation. The paper evaluates downstream recommendation, but the inspected text does not establish a user-behavior-specific geometric claim or isolate next-item behavior as the target of the geometry.",
+        "relevance": "Direct hyperbolic + generative discrete-code overlap; incomplete evidence for behavior-specific motivation.",
+        "title": "Hyperbolic RQ-VAE enhanced Generative Recommendation with Differential-Length Codebook Strategy"
+      },
+      {
+        "arxiv": "https://arxiv.org/abs/2605.06331",
+        "doi": null,
+        "evidence_basis": "Full parsed manuscript available locally at papers/latte_2605.06331.md; arXiv identifier is encoded in the local metadata and filename. Full text inspected.",
+        "evidence_label": "FULL_TEXT",
+        "overlap": "Studies autoregressive semantic-ID generation for predicting a user's next item from interaction history and identifies preference rank-reversal limitations induced by shared decoding prefixes. It does not use hyperbolic geometry.",
+        "relevance": "Strong behavior-first evidence for a generative semantic-ID failure mode, but no hyperbolic component.",
+        "title": "Expressiveness Limits of Autoregressive Semantic ID Generation in Generative Recommendation"
+      },
+      {
+        "arxiv": "https://arxiv.org/abs/2305.05065",
+        "doi": null,
+        "evidence_basis": "Identifier/title and commonly reported method details are supplied as a potentially relevant lead, but no full text was independently inspected in this task. Verify the arXiv record and paper before relying on this entry.",
+        "evidence_label": "UNKNOWN",
+        "overlap": "Generates semantic item identifiers autoregressively to recommend a next item from user interaction history. No hyperbolic geometry is part of the method.",
+        "relevance": "Generative semantic-ID next-item baseline; no geometry overlap.",
+        "title": "TIGER: Transformer-based Item Generation for Explainable and Robust Recommendation"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "ad2fa95101fd9dcfb9945badd2abc32b5247d72bdc23d955a1e866e424a388d6",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "candidate_id": "geometry_global_balanced_poincare_residual_vq_v1",
+  "behavior_problem_id": "sparse_nonreciprocal_train_transition_successors",
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "literature_evidence_sha256": "dbd4163af61e659c8d6ede3ed14e948f7c1d745bfbabe32539ad36b3a4e4e799",
+  "next_item_hypothesis": "For the demonstrated failure mode of sparse, directed train transitions with no observed reverse event, a Euclidean residual code geometry may use capacity inefficiently when successor structure is hierarchical and long-tailed. A negatively curved squared metric may separate broad branches while retaining fine distinctions within a branch, improving the semantic SID prefixes available to a downstream next-item ranker. This is a hypothesis, not a conclusion from the observed directionality or from the cited literature; Stage2 only builds item SIDs and does not rank next items.",
+  "math_definition": {
+    "builder": "Content embedding e_i is mapped by a shared affine map and tanh to z_i in R^32. Three residual quantization levels each use 256 learned code vectors. Each item receives one global ordered SID (k1,k2,k3), shared across users and contexts. No user representation, prefix Transformer, beam search, or recommendation metric is used in this builder.",
+    "geometry_constants": "Freeze curvature c=1.0, tau=0.1, epsilon=0.001, and projection radius R=0.9 in both arms. For c>0 use the stable arcosh implementation below. Clamp its arcosh argument only to at least 1.0. For c=0 use the exact flat limit in the same function; do not evaluate the curvature-dependent projection radius formula.",
+    "operator": {
+      "family": "poincare_squared_distance",
+      "curvature_c": 1.0,
+      "delta": 0.0,
+      "tau": 0.1,
+      "epsilon": 0.001,
+      "projection_radius": 0.9,
+      "scored_distance_squared": "D_c^2(x,y) = (1/c) * arcosh(1 + 2*c*||x-y||^2 / ((1-c*||x||^2)*(1-c*||y||^2)))^2",
+      "stable_arcosh": "For u=max(1, 1 + 2*c*||x-y||^2/((1-c*||x||^2)*(1-c*||y||^2))), compute arcosh(u)=log1p((u-1)+sqrt((u-1)*(u+1))). The clamp floor is exactly 1.0, never 1+delta.",
+      "flat_limit": "4*||x-y||^2",
+      "c_zero_rules": "At c=0, replace every scored squared distance by 4*||x-y||^2, use the identity for the exponential map (the builder does not invoke an exponential map), and do not apply (1-epsilon)/sqrt(c), which is undefined: apply the shared fixed-radius R=0.9 projection instead."
+    },
+    "tensor_gradient_rules": {
+      "content_embedding_input": "frozen input; stop-gradient",
+      "encoder_affine_weights_and_bias": "differentiable",
+      "code_vectors_level_1_to_3": "differentiable",
+      "global_balanced_assignment_labels": "frozen for the epoch; stop-gradient",
+      "assignment_logits_and_soft_probabilities": "differentiable",
+      "residuals_and_projected_latents": "differentiable",
+      "optimizer_state": "not a model tensor; updated by the frozen optimizer protocol"
+    },
+    "assignment_and_operation_order": "At each epoch boundary, over the complete fixed training item set (never a batch or validation/test population), deterministically compute whole-population balanced assignment labels using Sinkhorn-normalized costs at each residual level, with a fixed item-ID row order and the frozen run seed. Level 1 balances codes across all training items. Then subtract the selected level-1 code from each item's projected latent, project the residual, and globally balance level-2 assignments over all training items; repeat after level 2 for level 3. Freeze all three label arrays for that epoch. The balancing is over the entire item population, not whichever examples happen to share a batch; level-2 prefix diversity is preserved by level-1 global capacity balance followed by global residual-level capacity balance, and is measured directly by level2_distinct_prefixes. During minibatch optimization, train differentiable logits against these frozen labels, not via a gradient through Sinkhorn or argmin. For each item and level the exact residual order is: map input (level 1 only), project latent/residual, compute differentiable assignment logits and assign the frozen global label, project the selected code vector, subtract that code from the projected residual, then project the new residual before the next level or any scoring. No exponential map is applied. Every vector entering a distance is projected to the same fixed ball ||x||<=R in both arms.",
+    "objective": {
+      "anti_collapse": "Whole-population balanced frozen assignment labels, coupled to differentiable per-item categorical cross-entropy on assignment logits, prevent an all-items-one-code solution: balanced labels require code use and the cross-entropy has a gradient through logits and encoder. This enters the loss as L_assign below; no loss is evaluated solely on one-hot assignments.",
+      "loss_equations": [
+        {
+          "name": "L_assign",
+          "equation": "L_assign = (1/(|I_train|*3)) * sum_{i in I_train} sum_{l=1}^3 [-log softmax(a_{i,l}/tau)_{q_{i,l}}]",
+          "tensors_and_shapes": "a in R^{|I_train| x 3 x 256} are differentiable negative squared-distance logits; q in {1,...,256}^{|I_train| x 3} are frozen whole-population balanced labels; tau=0.1.",
+          "indices_normalization_reduction": "I_train is every unique training item in fixed item-ID order; mean over items and levels, then scalar sum of this term with the other listed terms.",
+          "empty_group_rule": "I_train is required nonempty; otherwise training is invalid and outcome is NULL.",
+          "target_circularity_break": "q is computed from the previous epoch's whole-training-population assignments and detached before the epoch; no current-batch assignment or validation/test information enters q."
+        },
+        {
+          "name": "L_reconstruct",
+          "equation": "L_reconstruct = (1/|I_train|) * sum_{i in I_train} D_c^2(P_R(z_i), P_R(sum_{l=1}^3 P_R(v_{l,q_{i,l}})))",
+          "tensors_and_shapes": "z in R^{|I_train| x 32}; v in R^{3 x 256 x 32}; q in {1,...,256}^{|I_train| x 3} is frozen; P_R(x)=x*min(1,R/||x||) with the zero vector unchanged.",
+          "indices_normalization_reduction": "Mean over all unique training items; squared distance only; scalar term added with coefficient 1.",
+          "empty_group_rule": "I_train must be nonempty; otherwise outcome is NULL.",
+          "target_circularity_break": "The discrete q labels are epoch-frozen and detached. Gradients flow through z and selected code vectors; q itself receives no gradient."
+        },
+        {
+          "name": "L_transition",
+          "equation": "L_transition = (1/|T_train|) * sum_{(a,t) in T_train} D_c^2(P_R(r_a), P_R(z_t))",
+          "tensors_and_shapes": "T_train is the multiset of directed adjacent train-split item transitions; a,t are item indices; r_a is the level-3 projected residual after the ordered map/project/assign/project-code/subtract/project sequence; z_t is the target's projected latent.",
+          "indices_normalization_reduction": "Mean over all train-only directed transitions, including repeats as observed; squared distance only; coefficient tau=0.1.",
+          "empty_group_rule": "If T_train is empty, define L_transition=0 and omit its coefficient contribution.",
+          "target_circularity_break": "Transition endpoints are observed train-split item IDs only; embeddings are differentiable, while target assignment labels remain detached and epoch-frozen. No validation/test behavior, future event, prediction-time user context, or batch-composition signal is used."
+        }
+      ],
+      "total_loss": "L = L_assign + L_reconstruct + tau*L_transition. All distance terms use the same squared power in curved and flat arms."
+    },
+    "loss_equations": "The three named equations above define the complete Stage2 objective; no other regularizer or auxiliary loss is used."
+  },
+  "hyperbolic_necessity": "The measured evidence establishes a directed, sparse-transition regime (including 314605 of 323633 directed pairs with no observed reverse event), but does not establish hierarchy, curvature, or causal benefit. Negative curvature is motivated as a testable capacity-allocation inductive bias for a potentially branching, long-tailed successor structure: it may represent broad-to-specific neighborhoods with less distortion than a flat metric. The cited arXiv source supports behavior-conditioned generative semantic IDs only, not hyperbolic geometry. A shared fixed projection ball and identical coordinates make the metric the sole arm difference, so the experiment can falsify this geometric necessity rather than treating it as established fact.",
+  "euclidean_control": "One implementation, architecture, parameters, initialisation, assignment procedure, optimizer, schedule, seeds, and budget; both arms project all scored vectors into the identical fixed radius R=0.9 ball. The only switch is D_c^2: curved arm uses the stated c=1 formula and flat arm uses its exact c->0 limit 4*||x-y||^2. The exponential map is not used in either arm.",
+  "effect_site": "Stage2 item-code assignment, residual quantization, and reconstruction/transition geometry only. Stage2 emits one global three-token SID per item and does not rank candidates; the downstream T5 Stage3 performs next-item ranking.",
+  "real_trigger_measurement": "The selected demonstrated failure is weak recoverability of sparse directed next-item transitions from item prefixes: train evidence has 323633 directed pairs across 57439 users, with 314605 pairs having no observed reverse event, and mean next-item entropy 4.844072338042215 bits. This is a measured directionality/sparsity trigger, not proof that hyperbolic geometry helps.",
+  "training_only_inputs": "Frozen content embeddings and train-split item transitions only. Balanced assignment population is the complete unique training item set, deterministically ordered by item ID, and labels are frozen for each epoch. The validation pairs are used only for the registered diagnostics. No validation/test behavior, future events, prediction-time user context, or batch composition is assignment or training supervision.",
+  "stable_global_sid": true,
+  "protocol": {
+    "latent_dim": 32,
+    "levels": 3,
+    "codes_per_level": 256,
+    "hyperparameter_sweep": false,
+    "uses_future_events": false,
+    "frozen_protocol_note": "Use the repository's already-frozen epochs, batch size, schedule, seeds, codebook initialization, optimizer, and budget unchanged; this candidate introduces no new training protocol."
+  },
+  "falsifier": {
+    "stage2_diagnostics": [
+      {
+        "name": "valid_l1_hard_er",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 0.1,
+        "seed_rule": "Compute per frozen seed on the exact 52855 frozen validation pairs (one positive and ten negatives per anchor, seed 42, history[-1] to target); use the frozen valid Hard-L1 ER definition. Must also satisfy the frozen admission gate strictly above its registered reference threshold."
+      },
+      {
+        "name": "level2_distinct_prefixes",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 1,
+        "seed_rule": "Count unique (k1,k2) over all items per frozen seed; must also satisfy the frozen admission gate strictly above its registered reference threshold."
+      },
+      {
+        "name": "valid_l1_positive_hit_rate",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 0.001,
+        "seed_rule": "Use the frozen definition on the exact 52855 validation pairs; compare per seed."
+      },
+      {
+        "name": "l3_collision",
+        "direction": "curved minus flat < 0",
+        "minimum_effect": 0.001,
+        "seed_rule": "Compute the frozen share of items whose complete three-code SID is shared by another item, per seed."
+      },
+      {
+        "name": "l3_refinement_gain",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 0.01,
+        "seed_rule": "Compute the frozen mean item-wise log2 bucket refinement, per seed."
+      },
+      {
+        "name": "conditional_g3",
+        "direction": "curved minus flat > 0",
+        "minimum_effect": 0.01,
+        "seed_rule": "Use exactly the frozen alpha=1, K=256 estimator and train-only longest-prefix successor counts; average per validation pair, with no-restricted-successor pairs contributing zero and non-finite pairs NULL."
+      }
+    ],
+    "stage3_behavioral_test": {
+      "metric": "test_R@10",
+      "direction": "curved minus flat > 0",
+      "minimum_effect": 0.005,
+      "seed_rule": "Evaluate the downstream frozen T5 Stage3 next-item ranker on the held-out test split for the same paired seeds and unchanged protocol; Stage2 itself does not rank."
+    },
+    "classification": {
+      "falsified_if": "At least one registered Stage2 diagnostic has a finite paired-seed aggregate in the registered direction but below its registered minimum_effect, OR either frozen admission gate fails.",
+      "passed_if": "Every registered Stage2 diagnostic and the registered Stage3 behavioral test has a finite paired-seed aggregate meeting its own registered direction and minimum_effect, and both frozen admission gates pass.",
+      "mixed_if": "Otherwise, including conflicting registered diagnostic outcomes; if any seed-wise or aggregate change is undefined or non-finite (zero denominator, missing evaluation, or empty stratum), that outcome is NULL and any comparison containing a NULL seed is inconclusive rather than passed or falsified."
+    }
+  }
+}

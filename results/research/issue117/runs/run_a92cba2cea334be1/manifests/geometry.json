@@ -1,0 +1,221 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "650fa657e1fc5b33f3adbc94a2b34dd9aaa84c66875965ef5852d344ffe7d407",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Hyperbolic semantic-ID quantization conditioned on the user's recent interaction sequence for next-item generation, tested against both fixed-ID HypRQ-VAE and Euclidean behavior-conditioned tokenizers.",
+        "evidence_label": "ABSTRACT",
+        "grounding": "HypRQ-VAE abstract supports hyperbolic generative item indexing and long-tail recommendation; Pctx abstract supports interaction-conditioned semantic IDs; TA-HGAT/HMamba abstracts support hyperbolic sequence/next-item behavior modeling.",
+        "status": "SYNTHESIS/HYPOTHESIS—not claimed as an existing published method"
+      },
+      {
+        "candidate": "Behavior-conditioned hyperbolic IDs to preserve personalized item hierarchy when a user's intent shifts across sessions, with next-item Recall/NDCG and long-tail stratification as outcomes.",
+        "evidence_label": "ABSTRACT",
+        "grounding": "Motivated by Pctx's user-context-dependent item semantics and hyperbolic recommender papers' hierarchy/long-tail rationale; no located abstract verifies their combination.",
+        "status": "SYNTHESIS/HYPOTHESIS—not a verified literature finding"
+      }
+    ],
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "limitations": [
+      "No source was independently verified by reading the full PDF body in this run. FULL_TEXT evidence is therefore not assigned; listed evidence is ABSTRACT only.",
+      "The arXiv API search was exploratory and not an exhaustive systematic review. Search coverage and terminology may miss papers using terms such as discrete item codes, hierarchical quantization, or generative retrieval without the phrase semantic IDs.",
+      "Based on the returned abstracts, no verified source explicitly establishes all three components—user next-item behavior, hyperbolic geometry, and generative semantic IDs—in a single work. This is a bounded search finding, not proof that no such work exists.",
+      "The arXiv entries are preprint records; publication status, DOI, and version-specific claims should be checked against publisher records before citation. DOI is left null where not verified.",
+      "Do not conflate sequential/next-item prediction with generative semantic-ID decoding: HMamba and TA-HGAT cover behavior plus hyperbolic modeling, while Pctx covers behavior-aware SID generation without hyperbolic geometry."
+    ],
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "sources": [
+      {
+        "arxiv": "2609.03369",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "arXiv API record supplies title and abstract and links to a PDF. The PDF body was not independently inspected in this run; do not treat the abstract as full-text verification.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2609.03369",
+          "full_text_pdf": "https://arxiv.org/pdf/2609.03369"
+        },
+        "overlap": {
+          "generative_semantic_ids": "YES—generative recommender and hyperbolic learned item indices; semantic IDs are implicit rather than explicitly called SIDs in the abstract",
+          "hyperbolic_geometry": "YES—proposes item indexing in hyperbolic space using HypRQ-VAE",
+          "user_next_item_behavior": "YES—abstract says sequential recommender systems model user behavior as item-ID sequences; evaluates recommendation"
+        },
+        "source_record": "https://export.arxiv.org/api/query?search_query=all%3Ahyperbolic%20AND%20all%3Arecommendation&max_results=15",
+        "title": "HypRQ-VAE: Hyperbolic Item Indexing for Long-Tail-Aware Generative Recommender Systems"
+      },
+      {
+        "arxiv": "2505.09205",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "Abstract-level evidence only; useful adjacent work on behavior plus hyperbolic sequence modeling, not evidence of the full three-way intersection.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2505.09205",
+          "full_text_pdf": "https://arxiv.org/pdf/2505.09205"
+        },
+        "overlap": {
+          "generative_semantic_ids": "NO evidence in abstract—does not mention semantic-ID tokenization or generative item-ID output",
+          "hyperbolic_geometry": "YES—hyperbolic selective state-space/sequence modeling",
+          "user_next_item_behavior": "YES—sequential recommendation models temporal evolution of user preferences from interaction sequences"
+        },
+        "source_record": "https://export.arxiv.org/api/query?search_query=all%3Ahyperbolic%20AND%20all%3Arecommendation&max_results=15",
+        "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation"
+      },
+      {
+        "arxiv": "2301.03780",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "Abstract-level evidence only; directly covers next-item behavior and hyperbolic geometry, but not generative semantic IDs.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2301.03780",
+          "full_text_pdf": "https://arxiv.org/pdf/2301.03780"
+        },
+        "overlap": {
+          "generative_semantic_ids": "NO evidence in abstract—no semantic IDs or generative semantic-ID decoding described",
+          "hyperbolic_geometry": "YES—hyperbolic projection and graph attention to model hierarchical session graphs",
+          "user_next_item_behavior": "YES—session-based recommendation predicts users' next interested items from prior browsing sessions"
+        },
+        "source_record": "https://export.arxiv.org/api/query?search_query=all%3Ahyperbolic%20AND%20all%3Arecommendation&max_results=15",
+        "title": "Time-aware Hyperbolic Graph Attention Network for Session-based Recommendation"
+      },
+      {
+        "arxiv": "2510.21276",
+        "doi": null,
+        "evidence_label": "ABSTRACT",
+        "evidence_note": "Abstract-level evidence only; behavior-personalized semantic-ID generation, not hyperbolic geometry.",
+        "links": {
+          "abstract": "https://arxiv.org/abs/2510.21276",
+          "full_text_pdf": "https://arxiv.org/pdf/2510.21276"
+        },
+        "overlap": {
+          "generative_semantic_ids": "YES—personalized context-aware tokenizer generates semantic IDs; same item can receive different IDs in different user contexts",
+          "hyperbolic_geometry": "NO evidence in abstract",
+          "user_next_item_behavior": "YES—incorporates a user's historical interactions and generates recommendations conditioned on personalized context"
+        },
+        "source_record": "https://export.arxiv.org/api/query?search_query=all%3A%22generative%20semantic%20IDs%22&max_results=10",
+        "title": "Pctx: Tokenizing Personalized Context for Generative Recommendation"
+      }
+    ],
+    "task_id": "literature"
+  },
+  "literature_evidence_sha256": "f1fd93ae264eeb89b091011e6760c77a489ddc638a5942256eee20cc7b040abd",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

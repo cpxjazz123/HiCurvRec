@@ -1,0 +1,745 @@
+W1025 15:07:06.245443 1773814 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] 
+W1025 15:07:06.245443 1773814 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+W1025 15:07:06.245443 1773814 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1025 15:07:06.245443 1773814 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************
+[RecBole RQ-VAE] device=cuda:0 all_items=24587 train_items=24556 world_size=4
+[RecBole RQ-VAE] config: epochs=3000 batch_size_per_rank=1024 total_batch=4096 lr=0.001
+[RecBole RQ-VAE] initializing codebooks with KMeans
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_lorentz_user_cohort_margin/model/layers.py:102: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  - 2 * latent @ code_embs.t()
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[RQ-VAE] epoch=1 loss=0.00244096 recon=0.00046256 lr=2.333e-05 time=0.656s
+[RQ-VAE] epoch=2 loss=0.00238721 recon=0.00045646 lr=4.333e-05 time=0.395s
+[RQ-VAE] epoch=3 loss=0.00220951 recon=0.00044414 lr=6.333e-05 time=0.386s
+[RQ-VAE] epoch=4 loss=0.00199468 recon=0.00042425 lr=8.333e-05 time=0.316s
+[RQ-VAE] epoch=5 loss=0.00172438 recon=0.00039434 lr=1.033e-04 time=0.394s
+[RQ-VAE] epoch=6 loss=0.00168117 recon=0.00035292 lr=1.233e-04 time=0.392s
+[RQ-VAE] epoch=7 loss=0.00193653 recon=0.00030756 lr=1.433e-04 time=0.391s
+[RQ-VAE] epoch=8 loss=0.00251883 recon=0.00026731 lr=1.633e-04 time=0.375s
+[RQ-VAE] epoch=9 loss=0.00279112 recon=0.00023673 lr=1.833e-04 time=0.379s
+[RQ-VAE] epoch=10 loss=0.00283151 recon=0.00021777 lr=2.033e-04 time=0.356s
+[RQ-VAE] epoch=11 loss=0.00274738 recon=0.00020644 lr=2.233e-04 time=0.254s
+[RQ-VAE] epoch=12 loss=0.00243713 recon=0.00019974 lr=2.433e-04 time=0.405s
+[RQ-VAE] epoch=13 loss=0.00216927 recon=0.00019444 lr=2.633e-04 time=0.378s
+[RQ-VAE] epoch=14 loss=0.00197149 recon=0.00018935 lr=2.833e-04 time=0.582s
+[RQ-VAE] epoch=15 loss=0.00172788 recon=0.00018542 lr=3.033e-04 time=0.362s
+[RQ-VAE] epoch=16 loss=0.00147231 recon=0.00018195 lr=3.233e-04 time=0.419s
+[RQ-VAE] epoch=17 loss=0.00136406 recon=0.00017864 lr=3.433e-04 time=0.392s
+[RQ-VAE] epoch=18 loss=0.00127107 recon=0.00017494 lr=3.633e-04 time=0.41s
+[RQ-VAE] epoch=19 loss=0.00118390 recon=0.00017147 lr=3.833e-04 time=0.347s
+[RQ-VAE] epoch=20 loss=0.00116075 recon=0.00016831 lr=4.033e-04 time=0.325s
+[RQ-VAE] epoch=21 loss=0.00109382 recon=0.00016569 lr=4.233e-04 time=0.45s
+[RQ-VAE] epoch=22 loss=0.00106284 recon=0.00016353 lr=4.433e-04 time=0.391s
+[RQ-VAE] epoch=23 loss=0.00105231 recon=0.00016154 lr=4.633e-04 time=0.398s
+[RQ-VAE] epoch=24 loss=0.00096784 recon=0.00015995 lr=4.833e-04 time=0.381s
+[RQ-VAE] epoch=25 loss=0.00095153 recon=0.00015848 lr=5.033e-04 time=0.397s
+[RQ-VAE] epoch=26 loss=0.00091414 recon=0.00015704 lr=5.233e-04 time=0.394s
+[RQ-VAE] epoch=27 loss=0.00086021 recon=0.00015577 lr=5.433e-04 time=0.271s
+[RQ-VAE] epoch=28 loss=0.00086094 recon=0.00015478 lr=5.633e-04 time=0.349s
+[RQ-VAE] epoch=29 loss=0.00084428 recon=0.00015394 lr=5.833e-04 time=0.392s
+[RQ-VAE] epoch=30 loss=0.00078654 recon=0.00015314 lr=6.033e-04 time=0.368s
+[RQ-VAE] epoch=31 loss=0.00080605 recon=0.00015222 lr=6.233e-04 time=0.342s
+[RQ-VAE] epoch=32 loss=0.00074387 recon=0.00015126 lr=6.433e-04 time=0.399s
+[RQ-VAE] epoch=33 loss=0.00073301 recon=0.00015043 lr=6.633e-04 time=0.358s
+[RQ-VAE] epoch=34 loss=0.00074222 recon=0.00014969 lr=6.833e-04 time=0.534s
+[RQ-VAE] epoch=35 loss=0.00072560 recon=0.00014912 lr=7.033e-04 time=0.411s
+[RQ-VAE] epoch=36 loss=0.00069392 recon=0.00014843 lr=7.233e-04 time=0.331s
+[RQ-VAE] epoch=37 loss=0.00070270 recon=0.00014771 lr=7.433e-04 time=0.403s
+[RQ-VAE] epoch=38 loss=0.00067932 recon=0.00014709 lr=7.633e-04 time=0.383s
+[RQ-VAE] epoch=39 loss=0.00064412 recon=0.00014653 lr=7.833e-04 time=0.368s
+[RQ-VAE] epoch=40 loss=0.00064951 recon=0.00014585 lr=8.033e-04 time=0.353s
+[RQ-VAE] epoch=41 loss=0.00063077 recon=0.00014524 lr=8.233e-04 time=0.361s
+[RQ-VAE] epoch=42 loss=0.00060971 recon=0.00014478 lr=8.433e-04 time=0.306s
+[RQ-VAE] epoch=43 loss=0.00060152 recon=0.00014423 lr=8.633e-04 time=0.342s
+[RQ-VAE] epoch=44 loss=0.00059759 recon=0.00014373 lr=8.833e-04 time=0.245s
+[RQ-VAE] epoch=45 loss=0.00059107 recon=0.00014313 lr=9.033e-04 time=0.374s
+[RQ-VAE] epoch=46 loss=0.00060040 recon=0.00014273 lr=9.233e-04 time=0.357s
+[RQ-VAE] epoch=47 loss=0.00061601 recon=0.00014234 lr=9.433e-04 time=0.346s
+[RQ-VAE] epoch=48 loss=0.00059292 recon=0.00014198 lr=9.633e-04 time=0.389s
+[RQ-VAE] epoch=49 loss=0.00058846 recon=0.00014170 lr=9.833e-04 time=0.647s
+[RQ-VAE] epoch=50 loss=0.00059493 recon=0.00014133 lr=1.000e-03 raw_unique=20356/24587 collision=0.172083 time=0.383s
+[RQ-VAE] epoch=51 loss=0.00059135 recon=0.00014082 lr=9.997e-04 time=0.364s
+[RQ-VAE] epoch=52 loss=0.00056688 recon=0.00014042 lr=9.993e-04 time=0.33s
+[RQ-VAE] epoch=53 loss=0.00053214 recon=0.00013999 lr=9.990e-04 time=0.39s
+[RQ-VAE] epoch=54 loss=0.00056643 recon=0.00013966 lr=9.986e-04 time=0.4s
+[RQ-VAE] epoch=55 loss=0.00054805 recon=0.00013935 lr=9.983e-04 time=0.41s
+[RQ-VAE] epoch=56 loss=0.00053282 recon=0.00013920 lr=9.980e-04 time=0.386s
+[RQ-VAE] epoch=57 loss=0.00051127 recon=0.00013881 lr=9.976e-04 time=0.33s
+[RQ-VAE] epoch=58 loss=0.00052210 recon=0.00013846 lr=9.973e-04 time=0.383s
+[RQ-VAE] epoch=59 loss=0.00052627 recon=0.00013810 lr=9.969e-04 time=0.345s
+[RQ-VAE] epoch=60 loss=0.00050872 recon=0.00013793 lr=9.966e-04 time=0.28s
+[RQ-VAE] epoch=61 loss=0.00050750 recon=0.00013755 lr=9.963e-04 time=0.349s
+[RQ-VAE] epoch=62 loss=0.00049671 recon=0.00013714 lr=9.959e-04 time=0.374s
+[RQ-VAE] epoch=63 loss=0.00051207 recon=0.00013669 lr=9.956e-04 time=0.361s
+[RQ-VAE] epoch=64 loss=0.00048748 recon=0.00013652 lr=9.953e-04 time=0.329s
+[RQ-VAE] epoch=65 loss=0.00046690 recon=0.00013642 lr=9.949e-04 time=0.359s
+[RQ-VAE] epoch=66 loss=0.00045959 recon=0.00013614 lr=9.946e-04 time=0.351s
+[RQ-VAE] epoch=67 loss=0.00046585 recon=0.00013600 lr=9.942e-04 time=0.37s
+[RQ-VAE] epoch=68 loss=0.00047581 recon=0.00013553 lr=9.939e-04 time=0.362s
+[RQ-VAE] epoch=69 loss=0.00050458 recon=0.00013515 lr=9.936e-04 time=0.334s
+[RQ-VAE] epoch=70 loss=0.00048803 recon=0.00013493 lr=9.932e-04 time=0.356s
+[RQ-VAE] epoch=71 loss=0.00048075 recon=0.00013501 lr=9.929e-04 time=0.35s
+[RQ-VAE] epoch=72 loss=0.00048301 recon=0.00013483 lr=9.925e-04 time=0.339s
+[RQ-VAE] epoch=73 loss=0.00046085 recon=0.00013469 lr=9.922e-04 time=0.381s
+[RQ-VAE] epoch=74 loss=0.00047328 recon=0.00013446 lr=9.919e-04 time=0.39s
+[RQ-VAE] epoch=75 loss=0.00048631 recon=0.00013422 lr=9.915e-04 time=0.339s
+[RQ-VAE] epoch=76 loss=0.00047977 recon=0.00013387 lr=9.912e-04 time=0.355s
+[RQ-VAE] epoch=77 loss=0.00046987 recon=0.00013341 lr=9.908e-04 time=0.299s
+[RQ-VAE] epoch=78 loss=0.00046450 recon=0.00013304 lr=9.905e-04 time=0.362s
+[RQ-VAE] epoch=79 loss=0.00045256 recon=0.00013275 lr=9.902e-04 time=0.398s
+[RQ-VAE] epoch=80 loss=0.00047376 recon=0.00013246 lr=9.898e-04 time=0.374s
+[RQ-VAE] epoch=81 loss=0.00045046 recon=0.00013234 lr=9.895e-04 time=0.407s
+[RQ-VAE] epoch=82 loss=0.00046621 recon=0.00013210 lr=9.892e-04 time=0.416s
+[RQ-VAE] epoch=83 loss=0.00044802 recon=0.00013192 lr=9.888e-04 time=0.394s
+[RQ-VAE] epoch=84 loss=0.00043970 recon=0.00013160 lr=9.885e-04 time=0.342s
+[RQ-VAE] epoch=85 loss=0.00045122 recon=0.00013133 lr=9.881e-04 time=0.36s
+[RQ-VAE] epoch=86 loss=0.00046388 recon=0.00013116 lr=9.878e-04 time=0.386s
+[RQ-VAE] epoch=87 loss=0.00045700 recon=0.00013094 lr=9.875e-04 time=0.381s
+[RQ-VAE] epoch=88 loss=0.00045903 recon=0.00013078 lr=9.871e-04 time=0.394s
+[RQ-VAE] epoch=89 loss=0.00046511 recon=0.00013030 lr=9.868e-04 time=0.348s
+[RQ-VAE] epoch=90 loss=0.00045857 recon=0.00013007 lr=9.864e-04 time=0.329s
+[RQ-VAE] epoch=91 loss=0.00046680 recon=0.00012994 lr=9.861e-04 time=0.306s
+[RQ-VAE] epoch=92 loss=0.00044572 recon=0.00012990 lr=9.858e-04 time=0.338s
+[RQ-VAE] epoch=93 loss=0.00046021 recon=0.00012987 lr=9.854e-04 time=0.368s
+[RQ-VAE] epoch=94 loss=0.00046139 recon=0.00012957 lr=9.851e-04 time=0.287s
+[RQ-VAE] epoch=95 loss=0.00044565 recon=0.00012929 lr=9.847e-04 time=0.356s
+[RQ-VAE] epoch=96 loss=0.00043324 recon=0.00012884 lr=9.844e-04 time=0.353s
+[RQ-VAE] epoch=97 loss=0.00045566 recon=0.00012882 lr=9.841e-04 time=0.378s
+[RQ-VAE] epoch=98 loss=0.00043107 recon=0.00012860 lr=9.837e-04 time=0.371s
+[RQ-VAE] epoch=99 loss=0.00045257 recon=0.00012847 lr=9.834e-04 time=0.37s
+[RQ-VAE] epoch=100 loss=0.00043846 recon=0.00012821 lr=9.831e-04 raw_unique=22220/24587 collision=0.096270 time=0.347s
+[RQ-VAE] epoch=101 loss=0.00043363 recon=0.00012812 lr=9.827e-04 time=0.38s
+[RQ-VAE] epoch=102 loss=0.00043986 recon=0.00012817 lr=9.824e-04 time=0.387s
+[RQ-VAE] epoch=103 loss=0.00044958 recon=0.00012808 lr=9.820e-04 time=0.362s
+[RQ-VAE] epoch=104 loss=0.00045421 recon=0.00012802 lr=9.817e-04 time=0.364s
+[RQ-VAE] epoch=105 loss=0.00044033 recon=0.00012809 lr=9.814e-04 time=0.401s
+[RQ-VAE] epoch=106 loss=0.00043908 recon=0.00012777 lr=9.810e-04 time=0.546s
+[RQ-VAE] epoch=107 loss=0.00043744 recon=0.00012751 lr=9.807e-04 time=0.314s
+[RQ-VAE] epoch=108 loss=0.00042250 recon=0.00012739 lr=9.803e-04 time=0.373s
+[RQ-VAE] epoch=109 loss=0.00043148 recon=0.00012701 lr=9.800e-04 time=0.399s
+[RQ-VAE] epoch=110 loss=0.00042609 recon=0.00012675 lr=9.797e-04 time=0.352s
+[RQ-VAE] epoch=111 loss=0.00042956 recon=0.00012680 lr=9.793e-04 time=0.278s
+[RQ-VAE] epoch=112 loss=0.00042115 recon=0.00012665 lr=9.790e-04 time=0.356s
+[RQ-VAE] epoch=113 loss=0.00044094 recon=0.00012654 lr=9.786e-04 time=0.421s
+[RQ-VAE] epoch=114 loss=0.00042148 recon=0.00012632 lr=9.783e-04 time=0.406s
+[RQ-VAE] epoch=115 loss=0.00042808 recon=0.00012617 lr=9.780e-04 time=0.335s
+[RQ-VAE] epoch=116 loss=0.00043390 recon=0.00012594 lr=9.776e-04 time=0.338s
+[RQ-VAE] epoch=117 loss=0.00043659 recon=0.00012591 lr=9.773e-04 time=0.384s
+[RQ-VAE] epoch=118 loss=0.00043539 recon=0.00012588 lr=9.769e-04 time=0.371s
+[RQ-VAE] epoch=119 loss=0.00043484 recon=0.00012566 lr=9.766e-04 time=0.333s
+[RQ-VAE] epoch=120 loss=0.00042850 recon=0.00012563 lr=9.763e-04 time=0.379s
+[RQ-VAE] epoch=121 loss=0.00044685 recon=0.00012549 lr=9.759e-04 time=0.389s
+[RQ-VAE] epoch=122 loss=0.00043472 recon=0.00012530 lr=9.756e-04 time=0.331s
+[RQ-VAE] epoch=123 loss=0.00042087 recon=0.00012502 lr=9.753e-04 time=0.312s
+[RQ-VAE] epoch=124 loss=0.00043384 recon=0.00012481 lr=9.749e-04 time=0.367s
+[RQ-VAE] epoch=125 loss=0.00042584 recon=0.00012462 lr=9.746e-04 time=0.34s
+[RQ-VAE] epoch=126 loss=0.00045127 recon=0.00012463 lr=9.742e-04 time=0.357s
+[RQ-VAE] epoch=127 loss=0.00043275 recon=0.00012456 lr=9.739e-04 time=0.374s
+[RQ-VAE] epoch=128 loss=0.00043769 recon=0.00012443 lr=9.736e-04 time=0.331s
+[RQ-VAE] epoch=129 loss=0.00043222 recon=0.00012408 lr=9.732e-04 time=0.4s
+[RQ-VAE] epoch=130 loss=0.00042243 recon=0.00012413 lr=9.729e-04 time=0.368s
+[RQ-VAE] epoch=131 loss=0.00042359 recon=0.00012410 lr=9.725e-04 time=0.392s
+[RQ-VAE] epoch=132 loss=0.00042113 recon=0.00012403 lr=9.722e-04 time=0.399s
+[RQ-VAE] epoch=133 loss=0.00042866 recon=0.00012390 lr=9.719e-04 time=0.379s
+[RQ-VAE] epoch=134 loss=0.00042672 recon=0.00012365 lr=9.715e-04 time=0.389s
+[RQ-VAE] epoch=135 loss=0.00042442 recon=0.00012360 lr=9.712e-04 time=0.634s
+[RQ-VAE] epoch=136 loss=0.00042556 recon=0.00012367 lr=9.708e-04 time=0.424s
+[RQ-VAE] epoch=137 loss=0.00043293 recon=0.00012315 lr=9.705e-04 time=0.397s
+[RQ-VAE] epoch=138 loss=0.00043193 recon=0.00012303 lr=9.702e-04 time=0.371s
+[RQ-VAE] epoch=139 loss=0.00042613 recon=0.00012328 lr=9.698e-04 time=0.389s
+[RQ-VAE] epoch=140 loss=0.00041969 recon=0.00012291 lr=9.695e-04 time=0.41s
+[RQ-VAE] epoch=141 loss=0.00041616 recon=0.00012296 lr=9.692e-04 time=0.397s
+[RQ-VAE] epoch=142 loss=0.00041780 recon=0.00012263 lr=9.688e-04 time=0.366s
+[RQ-VAE] epoch=143 loss=0.00041865 recon=0.00012234 lr=9.685e-04 time=0.388s
+[RQ-VAE] epoch=144 loss=0.00041744 recon=0.00012209 lr=9.681e-04 time=0.33s
+[RQ-VAE] epoch=145 loss=0.00042931 recon=0.00012207 lr=9.678e-04 time=0.396s
+[RQ-VAE] epoch=146 loss=0.00043420 recon=0.00012178 lr=9.675e-04 time=0.351s
+[RQ-VAE] epoch=147 loss=0.00042224 recon=0.00012194 lr=9.671e-04 time=0.368s
+[RQ-VAE] epoch=148 loss=0.00042583 recon=0.00012190 lr=9.668e-04 time=0.346s
+[RQ-VAE] epoch=149 loss=0.00043188 recon=0.00012168 lr=9.664e-04 time=0.347s
+[RQ-VAE] epoch=150 loss=0.00042179 recon=0.00012148 lr=9.661e-04 raw_unique=22083/24587 collision=0.101842 time=0.392s
+[RQ-VAE] epoch=151 loss=0.00042719 recon=0.00012154 lr=9.658e-04 time=0.366s
+[RQ-VAE] epoch=152 loss=0.00040173 recon=0.00012138 lr=9.654e-04 time=0.351s
+[RQ-VAE] epoch=153 loss=0.00042539 recon=0.00012109 lr=9.651e-04 time=0.37s
+[RQ-VAE] epoch=154 loss=0.00043156 recon=0.00012117 lr=9.647e-04 time=0.376s
+[RQ-VAE] epoch=155 loss=0.00044570 recon=0.00012119 lr=9.644e-04 time=0.587s
+[RQ-VAE] epoch=156 loss=0.00042564 recon=0.00012095 lr=9.641e-04 time=0.391s
+[RQ-VAE] epoch=157 loss=0.00043016 recon=0.00012084 lr=9.637e-04 time=0.392s
+[RQ-VAE] epoch=158 loss=0.00041220 recon=0.00012052 lr=9.634e-04 time=0.396s
+[RQ-VAE] epoch=159 loss=0.00040789 recon=0.00012057 lr=9.631e-04 time=0.372s
+[RQ-VAE] epoch=160 loss=0.00042661 recon=0.00012043 lr=9.627e-04 time=0.369s
+[RQ-VAE] epoch=161 loss=0.00041109 recon=0.00012043 lr=9.624e-04 time=0.342s
+[RQ-VAE] epoch=162 loss=0.00042304 recon=0.00012023 lr=9.620e-04 time=0.349s
+[RQ-VAE] epoch=163 loss=0.00042607 recon=0.00012006 lr=9.617e-04 time=0.368s
+[RQ-VAE] epoch=164 loss=0.00042240 recon=0.00012022 lr=9.614e-04 time=0.398s
+[RQ-VAE] epoch=165 loss=0.00041161 recon=0.00011972 lr=9.610e-04 time=0.359s
+[RQ-VAE] epoch=166 loss=0.00041394 recon=0.00011935 lr=9.607e-04 time=0.373s
+[RQ-VAE] epoch=167 loss=0.00041557 recon=0.00011930 lr=9.603e-04 time=0.395s
+[RQ-VAE] epoch=168 loss=0.00041692 recon=0.00011935 lr=9.600e-04 time=0.362s
+[RQ-VAE] epoch=169 loss=0.00042136 recon=0.00011943 lr=9.597e-04 time=0.271s
+[RQ-VAE] epoch=170 loss=0.00041838 recon=0.00011907 lr=9.593e-04 time=0.523s
+[RQ-VAE] epoch=171 loss=0.00040298 recon=0.00011907 lr=9.590e-04 time=0.389s
+[RQ-VAE] epoch=172 loss=0.00040186 recon=0.00011892 lr=9.586e-04 time=0.417s
+[RQ-VAE] epoch=173 loss=0.00041234 recon=0.00011907 lr=9.583e-04 time=0.387s
+[RQ-VAE] epoch=174 loss=0.00041525 recon=0.00011896 lr=9.580e-04 time=0.364s
+[RQ-VAE] epoch=175 loss=0.00041258 recon=0.00011863 lr=9.576e-04 time=0.353s
+[RQ-VAE] epoch=176 loss=0.00041153 recon=0.00011840 lr=9.573e-04 time=0.387s
+[RQ-VAE] epoch=177 loss=0.00043009 recon=0.00011850 lr=9.569e-04 time=0.292s
+[RQ-VAE] epoch=178 loss=0.00041194 recon=0.00011837 lr=9.566e-04 time=0.356s
+[RQ-VAE] epoch=179 loss=0.00041767 recon=0.00011812 lr=9.563e-04 time=0.438s
+[RQ-VAE] epoch=180 loss=0.00041341 recon=0.00011800 lr=9.559e-04 time=0.414s
+[RQ-VAE] epoch=181 loss=0.00040647 recon=0.00011773 lr=9.556e-04 time=0.355s
+[RQ-VAE] epoch=182 loss=0.00041608 recon=0.00011785 lr=9.553e-04 time=0.344s
+[RQ-VAE] epoch=183 loss=0.00040887 recon=0.00011798 lr=9.549e-04 time=0.359s
+[RQ-VAE] epoch=184 loss=0.00040937 recon=0.00011775 lr=9.546e-04 time=0.38s
+[RQ-VAE] epoch=185 loss=0.00041110 recon=0.00011766 lr=9.542e-04 time=0.313s
+[RQ-VAE] epoch=186 loss=0.00041158 recon=0.00011758 lr=9.539e-04 time=0.41s
+[RQ-VAE] epoch=187 loss=0.00041304 recon=0.00011739 lr=9.536e-04 time=0.363s
+[RQ-VAE] epoch=188 loss=0.00041007 recon=0.00011757 lr=9.532e-04 time=0.385s
+[RQ-VAE] epoch=189 loss=0.00040289 recon=0.00011711 lr=9.529e-04 time=0.363s
+[RQ-VAE] epoch=190 loss=0.00041395 recon=0.00011713 lr=9.525e-04 time=0.353s
+[RQ-VAE] epoch=191 loss=0.00041320 recon=0.00011728 lr=9.522e-04 time=0.428s
+[RQ-VAE] epoch=192 loss=0.00041212 recon=0.00011722 lr=9.519e-04 time=0.335s
+[RQ-VAE] epoch=193 loss=0.00041844 recon=0.00011729 lr=9.515e-04 time=0.385s
+[RQ-VAE] epoch=194 loss=0.00041146 recon=0.00011697 lr=9.512e-04 time=0.31s
+[RQ-VAE] epoch=195 loss=0.00040440 recon=0.00011670 lr=9.508e-04 time=0.346s
+[RQ-VAE] epoch=196 loss=0.00041610 recon=0.00011649 lr=9.505e-04 time=0.398s
+[RQ-VAE] epoch=197 loss=0.00041128 recon=0.00011676 lr=9.502e-04 time=0.39s
+[RQ-VAE] epoch=198 loss=0.00040776 recon=0.00011639 lr=9.498e-04 time=0.356s
+[RQ-VAE] epoch=199 loss=0.00041591 recon=0.00011652 lr=9.495e-04 time=0.385s
+[RQ-VAE] epoch=200 loss=0.00039583 recon=0.00011647 lr=9.492e-04 raw_unique=21765/24587 collision=0.114776 time=0.4s
+[RQ-VAE] epoch=201 loss=0.00040064 recon=0.00011614 lr=9.488e-04 time=0.377s
+[RQ-VAE] epoch=202 loss=0.00040525 recon=0.00011638 lr=9.485e-04 time=0.401s
+[RQ-VAE] epoch=203 loss=0.00041290 recon=0.00011610 lr=9.481e-04 time=0.427s
+[RQ-VAE] epoch=204 loss=0.00039902 recon=0.00011592 lr=9.478e-04 time=0.408s
+[RQ-VAE] epoch=205 loss=0.00041049 recon=0.00011565 lr=9.475e-04 time=0.392s
+[RQ-VAE] epoch=206 loss=0.00039060 recon=0.00011557 lr=9.471e-04 time=0.359s
+[RQ-VAE] epoch=207 loss=0.00041600 recon=0.00011552 lr=9.468e-04 time=0.382s
+[RQ-VAE] epoch=208 loss=0.00041260 recon=0.00011571 lr=9.464e-04 time=0.337s
+[RQ-VAE] epoch=209 loss=0.00041710 recon=0.00011572 lr=9.461e-04 time=0.378s
+[RQ-VAE] epoch=210 loss=0.00040424 recon=0.00011561 lr=9.458e-04 time=0.384s
+[RQ-VAE] epoch=211 loss=0.00041219 recon=0.00011547 lr=9.454e-04 time=0.372s
+[RQ-VAE] epoch=212 loss=0.00041469 recon=0.00011519 lr=9.451e-04 time=0.271s
+[RQ-VAE] epoch=213 loss=0.00039941 recon=0.00011506 lr=9.447e-04 time=0.411s
+[RQ-VAE] epoch=214 loss=0.00041272 recon=0.00011536 lr=9.444e-04 time=0.378s
+[RQ-VAE] epoch=215 loss=0.00040814 recon=0.00011523 lr=9.441e-04 time=0.397s
+[RQ-VAE] epoch=216 loss=0.00042414 recon=0.00011517 lr=9.437e-04 time=0.337s
+[RQ-VAE] epoch=217 loss=0.00040271 recon=0.00011499 lr=9.434e-04 time=0.344s
+[RQ-VAE] epoch=218 loss=0.00039306 recon=0.00011495 lr=9.431e-04 time=0.351s
+[RQ-VAE] epoch=219 loss=0.00039393 recon=0.00011473 lr=9.427e-04 time=0.402s
+[RQ-VAE] epoch=220 loss=0.00041047 recon=0.00011470 lr=9.424e-04 time=0.37s
+[RQ-VAE] epoch=221 loss=0.00041261 recon=0.00011470 lr=9.420e-04 time=0.377s
+[RQ-VAE] epoch=222 loss=0.00041237 recon=0.00011490 lr=9.417e-04 time=0.371s
+[RQ-VAE] epoch=223 loss=0.00039843 recon=0.00011479 lr=9.414e-04 time=0.395s
+[RQ-VAE] epoch=224 loss=0.00041252 recon=0.00011472 lr=9.410e-04 time=0.37s
+[RQ-VAE] epoch=225 loss=0.00039864 recon=0.00011486 lr=9.407e-04 time=0.475s
+[RQ-VAE] epoch=226 loss=0.00041753 recon=0.00011433 lr=9.403e-04 time=0.395s
+[RQ-VAE] epoch=227 loss=0.00039975 recon=0.00011421 lr=9.400e-04 time=0.556s
+[RQ-VAE] epoch=228 loss=0.00040784 recon=0.00011414 lr=9.397e-04 time=0.349s
+[RQ-VAE] epoch=229 loss=0.00041327 recon=0.00011389 lr=9.393e-04 time=0.337s
+[RQ-VAE] epoch=230 loss=0.00041615 recon=0.00011406 lr=9.390e-04 time=0.377s
+[RQ-VAE] epoch=231 loss=0.00041985 recon=0.00011394 lr=9.386e-04 time=0.363s
+[RQ-VAE] epoch=232 loss=0.00039820 recon=0.00011460 lr=9.383e-04 time=0.357s
+[RQ-VAE] epoch=233 loss=0.00040671 recon=0.00011389 lr=9.380e-04 time=0.373s
+[RQ-VAE] epoch=234 loss=0.00040106 recon=0.00011413 lr=9.376e-04 time=0.379s
+[RQ-VAE] epoch=235 loss=0.00040919 recon=0.00011410 lr=9.373e-04 time=0.414s
+[RQ-VAE] epoch=236 loss=0.00041179 recon=0.00011393 lr=9.369e-04 time=0.311s
+[RQ-VAE] epoch=237 loss=0.00040433 recon=0.00011398 lr=9.366e-04 time=0.353s
+[RQ-VAE] epoch=238 loss=0.00039920 recon=0.00011385 lr=9.363e-04 time=0.387s
+[RQ-VAE] epoch=239 loss=0.00042365 recon=0.00011348 lr=9.359e-04 time=0.43s
+[RQ-VAE] epoch=240 loss=0.00041869 recon=0.00011372 lr=9.356e-04 time=0.356s
+[RQ-VAE] epoch=241 loss=0.00041053 recon=0.00011358 lr=9.353e-04 time=0.434s
+[RQ-VAE] epoch=242 loss=0.00040180 recon=0.00011371 lr=9.349e-04 time=0.362s
+[RQ-VAE] epoch=243 loss=0.00041348 recon=0.00011331 lr=9.346e-04 time=0.367s
+[RQ-VAE] epoch=244 loss=0.00042444 recon=0.00011343 lr=9.342e-04 time=0.358s
+[RQ-VAE] epoch=245 loss=0.00040100 recon=0.00011371 lr=9.339e-04 time=0.346s
+[RQ-VAE] epoch=246 loss=0.00039875 recon=0.00011332 lr=9.336e-04 time=0.335s
+[RQ-VAE] epoch=247 loss=0.00039976 recon=0.00011334 lr=9.332e-04 time=0.407s
+[RQ-VAE] epoch=248 loss=0.00039586 recon=0.00011318 lr=9.329e-04 time=0.286s
+[RQ-VAE] epoch=249 loss=0.00041550 recon=0.00011320 lr=9.325e-04 time=0.369s
+[RQ-VAE] epoch=250 loss=0.00040050 recon=0.00011301 lr=9.322e-04 raw_unique=21764/24587 collision=0.114817 time=0.387s
+[RQ-VAE] epoch=251 loss=0.00041609 recon=0.00011293 lr=9.319e-04 time=0.37s
+[RQ-VAE] epoch=252 loss=0.00041215 recon=0.00011275 lr=9.315e-04 time=0.421s
+[RQ-VAE] epoch=253 loss=0.00040873 recon=0.00011272 lr=9.312e-04 time=0.367s
+[RQ-VAE] epoch=254 loss=0.00039976 recon=0.00011266 lr=9.308e-04 time=0.428s
+[RQ-VAE] epoch=255 loss=0.00040846 recon=0.00011223 lr=9.305e-04 time=0.374s
+[RQ-VAE] epoch=256 loss=0.00040939 recon=0.00011266 lr=9.302e-04 time=0.493s
+[RQ-VAE] epoch=257 loss=0.00040429 recon=0.00011227 lr=9.298e-04 time=0.368s
+[RQ-VAE] epoch=258 loss=0.00040366 recon=0.00011201 lr=9.295e-04 time=0.399s
+[RQ-VAE] epoch=259 loss=0.00039265 recon=0.00011232 lr=9.292e-04 time=0.39s
+[RQ-VAE] epoch=260 loss=0.00041254 recon=0.00011236 lr=9.288e-04 time=0.4s
+[RQ-VAE] epoch=261 loss=0.00040947 recon=0.00011193 lr=9.285e-04 time=0.391s
+[RQ-VAE] epoch=262 loss=0.00041040 recon=0.00011199 lr=9.281e-04 time=0.324s
+[RQ-VAE] epoch=263 loss=0.00041116 recon=0.00011197 lr=9.278e-04 time=0.316s
+[RQ-VAE] epoch=264 loss=0.00040630 recon=0.00011172 lr=9.275e-04 time=0.437s
+[RQ-VAE] epoch=265 loss=0.00040367 recon=0.00011179 lr=9.271e-04 time=0.364s
+[RQ-VAE] epoch=266 loss=0.00041825 recon=0.00011166 lr=9.268e-04 time=0.394s
+[RQ-VAE] epoch=267 loss=0.00041334 recon=0.00011173 lr=9.264e-04 time=0.36s
+[RQ-VAE] epoch=268 loss=0.00041774 recon=0.00011164 lr=9.261e-04 time=0.377s
+[RQ-VAE] epoch=269 loss=0.00041259 recon=0.00011123 lr=9.258e-04 time=0.358s
+[RQ-VAE] epoch=270 loss=0.00040164 recon=0.00011152 lr=9.254e-04 time=0.36s
+[RQ-VAE] epoch=271 loss=0.00040395 recon=0.00011145 lr=9.251e-04 time=0.403s
+[RQ-VAE] epoch=272 loss=0.00041053 recon=0.00011145 lr=9.247e-04 time=0.334s
+[RQ-VAE] epoch=273 loss=0.00040983 recon=0.00011149 lr=9.244e-04 time=0.389s
+[RQ-VAE] epoch=274 loss=0.00040691 recon=0.00011152 lr=9.241e-04 time=0.338s
+[RQ-VAE] epoch=275 loss=0.00040282 recon=0.00011137 lr=9.237e-04 time=0.519s
+[RQ-VAE] epoch=276 loss=0.00042733 recon=0.00011112 lr=9.234e-04 time=0.357s
+[RQ-VAE] epoch=277 loss=0.00039473 recon=0.00011128 lr=9.231e-04 time=0.39s
+[RQ-VAE] epoch=278 loss=0.00039182 recon=0.00011086 lr=9.227e-04 time=0.383s
+[RQ-VAE] epoch=279 loss=0.00041021 recon=0.00011082 lr=9.224e-04 time=0.244s
+[RQ-VAE] epoch=280 loss=0.00039636 recon=0.00011083 lr=9.220e-04 time=0.395s
+[RQ-VAE] epoch=281 loss=0.00040650 recon=0.00011072 lr=9.217e-04 time=0.368s
+[RQ-VAE] epoch=282 loss=0.00041130 recon=0.00011060 lr=9.214e-04 time=0.372s
+[RQ-VAE] epoch=283 loss=0.00042633 recon=0.00011054 lr=9.210e-04 time=0.36s
+[RQ-VAE] epoch=284 loss=0.00040218 recon=0.00011069 lr=9.207e-04 time=0.4s
+[RQ-VAE] epoch=285 loss=0.00041709 recon=0.00011083 lr=9.203e-04 time=0.368s
+[RQ-VAE] epoch=286 loss=0.00041999 recon=0.00011037 lr=9.200e-04 time=0.375s
+[RQ-VAE] epoch=287 loss=0.00041360 recon=0.00011042 lr=9.197e-04 time=0.416s
+[RQ-VAE] epoch=288 loss=0.00040405 recon=0.00011035 lr=9.193e-04 time=0.389s
+[RQ-VAE] epoch=289 loss=0.00041986 recon=0.00011009 lr=9.190e-04 time=0.387s
+[RQ-VAE] epoch=290 loss=0.00041226 recon=0.00011008 lr=9.186e-04 time=0.528s
+[RQ-VAE] epoch=291 loss=0.00039877 recon=0.00011016 lr=9.183e-04 time=0.382s
+[RQ-VAE] epoch=292 loss=0.00040346 recon=0.00011000 lr=9.180e-04 time=0.354s
+[RQ-VAE] epoch=293 loss=0.00041419 recon=0.00011004 lr=9.176e-04 time=0.389s
+[RQ-VAE] epoch=294 loss=0.00040682 recon=0.00011017 lr=9.173e-04 time=0.383s
+[RQ-VAE] epoch=295 loss=0.00040284 recon=0.00010965 lr=9.169e-04 time=0.286s
+[RQ-VAE] epoch=296 loss=0.00042838 recon=0.00010974 lr=9.166e-04 time=0.364s
+[RQ-VAE] epoch=297 loss=0.00040092 recon=0.00010972 lr=9.163e-04 time=0.339s
+[RQ-VAE] epoch=298 loss=0.00041130 recon=0.00011002 lr=9.159e-04 time=0.355s
+[RQ-VAE] epoch=299 loss=0.00039920 recon=0.00010995 lr=9.156e-04 time=0.357s
+[RQ-VAE] epoch=300 loss=0.00041588 recon=0.00011002 lr=9.153e-04 raw_unique=21821/24587 collision=0.112498 time=0.389s
+[RQ-VAE] epoch=301 loss=0.00041034 recon=0.00010972 lr=9.149e-04 time=0.406s
+[RQ-VAE] epoch=302 loss=0.00040183 recon=0.00010984 lr=9.146e-04 time=0.374s
+[RQ-VAE] epoch=303 loss=0.00042062 recon=0.00010946 lr=9.142e-04 time=0.392s
+[RQ-VAE] epoch=304 loss=0.00041621 recon=0.00010973 lr=9.139e-04 time=0.356s
+[RQ-VAE] epoch=305 loss=0.00041967 recon=0.00010957 lr=9.136e-04 time=0.392s
+[RQ-VAE] epoch=306 loss=0.00040952 recon=0.00010993 lr=9.132e-04 time=0.337s
+[RQ-VAE] epoch=307 loss=0.00039064 recon=0.00010952 lr=9.129e-04 time=0.345s
+[RQ-VAE] epoch=308 loss=0.00042390 recon=0.00010928 lr=9.125e-04 time=0.39s
+[RQ-VAE] epoch=309 loss=0.00040034 recon=0.00010948 lr=9.122e-04 time=0.432s
+[RQ-VAE] epoch=310 loss=0.00042877 recon=0.00010927 lr=9.119e-04 time=0.395s
+[RQ-VAE] epoch=311 loss=0.00041335 recon=0.00010935 lr=9.115e-04 time=0.345s
+[RQ-VAE] epoch=312 loss=0.00040801 recon=0.00010902 lr=9.112e-04 time=0.391s
+[RQ-VAE] epoch=313 loss=0.00041682 recon=0.00010920 lr=9.108e-04 time=0.384s
+[RQ-VAE] epoch=314 loss=0.00041169 recon=0.00010889 lr=9.105e-04 time=0.325s
+[RQ-VAE] epoch=315 loss=0.00041051 recon=0.00010893 lr=9.102e-04 time=0.369s
+[RQ-VAE] epoch=316 loss=0.00041476 recon=0.00010883 lr=9.098e-04 time=0.398s
+[RQ-VAE] epoch=317 loss=0.00042247 recon=0.00010878 lr=9.095e-04 time=0.409s
+[RQ-VAE] epoch=318 loss=0.00041257 recon=0.00010910 lr=9.092e-04 time=0.351s
+[RQ-VAE] epoch=319 loss=0.00040988 recon=0.00010873 lr=9.088e-04 time=0.412s
+[RQ-VAE] epoch=320 loss=0.00041022 recon=0.00010870 lr=9.085e-04 time=0.401s
+[RQ-VAE] epoch=321 loss=0.00041086 recon=0.00010842 lr=9.081e-04 time=0.427s
+[RQ-VAE] epoch=322 loss=0.00040779 recon=0.00010841 lr=9.078e-04 time=0.387s
+[RQ-VAE] epoch=323 loss=0.00039958 recon=0.00010850 lr=9.075e-04 time=0.38s
+[RQ-VAE] epoch=324 loss=0.00040341 recon=0.00010847 lr=9.071e-04 time=0.399s
+[RQ-VAE] epoch=325 loss=0.00041161 recon=0.00010858 lr=9.068e-04 time=0.314s
+[RQ-VAE] epoch=326 loss=0.00040904 recon=0.00010877 lr=9.064e-04 time=0.351s
+[RQ-VAE] epoch=327 loss=0.00040197 recon=0.00010845 lr=9.061e-04 time=0.381s
+[RQ-VAE] epoch=328 loss=0.00041532 recon=0.00010799 lr=9.058e-04 time=0.34s
+[RQ-VAE] epoch=329 loss=0.00040616 recon=0.00010825 lr=9.054e-04 time=0.353s
+[RQ-VAE] epoch=330 loss=0.00043741 recon=0.00010833 lr=9.051e-04 time=0.359s
+[RQ-VAE] epoch=331 loss=0.00041577 recon=0.00010838 lr=9.047e-04 time=0.299s
+[RQ-VAE] epoch=332 loss=0.00041682 recon=0.00010836 lr=9.044e-04 time=0.367s
+[RQ-VAE] epoch=333 loss=0.00042666 recon=0.00010825 lr=9.041e-04 time=0.34s
+[RQ-VAE] epoch=334 loss=0.00040935 recon=0.00010821 lr=9.037e-04 time=0.378s
+[RQ-VAE] epoch=335 loss=0.00039620 recon=0.00010792 lr=9.034e-04 time=0.357s
+[RQ-VAE] epoch=336 loss=0.00041012 recon=0.00010784 lr=9.031e-04 time=0.402s
+[RQ-VAE] epoch=337 loss=0.00041187 recon=0.00010763 lr=9.027e-04 time=0.343s
+[RQ-VAE] epoch=338 loss=0.00041051 recon=0.00010781 lr=9.024e-04 time=0.35s
+[RQ-VAE] epoch=339 loss=0.00040575 recon=0.00010766 lr=9.020e-04 time=0.356s
+[RQ-VAE] epoch=340 loss=0.00039024 recon=0.00010779 lr=9.017e-04 time=0.367s
+[RQ-VAE] epoch=341 loss=0.00040793 recon=0.00010793 lr=9.014e-04 time=0.354s
+[RQ-VAE] epoch=342 loss=0.00041990 recon=0.00010850 lr=9.010e-04 time=0.349s
+[RQ-VAE] epoch=343 loss=0.00040644 recon=0.00010831 lr=9.007e-04 time=0.335s
+[RQ-VAE] epoch=344 loss=0.00041563 recon=0.00010837 lr=9.003e-04 time=0.317s
+[RQ-VAE] epoch=345 loss=0.00040563 recon=0.00010799 lr=9.000e-04 time=0.377s
+[RQ-VAE] epoch=346 loss=0.00041671 recon=0.00010789 lr=8.997e-04 time=0.388s
+[RQ-VAE] epoch=347 loss=0.00041863 recon=0.00010821 lr=8.993e-04 time=0.488s
+[RQ-VAE] epoch=348 loss=0.00042144 recon=0.00010786 lr=8.990e-04 time=0.367s
+[RQ-VAE] epoch=349 loss=0.00041273 recon=0.00010759 lr=8.986e-04 time=0.393s
+[RQ-VAE] epoch=350 loss=0.00040201 recon=0.00010770 lr=8.983e-04 raw_unique=21862/24587 collision=0.110831 time=0.359s
+[RQ-VAE] epoch=351 loss=0.00041784 recon=0.00010751 lr=8.980e-04 time=0.366s
+[RQ-VAE] epoch=352 loss=0.00041864 recon=0.00010752 lr=8.976e-04 time=0.373s
+[RQ-VAE] epoch=353 loss=0.00041493 recon=0.00010732 lr=8.973e-04 time=0.349s
+[RQ-VAE] epoch=354 loss=0.00040670 recon=0.00010699 lr=8.969e-04 time=0.34s
+[RQ-VAE] epoch=355 loss=0.00040089 recon=0.00010698 lr=8.966e-04 time=0.362s
+[RQ-VAE] epoch=356 loss=0.00041719 recon=0.00010689 lr=8.963e-04 time=0.393s
+[RQ-VAE] epoch=357 loss=0.00041732 recon=0.00010686 lr=8.959e-04 time=0.379s
+[RQ-VAE] epoch=358 loss=0.00039324 recon=0.00010675 lr=8.956e-04 time=0.403s
+[RQ-VAE] epoch=359 loss=0.00039533 recon=0.00010685 lr=8.953e-04 time=0.412s
+[RQ-VAE] epoch=360 loss=0.00040881 recon=0.00010742 lr=8.949e-04 time=0.378s
+[RQ-VAE] epoch=361 loss=0.00041316 recon=0.00010728 lr=8.946e-04 time=0.355s
+[RQ-VAE] epoch=362 loss=0.00042391 recon=0.00010725 lr=8.942e-04 time=0.386s
+[RQ-VAE] epoch=363 loss=0.00040386 recon=0.00010667 lr=8.939e-04 time=0.404s
+[RQ-VAE] epoch=364 loss=0.00041694 recon=0.00010669 lr=8.936e-04 time=0.32s
+[RQ-VAE] epoch=365 loss=0.00041818 recon=0.00010646 lr=8.932e-04 time=0.367s
+[RQ-VAE] epoch=366 loss=0.00041603 recon=0.00010669 lr=8.929e-04 time=0.396s
+[RQ-VAE] epoch=367 loss=0.00039633 recon=0.00010666 lr=8.925e-04 time=0.312s
+[RQ-VAE] epoch=368 loss=0.00040013 recon=0.00010645 lr=8.922e-04 time=0.362s
+[RQ-VAE] epoch=369 loss=0.00040329 recon=0.00010612 lr=8.919e-04 time=0.391s
+[RQ-VAE] epoch=370 loss=0.00040145 recon=0.00010626 lr=8.915e-04 time=0.371s
+[RQ-VAE] epoch=371 loss=0.00041693 recon=0.00010625 lr=8.912e-04 time=0.375s
+[RQ-VAE] epoch=372 loss=0.00041118 recon=0.00010638 lr=8.908e-04 time=0.456s
+[RQ-VAE] epoch=373 loss=0.00040871 recon=0.00010624 lr=8.905e-04 time=0.321s
+[RQ-VAE] epoch=374 loss=0.00040845 recon=0.00010634 lr=8.902e-04 time=0.414s
+[RQ-VAE] epoch=375 loss=0.00040692 recon=0.00010618 lr=8.898e-04 time=0.417s
+[RQ-VAE] epoch=376 loss=0.00039413 recon=0.00010584 lr=8.895e-04 time=0.546s
+[RQ-VAE] epoch=377 loss=0.00040544 recon=0.00010581 lr=8.892e-04 time=0.385s
+[RQ-VAE] epoch=378 loss=0.00040229 recon=0.00010594 lr=8.888e-04 time=0.412s
+[RQ-VAE] epoch=379 loss=0.00039834 recon=0.00010564 lr=8.885e-04 time=0.369s
+[RQ-VAE] epoch=380 loss=0.00040472 recon=0.00010623 lr=8.881e-04 time=0.339s
+[RQ-VAE] epoch=381 loss=0.00042750 recon=0.00010604 lr=8.878e-04 time=0.417s
+[RQ-VAE] epoch=382 loss=0.00041069 recon=0.00010588 lr=8.875e-04 time=0.351s
+[RQ-VAE] epoch=383 loss=0.00041358 recon=0.00010567 lr=8.871e-04 time=0.388s
+[RQ-VAE] epoch=384 loss=0.00041302 recon=0.00010602 lr=8.868e-04 time=0.411s
+[RQ-VAE] epoch=385 loss=0.00041978 recon=0.00010605 lr=8.864e-04 time=0.386s
+[RQ-VAE] epoch=386 loss=0.00040779 recon=0.00010612 lr=8.861e-04 time=0.389s
+[RQ-VAE] epoch=387 loss=0.00039830 recon=0.00010600 lr=8.858e-04 time=0.356s
+[RQ-VAE] epoch=388 loss=0.00041495 recon=0.00010570 lr=8.854e-04 time=0.384s
+[RQ-VAE] epoch=389 loss=0.00039356 recon=0.00010567 lr=8.851e-04 time=0.299s
+[RQ-VAE] epoch=390 loss=0.00040876 recon=0.00010557 lr=8.847e-04 time=0.321s
+[RQ-VAE] epoch=391 loss=0.00042526 recon=0.00010548 lr=8.844e-04 time=0.386s
+[RQ-VAE] epoch=392 loss=0.00041650 recon=0.00010575 lr=8.841e-04 time=0.35s
+[RQ-VAE] epoch=393 loss=0.00042165 recon=0.00010587 lr=8.837e-04 time=0.372s
+[RQ-VAE] epoch=394 loss=0.00042620 recon=0.00010593 lr=8.834e-04 time=0.367s
+[RQ-VAE] epoch=395 loss=0.00040284 recon=0.00010563 lr=8.831e-04 time=0.392s
+[RQ-VAE] epoch=396 loss=0.00039703 recon=0.00010554 lr=8.827e-04 time=0.492s
+[RQ-VAE] epoch=397 loss=0.00039866 recon=0.00010563 lr=8.824e-04 time=0.303s
+[RQ-VAE] epoch=398 loss=0.00041690 recon=0.00010565 lr=8.820e-04 time=0.39s
+[RQ-VAE] epoch=399 loss=0.00041072 recon=0.00010535 lr=8.817e-04 time=0.36s
+[RQ-VAE] epoch=400 loss=0.00042019 recon=0.00010525 lr=8.814e-04 raw_unique=21746/24587 collision=0.115549 time=0.403s
+[RQ-VAE] epoch=401 loss=0.00040204 recon=0.00010511 lr=8.810e-04 time=0.366s
+[RQ-VAE] epoch=402 loss=0.00040023 recon=0.00010517 lr=8.807e-04 time=0.378s
+[RQ-VAE] epoch=403 loss=0.00041987 recon=0.00010507 lr=8.803e-04 time=0.403s
+[RQ-VAE] epoch=404 loss=0.00040032 recon=0.00010503 lr=8.800e-04 time=0.307s
+[RQ-VAE] epoch=405 loss=0.00040653 recon=0.00010507 lr=8.797e-04 time=0.344s
+[RQ-VAE] epoch=406 loss=0.00041354 recon=0.00010468 lr=8.793e-04 time=0.373s
+[RQ-VAE] epoch=407 loss=0.00041811 recon=0.00010498 lr=8.790e-04 time=0.355s
+[RQ-VAE] epoch=408 loss=0.00041589 recon=0.00010534 lr=8.786e-04 time=0.372s
+[RQ-VAE] epoch=409 loss=0.00041159 recon=0.00010510 lr=8.783e-04 time=0.409s
+[RQ-VAE] epoch=410 loss=0.00041312 recon=0.00010498 lr=8.780e-04 time=0.374s
+[RQ-VAE] epoch=411 loss=0.00040944 recon=0.00010474 lr=8.776e-04 time=0.535s
+[RQ-VAE] epoch=412 loss=0.00041682 recon=0.00010521 lr=8.773e-04 time=0.403s
+[RQ-VAE] epoch=413 loss=0.00041182 recon=0.00010507 lr=8.769e-04 time=0.302s
+[RQ-VAE] epoch=414 loss=0.00041624 recon=0.00010520 lr=8.766e-04 time=0.397s
+[RQ-VAE] epoch=415 loss=0.00040845 recon=0.00010508 lr=8.763e-04 time=0.346s
+[RQ-VAE] epoch=416 loss=0.00041561 recon=0.00010495 lr=8.759e-04 time=0.376s
+[RQ-VAE] epoch=417 loss=0.00042386 recon=0.00010453 lr=8.756e-04 time=0.377s
+[RQ-VAE] epoch=418 loss=0.00040638 recon=0.00010459 lr=8.753e-04 time=0.385s
+[RQ-VAE] epoch=419 loss=0.00041462 recon=0.00010445 lr=8.749e-04 time=0.309s
+[RQ-VAE] epoch=420 loss=0.00040422 recon=0.00010476 lr=8.746e-04 time=0.351s
+[RQ-VAE] epoch=421 loss=0.00040482 recon=0.00010486 lr=8.742e-04 time=0.359s
+[RQ-VAE] epoch=422 loss=0.00039264 recon=0.00010482 lr=8.739e-04 time=0.364s
+[RQ-VAE] epoch=423 loss=0.00042067 recon=0.00010463 lr=8.736e-04 time=0.393s
+[RQ-VAE] epoch=424 loss=0.00041419 recon=0.00010460 lr=8.732e-04 time=0.364s
+[RQ-VAE] epoch=425 loss=0.00041337 recon=0.00010457 lr=8.729e-04 time=0.399s
+[RQ-VAE] epoch=426 loss=0.00039607 recon=0.00010433 lr=8.725e-04 time=0.411s
+[RQ-VAE] epoch=427 loss=0.00041026 recon=0.00010432 lr=8.722e-04 time=0.354s
+[RQ-VAE] epoch=428 loss=0.00041735 recon=0.00010440 lr=8.719e-04 time=0.357s
+[RQ-VAE] epoch=429 loss=0.00041119 recon=0.00010420 lr=8.715e-04 time=0.335s
+[RQ-VAE] epoch=430 loss=0.00040643 recon=0.00010438 lr=8.712e-04 time=0.337s
+[RQ-VAE] epoch=431 loss=0.00039625 recon=0.00010431 lr=8.708e-04 time=0.281s
+[RQ-VAE] epoch=432 loss=0.00040754 recon=0.00010429 lr=8.705e-04 time=0.34s
+[RQ-VAE] epoch=433 loss=0.00040471 recon=0.00010449 lr=8.702e-04 time=0.357s
+[RQ-VAE] epoch=434 loss=0.00040171 recon=0.00010404 lr=8.698e-04 time=0.359s
+[RQ-VAE] epoch=435 loss=0.00039016 recon=0.00010406 lr=8.695e-04 time=0.355s
+[RQ-VAE] epoch=436 loss=0.00040418 recon=0.00010435 lr=8.692e-04 time=0.327s
+[RQ-VAE] epoch=437 loss=0.00041030 recon=0.00010403 lr=8.688e-04 time=0.363s
+[RQ-VAE] epoch=438 loss=0.00041462 recon=0.00010367 lr=8.685e-04 time=0.35s
+[RQ-VAE] epoch=439 loss=0.00042019 recon=0.00010420 lr=8.681e-04 time=0.405s
+[RQ-VAE] epoch=440 loss=0.00043071 recon=0.00010447 lr=8.678e-04 time=0.438s
+[RQ-VAE] epoch=441 loss=0.00040894 recon=0.00010419 lr=8.675e-04 time=0.361s
+[RQ-VAE] epoch=442 loss=0.00041044 recon=0.00010420 lr=8.671e-04 time=0.361s
+[RQ-VAE] epoch=443 loss=0.00040623 recon=0.00010418 lr=8.668e-04 time=0.381s
+[RQ-VAE] epoch=444 loss=0.00040739 recon=0.00010458 lr=8.664e-04 time=0.391s
+[RQ-VAE] epoch=445 loss=0.00040578 recon=0.00010436 lr=8.661e-04 time=0.333s
+[RQ-VAE] epoch=446 loss=0.00039049 recon=0.00010384 lr=8.658e-04 time=0.361s
+[RQ-VAE] epoch=447 loss=0.00040049 recon=0.00010369 lr=8.654e-04 time=0.395s
+[RQ-VAE] epoch=448 loss=0.00039966 recon=0.00010347 lr=8.651e-04 time=0.314s
+[RQ-VAE] epoch=449 loss=0.00039147 recon=0.00010373 lr=8.647e-04 time=0.361s
+[RQ-VAE] epoch=450 loss=0.00039941 recon=0.00010367 lr=8.644e-04 raw_unique=22079/24587 collision=0.102005 time=0.373s
+[RQ-VAE] epoch=451 loss=0.00040769 recon=0.00010364 lr=8.641e-04 time=0.396s
+[RQ-VAE] epoch=452 loss=0.00040468 recon=0.00010384 lr=8.637e-04 time=0.304s
+[RQ-VAE] epoch=453 loss=0.00042767 recon=0.00010380 lr=8.634e-04 time=0.388s
+[RQ-VAE] epoch=454 loss=0.00041034 recon=0.00010365 lr=8.631e-04 time=0.418s
+[RQ-VAE] epoch=455 loss=0.00041086 recon=0.00010356 lr=8.627e-04 time=0.355s
+[RQ-VAE] epoch=456 loss=0.00040100 recon=0.00010311 lr=8.624e-04 time=0.327s
+[RQ-VAE] epoch=457 loss=0.00040193 recon=0.00010314 lr=8.620e-04 time=0.375s
+[RQ-VAE] epoch=458 loss=0.00040385 recon=0.00010295 lr=8.617e-04 time=0.33s
+[RQ-VAE] epoch=459 loss=0.00041546 recon=0.00010341 lr=8.614e-04 time=0.386s
+[RQ-VAE] epoch=460 loss=0.00040688 recon=0.00010398 lr=8.610e-04 time=0.373s
+[RQ-VAE] epoch=461 loss=0.00041688 recon=0.00010342 lr=8.607e-04 time=0.398s
+[RQ-VAE] epoch=462 loss=0.00041388 recon=0.00010325 lr=8.603e-04 time=0.382s
+[RQ-VAE] epoch=463 loss=0.00040790 recon=0.00010334 lr=8.600e-04 time=0.353s
+[RQ-VAE] epoch=464 loss=0.00040723 recon=0.00010326 lr=8.597e-04 time=0.358s
+[RQ-VAE] epoch=465 loss=0.00042964 recon=0.00010313 lr=8.593e-04 time=0.29s
+[RQ-VAE] epoch=466 loss=0.00041131 recon=0.00010323 lr=8.590e-04 time=0.375s
+[RQ-VAE] epoch=467 loss=0.00040489 recon=0.00010281 lr=8.586e-04 time=0.376s
+[RQ-VAE] epoch=468 loss=0.00041048 recon=0.00010264 lr=8.583e-04 time=0.479s
+[RQ-VAE] epoch=469 loss=0.00039852 recon=0.00010253 lr=8.580e-04 time=0.386s
+[RQ-VAE] epoch=470 loss=0.00040149 recon=0.00010264 lr=8.576e-04 time=0.329s
+[RQ-VAE] epoch=471 loss=0.00039825 recon=0.00010229 lr=8.573e-04 time=0.304s
+[RQ-VAE] epoch=472 loss=0.00039769 recon=0.00010247 lr=8.569e-04 time=0.368s
+[RQ-VAE] epoch=473 loss=0.00040400 recon=0.00010224 lr=8.566e-04 time=0.375s
+[RQ-VAE] epoch=474 loss=0.00040132 recon=0.00010216 lr=8.563e-04 time=0.346s
+[RQ-VAE] epoch=475 loss=0.00039565 recon=0.00010250 lr=8.559e-04 time=0.371s
+[RQ-VAE] epoch=476 loss=0.00039496 recon=0.00010273 lr=8.556e-04 time=0.358s
+[RQ-VAE] epoch=477 loss=0.00041896 recon=0.00010277 lr=8.553e-04 time=0.392s
+[RQ-VAE] epoch=478 loss=0.00040744 recon=0.00010301 lr=8.549e-04 time=0.371s
+[RQ-VAE] epoch=479 loss=0.00040676 recon=0.00010316 lr=8.546e-04 time=0.372s
+[RQ-VAE] epoch=480 loss=0.00040634 recon=0.00010255 lr=8.542e-04 time=0.387s
+[RQ-VAE] epoch=481 loss=0.00039918 recon=0.00010269 lr=8.539e-04 time=0.392s
+[RQ-VAE] epoch=482 loss=0.00038870 recon=0.00010268 lr=8.536e-04 time=0.291s
+[RQ-VAE] epoch=483 loss=0.00040538 recon=0.00010262 lr=8.532e-04 time=0.386s
+[RQ-VAE] epoch=484 loss=0.00041885 recon=0.00010332 lr=8.529e-04 time=0.366s
+[RQ-VAE] epoch=485 loss=0.00042360 recon=0.00010315 lr=8.525e-04 time=0.349s
+[RQ-VAE] epoch=486 loss=0.00041925 recon=0.00010294 lr=8.522e-04 time=0.4s
+[RQ-VAE] epoch=487 loss=0.00042414 recon=0.00010295 lr=8.519e-04 time=0.379s
+[RQ-VAE] epoch=488 loss=0.00042154 recon=0.00010274 lr=8.515e-04 time=0.372s
+[RQ-VAE] epoch=489 loss=0.00040353 recon=0.00010262 lr=8.512e-04 time=0.407s
+[RQ-VAE] epoch=490 loss=0.00040458 recon=0.00010236 lr=8.508e-04 time=0.348s
+[RQ-VAE] epoch=491 loss=0.00039111 recon=0.00010246 lr=8.505e-04 time=0.4s
+[RQ-VAE] epoch=492 loss=0.00039907 recon=0.00010237 lr=8.502e-04 time=0.389s
+[RQ-VAE] epoch=493 loss=0.00040514 recon=0.00010247 lr=8.498e-04 time=0.35s
+[RQ-VAE] epoch=494 loss=0.00041137 recon=0.00010296 lr=8.495e-04 time=0.37s
+[RQ-VAE] epoch=495 loss=0.00041024 recon=0.00010258 lr=8.492e-04 time=0.368s
+[RQ-VAE] epoch=496 loss=0.00040652 recon=0.00010266 lr=8.488e-04 time=0.362s
+[RQ-VAE] epoch=497 loss=0.00041876 recon=0.00010262 lr=8.485e-04 time=0.492s
+[RQ-VAE] epoch=498 loss=0.00041632 recon=0.00010289 lr=8.481e-04 time=0.35s
+[RQ-VAE] epoch=499 loss=0.00040141 recon=0.00010223 lr=8.478e-04 time=0.168s
+[RQ-VAE] epoch=500 loss=0.00039156 recon=0.00010217 lr=8.475e-04 raw_unique=21861/24587 collision=0.110872 time=0.355s
+[RQ-VAE] epoch=501 loss=0.00039903 recon=0.00010177 lr=8.471e-04 time=0.351s
+[RQ-VAE] epoch=502 loss=0.00041510 recon=0.00010175 lr=8.468e-04 time=0.37s
+[RQ-VAE] epoch=503 loss=0.00040198 recon=0.00010153 lr=8.464e-04 time=0.336s
+[RQ-VAE] epoch=504 loss=0.00039356 recon=0.00010182 lr=8.461e-04 time=0.325s
+[RQ-VAE] epoch=505 loss=0.00041450 recon=0.00010187 lr=8.458e-04 time=0.364s
+[RQ-VAE] epoch=506 loss=0.00039637 recon=0.00010183 lr=8.454e-04 time=0.393s
+[RQ-VAE] epoch=507 loss=0.00039988 recon=0.00010145 lr=8.451e-04 time=0.38s
+[RQ-VAE] epoch=508 loss=0.00040304 recon=0.00010174 lr=8.447e-04 time=0.378s
+[RQ-VAE] epoch=509 loss=0.00039808 recon=0.00010179 lr=8.444e-04 time=0.309s
+[RQ-VAE] epoch=510 loss=0.00040149 recon=0.00010176 lr=8.441e-04 time=0.38s
+[RQ-VAE] epoch=511 loss=0.00040715 recon=0.00010204 lr=8.437e-04 time=0.482s
+[RQ-VAE] epoch=512 loss=0.00039996 recon=0.00010232 lr=8.434e-04 time=0.383s
+[RQ-VAE] epoch=513 loss=0.00040364 recon=0.00010197 lr=8.431e-04 time=0.391s
+[RQ-VAE] epoch=514 loss=0.00038953 recon=0.00010163 lr=8.427e-04 time=0.368s
+[RQ-VAE] epoch=515 loss=0.00039704 recon=0.00010170 lr=8.424e-04 time=0.243s
+[RQ-VAE] epoch=516 loss=0.00040312 recon=0.00010198 lr=8.420e-04 time=0.276s
+[RQ-VAE] epoch=517 loss=0.00040937 recon=0.00010181 lr=8.417e-04 time=0.566s
+[RQ-VAE] epoch=518 loss=0.00040690 recon=0.00010185 lr=8.414e-04 time=0.37s
+[RQ-VAE] epoch=519 loss=0.00040035 recon=0.00010142 lr=8.410e-04 time=0.39s
+[RQ-VAE] epoch=520 loss=0.00040659 recon=0.00010130 lr=8.407e-04 time=0.36s
+[RQ-VAE] epoch=521 loss=0.00039078 recon=0.00010171 lr=8.403e-04 time=0.363s
+[RQ-VAE] epoch=522 loss=0.00038160 recon=0.00010167 lr=8.400e-04 time=0.364s
+[RQ-VAE] epoch=523 loss=0.00040332 recon=0.00010172 lr=8.397e-04 time=0.364s
+[RQ-VAE] epoch=524 loss=0.00040928 recon=0.00010155 lr=8.393e-04 time=0.377s
+[RQ-VAE] epoch=525 loss=0.00038500 recon=0.00010117 lr=8.390e-04 time=0.376s
+[RQ-VAE] epoch=526 loss=0.00040735 recon=0.00010129 lr=8.386e-04 time=0.411s
+[RQ-VAE] epoch=527 loss=0.00039776 recon=0.00010156 lr=8.383e-04 time=0.399s
+[RQ-VAE] epoch=528 loss=0.00040847 recon=0.00010113 lr=8.380e-04 time=0.365s
+[RQ-VAE] epoch=529 loss=0.00040628 recon=0.00010089 lr=8.376e-04 time=0.391s
+[RQ-VAE] epoch=530 loss=0.00039908 recon=0.00010131 lr=8.373e-04 time=0.388s
+[RQ-VAE] epoch=531 loss=0.00039721 recon=0.00010155 lr=8.369e-04 time=0.314s
+[RQ-VAE] epoch=532 loss=0.00039368 recon=0.00010197 lr=8.366e-04 time=0.533s
+[RQ-VAE] epoch=533 loss=0.00040333 recon=0.00010139 lr=8.363e-04 time=0.265s
+[RQ-VAE] epoch=534 loss=0.00041806 recon=0.00010141 lr=8.359e-04 time=0.319s
+[RQ-VAE] epoch=535 loss=0.00041572 recon=0.00010147 lr=8.356e-04 time=0.338s
+[RQ-VAE] epoch=536 loss=0.00042180 recon=0.00010123 lr=8.353e-04 time=0.39s
+[RQ-VAE] epoch=537 loss=0.00041927 recon=0.00010134 lr=8.349e-04 time=0.349s
+[RQ-VAE] epoch=538 loss=0.00040815 recon=0.00010099 lr=8.346e-04 time=0.332s
+[RQ-VAE] epoch=539 loss=0.00040223 recon=0.00010115 lr=8.342e-04 time=0.336s
+[RQ-VAE] epoch=540 loss=0.00040238 recon=0.00010075 lr=8.339e-04 time=0.348s
+[RQ-VAE] epoch=541 loss=0.00039511 recon=0.00010074 lr=8.336e-04 time=0.388s
+[RQ-VAE] epoch=542 loss=0.00040029 recon=0.00010040 lr=8.332e-04 time=0.348s
+[RQ-VAE] epoch=543 loss=0.00040056 recon=0.00010086 lr=8.329e-04 time=0.344s
+[RQ-VAE] epoch=544 loss=0.00042035 recon=0.00010084 lr=8.325e-04 time=0.331s
+[RQ-VAE] epoch=545 loss=0.00039248 recon=0.00010089 lr=8.322e-04 time=0.356s
+[RQ-VAE] epoch=546 loss=0.00041614 recon=0.00010085 lr=8.319e-04 time=0.326s
+[RQ-VAE] epoch=547 loss=0.00041899 recon=0.00010095 lr=8.315e-04 time=0.383s
+[RQ-VAE] epoch=548 loss=0.00040411 recon=0.00010086 lr=8.312e-04 time=0.401s
+[RQ-VAE] epoch=549 loss=0.00040282 recon=0.00010121 lr=8.308e-04 time=0.362s
+[RQ-VAE] epoch=550 loss=0.00039580 recon=0.00010097 lr=8.305e-04 raw_unique=21913/24587 collision=0.108757 time=0.291s
+[RQ-VAE] epoch=551 loss=0.00041537 recon=0.00010075 lr=8.302e-04 time=0.365s
+[RQ-VAE] epoch=552 loss=0.00040154 recon=0.00010083 lr=8.298e-04 time=0.349s
+[RQ-VAE] epoch=553 loss=0.00041199 recon=0.00010127 lr=8.295e-04 time=0.412s
+[RQ-VAE] epoch=554 loss=0.00040577 recon=0.00010073 lr=8.292e-04 time=0.359s
+[RQ-VAE] epoch=555 loss=0.00039246 recon=0.00010042 lr=8.288e-04 time=0.363s
+[RQ-VAE] epoch=556 loss=0.00040900 recon=0.00010035 lr=8.285e-04 time=0.348s
+[RQ-VAE] epoch=557 loss=0.00040309 recon=0.00010046 lr=8.281e-04 time=0.334s
+[RQ-VAE] epoch=558 loss=0.00039567 recon=0.00010104 lr=8.278e-04 time=0.312s
+[RQ-VAE] epoch=559 loss=0.00039333 recon=0.00010036 lr=8.275e-04 time=0.337s
+[RQ-VAE] epoch=560 loss=0.00039203 recon=0.00010060 lr=8.271e-04 time=0.332s
+[RQ-VAE] epoch=561 loss=0.00039161 recon=0.00010030 lr=8.268e-04 time=0.367s
+[RQ-VAE] epoch=562 loss=0.00039889 recon=0.00010052 lr=8.264e-04 time=0.293s
+[RQ-VAE] epoch=563 loss=0.00038640 recon=0.00010092 lr=8.261e-04 time=0.364s
+[RQ-VAE] epoch=564 loss=0.00038952 recon=0.00010083 lr=8.258e-04 time=0.353s
+[RQ-VAE] epoch=565 loss=0.00039754 recon=0.00010050 lr=8.254e-04 time=0.367s
+[RQ-VAE] epoch=566 loss=0.00039228 recon=0.00010002 lr=8.251e-04 time=0.418s
+[RQ-VAE] epoch=567 loss=0.00039803 recon=0.00010005 lr=8.247e-04 time=0.359s
+[RQ-VAE] epoch=568 loss=0.00040430 recon=0.00010031 lr=8.244e-04 time=0.362s
+[RQ-VAE] epoch=569 loss=0.00041350 recon=0.00010003 lr=8.241e-04 time=0.359s
+[RQ-VAE] epoch=570 loss=0.00039000 recon=0.00010008 lr=8.237e-04 time=0.397s
+[RQ-VAE] epoch=571 loss=0.00039917 recon=0.00010013 lr=8.234e-04 time=0.372s
+[RQ-VAE] epoch=572 loss=0.00040284 recon=0.00010002 lr=8.231e-04 time=0.312s
+[RQ-VAE] epoch=573 loss=0.00039423 recon=0.00009972 lr=8.227e-04 time=0.404s
+[RQ-VAE] epoch=574 loss=0.00039151 recon=0.00010045 lr=8.224e-04 time=0.365s
+[RQ-VAE] epoch=575 loss=0.00038381 recon=0.00010007 lr=8.220e-04 time=0.4s
+[RQ-VAE] epoch=576 loss=0.00038150 recon=0.00010046 lr=8.217e-04 time=0.403s
+[RQ-VAE] epoch=577 loss=0.00040729 recon=0.00010055 lr=8.214e-04 time=0.371s
+[RQ-VAE] epoch=578 loss=0.00038592 recon=0.00010055 lr=8.210e-04 time=0.302s
+[RQ-VAE] epoch=579 loss=0.00039956 recon=0.00010029 lr=8.207e-04 time=0.415s
+[RQ-VAE] epoch=580 loss=0.00038996 recon=0.00010045 lr=8.203e-04 time=0.381s
+[RQ-VAE] epoch=581 loss=0.00039433 recon=0.00010010 lr=8.200e-04 time=0.335s
+[RQ-VAE] epoch=582 loss=0.00041207 recon=0.00009986 lr=8.197e-04 time=0.4s
+[RQ-VAE] epoch=583 loss=0.00039985 recon=0.00009988 lr=8.193e-04 time=0.38s
+[RQ-VAE] epoch=584 loss=0.00039574 recon=0.00010003 lr=8.190e-04 time=0.453s
+[RQ-VAE] epoch=585 loss=0.00038376 recon=0.00010003 lr=8.186e-04 time=0.304s
+[RQ-VAE] epoch=586 loss=0.00040642 recon=0.00009998 lr=8.183e-04 time=0.356s
+[RQ-VAE] epoch=587 loss=0.00039473 recon=0.00010000 lr=8.180e-04 time=0.342s
+[RQ-VAE] epoch=588 loss=0.00040639 recon=0.00009985 lr=8.176e-04 time=0.346s
+[RQ-VAE] epoch=589 loss=0.00040321 recon=0.00009971 lr=8.173e-04 time=0.469s
+[RQ-VAE] epoch=590 loss=0.00040003 recon=0.00009995 lr=8.169e-04 time=0.388s
+[RQ-VAE] epoch=591 loss=0.00039915 recon=0.00010028 lr=8.166e-04 time=0.37s
+[RQ-VAE] epoch=592 loss=0.00040499 recon=0.00010033 lr=8.163e-04 time=0.401s
+[RQ-VAE] epoch=593 loss=0.00040111 recon=0.00010012 lr=8.159e-04 time=0.333s
+[RQ-VAE] epoch=594 loss=0.00040924 recon=0.00009997 lr=8.156e-04 time=0.323s
+[RQ-VAE] epoch=595 loss=0.00042077 recon=0.00009988 lr=8.153e-04 time=0.339s
+[RQ-VAE] epoch=596 loss=0.00040212 recon=0.00010004 lr=8.149e-04 time=0.356s
+[RQ-VAE] epoch=597 loss=0.00039893 recon=0.00009972 lr=8.146e-04 time=0.358s
+[RQ-VAE] epoch=598 loss=0.00039137 recon=0.00009987 lr=8.142e-04 time=0.363s
+[RQ-VAE] epoch=599 loss=0.00038906 recon=0.00009971 lr=8.139e-04 time=0.365s
+[RQ-VAE] epoch=600 loss=0.00039394 recon=0.00009973 lr=8.136e-04 raw_unique=21782/24587 collision=0.114085 time=0.359s
+[RQ-VAE] epoch=601 loss=0.00039585 recon=0.00009952 lr=8.132e-04 time=0.282s
+[RQ-VAE] epoch=602 loss=0.00040163 recon=0.00009971 lr=8.129e-04 time=0.356s
+[RQ-VAE] epoch=603 loss=0.00040310 recon=0.00009946 lr=8.125e-04 time=0.368s
+[RQ-VAE] epoch=604 loss=0.00041259 recon=0.00009957 lr=8.122e-04 time=0.353s
+[RQ-VAE] epoch=605 loss=0.00040234 recon=0.00009949 lr=8.119e-04 time=0.349s
+[RQ-VAE] epoch=606 loss=0.00040562 recon=0.00009939 lr=8.115e-04 time=0.376s
+[RQ-VAE] epoch=607 loss=0.00041030 recon=0.00009944 lr=8.112e-04 time=0.344s
+[RQ-VAE] epoch=608 loss=0.00038823 recon=0.00009997 lr=8.108e-04 time=0.381s
+[RQ-VAE] epoch=609 loss=0.00039960 recon=0.00010026 lr=8.105e-04 time=0.396s
+[RQ-VAE] epoch=610 loss=0.00039877 recon=0.00009981 lr=8.102e-04 time=0.291s
+[RQ-VAE] epoch=611 loss=0.00040706 recon=0.00009991 lr=8.098e-04 time=0.373s
+[RQ-VAE] epoch=612 loss=0.00039850 recon=0.00009977 lr=8.095e-04 time=0.393s
+[RQ-VAE] epoch=613 loss=0.00040516 recon=0.00009969 lr=8.092e-04 time=0.396s
+[RQ-VAE] epoch=614 loss=0.00040174 recon=0.00009996 lr=8.088e-04 time=0.397s
+[RQ-VAE] epoch=615 loss=0.00042126 recon=0.00009974 lr=8.085e-04 time=0.401s
+[RQ-VAE] epoch=616 loss=0.00039813 recon=0.00009933 lr=8.081e-04 time=0.358s
+[RQ-VAE] epoch=617 loss=0.00041460 recon=0.00009982 lr=8.078e-04 time=0.344s
+[RQ-VAE] epoch=618 loss=0.00041758 recon=0.00009958 lr=8.075e-04 time=0.492s
+[RQ-VAE] epoch=619 loss=0.00040428 recon=0.00009948 lr=8.071e-04 time=0.353s
+[RQ-VAE] epoch=620 loss=0.00041475 recon=0.00009966 lr=8.068e-04 time=0.363s
+[RQ-VAE] epoch=621 loss=0.00040825 recon=0.00009896 lr=8.064e-04 time=0.412s
+[RQ-VAE] epoch=622 loss=0.00039528 recon=0.00009888 lr=8.061e-04 time=0.348s
+[RQ-VAE] epoch=623 loss=0.00038713 recon=0.00009892 lr=8.058e-04 time=0.376s
+[RQ-VAE] epoch=624 loss=0.00040302 recon=0.00009872 lr=8.054e-04 time=0.38s
+[RQ-VAE] epoch=625 loss=0.00039178 recon=0.00009842 lr=8.051e-04 time=0.309s
+[RQ-VAE] epoch=626 loss=0.00039447 recon=0.00009843 lr=8.047e-04 time=0.412s
+[RQ-VAE] epoch=627 loss=0.00040720 recon=0.00009878 lr=8.044e-04 time=0.397s
+[RQ-VAE] epoch=628 loss=0.00038796 recon=0.00009858 lr=8.041e-04 time=0.356s
+[RQ-VAE] epoch=629 loss=0.00040812 recon=0.00009856 lr=8.037e-04 time=0.366s
+[RQ-VAE] epoch=630 loss=0.00039000 recon=0.00009861 lr=8.034e-04 time=0.36s
+[RQ-VAE] epoch=631 loss=0.00039590 recon=0.00009848 lr=8.031e-04 time=0.356s
+[RQ-VAE] epoch=632 loss=0.00038906 recon=0.00009831 lr=8.027e-04 time=0.374s
+[RQ-VAE] epoch=633 loss=0.00039543 recon=0.00009805 lr=8.024e-04 time=0.371s
+[RQ-VAE] epoch=634 loss=0.00040119 recon=0.00009816 lr=8.020e-04 time=0.329s
+[RQ-VAE] epoch=635 loss=0.00040840 recon=0.00009895 lr=8.017e-04 time=0.311s
+[RQ-VAE] epoch=636 loss=0.00039069 recon=0.00009858 lr=8.014e-04 time=0.373s
+[RQ-VAE] epoch=637 loss=0.00040158 recon=0.00009899 lr=8.010e-04 time=0.579s
+[RQ-VAE] epoch=638 loss=0.00038649 recon=0.00009862 lr=8.007e-04 time=0.375s
+[RQ-VAE] epoch=639 loss=0.00039484 recon=0.00009845 lr=8.003e-04 time=0.364s
+[RQ-VAE] epoch=640 loss=0.00040053 recon=0.00009823 lr=8.000e-04 time=0.354s
+[RQ-VAE] epoch=641 loss=0.00039854 recon=0.00009829 lr=7.997e-04 time=0.318s
+[RQ-VAE] epoch=642 loss=0.00039038 recon=0.00009819 lr=7.993e-04 time=0.397s
+[RQ-VAE] epoch=643 loss=0.00039133 recon=0.00009827 lr=7.990e-04 time=0.37s
+[RQ-VAE] epoch=644 loss=0.00039386 recon=0.00009791 lr=7.986e-04 time=0.381s
+[RQ-VAE] epoch=645 loss=0.00038575 recon=0.00009766 lr=7.983e-04 time=0.366s
+[RQ-VAE] epoch=646 loss=0.00038521 recon=0.00009784 lr=7.980e-04 time=0.378s
+[RQ-VAE] epoch=647 loss=0.00039240 recon=0.00009796 lr=7.976e-04 time=0.354s
+[RQ-VAE] epoch=648 loss=0.00038857 recon=0.00009842 lr=7.973e-04 time=0.355s
+[RQ-VAE] epoch=649 loss=0.00040448 recon=0.00009818 lr=7.969e-04 time=0.388s
+[RQ-VAE] epoch=650 loss=0.00040497 recon=0.00009814 lr=7.966e-04 raw_unique=21847/24587 collision=0.111441 time=0.363s
+[RQ-VAE] epoch=651 loss=0.00039157 recon=0.00009805 lr=7.963e-04 time=0.319s
+[RQ-VAE] epoch=652 loss=0.00040147 recon=0.00009815 lr=7.959e-04 time=0.395s
+[RQ-VAE] epoch=653 loss=0.00039181 recon=0.00009750 lr=7.956e-04 time=0.352s
+[RQ-VAE] epoch=654 loss=0.00039352 recon=0.00009782 lr=7.953e-04 time=0.421s
+[RQ-VAE] epoch=655 loss=0.00040061 recon=0.00009794 lr=7.949e-04 time=0.366s
+[RQ-VAE] epoch=656 loss=0.00039642 recon=0.00009797 lr=7.946e-04 time=0.286s
+[RQ-VAE] epoch=657 loss=0.00039660 recon=0.00009854 lr=7.942e-04 time=0.324s
+[RQ-VAE] epoch=658 loss=0.00040079 recon=0.00009785 lr=7.939e-04 time=0.384s
+[RQ-VAE] epoch=659 loss=0.00040226 recon=0.00009820 lr=7.936e-04 time=0.433s
+[RQ-VAE] epoch=660 loss=0.00039313 recon=0.00009792 lr=7.932e-04 time=0.353s
+[RQ-VAE] epoch=661 loss=0.00039562 recon=0.00009757 lr=7.929e-04 time=0.365s
+[RQ-VAE] epoch=662 loss=0.00039577 recon=0.00009784 lr=7.925e-04 time=0.383s
+[RQ-VAE] epoch=663 loss=0.00039590 recon=0.00009764 lr=7.922e-04 time=0.364s
+[RQ-VAE] epoch=664 loss=0.00039601 recon=0.00009785 lr=7.919e-04 time=0.31s
+[RQ-VAE] epoch=665 loss=0.00038582 recon=0.00009775 lr=7.915e-04 time=0.335s
+[RQ-VAE] epoch=666 loss=0.00040667 recon=0.00009754 lr=7.912e-04 time=0.334s
+[RQ-VAE] epoch=667 loss=0.00040653 recon=0.00009796 lr=7.908e-04 time=0.374s
+[RQ-VAE] epoch=668 loss=0.00039515 recon=0.00009785 lr=7.905e-04 time=0.331s
+[RQ-VAE] epoch=669 loss=0.00040121 recon=0.00009802 lr=7.902e-04 time=0.312s
+[RQ-VAE] epoch=670 loss=0.00039171 recon=0.00009792 lr=7.898e-04 time=0.384s
+[RQ-VAE] epoch=671 loss=0.00039528 recon=0.00009812 lr=7.895e-04 time=0.346s
+W1025 15:12:25.016680 1773814 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/agent/server/api.py:723] Received Signals.SIGTERM death signal, shutting down workers
+W1025 15:12:25.022217 1773814 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 1773859 closing signal SIGTERM
+W1025 15:12:25.022645 1773814 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 1773860 closing signal SIGTERM
+W1025 15:12:25.022961 1773814 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 1773861 closing signal SIGTERM
+W1025 15:12:25.023236 1773814 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 1773862 closing signal SIGTERM
+Traceback (most recent call last):
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py", line 901, in main
+    run(args)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py", line 892, in run
+    elastic_launch(
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py", line 143, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py", line 268, in launch_agent
+    result = agent.run()
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/metrics/api.py", line 138, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/agent/server/api.py", line 715, in run
+    result = self._invoke_run(role)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/agent/server/api.py", line 879, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 1773814 got signal: 15

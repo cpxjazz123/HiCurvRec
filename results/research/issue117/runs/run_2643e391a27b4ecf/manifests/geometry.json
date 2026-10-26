@@ -1,0 +1,209 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "0ac27d4e88765f8e0049d2c995a25c5005a6647cd9f2f7d26dfe81c53d339faf",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "basis": [
+          "Recommender Systems with Generative Retrieval (arXiv:2305.05065) supports behavior-conditioned semantic-ID generation; it does not support the hyperbolic component."
+        ],
+        "behavior_problem": "Given a user's observed interaction sequence, generate/rank the next item; investigate whether sparse histories and tail-item transitions are better represented when item relationships have hierarchical structure.",
+        "candidate": "Modeling the next item as a behavior-conditioned generation problem over semantic item codes, while using hyperbolic geometry to represent hierarchical or long-tail structure in the item/code space.",
+        "decision": "Treat as a research gap/hypothesis, not as an existing method or demonstrated result.",
+        "evidence_status": "SYNTHESIS_NOT_ESTABLISHED_IN_A_SINGLE_VERIFIED_SOURCE"
+      }
+    ],
+    "limitations": [
+      "No independently verified full-text source found in this pass that explicitly combines all three elements: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+      "The verified source establishes only the behavior-plus-generative-semantic-ID pair; hyperbolic geometry must not be inferred from hierarchical semantic codes.",
+      "The unverified hyperbolic recommendation lead is explicitly excluded from evidence; its metadata and overlap remain UNKNOWN.",
+      "A full-text label indicates an accessible full-text preprint exists, not that every claim has been independently replicated.",
+      "No unseen future/test interactions or prior-candidate prompts were used."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+      "task_id": "literature"
+    },
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "doi": null,
+        "evidence_label": "FULL_TEXT",
+        "exact_overlap": "Directly addresses generative recommendation/retrieval using learned semantic IDs (RQ-VAE item codes) and user interaction histories, including sequential next-item recommendation. The paper does not establish use of hyperbolic geometry.",
+        "intersection_dimensions": {
+          "generative_semantic_ids": "YES",
+          "hyperbolic_geometry": "NO EVIDENCE",
+          "user_next_item_behavior": "YES"
+        },
+        "title": "Recommender Systems with Generative Retrieval",
+        "url": "https://arxiv.org/abs/2305.05065",
+        "verification_basis": "arXiv full-text preprint; title and identifier resolve at the canonical arXiv record."
+      },
+      {
+        "arxiv": null,
+        "doi": null,
+        "evidence_label": "UNKNOWN",
+        "exact_overlap": "Unverified lead only; excluded from evidence and conclusions.",
+        "intersection_dimensions": {
+          "generative_semantic_ids": "UNKNOWN",
+          "hyperbolic_geometry": "UNKNOWN",
+          "user_next_item_behavior": "UNKNOWN"
+        },
+        "title": "Hyperbolic Representation Learning for Collaborative Filtering",
+        "url": null,
+        "verification_basis": "Not included: title-level candidate could not be independently verified to a stable bibliographic record in this run. No claims are attributed to it."
+      }
+    ]
+  },
+  "literature_evidence_sha256": "dbd4163af61e659c8d6ede3ed14e948f7c1d745bfbabe32539ad36b3a4e4e799",
+  "research": "issue117-behavior-first",
+  "revision_feedback": {
+    "blockers": [
+      {
+        "claim": "The registered outcome rules do not define a mechanically reproducible paired-seed aggregate or the seed set for the Stage3 behavioral comparison.",
+        "code": "REPRODUCIBILITY_UNDERDEFINED",
+        "evidence": "Each diagnostic gives per-seed calculations and a direction/minimum effect, while Stage3 says only 'same paired seeds' and 'unchanged protocol'. The manifest does not name the seeds, define how per-seed changes are aggregated (for example mean or median), or specify how a finite aggregate is formed when some seed results are NULL. The NULL rule also says 'any comparison containing a NULL seed' without defining whether this refers to any metric or only the metric being compared. Consequently the minimum-effect and pass/falsified classifications are not uniquely decidable from the registered contract.",
+        "required_repair": "Register the exact seed list, the paired-seed aggregation and comparison rule for every metric, and the precise propagation rule for per-seed NULL results."
+      },
+      {
+        "claim": "The balanced assignment and assignment-logit targets are not specified sufficiently to uniquely recompute the training loss and labels.",
+        "code": "LOSS_ASSIGNMENT_COST_UNDERDEFINED",
+        "evidence": "The manifest refers to 'Sinkhorn-normalized costs' and 'differentiable negative squared-distance logits', but does not define the cost/logit formula, which geometry arm's distance is used for assignment, the Sinkhorn normalization/temperature/iteration and rounding or label extraction rule, or tie-breaking. It also says q is computed from the previous epoch's assignments while describing epoch-boundary whole-population balancing, leaving the initialization of the first epoch's q unspecified. These are material because q determines both L_assign and reconstruction/transition targets.",
+        "required_repair": "Specify the exact assignment cost/logit and Sinkhorn-to-discrete-label algorithm, including initialization, numerical settings and deterministic tie-breaking, for both arms."
+      }
+    ],
+    "reproducible_evidence": {
+      "behavioral_test": "Registered downstream test is test_R@10, curved minus flat > 0, minimum effect 0.005, on the held-out test split using frozen T5 Stage3 and paired seeds. Mixed/null classification is present but is not fully mechanically decidable because the aggregation and seed contract are omitted (see blockers).",
+      "causal_claim": "The manifest presents directionality/sparsity as motivation only and explicitly disclaims evidence of hierarchy, negative curvature, or causal gain. Stage2's global three-token SID assignment is distinguished from downstream Stage3 ranking. This is an appropriately bounded design hypothesis, not a demonstrated causal link.",
+      "classification_note": "CPU_ELIGIBLE is withheld because loss/assignment recomputation and behavioral outcome classification are not fully determined by this manifest. This is not GPU approval.",
+      "control": "The declared curved/flat arms share architecture, parameters, initialization, assignment procedure, optimizer, schedule, seeds and budget, and use the same fixed projection ball; the stated sole switch is the squared-distance operator and its exact flat limit. No additional capacity difference is declared.",
+      "leakage": "Declared inputs and supervision are frozen content embeddings and train-split transitions; validation pairs are limited to diagnostics. The manifest explicitly excludes validation/test behavior, future events, prediction-time user context and batch-composition supervision. No leakage is apparent in the stated design.",
+      "math": "For c=1, R=0.9 ensures both projected vectors lie strictly inside the unit ball: 1-c||x||^2 and 1-c||y||^2 are at least 0.19. The stated arcosh argument is at least 1, and the stable expression log1p((u-1)+sqrt((u-1)(u+1))) is valid there. The stated c-to-zero limit is correct: arcosh(1+2c||x-y||^2)^2/c tends to 4||x-y||^2. The fixed-radius projection avoids the singular curvature-dependent radius formula. No ill-typed distance or undefined distance domain is apparent.",
+      "scope": "Review is based only on the supplied current-only manifest; no repository implementation or unseen interactions were inspected.",
+      "stage2_indicators_and_gates": "The registered diagnostics include validation Hard-L1 ER, distinct two-token prefixes, and L3 statistics (collision, refinement gain, conditional g3), matching the requested leading-indicator categories. The stated frozen admission thresholds are strict: valid_l1_hard_er > 16.38953942232631 and level2_distinct_prefixes > 16145; schema_version is 1. The preflight direction warnings for L3 are not by themselves blockers: they are stated experimental hypotheses and the falsifier registers directions and effects."
+    },
+    "review_sha256": "1d48a28e016218e19440c0e6299aaf3422aaf95b1597fb57be41ebf0e45da4ee",
+    "review_verdict": "MATERIAL"
+  },
+  "revision_feedback_sha256": "482074c234209549d9a0869198f119c86ed8361342ed3a5358e9b63e7bf307c5",
+  "task_id": "geometry"
+}

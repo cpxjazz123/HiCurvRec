@@ -1,0 +1,208 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "candidate": {
+    "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+    "behavior_problem_id": "ordered-train-session-next-item-with-asymmetric-item-transitions",
+    "candidate_id": "issue117-hyp-residual-sid-v1",
+    "effect_site": "Stage2 item-SID construction only. Report validation Hard-L1 reconstruction error (lower is better), number of distinct two-token SID prefixes among validation items (higher is better), L3 collision rate (lower is better), refinement gain (higher is better), and conditional G3 (higher is better). These are diagnostics, not Stage3 ranking metrics. For the graph control, train with the identical train-transition signal, not a post-hoc graph adjustment.",
+    "euclidean_control": "Runnable matched arm: exact same encoder/decoder and 32-dimensional latent, three 256-entry codebooks, residual assignment structure, graph loss and train-only inputs, parameter count, initialization tensors/seed, optimizer, schedule, training budget and numerical settings. Replace only the metric by 4||x-y||^2 and use identity exp/log; vectors are unconstrained as specified by the c->0 domain policy. Retain the same loss, assignments, and commitment terms in the resulting flat coordinates. No sweep or arm-specific tuning.",
+    "falsifier": {
+      "arms": "Compare the frozen hyperbolic arm against the matched Euclidean arm and a matched graph arm. The graph arm has the same architecture, parameter count, initialization, optimizer, schedule, seeds and budget and trains WITH L_edge at gamma=1.0; it differs from the Euclidean control only by the graph signal being present versus absent. It uses the same Euclidean metric as the Euclidean control. No arm uses recommendation components or Stage3 metrics.",
+      "classification": "Supported only if all five diagnostics meet their stated directional minimum against BOTH matched controls. Falsified if all five are null (absolute relative changes below 1% for ER, prefix count, collision and refinement gain, and absolute G3 change below 0.005) or at least three diagnostics move beyond their null bands in the opposite direction against either control. Any mixed outcome, threshold miss, control disagreement, or result between null and minimum effect is inconclusive; it is not reported as support.",
+      "seeds_and_combination": "Use exactly seeds [17, 29, 43]. For each seed compute paired hyperbolic-minus-control validation differences; combine by the median of the three paired differences. A direction passes only if the median meets its threshold and at least two of three seed differences have the required direction.",
+      "thresholds": {
+        "L3_collision": "at least 2% relative decrease",
+        "conditional_G3": "at least 0.01 absolute increase",
+        "distinct_two_token_prefixes": "at least 2% relative increase",
+        "refinement_gain": "at least 2% relative increase",
+        "validation_Hard_L1_ER": "at least 2% relative decrease"
+      }
+    },
+    "hyperbolic_necessity": "The measured asymmetry motivates testing a geometry that can allocate hierarchical volume to broad, branching outgoing neighborhoods while retaining fine distinctions among descendants; it does not prove such structure or curvature is necessary. Negative curvature is a falsifiable inductive-bias hypothesis for the selected content-quantization failure, not a literature-established result. The graph signal is included identically in hyperbolic and Euclidean arms, so any difference is attributable to geometry rather than access to transitions.",
+    "literature_evidence_sha256": "c50eb7312faacb26aad305de60f7521e38f5b56b599734633be16cf12f186d6d",
+    "math_definition": {
+      "architecture_and_SID": "For each item i, fixed content input x_i is mapped by the frozen Stage2 encoder f_theta to z_i=f_theta(x_i) in R^32. Residual quantization has three levels l=1,2,3, each with 256 trainable code vectors a[l,k] in R^32; q[l,k]=exp_0^c(a[l,k]) lies in the open Poincare ball. At level l, residual r[i,1]=z_i and r[i,l+1]=r[i,l]-log_0^c(q[l,k[i,l]]). Assign k[i,l]=argmin_k d_c(exp_0^c(r[i,l]),q[l,k]) with lowest-index tie break. Reconstruct zhat_i=sum_l log_0^c(q[l,k[i,l]]). Output exactly one global SID (k[i,1],k[i,2],k[i,3]) per item; no per-user or per-session SID. Levels 2 and 3 condition exactly on the earlier assigned codes k[i,1:l-1] through the residual subtraction, and on no other codes/context. No prefix Transformer, beam search, recommender, ranking metric, or user bootstrap is part of this candidate.",
+      "assignment_distance": "Nearest-code assignment uses d_c^2/c (c=1 frozen); ties choose the smallest code index. At c->0, every assignment distance rule becomes 4||x-y||^2. exp becomes identity. The projection-radius rule is not applied at c=0; the flat arm is ordinary unconstrained Euclidean space.",
+      "frozen_geometry": "Fix c=1.0, tau=0.1, epsilon=1e-5, squared-distance clamp delta=1e-15, and projection radius R=(1-epsilon)/sqrt(c). Project any Euclidean tangent vector v used by exp/log or residual encoder to norm <=R; project q/code parameters to norm <=R after each optimizer update. For x,y in the ball let s=2||x-y||^2/((1-||x||^2)(1-||y||^2)); compute d_c(x,y)=arcosh(1+s), using arcosh(1+s)=log1p(s+sqrt(s*(s+2))) with s=max(s,delta) for numerical evaluation (define distance zero when x=y before the clamp). exp_0^c(v)=tanh(sqrt(c)||v||)*v/(sqrt(c)||v||), with value 0 at v=0; log_0^c(x)=atanh(sqrt(c)||x||)*x/(sqrt(c)||x||), with value 0 at x=0. The constant-curvature distance is d_c^2/c; at the frozen c=1 this is d_c^2. The c->0 limit of the distance rule d_c^2/c is 4||x-y||^2; exp_0^c tends to identity and log_0^c tends to identity. The projection radius (1-epsilon)/sqrt(c) is undefined at c=0: the flat arm therefore uses unconstrained R^32 vectors, identity exp/log, and no ball projection, rather than evaluating that radius. The flat arm's squared metric is exactly 4||x-y||^2.",
+      "training_tensors_and_losses": "Training-only tensors: items i in I_train, content embeddings x_i, and directed adjacent train-split transitions (u,v) in E_train. Let N=|I_train|, M=|E_train|; B[i]=zhat_i and Z[i]=z_i. Quantizer assignments k are stopped-gradient argmins. The sole Stage2 objective is L= (1/N) sum_{i in I_train} [||Z[i]-stopgrad(B[i])||_2^2 + ||stopgrad(Z[i])-B[i]||_2^2] + beta/(3N) sum_{i in I_train} sum_{l=1}^3 ||r[i,l]-stopgrad(log_0^c(q[l,k[i,l]]))||_2^2 + gamma L_edge, with beta=0.25 and gamma=1.0. In the first term the encoder receives gradient through Z only in the first summand and the decoder/code vectors through B only in the second; the displayed stopgrad operations enforce this. L_edge=(1/M) sum_{(u,v) in E_train} w[u,v] * -log p_theta(v|u), where p_theta(v|u)= exp(-d_c(exp_0^c(z_u),exp_0^c(z_v))^2/tau) / sum_{j in C(u)} exp(-d_c(exp_0^c(z_u),exp_0^c(z_j))^2/tau); C(u)={v} union the distinct train-only outgoing neighbors of u, w[u,v]=1/|{(a,b) in E_train:a=u}|, and each directed transition is counted once. If M=0 define L_edge=0; if an item has no outgoing train edge it contributes no edge term. The normalized edge target is t[u,j]=1[j=v] on C(u), and the stated log-softmax is its cross-entropy. This target has no parameter-dependent target distribution: it is a fixed one-hot label derived solely from E_train. Thus there is no target/parameter circularity; assignments in reconstruction/commitment are stop-gradient. For quantizer loss, if a batch or training partition has no assigned examples for a code, its code receives zero loss/update for that step (no empty-group mean or division). All sums are normalized as written; no other losses or targets are used."
+    },
+    "next_item_hypothesis": "Train-split ordered item transitions exhibit substantial directionality (314605/339519 directed pairs have no observed reverse; this is descriptive, not causal evidence). The single demonstrated failure selected is that a content-only item quantizer can merge items with different train-observed outgoing transition neighborhoods, making the next-item target's item SID less discriminative. Test whether curvature-aware residual quantization reduces this representation collision. This is a Stage2 hypothesis only: Stage2 builds item SIDs; downstream T5 Stage3 ranks next items. The cited work establishes next-item prediction with generative SIDs, not a hyperbolic method or an improvement.",
+    "protocol": {
+      "codes_per_level": 256,
+      "hyperparameter_sweep": false,
+      "latent_dim": 32,
+      "levels": 3,
+      "uses_future_events": false
+    },
+    "real_trigger_measurement": "Freeze the current-only manifest's train-only longest-prefix-per-user behavior population and content inputs. Build E_train exclusively from adjacent ordered items within training-split sequences. Evaluate the listed diagnostics on the existing validation items only; no validation/test transitions, future events, prediction-time context, candidate batch composition, or test behavior may be read by the candidate or its loss. Validation is used only to calculate the predeclared diagnostics and falsifier.",
+    "stable_global_sid": true,
+    "training_only_inputs": [
+      "Stage2 content embeddings for items in the training split",
+      "Ordered adjacent item transitions wholly inside the training split, as permitted by CLAUDE.md rule 16",
+      "Fixed train split membership and item IDs"
+    ]
+  },
+  "candidate_id": "issue117-hyp-residual-sid-v1",
+  "candidate_sha256": "8117f3e755936af157ba451d2c170c3f9d9f50afb7d0045819a743939d7d7fd3",
+  "inputs_sha256": "9cdb999cd535af5e7f1b2194caabc3a21e7168609925bb848d4ede1942f8c19f",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Predict the next item from the ordered item interactions in a user's session, using semantic IDs as the autoregressively generated target.",
+        "evidence_label": "FULL_TEXT",
+        "source_arxiv": "2305.05065",
+        "status": "Established behavior task in the cited work; hyperbolic modeling is not established by this source."
+      },
+      {
+        "candidate": "Test whether hyperbolic representations of user/session behavior improve next-item prediction while retaining generative semantic-ID decoding.",
+        "evidence_label": "UNKNOWN",
+        "status": "Research hypothesis only. No independently verified full-text source demonstrating this combined design was found in this bounded search."
+      }
+    ],
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "limitations": [
+      "The verified source directly supports next-item prediction and generative Semantic IDs, but does not establish hyperbolic geometry; therefore it must not be cited as evidence for the full intersection.",
+      "No independently verified source establishing all three elements together is included. The absence of such a source in this search is not proof that none exists.",
+      "FULL_TEXT is used only for the arXiv-hosted full text that is directly linked from the verified record. No claim about unseen future/test interactions is made.",
+      "The hyperbolic next-item + generative semantic-ID combination is presented solely as an UNKNOWN research candidate, not as a result reported in prior literature."
+    ],
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "doi": "10.48550/arXiv.2305.05065",
+        "evidence_label": "FULL_TEXT",
+        "full_text_url": "https://arxiv.org/html/2305.05065v3",
+        "scope_note": "Strong verified evidence for the behavior + generative semantic-ID pair, not the three-way intersection.",
+        "title": "Recommender Systems with Generative Retrieval",
+        "verified_overlap": {
+          "generative_semantic_ids": "Direct: items receive semantically meaningful tuples of codewords serving as Semantic IDs, which the retrieval model autoregressively decodes.",
+          "hyperbolic_geometry": "No evidence located in the inspected arXiv record/full-text-linked material; do not treat this paper as hyperbolic evidence.",
+          "user_next_item_behavior": "Direct: the abstract states that a Transformer sequence-to-sequence model predicts the Semantic ID of the next item a user will interact with, given Semantic IDs in the user's session."
+        }
+      }
+    ],
+    "task_id": "literature"
+  },
+  "literature_evidence_sha256": "c50eb7312faacb26aad305de60f7521e38f5b56b599734633be16cf12f186d6d",
+  "research": "issue117-behavior-first",
+  "task_id": "review"
+}

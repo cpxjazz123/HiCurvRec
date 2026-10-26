@@ -1,0 +1,67 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": null,
+      "arxiv": "2305.05065",
+      "links": {"abstract": "https://arxiv.org/abs/2305.05065", "full_text": "https://arxiv.org/pdf/2305.05065"},
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Directly addresses user next-item behavior and generative semantic IDs: it assigns each item a semantically meaningful tuple of codewords (Semantic ID), then trains a Transformer sequence-to-sequence model to predict the next interacted item's Semantic ID from IDs in the user session. The abstract does not establish use of hyperbolic geometry.",
+      "evidence_note": "arXiv metadata/abstract independently verifies title, identifier, and stated method. A linked author manuscript/full-text PDF is available, but its contents were not inspected for this report; therefore the evidence label is ABSTRACT, not FULL_TEXT."
+    },
+    {
+      "title": "HMamba: Hyperbolic Mamba for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2505.09205",
+      "links": {"abstract": "https://arxiv.org/abs/2505.09205", "full_text": "https://arxiv.org/pdf/2505.09205"},
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Directly addresses sequential/next-item recommendation and hyperbolic geometry, proposing a curvature-aware hyperbolic selective state-space model. The abstract does not mention generative semantic IDs or autoregressive item-identifier decoding.",
+      "evidence_note": "arXiv metadata/abstract independently verifies the bibliographic record and abstract-level claims. PDF available but not inspected; not labeled FULL_TEXT."
+    },
+    {
+      "title": "Hyperbolic Hypergraphs for Sequential Recommendation",
+      "doi": null,
+      "arxiv": "2108.08134",
+      "links": {"abstract": "https://arxiv.org/abs/2108.08134", "full_text": "https://arxiv.org/pdf/2108.08134"},
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Directly addresses sequential recommendation and hyperbolic geometry, using a hyperbolic hypergraph convolutional network and multi-scale temporal item representations. It does not state use of generative semantic IDs.",
+      "evidence_note": "arXiv metadata/abstract independently verifies the bibliographic record and stated approach. PDF available but not inspected; not labeled FULL_TEXT."
+    },
+    {
+      "title": "Time-aware Hyperbolic Graph Attention Network for Session-based Recommendation",
+      "doi": null,
+      "arxiv": "2301.03780",
+      "links": {"abstract": "https://arxiv.org/abs/2301.03780", "full_text": "https://arxiv.org/pdf/2301.03780"},
+      "evidence_label": "ABSTRACT",
+      "exact_overlap": "Explicitly frames session-based recommendation as predicting users' next interested items and proposes a time-aware hyperbolic graph attention model over sessions. It does not state use of generative semantic IDs.",
+      "evidence_note": "arXiv metadata/abstract independently verifies title, identifier, and abstract-level claims. PDF available but not inspected; not labeled FULL_TEXT."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Autoregressively generate the next item's semantic identifier from the user's observed interaction sequence, while placing or regularizing the item-code representation in a hyperbolic space.",
+      "support": ["2305.05065", "2505.09205"],
+      "status": "SYNTHESIS_NOT_A_VERIFIED_EXISTING_COMBINATION",
+      "why_behavior_first": "The target is the next user-interacted item; semantic IDs are the generated target representation, and hyperbolic geometry is a candidate inductive bias for hierarchical preference/item structure."
+    },
+    {
+      "candidate": "Generate a next-item semantic ID conditioned on recent session behavior and temporal transitions, with hyperbolic geometry modeling hierarchical session/item relationships.",
+      "support": ["2305.05065", "2108.08134", "2301.03780"],
+      "status": "SYNTHESIS_NOT_A_VERIFIED_EXISTING_COMBINATION",
+      "why_behavior_first": "Session-based next-item prediction is explicit in the hyperbolic sequential/session literature; TIGER-style semantic-ID generation supplies a distinct output mechanism, but no verified source here combines them."
+    }
+  ],
+  "limitations": [
+    "No independently verified paper was found in the checked records that combines all three elements—user next-item behavior, hyperbolic geometry, and generative semantic IDs—in one method. The sources are adjacent strands, not proof of a published integrated approach.",
+    "Evidence labels are conservative: only arXiv API metadata and abstracts were inspected. Full-text PDFs are linked but were not read, so none of the entries is labeled FULL_TEXT.",
+    "No DOI was verified for these records; arXiv identifiers and stable abstract/PDF URLs are provided instead.",
+    "The bibliography is a focused candidate set, not an exhaustive systematic review. Absence from this set should not be interpreted as proof that no related work exists.",
+    "Do not interpret generative retrieval as automatically implying hyperbolic geometry, or hyperbolic sequential recommendation as automatically implying semantic-ID generation."
+  ]
+}

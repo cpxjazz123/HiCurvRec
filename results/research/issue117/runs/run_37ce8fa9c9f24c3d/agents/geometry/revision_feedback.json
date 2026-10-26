@@ -1,0 +1,13 @@
+{
+  "blockers": [
+    {
+      "evidence": "candidate.falsifier.stage3_behavioral_test.seed_rule: 'report each paired curved-minus-flat result and the pre-registered aggregate'; candidate.falsifier.classification applies registered criteria to 'the aggregate'. No aggregate formula or aggregation rule is present in the manifest.",
+      "issue": "The registered falsifier is not fully mechanically decidable from this candidate: stage3_behavioral_test.seed_rule requires a 'pre-registered aggregate' and the global falsifier applies aggregate criteria, but neither specifies the aggregation operation (for example, mean paired difference versus another statistic). This leaves the pass/mixed/falsified classification ambiguous even if every per-seed result is available.",
+      "required_resolution": "Specify the exact aggregate calculation for test_R@10 and for any other comparison to which aggregate criteria apply, including how missing or non-finite seed values are handled (consistent with the NULL rule).",
+      "severity": "MATERIAL"
+    }
+  ],
+  "reproducible_evidence": null,
+  "review_sha256": "763eb9a6a77f4a8e5fc6ccbe4fd1e14b3163762fea24e376b9d774000c706492",
+  "review_verdict": "MATERIAL"
+}

@@ -1,0 +1,73 @@
+{
+  "candidate_id": "issue117-geometry-transition-residual-poincare-v1",
+  "note": "All four reviewed test suites actually ran; the existing MCP one-epoch trainer smoke still follows before official training.",
+  "passed": true,
+  "recorded_at_epoch": 1792834459.183684,
+  "review": "APPROVE_TESTS",
+  "source_sha256": "1c053a982c4cc116378d5b7404a599f9bc1827bc703e489e92336cb252b516e0",
+  "suites": {
+    "ddp": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "60b0899ca92fb6bec63d11a10bb517c9a9857a588bab609ac5097d05474aaaca",
+      "output_tail": "test_two_real_ranks_train_the_candidate_model (test_ddp.DistributedConsistencyTests) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 3.521s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "ddp"
+      ],
+      "skipped": 0,
+      "tests_run": 1,
+      "unexpected_successes": 0
+    },
+    "entrypoint": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "c2fb42fc0f44f34da335bb1de9869bad670b605824ab7ff98c330fa47da03b80",
+      "output_tail": "test_main_trains_transition_objective_and_writes_checkpoint_and_sid (test_entrypoint.RealTrainerEntrypointTests) ... ok\ntest_sampling_follows_the_row_normalised_target (test_entrypoint.TransitionSamplerTests) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 4.139s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "entrypoint"
+      ],
+      "skipped": 0,
+      "tests_run": 2,
+      "unexpected_successes": 0
+    },
+    "gradient": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "684483f769a089978b48537b2443909f396c3a1797b89bfdb0dcc05c94555136",
+      "output_tail": "test_real_rqvae_forward_backpropagates_to_encoder_and_selected_codebooks (test_gradient.CandidateTrainingGradientTests) ... ok\ntest_transition_objective_propagates_gradient_through_geometry (test_gradient.CandidateTrainingGradientTests) ... ok\ntest_curved_distance_matches_independent_oracle_and_gradcheck (test_gradient.PoincareGradientTests) ... ok\ntest_detached_assignment_has_no_latent_gradient (test_gradient.PoincareGradientTests) ... ok\ntest_exp_map_gradcheck_and_nonzero_input_gradient (test_gradient.PoincareGradientTests) ... ok\ntest_flat_limit_and_projection_have_live_gradients (test_gradient.PoincareGradientTests) ... ok\ntest_nan_is_not_silently_converted_to_finite_loss (test_gradient.PoincareGradientTests) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.822s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "math",
+        "gradient"
+      ],
+      "skipped": 0,
+      "tests_run": 7,
+      "unexpected_successes": 0
+    },
+    "math": {
+      "errors": 0,
+      "exit_code": 0,
+      "expected_failures": 0,
+      "failures": 0,
+      "output_sha256": "8366ba0d72c0981be8d2d8e1878d7b7465f49b26d8a2a02317044858bdd253b6",
+      "output_tail": "test_distance_broadcasting_is_pairwise (test_math.HyperbolicReferenceTests) ... ok\ntest_exponential_map_and_projection_have_independent_reference_values (test_math.HyperbolicReferenceTests) ... ok\ntest_squared_distance_curved_flat_and_clamped_coincident_values (test_math.HyperbolicReferenceTests) ... ok\ntest_assignment_subtracts_selected_euclidean_codes_after_each_level (test_math.ResidualAssignmentReferenceTests) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.005s\n\nOK\n",
+      "passed": true,
+      "process_group": [
+        "math",
+        "gradient"
+      ],
+      "skipped": 0,
+      "tests_run": 4,
+      "unexpected_successes": 0
+    }
+  },
+  "verified_at_epoch": 1792834459.183257
+}

@@ -1,0 +1,18 @@
+{
+  "candidate_id": "geometry-asymmetric-next-item-hyperbolic-semantic-id",
+  "source_sha256": "3e91364af58e820c71cb4bc2ae461aabab73eb3792442770ed1be7460066731c",
+  "proposal_sha256": "c8701416d4b694141d60366f61d3b70b4fbbc958f8188447d822f8d36e6a283d",
+  "test_sha256": {
+    "math": "4121d8aa2d2c733dc7a1059d63f023d76b717f6d49697a88c3460d3691cca89e",
+    "gradient": "87302635a0be6d78fa21a9534d6504e3556f5202dc2c76a05ed3489bf5ed2f8b",
+    "ddp": "164f7be99641e6494bb80bacb47170a45e1e787b5d966c3d354b8b01ba7e865d",
+    "entrypoint": "1e09f013eae8b9e5682a03e238326641ebb0ae93040d788290e6de85ccc638e9"
+  },
+  "verdict": "BLOCK",
+  "rationale": [
+    "The frozen source identity is not established by the files inspected: hashing the candidate's principal hyperbolic implementation, quantizer/layers, model package initializer, and trainer yields individual-file hashes 97d268cfb74255c2cab3541cf3063313f79f4a14d16317c77e0789cceacf1ffa, 8a6870d0ea739932bfda92cb7553c67f4f7d836dd3866e76651017fdabbe1448, a6360fa82aa5c24152e81c6d3dc3d6d4499a3311f6d7ae6d2f871b2d88a84aa4, and 05b66059769db20297f77cb76588cc88b45aa3f56fb9d9cc8d400e7e829ad772 respectively, not the supplied tree digest. More importantly, independent prior review artifacts report a different source digest (8e962bf56e385381cd03d9c0e77057655314e5634c628130e4d8aa8988258288), so source attribution is inconsistent."
+    ,"The frozen test hashes in the submitted manifest are the values returned above, but independent prior review records a different hash for every one of the four test categories (math a3898fa7ac179060e12776819bebe98d0b786ea93bcaa553bf15582c61d216dc; gradient 9f854b5ef0aa4f16ce4069cec9162c0ac3554c22b4d97b1dd9b3f3b9f4f00a90; DDP 219f4793db37ab48ab85a052083496775e4cd1c90f8ab16a1fdcfba42897be9d; entrypoint cfcf996ecffc1cd396ce1092d8449c75bb0a6185e96d134dcb0a1a7c59077464). The runtime's reported entrypoint source also differs from the frozen version, which adds an import-path correction. This is material test/hash drift."
+    ,"The math test's hard-coded reference values provide independent mathematical oracles, and the gradient test includes finite differences/gradcheck; these are useful non-mock tests. However, the independent runtime artifacts inspected provide source strings rather than verifiable successful execution records for the exact four frozen test files against the frozen source."
+    ,"The DDP test source describes a genuine two-process Gloo/DDP spawn and parameter synchronization checks, and the entrypoint test invokes candidate model operations. But without execution evidence tied to the exact frozen source and test hashes, the required >=2-rank and trainer-entrypoint evidence is not established."
+  ]
+}

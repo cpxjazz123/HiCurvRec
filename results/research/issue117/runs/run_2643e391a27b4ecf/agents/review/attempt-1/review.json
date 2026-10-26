@@ -1,0 +1,29 @@
+{
+  "candidate_id": "geometry_global_balanced_poincare_residual_vq_v1",
+  "candidate_sha256": "6a22ad784dbe461b48a27d9b962f0157c81b79104e01ad068811d0ea0ba5cf48",
+  "verdict": "MATERIAL",
+  "blockers": [
+    {
+      "code": "REPRODUCIBILITY_UNDERDEFINED",
+      "claim": "The registered outcome rules do not define a mechanically reproducible paired-seed aggregate or the seed set for the Stage3 behavioral comparison.",
+      "evidence": "Each diagnostic gives per-seed calculations and a direction/minimum effect, while Stage3 says only 'same paired seeds' and 'unchanged protocol'. The manifest does not name the seeds, define how per-seed changes are aggregated (for example mean or median), or specify how a finite aggregate is formed when some seed results are NULL. The NULL rule also says 'any comparison containing a NULL seed' without defining whether this refers to any metric or only the metric being compared. Consequently the minimum-effect and pass/falsified classifications are not uniquely decidable from the registered contract.",
+      "required_repair": "Register the exact seed list, the paired-seed aggregation and comparison rule for every metric, and the precise propagation rule for per-seed NULL results."
+    },
+    {
+      "code": "LOSS_ASSIGNMENT_COST_UNDERDEFINED",
+      "claim": "The balanced assignment and assignment-logit targets are not specified sufficiently to uniquely recompute the training loss and labels.",
+      "evidence": "The manifest refers to 'Sinkhorn-normalized costs' and 'differentiable negative squared-distance logits', but does not define the cost/logit formula, which geometry arm's distance is used for assignment, the Sinkhorn normalization/temperature/iteration and rounding or label extraction rule, or tie-breaking. It also says q is computed from the previous epoch's assignments while describing epoch-boundary whole-population balancing, leaving the initialization of the first epoch's q unspecified. These are material because q determines both L_assign and reconstruction/transition targets.",
+      "required_repair": "Specify the exact assignment cost/logit and Sinkhorn-to-discrete-label algorithm, including initialization, numerical settings and deterministic tie-breaking, for both arms."
+    }
+  ],
+  "reproducible_evidence": {
+    "scope": "Review is based only on the supplied current-only manifest; no repository implementation or unseen interactions were inspected.",
+    "math": "For c=1, R=0.9 ensures both projected vectors lie strictly inside the unit ball: 1-c||x||^2 and 1-c||y||^2 are at least 0.19. The stated arcosh argument is at least 1, and the stable expression log1p((u-1)+sqrt((u-1)(u+1))) is valid there. The stated c-to-zero limit is correct: arcosh(1+2c||x-y||^2)^2/c tends to 4||x-y||^2. The fixed-radius projection avoids the singular curvature-dependent radius formula. No ill-typed distance or undefined distance domain is apparent.",
+    "causal_claim": "The manifest presents directionality/sparsity as motivation only and explicitly disclaims evidence of hierarchy, negative curvature, or causal gain. Stage2's global three-token SID assignment is distinguished from downstream Stage3 ranking. This is an appropriately bounded design hypothesis, not a demonstrated causal link.",
+    "control": "The declared curved/flat arms share architecture, parameters, initialization, assignment procedure, optimizer, schedule, seeds and budget, and use the same fixed projection ball; the stated sole switch is the squared-distance operator and its exact flat limit. No additional capacity difference is declared.",
+    "leakage": "Declared inputs and supervision are frozen content embeddings and train-split transitions; validation pairs are limited to diagnostics. The manifest explicitly excludes validation/test behavior, future events, prediction-time user context and batch-composition supervision. No leakage is apparent in the stated design.",
+    "behavioral_test": "Registered downstream test is test_R@10, curved minus flat > 0, minimum effect 0.005, on the held-out test split using frozen T5 Stage3 and paired seeds. Mixed/null classification is present but is not fully mechanically decidable because the aggregation and seed contract are omitted (see blockers).",
+    "stage2_indicators_and_gates": "The registered diagnostics include validation Hard-L1 ER, distinct two-token prefixes, and L3 statistics (collision, refinement gain, conditional g3), matching the requested leading-indicator categories. The stated frozen admission thresholds are strict: valid_l1_hard_er > 16.38953942232631 and level2_distinct_prefixes > 16145; schema_version is 1. The preflight direction warnings for L3 are not by themselves blockers: they are stated experimental hypotheses and the falsifier registers directions and effects.",
+    "classification_note": "CPU_ELIGIBLE is withheld because loss/assignment recomputation and behavioral outcome classification are not fully determined by this manifest. This is not GPU approval."
+  }
+}

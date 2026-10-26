@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "geometry-global-sinkhorn-poincare-squared_review",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792843356.476146,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "86a3973bf9dc1d79c1c60a3402ab4e3fea425f85df8b282339fce174cf1fa18f",
+  "isolation_policy": "v2 permissions: shell/execute denied, external_directory denied, edit limited to the agent workspace; the workspace is its own opencode project so the boundary is the one that applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "review.json",
+  "output_sha256": "754c2b048cf31467a53dc04d7a510fd1a80453d5602fdf0a93d048892de189d2",
+  "pid": 2924236,
+  "project_marker": ".git",
+  "prompt_sha256": "40d0a3961f5c36fc6c022c2e0943265e95b422b0406a63b130615a1857d76e1f",
+  "session_sha256": "18ebbd488f475776810c0a30a43d07dbd7e4b21a0864e0d531cd827b9cfa7a5b",
+  "stderr_present": false,
+  "task_id": "geometry-global-sinkhorn-poincare-squared_review",
+  "timed_out": false,
+  "verified": true
+}

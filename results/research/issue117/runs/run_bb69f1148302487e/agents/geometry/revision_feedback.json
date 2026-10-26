@@ -1,0 +1,22 @@
+{
+  "blockers": [
+    {
+      "evidence": "The manifest says only squared assignment distance differs, but its frozen geometry also makes Exp_0^c(v)=tanh(sqrt(c)||v||)v/(sqrt(c)||v||) for c>0 and Exp_0^0(v)=v. Thus the candidate at c=1 and flat arm transform/project the latent vectors differently before assignment; the stated c->0 limit confirms this change. The control consequently changes both geometry/distance and the embedding map, contrary to the requirement that the control differ only in the metric. Same architecture and parameter count do not remove this confound.",
+      "issue": "The registered Euclidean control is not a metric-only ablation.",
+      "required_resolution": "Specify a matched control in which the compared arms differ only in the assignment metric while preserving the same input vectors, projection, assignments' coordinate conventions, and all other operations; otherwise the behavioral contrast cannot isolate the claimed geometry effect."
+    },
+    {
+      "evidence": "The registered stage2_diagnostics contains valid_l1_hard_er and level2_distinct_prefixes only. It registers no L3 statistics, despite the review contract explicitly requiring validation Hard-L1 ER, distinct two-token prefixes, and L3 statistics as leading indicators. The falsifier therefore cannot mechanically classify the required L3 indicator.",
+      "issue": "The required L3 leading-indicator diagnostic is absent.",
+      "required_resolution": "Register the frozen L3 statistic(s), their evaluation population, direction, minimum effect, seed aggregation, and NULL/mixed classification rule."
+    }
+  ],
+  "reproducible_evidence": {
+    "behavioral_registration": "Registers Stage3 test_R@10, increase versus matched control, strict minimum effect >0, paired per-seed candidate-minus-control, preregistered matched seeds, and frozen aggregation. Classification specifies passed/falsified/mixed and treats undefined or non-finite values and any NULL seed as inconclusive. Behavioral test registration is present, subject to resolving the invalidly confounded control.",
+    "causal_link": "The train-only directed-transition evidence motivates a testable next-item hypothesis but does not establish hierarchy, negative curvature, or causality; the candidate correctly labels those as hypotheses. The stated path from item-code geometry to downstream next-item behavior is a design claim, not evidence of a gain.",
+    "math_and_domain": "The squared Poincare distance is well-typed for the stated projected domain: c>0, ||x||,||y||<=R=0.99<1/sqrt(c) at the candidate c=1. The stated arcosh argument is at least 1, the clamp policy does not add an offset to valid values, and the stated c->0 squared-distance limit 4||x-y||^2 and Exp identity limit are consistent. The shared fixed-radius projection is defined at zero. No math-type, numerical-domain, or flat-limit blocker identified.",
+    "other_scope_checks": "No validation/test behavior, future events, prediction-time user context, or batch-composition signal is declared as training/assignment/target/codebook input. The reconstruction-plus-commitment loss is specified over the nonempty train-item set with coordinate-summed norms and explicit reductions; hard nearest-code assignment and tie-breaking are deterministic. Frozen Stage2 protocol is declared unchanged, with no sweep. Stage2 diagnostic thresholds match the supplied strict frozen thresholds: valid_l1_hard_er >16.38953942232631 and level2_distinct_prefixes >16145; schema_version 1 is represented in the supplied evidence."
+  },
+  "review_sha256": "cc846aea99aebee9d2ad2416f59d4fb0928cfca466ba1fe3330b8406557c7abe",
+  "review_verdict": "MATERIAL"
+}

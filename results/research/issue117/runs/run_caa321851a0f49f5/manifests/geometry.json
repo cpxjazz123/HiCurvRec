@@ -1,0 +1,212 @@
+{
+  "behavior_evidence": {
+    "directed_pairs": 323633,
+    "distinct_items": 24556,
+    "events": 396958,
+    "interpretation_limit": "Observed direction and entropy do NOT establish negative curvature or a causal next-item improvement.",
+    "mean_next_item_entropy_bits": 4.844072338042215,
+    "no_observed_reverse_events": 314605,
+    "no_reverse_fraction": 0.9266197178950221,
+    "population": "train_only_longest_prefix_per_user",
+    "schema": 1,
+    "source_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "top_edges": [
+      {
+        "count": 37,
+        "from": 6574,
+        "to": 9609
+      },
+      {
+        "count": 33,
+        "from": 18674,
+        "to": 19741
+      },
+      {
+        "count": 32,
+        "from": 22372,
+        "to": 9218
+      },
+      {
+        "count": 26,
+        "from": 22372,
+        "to": 22639
+      },
+      {
+        "count": 26,
+        "from": 22639,
+        "to": 22372
+      },
+      {
+        "count": 25,
+        "from": 11060,
+        "to": 22890
+      },
+      {
+        "count": 24,
+        "from": 23238,
+        "to": 23602
+      },
+      {
+        "count": 23,
+        "from": 13180,
+        "to": 22890
+      },
+      {
+        "count": 22,
+        "from": 19314,
+        "to": 23602
+      },
+      {
+        "count": 21,
+        "from": 9218,
+        "to": 22372
+      },
+      {
+        "count": 20,
+        "from": 16168,
+        "to": 19741
+      },
+      {
+        "count": 19,
+        "from": 10358,
+        "to": 8820
+      },
+      {
+        "count": 19,
+        "from": 16168,
+        "to": 18674
+      },
+      {
+        "count": 18,
+        "from": 9518,
+        "to": 6574
+      },
+      {
+        "count": 17,
+        "from": 20175,
+        "to": 20290
+      },
+      {
+        "count": 17,
+        "from": 22372,
+        "to": 8811
+      },
+      {
+        "count": 17,
+        "from": 22890,
+        "to": 4508
+      },
+      {
+        "count": 17,
+        "from": 24378,
+        "to": 9609
+      },
+      {
+        "count": 16,
+        "from": 19314,
+        "to": 23516
+      },
+      {
+        "count": 16,
+        "from": 19349,
+        "to": 1965
+      }
+    ],
+    "transitions": 339519,
+    "users": 57439
+  },
+  "behavior_evidence_sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b",
+  "inputs_sha256": "07bc515d922c2ff1228867a1e099c88d9a80db25f3c67923689b2bd269105c82",
+  "literature_evidence": {
+    "behavior_problem_candidates": [
+      {
+        "candidate": "Model next-item choice as a conditional distribution over the user's recent interaction/action sequence, with the target item represented by a semantic identifier sequence.",
+        "evidence_basis": [
+          "2305.05065",
+          "2402.17152"
+        ],
+        "status": "Supported as adjacent strands; no verified source combines this with hyperbolic geometry."
+      },
+      {
+        "candidate": "Use hyperbolic structure to represent hierarchical or multiscale relations in user/item behavior, then test whether it improves next-item prediction when paired with generative semantic IDs.",
+        "evidence_basis": [
+          "10.1145/3397271.3401049",
+          "1902.08648",
+          "2305.05065"
+        ],
+        "status": "Research hypothesis/synthesis, not a claim already demonstrated by these sources."
+      }
+    ],
+    "limitations": [
+      "No independently verified paper was found in this search that demonstrably combines all three elements: user next-item behavior, hyperbolic geometry, and generative semantic IDs.",
+      "FULL_TEXT is used only where an arXiv full-text/PDF is directly available and the relevant method can be checked; HME is labeled ABSTRACT because publisher DOI metadata/abstract are available but a full text was not verified here.",
+      "UNKNOWN means the stated feature was not established from the accessible evidence, not proof that the paper lacks it.",
+      "Search coverage was targeted rather than systematic; terms such as semantic item codes, tokenized item IDs, hyperbolic sequential recommendation, and next-POI may yield additional adjacent work.",
+      "The queried Crossref record independently confirms HME's title/DOI and cites Scalable hyperbolic recommender systems and HME; arXiv records independently identify the listed preprints."
+    ],
+    "manifest": {
+      "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+      "research": "issue117-behavior-first",
+      "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+      "task_id": "literature"
+    },
+    "sources": [
+      {
+        "arxiv": "2305.05065",
+        "canonical_url": "https://arxiv.org/abs/2305.05065",
+        "doi": null,
+        "full_text_url": "https://arxiv.org/pdf/2305.05065",
+        "intersection_assessment": "Strong evidence for sequential user behavior plus generative semantic IDs, but no established hyperbolic component; not evidence of the full three-way intersection.",
+        "overlap": {
+          "generative_semantic_ids": "FULL_TEXT — proposes semantic item identifiers and generative retrieval/recommendation by predicting identifier tokens.",
+          "hyperbolic_geometry": "UNKNOWN — no evidence verified that hyperbolic geometry is part of the method.",
+          "user_next_item_behavior": "FULL_TEXT — autoregressive recommendation predicts subsequent items from user interaction history."
+        },
+        "title": "TIGER: Transformer Index for GEnerative Recommenders"
+      },
+      {
+        "arxiv": null,
+        "canonical_url": "https://doi.org/10.1145/3397271.3401049",
+        "doi": "10.1145/3397271.3401049",
+        "full_text_url": null,
+        "intersection_assessment": "Relevant hyperbolic sequential recommendation baseline, but not established as a generative semantic-ID method.",
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN — no evidence verified of autoregressive generative semantic item IDs.",
+          "hyperbolic_geometry": "ABSTRACT — explicitly proposes hyperbolic metric embedding.",
+          "user_next_item_behavior": "ABSTRACT — next point-of-interest recommendation from user mobility/sequential behavior."
+        },
+        "title": "HME: A Hyperbolic Metric Embedding Approach for Next-POI Recommendation"
+      },
+      {
+        "arxiv": "1902.08648",
+        "canonical_url": "https://arxiv.org/abs/1902.08648",
+        "doi": null,
+        "full_text_url": "https://arxiv.org/pdf/1902.08648",
+        "intersection_assessment": "Supports the hyperbolic recommender strand; insufficient evidence for sequential next-item prediction or semantic IDs.",
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN — no verified generative semantic-ID mechanism.",
+          "hyperbolic_geometry": "FULL_TEXT — develops scalable hyperbolic recommender systems.",
+          "user_next_item_behavior": "UNKNOWN — recommender/user preference modeling is in scope, but next-item sequential prediction was not verified."
+        },
+        "title": "Scalable hyperbolic recommender systems"
+      },
+      {
+        "arxiv": "2402.17152",
+        "canonical_url": "https://arxiv.org/abs/2402.17152",
+        "doi": null,
+        "full_text_url": "https://arxiv.org/pdf/2402.17152",
+        "intersection_assessment": "Relevant for behavior-first generative recommendation framing, not proof of the three-way intersection.",
+        "overlap": {
+          "generative_semantic_ids": "UNKNOWN — generative recommendation is verified, but semantic IDs are not established from the inspected abstract/full-text metadata.",
+          "hyperbolic_geometry": "UNKNOWN — no verified hyperbolic geometry component.",
+          "user_next_item_behavior": "FULL_TEXT — frames recommendation as sequential transduction over user actions and interaction histories."
+        },
+        "title": "Actions Speak Louder than Words: Trillion-Parameter Sequential Transducers for Generative Recommendations"
+      }
+    ]
+  },
+  "literature_evidence_sha256": "f44bfc70f57e7f993b30e1c15fa13157f2926ec29444a72e9f3afe33a08d4ce5",
+  "research": "issue117-behavior-first",
+  "task_id": "geometry"
+}

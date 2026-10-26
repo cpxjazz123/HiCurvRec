@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/mcp/verify_worker.py", line 34, in main
+    manifest = workflow.freeze_reviewed_manifest(request["candidate_id"], tree, run_id)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/verification/workflow.py", line 222, in freeze_reviewed_manifest
+    validate_evidence(tree, candidate_id)
+  File "/fs04/ar57/wenyu/GeneRec/tools/research/verification/admission.py", line 170, in validate_evidence
+    raise AdmissionError("independent Reviewer did not approve these exact tests and source")
+tools.research.verification.admission.AdmissionError: independent Reviewer did not approve these exact tests and source

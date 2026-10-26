@@ -1,0 +1,43 @@
+{
+  "manifest": {
+    "inputs_sha256": "040ace7d316dbf7b5384a2492d52a47edfad353acdfb7ec492482435ea6f69a8",
+    "research": "issue117-behavior-first",
+    "research_question": "Research verified literature where user next-item behavior, hyperbolic geometry and generative semantic IDs intersect.",
+    "task_id": "literature"
+  },
+  "sources": [
+    {
+      "title": "Recommender Systems with Generative Retrieval",
+      "doi": "10.48550/arXiv.2305.05065",
+      "arxiv": "2305.05065",
+      "links": {
+        "abstract": "https://arxiv.org/abs/2305.05065",
+        "full_text_html": "https://arxiv.org/html/2305.05065v3",
+        "pdf": "https://arxiv.org/pdf/2305.05065"
+      },
+      "evidence_label": "ABSTRACT",
+      "evidence_basis": "ArXiv landing page abstract explicitly says that the model takes Semantic IDs for items in a user session and predicts the Semantic ID of the next item the user will interact with. The landing page provides full-text links, but the full text itself was not inspected for this report.",
+      "exact_overlap": {
+        "user_next_item_behavior": "Direct: next-item prediction from a user session.",
+        "generative_semantic_ids": "Direct: autoregressive generative retrieval decodes semantically meaningful codeword tuples (Semantic IDs).",
+        "hyperbolic_geometry": "Not evidenced in the checked abstract."
+      },
+      "bibliographic_note": "NeurIPS 2023; arXiv version v3, revised 2023-11-03."
+    }
+  ],
+  "behavior_problem_candidates": [
+    {
+      "candidate": "Session-conditioned next-item prediction using generative Semantic IDs, with hyperbolic geometry as a proposed representation/regularization choice.",
+      "evidence_status": "PARTIAL_INTERSECTION_ONLY",
+      "supported_overlap": "The TIGER abstract directly supports session-based next-item prediction and generative Semantic IDs.",
+      "unsupported_overlap": "No independently verified source in this evidence set establishes that the same method uses hyperbolic geometry.",
+      "research_gap": "A direct three-way intersection is not verified; do not represent hyperbolic geometry as part of TIGER or as an established combined method."
+    }
+  ],
+  "limitations": [
+    "No source was independently verified here that combines all three elements: user next-item behavior, hyperbolic geometry, and generative Semantic IDs.",
+    "The only included paper is verified from its arXiv abstract page; despite the linked HTML/PDF, no claim from its full text is labeled FULL_TEXT.",
+    "The absence of a verified combined paper in this small evidence set is not proof that none exists.",
+    "No prior-candidate prompt or unseen future/test interaction was used."
+  ]
+}
