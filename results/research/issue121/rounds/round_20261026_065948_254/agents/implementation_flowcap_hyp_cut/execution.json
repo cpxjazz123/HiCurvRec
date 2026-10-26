@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "implementation_flowcap_hyp_cut",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792959738.5368779,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "ab212be6b7c1e4a8b20521f88622d172d47f48ba261035d1181c1969ae693c0c",
+  "isolation_policy": "opencode v2 permission object: bash allowed (this role runs the smoke test), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "implementation.txt",
+  "output_sha256": "864b214e7ebf8fa79d1466bc31b5e5d5bafee63ffd28126e0f73beac6526477c",
+  "pid": 173296,
+  "project_marker": ".git",
+  "prompt_sha256": "cdb545c839aa899b27597b1e00022adbd5ec28df0970be578b12a145c1f5cbf8",
+  "session_sha256": "f625e084121f5510a4a03eb9b7d9a87e29bde6238593c4f9a30a8a4cc93770db",
+  "stderr_present": false,
+  "task_id": "implementation_flowcap_hyp_cut",
+  "timed_out": false,
+  "verified": true
+}

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:302-323 -> model/model.py:26-30 -> model/layers.py:280-345 | Source-inspected the trainer's training-only adjacent-event table and its forward wiring into the level-0 assignment. The same level-0 cost combines Poincare prototype distance with weighted Poincare distances from each training item's successors to those prototypes (layers.py:296-337); the resulting argmin is emitted as T1 and quantization loss is used by the trainer at train_rqvae.py:393-401. This is a connected behaviour-and-curvature pathway, not an unused helper or separate loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The successor signal is computed from training rows only and directly affects the curved T1 assignment objective. T2/T3 retain the baseline residual VQ path, and collision extension adds the fourth SID token.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:302-323 creates weighted directed successors; train_rqvae.py:389-393 supplies their embeddings and weights; layers.py:314-337 adds their curved consensus cost to T1 assignment.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:296-345 | Static differentiability trace of T1 costs, soft assignment and quantization loss into train_rqvae.py:393-401. No runtime training was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:311-312, 334-336
+FINDING DETAIL: The curved distance's argument is capped at 1-1e-6 before atanh. For points whose projected norm approaches the ball boundary, this cap makes distance saturate; more seriously, at zero separation delta2 is exactly zero and sqrt(delta2) has an undefined/unstable derivative in float32. The distance feeds both the assignment and the behavior consensus term, so a coincident point/prototype (or successor/prototype) can produce non-finite gradients despite finite forward losses. Gradient clipping at train_rqvae.py:399-400 does not repair NaN gradients. Since no runtime smoke was available, code does not establish finite backward for this valid counterexample.
+FINDING REPRODUCTION: Minimal counterexample: choose xball == pball (or a successor point equal to a prototype). Then delta2=0 at layers.py:309-312 (and similarly at :328-336); backpropagate the curved distance/soft-cost through sqrt at zero. The square-root derivative at zero is singular, and multiplying the resulting derivative by zero can yield NaN in float32. The same issue applies to a zero latent before projection. A zero loss value does not imply a finite gradient.
+FINDING CORRECTION: Evaluate squared geodesic cost without differentiating sqrt at zero, or clamp squared separation to a positive epsilon before sqrt and document its effect; add a source-level/runtime gradient smoke that checks finite losses and all intended encoder/prototype gradients for coincident and ordinary inputs. Verify behavior-off and Euclidean switches change and restore assignments/gradients.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:40-69, 281-326, 463-515, 518-546 | Static trace of root/data/result constants, trainer input loading, export/indexing, result writes, and both launcher branches.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the frozen stage1 embedding and stage0 training parquet paths; resolves the repository root by markers; writes checkpoint, logs, and SID files under its own promoted arm directory results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse; and exports item-indexed JSON keys by enumerate(sid) with a uniqueness check. The default launcher starts four ranks, while GENREC_SINGLE_GPU=1 bypasses torchrun and reaches main's single-process branch. No trainer execution was performed.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:58-69 for paths, :295-324 for frozen inputs and train-only behavior table, :491-510 for full-index export and validation, and :518-546 for launcher including SINGLE_GPU_ENV.
+FINDING CORRECTION: None.

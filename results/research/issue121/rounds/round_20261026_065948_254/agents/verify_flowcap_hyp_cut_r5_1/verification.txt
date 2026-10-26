@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:391-402, train_rqvae.py:463-468, train_rqvae.py:268-315 | Inspected the real trainer path: directed adjacent train-history transitions are counted and capped at 16 successors; the trainer adds the flow loss computed from Lorentz-distance-based balanced assignments and Lorentz prototype scores. The smoke_test.py:18-34 source exercises the flow function with behavior enabled, then disabled, and compares Lorentz versus Euclidean results; runtime execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The training-only directed transition signal changes the assignment-weighted geometric core computation; this is not an unrelated auxiliary behavior loss or an unused hyperbolic helper.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:391-402 constructs only from train_frame histories/targets; train_rqvae.py:467 calls flow_capacity_loss; train_rqvae.py:272-281 and 293-315 use Lorentz distances/points and successor-conditioned assignment distributions in the same loss.
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:268-315, train_rqvae.py:463-473 | Inspected the loss and optimizer path and the provided smoke harness source (smoke_test.py:9-34). The flow term is differentiable through balanced_assignments, Lorentz point construction, encoder outputs, and codebook embeddings, then enters loss.backward() before optimizer.step(). No runtime run was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No implementation-level dead term or evident float32 overflow/NaN hazard found. Behavior-off returns a differentiable zero, while disabling Lorentz geometry switches the point/distance operations to Euclidean. One limitation of the smoke assertion: its behavior-off gradient comparison adds an unrelated encoder-square loss at smoke_test.py:26-29, so that particular assertion does not isolate the flow-gradient delta. This does not invalidate the differentiable training path visible in the implementation.
+FINDING REPRODUCTION: Inspect smoke_test.py:25-34: loss_off is zero, but grad_off is measured after adding model.encoder(x).square().mean(); this is not an apples-to-apples gradient comparison. The actual training objective remains connected at train_rqvae.py:467-473, and the behavior-on path returns nonzero flow computation when usable edges exist at train_rqvae.py:283-315.
+FINDING CORRECTION: none required for implementation correctness. For a stronger diagnostic, compare gradients of FLOW_WEIGHT * flow_capacity_loss against a zero flow term while holding the same base loss/model state fixed, and separately compare Lorentz and Euclidean flow gradients.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-67, train_rqvae.py:360-403, train_rqvae.py:535-614 | Inspected the actual trainer entry point, data loading and transition construction, export indexing, destination derivation, and launcher branches. Runtime trainer execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Frozen inputs are stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet (lines 61-62). Output resolves under the promoted candidate's results/stage2_RQ-VAE/TIGER_flowcap_hyp_cut directory (lines 56-67), which is the required location, not a baseline/other candidate path. Export enumerates embedding rows as item IDs and writes both unique collision-extended SIDs and string-keyed JSON (lines 563-580). Launcher retains torchrun and the GENREC_SINGLE_GPU branch (lines 587-615, especially 591-592).
+FINDING REPRODUCTION: Follow train_rqvae.py:374-402 for the frozen data inputs and training-only transition graph; train_rqvae.py:572-580 for indexed SID/JSON export; train_rqvae.py:587-615 for multi-card and single-card entry behavior. The candidate check metadata reports an environment ModuleNotFoundError (CANDIDATE_CHECK.json:1-4), not a code integration failure; this review did not execute the trainer.
+FINDING CORRECTION: none

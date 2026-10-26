@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:281-293,354-391 | Traced training-only transition construction into the live training loss: source-item successor weights select batch edges, item and code prototypes are mapped to Lorentz points, and those weighted edge costs are added to the optimizer loss. Geometry-off substitutes Euclidean distances at lines 361-374; behavior-off disables this added path at line 357. This is one connected behavior/geometry pathway, not an unused helper or separate loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The implementation does couple training-only directed successor flow to Lorentz geodesic costs. No defect for this check.
+FINDING REPRODUCTION: Code-path inspection of the training loop at train_rqvae.py:354-391; actual trainer execution is unavailable in this environment.
+FINDING CORRECTION: None.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:354-397; smoke_test.py:15-49 | Inspected the live loss construction, backward and optimizer step, plus the supplied CPU forward/backward smoke. The smoke checks finite loss and gradients to encoder/codebook, but its test objective is separately reimplemented rather than invoking the trainer's actual transition-edge loss.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:77,357-390
+FINDING DETAIL: The specified capacity-constrained coarse-to-fine assignments are not implemented. The trainer keeps baseline K=(256,256,256), applies the flow loss only to the first 256-code layer, and balances soft probabilities only within each minibatch. There is no K1=16/K2=96 assignment, second-level flow/capacity term, parent-conditioned K2 prototypes, or balanced/hard capacity-constrained export; export still uses the baseline quantizer at lines 431-432 and 485-487. Thus the implemented differentiable flow/Lorentz regularizer is not the proposed capacity-constrained partition, and the intended T1/T2 SID assignment/gradient comparisons are not established by smoke_test.py, which substitutes a synthetic three-item edge objective.
+FINDING REPRODUCTION: Read the configured codebook sizes at train_rqvae.py:77 and trace live `codes = ...vq_layers[0]` plus flow computation at lines 357-390; then trace export through `get_indices` at lines 431-432. It uses 256 first-level codes and has no second-level flow path. The supplied smoke test uses its own `objective()` at smoke_test.py:28-42, rather than exercising `train_rqvae.py`'s training objective.
+FINDING CORRECTION: Implement and train the specified K1=16 and K2=96 balanced assignments with flow-geodesic coupling at both levels, parent-conditioned T2 where specified, and export the corresponding hardened assignments; preserve T3 residual quantization and deterministic T4 extension. Add an ablation check around the actual shared loss path verifying behavior-off and Euclidean substitutions alter gradients or assignments as claimed.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:40-67,251-294,456-499,506-534 | Inspected repository-root discovery, fixed Stage1 embedding and Stage0 training-parquet inputs, candidate-specific promoted result directory, export indexing/uniqueness logic, and launcher branches including `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 85-88 and its single-card bypass at lines 506-511. The trainer cannot be run in this environment; this is source inspection only.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The paths resolve from the repository root, output is scoped to `results/stage2_RQ-VAE/TIGER_flowcap_hyp_cut`, SIDs are emitted by row/item index with deterministic collision extension and a uniqueness check, and both torchrun and GENREC_SINGLE_GPU branches are present. No integration defect identified by inspection.
+FINDING REPRODUCTION: Inspect train_rqvae.py:49-67 for path derivation, 265-294 for frozen input/loading and train-only graph construction, 491-499 for indexed export, and 506-529 for launcher behavior. Runtime validation is not claimed.
+FINDING CORRECTION: None.

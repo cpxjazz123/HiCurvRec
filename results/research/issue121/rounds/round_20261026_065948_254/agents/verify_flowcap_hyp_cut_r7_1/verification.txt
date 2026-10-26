@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:395-407,268-320,468-472 | Static trace from training-only train.parquet transition counting, through sparse successor edges and balanced assignment distributions, to Lorentz-space assignment and expected Lorentz prototype score in the training loss. Also inspected smoke_test.py:9-34, which invokes this same objective and toggles behavior and geometry.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Directed adjacent transitions are counted from training histories plus training targets; capped successors supply weights. These weights score assignments produced using explicit Lorentz mappings and squared Lorentz distances, with a Lorentz inner-product score on the assigned code prototypes. This is one connected differentiable pathway, not a standalone behavior loss or unused helper.
+FINDING REPRODUCTION: Code-inspection trace: train_rqvae.py:397-407 constructs flow_neighbors; lines 279-290 compute Lorentz-based catalog assignments; lines 294-320 weight their expected curved prototype score by successor edges; lines 471-472 add it to the optimized loss. smoke_test.py:25-34 checks behavior-off and Euclidean substitutions.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:251-265,268-320,471-479 | Static autograd/numerical trace of Lorentz point construction, balanced soft assignments, weighted flow score and real loss.backward()/optimizer step; inspected the supplied smoke_test.py:9-34 as the intended runtime exercise (not executed in this environment).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level trainability defect found. The soft assignment and Lorentz score remain connected to encoder and codebook parameters; the returned flow is consumed by the trainer. Lorentz acosh input is clamped above 1, norm and Sinkhorn denominators are protected, and the flow normalization denominator is clamped, avoiding the identified float32 boundary/division hazards. The smoke source asserts finite loss, an encoder gradient and changed gradients with behavior off, and changed loss under Euclidean geometry. Runtime execution was not performed as instructed.
+FINDING REPRODUCTION: The supplied smoke_test.py calls flow_capacity_loss(...).backward() at lines 20-22 and compares behavior-off gradients and Euclidean flow at lines 25-34. Trainer checks loss finiteness before backward at train_rqvae.py:473-479.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:40-67,365-417,540-589,592-620 | Static inspection of the real main/launcher paths, frozen input constants, candidate-scoped output constants, training-ID and export logic, and both torchrun and GENREC_SINGLE_GPU branches.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Inputs resolve to stage1 sentence_t5.npy and results/stage0_build_parquet/train.parquet under the discovered repository root. Outputs are confined to results/stage2_RQ-VAE/TIGER_flowcap_hyp_cut. Export enumerates embedding rows as item IDs, extends collisions deterministically, checks uniqueness, and writes both NumPy and JSON forms. The launcher bypasses torchrun when GENREC_SINGLE_GPU=1 and otherwise launches four ranks; child ranks bypass relaunch.
+FINDING REPRODUCTION: Inspect constants and root resolution at train_rqvae.py:42-67; train data indexing at 379-407; export and uniqueness checks at 569-585; launcher branches at 592-620. Runtime trainer execution was not performed, per instruction.
+FINDING CORRECTION: None.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:381-392,268-305,453-457 | Traced train-history transition counting into flow_neighbors, then the trainer's flow_capacity_loss call. Source inspection shows edges select soft T1/T2 assignments and Lorentz code distances in the same weighted flow objective; the path is not a detached auxiliary behavior loss. smoke_test.py:17-34 supplies a synthetic directed cycle and checks behavior-on versus behavior-off and Euclidean distance results (not executed here).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No fidelity defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:251-265,268-305,453-463 | Inspected Lorentz mapping and distance, differentiable balanced assignments, edge-weighted objective, loss addition and backward. Soft assignment probabilities and curved distances remain in the autograd graph to encoder and codebook parameters; behavior-off returns a zero term. Safeguards keep the acosh argument at least 1+1e-6 and normalization denominators positive. smoke_test.py:20-34 encodes the intended finite-loss/gradient and switch comparisons, but was not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level dead term or clear float32 numerical hazard found. Runtime gradient smoke remains the prescribed external proof and is not claimed as executed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:42-67,381-392,497-502,553-570,577-605 | Source-traced root discovery, frozen stage0 train parquet input, per-arm result paths, indexed SID export/collision extension, default torchrun launcher and the GENREC_SINGLE_GPU branch. No trainer was run. The candidate check file reports its own path check crashed with ModuleNotFoundError (CANDIDATE_CHECK.json:2-3), so this does not establish runtime integration.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:299-304
+FINDING DETAIL: The implemented sparse-edge objective still performs a dense code-pair expansion at T2: it materializes a 96x96 curved-distance matrix and contracts that matrix separately across every edge via einsum. This is O(E_batch*96^2), contrary to the specified sparse O(E_batch*(K1+K2)) edge evaluation and the explicit instruction to disable full pairwise code-pair expansion. With up to 16 retained outgoing edges per source, this can dominate the training step and invalidate the stated smoke-overhead constraint. No measured smoke result is available to show it stays within the stated 10% ceiling.
+FINDING REPRODUCTION: For a batch containing E edges, inspect/evaluate the T2 branch at lines 301-304: `cost` has 96x96 entries and the einsum consumes both code dimensions for each edge. Its contraction scales as E*96*96, not E*96. This is a static complexity counterexample; no runtime measurement was performed.
+FINDING CORRECTION: Replace the dense code-pair contraction with an algebraically equivalent sparse/structured expectation using the Lorentz inner-product form and per-edge assignment-weighted prototype aggregates, avoiding an E-by-96-by-96 contraction; alternatively provide a measured real-trainer smoke demonstrating the required <=10% overhead and revise the implementation to meet the stated sparse cost contract. Also rerun the candidate path check and prescribed one-epoch gradient smoke in the GPU environment before admission.

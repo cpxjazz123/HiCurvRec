@@ -76,7 +76,9 @@ LR                  = 1e-3
 WEIGHT_DECAY        = 1e-4
 HIDDEN_SIZES        = (512, 256, 128)
 CODEBOOK_NUM        = 3
-CODEBOOK_SIZE       = (32, 256, 256)
+# Capacity budget from the measured survival table: the first two levels must be cheap
+# for the width-20 beam, the third carries the 256-way discrimination.
+CODEBOOK_SIZE       = (32, 96, 256)
 CODEBOOK_DIM        = 32
 BETA                = 0.25
 VQ_TYPE             = "vq"
