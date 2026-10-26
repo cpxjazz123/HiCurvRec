@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast/train_rqvae.py:229-280, 333-337, 400-424 | Static code trace: _successor_pairs mines user-ordered transitions solely from the frozen TRAIN_FILE (231-244), maps each batch source item to a successor (333-337, 402-418), constructs differentiable residual representations (252-262), and jointly scores source/successor candidates using expmap0 and Poincare distance when geometry is on (265-280). That contrast term is added to the actual reconstruction/quantization loss (419-424). The geometry-off branch uses Euclidean cdist on those same residuals; behaviour-off sets the pair list empty and contrast weight to zero.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A; runtime execution was not attempted.
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast/train_rqvae.py:252-280, 400-430 | Static differentiability/numerics trace: source residuals retain the encoder graph; the successor branch is intentionally a no-gradient target; Poincare exp-map, distance, temperature-scaled logits, cross-entropy and weighted addition remain in the source gradient path. The loss is checked finite, backpropagated, clipped and stepped. The exp-map projects into the open unit ball (model/utils.py:29-36, 50-55); artanh clamps strictly inside its domain in the tensor dtype (model/utils.py:17-27), avoiding float32 boundary infinities. The behaviour and geometry switches select zeroed contrast or Euclidean distance respectively (train_rqvae.py:99-101, 265-280, 400-424), so the coupled gradient computation changes under either ablation.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No source-level dead contrast term or identified numerical hazard. This is a code inspection, not an executed gradient smoke; the specified GPU runtime proof remains external.
+FINDING REPRODUCTION: N/A; per instruction, trainer execution was not attempted.
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast/train_rqvae.py:46-71, 304-339, 489-562 | Static integration trace: repository root is found by the stage2_RQ-VAE marker; outputs resolve to results/stage2_RQ-VAE/TIGER_behaviour_residual_contrast (not the baseline or another candidate), while logs resolve to stage2-RQ-VAE/TIGER_behaviour_residual_contrast/logs. Frozen embedding and training parquet paths are used (65-66, 318-325). Export enumerates embedding rows into item-id keys and extends collisions to unique SIDs before writing both NPY and JSON (517-531). The launcher returns directly for torchrun ranks and recognizes SINGLE_GPU_ENV == "GENREC_SINGLE_GPU" (539-545); otherwise it retains the four-card torchrun path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No source-level integration defect found. Actual trainer/launcher execution was not attempted.
+FINDING REPRODUCTION: N/A; execution is unavailable/per instruction not required here.
+FINDING CORRECTION: N/A

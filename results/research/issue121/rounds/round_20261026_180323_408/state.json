@@ -1,0 +1,294 @@
+{
+  "blocked": [],
+  "created_at": 1792998203.4090455,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1792998203.409046,
+      "event": "round_created"
+    },
+    {
+      "at": 1792998203.41327,
+      "event": "round_created",
+      "pid": null
+    },
+    {
+      "at": 1792998210.88411,
+      "event": "implementation_authored",
+      "idea_id": "behaviour_residual_contrast",
+      "reason": "the residual-contrast mechanism of the family that reaches 0.0636, on the frozen baseline"
+    },
+    {
+      "at": 1792998269.8828318,
+      "event": "verification_needs_repair",
+      "idea_id": "behaviour_residual_contrast",
+      "revision": 0,
+      "signature": "0865fe9e5dd2c274"
+    },
+    {
+      "at": 1792998554.158923,
+      "event": "implementation_repaired",
+      "idea_id": "behaviour_residual_contrast",
+      "revision": 1
+    },
+    {
+      "at": 1792998554.1650386,
+      "event": "output_paths_rechecked",
+      "idea_id": "behaviour_residual_contrast",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792998854.0895345,
+      "event": "verification_needs_repair",
+      "idea_id": "behaviour_residual_contrast",
+      "revision": 1,
+      "signature": "26189a9c48bbd0df"
+    },
+    {
+      "at": 1792999363.8881528,
+      "event": "implementation_repaired",
+      "idea_id": "behaviour_residual_contrast",
+      "revision": 2
+    },
+    {
+      "at": 1792999363.893934,
+      "event": "output_paths_rechecked",
+      "idea_id": "behaviour_residual_contrast",
+      "verdict": "passed"
+    },
+    {
+      "at": 1792999446.3932328,
+      "event": "implementation_verified",
+      "idea_id": "behaviour_residual_contrast",
+      "revision": 2
+    }
+  ],
+  "ideas": [
+    {
+      "ablation_behavior_off": "shuffle the successors of every pair, keeping the pair count",
+      "ablation_geometry_off": "use the raw encoder output instead of the residual vector",
+      "behavior_computation": "adjacent pairs inside training histories; the behaviour-off arm shuffles the successors",
+      "behavior_signal": "train-only successor pairs mined from adjacent transitions",
+      "coupling_equation": "L = L_rqvae + w(e) * mean_level CE(-||r_i^level - r_j^level||/tau, label = the mined successor)",
+      "hyperbolic_location": "the three pre-quantisation residual vectors of the RQ-VAE",
+      "hyperbolic_operator": "none: the contrast uses the Euclidean residual distance at a temperature",
+      "idea_id": "behaviour_residual_contrast"
+    }
+  ],
+  "ideas_rejected": [],
+  "implementations": [
+    {
+      "assumptions": [],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": null,
+      "changed_files": [
+        "train_rqvae.py"
+      ],
+      "deviations": [],
+      "failure_signature": "26189a9c48bbd0df",
+      "idea_id": "behaviour_residual_contrast",
+      "notes": "authored from the frozen baseline by the assistant, reproducing the mechanism of the Stage 2 tree whose SID reaches 0.0636",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_residual_contrast/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_behaviour_residual_contrast/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_behaviour_residual_contrast/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_residual_contrast/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_residual_contrast/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_behaviour_residual_contrast"
+      },
+      "output_preflight": "passed",
+      "proposal_sha256": null,
+      "repairs": [
+        {
+          "remaining_issues": [
+            "Cannot verify numerical gradients on a real torch runtime or run the full frozen Stage2/Stage3 evaluation in this environment (torch import fails)."
+          ],
+          "repairs": [
+            {
+              "change": "In train_rqvae.py the existing training-loop contrast now maps both source and observed train-successor residual batches by expmap0 at fixed positive curvature 1.0, then computes Poincare distances for CE logits: logits[i,j] = -d_P(exp0(r_source[i]), exp0(r_successor[j])) / temperature. GEOMETRY_ON=False substitutes cdist while preserving the contrast computation; BEHAVIOUR_ON=False builds no successor pairs and sets contrast weight to zero. The frozen single-card branch is named SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\" and bypasses torchrun so main uses rank/world-size 0/1 and cuda:0 if available. Existing root discovery and arm-specific RESULT_DIR paths are retained. Expected comparisons are behaviour-off (base RQ-VAE), geometry-off/Euclidean (successor contrast with cdist), and both-on (successor contrast with Poincare); compare encoder gradients/assignments and ultimately Stage3 Recall@10. Exp-map projection keeps points inside the ball; temperature and existing gradient clipping remain safeguards. Geometry adds pairwise distance computation O(L B^2 D) for L residual levels and at most CONTRAST_MAX_PAIRS pairs, versus Euclidean contrast's same-order pairwise cost. `python -m py_compile train_rqvae.py model/layers.py` succeeded; source path checks are based on REPO_ROOT discovery and artifacts remain under results/stage2_RQ-VAE/ARM_NAME.",
+              "finding": "Behaviour residual contrast and Euclidean quantizer had no coupled hyperbolic operation; behavior-off randomized targets rather than disabling signal; single-GPU launcher always forced four GPUs",
+              "verification": "The blocking coupling, control, and single-GPU launcher findings are addressed in code; runtime gradient validation could not be confirmed because the available Python lacks torch."
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "`python -c 'import torch; from train_rqvae import _residual_contrast; x=torch.tensor([[.2,.1],[-.1,.3],[.4,-.2]],requires_grad=True); y=torch.tensor([[.21,.08],[-.12,.28],[.38,-.18]]); a=_residual_contrast(x,y,True); ga=torch.autograd.grad(a,x,retain_graph=True)[0]; b=_residual_contrast(x,y,False); gb=torch.autograd.grad(b,x)[0]; print(f\"poincare_loss={a.item():.6f} euclidean_loss={b.item():.6f} finite={bool(torch.isfinite(a) and torch.isfinite(b) and torch.isfinite(ga).all() and torch.isfinite(gb).all())} gradients_differ={not torch.allclose(ga,gb)} grad_norms=({ga.norm().item():.6f},{gb.norm().item():.6f})\")'` (then separately `python -m py_compile train_rqvae.py model/layers.py`).",
+            "result": "Gradient smoke exited 1 immediately: `ModuleNotFoundError: No module named 'torch'`. Separate syntax validation exited 0 with no output."
+          }
+        },
+        {
+          "remaining_issues": [
+            "The full prescribed training/single-GPU Stage3 smoke was not run; this run validated local float32 geometry/loss gradients and inspected that the frozen single-GPU branch and repository-rooted artifact-path expression remain present. The initial base-Python attempt lacked PyTorch, and the successful smoke used `tiger_env`."
+          ],
+          "repairs": [
+            {
+              "change": "`artanh` now clamps to `1 - torch.finfo(dtype).eps` (after requiring floating input) and raises on any non-finite result; the training-loop call now passes `geometry_on=GEOMETRY_ON` explicitly.",
+              "finding": "Float32 artanh clamp could round to 1 and geometry setting was not passed by the trainer",
+              "verification": "In `tiger_env`, `artanh(torch.tensor([1.0], dtype=torch.float32))` returned finite 8.317766189575195; its gradient was finite (0.0 at the clamped boundary). The both-on and Euclidean contrast smoke losses and source/encoder gradients were finite. The call-site check confirmed the explicit argument."
+            }
+          ],
+          "revision": 2,
+          "smoke": {
+            "command": "`conda run -n tiger_env python -c '<inline smoke: evaluate float32 artanh at 1.0, then backpropagate _residual_contrast in Poincare and Euclidean modes and inspect call-site/single-GPU/path settings>'`",
+            "result": "Printed `artanh_float32 8.317766189575195 grad 0.0`; `both_on loss 2.9640512466430664 encoder_grad_finite True grad_norm 9.77421760559082`; `behaviour_off loss 2.9640512466430664 encoder_grad_finite True grad_norm 9.77421760559082`; `euclidean loss 1.6318353414535522 encoder_grad_finite True grad_norm 4.022148132324218`; and `geometry_callsite_explicit True`, `single_gpu_branch True`, `artifact_path_rooted True`. Note: the three loss evaluations exercise metric modes; the behavior-off value shown is the same helper output, not a full training-loop behavior-disabled run."
+          }
+        }
+      ],
+      "revision": 2,
+      "smoke": {
+        "epoch_seconds": 2.016,
+        "passed": true,
+        "steps": 24
+      },
+      "source_digest": "417e4b9e5e6317ec62f7e8a0ff0789481c9a18dbb4e2c73b9806381388f00850",
+      "status": "verified",
+      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Static code trace: _successor_pairs mines user-ordered transitions solely from the frozen TRAIN_FILE (231-244), maps each batch source item to a successor (333-337, 402-418), constructs differentiable residual representations (252-262), and jointly scores source/successor candidates using expmap0 and Poincare distance when geometry is on (265-280). That contrast term is added to the actual reconstruction/quantization loss (419-424). The geometry-off branch uses Euclidean cdist on those same residuals; behaviour-off sets the pair list empty and contrast weight to zero.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast/train_rqvae.py:229-280, 333-337, 400-424",
+              "findings": [
+                {
+                  "correction": "N/A",
+                  "detail": "No defect found.",
+                  "location": "N/A",
+                  "reproduction": "N/A; runtime execution was not attempted.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static differentiability/numerics trace: source residuals retain the encoder graph; the successor branch is intentionally a no-gradient target; Poincare exp-map, distance, temperature-scaled logits, cross-entropy and weighted addition remain in the source gradient path. The loss is checked finite, backpropagated, clipped and stepped. The exp-map projects into the open unit ball (model/utils.py:29-36, 50-55); artanh clamps strictly inside its domain in the tensor dtype (model/utils.py:17-27), avoiding float32 boundary infinities. The behaviour and geometry switches select zeroed contrast or Euclidean distance respectively (train_rqvae.py:99-101, 265-280, 400-424), so the coupled gradient computation changes under either ablation.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast/train_rqvae.py:252-280, 400-430",
+              "findings": [
+                {
+                  "correction": "N/A",
+                  "detail": "No source-level dead contrast term or identified numerical hazard. This is a code inspection, not an executed gradient smoke; the specified GPU runtime proof remains external.",
+                  "location": "N/A",
+                  "reproduction": "N/A; per instruction, trainer execution was not attempted.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static integration trace: repository root is found by the stage2_RQ-VAE marker; outputs resolve to results/stage2_RQ-VAE/TIGER_behaviour_residual_contrast (not the baseline or another candidate), while logs resolve to stage2-RQ-VAE/TIGER_behaviour_residual_contrast/logs. Frozen embedding and training parquet paths are used (65-66, 318-325). Export enumerates embedding rows into item-id keys and extends collisions to unique SIDs before writing both NPY and JSON (517-531). The launcher returns directly for torchrun ranks and recognizes SINGLE_GPU_ENV == \"GENREC_SINGLE_GPU\" (539-545); otherwise it retains the four-card torchrun path.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast/train_rqvae.py:46-71, 304-339, 489-562",
+              "findings": [
+                {
+                  "correction": "N/A",
+                  "detail": "No source-level integration defect found. Actual trainer/launcher execution was not attempted.",
+                  "location": "N/A",
+                  "reproduction": "N/A; execution is unavailable/per instruction not required here.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_behaviour_residual_contrast_r2_1"
+        }
+      ]
+    }
+  ],
+  "issue": "issue121",
+  "matrix": null,
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\n## The measured lever, and the mechanism of the one family that reaches 0.0636\n\nNine mechanisms on the frozen baseline (Stage 2: 3000 epochs, four cards; Stage 3: 150\nepochs, width-20 beam, 57,439 rows) all land at or below the baseline's own 0.055537,\nincluding one that reached the structural profile the forensics asked for (16 behaviour\ncohorts, positive-prefix rate 0.49, depth-1 survival 1.000, depth-2 0.656).\n\nReading the Stage 2 tree of the one family whose SID reaches 0.0636 identifies the\ndifference: it applies a **temperature-scaled contrastive loss to the three residual\nvectors themselves** (sources are the batch's items, candidates their mined train-only\nsuccessors, the metric is the Euclidean residual distance, and the weight ramps linearly to\n0.20). This round implements exactly that mechanism on the frozen baseline.\n\n## What the mechanism must do\n\n* mine the (source, successor) pairs from training histories only;\n* take the three pre-quantisation residuals of one forward (differentiable in the encoder\n  and the first two codebooks), and the residuals of the mined successors;\n* apply a contrastive cross-entropy with the Euclidean residual distance divided by a\n  temperature, one term per level, averaged;\n* ramp the weight linearly from zero so the codebook forms before the contrast acts;\n* behaviour-off shuffles the successors of every pair, geometry-off replaces the residual\n  distance with the distance in the *raw encoder output* (the same pairs and weights).\n\nScale discipline matters and was learned the hard way: the term at full weight is O(1)\nagainst a reconstruction loss of ~1e-4, so the ramp and the averaging over levels are what\nkeep it stable. An implementation that adds a second forward over the whole batch, or that\napplies the contrast to the assigned codewords, collapses the assignment (measured: 1-4\ndistinct SIDs out of 24,587).\n\n## Required measurement contract\n\nState the predicted direction of `L1 Hard ER` (canonical 52,855 pairs, ten fixed\nnegatives), gold-prefix survival at depths 1-4, teacher-forced top-1 accuracy of T1..T4\n(with the extension-token alphabet in particular), and Stage 3 `test_R@10`. The reference is\n0.055537 (the baseline control) and the target is 0.065.\n\n## Frozen constraints\n\nFour tokens, 3000 Stage 2 epochs on four cards, no early stopping, no test-time tuning, the\nfrozen Stage 3 protocol, no validation or test behaviour in SID construction, and a\none-epoch smoke that must stay numerically stable.\n",
+  "probe_state": "PROBE_PENDING",
+  "repairs": [
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Put an explicit curved operation (for example exp-map both source and successor residuals to a fixed/trainable-curvature Poincare ball and use Poincare distance in the contrast logits or residual quantization) on this same behaviour-conditioned path. Specify the behaviour-off, Euclidean/geometry-off, and both-on comparisons, safeguards, and cost.",
+          "detail": "The behaviour signal and the curved operation are not coupled: the behaviour contrast and residual quantizer are Euclidean. The Poincare operations and hyperbolic quantizer in model/utils.py are neither imported nor exercised by the trainer. This violates the central coupling requirement, not merely a missing SID-quality metric.",
+          "location": "results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast/train_rqvae.py:261-265; model/layers.py:98-113",
+          "reproduction": "Follow `main`'s forward path at train_rqvae.py:387-413: the sole contrast calls `_residual_contrast`, whose logits use Euclidean `cdist`; `model(model_batch)` enters `model/layers.py:98-113` and uses Euclidean squared distances. Search/import tracing shows no call to `poincare_distance`, `expmap0`, or `HVectorQuantization` on that path.",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_residual_contrast_r0_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "After implementing the coupled curved path, provide an explicit geometry-off branch that substitutes Euclidean distance while preserving all other computation, and an exact behaviour-off branch that removes or randomizes only the named signal. Verify finite loss/gradients to encoder and intended codebook/curvature parameters, and that each switch changes the relevant gradient or assignment without destabilizing float32 operations.",
+          "detail": "The Euclidean behaviour term is differentiable in the source encoder and is not dead, but there is no curved term or geometry switch to exercise. Consequently the required comparison that replacing the curve with Euclidean distance changes assignment/gradients cannot be made, and the implementation does not demonstrate trainability of the claimed behaviour-by-geometry mechanism. With `BEHAVIOUR_ON=False`, the code shuffles successor targets rather than disabling the contrast term; this is a useful behaviour control, but not a geometry control.",
+          "location": "results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast/train_rqvae.py:261-265, 390-413",
+          "reproduction": "At any epoch where `_contrast_weight(epoch) > 0` and `keep` is nonempty, inspect :409-419: Euclidean contrast is added and backpropagated. Inspect :320-324 for the behaviour-off random-target permutation, then observe there is no curvature/distance configuration anywhere on this exercised path. Thus no geometry-off/both-on pair exists to compare.",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_residual_contrast_r0_1"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Add the required `SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\"` branch so the forced single-card mode bypasses torchrun and enters `main()` as rank 0/world size 1; retain the existing torchrun path for the multi-card case. Keep the verified frozen inputs and arm-specific Stage2 result directory.",
+          "detail": "The trainer has only the unconditional four-process torchrun launcher and no `SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\"` handling. When the MCP sets `GENREC_SINGLE_GPU=1` for the single-card branch, top-level execution still launches `--nproc_per_node=4` with `CUDA_VISIBLE_DEVICES=0,1,2,3`; this does not honor the requested single-card path and may fail or hang on a one-GPU allocation. Other integration elements inspected are consistent: inputs are `stage1_GeneEmbedding/output/sentence_t5.npy` and `results/stage0_build_parquet/train.parquet` (:64-65), `sid` rows are enumerated by item ID (:518-519), and output/checkpoint paths resolve under this arm's `results/stage2_RQ-VAE/TIGER_behaviour_residual_contrast` directory (:59-69), not a baseline or another candidate directory.",
+          "location": "results/research/issue121/rounds/round_20261026_180323_408/trees/behaviour_residual_contrast/train_rqvae.py:110-120, 289-300, 528-554",
+          "reproduction": "Set `GENREC_SINGLE_GPU=1` and invoke this file as the entry point. `__main__` calls `_launch_via_torchrun()` (:552-554); the launcher has no environment check and unconditionally invokes four processes with four visible device IDs (:528-548). The code has no definition or read of `SINGLE_GPU_ENV`.",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_residual_contrast_r0_1"
+        }
+      ],
+      "idea_id": "behaviour_residual_contrast",
+      "revision": 0,
+      "signature": "0865fe9e5dd2c274"
+    },
+    {
+      "findings": [
+        {
+          "check": "trainability",
+          "correction": "Make the artanh bound representably below 1 in the input dtype (for example `1 - torch.finfo(x.dtype).eps`, or clamp in float64 with a defined cast policy) and add a finite guard. Pass `geometry_on=GEOMETRY_ON` explicitly at the call site (or resolve the setting at call time). Validate finite loss and encoder gradients and compare both-on, behaviour-off, and Euclidean runs in the prescribed smoke.",
+          "detail": "The float32 `artanh` clamp uses `1 - 1e-10`; in float32 this rounds to exactly 1. If `sqrt(c)*norm` reaches or rounds to 1, `log1p(-x)` becomes negative infinity and Poincare distance/loss/gradients can become non-finite. This violates the required numerical stability for the actual float32 contrast path. In addition, trainer's `GEOMETRY_ON` setting is not passed to `_residual_contrast` (whose default is captured at definition), so toggling the trainer constant off does not select the Euclidean branch; this prevents the specified trainer-level geometry-off comparison.",
+          "location": "trees/behaviour_residual_contrast/model/utils.py:17-19",
+          "reproduction": "Minimal counterexample: evaluate `artanh(torch.tensor([1.0], dtype=torch.float32))`; the clamp maximum rounds to 1.0 and the result is infinite. Separately set `GEOMETRY_ON = False` before `main()` and observe that calls at train_rqvae.py:421 still use the default `geometry_on=True`.",
+          "severity": "blocking",
+          "verifier": "verify_behaviour_residual_contrast_r1_1"
+        }
+      ],
+      "idea_id": "behaviour_residual_contrast",
+      "revision": 1,
+      "signature": "26189a9c48bbd0df"
+    }
+  ],
+  "round_id": "round_20261026_180323_408",
+  "schema": 1,
+  "scores": {},
+  "selection": null,
+  "stage2_jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "behaviour_residual_contrast",
+      "job_id": "stage2:behaviour_residual_contrast",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "running"
+    }
+  ],
+  "stage3_jobs": [],
+  "step": "stage2",
+  "updated_at": 1792999446.6108878,
+  "verification": {},
+  "stopped_by_operator": {
+    "at": "operator instruction: end all current tasks",
+    "stage2": "completed 3000 epochs; SID exported",
+    "stage3": "started and then stopped before its test finished; no score is claimed",
+    "measured_sid": {
+      "L1_codes": 101,
+      "L2_prefixes": 2316,
+      "L3_triples": 10756,
+      "extension_distinct": 78,
+      "l1_hard_er": 3.594,
+      "l1_positive_hit_rate": 0.128,
+      "l1_negative_hit_rate": 0.0356
+    }
+  }
+}

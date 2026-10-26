@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: trees/behaviour_residual_contrast/train_rqvae.py:229-244,265-280,400-423 | Static trace: `_successor_pairs` mines ordered adjacent items from the training parquet; trainer maps batch source IDs to successors, forms differentiable residual vectors, exp-maps both sides and scores their Poincare distances before adding the contrast to the RQ-VAE loss. `GEOMETRY_ON` is true by default. No runtime execution performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No fidelity defect found in the active pathway: the behaviour signal and curved operation meet in the same contrastive logits and loss, and the loss is connected to the encoder through source residuals.
+FINDING REPRODUCTION: Follow the call chain at train_rqvae.py:400-423 into `_residual_contrast` at 265-280; the `geometry_on` branch maps both arguments and computes Poincare distance.
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: trees/behaviour_residual_contrast/train_rqvae.py:265-280,400-429; trees/behaviour_residual_contrast/model/utils.py:17-19,42-59 | Static forward/backward trace of the contrast path; runtime training was not run.
+FINDING SEVERITY: blocking
+FINDING LOCATION: trees/behaviour_residual_contrast/model/utils.py:17-19
+FINDING DETAIL: The float32 `artanh` clamp uses `1 - 1e-10`; in float32 this rounds to exactly 1. If `sqrt(c)*norm` reaches or rounds to 1, `log1p(-x)` becomes negative infinity and Poincare distance/loss/gradients can become non-finite. This violates the required numerical stability for the actual float32 contrast path. In addition, trainer's `GEOMETRY_ON` setting is not passed to `_residual_contrast` (whose default is captured at definition), so toggling the trainer constant off does not select the Euclidean branch; this prevents the specified trainer-level geometry-off comparison.
+FINDING REPRODUCTION: Minimal counterexample: evaluate `artanh(torch.tensor([1.0], dtype=torch.float32))`; the clamp maximum rounds to 1.0 and the result is infinite. Separately set `GEOMETRY_ON = False` before `main()` and observe that calls at train_rqvae.py:421 still use the default `geometry_on=True`.
+FINDING CORRECTION: Make the artanh bound representably below 1 in the input dtype (for example `1 - torch.finfo(x.dtype).eps`, or clamp in float64 with a defined cast policy) and add a finite guard. Pass `geometry_on=GEOMETRY_ON` explicitly at the call site (or resolve the setting at call time). Validate finite loss and encoder gradients and compare both-on, behaviour-off, and Euclidean runs in the prescribed smoke.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: trees/behaviour_residual_contrast/train_rqvae.py:46-71,169-190,304-339,488-535,538-566 | Static inspection of root/path resolution, frozen embedding and parquet inputs, export/index construction, candidate-specific output paths, and launcher branches including `SINGLE_GPU_ENV`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Inputs use the frozen Stage1 embedding and Stage0 train parquet paths; exported SID rows enumerate the complete embedding matrix, JSON keys are those row/item IDs, and outputs resolve to this candidate's promoted result directory. Launcher retains both torchrun and the `GENREC_SINGLE_GPU` branch. Actual entry-point execution and distributed execution were not run.
+FINDING REPRODUCTION: Inspect train_rqvae.py:65-71 and 318-325 for inputs and ID alignment; 523-531 for SID export; 538-566 for launcher and single-card behavior.
+FINDING CORRECTION: none
