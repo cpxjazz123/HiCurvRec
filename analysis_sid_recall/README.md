@@ -9,8 +9,8 @@ generated from it. Collected read-only by `collect.py` (re-runnable).
 |---|---|
 | SID files in `sids/` (paired only) | 25 |
 | SID contents seen in the history (577 in total) | 577 |
-| Stage 3 runs paired to a SID | 32 |
-| distinct SIDs that have a recall | 25 |
+| SID + recall pairs (one per SID) | 25 |
+| Stage 3 runs the pairs were chosen from | 32 |
 | Stage 3 runs whose SID table no longer exists | 66 (in `stage3_runs_without_sid.csv`) |
 | recall source files copied to `recalls/` | 92 |
 
@@ -21,9 +21,14 @@ event. `sid_inventory.csv` holds one row per **paired** SID content with its pre
 the best recall it ever reached.
 
 The directory keeps **only the paired** SIDs and **only recalls that name a paired SID**:
-25 SID files and 32 recall files, and every recall file carries the `paired_sid` block
+25 SID files and 25 recall files — **one SID paired with exactly one recall** — and every
+recall file carries the `paired_sid` block
 (the SID's sha256, its file name, its paths and the run's own `code_path`), so the pairing
 is verifiable inside the file.
+
+When several runs generated from the same table, the **highest recall is kept** as that
+table's pair and the other runs are written to `sid_recall_alternatives.csv`; the paired row
+records how many runs shared the table (`sid_runs`) and their recall range.
 
 **A SID path is overwritten between runs.** `results/stage2_RQ-VAE/<arm>/item_sids.json`
 holds a different table after every Stage 2 run of that arm, so pairing a run with the

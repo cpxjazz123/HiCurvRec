@@ -297,6 +297,31 @@ def main() -> int:
                       "code_path": code, "sid_commit": blob,
                       "sid_resolution": resolution, **run["metrics"]})
 
+    # One SID, one recall: when several runs generated from the same table, the
+    # highest recall is kept as the pair and the other runs are written aside.
+    grouped: dict[str, list] = {}
+    for pair in pairs:
+        grouped.setdefault(pair["sid_sha256"], []).append(pair)
+    alternatives = []
+    kept = []
+    for digest, group in grouped.items():
+        group.sort(key=lambda item: -(item.get("test_recall@10") or 0))
+        best = dict(group[0])
+        best["sid_runs"] = len(group)
+        best["sid_recall_range"] = [min(item.get("test_recall@10") or 0 for item in group),
+                                    max(item.get("test_recall@10") or 0 for item in group)]
+        kept.append(best)
+        for other in group[1:]:
+            alternatives.append({"sid_sha256": digest, "variant": other["variant"],
+                                 "run_dir": other["run_dir"],
+                                 "test_recall@10": other.get("test_recall@10"),
+                                 "test_recall@5": other.get("test_recall@5"),
+                                 "test_ndcg@10": other.get("test_ndcg@10"),
+                                 "n_eval": other.get("n_eval"),
+                                 "note": "another run of the same SID table; the highest "
+                                         "recall is kept as the pair"})
+    pairs = kept
+
     names = write_sid_files(blobs)
 
     inventory = []
@@ -324,8 +349,8 @@ def main() -> int:
 
     with (OUT / "sid_recall.csv").open("w", newline="", encoding="utf-8") as handle:
         fields = ["sid_sha256", "sid_file", "sid_paths", "variant", "run_dir", "code_path",
-                  "sid_resolution", "test_recall@5", "test_recall@10", "test_ndcg@5",
-                  "test_ndcg@10", "n_eval"]
+                  "sid_resolution", "sid_runs", "sid_recall_range", "test_recall@5",
+                  "test_recall@10", "test_ndcg@5", "test_ndcg@10", "n_eval"]
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         for pair in sorted(pairs, key=lambda item: -(item.get("test_recall@10") or 0)):
@@ -334,6 +359,8 @@ def main() -> int:
                 "sid_paths": " | ".join(pair["sid_paths"]), "variant": pair["variant"],
                 "run_dir": pair["run_dir"], "code_path": pair["code_path"],
                 "sid_resolution": pair.get("sid_resolution", ""),
+                "sid_runs": pair.get("sid_runs", 1),
+                "sid_recall_range": json.dumps(pair.get("sid_recall_range", [])),
                 "test_recall@5": pair.get("test_recall@5"),
                 "test_recall@10": pair.get("test_recall@10"),
                 "test_ndcg@5": pair.get("test_ndcg@5"),
@@ -342,6 +369,8 @@ def main() -> int:
             })
     recalls = OUT / "recalls"
     recalls.mkdir(exist_ok=True)
+    for path in recalls.iterdir():
+        path.unlink()
     for pair in pairs:
         run = REPO / pair["run_dir"]
         source = run / "test_final.json"
@@ -375,6 +404,13 @@ def main() -> int:
         }
         payload["stage3_run"] = {"variant": pair["variant"], "run_dir": pair["run_dir"]}
         target.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
+    with (OUT / "sid_recall_alternatives.csv").open("w", newline="", encoding="utf-8") as handle:
+        fields = ["sid_sha256", "variant", "run_dir", "test_recall@5", "test_recall@10",
+                  "test_ndcg@10", "n_eval", "note"]
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        for row in alternatives:
+            writer.writerow({key: row.get(key) for key in fields})
     if unpaired_runs:
         with (OUT / "stage3_runs_without_sid.csv").open("w", newline="", encoding="utf-8") as handle:
             fields = ["variant", "run_dir", "code_path", "test_recall@5", "test_recall@10",
