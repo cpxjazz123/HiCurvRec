@@ -89,3 +89,43 @@ them.
 | `sid_recall.csv` | the pairing (SID -> one Stage 3 run and its recall) |
 
 Reproduce: `python analysis_sid_recall/behaviour_correlation.py`
+
+## Second battery: train-only transition-graph metrics
+
+The first battery measures prefix sharing on the held-out pairs. This battery asks a
+different question — does the partition agree with the *training* transition graph?
+Everything here is train-only (`sid_behaviour_metrics2.csv`).
+
+| metric | what it says | n | Pearson | **Spearman** | 95% CI |
+|---|---|---|---|---|---|
+| `succ_overlap_within_L1` | item pairs sharing the first code have similar successor rows (mean cosine overlap) | 67 | 0.679 | **0.847** | [0.748, 0.906] |
+| `adjacency_within_L1` | item pairs sharing the first code really do follow one another in training | 67 | 0.687 | **0.837** | [0.728, 0.903] |
+| `succ_prefix_purity` | an item's successors carry its own first code (count-weighted) | 67 | −0.045 | 0.470 | [0.199, 0.691] |
+| `mi_prefix_successor` | normalised mutual information between the first code and the successor | 67 | 0.286 | 0.388 | [0.172, 0.579] |
+| `succ_mass_top_decile` | share of successor mass in the heaviest decile of codes | 67 | −0.356 | −0.294 | [−0.513, −0.052] |
+| `L1_code_entropy_bits` | usage entropy of the first level (not a behaviour metric) | 67 | 0.213 | −0.035 | [−0.303, 0.236] |
+
+**Two of these beat the held-out ER**: the *cohort coherence* of the first level —
+do the items I group together have similar successors (`0.85`) and do they actually
+follow one another (`0.84`).
+
+### The trap in `succ_prefix_purity`
+
+Purity alone is gameable by collapsing the level:
+
+| arm | recall@10 | purity | MI | overlap | adjacency |
+|---|---|---|---|---|---|
+| `tiger_sample_resample` | 0.0637 | 0.116 | **0.268** | 0.009 | **0.022** |
+| `tiger_sample_crowd_posattract_w3` | 0.0643 | 0.126 | 0.256 | 0.009 | 0.020 |
+| `TIGER_behaviour_code_cohesion` (this session) | 0.0546 | **0.494** | **0.036** | 0.004 | **0.000** |
+| `TIGER_successor_entropy_curvature` | 0.0506 | 0.123 | 0.139 | 0.002 | 0.003 |
+| `curvature_RQ-VAE` | 0.0315 | 0.027 | 0.130 | 0.003 | 0.003 |
+
+The cohesion arm has the **highest purity in the whole sample** and one of the lowest
+informations: it made an item's successors share its own code by shrinking the first
+level to 16 codes (one of them holds 40% of the catalogue), so the successors are in the
+same code because almost everything is. Purity went up, the code stopped telling you
+*which* successor follows (MI 0.036 against 0.268), no two co-located items actually
+follow one another (adjacency 0.000), and recall stayed below the baseline. The metric
+worth optimising is **coherence with information** (`adjacency`, `overlap`, `MI`), never
+purity on its own.
