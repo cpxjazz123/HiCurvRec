@@ -406,35 +406,35 @@
       "variant": "TIGER_behaviour_code_cohesion"
     },
     {
-      "kind": "stage3_result",
       "idea_id": "behaviour_code_cohesion",
-      "revision": 5,
-      "variant": "TIGER_behaviour_code_cohesion",
-      "wider_L3": 1024,
+      "kind": "stage3_result",
       "metrics": {
-        "test_recall@5": 0.035689,
-        "test_recall@10": 0.05484,
-        "test_ndcg@10": 0.030364,
         "n_eval_partial": 28720,
-        "note": "two of four rank shards were written before the read; the two-shard rate is 0.054840"
+        "note": "two of four rank shards were written before the read; the two-shard rate is 0.054840",
+        "test_ndcg@10": 0.030364,
+        "test_recall@10": 0.05484,
+        "test_recall@5": 0.035689
       },
+      "note": "widening the third codebook raised the triple count from 8531 to 11517 and the positive-prefix rate to 0.493, but the extension token still has 100 distinct values and Recall stays with the other seven mechanisms, at or below the baseline",
+      "passed": false,
+      "revision": 5,
       "sid_structure": {
         "L1_codes": 12,
         "L2_prefixes": 574,
         "L3_triples": 11517,
-        "l1_positive_hit_rate": 0.4929,
-        "l1_hard_er": 1.548,
         "extension_distinct": 100,
+        "l1_hard_er": 1.548,
+        "l1_positive_hit_rate": 0.4929,
         "l3_collision": 0.681
       },
       "target": {
         "test_recall@10": 0.065
       },
-      "passed": false,
-      "note": "widening the third codebook raised the triple count from 8531 to 11517 and the positive-prefix rate to 0.493, but the extension token still has 100 distinct values and Recall stays with the other seven mechanisms, at or below the baseline"
+      "variant": "TIGER_behaviour_code_cohesion",
+      "wider_L3": 1024
     }
   ],
-  "step": "stage2",
-  "updated_at": 1792993391.1974695,
+  "step": "stage3",
+  "updated_at": 1792998012.8771906,
   "verification": {}
 }
