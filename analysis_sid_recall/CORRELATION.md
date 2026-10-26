@@ -250,3 +250,105 @@ Three readings, and the third is the one that changes how a mechanism should be 
    with each other at ±1.00, i.e. they are the same quantity read three ways. Moving one
    of these metrics moves the others, so the choice of metric is a choice of *which
    behaviour to enforce*, not of which knob to turn.
+
+## Four questions the overlap metric does not ask
+
+`sequence_and_cut_metrics.csv` answers four further questions about the same SID tables. None
+of them compares a positive item with a negative over prefix length, which is the comparison
+the reference work makes.
+
+### A. Multi-step prediction inside the SID's own code space
+
+A first-, second- and third-order Markov predictor over each level's code space is estimated
+from the training transitions only (339,519 of them, one per consecutive pair inside a user's
+longest training sequence) and scored on the held-out test transitions. `nll_norm` is the
+per-transition negative log-likelihood divided by `log(codes_used)`, so 1 means "as bad as the
+marginal" and 0 means "perfectly predictable"; `hit1_excess` and `hit10_excess` subtract the
+rate a guesser gets with the same number of codes.
+
+| level | context | nll_norm (median) | rho(recall) | rho(`cooccur_overlap_L3`) |
+|---|---|---|---|---|
+| L1 | 1 or 3 behaviours | 0.8693 | −0.134 | −0.046 |
+| L2 | 1 or 3 behaviours | 0.9582 | +0.545 | +0.619 |
+| L3 | 1 or 3 behaviours | 0.9728 | +0.572 | **+0.739** |
+
+Three things to read out of it:
+
+1. **The sign is the opposite of the naive expectation.** A *less* predictable code space
+   (higher `nll_norm`) goes with *higher* recall. A coarse level whose next code is trivially
+   guessable has been drained of information; the fine levels are informative exactly because
+   they are hard to guess.
+2. **It is largely redundant with the overlap metric.** The strongest version correlates 0.739
+   with `cooccur_overlap_L3` and only 0.572 with the recall, so as a predictor of a new SID's
+   recall it adds nothing over what is already measured.
+3. **The third-order context is not estimable at this scale, and the first version of this
+   script hid that.** The first run fed the second-order path for both the two- and the
+   three-behaviour context, so `ctx2` and `ctx3` came out identical for 9 of 12 field pairs;
+   the third-order table was then added properly and the columns are still identical
+   (rho = 1.000) — the triple space at L3 has 256^3 = 16.7M cells for 340k training
+   transitions, so every test triple falls back to the first-order table. The honest statement
+   is therefore "the code space is first-order predictable at this data scale; a 2-3 behaviour
+   context adds nothing measurable", not "the SID preserves multi-step history".
+
+### B. Recall sliced by target frequency
+
+Taken from the per-target rank dump of the Stage 3 evaluation (`_test_shards/rank*.json`,
+`target_rank` in 0..9 or null). **15 of the 67 runs wrote that dump**, so this and the next two
+sections cover those 15 and not the full sample.
+
+| target frequency in training | test rows | mean Recall@10 | spread over the 15 SIDs | rho with the overall recall |
+|---|---|---|---|---|
+| never a training target | 7,248 | **0.0015** | 0.0005 | +0.575 |
+| 1–2 | 14,947 | 0.0039 | 0.0010 | +0.696 |
+| 3–9 | 17,191 | 0.0174 | 0.0054 | +0.904 |
+| 10 or more | 18,053 | **0.1626** | 0.0083 | **+0.964** |
+
+**89.1% of every run's hits come from the frequently-targeted items**, and the gap between the
+common and the never-seen bucket is 0.161 (range 0.145-0.174 across the 15). All 15 SIDs are
+equally blind on unseen and rare targets: their spread there is 5e-4, i.e. five in ten
+thousand. The 67-table comparison is therefore a comparison of *popular* next items; nothing in
+it says a SID helps rare or genuinely new transitions.
+
+### C. Recall sliced by interest diversity
+
+Two splits, both computed per test row and identical for every SID:
+
+| split | group | rows | mean Recall@10 | rho with the overall recall |
+|---|---|---|---|---|
+| history length | ≤6 behaviours | 34,246 | 0.0651 | +0.900 |
+| | 7–15 | 18,536 | 0.0494 | +0.857 |
+| | ≥16 | 4,657 | 0.0344 | +0.886 |
+| semantic concentration (Stage 1 embedding) | dispersed tertile | 19,147 | 0.0458 | +0.868 |
+| | middle | 19,146 | 0.0568 | +0.854 |
+| | concentrated | 19,146 | 0.0700 | +0.900 |
+
+Longer histories are harder and semantically concentrated users are easier, by 1.5-2x, and all
+six groups correlate 0.85-0.90 with the overall recall: the SID differences are not confined to
+one kind of user, they shift the level of every group.
+
+### D. Behaviour drift instead of time
+
+**The dataset has no timestamps**, so the requested stable-versus-recent split cannot be made.
+The drift of the last three behaviours away from the user's earlier behaviour, measured as the
+cosine distance between the two mean embeddings, is used instead and is only a proxy:
+
+| drift tertile | rows | mean Recall@10 | rho with the overall recall |
+|---|---|---|---|
+| stable | 19,147 | 0.0678 | +0.857 |
+| drifting | 19,146 | 0.0547 | +0.871 |
+| shifted | 19,146 | 0.0500 | +0.907 |
+
+Recall falls monotonically as the recent behaviour drifts, which is what a long-term-rules
+reading predicts, but without timestamps this cannot distinguish "the SID learns long-term
+regularity" from "users whose recent items are unusual are harder to predict for any model".
+
+### Method notes and dead ends
+
+* Two natural diversity measures are degenerate on this data: the history's distinct-item ratio
+  and the novelty of the last three behaviours are **1.0 for every one of the 57,439 rows**,
+  because no user repeats an item inside a history. The semantic measures above replaced them.
+* The five runs without the per-target dump are named in the output file
+  (`has_target_dump = 0`) rather than dropped silently.
+* Metrics B/C/D are computed on 15 SIDs, so their correlations carry much wider intervals than
+  the 67-SID analysis; the level differences across buckets are consistent in all 15 runs and
+  are the part that can be read.
