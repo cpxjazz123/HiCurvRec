@@ -1,0 +1,264 @@
+{
+  "blocked": [],
+  "created_at": 1793010277.090808,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1793010277.0908082,
+      "event": "round_created"
+    },
+    {
+      "at": 1793010277.1172915,
+      "event": "round_created",
+      "pid": null
+    },
+    {
+      "at": 1793010285.564778,
+      "event": "implementation_authored",
+      "idea_id": "cooccur_coherent_sid",
+      "reason": "optimises the strongest measured behaviour metric directly"
+    },
+    {
+      "at": 1793010326.5167747,
+      "event": "verification_needs_repair",
+      "idea_id": "cooccur_coherent_sid",
+      "revision": 0,
+      "signature": "957715d8aa753e42"
+    },
+    {
+      "at": 1793010398.47938,
+      "event": "implementation_repaired",
+      "idea_id": "cooccur_coherent_sid",
+      "revision": 1
+    },
+    {
+      "at": 1793010398.4853191,
+      "event": "output_paths_rechecked",
+      "idea_id": "cooccur_coherent_sid",
+      "verdict": "passed"
+    },
+    {
+      "at": 1793010472.3493412,
+      "event": "implementation_verified",
+      "idea_id": "cooccur_coherent_sid",
+      "revision": 1
+    }
+  ],
+  "ideas": [
+    {
+      "ablation_behavior_off": "shuffle the co-occurrence rows across items",
+      "ablation_geometry_off": "Euclidean distance in the soft assignment, same pairs and weights",
+      "behavior_computation": "one sparse row-normalised matrix built from the training histories before training, frozen",
+      "behavior_signal": "train-only co-consumption rows (items sharing a training history)",
+      "coupling_equation": "L = L_rqvae - w * mean_ij S_ij * (p1i.p1j)(p2i.p2j)(p3i.p3j), S = cosine(cooccur_i, cooccur_j)",
+      "hyperbolic_location": "all three levels, through the differentiable soft assignment",
+      "hyperbolic_operator": "curved (Poincare) distances feed the soft assignment at each level",
+      "idea_id": "cooccur_coherent_sid"
+    }
+  ],
+  "ideas_rejected": [],
+  "implementations": [
+    {
+      "assumptions": [],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": null,
+      "changed_files": [
+        "train_rqvae.py"
+      ],
+      "deviations": [],
+      "failure_signature": "957715d8aa753e42",
+      "idea_id": "cooccur_coherent_sid",
+      "notes": "authored from the frozen baseline by the assistant; the objective is the measured cooccur_overlap_L3 target",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid"
+      },
+      "output_preflight": "passed",
+      "proposal_sha256": null,
+      "repairs": [
+        {
+          "remaining_issues": [
+            "Runtime loss/gradient finiteness, codebook-gradient reachability, and actual one-GPU training were not verified because PyTorch is unavailable here."
+          ],
+          "repairs": [
+            {
+              "change": "In train_rqvae.py, added the fixed-curvature Poincare path to _coherence_term: train-only co-consumption cosine similarities weight the joint soft prefix assignments, whose per-level distances now use expmap0-mapped residuals and code vectors plus Poincare distance; retained BEHAVIOUR_ON=False as an exact zero and added GEOMETRY_ON=False for Euclidean comparison. Projection and finite boundary safeguards are used; the source docstring states the computation and expected assignment/gradient comparison. Added SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\" and a bypass branch that lets the existing entry point call main() directly, while preserving torchrun child and multi-GPU behavior. Kept root discovery by walking to stage2_RQ-VAE, removed the absolute launcher script path, and put logs under RESULT_DIR so artifacts resolve under results/stage2_RQ-VAE/ARM_NAME. Static checks confirm the curved operation is in the training-called term, the switch and required environment constant exist, and no os.path.abspath remains; py_compile passed.",
+              "finding": "Behaviour/curved-geometry coupling, geometry-off comparison, single-GPU launch, and candidate artifact paths",
+              "verification": "Syntax compilation and source checks passed; the requested runtime smoke could not execute because this environment lacks PyTorch (see SMOKE RESULT)."
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "python - <<'PY' [runtime smoke importing train_rqvae.py and checking geometry-on, Euclidean geometry-off, behaviour-off gradients, then GENREC_SINGLE_GPU launcher bypass]",
+            "result": "Traceback (most recent call last):\n  File \"<stdin>\", line 7, in <module>\nModuleNotFoundError: No module named 'torch'\nExited with code 1"
+          }
+        }
+      ],
+      "revision": 1,
+      "smoke": {
+        "epoch_seconds": 1.226,
+        "passed": true,
+        "steps": 24
+      },
+      "source_digest": "cf42a02957dfa6cbbd71471e3eed97e26a2e132063dff4076ae9d674fac637cd",
+      "status": "verified",
+      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Static code trace: _cooccurrence_rows reads only TRAIN_FILE and builds per-item co-consumption rows from each training user's history and target (241-260); _coherence_term uses that batch similarity together with expmap0/proj_to_ball/Poincare distance soft assignments to construct a differentiable three-level shared-prefix probability (263-309); main adds the term to the reconstruction/quantization loss before backward (423-430). No runtime execution was attempted.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/train_rqvae.py:231-309, 423-430",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "The behavior signal and curved operation are in one connected pathway: changing the behavior similarity changes the coherence objective, while changing GEOMETRY_ON changes the distances that produce the soft assignment probabilities. The imported helpers are exercised, not merely inherited. The pathway is training-only and acts on soft prefix assignments; no finding.",
+                  "location": "none",
+                  "reproduction": "Static trace above; with BEHAVIOUR_ON=True and GEOMETRY_ON=True, _coherence_term calculates train-row co-occurrence similarity times the joint soft assignment probability, and its output is included in loss.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static autograd/numerical trace: the softmax, pairwise matrix products, and similarity-weighted objective remain differentiable through Poincare distances and expmap/projection to encoder outputs and code vectors; the result reaches loss.backward and optimizer.step. The hard residual code choice is locally non-differentiable, but is explicitly detached and is not the only route to the coherence term's gradients. Runtime gradient smoke was not available or required here.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/train_rqvae.py:263-309, 423-433; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/model/utils.py:21-59",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "The coupled term is consumed by the loss and has a differentiable route to encoder/codebook parameters. BEHAVIOUR_ON=False returns a zero connected to encoded; GEOMETRY_ON=False selects Euclidean distances in the same soft assignment pathway, providing the requested behavior-off and geometry-off controls. The code checks loss finiteness and clips gradients. No statically evident float32 overflow/NaN hazard was found in the exercised path: expmap outputs are projected inside the ball with epsilon 1e-5, keeping the artanh argument below one. Assignment/gradient differences are a runtime observation, not provable from source alone; the pathway and controls are implemented, and the specified GPU gradient smoke is the runtime check.",
+                  "location": "none",
+                  "reproduction": "Trace the two branches at train_rqvae.py:276-301 and the loss/backward at 423-433. A runtime comparison would run identical initialized batches with both switches on, then BEHAVIOUR_ON=False, then GEOMETRY_ON=False and compare gradients and/or emitted indices; it is not executed in this environment.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static integration trace: repository root and the candidate-specific promoted result path are derived at 46-71; TRAIN_FILE is the frozen stage0 train parquet and behavior loading uses it at 241-260; training item IDs index embedding rows at 346-364; final raw tokens are extended to unique SIDs and JSON keys are row/item IDs at 520-535. All outputs (checkpoint, logs, metrics, SID files) resolve under this candidate's results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid directory. Launcher uses torchrun for the normal four-card route and bypasses it when SINGLE_GPU_ENV (GENREC_SINGLE_GPU) is \"1\" (542-570). Runtime trainer execution was not attempted.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/train_rqvae.py:46-71, 241-260, 332-365, 492-539, 542-570",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "Source wiring preserves the frozen training data path, writes only to the candidate's promoted result directory, exports unique integer SIDs indexed by embedding/item row, and retains both launcher branches including GENREC_SINGLE_GPU. No integration defect is apparent from inspection. Actual trainer execution and exported-file validation are outside the available runtime, as stipulated.",
+                  "location": "none",
+                  "reproduction": "Static trace at the cited locations; verify the produced item_sids.json by checking keys 0 through N-1 correspond to embedding rows, and invoke with GENREC_SINGLE_GPU=1 to take the single-card branch when the prescribed GPU smoke is run.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_cooccur_coherent_sid_r1_1"
+        }
+      ]
+    }
+  ],
+  "issue": "issue121",
+  "matrix": null,
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\n## The measured target\n\nAcross 67 SID tables paired with their Stage 3 recall, the strongest measured predictor of\n`test_recall@10` is **co-occurrence coherence inside the three-token prefix**\n(`cooccur_overlap_L3`: the mean cosine similarity of the training co-consumption rows of\nitem pairs that share a three-token prefix): Spearman **0.902** [0.831, 0.939], and its\nshape is non-linear and saturating — out-of-sample R² 0.67 for an isotonic fit against\n0.51 for a straight line, with a step at 0.062 worth +0.0123 recall (permutation\np = 0.0005). Second and third are `adjacency_L1` (0.84) and the held-out prefix\ndiscrimination `er_L1` (0.78). Purity is excluded: it can be raised by collapsing a level\n(measured: purity 0.494 with adjacency 0.000 and recall below the baseline).\n\n## The mechanism this round implements\n\nOptimise that target directly in Stage 2. For every minibatch, three factors are combined:\n\n1. `S_ij`, the **fixed** cosine similarity of the train-only co-occurrence rows of items i\n   and j (detached; the behaviour signal);\n2. `J_ij = (p1_i·p1_j)(p2_i·p2_j)(p3_i·p3_j)`, the probability that the two items share all\n   three codes, computed from the model's **differentiable soft assignment** at each level\n   under the curved distance;\n3. the loss `-mean_ij S_ij J_ij` over the off-diagonal pairs of the minibatch.\n\nMaximising it pushes coherent pairs into the same prefix; the quantisation and\nreconstruction losses stay untouched, so the codebook still has to reconstruct.\n\n## Requirements\n\n* the behaviour signal must be train-only co-occurrence, computed once before training and\n  frozen;\n* the soft assignment must be the model's own, at all three levels, so the gradient reaches\n  the encoder and the three codebooks;\n* the term must be scale-matched (its value is O(0.05) against a reconstruction loss of\n  ~1e-4) and must stay sparse per step (a dense 1024-row block costs 19 s/epoch);\n* behaviour-off must shuffle the co-occurrence rows' item association, geometry-off must\n  replace the curved distance with the Euclidean one.\n\n## Required measurement contract\n\nReport `L1 Hard ER`, `cooccur_overlap_L3` (the target itself, on the exported SID),\n`adjacency_L1`, gold-prefix survival at depths 1-4, the extension-token alphabet, and Stage 3\n`test_R@10`. The baseline control is 0.055537 and the target is 0.065.\n\n## Frozen constraints\n\nFour tokens, 3000 Stage 2 epochs on four cards, no early stopping, no test-time tuning, the\nfrozen Stage 3 protocol, no validation or test behaviour anywhere in the SID construction.\n",
+  "probe_state": "PROBE_PENDING",
+  "repairs": [
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Put an explicit curved operation (for example, map residuals and code vectors to a Poincare ball and use Poincare distance for the soft prefix assignments) inside the same coherence/quantization pathway, with curvature and finite safeguards; define behaviour-off and Euclidean/geometry-off comparisons and document the expected observable change.",
+          "detail": "Behaviour and a curved operation are not coupled. Co-consumption similarity is paired with soft assignments produced from Euclidean distances. The Poincare implementation in model/utils.py is inherited but unused in the exercised pathway. The submitted idea fields are empty, so there is no stated alternate specification/control designation to excuse the absent coupling.",
+          "location": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/train_rqvae.py:258-291",
+          "reproduction": "Follow `main`'s call at train_rqvae.py:408-409 into `_coherence_term`; every assignment is `softmax(-layer._distances(residual) / COHERENCE_TAU)`. `_distances` at model/layers.py:98-104 contains only the Euclidean dot-product distance. No call path from this trainer reaches `poincare_distance`, `expmap0`, or another curved operation.",
+          "severity": "blocking",
+          "verifier": "verify_cooccur_coherent_sid_r0_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Implement the curved assignment path as part of this term, ensure its distance inputs stay within the ball and avoid unsafe inverse-hyperbolic operations, then verify finite loss/gradients and parameter reachability for both-on, behaviour-off, and Euclidean/geometry-off settings. Preserve the current zero-term behaviour-off control.",
+          "detail": "The coherence term has a plausible differentiable Euclidean soft-assignment gradient, but the implemented model has no geometry-on path and thus cannot satisfy the requested both-on versus geometry-off assignment/gradient comparison. No claim is made that runtime finiteness was executed; the stipulated MCP smoke is outside this review environment.",
+          "location": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/train_rqvae.py:280-285",
+          "reproduction": "Trace `distances = layer._distances(residual)` and `soft = torch.softmax(...)` at lines 282-283; this is the only assignment used by the coherence loss. Replacing the unused helper implementation in model/utils.py cannot change this path. `BEHAVIOUR_ON=False` returns a zero term at lines 268-269, but no corresponding geometry switch/path exists.",
+          "severity": "blocking",
+          "verifier": "verify_cooccur_coherent_sid_r0_1"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Add `SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\"` and an explicit single-card branch that skips the four-rank torchrun fork and enters `main` directly, while preserving the existing torchrun-child detection and multi-GPU launch path.",
+          "detail": "The launcher always forks four processes and forces `CUDA_VISIBLE_DEVICES=0,1,2,3`; it does not honor the required `GENREC_SINGLE_GPU` mode. The single-card branch therefore cannot run as required and may fail when fewer than four GPUs are available. The candidate-specific export directory itself is correct and is not a defect.",
+          "location": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/train_rqvae.py:524-545",
+          "reproduction": "Set `GENREC_SINGLE_GPU=1` and invoke this file as its entry point. `_launch_via_torchrun` does not inspect that variable and still builds a `--nproc_per_node=4` command with four visible device IDs (lines 528-542).",
+          "severity": "blocking",
+          "verifier": "verify_cooccur_coherent_sid_r0_1"
+        }
+      ],
+      "idea_id": "cooccur_coherent_sid",
+      "revision": 0,
+      "signature": "957715d8aa753e42"
+    }
+  ],
+  "round_id": "round_20261026_212437_90",
+  "schema": 1,
+  "scores": {},
+  "selection": null,
+  "stage2_jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "cooccur_coherent_sid",
+      "job_id": "stage2:cooccur_coherent_sid",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "running"
+    }
+  ],
+  "stage3_jobs": [],
+  "step": "stage3",
+  "updated_at": 1793010472.5842657,
+  "verification": {},
+  "stage3_results": [
+    {
+      "kind": "stage3_result",
+      "idea_id": "cooccur_coherent_sid",
+      "variant": "TIGER_cooccur_coherent_sid",
+      "sid": "results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/item_sids.json",
+      "metrics": {
+        "test_recall@5": 0.03666498372186145,
+        "test_recall@10": 0.05593760337053222,
+        "test_ndcg@10": 0.030766723265997328,
+        "n_eval": 57439
+      },
+      "sid_structure": {
+        "L1_codes": 242,
+        "L2_prefixes": 7375,
+        "L3_triples": 20412,
+        "l3_collision": 0.265,
+        "extension_distinct": 36,
+        "l1_hard_er": 6.716,
+        "l1_positive_hit_rate": 0.0854
+      },
+      "target_metric": {
+        "cooccur_overlap_L3": 0.0781,
+        "cooccur_overlap_L3_lift": 2.9,
+        "adjacency_L3": 0.0573,
+        "adjacency_L1": 0.0116,
+        "note": "the objective moved its own target from the baseline family's 0.03-0.05 to 0.078; the measured curve predicts 0.056 at that value and the run delivered 0.055938"
+      },
+      "comparison": {
+        "baseline_control": 0.055537,
+        "delta_vs_baseline": 0.000401,
+        "target": 0.065,
+        "passed": false
+      }
+    }
+  ]
+}

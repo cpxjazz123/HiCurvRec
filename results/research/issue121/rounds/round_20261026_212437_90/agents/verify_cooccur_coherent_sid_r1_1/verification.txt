@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/train_rqvae.py:231-309, 423-430 | Static code trace: _cooccurrence_rows reads only TRAIN_FILE and builds per-item co-consumption rows from each training user's history and target (241-260); _coherence_term uses that batch similarity together with expmap0/proj_to_ball/Poincare distance soft assignments to construct a differentiable three-level shared-prefix probability (263-309); main adds the term to the reconstruction/quantization loss before backward (423-430). No runtime execution was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The behavior signal and curved operation are in one connected pathway: changing the behavior similarity changes the coherence objective, while changing GEOMETRY_ON changes the distances that produce the soft assignment probabilities. The imported helpers are exercised, not merely inherited. The pathway is training-only and acts on soft prefix assignments; no finding.
+FINDING REPRODUCTION: Static trace above; with BEHAVIOUR_ON=True and GEOMETRY_ON=True, _coherence_term calculates train-row co-occurrence similarity times the joint soft assignment probability, and its output is included in loss.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/train_rqvae.py:263-309, 423-433; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/model/utils.py:21-59 | Static autograd/numerical trace: the softmax, pairwise matrix products, and similarity-weighted objective remain differentiable through Poincare distances and expmap/projection to encoder outputs and code vectors; the result reaches loss.backward and optimizer.step. The hard residual code choice is locally non-differentiable, but is explicitly detached and is not the only route to the coherence term's gradients. Runtime gradient smoke was not available or required here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The coupled term is consumed by the loss and has a differentiable route to encoder/codebook parameters. BEHAVIOUR_ON=False returns a zero connected to encoded; GEOMETRY_ON=False selects Euclidean distances in the same soft assignment pathway, providing the requested behavior-off and geometry-off controls. The code checks loss finiteness and clips gradients. No statically evident float32 overflow/NaN hazard was found in the exercised path: expmap outputs are projected inside the ball with epsilon 1e-5, keeping the artanh argument below one. Assignment/gradient differences are a runtime observation, not provable from source alone; the pathway and controls are implemented, and the specified GPU gradient smoke is the runtime check.
+FINDING REPRODUCTION: Trace the two branches at train_rqvae.py:276-301 and the loss/backward at 423-433. A runtime comparison would run identical initialized batches with both switches on, then BEHAVIOUR_ON=False, then GEOMETRY_ON=False and compare gradients and/or emitted indices; it is not executed in this environment.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_coherent_sid/train_rqvae.py:46-71, 241-260, 332-365, 492-539, 542-570 | Static integration trace: repository root and the candidate-specific promoted result path are derived at 46-71; TRAIN_FILE is the frozen stage0 train parquet and behavior loading uses it at 241-260; training item IDs index embedding rows at 346-364; final raw tokens are extended to unique SIDs and JSON keys are row/item IDs at 520-535. All outputs (checkpoint, logs, metrics, SID files) resolve under this candidate's results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid directory. Launcher uses torchrun for the normal four-card route and bypasses it when SINGLE_GPU_ENV (GENREC_SINGLE_GPU) is "1" (542-570). Runtime trainer execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Source wiring preserves the frozen training data path, writes only to the candidate's promoted result directory, exports unique integer SIDs indexed by embedding/item row, and retains both launcher branches including GENREC_SINGLE_GPU. No integration defect is apparent from inspection. Actual trainer execution and exported-file validation are outside the available runtime, as stipulated.
+FINDING REPRODUCTION: Static trace at the cited locations; verify the produced item_sids.json by checking keys 0 through N-1 correspond to embedding rows, and invoke with GENREC_SINGLE_GPU=1 to take the single-card branch when the prescribed GPU smoke is run.
+FINDING CORRECTION: Not applicable.

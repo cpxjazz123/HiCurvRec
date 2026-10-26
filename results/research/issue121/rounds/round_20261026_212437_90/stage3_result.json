@@ -1,0 +1,34 @@
+{
+  "kind": "stage3_result",
+  "idea_id": "cooccur_coherent_sid",
+  "variant": "TIGER_cooccur_coherent_sid",
+  "sid": "results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/item_sids.json",
+  "metrics": {
+    "test_recall@5": 0.03666498372186145,
+    "test_recall@10": 0.05593760337053222,
+    "test_ndcg@10": 0.030766723265997328,
+    "n_eval": 57439
+  },
+  "sid_structure": {
+    "L1_codes": 242,
+    "L2_prefixes": 7375,
+    "L3_triples": 20412,
+    "l3_collision": 0.265,
+    "extension_distinct": 36,
+    "l1_hard_er": 6.716,
+    "l1_positive_hit_rate": 0.0854
+  },
+  "target_metric": {
+    "cooccur_overlap_L3": 0.0781,
+    "cooccur_overlap_L3_lift": 2.9,
+    "adjacency_L3": 0.0573,
+    "adjacency_L1": 0.0116,
+    "note": "the objective moved its own target from the baseline family's 0.03-0.05 to 0.078; the measured curve predicts 0.056 at that value and the run delivered 0.055938"
+  },
+  "comparison": {
+    "baseline_control": 0.055537,
+    "delta_vs_baseline": 0.000401,
+    "target": 0.065,
+    "passed": false
+  }
+}
