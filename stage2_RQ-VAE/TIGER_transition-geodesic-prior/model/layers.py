@@ -132,9 +132,15 @@ class VQLayer(nn.Module):
             mass = mass / mass.sum(dim=-1, keepdim=True).clamp_min(1e-12)
             # Avoid 0 * (-inf) and ensure absent predecessor regions have no
             # influence, including when their geodesic log probability is low.
-            expected_logp = torch.where(mass > 0, mass * transition_logp, 0.0).sum(dim=-1)
-            transition_logp = expected_logp
-            distances = distances - 0.1 * transition_logp
+            # Per-CODE prior, not a per-row scalar: the item's predecessor-region
+            # mass (N, 256) goes through the region transition matrix (256, 256)
+            # and yields one log-probability per candidate code (N, 256). The
+            # earlier form summed the mixture down to a scalar per row and then
+            # subtracted it from a (N, 256) distance matrix, which both failed
+            # with a shape error from epoch 2 and, had it broadcast, would have
+            # shifted every candidate of a row by the same amount.
+            expected_logp = mass @ transition_logp
+            distances = distances - 0.1 * expected_logp
         if (self.training and self.use_sk) or (self.use_sk and infer_use_sk):
             centered = self.center_distance(distances).double()
             q = self.sinkhorn(centered, self.sk_epsilon, self.sk_iters)

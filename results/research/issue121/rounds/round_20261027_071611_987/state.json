@@ -139,6 +139,18 @@
       "event": "implementation_verified",
       "idea_id": "transition-geodesic-prior",
       "revision": 5
+    },
+    {
+      "at": 1793053191.4939103,
+      "event": "implementation_repaired",
+      "idea_id": "transition-geodesic-prior",
+      "reason": "per-code prior + vectorised mass"
+    },
+    {
+      "at": 1793053225.6502614,
+      "event": "implementation_verified",
+      "idea_id": "transition-geodesic-prior",
+      "revision": 6
     }
   ],
   "evidence_bundles": {
@@ -11343,14 +11355,30 @@
             "command": "python smoke_test.py",
             "result": "Traceback (most recent call last):\n  File \"/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/smoke_test.py\", line 4, in <module>\n    import torch\nModuleNotFoundError: No module named 'torch'\nExited with code 1"
           }
+        },
+        {
+          "change": "distances -= 0.1 * (mass @ transition_logp), i.e. one log-probability per candidate code; the per-step per-row Python loop with a bincount call is replaced by a frozen padded predecessor tensor plus one scatter_add (1.245 -> 0.259 s per epoch); the predecessor container is a list, indexed by enumerate",
+          "evidence": {
+            "epoch_seconds_after": 0.259,
+            "epoch_seconds_before": 1.245,
+            "epochs_logged_after": 10,
+            "four_rank_epochs_before_crash": 1,
+            "loss_trajectory": [
+              0.00048904,
+              0.00030886
+            ]
+          },
+          "kind": "per_code_prior_and_vectorised_mass",
+          "reason": "a four-rank run crashed at epoch 2 with 'The size of tensor a (1024) must match the size of tensor b (256)': the mechanism summed the predecessor-region mixture into a scalar per row and subtracted it from the (N, 256) distance matrix, so it was both a shape error and semantically a constant shift of every candidate of a row",
+          "source_digest": "f49548bd2a604c9d8ef91bde789fd0240296cd9db6bf0a23f974d9c81010947d"
         }
       ],
-      "revision": 5,
+      "revision": 6,
       "smoke": {
         "command": "cd /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior && /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 smoke_test.py",
         "result": "forward_backward=ok loss=2.659851 grad=finite sid_shape=(12, 3)"
       },
-      "source_digest": "9f5978b37c45491a0f6dfc9db2a0c735c5f6a9336dc5225e80d58d3c6bc36e7f",
+      "source_digest": "f49548bd2a604c9d8ef91bde789fd0240296cd9db6bf0a23f974d9c81010947d",
       "status": "verified",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior",
       "tree_exists": true,
@@ -11358,14 +11386,14 @@
         {
           "checks": [
             {
-              "exercised_how": "Inspected directed adjacent pairs formed only from train.parquet history/target, previous-epoch level-one item regions aggregated into a predecessor mass, and the transition/geodesic combination used in level-one candidate distances before hard code choice. The checked-in smoke_test.py:21-45 specifies explicit behavior-off and Euclidean-geometry controls that distinguish assignment outcomes; it was not runtime-executed.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:250-261,327-355 -> results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/model/layers.py:106-144,154",
+              "exercised_how": "Traced the trainer's training-only adjacent-item edge construction into epoch-frozen code-region transitions and per-item predecessor mass, then into the first-level quantizer's Poincare kernel and combined candidate log probability. The kernel is computed from code vectors using the Poincare distance expression at layers.py:106-118, and its result is combined with the transition table before candidate selection. The accompanying smoke test's deterministic controls exercise coupled, no-prior, and Euclidean-geometry-off assignments at smoke_test.py:21-45.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:250-261, 343-374 -> model/layers.py:106-143",
               "findings": [
                 {
-                  "correction": "N/A",
-                  "detail": "No defect found.",
-                  "location": "N/A",
-                  "reproduction": "N/A",
+                  "correction": "None.",
+                  "detail": "No blocking defect found.",
+                  "location": "none",
+                  "reproduction": "Not applicable; static path inspection and the source-level control cases above.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -11373,14 +11401,14 @@
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Static trace confirms finite safeguarded Poincare computation feeds the actual candidate-distance argmin; selected indices feed the quantized forward and quantization loss, which backpropagates through codebook/encoder/decoder parameters. smoke_test.py:7-19,21-45,59-63 contains forward/backward, finite-gradient and assignment-control assertions, but was not run. The hard argmin has no derivative, as expected for this straight-through quantizer; the prior/curve acts by changing selected code and thus the downstream VQ gradient rather than by a direct derivative through argmin.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/model/layers.py:106-144,146-167,308-327; results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:355-363",
+              "exercised_how": "Inspected assignment score construction, finite safeguards, hard assignment, and the downstream selected-code quantization loss/straight-through path. The transition prior changes the selected code in a deterministic boundary case versus both no-prior and Euclidean-kernel controls in smoke_test.py:21-45; the selected code's VQ gradient and finite forward/backward gradients are checked at smoke_test.py:14-19, 59-63. The hard argmin itself is non-differentiable, but selection changes which code receives the differentiable quantization update; the geometry is not a dead computed term.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/model/layers.py:120-173",
               "findings": [
                 {
-                  "correction": "No blocking correction required. For stronger smoke coverage, compare the actual codebook gradients from identical forward/backward inputs with prior enabled, prior disabled, and Euclidean kernel substituted.",
-                  "detail": "No dead coupled term or static numerical hazard found. The smoke test does not itself check that behavior/geometry-off gradients differ; its deterministic assignment control plus selected-code VQ path make the mechanism's gradient effect inspectable from code.",
-                  "location": "N/A",
-                  "reproduction": "The checked-in test's assignment counterexample is at smoke_test.py:21-45; the selected-code backward is at :59-63. Runtime proof is unavailable here as stipulated.",
+                  "correction": "None.",
+                  "detail": "No blocking defect found. Poincare distances are radially projected inside the ball and denominators/arguments/log affinity are bounded at layers.py:109-118; transition normalization uses clamped denominators at lines 128-142. The assignment pathway is intentionally discrete, with gradients flowing through the selected-code quantization loss.",
+                  "location": "none",
+                  "reproduction": "Source-level smoke case at smoke_test.py:21-63; no trainer execution claimed.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -11388,14 +11416,14 @@
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Inspected the trainer entry point, frozen Stage0 train.parquet / Stage1 embedding paths, candidate-specific promoted output directory, SID export/index construction, four-process launcher, and GENREC_SINGLE_GPU bypass branch. The export enumerates all embedding rows as item IDs and writes N-by-(levels+1) integer SIDs plus stringified zero-based item keys. No trainer execution was attempted.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:40-67,91-107,233-276,422-500",
+              "exercised_how": "Inspected repository-root discovery, the candidate-specific promoted result path, frozen stage0 train.parquet and stage1 embedding inputs, model/training entry point, final SID export/index construction, and launcher branches. The output destination is results/stage2_RQ-VAE/TIGER_transition-geodesic-prior; exported rows enumerate embedding item IDs at lines 469-482. The launcher has the GENREC_SINGLE_GPU branch at lines 491-496 and otherwise invokes torchrun at lines 497-514. Assessment is static; no trainer execution was performed.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_071611_987/transition-geodesic-prior/train_rqvae.py:40-67, 233-275, 441-518",
               "findings": [
                 {
-                  "correction": "N/A",
-                  "detail": "No integration defect found. RESULT_DIR resolves to results/stage2_RQ-VAE/TIGER_transition-geodesic-prior under the repository root, consistent with the required candidate-owned Stage2 path; writes shown are confined to that directory. SINGLE_GPU_ENV is exactly GENREC_SINGLE_GPU and its launcher branch is present.",
-                  "location": "N/A",
-                  "reproduction": "Static path and control-flow inspection at train_rqvae.py:40-67,472-500; export inspection at :457-465.",
+                  "correction": "None.",
+                  "detail": "No blocking integration defect found. The inputs use the frozen stage0 train.parquet and stage1 sentence_t5.npy paths (lines 61-62); outputs remain in this candidate's required promoted result directory. The N-row SID payload is indexed by item ID and collision extension guarantees unique rows (lines 476-482). The one-card environment branch is present and bypasses relaunch when GENREC_SINGLE_GPU is set.",
+                  "location": "none",
+                  "reproduction": "Static inspection of the cited trainer paths. The available CANDIDATE_CHECK.json reports an import ModuleNotFoundError (lines 1-4), which is inconclusive in this sandbox and is not evidence of a code-path defect; no runtime trainer claim is made.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -11404,7 +11432,7 @@
             }
           ],
           "verdict": "PASS",
-          "verifier": "verify_transition-geodesic-prior_r5_1"
+          "verifier": "verify_transition-geodesic-prior_r6_1"
         }
       ]
     }
@@ -13177,6 +13205,21 @@
       "signature": "f077928e2a2e6ec2"
     }
   ],
+  "resource_blocked": [
+    {
+      "decision": "RESOURCE_BLOCKED: the idea is kept, the optimisation route is the next step",
+      "idea_id": "transition-geodesic-prior",
+      "measurement": {
+        "cause": "the per-epoch rebuild of the predecessor-region transition matrix costs about twenty minutes, so the frozen 3000-epoch budget extrapolates past a thousand hours",
+        "epoch_time_s_logged": 0.475,
+        "epochs_logged": 1,
+        "note": "the logged 0.475 s is the training loop of epoch 1 only; the region-mass rebuild that precedes every epoch is the cost",
+        "wall_minutes_for_epoch_1": 50
+      },
+      "optimisation_route": "build the incoming region masses once from the frozen train-only predecessor lists instead of re-deriving them from the previous epoch's assignments, and update them every N epochs",
+      "variant": "TIGER_transition-geodesic-prior"
+    }
+  ],
   "review_bundles": {
     "pred_offset": "f936ce81a31fccc5b387e6dfba1596e5dd06335a653513f43baecc3b0054fe8b",
     "predecessor_contrast_offset": "04d9f645caa0efca9259668e9dc5b7028fa90e041d66202d0d528e41b1380767",
@@ -13649,22 +13692,39 @@
     }
   ],
   "stage3_jobs": [],
-  "step": "resource_blocked",
-  "updated_at": 1793048996.2147994,
+  "step": "stage2",
+  "updated_at": 1793053348.6509202,
   "verification": {},
-  "resource_blocked": [
+  "iterations": [
     {
-      "idea_id": "transition-geodesic-prior",
-      "variant": "TIGER_transition-geodesic-prior",
-      "measurement": {
-        "epochs_logged": 1,
-        "epoch_time_s_logged": 0.475,
-        "wall_minutes_for_epoch_1": 50,
-        "cause": "the per-epoch rebuild of the predecessor-region transition matrix costs about twenty minutes, so the frozen 3000-epoch budget extrapolates past a thousand hours",
-        "note": "the logged 0.475 s is the training loop of epoch 1 only; the region-mass rebuild that precedes every epoch is the cost"
+      "iteration": 5,
+      "changes": [
+        "per-code prior instead of a per-row scalar",
+        "vectorised predecessor mass",
+        "vectorised unique-pair transition matrix",
+        "list container fix"
+      ],
+      "stage2": {
+        "epochs": 3000,
+        "epoch_seconds": 0.14,
+        "total_seconds": 525,
+        "exit": 0
       },
-      "decision": "RESOURCE_BLOCKED: the idea is kept, the optimisation route is the next step",
-      "optimisation_route": "build the incoming region masses once from the frozen train-only predecessor lists instead of re-deriving them from the previous epoch's assignments, and update them every N epochs"
+      "sid_metrics": {
+        "L1_codes": 170,
+        "largest_L1_share": 0.166,
+        "L2": 2928,
+        "L3": 13325,
+        "ext_distinct": 117,
+        "cooccur_overlap_L3": 0.0596,
+        "adjacency_L3": 0.0217
+      },
+      "gate": {
+        "rule": "cooccur_overlap_L3 > 0.0756",
+        "result": "not met (0.0596)",
+        "stage3": "not run"
+      },
+      "synthesis": "directed transition structure and symmetric co-consumption coherence are different signals; every directed-injection variant lowers the coherence metric reproducibly, while the symmetric grouping was the only one that raised it"
     }
   ]
 }
