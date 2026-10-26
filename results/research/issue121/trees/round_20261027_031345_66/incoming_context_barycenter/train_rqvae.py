@@ -145,7 +145,14 @@ def incoming_assignment_loss(model: RQVAE, batch_ids: torch.Tensor,
     x = model.encoder(embeddings[batch_ids])
     eps = 1e-5
     if not behaviour_on:
-        return -torch.cdist(x.detach(), codes.detach()).square() / CONTEXT_TEMPERATURE
+        # behaviour-off control: the plain reconstruction-consistent Euclidean
+        # cost of the item's own latent. Nothing is detached, so the control
+        # keeps the same gradient path as the coupled arm and differs only in
+        # the behaviour/curvature term -- a detached control would compare two
+        # different graphs instead of one graph with and without the term.
+        control_cost = (x.square().sum(-1)[:, None] + codes.square().sum(-1)[None, :]
+                        - 2.0 * (x @ codes.t())).clamp_min(0.0)
+        return -control_cost / CONTEXT_TEMPERATURE
 
     def project(z):
         norm = z.norm(dim=-1, keepdim=True).clamp_min(1e-8)
@@ -172,13 +179,23 @@ def incoming_assignment_loss(model: RQVAE, batch_ids: torch.Tensor,
 
     positive = bary[batch_ids]
     negative = neg_bary[batch_ids]
-    # Positive and co-consumption hard-negative geodesic contrasts jointly
-    # determine the candidate distribution that drives the quantizer.
-    behaviour_scores = distance(positive, codes) - 0.5 * distance(negative, codes)
-    baseline_scores = distance(x, codes)
+    # MODULATE, do not replace. The first iteration let the behaviour/curvature
+    # cost replace the assignment entirely, so the argmax drifted to the few
+    # codes nearest the barycentre and the first level collapsed into one bucket
+    # holding 98.5% of the catalogue (cooccur_overlap_L3 0.0584 against the
+    # 0.0756 baseline). The reconstruction-consistent squared Euclidean cost is
+    # therefore the base term again and the geodesic contrast enters as a
+    # zero-centred, unit-scale bias, weighted by the concentration gate and by
+    # CONTEXT_WEIGHT: the Euclidean term still orders the codes, the behaviour
+    # term only re-weights them, and no single bucket can absorb the catalogue.
+    euclidean_cost = (x.square().sum(-1)[:, None] + codes.square().sum(-1)[None, :]
+                      - 2.0 * (x @ codes.t())).clamp_min(0.0)
+    behaviour_cost = distance(positive, codes) - 0.5 * distance(negative, codes)
+    bias = behaviour_cost - behaviour_cost.mean(dim=-1, keepdim=True)
+    bias = bias / bias.abs().mean(dim=-1, keepdim=True).clamp_min(eps)
     gate = (concentration[batch_ids].unsqueeze(-1) if concentration is not None
-            else torch.ones_like(behaviour_scores[:, :1]))
-    scores = gate * behaviour_scores + (1.0 - gate) * baseline_scores
+            else torch.ones_like(bias[:, :1]))
+    scores = euclidean_cost + CONTEXT_WEIGHT * gate * bias
     return -scores / CONTEXT_TEMPERATURE
 
 
@@ -261,6 +278,13 @@ def refresh_context_barycentres(model, embeddings, index, weight, mask, negative
         regions = region[inverse].view_as(index)
         weights = (weight * mask.float()).unsqueeze(-1)
         def frechet_mean(reg):
+            # geometry-off must remove the curvature from the barycentre too, not
+            # only from the region choice: the Euclidean control averages the raw
+            # codepoints and skips the Karcher iterations entirely.
+            if geometry == "euclidean":
+                pts = codes[reg]
+                w = weights.expand_as(pts)
+                return (w * pts).sum(1) / w.sum(1).clamp_min(eps)
             pts = curved_codes[reg]
             w = weights.expand_as(pts)
             mean = project((w * pts).sum(1) / w.sum(1).clamp_min(eps))
@@ -288,6 +312,13 @@ def refresh_context_barycentres(model, embeddings, index, weight, mask, negative
         )
         entropy = -entropy_terms.sum(-1)
         concentration = (1.0 - entropy / math.log(max(region_count, 2))).clamp(0, 1)
+        # An item with no observed training predecessor has an all-zero mask: its
+        # region mass is empty, its entropy is zero, and the formula above would
+        # call that "maximally concentrated" while its barycentre is the zero
+        # vector. Such an item must fall back to the plain Euclidean assignment,
+        # so the gate is forced to zero wherever no context exists.
+        has_context = mask.any(dim=-1).to(concentration.dtype)
+        concentration = concentration * has_context
     return bary.detach(), neg_bary.detach(), concentration.detach()
 
 

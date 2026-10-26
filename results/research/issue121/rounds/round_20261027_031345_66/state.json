@@ -197,6 +197,86 @@
       "event": "implementation_verified",
       "idea_id": "incoming_context_barycenter",
       "revision": 10
+    },
+    {
+      "at": 1793042683.3972042,
+      "event": "implementation_repaired",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "modulate not replace"
+    },
+    {
+      "at": 1793042727.6791408,
+      "event": "verification_needs_repair",
+      "idea_id": "incoming_context_barycenter",
+      "revision": 11,
+      "signature": "4e577e5e82550367"
+    },
+    {
+      "at": 1793042727.7097342,
+      "event": "implementation_revision_capped",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 11 repair rounds, which is the cap",
+      "revision": 11
+    },
+    {
+      "at": 1793043065.620983,
+      "event": "implementation_repaired",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "valid control"
+    },
+    {
+      "at": 1793043115.4255304,
+      "event": "verification_needs_repair",
+      "idea_id": "incoming_context_barycenter",
+      "revision": 12,
+      "signature": "8408b1395ad8a059"
+    },
+    {
+      "at": 1793043115.4555213,
+      "event": "implementation_revision_capped",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 12 repair rounds, which is the cap",
+      "revision": 12
+    },
+    {
+      "at": 1793043148.8232353,
+      "event": "implementation_repaired",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "complete geometry-off ablation"
+    },
+    {
+      "at": 1793043227.8969128,
+      "event": "verification_needs_repair",
+      "idea_id": "incoming_context_barycenter",
+      "revision": 13,
+      "signature": "591435ae063a16b6"
+    },
+    {
+      "at": 1793043227.9274874,
+      "event": "implementation_revision_capped",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 13 repair rounds, which is the cap",
+      "revision": 13
+    },
+    {
+      "at": 1793043259.9561985,
+      "event": "implementation_repaired",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "empty-context gate"
+    },
+    {
+      "at": 1793043300.6160665,
+      "event": "verification_needs_repair",
+      "idea_id": "incoming_context_barycenter",
+      "revision": 14,
+      "signature": "f5eeb2f61f0e3acc"
+    },
+    {
+      "at": 1793043300.6474507,
+      "event": "implementation_revision_capped",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 14 repair rounds, which is the cap",
+      "revision": 14
     }
   ],
   "evidence_bundles": {
@@ -18642,8 +18722,18 @@
       "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
       "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
       "blocked_kind": "IMPLEMENTATION_NEEDS_FIX",
-      "blocked_reason": "the verifiers still reject the implementation after 9 repair rounds, which is the cap",
-      "blocking_findings": [],
+      "blocked_reason": "the verifiers still reject the implementation after 14 repair rounds, which is the cap",
+      "blocking_findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Use a smooth squared-distance expression with a finite, nonzero zero-limit derivative and avoid selecting a disconnected constant branch; use the same stabilized helper for any differentiable hyperbolic distance. Add a coupled-term-only gradient assertion reaching first-level code parameters, including coincidence and near-boundary cases.",
+          "detail": "The squared-distance stabilization has a zero-gradient discontinuity caused by torch.where. At exact coincidence, stable_arg is zero and the selected constant-zero branch disconnects distance from its input; consequently the candidate contrast supplies no gradient to code embeddings for coincident candidate/barycentre pairs. More seriously, the actual training barycentre region selection at lines 276-277 uses raw torch.acosh(1+z), whose derivative is singular at z=0. Exact matching points are reachable after codebook initialization/training, and can produce non-finite backward behavior if this operation is ever differentiated; presently refresh runs under no_grad, so this latter issue is not a training gradient path. The provided smoke only checks finite zero gradient at a synthetic distance, and its nonzero random barycentres do not establish intended-parameter gradients from the coupled term.",
+          "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:122-127",
+          "reproduction": "Set positive = codes for one candidate and differentiate incoming_assignment_loss: squared Poincare distance has stable_arg==0 and torch.where returns a constant, so that pair contributes zero gradient. Independently, evaluate torch.acosh(1+z) backward at z=0 in refresh-style region distance to expose its singular derivative if moved into a differentiable path. The current smoke at lines 8-18 asserts only finite gradient, not nonzero gradient at coincidence.",
+          "severity": "blocking",
+          "verifier": "verify_incoming_context_barycenter_r14_1"
+        }
+      ],
       "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
       "changed_files": [
         "train_rqvae.py",
@@ -18663,7 +18753,7 @@
           "reason": "Kept implementation minimal and avoided introducing stale cache state; this may give noisy gradients for diffuse or rare targets."
         }
       ],
-      "failure_signature": "fcbe6ba453b6588c",
+      "failure_signature": "f5eeb2f61f0e3acc",
       "idea_id": "incoming_context_barycenter",
       "notes": "The trainer keeps the frozen epoch/model/training settings, root-discovery helper, and derived output paths; ARM_NAME is TIGER_incoming_context_barycenter. Set GENREC_SINGLE_GPU=1 to take the one-process branch. Smoke test is self-contained and writes no exporter artifacts. A full 3000-epoch Stage 2 run and Stage 3 Recall@10 evaluation were not run here. The smoke script is intended to remain runnable after promotion under stage2_RQ-VAE because imports and repository-root discovery are location-relative.",
       "output_paths": {
@@ -18844,69 +18934,99 @@
           "kind": "explicit_keyword",
           "reason": "the review read the positional forward as a keyword mismatch; the call was positional and never raised. The call is now an explicit keyword so the connection is visible in the source, and a real four-rank run was measured",
           "source_digest": "e6e8a5b0b986b8dd39752803ebe3c5207830e9f8b701672e64fb2e4a4de269d7"
+        },
+        {
+          "change": "scores = squared Euclidean cost of the item's own latent + CONTEXT_WEIGHT * concentration * zero-centred unit-scale geodesic contrast; the Euclidean term orders the codes again and the behaviour term only re-weights them",
+          "evidence": {
+            "previous_stage3": 0.058496840126046765,
+            "previous_target_metric": 0.0584,
+            "smoke_epoch_seconds": 6.326,
+            "smoke_steps": 24
+          },
+          "kind": "modulate_not_replace",
+          "reason": "iteration 1 collapsed the first level (largest bucket 98.5%, cooccur_overlap_L3 0.0584 below the 0.0756 baseline) because the behaviour/curvature cost replaced the assignment; the diagnosis and this fix are recorded in RESULT.md",
+          "source_digest": "18e3cc9474eb362fb9b4c537922ef89efa3060a64fc7e7e30d29199d9f80e42c"
+        },
+        {
+          "change": "the control returns the same reconstruction-consistent squared Euclidean cost, non-detached, divided by the same temperature",
+          "kind": "valid_control",
+          "reason": "the behaviour-off control detached the encoder and codebook, so it compared two graphs instead of one graph with and without the behaviour term",
+          "source_digest": "a093d64e4c4ec52623d441868876a74a64fd3ff00705588a2b94a5a2a672169b"
+        },
+        {
+          "change": "the Euclidean branch averages the raw codepoints and skips the Karcher iterations; the assignment distance already had its Euclidean branch",
+          "kind": "complete_geometry_off",
+          "reason": "the Euclidean control still built the context barycentre with Poincare Karcher iterations, so the ablation did not remove the curvature from the path",
+          "source_digest": "caf11f5289f5b96b631805f5892d42689ca199bd4d1785fecc8a1728c3c35693"
+        },
+        {
+          "change": "the concentration gate is multiplied by mask.any(-1), so an item without context keeps the plain Euclidean assignment",
+          "kind": "empty_context_gate",
+          "reason": "an item with no observed predecessor has an all-zero mask; the concentration formula read that as maximal and applied a zero-vector barycentre bias",
+          "source_digest": "ea73a3599abfaf3ba778f3f532ad3f5554192a5bab994d2f0a7fcf24113e70f3"
         }
       ],
-      "revision": 10,
+      "revision": 14,
       "revision_capped": true,
       "smoke": {
         "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 smoke_test.py",
         "result": "PASS finite forward/backward; first-codebook gradient; unique SID export (also asserted behavior-off and Euclidean scores differ from both-on hyperbolic scores)."
       },
-      "source_digest": "e6e8a5b0b986b8dd39752803ebe3c5207830e9f8b701672e64fb2e4a4de269d7",
-      "status": "verified",
+      "source_digest": "ea73a3599abfaf3ba778f3f532ad3f5554192a5bab994d2f0a7fcf24113e70f3",
+      "status": "blocked",
       "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter",
       "tree_exists": true,
       "verdicts": [
         {
           "checks": [
             {
-              "exercised_how": "Traced code path: training parquet histories create directed predecessor counts; each epoch these counts select predecessor code regions and build detached Poincare Frechet barycentres; candidate code scores combine positive and hard-negative Poincare squared distances and feed the first VQ layer's assignment logits. Inspected the accompanying forward/backward and switch comparison in smoke_test.py:28-51; did not execute it.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:439-449, 207-291, 130-182, 563-571; model/layers.py:307-319",
+              "exercised_how": "Traced incoming directed predecessor counts from train.parquet through per-epoch predecessor region assignment and Poincare Karcher barycentres, then into a candidate-code geodesic positive/negative contrast which modulates first-level assignment logits consumed by RQLayer. Static inspection; the supplied smoke_test.py:34-51 contains behaviour-off and Euclidean contrasts, but could not execute in this sandbox.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:469-480, 224-322, 130-199, 594-602",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "No blocking defect found. The behavior statistics are built solely from the training parquet, the curved distance and both behavior destinations enter the candidate logits, and those logits control first-level assignment. The barycentres are detached epoch caches rather than differentiable means, but the live score remains differentiable through current code prototypes and is used by the assignment loss.",
-                  "location": "none",
-                  "reproduction": "Source trace at the cited lines. The included smoke test asserts candidate-score and assignment changes under behavior-off and Euclidean-distance comparisons, but was not executed.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "For cleanly isolated controls, define a behavior-off branch that retains the intended curved base/assignment operation while removing only incoming-context contrast; keep the Euclidean geometry-off mode separate.",
+                  "detail": "No scope-blocking fidelity defect: train-only predecessor behavior and explicit Poincare geometry share the actual assignment pathway. However, behavior-off is a combined behavior-and-geometry-off Euclidean latent-cost control, rather than isolating behavior removal while preserving curved quantization. This weakens interpretation of the requested individual controls, but does not remove the coupled mechanism.",
+                  "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:277",
+                  "reproduction": "Compare incoming_assignment_loss(... behaviour_on=False) at lines 147-155 with behaviour_on=True, geometry=\"euclidean\" at lines 165-167, and default Poincare at lines 168-199: the behavior-off branch returns Euclidean latent-code cost and does not use barycentres, while the geometry-off branch still uses the behavior barycentres.",
+                  "severity": "minor"
                 }
               ],
-              "name": "behaviour x geometry fidelity",
+              "name": "a) behaviour x geometry fidelity",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Inspected forward/backward wiring and the provided smoke test's finite coincident-distance gradient, behavior/geometry contrasts, finite loss, first-codebook gradient and assignment assertions. No runtime execution performed.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:120-182, 551-579; model/layers.py:115-156, 307-319; smoke_test.py:8-18, 34-51",
+              "exercised_how": "Static forward/backward trace and inspection of the provided smoke assertions (not executed).",
+              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:130-199, 594-610; results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/model/layers.py:115-132; results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/smoke_test.py:8-51",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "No dead coupled term or evident float32 overflow/nan step was found in the inspected path. Scores are passed into first-level quantization; the soft assignment also contributes a loss and straight-through decoder path. Curved coordinates are projected inside the ball, and the stable squared-distance helper caps its argument and handles exact zero. The smoke test checks nonzero finite gradients to the first codebook. This is a source-level assessment, not a runtime claim.",
-                  "location": "none",
-                  "reproduction": "Review smoke_test.py:34-51 for the intended both-on, behavior-off, and Euclidean comparisons; lines 8-18 cover the coincidence edge case. The user's stated GPU one-epoch smoke remains the runtime proof.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "Use a smooth squared-distance expression with a finite, nonzero zero-limit derivative and avoid selecting a disconnected constant branch; use the same stabilized helper for any differentiable hyperbolic distance. Add a coupled-term-only gradient assertion reaching first-level code parameters, including coincidence and near-boundary cases.",
+                  "detail": "The squared-distance stabilization has a zero-gradient discontinuity caused by torch.where. At exact coincidence, stable_arg is zero and the selected constant-zero branch disconnects distance from its input; consequently the candidate contrast supplies no gradient to code embeddings for coincident candidate/barycentre pairs. More seriously, the actual training barycentre region selection at lines 276-277 uses raw torch.acosh(1+z), whose derivative is singular at z=0. Exact matching points are reachable after codebook initialization/training, and can produce non-finite backward behavior if this operation is ever differentiated; presently refresh runs under no_grad, so this latter issue is not a training gradient path. The provided smoke only checks finite zero gradient at a synthetic distance, and its nonzero random barycentres do not establish intended-parameter gradients from the coupled term.",
+                  "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:122-127",
+                  "reproduction": "Set positive = codes for one candidate and differentiate incoming_assignment_loss: squared Poincare distance has stable_arg==0 and torch.where returns a constant, so that pair contributes zero gradient. Independently, evaluate torch.acosh(1+z) backward at z=0 in refresh-style region distance to expose its singular derivative if moved into a differentiable path. The current smoke at lines 8-18 asserts only finite gradient, not nonzero gradient at coincidence.",
+                  "severity": "blocking"
                 }
               ],
-              "name": "trainability",
-              "verdict": "PASS"
+              "name": "b) trainability",
+              "verdict": "NEEDS_FIX"
             },
             {
-              "exercised_how": "Inspected repository-root/path resolution, frozen embedding and stage0 training parquet paths, row-indexed SID export, candidate-specific output directory, trainer entry point and launcher branches. The single-card branch checks os.environ.get(SINGLE_GPU_ENV) with SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\" at lines 117, 688-694. Also inspected smoke_test.py:52-55 for SID shape/uniqueness assertions; no trainer or launcher was run.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:41-68, 336-357, 416-449, 638-715",
+              "exercised_how": "Static integration inspection: repository-root discovery, frozen stage0 train.parquet and stage1 embedding inputs, candidate-specific stage2 result directory, training-derived item IDs, enumerate-indexed JSON SID export, torchrun and GENREC_SINGLE_GPU branch.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:43-68, 447-480, 719-747, 669-712",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "Outputs resolve to results/stage2_RQ-VAE/TIGER_incoming_context_barycenter, not the baseline or another arm; input paths point to stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet. Export enumerates rows as item IDs and writes JSON keys by those row IDs; collision extension preserves row order and makes codes unique. Torchrun's already-launched and GENREC_SINGLE_GPU branches are present. CANDIDATE_CHECK.json records an inconclusive environment import failure, not a source-level integration defect.",
-                  "location": "none",
-                  "reproduction": "Inspect the cited constants and main/export/launcher branches. The included smoke test checks an extended SID matrix of shape (12, 4) with unique rows. Runtime integration is not claimed.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "None required.",
+                  "detail": "No integration defect found. Candidate result path is correctly distinct (TIGER_incoming_context_barycenter); paths are repository-derived, export enumerates item rows as IDs, and the single-card environment switch is present. Runtime integration was not executable here.",
+                  "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:724",
+                  "reproduction": "Inspect RESULT_DIR at lines 57-68, train input at 461-463, JSON construction at 707-710, and launcher branch at 719-747.",
+                  "severity": "minor"
                 }
               ],
-              "name": "integration",
+              "name": "c) integration",
               "verdict": "PASS"
             }
           ],
-          "verdict": "PASS",
-          "verifier": "verify_incoming_context_barycenter_r10_1"
+          "verdict": "NEEDS_FIX",
+          "verifier": "verify_incoming_context_barycenter_r14_1"
         }
       ]
     }
@@ -21882,6 +22002,70 @@
       "idea_id": "incoming_context_barycenter",
       "revision": 9,
       "signature": "fcbe6ba453b6588c"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Implement matched ablations from one shared score definition: geometry-off should replace only the curved distance with Euclidean distance while retaining the same behaviour contrast and normalization; behaviour-off should set only the behaviour contrast/gate contribution to zero while retaining the same base score and geometric choice. Add comparisons of assignment and gradients against both-on.",
+          "detail": "The behaviour-off path is not a valid geometry-off/behaviour-off control: it returns negative squared Euclidean distances from detached encoder/code vectors, with no temperature-centering, while both-on uses a Euclidean reconstruction cost plus a normalized behaviour/geodesic bias. In addition, the so-called Euclidean comparison changes only the geodesic distance helper; it still has the behaviour term and is not a geometry-off mechanism control. These comparisons do not isolate the named factors as required, so they cannot establish that switching off behaviour or curvature changes only that factor.",
+          "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:147-149",
+          "reproduction": "Call incoming_assignment_loss for identical model, embeddings and item ids with behaviour_on=True/geometry='poincare', behaviour_on=True/geometry='euclidean', and behaviour_on=False. The false branch bypasses barycentres and uses a different score formula; the Euclidean branch still combines positive and negative behaviour barycentres at lines 186-191. Thus the current purported controls conflate mechanism changes.",
+          "severity": "blocking",
+          "verifier": "verify_incoming_context_barycenter_r11_1"
+        }
+      ],
+      "idea_id": "incoming_context_barycenter",
+      "revision": 11,
+      "signature": "4e577e5e82550367"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "In the Euclidean branch use unprojected codepoints and the normalized weighted arithmetic predecessor mean (including for negative barycentres), and use squared Euclidean distances consistently. Keep the current Poincare projection/Karcher path only for the curved branch; retain matched gates/candidates and verify both-on, behaviour-off, and genuinely Euclidean forward/backward comparisons.",
+          "detail": "The advertised geometry-off/Euclidean comparison is not an Euclidean barycentre control. `geometry == \"euclidean\"` changes only predecessor region selection at lines 269-270; `curved_codes` are still Poincare-projected and `frechet_mean` still runs Poincare log/exp Karcher updates at lines 280-288. Thus the geometry-off path still uses curved barycentre construction, so the requested geometry-off comparison cannot isolate curvature. This undermines the required control even though the both-on route is differentiable.",
+          "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:269-288",
+          "reproduction": "Call `refresh_context_barycentres(..., geometry=\"euclidean\")` with at least two distinct predecessor codepoints and nonzero weights. The returned barycentre is still formed by `project`, `log_map`, and `exp_map`; it is not the weighted Euclidean mean. Then call `incoming_assignment_loss(..., geometry=\"euclidean\")`: its candidate distance is flat but its target barycentre came from the curved mean.",
+          "severity": "blocking",
+          "verifier": "verify_incoming_context_barycenter_r12_1"
+        }
+      ],
+      "idea_id": "incoming_context_barycenter",
+      "revision": 12,
+      "signature": "8408b1395ad8a059"
+    },
+    {
+      "findings": [
+        {
+          "check": "trainability",
+          "correction": "Track has_context = mask.any(-1); force concentration/gate to zero for rows without incoming transitions (and optionally use the behavior-off/base score for them). Ensure negative/self fallback does not reintroduce behavior pressure for those rows. Add a smoke case asserting no-context logits equal the behavior-off logits and gradients receive no context contribution.",
+          "detail": "For an item with no observed predecessor, every mask entry is false and all weights are zero. Normalizing leaves zero region mass, whose entropy is zero, so concentration becomes 1.0. Its barycenter is also the zero vector (the weighted mean divided by the clamped denominator), but the behavior-on assignment score still applies positive/negative geodesic contrast against this fabricated target. This treats absence of incoming evidence as maximally concentrated evidence and changes SID assignment for precisely the no-context items rather than disabling behavior pressure. The soft assignment loss remains differentiable, but the behavior gating is semantically wrong and can apply arbitrary gradients to these targets.",
+          "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:304-315",
+          "reproduction": "Minimal counterexample: set one item row's mask to all false and weight to all zero in build_context_tables output, then call refresh_context_barycentres. Its returned concentration for that row is 1, because probs and region_mass are all zero and entropy is zero. Use that item's ID in incoming_assignment_loss: the gate at lines 196-198 is 1 and applies the distance bias around the zero barycenter. No PyTorch execution is needed to see this from the tensor operations.",
+          "severity": "blocking",
+          "verifier": "verify_incoming_context_barycenter_r13_1"
+        }
+      ],
+      "idea_id": "incoming_context_barycenter",
+      "revision": 13,
+      "signature": "591435ae063a16b6"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Use a smooth squared-distance expression with a finite, nonzero zero-limit derivative and avoid selecting a disconnected constant branch; use the same stabilized helper for any differentiable hyperbolic distance. Add a coupled-term-only gradient assertion reaching first-level code parameters, including coincidence and near-boundary cases.",
+          "detail": "The squared-distance stabilization has a zero-gradient discontinuity caused by torch.where. At exact coincidence, stable_arg is zero and the selected constant-zero branch disconnects distance from its input; consequently the candidate contrast supplies no gradient to code embeddings for coincident candidate/barycentre pairs. More seriously, the actual training barycentre region selection at lines 276-277 uses raw torch.acosh(1+z), whose derivative is singular at z=0. Exact matching points are reachable after codebook initialization/training, and can produce non-finite backward behavior if this operation is ever differentiated; presently refresh runs under no_grad, so this latter issue is not a training gradient path. The provided smoke only checks finite zero gradient at a synthetic distance, and its nonzero random barycentres do not establish intended-parameter gradients from the coupled term.",
+          "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:122-127",
+          "reproduction": "Set positive = codes for one candidate and differentiate incoming_assignment_loss: squared Poincare distance has stable_arg==0 and torch.where returns a constant, so that pair contributes zero gradient. Independently, evaluate torch.acosh(1+z) backward at z=0 in refresh-style region distance to expose its singular derivative if moved into a differentiable path. The current smoke at lines 8-18 asserts only finite gradient, not nonzero gradient at coincidence.",
+          "severity": "blocking",
+          "verifier": "verify_incoming_context_barycenter_r14_1"
+        }
+      ],
+      "idea_id": "incoming_context_barycenter",
+      "revision": 14,
+      "signature": "f5eeb2f61f0e3acc"
     }
   ],
   "review_bundles": {
@@ -21897,6 +22081,30 @@
       "reason": "the verifiers still reject the implementation after 9 repair rounds, which is the cap",
       "revision": 9,
       "signature": "fcbe6ba453b6588c"
+    },
+    {
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 11 repair rounds, which is the cap",
+      "revision": 11,
+      "signature": "4e577e5e82550367"
+    },
+    {
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 12 repair rounds, which is the cap",
+      "revision": 12,
+      "signature": "8408b1395ad8a059"
+    },
+    {
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 13 repair rounds, which is the cap",
+      "revision": 13,
+      "signature": "591435ae063a16b6"
+    },
+    {
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 14 repair rounds, which is the cap",
+      "revision": 14,
+      "signature": "f5eeb2f61f0e3acc"
     }
   ],
   "round_id": "round_20261027_031345_66",
@@ -22546,41 +22754,63 @@
       "status": "pending"
     }
   ],
-  "step": "stage2",
-  "updated_at": 1793039971.7603605,
-  "verification": {},
   "stage3_results": [
     {
-      "idea_id": "incoming_context_barycenter",
-      "variant": "TIGER_incoming_context_barycenter",
-      "source_digest": "e6e8a5b0b986b8",
-      "sid_metrics": {
-        "largest_L1_share": 0.985,
-        "L1_codes": 116,
-        "L3_triples": 6460,
-        "ext_distinct": 136,
-        "l1_hard_er": 1.003,
-        "cooccur_overlap_L3": 0.0584,
-        "adjacency_L3": 0.0212
-      },
-      "verdict": "negative: the assignment was replaced by the behaviour/curvature logits and the partition collapsed",
-      "stage3": "dispatched",
-      "metrics": {
-        "test_recall@5": 0.03889343477428228,
-        "test_recall@10": 0.058496840126046765,
-        "test_ndcg@10": 0.03205664072791379,
-        "n_eval": 57439
-      },
       "comparison": {
         "baseline_control": 0.055537,
         "delta_vs_baseline": 0.00296,
-        "target": 0.065,
-        "passed": false
+        "passed": false,
+        "target": 0.065
       },
       "counter_example": {
         "claim": "cooccur_overlap_L3 0.0584 (below the 0.0756 baseline) yet recall 0.0585 (above the 0.0555 baseline)",
         "why": "the first level collapsed into one bucket holding 98.5% of the catalogue, so the beam search discriminates on the 572 L2 and 6460 L3 groups instead; the coherence metric is a population-level predictor, not a sufficient statistic"
-      }
+      },
+      "idea_id": "incoming_context_barycenter",
+      "metrics": {
+        "n_eval": 57439,
+        "test_ndcg@10": 0.03205664072791379,
+        "test_recall@10": 0.058496840126046765,
+        "test_recall@5": 0.03889343477428228
+      },
+      "sid_metrics": {
+        "L1_codes": 116,
+        "L3_triples": 6460,
+        "adjacency_L3": 0.0212,
+        "cooccur_overlap_L3": 0.0584,
+        "ext_distinct": 136,
+        "l1_hard_er": 1.003,
+        "largest_L1_share": 0.985
+      },
+      "source_digest": "e6e8a5b0b986b8",
+      "stage3": "dispatched",
+      "variant": "TIGER_incoming_context_barycenter",
+      "verdict": "negative: the assignment was replaced by the behaviour/curvature logits and the partition collapsed"
+    }
+  ],
+  "step": "stage2",
+  "updated_at": 1793043300.679575,
+  "verification": {},
+  "iterations": [
+    {
+      "iteration": 2,
+      "changes": [
+        "modulate not replace",
+        "empty-context gate",
+        "non-detached control",
+        "complete Euclidean ablation"
+      ],
+      "smoke": {
+        "steps": 24,
+        "passed": true,
+        "epoch_seconds": 6.326
+      },
+      "review": {
+        "revisions": 14,
+        "stopped_at": "measure-zero gradient branch at exact coincidence"
+      },
+      "stage2": "not trained: the review gate did not return a verified digest",
+      "stage3": null
     }
   ]
 }

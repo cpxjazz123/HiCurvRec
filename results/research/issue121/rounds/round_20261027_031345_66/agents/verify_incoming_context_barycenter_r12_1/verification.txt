@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:455-466, 224-308, 130-199, 580-588 | Traced the real minibatch path from training-parquet adjacent transitions and co-consumption negative construction, through per-epoch Poincare context barycentres and squared geodesic contrast, into first-level assignment logits consumed by RQLayer. The two signals and curve participate in one candidate-scoring pathway; this is not an imported-but-unused helper or side loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No scope-contract defect found in the both-on coupled path.
+FINDING REPRODUCTION: Source trace above; the provided smoke test also constructs both-on, behaviour-off, and Euclidean logits at smoke_test.py:34-51.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/smoke_test.py:34-51; results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:120-199, 224-308, 580-595 | Inspected the gradient graph and the source-level smoke assertions (not executed). Both-on candidate scores are supplied to the first VQ layer, enter its soft assignment loss and straight-through decoder path, and are differentiated by the trainer. The stable squared-distance helper caps its argument and protects the zero-distance square root.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:269-288
+FINDING DETAIL: The advertised geometry-off/Euclidean comparison is not an Euclidean barycentre control. `geometry == "euclidean"` changes only predecessor region selection at lines 269-270; `curved_codes` are still Poincare-projected and `frechet_mean` still runs Poincare log/exp Karcher updates at lines 280-288. Thus the geometry-off path still uses curved barycentre construction, so the requested geometry-off comparison cannot isolate curvature. This undermines the required control even though the both-on route is differentiable.
+FINDING REPRODUCTION: Call `refresh_context_barycentres(..., geometry="euclidean")` with at least two distinct predecessor codepoints and nonzero weights. The returned barycentre is still formed by `project`, `log_map`, and `exp_map`; it is not the weighted Euclidean mean. Then call `incoming_assignment_loss(..., geometry="euclidean")`: its candidate distance is flat but its target barycentre came from the curved mean.
+FINDING CORRECTION: In the Euclidean branch use unprojected codepoints and the normalized weighted arithmetic predecessor mean (including for negative barycentres), and use squared Euclidean distances consistently. Keep the current Poincare projection/Karcher path only for the curved branch; retain matched gates/candidates and verify both-on, behaviour-off, and genuinely Euclidean forward/backward comparisons.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:41-68, 433-466, 655-701, 705-733 | Inspected entry-point paths, frozen embedding and training-parquet constants, train-only construction, export/indexing, result-directory resolution, launcher, and single-card branch. The code resolves the repository root by the `stage2_RQ-VAE` marker and writes candidate outputs beneath `results/stage2_RQ-VAE/TIGER_incoming_context_barycenter/`; exports enumerate item rows by item ID and make extended SIDs unique. `_launch_via_torchrun` honors `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level integration defect found. Runtime execution was not performed.
+FINDING REPRODUCTION: Trace the `__main__` call at lines 731-733, the single-GPU environment test at 705-710, data constants at 62-65, and export at 683-698. `CANDIDATE_CHECK.json` records an earlier `ModuleNotFoundError`, which is an inconclusive environment check rather than evidence of a trainer defect.
+FINDING CORRECTION: none

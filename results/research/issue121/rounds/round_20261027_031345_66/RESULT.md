@@ -109,3 +109,50 @@ The consequence for the programme: a mechanism has to be judged on the Stage 3 n
 the coherence metric as a prior, not as a gate. The next iteration should therefore keep the
 L1 spread (so the metric can be read at all) and test whether the *discrimination* coupling
 raises the metric into the 0.15 band, rather than taking a collapse as a pass.
+
+## Iteration 2 (same idea, the diagnosed fixes)
+
+The first iteration's failure mode was that the behaviour/curvature cost *replaced* the
+assignment. Iteration 2 keeps the same behaviour signal and the same curvature, and changes
+where they act:
+
+* **modulate instead of replace**: `scores = squared Euclidean cost of the item's own latent +
+  CONTEXT_WEIGHT * concentration * bias`, where the bias is the geodesic contrast
+  `d_c(positive barycentre, code) - 0.5 d_c(negative barycentre, code)`, zero-centred and
+  rescaled to unit mean magnitude, so the Euclidean term still orders the codes and the
+  behaviour term only re-weights them;
+* **the concentration gate is multiplied by `mask.any(-1)`**, so the ~7k items with no observed
+  training predecessor keep the plain Euclidean assignment instead of receiving a bias built
+  from a zero-vector barycentre;
+* **the behaviour-off control is non-detached**, so it differs from the coupled arm only by the
+  behaviour term rather than by a broken gradient path;
+* **the Euclidean ablation removes the curvature everywhere**, including the context
+  barycentre: the control averages raw codepoints and skips the Karcher iterations.
+
+### Review state
+
+Fourteen revisions. Every finding but one was a real defect and each of the four fixes above
+came out of this loop:
+
+| rev | finding | real? |
+|---|---|---|
+| 1-3 | one-way coupling, `NameError`, disconnected path | yes |
+| 5-7 | `acosh` derivative at zero distance, concentration read the wrong quantity | yes |
+| 9 | DDP wrapper not unwrapped in the per-epoch refresh (only a four-rank run shows it) | yes |
+| 10 | a positional forward read as a keyword mismatch | no, rebutted with a four-rank run |
+| 11 | the behaviour-off control detached the encoder and codebook | yes |
+| 12 | the Euclidean ablation still built a Poincaré barycentre | yes |
+| 13 | items without a predecessor got a zero-vector barycentre and a full-strength bias | yes |
+| 14 | `torch.where` constant-zero branch disconnects the gradient at exact coincidence | edge case, measure zero |
+
+The loop was stopped at revision 14. The remaining finding is a measure-zero numerical
+refinement (exact coincidence of a codepoint and a barycentre), and the per-candidate repair
+budget is long past its cap, so the candidate is recorded as `IMPLEMENTATION_NEEDS_FIX` with
+the evidence rather than spending more review rounds on it.
+
+**Iteration 2 has no Stage 3 number.** The fixes are smoke-tested (24 steps, finite loss, one
+epoch) but the arm was not trained, because the review gate did not return a verified digest.
+The next session should either (a) fix the measure-zero gradient branch and take the candidate
+through the review once more, or (b) run the same modulate-not-replace design through the
+issue #117 executable-verification flow, whose gate executes tests instead of reviewing
+prose, and then `stage2_start` it.

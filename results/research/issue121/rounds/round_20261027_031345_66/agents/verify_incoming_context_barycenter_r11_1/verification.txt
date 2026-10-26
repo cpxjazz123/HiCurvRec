@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:449-459, 217-301, 130-192; model/layers.py:307-319 | Traced directed adjacent training events into sparse incoming contexts, epoch-refreshed Poincare predecessor barycentres, then into first-level candidate logits consumed by the real RQ layer. The source smoke_test.py:34-51 specifies behaviour-off and Euclidean comparisons against both-on; runtime execution is unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:282-301
+FINDING DETAIL: The connected pathway exists: positive/negative predecessor barycentres and Poincare code distances jointly produce the candidate bias, and the first-level quantizer uses its logits. No finding for absent execution of the GPU smoke, as that is explicitly outside this review's requirements.
+FINDING REPRODUCTION: Inspect refresh_context_barycentres and incoming_assignment_loss at the cited lines, followed by RQLayer.forward at model/layers.py:307-319. The repository smoke defines the intended ablations at smoke_test.py:34-51 but was not run.
+FINDING CORRECTION: None required.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:147-192; model/layers.py:123-156 | Source-level forward/backward trace: both-on scores feed argmax and the soft assignment loss; curved code distances retain gradients to first-level code embeddings. The supplied smoke describes finite-loss/gradient and assignment ablations at smoke_test.py:8-51; it was not executed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:147-149
+FINDING DETAIL: The behaviour-off path is not a valid geometry-off/behaviour-off control: it returns negative squared Euclidean distances from detached encoder/code vectors, with no temperature-centering, while both-on uses a Euclidean reconstruction cost plus a normalized behaviour/geodesic bias. In addition, the so-called Euclidean comparison changes only the geodesic distance helper; it still has the behaviour term and is not a geometry-off mechanism control. These comparisons do not isolate the named factors as required, so they cannot establish that switching off behaviour or curvature changes only that factor.
+FINDING REPRODUCTION: Call incoming_assignment_loss for identical model, embeddings and item ids with behaviour_on=True/geometry='poincare', behaviour_on=True/geometry='euclidean', and behaviour_on=False. The false branch bypasses barycentres and uses a different score formula; the Euclidean branch still combines positive and negative behaviour barycentres at lines 186-191. Thus the current purported controls conflate mechanism changes.
+FINDING CORRECTION: Implement matched ablations from one shared score definition: geometry-off should replace only the curved distance with Euclidean distance while retaining the same behaviour contrast and normalization; behaviour-off should set only the behaviour contrast/gate contribution to zero while retaining the same base score and geometric choice. Add comparisons of assignment and gradients against both-on.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:43-68, 426-460, 648-725 | Inspected trainer entry, frozen embedding and training-parquet paths, own promoted-arm result directory, train-only target/transition construction, indexed SID JSON export and collision extension, plus torchrun and GENREC_SINGLE_GPU='1' branches. Static inspection only; trainer execution was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:60-68
+FINDING DETAIL: No integration defect found by source inspection. Outputs resolve to this candidate's promoted result directory; export enumerates embedding-row item IDs and creates unique four-token SIDs. The launcher returns without spawning torchrun when GENREC_SINGLE_GPU is set to '1'.
+FINDING REPRODUCTION: Inspect RESULT_DIR/OUTPUT_JSON and _extend_collisions at lines 389-402 and export at lines 683-690; inspect the single-card and torchrun branches at lines 698-725.
+FINDING CORRECTION: None required.
