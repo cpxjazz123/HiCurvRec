@@ -277,6 +277,50 @@
       "idea_id": "incoming_context_barycenter",
       "reason": "the verifiers still reject the implementation after 14 repair rounds, which is the cap",
       "revision": 14
+    },
+    {
+      "at": 1793043409.1240969,
+      "event": "implementation_repaired",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "Sinkhorn-balanced assignment"
+    },
+    {
+      "at": 1793043463.0402334,
+      "event": "verification_needs_repair",
+      "idea_id": "incoming_context_barycenter",
+      "revision": 15,
+      "signature": "ce8b05153d942478"
+    },
+    {
+      "at": 1793043463.07193,
+      "event": "implementation_revision_capped",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 15 repair rounds, which is the cap",
+      "revision": 15
+    },
+    {
+      "at": 1793043668.920021,
+      "event": "implementation_repaired",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "differentiable Sinkhorn"
+    },
+    {
+      "at": 1793043704.185049,
+      "event": "implementation_verified",
+      "idea_id": "incoming_context_barycenter",
+      "revision": 16
+    },
+    {
+      "at": 1793044637.7162821,
+      "event": "implementation_repaired",
+      "idea_id": "incoming_context_barycenter",
+      "reason": "balance sign"
+    },
+    {
+      "at": 1793044701.5571883,
+      "event": "implementation_verified",
+      "idea_id": "incoming_context_barycenter",
+      "revision": 17
     }
   ],
   "evidence_bundles": {
@@ -18722,18 +18766,8 @@
       "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
       "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
       "blocked_kind": "IMPLEMENTATION_NEEDS_FIX",
-      "blocked_reason": "the verifiers still reject the implementation after 14 repair rounds, which is the cap",
-      "blocking_findings": [
-        {
-          "check": "b) trainability",
-          "correction": "Use a smooth squared-distance expression with a finite, nonzero zero-limit derivative and avoid selecting a disconnected constant branch; use the same stabilized helper for any differentiable hyperbolic distance. Add a coupled-term-only gradient assertion reaching first-level code parameters, including coincidence and near-boundary cases.",
-          "detail": "The squared-distance stabilization has a zero-gradient discontinuity caused by torch.where. At exact coincidence, stable_arg is zero and the selected constant-zero branch disconnects distance from its input; consequently the candidate contrast supplies no gradient to code embeddings for coincident candidate/barycentre pairs. More seriously, the actual training barycentre region selection at lines 276-277 uses raw torch.acosh(1+z), whose derivative is singular at z=0. Exact matching points are reachable after codebook initialization/training, and can produce non-finite backward behavior if this operation is ever differentiated; presently refresh runs under no_grad, so this latter issue is not a training gradient path. The provided smoke only checks finite zero gradient at a synthetic distance, and its nonzero random barycentres do not establish intended-parameter gradients from the coupled term.",
-          "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:122-127",
-          "reproduction": "Set positive = codes for one candidate and differentiate incoming_assignment_loss: squared Poincare distance has stable_arg==0 and torch.where returns a constant, so that pair contributes zero gradient. Independently, evaluate torch.acosh(1+z) backward at z=0 in refresh-style region distance to expose its singular derivative if moved into a differentiable path. The current smoke at lines 8-18 asserts only finite gradient, not nonzero gradient at coincidence.",
-          "severity": "blocking",
-          "verifier": "verify_incoming_context_barycenter_r14_1"
-        }
-      ],
+      "blocked_reason": "the verifiers still reject the implementation after 15 repair rounds, which is the cap",
+      "blocking_findings": [],
       "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
       "changed_files": [
         "train_rqvae.py",
@@ -18753,7 +18787,7 @@
           "reason": "Kept implementation minimal and avoided introducing stale cache state; this may give noisy gradients for diffuse or rare targets."
         }
       ],
-      "failure_signature": "f5eeb2f61f0e3acc",
+      "failure_signature": "ce8b05153d942478",
       "idea_id": "incoming_context_barycenter",
       "notes": "The trainer keeps the frozen epoch/model/training settings, root-discovery helper, and derived output paths; ARM_NAME is TIGER_incoming_context_barycenter. Set GENREC_SINGLE_GPU=1 to take the one-process branch. Smoke test is self-contained and writes no exporter artifacts. A full 3000-epoch Stage 2 run and Stage 3 Recall@10 evaluation were not run here. The smoke script is intended to remain runnable after promotion under stage2_RQ-VAE because imports and repository-root discovery are location-relative.",
       "output_paths": {
@@ -18964,74 +18998,156 @@
           "kind": "empty_context_gate",
           "reason": "an item with no observed predecessor has an all-zero mask; the concentration formula read that as maximal and applied a zero-vector barycentre bias",
           "source_digest": "ea73a3599abfaf3ba778f3f532ad3f5554192a5bab994d2f0a7fcf24113e70f3"
+        },
+        {
+          "change": "VQLayer balances the coupled logits with the tree's existing sinkhorn (SK_EPSILON 0.003, SK_ITERS 50) before argmax, controlled by the new BALANCED_ASSIGNMENT constant; the trainer enables it on every level. The torch.where zero branch in the stabilised geodesic is replaced by a subtraction of the floor value, so the graph stays connected at exact coincidence.",
+          "kind": "sinkhorn_balanced_assignment",
+          "reason": "iteration 1 collapsed because the behaviour cost replaced the assignment and iteration 2 had to keep the bias small; a balanced (Sinkhorn) assignment makes the collapsed solution infeasible, so the behaviour/curvature cost can enter at full strength",
+          "source_digest": "9ae63ff17a380050fad463775e151a88ea358061487e02262ff097fc5e1f4f08"
+        },
+        {
+          "change": "a differentiable row/column Sinkhorn used for the balanced assignment; log(q).softmax() recovers q, and the applied parameter gradient norms stay positive",
+          "evidence": {
+            "applied_grad_norm_first_steps": [
+              0.0261,
+              0.0183,
+              0.0098
+            ],
+            "smoke_passed": true,
+            "smoke_steps": 24
+          },
+          "kind": "differentiable_balance",
+          "reason": "the class's sinkhorn() is decorated @torch.no_grad(), so balancing the coupled logits with it cut the soft assignment objective off the graph",
+          "source_digest": "ccb9e2cad9e0d48b37d53f0692624d65c8c02d9613978dbda7380d0ab843270c"
+        },
+        {
+          "change": "softmax(logits / epsilon)",
+          "evidence": {
+            "first_balanced_run": {
+              "cooccur_overlap_L3": 0.056,
+              "largest_L1_share": 0.821
+            }
+          },
+          "kind": "balance_sign",
+          "reason": "the balanced softmax exponent carried a minus sign although the logits are already negative costs: the balance was applied to the anti-assignment, which is why the first balanced run still left 82% of the catalogue in one L1 bucket and cooccur_overlap_L3 fell to 0.0560",
+          "source_digest": "401407050d49e1739240a30ef81ce600bfa7b590254f671fe59fb3e13cab7a50"
         }
       ],
-      "revision": 14,
+      "revision": 17,
       "revision_capped": true,
       "smoke": {
         "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 smoke_test.py",
         "result": "PASS finite forward/backward; first-codebook gradient; unique SID export (also asserted behavior-off and Euclidean scores differ from both-on hyperbolic scores)."
       },
-      "source_digest": "ea73a3599abfaf3ba778f3f532ad3f5554192a5bab994d2f0a7fcf24113e70f3",
-      "status": "blocked",
+      "source_digest": "401407050d49e1739240a30ef81ce600bfa7b590254f671fe59fb3e13cab7a50",
+      "status": "verified",
       "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter",
       "tree_exists": true,
       "verdicts": [
         {
           "checks": [
             {
-              "exercised_how": "Traced incoming directed predecessor counts from train.parquet through per-epoch predecessor region assignment and Poincare Karcher barycentres, then into a candidate-code geodesic positive/negative contrast which modulates first-level assignment logits consumed by RQLayer. Static inspection; the supplied smoke_test.py:34-51 contains behaviour-off and Euclidean contrasts, but could not execute in this sandbox.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:469-480, 224-322, 130-199, 594-602",
-              "findings": [
-                {
-                  "correction": "For cleanly isolated controls, define a behavior-off branch that retains the intended curved base/assignment operation while removing only incoming-context contrast; keep the Euclidean geometry-off mode separate.",
-                  "detail": "No scope-blocking fidelity defect: train-only predecessor behavior and explicit Poincare geometry share the actual assignment pathway. However, behavior-off is a combined behavior-and-geometry-off Euclidean latent-cost control, rather than isolating behavior removal while preserving curved quantization. This weakens interpretation of the requested individual controls, but does not remove the coupled mechanism.",
-                  "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:277",
-                  "reproduction": "Compare incoming_assignment_loss(... behaviour_on=False) at lines 147-155 with behaviour_on=True, geometry=\"euclidean\" at lines 165-167, and default Poincare at lines 168-199: the behavior-off branch returns Euclidean latent-code cost and does not use barycentres, while the geometry-off branch still uses the behavior barycentres.",
-                  "severity": "minor"
-                }
-              ],
-              "name": "a) behaviour x geometry fidelity",
-              "verdict": "PASS"
-            },
-            {
-              "exercised_how": "Static forward/backward trace and inspection of the provided smoke assertions (not executed).",
-              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:130-199, 594-610; results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/model/layers.py:115-132; results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/smoke_test.py:8-51",
-              "findings": [
-                {
-                  "correction": "Use a smooth squared-distance expression with a finite, nonzero zero-limit derivative and avoid selecting a disconnected constant branch; use the same stabilized helper for any differentiable hyperbolic distance. Add a coupled-term-only gradient assertion reaching first-level code parameters, including coincidence and near-boundary cases.",
-                  "detail": "The squared-distance stabilization has a zero-gradient discontinuity caused by torch.where. At exact coincidence, stable_arg is zero and the selected constant-zero branch disconnects distance from its input; consequently the candidate contrast supplies no gradient to code embeddings for coincident candidate/barycentre pairs. More seriously, the actual training barycentre region selection at lines 276-277 uses raw torch.acosh(1+z), whose derivative is singular at z=0. Exact matching points are reachable after codebook initialization/training, and can produce non-finite backward behavior if this operation is ever differentiated; presently refresh runs under no_grad, so this latter issue is not a training gradient path. The provided smoke only checks finite zero gradient at a synthetic distance, and its nonzero random barycentres do not establish intended-parameter gradients from the coupled term.",
-                  "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:122-127",
-                  "reproduction": "Set positive = codes for one candidate and differentiate incoming_assignment_loss: squared Poincare distance has stable_arg==0 and torch.where returns a constant, so that pair contributes zero gradient. Independently, evaluate torch.acosh(1+z) backward at z=0 in refresh-style region distance to expose its singular derivative if moved into a differentiable path. The current smoke at lines 8-18 asserts only finite gradient, not nonzero gradient at coincidence.",
-                  "severity": "blocking"
-                }
-              ],
-              "name": "b) trainability",
-              "verdict": "NEEDS_FIX"
-            },
-            {
-              "exercised_how": "Static integration inspection: repository-root discovery, frozen stage0 train.parquet and stage1 embedding inputs, candidate-specific stage2 result directory, training-derived item IDs, enumerate-indexed JSON SID export, torchrun and GENREC_SINGLE_GPU branch.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:43-68, 447-480, 719-747, 669-712",
+              "exercised_how": "Traced training-parquet adjacent history→target count construction into per-item predecessor-region barycentres (Poincare projection/log/exp Karcher updates) and hard-negative barycentres, then traced the positive/negative squared geodesic distances into the first-level candidate score and the RQ-VAE assignment input. The path is active when BEHAVIOUR_ON=True and GEOMETRY=\"poincare\". smoke_test.py:34-51 specifies both behavior-off and Euclidean comparisons and checks assignment differences; this is code inspection only, not a runtime execution.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:482-493, 237-335, 187-212, 598-618",
               "findings": [
                 {
                   "correction": "None required.",
-                  "detail": "No integration defect found. Candidate result path is correctly distinct (TIGER_incoming_context_barycenter); paths are repository-derived, export enumerates item rows as IDs, and the single-card environment switch is present. Runtime integration was not executable here.",
-                  "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:724",
-                  "reproduction": "Inspect RESULT_DIR at lines 57-68, train input at 461-463, JSON construction at 707-710, and launcher branch at 719-747.",
-                  "severity": "minor"
+                  "detail": "No blocking fidelity defect found. Both train-only incoming context and curved distance computations affect the candidate scores used by the first-token quantizer.",
+                  "location": "N/A",
+                  "reproduction": "Follow train_rqvae.py:482-493 → :598-618 → :137-212 and model/layers.py:128-186; the supplied smoke comparison is at smoke_test.py:34-51.",
+                  "severity": "minor when it does not stop the work"
                 }
               ],
-              "name": "c) integration",
+              "name": "behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the differentiable projected Poincare squared-distance expression and the score-to-soft-assignment-to-quantization-loss path. The assignment term is consumed as logits, and its soft distribution contributes to quant_loss; codebook gradients are not detached. The smoke file checks finite coincidence gradients, finite losses/codebook gradients, and both-on versus behavior-off/Euclidean assignment changes. Runtime execution is not claimed.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:164-212; model/layers.py:128-186; smoke_test.py:8-18, 34-51",
+              "findings": [
+                {
+                  "correction": "None required.",
+                  "detail": "No dead coupled term or evident float32 overflow/NaN hazard found in the examined forward/backward path. The barycentre refresh is intentionally no-grad/cache-detached; the current candidate score remains differentiable through code prototypes and the encoder. Stable squared-distance handling explicitly protects coincident points.",
+                  "location": "N/A",
+                  "reproduction": "Inspect train_rqvae.py:121-134, :168-185, :198-212 and model/layers.py:149-185; the minimal forward/backward and control assertions are smoke_test.py:34-51.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Traced repository-root discovery and candidate-specific results/stage2_RQ-VAE/TIGER_incoming_context_barycenter outputs; training statistics come from results/stage0_build_parquet/train.parquet; all-embedding row enumeration is used for SID JSON keys. Export enforces unique extended SIDs. Inspected launcher dispatch including SINGLE_GPU_ENV=\"GENREC_SINGLE_GPU\" and the single-card return branch. No trainer was run.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:41-68, 460-493, 685-728, 735-763",
+              "findings": [
+                {
+                  "correction": "None required.",
+                  "detail": "No integration defect found by static inspection. Output resolves to the required candidate-specific repository result directory, rather than a baseline or sibling candidate directory; the data source, item indexing, export, and single-card launcher branch are consistent.",
+                  "location": "N/A",
+                  "reproduction": "Inspect train_rqvae.py:43-68, :475-493, :714-728 and :735-763. The SINGLE_GPU_ENV branch is at :739 and main invocation at :761-763.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "integration",
               "verdict": "PASS"
             }
           ],
-          "verdict": "NEEDS_FIX",
-          "verifier": "verify_incoming_context_barycenter_r14_1"
+          "verdict": "PASS",
+          "verifier": "verify_incoming_context_barycenter_r17_1"
         }
       ]
     }
   ],
   "issue": "issue121",
+  "iterations": [
+    {
+      "changes": [
+        "modulate not replace",
+        "empty-context gate",
+        "non-detached control",
+        "complete Euclidean ablation"
+      ],
+      "iteration": 2,
+      "review": {
+        "revisions": 14,
+        "stopped_at": "measure-zero gradient branch at exact coincidence"
+      },
+      "smoke": {
+        "epoch_seconds": 6.326,
+        "passed": true,
+        "steps": 24
+      },
+      "stage2": "not trained: the review gate did not return a verified digest",
+      "stage3": null
+    },
+    {
+      "iteration": 3,
+      "changes": [
+        "Sinkhorn-balanced (differentiable) assignment",
+        "sign fix",
+        "torch.where zero-branch replaced by a floor subtraction"
+      ],
+      "stage2": {
+        "epochs": 3000,
+        "final_collision": 0.6525
+      },
+      "sid_metrics": {
+        "L1_codes": 104,
+        "largest_L1_share": 0.693,
+        "L2": 853,
+        "L3": 8545,
+        "ext_distinct": 117,
+        "cooccur_overlap_L3": 0.0571,
+        "adjacency_L3": 0.0192
+      },
+      "gate": {
+        "rule": "cooccur_overlap_L3 > baseline 0.0756 before any Stage 3 budget",
+        "result": "not met",
+        "stage3": "not run"
+      },
+      "structural_conclusion": "the barycentre is shared by many items, so the assignment cannot have more distinct outcomes than the behaviour signal has contexts; the context must be an offset on the item latent, not a replacement of it"
+    }
+  ],
   "matrix": {
     "dimensions": [
       "behavior_evidence",
@@ -22066,6 +22182,22 @@
       "idea_id": "incoming_context_barycenter",
       "revision": 14,
       "signature": "f5eeb2f61f0e3acc"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Make the balanced assignment differentiable with a numerically stable differentiable Sinkhorn implementation (or use a straight-through construction that preserves gradients to the pre-balance scores), and add a smoke test with balanced_assignment=True asserting finite nonzero gradients from the coupled assignment objective to the intended scoring inputs/parameters, alongside behaviour-off and Euclidean controls.",
+          "detail": "The trainer enables BALANCED_ASSIGNMENT at train_rqvae.py:116 and installs it on each quantizer at :580-582. The candidate score is then passed through sinkhorn(), which is decorated @torch.no_grad(), and replaced by log(balanced) at model/layers.py:137-142. Therefore the differentiable soft assignment objective at :154-162 receives detached logits: gradients cannot flow from that objective through the balanced assignment to the incoming-context score, barycentres, encoder scoring path, or behaviour/geometry parameters. The chosen argmax can change, so assignment is affected discretely, but the claimed coupled score has no gradient path through the actual trainer's balanced mechanism. The smoke test calls the default unbalanced model and cannot detect this.",
+          "location": "results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/model/layers.py:80-96, 136-142",
+          "reproduction": "Set layer.balanced_assignment=True as the trainer does, calculate assignment_logits with incoming_assignment_loss, and backpropagate the trainer loss. The balanced tensor is produced under no_grad and becomes the replacement logits; inspect/retain gradients on the pre-balance logits or compare upstream encoder gradients with the coupled score enabled and disabled. They receive no contribution through this score (only ordinary reconstruction/VQ paths remain). This is a static code counterexample; no PyTorch runtime was available.",
+          "severity": "blocking",
+          "verifier": "verify_incoming_context_barycenter_r15_1"
+        }
+      ],
+      "idea_id": "incoming_context_barycenter",
+      "revision": 15,
+      "signature": "ce8b05153d942478"
     }
   ],
   "review_bundles": {
@@ -22105,6 +22237,12 @@
       "reason": "the verifiers still reject the implementation after 14 repair rounds, which is the cap",
       "revision": 14,
       "signature": "f5eeb2f61f0e3acc"
+    },
+    {
+      "idea_id": "incoming_context_barycenter",
+      "reason": "the verifiers still reject the implementation after 15 repair rounds, which is the cap",
+      "revision": 15,
+      "signature": "ce8b05153d942478"
     }
   ],
   "round_id": "round_20261027_031345_66",
@@ -22728,18 +22866,8 @@
       "idea_id": "incoming_context_barycenter",
       "job_id": "stage2:incoming_context_barycenter",
       "kind": "stage2",
-      "stage3_job_id": "stage3:incoming_context_barycenter",
-      "status": "done"
-    },
-    {
-      "attempts": 0,
-      "error": null,
-      "failure_kind": null,
-      "idea_id": "incoming_context_barycenter",
-      "job_id": "stage3:incoming_context_barycenter",
-      "kind": "stage3",
       "stage3_job_id": null,
-      "status": "pending"
+      "status": "running"
     }
   ],
   "stage3_jobs": [
@@ -22789,28 +22917,6 @@
     }
   ],
   "step": "stage2",
-  "updated_at": 1793043300.679575,
-  "verification": {},
-  "iterations": [
-    {
-      "iteration": 2,
-      "changes": [
-        "modulate not replace",
-        "empty-context gate",
-        "non-detached control",
-        "complete Euclidean ablation"
-      ],
-      "smoke": {
-        "steps": 24,
-        "passed": true,
-        "epoch_seconds": 6.326
-      },
-      "review": {
-        "revisions": 14,
-        "stopped_at": "measure-zero gradient branch at exact coincidence"
-      },
-      "stage2": "not trained: the review gate did not return a verified digest",
-      "stage3": null
-    }
-  ]
+  "updated_at": 1793044706.5856032,
+  "verification": {}
 }

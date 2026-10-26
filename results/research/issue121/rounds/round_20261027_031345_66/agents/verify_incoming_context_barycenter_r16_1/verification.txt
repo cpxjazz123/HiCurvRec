@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:482-493, 237-335, 137-212, 610-618; model/layers.py:322-345 | Static traced the real trainer path: training parquet adjacent history->target counts produce sparse predecessor lists; epoch refresh maps predecessor encodings to first-code regions and computes Poincare Frechet means; incoming_assignment_loss computes positive/negative curved distances for every candidate and passes these as first-level assignment logits into the RQ-VAE forward. Also checked the stated Euclidean/behaviour-off switches in the same score path and smoke-test comparison code at smoke_test.py:34-51. No runtime was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. Both the train-only predecessor context and Poincare operations participate in the candidate score that controls first-token assignment; the behavior and geometry controls alter this pathway.
+FINDING REPRODUCTION: Code trace at the cited lines; runtime execution is unavailable in this sandbox.
+FINDING CORRECTION: None.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:121-135, 137-212, 276-335, 610-627; model/layers.py:81-87, 124-182; smoke_test.py:8-18, 34-51 | Static autograd/dataflow review plus inspection of the candidate's forward/backward smoke assertions: differentiable Poincare score -> differentiable balanced assignment -> first-level soft assignment and straight-through quantizer -> reconstruction/quantization loss -> backward. The term is consumed, not computed and discarded. Smoke test asserts finite coincident-distance gradient, nonzero finite first-codebook gradient, finite losses, and distinct both-on/behaviour-off and hyperbolic/Euclidean scores and assignments. Runtime not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 instability found. Projection stays within the Poincare ball; the squared-distance helper bounds its argument and regularizes the square-root zero derivative; barycentre operations clamp denominators and use detached epoch caches. The explicit switch comparisons are present.
+FINDING REPRODUCTION: Inspect cited path and smoke assertions. The sandbox lacks PyTorch, so the smoke could not be executed here; that is not treated as a defect.
+FINDING CORRECTION: None.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:41-68, 460-476, 685-728, 735-763; model/model.py:32-41 | Static inspection of actual main/trainer and export paths: repository-relative frozen stage1 embedding and stage0 train parquet inputs; result path is the candidate-specific results/stage2_RQ-VAE/TIGER_incoming_context_barycenter; exported rows enumerate embedding item IDs and JSON keys match those row indices; collision extension makes rows unique. Confirmed launcher checks torchrun rank and SINGLE_GPU_ENV == GENREC_SINGLE_GPU value "1"" before spawning four ranks. Candidate tree and promoted trainer/layers copies compare identical. No trainer run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Writes are scoped to the promoted candidate's required Stage2 result directory, not the baseline or another candidate; the launcher retains both torchrun and the named single-card bypass.
+FINDING REPRODUCTION: Inspect cited constants, main input loading, export mapping, and launcher branches. Runtime execution is unavailable in this sandbox.
+FINDING CORRECTION: None.

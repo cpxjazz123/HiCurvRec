@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:482-493, 237-335, 187-212, 598-618 | Traced training-parquet adjacent history→target count construction into per-item predecessor-region barycentres (Poincare projection/log/exp Karcher updates) and hard-negative barycentres, then traced the positive/negative squared geodesic distances into the first-level candidate score and the RQ-VAE assignment input. The path is active when BEHAVIOUR_ON=True and GEOMETRY="poincare". smoke_test.py:34-51 specifies both behavior-off and Euclidean comparisons and checks assignment differences; this is code inspection only, not a runtime execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking fidelity defect found. Both train-only incoming context and curved distance computations affect the candidate scores used by the first-token quantizer.
+FINDING REPRODUCTION: Follow train_rqvae.py:482-493 → :598-618 → :137-212 and model/layers.py:128-186; the supplied smoke comparison is at smoke_test.py:34-51.
+FINDING CORRECTION: None required.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:164-212; model/layers.py:128-186; smoke_test.py:8-18, 34-51 | Inspected the differentiable projected Poincare squared-distance expression and the score-to-soft-assignment-to-quantization-loss path. The assignment term is consumed as logits, and its soft distribution contributes to quant_loss; codebook gradients are not detached. The smoke file checks finite coincidence gradients, finite losses/codebook gradients, and both-on versus behavior-off/Euclidean assignment changes. Runtime execution is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No dead coupled term or evident float32 overflow/NaN hazard found in the examined forward/backward path. The barycentre refresh is intentionally no-grad/cache-detached; the current candidate score remains differentiable through code prototypes and the encoder. Stable squared-distance handling explicitly protects coincident points.
+FINDING REPRODUCTION: Inspect train_rqvae.py:121-134, :168-185, :198-212 and model/layers.py:149-185; the minimal forward/backward and control assertions are smoke_test.py:34-51.
+FINDING CORRECTION: None required.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:41-68, 460-493, 685-728, 735-763 | Traced repository-root discovery and candidate-specific results/stage2_RQ-VAE/TIGER_incoming_context_barycenter outputs; training statistics come from results/stage0_build_parquet/train.parquet; all-embedding row enumeration is used for SID JSON keys. Export enforces unique extended SIDs. Inspected launcher dispatch including SINGLE_GPU_ENV="GENREC_SINGLE_GPU" and the single-card return branch. No trainer was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by static inspection. Output resolves to the required candidate-specific repository result directory, rather than a baseline or sibling candidate directory; the data source, item indexing, export, and single-card launcher branch are consistent.
+FINDING REPRODUCTION: Inspect train_rqvae.py:43-68, :475-493, :714-728 and :735-763. The SINGLE_GPU_ENV branch is at :739 and main invocation at :761-763.
+FINDING CORRECTION: None required.

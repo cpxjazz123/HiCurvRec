@@ -156,3 +156,39 @@ The next session should either (a) fix the measure-zero gradient branch and take
 through the review once more, or (b) run the same modulate-not-replace design through the
 issue #117 executable-verification flow, whose gate executes tests instead of reviewing
 prose, and then `stage2_start` it.
+
+## Iteration 3: Sinkhorn-balanced assignment
+
+The balance was added so the behaviour/curvature cost could enter at full strength without
+collapse: the coupled logits are Sinkhorn-normalised (differentiable variant, `SK_EPSILON`
+0.003, `SK_ITERS` 50) before the `argmax`, so a near-uniform code marginal makes a single
+bucket expensive.
+
+| run | L1 codes | largest L1 share | L2 | L3 | ext | `cooccur_overlap_L3` | adjacency L3 |
+|---|---|---|---|---|---|---|---|
+| baseline `TIGER_RQ-VAE` | 247 | ~0.02 | — | ~20,000 | 42 | **0.0756** | 0.0506 |
+| iteration 1 (replace) | 116 | 0.985 | 572 | 6,460 | 136 | 0.0584 | 0.0212 |
+| iteration 3a (balance, sign error) | 124 | 0.821 | 1,388 | 7,805 | 143 | 0.0560 | 0.0176 |
+| iteration 3b (balance, sign fixed) | 104 | 0.693 | 853 | 8,545 | 117 | **0.0571** | 0.0192 |
+
+The balance softens the collapse (0.985 -> 0.821 -> 0.693) and does nothing for the target
+metric, which stays near 0.057 against the 0.0756 baseline. **The Stage 3 budget was not
+spent**, per the rule set after iteration 1: the target has to clear the baseline first.
+
+### Why the collapse is structural, not a matter of weights or balancing
+
+Every variant shares one property: the item's assignment is driven by a **barycentre of its
+predecessors' codepoints**, and that barycentre is a function of *which region the
+predecessors fall in*, not of the item itself. Items whose predecessors land in the same few
+regions therefore receive **the same cost vector** and, necessarily, the same `argmax`. The
+partition cannot have more distinct outcomes than the behaviour signal has distinct
+contexts -- a few hundred -- while a usable SID needs about 20,000 distinct triples. No
+weight, temperature, or marginal balancing can create information that the shared context
+does not carry.
+
+The fix is therefore not another knob but a different composition: the context must be an
+**offset on the item's own latent** (`x_i + offset(context_i)`, or a residual gate that
+multiplies the per-item Euclidean cost by a bounded factor derived from the context) so that
+two items with identical contexts still separate by their own embeddings. That keeps the
+behaviour signal in the assignment while preserving 24.6k distinct outcomes, and it is the
+design to try next.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:482-493, 598-618, 137-212; model/layers.py:307-330 | Source-traced train-only adjacent history->target counts and co-consumption negatives into per-epoch Poincare predecessor barycentres (train_rqvae.py:237-335), then into the first-level candidate score through Poincare candidate-to-positive/negative barycentre distances; RQLayer forwards that score to level-0 VQ. Confirmed the scoring computation consumes both the incoming-behaviour barycentres and curved distance. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No fidelity defect found. The coupled score is not an unrelated auxiliary loss or an unused helper: it supplies first-level candidate assignment logits.
+FINDING REPRODUCTION: Trace incoming construction at train_rqvae.py:482-532, barycentre refresh at :237-335, scoring at :187-212, and quantizer consumption at model/layers.py:318-324.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:208-212; model/layers.py:80-96, 136-167 | Source-traced the coupled score into balanced assignment and the quantizer's soft straight-through path. The supplied smoke_test.py:34-50 describes useful comparisons and gradients, but its path does not set balanced_assignment=True, so it does not exercise the trainer's actual balanced path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/model/layers.py:80-96, 136-142
+FINDING DETAIL: The trainer enables BALANCED_ASSIGNMENT at train_rqvae.py:116 and installs it on each quantizer at :580-582. The candidate score is then passed through sinkhorn(), which is decorated @torch.no_grad(), and replaced by log(balanced) at model/layers.py:137-142. Therefore the differentiable soft assignment objective at :154-162 receives detached logits: gradients cannot flow from that objective through the balanced assignment to the incoming-context score, barycentres, encoder scoring path, or behaviour/geometry parameters. The chosen argmax can change, so assignment is affected discretely, but the claimed coupled score has no gradient path through the actual trainer's balanced mechanism. The smoke test calls the default unbalanced model and cannot detect this.
+FINDING REPRODUCTION: Set layer.balanced_assignment=True as the trainer does, calculate assignment_logits with incoming_assignment_loss, and backpropagate the trainer loss. The balanced tensor is produced under no_grad and becomes the replacement logits; inspect/retain gradients on the pre-balance logits or compare upstream encoder gradients with the coupled score enabled and disabled. They receive no contribution through this score (only ordinary reconstruction/VQ paths remain). This is a static code counterexample; no PyTorch runtime was available.
+FINDING CORRECTION: Make the balanced assignment differentiable with a numerically stable differentiable Sinkhorn implementation (or use a straight-through construction that preserves gradients to the pre-balance scores), and add a smoke test with balanced_assignment=True asserting finite nonzero gradients from the coupled assignment objective to the intended scoring inputs/parameters, alongside behaviour-off and Euclidean controls.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_031345_66/incoming_context_barycenter/train_rqvae.py:41-68, 460-475, 685-728, 735-763 | Source-traced trainer entry, root and candidate result path derivation, frozen embedding/train parquet inputs, indexed SID JSON export, and launcher branches. The single-card branch explicitly reads SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at :118, :739-740; torchrun path and rank handling are at :735-763. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer resolves output to results/stage2_RQ-VAE/TIGER_incoming_context_barycenter, exports item IDs by embedding-row enumeration, and avoids writing to the baseline/candidate-tree result directory. It reads the frozen stage1 embedding and stage0 train parquet paths.
+FINDING REPRODUCTION: Inspect path constants and _repository_root at :41-68, parquet/embedding reads at :474-475, SID construction and JSON serialization at :714-728, and launcher single-card/DDP branches at :735-763.
+FINDING CORRECTION: none

@@ -3,65 +3,18 @@
     {
       "attempts": 1,
       "error": null,
-      "finished_at": 1793039966.6263053,
+      "finished_at": null,
       "gpu": "0,1,2,3",
       "idea_id": "incoming_context_barycenter",
       "job_id": "stage2:incoming_context_barycenter",
       "kind": "stage2",
       "launch_mode": "ddp4",
-      "queued_at": 1793039174.2499545,
-      "result": {
-        "metrics": {
-          "full_unique_items": 24587,
-          "level2_distinct_prefixes": 572,
-          "negative_hits": 519280,
-          "pairs": 52855,
-          "positive_hits": 52093,
-          "valid_l1_hard_er": 1.0031774765059314,
-          "valid_l1_negative_hit_rate": 0.9824614511399111,
-          "valid_l1_positive_hit_rate": 0.9855831993188913
-        },
-        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_incoming_context_barycenter/item_sids.json",
-        "sid_sha256": "4fadabd21762a83313d5d175255d9910ec5ac8a0aba3828c91b6669712a2dcb2",
-        "validity": {
-          "diagnostics": {
-            "full_unique_items": 24587,
-            "level2_distinct_prefixes": 572,
-            "negative_hits": 519280,
-            "pairs": 52855,
-            "positive_hits": 52093,
-            "valid_l1_hard_er": 1.0031774765059314,
-            "valid_l1_negative_hit_rate": 0.9824614511399111,
-            "valid_l1_positive_hit_rate": 0.9855831993188913
-          },
-          "reference_status": {
-            "status": "verified"
-          },
-          "refused": null,
-          "valid": true
-        }
-      },
+      "queued_at": 1793044706.453263,
+      "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_incoming_context_barycenter",
       "round_id": "round_20261027_031345_66",
-      "stage3_job_id": "stage3:incoming_context_barycenter",
-      "started_at": 1793039174.2625213,
-      "status": "done",
-      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_incoming_context_barycenter"
-    },
-    {
-      "attempts": 0,
-      "error": null,
-      "finished_at": null,
-      "idea_id": "incoming_context_barycenter",
-      "job_id": "stage3:incoming_context_barycenter",
-      "kind": "stage3",
-      "queued_at": 1793039966.9301782,
-      "result": null,
-      "round_id": "round_20261027_031345_66",
-      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_incoming_context_barycenter/item_sids.json",
-      "stage2_job_id": "stage2:incoming_context_barycenter",
-      "started_at": null,
-      "status": "pending",
+      "started_at": 1793044706.4613078,
+      "status": "running",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_incoming_context_barycenter"
     }
   ],

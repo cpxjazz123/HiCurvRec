@@ -77,6 +77,19 @@ class VQLayer(nn.Module):
             raise ValueError("Cannot center a constant distance matrix.")
         return (distances - middle) / amplitude
 
+    @staticmethod
+    def _balanced_assignment(logits: torch.Tensor, epsilon: float, iterations: int) -> torch.Tensor:
+        """Differentiable Sinkhorn balancing of the coupled assignment logits."""
+        # ``logits`` here are already negative costs (higher = better), so the
+        # exponent carries a PLUS sign. Using -logits put the weight on the
+        # most expensive codes: the first balanced run did exactly that and
+        # still left 82% of the catalogue in one first-level bucket.
+        q = torch.softmax(logits / max(epsilon, 1e-6), dim=-1)
+        for _ in range(int(iterations)):
+            q = q / q.sum(dim=0, keepdim=True).clamp_min(1e-12)
+            q = q / q.sum(dim=1, keepdim=True).clamp_min(1e-12)
+        return q
+
     @torch.no_grad()
     def sinkhorn(
         self,
@@ -128,6 +141,23 @@ class VQLayer(nn.Module):
                 )
             if not torch.isfinite(assignment_logits).all():
                 raise ValueError("assignment_logits must be finite")
+        # Balance the coupled assignment. Sinkhorn normalisation gives the batch
+        # a near-uniform code marginal, which makes a collapsed solution (one
+        # bucket absorbing the catalogue) infeasible; that is what lets the
+        # behaviour/curvature term enter at full strength without the runaway
+        # collapse the first iteration measured (largest L1 bucket 98.5%).
+        if assignment_logits is not None and getattr(self, "balanced_assignment", False):
+            # Differentiable balancing. The class's own sinkhorn() is decorated
+            # @torch.no_grad() because it only ever produced a hard index; using
+            # it here would cut the soft assignment objective off the graph and
+            # turn the coupled term into a dead one. This variant keeps the
+            # gradient and produces rows that sum to one, so log(q).softmax()
+            # below recovers q exactly.
+            balanced = self._balanced_assignment(
+                assignment_logits.double(), self.sk_epsilon, self.sk_iters)
+            if torch.isnan(balanced).any() or torch.isinf(balanced).any():
+                raise RuntimeError("Balanced assignment returned NaN or infinity.")
+            assignment_logits = torch.log(balanced.clamp_min(1e-12)).to(assignment_logits.dtype)
         embed_ind = (assignment_logits.argmax(-1) if assignment_logits is not None
                      else self._indices(distances, infer_use_sk))
         onehot = F.one_hot(embed_ind, self.n_embed)

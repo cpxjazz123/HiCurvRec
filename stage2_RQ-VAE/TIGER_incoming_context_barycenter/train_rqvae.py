@@ -113,6 +113,7 @@ BEHAVIOUR_ON = True
 GEOMETRY = "poincare"
 CURVATURE = 1.0
 CONTEXT_WEIGHT = 0.10
+BALANCED_ASSIGNMENT = True   # iteration 3: Sinkhorn-balance the coupled assignment
 CONTEXT_TEMPERATURE = 0.2
 SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"
 
@@ -124,7 +125,13 @@ def _stable_squared_poincare_from_arg(arg: torch.Tensor) -> torch.Tensor:
     # root prevents 0 * inf in autograd; its squared-distance bias is < 2e-12.
     root_arg = (stable_arg * 0.5).clamp_min(1e-12)
     value = 4.0 * torch.asinh(torch.sqrt(root_arg)).square()
-    return torch.where(stable_arg == 0, torch.zeros_like(value), value)
+    # Keep the graph connected at exact coincidence: a torch.where against a
+    # constant zero selects a branch with no gradient, so a codepoint that sits
+    # exactly on a barycentre would silently stop training that pair. Subtract
+    # the value the floor adds instead, which is exactly zero at arg == 0 and
+    # carries the derivative of the asinh form everywhere.
+    floor_value = 4.0 * float(torch.asinh(torch.sqrt(torch.tensor(1e-12))).square())
+    return (value - floor_value).clamp_min(0.0)
 
 
 def incoming_assignment_loss(model: RQVAE, batch_ids: torch.Tensor,
@@ -195,7 +202,13 @@ def incoming_assignment_loss(model: RQVAE, batch_ids: torch.Tensor,
     bias = bias / bias.abs().mean(dim=-1, keepdim=True).clamp_min(eps)
     gate = (concentration[batch_ids].unsqueeze(-1) if concentration is not None
             else torch.ones_like(bias[:, :1]))
-    scores = euclidean_cost + CONTEXT_WEIGHT * gate * bias
+    # Iteration 3: with the Sinkhorn balance active on the assignment the
+    # behaviour/curvature cost can enter at full strength; the balance, not a
+    # small weight, is what prevents the collapse.
+    if BALANCED_ASSIGNMENT:
+        scores = gate * behaviour_cost + (1.0 - gate) * euclidean_cost
+    else:
+        scores = euclidean_cost + CONTEXT_WEIGHT * gate * bias
     return -scores / CONTEXT_TEMPERATURE
 
 
@@ -564,6 +577,9 @@ def main() -> None:
     if rank == 0:
         print("[RecBole RQ-VAE] initializing codebooks with KMeans", flush=True)
     raw_module = model.module if isinstance(model, DDP) else model
+    # iteration 3: balance the coupled assignment on every level's quantizer
+    for layer in raw_module.rq.vq_layers:
+        layer.balanced_assignment = BALANCED_ASSIGNMENT
     with torch.no_grad():
         raw_module.init_codebook(train_embeddings.to(device))
     if world_size > 1:
