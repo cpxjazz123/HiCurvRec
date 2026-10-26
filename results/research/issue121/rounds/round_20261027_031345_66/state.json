@@ -22564,7 +22564,23 @@
         "adjacency_L3": 0.0212
       },
       "verdict": "negative: the assignment was replaced by the behaviour/curvature logits and the partition collapsed",
-      "stage3": "dispatched"
+      "stage3": "dispatched",
+      "metrics": {
+        "test_recall@5": 0.03889343477428228,
+        "test_recall@10": 0.058496840126046765,
+        "test_ndcg@10": 0.03205664072791379,
+        "n_eval": 57439
+      },
+      "comparison": {
+        "baseline_control": 0.055537,
+        "delta_vs_baseline": 0.00296,
+        "target": 0.065,
+        "passed": false
+      },
+      "counter_example": {
+        "claim": "cooccur_overlap_L3 0.0584 (below the 0.0756 baseline) yet recall 0.0585 (above the 0.0555 baseline)",
+        "why": "the first level collapsed into one bucket holding 98.5% of the catalogue, so the beam search discriminates on the 572 L2 and 6460 L3 groups instead; the coherence metric is a population-level predictor, not a sufficient statistic"
+      }
     }
   ]
 }

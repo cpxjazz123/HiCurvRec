@@ -84,3 +84,28 @@ The measured evidence that should decide between them: `cooccur_overlap_L3` is t
 observed arm sits at 0.168), while `ext_distinct` is negative (-0.471) and the L1 code count
 is irrelevant (-0.199, p = 0.117). A next iteration must show the target moving above 0.0756
 before any Stage 3 budget is spent on it.
+
+## Stage 3 result (recorded after the SID metrics, per the measurement contract)
+
+| metric | value |
+|---|---|
+| `test_recall@10` | **0.058497** |
+| `test_recall@5` | 0.038893 |
+| `test_ndcg@10` | 0.032057 |
+| baseline `TIGER_RQ-VAE` | 0.055537 (delta **+0.0030**) |
+| target | 0.065 (not met) |
+
+**This is a counter-example to the coherence curve, and it is the most useful thing this
+round produced.** The table's `cooccur_overlap_L3` is 0.0584, *below* the baseline's 0.0756,
+and the curve fitted on 67 tables predicts about 0.049 at that value; the measured recall is
+0.0585, *above* the baseline. The reason is the collapse: the first level holds 98.5% of the
+catalogue in one bucket, so the beam search discriminates on the 572 L2 groups and the 6,460
+L3 triples, and the first token stops carrying information altogether. That is the regime the
+`l1only` arms in the sample already hinted at (0.0628 with a single L1 code), and it means
+`cooccur_overlap_L3` is a population-level predictor and **not** a sufficient statistic for a
+particular table's recall.
+
+The consequence for the programme: a mechanism has to be judged on the Stage 3 number, with
+the coherence metric as a prior, not as a gate. The next iteration should therefore keep the
+L1 spread (so the metric can be read at all) and test whether the *discrimination* coupling
+raises the metric into the 0.15 band, rather than taking a collapse as a pass.
