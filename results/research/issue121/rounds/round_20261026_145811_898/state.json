@@ -363,7 +363,37 @@
     }
   ],
   "stage3_jobs": [],
-  "step": "stage2",
+  "step": "stage3",
   "updated_at": 1792988940.4806955,
-  "verification": {}
+  "verification": {},
+  "stage3_results": [
+    {
+      "kind": "stage3_result",
+      "idea_id": "behaviour_code_cohesion",
+      "variant": "TIGER_behaviour_code_cohesion",
+      "sid": "results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/item_sids.json",
+      "metrics": {
+        "test_recall@5": 0.03694354010341406,
+        "test_recall@10": 0.054562231236616236,
+        "test_ndcg@10": 0.030372693416861364,
+        "n_eval": 57439
+      },
+      "sid_structure": {
+        "L1_codes": 16,
+        "L2_prefixes": 546,
+        "L3_triples": 8531,
+        "l1_positive_hit_rate": 0.4301,
+        "l1_hard_er": 1.44
+      },
+      "target": {
+        "test_recall@10": 0.065
+      },
+      "passed": false,
+      "comparison": {
+        "baseline_control": 0.055537,
+        "delta_vs_baseline": -0.000975
+      },
+      "note": "the mechanism did what it was designed to do -- the first level collapsed into 16 behaviour cohorts and the canonical positive-prefix rate rose from the baseline's 0.082 to 0.430 -- and Recall still did not improve over the baseline, which is the seventh mechanism to land at or below it"
+    }
+  ]
 }
