@@ -189,3 +189,64 @@ A threshold scan on the same metric finds a split at **0.0585**: tables above it
 **+0.0120** recall (permutation p = 0.0005, 2000 shuffles), so the "jump" is a property of
 the data and not of the search over splits. (The 53-row draft put the split at 0.062; the
 correctly paired full set puts it at 0.0585.)
+
+## Which metrics are correlated with recall (survey over all three batteries)
+
+`correlation_summary.csv` merges the three batteries on `sid_sha256` and tests every
+metric against `test_recall@10` on the same 67 SIDs: Spearman with a bootstrap interval,
+a permutation p-value, the Benjamini-Hochberg adjusted p-value over the 31 metrics that
+survived the duplicate collapse (a lift is its metric divided by a constant, so it is the
+same test), and the best out-of-sample R2 of the shape analysis.
+
+| metric | rho | CI95 | p (BH) | best shape | out-of-sample R2 |
+|---|---|---|---|---|---|
+| `cooccur_overlap_L3` | **0.901** | [0.832, 0.940] | 0.0008 | isotonic | **0.705** |
+| `cooccur_overlap_L2` | 0.864 | [0.774, 0.916] | 0.0008 | isotonic | 0.571 |
+| `cooccur_overlap_L1` | 0.855 | [0.749, 0.917] | 0.0008 | kNN | 0.578 |
+| `succ_overlap_within_L1` | 0.847 | [0.749, 0.907] | 0.0008 | kNN | 0.498 |
+| `adjacency_within_L1` | 0.838 | [0.730, 0.903] | 0.0008 | kNN | 0.470 |
+| `adjacency_L1` | 0.825 | [0.706, 0.901] | 0.0008 | kNN | 0.478 |
+| `adjacency_L3` | 0.822 | [0.693, 0.897] | 0.0008 | kNN | 0.526 |
+| `adjacency_L2` | 0.820 | [0.704, 0.889] | 0.0008 | log | 0.449 |
+| `er_l1` | 0.782 | [0.659, 0.859] | 0.0008 | kNN | 0.375 |
+| `er_l3` | 0.781 | [0.656, 0.857] | 0.0008 | log | 0.439 |
+| `er_l2` | 0.759 | [0.629, 0.844] | 0.0008 | isotonic | 0.426 |
+| `L3_distinct` | 0.676 | [0.494, 0.806] | 0.0008 | kNN | 0.176 |
+| `mi_prefix_successor_L3` | 0.668 | [0.491, 0.795] | 0.0008 | kNN | 0.209 |
+| `p_neg_l3` | −0.639 | [−0.761, −0.469] | 0.0008 | kNN | 0.079 |
+| `gap_l1` | 0.556 | [0.299, 0.748] | 0.0013 | kNN | 0.488 |
+| `mi_prefix_successor_L2` | 0.493 | [0.256, 0.681] | 0.0008 | kNN | −0.007 |
+| `p_neg_l2` | −0.492 | [−0.667, −0.275] | 0.0008 | kNN | −0.051 |
+| `L2_distinct` | 0.476 | [0.226, 0.679] | 0.0008 | kNN | 0.103 |
+| `ext_distinct` | −0.471 | [−0.648, −0.245] | 0.0008 | log | −0.101 |
+| `succ_prefix_purity` | 0.470 | [0.200, 0.693] | 0.0013 | kNN | 0.391 |
+| `mi_prefix_successor_L1` | 0.453 | [0.242, 0.630] | 0.0008 | kNN | 0.015 |
+| `p_pos_l3` | −0.390 | [−0.592, −0.155] | 0.0013 | log | −0.129 |
+| `mi_prefix_successor` | 0.387 | [0.173, 0.580] | 0.0013 | kNN | −0.030 |
+| `gap_l3` | −0.358 | [−0.562, −0.131] | 0.0032 | log | −0.131 |
+| `p_pos_l1` | 0.355 | [0.071, 0.599] | 0.0050 | kNN | 0.363 |
+| `succ_mass_top_decile` | −0.294 | [−0.513, −0.052] | 0.0203 | kNN | 0.040 |
+| `L1_distinct` | −0.199 | [−0.431, 0.070] | 0.117 | quadratic | −0.157 |
+| `p_pos_l2` | −0.090 | [−0.332, 0.160] | 0.527 | log | −0.192 |
+| `L1_code_entropy_bits` | −0.035 | [−0.303, 0.236] | 0.832 | kNN | 0.002 |
+| `p_neg_l1` | 0.019 | [−0.259, 0.281] | 0.904 | kNN | −0.027 |
+| `gap_l2` | 0.010 | [−0.235, 0.253] | 0.946 | linear | −0.178 |
+
+Three readings, and the third is the one that changes how a mechanism should be designed:
+
+1. **Three correlated families.** Co-occurrence overlap (L3/L2/L1, rho 0.86–0.90),
+   successor-side coherence (`succ_overlap_within_L1`, `adjacency_within_L1`,
+   `adjacency_L1/L2/L3`, rho 0.82–0.85) and held-out prefix discrimination
+   (`er_l1/l2/l3`, rho 0.76–0.78) all survive the multiplicity correction.
+   `L1_distinct`, `L1_code_entropy_bits`, `p_pos_l2`, `p_neg_l1` and `gap_l2` do not:
+   the number of codes at the first level, the entropy of that level, and the
+   positive-side hit rates carry no information about the recall.
+2. **Ranking is not the same as predicting.** `L3_distinct` (rho 0.676) and `p_neg_l3`
+   (rho −0.639) rank the tables well but their best out-of-sample R2 is 0.18 and 0.08:
+   they are monotone but noisy. `gap_l1` is the other way round (rho 0.556, R2 0.488).
+   Only `cooccur_overlap_L3` is both strongly ranked and strongly predictive.
+3. **The families are not independent levers.** Their mutual rank correlations run from
+   0.58 to 0.97, and `mi_prefix_successor_L3`, `L3_distinct` and `p_neg_l3` correlate
+   with each other at ±1.00, i.e. they are the same quantity read three ways. Moving one
+   of these metrics moves the others, so the choice of metric is a choice of *which
+   behaviour to enforce*, not of which knob to turn.
