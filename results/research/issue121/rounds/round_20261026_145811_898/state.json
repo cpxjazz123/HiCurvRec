@@ -93,6 +93,19 @@
       "event": "implementation_verified",
       "idea_id": "behaviour_code_cohesion",
       "revision": 4
+    },
+    {
+      "at": 1792993352.5448916,
+      "event": "wider_l3",
+      "idea_id": "behaviour_code_cohesion",
+      "reason": "the measured loss is at depth 4; a wider third codebook makes the prefix near-unique so the extension token becomes nearly constant",
+      "revision": 5
+    },
+    {
+      "at": 1792993391.188975,
+      "event": "implementation_verified",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 5
     }
   ],
   "ideas": [
@@ -200,13 +213,13 @@
           }
         }
       ],
-      "revision": 4,
+      "revision": 5,
       "smoke": {
         "epoch_seconds": 1.226,
         "passed": true,
         "steps": 24
       },
-      "source_digest": "9eafae230cd98326584a9fdbd3c0da68b5fe8b691eee5d30d3e9e37eb6eb1498",
+      "source_digest": "73aea3b047f878cbe7ede82243f647c30f89a8f4f533b82044a462a45d8b33a4",
       "status": "verified",
       "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion",
       "tree_exists": true,
@@ -214,53 +227,53 @@
         {
           "checks": [
             {
-              "exercised_how": "Traced training batches from item IDs through train.parquet-derived directed successor pairs, pair-to-row lookup, Poincare projection/distances and soft assignment, into the added optimizer loss. This is one connected pathway: behavior chooses the paired item assignments and hyperbolic distance scores their codewords.",
-              "exercised_path": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:227-242, 262-299, 421-427",
+              "exercised_how": "Source-traced the training-only user successor-pair construction from train.parquet through the minibatch cohesion loss; verified the `geometry_on=True` branch projects both encoder latents and first-level codewords into the bounded Poincare ball, uses Poincare squared distances for soft assignments and code-to-code pair scoring, and adds that term to the loss used for backward. This is one connected pathway; `model/utils.py`'s other hyperbolic implementation is not relied on for this finding.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:230-245,265-302,427-430",
               "findings": [
                 {
-                  "correction": "none",
-                  "detail": "No fidelity defect found. The successor relation is sourced only from train.parquet seen_history and target; the curved operation is computed on both latent vectors and first-level codewords in the pair loss. Neither is merely imported or an unrelated side loss.",
-                  "location": "none",
-                  "reproduction": "Inspect train_rqvae.py:229-242 for successor extraction, :283-299 for pair-indexed Poincare soft assignments and expected codeword distance, and :426-427 for addition to the training objective. The behavior-off pair shuffle is at :354-361; geometry-off selects Euclidean cdist at :292-294.",
+                  "correction": "N/A",
+                  "detail": "No blocking defect found. The exercised pathway uses adjacent item pairs from each user's training-only `seen_history` plus `target` sequence (train_rqvae.py:230-245); those pairs select the minibatch items whose soft code assignments are compared under the curved code distance (265-302), and the resulting cohesion term is included in the optimized loss (427-430).",
+                  "location": "N/A",
+                  "reproduction": "Static source trace: follow `_successor_pairs()`'s train.parquet read and pair generation at lines 230-245, then `_cohesion_term()` at lines 265-302, and its loss addition at lines 427-430. No trainer execution was performed.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
-              "name": "behaviour x geometry fidelity",
+              "name": "a) behaviour x geometry fidelity",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Source-level forward/backward trace: the cohesion scalar is added to loss before backward; projection, squared Poincare distance, softmax, and matrix operations remain differentiable with respect to encoder latent and codeword parameters. Runtime execution is not required in this sandbox.",
-              "exercised_path": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:245-299, 421-433",
+              "exercised_how": "Inspected differentiable forward-to-loss and backward path. The cohesion calculations remain in PyTorch autograd; the detached item-row indexing only selects rows. The resulting term differentiates through the encoder latent and first-level codebook weights. Compared the code branches: `BEHAVIOUR_ON=False` shuffles successor targets at lines 357-364; `GEOMETRY_ON=False` replaces the curved distances with Euclidean `cdist` at lines 295-297.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:248-302,427-437",
               "findings": [
                 {
-                  "correction": "none",
-                  "detail": "No dead term or evident non-finite arithmetic defect found. The projection bounds norms, the distance denominator has a positive floor, the acosh argument is floored above one, and the trainer checks loss finiteness before backward. The behavior and geometry switches select distinct computations feeding the loss and gradients. Source inspection supports that comparisons change the computational objective; no runtime gradient or SID comparison is claimed.",
-                  "location": "none",
-                  "reproduction": "Trace _cohesion_term at :287-299 into loss.backward() at :430. Set BEHAVIOUR_ON=False to shuffle successor targets (:354-361), or GEOMETRY_ON=False to use torch.cdist (:292-294), and compare the resulting pair objective/gradient pathway. External GPU smoke remains the runtime proof.",
+                  "correction": "N/A",
+                  "detail": "No dead cohesion term or evident float32 numerical hazard found. With the configured positive curvature, `_project_ball` bounds norms to radius 0.9/sqrt(c) (248-252); the Poincare distance denominator is clamped positive and the `acosh` argument is clamped above 1 (255-262). The expected pair-distance expression (298-302) depends on both soft assignments and code distances. Static inspection supports finite differentiable gradients to encoder and codebook; runtime gradient/assignment comparisons were not executed in this sandbox.",
+                  "location": "N/A",
+                  "reproduction": "Source-level counterfactual check: `GEOMETRY_ON=True` selects Poincare assignment and pair distances, while false selects Euclidean distances; `BEHAVIOUR_ON=False` retains pair count but shuffles right-hand item IDs. In either case the loss is added before `loss.backward()` (427-437). No GPU smoke was run.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
-              "name": "trainability",
+              "name": "b) trainability",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Traced repository-root and arm result path resolution, frozen stage1 embedding and stage0 parquet inputs, trainer and export flow, numeric item-ID JSON keys, and both distributed launcher branches including SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\".",
-              "exercised_path": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:45-70, 323-362, 492-539, 542-571; stage3_T5Train/data/dataset.py:92-111",
+              "exercised_how": "Inspected repository-root and artifact path resolution, frozen stage0 train parquet and stage1 embedding inputs, trainer setup, final SID export, and both launcher branches. The output arm is `results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/`; JSON IDs enumerate embedding rows, and collision extension checks uniqueness. The single-card branch tests the exact `SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\"` constant.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_145811_898/trees/behaviour_code_cohesion/train_rqvae.py:45-70,326-375,495-538,545-574",
               "findings": [
                 {
-                  "correction": "none",
-                  "detail": "No integration defect found. The trainer uses the frozen sentence_t5.npy and train.parquet; outputs are isolated to results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion, the required candidate result directory. It exports one SID per embedding row, extends collisions to uniqueness, and writes contiguous zero-based string item keys. The launcher bypasses torchrun for an existing torchrun rank or a set GENREC_SINGLE_GPU variable, and otherwise retains the four-process torchrun launch.",
-                  "location": "none",
-                  "reproduction": "Check paths at :45-70, frozen inputs and IDs at :337-341, SID/JSON export at :527-533, and launch branching at :542-566. Stage3's loader's indexed-key handling is at stage3_T5Train/data/dataset.py:92-111.",
+                  "correction": "N/A",
+                  "detail": "No integration defect found by source inspection. Inputs resolve to the repository's `stage0_build_parquet/train.parquet` and frozen sentence-T5 embedding file (64-67); outputs and logs/checkpoint resolve only beneath this candidate's Stage2 result directory (61-70). The exported `item_sids.json` maps each zero-based embedding/item row ID to an integer SID (523-536), with uniqueness checked (531-532). `_launch_via_torchrun()` avoids relaunch when already under torchrun and calls `main()` when the configured single-GPU environment variable is set (545-574). The trainer was not run.",
+                  "location": "N/A",
+                  "reproduction": "Static path/branch trace at the cited lines: root is found by walking to the repository marker (45-59); `TRAIN_FILE` is the stage0 train parquet (65); `OUTPUT_JSON` is candidate-specific (62,67); export creates an enumerated item-ID mapping (523-536); launcher handles torchrun, single-card, and default multi-card dispatch (545-574).",
                   "severity": "minor when it does not stop the work"
                 }
               ],
-              "name": "integration",
+              "name": "c) integration",
               "verdict": "PASS"
             }
           ],
           "verdict": "PASS",
-          "verifier": "verify_behaviour_code_cohesion_r4_1"
+          "verifier": "verify_behaviour_code_cohesion_r5_1"
         }
       ]
     }
@@ -363,37 +376,65 @@
     }
   ],
   "stage3_jobs": [],
-  "step": "stage3",
-  "updated_at": 1792988940.4806955,
-  "verification": {},
   "stage3_results": [
     {
-      "kind": "stage3_result",
-      "idea_id": "behaviour_code_cohesion",
-      "variant": "TIGER_behaviour_code_cohesion",
-      "sid": "results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/item_sids.json",
-      "metrics": {
-        "test_recall@5": 0.03694354010341406,
-        "test_recall@10": 0.054562231236616236,
-        "test_ndcg@10": 0.030372693416861364,
-        "n_eval": 57439
+      "comparison": {
+        "baseline_control": 0.055537,
+        "delta_vs_baseline": -0.000975
       },
+      "idea_id": "behaviour_code_cohesion",
+      "kind": "stage3_result",
+      "metrics": {
+        "n_eval": 57439,
+        "test_ndcg@10": 0.030372693416861364,
+        "test_recall@10": 0.054562231236616236,
+        "test_recall@5": 0.03694354010341406
+      },
+      "note": "the mechanism did what it was designed to do -- the first level collapsed into 16 behaviour cohorts and the canonical positive-prefix rate rose from the baseline's 0.082 to 0.430 -- and Recall still did not improve over the baseline, which is the seventh mechanism to land at or below it",
+      "passed": false,
+      "sid": "results/stage2_RQ-VAE/TIGER_behaviour_code_cohesion/item_sids.json",
       "sid_structure": {
         "L1_codes": 16,
         "L2_prefixes": 546,
         "L3_triples": 8531,
-        "l1_positive_hit_rate": 0.4301,
-        "l1_hard_er": 1.44
+        "l1_hard_er": 1.44,
+        "l1_positive_hit_rate": 0.4301
+      },
+      "target": {
+        "test_recall@10": 0.065
+      },
+      "variant": "TIGER_behaviour_code_cohesion"
+    },
+    {
+      "kind": "stage3_result",
+      "idea_id": "behaviour_code_cohesion",
+      "revision": 5,
+      "variant": "TIGER_behaviour_code_cohesion",
+      "wider_L3": 1024,
+      "metrics": {
+        "test_recall@5": 0.035689,
+        "test_recall@10": 0.05484,
+        "test_ndcg@10": 0.030364,
+        "n_eval_partial": 28720,
+        "note": "two of four rank shards were written before the read; the two-shard rate is 0.054840"
+      },
+      "sid_structure": {
+        "L1_codes": 12,
+        "L2_prefixes": 574,
+        "L3_triples": 11517,
+        "l1_positive_hit_rate": 0.4929,
+        "l1_hard_er": 1.548,
+        "extension_distinct": 100,
+        "l3_collision": 0.681
       },
       "target": {
         "test_recall@10": 0.065
       },
       "passed": false,
-      "comparison": {
-        "baseline_control": 0.055537,
-        "delta_vs_baseline": -0.000975
-      },
-      "note": "the mechanism did what it was designed to do -- the first level collapsed into 16 behaviour cohorts and the canonical positive-prefix rate rose from the baseline's 0.082 to 0.430 -- and Recall still did not improve over the baseline, which is the seventh mechanism to land at or below it"
+      "note": "widening the third codebook raised the triple count from 8531 to 11517 and the positive-prefix rate to 0.493, but the extension token still has 100 distinct values and Recall stays with the other seven mechanisms, at or below the baseline"
     }
-  ]
+  ],
+  "step": "stage2",
+  "updated_at": 1792993391.1974695,
+  "verification": {}
 }
