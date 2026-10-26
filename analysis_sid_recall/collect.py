@@ -22,6 +22,7 @@ Everything is written under ``analysis_sid_recall/``:
 from __future__ import annotations
 
 import csv
+import datetime
 import hashlib
 import json
 import subprocess
@@ -119,21 +120,62 @@ def collect_working_tree_sids(blobs: dict) -> None:
                          "bytes": len(payload), "sha256": digest, "stats": stats}
 
 
-def resolve_path_to_content(path: str) -> tuple[str | None, bytes | None, str | None]:
-    """The content of a SID path, from the working tree or from the history."""
+def run_timestamp(run_dir: str) -> float | None:
+    """The epoch seconds of a Stage 3 run directory (``Oct-03-2026_20-34-59``)."""
+    import datetime
+
+    name = Path(run_dir).name
+    for pattern in ("%b-%d-%Y_%H-%M-%S", "%Y-%m-%d_%H-%M-%S"):
+        try:
+            stamp = datetime.datetime.strptime(name, pattern)
+        except ValueError:
+            continue
+        return stamp.timestamp()
+    return None
+
+
+def resolve_path_to_content(path: str, before: float | None = None
+                             ) -> tuple[str | None, bytes | None, str | None, str]:
+    """The content of a SID path *as it was at that moment*.
+
+    A SID path is overwritten: the same ``results/stage2_RQ-VAE/<arm>/item_sids.json``
+    can hold a different table after every Stage 2 run. Pairing a Stage 3 run with
+    the current file therefore attributes a run to a table it never saw. The
+    version that existed at the run's date is the one the run generated from, so
+    the history is consulted with a date filter.
+    """
     candidate = REPO / path
+    if candidate.is_file() and before is None:
+        payload = candidate.read_bytes()
+        return sha256_bytes(payload), payload, None, "working_tree"
+    history = git("log", "--all", "--format=%H|%cI", "--", path).splitlines()
+    best = None
+    for line in history:
+        commit, _, date = line.partition("|")
+        if before is not None:
+            try:
+                when = datetime.datetime.fromisoformat(date).timestamp()
+            except ValueError:
+                continue
+            if when > before:
+                continue
+        best = commit
+        break
+    if best:
+        payload = git_bytes("show", best + ":" + path)
+        if payload:
+            return sha256_bytes(payload), payload, best, "at_run_date"
+    if history:
+        # The file was committed after the run: the earliest surviving version is the
+        # only copy of the table the run could have used.
+        commit = history[-1].split("|", 1)[0]
+        payload = git_bytes("show", commit + ":" + path)
+        if payload:
+            return sha256_bytes(payload), payload, commit, "earliest_surviving"
     if candidate.is_file():
         payload = candidate.read_bytes()
-        return sha256_bytes(payload), payload, None
-    listing = git("rev-list", "--all", "--objects", "--", path).splitlines()
-    for line in reversed(listing):
-        parts = line.split(" ", 1)
-        if len(parts) != 2:
-            continue
-        payload = git_bytes("cat-file", "blob", parts[0])
-        if payload:
-            return sha256_bytes(payload), payload, parts[0]
-    return None, None, None
+        return sha256_bytes(payload), payload, None, "working_tree"
+    return None, None, None, "unresolved"
 
 
 def collect_stage3_runs() -> list:
@@ -225,11 +267,19 @@ def main() -> int:
 
     by_sha = {entry["sha256"]: digest for digest, entry in blobs.items()}
     pairs = []
+    unpaired_runs = []
     for run in runs:
         code = run["code_path"]
         if code.startswith(str(REPO)):
             code = str(Path(code).relative_to(REPO))
-        digest, payload, blob = resolve_path_to_content(code)
+        when = run_timestamp(run["run_dir"])
+        digest, payload, blob, resolution = resolve_path_to_content(code, before=when)
+        if resolution == "unresolved":
+            unpaired_runs.append({"variant": run["variant"], "run_dir": run["run_dir"],
+                                  "code_path": code, "reason": "the SID table this run used is "
+                                  "neither in the working tree nor in the git history",
+                                  **run["metrics"]})
+            continue
         if digest is None:
             continue
         if digest not in by_sha:
@@ -244,7 +294,8 @@ def main() -> int:
             by_sha[digest] = digest
         pairs.append({"sid_sha256": digest, "sid_paths": blobs[by_sha[digest]]["paths"],
                       "variant": run["variant"], "run_dir": run["run_dir"],
-                      "code_path": code, **run["metrics"]})
+                      "code_path": code, "sid_commit": blob,
+                      "sid_resolution": resolution, **run["metrics"]})
 
     names = write_sid_files(blobs)
 
@@ -272,15 +323,17 @@ def main() -> int:
             writer.writerow(row)
 
     with (OUT / "sid_recall.csv").open("w", newline="", encoding="utf-8") as handle:
-        fields = ["sid_sha256", "sid_file", "sid_paths", "variant", "run_dir",
-                  "test_recall@5", "test_recall@10", "test_ndcg@5", "test_ndcg@10", "n_eval"]
+        fields = ["sid_sha256", "sid_file", "sid_paths", "variant", "run_dir", "code_path",
+                  "sid_resolution", "test_recall@5", "test_recall@10", "test_ndcg@5",
+                  "test_ndcg@10", "n_eval"]
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         for pair in sorted(pairs, key=lambda item: -(item.get("test_recall@10") or 0)):
             writer.writerow({
                 "sid_sha256": pair["sid_sha256"], "sid_file": names[pair["sid_sha256"]],
                 "sid_paths": " | ".join(pair["sid_paths"]), "variant": pair["variant"],
-                "run_dir": pair["run_dir"],
+                "run_dir": pair["run_dir"], "code_path": pair["code_path"],
+                "sid_resolution": pair.get("sid_resolution", ""),
                 "test_recall@5": pair.get("test_recall@5"),
                 "test_recall@10": pair.get("test_recall@10"),
                 "test_ndcg@5": pair.get("test_ndcg@5"),
@@ -322,6 +375,14 @@ def main() -> int:
         }
         payload["stage3_run"] = {"variant": pair["variant"], "run_dir": pair["run_dir"]}
         target.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
+    if unpaired_runs:
+        with (OUT / "stage3_runs_without_sid.csv").open("w", newline="", encoding="utf-8") as handle:
+            fields = ["variant", "run_dir", "code_path", "test_recall@5", "test_recall@10",
+                      "test_ndcg@5", "test_ndcg@10", "n_eval", "reason"]
+            writer = csv.DictWriter(handle, fieldnames=fields)
+            writer.writeheader()
+            for run in unpaired_runs:
+                writer.writerow({key: run.get(key) for key in fields})
     (OUT / "sid_recall.json").write_text(json.dumps(
         {"pairs": pairs, "inventory": inventory}, indent=2, ensure_ascii=False),
         encoding="utf-8")

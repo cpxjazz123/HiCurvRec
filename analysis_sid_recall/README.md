@@ -7,10 +7,11 @@ generated from it. Collected read-only by `collect.py` (re-runnable).
 
 | item | count |
 |---|---|
-| SID files in `sids/` (paired only) | 79 |
+| SID files in `sids/` (paired only) | 25 |
 | SID contents seen in the history (577 in total) | 577 |
-| Stage 3 runs paired to a SID | 92 |
-| distinct SIDs that have a recall | 79 |
+| Stage 3 runs paired to a SID | 32 |
+| distinct SIDs that have a recall | 25 |
+| Stage 3 runs whose SID table no longer exists | 66 (in `stage3_runs_without_sid.csv`) |
 | recall source files copied to `recalls/` | 92 |
 
 `sid_recall.csv` / `sid_recall.json` hold one row per (SID content, Stage 3 run) pair with
@@ -20,9 +21,23 @@ event. `sid_inventory.csv` holds one row per **paired** SID content with its pre
 the best recall it ever reached.
 
 The directory keeps **only the paired** SIDs and **only recalls that name a paired SID**:
-79 SID files (96 MB) and 92 recall files, and every recall file carries the `paired_sid`
-block (the SID's sha256, its file name, its paths and the run's own `code_path`), so the
-pairing is verifiable inside the file. The 498 unpaired tables
+25 SID files and 32 recall files, and every recall file carries the `paired_sid` block
+(the SID's sha256, its file name, its paths and the run's own `code_path`), so the pairing
+is verifiable inside the file.
+
+**A SID path is overwritten between runs.** `results/stage2_RQ-VAE/<arm>/item_sids.json`
+holds a different table after every Stage 2 run of that arm, so pairing a run with the
+*current* file attributes it to a table it never generated from. Each run is therefore
+paired with the version of its path **as of the run's date**, taken from the history
+(`sid_resolution = at_run_date`), with two fallbacks: the working tree for a path that
+still exists (`working_tree`) and the earliest surviving version for a path committed
+after the run (`earliest_surviving`).
+
+That correction is why the numbers are much smaller than a naive path-based pairing:
+66 of the 98 Stage 3 runs used a table that exists neither in the working tree nor in the
+history, so they cannot be paired at all -- their recalls are listed separately in
+`stage3_runs_without_sid.csv` (the best of them is 0.064068) rather than being attributed
+to a table they did not use. The 498 unpaired tables
 that the history also contains were pruned; they stay recoverable from the git history, and
 `python analysis_sid_recall/collect.py` (without `--paired-only`) writes them again.
 
