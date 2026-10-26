@@ -7,8 +7,8 @@ generated from it. Collected read-only by `collect.py` (re-runnable).
 
 | item | count |
 |---|---|
-| distinct SID contents collected | 577 |
-| SID files written to `sids/` | 577 |
+| SID files in `sids/` (paired only) | 79 |
+| SID contents seen in the history (577 in total) | 577 |
 | Stage 3 runs paired to a SID | 92 |
 | distinct SIDs that have a recall | 79 |
 | recall source files copied to `recalls/` | 92 |
@@ -16,8 +16,12 @@ generated from it. Collected read-only by `collect.py` (re-runnable).
 `sid_recall.csv` / `sid_recall.json` hold one row per (SID content, Stage 3 run) pair with
 `test_recall@5`, `test_recall@10`, `test_ndcg@5`, `test_ndcg@10` and `n_eval`, taken from the
 run's own `train_start` (which names the `code_path` it generated from) and its `test`
-event. `sid_inventory.csv` holds one row per SID content with its prefix structure and the
-best recall it ever reached.
+event. `sid_inventory.csv` holds one row per **paired** SID content with its prefix structure and
+the best recall it ever reached.
+
+The directory keeps **only the paired** SIDs: 79 files, 96 MB. The 498 unpaired tables
+that the history also contains were pruned; they stay recoverable from the git history, and
+`python analysis_sid_recall/collect.py` (without `--paired-only`) writes them again.
 
 ## The pairing, and its limits
 
@@ -59,6 +63,8 @@ best recall it ever reached.
 | tiger_behavior | Oct-10-2026_16-25-18 | 0.06193 | 0.04072 | 0.03382 | git_history |
 
 ## Reproduce
+
+`--paired-only` prunes the output to the paired set (the current state of this directory).
 
 ```
 python analysis_sid_recall/collect.py

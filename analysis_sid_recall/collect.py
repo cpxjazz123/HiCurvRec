@@ -199,6 +199,24 @@ def write_sid_files(blobs: dict) -> dict:
     return names
 
 
+def prune_unpaired(names: dict, pairs: list) -> int:
+    """Drop the SID files that no Stage 3 run generated from.
+
+    The unpaired tables stay recoverable: they are in the git history, and
+    ``collect.py`` writes them again on the next run without this step.
+    """
+    keep = {pair["sid_sha256"] for pair in pairs}
+    removed = 0
+    for digest, name in names.items():
+        if digest in keep:
+            continue
+        target = SID_DIR / name
+        if target.is_file():
+            target.unlink()
+            removed += 1
+    return removed
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     blobs = collect_sid_blobs()
@@ -232,7 +250,8 @@ def main() -> int:
 
     inventory = []
     for digest, entry in blobs.items():
-        paired = [pair for pair in pairs if pair["sid_sha256"] == digest]
+        # the pairing is keyed by the content hash, not by the git blob id
+        paired = [pair for pair in pairs if pair["sid_sha256"] == entry["sha256"]]
         best = max((pair["test_recall@10"] for pair in paired), default=None)
         inventory.append({
             "sid_sha256": entry["sha256"], "file": names[entry["sha256"]], "bytes": entry["bytes"],
@@ -289,6 +308,20 @@ def main() -> int:
     (OUT / "sid_recall.json").write_text(json.dumps(
         {"pairs": pairs, "inventory": inventory}, indent=2, ensure_ascii=False),
         encoding="utf-8")
+
+    if "--paired-only" in sys.argv:
+        removed = prune_unpaired(names, pairs)
+        keep = {pair["sid_sha256"] for pair in pairs}
+        inventory = [row for row in inventory if row["sid_sha256"] in keep]
+        with (OUT / "sid_inventory.csv").open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(inventory[0]))
+            writer.writeheader()
+            for row in inventory:
+                row = dict(row)
+                row["paths"] = " | ".join(row["paths"])
+                row["levels"] = json.dumps(row["levels"], ensure_ascii=False)
+                writer.writerow(row)
+        print(f"unpaired SID files removed: {removed}")
 
     paired_sids = len({pair["sid_sha256"] for pair in pairs})
     print(f"SID contents collected : {len(blobs)}")
