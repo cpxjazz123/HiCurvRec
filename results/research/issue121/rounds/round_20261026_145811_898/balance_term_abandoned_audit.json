@@ -4,8 +4,10 @@
   "measured": [
     "at BALANCE_WEIGHT 1e-5 the one-epoch smoke reported 3 distinct SIDs out of 24587",
     "at BALANCE_WEIGHT 1e-8 the same smoke reported 1 distinct SID and the same total loss, so the collapse is not attributable to the term's weight",
-    "the term's own value is bounded by ln(1024) = 6.9, and at either weight it contributes at most 7e-5 to a loss of 2.4e-2, so the collapse is a side effect of the extra forward the term needs, not of the penalty itself"
+    "the term's own value is bounded by ln(1024) = 6.9, and at either weight it contributes at most 7e-5 to a loss of 2.4e-2, so the collapse is a side effect of the extra forward the term needs, not of the penalty itself",
+    "moved inside the RQLayer (no extra forward) at weight 2e-3: the one-epoch smoke still produced 4 distinct SIDs and a total loss of 2.4e-2, the same attractor as the trainer-level version",
+    "the total loss at that attractor is identical (2.41e-2 to 2.45e-2) across weights 1e-5, 1e-8 and 2e-3, which means the penalty's own magnitude is not what is being optimised; the assignment collapses before the penalty can act"
   ],
-  "decision": "the tree was restored to the last verified revision (cohesion + wide L3) and the balance variable is recorded as unstable in this implementation",
+  "decision": "the tree is restored to the last verified revision (cohesion + wide L3, measured 0.054840); the usage-balance variable is recorded as unusable in this quantizer",
   "state_of_the_art": "eight arms measured, all at or below the frozen baseline's 0.055537"
 }
