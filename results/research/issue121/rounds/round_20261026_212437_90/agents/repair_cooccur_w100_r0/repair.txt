@@ -1,0 +1,5 @@
+REPAIR: Hard-coded result directory uses TIGER_cooccur_w100 rather than promoted tree name cooccur_w100 | Changed ARM_NAME to "cooccur_w100"; RESULT_DIR and all derived artifacts continue to resolve beneath REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME | Smoke check parsed the trainer and asserted ARM_NAME, SINGLE_GPU_ENV, and the repository-root-derived candidate RESULT_DIR expression; all passed
+REMAINING ISSUE: I could not verify full single-GPU training or Stage3 Recall@10 in this smoke run.
+SMOKE COMMAND: python - <<'PY' [AST syntax and constant/path assertions against results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py]
+SMOKE RESULT: PASS: syntax; ARM_NAME=cooccur_w100; SINGLE_GPU_ENV=GENREC_SINGLE_GPU; candidate RESULT_DIR derives from REPO_ROOT.
+NOTES: Only the reported ARM_NAME defect was changed. The train-loop co-consumption coherence pathway, Poincare-distance assignment branch, repository-root discovery, and frozen single-card environment branch were left intact. The smoke check was static; it did not launch training or modify artifacts outside the candidate tree, except for this requested report.

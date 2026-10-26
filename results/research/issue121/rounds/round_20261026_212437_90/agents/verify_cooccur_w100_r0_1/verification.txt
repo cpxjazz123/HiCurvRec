@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:231-309, 423-427 | Source inspection of the real training call chain: _cooccurrence_rows reads only TRAIN_FILE user histories/targets and forms L2-normalised co-consumption rows; _coherence_term forms batch row cosine similarities and multiplies them by differentiable soft three-level prefix agreement. GEOMETRY_ON maps each residual/code vector with expmap0 and scores with Poincare distance before those soft assignments. The coherence term is added to the actual training loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No scope defect found: the training-only co-consumption signal and curved distance share one connected computation. This is a source-level inspection; no runtime execution was performed.
+FINDING REPRODUCTION: Follow main's TRAIN_FILE assignment/use at train_rqvae.py:65, 347, and 361-363 into _cooccurrence_rows and _coherence_term, then the loss addition at 426-427.
+FINDING CORRECTION: none
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:263-309, 423-433 | Static autograd-path inspection: softmax(-distance/tau), pairwise soft assignment products, and the final weighted similarity objective remain differentiable to encoded vectors and code embeddings; the term is used in loss.backward(). BEHAVIOUR_ON false returns a graph-connected zero; GEOMETRY_ON false selects Euclidean _distances. These switches provide the requested behaviour-off and Euclidean controls. No runtime smoke was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead-term or obvious float32 instability found on the configured path. Poincare expmap inputs are projected to a radius margin (eps 1e-5); curvature and temperature are positive. The requested empirical assignment/gradient changes cannot be established without execution, which the task explicitly exempts here.
+FINDING REPRODUCTION: Inspect _coherence_term and its loss/backward call at the cited lines; run the prescribed one-epoch GPU gradient smoke with both flags on, then separately BEHAVIOUR_ON=False and GEOMETRY_ON=False to compare gradients/assignments.
+FINDING CORRECTION: none
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:46-70, 115-127, 332-365, 527-535, 542-570 | Source inspection of trainer entry point, data paths, export and launcher branches. It reads stage1 sentence_t5.npy and results/stage0_build_parquet/train.parquet; emits item_sids.json keyed by enumerated item ID. The GENREC_SINGLE_GPU branch returns from launcher and then the entry point calls main().
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:61-63
+FINDING DETAIL: The result directory is hard-coded to results/stage2_RQ-VAE/TIGER_cooccur_w100, but this candidate tree's promoted name is cooccur_w100. Thus this trainer writes the candidate SID/checkpoint into a differently named arm directory rather than the required results/stage2_RQ-VAE/<promoted tree name>/; Stage 3/admission will look in the candidate-name directory and will not consume these outputs. Other inspected outputs (logs, checkpoint and SID) all derive from this incorrect RESULT_DIR.
+FINDING REPRODUCTION: Resolve the constants at lines 60-69 for this promoted tree: ARM_NAME evaluates to TIGER_cooccur_w100, so OUTPUT_JSON resolves to results/stage2_RQ-VAE/TIGER_cooccur_w100/item_sids.json instead of results/stage2_RQ-VAE/cooccur_w100/item_sids.json.
+FINDING CORRECTION: Set ARM_NAME to the exact promoted tree name, cooccur_w100, before promotion; keep all candidate artifacts rooted beneath that RESULT_DIR.

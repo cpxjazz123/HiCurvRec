@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:231-309, 419-430 | Static code-path inspection: `_cooccurrence_rows` reads only the frozen `train.parquet` and constructs per-user co-consumption rows; `_coherence_term` uses their batch cosine matrix in the same objective as soft three-level Poincare-distance assignments from expmap0-mapped residuals/code vectors. `GEOMETRY_ON=False` selects Euclidean distances in this pathway and `BEHAVIOUR_ON=False` zeros this term. The trainer adds this term before backward.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. This is one connected behaviour-and-curvature pathway, not an unused helper or two unrelated losses.
+FINDING REPRODUCTION: Source inspection of train_rqvae.py:241-260, 276-309, and 423-430.
+FINDING CORRECTION: none
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:263-309, 423-433; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/model/model.py:26-30; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/model/utils.py:21-59 | Static differentiability and numerical-path inspection (no trainer execution): the softmax assignment probabilities and their pairwise products remain in the autograd graph, and their loss is added before `backward()`. Poincare maps/distances are differentiable; projections bound mapped points inside the ball. Codebook embeddings are used in the distance computation, and encoded residuals feed the next level. Behaviour-off and geometry-off are explicit controls. No dead computed term or evident float32 overflow/NaN step was found in this exercised path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level trainability defect found. Runtime gradient smoke was not run in this environment.
+FINDING REPRODUCTION: Inspect train_rqvae.py:287-309 and 423-433; observe `soft` -> `joint` -> returned scalar -> `loss.backward()`. The unavailable runtime smoke is not treated as a defect.
+FINDING CORRECTION: none
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:46-71, 231-260, 332-365, 492-535, 542-570 | Static integration inspection: root resolution walks to the repository marker; input paths point to stage1 embeddings and frozen stage0 train parquet; result outputs resolve to `results/stage2_RQ-VAE/TIGER_cooccur_w100`; export enumerates item IDs against all embedding rows and writes unique extended SIDs to both formats. Launcher inspection confirms torchrun and the `GENREC_SINGLE_GPU` bypass branch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. The single-card branch checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` and calls `main()` after launcher bypass. Candidate output path is the required promoted-tree result directory, not a baseline or another candidate directory.
+FINDING REPRODUCTION: Inspect train_rqvae.py:60-71, 126, 346-348, 527-535, and 542-570. Runtime execution was not attempted.
+FINDING CORRECTION: none

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:231-311 | Static trace from main at lines 363-365 and 428-429: training-only parquet histories/targets form normalized sparse co-occurrence rows; the coherence term computes pair similarity and multiplies it by joint soft prefix-assignment probabilities, where assignments use expmap0/projection and Poincare distance at each of three levels. Geometry-off switches assignment distances to Euclidean cdist.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No finding. Behaviour and curved geometry participate in one differentiable coherence pathway; this is not an unrelated auxiliary loss or suffix on unchanged quantization.
+FINDING REPRODUCTION: Inspect train_rqvae.py:263-311 and call site at 428-429.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:263-311 | Static autograd trace: softmax of differentiable Poincare distances feeds pair products and the co-occurrence-weighted objective; distance depends on encoded residuals and code vectors, so gradients flow to encoder/codebook. Residual hard-code subtraction is explicitly under no_grad, while each subsequent soft assignment still depends on the differentiable current residual. BEHAVIOUR_ON false returns a graph-connected zero; GEOMETRY_ON false uses Euclidean cdist.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 overflow/NaN step found in the coupled pathway. The requested numerical forward/backward and switch-delta comparisons are runtime measurements; per instruction they are supplied by the prescribed MCP smoke, not required here. Assignment comparisons are structurally controlled by the switches at lines 276 and 290-303.
+FINDING REPRODUCTION: Trace _coherence_term at lines 276-311 and its weighted addition at lines 428-429; the function provides direct behaviour-off and Euclidean branches.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:41-71, 334-572 | Static entry-point trace only: main reads the stage1 embedding and stage0 train parquet, exports an item_id-keyed SID JSON and NumPy matrix, and the launcher checks GENREC_SINGLE_GPU at lines 544-550 before torchrun. Runtime execution is unavailable as specified.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:361, 425-429
+FINDING DETAIL: In multi-rank DDP the model is wrapped with find_unused_parameters=False, but the coherence branch performs a second encoder forward through raw_module.encoder(batch), bypassing the DDP wrapper. The DDP reducer only prepares parameter hooks for the wrapped forward graph. Parameters used exclusively in this second raw-module graph (and potentially all encoder parameters' second-use gradients) are not registered for that reducer pass; this can leave reducer buckets incomplete and hang/error on a subsequent iteration. The first wrapped model(batch) path does not make the second encoder forward safe for DDP reducer bookkeeping.
+FINDING REPRODUCTION: Launch with world_size=4 and BEHAVIOUR_ON=True as the default path does: at each iteration, model(batch) runs through DDP at line 425, then raw_module.encoder(batch) runs outside DDP at line 429 and contributes gradients in loss.backward() at line 432. Observe reducer synchronization on the next iteration; the unwrapped second forward is the differentiating case. Single-card GENREC_SINGLE_GPU=1 does not exercise this DDP defect.
+FINDING CORRECTION: Compute and return the encoded tensor as part of the same DDP-wrapped RQVAE forward (or otherwise restructure the wrapper so every differentiable encoder invocation is inside the DDP forward graph), then pass that returned tensor to _coherence_term. Alternatively use a correctly configured DDP strategy that explicitly supports this multi-forward graph and verify it with the required multi-rank smoke; do not merely set find_unused_parameters=True without checking repeated parameter use/reducer behavior.

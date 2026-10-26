@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w10/train_rqvae.py:231-260,263-309,419-427 | Traced the real training batch path: `_cooccurrence_rows` reads only `TRAIN_FILE` (the stage0 `train.parquet`) and builds per-item normalized co-consumption rows from each user's training history and target; `_coherence_term` turns those rows into pair similarities and combines them with differentiable soft prefix assignments computed from expmap0-mapped residuals/code vectors and Poincare distances; `main` adds that connected term to the training loss. `BEHAVIOUR_ON=False` returns a zero term; `GEOMETRY_ON=False` uses `_distances` for the soft assignments.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behavior signal and curved operation share the soft-assignment/joint-prefix/co-consumption objective, rather than appearing as unrelated losses or a post-quantization suffix.
+FINDING REPRODUCTION: Source trace at the cited path; no runtime execution was attempted, as requested. A runtime gradient smoke remains the stated external GPU check.
+FINDING CORRECTION: None.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w10/train_rqvae.py:263-309,419-433; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w10/model/utils.py:21-59 | Followed the coupled term from the batch's encoded values through expmap/projection, Poincare distance, softmax, pairwise soft prefix probability, and into the weighted loss and backward. The soft distance path remains differentiable to encoder and codebook parameters; hard residual code selection is explicitly supplementary and does not replace the gradient-bearing soft path. The behavior and geometry flags provide the requested behavior-off and Euclidean controls.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 overflow/NaN hazard found in the exercised path. Projection keeps mapped points inside the ball, and the distance operations are composed of differentiable tensor operations. Runtime finiteness and actual parameter-gradient checks are not claimed here.
+FINDING REPRODUCTION: Static path inspection only; compare `BEHAVIOUR_ON=True/False` and `GEOMETRY_ON=True/False` at `train_rqvae.py:276-301`. No trainer execution was attempted.
+FINDING CORRECTION: None. Retain the specified one-epoch GPU gradient smoke as runtime confirmation.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w10/train_rqvae.py:46-71,231-260,332-365,492-535,542-570 | Inspected the real entry point and its path derivation, data loading, export and launcher branches. The trainer reads stage1 embeddings and stage0 `train.parquet`; output paths resolve under repository `results/stage2_RQ-VAE/TIGER_cooccur_coherent_w10pp2/`. Export enumerates all embedding rows into integer SID rows, adds a collision-unique final token, and writes both `.npy` and item-id-keyed JSON. `_launch_via_torchrun` bypasses relaunch when `GENREC_SINGLE_GPU=1` and otherwise invokes torchrun; the child branch also returns when rank is set.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The candidate's own promoted arm directory is used, not the baseline or another candidate's result directory. Actual launcher execution and exported-file validation were not possible/attempted.
+FINDING REPRODUCTION: Static trace of `__main__` through `_launch_via_torchrun` and `main`; inspect output assignments at lines 63-71 and export at lines 521-533. The single-card switch is read at line 546.
+FINDING CORRECTION: None.

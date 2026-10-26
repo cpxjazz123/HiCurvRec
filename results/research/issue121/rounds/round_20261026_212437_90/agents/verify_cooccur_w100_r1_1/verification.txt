@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:231-260,263-309,419-430 | Static trace of the real training batch path: `_cooccurrence_rows` reads only TRAIN_FILE; it builds normalized co-consumption rows from each user's final training history/target. `_coherence_term` computes sparse-row cosine similarities, then multiplies those similarities by differentiable soft three-level prefix-sharing probabilities. With geometry enabled, every level's residual and code vectors are mapped with expmap0 and assigned using Poincare distance; this single behaviour-weighted soft-prefix computation therefore depends on both inputs. Its weighted result is added to the actual trainer loss at lines 426-427. The Euclidean branch at lines 299-301 is an explicit geometry-off comparison; behaviour-off returns a differentiable zero at lines 276-277.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The mechanism is specified in executable form and both switches affect the connected computation. The proposal text fields are blank, but the implementation and stated objective are sufficiently concrete for this code correctness review.
+FINDING REPRODUCTION: Static source trace; no runtime executed, consistent with the stated sandbox limitation.
+FINDING CORRECTION: None.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:263-309,423-433; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/model/utils.py:21-28,42-59 | Followed autograd from the loss through softmax of Poincare distances, curved residual/code mappings, and the encoder/codebook parameters; the result is consumed in the summed training loss before backward. Hard residual code selection is intentionally nondifferentiable, but the soft assignments themselves carry gradients. Behaviour-off explicitly removes this term and geometry-off substitutes the existing Euclidean distance calculation, so each switch changes the coupled loss computation and its gradient pathway. Projection bounds mapped points away from the unit-ball boundary, and curvature is fixed positive (0.1); no evident float32 overflow/NaN hazard in this exercised computation.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or apparent unstable numerical step found by code inspection. The implementation does not include assignment/gradient runtime comparison evidence here; that is covered by the stipulated external GPU smoke, not a reason to block this source review.
+FINDING REPRODUCTION: Inspect `_coherence_term` and its loss addition, then trace the differentiable softmax/distance operations to `loss.backward()`; no shell/PyTorch runtime was used.
+FINDING CORRECTION: None.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:46-70,332-365,492-535,542-570 | Static inspection of trainer entry point, path derivation, frozen input constants, export, and launch branches. The repository root is discovered via the `stage2_RQ-VAE` marker; output is isolated to `results/stage2_RQ-VAE/cooccur_w100/`, the required candidate result directory. Training reads the frozen stage1 embedding and stage0 train parquet. Export enumerates all embedding rows in item-ID order, writes the `.npy` SID matrix and matching string-keyed JSON mapping, and adds a unique collision-extension token. The top-level launcher runs torchrun normally and explicitly bypasses it when `GENREC_SINGLE_GPU=1` (lines 126, 542-547), then calls main.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Trainer execution, data availability, and produced-file contents were not runtime-verified in this sandbox.
+FINDING REPRODUCTION: Inspect the cited constants and entry-point branches; trainer runtime is unavailable as specified.
+FINDING CORRECTION: None.

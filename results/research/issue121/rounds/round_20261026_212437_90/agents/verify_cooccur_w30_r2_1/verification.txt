@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:231-311, 421-435 | Static code-path trace: _cooccurrence_rows reads only TRAIN_FILE; each training batch's sparse co-consumption similarity is multiplied by differentiable joint soft-prefix assignment probabilities, whose distances use expmap0/projection and Poincare distance when GEOMETRY_ON. The objective is added to the loss used for backward.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The behavior signal is the L2-normalized item co-consumption rows, built from a user's training history plus training target (train_rqvae.py:241-260); its pairwise cosine similarity directly weights the probability of sharing all three prefix codes (263-311). The curved metric participates in those assignments, not just in an unrelated loss. Behaviour-off returns a differentiable zero; geometry-off selects Euclidean cdist, providing the requested controls (276-277, 290-303).
+FINDING REPRODUCTION: Trace the call at train_rqvae.py:428-429 into _coherence_term. With both switches on it evaluates the sparse train-only similarity and the Poincare soft assignment jointly; toggling BEHAVIOUR_ON returns zero, and toggling GEOMETRY_ON selects the Euclidean assignment branch.
+FINDING CORRECTION: None required.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:263-311, 421-435; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/model/utils.py:21-59 | Static differentiability/numerical review: the softmax probabilities and pairwise products remain in autograd, are combined with fixed sparse-derived similarities, weighted into the actual training loss and backpropagated. Curved operations use finite-radius projection and safeguarded denominators.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or obvious float32 instability found. Gradients flow from joint soft-prefix probabilities through Poincare distances, expmap0 and encoded activations (train_rqvae.py:290-311); they reach encoder/codebook parameters through the wrapped forward's returned encoded tensor (model/model.py:26-32) and optimizer parameters (train_rqvae.py:428-435). The geometry-off and behaviour-off branches are present. Runtime smoke cannot be executed in this environment as specified; no runtime proof is required here.
+FINDING REPRODUCTION: For a minimal static trace, follow _coherence_term's softmax at train_rqvae.py:303 through pair/joint at 304-305 to the returned scalar at 311, then to loss.backward() at 430-432. With behaviour off the returned term is zero; with geometry off distances switch to cdist at 302. Runtime assignment/gradient comparisons require the stated GPU smoke.
+FINDING CORRECTION: None required.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:46-71, 334-367, 494-541, 544-572 | Static integration trace: root discovery and candidate-specific result paths; frozen embedding/train parquet inputs; full-item export with item IDs enumerated in order; torchrun launcher and GENREC_SINGLE_GPU bypass reviewed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. The path resolves repository root via the stage2_RQ-VAE marker and writes only under results/stage2_RQ-VAE/cooccur_w30 (46-71), while reading stage1 sentence_t5.npy and stage0 train.parquet (65-66). Export generates one row per all_embeddings item in item-id enumeration order, adds a unique collision suffix, and emits both NPY and JSON (523-535). The launcher returns directly when GENREC_SINGLE_GPU="1" and otherwise invokes torchrun (544-572).
+FINDING REPRODUCTION: Follow constants at train_rqvae.py:63-71, export loop at 523-535, and launcher branch at 546-566. The single-card branch is specifically guarded by SINGLE_GPU_ENV at 126 and checks its value at 548.
+FINDING CORRECTION: None required.

@@ -1,0 +1,5 @@
+REPAIR: RESULT_DIR 写入候选 arm 目录之外，原指向 results/stage2_RQ-VAE/cooccur_w100 | 将 ARM_NAME 改为 TIGER_cooccur_w100，保留由 stage2_RQ-VAE 标记向上定位的 REPO_ROOT 和 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME | py_compile 与 smoke 断言通过，确认导出路径为 repository-root/results/stage2_RQ-VAE/TIGER_cooccur_w100；源码无绝对路径字面量
+REMAINING ISSUE: 当前环境缺少 PyTorch，无法导入训练器或执行完整单卡训练；单卡分支已静态断言 GENREC_SINGLE_GPU=1 时跳过 torchrun
+SMOKE COMMAND: python3 -m py_compile train_rqvae.py model/*.py && GENREC_SINGLE_GPU=1 python3 - <<'PY' [静态断言 arm-scoped 路径、单卡分支、训练循环中的 co-occurrence/Poincare 连通路径及无绝对路径]
+SMOKE RESULT: PASS: py_compile; AST/path and smoke assertions; arm=TIGER_cooccur_w100; result path is repository-root/results/stage2_RQ-VAE/TIGER_cooccur_w100; GENREC_SINGLE_GPU branch; connected co-occurrence/Poincare loss pathway
+NOTES: 训练环路已有训练期共现相似度与 Poincare 距离共同作用于软前缀相干损失的实现，本次仅修复报告的输出目录缺陷并保留该实现。

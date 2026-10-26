@@ -42,6 +42,119 @@
       "event": "implementation_verified",
       "idea_id": "cooccur_coherent_sid",
       "revision": 1
+    },
+    {
+      "at": 1793014548.865029,
+      "event": "verification_needs_repair",
+      "idea_id": "cooccur_w30",
+      "revision": 0,
+      "signature": "626dfcc518162313"
+    },
+    {
+      "at": 1793014595.5131884,
+      "event": "implementation_repaired",
+      "idea_id": "cooccur_w30",
+      "revision": 1
+    },
+    {
+      "at": 1793014595.5193336,
+      "event": "output_paths_rechecked",
+      "idea_id": "cooccur_w30",
+      "verdict": "failed"
+    },
+    {
+      "at": 1793014635.1367407,
+      "event": "implementation_verified",
+      "idea_id": "cooccur_w10",
+      "revision": 0
+    },
+    {
+      "at": 1793014674.4174507,
+      "event": "verification_needs_repair",
+      "idea_id": "cooccur_w30",
+      "revision": 1,
+      "signature": "d6806259dd6f1921"
+    },
+    {
+      "at": 1793014766.5316837,
+      "event": "implementation_repaired",
+      "idea_id": "cooccur_w30",
+      "revision": 2
+    },
+    {
+      "at": 1793014766.5378425,
+      "event": "output_paths_rechecked",
+      "idea_id": "cooccur_w30",
+      "verdict": "failed"
+    },
+    {
+      "at": 1793014816.4501278,
+      "event": "verification_needs_repair",
+      "idea_id": "cooccur_w30",
+      "revision": 2,
+      "signature": "1a4f7797aedc8270"
+    },
+    {
+      "at": 1793014873.6836083,
+      "event": "implementation_repaired",
+      "idea_id": "cooccur_w30",
+      "revision": 3
+    },
+    {
+      "at": 1793014873.693182,
+      "event": "output_paths_rechecked",
+      "idea_id": "cooccur_w30",
+      "verdict": "passed"
+    },
+    {
+      "at": 1793014946.409704,
+      "event": "implementation_verified",
+      "idea_id": "cooccur_w30",
+      "revision": 3
+    },
+    {
+      "at": 1793017223.6783652,
+      "event": "verification_needs_repair",
+      "idea_id": "cooccur_w100",
+      "revision": 0,
+      "signature": "faac71f0a57d5b2c"
+    },
+    {
+      "at": 1793017263.875791,
+      "event": "implementation_repaired",
+      "idea_id": "cooccur_w100",
+      "revision": 1
+    },
+    {
+      "at": 1793017263.8829076,
+      "event": "output_paths_rechecked",
+      "idea_id": "cooccur_w100",
+      "verdict": "failed"
+    },
+    {
+      "at": 1793017311.663473,
+      "event": "verification_needs_repair",
+      "idea_id": "cooccur_w100",
+      "revision": 1,
+      "signature": "0b842e90d1c7d887"
+    },
+    {
+      "at": 1793017418.0649414,
+      "event": "implementation_repaired",
+      "idea_id": "cooccur_w100",
+      "revision": 2
+    },
+    {
+      "at": 1793017418.0759869,
+      "event": "output_paths_rechecked",
+      "idea_id": "cooccur_w100",
+      "verdict": "passed"
+    },
+    {
+      "at": 1793017466.6750085,
+      "event": "implementation_verified",
+      "idea_id": "cooccur_w100",
+      "revision": 2
     }
   ],
   "ideas": [
@@ -54,6 +167,36 @@
       "hyperbolic_location": "all three levels, through the differentiable soft assignment",
       "hyperbolic_operator": "curved (Poincare) distances feed the soft assignment at each level",
       "idea_id": "cooccur_coherent_sid"
+    },
+    {
+      "ablation_behavior_off": "shuffle the co-occurrence rows across items",
+      "ablation_geometry_off": "Euclidean distance in the soft assignment, same pairs and weights",
+      "behavior_computation": "one sparse row-normalised matrix built from the training histories before training, frozen",
+      "behavior_signal": "train-only co-consumption rows (items sharing a training history)",
+      "coupling_equation": "L = L_rqvae - w * mean_ij S_ij * (p1i.p1j)(p2i.p2j)(p3i.p3j), S = cosine(cooccur_i, cooccur_j)   # weight 0.003",
+      "hyperbolic_location": "all three levels, through the differentiable soft assignment",
+      "hyperbolic_operator": "curved (Poincare) distances feed the soft assignment at each level",
+      "idea_id": "cooccur_w30"
+    },
+    {
+      "ablation_behavior_off": "shuffle the co-occurrence rows across items",
+      "ablation_geometry_off": "Euclidean distance in the soft assignment, same pairs and weights",
+      "behavior_computation": "one sparse row-normalised matrix built from the training histories before training, frozen",
+      "behavior_signal": "train-only co-consumption rows (items sharing a training history)",
+      "coupling_equation": "L = L_rqvae - w * mean_ij S_ij * (p1i.p1j)(p2i.p2j)(p3i.p3j), S = cosine(cooccur_i, cooccur_j)   # weight 0.01",
+      "hyperbolic_location": "all three levels, through the differentiable soft assignment",
+      "hyperbolic_operator": "curved (Poincare) distances feed the soft assignment at each level",
+      "idea_id": "cooccur_w10"
+    },
+    {
+      "ablation_behavior_off": "shuffle the co-occurrence rows across items",
+      "ablation_geometry_off": "Euclidean distance in the soft assignment, same pairs and weights",
+      "behavior_computation": "one sparse row-normalised matrix built from the training histories before training, frozen",
+      "behavior_signal": "train-only co-consumption rows (items sharing a training history)",
+      "coupling_equation": "L = L_rqvae - w * mean_ij S_ij * (p1i.p1j)(p2i.p2j)(p3i.p3j), S = cosine(cooccur_i, cooccur_j)   # weight 1e-1, 100x the first run",
+      "hyperbolic_location": "all three levels, through the differentiable soft assignment",
+      "hyperbolic_operator": "curved (Poincare) distances feed the soft assignment at each level",
+      "idea_id": "cooccur_w100"
     }
   ],
   "ideas_rejected": [],
@@ -163,6 +306,390 @@
           "verifier": "verify_cooccur_coherent_sid_r1_1"
         }
       ]
+    },
+    {
+      "archived_findings": [
+        {
+          "archived_at_revision": 2,
+          "check": "output isolation",
+          "correction": "write only into the candidate's own result directory results/stage2_RQ-VAE/TIGER_<idea>/",
+          "detail": "the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/cooccur_w30",
+          "location": "train_rqvae.py",
+          "reproduction": "read the trainer's output constants",
+          "severity": "blocking",
+          "verifier": "preflight"
+        },
+        {
+          "archived_at_revision": 3,
+          "check": "output isolation",
+          "correction": "write only into the candidate's own result directory results/stage2_RQ-VAE/TIGER_<idea>/",
+          "detail": "the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/cooccur_w30",
+          "location": "train_rqvae.py",
+          "reproduction": "read the trainer's output constants",
+          "severity": "blocking",
+          "verifier": "preflight"
+        }
+      ],
+      "assumptions": [],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": null,
+      "changed_files": [
+        "train_rqvae.py"
+      ],
+      "deviations": [],
+      "failure_signature": "1a4f7797aedc8270",
+      "idea_id": "cooccur_w30",
+      "notes": "the same coherence objective at weight 0.003, to find the weight that maximises the measured target cooccur_overlap_L3",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30"
+      },
+      "output_preflight": "passed",
+      "proposal_sha256": null,
+      "repairs": [
+        {
+          "remaining_issues": [
+            "The prescribed GPU assignment/gradient comparison for behaviour-off, geometry-off, and both-on could not be executed because PyTorch is not installed in this environment."
+          ],
+          "repairs": [
+            {
+              "change": "Replaced layer._distances(residual) in the geometry-off soft assignment branch with torch.cdist(residual, layer.get_code_embs(), p=2), yielding ordinary Euclidean norm distances; retained identical residual subtraction, pair construction, temperature, and all other settings",
+              "finding": "Geometry-off used squared Euclidean distances, confounding the geometry comparison",
+              "verification": "Source inspection confirms the geometry-off branch now computes pairwise L2 norms while the shared subsequent softmax and residual update remain unchanged; syntax compilation passed. The attempted runtime import/smoke could not run because this environment has no PyTorch."
+            },
+            {
+              "change": "Set ARM_NAME to the promoted tree name cooccur_w30; RESULT_DIR and its checkpoint, logs, and exports consequently resolve below REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / \"cooccur_w30\"",
+              "finding": "Candidate outputs were routed to the wrong arm directory",
+              "verification": "Source assertions confirmed the ARM_NAME constant and derived RESULT_DIR; no absolute path or launcher changes were made."
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "`python - <<'PY'` importing train_rqvae.py, checking ordinary Euclidean distances and assignment gradients, candidate RESULT_DIR, and GENREC_SINGLE_GPU.",
+            "result": "`ModuleNotFoundError: No module named 'torch'`; exited with code 1. Fallback source/syntax smoke printed: `PASS: syntax compilation; Euclidean control uses torch.cdist(p=2); ARM_NAME is cooccur_w30`."
+          }
+        },
+        {
+          "remaining_issues": [
+            "Could not run a real runtime or multi-rank DDP smoke because importing torch fails with ModuleNotFoundError: No module named 'torch'."
+          ],
+          "repairs": [
+            {
+              "change": "RQVAE.forward now returns the encoded activation, and the coherence loss consumes that activation from the same model(batch) call wrapped by DDP; removed the raw_module.encoder(batch) second forward",
+              "finding": "train_rqvae.py:361, 425-429 DDP reducer bypass",
+              "verification": "python -m py_compile train_rqvae.py model/model.py passed and static inspection confirms there is no raw_module.encoder(batch) call; runtime backward smoke could not run because PyTorch is unavailable in this environment"
+            },
+            {
+              "change": "Confirmed RESULT_DIR is derived as REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME with ARM_NAME=\"cooccur_w30\"; artifacts (SID, JSON, checkpoint, logs) all derive from RESULT_DIR",
+              "finding": "train_rqvae.py output directory outside arm",
+              "verification": "Static constant inspection confirms no baseline or other candidate output directory is referenced; this resolves the path finding without changing already-correct constants"
+            }
+          ],
+          "revision": 2,
+          "smoke": {
+            "command": "python -m py_compile train_rqvae.py model/model.py && python - <<'PY'\\nimport torch\\nfrom model.model import RQVAE\\nfrom train_rqvae import _tokenizer_config, RESULT_DIR, REPO_ROOT, ARM_NAME\\nm = RQVAE(_tokenizer_config(), in_dim=16)\\nout = m(torch.randn(4, 16))\\nassert len(out) == 5 and out[4].shape == (4, 32)\\n(out[0].square().mean() + out[4].square().mean()).backward()\\nassert all(p.grad is not None for p in m.encoder.parameters())\\nassert RESULT_DIR == REPO_ROOT / 'results' / 'stage2_RQ-VAE' / ARM_NAME\\nprint('PASS: forward returns encoder activation; reconstruction+auxiliary backward reaches encoder; output path is arm-scoped')\\nprint('RESULT_DIR=' + str(RESULT_DIR))\\nPY",
+            "result": "python -m py_compile train_rqvae.py model/model.py succeeded. The runtime portion stopped immediately at import torch with ModuleNotFoundError: No module named 'torch'; therefore its assertions and PASS output were not produced."
+          }
+        },
+        {
+          "remaining_issues": [
+            "Full model training and Stage3 evaluation were not run; no claim is made about Recall@10."
+          ],
+          "repairs": [
+            {
+              "change": "Changed ARM_NAME to TIGER_cooccur_w30; RESULT_DIR and all artifact constants derive from REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME",
+              "finding": "RESULT_DIR pointed to results/stage2_RQ-VAE/cooccur_w30 instead of the candidate arm directory",
+              "verification": "The smoke check parsed the module and verified ARM_NAME is TIGER_cooccur_w30; the existing path expression therefore resolves to the candidate directory, not the baseline directory."
+            }
+          ],
+          "revision": 3,
+          "smoke": {
+            "command": "PYTHONDONTWRITEBYTECODE=1 python - <<'PY' [AST parse and assertions for ARM_NAME, SINGLE_GPU_ENV, coupled loss pathway, and behaviour/geometry switches]",
+            "result": "SMOKE PASS: syntax; arm output path resolves under candidate name; behaviour+Poincare coherence term is in training loss; single-GPU branch present."
+          }
+        }
+      ],
+      "revision": 3,
+      "smoke": {
+        "epoch_seconds": 1.2,
+        "passed": true,
+        "steps": 24
+      },
+      "source_digest": "b192e1617cef5eb24c2d93ab0001b6af61256afc40e0f1f5fb7f4cbae35e3f43",
+      "status": "verified",
+      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Statically traced _cooccurrence_rows -> training batch IDs -> _coherence_term -> weighted total training loss. _cooccurrence_rows constructs normalized item co-consumption rows from TRAIN_FILE only (history plus target per user); the term forms batch pairwise row cosine similarities and weights joint soft-prefix assignment probability. When geometry is on, each level's residual and code vectors are expmap0-mapped into the Poincare ball and scored with Poincare distance before soft assignment. This is one coupled loss pathway, not an imported helper or separate loss.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:231-311, 421-429; model/utils.py:21-59",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No defect found.",
+                  "location": "none",
+                  "reproduction": "Source trace at the cited locations; behavior-off returns a graph-connected zero, and geometry-off substitutes Euclidean cdist in the same per-level soft assignment used by the behavior-weighted objective.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Statically traced the actual forward outputs into _coherence_term and loss.backward(). The softmax/pairwise prefix similarities are differentiable through Poincare distances, expmap0, and codebook embeddings; encoded is returned through the wrapped forward. Hard residual code selection is intentionally detached, while the soft assignment path carries gradients to encoded/encoder and codebook parameters. Behavior-off zeroes this term; geometry-off changes its distance computation to Euclidean cdist.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:263-311, 425-435; model/model.py:26-32; model/layers.py:62-65",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No dead term or evident float32 instability found. Curved vectors are projected into the ball and the distance helper clamps artanh inputs; the positive curvature and epsilon constants are finite. Numerical execution was not performed.",
+                  "location": "none",
+                  "reproduction": "Compare the same batch with BEHAVIOUR_ON toggled or GEOMETRY_ON toggled: respectively the coupled term disappears or its soft assignment distance changes. Backpropagation from the enabled term follows the differentiable soft assignment path; the user-specified runtime smoke is not available in this sandbox.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Statically inspected the real main entry point, input constants, export, and launcher. Input embeddings resolve to stage1_GeneEmbedding/output/sentence_t5.npy and behavior reads results/stage0_build_parquet/train.parquet. The configured arm is TIGER_cooccur_w30, and checkpoint, metrics, NPY, and JSON outputs all resolve beneath results/stage2_RQ-VAE/TIGER_cooccur_w30. Export enumerates all embedding rows as item IDs, extends collisions, checks uniqueness, and writes integer SID rows keyed by their enumerated item IDs. The launcher bypasses torchrun when GENREC_SINGLE_GPU equals \"1\" and otherwise launches four ranks; already-launched rank processes also bypass relaunch.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:46-71, 334-367, 494-537, 544-572",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No integration defect found by source inspection. Trainer execution was not performed.",
+                  "location": "none",
+                  "reproduction": "Inspect constants and call paths at the cited lines; for the single-card branch, set GENREC_SINGLE_GPU=1 and _launch_via_torchrun returns before subprocess.call, after which the module entry point calls main().",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_cooccur_w30_r3_1"
+        }
+      ]
+    },
+    {
+      "assumptions": [],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": null,
+      "changed_files": [
+        "train_rqvae.py"
+      ],
+      "deviations": [],
+      "idea_id": "cooccur_w10",
+      "notes": "the same coherence objective at weight 0.01, to find the weight that maximises the measured target cooccur_overlap_L3",
+      "proposal_sha256": null,
+      "revision": 0,
+      "smoke": {
+        "epoch_seconds": 1.2,
+        "passed": true,
+        "steps": 24
+      },
+      "source_digest": "1ff293c59523f192715effe5d00ee6d626ebddeba4f3fa770f20d0f2bc076bee",
+      "status": "verified",
+      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w10",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Traced the real training batch path: `_cooccurrence_rows` reads only `TRAIN_FILE` (the stage0 `train.parquet`) and builds per-item normalized co-consumption rows from each user's training history and target; `_coherence_term` turns those rows into pair similarities and combines them with differentiable soft prefix assignments computed from expmap0-mapped residuals/code vectors and Poincare distances; `main` adds that connected term to the training loss. `BEHAVIOUR_ON=False` returns a zero term; `GEOMETRY_ON=False` uses `_distances` for the soft assignments.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w10/train_rqvae.py:231-260,263-309,419-427",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No defect found. The behavior signal and curved operation share the soft-assignment/joint-prefix/co-consumption objective, rather than appearing as unrelated losses or a post-quantization suffix.",
+                  "location": "none",
+                  "reproduction": "Source trace at the cited path; no runtime execution was attempted, as requested. A runtime gradient smoke remains the stated external GPU check.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Followed the coupled term from the batch's encoded values through expmap/projection, Poincare distance, softmax, pairwise soft prefix probability, and into the weighted loss and backward. The soft distance path remains differentiable to encoder and codebook parameters; hard residual code selection is explicitly supplementary and does not replace the gradient-bearing soft path. The behavior and geometry flags provide the requested behavior-off and Euclidean controls.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w10/train_rqvae.py:263-309,419-433; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w10/model/utils.py:21-59",
+              "findings": [
+                {
+                  "correction": "None. Retain the specified one-epoch GPU gradient smoke as runtime confirmation.",
+                  "detail": "No dead coupled term or evident float32 overflow/NaN hazard found in the exercised path. Projection keeps mapped points inside the ball, and the distance operations are composed of differentiable tensor operations. Runtime finiteness and actual parameter-gradient checks are not claimed here.",
+                  "location": "none",
+                  "reproduction": "Static path inspection only; compare `BEHAVIOUR_ON=True/False` and `GEOMETRY_ON=True/False` at `train_rqvae.py:276-301`. No trainer execution was attempted.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the real entry point and its path derivation, data loading, export and launcher branches. The trainer reads stage1 embeddings and stage0 `train.parquet`; output paths resolve under repository `results/stage2_RQ-VAE/TIGER_cooccur_coherent_w10pp2/`. Export enumerates all embedding rows into integer SID rows, adds a collision-unique final token, and writes both `.npy` and item-id-keyed JSON. `_launch_via_torchrun` bypasses relaunch when `GENREC_SINGLE_GPU=1` and otherwise invokes torchrun; the child branch also returns when rank is set.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w10/train_rqvae.py:46-71,231-260,332-365,492-535,542-570",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No integration defect found by source inspection. The candidate's own promoted arm directory is used, not the baseline or another candidate's result directory. Actual launcher execution and exported-file validation were not possible/attempted.",
+                  "location": "none",
+                  "reproduction": "Static trace of `__main__` through `_launch_via_torchrun` and `main`; inspect output assignments at lines 63-71 and export at lines 521-533. The single-card switch is read at line 546.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_cooccur_w10_r0_1"
+        }
+      ]
+    },
+    {
+      "archived_findings": [
+        {
+          "archived_at_revision": 2,
+          "check": "output isolation",
+          "correction": "write only into the candidate's own result directory results/stage2_RQ-VAE/TIGER_<idea>/",
+          "detail": "the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w100: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/cooccur_w100",
+          "location": "train_rqvae.py",
+          "reproduction": "read the trainer's output constants",
+          "severity": "blocking",
+          "verifier": "preflight"
+        }
+      ],
+      "assumptions": [],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": null,
+      "changed_files": [
+        "train_rqvae.py"
+      ],
+      "deviations": [],
+      "failure_signature": "0b842e90d1c7d887",
+      "idea_id": "cooccur_w100",
+      "notes": "the same objective at 1e-1 because 1e-3..1e-2 moved cooccur_overlap_L3 by only +0.001..+0.006 against the true baseline 0.0756",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w100/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w100/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w100/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w100/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w100/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w100"
+      },
+      "output_preflight": "passed",
+      "proposal_sha256": null,
+      "repairs": [
+        {
+          "remaining_issues": [
+            "I could not verify full single-GPU training or Stage3 Recall@10 in this smoke run."
+          ],
+          "repairs": [
+            {
+              "change": "Changed ARM_NAME to \"cooccur_w100\"; RESULT_DIR and all derived artifacts continue to resolve beneath REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME",
+              "finding": "Hard-coded result directory uses TIGER_cooccur_w100 rather than promoted tree name cooccur_w100",
+              "verification": "Smoke check parsed the trainer and asserted ARM_NAME, SINGLE_GPU_ENV, and the repository-root-derived candidate RESULT_DIR expression; all passed"
+            }
+          ],
+          "revision": 1,
+          "smoke": {
+            "command": "python - <<'PY' [AST syntax and constant/path assertions against results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py]",
+            "result": "PASS: syntax; ARM_NAME=cooccur_w100; SINGLE_GPU_ENV=GENREC_SINGLE_GPU; candidate RESULT_DIR derives from REPO_ROOT."
+          }
+        },
+        {
+          "remaining_issues": [
+            "当前环境缺少 PyTorch，无法导入训练器或执行完整单卡训练；单卡分支已静态断言 GENREC_SINGLE_GPU=1 时跳过 torchrun"
+          ],
+          "repairs": [
+            {
+              "change": "将 ARM_NAME 改为 TIGER_cooccur_w100，保留由 stage2_RQ-VAE 标记向上定位的 REPO_ROOT 和 RESULT_DIR = REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME",
+              "finding": "RESULT_DIR 写入候选 arm 目录之外，原指向 results/stage2_RQ-VAE/cooccur_w100",
+              "verification": "py_compile 与 smoke 断言通过，确认导出路径为 repository-root/results/stage2_RQ-VAE/TIGER_cooccur_w100；源码无绝对路径字面量"
+            }
+          ],
+          "revision": 2,
+          "smoke": {
+            "command": "python3 -m py_compile train_rqvae.py model/*.py && GENREC_SINGLE_GPU=1 python3 - <<'PY' [静态断言 arm-scoped 路径、单卡分支、训练循环中的 co-occurrence/Poincare 连通路径及无绝对路径]",
+            "result": "PASS: py_compile; AST/path and smoke assertions; arm=TIGER_cooccur_w100; result path is repository-root/results/stage2_RQ-VAE/TIGER_cooccur_w100; GENREC_SINGLE_GPU branch; connected co-occurrence/Poincare loss pathway"
+          }
+        }
+      ],
+      "revision": 2,
+      "smoke": {
+        "epoch_seconds": 1.2,
+        "passed": true,
+        "steps": 24
+      },
+      "source_digest": "df716d9f57767e06dc226c1680d943a9a326af73ca65f116cfe5899a0dc81737",
+      "status": "verified",
+      "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Static code-path inspection: `_cooccurrence_rows` reads only the frozen `train.parquet` and constructs per-user co-consumption rows; `_coherence_term` uses their batch cosine matrix in the same objective as soft three-level Poincare-distance assignments from expmap0-mapped residuals/code vectors. `GEOMETRY_ON=False` selects Euclidean distances in this pathway and `BEHAVIOUR_ON=False` zeros this term. The trainer adds this term before backward.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:231-309, 419-430",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "No defect found. This is one connected behaviour-and-curvature pathway, not an unused helper or two unrelated losses.",
+                  "location": "none",
+                  "reproduction": "Source inspection of train_rqvae.py:241-260, 276-309, and 423-430.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static differentiability and numerical-path inspection (no trainer execution): the softmax assignment probabilities and their pairwise products remain in the autograd graph, and their loss is added before `backward()`. Poincare maps/distances are differentiable; projections bound mapped points inside the ball. Codebook embeddings are used in the distance computation, and encoded residuals feed the next level. Behaviour-off and geometry-off are explicit controls. No dead computed term or evident float32 overflow/NaN step was found in this exercised path.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:263-309, 423-433; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/model/model.py:26-30; results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/model/utils.py:21-59",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "No code-level trainability defect found. Runtime gradient smoke was not run in this environment.",
+                  "location": "none",
+                  "reproduction": "Inspect train_rqvae.py:287-309 and 423-433; observe `soft` -> `joint` -> returned scalar -> `loss.backward()`. The unavailable runtime smoke is not treated as a defect.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static integration inspection: root resolution walks to the repository marker; input paths point to stage1 embeddings and frozen stage0 train parquet; result outputs resolve to `results/stage2_RQ-VAE/TIGER_cooccur_w100`; export enumerates item IDs against all embedding rows and writes unique extended SIDs to both formats. Launcher inspection confirms torchrun and the `GENREC_SINGLE_GPU` bypass branch.",
+              "exercised_path": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:46-71, 231-260, 332-365, 492-535, 542-570",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "No integration defect found. The single-card branch checks `SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\"` and calls `main()` after launcher bypass. Candidate output path is the required promoted-tree result directory, not a baseline or another candidate directory.",
+                  "location": "none",
+                  "reproduction": "Inspect train_rqvae.py:60-71, 126, 346-348, 527-535, and 542-570. Runtime execution was not attempted.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_cooccur_w100_r2_1"
+        }
+      ]
     }
   ],
   "issue": "issue121",
@@ -203,6 +730,104 @@
       "idea_id": "cooccur_coherent_sid",
       "revision": 0,
       "signature": "957715d8aa753e42"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Define the Euclidean control with Euclidean norm distances (or otherwise explicitly calibrate/normalize the Euclidean metric and temperature), retaining identical residual updates, pair construction, and all other settings. Then verify behavior-off, geometry-off, and both-on assignment/gradient comparisons in the prescribed GPU smoke.",
+          "detail": "Geometry-off is not a valid Euclidean control for the coupled term. In that branch the residual/code distances are Euclidean, but layer._distances(residual) returns squared Euclidean distances, while geometry-on uses actual Poincare distances. More importantly, the code’s hard residual update at :305-306 is the same Euclidean subtraction in both branches. Therefore a comparison does not isolate replacing the curve with Euclidean geometry (it changes the metric and scaling, and may change softmax saturation), and the proposal’s required geometry-off/Euclidean comparison is not faithfully defined. Behavior-off does return a zero-valued differentiable term, while the geometry-on branch is connected to encoder and codebook through soft assignments.",
+          "location": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:272-273, 290-300",
+          "reproduction": "Set GEOMETRY_ON=False with BEHAVIOUR_ON=True and inspect :299-301: distances become squared L2 values from VQLayer._distances, rather than the ordinary Euclidean distance used as a metric counterpart to Poincare distance. Compare to GEOMETRY_ON=True; the soft assignment temperature is fixed at 0.2, so scale changes confound the geometry ablation. For a literal check, compare each branch's computed distance for the same residual/code vectors.",
+          "severity": "blocking",
+          "verifier": "verify_cooccur_w30_r0_1"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Set ARM_NAME to the exact promoted tree name cooccur_w30 (or derive it safely from the promoted candidate identity) so all outputs resolve to results/stage2_RQ-VAE/cooccur_w30. Keep the launcher and frozen data path unchanged.",
+          "detail": "Candidate output is hard-wired to results/stage2_RQ-VAE/TIGER_cooccur_coherent_w30pp3, not results/stage2_RQ-VAE/cooccur_w30 (the promoted tree name). This writes the candidate's checkpoint, logs, and item_sids.json into a different arm's result directory, violating candidate isolation and risking overwriting another candidate's outputs. The frozen input path is correctly train.parquet under stage0_build_parquet; export enumerates all embedding rows as item IDs, and the collision extension makes rows unique. The launcher honors GENREC_SINGLE_GPU=1 at :546-547 and otherwise invokes torchrun.",
+          "location": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:61-69",
+          "reproduction": "Resolve ARM_NAME at :62 and RESULT_DIR at :63: with this tree named cooccur_w30, the destination is TIGER_cooccur_coherent_w30pp3. OUTPUT_JSON and CHECKPOINT inherit that destination at :67-69, and are written at :499-533.",
+          "severity": "blocking",
+          "verifier": "verify_cooccur_w30_r0_1"
+        }
+      ],
+      "idea_id": "cooccur_w30",
+      "revision": 0,
+      "signature": "626dfcc518162313"
+    },
+    {
+      "findings": [
+        {
+          "check": "output isolation",
+          "correction": "write only into the candidate's own result directory results/stage2_RQ-VAE/TIGER_<idea>/",
+          "detail": "the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/cooccur_w30",
+          "location": "train_rqvae.py",
+          "reproduction": "read the trainer's output constants",
+          "severity": "blocking",
+          "verifier": "preflight"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Compute and return the encoded tensor as part of the same DDP-wrapped RQVAE forward (or otherwise restructure the wrapper so every differentiable encoder invocation is inside the DDP forward graph), then pass that returned tensor to _coherence_term. Alternatively use a correctly configured DDP strategy that explicitly supports this multi-forward graph and verify it with the required multi-rank smoke; do not merely set find_unused_parameters=True without checking repeated parameter use/reducer behavior.",
+          "detail": "In multi-rank DDP the model is wrapped with find_unused_parameters=False, but the coherence branch performs a second encoder forward through raw_module.encoder(batch), bypassing the DDP wrapper. The DDP reducer only prepares parameter hooks for the wrapped forward graph. Parameters used exclusively in this second raw-module graph (and potentially all encoder parameters' second-use gradients) are not registered for that reducer pass; this can leave reducer buckets incomplete and hang/error on a subsequent iteration. The first wrapped model(batch) path does not make the second encoder forward safe for DDP reducer bookkeeping.",
+          "location": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:361, 425-429",
+          "reproduction": "Launch with world_size=4 and BEHAVIOUR_ON=True as the default path does: at each iteration, model(batch) runs through DDP at line 425, then raw_module.encoder(batch) runs outside DDP at line 429 and contributes gradients in loss.backward() at line 432. Observe reducer synchronization on the next iteration; the unwrapped second forward is the differentiating case. Single-card GENREC_SINGLE_GPU=1 does not exercise this DDP defect.",
+          "severity": "blocking",
+          "verifier": "verify_cooccur_w30_r1_1"
+        }
+      ],
+      "idea_id": "cooccur_w30",
+      "revision": 1,
+      "signature": "d6806259dd6f1921"
+    },
+    {
+      "findings": [
+        {
+          "check": "output isolation",
+          "correction": "write only into the candidate's own result directory results/stage2_RQ-VAE/TIGER_<idea>/",
+          "detail": "the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w30: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/cooccur_w30",
+          "location": "train_rqvae.py",
+          "reproduction": "read the trainer's output constants",
+          "severity": "blocking",
+          "verifier": "preflight"
+        }
+      ],
+      "idea_id": "cooccur_w30",
+      "revision": 2,
+      "signature": "1a4f7797aedc8270"
+    },
+    {
+      "findings": [
+        {
+          "check": "integration",
+          "correction": "Set ARM_NAME to the exact promoted tree name, cooccur_w100, before promotion; keep all candidate artifacts rooted beneath that RESULT_DIR.",
+          "detail": "The result directory is hard-coded to results/stage2_RQ-VAE/TIGER_cooccur_w100, but this candidate tree's promoted name is cooccur_w100. Thus this trainer writes the candidate SID/checkpoint into a differently named arm directory rather than the required results/stage2_RQ-VAE/<promoted tree name>/; Stage 3/admission will look in the candidate-name directory and will not consume these outputs. Other inspected outputs (logs, checkpoint and SID) all derive from this incorrect RESULT_DIR.",
+          "location": "results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w100/train_rqvae.py:61-63",
+          "reproduction": "Resolve the constants at lines 60-69 for this promoted tree: ARM_NAME evaluates to TIGER_cooccur_w100, so OUTPUT_JSON resolves to results/stage2_RQ-VAE/TIGER_cooccur_w100/item_sids.json instead of results/stage2_RQ-VAE/cooccur_w100/item_sids.json.",
+          "severity": "blocking",
+          "verifier": "verify_cooccur_w100_r0_1"
+        }
+      ],
+      "idea_id": "cooccur_w100",
+      "revision": 0,
+      "signature": "faac71f0a57d5b2c"
+    },
+    {
+      "findings": [
+        {
+          "check": "output isolation",
+          "correction": "write only into the candidate's own result directory results/stage2_RQ-VAE/TIGER_<idea>/",
+          "detail": "the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cooccur_w100: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/cooccur_w100",
+          "location": "train_rqvae.py",
+          "reproduction": "read the trainer's output constants",
+          "severity": "blocking",
+          "verifier": "preflight"
+        }
+      ],
+      "idea_id": "cooccur_w100",
+      "revision": 1,
+      "signature": "0b842e90d1c7d887"
     }
   ],
   "round_id": "round_20261026_212437_90",
@@ -219,46 +844,90 @@
       "kind": "stage2",
       "stage3_job_id": null,
       "status": "running"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "cooccur_w10",
+      "job_id": "stage2:cooccur_w10",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "pending"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "cooccur_w30",
+      "job_id": "stage2:cooccur_w30",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "pending"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "cooccur_w100",
+      "job_id": "stage2:cooccur_w100",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "pending"
     }
   ],
   "stage3_jobs": [],
-  "step": "stage3",
-  "updated_at": 1793010472.5842657,
-  "verification": {},
   "stage3_results": [
     {
-      "kind": "stage3_result",
-      "idea_id": "cooccur_coherent_sid",
-      "variant": "TIGER_cooccur_coherent_sid",
-      "sid": "results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/item_sids.json",
-      "metrics": {
-        "test_recall@5": 0.03666498372186145,
-        "test_recall@10": 0.05593760337053222,
-        "test_ndcg@10": 0.030766723265997328,
-        "n_eval": 57439
+      "comparison": {
+        "baseline_control": 0.055537,
+        "delta_vs_baseline": 0.000401,
+        "passed": false,
+        "target": 0.065
       },
+      "idea_id": "cooccur_coherent_sid",
+      "kind": "stage3_result",
+      "metrics": {
+        "n_eval": 57439,
+        "test_ndcg@10": 0.030766723265997328,
+        "test_recall@10": 0.05593760337053222,
+        "test_recall@5": 0.03666498372186145
+      },
+      "sid": "results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/item_sids.json",
       "sid_structure": {
         "L1_codes": 242,
         "L2_prefixes": 7375,
         "L3_triples": 20412,
-        "l3_collision": 0.265,
         "extension_distinct": 36,
         "l1_hard_er": 6.716,
-        "l1_positive_hit_rate": 0.0854
+        "l1_positive_hit_rate": 0.0854,
+        "l3_collision": 0.265
       },
       "target_metric": {
+        "adjacency_L1": 0.0116,
+        "adjacency_L3": 0.0573,
         "cooccur_overlap_L3": 0.0781,
         "cooccur_overlap_L3_lift": 2.9,
-        "adjacency_L3": 0.0573,
-        "adjacency_L1": 0.0116,
         "note": "the objective moved its own target from the baseline family's 0.03-0.05 to 0.078; the measured curve predicts 0.056 at that value and the run delivered 0.055938"
       },
-      "comparison": {
-        "baseline_control": 0.055537,
-        "delta_vs_baseline": 0.000401,
-        "target": 0.065,
-        "passed": false
-      }
+      "variant": "TIGER_cooccur_coherent_sid"
+    }
+  ],
+  "step": "stopped",
+  "updated_at": 1793017466.8681297,
+  "verification": {},
+  "notes": [
+    {
+      "idea_id": "cooccur_coherent_sid",
+      "what_happened": [
+        "cooccur_overlap_L3 目标函数在 TIGER_RQ-VAE 上实现并跑通: 权重 1e-3/3e-3/1e-2 三档, 该指标分别 0.0786/0.0762/0.0820, 基线 TIGER_RQ-VAE 为 0.0756 —— 目标函数没有推动指标.",
+        "Stage3: TIGER_cooccur_coherent_sid test_recall@10 = 0.055938, 基线 0.055537 (+0.0004, 噪声级).",
+        "w1e-1 一档在训练中被中止 (剂量-反应曲线已平坦, GPU 改投新臂).",
+        "全表复查: 好臂 (resample 家族) coocL3 0.155-0.175 且 adjacency_L3 0.21-0.27; 基线与我方全部变体 adjacency_L3 仅 0.05 —— 差距在 L2/L3 的相继性, 不在共现重叠.",
+        "新臂 TIGER_c131_coherence_prefix (基于 TIGER_BEHAVIOR_SAMPLE_RQ-VAE 的 resample 基线 + 共现一致性 x 曲线软分配耦合项) 已实现: coherence_losses.py + train_rqvae.py 接线.",
+        "冒烟抓出死项并已修复三处: (1) 曲率符号 (c>0), (2) 测地距离跨度过小导致软分配近似均匀, (3) 前缀一致概率量级 ~K^-3 无法配权 -> 改为除以均匀基线的 lift. 修复后尚未重跑冒烟."
+      ],
+      "status": "stopped_by_user"
     }
   ]
 }

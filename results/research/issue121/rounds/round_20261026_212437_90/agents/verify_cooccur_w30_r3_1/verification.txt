@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:231-311, 421-429; model/utils.py:21-59 | Statically traced _cooccurrence_rows -> training batch IDs -> _coherence_term -> weighted total training loss. _cooccurrence_rows constructs normalized item co-consumption rows from TRAIN_FILE only (history plus target per user); the term forms batch pairwise row cosine similarities and weights joint soft-prefix assignment probability. When geometry is on, each level's residual and code vectors are expmap0-mapped into the Poincare ball and scored with Poincare distance before soft assignment. This is one coupled loss pathway, not an imported helper or separate loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Source trace at the cited locations; behavior-off returns a graph-connected zero, and geometry-off substitutes Euclidean cdist in the same per-level soft assignment used by the behavior-weighted objective.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:263-311, 425-435; model/model.py:26-32; model/layers.py:62-65 | Statically traced the actual forward outputs into _coherence_term and loss.backward(). The softmax/pairwise prefix similarities are differentiable through Poincare distances, expmap0, and codebook embeddings; encoded is returned through the wrapped forward. Hard residual code selection is intentionally detached, while the soft assignment path carries gradients to encoded/encoder and codebook parameters. Behavior-off zeroes this term; geometry-off changes its distance computation to Euclidean cdist.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead term or evident float32 instability found. Curved vectors are projected into the ball and the distance helper clamps artanh inputs; the positive curvature and epsilon constants are finite. Numerical execution was not performed.
+FINDING REPRODUCTION: Compare the same batch with BEHAVIOUR_ON toggled or GEOMETRY_ON toggled: respectively the coupled term disappears or its soft assignment distance changes. Backpropagation from the enabled term follows the differentiable soft assignment path; the user-specified runtime smoke is not available in this sandbox.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:46-71, 334-367, 494-537, 544-572 | Statically inspected the real main entry point, input constants, export, and launcher. Input embeddings resolve to stage1_GeneEmbedding/output/sentence_t5.npy and behavior reads results/stage0_build_parquet/train.parquet. The configured arm is TIGER_cooccur_w30, and checkpoint, metrics, NPY, and JSON outputs all resolve beneath results/stage2_RQ-VAE/TIGER_cooccur_w30. Export enumerates all embedding rows as item IDs, extends collisions, checks uniqueness, and writes integer SID rows keyed by their enumerated item IDs. The launcher bypasses torchrun when GENREC_SINGLE_GPU equals "1" and otherwise launches four ranks; already-launched rank processes also bypass relaunch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Trainer execution was not performed.
+FINDING REPRODUCTION: Inspect constants and call paths at the cited lines; for the single-card branch, set GENREC_SINGLE_GPU=1 and _launch_via_torchrun returns before subprocess.call, after which the module entry point calls main().
+FINDING CORRECTION: None.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:231-309, 419-430 | Traced training parquet user-history/target aggregation into co-consumption row similarities, then the actual training loss call; for each of three prefix levels, curved residual/code embeddings feed Poincare distances and soft assignments, multiplied into the pairwise same-prefix probability and weighted by behaviour similarity.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. This is a connected behaviour-conditioned curved assignment pathway, rather than separate losses or a behaviour suffix on the unchanged hard quantizer.
+FINDING REPRODUCTION: Source trace: train-only rows are built at train_rqvae.py:241-260; _coherence_term combines behaviour similarity with Poincare-derived prefix probabilities at :279-309; the resulting term is added to the optimized loss at :426-430.
+FINDING CORRECTION: No correction required.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:263-309, 423-433 | Static forward/backward trace: the differentiable softmax probabilities and their product contribute to the scalar coherence loss, which is added before backward; no runtime execution was attempted. Inputs and intermediates are float32, and the configured ball projection epsilon keeps the mapped points away from the boundary.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:272-273, 290-300
+FINDING DETAIL: Geometry-off is not a valid Euclidean control for the coupled term. In that branch the residual/code distances are Euclidean, but layer._distances(residual) returns squared Euclidean distances, while geometry-on uses actual Poincare distances. More importantly, the code’s hard residual update at :305-306 is the same Euclidean subtraction in both branches. Therefore a comparison does not isolate replacing the curve with Euclidean geometry (it changes the metric and scaling, and may change softmax saturation), and the proposal’s required geometry-off/Euclidean comparison is not faithfully defined. Behavior-off does return a zero-valued differentiable term, while the geometry-on branch is connected to encoder and codebook through soft assignments.
+FINDING REPRODUCTION: Set GEOMETRY_ON=False with BEHAVIOUR_ON=True and inspect :299-301: distances become squared L2 values from VQLayer._distances, rather than the ordinary Euclidean distance used as a metric counterpart to Poincare distance. Compare to GEOMETRY_ON=True; the soft assignment temperature is fixed at 0.2, so scale changes confound the geometry ablation. For a literal check, compare each branch's computed distance for the same residual/code vectors.
+FINDING CORRECTION: Define the Euclidean control with Euclidean norm distances (or otherwise explicitly calibrate/normalize the Euclidean metric and temperature), retaining identical residual updates, pair construction, and all other settings. Then verify behavior-off, geometry-off, and both-on assignment/gradient comparisons in the prescribed GPU smoke.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:41-71, 332-365, 492-539, 542-570 | Static inspection of root/data/result path resolution, trainer entry point, SID construction/export, and launcher including SINGLE_GPU_ENV branch; no execution was attempted.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_212437_90/trees/cooccur_w30/train_rqvae.py:61-69
+FINDING DETAIL: Candidate output is hard-wired to results/stage2_RQ-VAE/TIGER_cooccur_coherent_w30pp3, not results/stage2_RQ-VAE/cooccur_w30 (the promoted tree name). This writes the candidate's checkpoint, logs, and item_sids.json into a different arm's result directory, violating candidate isolation and risking overwriting another candidate's outputs. The frozen input path is correctly train.parquet under stage0_build_parquet; export enumerates all embedding rows as item IDs, and the collision extension makes rows unique. The launcher honors GENREC_SINGLE_GPU=1 at :546-547 and otherwise invokes torchrun.
+FINDING REPRODUCTION: Resolve ARM_NAME at :62 and RESULT_DIR at :63: with this tree named cooccur_w30, the destination is TIGER_cooccur_coherent_w30pp3. OUTPUT_JSON and CHECKPOINT inherit that destination at :67-69, and are written at :499-533.
+FINDING CORRECTION: Set ARM_NAME to the exact promoted tree name cooccur_w30 (or derive it safely from the promoted candidate identity) so all outputs resolve to results/stage2_RQ-VAE/cooccur_w30. Keep the launcher and frozen data path unchanged.
