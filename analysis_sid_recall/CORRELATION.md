@@ -352,3 +352,63 @@ regularity" from "users whose recent items are unusual are harder to predict for
 * Metrics B/C/D are computed on 15 SIDs, so their correlations carry much wider intervals than
   the 67-SID analysis; the level differences across buckets are consistent in all 15 runs and
   are the part that can be read.
+
+## Incoming predecessor-context diversity (directed adjacency)
+
+`predecessor_context_metrics.csv`, produced by `predecessor_context_analysis.py`. For every
+adjacent **training** transition ``A -> B`` the predecessor ``A`` is mapped to the region its
+SID assigns, and for each target item ``B`` the distinct regions among its predecessors are
+counted:
+
+* ``region_ratio(B) = distinct regions of the predecessors / distinct predecessors`` is 1 when
+  every predecessor sits in its own region and small when they all share one, so it does not
+  grow with the item's in-degree;
+* ``region_entropy(B)`` is the predecessor-region entropy divided by ``log`` of the regions the
+  item could use.
+
+Both are averaged over the target items, overall and inside the target-frequency buckets. This
+is a property of the **directed** adjacency graph read through the SID: it uses neither a
+positive/negative ratio nor a co-occurrence vector.
+
+### The region depth decides the sign, and that is the finding
+
+| region depth | median ratio | raw rho(recall) | rho with `L3_distinct` | partial rho(recall \| `L3_distinct`) |
+|---|---|---|---|---|
+| L1 | 0.8865 | **−0.292** | +0.182 | **−0.574** |
+| L2 | 0.9920 | +0.056 | +0.581 | **−0.563** |
+| L3 | 0.9989 | **+0.333** | +0.859 | **−0.658** |
+
+The L3 reading is saturated by construction: about 20k distinct triples for 24.6k items means
+two distinct predecessors almost always sit in different triples, so at L3 the ratio equals the
+in-degree and only collapsed tables differ from 1 (8 of 67 tables are below 0.99). Its raw
+positive correlation is therefore a re-expression of the L3 granularity, which correlates 0.86
+with it and 0.68 with the recall.
+
+Once the granularity is controlled the relation is **negative at every depth** (−0.56 to −0.66,
+permutation p = 0.0002, the smallest value 4,000 permutations can produce). Holding a table's
+granularity fixed, a target whose predecessors arrive from *more* distinct behavioural regions
+has *lower* recall: a concentrated incoming context is the positive property, a diffuse one is
+not. This is the opposite of the naive "more diversity is better" reading, and the raw L3
+number alone would have said the naive thing.
+
+### By target frequency
+
+| bucket | items | median ratio (L1) | raw rho(recall) | p (BH over 8 tests) | partial rho(\| `L3_distinct`) |
+|---|---|---|---|---|---|
+| never a training target | 7,470 | 0.9324 | −0.359 | 0.012 | −0.610 |
+| 1–2 | 11,218 | 0.9066 | −0.323 | 0.021 | −0.589 |
+| 3–9 | 4,906 | 0.8233 | −0.254 | 0.053 | −0.549 |
+| 10 or more | 930 | 0.6346 | −0.202 | 0.126 | −0.496 |
+
+Frequently targeted items are reached from *fewer* coarse regions (median ratio 0.63 against
+0.93 for never-targeted items), and the negative relation holds in **every** bucket, strongest
+for rare and unseen targets. So the effect is not confined to popular items; if anything the
+popular items are where the raw signal is weakest.
+
+### Redundancy and multiplicity
+
+* This metric is **not** the co-occurrence one: at L1 it correlates −0.15 with
+  `cooccur_overlap_L3`. At L3 the apparent +0.54 goes through the granularity.
+* Eight variants were specified before the run (four depths/entropies plus four frequency
+  buckets); the Benjamini-Hochberg column above is over those eight, and the two that do not
+  survive are the ones with the weakest raw effect (`d1_common`, `d2_mean`).
