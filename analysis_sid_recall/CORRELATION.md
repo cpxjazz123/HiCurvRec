@@ -136,35 +136,56 @@ Rank correlation only measures a monotone average. Each candidate shape was ther
 fitted on four folds and scored on the fifth; a flexible shape wins only if it really
 generalises (`nonlinear_shapes.csv`).
 
+**The merge is on the SID's identity.** The three metric batteries are joined on
+`sid_sha256`, not on the arm name: the 67 SIDs carry only 53 distinct names
+(`curvature_RQ-VAE` alone names 15 different SIDs), so a merge on the name silently
+drops 14 rows and attaches one SID's metrics to another SID's recall. Every battery now
+records `sid_sha256` and the three sets of identifiers are verified to be identical
+before the analysis runs.
+
 | metric | linear | quadratic | log | kNN(7) | isotonic | best |
 |---|---|---|---|---|---|---|
-| **`cooccur_overlap_L3`** | 0.507 | 0.610 | 0.623 | 0.613 | **0.668** | isotonic |
-| `cooccur_overlap_L2` | 0.455 | 0.550 | 0.555 | 0.525 | 0.563 | isotonic |
-| `cooccur_overlap_L1` | **0.590** | 0.530 | 0.542 | 0.606 | 0.331 | kNN |
-| `adjacency_L3` | 0.346 | 0.477 | 0.543 | 0.571 | 0.398 | kNN |
-| `succ_overlap_within_L1` | 0.504 | 0.456 | 0.457 | 0.563 | 0.345 | kNN |
-| `adjacency_L1` | **0.477** | 0.419 | — | 0.444 | 0.183 | linear |
+| **`cooccur_overlap_L3`** | 0.554 | 0.655 | 0.663 | 0.648 | **0.705** | isotonic |
+| `cooccur_lift_L3` | 0.554 | 0.655 | 0.663 | 0.648 | **0.705** | isotonic |
+| `cooccur_overlap_L1` | 0.428 | 0.395 | 0.450 | **0.578** | 0.374 | kNN |
+| `cooccur_overlap_L2` | 0.445 | 0.553 | 0.538 | 0.521 | 0.571 | isotonic |
+| `adjacency_L3` | 0.324 | 0.425 | 0.521 | **0.526** | 0.406 | kNN |
+| `adjacency_L1` | 0.243 | 0.331 | — | **0.478** | 0.279 | kNN |
+| `succ_overlap_within_L1` | 0.124 | 0.486 | 0.340 | **0.498** | 0.409 | kNN |
+
+(`cooccur_lift_L3` is `cooccur_overlap_L3` divided by the random-pair baseline
+0.026873, a constant, so it carries exactly the same information and the same fit; the
+lift is only useful for reading the scale.)
 
 Three things follow:
 
-1. **At the fine level the relation is non-linear and the non-linear shape generalises.**
+1. **At the fine level the relation is non-linear, and the non-linear shape generalises.**
    For `cooccur_overlap_L3` the monotone isotonic fit reaches an out-of-sample R² of
-   **0.668** against the straight line's 0.507: a third of the variance that a linear model
-   misses is real and predictable.
-2. **At the first level it is linear.** `cooccur_overlap_L1` is best served by the straight
-   line (0.590) and the flexible fits *lose* (isotonic 0.331). Every extra degree of freedom
-   buys nothing there, which is what a linear relation looks like.
-3. **The curve saturates.** Quintile means of `cooccur_overlap_L3` against mean recall:
+   **0.705** against the straight line's 0.554. The two shapes are fitted on the same
+   folds, so the difference is paired: **+0.151, 95% CI [+0.126, +0.175], and the
+   isotonic fit wins 20 of 20 repeats.** A third of the variance a linear model misses
+   is real and predictable.
+2. **The first level is non-linear too, but not in the same way.** `cooccur_overlap_L1` is
+   best served by the local kNN fit (0.578 against the line's 0.428) and the smooth
+   monotone fit is the *worst* of the five (0.374). What separates the levels is not
+   "linear versus non-linear" but *which* non-linearity generalises: at L2/L3 a smooth
+   monotone curve transfers, at L1 only a piecewise-local one does. An earlier draft of
+   this file called the L1 relation linear; with the full 67 correctly paired that
+   claim does not hold.
+3. **The curve saturates.** Quintile means of `cooccur_overlap_L3` against mean recall
+   (all 67 SIDs):
 
-   | quintile metric mean | 0.0510 | 0.0750 | 0.0904 | 0.1128 | 0.1615 |
+   | quintile metric mean | 0.0503 | 0.0721 | 0.0907 | 0.1125 | 0.1527 |
    |---|---|---|---|---|---|
-   | mean recall@10 | 0.0486 | 0.0560 | 0.0575 | 0.0607 | 0.0630 |
-   | gain from the previous quintile | — | +0.0074 | +0.0015 | +0.0032 | +0.0023 |
+   | mean recall@10 | 0.0472 | 0.0552 | 0.0572 | 0.0601 | 0.0623 |
+   | gain from the previous quintile | — | +0.0080 | +0.0020 | +0.0029 | +0.0022 |
 
-   The first step buys 0.0074 of recall for 0.024 of metric; the last buys 0.0023 for
-   0.049. Returns halve as the metric doubles — the practical consequence is that a
-   mechanism should aim at the middle of the range, not at a perfectly coherent partition.
+   The first step buys 0.0080 of recall for 0.022 of metric; the last buys 0.0022 for
+   0.040. Returns fall as the metric grows — the practical consequence is that a
+   mechanism should aim at the middle of the range, not at a perfectly coherent
+   partition.
 
-A threshold scan on the same metric finds a split at **0.062**: tables above it average
-**+0.0123** recall (permutation p = 0.0005, 2000 shuffles), so the "jump" is a property of
-the data and not of the search over splits.
+A threshold scan on the same metric finds a split at **0.0585**: tables above it average
+**+0.0120** recall (permutation p = 0.0005, 2000 shuffles), so the "jump" is a property of
+the data and not of the search over splits. (The 53-row draft put the split at 0.062; the
+correctly paired full set puts it at 0.0585.)

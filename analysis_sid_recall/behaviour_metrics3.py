@@ -169,7 +169,8 @@ def main() -> int:
     rows = []
     for pair in pairs:
         sid = forensics.load_sid(HERE / "sids" / pair["sid_file"])
-        entry = {"variant": pair["variant"], "recall@10": float(pair["test_recall@10"])}
+        entry = {"sid_sha256": pair["sid_sha256"], "variant": pair["variant"],
+                 "recall@10": float(pair["test_recall@10"])}
         for depth in (1, 2, 3):
             codes = code_of(sid, depth)
             result = coherence(codes, adjacent, cooccur_rows, null_pairs, rng=rng)
@@ -188,7 +189,7 @@ def main() -> int:
     recall = [row["recall@10"] for row in rows]
     summary = []
     for metric in fields:
-        if metric in ("variant", "recall@10"):
+        if metric in ("sid_sha256", "variant", "recall@10"):
             continue
         defined = [(row[metric], row["recall@10"]) for row in rows if row[metric] is not None]
         x = [value for value, _ in defined]
