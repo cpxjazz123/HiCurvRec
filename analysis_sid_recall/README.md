@@ -19,7 +19,10 @@ run's own `train_start` (which names the `code_path` it generated from) and its 
 event. `sid_inventory.csv` holds one row per **paired** SID content with its prefix structure and
 the best recall it ever reached.
 
-The directory keeps **only the paired** SIDs: 79 files, 96 MB. The 498 unpaired tables
+The directory keeps **only the paired** SIDs and **only recalls that name a paired SID**:
+79 SID files (96 MB) and 92 recall files, and every recall file carries the `paired_sid`
+block (the SID's sha256, its file name, its paths and the run's own `code_path`), so the
+pairing is verifiable inside the file. The 498 unpaired tables
 that the history also contains were pruned; they stay recoverable from the git history, and
 `python analysis_sid_recall/collect.py` (without `--paired-only`) writes them again.
 

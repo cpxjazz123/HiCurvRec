@@ -298,13 +298,30 @@ def main() -> int:
             continue
         target = recalls / (pair["variant"].replace("/", "__") + "__" +
                             Path(pair["run_dir"]).name + ".json")
+        # Each recall file states the SID it was produced from, so the pairing is
+        # verifiable inside the file and a recall without its SID can be dropped.
+        payload = {}
         if source.name == "test_final.json":
-            target.write_text(source.read_text())
+            try:
+                payload = json.loads(source.read_text())
+            except ValueError:
+                payload = {}
         else:
             for line in source.read_text(errors="replace").splitlines():
                 if '"test"' in line:
-                    target.write_text(line.strip())
+                    try:
+                        payload = json.loads(line)
+                    except ValueError:
+                        payload = {}
                     break
+        payload["paired_sid"] = {
+            "sha256": pair["sid_sha256"],
+            "file": names[pair["sid_sha256"]],
+            "paths": pair["sid_paths"],
+            "code_path": pair["code_path"],
+        }
+        payload["stage3_run"] = {"variant": pair["variant"], "run_dir": pair["run_dir"]}
+        target.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
     (OUT / "sid_recall.json").write_text(json.dumps(
         {"pairs": pairs, "inventory": inventory}, indent=2, ensure_ascii=False),
         encoding="utf-8")
