@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:229-370, 423-428, 491 | Static call-path trace: training-only transitions are read and converted to successor probability rows at 229-251; L2-normalized sparse rows produce cosine cohort positives and zero-overlap negatives at 254-290; batch item IDs select pairs at 336-351; differentiable first-two-level soft/hard prefix points at 320-333 feed branching-conditioned Poincare pair distances and symmetric NCE at 302-370; main adds the term to the RQ-VAE loss at 491. The source explicitly supports behavior-off and Euclidean geometry-off variants at 338-339 and 357-365. Trainer runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The behavior signal changes the positives/negatives, and the curved metric acts on the differentiable shared two-level quantized prefix in the same loss pathway. The configured four codebooks retain the specified [256, 256, 256, 256] capacity (train_rqvae.py:80-83).
+FINDING REPRODUCTION: Static inspection of the exercised path above; runtime execution was not performed.
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:306-370, 487-497 | Traced the loss graph through projection/clamping and differentiable Poincare distance into prefix/codebook/encoder operations, then through finite-loss validation, backward, gradient clipping and optimizer step. No runtime smoke was run; the supplied GPU one-epoch gradient smoke remains the runtime proof.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The contrastive term is used in the optimized scalar and is not dead. `_soft_prefix` has hard-valued forward assignments with soft gradients into both encoder outputs and the first two codebooks; the geodesic distance and cross-entropy remain differentiable. Projection bounds points strictly inside the ball, and the atanh argument is capped below one, avoiding float32 singularities. Behavior-off returns a graph-connected zero; geometry-off selects Euclidean vector norms. No source-level numerical or trainability blocker found.
+FINDING REPRODUCTION: Trace `_contrastive_term` at 336-370 and the optimizer sequence at 487-497. The behavior-off and geometry-off switches are defined at 101-102 and gate the corresponding paths at 338 and 357.
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:47-71, 393-430, 556-603, 606-634 | Static inspection of repository-root resolution, frozen input constants and trainer setup; traced final all-embedding SID export/indexing and candidate result paths, then both torchrun and `GENREC_SINGLE_GPU` launcher branches. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the frozen stage1 embedding file and stage0 training parquet (66-67). It resolves repository root by the stage2 marker and writes artifacts under `results/stage2_RQ-VAE/TIGER_cohort_successor_curved_nce/` (47-71), the promoted candidate result location. Export runs indices over all embedding rows, uses enumerated item IDs for JSON keys, and deterministically extends collisions to unique SIDs (579-599). The launcher retains four-card torchrun and returns directly to `main()` when `GENREC_SINGLE_GPU` is set (606-634). No source-level integration defect found.
+FINDING REPRODUCTION: Inspect constants and export/launcher locations listed above. Runtime execution was not performed.
+FINDING CORRECTION: none

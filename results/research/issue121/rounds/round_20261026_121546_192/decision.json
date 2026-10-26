@@ -1,0 +1,1176 @@
+{
+  "decision_at": 1792978375.2576642,
+  "decision_hash": "e48ea74073187083c8386eeaae72b15c3052cf89189d3cfda283ce83013c0bde",
+  "evidence": {
+    "branch_scaled_transition_nce": {
+      "bundle_sha256": "cd05f7a8b74ede6e87496907e433d379c11154a313a5fe2939297dc6ee623612",
+      "literature_sha256": "f6c8561aa62db9cb5088b09f2fb6e55c00a42d0521aae12e41f847cb8f1cba12",
+      "math_sha256": "5d83958df20aaf16e036aaa1214519ece0e3ca9586bb4aab6c0b8ba6b094dc3c",
+      "probe_sha256": "4dc5966fa6c37a4a350c962b1f53ceb0cd164c357470e9b11773775804b665bc"
+    },
+    "cohort-target-lorentz-prefix": {
+      "bundle_sha256": "6b6a680740eed6d2318c73b02e70ce4298f684391ac87e4612d27a15a104d973",
+      "literature_sha256": "aac6e4e136ffe3c35ca3a055a78ea6e5e453759276ea91d8c90ab4ed5f6e61b7",
+      "math_sha256": "4d62c4fd3e3ba7de8347f1677be7305e641b8d326d6a032a337c1cbf635f5d4e",
+      "probe_sha256": "8e741813859740368842864c207024184429ea83de27ee8c2b663b18e12d2787"
+    },
+    "cohort_successor_curved_nce": {
+      "bundle_sha256": "70eef1615b150786cebb24f81fc8c855aeb0007a854fdc7a05b6277345d5f3b6",
+      "literature_sha256": "3ddeab4c22071672136a61e3acc3a914887bc03eb8a9a46080d766e35a108381",
+      "math_sha256": "e26554ac6a842f6f285259e8732b4a1e8385ef5ba2b37a93f1d00d8fa99203eb",
+      "probe_sha256": "92b8d95bd232bdb528a6b3b37bcdcae19d79e52f8bcec069c1aa18717ba19dcb"
+    },
+    "successor-prefix-geodesic": {
+      "bundle_sha256": "8ad592caa47dc6cc7a34277063fbc713e5915e9431e9c270e2560eefbc1a8d16",
+      "literature_sha256": "b0ea019f01e764a85fabdf120a6e07b66992cd10f233106f626cab4c442da0d0",
+      "math_sha256": "0d05431a9168b414046c186d75276e56b4fdaa72cb570b397aaef1a4465b62ca",
+      "probe_sha256": "4953d44639320f1d0a5f9963500c8463cd51c99d3052eaadc6294798d5bf44a7"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "successor-prefix-geodesic",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 1.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "This is very close computationally to the measured successor-geodesic-coarse family, and the bundle shows that family underperformed stronger measured alternatives on beam Recall; the new contrastive objective may not cure that failure mode.",
+          "scoring_2": "The closest measured mechanisms, successor_geodesic_coarse/v2 and tangent_successor_residual, already use successor behavior with curved/coarse-prefix geometry and underperform the stated .055537 baseline (E6); merely moving the pairwise loss onto the prefix may not overcome that failure mode.",
+          "scoring_3": "This is close to the already measured successor-geodesic-coarse family, while the bundle does not establish that per-item curvature changes the mechanism beyond a matched fixed-curvature/Euclidean control; implementational details for mapping quantized vectors into the Poincare ball are incomplete."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 gives auditable train-only entropy stratification and supports the branching hypothesis (4). Curved distance on the actual quantized prefix is real, but no matched-control argument or cancellation analysis establishes necessity (3). The change is a routine transition-geodesic contrastive variant of measured successor-geodesic methods (2; E6). Assignment gradients could plausibly change T1/T2 and next-token survival (4), but no explicit matched three-way controls/failure criterion are specified (2). Formula and cost are present, but stable ball projection, distance clipping, and denominator safeguards are absent (2). E6 makes this a near-repeat of a measured negative (1).",
+          "scoring_2": "behavior_evidence=4: E5 measures substantial, well-covered entropy/top-successor stratification, but not that the proposed sampled positive relation predicts SID usefulness, so not 5. geometry_necessity=3: curved distance and curvature do enter the same pairwise objective, but no matched-control argument rules out an equivalent Euclidean pair loss. novelty=2: actual-prefix pairwise contrast differs computationally, but is a routine extension of measured successor-geodesic/coarse and successor residual families (E6). downstream_mechanism=4: the proposal specifies T1/T2 assignment gradients and predicts prefix survival and recall (E13, E6). falsifiability=3: behavior-off/geometry-off/both-on are implied by its comparisons and failure can be observed, but matching, discriminating diagnostic and explicit refutation criterion are not fully specified. implementability=3: adequate basic recipe and cost estimate, but curvature varies by anchor in a pair distance without specifying which curvature governs both endpoints, and numerical boundary safeguards are not stated. exploration_value=1: near-repeat of measured negative successor-geodesic family (E6).",
+          "scoring_3": "E5 gives measured, strongly stratified train successor entropy with broad item coverage, supporting behavior_evidence=4 (the specific SID hypothesis remains unmeasured). The explicit exp map/geodesic acts on the actual quantized prefix, but no matched Euclidean result or cancellation analysis supports >3. Its mechanism resembles measured successor_geodesic_coarse variants in E6-E7, hence novelty=2. Directly shaping early assignments plausibly changes prefix survival and next-token prediction (4). Only the proposed objective and informal hypothesis are given, without the required three comparisons and failure criterion (falsifiability=2). Projection, temperature, numerical boundary handling and concrete curvature gradient are unspecified, and affordability is asserted rather than verified (implementability=2). Near-repeat of measured negatives gives exploration_value=1."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Behavior and curvature are coupled through the quantized prefix and expected effects are stated, but it does not name the required behavior-off, Euclidean/geometry-off, and both-on comparison; it also omits numerical safeguards for the Poincare map/distance.",
+          "scoring_2": "Train-only directed adjacent transitions are counted and sampled; curvature-conditioned Poincare exponential map/geodesic InfoNCE acts on the T1+T2 cumulative quantized prefix and sends gradients through its straight-through path. It names behavior-off, Euclidean and both-on comparisons, measurable outcomes, and cost/safeguards. The comparisons are required by the scope, though the proposal does not fully specify matching the controls.",
+          "scoring_3": "Train-only directed adjacent transitions with count-weighted positives and entropy-conditioned curvature feed a Poincare geodesic contrastive loss directly on quantized T1+T2; however requested behavior-off/Euclidean/both-on matched comparisons are not specified."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.85,
+          "scoring_2": 3.05,
+          "scoring_3": 2.85
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Behavior and curvature are coupled through the quantized prefix and expected effects are stated, but it does not name the required behavior-off, Euclidean/geometry-off, and both-on comparison; it also omits numerical safeguards for the Poincare map/distance.",
+            "scorer": "scoring_1"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.85
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "disputed": [
+          "falsifiability"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "cohort-target-lorentz-prefix",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposal assumes shared three-item context cohorts imply target substitutability, but the provided measured cohort-profile result is a different predecessor-profile construction and does not validate this exact Jaccard context-overlap signal.",
+          "scoring_2": "The measured cohort-profile statistic concerns shared predecessor/successor-cohort profiles and is weakly discriminative against fixed negatives (positive 0.9291 vs negative 0.8871; positive beats all ten negatives only 0.5898; E9); it does not establish that the proposed exact context-set Jaccard relation identifies substitutable targets.",
+          "scoring_3": "No measured statistic validates this exact destination/context-cohort Jaccard relation; supplied measured E9 is a different predecessor-profile statistic and cannot be treated as evidence for these positives."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 supports branching heterogeneity, but not the proposed context-cohort signal itself; E9 concerns another profile definition, leaving this evidence high-risk (2). Lorentz geodesic contrast on the quantized prefix is computationally explicit and plausibly non-Euclidean, but no matched Euclidean argument is supplied (3). Destination-side cohort overlap differs from cited transition heuristics and is computationally distinct, but cited-work/ledger traceability is missing (3). The stated chain to T1/T2 and recommendation is plausible and has named expected diagnostics (4). No named three-way controls or falsifier (1). Cost and core equation exist, but safeguards are missing (2). A different cohort construction could yield an informative negative (3).",
+          "scoring_2": "behavior_evidence=3: computation is explicit and E9 supports a related nondegenerate train-only cohort signal, but the exact shared-context relation and its coverage/behavioral predictive value are not measured. geometry_necessity=3: Lorentz geodesic acts on the same prefix as cohort positives, but no evidence distinguishes its effect from a matched Euclidean distance. novelty=3: destination targets sharing a context differs from direct transition pairs, although cohort/profile overlap is adjacent to measured cohort evidence (E9); no traceable cited-work/ledger comparison is provided. downstream_mechanism=4: the proposal connects positive cohort pairs to T1/T2 assignment and specifies survival/teacher-forced diagnostics. falsifiability=3: named behavior-off and Euclidean controls and observable criteria, but not fully matched or accompanied by a discriminating diagnostic/refutation. implementability=2: cohort construction and loss are stated, but Lorentz exp origin inputs, normalization, curvature conventions, stable acosh/clamping and gradient safeguards are absent; this needs specification before reliable implementation. exploration_value=3: a different source of positive pairs gives a useful test of whether context-conditioned target equivalence helps.",
+          "scoring_3": "The signal is computable and plausibly testable, but the bundle's measured train statistics (E5/E9) do not measure the proposal's specific unordered three-item context overlap, so behavior_evidence=3 rather than 4. Lorentz distance is a real curved operation on the prefix, but the proposal gives no argument why it outperforms a matched Euclidean metric (3). The relation differs computationally from direct-transition mechanisms, though no traceable prior-art/ledger comparison is supplied (3). It names the affected prefix and expected next-token / Recall direction (4). Controls and a failure criterion are absent (2). Lorentz normalization, stable acosh safeguards, zero-positive handling and timing verification are not specified (2). This is a distinct relation with an informative failure mode (3)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "The training-only cohort signal and Lorentz operation are connected through the quantized prefix, but required behavior-off, geometry-off/Euclidean, and both-on comparisons are not named; numerical safeguards for Lorentz exp-map/acosh computation are also unspecified.",
+          "scoring_2": "It computes train-only previous-up-to-three-item context cohorts and weighted Jaccard positive pairs, then uses Lorentz exponential maps/geodesic contrast on the T1+T2 quantized prefix. Both signals are in one differentiable pathway and the proposal states observable outcomes and the three comparison conditions. Numerical safeguards and precise matching are not specified, but these are implementation/rubric limitations rather than missing scope elements.",
+          "scoring_3": "Training-only shared-context cohorts determine positives/negatives and Lorentz geodesic contrast acts on cumulative T1+T2 quantized vectors; requested behavior-off, geometry-off and both-on matched comparisons are not specified."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.65,
+          "scoring_2": 3.05,
+          "scoring_3": 2.95
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The training-only cohort signal and Lorentz operation are connected through the quantized prefix, but required behavior-off, geometry-off/Euclidean, and both-on comparisons are not named; numerical safeguards for Lorentz exp-map/acosh computation are also unspecified.",
+            "scorer": "scoring_1"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.95
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "branch_scaled_transition_nce",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 1.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "Its core computation is a sampled successor-transition geodesic contrastive objective, substantially overlapping the already measured successor-geodesic-coarse mechanisms; changing soft versus hard prefix construction and curvature scaling alone may be a routine variation.",
+          "scoring_2": "This is very close to the already measured successor-geodesic coarse and v2 mechanisms, with negative Recall@10 outcomes and poor depth-2 survival (E6); changing hard to soft prefix and curvature scaling may not constitute a sufficiently independent hypothesis.",
+          "scoring_3": "The soft-prefix geodesic transition objective is computationally very close to the already measured successor-geodesic-coarse family, and its behavior/geometry ablations are only mentioned as required logging, not specified as controlled experiments."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "The measured entropy/top-1 relationship supports the behavioral premise and coverage (4; E5). Poincare distance operates on the soft quantized prefix, but matched Euclidean evidence and cancellation checks are absent (3). The transition-contrastive mechanism closely overlaps measured successor-geodesic variants (2; E6). Its proposed gradients to early assignments plausibly affect prefix survival and recommendation with explicit diagnostics (4). It mentions required ablations but not the three matched switches or a concrete failure criterion (2). Sampling, cost, and equation are specified, but numerical guards are not (2). Given the measured negative family, this is a near-repeat with limited exploration value (1).",
+          "scoring_2": "behavior_evidence=4: E5 directly supports a train-only branching signal with coverage/stratification, but does not validate sampled non-neighbours as negatives. geometry_necessity=3: curvature affects pair distances, yet matched Euclidean control is not argued and can reproduce the broad contrastive computation. novelty=2: the actual soft prefix and entropy-scaled curvature are variations of measured successor-geodesic/coarse work (E6). downstream_mechanism=4: explicitly predicts T1/T2, prefix-survival and Stage3 changes through the prefix loss. falsifiability=3: requests required ablations and measurable criteria, but lacks full matching, discriminating diagnostic and a clear mechanism-refuting condition. implementability=2: pair sampling and objective are implementable in outline, but “details below” leaves the differentiable prefix undefined; curvature formula, pair metric safeguards and cost at actual dimensions need verification. exploration_value=1: near-repeat of measured transition-geodesic family (E6).",
+          "scoring_3": "E5 measures a strong entropy/top-successor relationship and E10 supplies transition coverage, supporting behavior_evidence=4. Poincare distance on the actual soft prefix is explicit, but no matched Euclidean evidence or cancellation analysis (3). Relative to the measured successor-geodesic mechanisms in E6-E7 this is a routine variation, with entropy-scaled curvature rather than a substantially new pathway (2). It directly names prefix changes, expected survival and recommendation effects (4). Although three controls are called for, matched setup and falsifier are absent (2). “Soft prefix” is not operationally defined, and distance safeguards, tau and curvature reference/scaling are underspecified; cost is only estimated (2). Near-repeat of measured negatives (1)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It specifies training transitions, branch-conditioned curvature, and a coupled prefix loss, but does not explicitly name behavior-off, Euclidean/geometry-off, and both-on comparisons; numerical safeguards for Poincare distance are unspecified.",
+          "scoring_2": "Directed train-only transitions and per-item branching entropy determine sampled pairs and curvature; a Poincare geodesic contrastive loss acts directly on the soft two-level quantized prefix and its gradients reach the quantizer. It specifies behavior-off, Euclidean and both-on outcomes. The exact soft-prefix construction is deferred as “details below” but the stated core pathway is identifiable.",
+          "scoring_3": "Training-only directed transitions and entropy set positives/curvature, and Poincare geodesic contrast acts on the soft T1+T2 prefix representation; matched behavior-off, Euclidean and both-on comparisons are missing."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.85,
+          "scoring_2": 2.95,
+          "scoring_3": 2.85
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It specifies training transitions, branch-conditioned curvature, and a coupled prefix loss, but does not explicitly name behavior-off, Euclidean/geometry-off, and both-on comparisons; numerical safeguards for Poincare distance are unspecified.",
+            "scorer": "scoring_1"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 0,
+        "weighted_score": 2.85
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 2.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [
+          "exploration_value"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "cohort_successor_curved_nce",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "Sparse successor-row overlap may mostly identify shared popular destinations rather than functional interchangeability; the supplied evidence does not measure the proposed cosine-positive relation.",
+          "scoring_2": "Shared popular successors can make unrelated sources positives, and the supplied train evidence E5 establishes entropy stratification, not the proposed cosine-over-successor-rows relation's predictive validity; existing successor-geodesic mechanisms also measured poorly (E6).",
+          "scoring_3": "Its cosine-overlap successor relation is plausible but not measured for the proposed pair construction; E9's measured cohort-profile overlap is not the same statistic, and common successors may primarily signal popularity."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "E5 establishes substantial train-only branching heterogeneity and E9 supports a related, but not identical, cohort-profile signal; exact cosine successor overlap is not measured, so evidence is plausible rather than directly validated (4). Curved geodesic contrast acts on the quantized prefix, but there is no matched-control necessity argument (3). The source-side successor-distribution relation is distinct from direct successor attraction and the cohort-profile signal, though no traceable cited-work/ledger comparison is supplied (3). The proposed assignment-to-prefix-survival-to-recommendation chain has directional diagnostics (4). Behavior-off and Euclidean controls are mentioned, but a full explicit matched three-arm design and refutation condition are not (3). The equation and cost are given, but numerical guards are not (2). The cohort-overlap failure mode could be informative (3).",
+          "scoring_2": "behavior_evidence=4: train-only successor entropy is strongly measured and covered (E5), but the exact shared-successor positive overlap is not measured. geometry_necessity=3: Poincare distance is in the coupled objective, but a matched Euclidean contrastive transform could plausibly reproduce its effect absent evidence against it. novelty=2: shared-successor distribution positives are a routine variation on the already measured successor-geodesic/coarse and residual family (E6). downstream_mechanism=4: it names affected T1/T2 assignments and predicts survival and recall with diagnostics. falsifiability=3: behavior-off and Euclidean controls plus observable criteria are stated, but matching and an explicit refuting outcome are incomplete. implementability=2: sparse row overlap, positives and sampled negatives are specified, but curvature reference B_ref is undefined, and distance stability / zero-norm safeguards are omitted. exploration_value=1: near-repeat of the measured successor-geodesic family (E6).",
+          "scoring_3": "The behavioral signal is train-only and measurable, but no observed statistic in the bundle evaluates this exact source-row cosine (E5 is entropy; E9 is a different profile), so behavior_evidence=3. Curved geodesic contrast is coupled to the prefix, but necessity against a matched Euclidean counterpart is not argued (3). It differs from direct successor attraction by comparing successor distributions, yet no cited-work/ledger trace is supplied (3). The proposal specifies the assignment level and expected prefix survival/Recall diagnostics (4). Required three matched comparisons and a refutation threshold are absent (2). Thresholding, no-positive handling, sparse cosine preprocessing, differentiable prefix details and numerical safeguards need specification (2). It explores a different relation and its popularity-driven failure would be informative (3)."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It couples train-only successor-distribution overlap to curved prefix contrast and explicitly mentions behavior-off and Euclidean controls, but does not name the full both-on comparison as a controlled arm; numerical safeguards for Poincare distance are also absent.",
+          "scoring_2": "It computes train-only successor distributions and overlap positives, then couples those pairs to curvature-conditioned Poincare geodesic contrast on the differentiable T1/T2 prefix. The proposal names behavior-off and Euclidean comparisons and observable SID/Stage3 effects. It does not fully specify numerical boundary safeguards or control matching.",
+          "scoring_3": "Training-only successor-distribution overlap defines positive pairs and branching-scaled Poincare geodesic contrast acts on the differentiable T1+T2 prefix; the required three matched behavior/geometry comparisons are not specified."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.25,
+          "scoring_2": 2.95,
+          "scoring_3": 2.95
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "It couples train-only successor-distribution overlap to curved prefix contrast and explicitly mentions behavior-off and Euclidean controls, but does not name the full both-on comparison as a controlled arm; numerical safeguards for Poincare distance are also absent.",
+            "scorer": "scoring_1"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 3.25
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": false,
+        "pair": [
+          "branch_scaled_transition_nce",
+          "cohort-target-lorentz-prefix"
+        ],
+        "votes": {
+          "branch_scaled_transition_nce": 0,
+          "cohort-target-lorentz-prefix": 3
+        },
+        "winner": "cohort-target-lorentz-prefix"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "branch_scaled_transition_nce",
+          "cohort_successor_curved_nce"
+        ],
+        "votes": {
+          "branch_scaled_transition_nce": 3,
+          "cohort_successor_curved_nce": 0
+        },
+        "winner": "branch_scaled_transition_nce"
+      },
+      {
+        "disagreement": true,
+        "pair": [
+          "cohort-target-lorentz-prefix",
+          "cohort_successor_curved_nce"
+        ],
+        "votes": {
+          "cohort-target-lorentz-prefix": 1,
+          "cohort_successor_curved_nce": 2
+        },
+        "winner": "cohort_successor_curved_nce"
+      }
+    ],
+    "copeland": {
+      "branch_scaled_transition_nce": 0,
+      "cohort-target-lorentz-prefix": 0,
+      "cohort_successor_curved_nce": 0,
+      "successor-prefix-geodesic": 0
+    },
+    "cycles": [
+      [
+        "branch_scaled_transition_nce",
+        "cohort-target-lorentz-prefix",
+        "cohort_successor_curved_nce"
+      ]
+    ],
+    "position_bias": {
+      "first_listed_wins": 8,
+      "second_listed_wins": 1
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "8ad592caa47dc6cc7a34277063fbc713e5915e9431e9c270e2560eefbc1a8d16",
+      "idea_id": "successor-prefix-geodesic",
+      "proposal_sha256": "0c6b0c99e08ad352d79d9fb6cb666de6705a7b4de1011b929b7cfe0d53e17e39"
+    },
+    {
+      "evidence_sha256": "6b6a680740eed6d2318c73b02e70ce4298f684391ac87e4612d27a15a104d973",
+      "idea_id": "cohort-target-lorentz-prefix",
+      "proposal_sha256": "01406ab9ab97ea7b05b34ca1814a764ed46f7ae2472ba415813b9b1a2dd6dcf2"
+    },
+    {
+      "evidence_sha256": "cd05f7a8b74ede6e87496907e433d379c11154a313a5fe2939297dc6ee623612",
+      "idea_id": "branch_scaled_transition_nce",
+      "proposal_sha256": "60310f4a9533f01bc2f6a2dd0d8c0f6790dc32f11521e32500fd4242663179e9"
+    },
+    {
+      "evidence_sha256": "70eef1615b150786cebb24f81fc8c855aeb0007a854fdc7a05b6277345d5f3b6",
+      "idea_id": "cohort_successor_curved_nce",
+      "proposal_sha256": "fd02aeee0077a4a785049c814322d9302dff07652e0a0bfced5d4a22db96085c"
+    }
+  ],
+  "reviews": [
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "For q=0, exp_0(q)=0 regardless of c; if all sampled prefixes are zero, changing the behavior-derived curvature cannot change pair distances or gradients, so the claimed curvature pathway has no effect in that case.",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "successor-prefix-geodesic",
+          "missing_dimensions": [],
+          "objection": "This is very close computationally to the measured successor-geodesic-coarse family, and the bundle shows that family underperformed stronger measured alternatives on beam Recall; the new contrastive objective may not cure that failure mode.",
+          "rationale": "E5 gives auditable train-only entropy stratification and supports the branching hypothesis (4). Curved distance on the actual quantized prefix is real, but no matched-control argument or cancellation analysis establishes necessity (3). The change is a routine transition-geodesic contrastive variant of measured successor-geodesic methods (2; E6). Assignment gradients could plausibly change T1/T2 and next-token survival (4), but no explicit matched three-way controls/failure criterion are specified (2). Formula and cost are present, but stable ball projection, distance clipping, and denominator safeguards are absent (2). E6 makes this a near-repeat of a measured negative (1).",
+          "scope_reason": "Behavior and curvature are coupled through the quantized prefix and expected effects are stated, but it does not name the required behavior-off, Euclidean/geometry-off, and both-on comparison; it also omits numerical safeguards for the Poincare map/distance.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If two items each occur after a different context g1 and g2, their context sets are disjoint and A_ij=0, even if the histories are semantically interchangeable; conversely a shared generic context can produce positive overlap without substitutability.",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cohort-target-lorentz-prefix",
+          "missing_dimensions": [],
+          "objection": "The proposal assumes shared three-item context cohorts imply target substitutability, but the provided measured cohort-profile result is a different predecessor-profile construction and does not validate this exact Jaccard context-overlap signal.",
+          "rationale": "E5 supports branching heterogeneity, but not the proposed context-cohort signal itself; E9 concerns another profile definition, leaving this evidence high-risk (2). Lorentz geodesic contrast on the quantized prefix is computationally explicit and plausibly non-Euclidean, but no matched Euclidean argument is supplied (3). Destination-side cohort overlap differs from cited transition heuristics and is computationally distinct, but cited-work/ledger traceability is missing (3). The stated chain to T1/T2 and recommendation is plausible and has named expected diagnostics (4). No named three-way controls or falsifier (1). Cost and core equation exist, but safeguards are missing (2). A different cohort construction could yield an informative negative (3).",
+          "scope_reason": "The training-only cohort signal and Lorentz operation are connected through the quantized prefix, but required behavior-off, geometry-off/Euclidean, and both-on comparisons are not named; numerical safeguards for Lorentz exp-map/acosh computation are also unspecified.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 2.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 1.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If all b_i=0, then c is the same clipped constant for every item; the behavior-derived curvature ceases to encode any branching differences, although the transition-pair loss remains.",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "branch_scaled_transition_nce",
+          "missing_dimensions": [],
+          "objection": "Its core computation is a sampled successor-transition geodesic contrastive objective, substantially overlapping the already measured successor-geodesic-coarse mechanisms; changing soft versus hard prefix construction and curvature scaling alone may be a routine variation.",
+          "rationale": "The measured entropy/top-1 relationship supports the behavioral premise and coverage (4; E5). Poincare distance operates on the soft quantized prefix, but matched Euclidean evidence and cancellation checks are absent (3). The transition-contrastive mechanism closely overlaps measured successor-geodesic variants (2; E6). Its proposed gradients to early assignments plausibly affect prefix survival and recommendation with explicit diagnostics (4). It mentions required ablations but not the three matched switches or a concrete failure criterion (2). Sampling, cost, and equation are specified, but numerical guards are not (2). Given the measured negative family, this is a near-repeat with limited exploration value (1).",
+          "scope_reason": "It specifies training transitions, branch-conditioned curvature, and a coupled prefix loss, but does not explicitly name behavior-off, Euclidean/geometry-off, and both-on comparisons; numerical safeguards for Poincare distance are unspecified.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "Let P_a=(1,0) and P_b=(1,0) because both sources transition only to one globally popular item; cosine similarity is 1 although the sources can represent unrelated contexts and need not be interchangeable.",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E6",
+            "E7",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cohort_successor_curved_nce",
+          "missing_dimensions": [],
+          "objection": "Sparse successor-row overlap may mostly identify shared popular destinations rather than functional interchangeability; the supplied evidence does not measure the proposed cosine-positive relation.",
+          "rationale": "E5 establishes substantial train-only branching heterogeneity and E9 supports a related, but not identical, cohort-profile signal; exact cosine successor overlap is not measured, so evidence is plausible rather than directly validated (4). Curved geodesic contrast acts on the quantized prefix, but there is no matched-control necessity argument (3). The source-side successor-distribution relation is distinct from direct successor attraction and the cohort-profile signal, though no traceable cited-work/ledger comparison is supplied (3). The proposed assignment-to-prefix-survival-to-recommendation chain has directional diagnostics (4). Behavior-off and Euclidean controls are mentioned, but a full explicit matched three-arm design and refutation condition are not (3). The equation and cost are given, but numerical guards are not (2). The cohort-overlap failure mode could be informative (3).",
+          "scope_reason": "It couples train-only successor-distribution overlap to curved prefix contrast and explicitly mentions behavior-off and Euclidean controls, but does not name the full both-on comparison as a controlled arm; numerical safeguards for Poincare distance are also absent.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "If q_i^(2)=q_j^(2) for a positive pair due to identical T1/T2 code vectors, their geodesic distance is zero for every positive curvature; changing c_i cannot distinguish that pair or provide a nonzero separation signal for it.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "successor-prefix-geodesic",
+          "missing_dimensions": [],
+          "objection": "The closest measured mechanisms, successor_geodesic_coarse/v2 and tangent_successor_residual, already use successor behavior with curved/coarse-prefix geometry and underperform the stated .055537 baseline (E6); merely moving the pairwise loss onto the prefix may not overcome that failure mode.",
+          "rationale": "behavior_evidence=4: E5 measures substantial, well-covered entropy/top-successor stratification, but not that the proposed sampled positive relation predicts SID usefulness, so not 5. geometry_necessity=3: curved distance and curvature do enter the same pairwise objective, but no matched-control argument rules out an equivalent Euclidean pair loss. novelty=2: actual-prefix pairwise contrast differs computationally, but is a routine extension of measured successor-geodesic/coarse and successor residual families (E6). downstream_mechanism=4: the proposal specifies T1/T2 assignment gradients and predicts prefix survival and recall (E13, E6). falsifiability=3: behavior-off/geometry-off/both-on are implied by its comparisons and failure can be observed, but matching, discriminating diagnostic and explicit refutation criterion are not fully specified. implementability=3: adequate basic recipe and cost estimate, but curvature varies by anchor in a pair distance without specifying which curvature governs both endpoints, and numerical boundary safeguards are not stated. exploration_value=1: near-repeat of measured negative successor-geodesic family (E6).",
+          "scope_reason": "Train-only directed adjacent transitions are counted and sampled; curvature-conditioned Poincare exponential map/geodesic InfoNCE acts on the T1+T2 cumulative quantized prefix and sends gradients through its straight-through path. It names behavior-off, Euclidean and both-on comparisons, measurable outcomes, and cost/safeguards. The comparisons are required by the scope, though the proposal does not fully specify matching the controls.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If the previous-three context sets are {a,b,c} and {a,b,d}, they overlap heavily despite different order and potentially different intent; the unordered-set Jaccard treats them as similar, whereas contexts (a,b,c) and (c,b,a) can imply different next targets.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cohort-target-lorentz-prefix",
+          "missing_dimensions": [],
+          "objection": "The measured cohort-profile statistic concerns shared predecessor/successor-cohort profiles and is weakly discriminative against fixed negatives (positive 0.9291 vs negative 0.8871; positive beats all ten negatives only 0.5898; E9); it does not establish that the proposed exact context-set Jaccard relation identifies substitutable targets.",
+          "rationale": "behavior_evidence=3: computation is explicit and E9 supports a related nondegenerate train-only cohort signal, but the exact shared-context relation and its coverage/behavioral predictive value are not measured. geometry_necessity=3: Lorentz geodesic acts on the same prefix as cohort positives, but no evidence distinguishes its effect from a matched Euclidean distance. novelty=3: destination targets sharing a context differs from direct transition pairs, although cohort/profile overlap is adjacent to measured cohort evidence (E9); no traceable cited-work/ledger comparison is provided. downstream_mechanism=4: the proposal connects positive cohort pairs to T1/T2 assignment and specifies survival/teacher-forced diagnostics. falsifiability=3: named behavior-off and Euclidean controls and observable criteria, but not fully matched or accompanied by a discriminating diagnostic/refutation. implementability=2: cohort construction and loss are stated, but Lorentz exp origin inputs, normalization, curvature conventions, stable acosh/clamping and gradient safeguards are absent; this needs specification before reliable implementation. exploration_value=3: a different source of positive pairs gives a useful test of whether context-conditioned target equivalence helps.",
+          "scope_reason": "It computes train-only previous-up-to-three-item context cohorts and weighted Jaccard positive pairs, then uses Lorentz exponential maps/geodesic contrast on the T1+T2 quantized prefix. Both signals are in one differentiable pathway and the proposal states observable outcomes and the three comparison conditions. Numerical safeguards and precise matching are not specified, but these are implementation/rubric limitations rather than missing scope elements.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If the “soft prefix point” is the unquantized encoder vector before codebook assignment, its contrastive gradient can move encoder outputs while hard T1/T2 assignments remain unchanged; thus the claimed assignment pathway requires the unspecified soft-prefix definition to include a differentiable codebook-dependent path.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "branch_scaled_transition_nce",
+          "missing_dimensions": [],
+          "objection": "This is very close to the already measured successor-geodesic coarse and v2 mechanisms, with negative Recall@10 outcomes and poor depth-2 survival (E6); changing hard to soft prefix and curvature scaling may not constitute a sufficiently independent hypothesis.",
+          "rationale": "behavior_evidence=4: E5 directly supports a train-only branching signal with coverage/stratification, but does not validate sampled non-neighbours as negatives. geometry_necessity=3: curvature affects pair distances, yet matched Euclidean control is not argued and can reproduce the broad contrastive computation. novelty=2: the actual soft prefix and entropy-scaled curvature are variations of measured successor-geodesic/coarse work (E6). downstream_mechanism=4: explicitly predicts T1/T2, prefix-survival and Stage3 changes through the prefix loss. falsifiability=3: requests required ablations and measurable criteria, but lacks full matching, discriminating diagnostic and a clear mechanism-refuting condition. implementability=2: pair sampling and objective are implementable in outline, but “details below” leaves the differentiable prefix undefined; curvature formula, pair metric safeguards and cost at actual dimensions need verification. exploration_value=1: near-repeat of measured transition-geodesic family (E6).",
+          "scope_reason": "Directed train-only transitions and per-item branching entropy determine sampled pairs and curvature; a Poincare geodesic contrastive loss acts directly on the soft two-level quantized prefix and its gradients reach the quantizer. It specifies behavior-off, Euclidean and both-on outcomes. The exact soft-prefix construction is deferred as “details below” but the stated core pathway is identifiable.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "Let source i transition only to popular item h and source j transition only to h as well; their successor-row cosine is 1, although they may occur in unrelated user contexts and need not be interchangeable recommendation outcomes.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cohort_successor_curved_nce",
+          "missing_dimensions": [],
+          "objection": "Shared popular successors can make unrelated sources positives, and the supplied train evidence E5 establishes entropy stratification, not the proposed cosine-over-successor-rows relation's predictive validity; existing successor-geodesic mechanisms also measured poorly (E6).",
+          "rationale": "behavior_evidence=4: train-only successor entropy is strongly measured and covered (E5), but the exact shared-successor positive overlap is not measured. geometry_necessity=3: Poincare distance is in the coupled objective, but a matched Euclidean contrastive transform could plausibly reproduce its effect absent evidence against it. novelty=2: shared-successor distribution positives are a routine variation on the already measured successor-geodesic/coarse and residual family (E6). downstream_mechanism=4: it names affected T1/T2 assignments and predicts survival and recall with diagnostics. falsifiability=3: behavior-off and Euclidean controls plus observable criteria are stated, but matching and an explicit refuting outcome are incomplete. implementability=2: sparse row overlap, positives and sampled negatives are specified, but curvature reference B_ref is undefined, and distance stability / zero-norm safeguards are omitted. exploration_value=1: near-repeat of the measured successor-geodesic family (E6).",
+          "scope_reason": "It computes train-only successor distributions and overlap positives, then couples those pairs to curvature-conditioned Poincare geodesic contrast on the differentiable T1/T2 prefix. The proposal names behavior-off and Euclidean comparisons and observable SID/Stage3 effects. It does not fully specify numerical boundary safeguards or control matching.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "With q_i=e_i1+e_i2 outside the radius 1/sqrt(c_i), exp_0(q_i) is not a valid finite Poincare-ball point; clipping/projecting it can change gradients and the stated contrastive computation.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "successor-prefix-geodesic",
+          "missing_dimensions": [],
+          "objection": "This is close to the already measured successor-geodesic-coarse family, while the bundle does not establish that per-item curvature changes the mechanism beyond a matched fixed-curvature/Euclidean control; implementational details for mapping quantized vectors into the Poincare ball are incomplete.",
+          "rationale": "E5 gives measured, strongly stratified train successor entropy with broad item coverage, supporting behavior_evidence=4 (the specific SID hypothesis remains unmeasured). The explicit exp map/geodesic acts on the actual quantized prefix, but no matched Euclidean result or cancellation analysis supports >3. Its mechanism resembles measured successor_geodesic_coarse variants in E6-E7, hence novelty=2. Directly shaping early assignments plausibly changes prefix survival and next-token prediction (4). Only the proposed objective and informal hypothesis are given, without the required three comparisons and failure criterion (falsifiability=2). Projection, temperature, numerical boundary handling and concrete curvature gradient are unspecified, and affordability is asserted rather than verified (implementability=2). Near-repeat of measured negatives gives exploration_value=1.",
+          "scope_reason": "Train-only directed adjacent transitions with count-weighted positives and entropy-conditioned curvature feed a Poincare geodesic contrastive loss directly on quantized T1+T2; however requested behavior-off/Euclidean/both-on matched comparisons are not specified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If each context cohort has a distinct single target, then distinct items' context incidence sets are disjoint, every Jaccard score is zero, and the proposed positive sampler has no eligible pair.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cohort-target-lorentz-prefix",
+          "missing_dimensions": [],
+          "objection": "No measured statistic validates this exact destination/context-cohort Jaccard relation; supplied measured E9 is a different predecessor-profile statistic and cannot be treated as evidence for these positives.",
+          "rationale": "The signal is computable and plausibly testable, but the bundle's measured train statistics (E5/E9) do not measure the proposal's specific unordered three-item context overlap, so behavior_evidence=3 rather than 4. Lorentz distance is a real curved operation on the prefix, but the proposal gives no argument why it outperforms a matched Euclidean metric (3). The relation differs computationally from direct-transition mechanisms, though no traceable prior-art/ledger comparison is supplied (3). It names the affected prefix and expected next-token / Recall direction (4). Controls and a failure criterion are absent (2). Lorentz normalization, stable acosh safeguards, zero-positive handling and timing verification are not specified (2). This is a distinct relation with an informative failure mode (3).",
+          "scope_reason": "Training-only shared-context cohorts determine positives/negatives and Lorentz geodesic contrast acts on cumulative T1+T2 quantized vectors; requested behavior-off, geometry-off and both-on matched comparisons are not specified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If all observed successor rows have zero entropy, c=c0 (subject to clipping); thus the stated entropy-dependent curvature reduces to a fixed-curvature transition contrast and has no per-item branching adaptation.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "branch_scaled_transition_nce",
+          "missing_dimensions": [],
+          "objection": "The soft-prefix geodesic transition objective is computationally very close to the already measured successor-geodesic-coarse family, and its behavior/geometry ablations are only mentioned as required logging, not specified as controlled experiments.",
+          "rationale": "E5 measures a strong entropy/top-successor relationship and E10 supplies transition coverage, supporting behavior_evidence=4. Poincare distance on the actual soft prefix is explicit, but no matched Euclidean evidence or cancellation analysis (3). Relative to the measured successor-geodesic mechanisms in E6-E7 this is a routine variation, with entropy-scaled curvature rather than a substantially new pathway (2). It directly names prefix changes, expected survival and recommendation effects (4). Although three controls are called for, matched setup and falsifier are absent (2). “Soft prefix” is not operationally defined, and distance safeguards, tau and curvature reference/scaling are underspecified; cost is only estimated (2). Near-repeat of measured negatives (1).",
+          "scope_reason": "Training-only directed transitions and entropy set positives/curvature, and Poincare geodesic contrast acts on the soft T1+T2 prefix representation; matched behavior-off, Euclidean and both-on comparisons are missing.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "Let two source items each transition only to the same single successor. Their normalized rows have cosine 1 and become positives, although one shared popular destination supplies no evidence that the sources are interchangeable in their own recommendation contexts.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cohort_successor_curved_nce",
+          "missing_dimensions": [],
+          "objection": "Its cosine-overlap successor relation is plausible but not measured for the proposed pair construction; E9's measured cohort-profile overlap is not the same statistic, and common successors may primarily signal popularity.",
+          "rationale": "The behavioral signal is train-only and measurable, but no observed statistic in the bundle evaluates this exact source-row cosine (E5 is entropy; E9 is a different profile), so behavior_evidence=3. Curved geodesic contrast is coupled to the prefix, but necessity against a matched Euclidean counterpart is not argued (3). It differs from direct successor attraction by comparing successor distributions, yet no cited-work/ledger trace is supplied (3). The proposal specifies the assignment level and expected prefix survival/Recall diagnostics (4). Required three matched comparisons and a refutation threshold are absent (2). Thresholding, no-positive handling, sparse cosine preprocessing, differentiable prefix details and numerical safeguards need specification (2). It explores a different relation and its popularity-driven failure would be informative (3).",
+          "scope_reason": "Training-only successor-distribution overlap defines positive pairs and branching-scaled Poincare geodesic contrast acts on the differentiable T1+T2 prefix; the required three matched behavior/geometry comparisons are not specified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    }
+  ],
+  "round_id": "round_20261026_121546_192",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "cohort_successor_curved_nce",
+        "status": "BACKUP",
+        "weighted_score": 3.25
+      },
+      {
+        "idea_id": "cohort-target-lorentz-prefix",
+        "status": "BACKUP",
+        "weighted_score": 2.95
+      },
+      {
+        "idea_id": "branch_scaled_transition_nce",
+        "status": "BACKUP",
+        "weighted_score": 2.85
+      }
+    ],
+    "disagreement": {
+      "branch_scaled_transition_nce": 1.0,
+      "cohort-target-lorentz-prefix": 2.0,
+      "cohort_successor_curved_nce": 2.0,
+      "successor-prefix-geodesic": 1.0
+    },
+    "disputed": {
+      "branch_scaled_transition_nce": [],
+      "cohort-target-lorentz-prefix": [
+        "falsifiability"
+      ],
+      "cohort_successor_curved_nce": [
+        "exploration_value"
+      ],
+      "successor-prefix-geodesic": []
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": false,
+          "pair": [
+            "branch_scaled_transition_nce",
+            "cohort-target-lorentz-prefix"
+          ],
+          "votes": {
+            "branch_scaled_transition_nce": 0,
+            "cohort-target-lorentz-prefix": 3
+          },
+          "winner": "cohort-target-lorentz-prefix"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "branch_scaled_transition_nce",
+            "cohort_successor_curved_nce"
+          ],
+          "votes": {
+            "branch_scaled_transition_nce": 3,
+            "cohort_successor_curved_nce": 0
+          },
+          "winner": "branch_scaled_transition_nce"
+        },
+        {
+          "disagreement": true,
+          "pair": [
+            "cohort-target-lorentz-prefix",
+            "cohort_successor_curved_nce"
+          ],
+          "votes": {
+            "cohort-target-lorentz-prefix": 1,
+            "cohort_successor_curved_nce": 2
+          },
+          "winner": "cohort_successor_curved_nce"
+        }
+      ],
+      "copeland": {
+        "branch_scaled_transition_nce": 0,
+        "cohort-target-lorentz-prefix": 0,
+        "cohort_successor_curved_nce": 0,
+        "successor-prefix-geodesic": 0
+      },
+      "cycles": [
+        [
+          "branch_scaled_transition_nce",
+          "cohort-target-lorentz-prefix",
+          "cohort_successor_curved_nce"
+        ]
+      ],
+      "position_bias": {
+        "first_listed_wins": 8,
+        "second_listed_wins": 1
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "successor-prefix-geodesic",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.85 below 3.0",
+          "BELOW_MINIMUM_DIMENSION: exploration_value",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.85
+      },
+      {
+        "idea_id": "cohort-target-lorentz-prefix",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.95 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.95
+      },
+      {
+        "idea_id": "branch_scaled_transition_nce",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.85 below 3.0",
+          "BELOW_MINIMUM_DIMENSION: exploration_value",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 0"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.85
+      },
+      {
+        "idea_id": "cohort_successor_curved_nce",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 3.25
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [],
+    "selection_is_multiple": false,
+    "status": "NO_QUALIFIED_IDEA",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  }
+}

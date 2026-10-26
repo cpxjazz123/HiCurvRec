@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:231-373 | Static dataflow inspection from frozen TRAIN_FILE successor-history rows through sparse successor distributions, mined overlap pairs, sampled training tuples, differentiable first-two-level prefix points and Poincare distances into symmetric cross-entropy; confirmed the trainer adds that returned term at lines 491-500.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:302-317
+FINDING DETAIL: No defect found for this check. The successor-cohort signal conditions the contrastive pair selection, and the curvature-conditioned Poincare geodesic scores those same pair representations within the connected loss path. Behaviour-off returns a zero-valued term and geometry-off switches the same scores to Euclidean distance.
+FINDING REPRODUCTION: Trace _successor_supports -> _mine_pairs -> _contrastive_term -> _soft_prefix -> directional_logits -> forward/reverse cross entropy -> loss.backward. The geometry branch uses _poincare_distance, not an imported-but-unused helper.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:320-373, 491-503 | Static graph and numerical-safeguard inspection; execution was not performed, consistent with the stated sandbox limitation.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:347-349
+FINDING DETAIL: NCE indexes all_embeddings using item IDs mined from every training transition, but its tuple encoder invocation uses raw_module.encoder outside the DDP-wrapped forward. Under multi-rank training, those NCE-only encoder gradients are not reduced across ranks; each rank samples independently at lines 344-346, so the coupled term produces rank-local, inconsistent encoder updates. This breaks the intended distributed training pathway even though the local graph is differentiable.
+FINDING REPRODUCTION: Launch with world_size=4 and BEHAVIOUR_ON=True. Give ranks different sampled tuples (the configured seeds differ by rank at lines 409-410). At the NCE call, gradients from model.encoder(all_embeddings[flat_ids]) are accumulated locally, while no DDP forward prepares/reduces this second encoder graph; compare encoder parameter gradients across ranks immediately before optimizer.step at line 503. The NCE contribution will not be the all-reduced gradient of the global batch.
+FINDING CORRECTION: Route the NCE encoder/prefix computation through a DDP-visible forward (or explicitly all-reduce the NCE gradients consistently on every rank), preserving the shared tuple sampling/weighting semantics. The single-process path can remain unchanged.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:47-71, 396-433, 562-639 | Static inspection of root/path derivation, frozen input constants, export indexing/uniqueness, launcher and single-card branch; no runtime launch was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:82-85
+FINDING DETAIL: The implementation does not use the idea's specified four [256, 256, 256, 256] codebooks: it configures three learned codebooks [32, 256, 256] and appends one deterministic collision-extension token. Thus the requested unchanged baseline capacity and four-level first-two-prefix training design are not represented by the candidate trainer. The deterministic collision extension is not a learned fourth 256-entry codebook.
+FINDING REPRODUCTION: Inspect CODEBOOK_NUM and CODEBOOK_SIZE at lines 82-85 and _tokenizer_config at lines 375-393; execution configures three learned levels, with output extension added separately at lines 597-603. A run cannot export the specified four learned 256-entry levels from this configuration.
+FINDING CORRECTION: Align the trainer configuration and export contract with the frozen protocol required for this candidate: configure four learned levels of size 256 each (or correct the idea/configuration together if a different frozen capacity was intended), and ensure the downstream SID shape/index contract accepts that exact representation. Other inspected integration wiring points to candidate-owned results/stage2_RQ-VAE/TIGER_cohort_successor_curved_nce, the stage0 train.parquet input, all-item row-order JSON keys, and the GENREC_SINGLE_GPU branch.

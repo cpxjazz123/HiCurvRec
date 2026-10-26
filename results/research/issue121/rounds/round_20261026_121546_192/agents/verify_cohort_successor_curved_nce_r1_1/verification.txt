@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:229-361 | Static trace from training parquet successor extraction at 229-251, pair mining at 254-287, differentiable two-level prefix at 317-330, Poincare distance and NCE at 303-361, and loss use at 479-482. Runtime execution was unavailable; source-level pathway inspected.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:257-265
+FINDING DETAIL: The proposal requires cosine similarity between successor probability rows, but pair mining computes the raw sparse dot product `supports @ supports.T`. Since rows are L1-normalized probabilities, this is not cosine similarity (which additionally divides by each row's L2 norm). Consequently the 0.2 threshold and selected positive pairs do not implement the specified cohort relation. Additionally, the contrast is anchor-to-positive only rather than symmetric as the CHANGE requires.
+FINDING REPRODUCTION: For two identical distributions `[0.5, 0.5]`, raw dot is 0.5 while cosine is 1; for distributions `[1, 0]` and `[0.5, 0.5]`, raw dot is 0.5 while cosine is about 0.707. These yield different scores/rankings, and rows with different support concentration can cross the 0.2 threshold under raw dot despite their cosine being below it. Inspect `_mine_pairs`: `similarity = supports @ supports.T` at line 257 and threshold at 264. The single direction is directly visible in the one `F.cross_entropy` call at 361.
+FINDING CORRECTION: L2-normalize each sparse probability row before multiplying (with zero-row safeguards) to compute cosine and apply the stated threshold/top-one rule. Add the reverse anchor direction and average the two directional NCE terms to make the loss symmetric.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:317-361, 479-488 | Traced the differentiable soft-prefix straight-through path into the Poincare-positive/negative distances and cross-entropy, then into `loss.backward()` and optimizer update. No runtime smoke was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The contrastive term is consumed by the total loss and has a differentiable route through the soft assignments into the encoder and first two codebooks. Curved distances project to a bounded ball and clamp the atanh argument below one, avoiding the identified float32 boundary singularity. BEHAVIOUR_ON false returns a zero term; GEOMETRY_ON false selects Euclidean distances with the same mined pairs. These switches therefore change the active loss computation. Numerical gradients and actual assignment deltas remain for the specified GPU smoke, not provable from static inspection alone.
+FINDING REPRODUCTION: Source trace: `_soft_prefix` lines 317-330; curved distance lines 303-315; NCE line 361; added to training loss and backpropagated lines 482-488. Behavior-off is at lines 335-336 and Euclidean mode at 357-360.
+FINDING CORRECTION: No blocking correction identified from code inspection; retain the runtime one-epoch gradient smoke for execution evidence.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261026_121546_192/trees/cohort_successor_curved_nce/train_rqvae.py:47-71, 384-421, 547-625 | Static inspection of repository-root/result/data constants, trainer setup, export/indexing, and launcher including `GENREC_SINGLE_GPU`; trainer was not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads `stage1_GeneEmbedding/output/sentence_t5.npy` and `results/stage0_build_parquet/train.parquet`, writes candidate outputs under `results/stage2_RQ-VAE/TIGER_cohort_successor_curved_nce/`, exports rows keyed by enumerated item ID over all embeddings, and extends collisions to unique SIDs. The launcher runs torchrun by default and returns to direct `main()` when `GENREC_SINGLE_GPU` is set. No source-level integration defect was found. Runtime execution was unavailable.
+FINDING REPRODUCTION: Check constants at lines 61-71, frozen inputs and item ID setup at 397-420, export/index construction at 582-590, and launcher branch at 597-625 (especially environment switch at 601-602).
+FINDING CORRECTION: No correction identified from code inspection.
