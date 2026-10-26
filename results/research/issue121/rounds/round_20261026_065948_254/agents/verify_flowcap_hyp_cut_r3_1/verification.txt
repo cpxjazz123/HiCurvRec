@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:363-375,268-305,433-440 | Traced the training-history transition count construction into flow_capacity_loss and its invocation in the actual batch loop. The same edge-weighted successor expectation uses Lorentz assignments/distances and Lorentz code-to-code costs; the BEHAVIOR_ON and LORENTZ_GEOMETRY_ON branches both affect this pathway.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. Training-only directed transitions are counted from train_frame histories/targets, retained as up to 16 outgoing neighbors, then coupled to curved assignment and code-distance computations in the shared flow loss.
+FINDING REPRODUCTION: Source trace: train_rqvae.py:363-375 creates flow_neighbors; :272-305 computes curved assignments and edge expectation; :439-440 adds it to the training loss. smoke_test.py:9-34 describes behavior-off and Euclidean switches, though it was not executed here.
+FINDING CORRECTION: None required.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:268-305,433-447 | Statically followed the differentiable tensor operations from encoded input and codebook parameters through balanced assignments, Lorentz costs, and the weighted flow scalar into loss.backward() and optimizer.step(). Numerical safeguards include stabilized exponentials and denominators in balanced_assignments (:237-248), and a lower bound of 1+1e-6 before acosh (:261-265). The supplied smoke_test.py:20-34 encodes the on/off and geometry-off gradient comparisons; not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level dead flow term or obvious float32 overflow/NaN hazard was identified. The flow scalar is added to the optimized loss, and its assignments depend differentiably on encoder outputs and codebook parameters. Runtime gradient smoke is outside this review environment.
+FINDING REPRODUCTION: Inspect flow_capacity_loss at train_rqvae.py:272-305 and its loss addition/backward at :439-447; the intended switch comparisons are specified in smoke_test.py:20-34.
+FINDING CORRECTION: None required.
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:308-330,479-485,536-551,560-588 | Traced trainer entry and launcher, candidate-specific result path, full-catalog export and item-id enumeration. The launcher honors GENREC_SINGLE_GPU at :564-565 and otherwise dispatches torchrun. Export enumerates all embedding rows into JSON keys at :550-551.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261026_065948_254/flowcap_hyp_cut/train_rqvae.py:482-485,539-541
+FINDING DETAIL: T2 assignments are exported as global indices parent*6+local by hardened_prefixes (:317-329), but T3 residual reconstruction indexes the T2 codebook with prefixes[:,1] % 6. This discards the parent component, selecting the wrong T2 prototype for 15 of 16 parents. Moreover, the fitted T2 prototypes in flow_capacity_loss are parent-conditioned composites c1[parent]+child (:275-280), while this export path reconstructs with the unconditioned VQ layer-1 embedding. Thus exported T3 codes are not residual-quantized against the T1/T2 reconstruction used by the proposed mechanism, making the exported SID sequence internally inconsistent.
+FINDING REPRODUCTION: For an item assigned T1 parent 1 and T2 local child 0, hardened_prefixes returns T2 token 6. The export residual expression looks up layer 1 code 0 because it applies % 6, rather than the corresponding conditioned prototype for parent 1. The same expression occurs in both periodic evaluation (:483) and final export (:539), so the defect is reproducible without executing training.
+FINDING CORRECTION: Use one consistent T2 representation from assignment through reconstruction and export: retain the per-item parent-conditioned prototype c1[parent]+child[local] (or an equivalent explicitly indexed codebook) for residual subtraction, and ensure T3 quantization uses that same residual. Do not reduce the exported T2 token modulo 6 to retrieve a code; add a consistency check that reconstruction uses the selected parent's child prototype.

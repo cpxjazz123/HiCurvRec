@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_flowcap_hyp_cut_r5_1",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1792960807.5460365,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "3b0b600373544b7f522410ca84253790ed989148f46a378c72e1b6b170c21222",
+  "isolation_policy": "opencode v2 permission object: bash denied (this role reviews code), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "verification.txt",
+  "output_sha256": "ee6e099c59c172718019927e7538c1ca2a7cd9221dedebb3bc873ee6f89fa82a",
+  "pid": 264367,
+  "project_marker": ".git",
+  "prompt_sha256": "c5c34a5e5d9b5843f39708504a815868f0f27360a9e7410a7b5b073ba551837c",
+  "session_sha256": "62a9fdb750aea07357b1b40d9b27ad1c6d7193e3600fbcacb303150e0802e668",
+  "stderr_present": false,
+  "task_id": "verify_flowcap_hyp_cut_r5_1",
+  "timed_out": false,
+  "verified": true
+}

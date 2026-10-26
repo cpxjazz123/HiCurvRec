@@ -984,7 +984,8 @@ def _probe(key, out, args):
     # raised "only one element tensors can be converted to Python scalars", killing
     # the whole smoke. The gradient is still the thing worth asserting, so reduce the
     # magnitude to a number and say plainly that it was not a scalar term.
-    record = {"loss": float(magnitude) if magnitude.numel() == 1 else float(magnitude.mean()), "grad": best}
+    record = {"loss": float(magnitude) if magnitude.numel() == 1 else float(magnitude.mean()), "grad": best,
+              "scalar": bool(magnitude.numel() == 1)}
     if magnitude.numel() != 1:
         record["reduction"] = "mean_abs"
         record["shape"] = list(magnitude.shape)
@@ -1201,7 +1202,12 @@ else:
     }
     del probe_model
 
-dead_terms = sorted(k for k, v in probes.items() if v["loss"] > 1e-12 and v["grad"] <= 0.0)
+# A non-scalar helper (a projection, a normaliser, a per-sample residual) can have a
+# constant sum -- a row-normalised Sinkhorn output sums to its batch size -- so a zero
+# gradient of that sum says nothing about whether the term is wired in. Only a scalar
+# term, which is a real loss, is fatal when its gradient is zero.
+dead_terms = sorted(k for k, v in probes.items()
+                    if v.get("scalar", True) and v["loss"] > 1e-12 and v["grad"] <= 0.0)
 nonfinite = sorted(k for k, v in probes.items() if v["grad"] != v["grad"] or v["loss"] != v["loss"])
 summary = {
     "arm": getattr(T, "EXPERIMENT_ARM", None),

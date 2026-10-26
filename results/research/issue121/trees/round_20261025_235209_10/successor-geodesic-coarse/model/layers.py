@@ -308,7 +308,11 @@ class RQLayer(nn.Module):
                     dot = xball @ pball.t()
                     delta2 = (x2 - 2 * dot + p2).clamp_min(0)
                     denominator = ((1 - c * x2).clamp_min(1e-7) * (1 - c * p2).clamp_min(1e-7)).clamp_min(1e-7)
-                    argument = (c * delta2 / denominator).sqrt().clamp(max=1 - 1e-6)
+                    # Clamp the squared sinh-distance before sqrt: sqrt(0) has
+                    # an infinite derivative in float32. This creates a tiny
+                    # distance floor (and zero gradient below it), avoiding
+                    # NaNs when a point exactly coincides with a prototype.
+                    argument = (c * delta2 / denominator).clamp_min(1e-12).sqrt().clamp(max=1 - 1e-6)
                     d0 = ((2 / (c ** 0.5)) * torch.atanh(argument)).square()
                 costs = d0
                 if self.t1_behavior_on and successor_latents is not None and successor_weights is not None:
@@ -331,7 +335,9 @@ class RQLayer(nn.Module):
                         c = self.t1_curvature
                         denominator = ((1 - c * pn).clamp_min(1e-7)
                                        * (1 - c * sn).clamp_min(1e-7)).clamp_min(1e-7)
-                        argument = (c * delta2 / denominator).clamp_min(0).sqrt().clamp(max=1 - 1e-6)
+                        # Same documented squared-distance floor as the main
+                        # assignment path, for coincident successors/codewords.
+                        argument = (c * delta2 / denominator).clamp_min(1e-12).sqrt().clamp(max=1 - 1e-6)
                         gd = (2 / (c ** 0.5)) * torch.atanh(argument)
                         nd = gd.square()
                     costs = costs + self.t1_lambda * (nd * successor_weights.float().unsqueeze(-1)).sum(1)

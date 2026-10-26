@@ -1,0 +1,3 @@
+REVISION: Withdraw the claim that a codeword-dependent transition weight changes assignments: the evidence says it moved 0 top-1 assignments, and the row-scalar behavior cannot move any arg-min; the proposal therefore has no demonstrated assignment-changing behavior effect | answers the behavior_dependency gap
+WITHDRAWN: The claim that transition flow changes the assignment cost in a way that alters assignments, and the associated expectation that this yields improved prefix survival or downstream recall
+EVIDENCE NOTE: Measured: positive row scalar leaves every arg-min unchanged (True); codeword-dependent weight moved False of the top-1

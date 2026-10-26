@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:303-323 -> model/model.py:26-30 -> model/layers.py:280-350 | Traced the real trainer minibatch path: adjacent training-only events build directed top-16 popularity-corrected successor weights; trainer gathers those successors and passes their embeddings and weights into RQVAE; T1 combines the item-to-prototype Poincare squared distance and the weighted prototype-to-successor Poincare squared distances in one cost matrix used for soft costs and hard argmin. Source inspection only; no runtime execution was available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behavior and curved operation share the T1 cost pathway; neither is an unrelated auxiliary term.
+FINDING REPRODUCTION: Follow train_rqvae.py:387-393 into RQVAE.forward and RQLayer.forward; successor_weights multiply the geodesic neighbor distances before the shared costs feed both probabilities and T1 indices.
+FINDING CORRECTION: None.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:296-350; train_rqvae.py:393-401 | Inspected differentiable tensor flow from encoded item/successor latents and trainable T1 codebook through projected Poincare distances, weighted costs, softmax and soft cost term, then baseline codebook/commitment losses into loss.backward() and clipped optimizer step. Runtime smoke was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 instability found. Hard assignments are nondifferentiable as expected, while codebook/commitment and soft-cost paths provide gradients. The behavior-off and Euclidean switches are present as t1_behavior_on and t1_euclidean; behavior-off skips the neighbor cost and Euclidean mode replaces both item and neighbor distance computations. The soft cost includes the same costs, so these switches change the gradient computation; hard assignment changes when the resulting cost ranking changes.
+FINDING REPRODUCTION: Source-level counterfactual: with t1_behavior_on=False the conditional at layers.py:318 is bypassed; with t1_euclidean=True the branches at :302-303 and :321-328 replace the curved distances. In the default configuration the behavior term is active and curved mode is selected. No observed runtime gradient/assignment comparison is claimed.
+FINDING CORRECTION: None.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:40-69, 281-323, 463-515, 518-546 | Inspected trainer entry point, frozen Stage1 embedding and Stage0 training-parquet paths, output paths, SID export/index construction, and launcher/single-card branches. This was a source review; trainer execution was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Paths derive from repository root and write to results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse, the candidate-specific Stage2 result directory. Export enumerates embedding rows as item IDs, creates integer rows, extends collisions to unique SIDs, and emits both NumPy and item_sids.json formats. The launcher honors SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at line 102 and bypasses torchrun when set to "1" at lines 520-521; otherwise it starts four workers, while already-launched ranks bypass relaunch.
+FINDING REPRODUCTION: Inspect train_rqvae.py:61-67 for candidate result paths; :492-509 for all-item inference and ID-to-row JSON mapping; :518-546 for launcher behavior. No runtime execution was performed.
+FINDING CORRECTION: None.

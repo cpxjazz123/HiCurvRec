@@ -107,6 +107,32 @@
       "event": "implementation_verified",
       "idea_id": "successor-geodesic-coarse",
       "revision": 5
+    },
+    {
+      "at": 1792974106.952715,
+      "event": "capacity_budget_change",
+      "idea_id": "successor-geodesic-coarse",
+      "reason": "(32,96,256): the measured survival table requires the first two levels to be cheap",
+      "revision": 6
+    },
+    {
+      "at": 1792974137.4947555,
+      "event": "verification_needs_repair",
+      "idea_id": "successor-geodesic-coarse",
+      "revision": 6,
+      "signature": "fe6a8c5901398977"
+    },
+    {
+      "at": 1792974203.255906,
+      "event": "implementation_repaired",
+      "idea_id": "successor-geodesic-coarse",
+      "revision": 7
+    },
+    {
+      "at": 1792974237.936886,
+      "event": "implementation_verified",
+      "idea_id": "successor-geodesic-coarse",
+      "revision": 7
     }
   ],
   "evidence_bundles": {
@@ -19020,7 +19046,7 @@
           "reason": "the attempted minimal forward/backward smoke command exceeded its 120-second timeout."
         }
       ],
-      "failure_signature": "84718a86cee0895e",
+      "failure_signature": "fe6a8c5901398977",
       "idea_id": "successor-geodesic-coarse",
       "notes": "Only changed ARM_NAME to TIGER_successor-geodesic-coarse and added a GENREC_SINGLE_GPU=1 launcher bypass. The required computational coupling is absent; this tree is not a complete Stage 2 candidate and should not be promoted or evaluated as implementing the idea. I did not intentionally write to the baseline tree or its result directory.",
       "output_paths": {
@@ -19101,14 +19127,31 @@
             "command": "PYTHONPATH='<candidate-tree>' /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -c '<inline RQLayer smoke: B=2, K=32, N=16; run both-on, behavior-off, Euclidean; backward and assert finite loss and gradients>'",
             "result": "PASS {'both_on': ((2, 1), 2.795843, True), 'behavior_off': ((2, 1), 2.75382, True), 'euclidean': ((2, 1), 0.825769, True)}; assignment_changes {'behavior_off_vs_both': 0, 'euclidean_vs_both': 2}; prototype_gradient_deltas {'behavior_off_vs_both': 0.0, 'euclidean_vs_both': 0.96556717}. Initial attempt with system Python failed because torch is unavailable there; successful run used the Stage2 Python 3.9 environment."
           }
+        },
+        {
+          "remaining_issues": [
+            "Could not execute the required gradient/switch smoke test: `python` failed immediately with `ModuleNotFoundError: No module named 'torch'`. Hence finite backward and switch-dependent assignments/gradients are not runtime-verified."
+          ],
+          "repairs": [
+            {
+              "change": "Both main assignment and successor-consensus paths now clamp the squared sinh-distance to 1e-12 before sqrt, documenting the tiny distance floor and zero gradient below it; the existing boundary cap is retained",
+              "finding": "Coincident-point Poincare distance can yield non-finite gradients through sqrt at zero; the near-boundary cap also saturates distance",
+              "verification": "Source inspection confirms both sqrt sites use the positive floor; behavior/geometry runtime verification remains unconfirmed because the available Python lacks torch"
+            }
+          ],
+          "revision": 7,
+          "smoke": {
+            "command": "`python - <<'PY' ...` (inline RQLayer smoke covering coincident behavior-on curved, behavior-off curved, behavior-on Euclidean, and ordinary curved inputs; full script was run from the candidate tree)",
+            "result": "`ModuleNotFoundError: No module named 'torch'` (exit status 1); no smoke assertions ran."
+          }
         }
       ],
-      "revision": 5,
+      "revision": 7,
       "smoke": {
         "command": "GENREC_SINGLE_GPU=1 /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -c '... minimal RQVAE forward/backward and SID shape check ...'",
         "result": "Timed out after 120 seconds; no PASS output, trainer execution, or SID export was verified."
       },
-      "source_digest": "39e4b4e366dc13f1abc13d29b9f94e53f79e042b31f4871dfc90f8365426fe9c",
+      "source_digest": "3b6018a103c685d4fff93a0d3c1b32500349629b442889c6423b09c1027d030c",
       "status": "verified",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse",
       "tree_exists": true,
@@ -19116,14 +19159,14 @@
         {
           "checks": [
             {
-              "exercised_how": "Static path inspection: confirmed training-only directed adjacent-event counts and corrected/normalized top-16 weights are constructed from train_frame; per-item successor embeddings and weights are passed into the actual model forward; level-0 assignment uses Poincare-ball distances both from item to prototype and from each successor to prototype, with the weighted successor-geodesic term added to the same assignment costs before argmin.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:300-321 -> results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/model.py:26-30 -> results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:292-337",
+              "exercised_how": "Traced the real trainer minibatch path: adjacent training-only events build directed top-16 popularity-corrected successor weights; trainer gathers those successors and passes their embeddings and weights into RQVAE; T1 combines the item-to-prototype Poincare squared distance and the weighted prototype-to-successor Poincare squared distances in one cost matrix used for soft costs and hard argmin. Source inspection only; no runtime execution was available.",
+              "exercised_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:303-323 -> model/model.py:26-30 -> model/layers.py:280-350",
               "findings": [
                 {
                   "correction": "None.",
-                  "detail": "No blocking defect found. The behaviour signal and curved operation meet in one level-0 cost/assignment pathway; T2/T3 remain the Euclidean residual levels and collision extension follows afterward.",
+                  "detail": "No defect found. The behavior and curved operation share the T1 cost pathway; neither is an unrelated auxiliary term.",
                   "location": "none",
-                  "reproduction": "Inspect train_rqvae.py:300-321, 387-391 and layers.py:294-345. No trainer execution was attempted.",
+                  "reproduction": "Follow train_rqvae.py:387-393 into RQVAE.forward and RQLayer.forward; successor_weights multiply the geodesic neighbor distances before the shared costs feed both probabilities and T1 indices.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -19131,14 +19174,14 @@
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Static differentiability and switch-path inspection: the coupled distances feed costs, probabilities, and the hard argmin; the soft expected-cost term is added to quant_loss, and the straight-through quantized result continues through reconstruction. The behaviour and Euclidean switches explicitly remove the successor term or replace both distance computations.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:296-345",
+              "exercised_how": "Inspected differentiable tensor flow from encoded item/successor latents and trainable T1 codebook through projected Poincare distances, weighted costs, softmax and soft cost term, then baseline codebook/commitment losses into loss.backward() and clipped optimizer step. Runtime smoke was not run.",
+              "exercised_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:296-350; train_rqvae.py:393-401",
               "findings": [
                 {
                   "correction": "None.",
-                  "detail": "Code inspection shows differentiable dependencies from the coupled cost to the encoder and trainable first-level codebook, plus a nonzero soft-assignment cost term; behavior-off and Euclidean paths alter those costs. No dead computed term or evident float32 overflow/NaN hazard was found. Runtime finite-gradient proof is not claimed; the supplied MCP smoke is the runtime proof before a full run.",
+                  "detail": "No dead coupled term or evident float32 instability found. Hard assignments are nondifferentiable as expected, while codebook/commitment and soft-cost paths provide gradients. The behavior-off and Euclidean switches are present as t1_behavior_on and t1_euclidean; behavior-off skips the neighbor cost and Euclidean mode replaces both item and neighbor distance computations. The soft cost includes the same costs, so these switches change the gradient computation; hard assignment changes when the resulting cost ranking changes.",
                   "location": "none",
-                  "reproduction": "Compare layers.py:303-312 with 314-337, and 338-345. Setting t1_behavior_on false skips the successor addition; setting t1_euclidean true uses Euclidean cdist for the item and successor costs. These switches are source-inspected, not executed here.",
+                  "reproduction": "Source-level counterfactual: with t1_behavior_on=False the conditional at layers.py:318 is bypassed; with t1_euclidean=True the branches at :302-303 and :321-328 replace the curved distances. In the default configuration the behavior term is active and curved mode is selected. No observed runtime gradient/assignment comparison is claimed.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -19146,14 +19189,14 @@
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Static entry-point and path audit: traced root resolution, frozen embedding/parquet inputs, target-ID validation, export, and launcher branches, including GENREC_SINGLE_GPU.",
-              "exercised_path": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:40-69, 279-331, 461-544",
+              "exercised_how": "Inspected trainer entry point, frozen Stage1 embedding and Stage0 training-parquet paths, output paths, SID export/index construction, and launcher/single-card branches. This was a source review; trainer execution was not available.",
+              "exercised_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/train_rqvae.py:40-69, 281-323, 463-515, 518-546",
               "findings": [
                 {
                   "correction": "None.",
-                  "detail": "The repository root is found by the .git plus stage2_RQ-VAE marker (lines 42-61); inputs are the frozen sentence_t5.npy and stage0 train.parquet (63-65). Output paths are confined to results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse (60-69), the promoted candidate directory. SID rows are emitted in embedding/item-ID order by enumerate (490-507), with shape/uniqueness checks. Launcher uses four-card torchrun by default and returns to direct main execution when GENREC_SINGLE_GPU=1 (516-544). No baseline/other-candidate/out-of-repository write path found. Execution was not performed.",
+                  "detail": "No integration defect found. Paths derive from repository root and write to results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse, the candidate-specific Stage2 result directory. Export enumerates embedding rows as item IDs, creates integer rows, extends collisions to unique SIDs, and emits both NumPy and item_sids.json formats. The launcher honors SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\" at line 102 and bypasses torchrun when set to \"1\" at lines 520-521; otherwise it starts four workers, while already-launched ranks bypass relaunch.",
                   "location": "none",
-                  "reproduction": "Inspect train_rqvae.py:42-69 for path derivation; 293-321 for the input and training-only behaviour data; 483-509 for checkpoint/SID export and indexing; 516-544 for launcher branches.",
+                  "reproduction": "Inspect train_rqvae.py:61-67 for candidate result paths; :492-509 for all-item inference and ID-to-row JSON mapping; :518-546 for launcher behavior. No runtime execution was performed.",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -19162,7 +19205,7 @@
             }
           ],
           "verdict": "PASS",
-          "verifier": "verify_successor-geodesic-coarse_r5_1"
+          "verifier": "verify_successor-geodesic-coarse_r7_1"
         }
       ]
     }
@@ -22683,6 +22726,22 @@
       "idea_id": "successor-geodesic-coarse",
       "revision": 4,
       "signature": "84718a86cee0895e"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Evaluate squared geodesic cost without differentiating sqrt at zero, or clamp squared separation to a positive epsilon before sqrt and document its effect; add a source-level/runtime gradient smoke that checks finite losses and all intended encoder/prototype gradients for coincident and ordinary inputs. Verify behavior-off and Euclidean switches change and restore assignments/gradients.",
+          "detail": "The curved distance's argument is capped at 1-1e-6 before atanh. For points whose projected norm approaches the ball boundary, this cap makes distance saturate; more seriously, at zero separation delta2 is exactly zero and sqrt(delta2) has an undefined/unstable derivative in float32. The distance feeds both the assignment and the behavior consensus term, so a coincident point/prototype (or successor/prototype) can produce non-finite gradients despite finite forward losses. Gradient clipping at train_rqvae.py:399-400 does not repair NaN gradients. Since no runtime smoke was available, code does not establish finite backward for this valid counterexample.",
+          "location": "results/research/issue121/trees/round_20261025_235209_10/successor-geodesic-coarse/model/layers.py:311-312, 334-336",
+          "reproduction": "Minimal counterexample: choose xball == pball (or a successor point equal to a prototype). Then delta2=0 at layers.py:309-312 (and similarly at :328-336); backpropagate the curved distance/soft-cost through sqrt at zero. The square-root derivative at zero is singular, and multiplying the resulting derivative by zero can yield NaN in float32. The same issue applies to a zero latent before projection. A zero loss value does not imply a finite gradient.",
+          "severity": "blocking",
+          "verifier": "verify_successor-geodesic-coarse_r6_1"
+        }
+      ],
+      "idea_id": "successor-geodesic-coarse",
+      "revision": 6,
+      "signature": "fe6a8c5901398977"
     }
   ],
   "review_bundles": {
@@ -23463,7 +23522,7 @@
   ],
   "stage3_jobs": [],
   "step": "stage2",
-  "updated_at": 1792947943.8926926,
+  "updated_at": 1792974237.9678462,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261025_235209_10.log",
   "worker_pid": 3379029,
