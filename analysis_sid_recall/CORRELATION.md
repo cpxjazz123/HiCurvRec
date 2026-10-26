@@ -412,3 +412,73 @@ popular items are where the raw signal is weakest.
 * Eight variants were specified before the run (four depths/entropies plus four frequency
   buckets); the Benjamini-Hochberg column above is over those eight, and the two that do not
   survive are the ones with the weakest raw effect (`d1_common`, `d2_mean`).
+
+## Co-occurrence positive-versus-negative gap
+
+`positive_negative_gap_metrics.csv`, produced by `positive_negative_gap_analysis.py`. It uses
+the canonical held-out pairs the ER metric uses — 52,855 validity pairs, each with ten fixed
+negatives — and scores every pair by the co-occurrence cosine instead of by prefix sharing:
+
+    gap = mean_q [ cos(h_q, c_positive) - (1/K) sum_j cos(h_q, c_negative_j) ]
+
+with the co-occurrence rows built from the training split only. `h_q` is the context of the
+pair; the two versions differ in what that context is, and the difference matters.
+
+### Version A, SID free
+
+`h_q` is the anchor's own co-occurrence row. Nothing in this version depends on the SID table,
+so it is one number for the whole dataset (identical for all 67 tables) and it cannot be
+correlated with a per-SID recall:
+
+| | value |
+|---|---|
+| context to positive, mean cosine | 0.1383 |
+| context to the ten negatives, mean cosine | 0.0895 |
+| **gap** | **0.0487** |
+
+The co-occurrence representation does separate a behaviourally adjacent item from unrelated
+ones, and it does so by a small margin: the positive sits at 1.55x the negative level, and the
+positive level itself is only 0.14. This is a property of the dataset, not of any SID.
+
+### Version B, with an explicit L1 region condition
+
+`h_q` is the mean co-occurrence row of the items sharing the anchor's **L1** region, so the
+score becomes a property of the table. The L1 region holds 96 items on average, which keeps the
+aggregate informative. L2 (2.24 items per region) and L3 (1.13; 57 of 67 tables have fewer than
+two items per triple) degenerate to the item itself, so the conditioned score at those depths
+equals version A and adds nothing — the same geometric saturation the predecessor-diversity
+metric runs into.
+
+| metric | median | rho(recall) | p (BH over 7 tests) | rho(`cooccur_overlap_L3`) | partial rho(\| `cooccur_overlap_L3`) |
+|---|---|---|---|---|---|
+| **`d1_gap`** | 0.0837 | **+0.877** | 0.0003 | +0.872 | **+0.431** |
+| `d1_negative` | 0.1959 | −0.720 | 0.0003 | −0.813 | — |
+| `d1_positive` | 0.2771 | +0.229 | 0.068 | +0.073 | +0.377 |
+
+Three readings:
+
+1. **The discrimination is what carries the signal, not the level.** The positive similarity
+   alone correlates +0.229 (p = 0.068) while the positive-minus-negative gap correlates +0.877.
+   Two tables can have equally similar positives and differ completely in how well they push
+   the negatives away; the gap sees that difference and the level does not.
+2. **The negative side moves the wrong way when it is close.** `d1_negative` correlates −0.720:
+   tables whose negatives are co-occurrence-similar to the region are the tables with lower
+   recall, which is the separation failure the gap is built to expose.
+3. **It is not a second copy of the overlap metric, but it is close.** The gap correlates 0.872
+   with `cooccur_overlap_L3`, so most of its variance is shared; the partial correlation of
+   +0.431 after controlling for it means roughly a fifth of the rank variance is independent.
+
+### By target frequency (version B, L1)
+
+| bucket | median gap | rho(recall) | p (BH) |
+|---|---|---|---|
+| never a training target | 0.0440 | +0.871 | 0.0003 |
+| 1–2 | 0.0511 | +0.880 | 0.0003 |
+| 3–9 | 0.0573 | +0.906 | 0.0003 |
+| 10 or more | 0.1611 | +0.808 | 0.0003 |
+
+Unlike the raw predecessor-diversity reading, this one holds in every bucket and is weakest on
+the frequent targets: the discrimination the gap measures is present for rare and unseen targets
+too, not only for popular ones. Note that the *level* of the gap on frequent targets (0.161) is
+three times the level on rare ones, so the popular items are easier to separate in absolute
+terms while the ranking across tables is slightly tighter for the middle buckets.
