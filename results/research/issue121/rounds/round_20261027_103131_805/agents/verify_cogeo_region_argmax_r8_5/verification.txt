@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:211-425, train_rqvae.py:602-613, model/layers.py:121-162 | Inspected the trainer’s train-split signal construction and refresh, then traced the installed first-level assignment through its Poincare, co-consumption, and directed score into quantization. The sandbox cannot run the trainer; smoke_test.py:63-125 contains deterministic switch-comparison assertions.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The first-level score combines squared Poincare distance with co-consumption profile agreement and a bounded directed transition term in one assignment pathway. The signals are constructed from train_frame; the selected code enters the existing residual quantizer.
+FINDING REPRODUCTION: Static trace: train_rqvae.py:213-263 constructs behaviour counts from the training frame; :322-389 refreshes profiles and directed scores from current assignments; :391-425 combines them with Poincare distance; :602-613 installs the assignment; model/layers.py:127-162 uses its scores in the quantizer.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162, train_rqvae.py:641-653, smoke_test.py:47-60, smoke_test.py:86-125 | Traced the real forward/backward path in code and inspected the smoke test’s finite-loss/gradient and behaviour-off/geometry-off comparison assertions. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The coupled score supplies a soft candidate-weighted code vector whose loss contributes to quant_loss; its gradients can reach the encoder and codebook. The hard argmax itself is not differentiable, but the soft path avoids leaving the coupled term as assignment-only. The shown projection and denominator clamps do not present an evident float32 overflow or NaN hazard.
+FINDING REPRODUCTION: Inspect model/layers.py:150-161 for the soft-score loss and straight-through gradient path; smoke_test.py:55-60 checks finite loss and encoder gradients, while :113-125 checks that both switches change choices on its fixture.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:541-613, train_rqvae.py:732-811, smoke_test.py:39-62 | Inspected path resolution, trainer setup and launcher branches, export/indexing, and the smoke test’s SID shape/uniqueness checks. The sandbox cannot execute the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the stage0 train parquet and stage1 embedding file, writes artifacts to the promoted arm’s result directory, and exports rows by embedding/item ID with collision extension and uniqueness checks. The torchrun branch and the single-card `GENREC_SINGLE_GPU` bypass are present. Source inspection does not establish runtime success, but no integration defect is evident from the inspected code.
+FINDING REPRODUCTION: Inspect train_rqvae.py:54-75 for repository-relative input/output paths; :782-811 for launcher and single-card handling; :767-774 for indexed SID export; smoke_test.py:61-62 for the small export check.
+FINDING CORRECTION: none

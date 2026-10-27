@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:211-420, train_rqvae.py:542-551, model/layers.py:106-112, model/layers.py:126-130 | Static call-path inspection: training-only co-consumption and transition data are created by CoGeoAssignment, the first VQ layer's _indices invokes it, and it scores projected latent/code vectors by Poincare distance together with co-consumption agreement and directed radar before argmax. smoke_test.py:62-117 provides a deterministic switch-sensitivity fixture, though it was not executed here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:292-307
+FINDING DETAIL: The directed signal is not the specified distribution over all incoming training predecessors: _build_padded_tables truncates each item's incoming predecessor list to the eight highest-count sources. Consequently the directed radar omits valid transition evidence and does not compute the stated p(r|i) weighting over all r. The core co-consumption/Poincare coupling remains present.
+FINDING REPRODUCTION: Construct a training frame with nine distinct predecessors for one destination, each with a positive transition count. The padded table at lines 302-307 retains only eight; the omitted predecessor has zero contribution in the assignment at lines 403-411, although the specification includes it.
+FINDING CORRECTION: Preserve all incoming predecessors (e.g. a sparse/ragged representation and batched reduction), or explicitly revise the mechanism and its specification to define a justified bounded predecessor set rather than silently truncating it.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:363-420, model/layers.py:126-143, train_rqvae.py:579-591 | Static differentiation inspection: the assignment argmax is intentionally discrete, but its selected code goes through the existing straight-through quantizer; quantization loss is finite-valued MSE and backpropagates to encoder and codebook. The Poincare score projects vectors inside the ball and clamps denominators/acosh input away from singular boundaries. smoke_test.py:33-56 defines a forward/backward gradient and finite-loss smoke, and lines 105-117 test behavior-off and geometry-off sensitivity; runtime execution was unavailable as stipulated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:481-551, train_rqvae.py:670-748, smoke_test.py:33-56 | Static entry-point inspection: repository-root discovery resolves paths beneath the repository, TRAIN_FILE is results/stage0_build_parquet/train.parquet, outputs are scoped to results/stage2_RQ-VAE/TIGER_cogeo_region_argmax, JSON keys are zero-based enumerate item IDs, and the export checks uniqueness. The launcher handles torchrun children and checks SINGLE_GPU_ENV == "1" before launching; the stage3 trainer defines the same environment name at train_HG-Rec.py:88. The smoke fixture checks SID shape and uniqueness; the full trainer was not run, per the stated sandbox limitation.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

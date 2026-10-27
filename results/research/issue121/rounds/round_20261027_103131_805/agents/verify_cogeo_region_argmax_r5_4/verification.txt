@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-347,363-420; model/layers.py:106-130 | Traced train-only parquet histories into co-consumption and adjacent-transition tables, profile refresh, and VQLayer's first-level assignment hook; smoke_test.py:62-117 gives a deterministic switch comparison fixture (not executed).
+FINDING SEVERITY: minor
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:292-307
+FINDING DETAIL: The directed tie-break does not use the full incoming transition distribution p(r|i) specified by the proposal. It silently truncates each item's incoming predecessors to the eight most frequent before normalizing, so transitions from all other training predecessors contribute zero. The symmetric co-consumption/Poincare score is genuinely coupled and directed information is connected to that score, but this implementation changes the named directed signal.
+FINDING REPRODUCTION: Give one destination item nine distinct incoming sources with equal nonzero training transition counts. _build_padded_tables retains only eight; predecessor_mask has eight true entries and the ninth source has no influence on directed scoring.
+FINDING CORRECTION: Preserve and score the complete normalized incoming predecessor distribution (using a sparse/batched representation if needed), or explicitly revise the proposal and calibration/cost specification to define the top-eight approximation.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:363-420; model/layers.py:106-143; smoke_test.py:33-55,80-117 | Static trace confirms projected Poincare distance plus behaviour changes hard code selection; selected embeddings feed the straight-through quantizer and finite MSE quantization/reconstruction losses. Smoke fixture asserts finite forward/backward, encoder gradient, and distinct both-on, behaviour-off, and geometry-off assignments; runtime not run as instructed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection. The hard argmax itself is nondifferentiable, but it selects the code used by the differentiable straight-through quantizer; this is not a dead behaviour term. The projection and denominator clamps avoid the apparent float32 singularities.
+FINDING REPRODUCTION: The available static smoke assertions are in smoke_test.py:49-54 and 105-117; the GPU one-epoch runtime proof is outside this review environment.
+FINDING CORRECTION: No correction required for this check.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74,481-525,670-717,720-749 | Traced root/path constants, frozen stage0 train.parquet and stage1 embedding inputs, final all-item SID export, and torchrun/single-card launcher branches; smoke_test.py:34-56 checks repository discovery and SID shape/uniqueness. Runtime not run as instructed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The promoted arm writes under its own results/stage2_RQ-VAE/TIGER_cogeo_region_argmax directory; data inputs are the frozen train.parquet and sentence_t5.npy paths; exported rows enumerate item IDs in embedding order and the JSON keys are the same row indices. The launcher honors GENREC_SINGLE_GPU=1 and otherwise invokes torchrun.
+FINDING REPRODUCTION: Source checks at train_rqvae.py:63-74,495-500,705-713,724-744; SID uniqueness/shape assertions are in smoke_test.py:55-56.
+FINDING CORRECTION: No correction required for this check.

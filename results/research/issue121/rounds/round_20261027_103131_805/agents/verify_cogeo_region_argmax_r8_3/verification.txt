@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:322-384 -> train_rqvae.py:391-425 -> model/layers.py:127-162 | Traced the trainer’s train-only co-consumption and directed-transition profile construction into the Poincare-plus-behaviour score, then into first-level quantization. The score affects both the selected code and the differentiable soft quantization path. I inspected smoke_test.py:63-125 for the intended three-way switch fixture; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162 -> train_rqvae.py:641-653 | Code inspection shows the coupled score’s softmax-weighted code embedding contributes to quantization loss and the straight-through output, so its curved-distance pathway can backpropagate to the latent encoder and codebook. The score uses projection and denominator clamps and a finite lower bound before acosh. smoke_test.py:47-60 specifies a finite-loss/backward/encoder-gradient check, and lines 86-125 specify assignment comparisons for both-on, behaviour-off, and geometry-off; these were inspected, not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or clear float32 numerical hazard found. Runtime gradient smoke was not run, consistent with the stated sandbox limitation.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:541-613, train_rqvae.py:732-811 | Inspected the real trainer entry point, repository-root discovery, frozen embedding and train-parquet inputs, arm-specific result paths, full-catalogue SID export, and launcher. The output is indexed by enumerated item ID at lines 767-773 and goes to the promoted arm’s required results/stage2_RQ-VAE/TIGER_cogeo_region_argmax directory. The launcher checks SINGLE_GPU_ENV at lines 104 and 786-787 and otherwise invokes torchrun at lines 782-806. I did not execute the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The candidate metadata reports an inconclusive path-check crash from ModuleNotFoundError (CANDIDATE_CHECK.json:1-4), but the trainer’s path resolution and output targeting are explicit in the inspected code.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

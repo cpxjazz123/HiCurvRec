@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:391-425, 427-480; model/layers.py:121-162 | Traced the trainer-installed first-level assignment through its score and straight-through quantization paths. The same candidate score combines train-derived co-consumption agreement and directed transition context with squared Poincare distance; the selected code feeds residual quantization. The deterministic comparison fixture in smoke_test.py:86-125 exercises both behavior-off and geometry-off assignment switches. I did not run it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162; train_rqvae.py:641-653 | Inspected the real forward/backward path: the coupled score is used to select the hard code and also to form a differentiable soft codebook mixture added to quantization loss and the straight-through output. The smoke fixture at smoke_test.py:55-60 checks finite loss and encoder gradient; lines 113-125 compare assignment variants using identical inputs. I did not run it. The Poincare projection and denominator/acosh clamps are visible at train_rqvae.py:407-415 and 446-455.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No dead coupled term or evident float32 numerical hazard found by code inspection.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 541-613, 732-811; smoke_test.py:61-62 | Traced the trainer entry point, frozen Stage0 training parquet and Stage1 embedding inputs, candidate-specific result path, indexed SID JSON export, and launcher branches. The single-card branch reads SINGLE_GPU_ENV at train_rqvae.py:104 and 782-788. The smoke fixture checks unique SID shape/index order via enumeration in train_rqvae.py:772-773. Trainer execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by source inspection. CANDIDATE_CHECK.json:2-3 reports a ModuleNotFoundError, which is an inconclusive environment check, not evidence of a trainer defect.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

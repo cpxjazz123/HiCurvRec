@@ -1,0 +1,10 @@
+TREE: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax
+CHANGED FILE: train_rqvae.py
+CHANGED FILE: model/layers.py
+CHANGED FILE: smoke_test.py
+DEVIATION: Directed context is derived from training rows' history-to-target transitions and the directed term is hard-capped at 0.01; training-only co-consumption rows are built from item pairs co-occurring in each history-plus-target row. | The supplied parquet has user/history/target fields but no separate canonical event-transition table, so those are the available train-only behavior definitions.
+DEVIATION: The trainer has one operational coupled Poincare-plus-co-consumption path, but does not include implemented behavior-off and Euclidean-off experiment switches, nor run the full three-way Stage3 comparison. | A small smoke test validates execution and gradient flow; full 3000-epoch/Stage3 validation was not run. Therefore the stated hypothesis/admission criteria remain unverified.
+ASSUMPTION: The frozen batch size, optimizer, schedule and architecture stay unchanged; first-level epoch profiles are recomputed from current item-to-code hard assignments and the later residual quantization stages remain baseline.
+SMOKE COMMAND: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -u smoke_test.py
+SMOKE RESULT: PASS forward/backward finite; encoder gradient; unique SID export shape=(4, 4)
+NOTES: The trainer retains the dynamic repository-root marker walk, writes all output paths under its idea-specific ARM_NAME, and preserves the GENREC_SINGLE_GPU=1 single-process route. The smoke test confirms root discovery from this tree location; it was not run after promotion into stage2_RQ-VAE/. Full epoch runtime, one-GPU training against the frozen data, SID export at full scale, and Stage3 Recall@10 > 0.065 are not established. The sparse assignment implementation includes per-item Python loops and is not demonstrated to meet the proposed epoch budget. No files outside this candidate tree and the requested implementation report were intentionally changed.

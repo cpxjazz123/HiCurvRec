@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-421 -> model/layers.py:106-130 | Statically traced CoGeoAssignment.__call__ as invoked by VQLayer._indices; identified train-only co-consumption rows and directed transitions, curved Poincare scoring, and both ablation modes. The CPU smoke fixture at smoke_test.py:38-79 constructs both_on/behaviour_off/geometry_off choices, though it was not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-by-geometry assignment pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-143, train_rqvae.py:364-421 | Statically traced the selected hard code through embedding lookup and straight-through quantization, and the quantization/reconstruction losses backward into the encoder and codebook. The assignment score itself is nondifferentiable by design, but it controls the selected code and hence the quantization forward/gradient path. smoke_test.py:25-30 specifies finite-loss/encoder-gradient checks and :67-79 specifies switch sensitivity; neither was run in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No static dead-term or evident float32 overflow/NaN hazard found in the coupled score and straight-through training path. The Poincare denominator is clamped and inputs projected inside the unit ball; runtime gradient proof is delegated to the stated GPU smoke.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:573-608, 721-750 | Traced the real epoch refresh and top-level launcher from source. The trainer loads stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet (:61-69, :496-500), exports enumerate-indexed item_sids.json under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax (:61-70, :706-714), and _launch_via_torchrun honors GENREC_SINGLE_GPU at :104 and :721-745.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:604-608
+FINDING DETAIL: Epoch-end full-catalogue refresh invokes the coupled assignment with all item IDs but never installs the freshly computed full-catalogue latent in cogeo.current_latent. CoGeoAssignment.__call__ reads the stale last-minibatch current_latent and explicitly raises when its length does not match IDs (train_rqvae.py:375-381). Therefore the real trainer fails at the first epoch refresh, before it can complete training/export. Initial setup does set current_latent correctly only for initial-code generation (:547-551); that does not fix later refreshes.
+FINDING REPRODUCTION: Follow one epoch with COGEO_ENABLED=True: at :604 set region_item_ids to arange(N), compute encoded at :598, then :606 calls _indices; current_latent remains set by the last VQLayer.forward minibatch at model/layers.py:128-130. With N larger than the final batch, CoGeoAssignment.__call__ sees len(z) != len(ids_np) and raises RuntimeError("missing latent context for Poincare assignment"). This is deterministic for the stated catalogue and ordinary minibatches.
+FINDING CORRECTION: Set cogeo.current_latent = encoded immediately before the full-catalogue _indices call (as initial setup does), then refresh from those coupled assignments. Also ensure the full catalogue IDs and latent share device/length before invoking the hook.

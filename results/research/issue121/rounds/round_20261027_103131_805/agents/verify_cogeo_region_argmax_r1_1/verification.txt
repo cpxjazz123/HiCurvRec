@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-374 | Source-traced the training-only co-consumption and adjacent-transition construction, refreshed current-assignment profiles, and the first-level score in which Poincare squared distance, co-consumption agreement, and bounded directed score enter one argmax. Trainer hooks it into the first codebook at lines 492-501 and per training batch at model/layers.py:106-112,127-130. The available smoke_test.py:19-30 and :36-43 exercise an in-memory forward/backward and compare the named assignment variants; runtime could not be executed in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The behaviour signals are constructed from train.parquet only (train_rqvae.py:213-236), and both behaviour and the curved distance contribute to the same first-level selection (train_rqvae.py:332-374).
+FINDING REPRODUCTION: Source trace: CoGeoAssignment.__init__ consumes the frozen train frame; refresh builds profiles and transition-region masses; __call__ combines these with the Poincare score before argmax. The geometry_off and behaviour_off branches are defined at train_rqvae.py:366-374.
+FINDING CORRECTION: none
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:314-374 | Inspected score computation and its use by VQLayer, then traced the straight-through quantization loss/backward path at model/layers.py:121-143. smoke_test.py:25-30 specifies a finite forward/backward and finite encoder-gradient check; lines 36-43 exercise both_on, behaviour_off, and geometry_off on the same batch/codebook. Runtime execution is unavailable here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead score term or evident float32 overflow/NaN hazard found. The hard argmax itself is nondifferentiable, but the selected code enters the quantizer's straight-through path; reconstruction and quantization gradients reach encoder/codebook parameters (model/layers.py:140-143). The score variants switch the behavior and geometry terms on/off in the same assignment pathway (train_rqvae.py:366-374).
+FINDING REPRODUCTION: Minimal source reproduction is the smoke test's model forward, finite loss assertion, backward, and finite encoder gradient assertion at smoke_test.py:25-30, followed by compare_variants at :36-43. No runtime claims are made for this sandbox.
+FINDING CORRECTION: none
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74,431-501,615-658,665-694 | Traced repository-root and arm-specific paths, the frozen stage1 embedding and stage0 train parquet inputs, trainer setup, indexed SID export, and launcher branches including SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at :104 and its single-card bypass at :669. Runtime execution is not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking integration defect found by source inspection. Result paths resolve under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax; train input is results/stage0_build_parquet/train.parquet; export enumerates item IDs in order, writes both SID formats, and extends collisions to unique rows (train_rqvae.py:650-656). The launcher uses the repository-relative script and has the required single-GPU environment branch (:665-689).
+FINDING REPRODUCTION: Verify constants at train_rqvae.py:61-74 and :445-449; follow rank-0 export at :643-658 and launch dispatch at :665-694. The code-level SID shape/uniqueness assertions in smoke_test.py:31-32 exercise the export helper. No trainer execution was attempted.
+FINDING CORRECTION: none

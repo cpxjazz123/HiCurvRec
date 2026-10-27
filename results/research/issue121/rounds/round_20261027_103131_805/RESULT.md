@@ -1,45 +1,77 @@
-# round_20261027_103131_805 — symmetric coherence as the objective (iteration 6)
+# round_20261027_103131_805 — cogeo_region_argmax (iteration 6 of the hyperbolic x behaviour line)
 
-## What the round was for
+## The mechanism
 
-Iteration 5 established that the **directed** behaviour structure and the **symmetric**
-coherence metric are different signals: five designs that injected predecessors, successors,
-transition masses or hard negatives into the assignment all pushed `cooccur_overlap_L3` down
-(0.0584, 0.0571, 0.0596 against the plain baseline's 0.0756), while the only symmetric design
-in this repository raised it (0.0756 -> 0.0786-0.0820).
+The selected proposal of the round: the first-level code of an item is chosen by a score
+that combines the Poincare geodesic distance from the item's latent to the codewords, the
+**symmetric** co-consumption agreement between the item and the region (the mean
+co-consumption row of the items the code currently holds), and a bounded **directed**
+tie-break (the incoming transition mass of the item spread over the radar of its
+predecessors). The score is differentiable and drives the straight-through path of the
+quantiser, so the behaviour and the curvature train the encoder and the codebook and not
+only select a code.
 
-This round therefore inverted the composition, and the objective specified it exactly:
+## The review (five verifiers per revision) and what the operator did
 
-    k* = argmax_k [ -d_c(z_i, v_k)^2 / T + lambda * <A_i, g_k> + eps * directed_(i,k) ]
+| revision | what the reviewers found | what was done |
+|---|---|---|
+| 0 | the coupled score only fitted the Euclidean argmin; `raw_module` used before assignment | the coupling was made real and the unwrapping fixed |
+| 2-3 | the coupled score was auxiliary, then disconnected | the score was wired into the first-level quantiser |
+| 5-8 | a capped predecessor list, a co-consumption signal that lost its multiplicities, no differentiable path, a 2.24 GiB dense allocation per epoch, the hook installed before its profiles existed | all fixed by the operator, each with an executable check |
+| 9 | the ablation switches existed only inside the smoke | `COGEO_MODE` became a source constant, so an ablation is a real training arm |
 
-with `A_ij` the frozen train-only **symmetric** co-consumption cosine, `g_k` the mean
-co-consumption row of the items currently held by code `k` (refreshed per epoch), `d_c` the
-Poincare geodesic distance, `lambda` about 1 and `eps` at most `0.01 * lambda` so that the
-directed signal can only break near-ties and cannot move the partition. Three controls were
-required: behaviour-off, geometry-off and **directed-off** (`eps = 0`).
+The operator applied every finding that touched the mechanism and declined the rest (a
+line-continuation indentation, a NEEDS_FIX without a stated finding, the default Stage 3
+code path, which the MCP's `stage3_start` takes as an argument).
 
-Five ideation proposals came back, all in that family: `profile-curved-assignment`,
-`profile-curved-residual`, `cogeo-region-argmax`, `symgeo-profile-memory` and
-`symgeo-region`.
+Two findings were regressions the operator introduced while making the arm fast, and the
+verifiers caught both: the vectorised construction had dropped the multiplicity of every
+co-consumption pair and had reduced the transition table to the last edge of every sequence.
+The tree now carries an equivalence check that compares the vectorised counts with the
+original dictionary construction value by value.
 
-## Why the round stopped at scoring
+## Runtime
 
-The scoring phase raised `AGENT_INFRA_ERROR`: reviewer `scoring_2` broke the rubric schema
-twice — its `SCORE:` line for `profile-curved-assignment` carries **no rationale for the
-`novelty` dimension** (`novelty=UNKNOWN` in the first attempt, a bare `novelty=2` in the
-retry), and the rubric validator requires a rationale per dimension. The retry reused the same
-reviewer with the same prompt and produced the same malformed line, so the round was stopped
-for the operator instead of spending more reviewer runs on it.
+| phase | before | after |
+|---|---|---|
+| start-up (signal + KMeans + first refresh) | ~57 min | **~20 s** |
+| training | 2.36 s/epoch | **0.251 s/epoch** (3000 epochs in 785 s) |
 
-Under issue #121 rule 19c this is an agent infrastructure error: it is retried and must not be
-read as a scientific verdict on the five proposals. The fix belongs in the rubric prompt: ask
-for `dimension=score | rationale` for **every** dimension including `novelty`, and let the
-validator reject a bare `novelty=2` exactly as it rejected `novelty=UNKNOWN`.
+The co-consumption and transition counts are built with numpy instead of 4.7 million
+dictionary increments (386 s -> 3.7 s), the region profiles and the radar are one bincount
+per epoch, and the agreement of every item with every region is one sparse product per
+epoch instead of a per-step gather.
 
-## What is left to do
+## The result: the first level collapses
 
-1. fix the rubric prompt and re-run the scoring phase of this round (the five proposals and
-   their evidence bundles are on disk and need no regeneration);
-2. implement, verify and train the selected proposal with the frozen budget;
-3. apply the gate before spending Stage 3: `cooccur_overlap_L3` must clear the plain
-   baseline's 0.0756, the target band being 0.15 and the best observed value 0.168.
+| quantity | this arm | baseline | best arm in the 67-table sample |
+|---|---|---|---|
+| L1 codes | **3** | 247 | 204-248 |
+| largest L1 bucket | 0.642 | ~0.02 | — |
+| L2 prefixes | 394 | — | 15,000-24,000 |
+| L3 triples | 9,216 | ~20,000 | 15,000-24,000 |
+| extension alphabet | 73 | 42 | 7-10 |
+| `cooccur_overlap_L3` | **0.0601** | **0.0756** | 0.168 |
+| `adjacency_L3` | 0.0237 | 0.0506 | 0.23-0.27 |
+
+The gate (the target metric has to clear the plain baseline's 0.0756 before any Stage 3
+budget is spent) was **not met**, so no Stage 3 run was made.
+
+## What the line now shows
+
+Four designs in this line, all of which let the behaviour signal decide the code, all
+collapsed the partition, and the more strongly the behaviour signal drove the assignment
+the worse the partition got:
+
+| variant | L1 codes | largest L1 bucket | `cooccur_overlap_L3` | Stage 3 |
+|---|---|---|---|---|
+| replace (iteration 1) | 116 | 0.985 | 0.0584 | 0.058497 |
+| balanced (iteration 3) | 104 | 0.693 | 0.0571 | not run (gate) |
+| cogeo, differentiable (iteration 6) | **3** | 0.642 | 0.0601 | not run (gate) |
+
+The reconstruction loss is the only counterweight, and it is too weak: a score that
+decides the code outright wins over the reconstruction, and the items whose co-consumption
+profile agrees pick the same region. The next design has to keep the Euclidean term in
+charge of the ordering and use the behaviour term as a bounded bias, with a balance
+constraint on the assignment; and it has to be screened on the L1 code count after a few
+hundred epochs, which costs minutes instead of a full run.

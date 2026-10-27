@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:211-289, train_rqvae.py:322-383, train_rqvae.py:388-422, model/layers.py:127-161 | Traced the training-split co-consumption and transition construction into epoch-refreshed region profiles and directed scores, then into the first-level assignment score and quantizer’s differentiable soft-score path. `smoke_test.py:63-125` defines both-on, behaviour-off, and geometry-off assignment comparisons; execution was not available here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:121-162, train_rqvae.py:638-650, smoke_test.py:47-60, smoke_test.py:86-125 | Traced a forward from the first-level coupled score through the softmax-weighted code vectors, quantization loss, and backward to the encoder; the smoke test asserts finite loss and encoder gradients and checks that both switches change assignments. Static inspection only; no runtime execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found. The Poincare denominator and acosh argument are clamped, and the projected points remain inside the ball for the configured positive curvature.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:538-610, train_rqvae.py:729-803 | Inspected the repository-root and arm-specific paths, frozen `stage0_build_parquet/train.parquet` input, SID export keyed by item-row index, and launcher branches including `GENREC_SINGLE_GPU`. Trainer execution and export were not available here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Results resolve to the candidate’s own `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` directory; the candidate check metadata records an inconclusive import error, not a trainer failure.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:322-383, train_rqvae.py:388-422, model/layers.py:127-161 | Traced the trainer’s epoch refresh into `CoGeoAssignment.scores`, then through the first VQ layer’s assignment and soft straight-through quantization path. Training-only co-consumption profiles and directed transitions contribute to a score that also computes squared Poincaré distance; that score selects the code and contributes to the differentiable soft quantization term.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Source inspection of the exercised path.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161, train_rqvae.py:636-649, smoke_test.py:47-62, smoke_test.py:86-123 | Traced the real forward/backward path from latent assignment through `soft = softmax(coupled / scale) @ code_embs` and the added quantization loss. The smoke-test code checks finite loss and encoder gradients, and uses fixed fixtures to check that both-on assignments differ from behaviour-off and geometry-off assignments. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical hazard found. The Poincaré projection and denominator clamps keep the distance computation bounded away from invalid denominators; the soft-score spread is clamped before division.
+FINDING REPRODUCTION: Source inspection of `model/layers.py:404-422` and `model/layers.py:442-477`, plus the cited smoke-test assertions.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:61-74, train_rqvae.py:552-599, train_rqvae.py:727-770, train_rqvae.py:777-806 | Traced the trainer entry point from root and result-path resolution through loading `results/stage0_build_parquet/train.parquet`, training, and exporting all-item SIDs and item-ID-keyed JSON. Also inspected the four-card launcher and its `GENREC_SINGLE_GPU` branch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The result path is scoped to `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`; export rows are enumerated by item ID, and the single-card branch returns from launcher setup before calling `main`.
+FINDING REPRODUCTION: Source inspection of the cited trainer paths. The trainer was not run.
+FINDING CORRECTION: None.

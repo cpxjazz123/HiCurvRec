@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-226,320-365,373-433 -> model/layers.py:106-119,127-130 | Inspected the train-only history/target construction, epoch refresh of co-consumption region profiles and transition tables, Poincare squared-geodesic scoring plus co-consumption agreement and bounded directed term, then the VQ hard-code hook used during the real model forward. The trainer installs this callback on the first quantizer at train_rqvae.py:551-560 and refreshes it each epoch at :604-611. This is one connected assignment pathway, not an unused helper or a side loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No fidelity defect found. The co-consumption profile/agreement and Poincare distance jointly score first-level assignments; the directed predecessor-region term is bounded as specified. All signals are derived from TRAIN_FILE.
+FINDING REPRODUCTION: Source inspection of the exercised path above; no runtime execution performed.
+FINDING CORRECTION: None.
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-143, train_rqvae.py:373-433, smoke_test.py:25-45 | Traced the callback's selected indices into embedding lookup, straight-through quantization and the reconstruction/quantization loss; reviewed the CPU smoke's forward/backward and variant comparison assertions. No trainer execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:40-43
+FINDING DETAIL: The smoke test does not establish the required switch sensitivity. `compare_variants` counts differences against plain Euclidean argmin but the assertions only require nonnegative counts (which is true for every count), and do not require any variant to differ, check both_on against each control, or check return to the baseline choice when toggling modes. Thus a dead/ineffective behavior or geometry contribution can pass this purported coupling/trainability check. The implementation has a plausible hard-assignment-to-STE gradient path, but the required behavioral test of the coupled computation is absent.
+FINDING REPRODUCTION: The minimal counterexample is `variants = {"both_on": 0, "behaviour_off": 0, "geometry_off": 0, "items": 4}`: both assertions at smoke_test.py:42-43 pass, although none of the switches changes an assignment. A smoke run with sufficiently separated code scores can produce exactly this case.
+FINDING CORRECTION: Make the fixed-batch test assert actual switch sensitivity on a constructed deterministic case: choose latents/code vectors and nonuniform co-consumption/transition profiles such that both_on differs from behaviour_off and geometry_off, then assert toggling back to both_on restores its exact indices. Also assert finite gradients on encoder and codebook parameters after backward and compare the selected-code-dependent gradients across the same controls. Keep a separate finite-loss/finite-gradient check; do not treat nonnegative change counts as evidence of effect.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-75,490-525,551-560,674-721,724-753 | Inspected root/path resolution, frozen stage1 embedding and stage0 train.parquet inputs, target-ID validation, training setup, final all-item SID export and JSON indexing, result ownership, and the torchrun/single-card dispatch branches.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. The input is the canonical frozen training parquet, the result directory is `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax` under the resolved repository root, and the trainer exports an all-item row-indexed JSON mapping with unique extended SIDs. The launcher uses `GENREC_SINGLE_GPU` at train_rqvae.py:104 and :728; when set to "1" it correctly skips torchrun and `main()` selects cuda:0 when available. The four-card path dispatches the script relative to the repository root.
+FINDING REPRODUCTION: Static path/data/export/launcher trace at the cited locations. Runtime execution was not performed.
+FINDING CORRECTION: None.

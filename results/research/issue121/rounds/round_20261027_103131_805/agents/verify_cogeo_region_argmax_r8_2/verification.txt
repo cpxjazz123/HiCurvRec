@@ -1,0 +1,30 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-289, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:391-480, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-162 | Traced the frozen co-consumption and transition construction into the same first-level candidate scoring and argmax as the Poincare distance; traced that selected code into residual quantization. Reviewed the smoke-test fixture that compares both-on, behaviour-off, and geometry-off assignments at smoke_test.py:86-125. Code inspection only; runtime execution is unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-and-geometry pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:126-162, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:391-480 | Traced the differentiable score through the soft candidate distribution and straight-through quantized output into the quantization loss; reviewed the switch-comparison fixture at smoke_test.py:86-125. Runtime forward/backward execution is unavailable here.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:157-161
+FINDING DETAIL: The soft-score gradient path does not implement the claimed geometry-off control. In `CoGeoAssignment.scores`, geometry-off replaces the score with `-euclidean_dist` (train_rqvae.py:420-424), but the hook called by the real forward is `__call__` (layers.py:132), which returns only hard indices. The differentiable scores used for training are instead calculated separately by `scores`; that function has no `behaviour_off` or `geometry_off` branch and always uses the Poincare distance plus both behaviour terms. Consequently, the geometry-off switch can change hard SID assignments while leaving the training gradient’s curved, behaviour-coupled score unchanged. The smoke fixture only compares hard choices via `compare_variants`; it does not test that the forward/backward gradient changes under those switches.
+FINDING REPRODUCTION: In a forward/backward pass with `region_assignment.mode = "geometry_off"`, compare `scores` and the gradient from the soft term against `mode = "both_on"` using identical inputs. The gradient path still uses the Poincare score in both modes, even though `__call__` selects codes using Euclidean distance in geometry-off mode. Repeat with `behaviour_off`: the hard choice changes, but `scores` still adds both behaviour terms.
+FINDING CORRECTION: Use one shared, mode-aware score computation for both hard selection and the differentiable soft path. Apply each control to that shared score, and extend the smoke test to verify finite gradients and gradient changes for behaviour-off and geometry-off.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:541-560, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:732-810 | Inspected repository-root discovery, frozen stage0 train-parquet and stage1 embedding inputs, per-arm result paths, item-indexed export, DDP launch and `GENREC_SINGLE_GPU` branch. Runtime launch is unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Outputs resolve to this candidate’s promoted-arm directory, and the single-card environment branch is present.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+I could not write `verification.txt`: the available tools do not provide write permission.

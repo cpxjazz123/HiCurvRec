@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-243,364-421; model/layers.py:106-112 | Static trace of data construction through the hooked first-level assignment: the Poincare distance, co-consumption agreement and directed score are combined in one argmax. The connected pathway exists, but the behaviour inputs are not computed as specified.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:233-243
+FINDING DETAIL: The implementation does not build the stated train-only sequence signals. It records only the final adjacent pair of each history-plus-target row (lines 233-235), dropping the other adjacent transitions. For co-consumption it globally uniques item-pair keys and assigns each pair a count of one (lines 239-243), so repeated co-consumption across users is discarded rather than summed as the specified per-user symmetric co-consumption counts. The downstream pathway is genuinely coupled, but couples the geometry to materially different behaviour statistics.
+FINDING REPRODUCTION: Use two training rows with sequences [0,1,2] and [0,1,3]. The required transition counts include 0->1 twice and 1->2 / 1->3 once; this code records only 1->2 and 1->3. Their shared co-consumption pair (0,1) should have count two, but the merged unique-key representation stores count one. A one-row sequence [0,1,2,3] similarly yields only 2->3 in the transition table.
+FINDING CORRECTION: Aggregate every adjacent pair in each training sequence, summing counts across rows/users. Construct symmetric co-consumption counts according to the stated per-user distinct-item-pair rule, summing each user's contribution rather than globally binarizing pairs; retain the resulting frozen train-only sparse signal.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:364-421,581-591; model/layers.py:121-143 | Code inspection only (no PyTorch/runtime available as specified): the Poincare and behaviour scores produce hard choices consumed by the quantizer, whose straight-through estimator carries reconstruction/quantization gradients; the smoke fixture specifies forward/backward and compares both-on, behaviour-off and geometry-off assignments at smoke_test.py:24-30,67-79. No detached score is presented as a differentiable loss, and the argmax is explicitly documented as nondifferentiable while its selected code affects the quantizer path. Projection and denominator clamps bound the Poincare calculation away from the unit-ball boundary; no float32 overflow/NaN hazard is apparent from inspection.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261027_103131_805/agents/verify_cogeo_region_argmax_r4_3/verification.txt is the requested report; candidate train_rqvae.py:40-75,482-551,671-749 | Static integration trace only: stage0 train.parquet and stage1 sentence_t5.npy are used; repository-root resolution is marker-based; result artifacts resolve under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax; export enumerates embedding rows into item-ID keys and extends collisions; launcher uses torchrun by default and honors GENREC_SINGLE_GPU=1 at lines 721-749. No trainer execution was attempted. Candidate result path is the permitted promoted-tree result location, not a defect.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

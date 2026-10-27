@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:322-383, train_rqvae.py:388-477, model/layers.py:127-162 | Traced the training-only co-consumption and transition counts into refreshed region profiles and directed scores, then into the first-level assignment score. The score combines those behaviour terms with squared Poincare distance; its soft distribution also contributes to quantization loss and the straight-through output.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Both behaviour signals are constructed from the training frame, and the curved distance and behaviour scores participate in the same assignment computation.
+FINDING REPRODUCTION: The CPU smoke fixture in smoke_test.py:68-125 checks that the coupled assignments differ from the behaviour-off and geometry-off variants. The real trainer is not run here.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162, train_rqvae.py:638-650 | Inspected the real forward, loss, and backward path. The selected code feeds quantization; the coupled soft score contributes a differentiable term to quantization loss and the straight-through output. The Poincare projection and distance use norm and denominator clamps, and the acosh argument is clamped above one.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 numerical hazard found. Code inspection cannot establish the actual finite gradient values on the target runtime.
+FINDING REPRODUCTION: smoke_test.py:47-60 exercises a forward/backward and checks finite loss and encoder gradient; lines 86-125 check assignment sensitivity under both controls. The requested GPU runtime proof is not run here.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:538-610, train_rqvae.py:729-807 | Traced the trainer entry point, paths, training inputs, SID export, and launcher branches. The trainer reads stage0_build_parquet/train.parquet; the promoted arm writes under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax. The export enumerates rows by item ID, and the launcher returns directly when GENREC_SINGLE_GPU is set to "1".
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. CANDIDATE_CHECK.json:2-4 records an inconclusive path-check crash, not a demonstrated trainer defect. The trainer and distributed launcher were not executed.
+FINDING REPRODUCTION: Inspect train_rqvae.py:553-554 for the training data source, lines 763-770 for indexed SID export, and lines 779-807 for launcher and single-card handling. smoke_test.py:39-40 checks repository-root discovery; lines 61-62 check SID shape and uniqueness.
+FINDING CORRECTION: none

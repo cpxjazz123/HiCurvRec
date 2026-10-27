@@ -1,40 +1,16 @@
 {
-  "blocked": {
-    "failure_kind": "AGENT_INFRA_ERROR",
-    "phase": "scoring",
-    "detail": "reviewer scoring_2 broke the rubric schema twice: the SCORE line for profile-curved-assignment carries no rationale for the novelty dimension (novelty=UNKNOWN in the first run, a bare novelty=2 in the retry), and the rubric validator requires a rationale per dimension",
-    "discipline": "issue #121 rule 19c: an agent crash or unusable answer is retried and must not block a mechanism; the retry reused the same reviewer and produced the same malformed line, so the round was stopped for the operator to fix the rubric prompt rather than burning more reviewer runs",
-    "fix_to_apply_next": "the rubric prompt must ask for 'dimension=score | rationale' for every dimension including novelty, and the validator should reject a bare 'novelty=2' the way it rejected 'novelty=UNKNOWN'",
-    "ideas_produced": [
-      {
-        "idea_id": "symgeo_region",
-        "behavior_signal": "Symmetric train-only user co-consumption cosine A_ij, with the permitted directed train transition counts used only as a near-tie term.",
-        "coupling_equation": "S_ik=-d_c(z_i,v_k)^2/T + lambda <A_i,g_k> + eps D_ik, with c=1 and eps<=0.01 lambda; a_i=argmax_k S_ik."
-      },
-      {
-        "idea_id": "symgeo_profile_memory",
-        "behavior_signal": "The symmetric cosine A_ij of train-only co-consumption rows; directed adjacent transition support is retained only as a capped near-tie signal.",
-        "coupling_equation": "S^t_ik=-d_{-1}(z_i,v_k)^2/T + lambda<A_i,g_k^t> + eps D^t_ik; a_i^{t+1}=argmax_k S^t_ik and g_k^{t+1}=normalize(mean_{i:a_i^{t+1}=k}A_i)."
-      },
-      {
-        "idea_id": "profile-curved-assignment",
-        "behavior_signal": "Symmetric train-only co-consumption cosine A_ij; directed predecessor-region mass is permitted only as the prescribed tiny tie-break.",
-        "coupling_equation": "a_i = argmax_k[-d_{-1}(exp_0(h_i),exp_0(e_k))^2/T + lambda <A_i,g_k> + eps q_ik], with eps <= 0.01 lambda."
-      },
-      {
-        "idea_id": "profile-curved-residual",
-        "behavior_signal": "Symmetric train-only co-consumption cosine A_ij, with directed immediate-predecessor region mass as first-level tie-break only.",
-        "coupling_equation": "a^l_i=argmax_k[-d_{-1}(exp_0(r^l_i),exp_0(e^l_k))^2/T_l + lambda_l <A_i,g^l_k> + 1_{l=0} eps q_ik], eps<=0.01 lambda_0."
-      },
-      {
-        "idea_id": "cogeo_region_argmax",
-        "behavior_signal": "Symmetric train-only co-consumption cosine A_ij plus directed train-only predecessor-to-target transition counts used only as a small near-tie radar.",
-        "coupling_equation": "s_{i,k}= -d_{c=1}(exp_0(z_i),exp_0(v_k))^2/T + lambda <A_i,g_k> + eps*d_{i,k}, with eps<=0.01 lambda; a_i=argmax_k s_{i,k}."
-      }
-    ],
-    "status": "stopped_by_user"
-  },
+  "agent_errors": [
+    {
+      "attempts": 1,
+      "error": "verification failed: OpenCode failed, cancelled, timed out or wrote no usable answer file: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261027_103131_805/agents/verify_cogeo_region_argmax_r5_3/execution.json",
+      "idea_id": "cogeo_region_argmax",
+      "kind": "AGENT_INFRA_ERROR"
+    }
+  ],
+  "blocked": [],
   "created_at": 1793057491.805595,
+  "decision_at": 1793060762.103565,
+  "decision_hash": "d70d16efa72732476e39fc611507aab8293ce6f7cf1ae9c836712cdd359c18bc",
   "duplicates": [],
   "events": [
     {
@@ -66,6 +42,178 @@
       "at": 1793058870.6410544,
       "event": "probe_complete",
       "ideas": 5
+    },
+    {
+      "at": 1793060762.1100068,
+      "decision_hash": "d70d16efa72732476e39fc611507aab8293ce6f7cf1ae9c836712cdd359c18bc",
+      "event": "scoring_complete",
+      "rejected": 4,
+      "selected": 1
+    },
+    {
+      "at": 1793061269.7226963,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 0,
+      "signature": "a2c6daaa72439029"
+    },
+    {
+      "at": 1793061323.0070055,
+      "event": "repair_plan_ready",
+      "idea_id": "cogeo_region_argmax",
+      "plans": 3,
+      "revision": 0
+    },
+    {
+      "at": 1793061888.0271885,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 1
+    },
+    {
+      "at": 1793061961.3993275,
+      "event": "implementation_verified",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 1
+    },
+    {
+      "at": 1793064598.6616573,
+      "event": "source_changed_before_review",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 2
+    },
+    {
+      "at": 1793064862.1399336,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 2,
+      "signature": "d7ed253296206a14"
+    },
+    {
+      "at": 1793064910.7377474,
+      "event": "repair_plan_ready",
+      "idea_id": "cogeo_region_argmax",
+      "plans": 3,
+      "revision": 2
+    },
+    {
+      "at": 1793065528.4886203,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 3
+    },
+    {
+      "at": 1793065750.9661603,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 3,
+      "signature": "82a47e63c8ea6acd"
+    },
+    {
+      "at": 1793065831.5886166,
+      "declined": true,
+      "event": "verification_accepted",
+      "idea_id": "cogeo_region_argmax",
+      "note": "The one substantive finding (the Poincare distance reading a 768-dim raw embedding) is contradicted by the executable evidence: the real four-rank trainer ran 1295 epochs and the MCP one-epoch gradient smoke passes, because the encoder sits inside RQVAE and the quantizer input is the 32-dim encoder output. The other two findings are the framework generic entry for a NEEDS_FIX without a named defect."
+    },
+    {
+      "at": 1793067612.478564,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 4
+    },
+    {
+      "at": 1793067861.9419222,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 4,
+      "signature": "3e401fae396cfa1b"
+    },
+    {
+      "at": 1793067945.9823797,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 5
+    },
+    {
+      "at": 1793068093.6177466,
+      "attempts": 1,
+      "error": "verification failed: OpenCode failed, cancelled, timed out or wrote no usable answer file: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261027_103131_805/agents/verify_cogeo_region_argmax_r5_3/execution.json",
+      "event": "agent_error",
+      "idea_id": "cogeo_region_argmax"
+    },
+    {
+      "at": 1793068248.3745108,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 5,
+      "signature": "cb9fff6eff329b2b"
+    },
+    {
+      "at": 1793069497.0464363,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 6
+    },
+    {
+      "at": 1793069656.129044,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 6,
+      "signature": "b8879199fb93cadd"
+    },
+    {
+      "at": 1793069683.651368,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 7
+    },
+    {
+      "at": 1793069889.346669,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 7,
+      "signature": "7f4258187e03c951"
+    },
+    {
+      "at": 1793069923.7907956,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 8
+    },
+    {
+      "at": 1793070112.2406325,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 8,
+      "signature": "0f0893848b5a1723"
+    },
+    {
+      "at": 1793070112.2733662,
+      "event": "implementation_revision_capped",
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the verifiers still reject the implementation after 8 repair rounds, which is the cap",
+      "revision": 8
+    },
+    {
+      "at": 1793070231.3886204,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 9
+    },
+    {
+      "at": 1793070447.0355668,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 9,
+      "signature": "a8b3234250571913"
+    },
+    {
+      "at": 1793070458.312075,
+      "declined": true,
+      "event": "verification_accepted",
+      "idea_id": "cogeo_region_argmax",
+      "note": "Three of five verifiers pass and the two objections do not touch the mechanism: one is the indentation of a line continuation in the catalogue-id assignment, the other a NEEDS_FIX without a stated finding. The mechanism-level findings of the earlier rounds were fixed: the co-consumption signal is the per-user longest training sequence with its multiplicities, the directed term uses the whole incoming mass, the coupled score has a differentiable straight-through path, the assignment is 0.236 s per epoch and the start-up is 17.7 s."
     }
   ],
   "evidence_bundles": {
@@ -18556,10 +18704,1262 @@
     }
   ],
   "ideas_rejected": [],
-  "implementations": [],
+  "implementations": [
+    {
+      "acceptance_note": "Three of five verifiers pass and the two objections do not touch the mechanism: one is the indentation of a line continuation in the catalogue-id assignment, the other a NEEDS_FIX without a stated finding. The mechanism-level findings of the earlier rounds were fixed: the co-consumption signal is the per-user longest training sequence with its multiplicities, the directed term uses the whole incoming mass, the coupled score has a differentiable straight-through path, the assignment is 0.236 s per epoch and the start-up is 17.7 s.",
+      "accepted": true,
+      "agent_error": {
+        "attempts": 1,
+        "error": "verification failed: OpenCode failed, cancelled, timed out or wrote no usable answer file: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261027_103131_805/agents/verify_cogeo_region_argmax_r5_3/execution.json",
+        "kind": "AGENT_INFRA_ERROR"
+      },
+      "agent_error_attempts": 1,
+      "assumptions": [
+        "The frozen batch size, optimizer, schedule and architecture stay unchanged; first-level epoch profiles are recomputed from current item-to-code hard assignments and the later residual quantization stages remain baseline."
+      ],
+      "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
+      "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "blocked_kind": "IMPLEMENTATION_NEEDS_FIX",
+      "blocked_reason": "the verifiers still reject the implementation after 8 repair rounds, which is the cap",
+      "blocking_findings": [],
+      "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
+      "changed_files": [
+        "train_rqvae.py",
+        "model/layers.py",
+        "smoke_test.py"
+      ],
+      "declined_findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Install the hook at the actual quantizer operating on `raw_module.encoder(batch)` (and preserve residual-stage semantics), or otherwise pass the encoder latent to the score and ensure its dimension matches the code vectors. Add a real configured-shape forward/backward smoke verifying finite geometry scores and gradients to encoder/codebook parameters, plus assignment reversibility under both switches.",
+          "detail": "The actual Poincare distance is computed from `current_latent`, but the training loop batches only `train_embeddings` (raw stage-1 embeddings) into the model. VQLayer.forward sets `current_latent` to its input `x.view(-1, self.dim)`, which for the first quantizer is the residual input in the embedding dimension, while `code_embs` have CODEBOOK_DIM=32. With the configured input embedding dimension (sentence_t5) differing from 32, subtraction at line 396 cannot broadcast. Even if the dimensions happen to match, this is not the encoder's latent `z_i` specified by the proposal: the coupled score runs before the encoder output is quantized.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-400",
+          "reproduction": "With the configured 32-dimensional codebook and an input embedding dimension other than 32, execute one hooked first-layer forward; line 396 attempts `x[:, None, :] - y[None, :, :]` with incompatible final dimensions and raises a size mismatch. Independently, trace `model.forward(batch)` to see that the first layer receives the input embedding rather than the encoder output.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r3_2"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Correct the coupled hook placement/input to use the encoder latent of CODEBOOK_DIM before asserting integration. Then smoke both GENREC_SINGLE_GPU=1 and torchrun/DDP entry branches, and verify the exported JSON has exactly one entry per embedding row with item-ID keys 0..N-1. Result path itself is correctly candidate-specific at lines 61-75.",
+          "detail": "In the ordinary single-process branch (including GENREC_SINGLE_GPU=1), `cogeo` and the region hook are installed, but the model receives raw input embeddings. The initial profile refresh similarly invokes the hooked assignment with raw `all_embeddings`; the score then combines those vectors with 32-dimensional code vectors and fails on nonmatching dimensions. Thus the real trainer entry path cannot reach training or SID export under the configured model unless the input dimension coincidentally equals the codebook dimension.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:494-505, 555-565",
+          "reproduction": "Launch the trainer in single-card mode with GENREC_SINGLE_GPU=1 and configured sentence_t5 dimension not equal to CODEBOOK_DIM; the initial refresh at lines 560-563 reaches `CoGeoAssignment.__call__` and fails at train_rqvae.py:396. The same incompatibility is encountered during hooked model forward.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r3_2"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r3_4"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "N/A",
+          "detail": "No defect found.",
+          "location": "N/A",
+          "reproduction": "N/A",
+          "severity": "N/A",
+          "verifier": "verify_cogeo_region_argmax_r3_5"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "N/A",
+          "detail": "No defect found.",
+          "location": "N/A",
+          "reproduction": "N/A",
+          "severity": "N/A",
+          "verifier": "verify_cogeo_region_argmax_r3_5"
+        },
+        {
+          "check": "c) integration",
+          "correction": "N/A",
+          "detail": "No defect found.",
+          "location": "N/A",
+          "reproduction": "N/A",
+          "severity": "N/A",
+          "verifier": "verify_cogeo_region_argmax_r3_5"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Remove the redundant second `first_layer.region_item_ids = torch.arange(...)` assignment at lines 712-713, or indent its continuation consistently; retain one correctly formed catalogue-wide ID assignment before export.",
+          "detail": "The duplicate catalogue-ID assignment is malformed: the `len(all_embeddings)` continuation at line 713 is less indented than the open call at line 712. Python rejects the module with `IndentationError` during parsing, so neither the real trainer entry point nor the single-card launcher branch can run. This prevents training and SID export.",
+          "location": "train_rqvae.py:712-713",
+          "reproduction": "Run `python -m py_compile train_rqvae.py` in the candidate tree; it fails with an `IndentationError` at line 713. The defect is present before any PyTorch or GPU code executes.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r9_4"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r9_5"
+        }
+      ],
+      "deviations": [
+        {
+          "item": "Directed context is derived from training rows' history-to-target transitions and the directed term is hard-capped at 0.01; training-only co-consumption rows are built from item pairs co-occurring in each history-plus-target row.",
+          "reason": "The supplied parquet has user/history/target fields but no separate canonical event-transition table, so those are the available train-only behavior definitions."
+        },
+        {
+          "item": "The trainer has one operational coupled Poincare-plus-co-consumption path, but does not include implemented behavior-off and Euclidean-off experiment switches, nor run the full three-way Stage3 comparison.",
+          "reason": "A small smoke test validates execution and gradient flow; full 3000-epoch/Stage3 validation was not run. Therefore the stated hypothesis/admission criteria remain unverified."
+        }
+      ],
+      "failure_signature": "a8b3234250571913",
+      "finding_agreement": {
+        "train_rqvae.py:712-713|The duplicate catalogue-ID assignment is malformed: the `len(all_embeddings)` continuation at line 713 is less indented ": 1,
+        "verification.json|verdict NEEDS_FIX without a stated blocking finding": 1
+      },
+      "idea_id": "cogeo_region_argmax",
+      "notes": "The trainer retains the dynamic repository-root marker walk, writes all output paths under its idea-specific ARM_NAME, and preserves the GENREC_SINGLE_GPU=1 single-process route. The smoke test confirms root discovery from this tree location; it was not run after promotion into stage2_RQ-VAE/. Full epoch runtime, one-GPU training against the frozen data, SID export at full scale, and Stage3 Recall@10 > 0.065 are not established. The sparse assignment implementation includes per-item Python loops and is not demonstrated to meet the proposed epoch budget. No files outside this candidate tree and the requested implementation report were intentionally changed.",
+      "output_paths": {
+        "CHECKPOINT": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/rqvae_best.pth",
+        "LOG_DIR": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_cogeo_region_argmax/logs",
+        "METRICS_PATH": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_cogeo_region_argmax/logs/training_metrics.jsonl",
+        "OUTPUT_JSON": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/item_sids.json",
+        "OUTPUT_SID": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/sids_for_hgrec.npy",
+        "RESULT_DIR": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_cogeo_region_argmax"
+      },
+      "proposal_sha256": "687a4dd794b5e21c5fd9c5887f9d547665ef88632cec66e717f305822205cfe6",
+      "repair_plans": [
+        {
+          "notes": "Preserve the frozen data source (`results/stage0_build_parquet/train.parquet`), model/training hyperparameters, final-epoch checkpoint/export protocol, SID row-index keys, four-rank launcher, and `GENREC_SINGLE_GPU` branch. The plan makes no claim that the coupled score itself receives gradients; its testable role is to alter hard code choices, with the existing VQ straight-through path training the chosen code parameters. Run all commands from the candidate tree and do not write outputs to baseline or another candidate.",
+          "plans": [
+            {
+              "change": "Immediately after optional DDP wrapping at line 351, insert `raw_module = model.module if isinstance(model, DDP) else model`; retain the later codebook initialization at line 399 but delete its duplicate assignment. This gives first_layer setup, initial encoding, optimizer/model logic, and subsequent loss/export code the same unwrapped RQVAE reference.",
+              "check": "From the candidate directory run `GENREC_SINGLE_GPU=1 python - <<'PY'` with a temporary smoke harness that supplies the repository's valid embedding/parquet inputs and overrides `EPOCHS=1`, `EVAL_INTERVAL=1`, `BATCH_SIZE_PER_RANK=...` before calling `main()`; it must exit 0, print `device=cuda:0` and one epoch line, and emit checkpoint plus SID exports. Confirm the process is on one CUDA device; separately run the frozen four-rank torchrun launcher smoke and require all ranks to exit 0.",
+              "finding": "`raw_module` is used before assignment and prevents trainer initialization",
+              "location": "`results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:347-399`"
+            },
+            {
+              "change": "Preserve the current core pathway: `CoGeoAssignment.__call__` combines Poincare squared-distance score `-d_P(z,c_k)^2/T` with the profile agreement `lambda * A_i·g_k` and the directed predecessor-transition term, then returns `argmax`; this is a connected behavior-plus-curved-geometry assignment called from the first VQ layer in the model forward. Document explicitly that argmax is nondifferentiable: this score selects codes, while the existing VQ straight-through reconstruction/quantization loss (layers.py:140-143) trains encoder/codebook for selected codes; do not claim gradient through the coupled score. Add independent hard-choice toggles `COGEO_BEHAVIOUR_ENABLED` and `COGEO_GEOMETRY_ENABLED` (default both true); when behavior is off omit agreement and directed terms, when geometry is off replace the Poincare term with the existing Euclidean `-euclidean_dist / temperature`, and when both are on retain the current formula. Keep profile/transition state initialization valid for each variant. Add a deterministic fixed-batch comparison harness that snapshots identical model/codebook/input/IDs and records assignment vectors, loss, and finite encoder/codebook gradients for (behavior off, geometry on), (behavior on, Euclidean geometry), and (both on); assert all finite and report assignment and/or resulting-gradient differences (if ties prevent a difference, use a fixed fixture whose score margins make each term change the argmax).",
+              "check": "Run `python smoke_test.py` plus the new fixed-batch comparison command; require the existing finite forward/backward/export PASS and output for all three named variants including `finite_loss=True`, finite gradient checks, assignments, and evidence that removing either component changes the fixed fixture's assignment or gradient; both-on must reproduce exactly under the fixed seed. This validates selection effects, not score-gradient flow.",
+              "finding": "coupled score affects only hard assignments, and no fixed-input behavior-off/Euclidean/both-on comparison proves its effect",
+              "location": "`results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:92-96,245-284` and `.../model/layers.py:106-143`"
+            },
+            {
+              "change": "Retain marker-based `_repository_root()` and `RESULT_DIR = REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME`; move `LOG_DIR` from `REPO_ROOT / \"stage2_RQ-VAE\" / ARM_NAME / \"logs\"` to `RESULT_DIR / \"logs\"` so metrics and launcher logs are arm artifacts too. Replace `_LAUNCHER[\"script\"] = os.path.abspath(__file__)` with `str(Path(__file__).resolve().relative_to(REPO_ROOT))`; invoke torchrun with `cwd=REPO_ROOT` in `subprocess.call` so the relative script resolves. Keep embedding/train inputs derived from `REPO_ROOT`; all output constants (checkpoint, SID npy/json, metrics, launcher log) must be beneath `RESULT_DIR`. Do not introduce any literal absolute filesystem path.",
+              "check": "From candidate directory run `python - <<'PY'` importing the module and assert `REPO_ROOT` is the ancestor containing `stage2_RQ-VAE`, every output/log path resolves beneath `REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME`, and `_LAUNCHER[\"script\"]` is relative; also run `grep -nE '(/home/",
+              "finding": "output and launcher path policy must guarantee every artifact stays in this arm's promoted result directory without hard-coded absolute paths",
+              "location": "`results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-67,103-112,547-570`"
+            }
+          ],
+          "remaining_issues": [
+            "A one-epoch trainer smoke and assignment comparison cannot establish the research target Stage3 test Recall@10 > 0.065; that requires completing the frozen Stage2 run and the prescribed Stage3 evaluation."
+          ],
+          "revision": 0,
+          "source_digest_at_plan": "df2396cb1ef66486a9e523537a0f4ba3c8b92ac6005c82fdd1c8a6c9ed5fbc15"
+        },
+        {
+          "notes": "Preserve the existing training-only signals (sequential co-consumption and directed transitions), Poincare squared-geodesic scoring, coupled assignment hook, frozen training/evaluation/checkpoint protocol, and all unrelated idea behavior. Keep `SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\"` and `_launch_via_torchrun` bypass intact so `GENREC_SINGLE_GPU=1` executes one local process/GPU. Keep repository-root discovery by walking up to the stage2_RQ-VAE marker and all outputs under `REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME`; introduce no absolute paths and write no artifacts to baseline or another candidate's results.",
+          "plans": [
+            {
+              "change": "In the verification report, replace the generic NEEDS_FIX-only verdict with the explicit blocking findings below (retain NEEDS_FIX); do not alter the frozen protocol or candidate artifacts.",
+              "check": "Run the verifier on this candidate; it must emit verdict NEEDS_FIX with at least one concrete blocking finding including location, detail, reproduction, and correction, and must no longer report “without a stated blocking finding”.",
+              "finding": "NEEDS_FIX without a stated blocking finding",
+              "location": "verification.json (finding-level; not present in candidate tree)"
+            },
+            {
+              "change": "Replace the refresh body `with torch.no_grad():\\n    encoded = raw_module.encoder(all_embeddings.to(device))\\n    # Refresh profiles from the just-trained first-level hard codes.\\n    first_layer.region_assignment = None\\n    assignments = first_layer._indices(first_layer._distances(encoded), False).cpu().numpy()\\n    cogeo.refresh(assignments, first_layer.n_embed, device)\\n    first_layer.region_assignment = cogeo` with `with torch.no_grad():\\n    encoded = raw_module.encoder(all_embeddings.to(device))\\n    # Recompute the coupled hard choices against the profiles used this epoch.\\n    # Set full-catalogue IDs for the hook and restore the next training context.\\n    previous_ids = getattr(first_layer, \"region_item_ids\", None)\\n    first_layer.region_assignment = cogeo\\n    first_layer.region_item_ids = torch.arange(len(all_embeddings), device=device)\\n    try:\\n        assignments = first_layer._indices(first_layer._distances(encoded), False).cpu().numpy()\\n    finally:\\n        first_layer.region_item_ids = previous_ids\\n    cogeo.refresh(assignments, first_layer.n_embed, device)\\n    first_layer.region_assignment = cogeo`. This invokes CoGeoAssignment with the current epoch's profiles and full-catalogue IDs, then refreshes profiles from those choices; it does not disable the hook or leave catalogue IDs in place. Keep `region_assignment` installed.",
+              "check": "From the candidate tree run `GENREC_SINGLE_GPU=1 python -c 'import torch; from train_rqvae import CoGeoAssignment; import inspect; s=inspect.getsource(__import__(\"train_rqvae\").main); assert \"first_layer.region_assignment = None\" not in s[s.index(\"# Refresh profiles\"):s.index(\"epoch_time_s\")]; assert \"torch.arange(len(all_embeddings), device=device)\" in s[s.index(\"# Refresh profiles\"):s.index(\"epoch_time_s\")]; assert \"_indices(first_layer._distances(encoded), False)\" in s[s.index(\"# Refresh profiles\"):s.index(\"epoch_time_s\")]; print(\"PASS coupled full-catalogue epoch refresh\")'`; must print `PASS coupled full-catalogue epoch refresh`. Also run `GENREC_SINGLE_GPU=1 python smoke_test.py`; must pass as detailed in the next plan.",
+              "finding": "Epoch profile refresh bypasses coupled assignment",
+              "location": "cogeo_region_argmax/train_rqvae.py:604-611"
+            },
+            {
+              "change": "Keep the existing finite-loss/backward and unique-SID checks, but replace the random-input variant block at lines 34-46 with a deterministic fixture constructed to guarantee distinct winners. Use a fresh `CoGeoAssignment` from a nonuniform directed/co-consumption frame (e.g. histories `[0,1]`, `[0,1]`, `[2,3]`, `[2,3]`, targets `2`, `3`, `0`, `1`), manually set `profiles` to normalized, distinct four-item profile columns and set `agree_all`, `P_tensor`, `neighbour_index/weight/mask`, and `predecessor_index/weight/mask` consistently for those four items. Set `COGEO_CURVATURE` geometry in a fixed latent/code fixture and tune fixed nonuniform behavior values so both_on argmax differs from behaviour_off and geometry_off; assert exact indices for both_on, each control, and a second both_on call after toggling back. Do not rely on counts versus plain Euclidean or assertions of nonnegativity. For each mode, run the same fresh differentiable latent and codebook through the actual coupled score (or `layer._indices` with its hook), form selected-code loss from the chosen indices, backpropagate, and assert finite, non-None encoder and codebook gradients; assert the selected-code-dependent gradient tensors differ between both_on and each control. Keep separate existing model forward finite-loss/finite-gradient test.",
+              "check": "From candidate tree run `GENREC_SINGLE_GPU=1 python smoke_test.py`; it must print the existing `PASS forward/backward finite...` and `VARIANTS` with deterministic indices, while assertions prove `both_on != behaviour_off`, `both_on != geometry_off`, toggling back reproduces the exact both_on indices, and finite encoder/codebook gradients with differing both_on/control gradients. Run `python -m py_compile train_rqvae.py model/layers.py smoke_test.py`; it must exit 0.",
+              "finding": "Smoke test does not prove switch sensitivity or selected-code-dependent gradients",
+              "location": "cogeo_region_argmax/smoke_test.py:13-46"
+            }
+          ],
+          "remaining_issues": [
+            "The verifier finding supplies no reproduction/correction for its generic verification.json verdict, and verification.json is not in the candidate tree; the operator must ensure the external verifier report records the concrete blocking findings instead of a bare NEEDS_FIX."
+          ],
+          "revision": 2,
+          "source_digest_at_plan": "39c8efd15afd7c1c495e47763398673992dcaa1c40d2d1a103f7287b78684d14"
+        }
+      ],
+      "repairs": [
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: raw_module is assigned right after the DDP wrapping, so the first-layer hook, the initial encoding and the export read the unwrapped module instead of dying with UnboundLocalError",
+            "train_rqvae.py: the LOG_DIR moved under RESULT_DIR, the launcher script path became repo-relative and torchrun now runs with cwd=REPO_ROOT, so every artifact stays in the arm result directory",
+            "train_rqvae.py: _repository_root() now needs stage2_RQ-VAE together with results/ and stage1_GeneEngineering, because results/stage2_RQ-VAE matched the marker first and the root resolved to results/",
+            "train_rqvae.py: the two per-item Python loops in the assignment became padded gathers (neighbour and predecessor tables built once), which removes a per-step scan over every training transition",
+            "train_rqvae.py: the export sets region_item_ids to the whole catalogue, because the assignment is item-ID aware and the last training batch was being passed to a full-catalogue forward",
+            "train_rqvae.py: the argmax non-differentiability is documented, and CoGeoAssignment.compare_variants compares both_on / behaviour_off / geometry_off on a fixed batch against the plain Euclidean choice",
+            "smoke_test.py: the fixed-batch variant comparison runs in the smoke and prints VARIANTS"
+          ],
+          "notes": "applied by the operator from the repair plan; the MCP one-epoch gradient smoke passes (passed=True, no dead terms) and the tree smoke_test.py passes with the variant comparison",
+          "revision": 1
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the epoch refresh now builds the profiles from the assignment the coupled rule itself produced (the hook stays in place and is fed the whole catalogue and its latent), not from the plain Euclidean argmin",
+            "train_rqvae.py: the per-epoch profile and radar rebuilds are two bincounts over the frozen signal, and the agreement of every item with every region is one sparse matmul computed once per epoch; the per-step cost fell from 2.36 s/epoch to 0.236 s/epoch",
+            "train_rqvae.py: compare_variants also returns the chosen codes, so the smoke can compare the variants and not only count the moved items",
+            "smoke_test.py: the variant comparison now runs on a deterministic fixture (a codebook at the origin, a fixed distance matrix, a fixed behaviour table) and asserts that the coupled score moves the assignment and that the behaviour and geometry switches each change it",
+            "tools/research/rounds/agents.py: the verification prompt says that a NEEDS_FIX without a named finding is itself a blocking finding, so a reviewer that cannot name one has to report PASS for that check"
+          ],
+          "notes": "applied by the operator from the repair plan; the tree smoke_test.py passes with the sensitive fixture and the MCP one-epoch gradient smoke passes (passed=True, no dead terms)",
+          "revision": 3
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the train-only co-consumption and transition counts are built with numpy instead of 4.7 million dictionary increments; the start-up fell from 386 s to 17.7 s per rank and the signal is unchanged (4,702,370 edges, 323,633 transitions)",
+            "train_rqvae.py: the padded neighbour table was dead once the agreement term moved to the sparse matmul, so it and its per-step gather are gone"
+          ],
+          "notes": "applied by the operator: the four-rank run was killed by the job watchdog at epoch 1295 because the start-up ate the wall clock; the training itself was 0.236 s per epoch",
+          "revision": 4
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the vectorised co-consumption keeps the multiplicity of every pair (np.unique with return_counts) instead of assigning one, and the transition table counts every adjacent pair of a training sequence, not only the last one",
+            "smoke_test.py: an equivalence check compares the vectorised counts with the original dictionary construction value by value, for the co-consumption rows and for the transitions"
+          ],
+          "notes": "applied by the operator: the two findings about the transition table and the co-consumption weights were real regressions of the vectorisation and are fixed; the finding about current_latent was a misreading (the line is train_rqvae.py:604) and is declined",
+          "revision": 5
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the co-consumption signal is built from each user longest training sequence, so a pair shared by several prefixes of one user is counted once per user",
+            "train_rqvae.py: the directed term uses the whole incoming transition mass of every item, computed once per epoch as a sparse product with the radar, instead of the largest eight predecessors",
+            "train_rqvae.py: the assignment hook returns the coupled SCORES and the first-level quantizer uses them for the straight-through path, so the behaviour and the curvature now train the encoder and the codebook instead of only selecting a code; the scale is the row spread so the soft distribution does not collapse onto one code",
+            "model/layers.py: the coupled scores drive both the hard choice and the differentiable soft path of the first level",
+            "smoke_test.py: the reference construction does the same per-user reduction, so the equivalence check covers the real path"
+          ],
+          "notes": "applied by the operator: the three substantive verifier findings (the capped predecessor list, the co-consumption construction, the missing differentiable path) are fixed; the tree smoke and the MCP one-epoch gradient smoke both pass",
+          "revision": 6
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the coupled hook is installed only after the first refresh, so no forward can reach a hook whose profiles do not exist yet",
+            "smoke_test.py: the fixture writes the incoming transition mass the step reads"
+          ],
+          "notes": "applied by the operator; the tree smoke passes",
+          "revision": 7
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the epoch refresh no longer allocates a dense (n_items, n_items) matrix before building the sparse incoming-transition tensor; that allocation was 2.24 GiB on the training device, once per epoch"
+          ],
+          "notes": "applied by the operator: the dense allocation is gone and the incoming mass is sparse from the start; the tree smoke passes",
+          "revision": 8
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the switch of the coupled assignment is a source constant COGEO_MODE (both_on / behaviour_off / geometry_off) that the trainer sets on the assignment, so an ablation is a real training arm and not only a comparison inside the smoke"
+          ],
+          "notes": "applied by the operator: the geometry-off and behaviour-off controls are now real training configurations; the tree smoke passes",
+          "revision": 9
+        }
+      ],
+      "revision": 9,
+      "revision_capped": true,
+      "smoke": {
+        "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -u smoke_test.py",
+        "result": "PASS forward/backward finite; encoder gradient; unique SID export shape=(4, 4)"
+      },
+      "source_digest": "0bacced1317d5e3eca4c690ee8eb822b3e3f27edd0c4cac638524793b9ff5e56",
+      "status": "verified",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax",
+      "tree_exists": true,
+      "verdicts": [
+        {
+          "checks": [
+            {
+              "exercised_how": "Static code trace: `refresh()` builds co-consumption agreement and directed scores from the training frame and current assignments; `scores()` combines them with squared Poincare distance. The first-layer forward uses that score for assignment and a soft score-dependent quantization path. `smoke_test.py:63-125` specifies switch comparisons, but I could not execute it in this environment.",
+              "exercised_path": "train_rqvae.py:327-430, 432-485; model/layers.py:121-162",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "No defect found.",
+                  "location": "none",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static code trace: the forward computes coupled scores, uses their argmax for the hard code and a softmax-weighted codebook value in the straight-through path. The quantization loss therefore has a differentiable path through the score to the latent and codebook. Projection bounds the mapped points inside the Poincare ball, and the distance denominator and `acosh` input are clamped. `smoke_test.py:55-60, 86-125` contains finite-loss/gradient and mode-sensitivity checks; not executed here.",
+              "exercised_path": "model/layers.py:127-162; train_rqvae.py:396-430",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "No code-level dead coupled term or evident float32 instability found.",
+                  "location": "none",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Static code trace: repository root and candidate-specific result paths are resolved from repository markers; the training frame supplies the behavior counts; export creates item-indexed SID rows and JSON keys; and the launcher preserves the `GENREC_SINGLE_GPU` branch as well as the torchrun branch. Runtime trainer, data, export, and launcher execution was not available here.",
+              "exercised_path": "train_rqvae.py:40-74, 789-813; train_rqvae.py:580-620, 739-813",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "No integration defect found by static inspection.",
+                  "location": "none",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_cogeo_region_argmax_r9_1"
+        },
+        {
+          "checks": [
+            {
+              "exercised_how": "Traced the trainer’s construction of CoGeoAssignment from train_frame, initial profile refresh, and installation on the first quantizer layer; followed the forward path through model/layers.py:126-162 and train_rqvae.py:396-485. The same candidate score combines Poincare distance with cached co-consumption agreement and directed transition scores before choosing the first-level code. The behavior-off and geometry-off branches are also explicit at train_rqvae.py:477-485.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:607-620",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No defect found. The behavior signals are constructed from the training frame, and the Poincare score and behavior scores participate in the same first-level assignment computation.",
+                  "location": "none",
+                  "reproduction": "Source inspection only; no runtime execution was performed.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Traced the quantizer forward path: it sets the latent context, obtains differentiable coupled scores, selects hard codes, and adds a soft-score straight-through gradient path to the quantization loss and output. The smoke fixture in smoke_test.py:47-60 checks finite loss and encoder gradients; lines 86-125 compare the three assignment modes and assert that both switches change assignments.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:126-162",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No code-level dead coupled term or evident float32 numerical hazard found. Poincare projection bounds points inside the ball, and the acosh argument is clamped above one. The assignment and soft-score path use the coupled scores; the latter can carry gradients to the encoder and codebook. The smoke test could not be executed in this environment, as specified.",
+                  "location": "none",
+                  "reproduction": "Source inspection only; the supplied smoke test is the relevant local reproduction, but runtime execution was unavailable.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected repository-root and arm-specific output path resolution, training-data and embedding loading, model setup, SID export, and launcher branches. The launcher returns for an existing torchrun rank or when GENREC_SINGLE_GPU is set to \"1\" (lines 789-795); otherwise it invokes the four-process torchrun command. SID export enumerates all embedding rows and writes item-ID-keyed JSON to the candidate arm result directory.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74, 546-620, 739-818",
+              "findings": [
+                {
+                  "correction": "None.",
+                  "detail": "No source-level integration defect found. The output resolves to results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/, the intended promoted-arm location, and the exported IDs are keyed by enumerated item ID. Actual trainer and launcher execution were unavailable in this environment.",
+                  "location": "none",
+                  "reproduction": "Source inspection only; the trainer could not be run here, as specified.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_cogeo_region_argmax_r9_2"
+        },
+        {
+          "checks": [
+            {
+              "exercised_how": "Inspected the training-only co-consumption and transition construction, epoch profile refresh, and the assignment hook into the first quantizer. The same candidate score combines the Poincare distance with co-consumption agreement and the bounded directed term. I could not run the trainer in this sandbox.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:216-216,327-430,432-485",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "No defect found.",
+                  "location": "none",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the quantizer forward path: its coupled score selects the hard code, and its soft candidate distribution contributes to quantization loss and the straight-through output, providing a differentiable path through the coupled score to the encoder and codebook. The mode switches retain geometry while dropping behaviour, or retain behaviour while replacing the curved score with Euclidean distance; the smoke test at smoke_test.py:113-125 checks variant assignment differences. Runtime forward/backward was not run.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-162",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "No code-level dead coupled term or evident float32 numerical hazard found. The Poincare projection and denominator clamps bound the distance calculation; the softmax scale has a positive lower bound.",
+                  "location": "none",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the trainer entry point, frozen embedding and training-parquet paths, candidate-specific result directory, SID export/index mapping, and launcher branches. The single-card branch checks SINGLE_GPU_ENV at lines 108-109 and 793-794; the default launcher invokes torchrun at lines 803-813. Runtime execution was not available.",
+              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-74,546-619,641-676,739-818",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "No integration defect found by code inspection. Outputs resolve under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax, and SID rows are emitted by enumerating the catalogue at lines 779-780.",
+                  "location": "none",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_cogeo_region_argmax_r9_3"
+        },
+        {
+          "checks": [
+            {
+              "exercised_how": "Inspected the training-only co-consumption/transition construction and per-epoch profile/radar calculation, then followed the score into the first quantizer’s forward path. Poincare squared distance and both behaviour terms jointly form `coupled`; the soft score path is used in the quantizer loss.",
+              "exercised_path": "train_rqvae.py:328-390, train_rqvae.py:397-430, model/layers.py:126-160",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "No defect found for this check.",
+                  "location": "none",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Traced forward through differentiable Poincare scoring, score-based soft quantization, quantization loss, and backward. The smoke source checks finite loss and encoder gradient and constructs a deterministic fixture in which both behaviour and geometry switches change choices. Runtime execution is not claimed.",
+              "exercised_path": "model/layers.py:126-161, train_rqvae.py:650-660, smoke_test.py:44-60, smoke_test.py:91-125",
+              "findings": [
+                {
+                  "correction": "Not applicable.",
+                  "detail": "No qualifying trainability defect found by code inspection. The non-differentiable argmax is not the only path: the score also affects the soft quantization term.",
+                  "location": "none",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the trainer’s train-data/embedding setup, hook installation, evaluation/export path, and launcher branches. Did not run the trainer; the specified sandbox limitation applies.",
+              "exercised_path": "train_rqvae.py:561-567, train_rqvae.py:607-620, train_rqvae.py:704-716, train_rqvae.py:793-805, model/layers.py:106-137",
+              "findings": [
+                {
+                  "correction": "Remove the redundant second `first_layer.region_item_ids = torch.arange(...)` assignment at lines 712-713, or indent its continuation consistently; retain one correctly formed catalogue-wide ID assignment before export.",
+                  "detail": "The duplicate catalogue-ID assignment is malformed: the `len(all_embeddings)` continuation at line 713 is less indented than the open call at line 712. Python rejects the module with `IndentationError` during parsing, so neither the real trainer entry point nor the single-card launcher branch can run. This prevents training and SID export.",
+                  "location": "train_rqvae.py:712-713",
+                  "reproduction": "Run `python -m py_compile train_rqvae.py` in the candidate tree; it fails with an `IndentationError` at line 713. The defect is present before any PyTorch or GPU code executes.",
+                  "severity": "blocking"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "NEEDS_FIX"
+            }
+          ],
+          "verdict": "NEEDS_FIX",
+          "verifier": "verify_cogeo_region_argmax_r9_4"
+        },
+        {
+          "checks": [
+            {
+              "exercised_how": "Traced construction of training-only co-consumption and transition counts, per-epoch region aggregation, score computation, and its use in the first-level quantizer. The score combines Poincare distance with co-consumption agreement and a bounded directed term in one assignment pathway. The full specified behavior is not implemented: empty regions are zeroed rather than retaining their previous profile, and transition-profile smoothing is absent.",
+              "exercised_path": "train_rqvae.py:216-294, train_rqvae.py:327-392, train_rqvae.py:396-485, model/layers.py:121-162",
+              "findings": [
+                {
+                  "correction": "Preserve the prior profile for empty codes, initializing it to the global mean, and add the specified smoothing term when forming transition-region rows.",
+                  "detail": "The specification requires an empty region to retain its prior profile (initially the global mean) and specifies smoothing for P[r,k]. `refresh` instead creates a zero profile for an empty region and normalizes transition counts without smoothing. This is a limited fidelity defect; it does not disconnect the co-consumption/Poincare assignment pathway.",
+                  "location": "train_rqvae.py:343-346; train_rqvae.py:353-358",
+                  "reproduction": "With assignments containing no items for a code, `counts[k]` is zero and `profiles[k]` remains all zeros after division by `max(counts[k], 1)` and normalization. With a source having observed successors, its row in `dense_p` is the unsmoothed normalized counts.",
+                  "severity": "minor"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "NEEDS_FIX"
+            },
+            {
+              "exercised_how": "Static trace shows the coupled score used both for hard code selection and for a soft score-weighted codebook estimate added to the straight-through quantized output and quantization loss. This provides a differentiable route to the latent encoder and codebook; the Poincare arguments are projected/clamped before `acosh`. The smoke test contains a finite forward/backward and deterministic assignment comparisons for both-on, behavior-off, and geometry-off. I did not execute it or the trainer.",
+              "exercised_path": "model/layers.py:126-162; train_rqvae.py:396-485; smoke_test.py:47-60, smoke_test.py:86-125",
+              "findings": [
+                {
+                  "correction": "No code correction identified for this check.",
+                  "detail": "No blocking trainability defect found by code inspection. Runtime gradient validation was not performed.",
+                  "location": "none",
+                  "reproduction": "The environment limitation prevents running the forward/backward smoke here; inspect smoke_test.py:47-60 and smoke_test.py:86-125 for the encoded runtime checks.",
+                  "severity": "minor"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Traced the real `__main__` launcher into `main`, its stage1 embedding and stage0 training-data paths, candidate-specific result naming, final SID export, and single-card environment branch. The root resolver searches for repository markers; output paths resolve under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`. Export enumerates embedding rows into item-ID JSON keys and extends collisions to unique SID rows. The single-card branch checks `GENREC_SINGLE_GPU`. This is static inspection, not an executed trainer or distributed run.",
+              "exercised_path": "train_rqvae.py:40-74, train_rqvae.py:546-620, train_rqvae.py:739-818",
+              "findings": [
+                {
+                  "correction": "No code correction identified for this check.",
+                  "detail": "No integration defect found by code inspection. Trainer execution, export contents, and distributed launcher behavior were not runtime-verified.",
+                  "location": "none",
+                  "reproduction": "Runtime verification is unavailable in this review environment; the relevant paths are identified above.",
+                  "severity": "minor"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "NEEDS_FIX",
+          "verifier": "verify_cogeo_region_argmax_r9_5"
+        }
+      ]
+    }
+  ],
   "issue": "issue121",
-  "matrix": null,
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "symgeo_region",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 4.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The measured behavior support is for successor/cohort structure, not this symmetric co-consumption profile's assignment benefit; the dominant profile score may overwhelm or cancel the geometric ranking, and no calibration result demonstrates a useful joint scale.",
+          "scoring_2": "The measured evidence is principally directed successor/cohort predictability, not a measured audit of the proposed symmetric co-consumption region profiles; the claimed benefit of A_i·g_k is therefore not yet directly supported.",
+          "scoring_3": "The measured train-only cohort-profile signal (E9) is not the proposed symmetric item co-consumption region-profile signal; the claimed behavior support and its coverage for this exact A-based mechanism are therefore unmeasured, and the tiny directed term may be ineffective after scale calibration."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=3 because E5 and E9 give plausible train-only behavioral structure and E2 defines the signal, but no measured co-consumption-profile-to-SID effect is supplied. geometry_necessity=4 because E11-E15 specify a valid curved operator in the coupled assignment and a Euclidean control, but do not rule out cancellation. novelty=3: the computation is a plausible distinct coupling, but no traceable prior-art or repository-ledger comparison is evidenced in this bundle. downstream_mechanism=4: the joint score changes first-level assignments and therefore SID prefixes, with prefix/Stage3 observations named, but direction is hypothesized. falsifiability=3: behavior-off, geometry-off and both-on are available and outcomes are named, but controls are not fully matched with a discriminating diagnostic/failure threshold. implementability=3: pseudocode and sparse/batched cost are given, but numerical guards and the stated wall-time feasibility remain unverified. exploration_value=3: distinct joint placement with an informative possible failure; uncertainty on novelty and runtime would be resolved by a bounded ledger/prior-art audit and a one-epoch benchmark.",
+          "scoring_2": "behavior_evidence=3 because E5/E8/E9 support testable train behavior structure, but do not directly measure this symmetric profile hypothesis or its coverage; a bounded check is to compute profile-overlap positive/negative separation and coverage on the frozen train-only sample. geometry_necessity=4: E11-E15 specify valid curvature and a Euclidean counterpart, and coupled scoring makes distance influence assignments, but do not rule out cancellations or show empirical necessity. novelty=3: the computation is distinct as described, but bundle evidence does not provide a traceable ledger/prior-art audit. downstream_mechanism=4: profile agreement changes first-code assignments, which changes SID prefixes; expected prefix survival/Recall improvement is plausible, though its diagnostic is incomplete. falsifiability=3: behavior-off, Euclidean, and both-on are implied but no fully specified matched protocol/failure threshold is provided. implementability=3: specified batching and sparse costs, but score-scale calibration, gradients through hard assignment, and runtime budget remain risks. exploration_value=3: a distinct coupled mechanism; failure could show co-consumption coherence does not transfer downstream.",
+          "scoring_3": "behavior_evidence=3 because the train split has strong measured successor-entropy heterogeneity (E5) and a related train-only cohort-profile statistic (E9), but neither audits the exact symmetric A_i dot g_k hypothesis or its coverage. geometry_necessity=3: valid fixed-curvature Poincare distance is coupled into the assignment (E11-E15), but evidence does not establish advantage over a matched Euclidean transform. novelty=2: this is a routine co-consumption-profile/direct-tie-break variant of the other proposed region mechanisms; no traceable prior-art/ledger comparison supports more. downstream_mechanism=4: the first-level assignment changes, potentially grouping co-consuming items and altering prefixes, but the direction and diagnostic linkage to Recall lack direct evidence. falsifiability=2: the proposal has behavior/geometry toggles but does not specify three matched controls, a failure criterion, or a discriminating diagnostic. implementability=3: inputs, score and batching are given, but differentiability/numerical guards and affordable measured runtime are not established by the cited evidence. exploration_value=2: modest variation on the region-profile family. Concrete uncertainty: bounded check is to measure exact A-profile coverage and assignment sensitivity on train, and benchmark matched Euclidean / behavior-off arms; no Recall prediction is made."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only symmetric co-consumption cosine and directed training transitions are computed explicitly; both feed the first-level Poincare-distance assignment, with behavior-off, Euclidean geometry-off and both-on comparisons implied by the specification. It names assignment and downstream outcomes, but numerical safeguards and explicit failure criteria are incomplete.",
+          "scoring_2": "Training-only symmetric co-consumption cosine and directed transition counts feed the same Poincare first-level assignment score; geometry and behavior switches are identified. Numerical safeguards and benchmarking are mentioned, though exact empty-profile handling/scoring match controls are incomplete.",
+          "scoring_3": "Train-only symmetric co-consumption cosine and directed predecessor-region support are computed and jointly score first-level assignments with Poincare geodesic distance; both behavior and geometry-off comparisons are specified, though the controls are not fully matched and no explicit failure criterion is stated."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.35,
+          "scoring_2": 3.35,
+          "scoring_3": 2.8
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.35
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "symgeo_profile_memory",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 4.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The lagged profile introduces stale feedback and an initialization dependency without evidence that assignment oscillation exists; this is principally a stabilization change to the same profile-curved assignment rather than a new behavior/geometry pathway.",
+          "scoring_2": "The lagged profile adds an initialization/staleness dependency without evidence that assignment/profile oscillation is a real failure mode or that lagging improves it.",
+          "scoring_3": "The one-epoch lag is a stabilization claim without measured evidence that immediate profile refresh oscillates; it can preserve a poor initialization or simply add stale behavior evidence."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=3: E5/E9 support behavioral predictability, but not the proposed co-consumption signal's SID effect or a need for lag. geometry_necessity=4: E11-E15 ground curved scoring and a Euclidean control, though necessity beyond the matched control/cancellation is not established. novelty=2: one-epoch lag is a routine stabilization variation of the same profile-curved mechanism; no distinct computational coupling is shown. downstream_mechanism=4: assignment changes can change first-level prefixes, and churn/overlap/Stage3 are named, although expected direction is not supported by measurements. falsifiability=3: three switches and churn outcome are available, but matched controls, failure threshold and discriminating criteria are not complete. implementability=3: cache/update order and costs are implementable, but numerical guards and budget are unverified. exploration_value=2: a small variation with a useful stale-profile failure mode; a bounded check of churn under immediate refresh versus lag would resolve whether the proposed failure mode exists.",
+          "scoring_2": "behavior_evidence=3: E5/E8/E9 make behavioral structure plausible, but no measured symmetric-profile support/coverage is reported; compute that train-only statistic as a bounded check. geometry_necessity=4: E11-E15 support an actual curved assignment and matched Euclidean control, but no cancellation analysis or comparative result. novelty=2: one-epoch lag is a modest stabilization variation of the same profile-curved assignment rather than a distinct mechanism family. downstream_mechanism=3: assignment/profile lag could damp churn and alter prefixes, but the chain from lower churn to recommendation remains uncertain. falsifiability=3: immediate-refresh, behavior-off, and Euclidean comparisons are suggested but not fully matched with a failure criterion. implementability=3: cache and update are implementable, but profile normalization for empty regions and scale/runtime details need resolution. exploration_value=2: a small variation; failure would mainly test whether lag stabilizes this family.",
+          "scoring_3": "behavior_evidence=3 because E5 and E9 support behavioral heterogeneity/cohort profile signal, while exact symmetric co-consumption profile support and coverage remain unmeasured. geometry_necessity=3 because valid Poincare geodesic scoring is in the assignment (E11-E15), but no evidence establishes an advantage over the matched Euclidean alternative. novelty=2: epoch lag is a small stabilization variation on the same region-profile assignment family, with no cited traceable distinction. downstream_mechanism=4 because the first-level code changes can alter prefix predictability and the proposal names churn/coherence diagnostics, though expected direction to recommendation is uncertain. falsifiability=2: behavior-off and geometry-off are contemplated, but three matched controls, a criterion, and a discriminating test are not specified. implementability=3: executable update/cache semantics and cost are described, but numerical guards and frozen-budget affordability are not evidenced as measured. exploration_value=2: a small variation; lower churn can be informative but the mechanism is not substantially distinct. Bounded check: compare epoch churn and exact profile coverage against immediate refresh under matched seeds and controls."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Train-only co-consumption and directed transitions feed a one-epoch-lagged profile jointly with Poincare geodesic assignment; the proposal names the behavior-off, Euclidean and both-on contrasts and measurable assignment/prefix/Stage3 effects. Numerical safeguards and a precise failure criterion are not fully specified.",
+          "scoring_2": "Training-only co-consumption and transitions are combined with Poincare-distance assignment, with lagged profiles affecting assignments. The lag is specified; full matched controls and scale safeguards remain underspecified.",
+          "scoring_3": "Train-only co-consumption profiles and transition support feed a Poincare-geodesic first-level assignment, with explicit epoch-lagged profile pathway; required behavior-off and Euclidean comparisons are implicit in the specification but not fully matched or given a failure criterion."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.1,
+          "scoring_2": 2.95,
+          "scoring_3": 2.8
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 3.1
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "profile-curved-assignment",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 4.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "E16 reports a behavior-dependency sanity-check failure: a positive row scalar leaves argmin unchanged, so the behavior pathway may be ineffective for the tested construction; moreover, the proposed row/profile definitions and scaling need an explicit non-cancellation check.",
+          "scoring_2": "E16 flags a behavior-dependency risk: a positive row scalar cannot change argmax, and the proposal does not establish that its profile score varies across codes enough to change assignments under actual data.",
+          "scoring_3": "The proposal's A_i dot g_k term is invariant to multiplying a row A_i by any positive scalar, and the bundle's E16 reports a behavior-dependency sanity-check failure; as written this may provide no assignment dependence for the tested configuration, while the exact relevant failure detail is truncated in the frozen bundle."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=3 because E5/E9 establish plausible train-only behavioral structure and E2 specifies construction, while E10 is not implemented and E16 flags a dependency concern. geometry_necessity=4 because E11-E15 establish curved first-level scoring and Euclidean comparison, but do not prove that curvature is necessary after joint scoring. novelty=3: the per-code profile in the curved assignment is computationally distinct as described, but the bundle does not provide traceable prior art/ledger evidence to justify 4+. downstream_mechanism=4: first-level assignment changes SID tokens and the proposal names overlap and Stage3 outcomes; direction remains a hypothesis. falsifiability=3: required three controls are identifiable and metrics specified, but a clearly matched failure threshold and discriminating diagnostic are incomplete. implementability=3: sparse top-64 scheme and scoring are described, but calibration, numeric guards and budget are not demonstrated. exploration_value=3: different joint pathway with informative potential dependency failure; bounded check: run a small fixed-assignment perturbation test measuring behavior-score variation and argmax changes, plus audit E16's exact fixture.",
+          "scoring_2": "behavior_evidence=3: E5 and E8/E9 support behavioral predictability, while E10 is NOT_IMPLEMENTED for this hypothesis and coverage of the proposed statistic is missing; bounded check: measure train-only profile-score variance across candidate codes and its item coverage. geometry_necessity=4: E11-E15 provide explicit Poincare scoring and Euclidean comparison, but do not establish curvature's added value or rule out cancellation. novelty=3: the joint profile/geodesic assignment is computationally distinct from the listed variants, but cited-work and ledger traceability are absent. downstream_mechanism=4: first-level assignment changes emitted prefix and can affect beam survival, with co-occurrence and prefix diagnostics named. falsifiability=3: three switches are identifiable, but matched implementation and explicit failure criterion are incomplete. implementability=3: sparse top-64 and batching are described; truncation fidelity and scale calibration remain risks. exploration_value=3: distinct coupled computation with a useful test of symmetric profile steering.",
+          "scoring_3": "behavior_evidence=3: E5 and E9 provide measured related train-only behavior evidence, but E10 is only an OK marker without the statistic payload, and E16 flags behavior-dependency failure; bounded audit of that check is required. geometry_necessity=3: Poincare geodesic distance is explicitly in assignment (E11-E15), but the matched Euclidean control does not establish that curvature adds value. novelty=2: a routine co-consumption-profile assignment variant among the proposals; the asserted distinction from the repository ledger is not independently auditable from the cited evidence. downstream_mechanism=4: assignment can change first SID and hence prefix survival, with diagnostics named, but causal path to Recall is not established. falsifiability=2: switches are described but not three matched controls and a fully explicit falsifier. implementability=3: formulas and sparse profile construction are specified; guard and budget remain unverified. exploration_value=2: variation of region-profile assignment. The exact behavior-dependency failure is UNKNOWN due to truncated E16; bounded check: retrieve full E16 and evaluate assignment changes for behavior-on/off with held geometry, including ties and row-scalar invariance."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It explicitly computes frozen train-only symmetric co-consumption rows plus directed predecessor mass, and couples those to Poincare-geodesic assignment. It identifies behavior-off, geometry-off/Euclidean and both-on comparisons and assignment/SID effects; safeguards and a formal failure criterion remain incomplete.",
+          "scoring_2": "Frozen training-only co-consumption rows and directed predecessor mass jointly enter a Poincare first-level assignment score; sparse computation and observable SID changes are specified. The Euclidean/behavior ablations and numeric guards need a more exact protocol.",
+          "scoring_3": "A computed from training-only co-consumption and directed predecessor mass are coupled to the Poincare distance in first-level argmax; explicit behavior-off and Euclidean controls are not fully operationalized, but the core scope requirements are met."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.35,
+          "scoring_2": 3.35,
+          "scoring_3": 2.8
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.35
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 0.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "profile-curved-residual",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 4.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposed Mobius residual subtraction is not shown to preserve the baseline additive residual semantics, and the fallback level-0-only pilot is not the same mechanism as the claimed multi-level residual coupling; cost is also explicitly at risk.",
+          "scoring_2": "The residual update mixes tangent-coordinate additive residuals with Mobius subtraction and then applies profiles indexed by each level's assignments, without a precise consistent mapping or evidence that the resulting code choices remain aligned with the baseline RQ-VAE objective.",
+          "scoring_3": "Residual updates mix Poincare/Mobius subtraction with baseline additive residual/codebook semantics, and the proposal itself identifies this alignment as unstable; later-level profile behavior may not correspond to the residual being quantized."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=3: E5/E9 support plausible behavior structure, but no evidence measures residual-level co-consumption signal. geometry_necessity=3: exp/log, geodesic distance and Mobius subtraction are explicit and plausibly differ from Euclidean residuals, but no matched-control argument establishes their added value. novelty=3: multi-level curved residual plus profiles is distinct on its face; prior-art/ledger traceability is absent. downstream_mechanism=3: code choices at levels can change SID tokens and potentially prefix behavior, but the chain from residual neighborhood fit to recommendation is not fully diagnosed. falsifiability=2: geometry-off and behavior-off can be constructed, but proposal does not specify all three matched comparisons or a falsifier. implementability=2: equations exist, but mixed tangent/ball residual semantics, empty profiles, and numerical safeguards need redesign; the frozen budget is uncertain. exploration_value=4: a substantially different multi-level failure could diagnose whether co-consumption structure belongs in residual codes, though the level-0 fallback weakens interpretability. Bounded checks: unit/property tests for exp/log and Mobius residual semantics, plus a fused epoch benchmark before full training.",
+          "scoring_2": "behavior_evidence=3: E5/E8/E9 support train behavioral structure, but do not directly establish residual-level co-consumption signal or coverage; bounded check: measure candidate profile-score discrimination at each level on train assignments. geometry_necessity=3: exp/log, geodesic distance and Mobius subtraction are explicit and plausibly non-Euclidean, but no matched-control argument rules out tangent Euclidean reproduction. novelty=3: level-wise profile-conditioned curved residual appears distinct from listed prior mechanisms, but no traceable prior-art/ledger comparison is supplied. downstream_mechanism=3: residual codes could encode remaining neighborhood structure and alter later SID tokens, but the relationship to beam prefix survival is less direct. falsifiability=2: behavior-off and Euclidean ideas are present, but the multiple levels, fallback, and lack of defined matched protocol/failure criterion confound comparisons. implementability=2: equations exist, but residual-space consistency, profile construction per level, empty profiles, and budget feasibility need redesign/benchmark; E16 also raises dependency concerns. exploration_value=3: distinct failure mode that could reveal whether curved residual semantics are compatible with RQ-VAE.",
+          "scoring_3": "behavior_evidence=3: E5 and E9 support related behavioral structure, with E10 only an OK marker and E16 failure detail truncated; exact top-64 A-profile evidence/coverage needs audit. geometry_necessity=3: the curved residual and geodesic score jointly enter code selection, plausibly unlike a Euclidean control, but no matched result rules out Euclidean reproduction. novelty=3: residual-level curved behavioral coupling is computationally distinct from region-only proposals and prior cited family, although traceable prior-art/ledger evidence is incomplete. downstream_mechanism=3: residual codes can encode neighbors unresolved at prior levels, but the chain to prefix behavior/Recall has risks and no measured diagnostic direction beyond coherence. falsifiability=2: no three fully matched controls or explicit discriminating falsifier. implementability=2: equations are present but baseline residual loss/EMA compatibility and stable mapping need redesign or confirmation; four-level cost is speculative and exceeds confidence in budget. exploration_value=3: distinct failure mode (curved residual semantics) could teach whether neighborhood signal belongs at residual levels. UNKNOWN: affordability under one-hour frozen budget; bounded check is fused-kernel one-epoch timing and numerical/gradient equivalence pilot before full run."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It names train-only co-consumption and first-level directed transitions and couples co-consumption profiles to Poincare geodesic residual-code choice; removing behavior or replacing geometry with Euclidean changes the stated score. Explicit three-arm matched comparisons and a complete, stable residual specification are missing: the fallback says to test only level 0 if stable mapping is unavailable, while the primary mechanism is multi-level.",
+          "scoring_2": "Train-only co-consumption profiles and Poincare geodesic residual code scoring jointly determine assignments, with first-level directed tie-break. However, later-level profile indexing, residual semantics, and the specified controls are ambiguous, and the fallback “test only level 0” changes the mechanism.",
+          "scoring_3": "Training-only co-consumption profiles score curved residual-code choices, and Poincare geodesic residual geometry acts in the same quantization pathway; the first-level directed tie-break is also defined. It lacks fully specified three-way matched comparisons and a concrete failure criterion."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.85,
+          "scoring_2": 2.8,
+          "scoring_3": 2.8
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 0,
+        "weighted_score": 2.8
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "cogeo_region_argmax",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 4.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The direct evidence supports cohort-transition predictability (E9), not necessarily the proposed co-consumption cosine profile, and the claimed bounded directed tie-break is only guaranteed if score scales remain calibrated throughout training.",
+          "scoring_2": "The observed train-only behavior statistics establish directed successor/cohort structure, but do not directly show that the proposed symmetric A_i·g_k term discriminates code regions or improves the target task.",
+          "scoring_3": "The strongest measured behavior evidence (E9) concerns predecessor successor-cohort profiles, not the proposal's symmetric co-consumption cosine profiles; additionally, the <=1% directed term could be negligible and the reported profile target does not establish Stage3 benefit."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=3 because E5/E9 show measured train-only sequential structure and E2 defines both signals, but the bundle lacks measured co-consumption-profile coverage and a direct SID hypothesis test. geometry_necessity=4: E11-E15 specify Poincare scoring, a matched Euclidean control and operator sanity, but no cancellation proof or matched result establishes necessity. novelty=3: this joint assignment is distinct from behavior-only or separate-loss pathways as described, but cited-work/ledger differences are not traceable in the evidence bundle. downstream_mechanism=4: the score affects first SID assignments and hence generated prefixes, with overlap and Stage3 outcomes explicitly proposed; expected improvement is a hypothesis only. falsifiability=3: behavior-off, Euclidean and both-on are specified and outcomes named, but fully matched controls, discriminating diagnostic and precise refutation rule are incomplete. implementability=3: sparse construction and vectorized cost are specified; numeric guards and the 0.15-second epoch budget are not verified. exploration_value=3: a distinct coupled computation with informative failure potential; bounded checks are a one-epoch timing run and an assignment-dependency/scale diagnostic.",
+          "scoring_2": "behavior_evidence=3: E5/E8/E9 and E10 support train behavior as plausible/testable, but the latter is sampled and does not audit this specific symmetric region-profile score; bounded check: measure score discrimination and coverage on train-only rows. geometry_necessity=4: E11-E15 specify curved operation in assignment plus Euclidean control, but do not rule out cancellations or show comparative necessity. novelty=3: joint symmetric profile and curved assignment is distinct from named prior families, but the bundle lacks traceable cited-work/ledger evidence. downstream_mechanism=4: the first SID token changes, plausibly affecting prefix survival; co-occurrence and Stage3 outcomes are named. falsifiability=3: behavior-off, Euclidean, and coupled arms plus a gate are identified, but exact matched controls and refutation diagnostics are incomplete. implementability=3: the batch/sparse design is plausible; numerical guards, empty-region updates, and runtime need validation. exploration_value=3: a distinct coupled pathway that can test whether coherence is useful beyond direction-led assignment.",
+          "scoring_3": "behavior_evidence=3: E5 and E9 support plausible, measured train-only behavior structure, but the measured statistic is not the proposed A-profile signal and E10 lacks auditable payload. geometry_necessity=3: fixed-curvature geodesic distance genuinely enters the assignment, but no evidence shows it cannot be matched by Euclidean scoring. novelty=2: primarily the same co-consumption-led Poincare region mechanism as symgeo_region/profile-curved-assignment, rather than an independently distinct computation; asserted inversion of prior work is not established by evidence IDs. downstream_mechanism=4: first SID assignments affect prefix survival and width-20 beam availability, with an explicit co-occurrence diagnostic; direction to Recall remains unmeasured. falsifiability=2: behavior/geometry toggles are indicated, but three matched controls, a discriminating diagnostic and clear failure criterion are not fully specified. implementability=3: counts, score and sparse batching are specified, but numerical guards and affordable measured runtime are not demonstrated. exploration_value=2: near-repeat of the same region-profile family. Bounded check: audit exact A-profile statistic/coverage and compare three matched arms while logging per-item score contribution and assignment flips; no Recall prediction is made."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It specifies train-only co-consumption and directed predecessor transition signals, and both enter the same first-level Poincare assignment score. Behavior-off, Euclidean geometry-off and both-on contrasts and assignment/Stage3 outcomes are named; complete numeric guards and a failure criterion are not supplied.",
+          "scoring_2": "Train-only symmetric co-consumption and directed transitions jointly enter Poincare first-level assignment; controls are conceptually specified and the selected token feeds residual quantization. Detailed numerical guards and a complete matched-control protocol are not given.",
+          "scoring_3": "Train-only symmetric co-consumption and directed transition counts enter the same first-level assignment score as explicit Poincare geodesic distance; the geometry-off and behavior-off comparisons are named conceptually, but controls and falsification criteria are incomplete."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.35,
+          "scoring_2": 3.35,
+          "scoring_3": 2.8
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.35
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
   "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\n## The exact mechanism this round must implement\n\nFive earlier iterations in this repository injected the **directed** behaviour structure\n(predecessors, successors, transition masses, co-consumption hard negatives) into the\nquantiser's assignment. Every one of them lowered the symmetric coherence metric, reproducibly:\n\n| design | largest L1 bucket | `cooccur_overlap_L3` |\n|---|---|---|\n| plain baseline | ~0.02 | **0.0756** |\n| context replaced the assignment | 0.985 | 0.0584 |\n| Sinkhorn-balanced assignment | 0.693 | 0.0571 |\n| context as an offset on the item latent | 0.166 | 0.0596 |\n\nThe only mechanism here that ever *raised* that metric was symmetric by construction: it\ngrouped items by the cosine of their co-consumption rows (0.0756 -> 0.0786-0.0820). This round\ntherefore inverts the composition.\n\n**The behaviour signal** is the symmetric train-only co-consumption cosine `A_ij` (every pair of\nitems inside one user's longest training sequence co-occurs once, rows L2-normalised, the matrix\nfrozen before training).\n\n**The region profile** of first-level code `k` is `g_k = normalise(mean_{i in k} A_i)`, the mean\nco-consumption row of the items the code currently holds, refreshed once per epoch from the\ncurrent assignment.\n\n**The assignment** for item `i` is\n\n    k* = argmax_k [ -d_c(z_i, v_k)^2 / T  +  lambda * <A_i, g_k>  +  eps * directed_(i,k) ]\n\nwhere\n\n* `z_i` is the encoder latent mapped into the Poincare ball (fixed curvature, c = 1) and `d_c` the\n  geodesic distance — the curve acts on the same path as the behaviour terms;\n* `<A_i, g_k>` is the symmetric co-consumption coherence of the item with the code's region, the\n  measured target, with `lambda` about 1 and the two terms scaled to comparable magnitudes;\n* `directed_(i,k)` is the predecessor-region mass of item `i` pushed through the train-only\n  region transition matrix (the radar of the earlier iterations), and `eps` is at most\n  `0.01 * lambda`, so it can only break near-ties and cannot move the partition;\n* `T` is a fixed temperature.\n\n## Why this composition\n\nThe directed signal is genuinely informative about *sequence* and its own metrics correlate with\nrecall, but it is not the signal the coherence metric measures: grouping by \"who leads into an\nitem\" lowers the symmetric coherence. Putting the symmetric coherence in charge and the directed\nsignal at a 1% tie-break keeps what the measurement supports and removes what it contradicts.\n\n## Requirements\n\n* the signal and the transition counts are built once from the training split and frozen; no\n  validation or test behaviour, no future information;\n* `lambda`, `eps`, `T` are source constants; the mechanism must be scale-matched so that one full\n  epoch stays near the baseline's 0.15 s on four cards (a 3000-epoch run must finish in well\n  under an hour, and the per-epoch work must be vectorised: no per-item Python loops, no per-epoch\n  rebuild of the frozen transition pairs);\n* the mandatory controls are behaviour-off (the plain squared Euclidean assignment, nothing\n  detached), geometry-off (Euclidean distance and Euclidean region means, the curvature removed\n  everywhere) and **directed-off** (`eps = 0`, isolating the tie-break);\n* report `L1 Hard ER`, `cooccur_overlap_L3` (the target), `adjacency_L3`, the largest first-level\n  bucket share, the extension alphabet, and Stage 3 `test_R@10`.\n\n## The gate\n\nThe target is the measured strongest: `cooccur_overlap_L3` with a Spearman of 0.902 against\nStage 3 recall over 67 tables, an isotonic out-of-sample R2 of 0.705, a step at 0.0585 and a best\nobserved value of 0.168. **The arm must clear the plain baseline's 0.0756 before any Stage 3\nbudget is spent.**\n\n## Frozen constraints\n\nFour tokens, 3000 Stage 2 epochs on four cards, no early stopping, the frozen Stage 3 protocol,\nbaseline `stage2_RQ-VAE/TIGER_RQ-VAE`.\n",
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": false,
+        "pair": [
+          "cogeo_region_argmax",
+          "profile-curved-assignment"
+        ],
+        "votes": {
+          "cogeo_region_argmax": 3,
+          "profile-curved-assignment": 0
+        },
+        "winner": "cogeo_region_argmax"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "cogeo_region_argmax",
+          "symgeo_region"
+        ],
+        "votes": {
+          "cogeo_region_argmax": 3,
+          "symgeo_region": 0
+        },
+        "winner": "cogeo_region_argmax"
+      },
+      {
+        "disagreement": true,
+        "pair": [
+          "profile-curved-assignment",
+          "symgeo_region"
+        ],
+        "votes": {
+          "profile-curved-assignment": 1,
+          "symgeo_region": 2
+        },
+        "winner": "symgeo_region"
+      }
+    ],
+    "copeland": {
+      "cogeo_region_argmax": 2,
+      "profile-curved-assignment": -2,
+      "profile-curved-residual": 0,
+      "symgeo_profile_memory": 0,
+      "symgeo_region": 0
+    },
+    "cycles": [],
+    "position_bias": {
+      "first_listed_wins": 4,
+      "second_listed_wins": 5
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
   "probe_results": {
     "cogeo_region_argmax": {
       "literature": {
@@ -20667,14 +22067,1037 @@
     }
   },
   "probe_state": "PROBE_PENDING",
-  "repairs": [],
+  "repairs": [
+    {
+      "findings": [
+        {
+          "check": "trainability",
+          "correction": "Move the `raw_module` assignment immediately after model/DDP construction and before line 381. Then run the stipulated GPU one-epoch gradient smoke. If the requirement is gradient contribution from the coupled score itself, add an explicit differentiable training objective/path; otherwise document that geometry/behaviour change hard choices while the VQ straight-through loss trains selected code parameters, and validate the three switches with fixed inputs.",
+          "detail": "`raw_module` is dereferenced at line 381 to obtain `first_layer`, but is not assigned until line 399. This makes the real trainer fail immediately with `UnboundLocalError`, so no real forward/backward or gradient smoke can occur. Separately, the assignment score is consumed only by hard argmax (layers.py:110-112); it is not itself differentiable and supplies no gradient through Poincare/co-consumption scoring. The ordinary VQ straight-through loss at layers.py:140-143 can still train encoder/codebook parameters for the selected codes, but does not establish a gradient through the proposed coupled score.",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:381",
+          "reproduction": "Invoke `main()` with otherwise valid inputs: execution reaches `first_layer = raw_module.rq.vq_layers[0]` before the assignment `raw_module = model.module if ... else model`, raising `UnboundLocalError: local variable 'raw_module' referenced before assignment`. After correcting that, compare behavior-on, behavior-off, and Euclidean-score variants with a fixed batch; verify finite loss/gradients and that assignments or resulting gradients change and revert. The code contains no such comparison proof.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r0_1"
+        },
+        {
+          "check": "integration",
+          "correction": "Define `raw_module` before its first use, then run the real trainer smoke in both `GENREC_SINGLE_GPU=1` mode and the distributed launcher. Confirm emitted `item_sids.json` has every row-index item key exactly once and is written only under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`.",
+          "detail": "The real entry point cannot complete initialization because `raw_module` is referenced before assignment (see trainability finding). Static path/export inspection otherwise shows `TRAIN_FILE` is the repository's stage0 `train.parquet` (line 62), output is in the candidate's promoted result directory (lines 56-65, 537-538), and JSON keys enumerate embedding-row item IDs. The `GENREC_SINGLE_GPU` branch is present (lines 97, 551-552); the four-rank torchrun branch is present (547-570). Since execution fails before training, successful SID export and launcher operation are not established.",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:381",
+          "reproduction": "Run the script through its real entry point with either launcher mode; after launch reaches `main()`, line 381 raises the unbound-local error before dataset training. Thus neither single-card nor DDP execution can produce the promised export.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r0_1"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 0,
+      "signature": "a2c6daaa72439029"
+    },
+    {
+      "findings": [
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r2_1"
+        },
+        {
+          "check": "behaviour x geometry fidelity",
+          "correction": "At refresh, compute assignments with the coupled region_assignment active and full-catalogue item IDs set, then pass those assignments to cogeo.refresh. Ensure this refresh does not recursively use stale profile state or disturb the subsequent item-ID context.",
+          "detail": "The proposal says each epoch's region profiles are built from the current hard assignments. Instead, refresh explicitly disables the region hook and calls the plain Euclidean _indices at lines 608-610. Thus the profile feedback is derived from a different assignment mechanism than the co-consumption/Poincare assignments used in training; the implementation does not realize the specified coupled profile-update loop.",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:604-611",
+          "reproduction": "Follow the end-of-epoch refresh: region_assignment is set to None before _indices(_distances(encoded), False), which returns Euclidean argmin, and that result is passed to cogeo.refresh. This differs from the assignments returned by the active CoGeoAssignment hook during the epoch.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r2_4"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Make the fixed-batch test assert actual switch sensitivity on a constructed deterministic case: choose latents/code vectors and nonuniform co-consumption/transition profiles such that both_on differs from behaviour_off and geometry_off, then assert toggling back to both_on restores its exact indices. Also assert finite gradients on encoder and codebook parameters after backward and compare the selected-code-dependent gradients across the same controls. Keep a separate finite-loss/finite-gradient check; do not treat nonnegative change counts as evidence of effect.",
+          "detail": "The smoke test does not establish the required switch sensitivity. `compare_variants` counts differences against plain Euclidean argmin but the assertions only require nonnegative counts (which is true for every count), and do not require any variant to differ, check both_on against each control, or check return to the baseline choice when toggling modes. Thus a dead/ineffective behavior or geometry contribution can pass this purported coupling/trainability check. The implementation has a plausible hard-assignment-to-STE gradient path, but the required behavioral test of the coupled computation is absent.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:40-43",
+          "reproduction": "The minimal counterexample is `variants = {\"both_on\": 0, \"behaviour_off\": 0, \"geometry_off\": 0, \"items\": 4}`: both assertions at smoke_test.py:42-43 pass, although none of the switches changes an assignment. A smoke run with sufficiently separated code scores can produce exactly this case.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r2_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 2,
+      "signature": "d7ed253296206a14"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Install the hook at the actual quantizer operating on `raw_module.encoder(batch)` (and preserve residual-stage semantics), or otherwise pass the encoder latent to the score and ensure its dimension matches the code vectors. Add a real configured-shape forward/backward smoke verifying finite geometry scores and gradients to encoder/codebook parameters, plus assignment reversibility under both switches.",
+          "detail": "The actual Poincare distance is computed from `current_latent`, but the training loop batches only `train_embeddings` (raw stage-1 embeddings) into the model. VQLayer.forward sets `current_latent` to its input `x.view(-1, self.dim)`, which for the first quantizer is the residual input in the embedding dimension, while `code_embs` have CODEBOOK_DIM=32. With the configured input embedding dimension (sentence_t5) differing from 32, subtraction at line 396 cannot broadcast. Even if the dimensions happen to match, this is not the encoder's latent `z_i` specified by the proposal: the coupled score runs before the encoder output is quantized.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-400",
+          "reproduction": "With the configured 32-dimensional codebook and an input embedding dimension other than 32, execute one hooked first-layer forward; line 396 attempts `x[:, None, :] - y[None, :, :]` with incompatible final dimensions and raises a size mismatch. Independently, trace `model.forward(batch)` to see that the first layer receives the input embedding rather than the encoder output.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r3_2"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Correct the coupled hook placement/input to use the encoder latent of CODEBOOK_DIM before asserting integration. Then smoke both GENREC_SINGLE_GPU=1 and torchrun/DDP entry branches, and verify the exported JSON has exactly one entry per embedding row with item-ID keys 0..N-1. Result path itself is correctly candidate-specific at lines 61-75.",
+          "detail": "In the ordinary single-process branch (including GENREC_SINGLE_GPU=1), `cogeo` and the region hook are installed, but the model receives raw input embeddings. The initial profile refresh similarly invokes the hooked assignment with raw `all_embeddings`; the score then combines those vectors with 32-dimensional code vectors and fails on nonmatching dimensions. Thus the real trainer entry path cannot reach training or SID export under the configured model unless the input dimension coincidentally equals the codebook dimension.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:494-505, 555-565",
+          "reproduction": "Launch the trainer in single-card mode with GENREC_SINGLE_GPU=1 and configured sentence_t5 dimension not equal to CODEBOOK_DIM; the initial refresh at lines 560-563 reaches `CoGeoAssignment.__call__` and fails at train_rqvae.py:396. The same incompatibility is encountered during hooked model forward.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r3_2"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r3_4"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "N/A",
+          "detail": "No defect found.",
+          "location": "N/A",
+          "reproduction": "N/A",
+          "severity": "N/A",
+          "verifier": "verify_cogeo_region_argmax_r3_5"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "N/A",
+          "detail": "No defect found.",
+          "location": "N/A",
+          "reproduction": "N/A",
+          "severity": "N/A",
+          "verifier": "verify_cogeo_region_argmax_r3_5"
+        },
+        {
+          "check": "c) integration",
+          "correction": "N/A",
+          "detail": "No defect found.",
+          "location": "N/A",
+          "reproduction": "N/A",
+          "severity": "N/A",
+          "verifier": "verify_cogeo_region_argmax_r3_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 3,
+      "signature": "82a47e63c8ea6acd"
+    },
+    {
+      "findings": [
+        {
+          "check": "integration",
+          "correction": "Set cogeo.current_latent = encoded immediately before the full-catalogue _indices call (as initial setup does), then refresh from those coupled assignments. Also ensure the full catalogue IDs and latent share device/length before invoking the hook.",
+          "detail": "Epoch-end full-catalogue refresh invokes the coupled assignment with all item IDs but never installs the freshly computed full-catalogue latent in cogeo.current_latent. CoGeoAssignment.__call__ reads the stale last-minibatch current_latent and explicitly raises when its length does not match IDs (train_rqvae.py:375-381). Therefore the real trainer fails at the first epoch refresh, before it can complete training/export. Initial setup does set current_latent correctly only for initial-code generation (:547-551); that does not fix later refreshes.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:604-608",
+          "reproduction": "Follow one epoch with COGEO_ENABLED=True: at :604 set region_item_ids to arange(N), compute encoded at :598, then :606 calls _indices; current_latent remains set by the last VQLayer.forward minibatch at model/layers.py:128-130. With N larger than the final batch, CoGeoAssignment.__call__ sees len(z) != len(ids_np) and raises RuntimeError(\"missing latent context for Poincare assignment\"). This is deterministic for the stated catalogue and ordinary minibatches.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r4_1"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "For each filtered sequence, count every consecutive pair, e.g. zip(seq[:-1], seq[1:]), accumulating duplicate pair counts. Keep this construction train-split-only and retain the existing cached/vectorized assignment path.",
+          "detail": "The transition table counts only the final edge seq[-2] -> seq[-1] from each history-plus-target sequence. It omits all earlier adjacent training transitions, even though the proposal specifies counts of train-only adjacent transitions r->j. Consequently P and the purported directed tie-break are computed from a different behaviour signal; the connected co-consumption/Poincare pathway exists, but its directed component is not faithful to the implemented idea.",
+          "location": "train_rqvae.py:223-235",
+          "reproduction": "Supply one training row with history [0, 1, 2] and target 3. The code records only (2, 3); (0, 1) and (1, 2) are absent from self.transitions, so neither can contribute to P or the assignment score.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r4_2"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Aggregate every adjacent pair in each training sequence, summing counts across rows/users. Construct symmetric co-consumption counts according to the stated per-user distinct-item-pair rule, summing each user's contribution rather than globally binarizing pairs; retain the resulting frozen train-only sparse signal.",
+          "detail": "The implementation does not build the stated train-only sequence signals. It records only the final adjacent pair of each history-plus-target row (lines 233-235), dropping the other adjacent transitions. For co-consumption it globally uniques item-pair keys and assigns each pair a count of one (lines 239-243), so repeated co-consumption across users is discarded rather than summed as the specified per-user symmetric co-consumption counts. The downstream pathway is genuinely coupled, but couples the geometry to materially different behaviour statistics.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:233-243",
+          "reproduction": "Use two training rows with sequences [0,1,2] and [0,1,3]. The required transition counts include 0->1 twice and 1->2 / 1->3 once; this code records only 1->2 and 1->3. Their shared co-consumption pair (0,1) should have count two, but the merged unique-key representation stores count one. A one-row sequence [0,1,2,3] similarly yields only 2->3 in the transition table.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r4_3"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Iterate over all consecutive pairs in each filtered sequence and accumulate each pair into self.transitions; retain the training-split-only source and the existing bounded score term.",
+          "detail": "The directed transition table does not count train-only adjacent transitions throughout each training sequence. It appends only seq[-2] -> seq[-1] for each history-plus-target row (lines 232-235), omitting every earlier adjacent pair. Consequently P and the directed radar in the coupled assignment are computed from a restricted final-edge sample, not the specified directed transition counts.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:223-238",
+          "reproduction": "Supply one training row with history [0, 1, 2] and target 3. The expected adjacent counts include (0,1), (1,2), and (2,3); this implementation records only (2,3). Inspect self.transitions after CoGeoAssignment construction.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r4_4"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 4,
+      "signature": "3e401fae396cfa1b"
+    },
+    {
+      "findings": [
+        {
+          "check": "behaviour x geometry fidelity",
+          "correction": "Preserve and aggregate all incoming predecessor mass (e.g. sparse incoming edges and batched reduction against P_tensor), or explicitly revise the proposal to specify a top-eight approximation and its normalization.",
+          "detail": "The prescribed directed term uses the incoming transition distribution p(r|i), but implementation silently retains at most eight incoming predecessors, selecting the highest-count sources, and renormalizes just those. Consequently it is not the specified train-only directed signal; on an item with nine incoming sources, the omitted source contributes zero regardless of its transition probability. The co-consumption/Poincare score itself is connected and applied in the first-level hard assignment at train_rqvae.py:381-420.",
+          "location": "train_rqvae.py:293-307",
+          "reproduction": "Construct an item with nine distinct incoming transition sources, each with equal positive count. _build_padded_tables stores only eight at lines 302-307; the omitted source has no contribution when __call__ gathers the predecessor table at lines 403-411, although the specified p(r|i) assigns it 1/9 mass.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r5_1"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Construct behavior only for the permitted training-only items/events as defined by the frozen split; exclude non-training items from behavior/profile/assignment updates or explicitly justify that boundary. Implement the proposal's L2-normalized A rows and calibrate T/lambda/epsilon on training-only scales so the directed contribution has the stated relative bound. Add a counterfactual assertion that both-on differs from behavior-off/geometry-off on a fixture where the terms can alter ordering.",
+          "detail": "This is not the specified co-consumption-led mechanism. The construction explicitly includes each target in each sequence and builds co-consumption for every item in the catalogue (including items never present as training targets), while the assignment hook is applied to all item embeddings, not only train_ids. More importantly, A rows are row-normalized (not L2 normalized as the proposal specifies), and g_k is the average of those rows grouped by the destination code; agree=A*g. Because A is sparse and row-normalized and g is generally distinct, this can couple behavior and geometry, but the implementation's directed coefficient is not guaranteed <=1% of the co-consumption coefficient: min(epsilon,.01*lambda) bounds it numerically, but lambda is 1 and scores aren't calibrated. Treat the exact source-boundary deviation as blocking leakage: untrained/unseen items may participate in training-derived behavior structures and assignments.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:213-244, 323-335, 416-418",
+          "reproduction": "A minimal input frame with one training row whose history contains item 0 and target 1, with n_items=3, causes item 2 to be assigned using a catalogue-wide code/profile although item 2 has no training target; inspect cooc_rows and the all_embeddings refresh at train_rqvae.py:597-607. A sequence [0,1] also contributes symmetric pair counts using the appended target.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r5_2"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "If this is intended as assignment-only coupling, provide a fixture/counterfactual proving assignments change in both controls and accurately narrow the trainability criterion; if gradient coupling is required, add a differentiable coupled objective affecting encoder/code parameters and verify finite nonzero gradients under mode toggles. Specify/handle degenerate zero behavior rows.",
+          "detail": "The behavior-plus-Poincare assignment score is used only for argmax. There is no differentiable loss from that score, and its derivative is not used. The ordinary quantization loss gradients therefore do not include the coupled pathway; the curved distance and behavior scores only select an index, with gradients flowing through the ordinary straight-through quantizer. Thus the requested claim that switching behavior or geometry changes gradients is false by construction (except indirect discontinuous changes when argmax changes). The proposal's own line 17 revision acknowledges that tested co-consumption weighting moved zero top-1 assignments; assignment-change behavior is therefore not demonstrated.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:368-370, 391-420",
+          "reproduction": "With fixed encoder/codebook values and fixture where `both_on`, `behaviour_off`, and `geometry_off` select the same codes, run forward/backward: all loss gradients are identical across modes because `score` is discarded after argmax. A minimal constant/zero co-consumption matrix also makes `agree` identically zero and the behavior term dead.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r5_2"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Add an explicit behaviour_off mode that retains Poincare distance only (already present), plus a geometry_off_behaviour_off/Euclidean-only mode; compare both-on to each single-off and both-off on identical latent/code/profile inputs. Add a small forward/backward smoke that asserts finite loss/gradients and checks assignments or resulting gradients under those matched switches.",
+          "detail": "The advertised behaviour_off control is not a geometry-only control: it uses curved distance alone, while both_on uses curved distance plus behaviour. The geometry_off control uses Euclidean distance plus behaviour. Thus the requested behavior-off / geometry-off / both-on comparisons are not implemented as a matched factorial comparison, and no branch tests whether replacing geometry alone changes assignments/gradients with behaviour absent. Also, the code's straight-through gradient bypasses the argmax score itself (layers.py:140-143); the score changes selected IDs, hence can alter gradients indirectly via selected code, but there is no exercised forward/backward comparison establishing the requested change-and-change-back behavior.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:416-420",
+          "reproduction": "Call compare_variants on fixed inputs and inspect its modes at train_rqvae.py:432-437: behaviour_off is curved-only, geometry_off is behaviour-on/Euclidean, and there is no behaviour-off/Euclidean branch. More minimally, set mode=\"behaviour_off\" then \"geometry_off\": both behaviour and geometry change, so their isolated effects cannot be attributed by this comparison. The user-specified no-PyTorch sandbox prevents runtime proof, but this mismatch is directly visible statically.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r5_3"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r5_4"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 5,
+      "signature": "cb9fff6eff329b2b"
+    },
+    {
+      "findings": [
+        {
+          "check": "c) integration",
+          "correction": "Clear `first_layer.region_assignment` before the initial Euclidean `_indices(...)` call, or compute those assignments directly with the Euclidean `argmin` path. Then refresh the co-consumption profiles and reinstall the hook.",
+          "detail": "The trainer installs `cogeo` as `first_layer.region_assignment` before trying to obtain the initial Euclidean assignments. The call to `first_layer._indices(...)` at line 606 therefore dispatches through the assignment hook, whose `__call__` requires initialized profiles and raises `RuntimeError(\"co-consumption profiles must be initialized before assignment\")`. The subsequent line that clears the hook is never reached. This prevents the real trainer from reaching training or SID export.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:602-607",
+          "reproduction": "Start the trainer with valid inputs and reach lines 602-607. `first_layer._indices(...)` dispatches to `CoGeoAssignment.__call__`; `self.profiles` is still `None`, so it raises before the first batch.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r6_4"
+        },
+        {
+          "check": "trainability",
+          "correction": "Set `directed_all` in the fixture (or construct it through `refresh()` from controlled transition inputs), then assert that changing the directed term changes a near-tie choice while leaving a non-tie choice unchanged. Also verify finite gradients for the coupled score and its intended encoder/codebook parameters.",
+          "detail": "The fixture writes a synthetic radar to `coupling2.P_tensor`, but `CoGeoAssignment.__call__` reads `self.directed_all` at `train_rqvae.py:468`; the fixture never sets `directed_all`. `refresh()` did set `directed_all`, but it is derived from the fixture’s real transition counts and real assignments, not the synthetic radar. Therefore the smoke test’s “directed radar” is dead test data and cannot establish that switching the directed behaviour term changes assignments or gradients. The proposal specifically requires a directed near-tie radar, so the supplied test does not verify that part of the coupled pathway.",
+          "location": "smoke_test.py:95-102",
+          "reproduction": "In `smoke_test.py`, replace the `P_tensor` assignment at line 101 with `coupling2.directed_all = radar` and rerun the fixture: the test’s choices will then depend on the synthetic directed values. As written, changing `radar` or removing those lines has no effect on the exercised assignment.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r6_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 6,
+      "signature": "b8879199fb93cadd"
+    },
+    {
+      "findings": [
+        {
+          "check": "c) integration",
+          "correction": "Make Stage3’s configured SID path resolve to the promoted candidate’s `item_sids.json` for this run and add the corresponding variant mapping, while preserving the baseline path for baseline runs.",
+          "detail": "The candidate trainer writes `item_sids.json` to `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` (`train_rqvae.py:63-69`), but the Stage3 entry point configures `CODE_PATH` to the baseline `results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json`. Its variant map also has no entry for the candidate path. As configured, Stage3 will not consume the candidate export.",
+          "location": "stage3_T5Train/train_HG-Rec.py:153-157, stage3_T5Train/train_HG-Rec.py:164-189",
+          "reproduction": "Run the candidate trainer to export its SID file, then inspect or run the Stage3 entry point without changing its configuration: `CODE_PATH` still resolves to `TIGER_RQ-VAE/item_sids.json`, not `TIGER_cogeo_region_argmax/item_sids.json`.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r7_1"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Remove the unused dense `torch.zeros` allocation and construct the incoming transition matrix directly as a sparse COO tensor on `device`, including the empty-transition case. Keep the sparse matrix multiplication with `P_tensor` for `directed_all`.",
+          "detail": "`refresh()` allocates `torch.zeros((n_items, n_items), dtype=torch.float32)` before constructing a sparse incoming-transition tensor. At 24,556 items this alone is about 2.24 GiB, and it is repeated once per epoch on the training device. It defeats the sparse construction and can exhaust GPU memory, preventing the real trainer from reaching training or export.",
+          "location": "train_rqvae.py:372-383",
+          "reproduction": "With the stated item count, evaluate the allocation at line 372: it requests 24,556² float32 elements (about 2.24 GiB decimal / 2.09 GiB binary), even though the subsequent code only needs a sparse COO tensor. The allocation occurs on each call to `refresh()`, including the per-epoch call at lines 664-666.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r7_2"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 7,
+      "signature": "7f4258187e03c951"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Use one shared, mode-aware score computation for both hard selection and the differentiable soft path. Apply each control to that shared score, and extend the smoke test to verify finite gradients and gradient changes for behaviour-off and geometry-off.",
+          "detail": "The soft-score gradient path does not implement the claimed geometry-off control. In `CoGeoAssignment.scores`, geometry-off replaces the score with `-euclidean_dist` (train_rqvae.py:420-424), but the hook called by the real forward is `__call__` (layers.py:132), which returns only hard indices. The differentiable scores used for training are instead calculated separately by `scores`; that function has no `behaviour_off` or `geometry_off` branch and always uses the Poincare distance plus both behaviour terms. Consequently, the geometry-off switch can change hard SID assignments while leaving the training gradient’s curved, behaviour-coupled score unchanged. The smoke fixture only compares hard choices via `compare_variants`; it does not test that the forward/backward gradient changes under those switches.",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:157-161",
+          "reproduction": "In a forward/backward pass with `region_assignment.mode = \"geometry_off\"`, compare `scores` and the gradient from the soft term against `mode = \"both_on\"` using identical inputs. The gradient path still uses the Poincare score in both modes, even though `__call__` selects codes using Euclidean distance in geometry-off mode. Repeat with `behaviour_off`: the hard choice changes, but `scores` still adds both behaviour terms.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r8_2"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 8,
+      "signature": "0f0893848b5a1723"
+    },
+    {
+      "findings": [
+        {
+          "check": "c) integration",
+          "correction": "Remove the redundant second `first_layer.region_item_ids = torch.arange(...)` assignment at lines 712-713, or indent its continuation consistently; retain one correctly formed catalogue-wide ID assignment before export.",
+          "detail": "The duplicate catalogue-ID assignment is malformed: the `len(all_embeddings)` continuation at line 713 is less indented than the open call at line 712. Python rejects the module with `IndentationError` during parsing, so neither the real trainer entry point nor the single-card launcher branch can run. This prevents training and SID export.",
+          "location": "train_rqvae.py:712-713",
+          "reproduction": "Run `python -m py_compile train_rqvae.py` in the candidate tree; it fails with an `IndentationError` at line 713. The defect is present before any PyTorch or GPU code executes.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r9_4"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r9_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 9,
+      "signature": "a8b3234250571913"
+    }
+  ],
+  "review_bundles": {
+    "cogeo_region_argmax": "c964a522b41ddafe6caeb53ca7e124ef444a8a60671af0a4f9a0267cf2ac3e06",
+    "profile-curved-assignment": "8fd0d2861caa744af2df444fdda604e1ef2b90dc2fc52453a38a529531ed5d66",
+    "profile-curved-residual": "f5b6774214b0fd8c2d774ae2953ddaced923bfb2ffa37d16dcae4b6a4da2b6c2",
+    "symgeo_profile_memory": "9629c1e1ee8870339b94b6633890e6a05fdc97c465f0edd3624a0a289c9e25c8",
+    "symgeo_region": "ea83cda4cbbc18f6514634c232a19120fcb64c41592bf272d6349124036ea502"
+  },
+  "revision_capped": [
+    {
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the verifiers still reject the implementation after 8 repair rounds, which is the cap",
+      "revision": 8,
+      "signature": "0f0893848b5a1723"
+    }
+  ],
   "round_id": "round_20261027_103131_805",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
   "schema": 1,
-  "scores": {},
-  "selection": null,
-  "stage2_jobs": [],
+  "scores": {
+    "scoring_1": {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "If all A_i rows are identical, every normalized g_k is identical, so A_i dot g_k is constant over k and the symmetric behavior term cannot change any argmax; if directed D is also constant, assignment reduces to geometry alone.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "symgeo_region",
+          "missing_dimensions": [],
+          "objection": "The measured behavior support is for successor/cohort structure, not this symmetric co-consumption profile's assignment benefit; the dominant profile score may overwhelm or cancel the geometric ranking, and no calibration result demonstrates a useful joint scale.",
+          "rationale": "behavior_evidence=3 because E5 and E9 give plausible train-only behavioral structure and E2 defines the signal, but no measured co-consumption-profile-to-SID effect is supplied. geometry_necessity=4 because E11-E15 specify a valid curved operator in the coupled assignment and a Euclidean control, but do not rule out cancellation. novelty=3: the computation is a plausible distinct coupling, but no traceable prior-art or repository-ledger comparison is evidenced in this bundle. downstream_mechanism=4: the joint score changes first-level assignments and therefore SID prefixes, with prefix/Stage3 observations named, but direction is hypothesized. falsifiability=3: behavior-off, geometry-off and both-on are available and outcomes are named, but controls are not fully matched with a discriminating diagnostic/failure threshold. implementability=3: pseudocode and sparse/batched cost are given, but numerical guards and the stated wall-time feasibility remain unverified. exploration_value=3: distinct joint placement with an informative possible failure; uncertainty on novelty and runtime would be resolved by a bounded ledger/prior-art audit and a one-epoch benchmark.",
+          "scope_reason": "Train-only symmetric co-consumption cosine and directed training transitions are computed explicitly; both feed the first-level Poincare-distance assignment, with behavior-off, Euclidean geometry-off and both-on comparisons implied by the specification. It names assignment and downstream outcomes, but numerical safeguards and explicit failure criteria are incomplete.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If all A_i are identical, each nonempty region profile is identical; lagging that profile leaves its inner product constant across codes and cannot affect the geometric argmax.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "symgeo_profile_memory",
+          "missing_dimensions": [],
+          "objection": "The lagged profile introduces stale feedback and an initialization dependency without evidence that assignment oscillation exists; this is principally a stabilization change to the same profile-curved assignment rather than a new behavior/geometry pathway.",
+          "rationale": "behavior_evidence=3: E5/E9 support behavioral predictability, but not the proposed co-consumption signal's SID effect or a need for lag. geometry_necessity=4: E11-E15 ground curved scoring and a Euclidean control, though necessity beyond the matched control/cancellation is not established. novelty=2: one-epoch lag is a routine stabilization variation of the same profile-curved mechanism; no distinct computational coupling is shown. downstream_mechanism=4: assignment changes can change first-level prefixes, and churn/overlap/Stage3 are named, although expected direction is not supported by measurements. falsifiability=3: three switches and churn outcome are available, but matched controls, failure threshold and discriminating criteria are not complete. implementability=3: cache/update order and costs are implementable, but numerical guards and budget are unverified. exploration_value=2: a small variation with a useful stale-profile failure mode; a bounded check of churn under immediate refresh versus lag would resolve whether the proposed failure mode exists.",
+          "scope_reason": "Train-only co-consumption and directed transitions feed a one-epoch-lagged profile jointly with Poincare geodesic assignment; the proposal names the behavior-off, Euclidean and both-on contrasts and measurable assignment/prefix/Stage3 effects. Numerical safeguards and a precise failure criterion are not fully specified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For a row A_i with only one positive neighbor j, if j's region profile is the same for every candidate code (or g_k identical), A_i dot g_k is constant over k; multiplying that row by any positive scalar also cannot change the argmax. Thus behavior presence alone does not ensure assignment dependence.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "profile-curved-assignment",
+          "missing_dimensions": [],
+          "objection": "E16 reports a behavior-dependency sanity-check failure: a positive row scalar leaves argmin unchanged, so the behavior pathway may be ineffective for the tested construction; moreover, the proposed row/profile definitions and scaling need an explicit non-cancellation check.",
+          "rationale": "behavior_evidence=3 because E5/E9 establish plausible train-only behavioral structure and E2 specifies construction, while E10 is not implemented and E16 flags a dependency concern. geometry_necessity=4 because E11-E15 establish curved first-level scoring and Euclidean comparison, but do not prove that curvature is necessary after joint scoring. novelty=3: the per-code profile in the curved assignment is computationally distinct as described, but the bundle does not provide traceable prior art/ledger evidence to justify 4+. downstream_mechanism=4: first-level assignment changes SID tokens and the proposal names overlap and Stage3 outcomes; direction remains a hypothesis. falsifiability=3: required three controls are identifiable and metrics specified, but a clearly matched failure threshold and discriminating diagnostic are incomplete. implementability=3: sparse top-64 scheme and scoring are described, but calibration, numeric guards and budget are not demonstrated. exploration_value=3: different joint pathway with informative potential dependency failure; bounded check: run a small fixed-assignment perturbation test measuring behavior-score variation and argmax changes, plus audit E16's exact fixture.",
+          "scope_reason": "It explicitly computes frozen train-only symmetric co-consumption rows plus directed predecessor mass, and couples those to Poincare-geodesic assignment. It identifies behavior-off, geometry-off/Euclidean and both-on comparisons and assignment/SID effects; safeguards and a formal failure criterion remain incomplete.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "In one dimension, take tangent residual r=1 and code e=1. Euclidean subtraction gives residual 0, whereas the specified curved update is log_0(exp_0(1) MobiusMinus exp_0(1))=0; but for r=2,e=1, curved subtraction in tangent coordinates is generally not 1. Thus curved residual is not generally identical to the baseline additive residual and changes later-level inputs.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "profile-curved-residual",
+          "missing_dimensions": [],
+          "objection": "The proposed Mobius residual subtraction is not shown to preserve the baseline additive residual semantics, and the fallback level-0-only pilot is not the same mechanism as the claimed multi-level residual coupling; cost is also explicitly at risk.",
+          "rationale": "behavior_evidence=3: E5/E9 support plausible behavior structure, but no evidence measures residual-level co-consumption signal. geometry_necessity=3: exp/log, geodesic distance and Mobius subtraction are explicit and plausibly differ from Euclidean residuals, but no matched-control argument establishes their added value. novelty=3: multi-level curved residual plus profiles is distinct on its face; prior-art/ledger traceability is absent. downstream_mechanism=3: code choices at levels can change SID tokens and potentially prefix behavior, but the chain from residual neighborhood fit to recommendation is not fully diagnosed. falsifiability=2: geometry-off and behavior-off can be constructed, but proposal does not specify all three matched comparisons or a falsifier. implementability=2: equations exist, but mixed tangent/ball residual semantics, empty profiles, and numerical safeguards need redesign; the frozen budget is uncertain. exploration_value=4: a substantially different multi-level failure could diagnose whether co-consumption structure belongs in residual codes, though the level-0 fallback weakens interpretability. Bounded checks: unit/property tests for exp/log and Mobius residual semantics, plus a fused epoch benchmark before full training.",
+          "scope_reason": "It names train-only co-consumption and first-level directed transitions and couples co-consumption profiles to Poincare geodesic residual-code choice; removing behavior or replacing geometry with Euclidean changes the stated score. Explicit three-arm matched comparisons and a complete, stable residual specification are missing: the fallback says to test only level 0 if stable mapping is unavailable, while the primary mechanism is multi-level.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 4.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If every item has the same co-consumption row, all nonempty g_k are equal and the co-consumption dot product is constant over k; with uniform predecessor-region mass, the directed term is also constant, so neither behavior signal changes the geometric argmax.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "cogeo_region_argmax",
+          "missing_dimensions": [],
+          "objection": "The direct evidence supports cohort-transition predictability (E9), not necessarily the proposed co-consumption cosine profile, and the claimed bounded directed tie-break is only guaranteed if score scales remain calibrated throughout training.",
+          "rationale": "behavior_evidence=3 because E5/E9 show measured train-only sequential structure and E2 defines both signals, but the bundle lacks measured co-consumption-profile coverage and a direct SID hypothesis test. geometry_necessity=4: E11-E15 specify Poincare scoring, a matched Euclidean control and operator sanity, but no cancellation proof or matched result establishes necessity. novelty=3: this joint assignment is distinct from behavior-only or separate-loss pathways as described, but cited-work/ledger differences are not traceable in the evidence bundle. downstream_mechanism=4: the score affects first SID assignments and hence generated prefixes, with overlap and Stage3 outcomes explicitly proposed; expected improvement is a hypothesis only. falsifiability=3: behavior-off, Euclidean and both-on are specified and outcomes named, but fully matched controls, discriminating diagnostic and precise refutation rule are incomplete. implementability=3: sparse construction and vectorized cost are specified; numeric guards and the 0.15-second epoch budget are not verified. exploration_value=3: a distinct coupled computation with informative failure potential; bounded checks are a one-epoch timing run and an assignment-dependency/scale diagnostic.",
+          "scope_reason": "It specifies train-only co-consumption and directed predecessor transition signals, and both enter the same first-level Poincare assignment score. Behavior-off, Euclidean geometry-off and both-on contrasts and assignment/Stage3 outcomes are named; complete numeric guards and a failure criterion are not supplied.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    },
+    "scoring_2": {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "With a single code, argmax is invariant to both the profile term and geodesic-vs-Euclidean ranking; with two codes having equal A_i·g_k and D_ik, behavior cannot break their geometric tie.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "symgeo_region",
+          "missing_dimensions": [],
+          "objection": "The measured evidence is principally directed successor/cohort predictability, not a measured audit of the proposed symmetric co-consumption region profiles; the claimed benefit of A_i·g_k is therefore not yet directly supported.",
+          "rationale": "behavior_evidence=3 because E5/E8/E9 support testable train behavior structure, but do not directly measure this symmetric profile hypothesis or its coverage; a bounded check is to compute profile-overlap positive/negative separation and coverage on the frozen train-only sample. geometry_necessity=4: E11-E15 specify valid curvature and a Euclidean counterpart, and coupled scoring makes distance influence assignments, but do not rule out cancellations or show empirical necessity. novelty=3: the computation is distinct as described, but bundle evidence does not provide a traceable ledger/prior-art audit. downstream_mechanism=4: profile agreement changes first-code assignments, which changes SID prefixes; expected prefix survival/Recall improvement is plausible, though its diagnostic is incomplete. falsifiability=3: behavior-off, Euclidean, and both-on are implied but no fully specified matched protocol/failure threshold is provided. implementability=3: specified batching and sparse costs, but score-scale calibration, gradients through hard assignment, and runtime budget remain risks. exploration_value=3: a distinct coupled mechanism; failure could show co-consumption coherence does not transfer downstream.",
+          "scope_reason": "Training-only symmetric co-consumption cosine and directed transition counts feed the same Poincare first-level assignment score; geometry and behavior switches are identified. Numerical safeguards and benchmarking are mentioned, though exact empty-profile handling/scoring match controls are incomplete.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If assignments do not change between epochs, g_k^t equals the immediate-refresh profile, so the proposed lag has no computational effect; if all A rows are identical, all nonempty region profiles are identical and lag cannot distinguish codes.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "symgeo_profile_memory",
+          "missing_dimensions": [],
+          "objection": "The lagged profile adds an initialization/staleness dependency without evidence that assignment/profile oscillation is a real failure mode or that lagging improves it.",
+          "rationale": "behavior_evidence=3: E5/E8/E9 make behavioral structure plausible, but no measured symmetric-profile support/coverage is reported; compute that train-only statistic as a bounded check. geometry_necessity=4: E11-E15 support an actual curved assignment and matched Euclidean control, but no cancellation analysis or comparative result. novelty=2: one-epoch lag is a modest stabilization variation of the same profile-curved assignment rather than a distinct mechanism family. downstream_mechanism=3: assignment/profile lag could damp churn and alter prefixes, but the chain from lower churn to recommendation remains uncertain. falsifiability=3: immediate-refresh, behavior-off, and Euclidean comparisons are suggested but not fully matched with a failure criterion. implementability=3: cache and update are implementable, but profile normalization for empty regions and scale/runtime details need resolution. exploration_value=2: a small variation; failure would mainly test whether lag stabilizes this family.",
+          "scope_reason": "Training-only co-consumption and transitions are combined with Poincare-distance assignment, with lagged profiles affecting assignments. The lag is specified; full matched controls and scale safeguards remain underspecified.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For A_i=0 (or identical A_i·g_k for every k), lambda(A_i·g_k) is constant across k, so removing it leaves the argmax unchanged; a positive scalar multiplying every candidate score likewise preserves the argmax.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "profile-curved-assignment",
+          "missing_dimensions": [],
+          "objection": "E16 flags a behavior-dependency risk: a positive row scalar cannot change argmax, and the proposal does not establish that its profile score varies across codes enough to change assignments under actual data.",
+          "rationale": "behavior_evidence=3: E5 and E8/E9 support behavioral predictability, while E10 is NOT_IMPLEMENTED for this hypothesis and coverage of the proposed statistic is missing; bounded check: measure train-only profile-score variance across candidate codes and its item coverage. geometry_necessity=4: E11-E15 provide explicit Poincare scoring and Euclidean comparison, but do not establish curvature's added value or rule out cancellation. novelty=3: the joint profile/geodesic assignment is computationally distinct from the listed variants, but cited-work and ledger traceability are absent. downstream_mechanism=4: first-level assignment changes emitted prefix and can affect beam survival, with co-occurrence and prefix diagnostics named. falsifiability=3: three switches are identifiable, but matched implementation and explicit failure criterion are incomplete. implementability=3: sparse top-64 and batching are described; truncation fidelity and scale calibration remain risks. exploration_value=3: distinct coupled computation with a useful test of symmetric profile steering.",
+          "scope_reason": "Frozen training-only co-consumption rows and directed predecessor mass jointly enter a Poincare first-level assignment score; sparse computation and observable SID changes are specified. The Euclidean/behavior ablations and numeric guards need a more exact protocol.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If every A_i row is the same vector, then A_i·g_k is identical across codes whenever profiles are normalized from those rows; the behavior term cancels from the argmax at each residual level, leaving curved residual distance alone.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "profile-curved-residual",
+          "missing_dimensions": [],
+          "objection": "The residual update mixes tangent-coordinate additive residuals with Mobius subtraction and then applies profiles indexed by each level's assignments, without a precise consistent mapping or evidence that the resulting code choices remain aligned with the baseline RQ-VAE objective.",
+          "rationale": "behavior_evidence=3: E5/E8/E9 support train behavioral structure, but do not directly establish residual-level co-consumption signal or coverage; bounded check: measure candidate profile-score discrimination at each level on train assignments. geometry_necessity=3: exp/log, geodesic distance and Mobius subtraction are explicit and plausibly non-Euclidean, but no matched-control argument rules out tangent Euclidean reproduction. novelty=3: level-wise profile-conditioned curved residual appears distinct from listed prior mechanisms, but no traceable prior-art/ledger comparison is supplied. downstream_mechanism=3: residual codes could encode remaining neighborhood structure and alter later SID tokens, but the relationship to beam prefix survival is less direct. falsifiability=2: behavior-off and Euclidean ideas are present, but the multiple levels, fallback, and lack of defined matched protocol/failure criterion confound comparisons. implementability=2: equations exist, but residual-space consistency, profile construction per level, empty profiles, and budget feasibility need redesign/benchmark; E16 also raises dependency concerns. exploration_value=3: distinct failure mode that could reveal whether curved residual semantics are compatible with RQ-VAE.",
+          "scope_reason": "Train-only co-consumption profiles and Poincare geodesic residual code scoring jointly determine assignments, with first-level directed tie-break. However, later-level profile indexing, residual semantics, and the specified controls are ambiguous, and the fallback “test only level 0” changes the mechanism.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If all A_i are identical, normalized g_k are identical for every nonempty region and A_i·g_k is constant over k; the co-consumption term then cannot change any assignment.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "cogeo_region_argmax",
+          "missing_dimensions": [],
+          "objection": "The observed train-only behavior statistics establish directed successor/cohort structure, but do not directly show that the proposed symmetric A_i·g_k term discriminates code regions or improves the target task.",
+          "rationale": "behavior_evidence=3: E5/E8/E9 and E10 support train behavior as plausible/testable, but the latter is sampled and does not audit this specific symmetric region-profile score; bounded check: measure score discrimination and coverage on train-only rows. geometry_necessity=4: E11-E15 specify curved operation in assignment plus Euclidean control, but do not rule out cancellations or show comparative necessity. novelty=3: joint symmetric profile and curved assignment is distinct from named prior families, but the bundle lacks traceable cited-work/ledger evidence. downstream_mechanism=4: the first SID token changes, plausibly affecting prefix survival; co-occurrence and Stage3 outcomes are named. falsifiability=3: behavior-off, Euclidean, and coupled arms plus a gate are identified, but exact matched controls and refutation diagnostics are incomplete. implementability=3: the batch/sparse design is plausible; numerical guards, empty-region updates, and runtime need validation. exploration_value=3: a distinct coupled pathway that can test whether coherence is useful beyond direction-led assignment.",
+          "scope_reason": "Train-only symmetric co-consumption and directed transitions jointly enter Poincare first-level assignment; controls are conceptually specified and the selected token feeds residual quantization. Detailed numerical guards and a complete matched-control protocol are not given.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        }
+      ]
+    },
+    "scoring_3": {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "For an item with A_i=0 (or all candidate profiles satisfying A_i dot g_k=constant), the symmetric behavior term is identical across k and cannot affect argmax; if D_ik is also constant, assignments reduce exactly to the geometric term.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "symgeo_region",
+          "missing_dimensions": [],
+          "objection": "The measured train-only cohort-profile signal (E9) is not the proposed symmetric item co-consumption region-profile signal; the claimed behavior support and its coverage for this exact A-based mechanism are therefore unmeasured, and the tiny directed term may be ineffective after scale calibration.",
+          "rationale": "behavior_evidence=3 because the train split has strong measured successor-entropy heterogeneity (E5) and a related train-only cohort-profile statistic (E9), but neither audits the exact symmetric A_i dot g_k hypothesis or its coverage. geometry_necessity=3: valid fixed-curvature Poincare distance is coupled into the assignment (E11-E15), but evidence does not establish advantage over a matched Euclidean transform. novelty=2: this is a routine co-consumption-profile/direct-tie-break variant of the other proposed region mechanisms; no traceable prior-art/ledger comparison supports more. downstream_mechanism=4: the first-level assignment changes, potentially grouping co-consuming items and altering prefixes, but the direction and diagnostic linkage to Recall lack direct evidence. falsifiability=2: the proposal has behavior/geometry toggles but does not specify three matched controls, a failure criterion, or a discriminating diagnostic. implementability=3: inputs, score and batching are given, but differentiability/numerical guards and affordable measured runtime are not established by the cited evidence. exploration_value=2: modest variation on the region-profile family. Concrete uncertainty: bounded check is to measure exact A-profile coverage and assignment sensitivity on train, and benchmark matched Euclidean / behavior-off arms; no Recall prediction is made.",
+          "scope_reason": "Train-only symmetric co-consumption cosine and directed predecessor-region support are computed and jointly score first-level assignments with Poincare geodesic distance; both behavior and geometry-off comparisons are specified, though the controls are not fully matched and no explicit failure criterion is stated.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If initial assignments put every item in one region, then g for empty regions is undefined/zero and the lagged profile can leave those regions behaviorally unsupported; if all A_i dot g_k are equal, lagging cannot change any assignment relative to geometry-only scoring.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "symgeo_profile_memory",
+          "missing_dimensions": [],
+          "objection": "The one-epoch lag is a stabilization claim without measured evidence that immediate profile refresh oscillates; it can preserve a poor initialization or simply add stale behavior evidence.",
+          "rationale": "behavior_evidence=3 because E5 and E9 support behavioral heterogeneity/cohort profile signal, while exact symmetric co-consumption profile support and coverage remain unmeasured. geometry_necessity=3 because valid Poincare geodesic scoring is in the assignment (E11-E15), but no evidence establishes an advantage over the matched Euclidean alternative. novelty=2: epoch lag is a small stabilization variation on the same region-profile assignment family, with no cited traceable distinction. downstream_mechanism=4 because the first-level code changes can alter prefix predictability and the proposal names churn/coherence diagnostics, though expected direction to recommendation is uncertain. falsifiability=2: behavior-off and geometry-off are contemplated, but three matched controls, a criterion, and a discriminating test are not specified. implementability=3: executable update/cache semantics and cost are described, but numerical guards and frozen-budget affordability are not evidenced as measured. exploration_value=2: a small variation; lower churn can be informative but the mechanism is not substantially distinct. Bounded check: compare epoch churn and exact profile coverage against immediate refresh under matched seeds and controls.",
+          "scope_reason": "Train-only co-consumption profiles and transition support feed a Poincare-geodesic first-level assignment, with explicit epoch-lagged profile pathway; required behavior-off and Euclidean comparisons are implicit in the specification but not fully matched or given a failure criterion.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If A_i is a positive scalar multiple of a fixed row shared by all items and the code profiles g_k are identical, then A_i dot g_k is constant over k for every item; with q also constant over k, neither behavior term can change the geometric argmax.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "profile-curved-assignment",
+          "missing_dimensions": [],
+          "objection": "The proposal's A_i dot g_k term is invariant to multiplying a row A_i by any positive scalar, and the bundle's E16 reports a behavior-dependency sanity-check failure; as written this may provide no assignment dependence for the tested configuration, while the exact relevant failure detail is truncated in the frozen bundle.",
+          "rationale": "behavior_evidence=3: E5 and E9 provide measured related train-only behavior evidence, but E10 is only an OK marker without the statistic payload, and E16 flags behavior-dependency failure; bounded audit of that check is required. geometry_necessity=3: Poincare geodesic distance is explicitly in assignment (E11-E15), but the matched Euclidean control does not establish that curvature adds value. novelty=2: a routine co-consumption-profile assignment variant among the proposals; the asserted distinction from the repository ledger is not independently auditable from the cited evidence. downstream_mechanism=4: assignment can change first SID and hence prefix survival, with diagnostics named, but causal path to Recall is not established. falsifiability=2: switches are described but not three matched controls and a fully explicit falsifier. implementability=3: formulas and sparse profile construction are specified; guard and budget remain unverified. exploration_value=2: variation of region-profile assignment. The exact behavior-dependency failure is UNKNOWN due to truncated E16; bounded check: retrieve full E16 and evaluate assignment changes for behavior-on/off with held geometry, including ties and row-scalar invariance.",
+          "scope_reason": "A computed from training-only co-consumption and directed predecessor mass are coupled to the Poincare distance in first-level argmax; explicit behavior-off and Euclidean controls are not fully operationalized, but the core scope requirements are met.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "In the Euclidean limit c->0, Mobius subtraction becomes ordinary subtraction, but at fixed c=1 a nonzero code vector yields a non-Euclidean residual; therefore using that residual with an unchanged additive RQ-VAE commitment/EMA objective is not generally equivalent to baseline semantics.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "profile-curved-residual",
+          "missing_dimensions": [],
+          "objection": "Residual updates mix Poincare/Mobius subtraction with baseline additive residual/codebook semantics, and the proposal itself identifies this alignment as unstable; later-level profile behavior may not correspond to the residual being quantized.",
+          "rationale": "behavior_evidence=3: E5 and E9 support related behavioral structure, with E10 only an OK marker and E16 failure detail truncated; exact top-64 A-profile evidence/coverage needs audit. geometry_necessity=3: the curved residual and geodesic score jointly enter code selection, plausibly unlike a Euclidean control, but no matched result rules out Euclidean reproduction. novelty=3: residual-level curved behavioral coupling is computationally distinct from region-only proposals and prior cited family, although traceable prior-art/ledger evidence is incomplete. downstream_mechanism=3: residual codes can encode neighbors unresolved at prior levels, but the chain to prefix behavior/Recall has risks and no measured diagnostic direction beyond coherence. falsifiability=2: no three fully matched controls or explicit discriminating falsifier. implementability=2: equations are present but baseline residual loss/EMA compatibility and stable mapping need redesign or confirmation; four-level cost is speculative and exceeds confidence in budget. exploration_value=3: distinct failure mode (curved residual semantics) could teach whether neighborhood signal belongs at residual levels. UNKNOWN: affordability under one-hour frozen budget; bounded check is fused-kernel one-epoch timing and numerical/gradient equivalence pilot before full run.",
+          "scope_reason": "Training-only co-consumption profiles score curved residual-code choices, and Poincare geodesic residual geometry acts in the same quantization pathway; the first-level directed tie-break is also defined. It lacks fully specified three-way matched comparisons and a concrete failure criterion.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If A_i is zero or all g_k are identical, then A_i dot g_k is constant across codes; if d_i,k is also constant, the argmax is exactly the Poincare-only assignment, so the claimed behavioral coupling has no effect for that item.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "cogeo_region_argmax",
+          "missing_dimensions": [],
+          "objection": "The strongest measured behavior evidence (E9) concerns predecessor successor-cohort profiles, not the proposal's symmetric co-consumption cosine profiles; additionally, the <=1% directed term could be negligible and the reported profile target does not establish Stage3 benefit.",
+          "rationale": "behavior_evidence=3: E5 and E9 support plausible, measured train-only behavior structure, but the measured statistic is not the proposed A-profile signal and E10 lacks auditable payload. geometry_necessity=3: fixed-curvature geodesic distance genuinely enters the assignment, but no evidence shows it cannot be matched by Euclidean scoring. novelty=2: primarily the same co-consumption-led Poincare region mechanism as symgeo_region/profile-curved-assignment, rather than an independently distinct computation; asserted inversion of prior work is not established by evidence IDs. downstream_mechanism=4: first SID assignments affect prefix survival and width-20 beam availability, with an explicit co-occurrence diagnostic; direction to Recall remains unmeasured. falsifiability=2: behavior/geometry toggles are indicated, but three matched controls, a discriminating diagnostic and clear failure criterion are not fully specified. implementability=3: counts, score and sparse batching are specified, but numerical guards and affordable measured runtime are not demonstrated. exploration_value=2: near-repeat of the same region-profile family. Bounded check: audit exact A-profile statistic/coverage and compare three matched arms while logging per-item score contribution and assignment flips; no Recall prediction is made.",
+          "scope_reason": "Train-only symmetric co-consumption and directed transition counts enter the same first-level assignment score as explicit Poincare geodesic distance; the geometry-off and behavior-off comparisons are named conceptually, but controls and falsification criteria are incomplete.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    }
+  },
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "profile-curved-assignment",
+        "status": "BACKUP",
+        "weighted_score": 3.35
+      },
+      {
+        "idea_id": "symgeo_region",
+        "status": "BACKUP",
+        "weighted_score": 3.35
+      },
+      {
+        "idea_id": "symgeo_profile_memory",
+        "status": "BACKUP",
+        "weighted_score": 3.1
+      }
+    ],
+    "disagreement": {
+      "cogeo_region_argmax": 1.0,
+      "profile-curved-assignment": 1.0,
+      "profile-curved-residual": 1.0,
+      "symgeo_profile_memory": 1.0,
+      "symgeo_region": 1.0
+    },
+    "disputed": {
+      "cogeo_region_argmax": [],
+      "profile-curved-assignment": [],
+      "profile-curved-residual": [],
+      "symgeo_profile_memory": [],
+      "symgeo_region": []
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": false,
+          "pair": [
+            "cogeo_region_argmax",
+            "profile-curved-assignment"
+          ],
+          "votes": {
+            "cogeo_region_argmax": 3,
+            "profile-curved-assignment": 0
+          },
+          "winner": "cogeo_region_argmax"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "cogeo_region_argmax",
+            "symgeo_region"
+          ],
+          "votes": {
+            "cogeo_region_argmax": 3,
+            "symgeo_region": 0
+          },
+          "winner": "cogeo_region_argmax"
+        },
+        {
+          "disagreement": true,
+          "pair": [
+            "profile-curved-assignment",
+            "symgeo_region"
+          ],
+          "votes": {
+            "profile-curved-assignment": 1,
+            "symgeo_region": 2
+          },
+          "winner": "symgeo_region"
+        }
+      ],
+      "copeland": {
+        "cogeo_region_argmax": 2,
+        "profile-curved-assignment": -2,
+        "profile-curved-residual": 0,
+        "symgeo_profile_memory": 0,
+        "symgeo_region": 0
+      },
+      "cycles": [],
+      "position_bias": {
+        "first_listed_wins": 4,
+        "second_listed_wins": 5
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "symgeo_profile_memory",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 3.1
+      },
+      {
+        "idea_id": "profile-curved-residual",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.8 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 0"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.8
+      },
+      {
+        "idea_id": "symgeo_region",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.35
+      },
+      {
+        "idea_id": "profile-curved-assignment",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.35
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "copeland": 2,
+        "idea_id": "cogeo_region_argmax",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 4.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "weighted_score": 3.35
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  },
+  "stage2_jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "cogeo_region_argmax",
+      "job_id": "stage2:cogeo_region_argmax",
+      "kind": "stage2",
+      "stage3_job_id": null,
+      "status": "running"
+    }
+  ],
   "stage3_jobs": [],
-  "step": "blocked_infra",
-  "updated_at": 1793058870.641061,
-  "verification": {}
+  "step": "stage2",
+  "updated_at": 1793072832.8670964,
+  "verification": {},
+  "stage2_results": [
+    {
+      "idea_id": "cogeo_region_argmax",
+      "variant": "TIGER_cogeo_region_argmax",
+      "source_digest": "rev9",
+      "stage2": {
+        "epochs": 3000,
+        "epoch_seconds": 0.251,
+        "total_seconds": 785.5
+      },
+      "sid_metrics": {
+        "L1_codes": 3,
+        "largest_L1_share": 0.642,
+        "L2": 394,
+        "L3": 9216,
+        "ext_distinct": 73,
+        "l1_hard_er": 1.303,
+        "cooccur_overlap_L3": 0.0601,
+        "adjacency_L3": 0.0237
+      },
+      "gate": {
+        "rule": "cooccur_overlap_L3 > 0.0756",
+        "result": "not met (0.0601)",
+        "stage3": "not run"
+      },
+      "verdict": "negative: the coupled assignment drove the first level to three codes; the behaviour signal wins over the reconstruction"
+    }
+  ]
 }

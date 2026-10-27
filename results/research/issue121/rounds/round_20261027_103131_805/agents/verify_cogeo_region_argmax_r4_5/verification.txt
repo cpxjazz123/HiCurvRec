@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:364-421, called from model/layers.py:107-119 | Static trace of the real first quantizer forward hook: the trainer installs CoGeoAssignment (train_rqvae.py:543-552), sets current latent immediately before the model forward (train_rqvae.py:596-605), and the hook uses Poincare distance, frozen train-split co-consumption agreement, and the directed transition radar in the same code-selection score. The chosen code is passed into the quantizer. No runtime execution was attempted, consistent with the stated sandbox constraint.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Co-consumption is formed from train_frame and transitions from those same training histories/targets (train_rqvae.py:215-238); the coupled score is computed at train_rqvae.py:382-421. The geometry and both behaviour terms jointly determine the first-level assignment.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable; no correction required.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:364-421; train_rqvae.py:589-610; model/layers.py:107-119, 132-185 | Static forward/backward trace: assignments from the coupled score feed the existing quantizer straight-through path, while the differentiable quantizer loss updates encoder/codebook parameters. The trainer checks finite loss, calls backward, clips gradients, and steps the optimizer. The score clamps projected points inside the ball, bounds distance denominators away from zero, clamps acosh input above one, and uses finite positive configured temperature/curvature. The comparison modes in CoGeoAssignment.__call__ remove both behaviour terms or replace Poincare with the Euclidean distance while holding inputs fixed (train_rqvae.py:413-421); smoke_test.py provides the variant comparison harness. No claim of observed runtime gradients is made.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No statically identifiable dead coupled term or float32 numerical hazard found. Argmax itself is nondifferentiable, but its selected code feeds the quantizer's straight-through training path as intended; the auxiliary terms alter the hard assignment rather than adding a standalone loss.
+FINDING REPRODUCTION: Not applicable; no finding. Runtime gradient smoke is deferred to the specified GPU MCP one-epoch check.
+FINDING CORRECTION: Not applicable; no correction required.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:50-70, 482-503, 706-745 | Static integration trace of the entry point and launcher. Data loads the frozen train.parquet and embedding matrix; result paths resolve under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax. Export enumerates item rows into JSON keys and writes the corresponding SID array, with unique/index-shape checks. The launcher preserves the GENREC_SINGLE_GPU branch and otherwise starts the four-process torchrun branch. Runtime execution is unavailable per the stated sandbox constraint.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Outputs are scoped to this promoted candidate's required result directory, not the baseline or another candidate. The exported JSON is indexed by item ID, and the single-card environment switch is present and checked.
+FINDING REPRODUCTION: Not applicable; no finding. Static references: train_rqvae.py:63-75, 497-503, 706-712, 721-745.
+FINDING CORRECTION: Not applicable; no correction required.

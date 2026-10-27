@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:328-390, train_rqvae.py:397-430, model/layers.py:126-160 | Inspected the training-only co-consumption/transition construction and per-epoch profile/radar calculation, then followed the score into the first quantizer’s forward path. Poincare squared distance and both behaviour terms jointly form `coupled`; the soft score path is used in the quantizer loss.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:126-161, train_rqvae.py:650-660, smoke_test.py:44-60, smoke_test.py:91-125 | Traced forward through differentiable Poincare scoring, score-based soft quantization, quantization loss, and backward. The smoke source checks finite loss and encoder gradient and constructs a deterministic fixture in which both behaviour and geometry switches change choices. Runtime execution is not claimed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No qualifying trainability defect found by code inspection. The non-differentiable argmax is not the only path: the score also affects the soft quantization term.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:561-567, train_rqvae.py:607-620, train_rqvae.py:704-716, train_rqvae.py:793-805, model/layers.py:106-137 | Inspected the trainer’s train-data/embedding setup, hook installation, evaluation/export path, and launcher branches. Did not run the trainer; the specified sandbox limitation applies.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:712-713
+FINDING DETAIL: The duplicate catalogue-ID assignment is malformed: the `len(all_embeddings)` continuation at line 713 is less indented than the open call at line 712. Python rejects the module with `IndentationError` during parsing, so neither the real trainer entry point nor the single-card launcher branch can run. This prevents training and SID export.
+FINDING REPRODUCTION: Run `python -m py_compile train_rqvae.py` in the candidate tree; it fails with an `IndentationError` at line 713. The defect is present before any PyTorch or GPU code executes.
+FINDING CORRECTION: Remove the redundant second `first_layer.region_item_ids = torch.arange(...)` assignment at lines 712-713, or indent its continuation consistently; retain one correctly formed catalogue-wide ID assignment before export.

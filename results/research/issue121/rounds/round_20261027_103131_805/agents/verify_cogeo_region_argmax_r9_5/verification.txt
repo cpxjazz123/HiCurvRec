@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:216-294, train_rqvae.py:327-392, train_rqvae.py:396-485, model/layers.py:121-162 | Traced construction of training-only co-consumption and transition counts, per-epoch region aggregation, score computation, and its use in the first-level quantizer. The score combines Poincare distance with co-consumption agreement and a bounded directed term in one assignment pathway. The full specified behavior is not implemented: empty regions are zeroed rather than retaining their previous profile, and transition-profile smoothing is absent.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:343-346; train_rqvae.py:353-358
+FINDING DETAIL: The specification requires an empty region to retain its prior profile (initially the global mean) and specifies smoothing for P[r,k]. `refresh` instead creates a zero profile for an empty region and normalizes transition counts without smoothing. This is a limited fidelity defect; it does not disconnect the co-consumption/Poincare assignment pathway.
+FINDING REPRODUCTION: With assignments containing no items for a code, `counts[k]` is zero and `profiles[k]` remains all zeros after division by `max(counts[k], 1)` and normalization. With a source having observed successors, its row in `dense_p` is the unsmoothed normalized counts.
+FINDING CORRECTION: Preserve the prior profile for empty codes, initializing it to the global mean, and add the specified smoothing term when forming transition-region rows.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:126-162; train_rqvae.py:396-485; smoke_test.py:47-60, smoke_test.py:86-125 | Static trace shows the coupled score used both for hard code selection and for a soft score-weighted codebook estimate added to the straight-through quantized output and quantization loss. This provides a differentiable route to the latent encoder and codebook; the Poincare arguments are projected/clamped before `acosh`. The smoke test contains a finite forward/backward and deterministic assignment comparisons for both-on, behavior-off, and geometry-off. I did not execute it or the trainer.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection. Runtime gradient validation was not performed.
+FINDING REPRODUCTION: The environment limitation prevents running the forward/backward smoke here; inspect smoke_test.py:47-60 and smoke_test.py:86-125 for the encoded runtime checks.
+FINDING CORRECTION: No code correction identified for this check.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:546-620, train_rqvae.py:739-818 | Traced the real `__main__` launcher into `main`, its stage1 embedding and stage0 training-data paths, candidate-specific result naming, final SID export, and single-card environment branch. The root resolver searches for repository markers; output paths resolve under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`. Export enumerates embedding rows into item-ID JSON keys and extends collisions to unique SID rows. The single-card branch checks `GENREC_SINGLE_GPU`. This is static inspection, not an executed trainer or distributed run.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Trainer execution, export contents, and distributed launcher behavior were not runtime-verified.
+FINDING REPRODUCTION: Runtime verification is unavailable in this review environment; the relevant paths are identified above.
+FINDING CORRECTION: No code correction identified for this check.

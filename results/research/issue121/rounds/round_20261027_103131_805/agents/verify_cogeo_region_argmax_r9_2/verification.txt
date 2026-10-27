@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:607-620 | Traced the trainer’s construction of CoGeoAssignment from train_frame, initial profile refresh, and installation on the first quantizer layer; followed the forward path through model/layers.py:126-162 and train_rqvae.py:396-485. The same candidate score combines Poincare distance with cached co-consumption agreement and directed transition scores before choosing the first-level code. The behavior-off and geometry-off branches are also explicit at train_rqvae.py:477-485.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behavior signals are constructed from the training frame, and the Poincare score and behavior scores participate in the same first-level assignment computation.
+FINDING REPRODUCTION: Source inspection only; no runtime execution was performed.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:126-162 | Traced the quantizer forward path: it sets the latent context, obtains differentiable coupled scores, selects hard codes, and adds a soft-score straight-through gradient path to the quantization loss and output. The smoke fixture in smoke_test.py:47-60 checks finite loss and encoder gradients; lines 86-125 compare the three assignment modes and assert that both switches change assignments.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 numerical hazard found. Poincare projection bounds points inside the ball, and the acosh argument is clamped above one. The assignment and soft-score path use the coupled scores; the latter can carry gradients to the encoder and codebook. The smoke test could not be executed in this environment, as specified.
+FINDING REPRODUCTION: Source inspection only; the supplied smoke test is the relevant local reproduction, but runtime execution was unavailable.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74, 546-620, 739-818 | Inspected repository-root and arm-specific output path resolution, training-data and embedding loading, model setup, SID export, and launcher branches. The launcher returns for an existing torchrun rank or when GENREC_SINGLE_GPU is set to "1" (lines 789-795); otherwise it invokes the four-process torchrun command. SID export enumerates all embedding rows and writes item-ID-keyed JSON to the candidate arm result directory.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level integration defect found. The output resolves to results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/, the intended promoted-arm location, and the exported IDs are keyed by enumerated item ID. Actual trainer and launcher execution were unavailable in this environment.
+FINDING REPRODUCTION: Source inspection only; the trainer could not be run here, as specified.
+FINDING CORRECTION: None.

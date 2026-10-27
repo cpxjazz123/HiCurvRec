@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-270,320-433,555-564,608-620; model/layers.py:106-119,121-143 | Static-traced trainer setup, per-batch first-layer call, scoring, and epoch refresh. Co-consumption rows and directed transitions are built from the train parquet only; assignments jointly score projected latent/code vectors using squared Poincare distance, co-consumption region agreement, and bounded directed predecessor radar. The selected code reaches the normal residual quantizer via the installed first-layer hook.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:106-143; train_rqvae.py:373-433,592-605; smoke_test.py:17-30,38-79 | Inspected the actual forward/backward and switch paths, plus the candidate CPU smoke fixture (not run, consistent with the sandbox constraint). The score's hard argmax is intentionally nondifferentiable, but it selects the code used by the straight-through quantizer; quantization/reconstruction losses then carry gradients to the encoder and selected codebook parameters. Projection bounds points inside the Poincare ball, denominator clamps are finite for float32, and acosh input is clamped above one. Smoke fixture checks finite loss/encoder gradient and creates assignment changes under behaviour-off and geometry-off variants.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-75,494-565,649-725,733-762 | Static-traced real trainer entry point, repository-root/result path derivation, frozen train.parquet and stage1 embedding paths, export, and launcher branches. Export encodes the full embedding matrix in row/item-id order and emits unique extended SIDs plus item-id keyed JSON. Results/checkpoints/logs target results/stage2_RQ-VAE/TIGER_cogeo_region_argmax. Launcher checks GENREC_SINGLE_GPU and otherwise invokes torchrun; the single-card branch bypasses spawning and enters main.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

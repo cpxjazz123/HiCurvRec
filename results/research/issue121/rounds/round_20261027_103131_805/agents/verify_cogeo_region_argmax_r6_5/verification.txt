@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:599-608, model/layers.py:126-136, train_rqvae.py:388-422 | Traced the trainer’s hook setup into the first-level quantizer and its scoring function. `scores()` combines train-only co-consumption agreement and directed-transition scores with squared Poincaré distance; the resulting score selects the first code. `model/layers.py:150-161` also sends that score through a soft straight-through path. This is source inspection only; I did not run the smoke test.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: —
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: —
+FINDING CORRECTION: —
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:126-161, train_rqvae.py:388-422 | Inspected the forward/backward path and the supplied CPU smoke-test source. The smoke test is not run. The differentiable score and soft assignment path are connected to the quantizer loss, but the test’s assignment-switch comparison does not exercise the directed radar it claims to test.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:95-102
+FINDING DETAIL: The fixture writes a synthetic radar to `coupling2.P_tensor`, but `CoGeoAssignment.__call__` reads `self.directed_all` at `train_rqvae.py:468`; the fixture never sets `directed_all`. `refresh()` did set `directed_all`, but it is derived from the fixture’s real transition counts and real assignments, not the synthetic radar. Therefore the smoke test’s “directed radar” is dead test data and cannot establish that switching the directed behaviour term changes assignments or gradients. The proposal specifically requires a directed near-tie radar, so the supplied test does not verify that part of the coupled pathway.
+FINDING REPRODUCTION: In `smoke_test.py`, replace the `P_tensor` assignment at line 101 with `coupling2.directed_all = radar` and rerun the fixture: the test’s choices will then depend on the synthetic directed values. As written, changing `radar` or removing those lines has no effect on the exercised assignment.
+FINDING CORRECTION: Set `directed_all` in the fixture (or construct it through `refresh()` from controlled transition inputs), then assert that changing the directed term changes a near-tie choice while leaving a non-tie choice unchanged. Also verify finite gradients for the coupled score and its intended encoder/codebook parameters.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:552-553, train_rqvae.py:762-768, train_rqvae.py:777-806 | Inspected the trainer’s root and artifact path resolution, frozen embedding/train input paths, item-ID-based SID export, and launcher branches, including `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 99 and 104 and the single-card bypass at lines 779-782. Runtime execution was unavailable.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: —
+FINDING DETAIL: No integration defect found by source inspection. Outputs resolve under the candidate-specific promoted result directory, and the SID JSON keys are generated from catalogue row indices.
+FINDING REPRODUCTION: —
+FINDING CORRECTION: —

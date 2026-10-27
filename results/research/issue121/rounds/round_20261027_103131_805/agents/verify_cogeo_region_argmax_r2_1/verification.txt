@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:551-560 -> model/layers.py:106-112,121-130 -> train_rqvae.py:373-433 | Static trace of the trainer hook and the assignment score; no runtime execution. Train-only frame builds symmetric co-consumption and directed adjacent transitions at train_rqvae.py:213-227. Per-epoch profile/radar refresh is at :320-365. Assignment combines Poincare distance and co-consumption agreement, with bounded directed radar, at :391-433; the first-level quantizer consumes its selected code through the ordinary straight-through quantizer at model/layers.py:121-143.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No scope-fidelity defect found. The behaviour signals and curved distance participate in one first-level argmax pathway; the directed term is capped at 1% of the symmetric coefficient.
+FINDING REPRODUCTION: Static inspection of the exercised path cited above. The supplied smoke test's forward/backward path is specified at smoke_test.py:19-30 but was not run.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-143 and train_rqvae.py:373-433 | Static differentiability trace: the hard argmax selects the quantized code, and its straight-through expression at layers.py:140-143 carries gradients through the selected quantization path to encoder/codebook parameters. The Poincare score uses projected tensors, finite clamps and acosh at train_rqvae.py:392-401. Smoke test source constructs a real forward/backward and checks finite loss and encoder gradient at smoke_test.py:25-30; its variant comparison is at :36-43. Runtime was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 overflow/NaN hazard found by code inspection. The score's argmax is intentionally nondifferentiable; the selected code affects gradients through straight-through quantization. The three modes are implemented: behavior_off retains Poincare distance alone, geometry_off substitutes Euclidean distance while retaining behaviour, and both_on uses the coupled score (train_rqvae.py:425-433). The smoke assertions do not require a nonzero assignment change, so they are weak evidence of an actual switch effect, but this is not by itself a demonstrated implementation defect.
+FINDING REPRODUCTION: Inspect train_rqvae.py:425-433 and model/layers.py:140-143. The smoke variant counts at smoke_test.py:42-43 only assert nonnegative counts, not that any mode changes a choice; no GPU/runtime claim is made.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-75,490-560,674-753 | Static integration inspection only; trainer was not run. Inputs resolve from repository root to stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet (:42-69,504-505); the latter exclusively initializes CoGeoAssignment (:551). Candidate-specific output is results/stage2_RQ-VAE/TIGER_cogeo_region_argmax (:61-75). SID rows are exported in embedding/item order and JSON keys are enumerate indices (:703-715), with collision uniqueness checked (:709-711). Four-card launch and the GENREC_SINGLE_GPU="1" early-return branch are present (:724-753, especially :728-729).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The result path is the required promoted candidate directory, not the baseline or another candidate. The single-card branch reads the requested SINGLE_GPU_ENV constant at :104 and checks it at :728-729. CANDIDATE_CHECK.json reports an earlier path-check crash due to ModuleNotFoundError, which is inconclusive and is not evidence of a code defect.
+FINDING REPRODUCTION: Static inspection of cited path and export/launcher code. The trainer and distributed launcher were not executed.
+FINDING CORRECTION: none

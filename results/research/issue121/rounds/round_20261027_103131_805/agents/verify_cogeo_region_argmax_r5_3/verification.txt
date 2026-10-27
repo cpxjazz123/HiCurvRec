@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:106-130; results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:363-420 | Static trace from trainer hook installation at train_rqvae.py:542-551 and batch latent assignment at layers.py:128-130 into CoGeoAssignment.__call__; verified that the same candidate argmax adds the frozen co-consumption agreement and directed predecessor-region term to the negative Poincare squared distance. No runtime was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check. The connected assignment pathway uses training-derived co-consumption profiles and directed transitions together with a computed Poincare geodesic score; they are not separate losses or unused helpers.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable.
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:363-420; results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-143 | Inspected assignment score, quantizer forward, and straight-through quantization path. Checked the three switch branches in CoGeoAssignment.__call__ and the actual codebook/encoder loss path; runtime execution was unavailable as stipulated.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:416-420
+FINDING DETAIL: The advertised behaviour_off control is not a geometry-only control: it uses curved distance alone, while both_on uses curved distance plus behaviour. The geometry_off control uses Euclidean distance plus behaviour. Thus the requested behavior-off / geometry-off / both-on comparisons are not implemented as a matched factorial comparison, and no branch tests whether replacing geometry alone changes assignments/gradients with behaviour absent. Also, the code's straight-through gradient bypasses the argmax score itself (layers.py:140-143); the score changes selected IDs, hence can alter gradients indirectly via selected code, but there is no exercised forward/backward comparison establishing the requested change-and-change-back behavior.
+FINDING REPRODUCTION: Call compare_variants on fixed inputs and inspect its modes at train_rqvae.py:432-437: behaviour_off is curved-only, geometry_off is behaviour-on/Euclidean, and there is no behaviour-off/Euclidean branch. More minimally, set mode="behaviour_off" then "geometry_off": both behaviour and geometry change, so their isolated effects cannot be attributed by this comparison. The user-specified no-PyTorch sandbox prevents runtime proof, but this mismatch is directly visible statically.
+FINDING CORRECTION: Add an explicit behaviour_off mode that retains Poincare distance only (already present), plus a geometry_off_behaviour_off/Euclidean-only mode; compare both-on to each single-off and both-off on identical latent/code/profile inputs. Add a small forward/backward smoke that asserts finite loss/gradients and checks assignments or resulting gradients under those matched switches.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-74, 481-551, 670-744 | Static trace of repository-root discovery, frozen stage0 train.parquet and stage1 embedding inputs, promoted-arm result paths, SID generation/indexing, and launcher branches. Confirmed SINGLE_GPU_ENV is GENREC_SINGLE_GPU at line 104 and the single-card bypass at lines 720-725; multi-card torchrun setup is at lines 734-743.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Inputs resolve to the frozen training parquet and repository embedding file; output artifacts are under the candidate's own results/stage2_RQ-VAE/TIGER_cogeo_region_argmax directory. SID rows are emitted in item-ID enumeration order with a JSON key per item ID. Launcher preserves both torchrun and GENREC_SINGLE_GPU branches.
+FINDING REPRODUCTION: Not applicable; no finding. Trainer execution was not attempted, as stipulated.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-433 | Statically traced the VQLayer hook at model/layers.py:106-112 and trainer setup/refresh at train_rqvae.py:555-564,608-620; smoke_test.py:38-79 constructs a deterministic switch-sensitive fixture. Co-consumption profile agreement and Poincare distance enter the same first-level score, with directed predecessor-region radar bounded as a tie-break.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:282-295,300-317
+FINDING DETAIL: The exercised hot-path behaviour tables truncate each item's co-consumption neighbours to 32 and incoming transition predecessors to 8, then renormalize the retained counts. This is not the specified full normalized co-consumption row / p(r|i): omitted neighbours and predecessors have zero contribution, changing the actual behaviour×geometry score for items with degree above those caps. The symmetric profile-building path at lines 329-365 uses full rows, but the per-item agreement score additionally uses precomputed top-32 rows in _build_padded_tables and those tensors are not used in __call__ (the actual agree is agree_all); thus the direct agreement path is full, while the directed term is capped. The co-consumption padding is dead code, but does not alter the score.
+FINDING REPRODUCTION: Construct a training item with at least 9 distinct incoming predecessor items, where the ninth has nonzero transition count and a successor-code distribution different from the top eight. Inspect predecessor_index/predecessor_weight: the ninth source is absent and the remaining eight are renormalized; the computed directed score therefore differs from sum_r p(r|i)P[r,k] on the full set. Likewise neighbour table truncates beyond 32, although the live agreement uses agree_all.
+FINDING CORRECTION: Preserve all incoming predecessor counts in a sparse/batched representation and compute their normalized weighted P rows without truncation (or explicitly revise the proposal to specify top-8). Remove the unused top-32 neighbour table or use it only if the proposal explicitly permits truncation.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:17-32,38-79 | Source inspection of the real forward/backward route: VQLayer.forward installs latent context, assignment selects hard codes, and the standard straight-through quantizer supplies gradients; the smoke fixture performs forward/backward, checks finite loss and encoder gradient, and asserts both-on differs from behaviour-off and geometry-off choices. Poincare projection clamps norms inside the ball and the acosh argument is clamped above 1, avoiding the identified float32 boundary hazards. Runtime execution is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-75,494-529,683-761 | Inspected trainer entry point and path/data/export/launcher code. It reads stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet; builds behaviour only from train_frame; derives repository root and writes SID/checkpoint/logs under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax. Export enumerates all embedding rows as item IDs and emits JSON keys from enumerate(sid); launcher skips torchrun when GENREC_SINGLE_GPU=1 and invokes main directly, otherwise torchrun launches four ranks.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

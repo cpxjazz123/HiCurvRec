@@ -1,0 +1,29 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:327-430, 432-485; model/layers.py:121-162 | Static code trace: `refresh()` builds co-consumption agreement and directed scores from the training frame and current assignments; `scores()` combines them with squared Poincare distance. The first-layer forward uses that score for assignment and a soft score-dependent quantization path. `smoke_test.py:63-125` specifies switch comparisons, but I could not execute it in this environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+VERDICT: PASS
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162; train_rqvae.py:396-430 | Static code trace: the forward computes coupled scores, uses their argmax for the hard code and a softmax-weighted codebook value in the straight-through path. The quantization loss therefore has a differentiable path through the score to the latent and codebook. Projection bounds the mapped points inside the Poincare ball, and the distance denominator and `acosh` input are clamped. `smoke_test.py:55-60, 86-125` contains finite-loss/gradient and mode-sensitivity checks; not executed here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 instability found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+VERDICT: PASS
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 789-813; train_rqvae.py:580-620, 739-813 | Static code trace: repository root and candidate-specific result paths are resolved from repository markers; the training frame supplies the behavior counts; export creates item-indexed SID rows and JSON keys; and the launcher preserves the `GENREC_SINGLE_GPU` branch as well as the torchrun branch. Runtime trainer, data, export, and launcher execution was not available here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by static inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

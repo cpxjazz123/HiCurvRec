@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-420, 542-551, 595-607; model/layers.py:106-130 | Inspected the training-only history/target count construction, epoch profile refresh, and first-layer _indices hook; smoke_test.py:62-117 provides deterministic both-on, behaviour-off, and geometry-off assignment comparisons. The score combines projected Poincare distance, symmetric co-consumption agreement, and the bounded predecessor-region radar in one argmax.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:363-420; model/layers.py:121-143; smoke_test.py:41-56, 80-117 | Code inspection: the finite projected Poincare score selects the code; VQLayer's straight-through quantized output and quantization loss propagate gradients to encoder/codebook parameters. The test constructs a forward/backward finite-loss and encoder-gradient smoke and checks assignments change under both switches. Runtime execution was not attempted, as instructed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-75, 481-551, 670-748; smoke_test.py:33-56 | Inspected root/path resolution, frozen stage0 train.parquet input, the rank-aware trainer and launcher (including SINGLE_GPU_ENV at lines 99, 104, 720-748), and export generation. SID export enumerates all embedding rows by item ID and writes both indexed JSON keys and the array under the candidate-specific results/stage2_RQ-VAE/TIGER_cogeo_region_argmax directory; collision extension checks uniqueness.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

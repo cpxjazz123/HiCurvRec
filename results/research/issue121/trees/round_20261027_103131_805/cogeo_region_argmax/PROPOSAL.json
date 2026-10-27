@@ -1,0 +1,44 @@
+{
+  "ablation_behavior_off": "Set lambda=eps=0 and use the plain squared Euclidean assignment required for the behavior-off control; no detached behavior term remains.",
+  "ablation_both_on": "Use fixed-curvature Poincare distance, dominant co-consumption profile agreement, and bounded directed tie-break exactly as in the coupling equation.",
+  "ablation_geometry_off": "Retain the same A_i, g_k, directed counts, coefficients, and assignment pathway, but replace Poincare maps/distance with squared Euclidean distance/norm everywhere in the assignment and profile geometry.",
+  "also_proposed_by": [
+    "ideation_3"
+  ],
+  "behavior_computation": "For each user's longest chronological training sequence, count each distinct item pair once in a symmetric co-consumption matrix; L2-normalize each row to obtain A_i. Separately count adjacent directed transitions r->i over training sequences. Freeze both before Stage2; recompute only code-region aggregation g_k once per epoch from assignments, not from new interactions.",
+  "behavior_signal": "Symmetric train-only co-consumption cosine A_ij plus directed train-only predecessor-to-target transition counts used only as a small near-tie radar.",
+  "cost_estimate": "One sparse train-split co-consumption construction and one transition count pass before training. Per epoch, profile aggregation costs O(nnz(A)) with sparse rows and current item assignments, plus vectorized assignment O(N*K*D) and directed score O(N*K) using cached P and batched sparse/dense products; no per-item Python loop or transition-pair rebuild. At frozen scale (N=24,556; 24 steps/epoch; 3,000 epochs), 73,668,000 item/code opportunities per first-level pass over the run. Expect a modest constant-factor increase over baseline; keep one epoch near 0.15 s on four cards by sparse/dense batching and cache reuse.",
+  "coupling_equation": "s_{i,k}= -d_{c=1}(exp_0(z_i),exp_0(v_k))^2/T + lambda <A_i,g_k> + eps*d_{i,k}, with eps<=0.01 lambda; a_i=argmax_k s_{i,k}.",
+  "coupling_path": "Frozen A_i and current-assignment region profiles g_k provide a dominant per-candidate behavior score in the same argmax as the Poincare geodesic score; cached train transition-region masses provide only a bounded secondary score. Removing A removes the coherence drive; replacing the Poincare score by Euclidean distance changes the same candidate computation.",
+  "duplicate_count": 1,
+  "evidence_revision": {
+    "answers": "Addresses the behavior_dependency gap by distinguishing an assignment-invariant row scalar from the measured codeword-dependent weighting result.",
+    "evidence_note": "Positive row scalar left every arg-min unchanged (True); codeword-dependent weight moved 0 top-1 assignments. Cooccur_overlap_L3 and Stage3 test_R@10 for this proposal: UNKNOWN.",
+    "revision": "The evidence does not support claiming that the co-consumption term moves first-level assignments: a positive row scalar preserves every arg-min, and the tested codeword-dependent weight moved 0 top-1 assignments. Withdraw the claim that co-consumption and Poincare distance jointly determine changed assignments; the directed tie-break is likewise unsupported as a source of movement by these measurements.",
+    "withdrawn": "The claim that this proposal's co-consumption term changes assignments, and therefore the claim that this evidence establishes co-consumption-led partition improvement."
+  },
+  "falsifiable_hypothesis": "Co-consumption agreement dominates partition movement and raises cooccur_overlap_L3 above the 0.0756 plain baseline before Stage 3 is run; the weak directed term improves sequence usefulness without eroding that gain. Keep only if measured cooccur_overlap_L3 clears 0.0756 and Stage3 test_R@10 exceeds 0.065, with the coupled run beating both controls.",
+  "fingerprint": "6e9fb07b3a08f468",
+  "hyperbolic_location": "First-level candidate assignment score; this changes the emitted first SID token and its quantization gradient.",
+  "hyperbolic_operator": "Fixed-curvature Poincare-ball exponential map and squared geodesic distance d_c^2 at curvature -c (c=1), between mapped item latent and mapped first-level code vector.",
+  "idea_id": "cogeo_region_argmax",
+  "key_change": "Freeze normalized train-only co-consumption rows A_i and directed transition counts; once per epoch form code-region profiles g_k from current hard assignments. Score every item/code pair with negative squared Poincare distance plus dominant symmetric profile agreement and a <=1%-strength directed predecessor-region term, then use the selected code in ordinary residual quantization.",
+  "leakage_boundary": "Construct A and transition counts exclusively from the training split and freeze them before Stage2 optimization. Validation/test interactions, future events, and Stage3 context do not enter A, transition counts, profiles, assignments, or SID export.",
+  "motivation": "The measured target is symmetric co-consumption coherence, while directed transitions carry useful sequential information but have repeatedly damaged that target when allowed to control partitions. Make symmetric neighbourhood agreement determine the partition and reserve directed context for genuinely ambiguous code choices.",
+  "novelty": "Unlike prior transition-led assignments, Sinkhorn, latent-offset, and co-consumption-row grouping followed by an unchanged Euclidean quantizer, this makes co-consumption and Poincare distance jointly determine every first-level assignment; directed transition information is strictly a bounded tie-break. It is the prescribed inversion of the previous composition, not a reuse of those earlier mechanisms.",
+  "observables": "Compare L1 Hard ER, cooccur_overlap_L3, adjacency_L3, largest first-level bucket share, extension alphabet, and (only after the gate clears) Stage3 test_R@10. Also inspect changed first-level assignments and the fraction of assignments for which the directed term actually breaks a near-tie. Require both-on cooccur_overlap_L3>0.0756 before spending Stage3 budget.",
+  "origin_agent": "ideation_3",
+  "proposal_revision": 1,
+  "risks": [
+    "Sparse row/profile reductions or Poincare distance may exceed the epoch budget; stale/noisy hard assignments may make profiles oscillate; the directed term may be too weak to matter or, if scales are mismatched, cease to be a tie-break. Co-consumption coherence can improve without improving next-item recall."
+  ],
+  "safeguards": "Use float32 for geometry; project mapped points to norm <=(1-delta)/sqrt(c); clamp Poincare acosh/atanh arguments; normalize sparse rows with denominator at least delta; smooth transition rows by alpha and define zero-incoming items as d=0; retain prior profile for empty codes; cap eps at 0.01 lambda; calibrate score scales using training data only; check finite scores and gradients. Avoid materializing dense N-by-N A if the train matrix is sparse.",
+  "scope_reasons": [],
+  "scope_verdict": "IN_SCOPE",
+  "spec_equations": "Train counts C_sym[i,j]=sum_u 1[i,j in unique(items(seq_u))]; A_i=C_sym[i,:]/max(||C_sym[i,:]||_2,delta). At epoch e, g_k=normalize(sum_{j:a_j=k} A_j/max(1,n_k)); P_{r,k}=(sum_{j:a_j=k} n_{r,j}+alpha)/(sum_{k'}sum_{j:a_j=k'}n_{r,j}+K alpha); d_{i,k}=normalize_k(sum_r n_{r,i}P_{r,k}) (zero vector if no incoming edges). Compute all scores in batches and update hard assignment. Use row-normalized sparse A for profile aggregation and cached transition matrices.",
+  "spec_inputs_outputs": "Inputs: training-only longest sequences, frozen A and adjacent-transition counts, current encoder/code vectors and assignments, fixed c=1, source constants T/lambda/eps/alpha. Outputs: per-item first-level hard assignment, per-code region profile refreshed each epoch, and downstream RQ-VAE SIDs.",
+  "specification": {
+    "text": "Initialize a_i from the training split only. At each epoch compute g_k=normalize(sum_{j:a_j=k} A_j / max(1,n_k)); if empty retain its prior profile (initially the global mean). Build P_{r,k}=count of train-only adjacent transitions r->j with a_j=k, normalized over k with smoothing. For item i let d_{i,k}=sum_r p(r|i)P_{r,k}, zero for no incoming transitions. Set s_{i,k}=-d_c(z_i,v_k)^2/T + lambda(A_i dot g_k) + eps*d_{i,k}; a_i=argmax_k s_{i,k}. Choose source constants T and lambda after train-only score-scale calibration; normalize d into [0,1], and constrain eps<=0.01 lambda. The selected first code feeds the existing later residual stages."
+  },
+  "title": "Co-consumption-led Poincare region assignment with directed near-tie radar"
+}

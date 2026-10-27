@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:322-383, 388-422; model/layers.py:126-161 | Inspected the epoch profile/radar construction and the score path called by the quantizer. The score combines Poincare squared distance with co-consumption agreement and directed transition scores; the soft score path is used in the straight-through quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:47-60, 86-123; model/layers.py:130-161 | Inspected the forward/backward smoke path and the score-to-softmax-to-quantizer gradient path. The soft coupled score feeds the quantization loss and straight-through output; the smoke also checks finite loss/encoder gradient and assignment changes across the behaviour-off and geometry-off variants. Runtime execution was unavailable in this review.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:599-608, 804-806 | Traced the real trainer startup from the entry point through initial assignment/profile setup. The trainer fails before its first training batch.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:602-607
+FINDING DETAIL: The trainer installs `cogeo` as `first_layer.region_assignment` before trying to obtain the initial Euclidean assignments. The call to `first_layer._indices(...)` at line 606 therefore dispatches through the assignment hook, whose `__call__` requires initialized profiles and raises `RuntimeError("co-consumption profiles must be initialized before assignment")`. The subsequent line that clears the hook is never reached. This prevents the real trainer from reaching training or SID export.
+FINDING REPRODUCTION: Start the trainer with valid inputs and reach lines 602-607. `first_layer._indices(...)` dispatches to `CoGeoAssignment.__call__`; `self.profiles` is still `None`, so it raises before the first batch.
+FINDING CORRECTION: Clear `first_layer.region_assignment` before the initial Euclidean `_indices(...)` call, or compute those assignments directly with the Euclidean `argmin` path. Then refresh the co-consumption profiles and reinstall the hook.

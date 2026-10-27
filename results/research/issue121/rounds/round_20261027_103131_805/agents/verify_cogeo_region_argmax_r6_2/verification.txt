@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:322-383, train_rqvae.py:388-422, model/layers.py:126-162 | Traced the trainer’s profile refresh and assignment hook into the first quantizer. Training-only co-consumption profiles and directed transitions contribute to the score alongside squared Poincare distance; the selected first code is used by residual quantization. smoke_test.py:68-123 contains a deterministic fixture comparing both-on, behaviour-off and geometry-off assignments.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Source inspection; runtime execution was not available in this sandbox.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:126-162, train_rqvae.py:636-649 | Traced the forward/backward path: the coupled score supplies a soft codebook-weighted estimate used in quantization loss and the straight-through output, so gradients can reach the encoder and codebook. The Poincare projection and distance use finite clamps; the softmax scale is clamped away from zero. smoke_test.py:55-60 checks finite loss and encoder gradients, and lines 86-123 check assignment changes across the three variants.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The runtime gradient smoke was not run here.
+FINDING REPRODUCTION: Source inspection of the differentiable path and smoke-test assertions.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:538-608, train_rqvae.py:727-805 | Traced the real trainer entry point through train.parquet loading, training-only assignment setup, export and launcher. Inputs resolve from the repository root; artifacts resolve to the promoted candidate’s `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` directory. Export enumerates embedding rows into item-indexed JSON and extends collisions to unique SIDs. The launcher includes the single-card `GENREC_SINGLE_GPU` branch at lines 777-782.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer was not executed in this sandbox.
+FINDING REPRODUCTION: Trace the entry point at lines 804-806 and its launcher, data, and export paths cited above.
+FINDING CORRECTION: None.

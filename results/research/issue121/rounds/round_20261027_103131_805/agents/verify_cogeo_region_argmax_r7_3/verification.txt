@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:388-422, 454-477 | Traced the real first-layer forward through model/layers.py:126-137: it supplies the latent and item IDs to the score, which combines Poincare distance with co-consumption agreement and directed transition radar before selecting a code. The training-only signals are built from TRAIN_FILE at train_rqvae.py:553 and 211-289; epoch profiles are refreshed at 654-666. The switch comparisons are represented in smoke_test.py:63-125.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behaviour signals and curved operation meet in the first-level assignment score; this is not an unrelated auxiliary loss or an unchanged Euclidean quantizer with a behaviour suffix.
+FINDING REPRODUCTION: Source trace: model/layers.py:126-137 calls CoGeoAssignment.scores; train_rqvae.py:407-422 computes and combines the curved and behaviour scores. The supplied smoke test constructs a deterministic fixture and checks that both-on choices differ from the behaviour-off and geometry-off choices at smoke_test.py:86-125.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:126-162 | Inspected the forward/backward route: the coupled score selects hard indices and also produces a soft candidate embedding; its auxiliary quantization loss and straight-through output connect that score to the encoder and codebook. The smoke test includes finite-loss and finite encoder-gradient assertions at smoke_test.py:55-60, plus assignment-switch checks at 113-125.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 overflow/NaN hazard found in the coupled path. Projection bounds points inside the Poincare ball, distance denominators and acosh inputs are guarded, and the softmax scale has a positive lower bound. No runtime claim is made; the requested GPU smoke remains the runtime proof.
+FINDING REPRODUCTION: Inspect model/layers.py:150-161 for the differentiable soft-score path and train_rqvae.py:404-422 for score construction. The deterministic switch fixture asserts different choices for both-on versus each control at smoke_test.py:117-125. The provided smoke test checks encoder gradients; it does not explicitly assert a codebook gradient.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-75, 538-609, 729-808 | Inspected repository-root and arm-specific output resolution, the frozen stage0 train parquet and stage1 embedding inputs, training and export flow, and launcher branches including GENREC_SINGLE_GPU at lines 779-808. SID export enumerates item IDs in row order and writes matching integer-keyed JSON entries at lines 757-770. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The candidate writes to its promoted arm directory under results/stage2_RQ-VAE, uses the frozen stage0 train parquet, exports catalogue-indexed SIDs with collision extension, and retains the single-card launcher bypass.
+FINDING REPRODUCTION: Follow REPO_ROOT/RESULT_DIR/ TRAIN_FILE definitions at train_rqvae.py:42-75, input loading at 552-559, export at 757-770, and launcher logic at 779-803. Runtime trainer execution was not performed.
+FINDING CORRECTION: none

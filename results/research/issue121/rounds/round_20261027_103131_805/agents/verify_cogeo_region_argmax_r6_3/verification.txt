@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:652-664 -> train_rqvae.py:388-422 -> model/layers.py:127-161 | Traced the epoch refresh and first-level training forward: train-only co-consumption profiles and directed counts are built at train_rqvae.py:213-289; the score combines their profile/radar terms with squared Poincare distance at train_rqvae.py:404-422; model/layers.py:150-161 uses that score in the differentiable quantization path. The assignment is also refreshed from the coupled choices at train_rqvae.py:660-664.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by source inspection. The behavior signals and curved distance share the first-level assignment and its soft straight-through training pathway.
+FINDING REPRODUCTION: Source trace through the cited epoch refresh, score calculation, and quantizer forward.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161 | Inspected the forward path: item IDs and latent vectors feed differentiable Poincare-plus-behavior scores; the selected hard code is used for quantization, and the softmax over those scores contributes a loss and straight-through gradient path to the encoder and codebook. Float32 safeguards project points inside the Poincare ball and clamp distance denominators and the acosh input at train_rqvae.py:404-412. The fixture at smoke_test.py:86-123 checks assignment differences for both-on, behavior-off, and geometry-off variants, and the forward/backward finite-loss and encoder-gradient assertions are at smoke_test.py:54-60.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or source-visible numerical hazard found. Runtime training was not run; the sandbox limitation is not treated as a defect.
+FINDING REPRODUCTION: Inspect the cited quantizer forward and smoke-test assertions. The smoke test itself was not executed.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:538-608, train_rqvae.py:727-805 | Traced repository-root and result-path resolution, frozen stage1 embedding and stage0 training-parquet inputs, trainer initialization, final item-indexed SID export, and launcher branches. The SID JSON keys are enumeration indices matching embedding rows at train_rqvae.py:767-768. Result artifacts resolve to results/stage2_RQ-VAE/TIGER_cogeo_region_argmax at train_rqvae.py:61-74. The launcher checks SINGLE_GPU_ENV at train_rqvae.py:781-782.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Output is in the candidate’s required result directory, and the single-card launcher branch is present. Runtime trainer and distributed-launcher execution were not performed.
+FINDING REPRODUCTION: Trace the cited trainer and launcher paths. No runtime execution was performed.
+FINDING CORRECTION: none

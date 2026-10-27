@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:363-420 -> model/layers.py:106-130 | Static call-path inspection, plus smoke_test.py:80-117's deterministic variant fixture; runtime unavailable as specified.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:293-307
+FINDING DETAIL: The prescribed directed term uses the incoming transition distribution p(r|i), but implementation silently retains at most eight incoming predecessors, selecting the highest-count sources, and renormalizes just those. Consequently it is not the specified train-only directed signal; on an item with nine incoming sources, the omitted source contributes zero regardless of its transition probability. The co-consumption/Poincare score itself is connected and applied in the first-level hard assignment at train_rqvae.py:381-420.
+FINDING REPRODUCTION: Construct an item with nine distinct incoming transition sources, each with equal positive count. _build_padded_tables stores only eight at lines 302-307; the omitted source has no contribution when __call__ gathers the predecessor table at lines 403-411, although the specified p(r|i) assigns it 1/9 mass.
+FINDING CORRECTION: Preserve and aggregate all incoming predecessor mass (e.g. sparse incoming edges and batched reduction against P_tensor), or explicitly revise the proposal to specify a top-eight approximation and its normalization.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:121-143 -> train_rqvae.py:583-591; train_rqvae.py:363-420 | Inspected forward, hard argmax assignment, straight-through quantizer, and backward/update path; smoke_test.py:48-54 contains finite-loss and encoder-gradient assertions, while lines 100-117 compare both-on, behaviour-off, and geometry-off choices.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:391-420
+FINDING DETAIL: No trainability defect found: the assignment score is intentionally a hard argmax (not differentiable), but it selects the code consumed by the existing straight-through quantizer, so ordinary quantization/reconstruction gradients reach encoder and codebook parameters. The Poincare safeguards project inside the ball and clamp acosh input away from one; behaviour-off and Euclidean-distance switches are wired. No executed runtime proof is claimed.
+FINDING REPRODUCTION: Source-level path is VQLayer.forward setting current_latent and invoking _indices, CoGeoAssignment returning argmax, then embedding lookup and straight-through expression x + (x_q - x).detach(); smoke fixture checks variant choices change under the switches.
+FINDING CORRECTION: Not applicable.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, 481-552, 572-607, 670-748 | Static inspection of trainer entry point, data source, export/index mapping, output paths, and launcher branches; execution is unavailable as specified.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:63-75, 494-499, 705-713, 720-744
+FINDING DETAIL: No integration defect found by inspection. The trainer reads the frozen stage0 train.parquet and stage1 embeddings; resolves repository root by markers; writes artifacts to results/stage2_RQ-VAE/TIGER_cogeo_region_argmax; enumerates SID JSON keys by embedding row/item ID and extends collisions to unique rows. The launcher has the requested GENREC_SINGLE_GPU branch and otherwise launches torchrun; existing torchrun children return through the RANK check. Actual execution/export validity cannot be established in this environment.
+FINDING REPRODUCTION: Follow main() from lines 481-499 through final export lines 699-713; inspect _launch_via_torchrun lines 720-744, including SINGLE_GPU_ENV comparison at 724-725.
+FINDING CORRECTION: Not applicable.

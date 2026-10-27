@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:216-216,327-430,432-485 | Inspected the training-only co-consumption and transition construction, epoch profile refresh, and the assignment hook into the first quantizer. The same candidate score combines the Poincare distance with co-consumption agreement and the bounded directed term. I could not run the trainer in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-162 | Inspected the quantizer forward path: its coupled score selects the hard code, and its soft candidate distribution contributes to quantization loss and the straight-through output, providing a differentiable path through the coupled score to the encoder and codebook. The mode switches retain geometry while dropping behaviour, or retain behaviour while replacing the curved score with Euclidean distance; the smoke test at smoke_test.py:113-125 checks variant assignment differences. Runtime forward/backward was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 numerical hazard found. The Poincare projection and denominator clamps bound the distance calculation; the softmax scale has a positive lower bound.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-74,546-619,641-676,739-818 | Inspected the trainer entry point, frozen embedding and training-parquet paths, candidate-specific result directory, SID export/index mapping, and launcher branches. The single-card branch checks SINGLE_GPU_ENV at lines 108-109 and 793-794; the default launcher invokes torchrun at lines 803-813. Runtime execution was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Outputs resolve under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax, and SID rows are emitted by enumerating the catalogue at lines 779-780.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

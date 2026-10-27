@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:211-289, train_rqvae.py:322-425, model/layers.py:121-162 | Traced the training-only co-consumption and transition construction through epoch profile refresh into the first-level assignment score. The score uses squared Poincare distance together with profile agreement and the bounded directed term; the smoke fixture at smoke_test.py:86-125 checks assignment changes across both-on, behaviour-off and geometry-off modes.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:126-162, train_rqvae.py:641-653, smoke_test.py:47-60, smoke_test.py:86-125 | Inspected the forward path: the coupled score feeds a soft candidate distribution and auxiliary quantization loss, with gradients flowing through Poincare distance and behaviour-weighted scores into the encoder and codebook. The smoke test performs forward/backward, checks finite loss and encoder gradient, and tests that the assignment changes under the stated switches. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 overflow/NaN hazard found. The score clamps the Poincare-ball projection and distance denominators, and clamps the acosh input above one.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:541-613, train_rqvae.py:732-779, train_rqvae.py:782-811 | Inspected root and path resolution, training input, trainer setup, SID export/index construction, DDP cleanup, and launcher branches. The source selects results/stage0_build_parquet/train.parquet, writes artifacts under the promoted arm’s results/stage2_RQ-VAE directory, exports rows keyed by enumerated item IDs, and checks SID uniqueness. The single-card branch reads SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at train_rqvae.py:104, 782-787. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

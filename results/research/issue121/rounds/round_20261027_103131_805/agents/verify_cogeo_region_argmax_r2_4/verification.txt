@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:106-119,121-130; /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-433,604-611 | Statically traced the trainer-installed VQLayer assignment hook into CoGeoAssignment.__call__, and traced refresh construction. The assignment score uses projected Poincare distance, co-consumption agreement, and bounded directed transition scores together. No runtime execution was attempted.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:604-611
+FINDING DETAIL: The proposal says each epoch's region profiles are built from the current hard assignments. Instead, refresh explicitly disables the region hook and calls the plain Euclidean _indices at lines 608-610. Thus the profile feedback is derived from a different assignment mechanism than the co-consumption/Poincare assignments used in training; the implementation does not realize the specified coupled profile-update loop.
+FINDING REPRODUCTION: Follow the end-of-epoch refresh: region_assignment is set to None before _indices(_distances(encoded), False), which returns Euclidean argmin, and that result is passed to cogeo.refresh. This differs from the assignments returned by the active CoGeoAssignment hook during the epoch.
+FINDING CORRECTION: At refresh, compute assignments with the coupled region_assignment active and full-catalogue item IDs set, then pass those assignments to cogeo.refresh. Ensure this refresh does not recursively use stale profile state or disturb the subsequent item-ID context.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-143; /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-433,588-600; /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:25-43 | Static forward/backward trace: trainer sets latent context in VQLayer.forward, the coupled score chooses indices, and the selected embeddings feed the quantizer's straight-through output and quantization loss. The score itself is intentionally hard/non-differentiable, but the chosen code affects the ordinary trainable quantizer path. Inspected the variant switch implementation and smoke-test comparison; did not run it.
+FINDING SEVERITY: minor
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:40-43
+FINDING DETAIL: The smoke test computes both_on, behaviour_off, and geometry_off variant counts, but only asserts that the counts are nonnegative (which is tautological). It therefore does not verify that either switch changes an assignment on the fixture or that toggling back restores the baseline. The implementation's switch branches are visibly distinct, so this is a validation weakness, not evidence of a dead term or a broken gradient path.
+FINDING REPRODUCTION: In the smoke test, any three nonnegative counts satisfy the assertions, including all-zero movement counts for all variants.
+FINDING CORRECTION: Make the fixture non-degenerate and assert the expected selected indices differ for both_on versus behaviour_off and geometry_off, while repeated evaluation after restoring both_on reproduces the same indices. Keep the actual trainer gradient smoke as the runtime proof.
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74,490-525,674-721,724-753 | Statically inspected repository-root and artifact path derivation, frozen embedding/train input constants, training-ID validation, SID export/index construction, output destinations, torchrun launcher, and the GENREC_SINGLE_GPU branch. No trainer execution was attempted.
+FINDING SEVERITY: minor
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:645-648
+FINDING DETAIL: The evaluation block assigns the full-catalogue region_item_ids twice consecutively. This is redundant but does not change the IDs or block training/export.
+FINDING REPRODUCTION: Read the two identical torch.arange assignments at lines 645 and 647.
+FINDING CORRECTION: Remove either duplicate assignment; no functional correction is otherwise needed.

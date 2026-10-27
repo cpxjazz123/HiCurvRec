@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-433, installed at :551-560 and invoked via model/layers.py:106-112,130-131 | Inspected the trainer setup, VQLayer assignment hook, and score computation. Train-only co-consumption profiles and directed transition-region masses enter the same first-level argmax as the projected Poincare squared-geodesic score. The selected code is then used by the ordinary quantizer. The geometry-off and behaviour-off branches are at train_rqvae.py:425-433.
+FINDING SEVERITY: minor
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking fidelity defect found. The assignment is a hard argmax, so the score itself is not differentiated; the selected code feeds the existing straight-through quantizer path, as documented at train_rqvae.py:376-380.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:391-433 and model/layers.py:121-143 | Static forward/backward trace: projected latent and code vectors produce finite-domain Poincare scores; the selected index feeds embedding lookup and straight-through quantization, whose losses provide encoder and codebook gradients. The batch smoke path is specified in smoke_test.py:19-30; fixed-input mode comparisons are at :36-43. No trainer execution was performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: N/A
+FINDING DETAIL: No dead coupled score term or float32 overflow/NaN hazard was found in the examined pathway. The hard assignment is intentionally nondifferentiable; changing its selected code changes the quantization pathway and its gradients. The smoke test checks finite loss and an encoder gradient, but its variant assertions do not require distinct assignments, so it is not itself proof that the supplied fixture distinguishes the three modes.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-75,490-560,674-752 | Inspected the real entry point, data/constants, export and launcher code. The frozen training input is results/stage0_build_parquet/train.parquet (:66-68,504-505); artifacts resolve under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax (:61-75). Export assigns rows by item ID, extends collisions, checks uniqueness, and writes the JSON mapping (:703-715). The launcher uses torchrun unless already under RANK or GENREC_SINGLE_GPU=1 (:724-752).
+FINDING SEVERITY: minor
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking integration defect found by code inspection. Trainer execution, GPU smoke, and distributed launch were not run.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

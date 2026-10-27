@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:322-383, train_rqvae.py:388-422, model/layers.py:127-161 | Inspected the training-only co-consumption and transition construction, epoch profile refresh, Poincare-plus-behaviour scoring, and quantizer forward path. The same candidate score combines the curved distance with co-consumption agreement and the directed term; the resulting soft score also feeds the quantizer’s straight-through path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161, train_rqvae.py:388-422 | Inspected the real forward/backward path: scores are differentiable before argmax, and the score-derived soft code embedding contributes to quantization loss and the straight-through output. `behavior_off` retains curved distance without behaviour terms; `geometry_off` replaces the curved score with Euclidean distance while retaining both behaviour terms. The switches therefore affect the scored candidates and the score-derived gradients. The clamped Poincare arguments and projection keep the distance computation bounded away from its singular boundary.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical hazard found in the inspected coupled forward/backward path. Runtime gradients were not executed, consistent with the stated sandbox limitation.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:553-573, train_rqvae.py:599-610, train_rqvae.py:631-666, train_rqvae.py:729-803 | Inspected the trainer’s frozen `train.parquet` input, training-item indexing, profile refresh, SID export, result-directory derivation, and launcher branches. The candidate-specific result directory and `GENREC_SINGLE_GPU` branch are present, but the epoch refresh allocates a dense item-by-item transition matrix.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:372-383
+FINDING DETAIL: `refresh()` allocates `torch.zeros((n_items, n_items), dtype=torch.float32)` before constructing a sparse incoming-transition tensor. At 24,556 items this alone is about 2.24 GiB, and it is repeated once per epoch on the training device. It defeats the sparse construction and can exhaust GPU memory, preventing the real trainer from reaching training or export.
+FINDING REPRODUCTION: With the stated item count, evaluate the allocation at line 372: it requests 24,556² float32 elements (about 2.24 GiB decimal / 2.09 GiB binary), even though the subsequent code only needs a sparse COO tensor. The allocation occurs on each call to `refresh()`, including the per-epoch call at lines 664-666.
+FINDING CORRECTION: Remove the unused dense `torch.zeros` allocation and construct the incoming transition matrix directly as a sparse COO tensor on `device`, including the empty-transition case. Keep the sparse matrix multiplication with `P_tensor` for `directed_all`.

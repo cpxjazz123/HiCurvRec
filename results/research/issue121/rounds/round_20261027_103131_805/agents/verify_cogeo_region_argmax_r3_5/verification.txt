@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-433, 555-565, 592-620; model/layers.py:106-112, 121-131 | Traced the trainer-installed first-layer hook through VQLayer.forward/_indices into CoGeoAssignment.__call__. The assignment score combines projected Poincare distance (lines 391-401), train-only co-consumption profile agreement (lines 409-415, from rows constructed at 217-226 and profiles at 320-365), and bounded train-only directed predecessor-region score (416-431). The selected code is used by normal residual quantization. Also inspected smoke_test.py:38-79 for the controlled variant fixture; did not execute it because this sandbox lacks PyTorch/shell runtime support.
+FINDING SEVERITY: N/A
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-143; train_rqvae.py:373-433, 592-605; smoke_test.py:17-32, 38-79 | Inspected differentiable quantizer loss and straight-through path: argmax is deliberately nondifferentiable, while quantization loss propagates to encoder and codebook. The behavior/geometry score determines hard indices consumed by that path. The smoke fixture checks finite loss/encoder gradient and distinguishes both-on, behavior-off and geometry-off assignments under shared inputs/codebook. Numerical inspection found Poincare projection inside the open unit ball and denominator/acosh safeguards; no apparent float32 overflow/NaN hazard in the stated operations. Runtime gradient smoke was not run here, as permitted by the instructions.
+FINDING SEVERITY: N/A
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-74, 494-565, 683-762 | Inspected entry point, frozen embedding/train parquet paths, repository-root discovery, arm-specific results path, all-item ID-aware export and JSON construction, and launcher branches. Export enumerates item rows in order and checks SID uniqueness; result artifacts resolve beneath results/stage2_RQ-VAE/TIGER_cogeo_region_argmax. The torchrun subprocess uses the repository-relative script and repository cwd; RANK bypass and GENREC_SINGLE_GPU="1" bypass are present. Trainer execution was not attempted per sandbox constraint.
+FINDING SEVERITY: N/A
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

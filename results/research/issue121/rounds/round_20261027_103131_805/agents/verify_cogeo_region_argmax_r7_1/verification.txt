@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:599-610, results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:126-162, results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:388-477 | Traced the first-level quantizer hook from trainer setup through the Poincare-plus-co-consumption/directed score to the selected code and straight-through quantizer. `smoke_test.py:43-60` constructs the model, refreshes profiles, and performs a forward/backward; `smoke_test.py:86-125` checks assignment changes under the named modes. I did not run the test or trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected training-only behaviour and curved-assignment pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:126-162 | Code inspection shows the coupled score feeds the hard choice and a score-dependent soft quantization term; the latter contributes to `quant_loss` and the straight-through output, providing a gradient path through the curved score to the encoder and codebook. The smoke test checks finite loss and encoder gradient at `smoke_test.py:55-60`, and compares both-on, behaviour-off, and geometry-off choices at `smoke_test.py:113-125`. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 instability found in the inspected path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:61-74, results/research/issue121/rounds/round_20261027_103131_805/agents/verify_cogeo_region_argmax_r7_1/verification.txt | Inspected the candidate trainer’s input/output constants, SID export, and launcher alongside the real Stage3 trainer’s configured SID path. The requested output file was not written; this report is provided in the response.
+FINDING SEVERITY: blocking
+FINDING LOCATION: stage3_T5Train/train_HG-Rec.py:153-157, stage3_T5Train/train_HG-Rec.py:164-189
+FINDING DETAIL: The candidate trainer writes `item_sids.json` to `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` (`train_rqvae.py:63-69`), but the Stage3 entry point configures `CODE_PATH` to the baseline `results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json`. Its variant map also has no entry for the candidate path. As configured, Stage3 will not consume the candidate export.
+FINDING REPRODUCTION: Run the candidate trainer to export its SID file, then inspect or run the Stage3 entry point without changing its configuration: `CODE_PATH` still resolves to `TIGER_RQ-VAE/item_sids.json`, not `TIGER_cogeo_region_argmax/item_sids.json`.
+FINDING CORRECTION: Make Stage3’s configured SID path resolve to the promoted candidate’s `item_sids.json` for this run and add the corresponding variant mapping, while preserving the baseline path for baseline runs.

@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:555-564, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:106-112, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-433 | Traced the trainer's first-level hook through VQLayer._indices into CoGeoAssignment.__call__: train-frame histories/targets build frozen co-consumption and directed transitions (lines 217-226); refreshed hard-code profiles and transition-to-code distributions feed the same score as the projected Poincare distance and its argmax (lines 320-365, 391-433). Inspected smoke_test.py:33-79 for both switches; did not execute runtime tests.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-143, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:592-605, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:25-32,33-79 | Code inspection: the score selects the hard code, which feeds embedding lookup and the straight-through quantizer; quantization loss has gradients to the encoder and selected codebook parameters. The Poincare calculation projects into the ball and clamps its denominator/acosh input to finite float32 ranges. Inspected the smoke's finite loss/encoder-gradient assertions and its both_on, behaviour_off, geometry_off comparison fixture; runtime unavailable and not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by source inspection. The smoke fixture checks encoder gradient but does not explicitly assert a codebook gradient; the forward/backward loss path nevertheless includes the differentiable codebook reconstruction term at layers.py:140-142.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-75,494-529,683-729,733-762 | Inspected root/data/result path constants, frozen train.parquet and embedding inputs, item-ID dataset/export flow, final unique SID extension and JSON enumeration, and both launcher branches including SINGLE_GPU_ENV at lines 104 and 733-738. The entry point and GPU/distributed runtime were not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by source inspection. Results resolve to the candidate-specific promoted arm directory; export rows use item IDs by enumeration over the complete embedding matrix. The single-GPU environment branch and torchrun path are present.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

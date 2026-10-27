@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-281,364-421; model/layers.py:106-119 | Traced the data construction, epoch profile refresh, VQLayer hook, and final first-level argmax. The score combines Poincare distance with co-consumption agreement and a bounded directed term, but the transition input is incomplete.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:223-238
+FINDING DETAIL: The directed transition table does not count train-only adjacent transitions throughout each training sequence. It appends only seq[-2] -> seq[-1] for each history-plus-target row (lines 232-235), omitting every earlier adjacent pair. Consequently P and the directed radar in the coupled assignment are computed from a restricted final-edge sample, not the specified directed transition counts.
+FINDING REPRODUCTION: Supply one training row with history [0, 1, 2] and target 3. The expected adjacent counts include (0,1), (1,2), and (2,3); this implementation records only (2,3). Inspect self.transitions after CoGeoAssignment construction.
+FINDING CORRECTION: Iterate over all consecutive pairs in each filtered sequence and accumulate each pair into self.transitions; retain the training-split-only source and the existing bounded score term.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:17-32; train_rqvae.py:364-421; model/layers.py:121-143 | Inspected the included forward/backward smoke and the executed hook/straight-through quantizer path. The assignment choice feeds embedding lookup and the quantization loss; the straight-through path propagates gradients. The score safeguards projection norms and the acosh argument, and the comparison fixture checks both switches alter code choices. I did not run it, consistent with the stated sandbox constraint.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-75,482-553,671-745 | Statically traced repository-root and frozen train/embedding paths, candidate-specific result paths, item-row SID serialization, and launcher dispatch. RESULT_DIR resolves under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax; export enumerates embedding rows into matching integer item keys. The launcher returns directly for GENREC_SINGLE_GPU=1 and otherwise starts torchrun from REPO_ROOT. No trainer execution was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:364-421 -> model/layers.py:106-112, 126-131 | Inspected the installed first-level VQLayer hook and assignment scoring. It combines projected Poincare distance, co-consumption agreement, and directed predecessor-region score in one argmax; the smoke fixture at smoke_test.py:38-79 switches behaviour and geometry off and asserts distinct choices. The directed input construction does not match the specified adjacent-transition counts.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:223-235
+FINDING DETAIL: The transition table counts only the final edge seq[-2] -> seq[-1] from each history-plus-target sequence. It omits all earlier adjacent training transitions, even though the proposal specifies counts of train-only adjacent transitions r->j. Consequently P and the purported directed tie-break are computed from a different behaviour signal; the connected co-consumption/Poincare pathway exists, but its directed component is not faithful to the implemented idea.
+FINDING REPRODUCTION: Supply one training row with history [0, 1, 2] and target 3. The code records only (2, 3); (0, 1) and (1, 2) are absent from self.transitions, so neither can contribute to P or the assignment score.
+FINDING CORRECTION: For each filtered sequence, count every consecutive pair, e.g. zip(seq[:-1], seq[1:]), accumulating duplicate pair counts. Keep this construction train-split-only and retain the existing cached/vectorized assignment path.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:364-421 -> model/layers.py:121-143; smoke_test.py:17-30, 41-79 | Code inspection: assignment is a hard argmax, but selected code embeddings feed the existing straight-through quantizer and quantization loss; the encoder also receives the commitment gradient. The score uses projected Poincare distance with denominator/acosh guards, while behaviour terms affect the selected code. The supplied smoke test performs forward/backward, checks finite loss and encoder gradient, then compares both-on, behaviour-off, and geometry-off assignments. Runtime execution was not performed in this sandbox as specified.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 482-552, 573-608, 671-749; smoke_test.py:9-10, 31-32 | Inspected the trainer entry path, frozen inputs, assignment refresh, export, and launcher. Inputs resolve to stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet; outputs resolve under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax. SID export enumerates embedding rows as item IDs and writes both NPY and string-keyed JSON, adding a uniqueness extension. The launcher starts four-card torchrun by default and explicitly returns to the caller when GENREC_SINGLE_GPU=1, after which main selects the single available CUDA device (or CPU). No shell/runtime execution was performed, per instruction.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-433; model/layers.py:106-131 | Static trace of train-only frame construction, co-consumption and transition aggregation, then Poincare-plus-behaviour argmax installed in first VQ layer; smoke_test.py:38-79 defines explicit switch comparisons. No execution claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-433, 592-605; model/layers.py:121-143 | Static trace of the hooked forward, argmax selection and straight-through quantizer backward; smoke_test.py:24-30 and 67-79 describe CPU forward/backward and variant assertions, but runtime could not be executed in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:373-400
+FINDING DETAIL: The actual Poincare distance is computed from `current_latent`, but the training loop batches only `train_embeddings` (raw stage-1 embeddings) into the model. VQLayer.forward sets `current_latent` to its input `x.view(-1, self.dim)`, which for the first quantizer is the residual input in the embedding dimension, while `code_embs` have CODEBOOK_DIM=32. With the configured input embedding dimension (sentence_t5) differing from 32, subtraction at line 396 cannot broadcast. Even if the dimensions happen to match, this is not the encoder's latent `z_i` specified by the proposal: the coupled score runs before the encoder output is quantized.
+FINDING REPRODUCTION: With the configured 32-dimensional codebook and an input embedding dimension other than 32, execute one hooked first-layer forward; line 396 attempts `x[:, None, :] - y[None, :, :]` with incompatible final dimensions and raises a size mismatch. Independently, trace `model.forward(batch)` to see that the first layer receives the input embedding rather than the encoder output.
+FINDING CORRECTION: Install the hook at the actual quantizer operating on `raw_module.encoder(batch)` (and preserve residual-stage semantics), or otherwise pass the encoder latent to the score and ensure its dimension matches the code vectors. Add a real configured-shape forward/backward smoke verifying finite geometry scores and gradients to encoder/codebook parameters, plus assignment reversibility under both switches.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-75, 494-565, 733-762; model/layers.py:106-131; train_rqvae.py:683-730 | Static trace of repository-relative data/result paths, train parquet input, SID export/index enumeration, DDP launcher and GENREC_SINGLE_GPU branch. No trainer execution claimed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:494-505, 555-565
+FINDING DETAIL: In the ordinary single-process branch (including GENREC_SINGLE_GPU=1), `cogeo` and the region hook are installed, but the model receives raw input embeddings. The initial profile refresh similarly invokes the hooked assignment with raw `all_embeddings`; the score then combines those vectors with 32-dimensional code vectors and fails on nonmatching dimensions. Thus the real trainer entry path cannot reach training or SID export under the configured model unless the input dimension coincidentally equals the codebook dimension.
+FINDING REPRODUCTION: Launch the trainer in single-card mode with GENREC_SINGLE_GPU=1 and configured sentence_t5 dimension not equal to CODEBOOK_DIM; the initial refresh at lines 560-563 reaches `CoGeoAssignment.__call__` and fails at train_rqvae.py:396. The same incompatibility is encountered during hooked model forward.
+FINDING CORRECTION: Correct the coupled hook placement/input to use the encoder latent of CODEBOOK_DIM before asserting integration. Then smoke both GENREC_SINGLE_GPU=1 and torchrun/DDP entry branches, and verify the exported JSON has exactly one entry per embedding row with item-ID keys 0..N-1. Result path itself is correctly candidate-specific at lines 61-75.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:211-226,320-433; model/layers.py:106-130 | Static code-path inspection, tracing training-only history/target construction through refreshed co-consumption profiles and directed transition table, into the item/code assignment invoked by the first VQ layer. Did not execute the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The same assignment score combines projected Poincare squared geodesic distance (negative score) with co-consumption profile agreement and a bounded directed predecessor-region score. The assignment is installed on the first quantizer, whose selected index is used by residual quantization. Inputs are built from TRAIN_FILE only. No disconnected helper or side loss is being counted as coupling.
+FINDING REPRODUCTION: Inspect CoGeoAssignment.__call__: lines 391-401 compute/project the curved distance; lines 409-424 form training-signal agreement and directed score; lines 425-433 combine these in the selected-code argmax. The trainer constructs this object from train_frame at lines 505-505 and installs it at lines 551-560.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-143; train_rqvae.py:373-433,588-600; smoke_test.py:17-45 | Static forward/backward trace plus inspection of the supplied CPU smoke-test assertions (not executed). The score chooses hard indices; quantized embeddings then use the straight-through estimator and quantization loss to update encoder/codebook parameters. The Poincare projection bounds norms below the unit-ball boundary; denominator/acosh clamps avoid singular or sub-domain values in the curved calculation.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The coupled score is not expected to backpropagate through argmax, but it is not dead: it changes the hard code consumed by the quantizer and therefore can change the straight-through quantization path and its gradients. behaviour_off removes both behaviour additions while retaining Poincare distance; geometry_off substitutes negative Euclidean distance while retaining both behaviour additions. The smoke test calls all three modes on the same batch/codebook and reports movement counts. No numerical hazard is apparent in the bounded projection, clamped denominator, or clamped acosh input for finite float32 inputs.
+FINDING REPRODUCTION: Inspect train_rqvae.py:425-433 for the three switch semantics and model/layers.py:130-143 for hard-code use and straight-through gradients. smoke_test.py:33-43 calls compare_variants on a fixed batch. The supplied smoke asserts finiteness and an encoder gradient at lines 25-30; it prints variant movement counts but does not assert a nonzero movement count or equality/reversal properties. This is a test-strength limitation, not evidence of a dead computational path; trainer execution was not performed.
+FINDING CORRECTION: none required for code correctness. For a stronger regression assertion, use a deliberately non-tied fixture where each switch changes the known selected codes, then assert the expected codes for both_on, behaviour_off, and geometry_off.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-75,490-560,674-748 | Static inspection of repository-root/path resolution, frozen input paths, output/index construction, trainer entry point and launcher branches. Did not run the trainer or distributed launcher.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The root is discovered from repository markers; training reads stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet. Outputs, checkpoint, metrics, and launcher log resolve beneath results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/, the promoted arm directory. Export enumerates all embedding rows in item-id order, extends collisions, checks uniqueness, and writes integer SID rows keyed by enumerate index to item_sids.json. The module entry invokes the launcher; torchrun child, exact GENREC_SINGLE_GPU="1" single-card branch, and default four-card branch are present.
+FINDING REPRODUCTION: Inspect train_rqvae.py:42-75 for root and arm paths; 504-505 for frozen data inputs; 642-651 and 703-715 for all-item encoding and indexed SID export; 724-753 for launcher behavior, including SINGLE_GPU_ENV at 104 and branch at 728. No write path in the inspected trainer resolves to a baseline/candidate-other directory or outside the repository.
+FINDING CORRECTION: none
