@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:338-409 -> model/layers.py:345-397 -> model/layers.py:238-274 -> model/hyperbolic.py:221-245 | Inspected the training-only directed-transition profile and branch construction, the batch context and anchor calculation, and the anchor-relative curved fine quantizer. The smoke test also defines assignment comparisons with behaviour and geometry switched off at smoke_test.py:119-178; I did not run it.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check. The transition-derived branch labels select branch-specific anchors, and those anchors are used by the curved log-map, tangent-space code assignment, and exp-map residual update. The behaviour and geometry controls are wired into this path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:345-397 -> model/layers.py:399-434 -> model/hyperbolic.py:221-245 | Inspected the differentiable fine-quantization path and the smoke test’s forward/backward and switch assertions at smoke_test.py:119-178. Runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/hyperbolic.py:41,97-98,221-245
+FINDING DETAIL: The fixed 10.0 log-map norm clamp is not a scale-relative bound and can erase the gradient through the residual path. `ball_log_map` clamps tangent vectors at line 98; if an item’s anchor-to-residual log-map norm exceeds 10, the clamp’s scale becomes 10/norm, so the output norm is fixed at 10 and its radial derivative is zero. `tangent_quantize` then uses that clamped vector for the assignment/reconstruction at lines 236-245. The curvature is computed from the measured encoder-output radius at train_rqvae.py:510-514, but the clamp is not derived from that scale. The smoke test uses small toy vectors and does not exercise the large-log-norm case.
+FINDING REPRODUCTION: Call `ball_log_map` on a finite in-ball base/point pair whose unclamped tangent norm exceeds 10, then backpropagate a loss depending on the returned norm. The output norm is exactly 10 and its radial gradient is zero; in the fine quantizer this can suppress the intended encoder/residual gradient for such examples.
+FINDING CORRECTION: Replace the fixed tangent-norm cap with a finite bound derived from the measured curvature/scale and document that bound, or otherwise stabilize the log map without a hard saturation that zeroes the radial gradient. Add a forward/backward case above the current cap to the smoke test.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-79,428-505,543-552,638-717 | Inspected the repository-root and promoted candidate result-path resolution, frozen Stage 0 training parquet and Stage 1 embedding inputs, all-item SID export and JSON indexing, and launcher branches including `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The trainer reads `results/stage0_build_parquet/train.parquet`, exports rows keyed by enumerated embedding/item ID into the candidate’s promoted result directory, and the launcher returns without forking when `GENREC_SINGLE_GPU=1`; otherwise it launches four ranks. I could not execute the trainer or distributed launcher here.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

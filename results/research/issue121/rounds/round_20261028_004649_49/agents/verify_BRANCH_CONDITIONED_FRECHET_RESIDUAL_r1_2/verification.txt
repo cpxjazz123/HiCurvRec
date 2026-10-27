@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:333-384, model/layers.py:387-412, model/hyperbolic.py:221-245 | Traced `RQVAE.forward` through anchor preparation and fine quantization; inspected the smoke checks at smoke_test.py:119-178, which compare both-on, behaviour-off and geometry-off assignments.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The training-only directed transition profiles determine branch labels and sampled successor residuals determine branch Fréchet anchors; the anchors enter curved log-map/tangent-space quantization. This is one connected behaviour-and-geometry pathway, not a suffix or unrelated loss.
+FINDING REPRODUCTION: `smoke_test.py:147-154` specifies the comparisons that check whether switching either mechanism off changes fine-level assignments. Runtime execution was unavailable in this sandbox.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:387-422, model/hyperbolic.py:221-245, smoke_test.py:133-178 | Inspected the forward/straight-through loss path and the smoke checks for finite geometry, assignment changes, and nonzero gradients reaching the encoder and fine codebooks. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The fine-level contribution participates in the residual quantization loss and reconstruction path; the straight-through expression at `model/layers.py:412` preserves a gradient path to the residual, and the codebook loss at lines 410-411 supplies a codebook gradient. The curved maps include projection and bounded log-map safeguards. The smoke test also specifies behaviour-off and Euclidean controls, and checks their assignment effects.
+FINDING REPRODUCTION: The source-level gradient and switch comparisons are in `smoke_test.py:133-178`. The GPU smoke is not run here.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:117-127, train_rqvae.py:595-621 | Inspected the trainer entry point and launcher configuration, plus the required single-card environment contract. The candidate launcher does not read `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"`.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:117-127, train_rqvae.py:595-616
+FINDING DETAIL: The launcher always sets `CUDA_VISIBLE_DEVICES` to `0,1,2,3` and invokes four-process torchrun when `RANK` is absent. It has no single-card branch for `GENREC_SINGLE_GPU=1`. Consequently the configured single-card launch can ignore the exposed-card constraint or fail before training, rather than running the trainer directly. This violates the required distributed-launcher integration.
+FINDING REPRODUCTION: Set `GENREC_SINGLE_GPU=1` and invoke `train_rqvae.py` without torchrun. `_launch_via_torchrun()` does not inspect that variable and proceeds to launch four workers with `CUDA_VISIBLE_DEVICES=0,1,2,3`.
+FINDING CORRECTION: Add the single-card launcher branch that reads `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` and skips the torchrun fork when it is set, preserving the existing four-card launch otherwise.

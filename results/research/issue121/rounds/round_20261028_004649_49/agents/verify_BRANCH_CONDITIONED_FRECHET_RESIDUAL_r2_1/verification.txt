@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:333-384, model/layers.py:387-412, model/hyperbolic.py:221-245 | Traced the training call from train_rqvae.py:481 through branch-anchor construction and fine quantization. Training-only transition branches select Fréchet anchors, and the fine residual and code vectors are compared in the anchor’s tangent space.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/hyperbolic.py:243-245; model/layers.py:257,326
+FINDING DETAIL: The curved operation selects a code in the tangent space and applies the exponential map, but then converts the result into an ambient displacement (`reconstructed - anchors`) and updates the residual using ordinary subtraction (`residual - quant`). The specified curved residual update is not implemented: subtract the selected code in the anchor’s tangent space, then use the resulting exponential-map point as the residual. Thus the curved residual state passed to subsequent fine levels is not the specified geodesic update.
+FINDING REPRODUCTION: Follow `tangent_quantize` at model/hyperbolic.py:243-245: it returns `exp_a(tangent - selected)`. `fine_quantize` at model/layers.py:257 turns that point into an ambient displacement; `RQLayer.forward` at model/layers.py:326 subtracts the displacement from the original residual. This is not the specified `exp_a(log_a(residual) - selected)` residual update.
+FINDING CORRECTION: Preserve and propagate the exponential-map residual point after tangent-space code subtraction at each fine level, with the residual representation and quantization-loss/decoder interfaces made consistent with that curved update. Keep the behaviour-selected branch anchor in that same update pathway.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:305-331, model/layers.py:387-422, model/hyperbolic.py:221-245; smoke_test.py:119-178 | Inspected the real forward/backward path and the smoke test’s both-on, behaviour-off, and geometry-off comparisons. The fine-level losses are consumed, and the smoke test checks finite geometry behavior, assignment changes under both switches, and nonzero gradients to the encoder and fine codebooks. No PyTorch runtime execution was performed in this review.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-71, train_rqvae.py:338-481, train_rqvae.py:548-626; smoke_test.py:224-249 | Inspected repository-root and promoted-arm path resolution, the Stage 2 embedding and training-parquet inputs, training and export indexing, and the four-rank launcher plus its single-card branch. The source includes a four-rank smoke check, but it was not run here.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

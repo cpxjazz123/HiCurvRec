@@ -1,0 +1,28 @@
+I’ll inspect the candidate tree and its trainer/data/launcher paths, then return the three check blocks in the exact requested format. I won’t modify files; I can’t write the requested verification file under your no-write constraint, so I’ll provide the report in the response itself.
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:338-409 -> model/layers.py:320-333,343-395,397-433 -> model/hyperbolic.py:134-179,233-262 | Inspected the training-only transition-profile construction, per-batch edge context, anchor preparation, and fine-level quantization. The smoke-test code at smoke_test.py:131-190 exercises both-off comparisons: it checks that behaviour-off changes fine-level assignments, geometry-off changes fine-level assignments, and the coarse assignment stays unchanged.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The training-derived outgoing-transition branches select anchors that enter the curved log-map/tangent-quantization/residual-update path; behaviour and geometry are part of the same computation.
+FINDING REPRODUCTION: Source inspection of the cited path; runtime execution was not available in this sandbox.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:343-395,397-433 -> model/hyperbolic.py:134-179,233-262; smoke_test.py:131-190 | Inspected the differentiable residual-to-tangent and codebook path, the straight-through contribution and quantization loss, and the backward assertions for encoder and fine-codebook gradients. The smoke test also compares assignments with behaviour and geometry switched off.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 overflow/NaN hazard found by code inspection. Gradients flow through the current item residual and selected code contribution; anchors are intentionally computed without gradients from sampled training-edge successor residuals. The supplied smoke-test code asserts finite-relevant behavior indirectly through backward and nonzero gradients, but was not executed here.
+FINDING REPRODUCTION: The code-path and gradient assertions are at smoke_test.py:145-190. Runtime execution was not available in this sandbox, as stipulated.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-79,431-470,641-719; smoke_test.py:236-261 | Inspected the repository-relative frozen Stage 0 training parquet and Stage 1 embedding paths, promoted candidate result path, full-epoch trainer loop, indexed SID export, torchrun launcher, and `GENREC_SINGLE_GPU` branch. The supplied four-rank smoke check covers the launcher/model collective path when four cards are available; it was not executed here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Outputs go to `results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/`, the candidate’s promoted result directory. Export enumerates all embedding rows by item index and writes the indexed JSON mapping. The single-card launcher branch returns to `main()` when `GENREC_SINGLE_GPU=1`.
+FINDING REPRODUCTION: See the cited trainer lines for path resolution, data loading, export, and launcher behavior. Runtime execution was not available in this sandbox.
+FINDING CORRECTION: None.

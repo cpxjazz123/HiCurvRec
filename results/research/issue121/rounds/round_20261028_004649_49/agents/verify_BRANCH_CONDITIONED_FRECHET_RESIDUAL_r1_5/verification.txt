@@ -1,0 +1,29 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:252-316, train_rqvae.py:427-448, model/layers.py:333-385, model/layers.py:387-422, model/hyperbolic.py:221-245 | Traced the training-only transition counts into branch labels and sampled weighted edges, then followed the selected branch anchors into the fine-level Poincaré log-map quantizer. The code defines behaviour-off and geometry-off controls; smoke_test.py:119-178 checks that each changes fine assignments relative to both-on.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-and-curvature pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:333-385, model/layers.py:387-422, model/hyperbolic.py:82-122, model/hyperbolic.py:221-245, smoke_test.py:119-178 | Traced the differentiable fine residual and quantization-loss path through the log map, tangent-space distance, and exponential reconstruction. The anchor context is intentionally computed without gradients; the fine residual and codebook still feed the quantization loss and straight-through output. The smoke test specifies both-on versus behaviour-off/geometry-off assignment comparisons and checks gradients reaching the encoder and fine codebooks. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Code inspection found no dead coupled term or evident float32 numerical hazard that warrants a blocking finding.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-71, train_rqvae.py:335-365, train_rqvae.py:545-588, train_rqvae.py:595-621 | Traced the configured embedding and training-parquet inputs, the promoted-candidate result path, the indexed SID export, and the trainer launcher. Compared the candidate launcher with the required `GENREC_SINGLE_GPU` contract; no runtime execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:595-621
+FINDING DETAIL: The trainer has no `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` contract or single-card launch branch. `_launch_via_torchrun()` unconditionally launches four processes whenever it is not already inside torchrun. A one-card allocation therefore cannot use the required single-card entry-point path.
+FINDING REPRODUCTION: Set `GENREC_SINGLE_GPU=1` and invoke `train_rqvae.py` as the entry point. The code does not inspect that variable and still constructs a four-process torchrun command at lines 607-613 with `CUDA_VISIBLE_DEVICES="0,1,2,3"` at lines 599-601.
+FINDING CORRECTION: Add `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` and honor it in the launcher: when set, bypass the four-process relaunch and run `main()` directly as a single process, while retaining the existing torchrun path for four-card training.
+
+I could not write the requested verification file: the instruction says “You have no write permission” and “Write nowhere else,” so this report is provided here only.

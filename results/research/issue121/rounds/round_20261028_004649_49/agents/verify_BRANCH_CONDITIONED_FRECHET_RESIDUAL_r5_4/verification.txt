@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:343-395, model/layers.py:397-433, model/hyperbolic.py:134-175, model/hyperbolic.py:230-259 | Inspected the training-context construction, branch-anchor computation, and fine-level quantization call chain. `smoke_test.py:131-190` defines behavior-off and geometry-off assignment comparisons and gradient checks; I did not run it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: The inspected path connects training-only transition branches to Fréchet anchors and curved tangent-space fine quantization. No defect found in this check.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:343-395, model/layers.py:397-433, model/hyperbolic.py:82-107, model/hyperbolic.py:134-175 | Traced the forward and backward path in code and inspected the defined switch/gradient smoke checks at `smoke_test.py:131-190`. I did not run them.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:364-377; model/hyperbolic.py:134-175
+FINDING DETAIL: The anchor routine passes raw `target_residual` values to `branch_frechet_means`, which assumes its points are in the Poincaré ball. Only the initial mean is projected (`model/hyperbolic.py:166`); the input points are not. In particular, a zero anchor and a residual with norm 2 at curvature 1 produce a Möbius-addition difference with norm 2; `ball_log_map` clamps its atanh argument to `1-1e-5` and returns a finite, artificially saturated tangent rather than the logarithm of a valid ball point. The resulting anchor is not the specified Fréchet mean of valid residuals. With the trainer’s scale-derived curvature and unbounded encoder residuals, this can affect the core coupled assignment; the current toy smoke uses small inputs and does not cover this counterexample.
+FINDING REPRODUCTION: Call `branch_frechet_means` with curvature `1.0`, one point `[2.0, 0.0]`, branch id `0`, and weight `1.0`. It does not reject or project the out-of-ball input before the log/exp averaging, so its result is based on the clamped log-map behavior rather than a valid Poincaré-ball mean.
+FINDING CORRECTION: Project successor residuals into the ball before they enter `branch_frechet_means` and before subsequent residual-level anchor calculations, using the same curvature and projection policy as the quantizer. Add a smoke case with out-of-ball residuals that verifies the mean inputs are valid and the forward/backward outputs remain finite.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-79, train_rqvae.py:428-505, train_rqvae.py:543-552, train_rqvae.py:673-716 | Inspected the trainer entry point, frozen input paths, candidate-specific result path, export/indexing logic, four-card launcher, and `GENREC_SINGLE_GPU` branch. I did not run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: The trainer points to the frozen Stage 1 embedding and Stage 0 training parquet, exports rows keyed by enumerated item IDs, writes results under its own promoted candidate directory, and preserves both launcher branches. No integration defect found by code inspection.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

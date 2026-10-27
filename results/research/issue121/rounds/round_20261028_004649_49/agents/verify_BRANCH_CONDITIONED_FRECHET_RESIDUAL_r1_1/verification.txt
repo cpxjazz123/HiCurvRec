@@ -1,0 +1,29 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:333-384, model/layers.py:387-422, model/hyperbolic.py:125-166, model/hyperbolic.py:221-245 | Traced the trainer’s training-only transition counts and sampled edges into branch-conditioned Fréchet anchors, then through anchor-relative log-map quantization and exp-map reconstruction. The behavior and geometry switches feed this path; smoke_test.py:119-178 describes assignment comparisons and gradient checks, but was not run here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behavior-and-curvature pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:387-422, model/hyperbolic.py:221-245, smoke_test.py:119-178 | Inspected the differentiable quantization loss and straight-through path to the encoder and fine codebooks, along with the behavior-off and geometry-off assignment comparisons. The smoke test specifies finite assignment comparisons and nonzero gradient checks; it was not run here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Code inspection found no dead quantization term or evident float32 numerical hazard that warrants a trainability finding. Runtime execution was unavailable in this environment.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-72, train_rqvae.py:335-621 | Inspected the trainer entry point, frozen embedding and training-parquet inputs, candidate-specific result paths, indexed SID export, and torchrun launcher. The launcher has a four-card path, but no SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" contract or single-card bypass.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:595-620
+FINDING DETAIL: The entry point unconditionally launches four processes whenever it is not already under torchrun. It does not recognize GENREC_SINGLE_GPU, so the required single-card launch mode instead attempts to start the four-card job and can fail or hang when only one card is allocated.
+FINDING REPRODUCTION: Set GENREC_SINGLE_GPU=1 and invoke train_rqvae.py outside torchrun with one GPU allocated. The entry point still calls _launch_via_torchrun(), whose command specifies --nproc_per_node=4 at lines 607-613.
+FINDING CORRECTION: Define SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" and make _launch_via_torchrun bypass torchrun when that environment variable requests single-GPU mode, allowing main() to run as one local process.
+
+The requested absolute-path report file was not written: this environment’s available file tools do not provide a write-permission guarantee, and the instruction also says to print the answer in the response and write nowhere else.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:338-409 → model/layers.py:343-395,405-420 → model/hyperbolic.py:134-178,233-262 | Traced the trainer’s training-only adjacent-transition counts and branch assignments into sampled edge context, branch-conditioned Fréchet anchors, and the fine-level tangent-space quantizer. The branch selects the anchor used by the log-map, code assignment and exp-map residual update. The behaviour-off and geometry-off controls are wired into that pathway at model/layers.py:355-377 and model/layers.py:416-420.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Code inspection; no runtime execution.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/layers.py:405-433 → model/hyperbolic.py:233-262 | Inspected the fine-level loss and gradient path: assignments use squared tangent-space distances; the selected tangent code is mapped back with the exp-map; the straight-through quantized value and quantization loss connect to the encoder and fine codebooks. The supplied smoke test specifies forward/backward and assignment comparisons with behaviour or geometry switched off at smoke_test.py:131-190. Runtime proof was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident numerical hazard found in the inspected coupled path. The log-map uses bounded inputs and finite safeguards; the exp-map and Fréchet update include ball projection.
+FINDING REPRODUCTION: Code inspection; runtime unavailable in this review.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:70-79,431-461,505-555,641-684,691-720 | Traced the real entry point’s frozen embedding and training-parquet paths, fixed 3000-epoch configuration, promoted candidate result directory, item-indexed SID JSON export, and launcher. The single-card branch checks `GENREC_SINGLE_GPU` at lines 117-119 and 691-697; the four-rank torchrun path is at lines 698-715. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Outputs resolve to the candidate’s own `results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/` directory, and the JSON export enumerates every item ID from its row index.
+FINDING REPRODUCTION: Code inspection; runtime unavailable in this review.
+FINDING CORRECTION: none

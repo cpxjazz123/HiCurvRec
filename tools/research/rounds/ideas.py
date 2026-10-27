@@ -24,6 +24,11 @@ REQUIRED_FIELDS = (
 MAX_IDEA_ID_LEN = 64
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 
+#: The structural maximum of one round: five ideation agents, three ideas each.
+#: A cap below that would kill a round precisely when the agents are productive,
+#: so the bound is the structure, not a round-specific number.
+MAX_IDEAS_PER_ROUND = 15
+
 
 class IdeaError(ValueError):
     """An idea cannot be made minimally specified."""
@@ -92,6 +97,7 @@ def collect_ideas(per_agent: Iterable[dict]) -> list:
     order: list = []
     duplicates: list = []
     collected_rejections: list = []
+    used_ids: dict = {}
     for agent, payload in per_agent:
         ideas = payload.get("ideas") if isinstance(payload, dict) else payload
         if not isinstance(ideas, list) or not ideas:
@@ -107,6 +113,20 @@ def collect_ideas(per_agent: Iterable[dict]) -> list:
                 rejected.append({"idea_id": str(raw.get("idea_id", "")) if isinstance(raw, dict) else "",
                                  "origin_agent": str(agent), "reason": str(exc)})
                 continue
+            # An identifier has to name one mechanism inside the round: two
+            # agents that pick the same name would otherwise make the scorer's
+            # two legitimate judgements look like a broken rubric.
+            original_id = idea["idea_id"]
+            if original_id in used_ids:
+                suffix = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(agent))
+                renamed = original_id + "__" + suffix
+                while renamed in used_ids:
+                    renamed = renamed + "_x"
+                idea["idea_id"] = renamed
+                idea["renamed_from"] = original_id
+                used_ids[renamed] = True
+            else:
+                used_ids[original_id] = True
             fingerprint = idea_fingerprint(idea)
             if fingerprint in canonical:
                 canonical[fingerprint]["also_proposed_by"].append(idea["origin_agent"])
@@ -123,8 +143,9 @@ def collect_ideas(per_agent: Iterable[dict]) -> list:
     merged = [canonical[key] for key in order]
     if len(merged) < 3:
         raise IdeaError("a round needs at least three distinct ideas, got " + str(len(merged)))
-    if len(merged) > 9:
-        raise IdeaError("a round may not hold more than nine ideas, got " + str(len(merged)))
+    if len(merged) > MAX_IDEAS_PER_ROUND:
+        raise IdeaError("a round may not hold more than " + str(MAX_IDEAS_PER_ROUND) +
+                        " ideas, got " + str(len(merged)))
     for idea in merged:
         idea["duplicate_count"] = len(idea["also_proposed_by"])
     if collected_rejections:

@@ -1,0 +1,29 @@
+I’ll inspect the candidate tree and its launcher/trainer wiring, then report the three checks in the requested plain-text format. I won’t modify files; I can’t write the requested report path because you specified no write permission, so I’ll return its exact contents here.
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:320-335, model/layers.py:337-389, model/layers.py:391-426, model/hyperbolic.py:125-166, model/hyperbolic.py:221-245 | Traced the RQLayer fine-level forward path: training-edge successor residuals are grouped by source-item branch and used to compute branch anchors with curved Fréchet averaging; those anchors then enter the fine quantizer’s log-map/tangent-code/exp-map computation. The switches are wired into anchor construction and quantization. The candidate smoke test specifies branch/geometry assignment comparisons at smoke_test.py:119-178; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:337-389, model/layers.py:391-426, model/hyperbolic.py:221-245, smoke_test.py:119-178 | Inspected the forward/backward path and the authored smoke assertions. The fine quantizer’s straight-through output and quantization loss provide a differentiable path to the encoder and fine codebooks; the smoke test defines both switch comparisons and gradient checks. I could not execute the trainer or smoke test in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:254-261, model/layers.py:326-335
+FINDING DETAIL: The curved fine-level update does not implement the specified residual update. `tangent_quantize` returns `exp_a(log_a(r) - code)` (the residual after subtracting the selected code in the tangent space), but `fine_quantize` returns that point as `contribution`, and the residual stack then calculates `residual = residual - quant`. Thus it subtracts the reconstructed residual point from the original residual instead of using that point as the new residual. This also makes the accumulated reconstruction inconsistent with the stated curved residual quantization mechanism. The same subtraction is used while preparing the next-level anchors at model/layers.py:374-378.
+FINDING REPRODUCTION: For any fine-level input residual `r`, anchor `a`, and selected tangent code `c`, the intended next residual is `exp_a(log_a(r) - c)`. The current stack instead sets it to `r - exp_a(log_a(r) - c)`. A minimal counterexample is `c=0`: the curved residual should remain `r`, while the current update produces `r - r = 0`. Consequently a zero selected code still erases the residual, altering later levels and gradients.
+FINDING CORRECTION: Separate the curved residual-state update from the quantized contribution accumulated for reconstruction. Carry `exp_a(log_a(r) - c)` as the next residual at fine levels (and use the same rule for successor residuals when computing subsequent anchors); do not feed that reconstructed residual through the generic `residual - quant` update. Define the reconstruction contribution consistently with the chosen curved residual decomposition.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:41-73, train_rqvae.py:422-453, train_rqvae.py:537-546, train_rqvae.py:632-679, train_rqvae.py:682-711, smoke_test.py:224-249, train_rqvae.py:111-113 | Inspected the real trainer’s input, output, indexing, and launch paths, including the `GENREC_SINGLE_GPU` branch. The candidate smoke test defines a four-rank check, but neither it nor the trainer could be run here.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:63-65
+FINDING DETAIL: The trainer writes SIDs under `results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/`, not under the promoted candidate tree name `results/stage2_RQ-VAE/BRANCH_CONDITIONED_FRECHET_RESIDUAL/`. Per the stated integration contract, Stage 3 and admission read the promoted tree’s result directory; the current arm name points elsewhere.
+FINDING REPRODUCTION: Evaluate `RESULT_DIR` at train_rqvae.py:65: it is constructed from `ARM_NAME = "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL"` at line 64. `OUTPUT_SID` and `OUTPUT_JSON` are then placed inside that directory at lines 69-70, and the final export writes them there at lines 670-673.
+FINDING CORRECTION: Set `ARM_NAME` to the exact promoted tree name `BRANCH_CONDITIONED_FRECHET_RESIDUAL`, so checkpoint and SID outputs resolve to the candidate’s required result directory.

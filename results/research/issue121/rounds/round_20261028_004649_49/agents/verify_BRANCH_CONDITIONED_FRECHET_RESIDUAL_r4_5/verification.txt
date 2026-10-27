@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:338-409` → `train_rqvae.py:520-541` → `model/layers.py:345-397` → `model/layers.py:238-275` | Traced the training-only directed-transition profiles and branches into sampled-edge Fréchet anchors, then into the anchor-relative Poincaré tangent quantizer. The switch checks are in `smoke_test.py:119-156`; runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The branch label selects the anchor used by curved residual quantization; the behaviour-off and geometry-off switches replace those parts of the same pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `model/layers.py:399-434` → `model/layers.py:238-275` → `model/hyperbolic.py:82-112,221-245` | Inspected the forward path, straight-through quantization loss, and backward connections to residuals and codebooks. `smoke_test.py:119-178` checks that both switches change fine-level assignments and that gradients reach the encoder and fine codebooks; `smoke_test.py:35-83` checks geometric maps and Fréchet means. Runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 numerical hazard found in the coupled path. Anchor construction is intentionally under `no_grad`; the quantization loss still connects the residual and fine codebook through the selected contribution and straight-through estimator.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:41-79,428-541,543-552,638-685,688-717` | Traced repository and promoted-candidate result paths, Stage 1 embeddings and Stage 0 training parquet inputs, training/export flow, item-indexed SID JSON creation, and both torchrun and `GENREC_SINGLE_GPU` launch branches. The smoke suite’s integration checks are at `smoke_test.py:193-249`; runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The trainer writes outputs under its own promoted result directory, exports one row per embedding item with string item-ID keys, and retains the required single-card launcher branch.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

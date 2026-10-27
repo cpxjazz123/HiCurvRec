@@ -1,0 +1,28 @@
+I’ll inspect the candidate tree and compare its data, training, export, and launcher paths. I won’t modify files; I’ll return the requested plain-text report here.
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:255-319 → model/layers.py:333-385 → model/layers.py:387-409 → model/hyperbolic.py:221-245 | Traced training-derived transition counts through branch assignment, anchor construction and fine-level Poincaré log/exp quantization. This is one connected behavior-and-geometry pathway.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:284-307
+FINDING DETAIL: The branch profile does not represent the item’s outgoing-transition distribution over successor items. It sorts each source’s edge counts and stores the top counts by rank in columns 0…top-k−1, discarding the corresponding destination IDs. For example, transitions A→X with count 5 and B→Y with count 5 produce identical profiles, just as A→X and A→Y with the same count do. K-means therefore clusters count-rank patterns, not the specified sparse outgoing-transition distributions; the branch labels selecting the hyperbolic anchors are not faithful to the stated behavior signal.
+FINDING REPRODUCTION: Give two sources equal sorted outgoing edge counts but disjoint destination IDs. The code writes identical profile rows at lines 295-301, so their cosine similarity is 1 and their branch assignments cannot distinguish their successor identities on profile grounds.
+FINDING CORRECTION: Build q_i with successor item IDs as sparse coordinates, retain the top-k (destination, count) pairs, normalize those values, and cluster those destination-aware sparse vectors with deterministic spherical k-means.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:305-331, model/layers.py:333-422, model/hyperbolic.py:125-166 and 221-245 | Inspected the forward path from branch anchors through tangent-space quantization and straight-through losses, and the backward path through quantization loss to the encoder and codebooks. The smoke test defines switch comparisons and gradient checks at smoke_test.py:119-178; runtime execution is unavailable in this environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 overflow/NaN hazard found in the inspected path. The anchors are batch-derived from sampled training-edge successors, and the selected anchor and curved residual operation feed the fine quantizer. The code includes behavior-off and geometry-off controls. This is a source-level assessment, not a claim that the smoke test was executed.
+FINDING REPRODUCTION: Not applicable; no defect found.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-72, 338-415, 453-462, 548-626 | Inspected the trainer’s repository-relative input paths, Stage 0 training-parquet read, item-row indexing for export, candidate-specific output paths, SID extension/JSON export, and launcher branches including `GENREC_SINGLE_GPU` at lines 598-626. Runtime execution is unavailable in this environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The configured paths use the frozen embedding and training-parquet locations; outputs resolve beneath this candidate’s named Stage 2 result directory, rather than the baseline or another candidate’s directory. Export enumerates embedding rows as item IDs and writes matching integer-keyed JSON entries. The single-card branch is present and bypasses torchrun when `GENREC_SINGLE_GPU` is `"1"`; the four-card launcher remains configured for four ranks.
+FINDING REPRODUCTION: Not applicable; no defect found.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:520-541 → model/layers.py:345-397,399-424 → model/hyperbolic.py:125-166,221-245 | Traced the trainer’s training-only transition context into branch-specific Fréchet anchors and the fine quantizer. The fine quantizer uses anchor-relative Poincaré log/exp maps; its behavior and geometry switches alter the same anchor-and-assignment computation. `smoke_test.py:119-178` describes checks for both switches changing fine-level assignments, though I did not run it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:312-343,399-434 → model/hyperbolic.py:221-245 | Inspected the real RQ stack and curved fine-quantization path, including its residual update and straight-through gradient construction. No runtime was run.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:329-343
+FINDING DETAIL: The fine-level result is the *next residual*, not the quantized contribution. `fine_quantize` returns the exponential-mapped residual after subtracting the selected tangent code (`model/hyperbolic.py:243-245`), but `_fine_forward` passes that result through as `quant` (`model/layers.py:418-424`), then the stack both adds it to `quantized_x` and sets it as the next `residual` (`model/layers.py:335-340`). This does not accumulate the selected fine code’s contribution or perform a residual subtraction as the RQ stack requires; subsequent fine assignments and the reconstructed output therefore do not represent the specified residual quantization. The issue affects the core training computation, not just a diagnostic.
+FINDING REPRODUCTION: Trace any call with `fine_context`: at a fine level, let `residual` be the input and `contribution` the value returned by `fine_quantize`. The code sets `residual = residual + (contribution - residual).detach()` and adds that same straight-through value to `quantized_x`; it never accumulates a quantized contribution derived from the before/after residuals. Thus the fine output is not the baseline-style sum of quantized contributions.
+FINDING CORRECTION: Keep the next residual and the quantized contribution distinct. Update the residual according to the curved residual rule, and accumulate the corresponding selected-code contribution for reconstruction; ensure the straight-through estimator and quantization loss apply to that contribution without replacing the residual-stack semantics.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:43-79,428-459,543-552,638-685,688-717 | Inspected repository-root and result-path resolution, the frozen Stage 0 parquet and Stage 1 embedding inputs, training/export item indexing, final SID JSON construction, and both four-card launcher and `GENREC_SINGLE_GPU` branches. The candidate writes to its own promoted `results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/` result directory. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

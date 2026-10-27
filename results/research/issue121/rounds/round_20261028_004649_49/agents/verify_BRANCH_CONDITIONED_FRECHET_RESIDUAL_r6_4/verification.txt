@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:338-409 → model/layers.py:343-395 → model/layers.py:238-271 → model/hyperbolic.py:134-178,233-262 | Inspected the training-derived transition-profile and edge construction, then followed the branch labels and weighted successor residuals into the Fréchet anchors and anchor-relative curved quantizer. The path feeds those quantized reconstructions into subsequent residual levels. The behavior-off and geometry-off switches are wired into this path at model/layers.py:356-377 and model/layers.py:416-419.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Outgoing-transition profiles are constructed from the training frame, and the source item’s branch selects a curvature-dependent Fréchet anchor used directly by the fine-level assignment and residual update.
+FINDING REPRODUCTION: Code inspection of the cited path; no trainer runtime was run.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:309-341,343-395,397-433 → model/hyperbolic.py:82-121,134-178,233-262 | Inspected the forward path through anchor calculation, log/exp maps, assignment, reconstruction, and quantization loss. The fine-level loss uses the selected contribution and residual with straight-through quantization at model/layers.py:420-423; code vectors are obtained from trainable VQ-layer parameters at model/layers.py:252-256 and 413-419. The smoke test defines behavior-off and geometry-off comparisons at smoke_test.py:134-166 and checks the real backward path at smoke_test.py:174 onward.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 overflow/NaN hazard found by inspection. The geometry operations include projection, denominator floors, bounded log-map norms, and finite-update fallback. The configured smoke checks exercise switch-dependent assignments and gradients in code; no PyTorch runtime was available here, so those checks were inspected rather than executed.
+FINDING REPRODUCTION: Inspect smoke_test.py:134-190 and the cited forward/backward path. Runtime execution was not performed.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-79,338-417,431-469,684-701 | Inspected root and output-path resolution, training-data loading, branch/edge construction and sampling, final SID export, and the launcher’s single-card branch. The trainer reads results/stage0_build_parquet/train.parquet at train_rqvae.py:73-76, and writes to its promoted candidate directory under results/stage2_RQ-VAE at lines 70-79. The single-card environment variable is GENREC_SINGLE_GPU at lines 117-119 and is checked at lines 695-701. SID export is at lines 684 onward.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The output directory is the candidate’s own promoted result directory, and the inspected trainer path contains the single-card launcher branch. The sandbox limitation means the trainer and distributed launcher were not run.
+FINDING REPRODUCTION: Inspect the cited trainer entry point and export path; runtime execution was not performed.
+FINDING CORRECTION: Not applicable.

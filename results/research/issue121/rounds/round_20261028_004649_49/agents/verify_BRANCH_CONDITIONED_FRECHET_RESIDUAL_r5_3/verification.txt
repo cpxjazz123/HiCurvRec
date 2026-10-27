@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:343-395, model/layers.py:397-433, model/hyperbolic.py:230-259 | Traced the training-only transition counts and branch labels from train_rqvae.py:338-409 into anchor construction and fine-level tangent quantization. The branch-selected Fréchet anchors and Poincaré log/exp operations jointly determine fine-level assignments and residual updates. The smoke test defines behavior-off and geometry-off comparisons at smoke_test.py:159-168.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:343-395, model/layers.py:397-433, model/hyperbolic.py:82-107, model/hyperbolic.py:134-175 | Traced the fine-level residual through branch-anchor construction, log-map quantization, the straight-through output and quantization loss. The smoke test specifies assignment-switch and gradient checks at smoke_test.py:131-190; runtime execution was not performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:365-367; model/hyperbolic.py:134-175
+FINDING DETAIL: The residuals passed as Fréchet-mean points are not projected into the Poincaré ball. `target_residual` is the unconstrained encoder output minus the Euclidean coarse code, then `branch_frechet_means` sends those points directly to `ball_log_map`. The map’s Möbius addition and atanh formula require points inside the ball; clamping the atanh argument does not make an out-of-ball point a valid geometric input. Thus anchors can be computed from invalid geometric points, and the branch-conditioned curved pathway is not numerically/geometrically sound for unconstrained residuals.
+FINDING REPRODUCTION: Use curvature `c=1` and a branch residual point with norm `2` (for example, `points=[[2,0]]`), with an in-ball anchor at zero, and call `branch_frechet_means(points, [0], [1], 1, c)`. The input lies outside the unit ball but is passed unprojected to `ball_log_map`; its result is clipped by the atanh safeguard rather than representing the valid log map of a point in the ball. The trainer produces such residuals without any projection at train_rqvae.py:527-528 and model/layers.py:365-367.
+FINDING CORRECTION: Project each residual point into the ball before it enters Fréchet averaging (including successor residuals at every fine level), and ensure the same valid representation is used for anchor construction and quantization. Add a test that exercises out-of-ball encoder residuals and verifies finite, valid in-ball inputs and gradients through the intended residual path.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-80, train_rqvae.py:428-505, train_rqvae.py:543-552, train_rqvae.py:638-716 | Statically traced repository-root and candidate result-path resolution, the frozen embedding and training-parquet inputs, all-item ID-indexed SID export, output paths, and the launcher’s `GENREC_SINGLE_GPU` branch. Four-card launch configuration and the single-card bypass are at train_rqvae.py:127-137 and train_rqvae.py:688-717.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Runtime execution was not performed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

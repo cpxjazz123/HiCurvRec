@@ -1,0 +1,31 @@
+I’ll inspect the candidate implementation and compare it with the frozen trainer/data/export conventions. I’ll only report reproducible correctness defects, and I won’t modify any files.
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/layers.py:343-395, :397-420; results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/hyperbolic.py:134-175, :230-259 | Inspected the trainer’s fine-context construction and the quantizer/anchor path. Training-only outgoing-transition branches select which successor residuals are grouped for branch Fréchet anchors; those anchors enter the fine-level log-map, tangent-space assignment, and exp-map residual reconstruction. The code also has behaviour-off and geometry-off paths. I did not run the trainer.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/layers.py:397-433; results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/hyperbolic.py:82-121, :230-259; results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/smoke_test.py:131-190 | Inspected the differentiable fine-level quantization and straight-through loss path, plus the smoke test that compares both-on, behaviour-off, and geometry-off assignments and checks gradients reach the encoder and fine codebooks. The maps include projection and bounded log-map safeguards. Runtime execution was not performed.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:412-425, :520-541, :543-551, :688-717 | Traced training-edge sampling into the trainer’s context builder and export path. The single-card launcher branch checks SINGLE_GPU_ENV (`GENREC_SINGLE_GPU`) at lines 117-119 and 688-694. No trainer execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:423-425, :523-525
+FINDING DETAIL: Items with no outgoing training edge are marked invalid, but the sampler still returns `starts` as their edge index. For a trailing edge-less item, `starts` equals the edge count, which is outside the valid index range. The context builder then indexes `edge_target_t` with that index before using the validity mask (which is discarded), causing an out-of-range failure. This can occur in export because it processes every item ID, not only items with outgoing edges.
+FINDING REPRODUCTION: Use an edge table with one edge and `item_edge_start = [0, 1, 1]`, then sample item ID `1`. `sample_training_edges` returns index `1` and `valid=False`; indexing an `edge_target_t` of length one at that index raises an out-of-range error. The same invalid sample can arise in `build_context` during `export_tokens`.
+FINDING CORRECTION: Preserve the validity mask and filter invalid samples before indexing/gathering edge targets, or return a safe in-range dummy edge index for edge-less items and ensure those samples have zero weight and do not contribute to anchor computation.

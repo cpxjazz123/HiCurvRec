@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/layers.py:333-422 | Traced training-edge targets through branch-conditioned Fréchet anchors and Poincaré tangent-space fine quantization; smoke_test.py:119-178 contains behavior-off and geometry-off assignment comparisons and gradient checks. Runtime execution was unavailable.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The training-only transition branches select anchors used by the curved fine quantizer in one connected path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/layers.py:387-422 | Inspected the fine-level assignment, straight-through output, and quantization loss path; smoke_test.py:133-178 specifies finite-gradient and switch-change checks. Runtime execution was unavailable.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 numerical hazard found on the coupled path. The code and smoke assertions provide a differentiable path to the encoder and fine codebooks and compare both-on against behavior-off and geometry-off assignments; actual execution was not performed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:595-621 | Traced the trainer entry point, frozen embedding and training-parquet inputs, candidate-specific result paths, indexed SID export, and launcher branch. Compared the launch contract with the required GENREC_SINGLE_GPU environment variable; runtime execution was unavailable.
+FINDING SEVERITY: blocking
+FINDING LOCATION: BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:595-621
+FINDING DETAIL: The trainer has no `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` contract or single-card bypass. When `GENREC_SINGLE_GPU=1` is set without `RANK`, the entry point still calls `_launch_via_torchrun()`, which unconditionally launches four ranks with devices `0,1,2,3`. This breaks the required single-card launcher path.
+FINDING REPRODUCTION: Set `GENREC_SINGLE_GPU=1` and run `python train_rqvae.py` with one visible GPU. The entry point still invokes torchrun with `--nproc_per_node=4` and forces `CUDA_VISIBLE_DEVICES=0,1,2,3` at lines 599-612.
+FINDING CORRECTION: Define `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` and make the launcher bypass the four-rank fork when it is set to `"1"`, then run `main()` in the single-process branch.

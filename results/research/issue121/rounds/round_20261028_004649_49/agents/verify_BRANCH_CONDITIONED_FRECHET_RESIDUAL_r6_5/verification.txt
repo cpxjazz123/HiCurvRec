@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:338-409, model/layers.py:343-395, model/layers.py:397-420, model/hyperbolic.py:134-178, model/hyperbolic.py:233-262 | Traced the training-only adjacent-transition counts into sparse outgoing profiles and branch labels, then traced sampled training edges to successor residuals, branch Fréchet anchors, and anchor-relative fine-level quantization. The smoke test defines checks for branch/geometry switch effects at smoke_test.py:131-190; runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/layers.py:343-395, model/layers.py:238-271, model/layers.py:397-433, smoke_test.py:131-190 | Inspected the differentiable residual-to-tangent quantization and straight-through loss path, along with the finite guards in hyperbolic.py:44-131 and the switch assertions in the smoke test. The smoke test checks encoder and fine-codebook gradients and assignment changes for behaviour-off and geometry-off; no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or clear numerical hazard found by code inspection. Runtime smoke was not run.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:41-79, train_rqvae.py:431-555, train_rqvae.py:641-719, smoke_test.py:236-261, ddp_check.py:49-105 | Inspected the real trainer entry point, frozen training embedding/parquet paths, per-item SID export and JSON indexing, output-directory construction, four-rank launcher, and GENREC_SINGLE_GPU branch. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The candidate writes to its own promoted result directory, uses the expected Stage 1 and Stage 0 inputs, and exports rows keyed by item ID.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

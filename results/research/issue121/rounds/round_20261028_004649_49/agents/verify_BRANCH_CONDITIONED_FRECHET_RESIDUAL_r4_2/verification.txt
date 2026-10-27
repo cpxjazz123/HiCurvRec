@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:345-397, model/layers.py:399-434, model/hyperbolic.py:125-166, model/hyperbolic.py:221-245 | Inspected the training-context construction and fine-level quantization path. Training-only transitions are counted in train_rqvae.py:338-409; their source branches and weighted successor residuals build branch anchors, which are used by the curved tangent quantizer.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Both training-derived behaviour and Poincaré log/exp operations participate in the fine-level assignment and residual update.
+FINDING REPRODUCTION: The code path passes branch labels and sampled training edges into _prepare_anchors; fine_quantize then maps residuals and code vectors relative to the selected anchors. The smoke test also compares behaviour-off and geometry-off assignments at smoke_test.py:147-156.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:312-343, model/layers.py:399-434, model/hyperbolic.py:221-245, smoke_test.py:119-178 | Inspected the forward, straight-through quantization loss, and backward path, including the candidate’s explicit switch and gradient checks. Runtime execution was not performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 overflow/NaN hazard found. The fine-level loss has a straight-through path to the residual encoder and a codebook loss path; smoke_test.py checks nonzero encoder and fine-codebook gradients, and checks that both switches change fine assignments.
+FINDING REPRODUCTION: The code-defined reproduction is check_switches_and_gradient at smoke_test.py:119-178. No trainer or smoke test was executed in this review.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-79, train_rqvae.py:428-541, train_rqvae.py:543-552, train_rqvae.py:638-716, smoke_test.py:224-249 | Inspected the trainer entry point, frozen input paths and epoch count, output paths and indexed SID export, and both launcher branches. Runtime execution was not performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Inputs resolve to the repository’s Stage 1 embeddings and Stage 0 training parquet; outputs resolve to this candidate’s promoted Stage 2 directory. SID rows are emitted by item index, and JSON keys enumerate those same row indices. The launcher preserves the four-card torchrun path and returns directly for GENREC_SINGLE_GPU=1.
+FINDING REPRODUCTION: Inspect the constants and path discovery at train_rqvae.py:41-79, data loading at train_rqvae.py:441-445, SID export at train_rqvae.py:673-680, and launcher at train_rqvae.py:688-717. The four-rank smoke is defined at smoke_test.py:224-249 but was not run.
+FINDING CORRECTION: none

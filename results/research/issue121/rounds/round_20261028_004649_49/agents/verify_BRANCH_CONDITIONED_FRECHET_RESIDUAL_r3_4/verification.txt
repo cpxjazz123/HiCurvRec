@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:320-335, 337-389, 391-426; model/hyperbolic.py:125-166, 221-245 | Inspected the fine-level training path: training-edge successor residuals form branch-conditioned Fréchet anchors, and the fine quantizer uses anchor-relative log maps, tangent-space code assignment and exp maps. The switches select the global-anchor and Euclidean controls; smoke_test.py:119-178 specifies assignment comparisons for both controls.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No finding.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:337-426; model/hyperbolic.py:82-112, 221-245; smoke_test.py:119-178 | Inspected the forward/backward path and its smoke-test checks. Fine-level assignments use the curved branch anchors; the straight-through output and quantization loss provide gradient paths to the encoder and fine codebooks. The smoke test checks finite geometry round trips, changed assignments under behaviour/geometry controls, and nonzero encoder and fine-codebook gradients. Runtime execution is unavailable in this sandbox, as specified.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No finding.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:62-73, 422-443, 537-546, 632-675, 682-711 | Inspected trainer constants, frozen input paths, export/indexing, result/log destinations and launcher branches. Runtime execution was not available. `GENREC_SINGLE_GPU` is read at lines 113 and 686-688; the four-rank torchrun path is at lines 697-706.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:64-70
+FINDING DETAIL: The candidate’s `RESULT_DIR` and exported SID files resolve under `results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/`, not the required promoted-tree directory `results/stage2_RQ-VAE/BRANCH_CONDITIONED_FRECHET_RESIDUAL/`. Stage 3/admission therefore will not read this candidate’s export at the required location; the current name risks writing to a different arm’s directory.
+FINDING REPRODUCTION: Resolve `RESULT_DIR` from the configured constants at lines 64-70: its final path component is `TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL`, while the promoted tree name supplied for this review is `BRANCH_CONDITIONED_FRECHET_RESIDUAL`.
+FINDING CORRECTION: Set `ARM_NAME` to the promoted tree name so checkpoint, `.npy`, and JSON SID exports land in that candidate’s required `results/stage2_RQ-VAE/<promoted tree name>/` directory.

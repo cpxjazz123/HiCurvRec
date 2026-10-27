@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:255-319 -> results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/layers.py:333-385 -> results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/hyperbolic.py:125-166 | Traced how training transitions build branch profiles and how sampled successor residuals enter branch Fréchet anchors used by fine quantization. The coupled curved path itself is present.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:284-303
+FINDING DETAIL: The claimed branch signal is not an outgoing-transition distribution over successor items. The code retains the top transition counts but writes their values into the first slots of a fixed-width vector, discarding each destination item ID. Thus profiles for items with the same sorted counts but different successors become identical, and clustering cannot distinguish their transition destinations as the proposal specifies. The later anchor computation uses edges, but its source branch labels were formed from this lossy, non-destination-aware profile.
+FINDING REPRODUCTION: Consider two source items with one training edge each, to distinct destinations, both with count 1. Both receive the identical profile `[1, 0, ...]` at lines 293-303 and therefore the same profile-based clustering input, although their outgoing-transition distributions differ.
+FINDING CORRECTION: Construct each q_i with destination identity retained (for example, a sparse vector keyed by destination item ID, with transition counts normalized as specified), then cluster those vectors deterministically and derive branch labels from them.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/layers.py:305-331,333-422; results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/model/hyperbolic.py:82-112,125-166,221-245; results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/smoke_test.py:119-178 | Inspected the forward path, gradient-bearing fine quantization and loss, and the smoke test’s both-on, behaviour-off and geometry-off comparisons. The smoke test is code evidence, not a runtime execution here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection: anchors are intentionally computed without gradients, while the fine residual and selected code contribution feed the quantization loss and straight-through output. The smoke test checks fine-level assignment changes under both switches and nonzero gradients to encoder and fine codebooks. This sandbox does not provide runtime execution, as noted in the instructions.
+FINDING REPRODUCTION: Not applicable; no defect identified.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_004649_49/BRANCH_CONDITIONED_FRECHET_RESIDUAL/train_rqvae.py:40-72,338-377,548-590,598-627 | Inspected the entry-point launcher and training/data/export path: it reads the Stage 1 embedding and Stage 0 training parquet, routes outputs to the promoted candidate’s Stage 2 result directory, exports item rows by enumerated embedding index, and honors `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The candidate-specific `ARM_NAME` determines the Stage 2 result path; the frozen training inputs are used; export checks uniqueness after extension and writes JSON keys from item-row indices; and the launcher retains both the four-card torchrun path and the named single-card branch. Trainer execution and distributed runtime were not run here.
+FINDING REPRODUCTION: Not applicable; no defect identified.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:338-409 → model/layers.py:343-395,397-433 → model/hyperbolic.py:134-178,233-262 | Traced training-only adjacent transitions into branch labels and sampled, count-weighted edges; those edges produce branch-specific Fréchet anchors, which are used in the fine-level curved quantization and residual update. The behavior and geometry switches are wired into this path at model/layers.py:368-377,397-419. The supplied smoke checks exercise the switches and assignment changes at smoke_test.py:131-190; I inspected these checks but did not run them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:397-433 → model/hyperbolic.py:233-262 | Inspected the fine-level forward path, its quantization loss, and the smoke test’s backward assertions at smoke_test.py:145-190. The test checks that both switches alter fine assignments and that gradients reach the encoder and fine codebooks. This is a code review; I did not run the test or trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 numerical hazard found in the inspected path. The supplied checks cover assignment changes under both-off-control comparisons and gradient reachability.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-79,431-476,641-719 | Inspected the real trainer entry point, frozen Stage 0 embedding and training-parquet paths, promoted candidate result path, SID export, and launcher branches. The single-card branch checks SINGLE_GPU_ENV at train_rqvae.py:117-119,691-697; the four-card torchrun branch is at train_rqvae.py:698-715. The SID JSON keys are enumerated from embedding row IDs at train_rqvae.py:676-682. I did not run the trainer or launcher.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The output resolves to this candidate’s promoted result directory, uses the frozen training data paths, and exports item-indexed SIDs.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

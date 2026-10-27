@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:345-397, model/layers.py:399-424, model/hyperbolic.py:125-166 and model/hyperbolic.py:221-245 | Traced the trainer’s `build_context` into RQLayer anchor preparation and fine quantization. `build_context` supplies training-derived branch IDs and sampled training edges (`train_rqvae.py:520-541`); those select successor-residual Fréchet anchors, which feed the curved log-map/tangent-code/exp-map path. `smoke_test.py:119-156` specifies both behaviour-off and geometry-off comparisons, but I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:399-434 and model/hyperbolic.py:221-245 | Inspected the differentiable fine-level path and its quantization loss: the residual goes through the log map and selected-code reconstruction, and the loss connects the contribution to both the residual and codebook. The smoke test contains finite-geometry, assignment-switch, and gradient assertions at `smoke_test.py:119-178`; runtime execution was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term, non-finite operation, or disconnected intended parameter was identified. The requested switches are wired into anchor construction and geometry quantization; the smoke test checks assignment changes under each switch. This is source inspection, not runtime proof.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-80, train_rqvae.py:428-458, train_rqvae.py:638-685 and train_rqvae.py:688-717 | Inspected the real trainer entry point, frozen embedding and training-parquet paths, candidate-specific result paths, indexed SID export, and launcher branches. The single-card path explicitly checks `GENREC_SINGLE_GPU` at `train_rqvae.py:692-694`; the four-rank launcher is configured at `train_rqvae.py:127-137` and invoked at `train_rqvae.py:695-712`. I did not run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Outputs resolve to this candidate’s promoted Stage 2 directory, and the export enumerates item IDs in row order before writing matching JSON keys.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

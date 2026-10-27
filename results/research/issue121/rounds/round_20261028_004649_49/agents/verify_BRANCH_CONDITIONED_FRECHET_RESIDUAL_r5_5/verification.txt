@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:343-395, model/layers.py:397-433, model/hyperbolic.py:134-175, model/hyperbolic.py:230-259 | Inspected the training-data transition/profile and branch construction at train_rqvae.py:338-409, then traced those branch labels and sampled edge weights into branch Fréchet anchors and the fine-level curved quantizer. The smoke test defines switch and assignment checks at smoke_test.py:131-168, but I could not execute it in this environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found. The training-only outgoing-transition profiles determine branch labels; those labels and sampled training edges determine anchors; the curved log-map residual and tangent-space code assignment use those anchors in the same fine-quantization pathway.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:320-341, model/layers.py:397-433, model/hyperbolic.py:230-259, smoke_test.py:131-190 | Statically traced the fine quantization and quantization-loss gradients from the training forward pass. The smoke test specifies behaviour-off and geometry-off assignment comparisons and checks encoder and fine-codebook gradients; I could not execute it here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No code-level dead term or evident non-finite numerical step found. The fine-level contribution participates in quantization loss and the straight-through output, while the residual reconstruction feeds the next level. The behavior and geometry switches reach the anchor computation and quantizer respectively.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-79, train_rqvae.py:428-459, train_rqvae.py:543-551, train_rqvae.py:638-685, train_rqvae.py:688-717 | Inspected root and output-path resolution, frozen Stage 2 input paths, training/export indexing, final SID uniqueness extension, and both launcher branches. The four-rank check is specified in ddp_check.py:49-105; runtime execution was unavailable.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by inspection. Inputs resolve to the repository’s Stage 1 embeddings and Stage 0 training parquet; outputs resolve to this promoted candidate’s Stage 2 result directory. Export enumerates item IDs in row order and writes matching integer-keyed JSON entries. The launcher preserves the four-card torchrun path and the GENREC_SINGLE_GPU single-process branch.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

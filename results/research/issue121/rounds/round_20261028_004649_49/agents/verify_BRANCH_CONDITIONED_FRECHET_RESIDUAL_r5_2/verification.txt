@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:343-395 -> model/layers.py:397-433 -> model/hyperbolic.py:134-175,230-259 | Traced the trainer’s training-only transition construction at train_rqvae.py:338-409 into the fine-level anchor preparation and quantization. The source branch selects a successor-residual Fréchet anchor, and the residual is log-mapped and quantized in that anchor’s tangent space. The smoke test defines behavior-off and geometry-off comparisons and checks that both change fine-level assignments at smoke_test.py:131-168. No trainer execution was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:343-433 -> model/hyperbolic.py:134-175,230-259 | Inspected the forward path, straight-through output and quantization loss, and the backward-path assertions in smoke_test.py:145-190. The anchor computation is explicitly no-grad context, while the fine quantization loss connects the residual to the encoder and the selected contribution to the fine codebooks. The smoke test also checks assignment changes with behavior and geometry switches. Per the stated sandbox limitation, this is a code inspection; no runtime proof was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-79,428-459,638-685,688-717 | Traced the entry point from the frozen Stage 1 embedding and Stage 0 training parquet paths through training and final SID export. The output resolves to this candidate’s promoted result directory, and the JSON export enumerates rows by item ID. Inspected the four-card torchrun launcher and the single-card `GENREC_SINGLE_GPU` branch at train_rqvae.py:688-717. Runtime execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

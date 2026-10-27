@@ -1,0 +1,29 @@
+I’ll inspect the candidate tree against the specified mechanism and integration contracts, using read-only inspection. I’ll return the exact requested plain-text blocks here; I won’t write to the path because you explicitly said I have no write permission and to write nowhere else.
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:255-319 -> train_rqvae.py:430-451 -> model/layers.py:333-385 -> model/hyperbolic.py:125-166 and model/layers.py:238-267 | Traced the trainer’s training-only transition construction and batch context into branch Fréchet anchors and the curved fine quantizer; smoke_test.py:119-156 checks that the toy pathway changes fine-level SIDs when behaviour or geometry is switched off.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:284-303
+FINDING DETAIL: The purported sparse outgoing-transition distributions do not encode destination item identity. The code sorts each source’s outgoing edges, then writes only their counts into the first positions of a fixed-width vector. Thus different successor sets with the same sorted edge counts produce identical profiles, and the “branches” are based on outgoing-count shapes rather than outgoing-transition distributions. Although that profile affects the curved anchor pathway, it does not implement the specified transition-profile behaviour signal.
+FINDING REPRODUCTION: Give item A one outgoing edge to item 10 and item B one outgoing edge to item 20. Both profiles become [1, 0, ...] at lines 293-301 despite disjoint successor distributions; likewise, any two items with the same sorted outgoing counts collapse to the same profile.
+FINDING CORRECTION: Build each q_i in destination-item coordinates (using a sparse representation or a defined destination-indexed feature map), normalize it, and cluster those distributions. Keep the resulting training-only branch labels connected to the Fréchet-anchor and tangent-quantization path.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:42-47 -> model/layers.py:305-331, 333-422 -> model/hyperbolic.py:221-245 | Inspected the forward/backward graph: the fine-level straight-through quantized contribution and quantization loss depend on the residual and selected code vectors; smoke_test.py:119-178 checks assignment changes under behaviour-off and geometry-off controls and nonzero encoder/fine-codebook gradients. The trainer also rejects non-finite losses at train_rqvae.py:481-489. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No trainability defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-72, 338-369, 453-462, 548-595, 598-627 | Inspected the real trainer entry point, its Stage 0 training parquet and Stage 1 embedding paths, output indexing/export, repository-root resolution, and launcher branches. The four-rank smoke path is defined in smoke_test.py:224-249 and ddp_check.py:49-105; the single-card branch checks SINGLE_GPU_ENV at train_rqvae.py:110-112 and train_rqvae.py:598-605. I did not run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The trainer resolves its repository result directory from the explicit ARM_NAME and emits item SIDs indexed by embedding row; the single-card and torchrun branches are present.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

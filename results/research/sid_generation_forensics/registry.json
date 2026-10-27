@@ -102,5 +102,23 @@
     },
     "stage2_metrics_report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/stage2_metrics/5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16.json",
     "family": "co-occurrence rank sum over the hyperbolic code-conditioned distance (round_20261027_202919_817)"
+  },
+  "branch_conditioned_frechet_residual": {
+    "stage3": "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/item_sids.json",
+    "sid_origin": "in-repo",
+    "reported": {
+      "test_recall@10": 0.05459705078431031,
+      "test_recall@5": 0.03629937847107366,
+      "test_ndcg@10": 0.029830042735162276
+    },
+    "stage2_diagnostics": {
+      "valid_l1_hard_er": 6.508183943881527,
+      "level2_distinct_prefixes": 9047,
+      "l3_collision": 0.17346565258063204,
+      "l3_refinement_gain_bits": 2.0557941056176205
+    },
+    "stage2_metrics_report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/stage2_metrics/12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b.json",
+    "family": "branch-anchored tangent quantization of the fine levels (round_20261028_004649_49)"
   }
 }

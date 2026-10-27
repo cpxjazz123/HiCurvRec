@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "evidence_revision_TRANSITION_GEODESIC_RESIDUAL_r0",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 130,
+  "finished_utc_epoch": 1793116263.9700773,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "52866d9fbc90471fc219d09ced94eb3ed014fc57fe769731127c9f8419f256fb",
+  "isolation_policy": "opencode v2 permission object: bash denied, edit and write denied (this role is read-only and its answer is read back from the session stream), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "revision.txt",
+  "output_sha256": null,
+  "pid": 2337728,
+  "project_marker": ".git",
+  "prompt_sha256": "b52777b401d83cd40f088deec04330f2877a8cc3c9026c8ffdc31072475376c6",
+  "session_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_present": false,
+  "task_id": "evidence_revision_TRANSITION_GEODESIC_RESIDUAL_r0",
+  "timed_out": true,
+  "verified": false
+}

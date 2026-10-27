@@ -1,0 +1,29 @@
+I’ll inspect the candidate implementation and its trainer/data/export/launcher paths, then report only code-grounded findings. I won’t modify files; the required report path is outside the writable scope, so I’ll provide the exact plain-text report here.
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:332-403 -> train_rqvae.py:514-535 -> model/layers.py:320-335, 337-389, 391-426 -> model/hyperbolic.py:125-166, 221-245 | Traced the training-only adjacent-transition counts into sparse outgoing profiles and branch IDs, then followed batch edge sampling through branch Fréchet anchors and anchor-relative tangent quantization. The behavior and geometry switches both alter that fine-level path; the smoke test at smoke_test.py:119-156 checks both switches against the both-on assignment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the required connected behaviour-and-curvature pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:391-426; model/hyperbolic.py:82-112, 221-245; smoke_test.py:119-178 | Inspected the differentiable residual log-map, tangent-space code-distance and exponential-map path, followed by the straight-through quantizer and quantization loss. The smoke test specifies finite geometric checks, verifies both switches change fine assignments, and checks gradients reach the encoder and fine codebooks. Runtime execution is not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-grounded dead-term, gradient-path, or evident float32 numerical-hazard defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-73, 422-461, 632-679, 682-711; smoke_test.py:224-249 | Traced repository-root resolution, frozen embedding and training-parquet inputs, output paths under the candidate’s promoted Stage 2 result directory, item-indexed SID export and uniqueness extension, and both launcher branches. The single-card branch checks SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at train_rqvae.py:111-113, 682-688; the four-rank smoke path is specified at smoke_test.py:224-249.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Trainer execution and distributed runtime behavior were not run here.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

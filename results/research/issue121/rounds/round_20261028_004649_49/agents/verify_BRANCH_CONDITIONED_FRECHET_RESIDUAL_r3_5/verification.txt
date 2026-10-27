@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:337-389, model/layers.py:399-415, model/hyperbolic.py:125-166 and model/hyperbolic.py:221-245 | Static trace from training transitions in train_rqvae.py:332-403 through sampled edge context at 514-535 into branch Fréchet anchors and anchor-relative tangent quantization. The smoke test’s switch and assignment checks at smoke_test.py:119-156 exercise the mechanism in a toy model; I did not run them.
+FINDING SEVERITY: minor
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found. Training-only outgoing transitions determine branch labels and edge-weighted successor-residual anchors; those anchors are used with log/exp maps in the fine quantizer’s assignment and reconstruction path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:238-271, model/layers.py:391-426 and model/hyperbolic.py:221-245 | Static trace of fine-level contribution and quantization-loss gradients, plus review of the geometry-off switch. The toy smoke test checks assignments and some gradients at smoke_test.py:133-178, but does not compare gradient values across switch settings or establish finite losses and gradients for the real trainer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:262-271
+FINDING DETAIL: The geometry-off branch assigns using `residual - anchors`, but returns only the selected code embedding as the contribution. The stack then subtracts that contribution from the residual at model/layers.py:329-330. Thus the anchor affects assignment but is omitted from reconstruction and the residual update. This is not a consistent Euclidean replacement for the anchor-relative quantizer and makes the geometry-off comparison incorrect.
+FINDING REPRODUCTION: Call `fine_quantize` with `geometry_on=False`, a nonzero anchor, and a zero codebook. It returns a zero contribution even though its assigned residual is `residual - anchor`; the caller subtracts zero, leaving the residual unchanged.
+FINDING CORRECTION: Return `anchors + F.embedding(indices, codes)` as the Euclidean contribution, so the residual update subtracts the anchor-relative reconstructed value. Ensure the geometry-off quantization loss and update use that same contribution.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:41-73, train_rqvae.py:422-461, train_rqvae.py:632-675 and train_rqvae.py:682-711 | Static inspection of repository/data/result paths, trainer entry point, SID export/indexing, and launcher branches; runtime execution was unavailable as specified.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:63-65
+FINDING DETAIL: The candidate tree is `BRANCH_CONDITIONED_FRECHET_RESIDUAL`, but `ARM_NAME` is `TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL`. Consequently the trainer writes SIDs and checkpoint under `results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/`, rather than the candidate’s promoted-tree result directory required by the contract. Stage 3/admission looking under the promoted tree name will not read this candidate’s export.
+FINDING REPRODUCTION: Resolve `RESULT_DIR` using the required promoted tree name `BRANCH_CONDITIONED_FRECHET_RESIDUAL`; it currently resolves using the distinct `ARM_NAME` value at line 64.
+FINDING CORRECTION: Set `ARM_NAME` to the exact promoted tree name expected by admission and Stage 3, and keep all candidate outputs rooted under that result directory.

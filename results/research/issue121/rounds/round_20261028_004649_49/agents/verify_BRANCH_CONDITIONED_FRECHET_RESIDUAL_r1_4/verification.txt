@@ -1,0 +1,33 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:333-385 | Traced training-derived transition branches and sampled successor residuals into branch Fréchet anchors, then followed those anchors through model/layers.py:387-411 and model/hyperbolic.py:221-245, where the fine residual and code vectors are mapped into the anchor tangent space and quantized. The behavior-off and geometry-off switches are wired into that same path at model/layers.py:345-367; smoke_test.py:147-156 specifies assignment comparisons for both switches. I inspected the code; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the required connected behaviour-and-geometry pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:387-422 | Inspected the fine-level straight-through quantization and loss path, including the differentiable tangent quantization in model/hyperbolic.py:221-245. smoke_test.py:119-178 specifies switch-driven SID changes and nonzero encoder and fine-codebook gradients. I did not execute the smoke test or trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No static dead-term or clear float32 instability defect found in the coupled forward/backward path. Runtime trainability was not independently exercised here.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:252-332, train_rqvae.py:409-448, train_rqvae.py:474-487, train_rqvae.py:545-588, train_rqvae.py:595-621 | Traced training transition construction, batch context creation, training, SID export/indexing, result paths, and launcher behavior by source inspection. I did not execute the trainer. The four-rank smoke entry is ddp_check.py:49-105.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:430-433
+FINDING DETAIL: The sampler returns a validity mask for items without outgoing training edges, but the trainer ignores it and indexes the target array for every sampled item. For an item with no outgoing edge, sample_training_edges returns its CSR start offset; if that offset equals the number of edges, indexing edge_target_t raises an out-of-bounds error. Such items can occur in training batches, so training can fail before completing.
+FINDING REPRODUCTION: Use a training edge table where the final item in a batch has no outgoing edges and its CSR start offset equals len(edge_target). build_context indexes edge_target_t at that offset and raises IndexError. More generally, any sampled item with no outgoing edge whose start offset is len(edge_target) reproduces the failure.
+FINDING CORRECTION: Use the returned valid mask to exclude invalid samples from anchor construction and corresponding weights/branch IDs, or provide a safe in-range placeholder target and set that sample’s edge weight to zero before indexing-dependent anchor calculations.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:595-620
+FINDING DETAIL: The trainer does not define or read SINGLE_GPU_ENV = "GENREC_SINGLE_GPU". Its entry point always launches torchrun with four processes when not already under torchrun. Consequently, the required single-card launcher branch is absent; setting GENREC_SINGLE_GPU=1 does not prevent the four-card launch.
+FINDING REPRODUCTION: Invoke the entry point with GENREC_SINGLE_GPU=1 and without RANK set. _launch_via_torchrun still constructs and runs a command with --nproc_per_node=4.
+FINDING CORRECTION: Add the GENREC_SINGLE_GPU switch and make the entry point call main directly in single-card mode, while retaining the existing torchrun path for the four-card mode.

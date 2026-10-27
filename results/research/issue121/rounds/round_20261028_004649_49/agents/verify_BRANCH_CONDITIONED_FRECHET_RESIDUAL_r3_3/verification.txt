@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:337-389, model/layers.py:391-426, model/hyperbolic.py:221-245 | Traced training context from train_rqvae.py:514-535 into anchor preparation and fine quantization. The training-only outgoing-transition branches select Fréchet anchors, and the curved log/exp tangent quantizer uses those anchors to determine fine-level assignments. smoke_test.py:119-178 defines checks for the behaviour-off and geometry-off assignment comparisons; I did not execute them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in whether the training-only behaviour and curved operation share a connected fine-quantization path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:337-426, model/hyperbolic.py:221-245 | Inspected the forward and backward computation statically; the environment does not provide the requested runtime proof. Fine-level straight-through quantization and quantization loss provide gradient paths to the encoder and codebooks, while anchor construction is intentionally under no_grad.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:257-261, model/layers.py:330-331, model/layers.py:374-379
+FINDING DETAIL: The curved quantizer returns an absolute ball point, exp_anchor(tangent - selected_code), as `contribution`; the residual stack then subtracts that point directly from the Euclidean encoded residual. This does not implement the specified curved residual update: after subtracting the selected code in the anchor’s tangent space, the result must be represented relative to the anchor, not treated as an ambient Euclidean code contribution. The same mismatch occurs while computing the successor’s next residual for the second anchor. Consequently the fine residuals and later-level assignments do not follow the specified geodesic residual pathway, even though the first fine-level assignment uses curved geometry.
+FINDING REPRODUCTION: In `fine_quantize`, choose an anchor that is not the origin and a residual/code for which `ball_exp_map(anchor, tangent - selected, curvature)` is nonzero. Observe that this absolute ball coordinate is returned as the contribution and is subtracted from the original Euclidean residual at `RQLayer.forward:330`; `_prepare_anchors` repeats that subtraction at line 377. The output is not the residual obtained by the specified anchor-relative curved update.
+FINDING CORRECTION: Keep fine residuals and quantized contributions in a consistent representation. Apply the selected code subtraction in the anchor tangent space, then use the exp map to form the updated curved residual; pass that curved residual to subsequent fine levels and anchor construction. Do not subtract an absolute ball point from the original Euclidean encoded residual. Recheck that the Euclidean control remains a valid separate control and that both switches still alter assignments or gradients.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-73, train_rqvae.py:422-546, train_rqvae.py:632-711 | Inspected the trainer entry point, its paths and export flow, and both launcher branches statically. It reads the stage1 embedding file and stage0 training parquet, writes artifacts under the candidate’s promoted `results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/` directory, exports rows by item ID, and includes the `GENREC_SINGLE_GPU` branch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. I did not execute the trainer, SID export, or distributed launcher.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
