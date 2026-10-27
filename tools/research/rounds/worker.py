@@ -108,7 +108,8 @@ def run_ideation(root: Path, objective: str) -> list:
     prompt_base = agent_contracts.IDEA_PROMPT.format(
         minimum=IDEA_MIN, maximum=IDEA_MAX,
         objective=agent_contracts.RESEARCH_OBJECTIVE,
-        scope=agent_contracts.SCOPE_CONTRACT)
+        scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
+        agent_contracts.EXPERIMENT_POLICY)
     def ideate(index):
         task_id = "ideation_" + str(index)
         prompt = (prompt_base + "\n\nThe round objective: " + (objective or "improve the "
@@ -375,7 +376,8 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None,
         task_id = "scoring_" + str(index)
         prompt = (agent_contracts.SCORE_PROMPT.format(
             objective=agent_contracts.RESEARCH_OBJECTIVE,
-            scope=agent_contracts.SCOPE_CONTRACT,
+            scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
+            agent_contracts.EXPERIMENT_POLICY,
             rubric_version=scoring_module.RUBRIC["version"],
             rubric=_rubric_text()) +
             "\n\nThe proposals, all of them:\n" + payload +
@@ -565,7 +567,8 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
     prompt = (agent_contracts.IMPLEMENT_PROMPT.format(
         idea=plaintext.render_idea(idea), tree=str(tree),
         objective=agent_contracts.RESEARCH_OBJECTIVE,
-        scope=agent_contracts.SCOPE_CONTRACT))
+        scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
+        agent_contracts.EXPERIMENT_POLICY))
     report = _run_agent(root, "implementation_" + idea["idea_id"], prompt,
                         "implementation.txt", plaintext.parse_implementation,
                         role="implementation")
@@ -594,7 +597,8 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
     prompt = (agent_contracts.VERIFY_PROMPT.format(
         idea=plaintext.render_idea(idea), tree=str(tree),
         objective=agent_contracts.RESEARCH_OBJECTIVE,
-        scope=agent_contracts.SCOPE_CONTRACT))
+        scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
+        agent_contracts.EXPERIMENT_POLICY))
     def verify(index):
         # The revision is part of the workspace name: a fresh review after a
         # repair must be a fresh agent, never a replay of the previous answer.
@@ -621,7 +625,8 @@ def run_repair_plan(root: Path, idea: dict, tree: Path, findings: list,
     prompt = (agent_contracts.REPAIR_PLAN_PROMPT.format(
         findings=plaintext.render_findings(findings), tree=str(tree),
         objective=agent_contracts.RESEARCH_OBJECTIVE,
-        scope=agent_contracts.SCOPE_CONTRACT))
+        scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
+        agent_contracts.EXPERIMENT_POLICY))
     backup = _tree_backup(tree)
     before = pipeline_module._source_digest(tree)
     plan = _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),

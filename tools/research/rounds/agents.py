@@ -41,12 +41,35 @@ SCOPE_CONTRACT = (
     "  4. TESTABLE EFFECT: it states what should observably change (SID assignment, "
     "gradient or parameter update, prefix behaviour predictability, or Stage3 "
     "Recall) and names the behaviour-off, geometry-off/Euclidean and both-on "
-    "comparisons.\n"
+    "comparisons. The three switches must be part of the mechanism, so that the "
+    "coupling can be shown to be real, but the round RUNS no ablation arm: each "
+    "candidate is trained once.\n"
     "  5. MINIMAL SPECIFICATION: equations or pseudocode, inputs and outputs, "
     "numerical safeguards and the training cost. No proof and no paper section are "
     "required.\n"
     "SID quality (ER, prefix counts, collisions) is NOT a scope criterion and NOT an "
     "admission rule."
+)
+
+#: The experiment policy of the programme, stated to every role.
+EXPERIMENT_POLICY = (
+    "EXPERIMENT POLICY (binding on every proposal, implementation and review):\n"
+    "  - ONE candidate, ONE training run, on the frozen budget (3000 Stage 2 epochs "
+    "on four cards, the frozen Stage 3 protocol, no early stopping).\n"
+    "  - NO ablation experiments: the behaviour-off, geometry-off and both-on "
+    "switches must EXIST in the code and must be correct, but no arm is trained "
+    "with them switched off.\n"
+    "  - NO tuning experiments: no sweep over the coupling weight, the clip bound, "
+    "the temperature, the usage weight or any other constant. A constant that "
+    "enters the mechanism has to be DERIVED (a scale-relative bound, a measured "
+    "quantity, a documented default), not chosen by trying values.\n"
+    "  - NO multi-seed experiments: a candidate is not repeated with other seeds, "
+    "so a single run decides it and the seed noise is part of the uncertainty.\n"
+    "  - The behavioural diagnostics (coherence, adjacency, transfer predictability) "
+    "are recorded, never used as an admission gate; Stage 3 test_recall@10 is the "
+    "judgement.\n"
+    "  - A proposal that needs an ablation, a sweep or a seed repetition to make "
+    "its case is out of programme: it has to make the case with one run."
 )
 
 IDEA_FIELDS = (
@@ -214,6 +237,11 @@ REBUTTAL_PROMPT = (
 )
 
 IMPLEMENT_PROMPT = (
+    "The experiment policy binds you: ONE candidate, ONE training run on the frozen "
+    "budget. Do not train ablation arms, do not sweep any constant and do not repeat "
+    "the run with another seed. The behaviour-off, geometry-off and both-on switches "
+    "must exist in the code and be correct, and a cheap unit-level check that the "
+    "switch is wired is welcome, but no experiment with them switched off.\n"
     "Implement ONE idea as a standalone Stage 2 candidate tree.\n"
     "THE RESEARCH OBJECTIVE:\n{objective}\n"
     "THE SCOPE CONTRACT:\n{scope}\n"

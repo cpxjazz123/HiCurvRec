@@ -28,6 +28,13 @@ review. The rule is enforced, not merely requested: the tree's sources are
 copied aside before the planner runs, and a planner that edits anyway has its
 edit rolled back and its plan rejected.
 
+**One candidate, one run.** The programme trains every candidate once on the frozen
+budget. No ablation arm is trained, even though the behaviour-off, geometry-off and
+both-on switches must exist and be correct, so that the coupling can be shown to be
+real. No constant is swept: what enters the mechanism has to be derived. No seed
+repetition decides anything. The behavioural diagnostics are recorded and never
+used as an admission gate; the Stage 3 recall is the judgement.
+
 The modules here are deliberately split so that the decision logic is testable
 without an agent: `ideas` and `scoring` are pure functions over JSON, `agents`
 holds the agent contracts, `pipeline` is the round state machine and `jobs` is the
