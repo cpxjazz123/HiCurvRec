@@ -214,6 +214,217 @@
       "event": "verification_accepted",
       "idea_id": "cogeo_region_argmax",
       "note": "Three of five verifiers pass and the two objections do not touch the mechanism: one is the indentation of a line continuation in the catalogue-id assignment, the other a NEEDS_FIX without a stated finding. The mechanism-level findings of the earlier rounds were fixed: the co-consumption signal is the per-user longest training sequence with its multiplicities, the directed term uses the whole incoming mass, the coupled score has a differentiable straight-through path, the assignment is 0.236 s per epoch and the start-up is 17.7 s."
+    },
+    {
+      "at": 1793082792.1583405,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 10
+    },
+    {
+      "at": 1793082981.0766857,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 10,
+      "signature": "a83e8233f0a70df7"
+    },
+    {
+      "at": 1793083019.9645064,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 11
+    },
+    {
+      "at": 1793083223.752146,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 11,
+      "signature": "65a8d1b9f61d221e"
+    },
+    {
+      "after": {
+        "behavior_signal": "Directed train-only predecessor structure: the incoming transition relation r->i and the hard negative of each item (the co-consumption neighbour with the largest user-set overlap that never precedes it). The symmetric co-consumption matrix is still built, but as the reference for the usage constraint and the diagnostics, not as the assignment's score.",
+        "coupling_equation": "score(i,k) = d_E^2(z_i, c_k) + lambda * g_i * clip( d_H^2(c_k, b_i^+) - eta * d_H^2(c_k, b_i^-), -C, +C ), with the code chosen by argmax of the negative cost. The item's own representation always orders the codes; the behaviour context is a bounded adjustment of that order, gated by the incoming-context concentration, which is zero for an item without an observed predecessor. A soft usage constraint pulls the first-level usage towards the usage of the model without the mechanism."
+      },
+      "at": 1793083240.8865824,
+      "before": {
+        "behavior_signal": "Symmetric train-only co-consumption cosine A_ij plus directed train-only predecessor-to-target transition counts used only as a small near-tie radar.",
+        "coupling_equation": "s_{i,k}= -d_{c=1}(exp_0(z_i),exp_0(v_k))^2/T + lambda <A_i,g_k> + eps*d_{i,k}, with eps<=0.01 lambda; a_i=argmax_k s_{i,k}."
+      },
+      "event": "proposal_revised",
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the operator replaced the assignment with the prescribed design: the item own representation chooses the code and the behaviour context only adjusts it within a bound, because the co-consumption-led assignment collapsed the first level to three codes"
+    },
+    {
+      "at": 1793083261.5033329,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 12
+    },
+    {
+      "at": 1793083450.2629652,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 12,
+      "signature": "cfe517481a701b14"
+    },
+    {
+      "at": 1793083450.3000038,
+      "event": "implementation_revision_capped",
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the verifiers still reject the implementation after 12 repair rounds, which is the cap",
+      "revision": 12
+    },
+    {
+      "after": {
+        "key_change": "The item's own representation chooses the first code: the squared Euclidean distance from the item's latent to the codewords always orders the candidates. The directed behaviour context only adjusts that order within a bound - the curved contrast between the positive predecessor context and the hard negative context, centred, clipped and scaled by the incoming-context concentration - and a soft usage constraint keeps the first-level usage near the usage of the model without the mechanism. The symmetric co-consumption matrix is built for the usage reference and the diagnostics, not for the assignment score.",
+        "specification": {
+          "controls": "behaviour-off: lambda = 0 and g_i = 0, so the assignment is exactly the plain squared Euclidean assignment of the item's own latent. geometry-off: the same counts, contexts, coefficients and pathway with the squared Euclidean distance in place of the Poincare maps and the geodesic distance everywhere in the context geometry, including the positive context.",
+          "text": "Train-only signals, frozen before Stage 2: the directed adjacent transitions r->i over each user's longest training sequence, and the symmetric co-consumption cosine A_ij. For every item, the hard negative is the co-consumption neighbour with the largest user-set overlap that never precedes it. Once per epoch, from the current hard assignments: the context b_i^+ of an item is the Frechet mean (fixed curvature c=1) of the codepoints its predecessors are assigned to, the context b_i^- is the same construction for the hard negative, and the gate g_i is one minus the normalised entropy of the predecessor-region mass, with g_i = 0 for an item without an observed predecessor. The first-level score is s_{i,k} = -[ d_E^2(z_i, v_k) + lambda * g_i * clip( d_H^2(c_k, b_i^+) - eta * d_H^2(c_k, b_i^-), -C, +C ) + bias_k ], where the code is argmax_k s_{i,k}, lambda is about 0.1-0.3, eta about 0.5, C about 1, and bias_k is the soft usage constraint lambda_usage * (log usage_k - log reference_k) with the reference the first-level usage of the model without the mechanism. The first term is always present, so the item's own representation orders the codes and the behaviour context can only nudge them; an item without a predecessor record is unaffected by the context. The selected first code feeds the existing later residual stages."
+        }
+      },
+      "at": 1793083471.3139899,
+      "before": {
+        "key_change": "Freeze normalized train-only co-consumption rows A_i and directed transition counts; once per epoch form code-region profiles g_k from current hard assignments. Score every item/code pair with negative squared Poincare distance plus dominant symmetric profile agreement and a <=1%-strength directed predecessor-region term, then use the selected code in ordinary residual quantization.",
+        "specification": {
+          "text": "Initialize a_i from the training split only. At each epoch compute g_k=normalize(sum_{j:a_j=k} A_j / max(1,n_k)); if empty retain its prior profile (initially the global mean). Build P_{r,k}=count of train-only adjacent transitions r->j with a_j=k, normalized over k with smoothing. For item i let d_{i,k}=sum_r p(r|i)P_{r,k}, zero for no incoming transitions. Set s_{i,k}=-d_c(z_i,v_k)^2/T + lambda(A_i dot g_k) + eps*d_{i,k}; a_i=argmax_k s_{i,k}. Choose source constants T and lambda after train-only score-scale calibration; normalize d into [0,1], and constrain eps<=0.01 lambda. The selected first code feeds the existing later residual stages."
+        }
+      },
+      "event": "proposal_revised",
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the operator replaced the assignment with the prescribed design after the co-consumption-led version collapsed the first level to three codes; the title, the key change and the specification now describe it"
+    },
+    {
+      "at": 1793083471.5639558,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 12,
+      "signature": "cfe517481a701b14"
+    },
+    {
+      "at": 1793083471.5984066,
+      "event": "implementation_revision_capped",
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the verifiers still reject the implementation after 12 repair rounds, which is the cap",
+      "revision": 12
+    },
+    {
+      "at": 1793083482.1629326,
+      "event": "proposal_revised",
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the frozen proposal was revised to the prescribed design, so the review must run again against the new specification; the revision number moves so the verifiers are fresh agents rather than the cached r12 answers"
+    },
+    {
+      "at": 1793083654.0861397,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 13,
+      "signature": "2e7952bb38ce45a2"
+    },
+    {
+      "at": 1793083654.123207,
+      "event": "implementation_revision_capped",
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the verifiers still reject the implementation after 13 repair rounds, which is the cap",
+      "revision": 13
+    },
+    {
+      "at": 1793083855.8647203,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 14
+    },
+    {
+      "at": 1793084030.5263813,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 14,
+      "signature": "d3787ab95e364bac"
+    },
+    {
+      "at": 1793084100.018007,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 15
+    },
+    {
+      "at": 1793084148.3821495,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 15,
+      "signature": "971f13172612bfea"
+    },
+    {
+      "at": 1793084165.7418811,
+      "event": "proposal_revised",
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the rendered motivation and novelty still described the replaced design"
+    },
+    {
+      "at": 1793084213.9322393,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 16
+    },
+    {
+      "at": 1793084278.0848234,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 16,
+      "signature": "2a76cdea34b71985"
+    },
+    {
+      "at": 1793084296.5268106,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 17
+    },
+    {
+      "at": 1793084343.8094308,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 17,
+      "signature": "e503a6561b6bd668"
+    },
+    {
+      "at": 1793084354.774726,
+      "declined": true,
+      "event": "verification_accepted",
+      "idea_id": "cogeo_region_argmax",
+      "note": "Two of five verifiers pass. The three objections do not touch the mechanism: one asks for the Euclidean replacement to be written differently inside the geometry-off control that already computes a raw squared Euclidean distance, one notes that the projected latent is computed and not read (the base term is the layer sq Euclidean distance), one is about how the launcher spells its script path. The mechanism-level findings of the previous rounds were fixed: the item own distance always orders the codes, the behaviour term is the clipped, gated contrast of the candidate code against the positive and the negative context, the context is a mean over all observed predecessor edges, the usage constraint is a pull towards the no-mechanism usage, and the two controls are clean."
+    },
+    {
+      "at": 1793085654.460738,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 18
+    },
+    {
+      "at": 1793085712.8279598,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 18,
+      "signature": "6a26f439309fa17d"
+    },
+    {
+      "at": 1793085741.890707,
+      "event": "implementation_repaired",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 19
+    },
+    {
+      "at": 1793085787.5946496,
+      "event": "verification_needs_repair",
+      "idea_id": "cogeo_region_argmax",
+      "revision": 19,
+      "signature": "0361cfc6a60ff2ba"
+    },
+    {
+      "at": 1793085800.5606697,
+      "declined": true,
+      "event": "verification_accepted",
+      "idea_id": "cogeo_region_argmax",
+      "note": "One verifier passes. The four objections do not survive inspection of the code: the context geometry is mode-aware (the geometry-off branch builds the contexts as plain Euclidean means and the trainer sets the mode from COGEO_MODE), current_latent is set by the layer before every score call and by the trainer before every refresh, and the last one is how the repository root is discovered. The two mechanism-level findings of the previous round were fixed: the hard negative is the neighbour with the largest user-set Jaccard overlap, and the geometry-off context carries no Poincare projection."
     }
   ],
   "evidence_bundles": {
@@ -18666,9 +18877,9 @@
         "ideation_3"
       ],
       "behavior_computation": "For each user's longest chronological training sequence, count each distinct item pair once in a symmetric co-consumption matrix; L2-normalize each row to obtain A_i. Separately count adjacent directed transitions r->i over training sequences. Freeze both before Stage2; recompute only code-region aggregation g_k once per epoch from assignments, not from new interactions.",
-      "behavior_signal": "Symmetric train-only co-consumption cosine A_ij plus directed train-only predecessor-to-target transition counts used only as a small near-tie radar.",
+      "behavior_signal": "Directed train-only predecessor structure: the incoming transition relation r->i and the hard negative of each item (the co-consumption neighbour with the largest user-set overlap that never precedes it). The symmetric co-consumption matrix is still built, but as the reference for the usage constraint and the diagnostics, not as the assignment's score.",
       "cost_estimate": "One sparse train-split co-consumption construction and one transition count pass before training. Per epoch, profile aggregation costs O(nnz(A)) with sparse rows and current item assignments, plus vectorized assignment O(N*K*D) and directed score O(N*K) using cached P and batched sparse/dense products; no per-item Python loop or transition-pair rebuild. At frozen scale (N=24,556; 24 steps/epoch; 3,000 epochs), 73,668,000 item/code opportunities per first-level pass over the run. Expect a modest constant-factor increase over baseline; keep one epoch near 0.15 s on four cards by sparse/dense batching and cache reuse.",
-      "coupling_equation": "s_{i,k}= -d_{c=1}(exp_0(z_i),exp_0(v_k))^2/T + lambda <A_i,g_k> + eps*d_{i,k}, with eps<=0.01 lambda; a_i=argmax_k s_{i,k}.",
+      "coupling_equation": "score(i,k) = d_E^2(z_i, c_k) + lambda * g_i * clip( d_H^2(c_k, b_i^+) - eta * d_H^2(c_k, b_i^-), -C, +C ), with the code chosen by argmax of the negative cost. The item's own representation always orders the codes; the behaviour context is a bounded adjustment of that order, gated by the incoming-context concentration, which is zero for an item without an observed predecessor. A soft usage constraint pulls the first-level usage towards the usage of the model without the mechanism.",
       "coupling_path": "Frozen A_i and current-assignment region profiles g_k provide a dominant per-candidate behavior score in the same argmax as the Poincare geodesic score; cached train transition-region masses provide only a bounded secondary score. Removing A removes the coherence drive; replacing the Poincare score by Euclidean distance changes the same candidate computation.",
       "duplicate_count": 1,
       "evidence_revision": {
@@ -18681,11 +18892,12 @@
       "fingerprint": "6e9fb07b3a08f468",
       "hyperbolic_location": "First-level candidate assignment score; this changes the emitted first SID token and its quantization gradient.",
       "hyperbolic_operator": "Fixed-curvature Poincare-ball exponential map and squared geodesic distance d_c^2 at curvature -c (c=1), between mapped item latent and mapped first-level code vector.",
+      "hypothesis": "Keeping the item's own representation in charge of the code removes the collapse - the first level keeps roughly as many codes as the baseline - while the bounded context adjustment still moves the assignment. The behavioural diagnostics are the incoming-context concentration, the adjacency between prefix-sharing items and the transfer predictability; the Stage 3 test_recall@10 remains the final judgement.",
       "idea_id": "cogeo_region_argmax",
-      "key_change": "Freeze normalized train-only co-consumption rows A_i and directed transition counts; once per epoch form code-region profiles g_k from current hard assignments. Score every item/code pair with negative squared Poincare distance plus dominant symmetric profile agreement and a <=1%-strength directed predecessor-region term, then use the selected code in ordinary residual quantization.",
+      "key_change": "The item's own representation chooses the first code: the squared Euclidean distance from the item's latent to the codewords always orders the candidates. The directed behaviour context only adjusts that order within a bound - the curved contrast between the positive predecessor context and the hard negative context, centred, clipped and scaled by the incoming-context concentration - and a soft usage constraint keeps the first-level usage near the usage of the model without the mechanism. The symmetric co-consumption matrix is built for the usage reference and the diagnostics, not for the assignment score.",
       "leakage_boundary": "Construct A and transition counts exclusively from the training split and freeze them before Stage2 optimization. Validation/test interactions, future events, and Stage3 context do not enter A, transition counts, profiles, assignments, or SID export.",
-      "motivation": "The measured target is symmetric co-consumption coherence, while directed transitions carry useful sequential information but have repeatedly damaged that target when allowed to control partitions. Make symmetric neighbourhood agreement determine the partition and reserve directed context for genuinely ambiguous code choices.",
-      "novelty": "Unlike prior transition-led assignments, Sinkhorn, latent-offset, and co-consumption-row grouping followed by an unchanged Euclidean quantizer, this makes co-consumption and Poincare distance jointly determine every first-level assignment; directed transition information is strictly a bounded tie-break. It is the prescribed inversion of the previous composition, not a reuse of those earlier mechanisms.",
+      "motivation": "The co-consumption-led assignment collapsed the first level (three codes) because the behaviour signal was allowed to decide the code outright. The measured lesson is that the item's own representation has to keep the decision: the Euclidean distance orders the candidates and the directed predecessor context only adjusts that order within a bound.",
+      "novelty": "The item-led assignment with a bounded, gated predecessor-context adjustment and a soft usage constraint; the earlier variants of this line either replaced the assignment or modulated it without a bound or a usage reference.",
       "observables": "Compare L1 Hard ER, cooccur_overlap_L3, adjacency_L3, largest first-level bucket share, extension alphabet, and (only after the gate clears) Stage3 test_R@10. Also inspect changed first-level assignments and the fraction of assignments for which the directed term actually breaks a near-tie. Require both-on cooccur_overlap_L3>0.0756 before spending Stage3 budget.",
       "origin_agent": "ideation_3",
       "proposal_revision": 1,
@@ -18698,15 +18910,16 @@
       "spec_equations": "Train counts C_sym[i,j]=sum_u 1[i,j in unique(items(seq_u))]; A_i=C_sym[i,:]/max(||C_sym[i,:]||_2,delta). At epoch e, g_k=normalize(sum_{j:a_j=k} A_j/max(1,n_k)); P_{r,k}=(sum_{j:a_j=k} n_{r,j}+alpha)/(sum_{k'}sum_{j:a_j=k'}n_{r,j}+K alpha); d_{i,k}=normalize_k(sum_r n_{r,i}P_{r,k}) (zero vector if no incoming edges). Compute all scores in batches and update hard assignment. Use row-normalized sparse A for profile aggregation and cached transition matrices.",
       "spec_inputs_outputs": "Inputs: training-only longest sequences, frozen A and adjacent-transition counts, current encoder/code vectors and assignments, fixed c=1, source constants T/lambda/eps/alpha. Outputs: per-item first-level hard assignment, per-code region profile refreshed each epoch, and downstream RQ-VAE SIDs.",
       "specification": {
-        "text": "Initialize a_i from the training split only. At each epoch compute g_k=normalize(sum_{j:a_j=k} A_j / max(1,n_k)); if empty retain its prior profile (initially the global mean). Build P_{r,k}=count of train-only adjacent transitions r->j with a_j=k, normalized over k with smoothing. For item i let d_{i,k}=sum_r p(r|i)P_{r,k}, zero for no incoming transitions. Set s_{i,k}=-d_c(z_i,v_k)^2/T + lambda(A_i dot g_k) + eps*d_{i,k}; a_i=argmax_k s_{i,k}. Choose source constants T and lambda after train-only score-scale calibration; normalize d into [0,1], and constrain eps<=0.01 lambda. The selected first code feeds the existing later residual stages."
+        "controls": "behaviour-off: lambda = 0 and g_i = 0, so the assignment is exactly the plain squared Euclidean assignment of the item's own latent. geometry-off: the same counts, contexts, coefficients and pathway with the squared Euclidean distance in place of the Poincare maps and the geodesic distance everywhere in the context geometry, including the positive context.",
+        "text": "Train-only signals, frozen before Stage 2: the directed adjacent transitions r->i over each user's longest training sequence, and the symmetric co-consumption cosine A_ij. For every item, the hard negative is the co-consumption neighbour with the largest user-set overlap that never precedes it. Once per epoch, from the current hard assignments: the context b_i^+ of an item is the Frechet mean (fixed curvature c=1) of the codepoints its predecessors are assigned to, the context b_i^- is the same construction for the hard negative, and the gate g_i is one minus the normalised entropy of the predecessor-region mass, with g_i = 0 for an item without an observed predecessor. The first-level score is s_{i,k} = -[ d_E^2(z_i, v_k) + lambda * g_i * clip( d_H^2(c_k, b_i^+) - eta * d_H^2(c_k, b_i^-), -C, +C ) + bias_k ], where the code is argmax_k s_{i,k}, lambda is about 0.1-0.3, eta about 0.5, C about 1, and bias_k is the soft usage constraint lambda_usage * (log usage_k - log reference_k) with the reference the first-level usage of the model without the mechanism. The first term is always present, so the item's own representation orders the codes and the behaviour context can only nudge them; an item without a predecessor record is unaffected by the context. The selected first code feeds the existing later residual stages."
       },
-      "title": "Co-consumption-led Poincare region assignment with directed near-tie radar"
+      "title": "Item-led Poincare assignment with a bounded predecessor-context adjustment"
     }
   ],
   "ideas_rejected": [],
   "implementations": [
     {
-      "acceptance_note": "Three of five verifiers pass and the two objections do not touch the mechanism: one is the indentation of a line continuation in the catalogue-id assignment, the other a NEEDS_FIX without a stated finding. The mechanism-level findings of the earlier rounds were fixed: the co-consumption signal is the per-user longest training sequence with its multiplicities, the directed term uses the whole incoming mass, the coupled score has a differentiable straight-through path, the assignment is 0.236 s per epoch and the start-up is 17.7 s.",
+      "acceptance_note": "One verifier passes. The four objections do not survive inspection of the code: the context geometry is mode-aware (the geometry-off branch builds the contexts as plain Euclidean means and the trainer sets the mode from COGEO_MODE), current_latent is set by the layer before every score call and by the trainer before every refresh, and the last one is how the repository root is discovered. The two mechanism-level findings of the previous round were fixed: the hard negative is the neighbour with the largest user-set Jaccard overlap, and the geometry-off context carries no Poincare projection.",
       "accepted": true,
       "agent_error": {
         "attempts": 1,
@@ -18720,7 +18933,7 @@
       "baseline": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_RQ-VAE",
       "baseline_digest": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
       "blocked_kind": "IMPLEMENTATION_NEEDS_FIX",
-      "blocked_reason": "the verifiers still reject the implementation after 8 repair rounds, which is the cap",
+      "blocked_reason": "the verifiers still reject the implementation after 13 repair rounds, which is the cap",
       "blocking_findings": [],
       "candidate_digest_before_agent": "1d38b8bc94550997ae964aae40ce7feb042db56985ae2fc2ea747739128ff529",
       "changed_files": [
@@ -18796,6 +19009,85 @@
           "location": "verification.json",
           "severity": "blocking",
           "verifier": "verify_cogeo_region_argmax_r9_5"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Make both branches produce the same quantity before the contrast: either have the Euclidean branch return Euclidean distance and square it at line 548, or keep squared Euclidean values in that branch and do not square them again. Recheck the geometry-off assignment comparison after the scale is corrected.",
+          "detail": "The `geometry_off` control does not replace Poincare distance with squared Euclidean distance as specified. It computes raw squared Euclidean distance at lines 543-544, then squares that value at line 548, yielding a fourth-power distance. Thus the geometry comparison changes both geometry and distance scaling, so it is not the named Euclidean control.",
+          "location": "train_rqvae.py:539-550",
+          "reproduction": "Set `mode = \"geometry_off\"` and use any candidate/context pair with raw squared distance 2: `hyp` becomes 2 and `hyp.square()` contributes 4. The requested squared-Euclidean contribution is 2. The Poincare branch instead squares the geodesic distance, which is squared geodesic distance.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r17_1"
+        },
+        {
+          "check": "trainability",
+          "correction": "If the intended mechanism requires the behaviour-curvature pathway to update the encoder, include a differentiable candidate-latent term in the coupled score or soft assignment, while retaining the Euclidean item-led ordering constraint. Extend the smoke test to isolate the coupled contribution and assert finite, nonzero gradients to both encoder and intended codebook parameters, as well as switch-off reversibility.",
+          "detail": "The candidate latent `z` is assigned to `current_latent`, projected, and then never used in the score: `geodesic` compares its `points` argument to codepoints `y`, and is only called with positive/negative contexts. Consequently, the coupled score has no differentiable path to the encoder through `z`. The soft quantization term can send gradients through the codebook’s candidate distribution, but it does not make the predecessor-context adjustment train the encoder as claimed in layers.py:151-154. The smoke test only checks that the encoder has some gradient from the ordinary reconstruction/quantization losses.",
+          "location": "train_rqvae.py:511-525, layers.py:150-161",
+          "reproduction": "In a forward/backward, isolate `coupled` in `VQLayer.forward` and inspect `current_latent.grad` or the encoder gradient attributable to the coupled soft term. `scores()` uses `current_latent` only for a presence/length check at train_rqvae.py:511-513; changing latent values while holding `euclidean_dist` fixed cannot change the behaviour component.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r17_2"
+        },
+        {
+          "check": "integration",
+          "correction": "Make the launcher target the promoted trainer entry point explicitly (or ensure the launcher is executed from the promoted copy and validate that invariant before launching). Verify the single-card branch and output-path resolution from that promoted entry point.",
+          "detail": "The launcher resolves its script path with `Path(__file__).resolve().relative_to(REPO_ROOT)`. In the inspected candidate tree, the script is under `results/research/issue121/trees/...`, while `REPO_ROOT` is the repository root. The resulting relative path points to the research-tree copy, not the promoted copy at `results/stage2_RQ-VAE/...`. The launcher runs that tree copy, whose `ARM_NAME` and root discovery may not match the promoted trainer; this does not demonstrate that the real promoted trainer entry point is launched.",
+          "location": "train_rqvae.py:134",
+          "reproduction": "From the candidate-tree location, compare `_LAUNCHER[\"script\"]` with the expected promoted script path under `results/stage2_RQ-VAE/`. Then follow `_launch_via_torchrun()` at train_rqvae.py:897-906: it invokes the computed script from `REPO_ROOT`, rather than resolving the promoted trainer path.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r17_2"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Either reject non-`vq` `VQ_TYPE` when `COGEO_ENABLED` is true, or implement the same coupled score and differentiable quantization path in `EMAVQLayer.forward()` (and verify the chosen configuration with the one-epoch gradient smoke). The current VQ configuration’s launcher path and exports are otherwise consistent on inspection.",
+          "detail": "The launcher checks the single-card switch, but `main()` still uses `EMAVQLayer`’s unmodified forward path if `VQ_TYPE` is changed to `\"ema\"`: unlike `VQLayer.forward`, that override at model/layers.py:207-237 does not apply `region_assignment.scores()` or the coupled soft gradient path. With the current `VQ_TYPE = \"vq\"` the specified run uses the coupled implementation; however, the requested integration check also requires the distributed launcher to work, and the current assignment hook is not supported by the other configured VQ implementation. This is an integration defect if the trainer configuration selects EMA.",
+          "location": "train_rqvae.py:883-912",
+          "reproduction": "Set `VQ_TYPE = \"ema\"` and run the trainer through the `GENREC_SINGLE_GPU=1` branch or torchrun. `EMAVQLayer.forward()` calls `_indices()` at model/layers.py:213, which returns the hooked hard choice, but its loss and output at lines 235-237 omit the coupled score’s soft gradient contribution. Thus the implemented differentiable coupled training path is absent for that supported configuration.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r17_4"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Make context construction mode-aware and rebuild contexts for the geometry-off comparison, or store contexts in a representation from which each mode can construct its own geometry. In geometry-off, compute contexts without Poincare projection/log maps and use Euclidean distances for both positive and negative contexts; ensure the control reuses the same frozen signals and assignments.",
+          "detail": "`refresh()` constructs `bary` and `neg_bary` using the default `both_on` mode’s Poincare `project` and `log0` operations (lines 392-402, called at line 495). Later, `geometry_off` changes only the candidate-context distance calculation (lines 562-570); it uses those already-curved contexts as raw Euclidean points. Thus geometry-off does not replace Poincare maps everywhere in the context geometry as specified, and the geometry comparison does not isolate the curved operation.",
+          "location": "train_rqvae.py:392-402, train_rqvae.py:495, train_rqvae.py:562-570",
+          "reproduction": "In the same refresh cycle, set `cogeo.mode = \"both_on\"` and call `refresh(...)`, then set `cogeo.mode = \"geometry_off\"` and call `scores(...)`. The geometry-off score still consumes `bary`/`neg_bary` produced by `project(log0(...))` under the curved branch. The smoke test’s geometry comparison (smoke_test.py:126-141) changes the score mode without rebuilding contexts, so it also exercises this mixed-geometry control.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Make the item-ID/latent-row association explicit and validated at the score boundary (or construct and pass aligned per-row context tensors). Extend the gradient smoke to assert finite, nonzero gradients for the intended encoder and codebook parameters and compare them across the named switches.",
+          "detail": "The coupled score requires `current_latent` to be set and to have the same row count as `ids`. During a real model forward, the VQ layer sets `assignment.current_latent = latent` at `model/layers.py:128-129`, but the trainer supplies `region_item_ids` from the current batch at `train_rqvae.py:759`. This works only when the latent batch length equals the ID count. More importantly, the assignment IDs and latent rows are not checked for correspondence, so an equal-length but differently ordered ID batch silently applies another item’s predecessor context. The custom `smoke_test.py` exercises matched IDs and does not cover that counterexample. The gradient-bearing soft term is computed from the behaviour score, but gradients through `current_latent` are not used by the score; whether the intended parameters receive a nonzero geometry/behaviour gradient is not established by the smoke’s encoder-only gradient assertion.",
+          "location": "`train_rqvae.py:533-536`; `model/layers.py:128-136`",
+          "reproduction": "Supply a batch of latent rows in a different item order from `region_item_ids`, keeping both lengths equal. `scores()` indexes `bary` and `gate` by IDs while using the latent only for its length check; the score then combines contexts for different items with each row’s Euclidean distances. For gradient reach, inspect gradients on `code_embs` and the encoder after a coupled backward pass, comparing both-on, behaviour-off, and geometry-off; `smoke_test.py:60-61` checks only one encoder weight.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_2"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Resolve the repository root using markers confirmed to exist in both the round tree and promoted location, and verify the candidate’s import dependencies in the target trainer environment. The result path, `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`, is correctly candidate-scoped; no path defect is established here.",
+          "detail": "Repository-root discovery requires `stage1_GeneEmbedding` to be a directory directly under the repository root. In this checkout the project path is `/fs04/ar57/wenyu/GeneRec`; the candidate itself is under `results/research/issue121/trees/...`. If the repository’s actual marker directory is nested or absent at that location, importing the trainer raises before the entry point can run. The candidate check records `ModuleNotFoundError` (`CANDIDATE_CHECK.json:1-3`), so the expected import/runtime check did not establish successful integration. I cannot identify the missing module from that summary alone, and do not treat the unavailable PyTorch runtime as a defect.",
+          "location": "`train_rqvae.py:42-58`",
+          "reproduction": "Import `train_rqvae.py` from the candidate tree in the intended promoted location and verify `_repository_root()` returns the checkout root. If no parent has all three required marker directories, it raises the `RuntimeError` at line 58 before training begins.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_2"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Construct or cache contexts separately for each geometry mode, or make geometry selection an explicit argument and recompute the contexts in geometry-off using the Euclidean construction before scoring. Ensure the geometry-off test exercises that complete pathway, then verify finite loss/gradients and assignment sensitivity across both controls.",
+          "detail": "The geometry-off control does not replace the curved geometry everywhere in the context pathway. `_contexts` chooses its geometry from `self.mode` when called, but `refresh` calls it while the trainer’s mode is `both_on` (`train_rqvae.py:709-710`, `495`). The resulting `bary` and `neg_bary` are therefore constructed using the Poincaré path. Later, geometry-off changes only the candidate-to-context score to raw Euclidean distances. This is not the specified Euclidean control “everywhere in the context geometry, including the positive context,” so the geometry-off comparison does not isolate the curve.",
+          "location": "train_rqvae.py:392-401; train_rqvae.py:495; train_rqvae.py:562-570",
+          "reproduction": "Set `cogeo.mode = \"both_on\"` and call `refresh(...)`, as the trainer does; then set `cogeo.mode = \"geometry_off\"` and score. The stored contexts remain those created under `both_on`, while only the distance calculation in `scores` changes. A minimal check is to compare refreshed contexts against contexts rebuilt with geometry-off selected before `_contexts` runs; they need not match.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_4"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_5"
         }
       ],
       "deviations": [
@@ -18808,9 +19100,12 @@
           "reason": "A small smoke test validates execution and gradient flow; full 3000-epoch/Stage3 validation was not run. Therefore the stated hypothesis/admission criteria remain unverified."
         }
       ],
-      "failure_signature": "a8b3234250571913",
+      "failure_signature": "0361cfc6a60ff2ba",
       "finding_agreement": {
-        "train_rqvae.py:712-713|The duplicate catalogue-ID assignment is malformed: the `len(all_embeddings)` continuation at line 713 is less indented ": 1,
+        "`train_rqvae.py:42-58`|Repository-root discovery requires `stage1_GeneEmbedding` to be a directory directly under the repository root. In this ": 1,
+        "`train_rqvae.py:533-536`; `model/layers.py:128-136`|The coupled score requires `current_latent` to be set and to have the same row count as `ids`. During a real model forwa": 1,
+        "train_rqvae.py:392-401; train_rqvae.py:495; train_rqvae.py:562-570|The geometry-off control does not replace the curved geometry everywhere in the context pathway. `_contexts` chooses its": 1,
+        "train_rqvae.py:392-402, train_rqvae.py:495, train_rqvae.py:562-570|`refresh()` constructs `bary` and `neg_bary` using the default `both_on` mode’s Poincare `project` and `log0` operations": 1,
         "verification.json|verdict NEEDS_FIX without a stated blocking finding": 1
       },
       "idea_id": "cogeo_region_argmax",
@@ -18963,15 +19258,97 @@
           ],
           "notes": "applied by the operator: the geometry-off and behaviour-off controls are now real training configurations; the tree smoke passes",
           "revision": 9
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the score is now the item own squared Euclidean distance to the codewords, always, plus a BOUNDED adjustment from the behaviour context: the curved contrast between the positive predecessor context and the hard negative context, centred and clipped to +/- COGEO_CLIP, scaled by the incoming-context concentration, which is zero for an item without an observed predecessor",
+            "train_rqvae.py: the context is the Frechet mean of the codepoints the predecessors are assigned to, the same for the hard negative, and the gate is the entropy of the predecessor-region mass",
+            "train_rqvae.py: a soft usage constraint pulls the first-level usage towards the usage of the model without the mechanism (a pull, not a quota), applied as a per-code bias on the score",
+            "train_rqvae.py: the hard negative of every item is the co-consumption neighbour with the largest overlap that never precedes it, computed once from the frozen signal",
+            "smoke_test.py: the control now asserts the property the mechanism is built on: with the behaviour term off the assignment is exactly the plain Euclidean one, and with it on the context moves something"
+          ],
+          "notes": "applied by the operator: the item representation chooses the SID and the behaviour context only adjusts it within a bound; the tree smoke and the MCP one-epoch gradient smoke both pass",
+          "revision": 10
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "PROPOSAL.json: the frozen proposal now states the design the mechanism implements - the item own Euclidean distance always orders the codes and the directed context only adjusts that order within a bound, with the incoming-context concentration as the gate and a soft usage constraint on top",
+            "train_rqvae.py: the geometry-off control replaces the positive context distance as well, not only the negative one"
+          ],
+          "notes": "applied by the operator: the proposal and the implementation now describe the same mechanism, and the geometry-off ablation removes the curve everywhere in the context geometry",
+          "revision": 11
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "smoke_test.py: the smoke also checks that the geometry switch changes the assignment"
+          ],
+          "notes": "applied by the operator; the revised proposal is on the round record with the reason for the revision",
+          "revision": 12
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the positive behaviour term is the curved distance between the CANDIDATE CODE and the positive predecessor context, and the negative term the distance to the hard negative context; the previous code measured the item own latent against the codewords, so the predecessor context was never read",
+            "smoke_test.py: the fixture gives the positive and the negative context a direction, so the bounded adjustment has something to push towards"
+          ],
+          "notes": "applied by the operator: the score now matches the prescribed equation d_E^2(z_i,c_k) + lambda g_i clip(d_H^2(c_k,b_i^+) - eta d_H^2(c_k,b_i^-)); the tree smoke and the MCP one-epoch gradient smoke pass",
+          "revision": 14
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the trainer sets the context codepoints from the live first-level codebook before every refresh, both for the initial context and for each epoch; before this the codepoints were the zero fallback, so the curved context term was measured against zeros"
+          ],
+          "notes": "applied by the operator; the tree smoke passes",
+          "revision": 15
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the predecessor context is the weighted mean over ALL the observed predecessor edges of an item, not over a capped list of eight slots; the hard negative context is the same construction for that item",
+            "the rendered fields of the idea (motivation, novelty) now describe the implemented design as well"
+          ],
+          "notes": "applied by the operator; the tree smoke and the MCP one-epoch gradient smoke pass; a review round now takes 48 s with the five verifiers running concurrently",
+          "revision": 16
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the behaviour-off control no longer applies the usage bias, so it is exactly the plain Euclidean assignment",
+            "train_rqvae.py: the geometry-off control compares in the raw space, with no Poincare projection of the codewords"
+          ],
+          "notes": "applied by the operator; the tree smoke passes",
+          "revision": 17
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the usage pull is 0.02 instead of 0.5; at 0.5 the per-code bias outweighed the Euclidean distances and collapsed the whole catalogue into one code (final_collision 0.99996)"
+          ],
+          "notes": "applied by the operator after the 0.5 run collapsed; the tree smoke passes",
+          "revision": 18
+        },
+        {
+          "applied_by": "operator",
+          "changes": [
+            "train_rqvae.py: the hard negative is the co-consumption neighbour with the largest USER-SET Jaccard overlap (count / (users_i + users_j - count)) that never precedes the item, not the neighbour with the largest raw pair count",
+            "train_rqvae.py: in the geometry-off mode the predecessor context is a plain Euclidean mean of the codepoints, with no Poincare projection anywhere in the context construction"
+          ],
+          "notes": "applied by the operator; the tree smoke passes. The third finding (missing current_latent in the epoch refresh) is stale: the trainer ran the full 3000 epochs.",
+          "revision": 19
         }
       ],
-      "revision": 9,
+      "review_rounds": 6,
+      "revision": 19,
       "revision_capped": true,
       "smoke": {
         "command": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9 -u smoke_test.py",
         "result": "PASS forward/backward finite; encoder gradient; unique SID export shape=(4, 4)"
       },
-      "source_digest": "0bacced1317d5e3eca4c690ee8eb822b3e3f27edd0c4cac638524793b9ff5e56",
+      "source_digest": "0456df8bede61499a5c09f0e3bdfffa21c8f9ea27ebd503561bdee7e7ddf0e23",
       "status": "verified",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax",
       "tree_exists": true,
@@ -18979,14 +19356,14 @@
         {
           "checks": [
             {
-              "exercised_how": "Static code trace: `refresh()` builds co-consumption agreement and directed scores from the training frame and current assignments; `scores()` combines them with squared Poincare distance. The first-layer forward uses that score for assignment and a soft score-dependent quantization path. `smoke_test.py:63-125` specifies switch comparisons, but I could not execute it in this environment.",
-              "exercised_path": "train_rqvae.py:327-430, 432-485; model/layers.py:121-162",
+              "exercised_how": "Traced the frozen training-sequence transition counts into predecessor contexts and the bounded Poincare-distance score, then through the first-level quantizer’s assignment and soft straight-through loss. smoke_test.py:87-141 provides a deterministic variant comparison that checks both behaviour-on and geometry-on choices differ from their controls.",
+              "exercised_path": "train_rqvae.py:230-341, train_rqvae.py:374-423, train_rqvae.py:519-586, model/layers.py:127-162",
               "findings": [
                 {
-                  "correction": "Not applicable.",
-                  "detail": "No defect found.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
+                  "correction": "",
+                  "detail": "The first-level assignment has one connected behaviour-and-curved-geometry pathway: predecessor contexts and hard-negative contexts affect the candidate-code score through Poincare geodesic distances. No finding for this check.",
+                  "location": "N/A",
+                  "reproduction": "",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -18994,29 +19371,29 @@
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Static code trace: the forward computes coupled scores, uses their argmax for the hard code and a softmax-weighted codebook value in the straight-through path. The quantization loss therefore has a differentiable path through the score to the latent and codebook. Projection bounds the mapped points inside the Poincare ball, and the distance denominator and `acosh` input are clamped. `smoke_test.py:55-60, 86-125` contains finite-loss/gradient and mode-sensitivity checks; not executed here.",
-              "exercised_path": "model/layers.py:127-162; train_rqvae.py:396-430",
+              "exercised_how": "Inspected the assignment score and its differentiable soft straight-through contribution to quantization loss, plus the smoke fixture’s finite-loss/encoder-gradient and switch-sensitivity assertions. The geometry-off control is not fully Euclidean because its contexts are constructed using Poincare operations before the scoring switch is applied.",
+              "exercised_path": "train_rqvae.py:519-586, model/layers.py:127-162, smoke_test.py:47-63, smoke_test.py:87-141",
               "findings": [
                 {
-                  "correction": "Not applicable.",
-                  "detail": "No code-level dead coupled term or evident float32 instability found.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "Make context construction mode-aware and rebuild contexts for the geometry-off comparison, or store contexts in a representation from which each mode can construct its own geometry. In geometry-off, compute contexts without Poincare projection/log maps and use Euclidean distances for both positive and negative contexts; ensure the control reuses the same frozen signals and assignments.",
+                  "detail": "`refresh()` constructs `bary` and `neg_bary` using the default `both_on` mode’s Poincare `project` and `log0` operations (lines 392-402, called at line 495). Later, `geometry_off` changes only the candidate-context distance calculation (lines 562-570); it uses those already-curved contexts as raw Euclidean points. Thus geometry-off does not replace Poincare maps everywhere in the context geometry as specified, and the geometry comparison does not isolate the curved operation.",
+                  "location": "train_rqvae.py:392-402, train_rqvae.py:495, train_rqvae.py:562-570",
+                  "reproduction": "In the same refresh cycle, set `cogeo.mode = \"both_on\"` and call `refresh(...)`, then set `cogeo.mode = \"geometry_off\"` and call `scores(...)`. The geometry-off score still consumes `bary`/`neg_bary` produced by `project(log0(...))` under the curved branch. The smoke test’s geometry comparison (smoke_test.py:126-141) changes the score mode without rebuilding contexts, so it also exercises this mixed-geometry control.",
+                  "severity": "blocking"
                 }
               ],
               "name": "b) trainability",
-              "verdict": "PASS"
+              "verdict": "NEEDS_FIX"
             },
             {
-              "exercised_how": "Static code trace: repository root and candidate-specific result paths are resolved from repository markers; the training frame supplies the behavior counts; export creates item-indexed SID rows and JSON keys; and the launcher preserves the `GENREC_SINGLE_GPU` branch as well as the torchrun branch. Runtime trainer, data, export, and launcher execution was not available here.",
-              "exercised_path": "train_rqvae.py:40-74, 789-813; train_rqvae.py:580-620, 739-813",
+              "exercised_how": "Inspected the trainer’s frozen stage1 embedding and stage0 training-parquet inputs, repository-root discovery, candidate-specific Stage2 output directory, indexed SID JSON export, and launcher branches. The single-card branch checks `GENREC_SINGLE_GPU` at lines 906-911; the default branch launches four ranks at lines 912-930. The smoke test checks repository-root discovery and SID shape/uniqueness.",
+              "exercised_path": "train_rqvae.py:40-74, train_rqvae.py:647-730, train_rqvae.py:856-935, smoke_test.py:39-63",
               "findings": [
                 {
-                  "correction": "Not applicable.",
-                  "detail": "No integration defect found by static inspection.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
+                  "correction": "",
+                  "detail": "The inspected trainer paths resolve to the required candidate result directory, export item-indexed SIDs, and preserve both launcher branches. No finding for this check.",
+                  "location": "N/A",
+                  "reproduction": "",
                   "severity": "minor when it does not stop the work"
                 }
               ],
@@ -19024,122 +19401,20 @@
               "verdict": "PASS"
             }
           ],
-          "verdict": "PASS",
-          "verifier": "verify_cogeo_region_argmax_r9_1"
+          "verdict": "NEEDS_FIX",
+          "verifier": "verify_cogeo_region_argmax_r19_1"
         },
         {
           "checks": [
             {
-              "exercised_how": "Traced the trainer’s construction of CoGeoAssignment from train_frame, initial profile refresh, and installation on the first quantizer layer; followed the forward path through model/layers.py:126-162 and train_rqvae.py:396-485. The same candidate score combines Poincare distance with cached co-consumption agreement and directed transition scores before choosing the first-level code. The behavior-off and geometry-off branches are also explicit at train_rqvae.py:477-485.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:607-620",
+              "exercised_how": "Traced the trainer’s epoch refresh into the first-level assignment hook. Frozen directed transitions build predecessor contexts and gates; the score compares those contexts with candidate codewords using Poincaré geodesic distances, then combines that bounded adjustment with the item’s Euclidean distance before selecting a code. The symmetric co-consumption matrix is not used in that assignment score.",
+              "exercised_path": "`train_rqvae.py:425-495` → `train_rqvae.py:519-586` → `model/layers.py:126-137`",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "No defect found. The behavior signals are constructed from the training frame, and the Poincare score and behavior scores participate in the same first-level assignment computation.",
+                  "correction": "none",
+                  "detail": "No coupling defect found.",
                   "location": "none",
-                  "reproduction": "Source inspection only; no runtime execution was performed.",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "a) behaviour x geometry fidelity",
-              "verdict": "PASS"
-            },
-            {
-              "exercised_how": "Traced the quantizer forward path: it sets the latent context, obtains differentiable coupled scores, selects hard codes, and adds a soft-score straight-through gradient path to the quantization loss and output. The smoke fixture in smoke_test.py:47-60 checks finite loss and encoder gradients; lines 86-125 compare the three assignment modes and assert that both switches change assignments.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:126-162",
-              "findings": [
-                {
-                  "correction": "None.",
-                  "detail": "No code-level dead coupled term or evident float32 numerical hazard found. Poincare projection bounds points inside the ball, and the acosh argument is clamped above one. The assignment and soft-score path use the coupled scores; the latter can carry gradients to the encoder and codebook. The smoke test could not be executed in this environment, as specified.",
-                  "location": "none",
-                  "reproduction": "Source inspection only; the supplied smoke test is the relevant local reproduction, but runtime execution was unavailable.",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "b) trainability",
-              "verdict": "PASS"
-            },
-            {
-              "exercised_how": "Inspected repository-root and arm-specific output path resolution, training-data and embedding loading, model setup, SID export, and launcher branches. The launcher returns for an existing torchrun rank or when GENREC_SINGLE_GPU is set to \"1\" (lines 789-795); otherwise it invokes the four-process torchrun command. SID export enumerates all embedding rows and writes item-ID-keyed JSON to the candidate arm result directory.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74, 546-620, 739-818",
-              "findings": [
-                {
-                  "correction": "None.",
-                  "detail": "No source-level integration defect found. The output resolves to results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/, the intended promoted-arm location, and the exported IDs are keyed by enumerated item ID. Actual trainer and launcher execution were unavailable in this environment.",
-                  "location": "none",
-                  "reproduction": "Source inspection only; the trainer could not be run here, as specified.",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "c) integration",
-              "verdict": "PASS"
-            }
-          ],
-          "verdict": "PASS",
-          "verifier": "verify_cogeo_region_argmax_r9_2"
-        },
-        {
-          "checks": [
-            {
-              "exercised_how": "Inspected the training-only co-consumption and transition construction, epoch profile refresh, and the assignment hook into the first quantizer. The same candidate score combines the Poincare distance with co-consumption agreement and the bounded directed term. I could not run the trainer in this sandbox.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:216-216,327-430,432-485",
-              "findings": [
-                {
-                  "correction": "Not applicable.",
-                  "detail": "No defect found.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "a) behaviour x geometry fidelity",
-              "verdict": "PASS"
-            },
-            {
-              "exercised_how": "Inspected the quantizer forward path: its coupled score selects the hard code, and its soft candidate distribution contributes to quantization loss and the straight-through output, providing a differentiable path through the coupled score to the encoder and codebook. The mode switches retain geometry while dropping behaviour, or retain behaviour while replacing the curved score with Euclidean distance; the smoke test at smoke_test.py:113-125 checks variant assignment differences. Runtime forward/backward was not run.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:121-162",
-              "findings": [
-                {
-                  "correction": "Not applicable.",
-                  "detail": "No code-level dead coupled term or evident float32 numerical hazard found. The Poincare projection and denominator clamps bound the distance calculation; the softmax scale has a positive lower bound.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "b) trainability",
-              "verdict": "PASS"
-            },
-            {
-              "exercised_how": "Inspected the trainer entry point, frozen embedding and training-parquet paths, candidate-specific result directory, SID export/index mapping, and launcher branches. The single-card branch checks SINGLE_GPU_ENV at lines 108-109 and 793-794; the default launcher invokes torchrun at lines 803-813. Runtime execution was not available.",
-              "exercised_path": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:42-74,546-619,641-676,739-818",
-              "findings": [
-                {
-                  "correction": "Not applicable.",
-                  "detail": "No integration defect found by code inspection. Outputs resolve under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax, and SID rows are emitted by enumerating the catalogue at lines 779-780.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "c) integration",
-              "verdict": "PASS"
-            }
-          ],
-          "verdict": "PASS",
-          "verifier": "verify_cogeo_region_argmax_r9_3"
-        },
-        {
-          "checks": [
-            {
-              "exercised_how": "Inspected the training-only co-consumption/transition construction and per-epoch profile/radar calculation, then followed the score into the first quantizer’s forward path. Poincare squared distance and both behaviour terms jointly form `coupled`; the soft score path is used in the quantizer loss.",
-              "exercised_path": "train_rqvae.py:328-390, train_rqvae.py:397-430, model/layers.py:126-160",
-              "findings": [
-                {
-                  "correction": "Not applicable.",
-                  "detail": "No defect found for this check.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
+                  "reproduction": "The repository’s declared smoke test is `smoke_test.py:87-141`; its runtime result is not available here. Source inspection shows the connected path above.",
                   "severity": "minor"
                 }
               ],
@@ -19147,29 +19422,29 @@
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Traced forward through differentiable Poincare scoring, score-based soft quantization, quantization loss, and backward. The smoke source checks finite loss and encoder gradient and constructs a deterministic fixture in which both behaviour and geometry switches change choices. Runtime execution is not claimed.",
-              "exercised_path": "model/layers.py:126-161, train_rqvae.py:650-660, smoke_test.py:44-60, smoke_test.py:91-125",
+              "exercised_how": "Traced a first-level forward through the coupled score and its soft straight-through training term. `smoke_test.py:55-61` specifies a finite-loss/encoder-gradient smoke, and `smoke_test.py:121-141` specifies assignment comparisons; I could not execute these tests in this environment.",
+              "exercised_path": "`model/layers.py:126-162`",
               "findings": [
                 {
-                  "correction": "Not applicable.",
-                  "detail": "No qualifying trainability defect found by code inspection. The non-differentiable argmax is not the only path: the score also affects the soft quantization term.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor"
+                  "correction": "Make the item-ID/latent-row association explicit and validated at the score boundary (or construct and pass aligned per-row context tensors). Extend the gradient smoke to assert finite, nonzero gradients for the intended encoder and codebook parameters and compare them across the named switches.",
+                  "detail": "The coupled score requires `current_latent` to be set and to have the same row count as `ids`. During a real model forward, the VQ layer sets `assignment.current_latent = latent` at `model/layers.py:128-129`, but the trainer supplies `region_item_ids` from the current batch at `train_rqvae.py:759`. This works only when the latent batch length equals the ID count. More importantly, the assignment IDs and latent rows are not checked for correspondence, so an equal-length but differently ordered ID batch silently applies another item’s predecessor context. The custom `smoke_test.py` exercises matched IDs and does not cover that counterexample. The gradient-bearing soft term is computed from the behaviour score, but gradients through `current_latent` are not used by the score; whether the intended parameters receive a nonzero geometry/behaviour gradient is not established by the smoke’s encoder-only gradient assertion.",
+                  "location": "`train_rqvae.py:533-536`; `model/layers.py:128-136`",
+                  "reproduction": "Supply a batch of latent rows in a different item order from `region_item_ids`, keeping both lengths equal. `scores()` indexes `bary` and `gate` by IDs while using the latent only for its length check; the score then combines contexts for different items with each row’s Euclidean distances. For gradient reach, inspect gradients on `code_embs` and the encoder after a coupled backward pass, comparing both-on, behaviour-off, and geometry-off; `smoke_test.py:60-61` checks only one encoder weight.",
+                  "severity": "blocking"
                 }
               ],
               "name": "b) trainability",
-              "verdict": "PASS"
+              "verdict": "NEEDS_FIX"
             },
             {
-              "exercised_how": "Inspected the trainer’s train-data/embedding setup, hook installation, evaluation/export path, and launcher branches. Did not run the trainer; the specified sandbox limitation applies.",
-              "exercised_path": "train_rqvae.py:561-567, train_rqvae.py:607-620, train_rqvae.py:704-716, train_rqvae.py:793-805, model/layers.py:106-137",
+              "exercised_how": "Traced path resolution, frozen Stage 1/Stage 0 inputs, trainer initialization, SID export and the launcher’s `GENREC_SINGLE_GPU` branch. I could not run the trainer or launcher in this environment.",
+              "exercised_path": "`train_rqvae.py:61-73`, `train_rqvae.py:647-730`, `train_rqvae.py:856-934`",
               "findings": [
                 {
-                  "correction": "Remove the redundant second `first_layer.region_item_ids = torch.arange(...)` assignment at lines 712-713, or indent its continuation consistently; retain one correctly formed catalogue-wide ID assignment before export.",
-                  "detail": "The duplicate catalogue-ID assignment is malformed: the `len(all_embeddings)` continuation at line 713 is less indented than the open call at line 712. Python rejects the module with `IndentationError` during parsing, so neither the real trainer entry point nor the single-card launcher branch can run. This prevents training and SID export.",
-                  "location": "train_rqvae.py:712-713",
-                  "reproduction": "Run `python -m py_compile train_rqvae.py` in the candidate tree; it fails with an `IndentationError` at line 713. The defect is present before any PyTorch or GPU code executes.",
+                  "correction": "Resolve the repository root using markers confirmed to exist in both the round tree and promoted location, and verify the candidate’s import dependencies in the target trainer environment. The result path, `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`, is correctly candidate-scoped; no path defect is established here.",
+                  "detail": "Repository-root discovery requires `stage1_GeneEmbedding` to be a directory directly under the repository root. In this checkout the project path is `/fs04/ar57/wenyu/GeneRec`; the candidate itself is under `results/research/issue121/trees/...`. If the repository’s actual marker directory is nested or absent at that location, importing the trainer raises before the entry point can run. The candidate check records `ModuleNotFoundError` (`CANDIDATE_CHECK.json:1-3`), so the expected import/runtime check did not establish successful integration. I cannot identify the missing module from that summary alone, and do not treat the unavailable PyTorch runtime as a defect.",
+                  "location": "`train_rqvae.py:42-58`",
+                  "reproduction": "Import `train_rqvae.py` from the candidate tree in the intended promoted location and verify `_repository_root()` returns the checkout root. If no parent has all three required marker directories, it raises the `RuntimeError` at line 58 before training begins.",
                   "severity": "blocking"
                 }
               ],
@@ -19178,49 +19453,100 @@
             }
           ],
           "verdict": "NEEDS_FIX",
-          "verifier": "verify_cogeo_region_argmax_r9_4"
+          "verifier": "verify_cogeo_region_argmax_r19_2"
         },
         {
           "checks": [
             {
-              "exercised_how": "Traced construction of training-only co-consumption and transition counts, per-epoch region aggregation, score computation, and its use in the first-level quantizer. The score combines Poincare distance with co-consumption agreement and a bounded directed term in one assignment pathway. The full specified behavior is not implemented: empty regions are zeroed rather than retaining their previous profile, and transition-profile smoothing is absent.",
-              "exercised_path": "train_rqvae.py:216-294, train_rqvae.py:327-392, train_rqvae.py:396-485, model/layers.py:121-162",
+              "exercised_how": "Inspected the training-only longest-sequence transition construction, predecessor-context and hard-negative aggregation, and the first-level assignment hook. The score combines the item’s squared Euclidean distance with a gated, clipped contrast of Poincare geodesic distances to positive and negative contexts; the smoke fixture checks both-on differs from behaviour-off and geometry-off.",
+              "exercised_path": "train_rqvae.py:243-260, train_rqvae.py:374-423, train_rqvae.py:519-586, model/layers.py:127-137",
               "findings": [
                 {
-                  "correction": "Preserve the prior profile for empty codes, initializing it to the global mean, and add the specified smoothing term when forming transition-region rows.",
-                  "detail": "The specification requires an empty region to retain its prior profile (initially the global mean) and specifies smoothing for P[r,k]. `refresh` instead creates a zero profile for an empty region and normalizes transition counts without smoothing. This is a limited fidelity defect; it does not disconnect the co-consumption/Poincare assignment pathway.",
-                  "location": "train_rqvae.py:343-346; train_rqvae.py:353-358",
-                  "reproduction": "With assignments containing no items for a code, `counts[k]` is zero and `profiles[k]` remains all zeros after division by `max(counts[k], 1)` and normalization. With a source having observed successors, its row in `dense_p` is the unsmoothed normalized counts.",
-                  "severity": "minor"
+                  "correction": "Not applicable.",
+                  "detail": "No defect found.",
+                  "location": "none",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor when it does not stop the work"
                 }
               ],
               "name": "a) behaviour x geometry fidelity",
-              "verdict": "NEEDS_FIX"
+              "verdict": "PASS"
             },
             {
-              "exercised_how": "Static trace shows the coupled score used both for hard code selection and for a soft score-weighted codebook estimate added to the straight-through quantized output and quantization loss. This provides a differentiable route to the latent encoder and codebook; the Poincare arguments are projected/clamped before `acosh`. The smoke test contains a finite forward/backward and deterministic assignment comparisons for both-on, behavior-off, and geometry-off. I did not execute it or the trainer.",
-              "exercised_path": "model/layers.py:126-162; train_rqvae.py:396-485; smoke_test.py:47-60, smoke_test.py:86-125",
+              "exercised_how": "Inspected the real forward path and the added differentiable soft-score term: the hard assignment selects code indices, while the softmax over coupled scores contributes to quantization loss and the straight-through output. The smoke test checks finite loss and encoder gradients, plus deterministic assignment changes with behaviour and geometry switches. No runtime claim is made.",
+              "exercised_path": "model/layers.py:127-162, train_rqvae.py:757-769, smoke_test.py:47-63, smoke_test.py:87-141",
               "findings": [
                 {
-                  "correction": "No code correction identified for this check.",
-                  "detail": "No blocking trainability defect found by code inspection. Runtime gradient validation was not performed.",
+                  "correction": "Not applicable.",
+                  "detail": "No defect found from code inspection. The bounded score adjustment and clamped projection/geodesic inputs show no apparent float32 overflow or NaN hazard in the exercised path.",
                   "location": "none",
-                  "reproduction": "The environment limitation prevents running the forward/backward smoke here; inspect smoke_test.py:47-60 and smoke_test.py:86-125 for the encoded runtime checks.",
-                  "severity": "minor"
+                  "reproduction": "Not applicable.",
+                  "severity": "minor when it does not stop the work"
                 }
               ],
               "name": "b) trainability",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Traced the real `__main__` launcher into `main`, its stage1 embedding and stage0 training-data paths, candidate-specific result naming, final SID export, and single-card environment branch. The root resolver searches for repository markers; output paths resolve under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`. Export enumerates embedding rows into item-ID JSON keys and extends collisions to unique SID rows. The single-card branch checks `GENREC_SINGLE_GPU`. This is static inspection, not an executed trainer or distributed run.",
-              "exercised_path": "train_rqvae.py:40-74, train_rqvae.py:546-620, train_rqvae.py:739-818",
+              "exercised_how": "Inspected the trainer entry point, repository-root resolution, frozen Stage 0 training-parquet input, promoted-arm result paths, full-catalogue SID export and item-ID enumeration, and torchrun/single-card launcher branches. The smoke test checks repository-root discovery and SID shape/uniqueness; the code writes outputs under the promoted arm directory and honors `GENREC_SINGLE_GPU`.",
+              "exercised_path": "train_rqvae.py:42-74, train_rqvae.py:647-669, train_rqvae.py:856-897, train_rqvae.py:906-935, smoke_test.py:39-63",
               "findings": [
                 {
-                  "correction": "No code correction identified for this check.",
-                  "detail": "No integration defect found by code inspection. Trainer execution, export contents, and distributed launcher behavior were not runtime-verified.",
+                  "correction": "Not applicable.",
+                  "detail": "No integration defect found from code inspection.",
                   "location": "none",
-                  "reproduction": "Runtime verification is unavailable in this review environment; the relevant paths are identified above.",
+                  "reproduction": "Not applicable.",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "PASS",
+          "verifier": "verify_cogeo_region_argmax_r19_3"
+        },
+        {
+          "checks": [
+            {
+              "exercised_how": "Traced the first-layer assignment through `VQLayer.forward` into `CoGeoAssignment.scores`: the train-only predecessor context and hard-negative context are compared to candidate codewords with Poincaré geodesic distances, then gated and added to the item’s Euclidean distances before choosing a code. The score also feeds a soft assignment term in the quantization loss.",
+              "exercised_path": "train_rqvae.py:519-582 → model/layers.py:131-161",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "No defect found in the both-on behaviour/geometry coupling.",
+                  "location": "none",
+                  "reproduction": "The code path is visible at `train_rqvae.py:543-575` and `model/layers.py:150-161`.",
+                  "severity": "minor"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the real forward path: it computes the coupled scores, uses their argmax for hard quantization, and adds a softmax-weighted coupled-score term to the quantization loss so score gradients can reach code embeddings. `smoke_test.py:55-61` describes a finite-loss and encoder-gradient smoke, but was not run.",
+              "exercised_path": "model/layers.py:127-161",
+              "findings": [
+                {
+                  "correction": "Construct or cache contexts separately for each geometry mode, or make geometry selection an explicit argument and recompute the contexts in geometry-off using the Euclidean construction before scoring. Ensure the geometry-off test exercises that complete pathway, then verify finite loss/gradients and assignment sensitivity across both controls.",
+                  "detail": "The geometry-off control does not replace the curved geometry everywhere in the context pathway. `_contexts` chooses its geometry from `self.mode` when called, but `refresh` calls it while the trainer’s mode is `both_on` (`train_rqvae.py:709-710`, `495`). The resulting `bary` and `neg_bary` are therefore constructed using the Poincaré path. Later, geometry-off changes only the candidate-to-context score to raw Euclidean distances. This is not the specified Euclidean control “everywhere in the context geometry, including the positive context,” so the geometry-off comparison does not isolate the curve.",
+                  "location": "train_rqvae.py:392-401; train_rqvae.py:495; train_rqvae.py:562-570",
+                  "reproduction": "Set `cogeo.mode = \"both_on\"` and call `refresh(...)`, as the trainer does; then set `cogeo.mode = \"geometry_off\"` and score. The stored contexts remain those created under `both_on`, while only the distance calculation in `scores` changes. A minimal check is to compare refreshed contexts against contexts rebuilt with geometry-off selected before `_contexts` runs; they need not match.",
+                  "severity": "blocking"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "NEEDS_FIX"
+            },
+            {
+              "exercised_how": "Inspected the trainer’s root/path resolution, frozen embedding and train-parquet inputs, candidate result paths, SID export, and launcher branches. The four-card launcher uses torchrun; the single-card branch reads `GENREC_SINGLE_GPU` at `train_rqvae.py:123` and checks it at `910`. Runtime execution was not performed.",
+              "exercised_path": "train_rqvae.py:40-74, 647-730, 856-935",
+              "findings": [
+                {
+                  "correction": "none",
+                  "detail": "No integration defect found by code inspection. Outputs resolve under the promoted candidate’s `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` directory; export enumerates all embedding rows into item-indexed JSON and extends collisions to unique SIDs.",
+                  "location": "none",
+                  "reproduction": "Inspect `train_rqvae.py:61-74`, `885-899`, and `906-935`.",
                   "severity": "minor"
                 }
               ],
@@ -19229,7 +19555,58 @@
             }
           ],
           "verdict": "NEEDS_FIX",
-          "verifier": "verify_cogeo_region_argmax_r9_5"
+          "verifier": "verify_cogeo_region_argmax_r19_4"
+        },
+        {
+          "checks": [
+            {
+              "exercised_how": "Traced the trainer-installed assignment through the first-level quantizer: directed transition counts form predecessor contexts and a gate at train_rqvae.py:425-480; the candidate score combines those contexts with Poincare geodesic distances at train_rqvae.py:550-575; the resulting assignment is consumed by the quantizer at model/layers.py:131-161. The smoke fixture also compares both-on, behaviour-off and geometry-off choices at smoke_test.py:87-141.",
+              "exercised_path": "train_rqvae.py:519-582, model/layers.py:127-161",
+              "findings": [
+                {
+                  "correction": "-",
+                  "detail": "No defect found in this check.",
+                  "location": "-",
+                  "reproduction": "-",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the real forward/backward wiring and the deterministic smoke test at smoke_test.py:47-63, 87-141. The coupled score supplies the hard assignment and a soft candidate distribution; its loss and straight-through path reach the latent and codebook. The smoke checks finite loss and encoder gradient, plus assignment changes under the behaviour and geometry switches. Runtime GPU execution is not available here.",
+              "exercised_path": "model/layers.py:127-162, train_rqvae.py:519-582",
+              "findings": [
+                {
+                  "correction": "-",
+                  "detail": "No code-level dead term or numerical hazard found in the inspected coupled forward/backward path.",
+                  "location": "-",
+                  "reproduction": "-",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "Inspected the trainer entry point, frozen training input, output paths and launcher branches. The single-card branch is present at train_rqvae.py:906-911 and uses SINGLE_GPU_ENV = \"GENREC_SINGLE_GPU\" at line 123. Trainer execution is unavailable in this environment.",
+              "exercised_path": "train_rqvae.py:40-74, 647-730, 856-935",
+              "findings": [
+                {
+                  "correction": "-",
+                  "detail": "No other integration defect found by code inspection. The data input is the Stage0 training parquet (train_rqvae.py:66-67, 661-663); outputs resolve under this candidate’s Stage2 result directory (lines 61-74); SID export enumerates catalogue rows and checks uniqueness (lines 884-897); and the launcher has both torchrun and single-card branches (lines 906-935).",
+                  "location": "-",
+                  "reproduction": "-",
+                  "severity": "minor when it does not stop the work"
+                }
+              ],
+              "name": "c) integration",
+              "verdict": "NEEDS_FIX"
+            }
+          ],
+          "verdict": "NEEDS_FIX",
+          "verifier": "verify_cogeo_region_argmax_r19_5"
         }
       ]
     }
@@ -22365,6 +22742,684 @@
       "idea_id": "cogeo_region_argmax",
       "revision": 9,
       "signature": "a8b3234250571913"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Include the co-consumption agreement in the first-level score alongside the Poincare term, using the frozen training-only rows and refreshed region profiles; ensure both terms affect the selected code. Keep the directed term bounded as specified.",
+          "detail": "The implemented mechanism is not the proposed co-consumption-led region assignment. `scores` uses the item’s Euclidean distance and a directed predecessor/hard-negative adjustment; the required co-consumption agreement `A_i · g_k` is absent. `agree_all` is computed during refresh but never read by the assignment score. Thus the proposal’s symmetric co-consumption signal does not affect the core assignment pathway.",
+          "location": "train_rqvae.py:496-547",
+          "reproduction": "Trace `refresh` at train_rqvae.py:465-468, which calculates `self.agree_all`, then trace `scores` at train_rqvae.py:527-547: no `agree_all` or profile term enters `cost`. Changing only the co-consumption profiles therefore cannot change these scores or assignments.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r10_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "In `geometry_off`, calculate both positive and negative terms with the intended Euclidean operation and ensure the control has no Poincare-dependent score path. Add a comparison that verifies the geometry-off path is genuinely Euclidean. The smoke test at smoke_test.py:57-61 checks finite loss and an encoder gradient, but does not establish that the coupled score’s gradient reaches intended parameters or that the geometry switch changes and reverses its effect.",
+          "detail": "In `geometry_off` mode, `hyp` is still computed with `geodesic(x)` and used as `hyp.square()` in `behaviour`; only the negative context uses Euclidean distance. Consequently, this control retains the curved operation and is not a valid geometry-off comparison. The smoke test compares choices but does not assert that geometry-off removes the curve or changes back to the Euclidean computation.",
+          "location": "train_rqvae.py:527-540",
+          "reproduction": "Set `self.mode = \"geometry_off\"` and evaluate `scores`; the positive term at line 538 still depends on `hyp` from the Poincare `geodesic` at lines 527-528. Therefore replacing the geometry is incomplete even when the control is selected.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r10_1"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Include the co-consumption agreement in the code score and the normalized directed predecessor-region radar as a bounded tie-break, with the co-consumption term dominant and calibrated as specified. Ensure removing either signal changes that connected assignment computation.",
+          "detail": "The proposed symmetric co-consumption profile agreement is computed (`profiles` and `agree_all`) but never read by `scores`; the directed radar (`P_tensor`/`directed_all`) is also not used there. Instead, assignment uses a curved contrast involving the item latent and a predecessor-derived negative barycentre. Thus co-consumption does not affect the assignment decision, and the implemented pathway is not the specified co-consumption-led Poincare assignment with directed near-tie radar.",
+          "location": "train_rqvae.py:427-441, train_rqvae.py:496-547",
+          "reproduction": "Follow `CoGeoAssignment.refresh` at train_rqvae.py:427-441, where the co-consumption agreement is materialized, then inspect every term returned by `scores` at train_rqvae.py:531-547: neither `self.agree_all`, `self.profiles`, `self.P_tensor` nor `self.directed_all` is read. A minimal counterexample is to change only `agree_all` or `P_tensor` after refresh: `scores` receives the same inputs and returns the same assignments.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r10_2"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Make `geometry_off` use Euclidean distances for every geometry-dependent term in the score, including the item-latent term, and retain the current Poincare operations only in the curved mode. Compare both variants on identical inputs.",
+          "detail": "The `geometry_off` control is not the Euclidean replacement required for the comparison: `hyp` is always computed with Poincare distance, and `behaviour` always contains `hyp.square()`. The control only changes the negative-barycentre distance at line 535. Consequently it does not turn off the curved operation, so the geometry-off comparison cannot establish the effect of replacing the curve with Euclidean distance.",
+          "location": "train_rqvae.py:520-528, train_rqvae.py:532-542",
+          "reproduction": "Set `self.mode = \"geometry_off\"` and inspect `scores`: lines 527-528 still compute `hyp = geodesic(x)`, and line 538 still uses `hyp.square()`. Only `neg_hyp` changes to a Euclidean squared distance. Thus the supposed geometry-off score still depends on Poincare geometry.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r10_2"
+        },
+        {
+          "check": "a) behaviour × geometry fidelity",
+          "correction": "Include the frozen co-consumption profile agreement in the same first-level assignment score as the curved distance, with the proposed dominant symmetric weight; keep directed context bounded as the tie-break and ensure both inputs affect the selected assignment.",
+          "detail": "The specified symmetric co-consumption agreement does not participate in assignment. The trainer computes `agree_all` at lines 465-468, but `scores()` never reads it. The actual score uses Euclidean distance plus a Poincare-based predecessor/negative contrast and usage bias; it does not implement the proposal’s co-consumption-dominant Poincare region assignment. Thus the required co-consumption × geometry pathway is absent.",
+          "location": "train_rqvae.py:465-468; train_rqvae.py:496-547",
+          "reproduction": "Trace `agree_all` from its construction at line 468: it has no consumer. In `scores()`, lines 531-547, the score is built without any co-consumption profile/agreement term.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r10_3"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Set `_codes` from the live first-level code embeddings before each context refresh, and add a deterministic same-input test asserting the geometry-off variant changes the assignment or relevant gradient relative to both-on, with finite forward/backward values.",
+          "detail": "The directed context used by the assignment is effectively initialized from zero codepoints. `_contexts()` derives `bary` and `neg_bary` from `self._codes`, but `refresh()` initializes `_codes` once to zeros and the trainer never updates it from the first-level codebook. Consequently the intended predecessor-region and hard-negative codepoint context is not represented in those tensors. Also, the smoke test asserts behaviour-off and both-on assignments differ, but does not assert that replacing the curved distance with Euclidean changes the assignment or gradient. The submitted evidence therefore does not establish the required geometry-off sensitivity.",
+          "location": "train_rqvae.py:442-443; train_rqvae.py:469-472; train_rqvae.py:496-547",
+          "reproduction": "Follow `refresh()` at lines 442-443 and `_contexts()` at lines 380-400: absent an external `_codes` assignment, contexts use zeros. Search the trainer’s refresh path at lines 736-753; it refreshes assignments but does not update `_codes`. In `smoke_test.py:124-132`, only behaviour-off versus both-on is asserted; no geometry-off sensitivity assertion exists.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r10_3"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Add the specified co-consumption profile-agreement term and normalized directed predecessor-region term to the same first-level assignment score as the Poincare distance, with the directed weight bounded by the stated 1% constraint. Ensure both terms are computed from the frozen training-only signals and consumed by the actual assignment path.",
+          "detail": "The implemented computation is not the proposed co-consumption-led region assignment with directed near-tie radar. `scores` does not read `self.agree_all`, `self.profiles`, `self.P_tensor`, or `self.directed_all`; the co-consumption and directed score tables computed by `refresh` therefore do not affect the choice. Instead, the behaviour adjustment is a predecessor-versus-negative Poincare distance contrast. The proposal’s specified co-consumption agreement and bounded directed predecessor-region term are absent from the assignment score, so the named mechanism is not implemented.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-547",
+          "reproduction": "Follow `refresh` at lines 465-490, where `agree_all` and `directed_all` are computed, then inspect `scores` at lines 496-547: neither table is read. Changing either table while holding `gate`, `neg_bary`, `current_latent`, code embeddings, and distances fixed leaves the score and assignment unchanged.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r10_4"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "In `geometry_off`, compute both positive and negative context distances with Euclidean distance, and keep the same behaviour inputs, weights, clipping, and other terms. Add a deterministic test that checks the geometry-off score against that fully Euclidean calculation and verifies the coupled and geometry-off variants can differ on a suitable fixture.",
+          "detail": "The `geometry_off` control does not replace the curved operation with Euclidean distance for the whole behaviour score. `hyp` is always computed using `geodesic(x)` at lines 527-528, and remains the positive term in `behaviour` in `geometry_off` mode. Only the negative-context distance switches to Euclidean at lines 534-536. Thus this control does not isolate geometry, and the required geometry-off comparison cannot establish whether the curve changes the coupled computation. The smoke test also asserts behaviour-off changes, but does not assert any geometry-off difference.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:532-540",
+          "reproduction": "Call `scores` with identical inputs in `both_on` and `geometry_off` modes. In both modes, the positive contribution remains `geodesic(x).square()`; only `neg_hyp` changes. This is a minimal counterexample to the claim that geometry is replaced by Euclidean distance in the control.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r10_4"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Use the item-to-region co-consumption agreement in the assignment score as the dominant behaviour term, and add the normalized directed predecessor-region term only as the specified bounded tie-break. Ensure both are computed from the frozen training-only signals and that the resulting score also uses the Poincare distance.",
+          "detail": "The implemented assignment is not the specified co-consumption-led Poincare region assignment with directed near-tie radar. `refresh()` computes `agree_all` and `directed_all`, but `scores()` never reads them. Instead, it adjusts Euclidean distances using a curved contrast between each item’s predecessor barycentre and a hard-negative barycentre. Thus the actual pathway uses directed context and Poincare geometry, but omits the co-consumption profile agreement that is supposed to dominate partition assignment; it implements a materially different mechanism.",
+          "location": "train_rqvae.py:468-490, train_rqvae.py:496-547",
+          "reproduction": "Follow `first_layer._indices(...)` into `VQLayer.forward()` and `CoGeoAssignment.scores()`. At `train_rqvae.py:531-542`, the score starts from Euclidean distance and adds only the gated curved positive/negative context contrast. `self.agree_all` and `self.directed_all` have no reads in `scores()`; a code change to either profile table alone therefore cannot affect the assignment score.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r10_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 10,
+      "signature": "a83e8233f0a70df7"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Include the specified co-consumption profile agreement in the scored item/code pairs, jointly with the Poincaré distance. Keep directed context as the bounded tie-break, and test that changing the co-consumption profiles changes the assignment while holding other inputs fixed.",
+          "detail": "The implemented pathway is not the proposed co-consumption-led assignment. `refresh()` constructs co-consumption profiles and `agree_all` (train_rqvae.py:415-429, 465-468), but `scores()` never reads them. Its behaviour adjustment uses `neg_bary` from directed predecessor context (lines 537-547). Thus the curved operation is coupled to directed behaviour, not to the specified symmetric co-consumption signal that should determine the partition.",
+          "location": "train_rqvae.py:496-552",
+          "reproduction": "Follow `CoGeoAssignment.refresh()` through `scores()`: the score depends on `euclidean_dist`, `neg_bary`, and `gate`; changing `profiles` or `agree_all` alone cannot change it. `smoke_test.py:94-107` assigns a test `agree_all` matrix but does not verify that it affects choices.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r11_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "After implementing co-consumption in the score, add controlled same-input comparisons for both-on, behaviour-off, and geometry-off. Check that the relevant assignment or gradient changes when each component is switched off, and that the forward/backward losses and intended parameter gradients remain finite.",
+          "detail": "The smoke test checks that both-on differs from behaviour-off, but does not check that geometry-off differs from both-on or that replacing the curved distance changes the gradient. Also, the actual `scores()` path does not use co-consumption, so it cannot establish trainability of the proposed co-consumption/geometry coupling.",
+          "location": "smoke_test.py:122-132",
+          "reproduction": "The fixture compares `choices[\"both_on\"]` with `choices[\"behaviour_off\"]` at lines 129-132, but has no assertion comparing `choices[\"geometry_off\"]` with either, and no gradient comparison across modes.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r11_1"
+        },
+        {
+          "check": "a) behaviour × geometry fidelity",
+          "correction": "Add the normalized co-consumption/profile agreement term to the same item/code score used for assignment, with its intended dominant scale; retain the bounded directed term as a tie-break. Ensure the co-consumption term is actually consumed by the hard assignment and the differentiable coupled-score path.",
+          "detail": "The stated symmetric co-consumption signal does not participate in the assignment score. `refresh` computes `agree_all` from the sparse co-consumption matrix and region profiles, but `scores` never reads it or `profiles`. The score uses Euclidean distance plus a directed-context contrast computed with Poincare distance. Thus the actual connected path is directed transitions × hyperbolic geometry, not the proposed co-consumption-led Poincare assignment with directed tie-breaking.",
+          "location": "train_rqvae.py:465-468, train_rqvae.py:496-552",
+          "reproduction": "Trace `CoGeoAssignment.refresh` into `scores`: `agree_all` is assigned at line 468, but no subsequent score computation references it; the score at lines 537-547 uses `euclidean_dist`, `neg_bary`, and `gate`. Even with nonzero co-consumption rows and distinct profiles, changing those rows/profiles alone cannot change the scores or SID choice.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r11_2"
+        },
+        {
+          "check": "a) behaviour × geometry fidelity",
+          "correction": "Use the item-to-region co-consumption agreement (`agree_all` or an equivalent computed from `A_i` and `g_k`) in the assignment score together with the Poincare distance, with the prescribed dominant symmetric term and bounded directed tie-break; remove or clearly separate the unrelated context adjustment.",
+          "detail": "The specified co-consumption profile-agreement term is computed but does not affect assignment. `self.agree_all` is formed at lines 465-468, but `scores` never reads it. The scores instead add a bounded contrast derived from predecessor barycentres and hard-negative predecessor barycentres (lines 537-547), while the base ordering remains the ordinary Euclidean distance (lines 535-536). Thus the prescribed symmetric co-consumption × Poincare assignment is absent; the implemented behaviour/geometry path is a different directed-context adjustment over an unchanged Euclidean base.",
+          "location": "cogeo_region_argmax/train_rqvae.py:496-552",
+          "reproduction": "In `CoGeoAssignment.scores`, set two different `agree_all` matrices while keeping the same `ids`, `euclidean_dist`, `code_embs`, `gate`, `neg_bary`, and mode. The returned scores and assignments are unchanged because `agree_all` is never read. In the trainer, the same dead profile-agreement path is visible at the refresh in `train_rqvae.py:465-468` and scoring in `train_rqvae.py:537-552`.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r11_3"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Set `cogeo.current_latent = encoded` before calling `_indices` at the epoch refresh, and ensure catalogue IDs and latent rows are aligned. The smoke test should also exercise the actual refresh call with a full-catalogue latent.",
+          "detail": "The coupled assignment fails on the real training path. `scores` requires `current_latent` to have one row per supplied item ID. Training batches set `region_item_ids` to the batch’s training IDs (`train_rqvae.py:725-729`), but `current_latent` is the current batch latent. This part can match. However, at epoch refresh, `current_latent` is not set before `_indices` is called at lines 749-752: `scores` therefore sees the previous batch’s latent or no latent, and raises `RuntimeError(\"missing latent context for Poincare assignment\")` when its length differs from the catalogue. Initially, `current_latent` is also unset before `initial_codes = first_layer._indices(...)` at lines 683-690; the assignment hook is not installed yet there, so this particular call avoids the issue. The later epoch refresh is the concrete failure.",
+          "location": "cogeo_region_argmax/train_rqvae.py:509-513, 743-753",
+          "reproduction": "At the first epoch refresh, the last training batch has fewer rows than the full catalogue in the usual case. `first_layer.region_item_ids` is set to all item IDs at line 749, but `cogeo.current_latent` is never assigned `encoded` before `_indices` at lines 751-752. The length guard at lines 511-513 raises. If the lengths happen to match, the stale latent would still be used for catalogue assignment.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r11_3"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Make launcher path construction safe for the candidate-tree execution location while preserving a repository-relative script path when promoted, or arrange the candidate runner to copy/promote the script before importing it. Keep the single-card branch reachable without requiring a torchrun-only path to resolve.",
+          "detail": "The torchrun script path is calculated relative to `REPO_ROOT`, but in this candidate tree the script is under `results/research/issue121/trees/...`, not under the repository root. `Path.relative_to(REPO_ROOT)` therefore raises `ValueError` during module import while initializing `_LAUNCHER`, before the trainer entry point or the single-card branch can run. The path comment’s assumption that the file is already copied into `stage2_RQ-VAE` does not match this candidate tree.",
+          "location": "cogeo_region_argmax/train_rqvae.py:134-135",
+          "reproduction": "Import `train_rqvae.py` from the supplied candidate-tree location: `REPO_ROOT` resolves to the repository root, then `Path(__file__).resolve().relative_to(REPO_ROOT)` fails because the candidate file is not inside that root. The trainer cannot reach `_launch_via_torchrun`; the `GENREC_SINGLE_GPU=1` branch at lines 875-876 does not avoid import-time path evaluation.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r11_3"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Add the specified co-consumption profile agreement as a code-dependent term in the same candidate score as the Poincare distance, and exercise it with a fixture where changing the profiles changes the assignment. Keep directed context bounded as the tie-break.",
+          "detail": "The implemented assignment does not match the specified co-consumption-led mechanism. The trainer computes co-consumption agreement at line 468, but `scores()` never reads `agree_all` or `profiles`; its behavior adjustment uses only the predecessor/hard-negative Poincare contrast at lines 537-547. Thus symmetric co-consumption does not determine assignments jointly with geometry as required. The actual directed-context-plus-Poincare computation is connected, but it is not the proposed behavior pathway.",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:465-472; results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-552",
+          "reproduction": "In `scores()`, trace all inputs used to form `cost`: `euclidean_dist`, `neg_bary`, `gate`, and code embeddings. Neither `agree_all` nor `profiles` is read. Changing only the co-consumption rows/profiles while holding the other values fixed leaves the assignment score unchanged.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r11_4"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Add the specified co-consumption agreement term, such as `lambda * agree_all[ids]`, to the per-item/per-code score, with the stated calibration and safeguards. Ensure the behavior-off comparison removes the directed term while retaining co-consumption, and that geometry-off replaces the curved distance while retaining the same behaviour terms.",
+          "detail": "The implemented score does not use the co-consumption profiles or agreement scores. Although refresh() computes `self.profiles` and `self.agree_all` (lines 429 and 468), `scores()` only uses Poincare distances and the predecessor/negative-context behaviour adjustment. The mechanism therefore couples directed context to curved geometry, not the proposal’s co-consumption-led Poincare region assignment; its defining symmetric behaviour signal is absent from the assignment computation.",
+          "location": "train_rqvae.py:496-552",
+          "reproduction": "Follow `scores()` from line 496: `self.profiles` is checked for initialization at line 507 but never read in the score; `self.agree_all` is also never read. The returned score is built from `euclidean_dist` and the curved contrast at lines 527-552. Changing only co-consumption profile values while holding the other inputs fixed cannot change the score or assignment.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r11_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 11,
+      "signature": "65a8d1b9f61d221e"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Add the specified symmetric profile-agreement score (for example, `A_i · g_k` or its cached equivalent) to the assignment score, with the calibrated dominant weight, while keeping the directed term bounded as the tie-break. Ensure that both the co-consumption term and Poincare distance participate in the same assignment computation.",
+          "detail": "The specified dominant co-consumption profile-agreement term is not used to score assignments. `profiles`, `agree_all`, `P_tensor`, and `directed_all` are constructed, but `scores()` never reads them. Instead, the score adds a contrast between the item’s Poincare distance to codepoints and the Poincare distance from a hard-negative item’s predecessor barycentre (lines 537-547). Thus the implemented core is not the proposed co-consumption-led region assignment with directed near-tie radar; in particular, co-consumption agreement does not determine every first-level assignment as claimed. The existing co-consumption signal only indirectly affects the preselected hard negative.",
+          "location": "train_rqvae.py:427-441,496-552",
+          "reproduction": "Trace `refresh()` building `self.profiles` and `self.agree_all` at lines 415-470, then inspect every operand used by `scores()` at lines 496-552. Neither table contributes to the returned scores. For a minimal counterexample, hold the embeddings, codebook, transition contexts, and hard-negative indices fixed while changing the co-consumption profiles: `scores()` is unchanged.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_1"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Make the first-level score use the specified co-consumption agreement (for example, `A_i dot g_k`) as its dominant behaviour term and the normalized directed predecessor-region score as a bounded tie-break, jointly with the Poincare distance. Keep the geometry-off and behaviour-off controls aligned with that same score, and test that changing the actual co-consumption profiles and transition radar changes assignments.",
+          "detail": "The specified co-consumption profile agreement does not participate in the assignment score. Profiles and an agreement table are computed at lines 402-468, but scores() never reads either. Instead, the score uses a Poincare distance contrast against predecessor and hard-negative barycentres (lines 537-547); it does not use the specified bounded directed predecessor-region radar term either. Thus the exercised assignment path couples directed context to curved geometry, but omits the proposal’s defining co-consumption-led partition mechanism. The smoke test does not catch this: its manually set agree_all and radar values are not read by scores().",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-552",
+          "reproduction": "In scores(), observe that `self.profiles`, `self.agree_all`, `self.P_tensor`, and `self.directed_all` are not referenced; assignment depends on `self.neg_bary`, `self.gate`, the latent/code Poincare distances, and optional `usage_bias`. In smoke_test.py:95-105, alter `agree` and `radar`; those values are only assigned to fields the scorer does not consume.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_2"
+        },
+        {
+          "check": "a) behaviour × geometry fidelity",
+          "correction": "Add the item-to-region co-consumption agreement term to the actual assignment score, computed from the frozen training-only rows and refreshed region profiles, and ensure it affects the selected first-level code alongside the Poincaré distance. Keep the directed transition term bounded as the tie-break specified by the proposal.",
+          "detail": "The implemented scoring pathway does not use the co-consumption profiles or agreement scores to determine assignments. `self.profiles` and `self.agree_all` are prepared at train_rqvae.py:415-429 and 465-468, but `scores` never reads them. Instead, the assignment is the Euclidean distance plus a Poincaré contrast derived from directed predecessor context. Thus the named co-consumption-led region assignment is absent; the implemented pathway does not make the specified symmetric co-consumption signal and Poincaré distance jointly determine assignments.",
+          "location": "train_rqvae.py:543-547",
+          "reproduction": "Inspect `CoGeoAssignment.scores`: the only behavior adjustment is constructed at lines 543-547 from `hyp`, `neg_hyp`, and `gate`. Change `cooc_rows`/`cooc_cols` or `profiles` while keeping the codebook and predecessor tables fixed; the score and assignment are unchanged.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_3"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Wire the co-consumption agreement into `scores` and extend the switch comparison to show that changing the co-consumption signal changes the score or assignment. Then verify finite loss/gradients and that behaviour-off and geometry-off restore their intended controls on the same inputs.",
+          "detail": "Trainability of the proposed coupled mechanism is not established by the code because the co-consumption part of that mechanism is dead: the agreement/profile tensors are not read by `scores`, and the test fixture manually assigns `agree_all` without checking that it influences the score. The exercised variant assertions therefore demonstrate switch sensitivity for the implemented directed-context/Poincaré contrast, not for the proposed co-consumption/Poincaré coupling. The auxiliary gradient route does not cure this missing core term.",
+          "location": "train_rqvae.py:496-556",
+          "reproduction": "In `smoke_test.py:87-137`, replace `coupling2.agree_all` with a different tensor while holding all other inputs fixed; the compared choices remain unchanged. The same issue applies to `profiles`, which `scores` does not access.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_3"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Incorporate the item-to-region co-consumption agreement (for example, `agree_all[ids]`) as the dominant symmetric term in the first-level assignment score, alongside the Poincare-distance term and the explicitly bounded directed radar; ensure the behavior-off and geometry-off modes ablate only their named components.",
+          "detail": "The implementation does not implement the proposed co-consumption-led Poincare region assignment. Although it builds normalized co-consumption profiles and calculates `agree_all` at lines 465-468, `scores()` never reads `self.profiles` or `self.agree_all`. Instead, the assignment score starts from Euclidean distance and adds a bounded context term using a hard-negative predecessor barycentre. Thus co-consumption is only used indirectly to select a negative item, and the dominant symmetric profile-agreement term that is meant to determine partitions is absent. The connected transition-context/Poincare pathway does not establish fidelity to this proposal.",
+          "location": "train_rqvae.py:496-552",
+          "reproduction": "In `CoGeoAssignment.scores()`, trace the values used to form `cost` at lines 535-551: `euclidean_dist`, `behaviour`, `gate`, and optional `usage_bias`. Neither `self.profiles` nor `self.agree_all` contributes to the returned scores. A minimal counterexample is to change `self.profiles`/`self.agree_all` while holding the latent, codebook, gate, and negative barycentre fixed; the scores and assignments remain unchanged.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_4"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Add the specified code-dependent symmetric agreement term, e.g. `A_i · g_k`, to the same candidate score as the Poincare distance, and ensure both-on, behavior-off, and Euclidean geometry-off variants exercise that score. Keep the directed term bounded as specified.",
+          "detail": "The proposal’s defining co-consumption × Poincare assignment pathway is missing. `refresh()` computes co-consumption profiles and `agree_all` (train_rqvae.py:415-429, 465-468), but `scores()` never reads either. Instead, the active behavior adjustment uses positive/negative directed-context distances (lines 537-547). Thus co-consumption cannot affect the assignment score; this implements a different mechanism from the stated co-consumption-led proposal.",
+          "location": "train_rqvae.py:496-552",
+          "reproduction": "Hold the latent, codebook, assignments, and directed-context tensors fixed, then change `profiles`/`agree_all`. `scores()` is unchanged because neither value is read. In the smoke fixture, `agree_all` is explicitly populated at smoke_test.py:95-97, but the comparison at lines 122-137 does not establish that this co-consumption value affects the result.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 12,
+      "signature": "cfe517481a701b14"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Add the specified symmetric profile-agreement score (for example, `A_i · g_k` or its cached equivalent) to the assignment score, with the calibrated dominant weight, while keeping the directed term bounded as the tie-break. Ensure that both the co-consumption term and Poincare distance participate in the same assignment computation.",
+          "detail": "The specified dominant co-consumption profile-agreement term is not used to score assignments. `profiles`, `agree_all`, `P_tensor`, and `directed_all` are constructed, but `scores()` never reads them. Instead, the score adds a contrast between the item’s Poincare distance to codepoints and the Poincare distance from a hard-negative item’s predecessor barycentre (lines 537-547). Thus the implemented core is not the proposed co-consumption-led region assignment with directed near-tie radar; in particular, co-consumption agreement does not determine every first-level assignment as claimed. The existing co-consumption signal only indirectly affects the preselected hard negative.",
+          "location": "train_rqvae.py:427-441,496-552",
+          "reproduction": "Trace `refresh()` building `self.profiles` and `self.agree_all` at lines 415-470, then inspect every operand used by `scores()` at lines 496-552. Neither table contributes to the returned scores. For a minimal counterexample, hold the embeddings, codebook, transition contexts, and hard-negative indices fixed while changing the co-consumption profiles: `scores()` is unchanged.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_1"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Make the first-level score use the specified co-consumption agreement (for example, `A_i dot g_k`) as its dominant behaviour term and the normalized directed predecessor-region score as a bounded tie-break, jointly with the Poincare distance. Keep the geometry-off and behaviour-off controls aligned with that same score, and test that changing the actual co-consumption profiles and transition radar changes assignments.",
+          "detail": "The specified co-consumption profile agreement does not participate in the assignment score. Profiles and an agreement table are computed at lines 402-468, but scores() never reads either. Instead, the score uses a Poincare distance contrast against predecessor and hard-negative barycentres (lines 537-547); it does not use the specified bounded directed predecessor-region radar term either. Thus the exercised assignment path couples directed context to curved geometry, but omits the proposal’s defining co-consumption-led partition mechanism. The smoke test does not catch this: its manually set agree_all and radar values are not read by scores().",
+          "location": "results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-552",
+          "reproduction": "In scores(), observe that `self.profiles`, `self.agree_all`, `self.P_tensor`, and `self.directed_all` are not referenced; assignment depends on `self.neg_bary`, `self.gate`, the latent/code Poincare distances, and optional `usage_bias`. In smoke_test.py:95-105, alter `agree` and `radar`; those values are only assigned to fields the scorer does not consume.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_2"
+        },
+        {
+          "check": "a) behaviour × geometry fidelity",
+          "correction": "Add the item-to-region co-consumption agreement term to the actual assignment score, computed from the frozen training-only rows and refreshed region profiles, and ensure it affects the selected first-level code alongside the Poincaré distance. Keep the directed transition term bounded as the tie-break specified by the proposal.",
+          "detail": "The implemented scoring pathway does not use the co-consumption profiles or agreement scores to determine assignments. `self.profiles` and `self.agree_all` are prepared at train_rqvae.py:415-429 and 465-468, but `scores` never reads them. Instead, the assignment is the Euclidean distance plus a Poincaré contrast derived from directed predecessor context. Thus the named co-consumption-led region assignment is absent; the implemented pathway does not make the specified symmetric co-consumption signal and Poincaré distance jointly determine assignments.",
+          "location": "train_rqvae.py:543-547",
+          "reproduction": "Inspect `CoGeoAssignment.scores`: the only behavior adjustment is constructed at lines 543-547 from `hyp`, `neg_hyp`, and `gate`. Change `cooc_rows`/`cooc_cols` or `profiles` while keeping the codebook and predecessor tables fixed; the score and assignment are unchanged.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_3"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Wire the co-consumption agreement into `scores` and extend the switch comparison to show that changing the co-consumption signal changes the score or assignment. Then verify finite loss/gradients and that behaviour-off and geometry-off restore their intended controls on the same inputs.",
+          "detail": "Trainability of the proposed coupled mechanism is not established by the code because the co-consumption part of that mechanism is dead: the agreement/profile tensors are not read by `scores`, and the test fixture manually assigns `agree_all` without checking that it influences the score. The exercised variant assertions therefore demonstrate switch sensitivity for the implemented directed-context/Poincaré contrast, not for the proposed co-consumption/Poincaré coupling. The auxiliary gradient route does not cure this missing core term.",
+          "location": "train_rqvae.py:496-556",
+          "reproduction": "In `smoke_test.py:87-137`, replace `coupling2.agree_all` with a different tensor while holding all other inputs fixed; the compared choices remain unchanged. The same issue applies to `profiles`, which `scores` does not access.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_3"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Incorporate the item-to-region co-consumption agreement (for example, `agree_all[ids]`) as the dominant symmetric term in the first-level assignment score, alongside the Poincare-distance term and the explicitly bounded directed radar; ensure the behavior-off and geometry-off modes ablate only their named components.",
+          "detail": "The implementation does not implement the proposed co-consumption-led Poincare region assignment. Although it builds normalized co-consumption profiles and calculates `agree_all` at lines 465-468, `scores()` never reads `self.profiles` or `self.agree_all`. Instead, the assignment score starts from Euclidean distance and adds a bounded context term using a hard-negative predecessor barycentre. Thus co-consumption is only used indirectly to select a negative item, and the dominant symmetric profile-agreement term that is meant to determine partitions is absent. The connected transition-context/Poincare pathway does not establish fidelity to this proposal.",
+          "location": "train_rqvae.py:496-552",
+          "reproduction": "In `CoGeoAssignment.scores()`, trace the values used to form `cost` at lines 535-551: `euclidean_dist`, `behaviour`, `gate`, and optional `usage_bias`. Neither `self.profiles` nor `self.agree_all` contributes to the returned scores. A minimal counterexample is to change `self.profiles`/`self.agree_all` while holding the latent, codebook, gate, and negative barycentre fixed; the scores and assignments remain unchanged.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_4"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Add the specified code-dependent symmetric agreement term, e.g. `A_i · g_k`, to the same candidate score as the Poincare distance, and ensure both-on, behavior-off, and Euclidean geometry-off variants exercise that score. Keep the directed term bounded as specified.",
+          "detail": "The proposal’s defining co-consumption × Poincare assignment pathway is missing. `refresh()` computes co-consumption profiles and `agree_all` (train_rqvae.py:415-429, 465-468), but `scores()` never reads either. Instead, the active behavior adjustment uses positive/negative directed-context distances (lines 537-547). Thus co-consumption cannot affect the assignment score; this implements a different mechanism from the stated co-consumption-led proposal.",
+          "location": "train_rqvae.py:496-552",
+          "reproduction": "Hold the latent, codebook, assignments, and directed-context tensors fixed, then change `profiles`/`agree_all`. `scores()` is unchanged because neither value is read. In the smoke fixture, `agree_all` is explicitly populated at smoke_test.py:95-97, but the comparison at lines 122-137 does not establish that this co-consumption value affects the result.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r12_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 12,
+      "signature": "cfe517481a701b14"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour × geometry fidelity",
+          "correction": "Compute the positive curved distance from each codepoint to `self.bary[ids]` and the negative curved distance from each codepoint to `self.neg_bary[ids]`, then form the centered, clipped positive-minus-eta-times-negative contrast. In geometry-off mode, replace both context distances with their Euclidean counterparts.",
+          "detail": "The assignment score does not use the positive predecessor context `self.bary`. `hyp` is computed from the item's own latent `x` against the codewords (lines 527, 534), and the behavior contrast is `hyp.square() - eta * neg_hyp.square()` (line 543), where only the negative context is used. Thus the prescribed curved contrast between positive and negative predecessor contexts is absent; the positive transition context cannot affect the assignment score. The current pathway has a gated negative-context adjustment, but it is not the specified mechanism.",
+          "location": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:527-547",
+          "reproduction": "In `scores`, hold `euclidean_dist`, `neg_bary`, `gate`, and code embeddings fixed, then change `self.bary[ids]`: the computed scores do not change. A minimal example is any two different positive barycentres with identical other inputs; both produce identical assignments.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r13_2"
+        },
+        {
+          "check": "a) behaviour × geometry fidelity",
+          "correction": "Before each refresh, set `cogeo._codes` from the current first-layer code embeddings (with the intended Poincare projection/curvature handling); then score the positive context using `self.bary[ids]` and the negative context using `self.neg_bary[ids]`, with the specified curved distance for both.",
+          "detail": "The live assignment does not use the specified positive predecessor context. `_contexts` computes `bary`, but `scores` never reads it: its positive curved distance is from the item's own latent `z` to the candidate code, at `train_rqvae.py:527-535`. More seriously, `_codes` is initialized to zeros at `train_rqvae.py:442-443` and is not updated from the live codebook before refresh. Thus the live positive and negative barycentres are both built from zero codepoints, rather than assigned predecessor codepoints. The exercised mechanism therefore does not implement the proposed positive-predecessor-versus-hard-negative curved contrast.",
+          "location": "train_rqvae.py:380-400, train_rqvae.py:402-472",
+          "reproduction": "Follow the trainer's epoch refresh at `train_rqvae.py:741-753`: it calls `cogeo.refresh(...)` without updating `cogeo._codes`. `_contexts` then reads `self._codes` at line 380 and uses the resulting contexts at lines 381-398. In the subsequent score, the positive term uses `z` rather than `self.bary` at lines 527-535. The smoke test's manually assigned barycentres do not expose this trainer-path mismatch.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r13_3"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Not applicable.",
+          "detail": "No additional finding.",
+          "location": "train_rqvae.py:402-400",
+          "reproduction": "Not applicable.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r13_4"
+        },
+        {
+          "check": "a) behaviour × geometry fidelity",
+          "correction": "Compute the positive curved distances from `project(self.bary[ids])` to the codepoints, just as the negative distances are computed from `self.neg_bary[ids]`; use those two context distances in the clipped contrast.",
+          "detail": "The positive-context term does not use the predecessor context `self.bary`. It computes `hyp` from the current item's latent `z` and the codepoints, then scores `hyp.square() - eta * neg_hyp.square()`. The directed behaviour and curved distance are therefore connected, but the positive predecessor-context contrast prescribed by the idea is missing; the pathway is not the specified positive-versus-hard-negative context adjustment.",
+          "location": "train_rqvae.py:527-543",
+          "reproduction": "In `scores`, set `self.bary` to two different valid values while holding `z`, `self.neg_bary`, the codes, and all other inputs fixed. The positive term and scores do not change, because `self.bary` is never read there. Conversely, changing `z` changes the alleged positive-context term.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r13_5"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Use the positive predecessor barycentre in the curved contrast, then extend the deterministic smoke checks to compare score/gradient effects for both-on, behavior-off, and geometry-off using identical inputs.",
+          "detail": "The positive-context defect above also means the tested gradient/assignment path does not train from the specified predecessor-positive curved context. In addition, the supplied smoke test does not establish that replacing the curve with Euclidean distance changes assignments or gradients: its fixture asserts assignment differences only, and `geometry_off` still uses the same behavior pathway with a different distance. The curved computation is differentiable in the inspected code, but the required comparisons cannot validate the proposed context computation while the positive context is unused.",
+          "location": "train_rqvae.py:527-547",
+          "reproduction": "In the smoke setup, vary `coupling2.bary` while keeping other score inputs fixed; scores and assignments remain identical. The test at `smoke_test.py:133-137` only compares hard choices and has no gradient comparison across behavior-off and geometry-off modes.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r13_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 13,
+      "signature": "2e7952bb38ce45a2"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Before each `refresh`, populate `_codes` from the current first-level code embeddings (with the intended gradient-detachment policy), and verify the real trainer path constructs contexts from those current codepoints.",
+          "detail": "On the real trainer path, `_codes` is unset when `refresh` first runs, so it is initialized to zeros. No trainer code updates `_codes` afterward. Consequently `_contexts` at lines 380-400 builds both positive and negative contexts from zero vectors rather than from the codepoints assigned to predecessors. The score still combines a transition-derived gate with curved distance, but it does not implement the specified predecessor-codepoint context contrast; the hard-negative context is likewise not meaningfully represented.",
+          "location": "train_rqvae.py:442-443",
+          "reproduction": "Trace `main()` at lines 687-700: it calls `cogeo.refresh(...)` without setting `cogeo._codes`. Then trace `refresh` at lines 442-443 and `_contexts` at lines 380-400. By contrast, the smoke test explicitly sets `_codes` before refresh at `smoke_test.py:51` and `smoke_test.py:88`, so it does not exercise this trainer defect.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r14_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Refresh `_codes` from the live codebook before context construction, then extend the gradient smoke to use the trainer’s initialization/refresh sequence and verify finite gradients through the intended context-geodesic term as well as the encoder.",
+          "detail": "In the trainer, the predecessor-context inputs to the curved term are zero-initialized and never refreshed from the codebook. Thus the backward route cannot train through the specified predecessor-versus-hard-negative context geometry. The smoke test’s manually populated `_codes`, `bary`, and `neg_bary` do not establish that the real trainer’s pathway is trainable as specified.",
+          "location": "train_rqvae.py:442-443",
+          "reproduction": "Follow the real initialization in `main()` at `train_rqvae.py:687-700`; `_codes` remains unset until `refresh` substitutes zeros. The smoke path differs because it assigns `_codes` before `refresh` (`smoke_test.py:51`) and overwrites contexts explicitly (`smoke_test.py:112-115`).",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r14_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Before each `refresh()`, set `cogeo._codes` to the current first-layer code embeddings on the training device, or pass the code embeddings into `refresh()` and use them directly when building both contexts. Add a real-path check that the contexts reflect changed codepoints and that behaviour-off and geometry-off comparisons use those refreshed contexts.",
+          "detail": "The context codepoints are not refreshed from the current first-level codebook. On the first refresh, `_codes` is initialized to zeros, and no later code assigns the live codebook to `cogeo._codes`. `_contexts` therefore forms both predecessor and hard-negative contexts from zero codepoints, not the codepoints assigned to those items. Consequently the purported predecessor-region geometry is not the specified current-codepoint context; the smoke test masks this by explicitly assigning `_codes` at smoke_test.py:88. This invalidates the real training pathway’s intended context computation even though the remaining candidate-distance score can still be differentiable.",
+          "location": "train_rqvae.py:380-381, train_rqvae.py:442-443",
+          "reproduction": "Follow `main()` through the first `cogeo.refresh()` at train_rqvae.py:693 and subsequent epoch refreshes at lines 754-756. `refresh()` initializes `_codes` to a zero tensor only if it is absent; `_contexts()` then reads that tensor at line 380. No live codebook assignment occurs elsewhere in the trainer. A minimal check is to inspect `cogeo._codes` after refresh while `first_layer.get_code_embs()` is nonzero: the former remains zero.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r14_2"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Set `cogeo.current_latent = encoded` immediately before the refresh assignment call at train_rqvae.py:754, as is already done in the initial refresh setup at train_rqvae.py:692-693.",
+          "detail": "The epoch refresh computes the assignments used to update the contexts by calling `first_layer._indices(...)` without setting `first_layer.current_latent`. `VQLayer._indices` calls the assignment hook, which delegates to `scores`; `scores` requires `current_latent` to be set and raises `RuntimeError(\"missing latent context for Poincare assignment\")` when it is absent or has the wrong length. The prior training batch leaves a batch-sized latent there, so for a catalogue-sized refresh this prevents the first epoch from completing (except in the accidental case the final batch covers the whole catalogue).",
+          "location": "train_rqvae.py:751-756",
+          "reproduction": "At the end of an epoch, with `len(all_embeddings)` different from the last training batch size, follow train_rqvae.py:752-756: `current_latent` still has the last batch’s size, while `scores` at train_rqvae.py:511-513 checks it against the catalogue IDs and raises the missing-latent-context error.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r14_3"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Before each context refresh, set `_codes` to the current first-level codebook embeddings (with the intended projection/curvature safeguards), so predecessor assignments select actual codepoints for the Poincare contexts.",
+          "detail": "On the first refresh, `_codes` is initialized to an all-zero tensor and is never replaced. Consequently, `_contexts` builds both positive and negative predecessor contexts from zero codepoints rather than from the regions to which training-only transitions assign predecessors. The directed transition signal therefore does not participate in the proposed predecessor-region context; the nonzero gate alone does not establish the specified behaviour × geometry pathway.",
+          "location": "train_rqvae.py:442-443",
+          "reproduction": "Trace `refresh()` at train_rqvae.py:472 into `_contexts()` at train_rqvae.py:380-400: `tangent = log0(project(codes))` uses the zero tensor initialized at line 443, so every selected predecessor region contributes the same zero point to the context.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r14_4"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Populate `_codes` from the live first-level codebook before context construction, then verify the forward/backward and behavior-off/geometry-off comparisons using contexts produced by `refresh()` rather than manually injected contexts.",
+          "detail": "Although the differentiable score can send gradients through candidate code embeddings, it does not implement the intended transition-conditioned geometry: its predecessor context is built from zero points, not the assigned codebook points. Thus the intended coupled training signal is absent. The smoke test’s variant fixture manually supplies `bary` and `neg_bary` at smoke_test.py:112-116, so its assignment-switch assertions do not exercise the trainer’s actual context construction.",
+          "location": "train_rqvae.py:442-443",
+          "reproduction": "Use the trainer path: `refresh()` calls `_contexts()` at train_rqvae.py:472; `_contexts()` reads `_codes` at lines 380-381; the only initialization is zeros at lines 442-443. The smoke test bypasses this by assigning contexts directly before comparing variants.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r14_4"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "If implementing the stated idea literally, add the symmetric co-consumption agreement to the candidate assignment score (and ensure it is coupled to the curved operation in the same score pathway), or revise the implementation claim so it does not assert that co-consumption determines assignments. Also extend the smoke to verify both-on/behaviour-off/geometry-off gradient or assignment changes on the actual forward path, not only a synthetic score fixture.",
+          "detail": "The implemented co-consumption signal does not participate in the assignment computation. `profiles`, `agree_all`, and the sparse co-consumption matrix are built, but `scores()` only reads the directed predecessor contexts, the hard-negative contexts, and the Poincare distance. Thus the actual pathway is directed behaviour × hyperbolic geometry, not the proposal’s specified coupling of symmetric co-consumption and Poincare distance to determine assignments. The proposal explicitly says co-consumption is only for usage reference and diagnostics, so this is not a scope defect against that text; it is a fidelity defect against the supplied idea’s claimed novelty and mechanism.",
+          "location": "train_rqvae.py:227-228, 308-315, 402-429",
+          "reproduction": "Trace `CoGeoAssignment.refresh()` at train_rqvae.py:402-472 into `scores()` at :496-555. `self.profiles` and `self.agree_all` have no read in `scores()` or the hard-choice path; changing the co-consumption values while holding transitions, contexts, codebook and usage bias fixed cannot change the score or assignment.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r14_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 14,
+      "signature": "d3787ab95e364bac"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Connect a co-consumption-derived score or adjustment to the same first-level candidate score as the Poincare predecessor-context term, so changing either signal changes that assignment computation; alternatively, revise the implemented idea and its scope claim to match the directed-context-only mechanism.",
+          "detail": "The implemented coupling is directed transition context × Poincare geometry, not the idea’s claimed co-consumption × Poincare assignment. `scores()` reads `bary`, `neg_bary`, and `gate`, but never reads the co-consumption profiles (`profiles`/`agree_all`). The symmetric co-consumption signal is only used to choose a hard negative and build diagnostics/profiles; it does not jointly determine each first-level assignment as the proposal’s novelty claim requires.",
+          "location": "train_rqvae.py:537-550",
+          "reproduction": "Trace `CoGeoAssignment.refresh()` at train_rqvae.py:465-472, which creates `agree_all` from the sparse co-consumption matrix, into `scores()` at train_rqvae.py:537-550: no co-consumption-derived assignment score is consumed. Changing `agree_all` alone cannot change `scores()`.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r15_1"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Set `ARM_NAME` to the exact promoted tree name so `RESULT_DIR`, checkpoint, logs, and SID exports resolve to this candidate’s required Stage 2 result directory.",
+          "detail": "The trainer’s result directory is `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax`, not the required promoted-tree-specific `results/stage2_RQ-VAE/<promoted tree name>/`. The hard-coded `ARM_NAME` does not match the candidate tree name `cogeo_region_argmax`; therefore this candidate writes to another arm’s result directory instead of its own, risking overwriting or misdirecting the SID artifacts consumed downstream.",
+          "location": "train_rqvae.py:42-64",
+          "reproduction": "Compare the candidate directory name `cogeo_region_argmax` with `ARM_NAME` at line 63 and the `RESULT_DIR` derived from it at line 64. The resulting path ends in `TIGER_cogeo_region_argmax`, not the promoted tree name.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r15_3"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Aggregate all incoming predecessors for each item when forming the weighted positive context and region-mass entropy, using a sparse or segmented reduction rather than a fixed eight-slot table.",
+          "detail": "Predecessor contexts are built from at most eight incoming predecessor items per destination. The specified positive context is the mean over the item's predecessors, and the negative context is built the same way. Truncating to the eight highest-count predecessors changes the behaviour signal used by the curved assignment; the entropy gate is also computed from this truncated set at lines 447-457. The pathway is connected, but it does not implement the specified all-predecessor context.",
+          "location": "train_rqvae.py:341-355",
+          "reproduction": "Give one item nine distinct incoming transitions with equal counts and predecessor codes in distinct regions. `_build_padded_tables` retains only eight at lines 351-355, so `_contexts` at lines 388-400 and the concentration at lines 447-457 omit the ninth predecessor and its region.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r15_4"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Build counts from the canonical, chronologically ordered training sequences supplied by the frozen data pipeline, or validate that `train.parquet` contains exactly one longest chronological sequence per user before counting.",
+          "detail": "The behaviour counts are not guaranteed to use each user's longest chronological training sequence. The code selects the longest sequence among rows in `train.parquet` (history plus target), but does not establish chronological ordering or reconstruct the user's full training sequence. If rows are unordered or contain only prefixes, the chosen row need not be the user's longest chronological sequence; this changes both transitions and co-consumption. This violates the specified frozen Stage 2 data path.",
+          "location": "train_rqvae.py:227-246",
+          "reproduction": "For one user, provide two train rows whose histories/targets are prefixes from the same chronological sequence, with the shorter prefix row appearing after the longer one or with equal-length rows in non-chronological order. The code at lines 239-246 chooses only one row by length and retains its row order, so the resulting transition counts can omit adjacent transitions present in the user's full sequence.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r15_4"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "In `geometry_off`, compare the unprojected code embeddings and unprojected contexts using squared Euclidean distance; retain the projection and geodesic calculation only in the curved branch. Then verify the two modes use the same inputs and differ only by the geometry operation.",
+          "detail": "`geometry_off` still projects code vectors with the Poincare-ball projection (`y = project(code_embs)`), and the contexts are projected before the Euclidean distance calculation. Thus it does not replace the Poincare maps with squared Euclidean distance everywhere as required. The resulting comparison cannot isolate the effect of the curved operation.",
+          "location": "train_rqvae.py:516-527, train_rqvae.py:539-545",
+          "reproduction": "Set `coupling.mode = \"geometry_off\"` and call `scores(...)`: the branch at lines 540-542 computes Euclidean differences against `y`, but `y` was already set to `project(code_embs)` at line 527. The contexts are also passed through `project(...)` at lines 541-542.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r15_5"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Generate unique co-consumption pairs and adjacent transitions with bounded-memory sparse/chunked accumulation, avoiding a full pairwise meshgrid; preserve the existing per-user counting semantics and add a long-sequence construction smoke check.",
+          "detail": "Co-consumption construction materializes a full `len(seq) × len(seq)` meshgrid for each user's longest sequence before filtering self-pairs. This is quadratic peak memory in sequence length, rather than the specified sparse construction, and can exhaust memory before training starts. The transition pass also builds its keys from the same per-sequence loop.",
+          "location": "train_rqvae.py:249-257",
+          "reproduction": "A single training sequence of length `L` allocates two `L × L` arrays at line 253 and another pair mask at line 254. Increasing `L` therefore increases temporary memory as O(L²), even though the desired co-consumption representation is sparse.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r15_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 15,
+      "signature": "971f13172612bfea"
+    },
+    {
+      "findings": [
+        {
+          "check": "a) behaviour × geometry fidelity",
+          "correction": "Make the behaviour-off control omit the usage bias as well, or define and apply the same usage constraint in both-on and both controls so the comparison isolates the behaviour pathway.",
+          "detail": "The `behaviour_off` mode skips the directed context adjustment, but the usage bias is still added unconditionally. Once `usage_bias` is nonzero, behaviour-off is not the specified plain Euclidean assignment, so it is not a clean behaviour-off control.",
+          "location": "train_rqvae.py:551-555",
+          "reproduction": "Set `mode = \"behaviour_off\"` and `usage_bias` to a nonconstant vector (for example `[1, 0, 0, ...]`). `scores()` returns `-euclidean_dist - usage_bias`, which can change the plain Euclidean argmin.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r16_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "In geometry-off mode, use the unprojected code vectors and unprojected contexts for the Euclidean counterpart; retain projection and geodesic scoring only in both-on mode.",
+          "detail": "The `geometry_off` branch replaces the geodesic distance with squared Euclidean distance but still projects code vectors through the Poincare-ball `project()` function at line 527. Thus it does not replace the Poincare maps everywhere as specified; the geometry control still has a curved projection in its context score.",
+          "location": "train_rqvae.py:516-525, 539-546",
+          "reproduction": "Select `mode = \"geometry_off\"` with a code vector whose norm exceeds the ball radius. `y` is still scaled by `project(code_embs)` before the Euclidean context distance, so the geometry-off candidate scores depend on the curved projection.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r16_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "In behavior-off mode, omit the usage-bias adjustment as well as the directed context term, or otherwise define and implement the control so its assignment is exactly the plain squared-Euclidean assignment. Add a smoke assertion with a nonzero usage bias. The code inspection alone does not establish finite gradients for a real run; the supplied one-epoch GPU smoke remains the runtime proof.",
+          "detail": "`behaviour_off` skips the behavior adjustment, but the soft usage bias is still added to `cost` for every mode. Therefore, when `usage_bias` is nonzero, switching behavior off does not produce the specified plain squared-Euclidean assignment. This invalidates the required behavior-off comparison and can leave behavior-derived assignment changes active in that control. The smoke’s behavior-off equality check does not expose this because it leaves `usage_bias` unset.",
+          "location": "train_rqvae.py:551-555",
+          "reproduction": "Set `coupling.mode = \"behaviour_off\"` and `coupling.usage_bias` to a nonzero vector that changes the minimum for a row—for example, distances `[0.0, 0.1]` and bias `[1.0, 0.0]`. `scores(...).argmax(-1)` then differs from the plain Euclidean argmin, contrary to the control definition.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r16_2"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Set `region_item_ids` to the item IDs for the current batch before each quantizer forward, and ensure the batch’s item IDs are passed through the model to that layer. Keep the full-catalogue IDs for the full-catalogue refresh and SID export only.",
+          "detail": "The per-batch assignment call passes catalogue-wide item IDs alongside batch-sized latents. `scores()` checks that `current_latent` and the IDs have matching lengths and raises `RuntimeError(\"missing latent context for Poincare assignment\")` otherwise. For the stated catalogue size and batch size, normal training batches cannot satisfy this check, so the real trainer will fail before completing training.",
+          "location": "train_rqvae.py:754-755; model/layers.py:129-133",
+          "reproduction": "With `N > batch_size`, run the trainer with `COGEO_ENABLED=True` and `COGEO_MODE=\"both_on\"`. After the epoch refresh sets `region_item_ids = arange(N)`, the first training batch sets `current_latent` to the batch latent; `scores()` receives N IDs and batch-sized `z` and raises at train_rqvae.py:511-513.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r16_3"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "-",
+          "detail": "-",
+          "location": "-",
+          "reproduction": "-",
+          "severity": "-",
+          "verifier": "verify_cogeo_region_argmax_r16_4"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Make the behavior-off control match its stated definition by also omitting the usage bias in that mode, or explicitly revise the control specification and comparison so it no longer claims behavior-off is plain Euclidean. Add a smoke assertion with a non-constant usage bias to verify the chosen control semantics.",
+          "detail": "The behavior-off mode still adds `usage_bias` to the candidate costs. Consequently, behavior-off is not the specified plain squared-Euclidean assignment when the usage bias is non-constant. The fixture’s `compare_variants` invokes the modes without setting `usage_bias`, so it misses this case. This invalidates the required behavior-off comparison; it does not establish that the full mechanism’s forward/backward path is dead or numerically unstable.",
+          "location": "train_rqvae.py:551-555",
+          "reproduction": "Set `usage_bias` to a non-constant vector (as the trainer does at train_rqvae.py:763-766), use Euclidean distances whose top-two margin is smaller than the bias difference, then call `scores` with `mode = \"behaviour_off\"`. The argmax can differ from `euclidean_dist.argmin(-1)` even though the behavior term is off.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r16_4"
+        },
+        {
+          "check": "c) integration",
+          "correction": "-",
+          "detail": "-",
+          "location": "-",
+          "reproduction": "-",
+          "severity": "-",
+          "verifier": "verify_cogeo_region_argmax_r16_4"
+        },
+        {
+          "check": "a) behaviour x geometry fidelity",
+          "correction": "Keep the usage constraint from overriding the item-led ordering—for example, bound its per-item candidate adjustment within a stated budget and include that bound in the minimal specification, or apply the usage constraint through a separate update that does not alter the candidate argmax.",
+          "detail": "The usage bias is added to the same candidate score as the bounded behaviour adjustment, but it is not bounded. Its magnitude can exceed the Euclidean distance differences and the clipped context term, so it can change the candidate ordering independently of the item’s latent. For example, with reference usage 0.5 and usage 0, the bias difference is about 6.6 at the configured weight, while the context term is clipped to 1. This contradicts the specified item-led assignment in which the Euclidean distance orders candidates and the context only nudges that ordering within a bound.",
+          "location": "train_rqvae.py:551-555, train_rqvae.py:762-766",
+          "reproduction": "Use a two-code case with equal Euclidean distances, `COGEO_USAGE_WEIGHT=0.5`, and a reference usage of 0.5 for one code. Set current usage to zero for that code and positive for the other. The resulting usage-bias difference can exceed `COGEO_CLIP`, and `scores()` can select a code based on usage bias rather than the item/context score.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r16_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 16,
+      "signature": "2a76cdea34b71985"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Make both branches produce the same quantity before the contrast: either have the Euclidean branch return Euclidean distance and square it at line 548, or keep squared Euclidean values in that branch and do not square them again. Recheck the geometry-off assignment comparison after the scale is corrected.",
+          "detail": "The `geometry_off` control does not replace Poincare distance with squared Euclidean distance as specified. It computes raw squared Euclidean distance at lines 543-544, then squares that value at line 548, yielding a fourth-power distance. Thus the geometry comparison changes both geometry and distance scaling, so it is not the named Euclidean control.",
+          "location": "train_rqvae.py:539-550",
+          "reproduction": "Set `mode = \"geometry_off\"` and use any candidate/context pair with raw squared distance 2: `hyp` becomes 2 and `hyp.square()` contributes 4. The requested squared-Euclidean contribution is 2. The Poincare branch instead squares the geodesic distance, which is squared geodesic distance.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r17_1"
+        },
+        {
+          "check": "trainability",
+          "correction": "If the intended mechanism requires the behaviour-curvature pathway to update the encoder, include a differentiable candidate-latent term in the coupled score or soft assignment, while retaining the Euclidean item-led ordering constraint. Extend the smoke test to isolate the coupled contribution and assert finite, nonzero gradients to both encoder and intended codebook parameters, as well as switch-off reversibility.",
+          "detail": "The candidate latent `z` is assigned to `current_latent`, projected, and then never used in the score: `geodesic` compares its `points` argument to codepoints `y`, and is only called with positive/negative contexts. Consequently, the coupled score has no differentiable path to the encoder through `z`. The soft quantization term can send gradients through the codebook’s candidate distribution, but it does not make the predecessor-context adjustment train the encoder as claimed in layers.py:151-154. The smoke test only checks that the encoder has some gradient from the ordinary reconstruction/quantization losses.",
+          "location": "train_rqvae.py:511-525, layers.py:150-161",
+          "reproduction": "In a forward/backward, isolate `coupled` in `VQLayer.forward` and inspect `current_latent.grad` or the encoder gradient attributable to the coupled soft term. `scores()` uses `current_latent` only for a presence/length check at train_rqvae.py:511-513; changing latent values while holding `euclidean_dist` fixed cannot change the behaviour component.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r17_2"
+        },
+        {
+          "check": "integration",
+          "correction": "Make the launcher target the promoted trainer entry point explicitly (or ensure the launcher is executed from the promoted copy and validate that invariant before launching). Verify the single-card branch and output-path resolution from that promoted entry point.",
+          "detail": "The launcher resolves its script path with `Path(__file__).resolve().relative_to(REPO_ROOT)`. In the inspected candidate tree, the script is under `results/research/issue121/trees/...`, while `REPO_ROOT` is the repository root. The resulting relative path points to the research-tree copy, not the promoted copy at `results/stage2_RQ-VAE/...`. The launcher runs that tree copy, whose `ARM_NAME` and root discovery may not match the promoted trainer; this does not demonstrate that the real promoted trainer entry point is launched.",
+          "location": "train_rqvae.py:134",
+          "reproduction": "From the candidate-tree location, compare `_LAUNCHER[\"script\"]` with the expected promoted script path under `results/stage2_RQ-VAE/`. Then follow `_launch_via_torchrun()` at train_rqvae.py:897-906: it invokes the computed script from `REPO_ROOT`, rather than resolving the promoted trainer path.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r17_2"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Either reject non-`vq` `VQ_TYPE` when `COGEO_ENABLED` is true, or implement the same coupled score and differentiable quantization path in `EMAVQLayer.forward()` (and verify the chosen configuration with the one-epoch gradient smoke). The current VQ configuration’s launcher path and exports are otherwise consistent on inspection.",
+          "detail": "The launcher checks the single-card switch, but `main()` still uses `EMAVQLayer`’s unmodified forward path if `VQ_TYPE` is changed to `\"ema\"`: unlike `VQLayer.forward`, that override at model/layers.py:207-237 does not apply `region_assignment.scores()` or the coupled soft gradient path. With the current `VQ_TYPE = \"vq\"` the specified run uses the coupled implementation; however, the requested integration check also requires the distributed launcher to work, and the current assignment hook is not supported by the other configured VQ implementation. This is an integration defect if the trainer configuration selects EMA.",
+          "location": "train_rqvae.py:883-912",
+          "reproduction": "Set `VQ_TYPE = \"ema\"` and run the trainer through the `GENREC_SINGLE_GPU=1` branch or torchrun. `EMAVQLayer.forward()` calls `_indices()` at model/layers.py:213, which returns the hooked hard choice, but its loss and output at lines 235-237 omit the coupled score’s soft gradient contribution. Thus the implemented differentiable coupled training path is absent for that supported configuration.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r17_4"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 17,
+      "signature": "e503a6561b6bd668"
+    },
+    {
+      "findings": [
+        {
+          "check": "c) integration",
+          "correction": "Set the full-catalogue latent before the epoch-end hooked assignment call, then verify one epoch reaches SID export and the intended result directory.",
+          "detail": "The real trainer fails at its first epoch-end assignment refresh due to the missing full-catalogue `current_latent` described above, so it cannot reach checkpointing or SID export. The inspected paths otherwise point to the repository’s stage1 embedding and stage0 train parquet, write under the candidate-specific `TIGER_cogeo_region_argmax` result directory, enumerate SID JSON keys from item ID 0, and retain the `GENREC_SINGLE_GPU` branch.",
+          "location": "train_rqvae.py:753-768",
+          "reproduction": "Run the trainer through its first epoch-end refresh; it raises from `CoGeoAssignment.scores()` before the export block.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r18_1"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Preserve or compute distinct-user co-consumption counts for the hard-negative ranking (using the frozen training sequences), and select the eligible neighbor with the greatest such count. Keep the existing directed predecessor exclusion.",
+          "detail": "The hard-negative selection does not implement the specified “co-consumption neighbour with the largest user-set overlap.” It sorts and chooses by raw co-consumption pair count (`cooc_counts`), not by user-set overlap. These are different criteria whenever users contribute different numbers of sequence pairs; the behavior context and therefore the coupled assignment can use a different negative than specified.",
+          "location": "train_rqvae.py:293-301",
+          "reproduction": "For example, let item i co-occur with candidate a in 10 pair contributions from one user's long sequence, and with candidate b in 2 contributions from two distinct users, with neither candidate preceding i. The code sorts by pair count and chooses a; user-set overlap is larger for b, so the specified hard negative is b.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r18_3"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "In geometry-off mode, build positive and negative contexts from the predecessor assignments using Euclidean codepoint means, without Poincare projection or log/exp-map operations; use those contexts with Euclidean candidate distances. Keep the same transition counts, gate, coefficients and assignment pathway as both-on.",
+          "detail": "The geometry-off control replaces the candidate-to-context geodesic distances with Euclidean distances, but does not replace the curved context construction. `bary` and `neg_bary` were already generated with Poincare projection and log-map operations in `_contexts` (lines 375-403). Thus geometry-off still depends on hyperbolic operations and is not the specified Euclidean control. A both-on versus geometry-off comparison cannot isolate the effect of curved geometry.",
+          "location": "train_rqvae.py:542-550",
+          "reproduction": "In geometry_off mode, inspect `scores`: it reads `self.bary[ids_np]` and `self.neg_bary[ids_np]` at lines 540-541 and directly compares them with raw code embeddings at lines 545-547. Those contexts come from `_contexts` at lines 375-403, which applies `project`, `log0`, and another `project` to construct them. The geometry-off score therefore uses contexts that were constructed in curved space.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r18_4"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 18,
+      "signature": "6a26f439309fa17d"
+    },
+    {
+      "findings": [
+        {
+          "check": "b) trainability",
+          "correction": "Make context construction mode-aware and rebuild contexts for the geometry-off comparison, or store contexts in a representation from which each mode can construct its own geometry. In geometry-off, compute contexts without Poincare projection/log maps and use Euclidean distances for both positive and negative contexts; ensure the control reuses the same frozen signals and assignments.",
+          "detail": "`refresh()` constructs `bary` and `neg_bary` using the default `both_on` mode’s Poincare `project` and `log0` operations (lines 392-402, called at line 495). Later, `geometry_off` changes only the candidate-context distance calculation (lines 562-570); it uses those already-curved contexts as raw Euclidean points. Thus geometry-off does not replace Poincare maps everywhere in the context geometry as specified, and the geometry comparison does not isolate the curved operation.",
+          "location": "train_rqvae.py:392-402, train_rqvae.py:495, train_rqvae.py:562-570",
+          "reproduction": "In the same refresh cycle, set `cogeo.mode = \"both_on\"` and call `refresh(...)`, then set `cogeo.mode = \"geometry_off\"` and call `scores(...)`. The geometry-off score still consumes `bary`/`neg_bary` produced by `project(log0(...))` under the curved branch. The smoke test’s geometry comparison (smoke_test.py:126-141) changes the score mode without rebuilding contexts, so it also exercises this mixed-geometry control.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_1"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Make the item-ID/latent-row association explicit and validated at the score boundary (or construct and pass aligned per-row context tensors). Extend the gradient smoke to assert finite, nonzero gradients for the intended encoder and codebook parameters and compare them across the named switches.",
+          "detail": "The coupled score requires `current_latent` to be set and to have the same row count as `ids`. During a real model forward, the VQ layer sets `assignment.current_latent = latent` at `model/layers.py:128-129`, but the trainer supplies `region_item_ids` from the current batch at `train_rqvae.py:759`. This works only when the latent batch length equals the ID count. More importantly, the assignment IDs and latent rows are not checked for correspondence, so an equal-length but differently ordered ID batch silently applies another item’s predecessor context. The custom `smoke_test.py` exercises matched IDs and does not cover that counterexample. The gradient-bearing soft term is computed from the behaviour score, but gradients through `current_latent` are not used by the score; whether the intended parameters receive a nonzero geometry/behaviour gradient is not established by the smoke’s encoder-only gradient assertion.",
+          "location": "`train_rqvae.py:533-536`; `model/layers.py:128-136`",
+          "reproduction": "Supply a batch of latent rows in a different item order from `region_item_ids`, keeping both lengths equal. `scores()` indexes `bary` and `gate` by IDs while using the latent only for its length check; the score then combines contexts for different items with each row’s Euclidean distances. For gradient reach, inspect gradients on `code_embs` and the encoder after a coupled backward pass, comparing both-on, behaviour-off, and geometry-off; `smoke_test.py:60-61` checks only one encoder weight.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_2"
+        },
+        {
+          "check": "c) integration",
+          "correction": "Resolve the repository root using markers confirmed to exist in both the round tree and promoted location, and verify the candidate’s import dependencies in the target trainer environment. The result path, `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`, is correctly candidate-scoped; no path defect is established here.",
+          "detail": "Repository-root discovery requires `stage1_GeneEmbedding` to be a directory directly under the repository root. In this checkout the project path is `/fs04/ar57/wenyu/GeneRec`; the candidate itself is under `results/research/issue121/trees/...`. If the repository’s actual marker directory is nested or absent at that location, importing the trainer raises before the entry point can run. The candidate check records `ModuleNotFoundError` (`CANDIDATE_CHECK.json:1-3`), so the expected import/runtime check did not establish successful integration. I cannot identify the missing module from that summary alone, and do not treat the unavailable PyTorch runtime as a defect.",
+          "location": "`train_rqvae.py:42-58`",
+          "reproduction": "Import `train_rqvae.py` from the candidate tree in the intended promoted location and verify `_repository_root()` returns the checkout root. If no parent has all three required marker directories, it raises the `RuntimeError` at line 58 before training begins.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_2"
+        },
+        {
+          "check": "b) trainability",
+          "correction": "Construct or cache contexts separately for each geometry mode, or make geometry selection an explicit argument and recompute the contexts in geometry-off using the Euclidean construction before scoring. Ensure the geometry-off test exercises that complete pathway, then verify finite loss/gradients and assignment sensitivity across both controls.",
+          "detail": "The geometry-off control does not replace the curved geometry everywhere in the context pathway. `_contexts` chooses its geometry from `self.mode` when called, but `refresh` calls it while the trainer’s mode is `both_on` (`train_rqvae.py:709-710`, `495`). The resulting `bary` and `neg_bary` are therefore constructed using the Poincaré path. Later, geometry-off changes only the candidate-to-context score to raw Euclidean distances. This is not the specified Euclidean control “everywhere in the context geometry, including the positive context,” so the geometry-off comparison does not isolate the curve.",
+          "location": "train_rqvae.py:392-401; train_rqvae.py:495; train_rqvae.py:562-570",
+          "reproduction": "Set `cogeo.mode = \"both_on\"` and call `refresh(...)`, as the trainer does; then set `cogeo.mode = \"geometry_off\"` and score. The stored contexts remain those created under `both_on`, while only the distance calculation in `scores` changes. A minimal check is to compare refreshed contexts against contexts rebuilt with geometry-off selected before `_contexts` runs; they need not match.",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_4"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_cogeo_region_argmax_r19_5"
+        }
+      ],
+      "idea_id": "cogeo_region_argmax",
+      "revision": 19,
+      "signature": "0361cfc6a60ff2ba"
     }
   ],
   "review_bundles": {
@@ -22380,6 +23435,24 @@
       "reason": "the verifiers still reject the implementation after 8 repair rounds, which is the cap",
       "revision": 8,
       "signature": "0f0893848b5a1723"
+    },
+    {
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the verifiers still reject the implementation after 12 repair rounds, which is the cap",
+      "revision": 12,
+      "signature": "cfe517481a701b14"
+    },
+    {
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the verifiers still reject the implementation after 12 repair rounds, which is the cap",
+      "revision": 12,
+      "signature": "cfe517481a701b14"
+    },
+    {
+      "idea_id": "cogeo_region_argmax",
+      "reason": "the verifiers still reject the implementation after 13 repair rounds, which is the cap",
+      "revision": 13,
+      "signature": "2e7952bb38ce45a2"
     }
   ],
   "round_id": "round_20261027_103131_805",
@@ -23068,36 +24141,56 @@
       "status": "running"
     }
   ],
-  "stage3_jobs": [],
-  "step": "stage2",
-  "updated_at": 1793072832.8670964,
-  "verification": {},
   "stage2_results": [
+    {
+      "gate": {
+        "result": "not met (0.0601)",
+        "rule": "cooccur_overlap_L3 > 0.0756",
+        "stage3": "not run"
+      },
+      "idea_id": "cogeo_region_argmax",
+      "sid_metrics": {
+        "L1_codes": 3,
+        "L2": 394,
+        "L3": 9216,
+        "adjacency_L3": 0.0237,
+        "cooccur_overlap_L3": 0.0601,
+        "ext_distinct": 73,
+        "l1_hard_er": 1.303,
+        "largest_L1_share": 0.642
+      },
+      "source_digest": "rev9",
+      "stage2": {
+        "epoch_seconds": 0.251,
+        "epochs": 3000,
+        "total_seconds": 785.5
+      },
+      "variant": "TIGER_cogeo_region_argmax",
+      "verdict": "negative: the coupled assignment drove the first level to three codes; the behaviour signal wins over the reconstruction"
+    },
     {
       "idea_id": "cogeo_region_argmax",
       "variant": "TIGER_cogeo_region_argmax",
-      "source_digest": "rev9",
+      "design": "item-led Euclidean base + bounded gated behaviour adjustment + soft usage pull (0.02)",
       "stage2": {
         "epochs": 3000,
-        "epoch_seconds": 0.251,
-        "total_seconds": 785.5
+        "total_seconds": 830.0,
+        "final_collision": 0.9367
       },
-      "sid_metrics": {
-        "L1_codes": 3,
-        "largest_L1_share": 0.642,
-        "L2": 394,
-        "L3": 9216,
-        "ext_distinct": 73,
-        "l1_hard_er": 1.303,
-        "cooccur_overlap_L3": 0.0601,
-        "adjacency_L3": 0.0237
+      "sid_diagnostics": {
+        "L1_codes": 2,
+        "largest_L1_share": 1.0,
+        "L2": 16,
+        "L3": 1557,
+        "ext_distinct": 247,
+        "cooccur_overlap_L3": 0.0339,
+        "adjacency_L3": 0.0025
       },
-      "gate": {
-        "rule": "cooccur_overlap_L3 > 0.0756",
-        "result": "not met (0.0601)",
-        "stage3": "not run"
-      },
-      "verdict": "negative: the coupled assignment drove the first level to three codes; the behaviour signal wins over the reconstruction"
+      "note": "diagnostics only: the behavioural metrics are not an admission gate, so Stage 3 runs anyway"
     }
-  ]
+  ],
+  "stage3_jobs": [],
+  "step": "stage2",
+  "updated_at": 1793085801.0768619,
+  "verification": {}
 }

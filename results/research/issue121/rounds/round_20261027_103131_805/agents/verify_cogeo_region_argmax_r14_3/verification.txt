@@ -1,0 +1,32 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:227-257, 362-400, 496-555; model/layers.py:127-137 | Inspected the training-only transition and co-consumption construction, the predecessor and negative contexts, and the score path invoked by the first-level quantizer. The score combines the item’s Euclidean distance with a gated, clipped Poincare context contrast; the geometry-off branch substitutes Euclidean context distances at train_rqvae.py:539-545.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:227-257
+FINDING DETAIL: None.
+
+FINDING REPRODUCTION: None.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162; train_rqvae.py:728-740; smoke_test.py:47-63, 87-141 | Inspected the real forward/backward path and the supplied smoke fixture. The selected code feeds the quantization loss, and the coupled score also contributes a soft assignment loss whose gradients flow through the score to the encoder and codebook. The fixture checks finite loss and encoder gradients, and checks that both-on, behaviour-off and geometry-off assignments differ as expected. Runtime execution was not available in this sandbox.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: model/layers.py:150-161
+FINDING DETAIL: None.
+FINDING REPRODUCTION: None.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-73, 620-655, 824-871, 874-903 | Inspected the trainer entry point, frozen train/embedding inputs, export and launcher configuration. The trainer reads `train.parquet` and `sentence_t5.npy`, exports item-indexed SIDs to the promoted arm’s result directory, and includes both torchrun and `GENREC_SINGLE_GPU` branches. The integration review was by source inspection; runtime execution was unavailable.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:751-756
+FINDING DETAIL: The epoch refresh computes the assignments used to update the contexts by calling `first_layer._indices(...)` without setting `first_layer.current_latent`. `VQLayer._indices` calls the assignment hook, which delegates to `scores`; `scores` requires `current_latent` to be set and raises `RuntimeError("missing latent context for Poincare assignment")` when it is absent or has the wrong length. The prior training batch leaves a batch-sized latent there, so for a catalogue-sized refresh this prevents the first epoch from completing (except in the accidental case the final batch covers the whole catalogue).
+FINDING REPRODUCTION: At the end of an epoch, with `len(all_embeddings)` different from the last training batch size, follow train_rqvae.py:752-756: `current_latent` still has the last batch’s size, while `scores` at train_rqvae.py:511-513 checks it against the catalogue IDs and raises the missing-latent-context error.
+FINDING CORRECTION: Set `cogeo.current_latent = encoded` immediately before the refresh assignment call at train_rqvae.py:754, as is already done in the initial refresh setup at train_rqvae.py:692-693.

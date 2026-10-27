@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:227-257, train_rqvae.py:362-400, train_rqvae.py:496-559, model/layers.py:128-136 | Traced the training-only adjacent-transition counts into predecessor contexts and gates, then into the same candidate score as the Poincare geodesic contrast; the first-level quantizer uses that score to select its code. The geometry-off branch uses Euclidean context distances, while behaviour_off omits the context term.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking scope defect found in the connected transition-context/Poincare assignment pathway.
+FINDING REPRODUCTION: Source inspection of the cited path.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:362-400, train_rqvae.py:402-472, train_rqvae.py:744-756, model/layers.py:128-161, smoke_test.py:87-141 | Traced the epoch refresh into context construction and then through the quantizer’s coupled-score soft surrogate and backward path. The smoke test checks a finite loss and encoder gradient, and uses a synthetic fixture to compare assignment switches; it does not test refreshing contexts from live code vectors.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:380-381, train_rqvae.py:442-443
+FINDING DETAIL: The context codepoints are not refreshed from the current first-level codebook. On the first refresh, `_codes` is initialized to zeros, and no later code assigns the live codebook to `cogeo._codes`. `_contexts` therefore forms both predecessor and hard-negative contexts from zero codepoints, not the codepoints assigned to those items. Consequently the purported predecessor-region geometry is not the specified current-codepoint context; the smoke test masks this by explicitly assigning `_codes` at smoke_test.py:88. This invalidates the real training pathway’s intended context computation even though the remaining candidate-distance score can still be differentiable.
+FINDING REPRODUCTION: Follow `main()` through the first `cogeo.refresh()` at train_rqvae.py:693 and subsequent epoch refreshes at lines 754-756. `refresh()` initializes `_codes` to a zero tensor only if it is absent; `_contexts()` then reads that tensor at line 380. No live codebook assignment occurs elsewhere in the trainer. A minimal check is to inspect `cogeo._codes` after refresh while `first_layer.get_code_embs()` is nonzero: the former remains zero.
+FINDING CORRECTION: Before each `refresh()`, set `cogeo._codes` to the current first-layer code embeddings on the training device, or pass the code embeddings into `refresh()` and use them directly when building both contexts. Add a real-path check that the contexts reflect changed codepoints and that behaviour-off and geometry-off comparisons use those refreshed contexts.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:620-655, train_rqvae.py:824-871, train_rqvae.py:874-903 | Inspected root and result path resolution, train parquet and embedding inputs, item-indexed SID export, and launcher branches. The candidate’s promoted arm name resolves to its own required Stage2 result directory; the single-card branch checks `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Runtime execution was not performed.
+FINDING REPRODUCTION: Source inspection of the cited entry-point, export, and launcher code.
+FINDING CORRECTION: none

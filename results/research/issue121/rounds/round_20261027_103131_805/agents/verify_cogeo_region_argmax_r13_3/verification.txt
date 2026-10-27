@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:741-753 → train_rqvae.py:402-472 → train_rqvae.py:496-552 → model/layers.py:127-137 | Traced the epoch refresh and the first-level assignment score, including how the predecessor tables and curved score reach the quantizer. The supplied `smoke_test.py` also exercises the score switches, but its fixture manually sets the contexts.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:380-400, train_rqvae.py:402-472
+FINDING DETAIL: The live assignment does not use the specified positive predecessor context. `_contexts` computes `bary`, but `scores` never reads it: its positive curved distance is from the item's own latent `z` to the candidate code, at `train_rqvae.py:527-535`. More seriously, `_codes` is initialized to zeros at `train_rqvae.py:442-443` and is not updated from the live codebook before refresh. Thus the live positive and negative barycentres are both built from zero codepoints, rather than assigned predecessor codepoints. The exercised mechanism therefore does not implement the proposed positive-predecessor-versus-hard-negative curved contrast.
+FINDING REPRODUCTION: Follow the trainer's epoch refresh at `train_rqvae.py:741-753`: it calls `cogeo.refresh(...)` without updating `cogeo._codes`. `_contexts` then reads `self._codes` at line 380 and uses the resulting contexts at lines 381-398. In the subsequent score, the positive term uses `z` rather than `self.bary` at lines 527-535. The smoke test's manually assigned barycentres do not expose this trainer-path mismatch.
+FINDING CORRECTION: Before each refresh, set `cogeo._codes` from the current first-layer code embeddings (with the intended Poincare projection/curvature handling); then score the positive context using `self.bary[ids]` and the negative context using `self.neg_bary[ids]`, with the specified curved distance for both.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162 → train_rqvae.py:496-552 | Inspected the forward path: the coupled scores feed a softmax-weighted code embedding, which is added as a straight-through differentiable term to the quantized output and quantization loss. The provided smoke fixture calls `backward()` and checks finite loss and encoder gradients, and compares both-on, behaviour-off, and geometry-off choices.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No additional trainability defect identified from code inspection. The coupled score has a differentiable surrogate path to the encoder and code embeddings; the hard assignment itself is not differentiable, but is not the only path used for training.
+FINDING REPRODUCTION: The supplied runtime proof cannot be executed in this environment, as noted in the request. `smoke_test.py:55-61` contains the forward/backward finite-loss and encoder-gradient check; `smoke_test.py:117-137` contains the switch-sensitivity fixture.
+FINDING CORRECTION: No correction required for this check.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:617-678, train_rqvae.py:821-895 | Inspected the root and result-path resolution, frozen input paths, trainer setup, SID export, and launcher branches. `smoke_test.py:40` checks root discovery; `train_rqvae.py:875-876` reads `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"`.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified by inspection. The frozen embedding and training parquet paths are used; output artifacts resolve under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`; exported SIDs enumerate embedding rows as item IDs and are extended to unique rows; and the launcher retains both torchrun and single-GPU branches.
+FINDING REPRODUCTION: Trace `EMBEDDING_FILE`/`TRAIN_FILE` at `train_rqvae.py:66-67`, export and item-ID enumeration at lines 849-862, and launcher behavior at lines 871-895. Runtime execution is unavailable in this sandbox.
+FINDING CORRECTION: No correction required for this check.

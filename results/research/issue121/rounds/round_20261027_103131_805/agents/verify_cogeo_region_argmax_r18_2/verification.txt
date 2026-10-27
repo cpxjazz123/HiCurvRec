@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:499-562 | Inspected the assignment hook in model/layers.py:106-112, 127-137 and the trainer wiring at train_rqvae.py:699-710, 753-768. The scores use the frozen directed transition contexts and hard-negative contexts with Poincare projection/geodesic distances in one assignment computation; the co-consumption matrix is not used for that score.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Behaviour and curved geometry meet in the candidate-code context contrast, which adjusts the item’s Euclidean candidate costs.
+FINDING REPRODUCTION: Source inspection only; the sandbox does not provide the PyTorch runtime needed to execute the trainer.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:121-162 | Inspected the real VQ forward path: it computes coupled scores, selects hard codes, and adds a differentiable soft-score quantization term. The smoke test’s forward/backward assertions are at smoke_test.py:55-61; its same-input behaviour-off and geometry-off assignment comparisons are at smoke_test.py:121-141.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 numerical hazard found. The curved distance clamps the acosh argument above one, and the soft coupled term carries gradients through the candidate scores to the encoder and code embeddings. The smoke fixture explicitly checks that both-on differs from behaviour-off and geometry-off.
+FINDING REPRODUCTION: The sandbox lacks PyTorch and cannot execute the smoke test or trainer. This is a source-level assessment; the supplied smoke assertions describe the runtime checks.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 627-710, 836-915 | Inspected repository-root discovery and candidate-specific output paths, frozen embedding/train inputs, item-ID-aware export and JSON construction, trainer entry point, distributed launch, and the `GENREC_SINGLE_GPU` branch. The smoke test checks repository-root discovery and SID shape/uniqueness at smoke_test.py:39-40, 62-63.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Outputs resolve to `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax`, the intended candidate-specific result directory; exported rows are enumerated by item ID. The launcher retains the four-card torchrun path and bypasses it when `GENREC_SINGLE_GPU=1`.
+FINDING REPRODUCTION: Inspected the configured paths and trainer/export/launcher code. Runtime execution is unavailable in this sandbox.
+FINDING CORRECTION: None.

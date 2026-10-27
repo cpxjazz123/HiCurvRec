@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:741-753 → model/layers.py:127-161 → train_rqvae.py:496-552 | Traced the epoch refresh into the first-level quantizer’s assignment score and its differentiable soft-score loss. The score uses Poincaré distances and directed predecessor context, but does not use the co-consumption profiles.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:496-552
+FINDING DETAIL: The implemented pathway is not the proposed co-consumption-led assignment. `refresh()` constructs co-consumption profiles and `agree_all` (train_rqvae.py:415-429, 465-468), but `scores()` never reads them. Its behaviour adjustment uses `neg_bary` from directed predecessor context (lines 537-547). Thus the curved operation is coupled to directed behaviour, not to the specified symmetric co-consumption signal that should determine the partition.
+FINDING REPRODUCTION: Follow `CoGeoAssignment.refresh()` through `scores()`: the score depends on `euclidean_dist`, `neg_bary`, and `gate`; changing `profiles` or `agree_all` alone cannot change it. `smoke_test.py:94-107` assigns a test `agree_all` matrix but does not verify that it affects choices.
+FINDING CORRECTION: Include the specified co-consumption profile agreement in the scored item/code pairs, jointly with the Poincaré distance. Keep directed context as the bounded tie-break, and test that changing the co-consumption profiles changes the assignment while holding other inputs fixed.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-161 → train_rqvae.py:496-552 | Inspected the forward path, score-to-soft-quantization gradient route, and the smoke test’s forward/backward assertions and mode comparisons; runtime execution was not available in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:122-132
+FINDING DETAIL: The smoke test checks that both-on differs from behaviour-off, but does not check that geometry-off differs from both-on or that replacing the curved distance changes the gradient. Also, the actual `scores()` path does not use co-consumption, so it cannot establish trainability of the proposed co-consumption/geometry coupling.
+FINDING REPRODUCTION: The fixture compares `choices["both_on"]` with `choices["behaviour_off"]` at lines 129-132, but has no assertion comparing `choices["geometry_off"]` with either, and no gradient comparison across modes.
+FINDING CORRECTION: After implementing co-consumption in the score, add controlled same-input comparisons for both-on, behaviour-off, and geometry-off. Check that the relevant assignment or gradient changes when each component is switched off, and that the forward/backward losses and intended parameter gradients remain finite.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 617-698, 821-900 | Inspected root and train-data path resolution, the trainer setup and first-layer hook, SID export/index mapping, output paths, and launcher branches. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The trainer reads `results/stage0_build_parquet/train.parquet`, writes artifacts under the candidate’s `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax` directory, and exports rows keyed by enumerated item IDs. `_launch_via_torchrun()` returns for an existing rank or when `GENREC_SINGLE_GPU=1`; otherwise it launches four ranks.
+FINDING REPRODUCTION: Code inspection only; this sandbox has no PyTorch or shell, so the trainer was not run.
+FINDING CORRECTION: none

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:227-329, train_rqvae.py:402-490, train_rqvae.py:496-547, layers.py:127-136 | Inspected the trainer’s signal construction and refresh path through to the first-level assignment score. The code builds co-consumption profiles and directed transition tables, but the scoring function does not use either table to choose codes.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:468-490, train_rqvae.py:496-547
+FINDING DETAIL: The implemented assignment is not the specified co-consumption-led Poincare region assignment with directed near-tie radar. `refresh()` computes `agree_all` and `directed_all`, but `scores()` never reads them. Instead, it adjusts Euclidean distances using a curved contrast between each item’s predecessor barycentre and a hard-negative barycentre. Thus the actual pathway uses directed context and Poincare geometry, but omits the co-consumption profile agreement that is supposed to dominate partition assignment; it implements a materially different mechanism.
+FINDING REPRODUCTION: Follow `first_layer._indices(...)` into `VQLayer.forward()` and `CoGeoAssignment.scores()`. At `train_rqvae.py:531-542`, the score starts from Euclidean distance and adds only the gated curved positive/negative context contrast. `self.agree_all` and `self.directed_all` have no reads in `scores()`; a code change to either profile table alone therefore cannot affect the assignment score.
+FINDING CORRECTION: Use the item-to-region co-consumption agreement in the assignment score as the dominant behaviour term, and add the normalized directed predecessor-region term only as the specified bounded tie-break. Ensure both are computed from the frozen training-only signals and that the resulting score also uses the Poincare distance.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: layers.py:127-162, train_rqvae.py:496-547, smoke_test.py:43-63, smoke_test.py:87-132 | Inspected the forward/backward path and the smoke fixture. The coupled score reaches the soft candidate distribution and quantization loss; the fixture checks finite loss, finite encoder gradients, and assignment movement with behavior enabled versus behavior disabled. `scores()` also contains a Euclidean geometry-off variant, though the fixture does not assert that this variant changes assignments.
+FINDING SEVERITY: minor
+FINDING LOCATION: smoke_test.py:122-132
+FINDING DETAIL: The switch-sensitivity smoke test checks behavior-off versus both-on, but does not assert that replacing the curved distance with Euclidean distance changes assignments or gradients. This leaves the geometry-off comparison unverified by that fixture; it is not evidence of a defect in the differentiable path itself.
+FINDING REPRODUCTION: In `smoke_test.py`, `compare_variants()` produces both `geometry_off` and `both_on` choices, but the assertions only compare `behaviour_off` to `plain` and `both_on` to `behaviour_off`.
+FINDING CORRECTION: Add a deterministic assertion for the geometry-off versus both-on result if the smoke test is intended to verify both required controls.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:612-647, train_rqvae.py:816-863, train_rqvae.py:866-895 | Inspected the real trainer entry point, its frozen embedding and training-parquet paths, output indexing, candidate result path, and launcher branches. The environment does not permit running the trainer, so this is a code inspection rather than a runtime execution.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:870-871
+FINDING DETAIL: No integration defect found. The `GENREC_SINGLE_GPU` branch bypasses torchrun as required; the normal branch launches the four-process torchrun command. Results resolve to this candidate’s promoted arm directory, and the export maps each embedding row’s item ID to its SID in `item_sids.json`.
+FINDING REPRODUCTION: Read `SINGLE_GPU_ENV` at line 120 and the branch at lines 868-871; inspect `RESULT_DIR`, `TRAIN_FILE`, and the export at lines 64, 67, and 851-857.
+FINDING CORRECTION: None.

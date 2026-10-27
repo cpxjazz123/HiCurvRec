@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:496-555, model/layers.py:106-119, 127-162 | Traced the trainer-installed assignment hook through the first-level quantizer and compared both switch branches in the score implementation; runtime execution is unavailable in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:551-555
+FINDING DETAIL: The `behaviour_off` mode skips the directed context adjustment, but the usage bias is still added unconditionally. Once `usage_bias` is nonzero, behaviour-off is not the specified plain Euclidean assignment, so it is not a clean behaviour-off control.
+FINDING REPRODUCTION: Set `mode = "behaviour_off"` and `usage_bias` to a nonconstant vector (for example `[1, 0, 0, ...]`). `scores()` returns `-euclidean_dist - usage_bias`, which can change the plain Euclidean argmin.
+FINDING CORRECTION: Make the behaviour-off control omit the usage bias as well, or define and apply the same usage constraint in both-on and both controls so the comparison isolates the behaviour pathway.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-162, train_rqvae.py:496-555 | Statically traced `scores()` into the soft candidate distribution and quantization loss. That path is differentiable to the encoder and codebook; no runtime smoke was run.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:516-525, 539-546
+FINDING DETAIL: The `geometry_off` branch replaces the geodesic distance with squared Euclidean distance but still projects code vectors through the Poincare-ball `project()` function at line 527. Thus it does not replace the Poincare maps everywhere as specified; the geometry control still has a curved projection in its context score.
+FINDING REPRODUCTION: Select `mode = "geometry_off"` with a code vector whose norm exceeds the ball radius. `y` is still scaled by `project(code_embs)` before the Euclidean context distance, so the geometry-off candidate scores depend on the curved projection.
+FINDING CORRECTION: In geometry-off mode, use the unprojected code vectors and unprojected contexts for the Euclidean counterpart; retain projection and geodesic scoring only in both-on mode.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, 620-681, 829-907 | Inspected repository-root and candidate result-path resolution, frozen Stage0 training parquet input, all-item SID export and JSON indexing, trainer write locations, and launcher branches including `GENREC_SINGLE_GPU`. Runtime execution was not possible in this sandbox.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer reads `results/stage0_build_parquet/train.parquet`, writes artifacts under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax`, exports rows keyed by enumerated item IDs, and returns directly from the launcher when `GENREC_SINGLE_GPU=1`.
+FINDING REPRODUCTION: Source inspection of the cited paths; no runtime reproduction was performed.
+FINDING CORRECTION: none

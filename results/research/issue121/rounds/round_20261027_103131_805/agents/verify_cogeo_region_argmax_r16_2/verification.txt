@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:496-559; model/layers.py:127-161 | Traced the training assignment call from `VQLayer.forward` into `CoGeoAssignment.scores`: the frozen directed predecessor contexts and gate enter the same candidate score as the squared Poincare distances, and that score determines the first code. The score is bounded/clipped; the forward path also uses its soft candidate distribution in the quantization loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found for the directed predecessor-context plus curved-geometry pathway.
+FINDING REPRODUCTION: Source inspection of the exercised path above; no trainer runtime was available.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-161; train_rqvae.py:496-559 | Traced the coupled score into the soft candidate distribution and its addition to `quant_loss`, then into `loss.backward()` at `train_rqvae.py:737-741`. `smoke_test.py:55-61` describes a finite-loss/encoder-gradient smoke path, but does not test the usage-bias interaction with the behavior-off switch.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:551-555
+FINDING DETAIL: `behaviour_off` skips the behavior adjustment, but the soft usage bias is still added to `cost` for every mode. Therefore, when `usage_bias` is nonzero, switching behavior off does not produce the specified plain squared-Euclidean assignment. This invalidates the required behavior-off comparison and can leave behavior-derived assignment changes active in that control. The smoke’s behavior-off equality check does not expose this because it leaves `usage_bias` unset.
+FINDING REPRODUCTION: Set `coupling.mode = "behaviour_off"` and `coupling.usage_bias` to a nonzero vector that changes the minimum for a row—for example, distances `[0.0, 0.1]` and bias `[1.0, 0.0]`. `scores(...).argmax(-1)` then differs from the plain Euclidean argmin, contrary to the control definition.
+FINDING CORRECTION: In behavior-off mode, omit the usage-bias adjustment as well as the directed context term, or otherwise define and implement the control so its assignment is exactly the plain squared-Euclidean assignment. Add a smoke assertion with a nonzero usage bias. The code inspection alone does not establish finite gradients for a real run; the supplied one-epoch GPU smoke remains the runtime proof.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 620-705, 829-908 | Inspected repository-root discovery, the frozen Stage0 `train.parquet` and Stage1 embedding paths, train-target/embedding index validation, result paths, SID export, and launcher branches. The promoted arm writes under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax`; `_launch_via_torchrun` returns for an existing torchrun rank or when `GENREC_SINGLE_GPU=1`, and otherwise launches the configured four-rank script.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking integration defect found by source inspection. The SID export enumerates all embedding rows as item IDs and writes JSON keys from those same row indices; the trainer artifacts resolve to this arm’s result directory.
+FINDING REPRODUCTION: Inspected the entry point and path/export code. The trainer was not run in this sandbox, so this is not a runtime verification.
+FINDING CORRECTION: none

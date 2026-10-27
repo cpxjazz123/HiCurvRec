@@ -1,0 +1,33 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:519-582, model/layers.py:127-161 | Traced the trainer-installed assignment through the first-level quantizer: directed transition counts form predecessor contexts and a gate at train_rqvae.py:425-480; the candidate score combines those contexts with Poincare geodesic distances at train_rqvae.py:550-575; the resulting assignment is consumed by the quantizer at model/layers.py:131-161. The smoke fixture also compares both-on, behaviour-off and geometry-off choices at smoke_test.py:87-141.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: -
+FINDING DETAIL: No defect found in this check.
+FINDING REPRODUCTION: -
+FINDING CORRECTION: -
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162, train_rqvae.py:519-582 | Inspected the real forward/backward wiring and the deterministic smoke test at smoke_test.py:47-63, 87-141. The coupled score supplies the hard assignment and a soft candidate distribution; its loss and straight-through path reach the latent and codebook. The smoke checks finite loss and encoder gradient, plus assignment changes under the behaviour and geometry switches. Runtime GPU execution is not available here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: -
+FINDING DETAIL: No code-level dead term or numerical hazard found in the inspected coupled forward/backward path.
+FINDING REPRODUCTION: -
+FINDING CORRECTION: -
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-74, 647-730, 856-935 | Inspected the trainer entry point, frozen training input, output paths and launcher branches. The single-card branch is present at train_rqvae.py:906-911 and uses SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at line 123. Trainer execution is unavailable in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:562-570
+FINDING DETAIL: The geometry-off control does not replace Poincare geometry everywhere in the context computation. `refresh()` builds `bary` and `neg_bary` using the Poincare projection in `_contexts()` at lines 384-423, before the assignment score checks the mode. In geometry-off scoring, those already-projected contexts are compared to raw code vectors with Euclidean distance. Thus the control mixes Poincare-derived contexts with Euclidean scoring instead of using the same contexts and pathway with Euclidean geometry throughout, invalidating the required geometry-off comparison.
+FINDING REPRODUCTION: Call `refresh()` with `mode="geometry_off"` and nonzero predecessor codepoints; `_contexts()` still projects the codepoints and barycentres because its geometry selection is read at refresh time. Then `scores()` takes the geometry-off branch at lines 562-567 and compares that projected `bary` to `raw_codes`. Compare against an otherwise identical Euclidean context construction: the contexts and therefore candidate costs can differ.
+FINDING CORRECTION: Make context construction use the selected geometry mode, and ensure geometry-off uses raw Euclidean predecessor means and negative contexts throughout, including the positive context. Rebuild contexts when changing modes in the comparison harness, or compute/store equivalent contexts per geometry mode.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: -
+FINDING DETAIL: No other integration defect found by code inspection. The data input is the Stage0 training parquet (train_rqvae.py:66-67, 661-663); outputs resolve under this candidate’s Stage2 result directory (lines 61-74); SID export enumerates catalogue rows and checks uniqueness (lines 884-897); and the launcher has both torchrun and single-card branches (lines 906-935).
+FINDING REPRODUCTION: -
+FINDING CORRECTION: -

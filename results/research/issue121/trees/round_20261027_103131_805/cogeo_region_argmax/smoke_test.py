@@ -48,6 +48,7 @@ def main():
     layer = model.rq.vq_layers[0]
     with torch.no_grad():
         z = model.encoder(torch.randn(4, 5))
+        coupling._codes = layer.get_code_embs().detach()
         coupling.refresh(layer._indices(layer._distances(z), False).numpy(), 4, torch.device("cpu"))
     layer.region_assignment = coupling
     layer.region_item_ids = torch.tensor([0,1,2,3])
@@ -84,11 +85,12 @@ def main():
         counted_transitions[(int(src), int(dst))] = float(value)
     assert counted_transitions == dict(reference_transitions), counted_transitions
     with torch.no_grad():
+        coupling2._codes = layer.get_code_embs().detach()
         coupling2.refresh(np.array([0, 1, 2, 3], dtype=np.int64), 4, torch.device("cpu"))
-        # A codebook at the origin makes the geodesic term flat, so the three
-        # variants are separated by the behaviour term and by the Euclidean
-        # term instead of by a random draw.
-        layer.get_code_embs().data.zero_()
+        # A spread codebook, so the curved contrast between the codewords has
+        # room to move a code: the behaviour adjustment is bounded, and a
+        # degenerate codebook would make it invisible.
+        layer.get_code_embs().data.copy_(torch.eye(4, 3) * 0.5)
         agree = torch.zeros((4, 4))
         for item, code in ((0, 1), (1, 1), (2, 3), (3, 3)):
             agree[item, code] = 0.1
@@ -101,6 +103,17 @@ def main():
         coupling2.P_tensor = radar
         # the incoming transition mass the step reads
         coupling2.directed_all = radar
+        # a focused incoming context, so the gate of the behaviour adjustment is
+        # open for these items
+        coupling2.concentration = torch.ones(4)
+        # the context of the items and of their hard negatives: the positive
+        # context sits where codes 0 and 1 are, the negative context where code
+        # 3 is, so the bounded adjustment has a direction to push in
+        coupling2.bary = torch.tensor([[0.4, 0.0, 0.0], [0.4, 0.0, 0.0],
+                                       [0.0, 0.4, 0.0], [0.0, 0.4, 0.0]])
+        coupling2.neg_bary = torch.tensor([[0.0, 0.0, 0.4], [0.0, 0.0, 0.4],
+                                          [0.0, 0.0, 0.4], [0.0, 0.0, 0.4]])
+        coupling2.gate = torch.ones(4)
         layer.region_assignment = coupling2
         layer.region_item_ids = torch.tensor([0, 1, 2, 3])
         latent = model.encoder(x)
@@ -114,13 +127,16 @@ def main():
                                                layer.get_code_embs())
     assert variants["items"] == 4
     assert variants["plain"] == [0, 1, 2, 3]
-    # the behaviour term must move the assignment, otherwise it is a dead term
-    assert variants["both_on"] > 0, "the coupled score did not change any code"
-    assert variants["choices"]["both_on"] == [1, 1, 3, 3], variants["choices"]
-    # both switches have to change the assignment: a switch that changes
-    # nothing is a switch that is not wired.
+    # The control is the item's own choice: with the behaviour term off, the
+    # assignment is exactly the plain Euclidean one. That is the property the
+    # mechanism is built on.
+    assert variants["choices"]["behaviour_off"] == variants["plain"], variants["choices"]
+    # And with the behaviour term on, the context moves something.
     assert variants["choices"]["both_on"] != variants["choices"]["behaviour_off"], \
-        "the behaviour switch changed nothing"
+        "the behaviour adjustment changed nothing"
+    # The geometry switch has to change the assignment as well: the curve is
+    # part of the context geometry, and an ablation that changes nothing is an
+    # ablation that is not wired.
     assert variants["choices"]["both_on"] != variants["choices"]["geometry_off"], \
         "the geometry switch changed nothing"
     print("PASS forward/backward finite; encoder gradient; unique SID export shape=(4, 4)")

@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:496-552, called by model/layers.py:127-136 | Traced the trainer-installed assignment hook through its score calculation and compared the positive and negative context inputs with the proposal.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:527-543
+FINDING DETAIL: The positive-context term does not use the predecessor context `self.bary`. It computes `hyp` from the current item's latent `z` and the codepoints, then scores `hyp.square() - eta * neg_hyp.square()`. The directed behaviour and curved distance are therefore connected, but the positive predecessor-context contrast prescribed by the idea is missing; the pathway is not the specified positive-versus-hard-negative context adjustment.
+FINDING REPRODUCTION: In `scores`, set `self.bary` to two different valid values while holding `z`, `self.neg_bary`, the codes, and all other inputs fixed. The positive term and scores do not change, because `self.bary` is never read there. Conversely, changing `z` changes the alleged positive-context term.
+FINDING CORRECTION: Compute the positive curved distances from `project(self.bary[ids])` to the codepoints, just as the negative distances are computed from `self.neg_bary[ids]`; use those two context distances in the clipped contrast.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:121-162 and train_rqvae.py:496-552 | Inspected the forward path from the assignment scores into the straight-through quantization loss and the soft candidate distribution; checked the smoke fixture’s asserted controls.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:527-547
+FINDING DETAIL: The positive-context defect above also means the tested gradient/assignment path does not train from the specified predecessor-positive curved context. In addition, the supplied smoke test does not establish that replacing the curve with Euclidean distance changes assignments or gradients: its fixture asserts assignment differences only, and `geometry_off` still uses the same behavior pathway with a different distance. The curved computation is differentiable in the inspected code, but the required comparisons cannot validate the proposed context computation while the positive context is unused.
+FINDING REPRODUCTION: In the smoke setup, vary `coupling2.bary` while keeping other score inputs fixed; scores and assignments remain identical. The test at `smoke_test.py:133-137` only compares hard choices and has no gradient comparison across behavior-off and geometry-off modes.
+FINDING CORRECTION: Use the positive predecessor barycentre in the curved contrast, then extend the deterministic smoke checks to compare score/gradient effects for both-on, behavior-off, and geometry-off using identical inputs.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 617-679, 821-900 | Inspected the real entry point, repository-root and result-path resolution, frozen embedding/train-parquet inputs, SID export/indexing, and launcher branches, including `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Outputs resolve under this candidate’s promoted result directory; export enumerates rows by item ID and writes both the array and item-ID-keyed JSON. The launcher returns for an existing torchrun rank and for `GENREC_SINGLE_GPU=1`, otherwise invokes torchrun from the repository root.
+FINDING REPRODUCTION: Not run: the stated sandbox limitation prevents running the trainer. Source paths and branches were inspected.
+FINDING CORRECTION: None.

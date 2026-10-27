@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:499-562, model/layers.py:126-162 | Inspected the assignment hook into `CoGeoAssignment.scores` and the coupled straight-through path. `smoke_test.py:87-141` sets up the same batch and codebook across both-on, behaviour-off, and geometry-off variants, and asserts that both switches change the selected codes. The score combines directed predecessor contexts and their hard-negative contexts with Poincare geodesic distances; the behaviour adjustment is gated and clipped, and the item’s Euclidean distance remains the base score.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:126-162, train_rqvae.py:519-562 | Inspected the real quantizer forward path: it computes the coupled score, uses it for the hard assignment, and adds a differentiable soft-candidate quantization loss. The soft path depends on the coupled score and live code embeddings; the score depends on the latent, code embeddings, directed contexts, and curved distances. `smoke_test.py:55-61` supplies a forward/backward finite-loss and encoder-gradient check, while `smoke_test.py:126-141` checks assignment sensitivity to both controls. This is source inspection and test-code review, not an executed runtime proof.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-73, 627-710, 836-915 | Inspected the trainer entry point, its frozen inputs (`stage1_GeneEmbedding/output/sentence_t5.npy` and `results/stage0_build_parquet/train.parquet`), arm-specific output paths, full-catalogue SID export and item-ID mapping, and the torchrun launcher including the `GENREC_SINGLE_GPU` branch. `smoke_test.py:39-63` contains repository-root and SID-shape/uniqueness checks. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

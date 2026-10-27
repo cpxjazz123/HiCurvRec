@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:402-472 → train_rqvae.py:496-547 → model/layers.py:131-161 | Traced the first-level assignment hook in the trainer and quantizer; inspected which refreshed behaviour tensors enter the assignment score.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:465-468; train_rqvae.py:496-547
+FINDING DETAIL: The specified symmetric co-consumption agreement does not participate in assignment. The trainer computes `agree_all` at lines 465-468, but `scores()` never reads it. The actual score uses Euclidean distance plus a Poincare-based predecessor/negative contrast and usage bias; it does not implement the proposal’s co-consumption-dominant Poincare region assignment. Thus the required co-consumption × geometry pathway is absent.
+FINDING REPRODUCTION: Trace `agree_all` from its construction at line 468: it has no consumer. In `scores()`, lines 531-547, the score is built without any co-consumption profile/agreement term.
+FINDING CORRECTION: Include the frozen co-consumption profile agreement in the same first-level assignment score as the curved distance, with the proposed dominant symmetric weight; keep directed context bounded as the tie-break and ensure both inputs affect the selected assignment.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:402-472 → train_rqvae.py:496-547 → model/layers.py:131-162 | Inspected the runtime scoring inputs, their initialization/refresh, the differentiable soft assignment loss, and the smoke-test variant assertions.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:442-443; train_rqvae.py:469-472; train_rqvae.py:496-547
+FINDING DETAIL: The directed context used by the assignment is effectively initialized from zero codepoints. `_contexts()` derives `bary` and `neg_bary` from `self._codes`, but `refresh()` initializes `_codes` once to zeros and the trainer never updates it from the first-level codebook. Consequently the intended predecessor-region and hard-negative codepoint context is not represented in those tensors. Also, the smoke test asserts behaviour-off and both-on assignments differ, but does not assert that replacing the curved distance with Euclidean changes the assignment or gradient. The submitted evidence therefore does not establish the required geometry-off sensitivity.
+FINDING REPRODUCTION: Follow `refresh()` at lines 442-443 and `_contexts()` at lines 380-400: absent an external `_codes` assignment, contexts use zeros. Search the trainer’s refresh path at lines 736-753; it refreshes assignments but does not update `_codes`. In `smoke_test.py:124-132`, only behaviour-off versus both-on is asserted; no geometry-off sensitivity assertion exists.
+FINDING CORRECTION: Set `_codes` from the live first-level code embeddings before each context refresh, and add a deterministic same-input test asserting the geometry-off variant changes the assignment or relevant gradient relative to both-on, with finite forward/backward values.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74; train_rqvae.py:612-697; train_rqvae.py:816-895; smoke_test.py:39-63 | Statically traced repository/data/result paths, the trainer entry point, single-card and torchrun launcher branches, and SID export/indexing. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified from the inspected code. The trainer reads the frozen `stage0_build_parquet/train.parquet`, resolves its output to the candidate’s promoted `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` directory, exports rows keyed by enumerated item IDs, and has a `GENREC_SINGLE_GPU` single-card branch. The candidate check records an import failure, which is not evidence of a trainer integration defect.
+FINDING REPRODUCTION: Static inspection of the cited paths and branches; trainer execution was not performed.
+FINDING CORRECTION: none

@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:227-329, train_rqvae.py:362-400, train_rqvae.py:496-563, model/layers.py:127-161 | Traced the trainer’s frozen training transitions into predecessor contexts and the hard-negative context, then followed `scores()` into the Poincare-distance contrast and the first-level hard assignment. `smoke_test.py:87-141` supplies a deterministic variant comparison that checks both-on differs from behaviour-off and geometry-off. This is source inspection; I did not execute the smoke test.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:101-103
+FINDING DETAIL: The configured mechanism does not match the proposal’s stated approximate scale: `COGEO_LAMBDA` is `1.0`, while the proposal specifies lambda about `0.1-0.3`. The pathway is coupled, but this setting changes its strength and does not implement the proposed coefficient.
+FINDING REPRODUCTION: Read `COGEO_LAMBDA` at train_rqvae.py:102 and its multiplication into the score at train_rqvae.py:552; the implemented adjustment is ten times the proposal’s lower stated value.
+FINDING CORRECTION: Set `COGEO_LAMBDA` to the selected proposal-range value and record the chosen value in the training metrics/config.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161, train_rqvae.py:734-748, smoke_test.py:47-61 and smoke_test.py:87-141 | Inspected the real forward/backward path: the score’s softmax-weighted code embeddings add a differentiable quantization loss and straight-through gradient path; the trainer backpropagates the total loss. The smoke fixture asserts finite loss/encoder gradient and assignment changes under the behaviour and geometry switches. Runtime execution was not performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:101-103
+FINDING DETAIL: The implemented adjustment coefficient is `1.0`, outside the proposal’s approximate `0.1-0.3` range. This is a fidelity/configuration concern, not a demonstrated dead gradient term or numerical failure.
+FINDING REPRODUCTION: Compare `COGEO_LAMBDA` at train_rqvae.py:102 with its use in the differentiable score at train_rqvae.py:552.
+FINDING CORRECTION: Use a coefficient in the proposal’s stated range, then retain the existing both-on versus behaviour-off/geometry-off smoke comparisons.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:624-707, train_rqvae.py:833-912, model/layers.py:301-318 | Traced repository/result path resolution, frozen embedding and train-parquet loading, ID validation, trainer setup, export, and the launcher’s single-card and torchrun branches. Source inspection only; no trainer execution.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:883-912
+FINDING DETAIL: The launcher checks the single-card switch, but `main()` still uses `EMAVQLayer`’s unmodified forward path if `VQ_TYPE` is changed to `"ema"`: unlike `VQLayer.forward`, that override at model/layers.py:207-237 does not apply `region_assignment.scores()` or the coupled soft gradient path. With the current `VQ_TYPE = "vq"` the specified run uses the coupled implementation; however, the requested integration check also requires the distributed launcher to work, and the current assignment hook is not supported by the other configured VQ implementation. This is an integration defect if the trainer configuration selects EMA.
+FINDING REPRODUCTION: Set `VQ_TYPE = "ema"` and run the trainer through the `GENREC_SINGLE_GPU=1` branch or torchrun. `EMAVQLayer.forward()` calls `_indices()` at model/layers.py:213, which returns the hooked hard choice, but its loss and output at lines 235-237 omit the coupled score’s soft gradient contribution. Thus the implemented differentiable coupled training path is absent for that supported configuration.
+FINDING CORRECTION: Either reject non-`vq` `VQ_TYPE` when `COGEO_ENABLED` is true, or implement the same coupled score and differentiable quantization path in `EMAVQLayer.forward()` (and verify the chosen configuration with the one-epoch gradient smoke). The current VQ configuration’s launcher path and exports are otherwise consistent on inspection.

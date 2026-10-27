@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:227-257, train_rqvae.py:362-400, train_rqvae.py:496-559, model/layers.py:127-161 | Traced the frozen training-sequence transition counts into predecessor and negative contexts, then into the Poincare-context contrast in the first-level assignment score and the quantization path. smoke_test.py:69-141 supplies a deterministic comparison fixture for both-on, behaviour-off, and geometry-off assignment choices.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161, train_rqvae.py:733-741, smoke_test.py:47-63, smoke_test.py:87-141 | Inspected the forward and backward path in code. The score feeds a softmax-based straight-through surrogate in addition to the hard assignment; the smoke fixture checks finite loss and encoder gradients, and checks that the assignment changes under both-on and returns to the plain choice with behaviour off. It also checks that replacing the curve with Euclidean context distances changes the fixture’s assignment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 numerical hazard found by code inspection. Runtime training is not claimed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-73, train_rqvae.py:620-655, train_rqvae.py:829-872, train_rqvae.py:879-908 | Traced repository-root resolution, the frozen Stage0 training parquet and Stage1 embedding inputs, catalogue-indexed SID export, and arm-specific result paths. Inspected the launcher’s four-card torchrun branch and the `GENREC_SINGLE_GPU` branch, which returns to `main()` without spawning torchrun. This is a code inspection; the trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The candidate writes to its own promoted Stage2 result directory, as required.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

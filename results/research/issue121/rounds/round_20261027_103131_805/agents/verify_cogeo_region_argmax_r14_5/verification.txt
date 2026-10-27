@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:227-228, 402-472, 496-559; model/layers.py:127-137, 150-162 | Static code trace: training-only transition counts and predecessor contexts are built and refreshed, then the first-level quantizer scores candidate codewords using both the Euclidean item distance and a clipped Poincare-context contrast. The geometry-off and behaviour-off switches are present in the score path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-162; train_rqvae.py:496-559 | Static forward/backward trace: the coupled score contributes to a soft candidate distribution and an added quantization loss; that loss is connected to code embeddings and the latent. The smoke test at smoke_test.py:47-61 checks finite loss and an encoder gradient, but does not establish finite gradients for all intended parameters or compare gradients across switches.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:227-228, 308-315, 402-429
+FINDING DETAIL: The implemented co-consumption signal does not participate in the assignment computation. `profiles`, `agree_all`, and the sparse co-consumption matrix are built, but `scores()` only reads the directed predecessor contexts, the hard-negative contexts, and the Poincare distance. Thus the actual pathway is directed behaviour × hyperbolic geometry, not the proposal’s specified coupling of symmetric co-consumption and Poincare distance to determine assignments. The proposal explicitly says co-consumption is only for usage reference and diagnostics, so this is not a scope defect against that text; it is a fidelity defect against the supplied idea’s claimed novelty and mechanism.
+FINDING REPRODUCTION: Trace `CoGeoAssignment.refresh()` at train_rqvae.py:402-472 into `scores()` at :496-555. `self.profiles` and `self.agree_all` have no read in `scores()` or the hard-choice path; changing the co-consumption values while holding transitions, contexts, codebook and usage bias fixed cannot change the score or assignment.
+FINDING CORRECTION: If implementing the stated idea literally, add the symmetric co-consumption agreement to the candidate assignment score (and ensure it is coupled to the curved operation in the same score pathway), or revise the implementation claim so it does not assert that co-consumption determines assignments. Also extend the smoke to verify both-on/behaviour-off/geometry-off gradient or assignment changes on the actual forward path, not only a synthetic score fixture.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 620-655, 824-903 | Static code inspection: the trainer resolves the repository root from markers, reads Stage1 embeddings and the Stage0 `train.parquet`, writes checkpoint/SID/JSON/metrics beneath the promoted arm’s `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` directory, exports rows by enumerated item ID, extends collisions to unique SIDs, and includes both the torchrun launcher and the `GENREC_SINGLE_GPU` bypass. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by static inspection. The candidate check artifact reports an inconclusive `ModuleNotFoundError`; it does not establish a trainer failure.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

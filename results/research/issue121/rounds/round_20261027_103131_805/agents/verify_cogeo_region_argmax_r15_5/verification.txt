@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:402-472, train_rqvae.py:496-555, model/layers.py:127-136 | Traced the epoch refresh of training-derived predecessor contexts and gates into the first-level candidate score, then into the hard code choice. The score uses Poincare geodesic distances for positive and negative contexts; the selected code feeds quantization.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The training-only predecessor signal and curved operation meet in one connected assignment pathway. The implementation also uses co-consumption to choose the hard negative at train_rqvae.py:280-298.
+FINDING REPRODUCTION: Source inspection of the refresh, scoring, and quantizer-hook path described above.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:121-162, train_rqvae.py:496-559 | Inspected the real forward path: the hooked score selects the hard code, and its differentiable soft candidate distribution contributes to quantization loss and the straight-through output. The code alone supports a differentiable route to encoder and codebook parameters, but the geometry-off comparison is not the specified Euclidean control.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:516-527, train_rqvae.py:539-545
+FINDING DETAIL: `geometry_off` still projects code vectors with the Poincare-ball projection (`y = project(code_embs)`), and the contexts are projected before the Euclidean distance calculation. Thus it does not replace the Poincare maps with squared Euclidean distance everywhere as required. The resulting comparison cannot isolate the effect of the curved operation.
+FINDING REPRODUCTION: Set `coupling.mode = "geometry_off"` and call `scores(...)`: the branch at lines 540-542 computes Euclidean differences against `y`, but `y` was already set to `project(code_embs)` at line 527. The contexts are also passed through `project(...)` at lines 541-542.
+FINDING CORRECTION: In `geometry_off`, compare the unprojected code embeddings and unprojected contexts using squared Euclidean distance; retain the projection and geodesic calculation only in the curved branch. Then verify the two modes use the same inputs and differ only by the geometry operation.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:227-299, train_rqvae.py:620-681, train_rqvae.py:879-908 | Inspected the trainer entry point, frozen train-file inputs, arm-specific output constants, SID export/index construction, four-process torchrun launcher, and the `GENREC_SINGLE_GPU` branch. The candidate check records `ModuleNotFoundError` (CANDIDATE_CHECK.json:2-3); I did not execute the trainer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:249-257
+FINDING DETAIL: Co-consumption construction materializes a full `len(seq) × len(seq)` meshgrid for each user's longest sequence before filtering self-pairs. This is quadratic peak memory in sequence length, rather than the specified sparse construction, and can exhaust memory before training starts. The transition pass also builds its keys from the same per-sequence loop.
+FINDING REPRODUCTION: A single training sequence of length `L` allocates two `L × L` arrays at line 253 and another pair mask at line 254. Increasing `L` therefore increases temporary memory as O(L²), even though the desired co-consumption representation is sparse.
+FINDING CORRECTION: Generate unique co-consumption pairs and adjacent transitions with bounded-memory sparse/chunked accumulation, avoiding a full pairwise meshgrid; preserve the existing per-user counting semantics and add a long-sequence construction smoke check.

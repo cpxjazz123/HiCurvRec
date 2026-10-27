@@ -1,0 +1,33 @@
+I’ll inspect the candidate implementation and its trainer/export/launcher paths, then return the requested plain-text report only. I won’t modify files; the requested output path is inaccessible under the no-write constraint.
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:499-566, model/layers.py:126-161 | Traced the trainer-installed first-level assignment hook through the score and quantizer forward path. The score combines the squared Euclidean item-to-code distance with a gated, clipped predecessor-context contrast using Poincare geodesic distances; the soft candidate distribution also feeds the straight-through quantizer path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the behaviour–geometry coupling pathway.
+FINDING REPRODUCTION: Code inspection of the assignment hook and its call from the quantizer forward pass.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:753-768, train_rqvae.py:499-516 | Traced the epoch-end assignment refresh: it encodes the catalogue and calls the hooked first-level assignment, which requires `current_latent` to be set.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:753-768
+FINDING DETAIL: The epoch-end refresh calls `first_layer._indices(...)` with the assignment hook installed, but does not set `cogeo.current_latent = encoded` first. The hook’s `scores()` checks for `current_latent` and raises `RuntimeError("missing latent context for Poincare assignment")` when absent or wrong-length. Thus the real training loop cannot complete its first epoch, and the later coupled assignment and gradient behavior cannot be exercised by that trainer.
+FINDING REPRODUCTION: Run one epoch through the refresh block: after `encoded = raw_module.encoder(...)`, the call at line 763 reaches `scores()`; absent a prior forward that happened to leave a matching-length latent, it raises. With a typical final training batch shorter than the catalogue, the stale latent fails the length check as well.
+FINDING CORRECTION: Set `cogeo.current_latent = encoded` immediately before computing `assignments`, or pass the encoded latent explicitly into the refresh assignment call. Ensure the refresh uses the full-catalogue latent for that assignment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The differentiable soft-score path is connected to the codebook and encoder through the score and the straight-through output; it is not computed and discarded. The blocker above prevents the real trainer from reaching later epochs, but no separate gradient-path defect was found by inspection.
+FINDING REPRODUCTION: Follow `model/layers.py:130-161`: the hooked score contributes a soft candidate distribution to `quant_loss` and the straight-through quantized output.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:627-688, train_rqvae.py:871-915 | Inspected the trainer entry point, frozen train/embedding inputs, result path construction, SID export/indexing, and torchrun/single-card launcher branches.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:753-768
+FINDING DETAIL: The real trainer fails at its first epoch-end assignment refresh due to the missing full-catalogue `current_latent` described above, so it cannot reach checkpointing or SID export. The inspected paths otherwise point to the repository’s stage1 embedding and stage0 train parquet, write under the candidate-specific `TIGER_cogeo_region_argmax` result directory, enumerate SID JSON keys from item ID 0, and retain the `GENREC_SINGLE_GPU` branch.
+FINDING REPRODUCTION: Run the trainer through its first epoch-end refresh; it raises from `CoGeoAssignment.scores()` before the export block.
+FINDING CORRECTION: Set the full-catalogue latent before the epoch-end hooked assignment call, then verify one epoch reaches SID export and the intended result directory.

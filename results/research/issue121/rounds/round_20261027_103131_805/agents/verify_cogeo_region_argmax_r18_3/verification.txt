@@ -1,0 +1,30 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:230-332, 405-475, 499-566; model/layers.py:106-119, 121-162 | Inspected the assignment hook from frozen training transitions through per-epoch predecessor contexts and into the first-level RQ-VAE quantizer. The score combines the item's Euclidean distance with a gated, clipped contrast of Poincare geodesic distances to positive and hard-negative predecessor contexts.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:121-162; train_rqvae.py:499-566 | Inspected the forward/backward route: the coupled scores form a soft candidate distribution, whose codebook-weighted output contributes to quantization loss and the straight-through output. The supplied smoke test exercises forward/backward, finite loss and encoder gradients, and checks that behaviour-off matches the plain assignment while both-on and geometry-off choices differ on its fixture. I did not execute it; runtime execution is not required here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-74, 627-710, 730-773, 836-915; smoke_test.py:39-63 | Inspected the trainer entry point, repository-relative frozen Stage0 train parquet path, promoted-arm output path, SID export and launcher branches. The smoke test checks repository-root discovery and unique, row-indexed SID extension on a small fixture; the single-card branch is selected by `GENREC_SINGLE_GPU=1` at train_rqvae.py:886-915.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:293-301
+FINDING DETAIL: The hard-negative selection does not implement the specified “co-consumption neighbour with the largest user-set overlap.” It sorts and chooses by raw co-consumption pair count (`cooc_counts`), not by user-set overlap. These are different criteria whenever users contribute different numbers of sequence pairs; the behavior context and therefore the coupled assignment can use a different negative than specified.
+FINDING REPRODUCTION: For example, let item i co-occur with candidate a in 10 pair contributions from one user's long sequence, and with candidate b in 2 contributions from two distinct users, with neither candidate preceding i. The code sorts by pair count and chooses a; user-set overlap is larger for b, so the specified hard negative is b.
+FINDING CORRECTION: Preserve or compute distinct-user co-consumption counts for the hard-negative ranking (using the frozen training sequences), and select the eligible neighbor with the greatest such count. Keep the existing directed predecessor exclusion.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:293-301
+FINDING DETAIL: The hard-negative selection does not implement the specified “co-consumption neighbour with the largest user-set overlap.” It sorts and chooses by raw co-consumption pair count (`cooc_counts`), not by user-set overlap. These are different criteria whenever users contribute different numbers of sequence pairs; the behavior context and therefore the coupled assignment can use a different negative than specified.
+FINDING REPRODUCTION: For example, let item i co-occur with candidate a in 10 pair contributions from one user's long sequence, and with candidate b in 2 contributions from two distinct users, with neither candidate preceding i. The code sorts by pair count and chooses a; user-set overlap is larger for b, so the specified hard negative is b.
+FINDING CORRECTION: Preserve or compute distinct-user co-consumption counts for the hard-negative ranking (using the frozen training sequences), and select the eligible neighbor with the greatest such count. Keep the existing directed predecessor exclusion.

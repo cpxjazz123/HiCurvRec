@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:496-559, called from model/layers.py:127-137 | Inspected the assignment scoring path and its caller. Training-only predecessor contexts and hard-negative contexts are compared to candidate codewords with Poincare geodesic distances; that bounded, gated contrast is added to the item’s Euclidean candidate distances before argmax. The geometry-off branch replaces both context distances with squared Euclidean distances.
+FINDING SEVERITY: -
+FINDING LOCATION: -
+FINDING DETAIL: -
+FINDING REPRODUCTION: -
+FINDING CORRECTION: -
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-161, train_rqvae.py:496-559 | Inspected the forward/backward path and the smoke-test fixture in smoke_test.py:47-63, 87-141. The coupled score selects hard codes and also supplies a differentiable soft candidate distribution used in the quantization loss, so the score can affect encoder and codebook gradients. The smoke test checks finite loss and encoder gradient and compares the three assignment modes, but it does not test behavior-off against the actual plain Euclidean choice after the usage bias is active.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:551-555
+FINDING DETAIL: The behavior-off mode still adds `usage_bias` to the candidate costs. Consequently, behavior-off is not the specified plain squared-Euclidean assignment when the usage bias is non-constant. The fixture’s `compare_variants` invokes the modes without setting `usage_bias`, so it misses this case. This invalidates the required behavior-off comparison; it does not establish that the full mechanism’s forward/backward path is dead or numerically unstable.
+FINDING REPRODUCTION: Set `usage_bias` to a non-constant vector (as the trainer does at train_rqvae.py:763-766), use Euclidean distances whose top-two margin is smaller than the bias difference, then call `scores` with `mode = "behaviour_off"`. The argmax can differ from `euclidean_dist.argmin(-1)` even though the behavior term is off.
+FINDING CORRECTION: Make the behavior-off control match its stated definition by also omitting the usage bias in that mode, or explicitly revise the control specification and comparison so it no longer claims behavior-off is plain Euclidean. Add a smoke assertion with a non-constant usage bias to verify the chosen control semantics.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, 620-704, 829-907 | Inspected the trainer entry point, data paths, export, output constants, and launcher branches. It reads the repository’s `stage0_build_parquet/train.parquet` and Stage 1 embeddings; writes checkpoint, metrics, and SID exports under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`; exports rows keyed by enumerated item IDs; and extends colliding codes before writing. The launcher checks `GENREC_SINGLE_GPU` at line 883 and otherwise invokes the four-card torchrun command. Runtime execution was not performed.
+FINDING SEVERITY: -
+FINDING LOCATION: -
+FINDING DETAIL: -
+FINDING REPRODUCTION: -
+FINDING CORRECTION: -

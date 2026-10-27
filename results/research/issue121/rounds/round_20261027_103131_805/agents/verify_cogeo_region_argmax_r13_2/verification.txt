@@ -1,0 +1,24 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:741-753 → /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:131-137 → /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-552 | Traced the epoch refresh and the first-level assignment hook into the coupled score; inspected the Poincaré/geodesic and predecessor-context calculations.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:527-547
+FINDING DETAIL: The assignment score does not use the positive predecessor context `self.bary`. `hyp` is computed from the item's own latent `x` against the codewords (lines 527, 534), and the behavior contrast is `hyp.square() - eta * neg_hyp.square()` (line 543), where only the negative context is used. Thus the prescribed curved contrast between positive and negative predecessor contexts is absent; the positive transition context cannot affect the assignment score. The current pathway has a gated negative-context adjustment, but it is not the specified mechanism.
+FINDING REPRODUCTION: In `scores`, hold `euclidean_dist`, `neg_bary`, `gate`, and code embeddings fixed, then change `self.bary[ids]`: the computed scores do not change. A minimal example is any two different positive barycentres with identical other inputs; both produce identical assignments.
+FINDING CORRECTION: Compute the positive curved distance from each codepoint to `self.bary[ids]` and the negative curved distance from each codepoint to `self.neg_bary[ids]`, then form the centered, clipped positive-minus-eta-times-negative contrast. In geometry-off mode, replace both context distances with their Euclidean counterparts.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:131-161 → /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-556 | Inspected the actual forward path: coupled scores select hard indices, and the softmax-weighted codebook output contributes to the straight-through quantization loss and reconstruction path. The score uses clipped float32 distances with positive denominator clamps; the softmax scale is clamped to `1e-6`. The supplied smoke fixture checks finite loss and encoder gradient, and checks that both-on assignments differ from behaviour-off and geometry-off assignments. No additional trainability defect found by code inspection; runtime training was not run.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-75, 617-653, 821-900 | Inspected repository-root/path resolution, the data inputs, trainer setup, SID export, and launcher branches. The trainer reads `stage1_GeneEmbedding/output/sentence_t5.npy` and `results/stage0_build_parquet/train.parquet`; writes artifacts under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`; exports rows indexed by item ID with a uniqueness extension; and the launcher honors `GENREC_SINGLE_GPU` at lines 875-876 while retaining the four-card torchrun branch. No integration defect found by inspection.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration finding.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

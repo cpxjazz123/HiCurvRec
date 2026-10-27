@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:227-299, train_rqvae.py:362-400, train_rqvae.py:496-563, layers.py:106-119, layers.py:121-162 | Traced the frozen directed-transition construction through predecessor-context and hard-negative aggregation into the bounded Poincare-distance score, then through the first VQ layer’s assignment hook and soft straight-through training path. The deterministic switch fixture is in smoke_test.py:87-141; it checks that both-on choices differ from behaviour-off and geometry-off. I inspected the code and fixture; I did not run them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:372-400
+FINDING DETAIL: The proposal specifies a Frechet mean of predecessor codepoints, but the implementation takes an arithmetic mean in the Poincare tangent space at the origin and projects it back. That is a different context construction, so the implemented behaviour pathway is not fully faithful to the stated specification. The connected behaviour-plus-curvature pathway itself is present.
+FINDING REPRODUCTION: For two distinct predecessor codepoints, compare the returned bary against a Poincare Frechet mean of those points. The code computes `project(weighted mean(log0(project(codepoints))))`; it does not optimize or otherwise compute the Frechet mean under the stated geodesic distance.
+FINDING CORRECTION: Either implement the specified Poincare Frechet mean with a bounded, numerically safeguarded iteration, or explicitly revise the proposal’s context definition to the origin-tangent-space mean and use that same definition for the controls.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: layers.py:127-162, train_rqvae.py:496-559, smoke_test.py:47-61 and smoke_test.py:87-141 | Traced a real model forward and loss backward in the smoke fixture. The fixture checks finite loss and an encoder gradient, and compares assignments across switches, but it does not establish that gradients from the coupled score are finite or reach the intended parameters.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:511-525, layers.py:150-161
+FINDING DETAIL: The candidate latent `z` is assigned to `current_latent`, projected, and then never used in the score: `geodesic` compares its `points` argument to codepoints `y`, and is only called with positive/negative contexts. Consequently, the coupled score has no differentiable path to the encoder through `z`. The soft quantization term can send gradients through the codebook’s candidate distribution, but it does not make the predecessor-context adjustment train the encoder as claimed in layers.py:151-154. The smoke test only checks that the encoder has some gradient from the ordinary reconstruction/quantization losses.
+FINDING REPRODUCTION: In a forward/backward, isolate `coupled` in `VQLayer.forward` and inspect `current_latent.grad` or the encoder gradient attributable to the coupled soft term. `scores()` uses `current_latent` only for a presence/length check at train_rqvae.py:511-513; changing latent values while holding `euclidean_dist` fixed cannot change the behaviour component.
+FINDING CORRECTION: If the intended mechanism requires the behaviour-curvature pathway to update the encoder, include a differentiable candidate-latent term in the coupled score or soft assignment, while retaining the Euclidean item-led ordering constraint. Extend the smoke test to isolate the coupled contribution and assert finite, nonzero gradients to both encoder and intended codebook parameters, as well as switch-off reversibility.
+
+CHECK: integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:624-707, train_rqvae.py:833-912 | Inspected the repository-root and arm-output resolution, frozen embedding/parquet inputs, trainer setup, SID export/index mapping, and launcher including the `GENREC_SINGLE_GPU` branch. The trainer could not be run in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:134
+FINDING DETAIL: The launcher resolves its script path with `Path(__file__).resolve().relative_to(REPO_ROOT)`. In the inspected candidate tree, the script is under `results/research/issue121/trees/...`, while `REPO_ROOT` is the repository root. The resulting relative path points to the research-tree copy, not the promoted copy at `results/stage2_RQ-VAE/...`. The launcher runs that tree copy, whose `ARM_NAME` and root discovery may not match the promoted trainer; this does not demonstrate that the real promoted trainer entry point is launched.
+FINDING REPRODUCTION: From the candidate-tree location, compare `_LAUNCHER["script"]` with the expected promoted script path under `results/stage2_RQ-VAE/`. Then follow `_launch_via_torchrun()` at train_rqvae.py:897-906: it invokes the computed script from `REPO_ROOT`, rather than resolving the promoted trainer path.
+FINDING CORRECTION: Make the launcher target the promoted trainer entry point explicitly (or ensure the launcher is executed from the promoted copy and validate that invariant before launching). Verify the single-card branch and output-path resolution from that promoted entry point.

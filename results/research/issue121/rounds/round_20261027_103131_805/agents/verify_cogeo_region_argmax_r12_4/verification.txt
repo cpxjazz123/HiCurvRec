@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:227-329, train_rqvae.py:402-494, train_rqvae.py:496-556, model/layers.py:127-161 | Traced training-only co-consumption and transition construction through profile refresh and assignment scoring, then traced the hooked first-level quantizer forward.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:496-552
+FINDING DETAIL: The implementation does not implement the proposed co-consumption-led Poincare region assignment. Although it builds normalized co-consumption profiles and calculates `agree_all` at lines 465-468, `scores()` never reads `self.profiles` or `self.agree_all`. Instead, the assignment score starts from Euclidean distance and adds a bounded context term using a hard-negative predecessor barycentre. Thus co-consumption is only used indirectly to select a negative item, and the dominant symmetric profile-agreement term that is meant to determine partitions is absent. The connected transition-context/Poincare pathway does not establish fidelity to this proposal.
+FINDING REPRODUCTION: In `CoGeoAssignment.scores()`, trace the values used to form `cost` at lines 535-551: `euclidean_dist`, `behaviour`, `gate`, and optional `usage_bias`. Neither `self.profiles` nor `self.agree_all` contributes to the returned scores. A minimal counterexample is to change `self.profiles`/`self.agree_all` while holding the latent, codebook, gate, and negative barycentre fixed; the scores and assignments remain unchanged.
+FINDING CORRECTION: Incorporate the item-to-region co-consumption agreement (for example, `agree_all[ids]`) as the dominant symmetric term in the first-level assignment score, alongside the Poincare-distance term and the explicitly bounded directed radar; ensure the behavior-off and geometry-off modes ablate only their named components.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161, train_rqvae.py:496-556, smoke_test.py:47-61, smoke_test.py:113-137 | Inspected the forward/backward path and the supplied smoke-test checks; code inspection shows the coupled score contributes to the differentiable soft quantization loss, with behavior and geometry variants compared on the same batch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection. The coupled score feeds the soft candidate distribution and quantization loss; the smoke test checks finite loss and encoder gradients, and checks that behavior-off and geometry-off change assignments on its fixture. Runtime training was not run.
+FINDING REPRODUCTION: The supplied `smoke_test.py` contains the forward/backward and variant assertions at lines 47-61 and 113-137. This review did not execute it.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:617-699, train_rqvae.py:821-899, smoke_test.py:62-63 | Traced repository-root and arm-specific output resolution, frozen embedding and training-parquet inputs, train setup, SID export/indexing, and launcher branches, including `SINGLE_GPU_ENV` at lines 120 and 875-876. The smoke test checks the collision-extension output shape and uniqueness.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking integration defect found by code inspection. The trainer reads `stage1_GeneEmbedding/output/sentence_t5.npy` and `results/stage0_build_parquet/train.parquet`, writes artifacts under the candidate-specific `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax` directory, and exports item-indexed SID rows to JSON keyed by enumerated item ID. The launcher has both torchrun and single-card branches. Runtime integration was not exercised.
+FINDING REPRODUCTION: Inspect the path constants and export code at `train_rqvae.py:61-74` and `train_rqvae.py:856-864`, and launcher branches at `train_rqvae.py:871-900`. This review did not execute the trainer.
+FINDING CORRECTION: none

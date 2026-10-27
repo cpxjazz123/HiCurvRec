@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:496-552 → model/layers.py:106-119,121-162 | Traced the first-level assignment hook and its score/quantization path in code; the requested runtime smoke cannot be run in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:427-441,496-552
+FINDING DETAIL: The specified dominant co-consumption profile-agreement term is not used to score assignments. `profiles`, `agree_all`, `P_tensor`, and `directed_all` are constructed, but `scores()` never reads them. Instead, the score adds a contrast between the item’s Poincare distance to codepoints and the Poincare distance from a hard-negative item’s predecessor barycentre (lines 537-547). Thus the implemented core is not the proposed co-consumption-led region assignment with directed near-tie radar; in particular, co-consumption agreement does not determine every first-level assignment as claimed. The existing co-consumption signal only indirectly affects the preselected hard negative.
+FINDING REPRODUCTION: Trace `refresh()` building `self.profiles` and `self.agree_all` at lines 415-470, then inspect every operand used by `scores()` at lines 496-552. Neither table contributes to the returned scores. For a minimal counterexample, hold the embeddings, codebook, transition contexts, and hard-negative indices fixed while changing the co-consumption profiles: `scores()` is unchanged.
+FINDING CORRECTION: Add the specified symmetric profile-agreement score (for example, `A_i · g_k` or its cached equivalent) to the assignment score, with the calibrated dominant weight, while keeping the directed term bounded as the tie-break. Ensure that both the co-consumption term and Poincare distance participate in the same assignment computation.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:121-162, especially 128-160 | Inspected the real VQ forward path and `smoke_test.py:47-63,113-137`; runtime execution was unavailable. The coupled score feeds a differentiable soft candidate distribution into the quantization loss, so the encoder and code embeddings have a gradient path beyond the hard argmax. The smoke source checks finite loss and encoder gradient, and checks assignment sensitivity to both mode switches on its fixture.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74,617-698,741-757,821-900 | Inspected trainer setup, data loading, refresh, export, and launcher code; runtime execution was unavailable. The trainer reads the repository’s frozen `stage0_build_parquet/train.parquet` and Stage 1 embedding path, derives the repository root, and targets `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`. Export enumerates rows by item ID and extends collisions to unique SIDs; the launcher retains both torchrun and `GENREC_SINGLE_GPU` branches.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION:

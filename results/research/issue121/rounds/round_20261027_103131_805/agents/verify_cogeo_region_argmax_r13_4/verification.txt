@@ -1,0 +1,32 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:496-552 -> model/layers.py:128-137 | Static trace of the training assignment hook and score computation; the specified runtime smoke is unavailable here. The smoke fixture at smoke_test.py:87-137 also compares the behaviour and geometry switches, but does not establish that the positive predecessor context is used.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:527-545
+FINDING DETAIL: The curved score does not use the specified positive predecessor context. `hyp` is computed from the item's own latent `z` against the codewords at lines 527-534, while `self.bary`—the positive predecessor context computed at lines 362-400 and 469-472—is never read by `scores`. The negative term uses `self.neg_bary`, so the actual curved contrast is item-latent versus negative context, not positive-predecessor-context versus hard-negative-context. Also, `_codes` is initialized as zeros at lines 442-443 and is never refreshed from the codebook, so the barycentres are based on zero codepoints rather than current codepoints. Thus the claimed co-consumption and Poincare distance do not jointly determine assignment as specified.
+FINDING REPRODUCTION: Trace `CoGeoAssignment.refresh` into `_contexts` and then `scores`: set different `self.bary` values while holding `current_latent`, `neg_bary`, codewords, and distances fixed; `scores` is unchanged because it never reads `self.bary`. Separately, after codebook initialization and after an epoch refresh, inspect `cogeo._codes`; it remains the zero tensor initialized in `refresh`.
+FINDING CORRECTION: In `scores`, compute the positive curved distance from `self.bary[ids]` to the codewords (and the negative distance from `self.neg_bary[ids]`), then form the specified centered, clipped contrast. Refresh `_codes` from the current first-level codebook before computing contexts. Keep the Euclidean item-to-code distance as the base score.
+FINDING LOCATION: train_rqvae.py:402-400
+FINDING DETAIL: No additional finding.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:121-162 -> train_rqvae.py:729-737 | Static forward/backward trace: the coupled score feeds a softmax-weighted codebook value added to the quantization output, and the resulting loss is backpropagated. `smoke_test.py:55-61` describes the finite-loss and encoder-gradient smoke; `smoke_test.py:122-137` checks assignment changes across the behavior and geometry modes. Runtime execution is unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No trainability defect found by code inspection. The coupled score has a differentiable path through the score, soft assignment, and quantization loss; the geometry-off branch substitutes Euclidean context distance, and the behavior-off mode omits the behavior adjustment.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 617-698, 821-900 | Static trace of repository-root and result-path resolution, frozen embedding/train parquet loading, trainer setup, export, and launcher branches. The single-card branch reads `GENREC_SINGLE_GPU` at lines 120 and 873-876; the export writes item-indexed rows and JSON keys at lines 856-863.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The result path is the promoted arm directory under `results/stage2_RQ-VAE`, the export enumerates item IDs in row order, and the launcher returns without spawning torchrun when `GENREC_SINGLE_GPU=1`.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

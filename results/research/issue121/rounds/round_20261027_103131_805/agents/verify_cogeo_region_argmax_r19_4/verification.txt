@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:519-582 → model/layers.py:131-161 | Traced the first-layer assignment through `VQLayer.forward` into `CoGeoAssignment.scores`: the train-only predecessor context and hard-negative context are compared to candidate codewords with Poincaré geodesic distances, then gated and added to the item’s Euclidean distances before choosing a code. The score also feeds a soft assignment term in the quantization loss.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the both-on behaviour/geometry coupling.
+FINDING REPRODUCTION: The code path is visible at `train_rqvae.py:543-575` and `model/layers.py:150-161`.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-161 | Inspected the real forward path: it computes the coupled scores, uses their argmax for hard quantization, and adds a softmax-weighted coupled-score term to the quantization loss so score gradients can reach code embeddings. `smoke_test.py:55-61` describes a finite-loss and encoder-gradient smoke, but was not run.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:392-401; train_rqvae.py:495; train_rqvae.py:562-570
+FINDING DETAIL: The geometry-off control does not replace the curved geometry everywhere in the context pathway. `_contexts` chooses its geometry from `self.mode` when called, but `refresh` calls it while the trainer’s mode is `both_on` (`train_rqvae.py:709-710`, `495`). The resulting `bary` and `neg_bary` are therefore constructed using the Poincaré path. Later, geometry-off changes only the candidate-to-context score to raw Euclidean distances. This is not the specified Euclidean control “everywhere in the context geometry, including the positive context,” so the geometry-off comparison does not isolate the curve.
+FINDING REPRODUCTION: Set `cogeo.mode = "both_on"` and call `refresh(...)`, as the trainer does; then set `cogeo.mode = "geometry_off"` and score. The stored contexts remain those created under `both_on`, while only the distance calculation in `scores` changes. A minimal check is to compare refreshed contexts against contexts rebuilt with geometry-off selected before `_contexts` runs; they need not match.
+FINDING CORRECTION: Construct or cache contexts separately for each geometry mode, or make geometry selection an explicit argument and recompute the contexts in geometry-off using the Euclidean construction before scoring. Ensure the geometry-off test exercises that complete pathway, then verify finite loss/gradients and assignment sensitivity across both controls.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 647-730, 856-935 | Inspected the trainer’s root/path resolution, frozen embedding and train-parquet inputs, candidate result paths, SID export, and launcher branches. The four-card launcher uses torchrun; the single-card branch reads `GENREC_SINGLE_GPU` at `train_rqvae.py:123` and checks it at `910`. Runtime execution was not performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Outputs resolve under the promoted candidate’s `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` directory; export enumerates all embedding rows into item-indexed JSON and extends collisions to unique SIDs.
+FINDING REPRODUCTION: Inspect `train_rqvae.py:61-74`, `885-899`, and `906-935`.
+FINDING CORRECTION: none

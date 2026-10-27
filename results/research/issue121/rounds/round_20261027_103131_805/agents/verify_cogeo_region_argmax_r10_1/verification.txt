@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:496-551 -> model/layers.py:127-161 | Traced the assignment hook from the trainer’s first-level quantizer and checked the score inputs and uses. The score combines directed predecessor context with Poincare distances, but does not use the co-consumption profiles or agreement computed at train_rqvae.py:402-468.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:496-547
+FINDING DETAIL: The implemented mechanism is not the proposed co-consumption-led region assignment. `scores` uses the item’s Euclidean distance and a directed predecessor/hard-negative adjustment; the required co-consumption agreement `A_i · g_k` is absent. `agree_all` is computed during refresh but never read by the assignment score. Thus the proposal’s symmetric co-consumption signal does not affect the core assignment pathway.
+FINDING REPRODUCTION: Trace `refresh` at train_rqvae.py:465-468, which calculates `self.agree_all`, then trace `scores` at train_rqvae.py:527-547: no `agree_all` or profile term enters `cost`. Changing only the co-consumption profiles therefore cannot change these scores or assignments.
+FINDING CORRECTION: Include the co-consumption agreement in the first-level score alongside the Poincare term, using the frozen training-only rows and refreshed region profiles; ensure both terms affect the selected code. Keep the directed term bounded as specified.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-161 -> train_rqvae.py:496-547 | Inspected the real quantizer forward and backward path, including the soft-score surrogate, and the variant switches. The code contains a differentiable soft assignment loss, but the geometry-off control does not replace the curved score with a Euclidean score.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:527-540
+FINDING DETAIL: In `geometry_off` mode, `hyp` is still computed with `geodesic(x)` and used as `hyp.square()` in `behaviour`; only the negative context uses Euclidean distance. Consequently, this control retains the curved operation and is not a valid geometry-off comparison. The smoke test compares choices but does not assert that geometry-off removes the curve or changes back to the Euclidean computation.
+FINDING REPRODUCTION: Set `self.mode = "geometry_off"` and evaluate `scores`; the positive term at line 538 still depends on `hyp` from the Poincare `geodesic` at lines 527-528. Therefore replacing the geometry is incomplete even when the control is selected.
+FINDING CORRECTION: In `geometry_off`, calculate both positive and negative terms with the intended Euclidean operation and ensure the control has no Poincare-dependent score path. Add a comparison that verifies the geometry-off path is genuinely Euclidean. The smoke test at smoke_test.py:57-61 checks finite loss and an encoder gradient, but does not establish that the coupled score’s gradient reaches intended parameters or that the geometry switch changes and reverses its effect.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-73, 612-627, 816-863, 866-895 | Inspected repository-root/path resolution, the real trainer’s frozen training-file input, export indexing and uniqueness checks, result paths, and both launcher branches. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer reads `results/stage0_build_parquet/train.parquet`, writes artifacts under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax`, exports item IDs by enumerating the full embedding array, and checks SID uniqueness. The launcher uses `GENREC_SINGLE_GPU` for its single-card branch and otherwise invokes torchrun.
+FINDING REPRODUCTION: Source inspection at train_rqvae.py:64-73, 627, 851-857, and 866-895.
+FINDING CORRECTION: none

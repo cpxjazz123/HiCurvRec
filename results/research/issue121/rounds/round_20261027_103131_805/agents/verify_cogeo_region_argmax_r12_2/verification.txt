@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:127-137 -> results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-552 | Traced the trainer-installed first-layer assignment hook into its score computation and compared that computation with the specified co-consumption profile and directed radar terms. The smoke test’s comparison path is at smoke_test.py:122-137.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-552
+FINDING DETAIL: The specified co-consumption profile agreement does not participate in the assignment score. Profiles and an agreement table are computed at lines 402-468, but scores() never reads either. Instead, the score uses a Poincare distance contrast against predecessor and hard-negative barycentres (lines 537-547); it does not use the specified bounded directed predecessor-region radar term either. Thus the exercised assignment path couples directed context to curved geometry, but omits the proposal’s defining co-consumption-led partition mechanism. The smoke test does not catch this: its manually set agree_all and radar values are not read by scores().
+FINDING REPRODUCTION: In scores(), observe that `self.profiles`, `self.agree_all`, `self.P_tensor`, and `self.directed_all` are not referenced; assignment depends on `self.neg_bary`, `self.gate`, the latent/code Poincare distances, and optional `usage_bias`. In smoke_test.py:95-105, alter `agree` and `radar`; those values are only assigned to fields the scorer does not consume.
+FINDING CORRECTION: Make the first-level score use the specified co-consumption agreement (for example, `A_i dot g_k`) as its dominant behaviour term and the normalized directed predecessor-region score as a bounded tie-break, jointly with the Poincare distance. Keep the geometry-off and behaviour-off controls aligned with that same score, and test that changing the actual co-consumption profiles and transition radar changes assignments.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:127-162 -> results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-556 | Inspected the forward path, score switches, and backward path in smoke_test.py:55-61 and its deterministic variant checks at :122-137. The environment limitation precludes executing the smoke test here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The coupled score is consumed for hard assignment, and the softmax-weighted code embedding at layers.py:157-161 adds a differentiable loss/path into encoder and codebook computation. The Poincare calculation projects points inside the unit ball and clamps the acosh argument above one; the softmax scale is clamped away from zero. The smoke test checks finite loss and encoder gradient, and has assignment comparisons for behaviour-off and geometry-off. The implementation defect reported under check a means this is trainability of the implemented directed-context/geometry mechanism, not of the specified co-consumption-led mechanism.
+FINDING REPRODUCTION: Source inspection only; no PyTorch runtime is available in this sandbox. The supplied smoke test’s finite-gradient assertions are at smoke_test.py:55-61, and the assignment-switch assertions at :124-137.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74, 617-678, 821-900 | Traced the entry point, input paths, result paths, export, and launcher branches by code inspection; did not execute the trainer because this sandbox lacks PyTorch and shell access.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the stage1 embedding file and stage0 training parquet (lines 66-67), derives the repository root from repository markers (lines 42-61), and writes checkpoint, logs, NumPy SIDs, and JSON SIDs only under the candidate’s promoted result directory (lines 63-74, 828-864). Export enumerates embedding rows as item IDs and requires unique extended SIDs (lines 856-862). The launcher invokes torchrun with a repository-relative script and repository-root working directory (lines 871-895); when `GENREC_SINGLE_GPU=1`, it returns to the single-card branch at lines 875-876. Runtime execution and export validity could not be independently confirmed here.
+FINDING REPRODUCTION: Inspect the constants and branches cited above; runtime confirmation would require the stated external GPU smoke/trainer run.
+FINDING CORRECTION: none

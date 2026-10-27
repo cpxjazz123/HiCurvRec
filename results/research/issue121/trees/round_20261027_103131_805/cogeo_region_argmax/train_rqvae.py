@@ -106,6 +106,20 @@ COGEO_EPSILON       = 0.01
 # "both_on" (the mechanism), "behaviour_off" (the behaviour terms are dropped)
 # and "geometry_off" (the curve is replaced by the plain Euclidean distance).
 COGEO_MODE          = "both_on"
+# The behaviour term is a bounded adjustment of the item's own choice, never a
+# replacement of it: the Euclidean distance of the item's latent to the code
+# always orders the codes, and the behaviour term may move a code by at most
+# this much.
+COGEO_CLIP          = 1.0
+# The weight of the hard negative context inside the bounded adjustment.
+COGEO_ETA           = 0.5
+# The weight of the soft constraint that keeps the first-level usage near the
+# usage of the model without the mechanism. It is a pull, not a quota: the codes
+# are not forced to be equally used.
+# The usage pull is a nudge, not a quota: at 0.5 the per-code bias (about 7
+# cost units between a used and an unused code) outweighed the Euclidean
+# distances and drove the whole catalogue into one code.
+COGEO_USAGE_WEIGHT  = 0.02
 SINGLE_GPU_ENV      = "GENREC_SINGLE_GPU"
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
@@ -266,6 +280,34 @@ class CoGeoAssignment:
         self.transitions = defaultdict(float)
         for src, dst, value in zip(self.trans_src, self.trans_dst, self.trans_val):
             self.transitions[int(src), int(dst)] += float(value)
+        # The hard negative of every item: the co-consumption neighbour with the
+        # largest overlap that never precedes it. Both signals are frozen, so
+        # this is computed once.
+        predecessors: dict[int, set] = defaultdict(set)
+        for src, dst in zip(self.trans_src, self.trans_dst):
+            predecessors[int(dst)].add(int(src))
+        # the user-set overlap is the Jaccard index, not the raw pair count:
+        # count / (users_i + users_j - count)
+        self.user_count = np.zeros(n_items, dtype=np.float64)
+        for _sequence in longest.values():
+            self.user_count[_sequence] += 1.0
+        pair_count = self.cooc_counts.astype(np.float64)
+        union = (self.user_count[self.cooc_rows] + self.user_count[self.cooc_cols]
+                 - pair_count)
+        overlap = pair_count / np.maximum(union, 1.0)
+        order = np.lexsort((-overlap, self.cooc_rows))
+        rows_sorted = self.cooc_rows[order]
+        cols_sorted = self.cooc_cols[order]
+        boundaries = np.searchsorted(rows_sorted, np.arange(n_items + 1))
+        self.negative_index = np.arange(n_items, dtype=np.int64)
+        for item in range(n_items):
+            start, stop = int(boundaries[item]), int(boundaries[item + 1])
+            blocked = predecessors.get(item, set())
+            for position in range(start, stop):
+                candidate = int(cols_sorted[position])
+                if candidate != item and candidate not in blocked:
+                    self.negative_index[item] = candidate
+                    break
         self.n_items = n_items
         self.profiles = None
         self.prev_assignment = np.zeros(n_items, dtype=np.int64)
@@ -286,6 +328,11 @@ class CoGeoAssignment:
         # self.trans_src / self.trans_dst / self.trans_val already hold the
         # numpy construction of the same counts.
         self.P = {}
+        self.gate = None
+        self.bary = None
+        self.neg_bary = None
+        self.concentration = None
+        self.usage_bias = None
         by_src = defaultdict(lambda: defaultdict(float))
         for (src, dst), count in self.transitions.items():
             by_src[src][dst] += count
@@ -324,6 +371,57 @@ class CoGeoAssignment:
         self.predecessor_mask = torch.as_tensor(p_mask)
         self.P_tensor = None      # filled by refresh(), which knows the code count
 
+    def _contexts(self, assignments, k: int, device):
+        """The per-item context: the predecessor barycentre, the negative's, the gate.
+
+        The context is a mean of codepoints, so items that share a context
+        still separate by their own latent; and the gate is zero for an item
+        without an observed predecessor, so an empty context never moves an
+        assignment.
+        """
+        eps = 1e-5
+
+        def project(values):
+            norm = values.norm(dim=-1, keepdim=True).clamp_min(1e-8)
+            return values / norm * torch.tanh(norm * 0.5) * (1.0 - eps)
+
+        def log0(values):
+            norm = values.norm(dim=-1, keepdim=True).clamp(max=1.0 - eps)
+            return 2.0 * torch.atanh(norm) * values / norm.clamp_min(eps)
+
+        geometry = getattr(self, "mode", "both_on") == "geometry_off" and "euclidean" or "poincare"
+
+        def to_ball(values):
+            return values if geometry == "euclidean" else project(values)
+
+        def from_ball(values):
+            return values if geometry == "euclidean" else project(values)
+
+        def tangent_of(values):
+            return values if geometry == "euclidean" else log0(project(values))
+
+        codes = self._codes
+        tangent = tangent_of(codes)
+        regions = torch.as_tensor(assignments, dtype=torch.long, device=device)
+        source_code = tangent[regions[self.trans_src]]
+        destination = torch.as_tensor(self.trans_dst, dtype=torch.long, device=device)
+        weight = torch.as_tensor(self.trans_val, dtype=torch.float32, device=device)
+        # The context of an item is the mean over ALL its observed predecessors,
+        # not over a capped list of them: the transition edges are the signal.
+        mass = torch.zeros((self.n_items, 1), dtype=torch.float32, device=device)
+        mass.index_add_(0, destination, weight.unsqueeze(-1))
+        bary = torch.zeros((self.n_items, tangent.shape[-1]), dtype=torch.float32, device=device)
+        bary.index_add_(0, destination, source_code * weight.unsqueeze(-1))
+        bary = from_ball(bary / mass.clamp_min(1e-9))
+        # the same construction for the hard negative of the item
+        negative = self.negative_index
+        if not torch.is_tensor(negative):
+            negative = torch.as_tensor(negative, dtype=torch.long, device=device)
+        # the hard negative's own context, from the same construction
+        negative_bary = bary[negative.clamp_min(0)]
+        gate = (mass.squeeze(-1) > 0).float() * self.concentration
+        return gate, bary, negative_bary
+
     def refresh(self, assignments, k: int, device):
         """The region profiles and the directed radar, rebuilt from the codes.
 
@@ -332,6 +430,11 @@ class CoGeoAssignment:
         of a source is the distribution of the codes of its successors.
         """
         self.prev_assignment = assignments.astype(np.int64, copy=False)
+        # the predecessor tables live on the training device from here on
+        self.predecessor_index = self.predecessor_index.to(device)
+        self.predecessor_weight = self.predecessor_weight.to(device)
+        self.predecessor_mask = self.predecessor_mask.to(device)
+        self.negative_index = torch.as_tensor(self.negative_index, device=device)
         counts = np.bincount(assignments, minlength=k)
         if len(self.cooc_rows):
             codes = assignments[self.cooc_rows]
@@ -359,6 +462,22 @@ class CoGeoAssignment:
         else:
             dense_p = np.zeros((self.n_items, k), dtype=np.float32)
         self.P_tensor = torch.as_tensor(dense_p, device=device)
+        if getattr(self, "_codes", None) is None:
+            self._codes = torch.zeros((k, 32), dtype=torch.float32, device=device)
+        # The incoming-context concentration: the entropy of the predecessor
+        # region mass, over the regions of the first level. It is zero where an
+        # item has no observed predecessor.
+        regions = torch.as_tensor(assignments, dtype=torch.long, device=device)
+        predecessor_regions = regions[self.predecessor_index.clamp_min(0)]
+        predecessor_weight = self.predecessor_weight * self.predecessor_mask.float()
+        mass = torch.zeros((self.n_items, k), dtype=torch.float32, device=device)
+        mass.scatter_add_(1, predecessor_regions, predecessor_weight)
+        totals = mass.sum(dim=-1, keepdim=True).clamp_min(1e-9)
+        distribution = mass / totals
+        entropy = -(distribution.clamp_min(1e-12) * distribution.clamp_min(1e-12).log()).sum(-1)
+        concentration = 1.0 - entropy / float(np.log(max(k, 2)))
+        has_context = (self.predecessor_mask.any(dim=-1)).float()
+        self.concentration = (concentration * has_context).clamp(0.0, 1.0)
         if self.cooc_sparse is None:
             indices = torch.as_tensor(
                 np.stack((self.cooc_rows, self.cooc_cols)), dtype=torch.long,
@@ -370,6 +489,10 @@ class CoGeoAssignment:
         # profiles only move when the assignment is refreshed, so this product
         # is done here instead of inside the training step.
         self.agree_all = torch.sparse.mm(self.cooc_sparse, self.profiles)
+        # The context of every item: the Frechet mean of the codepoints its
+        # predecessors are assigned to, the same for its hard negative, and the
+        # gate that is zero where there is no predecessor at all.
+        self.gate, self.bary, self.neg_bary = self._contexts(assignments, k, device)
         # The incoming transition mass of every item: the normalised counts of
         # the transitions that end in it, spread over the radar of their
         # sources. The whole incoming mass is used, not the largest few
@@ -389,16 +512,20 @@ class CoGeoAssignment:
         else:
             self.directed_all = torch.zeros((self.n_items, k), dtype=torch.float32,
                                             device=device)
-        self.predecessor_index = self.predecessor_index.to(device)
+        # the predecessor tables were moved to the device at the top of refresh
         self.predecessor_weight = self.predecessor_weight.to(device)
         self.predecessor_mask = self.predecessor_mask.to(device)
 
     def scores(self, ids, euclidean_dist, code_embs):
-        """The coupled score of every candidate code, before the argmax.
+        """The coupled score: the item chooses, the context adjusts.
 
-        The score is differentiable: the quantizer uses it for the straight-
-        through path, so the coupled rule trains the encoder and the codebook
-        instead of only selecting a code.
+        The squared Euclidean distance from the item's own latent to the
+        codewords is always the base of the score, so the item's representation
+        decides which code it gets. The behaviour context is a bounded
+        adjustment on top of it: the curved contrast between the positive
+        predecessor context and the hard negative context, centred and clipped,
+        and scaled by the incoming-context concentration, which is zero for an
+        item without an observed predecessor.
         """
         if self.profiles is None:
             raise RuntimeError("co-geometry profiles must be initialized before assignment")
@@ -409,80 +536,54 @@ class CoGeoAssignment:
             raise RuntimeError("missing latent context for Poincare assignment")
         c = COGEO_CURVATURE
 
-        def project(x):
-            norm = x.norm(dim=-1, keepdim=True).clamp_min(1e-12)
-            return x * torch.clamp((1.0 - 1e-5) / (norm * (c ** 0.5)), max=1.0)
+        def project(values):
+            norm = values.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+            return values * torch.clamp((1.0 - 1e-5) / (norm * (c ** 0.5)), max=1.0)
+
+        def geodesic(points):
+            delta = (points[:, None, :] - y[None, :, :]).pow(2).sum(-1)
+            nx = (points * points).sum(-1, keepdim=True)
+            ny = (y * y).sum(-1).unsqueeze(0)
+            arg = (2 * delta / ((1 - c * nx).clamp_min(1e-6) * (1 - c * ny).clamp_min(1e-6))).clamp_min(0)
+            return torch.acosh((1 + arg).clamp_min(1 + 1e-7)) / (c ** 0.5)
+
         x, y = project(z), project(code_embs)
-        delta = (x[:, None, :] - y[None, :, :]).pow(2).sum(-1)
-        nx = (x * x).sum(-1, keepdim=True)
-        ny = (y * y).sum(-1).unsqueeze(0)
-        arg = (2 * delta / ((1 - c * nx).clamp_min(1e-6) * (1 - c * ny).clamp_min(1e-6))).clamp_min(0)
-        hyp = torch.acosh((1 + arg).clamp_min(1 + 1e-7)) / (c ** 0.5)
-        score = -hyp.square() / COGEO_TEMPERATURE
         mode = getattr(self, "mode", "both_on")
-        agree = self.agree_all[ids_np]
-        directed = self.directed_all[ids_np]
-        if mode == "geometry_off":
-            score = -euclidean_dist
+        # The item's own representation chooses the code: the squared Euclidean
+        # distance to the codewords is always the base of the score.
+        cost = euclidean_dist.clone()
         if mode in ("both_on", "geometry_off"):
-            score = score + COGEO_LAMBDA * agree
-            score = score + min(COGEO_EPSILON, .01 * COGEO_LAMBDA) * directed.clamp(0, 1)
-        return score
+            # The behaviour term compares the CANDIDATE CODE with the two
+            # contexts: the positive predecessor context and the hard negative
+            # context. It is not the distance from the item's own latent, which
+            # is the base term already.
+            positive = self.bary[ids_np]
+            negative = self.neg_bary[ids_np]
+            if mode == "geometry_off":
+                # the Euclidean counterpart of both contexts, in the raw space:
+                # no Poincare projection anywhere in the control
+                raw_codes = code_embs
+                hyp = (positive[:, None, :] - raw_codes[None, :, :]).pow(2).sum(-1)
+                neg_hyp = (negative[:, None, :] - raw_codes[None, :, :]).pow(2).sum(-1)
+            else:
+                hyp = geodesic(project(positive))
+                neg_hyp = geodesic(project(negative))
+            behaviour = hyp.square() - COGEO_ETA * neg_hyp.square()
+            behaviour = behaviour - behaviour.mean(dim=-1, keepdim=True)
+            behaviour = behaviour.clamp(-COGEO_CLIP, COGEO_CLIP)
+            gate = self.gate[ids_np].unsqueeze(-1)
+            cost = cost + COGEO_LAMBDA * gate * behaviour
+        # The soft usage constraint: a pull of the first-level usage towards the
+        # usage of the model without the mechanism, not a quota. It belongs to
+        # the mechanism, so the behaviour-off control does not apply it: that
+        # control has to be exactly the plain Euclidean assignment.
+        if self.usage_bias is not None and mode != "behaviour_off":
+            cost = cost + self.usage_bias.unsqueeze(0)
+        return -cost
 
     def __call__(self, ids, euclidean_dist, code_embs):
-        """The coupled first-level assignment.
-
-        The score is the Poincare squared geodesic distance plus the symmetric
-        co-consumption agreement and a bounded directed tie-break. The final
-        ``argmax`` is **not differentiable**: this score selects the code, and
-        the gradient reaches the encoder and the codebook through the
-        straight-through path of the quantiser, not through the argmax itself.
-        """
-        if self.profiles is None:
-            raise RuntimeError("co-geometry profiles must be initialized before assignment")
-        ids_np = ids.detach().cpu().numpy().astype(np.int64)
-        device = euclidean_dist.device
-        z = getattr(self, "current_latent", None)
-        if z is None or len(z) != len(ids_np):
-            # Recover latent from Euclidean distance and code vectors is not
-            # possible; trainer supplies it immediately before forward.
-            raise RuntimeError("missing latent context for Poincare assignment")
-        c = COGEO_CURVATURE
-        def project(x):
-            norm = x.norm(dim=-1, keepdim=True).clamp_min(1e-12)
-            return x * torch.clamp((1.0 - 1e-5) / (norm * (c ** 0.5)), max=1.0)
-        x, y = project(z), project(code_embs)
-        delta = (x[:, None, :] - y[None, :, :]).pow(2).sum(-1)
-        nx = (x * x).sum(-1, keepdim=True)
-        ny = (y * y).sum(-1).unsqueeze(0)
-        arg = (2 * delta / ((1 - c * nx).clamp_min(1e-6) * (1 - c * ny).clamp_min(1e-6))).clamp_min(0)
-        hyp = torch.acosh((1 + arg).clamp_min(1 + 1e-7)) / (c ** 0.5)
-        score = -hyp.square() / COGEO_TEMPERATURE
-        mode = getattr(self, "mode", "both_on")
-        # A_i dot g_k via sparse item-neighbour reductions (bounded dense batch output).
-        # A_i dot g_k over the item's co-consumption neighbours. The padded
-        # neighbour table and the padded predecessor table are built once, so a
-        # step is two gathers and two matmuls instead of two Python loops over
-        # the batch (the directed loop scanned every training transition for
-        # every item of every batch, which is quadratic in the data).
-        # The item's own co-consumption row times the region profiles, for the
-        # whole catalogue (computed once per epoch) and indexed here.
-        agree = self.agree_all[ids_np]
-
-        # The incoming transition mass of every item, over all its
-        # predecessors, computed once per epoch: a sparse product of the
-        # transition table with the radar, not a per-item sum over a capped
-        # predecessor list.
-        directed = self.directed_all[ids_np]
-        if mode == "geometry_off":
-            # The Euclidean counterpart of the same assignment: the behaviour
-            # terms stay, the curve is replaced by the plain squared distance.
-            score = -euclidean_dist
-        if mode in ("both_on", "geometry_off"):
-            score = score + COGEO_LAMBDA * agree
-            score = score + min(COGEO_EPSILON, .01 * COGEO_LAMBDA) * directed.clamp(0, 1)
-        # mode == "behaviour_off": the curved distance alone, no behaviour term.
-        return score.argmax(-1)
+        """The hard choice of the coupled score."""
+        return self.scores(ids, euclidean_dist, code_embs).argmax(-1)
 
     def compare_variants(self, ids, euclidean_dist, code_embs) -> dict:
         """How many items each variant moves away from the plain Euclidean choice.
@@ -616,7 +717,15 @@ def main() -> None:
             # earlier leaves a window in which a forward would call a hook with
             # no profiles.
             initial_codes = first_layer._indices(first_layer._distances(initial_encoded), False).cpu().numpy()
+            # the context codepoints come from the live first-level codebook
+            cogeo._codes = first_layer.get_code_embs().detach()
             cogeo.refresh(initial_codes, first_layer.n_embed, device)
+            # The soft usage constraint pulls the first-level usage towards the
+            # usage of the model without the mechanism. It is a pull, not a quota:
+            # the codes are not forced to be equally used.
+            reference = np.bincount(initial_codes, minlength=first_layer.n_embed)
+            cogeo.usage_reference = torch.as_tensor(
+                reference.astype(np.float32) / max(reference.sum(), 1), device=device)
             first_layer.region_assignment = cogeo
 
     if rank == 0:
@@ -673,7 +782,15 @@ def main() -> None:
                 cogeo.current_latent = encoded
                 assignments = first_layer._indices(
                     first_layer._distances(encoded), False).cpu().numpy()
+                # the codebook moved during the epoch, so the context codepoints
+                # are refreshed with it
+                cogeo._codes = first_layer.get_code_embs().detach()
                 cogeo.refresh(assignments, first_layer.n_embed, device)
+                usage = np.bincount(assignments, minlength=first_layer.n_embed)
+                usage = usage.astype(np.float32) / max(usage.sum(), 1)
+                reference = cogeo.usage_reference.cpu().numpy()
+                bias = COGEO_USAGE_WEIGHT * (np.log(usage + 1e-6) - np.log(reference + 1e-6))
+                cogeo.usage_bias = torch.as_tensor(bias, dtype=torch.float32, device=device)
         epoch_time_s = round(time.time() - _epoch_t0, 3)
 
         # === DDP all_reduce: 跨 rank 求平均 loss / recon ===

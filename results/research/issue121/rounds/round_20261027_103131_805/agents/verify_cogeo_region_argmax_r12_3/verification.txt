@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:227-228, train_rqvae.py:402-496, train_rqvae.py:496-556, model/layers.py:106-119, model/layers.py:127-162 | Traced the trainer’s first-layer assignment hook into `CoGeoAssignment.scores` and the VQ forward path. `refresh` builds co-consumption profiles and directed-transition tables; `scores` computes a Poincaré-based contrast using predecessor and negative-predecessor barycentres.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:543-547
+FINDING DETAIL: The implemented scoring pathway does not use the co-consumption profiles or agreement scores to determine assignments. `self.profiles` and `self.agree_all` are prepared at train_rqvae.py:415-429 and 465-468, but `scores` never reads them. Instead, the assignment is the Euclidean distance plus a Poincaré contrast derived from directed predecessor context. Thus the named co-consumption-led region assignment is absent; the implemented pathway does not make the specified symmetric co-consumption signal and Poincaré distance jointly determine assignments.
+FINDING REPRODUCTION: Inspect `CoGeoAssignment.scores`: the only behavior adjustment is constructed at lines 543-547 from `hyp`, `neg_hyp`, and `gate`. Change `cooc_rows`/`cooc_cols` or `profiles` while keeping the codebook and predecessor tables fixed; the score and assignment are unchanged.
+FINDING CORRECTION: Add the item-to-region co-consumption agreement term to the actual assignment score, computed from the frozen training-only rows and refreshed region profiles, and ensure it affects the selected first-level code alongside the Poincaré distance. Keep the directed transition term bounded as the tie-break specified by the proposal.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-162, train_rqvae.py:496-556, smoke_test.py:87-137 | Inspected the forward/backward implementation and its smoke fixture. The coupled score feeds a softmax-weighted code embedding and an auxiliary quantization loss, so there is a differentiable route through that score; the smoke test checks finite loss and an encoder gradient and tests switch-sensitive choices in a synthetic fixture.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:496-556
+FINDING DETAIL: Trainability of the proposed coupled mechanism is not established by the code because the co-consumption part of that mechanism is dead: the agreement/profile tensors are not read by `scores`, and the test fixture manually assigns `agree_all` without checking that it influences the score. The exercised variant assertions therefore demonstrate switch sensitivity for the implemented directed-context/Poincaré contrast, not for the proposed co-consumption/Poincaré coupling. The auxiliary gradient route does not cure this missing core term.
+FINDING REPRODUCTION: In `smoke_test.py:87-137`, replace `coupling2.agree_all` with a different tensor while holding all other inputs fixed; the compared choices remain unchanged. The same issue applies to `profiles`, which `scores` does not access.
+FINDING CORRECTION: Wire the co-consumption agreement into `scores` and extend the switch comparison to show that changing the co-consumption signal changes the score or assignment. Then verify finite loss/gradients and that behaviour-off and geometry-off restore their intended controls on the same inputs.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:617-698, train_rqvae.py:821-900, smoke_test.py:39-63 | Inspected the trainer’s path derivation, frozen train-file and embedding inputs, first-layer hook setup, export, and launcher branches. The repository-root resolver requires the repository markers; outputs are rooted at `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax`; SIDs are generated over all embedding rows and collision-extended with item order preserved. The launcher uses `GENREC_SINGLE_GPU` at lines 108 and 120, and `_launch_via_torchrun` returns for either an existing torchrun rank or the single-card flag.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Runtime execution was not performed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

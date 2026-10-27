@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:227-228, train_rqvae.py:402-472, train_rqvae.py:496-550, model/layers.py:127-161 | Traced the trainer’s first-level assignment from `CoGeoAssignment.refresh` through `scores` and the soft straight-through quantization path. The code uses frozen training transitions to form predecessor contexts and a Poincare geodesic contrast in the same assignment score. However, the trainer never supplies the code vectors used to form those contexts.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:442-443
+FINDING DETAIL: On the real trainer path, `_codes` is unset when `refresh` first runs, so it is initialized to zeros. No trainer code updates `_codes` afterward. Consequently `_contexts` at lines 380-400 builds both positive and negative contexts from zero vectors rather than from the codepoints assigned to predecessors. The score still combines a transition-derived gate with curved distance, but it does not implement the specified predecessor-codepoint context contrast; the hard-negative context is likewise not meaningfully represented.
+FINDING REPRODUCTION: Trace `main()` at lines 687-700: it calls `cogeo.refresh(...)` without setting `cogeo._codes`. Then trace `refresh` at lines 442-443 and `_contexts` at lines 380-400. By contrast, the smoke test explicitly sets `_codes` before refresh at `smoke_test.py:51` and `smoke_test.py:88`, so it does not exercise this trainer defect.
+FINDING CORRECTION: Before each `refresh`, populate `_codes` from the current first-level code embeddings (with the intended gradient-detachment policy), and verify the real trainer path constructs contexts from those current codepoints.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-161, train_rqvae.py:496-550, smoke_test.py:47-63 | Inspected the forward/backward route and the smoke-test fixture. The coupled score is consumed by the hard choice and its softmax adds a differentiable quantization-loss term; the smoke fixture checks finite loss and an encoder gradient. Runtime execution was not performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:442-443
+FINDING DETAIL: In the trainer, the predecessor-context inputs to the curved term are zero-initialized and never refreshed from the codebook. Thus the backward route cannot train through the specified predecessor-versus-hard-negative context geometry. The smoke test’s manually populated `_codes`, `bary`, and `neg_bary` do not establish that the real trainer’s pathway is trainable as specified.
+FINDING REPRODUCTION: Follow the real initialization in `main()` at `train_rqvae.py:687-700`; `_codes` remains unset until `refresh` substitutes zeros. The smoke path differs because it assigns `_codes` before `refresh` (`smoke_test.py:51`) and overwrites contexts explicitly (`smoke_test.py:112-115`).
+FINDING CORRECTION: Refresh `_codes` from the live codebook before context construction, then extend the gradient smoke to use the trainer’s initialization/refresh sequence and verify finite gradients through the intended context-geodesic term as well as the encoder.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:620-700, train_rqvae.py:791-865, train_rqvae.py:874-903 | Inspected the entry point, path constants, data loading, SID export, and launcher branches. The code reads the frozen Stage 1 embeddings and Stage 0 training parquet, writes artifacts under the promoted arm’s `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` directory, exports rows by item ID, and retains the `GENREC_SINGLE_GPU` branch. The four-card launcher is present. Execution was not performed; this verdict is based on code inspection.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection.
+FINDING REPRODUCTION: Not applicable; the trainer was not run in this environment.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:126-137 | Traced first-level VQLayer.forward into CoGeoAssignment.scores at train_rqvae.py:496-552. The trainer builds training-only transition and co-consumption signals at train_rqvae.py:227-299, refreshes the predecessor and negative contexts at train_rqvae.py:402-472, then scores code choices using the item’s Euclidean distance plus a bounded Poincare-context adjustment at train_rqvae.py:516-552. The smoke test’s variant fixture checks that both-on differs from behaviour-off and geometry-off at smoke_test.py:117-137. I inspected this test and path; I did not run them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261027_103131_805/agents/verify_cogeo_region_argmax_r13_1/verification.txt | Code inspection only: the smoke test defines a forward/backward finite-loss and encoder-gradient check at smoke_test.py:47-63, while the coupled score feeds a soft candidate distribution into the quantization loss and straight-through output at model/layers.py:150-162. The score uses clamped projection and distance denominators at train_rqvae.py:516-525, and clamps the behaviour adjustment at train_rqvae.py:543-547. The smoke test also specifies assignment comparisons for both-on, behaviour-off, and geometry-off at smoke_test.py:122-137. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by code inspection. The coupled scores are differentiable through the soft quantization term; the assignment itself is a hard argmax. Numerical guards bound the Poincare inputs and denominators, and the contrast is clipped before use.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74, 617-698, 821-899 | Inspected the trainer entry point and its path, export, and launcher logic. It reads the repository’s stage1 embeddings and stage0 training parquet at lines 66-67 and 631-635, writes artifacts under the candidate’s promoted result directory at lines 61-74 and 828-862, and exports rows keyed by their enumerated item IDs at lines 856-862. The four-card launcher and the `GENREC_SINGLE_GPU` bypass are at lines 871-895. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by code inspection. The result path is derived from the repository root and the candidate arm name; the single-card branch checks the named environment variable.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

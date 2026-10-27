@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:243-260, train_rqvae.py:374-423, train_rqvae.py:519-586, model/layers.py:127-137 | Inspected the training-only longest-sequence transition construction, predecessor-context and hard-negative aggregation, and the first-level assignment hook. The score combines the item’s squared Euclidean distance with a gated, clipped contrast of Poincare geodesic distances to positive and negative contexts; the smoke fixture checks both-on differs from behaviour-off and geometry-off.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162, train_rqvae.py:757-769, smoke_test.py:47-63, smoke_test.py:87-141 | Inspected the real forward path and the added differentiable soft-score term: the hard assignment selects code indices, while the softmax over coupled scores contributes to quantization loss and the straight-through output. The smoke test checks finite loss and encoder gradients, plus deterministic assignment changes with behaviour and geometry switches. No runtime claim is made.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found from code inspection. The bounded score adjustment and clamped projection/geodesic inputs show no apparent float32 overflow or NaN hazard in the exercised path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:647-669, train_rqvae.py:856-897, train_rqvae.py:906-935, smoke_test.py:39-63 | Inspected the trainer entry point, repository-root resolution, frozen Stage 0 training-parquet input, promoted-arm result paths, full-catalogue SID export and item-ID enumeration, and torchrun/single-card launcher branches. The smoke test checks repository-root discovery and SID shape/uniqueness; the code writes outputs under the promoted arm directory and honors `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found from code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

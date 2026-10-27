@@ -1,0 +1,28 @@
+I’ll inspect the candidate tree and its launch/data/export paths, then return the requested plain-text blocks. I won’t modify files; the stated sandbox limits mean runtime claims will be based on code inspection.
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:496-563 → model/layers.py:127-161 | Traced first-layer `region_assignment.scores()` from `VQLayer.forward`; the score combines frozen training transitions, predecessor and hard-negative contexts, the gate, and Poincare geodesic distances in the same candidate score. `smoke_test.py:64-141` contains a deterministic switch-sensitivity fixture, though I could not execute it in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking coupling defect found. The score has an item-latent Euclidean base and a behaviour-gated curved context adjustment in one assignment pathway.
+FINDING REPRODUCTION: Code inspection of `train_rqvae.py:496-559` and the hook in `model/layers.py:127-136`.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-161 → train_rqvae.py:738-745 | Traced forward quantization, loss construction, and backward path. The coupled score is converted into a soft candidate distribution and adds a differentiable quantization loss; the smoke fixture asserts finite loss and encoder gradient at `smoke_test.py:55-61`. Runtime execution was unavailable.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:539-550
+FINDING DETAIL: The `geometry_off` control does not replace Poincare distance with squared Euclidean distance as specified. It computes raw squared Euclidean distance at lines 543-544, then squares that value at line 548, yielding a fourth-power distance. Thus the geometry comparison changes both geometry and distance scaling, so it is not the named Euclidean control.
+FINDING REPRODUCTION: Set `mode = "geometry_off"` and use any candidate/context pair with raw squared distance 2: `hyp` becomes 2 and `hyp.square()` contributes 4. The requested squared-Euclidean contribution is 2. The Poincare branch instead squares the geodesic distance, which is squared geodesic distance.
+FINDING CORRECTION: Make both branches produce the same quantity before the contrast: either have the Euclidean branch return Euclidean distance and square it at line 548, or keep squared Euclidean values in that branch and do not square them again. Recheck the geometry-off assignment comparison after the scale is corrected.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, 624-640, 833-912 | Inspected repository-root resolution, frozen Stage0 `train.parquet` input, arm-specific output paths, full-catalogue SID export and item-ID enumeration, and both launcher branches including `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 120 and 883-907. Runtime execution was unavailable.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified by inspection. Outputs resolve under `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax`, and the single-GPU environment switch bypasses torchrun.
+FINDING REPRODUCTION: Code inspection of the cited path and launcher lines.
+FINDING CORRECTION: none

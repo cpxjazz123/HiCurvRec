@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:732-734 -> model/layers.py:127-137 -> train_rqvae.py:227-229,496-555 | Inspected the trainer’s first-level assignment hook and its score computation. The frozen training-sequence transitions build predecessor contexts and gates; the score compares those contexts with candidate codewords using Poincare geodesic distances, then combines that adjustment with the item’s Euclidean distance.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161 -> train_rqvae.py:732-741 | Inspected the forward and backward path. The coupled scores determine hard indices and also feed a soft candidate distribution added to the quantization loss and straight-through output; that path depends on the contexts and codewords. `smoke_test.py:55-61, 87-141` specifies finite-loss/encoder-gradient and switch-sensitivity checks. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 numerical hazard found. The smoke test is not a runtime result from this review.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-75,620-681,829-903 | Inspected the entry point, frozen input paths, result paths, export, and launcher branches. `CANDIDATE_CHECK.json:1-4` records that the candidate path check crashed with `ModuleNotFoundError`; no trainer run was available.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:42-64
+FINDING DETAIL: The trainer’s result directory is `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax`, not the required promoted-tree-specific `results/stage2_RQ-VAE/<promoted tree name>/`. The hard-coded `ARM_NAME` does not match the candidate tree name `cogeo_region_argmax`; therefore this candidate writes to another arm’s result directory instead of its own, risking overwriting or misdirecting the SID artifacts consumed downstream.
+FINDING REPRODUCTION: Compare the candidate directory name `cogeo_region_argmax` with `ARM_NAME` at line 63 and the `RESULT_DIR` derived from it at line 64. The resulting path ends in `TIGER_cogeo_region_argmax`, not the promoted tree name.
+FINDING CORRECTION: Set `ARM_NAME` to the exact promoted tree name so `RESULT_DIR`, checkpoint, logs, and SID exports resolve to this candidate’s required Stage 2 result directory.

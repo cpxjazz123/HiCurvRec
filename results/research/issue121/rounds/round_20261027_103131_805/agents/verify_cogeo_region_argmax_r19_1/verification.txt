@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:230-341, train_rqvae.py:374-423, train_rqvae.py:519-586, model/layers.py:127-162 | Traced the frozen training-sequence transition counts into predecessor contexts and the bounded Poincare-distance score, then through the first-level quantizer’s assignment and soft straight-through loss. smoke_test.py:87-141 provides a deterministic variant comparison that checks both behaviour-on and geometry-on choices differ from their controls.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: The first-level assignment has one connected behaviour-and-curved-geometry pathway: predecessor contexts and hard-negative contexts affect the candidate-code score through Poincare geodesic distances. No finding for this check.
+
+VERDICT: NEEDS_FIX
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:519-586, model/layers.py:127-162, smoke_test.py:47-63, smoke_test.py:87-141 | Inspected the assignment score and its differentiable soft straight-through contribution to quantization loss, plus the smoke fixture’s finite-loss/encoder-gradient and switch-sensitivity assertions. The geometry-off control is not fully Euclidean because its contexts are constructed using Poincare operations before the scoring switch is applied.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:392-402, train_rqvae.py:495, train_rqvae.py:562-570
+FINDING DETAIL: `refresh()` constructs `bary` and `neg_bary` using the default `both_on` mode’s Poincare `project` and `log0` operations (lines 392-402, called at line 495). Later, `geometry_off` changes only the candidate-context distance calculation (lines 562-570); it uses those already-curved contexts as raw Euclidean points. Thus geometry-off does not replace Poincare maps everywhere in the context geometry as specified, and the geometry comparison does not isolate the curved operation.
+FINDING REPRODUCTION: In the same refresh cycle, set `cogeo.mode = "both_on"` and call `refresh(...)`, then set `cogeo.mode = "geometry_off"` and call `scores(...)`. The geometry-off score still consumes `bary`/`neg_bary` produced by `project(log0(...))` under the curved branch. The smoke test’s geometry comparison (smoke_test.py:126-141) changes the score mode without rebuilding contexts, so it also exercises this mixed-geometry control.
+FINDING CORRECTION: Make context construction mode-aware and rebuild contexts for the geometry-off comparison, or store contexts in a representation from which each mode can construct its own geometry. In geometry-off, compute contexts without Poincare projection/log maps and use Euclidean distances for both positive and negative contexts; ensure the control reuses the same frozen signals and assignments.
+
+VERDICT: NEEDS_FIX
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:647-730, train_rqvae.py:856-935, smoke_test.py:39-63 | Inspected the trainer’s frozen stage1 embedding and stage0 training-parquet inputs, repository-root discovery, candidate-specific Stage2 output directory, indexed SID JSON export, and launcher branches. The single-card branch checks `GENREC_SINGLE_GPU` at lines 906-911; the default branch launches four ranks at lines 912-930. The smoke test checks repository-root discovery and SID shape/uniqueness.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: The inspected trainer paths resolve to the required candidate result directory, export item-indexed SIDs, and preserve both launcher branches. No finding for this check.

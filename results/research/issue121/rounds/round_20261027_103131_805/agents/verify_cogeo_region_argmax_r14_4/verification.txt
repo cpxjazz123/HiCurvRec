@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:402-472, train_rqvae.py:496-555, model/layers.py:106-112 | Traced the trainer’s epoch refresh into context construction and the first-level assignment hook. The context path reads `self._codes` in `_contexts`, but the trainer never updates it from the current codebook.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:442-443
+FINDING DETAIL: On the first refresh, `_codes` is initialized to an all-zero tensor and is never replaced. Consequently, `_contexts` builds both positive and negative predecessor contexts from zero codepoints rather than from the regions to which training-only transitions assign predecessors. The directed transition signal therefore does not participate in the proposed predecessor-region context; the nonzero gate alone does not establish the specified behaviour × geometry pathway.
+FINDING REPRODUCTION: Trace `refresh()` at train_rqvae.py:472 into `_contexts()` at train_rqvae.py:380-400: `tangent = log0(project(codes))` uses the zero tensor initialized at line 443, so every selected predecessor region contributes the same zero point to the context.
+FINDING CORRECTION: Before each context refresh, set `_codes` to the current first-level codebook embeddings (with the intended projection/curvature safeguards), so predecessor assignments select actual codepoints for the Poincare contexts.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:121-162, train_rqvae.py:728-740, train_rqvae.py:402-472 | Followed the real forward/backward path: the coupled score contributes a soft candidate distribution to the quantization loss and straight-through output, so that score is not wholly dead. However, the behavior-derived context consumed by that score is constructed from the permanently zero `_codes` tensor.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:442-443
+FINDING DETAIL: Although the differentiable score can send gradients through candidate code embeddings, it does not implement the intended transition-conditioned geometry: its predecessor context is built from zero points, not the assigned codebook points. Thus the intended coupled training signal is absent. The smoke test’s variant fixture manually supplies `bary` and `neg_bary` at smoke_test.py:112-116, so its assignment-switch assertions do not exercise the trainer’s actual context construction.
+FINDING REPRODUCTION: Use the trainer path: `refresh()` calls `_contexts()` at train_rqvae.py:472; `_contexts()` reads `_codes` at lines 380-381; the only initialization is zeros at lines 442-443. The smoke test bypasses this by assigning contexts directly before comparing variants.
+FINDING CORRECTION: Populate `_codes` from the live first-level codebook before context construction, then verify the forward/backward and behavior-off/geometry-off comparisons using contexts produced by `refresh()` rather than manually injected contexts.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:620-681, train_rqvae.py:824-903, smoke_test.py:39-63 | Inspected repository-root and result-path derivation, frozen embedding/train inputs, trainer setup, SID export/indexing, and launcher branches. The single-card branch checks `GENREC_SINGLE_GPU` at train_rqvae.py:120 and 878-879; the candidate writes under its promoted arm directory at lines 61-74.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified by source inspection. Runtime execution was not performed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

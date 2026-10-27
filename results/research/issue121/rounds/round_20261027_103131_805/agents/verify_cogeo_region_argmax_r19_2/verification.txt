@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:425-495` → `train_rqvae.py:519-586` → `model/layers.py:126-137` | Traced the trainer’s epoch refresh into the first-level assignment hook. Frozen directed transitions build predecessor contexts and gates; the score compares those contexts with candidate codewords using Poincaré geodesic distances, then combines that bounded adjustment with the item’s Euclidean distance before selecting a code. The symmetric co-consumption matrix is not used in that assignment score.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No coupling defect found.
+FINDING REPRODUCTION: The repository’s declared smoke test is `smoke_test.py:87-141`; its runtime result is not available here. Source inspection shows the connected path above.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `model/layers.py:126-162` | Traced a first-level forward through the coupled score and its soft straight-through training term. `smoke_test.py:55-61` specifies a finite-loss/encoder-gradient smoke, and `smoke_test.py:121-141` specifies assignment comparisons; I could not execute these tests in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:533-536`; `model/layers.py:128-136`
+FINDING DETAIL: The coupled score requires `current_latent` to be set and to have the same row count as `ids`. During a real model forward, the VQ layer sets `assignment.current_latent = latent` at `model/layers.py:128-129`, but the trainer supplies `region_item_ids` from the current batch at `train_rqvae.py:759`. This works only when the latent batch length equals the ID count. More importantly, the assignment IDs and latent rows are not checked for correspondence, so an equal-length but differently ordered ID batch silently applies another item’s predecessor context. The custom `smoke_test.py` exercises matched IDs and does not cover that counterexample. The gradient-bearing soft term is computed from the behaviour score, but gradients through `current_latent` are not used by the score; whether the intended parameters receive a nonzero geometry/behaviour gradient is not established by the smoke’s encoder-only gradient assertion.
+FINDING REPRODUCTION: Supply a batch of latent rows in a different item order from `region_item_ids`, keeping both lengths equal. `scores()` indexes `bary` and `gate` by IDs while using the latent only for its length check; the score then combines contexts for different items with each row’s Euclidean distances. For gradient reach, inspect gradients on `code_embs` and the encoder after a coupled backward pass, comparing both-on, behaviour-off, and geometry-off; `smoke_test.py:60-61` checks only one encoder weight.
+FINDING CORRECTION: Make the item-ID/latent-row association explicit and validated at the score boundary (or construct and pass aligned per-row context tensors). Extend the gradient smoke to assert finite, nonzero gradients for the intended encoder and codebook parameters and compare them across the named switches.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:61-73`, `train_rqvae.py:647-730`, `train_rqvae.py:856-934` | Traced path resolution, frozen Stage 1/Stage 0 inputs, trainer initialization, SID export and the launcher’s `GENREC_SINGLE_GPU` branch. I could not run the trainer or launcher in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:42-58`
+FINDING DETAIL: Repository-root discovery requires `stage1_GeneEmbedding` to be a directory directly under the repository root. In this checkout the project path is `/fs04/ar57/wenyu/GeneRec`; the candidate itself is under `results/research/issue121/trees/...`. If the repository’s actual marker directory is nested or absent at that location, importing the trainer raises before the entry point can run. The candidate check records `ModuleNotFoundError` (`CANDIDATE_CHECK.json:1-3`), so the expected import/runtime check did not establish successful integration. I cannot identify the missing module from that summary alone, and do not treat the unavailable PyTorch runtime as a defect.
+FINDING REPRODUCTION: Import `train_rqvae.py` from the candidate tree in the intended promoted location and verify `_repository_root()` returns the checkout root. If no parent has all three required marker directories, it raises the `RuntimeError` at line 58 before training begins.
+FINDING CORRECTION: Resolve the repository root using markers confirmed to exist in both the round tree and promoted location, and verify the candidate’s import dependencies in the target trainer environment. The result path, `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`, is correctly candidate-scoped; no path defect is established here.

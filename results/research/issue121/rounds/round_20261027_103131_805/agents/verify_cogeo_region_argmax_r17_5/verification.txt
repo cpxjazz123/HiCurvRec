@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:227-257, 362-400, 496-559; model/layers.py:106-119, 127-162 | Traced the frozen training-sequence transition counts into predecessor contexts and the gated, clipped Poincare-distance contrast in the first-level assignment score. The score feeds the hard choice and the differentiable soft quantization path. The co-consumption signal also selects hard negatives; it is not a separate assignment loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162; train_rqvae.py:734-747 | Traced the forward and backward graph: the bounded score is used to select codes and to form the soft candidate distribution; its score depends on the latent distance and code embeddings, and the soft quantization loss reaches the encoder and codebook. The smoke fixture at smoke_test.py:87-141 checks that the coupled, behaviour-off, and geometry-off choices differ as intended, and lines 55-61 check finite loss and encoder gradients. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or float32 numerical hazard found in the exercised coupled assignment path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 624-707, 833-912; smoke_test.py:39-63 | Traced repository-root and result-path resolution, the frozen stage-1 embedding and stage-0 training-parquet inputs, the trainer entry point, SID export and item indexing, and the launcher branches. The single-card branch checks `GENREC_SINGLE_GPU` at train_rqvae.py:120, 883-888; the multi-card branch constructs the `torchrun` command at lines 889-907. The smoke fixture checks unique SID extension and shape. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

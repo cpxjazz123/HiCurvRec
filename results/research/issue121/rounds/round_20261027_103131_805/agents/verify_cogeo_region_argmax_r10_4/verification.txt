@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:227-229, 402-472, 496-547 | Traced training-only signal construction, epoch refresh, and assignment scoring into model/layers.py:106-112, 127-137. The code constructs co-consumption profiles and directed transition tables, then scores assignments using a Poincare contrast between predecessor and negative-context barycentres. However, neither the co-consumption agreement nor the directed radar in the proposal’s score is used by that scoring path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-547
+FINDING DETAIL: The implemented computation is not the proposed co-consumption-led region assignment with directed near-tie radar. `scores` does not read `self.agree_all`, `self.profiles`, `self.P_tensor`, or `self.directed_all`; the co-consumption and directed score tables computed by `refresh` therefore do not affect the choice. Instead, the behaviour adjustment is a predecessor-versus-negative Poincare distance contrast. The proposal’s specified co-consumption agreement and bounded directed predecessor-region term are absent from the assignment score, so the named mechanism is not implemented.
+FINDING REPRODUCTION: Follow `refresh` at lines 465-490, where `agree_all` and `directed_all` are computed, then inspect `scores` at lines 496-547: neither table is read. Changing either table while holding `gate`, `neg_bary`, `current_latent`, code embeddings, and distances fixed leaves the score and assignment unchanged.
+FINDING CORRECTION: Add the specified co-consumption profile-agreement term and normalized directed predecessor-region term to the same first-level assignment score as the Poincare distance, with the directed weight bounded by the stated 1% constraint. Ensure both terms are computed from the frozen training-only signals and consumed by the actual assignment path.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:127-161 | Inspected the first-level forward path and the included smoke fixture at results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:47-63, 113-132. The forward path passes the coupled score into a soft distribution and adds its quantization loss, providing a differentiable route to encoder and codebook parameters. Runtime execution was not available here.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:532-540
+FINDING DETAIL: The `geometry_off` control does not replace the curved operation with Euclidean distance for the whole behaviour score. `hyp` is always computed using `geodesic(x)` at lines 527-528, and remains the positive term in `behaviour` in `geometry_off` mode. Only the negative-context distance switches to Euclidean at lines 534-536. Thus this control does not isolate geometry, and the required geometry-off comparison cannot establish whether the curve changes the coupled computation. The smoke test also asserts behaviour-off changes, but does not assert any geometry-off difference.
+FINDING REPRODUCTION: Call `scores` with identical inputs in `both_on` and `geometry_off` modes. In both modes, the positive contribution remains `geodesic(x).square()`; only `neg_hyp` changes. This is a minimal counterexample to the claim that geometry is replaced by Euclidean distance in the control.
+FINDING CORRECTION: In `geometry_off`, compute both positive and negative context distances with Euclidean distance, and keep the same behaviour inputs, weights, clipping, and other terms. Add a deterministic test that checks the geometry-off score against that fully Euclidean calculation and verifies the coupled and geometry-off variants can differ on a suitable fixture.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-74, 612-697, 816-863, 866-895 | Inspected the trainer’s repository-root and result-path resolution, training-data loading, export/indexing, and launcher branches. Runtime execution was not available here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer reads the frozen `results/stage0_build_parquet/train.parquet`; writes checkpoint, logs, and SID artifacts to `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`; exports one row per embedding item with IDs keyed by row index; and includes both the torchrun branch and the `GENREC_SINGLE_GPU` single-card bypass.
+FINDING REPRODUCTION: Source inspection of the referenced paths and branches; no trainer run was performed.
+FINDING CORRECTION: none

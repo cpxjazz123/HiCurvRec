@@ -1,0 +1,21 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:496-556 → model/layers.py:127-161 | Traced the first-level assignment hook and the score computation, and inspected the smoke fixture at smoke_test.py:87-137. The active score combines a Poincare-based directed-context adjustment with Euclidean distance; it does not use the computed co-consumption agreement.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:496-552
+FINDING DETAIL: The proposal’s defining co-consumption × Poincare assignment pathway is missing. `refresh()` computes co-consumption profiles and `agree_all` (train_rqvae.py:415-429, 465-468), but `scores()` never reads either. Instead, the active behavior adjustment uses positive/negative directed-context distances (lines 537-547). Thus co-consumption cannot affect the assignment score; this implements a different mechanism from the stated co-consumption-led proposal.
+FINDING REPRODUCTION: Hold the latent, codebook, assignments, and directed-context tensors fixed, then change `profiles`/`agree_all`. `scores()` is unchanged because neither value is read. In the smoke fixture, `agree_all` is explicitly populated at smoke_test.py:95-97, but the comparison at lines 122-137 does not establish that this co-consumption value affects the result.
+FINDING CORRECTION: Add the specified code-dependent symmetric agreement term, e.g. `A_i · g_k`, to the same candidate score as the Poincare distance, and ensure both-on, behavior-off, and Euclidean geometry-off variants exercise that score. Keep the directed term bounded as specified.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161 → train_rqvae.py:496-556 | Static code inspection only; no trainer execution. `forward()` passes the current latent into the score, selects its hard assignment, and adds a soft candidate-distribution term to the quantization loss and straight-through output. The score uses projected points and clamped Poincare-distance arguments. `smoke_test.py:55-61` specifies a finite forward/backward and encoder-gradient check; lines 122-137 specify assignment-switch comparisons for behavior-off and geometry-off. The sandbox does not permit running the trainer, so these runtime assertions are not independently verified here.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, 617-698, 821-900 | Static inspection of the trainer entry point, configured paths, export, and launcher branches; no trainer execution. The configured inputs are Stage1 embeddings and Stage0 `train.parquet`; output paths resolve to the candidate’s promoted Stage2 result directory. Export enumerates item rows into JSON keys and checks SID uniqueness. The launcher honors `GENREC_SINGLE_GPU` at lines 871-876 and otherwise invokes the configured torchrun command.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:617-900
+FINDING DETAIL: No integration defect established by the inspected code. This is a static review; actual execution of the trainer, export, and distributed launcher was not performed.

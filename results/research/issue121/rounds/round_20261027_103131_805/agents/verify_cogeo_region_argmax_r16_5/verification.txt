@@ -1,0 +1,17 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:402-472, train_rqvae.py:496-555, layers.py:127-137 | Traced the training refresh into the first-level quantizer’s scoring path. The directed predecessor context and Poincaré geodesic contrast are combined in the candidate-code score.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:551-555, train_rqvae.py:762-766
+FINDING DETAIL: The usage bias is added to the same candidate score as the bounded behaviour adjustment, but it is not bounded. Its magnitude can exceed the Euclidean distance differences and the clipped context term, so it can change the candidate ordering independently of the item’s latent. For example, with reference usage 0.5 and usage 0, the bias difference is about 6.6 at the configured weight, while the context term is clipped to 1. This contradicts the specified item-led assignment in which the Euclidean distance orders candidates and the context only nudges that ordering within a bound.
+FINDING REPRODUCTION: Use a two-code case with equal Euclidean distances, `COGEO_USAGE_WEIGHT=0.5`, and a reference usage of 0.5 for one code. Set current usage to zero for that code and positive for the other. The resulting usage-bias difference can exceed `COGEO_CLIP`, and `scores()` can select a code based on usage bias rather than the item/context score.
+FINDING CORRECTION: Keep the usage constraint from overriding the item-led ordering—for example, bound its per-item candidate adjustment within a stated budget and include that bound in the minimal specification, or apply the usage constraint through a separate update that does not alter the candidate argmax.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: layers.py:127-162, train_rqvae.py:730-741, smoke_test.py:43-63, smoke_test.py:87-141 | Inspected the real forward/backward path and the deterministic switch fixture. The coupled score feeds a soft candidate distribution used in both the quantization loss and straight-through output; the fixture checks finite loss and encoder gradients, and verifies assignment changes with behaviour and geometry switches. Runtime execution was not performed, consistent with the stated sandbox limitation.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:620-656, train_rqvae.py:829-907, smoke_test.py:62-63 | Inspected root and result-path resolution, the frozen Stage 0 parquet and Stage 1 embedding inputs, indexed SID export and uniqueness check, and the launcher. The launcher’s single-card branch reads `SINGLE_GPU_ENV` at `train_rqvae.py:883`; the candidate result path is under its own promoted arm directory. Runtime execution was not performed, consistent with the stated sandbox limitation.

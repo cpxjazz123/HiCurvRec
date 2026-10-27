@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:496-559 | Inspected the assignment scoring path and smoke_test.py:87-141. The trainer builds predecessor contexts from frozen training transitions in train_rqvae.py:227-300, refreshes the contexts and gate in train_rqvae.py:402-472, then scores candidate codewords with the positive/negative Poincaré distance contrast in train_rqvae.py:520-552. The smoke fixture compares both_on, behaviour_off and geometry_off on the same inputs and asserts that the enabled assignment changes versus both controls.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:121-162 | Inspected the real VQLayer forward/backward path and smoke_test.py:55-61, 126-141. The coupled score feeds a soft candidate distribution used in the quantization loss and straight-through output; the smoke test checks finite loss and encoder gradients, and asserts assignment changes for both_on versus behaviour_off and geometry_off.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 numerical hazard found. Runtime gradient execution was not performed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-73, 624-706, 833-912 | Inspected the trainer entry point, data and output path constants, SID export, and launcher branches. The trainer reads stage1 embeddings and results/stage0_build_parquet/train.parquet, constructs the mechanism from that training frame, exports item-indexed SID rows and JSON keys, and writes artifacts under results/stage2_RQ-VAE/TIGER_cogeo_region_argmax. The launcher checks SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at train_rqvae.py:120, 883-912.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection.
+FINDING REPRODUCTION: Not applicable; the trainer could not be run in this environment.
+FINDING CORRECTION: Not applicable.

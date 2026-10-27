@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:227-230, train_rqvae.py:402-472, train_rqvae.py:496-552, model/layers.py:127-136 | Static trace of the trainer-installed assignment hook from `VQLayer.forward` through `CoGeoAssignment.scores`; the runtime smoke is unavailable in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:465-468, train_rqvae.py:496-552
+FINDING DETAIL: The stated symmetric co-consumption signal does not participate in the assignment score. `refresh` computes `agree_all` from the sparse co-consumption matrix and region profiles, but `scores` never reads it or `profiles`. The score uses Euclidean distance plus a directed-context contrast computed with Poincare distance. Thus the actual connected path is directed transitions × hyperbolic geometry, not the proposed co-consumption-led Poincare assignment with directed tie-breaking.
+FINDING REPRODUCTION: Trace `CoGeoAssignment.refresh` into `scores`: `agree_all` is assigned at line 468, but no subsequent score computation references it; the score at lines 537-547 uses `euclidean_dist`, `neg_bary`, and `gate`. Even with nonzero co-consumption rows and distinct profiles, changing those rows/profiles alone cannot change the scores or SID choice.
+FINDING CORRECTION: Add the normalized co-consumption/profile agreement term to the same item/code score used for assignment, with its intended dominant scale; retain the bounded directed term as a tie-break. Ensure the co-consumption term is actually consumed by the hard assignment and the differentiable coupled-score path.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162, train_rqvae.py:496-552, smoke_test.py:47-62, smoke_test.py:87-132 | Static forward/backward trace plus inspection of the provided smoke fixture. The fixture asserts finite loss and encoder gradient, and checks that `both_on` differs from `behaviour_off`; no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:558-577, smoke_test.py:117-132
+FINDING DETAIL: None. The implemented directed-context/Poincare score has a differentiable soft-score path into the encoder and codebook, and its projection, denominator, and `acosh` inputs have finite-range safeguards for ordinary finite float32 inputs. The smoke compares the behaviour-off assignment but does not assert that `geometry_off` changes the assignment; this is a verification-coverage limitation, not a demonstrated trainability defect.
+FINDING REPRODUCTION: The forward sets the latent context and obtains the coupled score at `model/layers.py:127-136`; lines 157-161 use a softmax-weighted codebook result in the quantization loss and straight-through output. The smoke’s `loss.backward()` and finite encoder-gradient assertions are at `smoke_test.py:57-61`.
+FINDING CORRECTION: None required for the trainability check. Add an explicit geometry-off assignment/gradient comparison if that control is intended to be asserted by the smoke.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-73, train_rqvae.py:617-652, train_rqvae.py:849-895 | Static inspection of path resolution, data loading, export, and launcher branches; trainer execution was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:61-73, train_rqvae.py:871-895
+FINDING DETAIL: None found. The trainer derives the repository root, reads the frozen `results/stage0_build_parquet/train.parquet`, writes outputs under the promoted arm’s `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/`, exports item IDs by embedding-row enumeration, and checks uniqueness after collision extension. The launcher returns directly when `GENREC_SINGLE_GPU="1"` and otherwise invokes torchrun from the repository root. These are source-level checks, not an executed integration run.
+FINDING REPRODUCTION: Inspect `TRAIN_FILE` and `RESULT_DIR` at `train_rqvae.py:64-69`, loading at lines 631-633, JSON export at lines 856-863, and launcher branches at lines 871-895.
+FINDING CORRECTION: None required for the integration check.

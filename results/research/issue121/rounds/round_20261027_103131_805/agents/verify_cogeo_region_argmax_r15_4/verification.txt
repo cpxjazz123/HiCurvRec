@@ -1,0 +1,28 @@
+I’ll inspect the candidate’s implementation and entry points, then return the three requested checks in the exact plain-text format. I will not modify or create files; I’ll print the report here.
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:227-329, train_rqvae.py:331-360, train_rqvae.py:402-472, train_rqvae.py:496-555, model/layers.py:127-161 | Traced frozen transition counts into predecessor contexts, then into the Poincare positive/negative-context score and the soft quantization path; reviewed smoke_test.py:87-141 for the variant comparisons. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:341-355
+FINDING DETAIL: Predecessor contexts are built from at most eight incoming predecessor items per destination. The specified positive context is the mean over the item's predecessors, and the negative context is built the same way. Truncating to the eight highest-count predecessors changes the behaviour signal used by the curved assignment; the entropy gate is also computed from this truncated set at lines 447-457. The pathway is connected, but it does not implement the specified all-predecessor context.
+FINDING REPRODUCTION: Give one item nine distinct incoming transitions with equal counts and predecessor codes in distinct regions. `_build_padded_tables` retains only eight at lines 351-355, so `_contexts` at lines 388-400 and the concentration at lines 447-457 omit the ninth predecessor and its region.
+FINDING CORRECTION: Aggregate all incoming predecessors for each item when forming the weighted positive context and region-mass entropy, using a sparse or segmented reduction rather than a fixed eight-slot table.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161, train_rqvae.py:496-555, smoke_test.py:55-63, smoke_test.py:87-141 | Inspected the differentiable coupled score and soft assignment contribution to quantization loss, and the supplied forward/backward and switch-sensitivity smoke-test code. No runtime execution was performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection. The coupled score uses differentiable codeword-dependent curved distances; its soft distribution contributes to the quantization loss and straight-through output. The smoke test checks finite loss and encoder gradients, and checks assignment changes for both-on versus behaviour-off and geometry-off.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:620-703, train_rqvae.py:829-907, model/model.py:32-36, train_rqvae.py:879-907 | Inspected repository-root and result-path resolution, the frozen embedding/train inputs, trainer setup, full-catalogue SID export, and launcher branches including `GENREC_SINGLE_GPU`. No runtime execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:227-246
+FINDING DETAIL: The behaviour counts are not guaranteed to use each user's longest chronological training sequence. The code selects the longest sequence among rows in `train.parquet` (history plus target), but does not establish chronological ordering or reconstruct the user's full training sequence. If rows are unordered or contain only prefixes, the chosen row need not be the user's longest chronological sequence; this changes both transitions and co-consumption. This violates the specified frozen Stage 2 data path.
+FINDING REPRODUCTION: For one user, provide two train rows whose histories/targets are prefixes from the same chronological sequence, with the shorter prefix row appearing after the longer one or with equal-length rows in non-chronological order. The code at lines 239-246 chooses only one row by length and retains its row order, so the resulting transition counts can omit adjacent transitions present in the user's full sequence.
+FINDING CORRECTION: Build counts from the canonical, chronologically ordered training sequences supplied by the frozen data pipeline, or validate that `train.parquet` contains exactly one longest chronological sequence per user before counting.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:496-547 -> model/layers.py:127-162 | Static code inspection traced the trainer-installed assignment hook and its score through the quantizer. The specified CPU smoke test could not be run in this sandbox; the candidate check also records a ModuleNotFoundError at CANDIDATE_CHECK.json:2.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:427-441, train_rqvae.py:496-547
+FINDING DETAIL: The proposed symmetric co-consumption profile agreement is computed (`profiles` and `agree_all`) but never read by `scores`; the directed radar (`P_tensor`/`directed_all`) is also not used there. Instead, assignment uses a curved contrast involving the item latent and a predecessor-derived negative barycentre. Thus co-consumption does not affect the assignment decision, and the implemented pathway is not the specified co-consumption-led Poincare assignment with directed near-tie radar.
+FINDING REPRODUCTION: Follow `CoGeoAssignment.refresh` at train_rqvae.py:427-441, where the co-consumption agreement is materialized, then inspect every term returned by `scores` at train_rqvae.py:531-547: neither `self.agree_all`, `self.profiles`, `self.P_tensor` nor `self.directed_all` is read. A minimal counterexample is to change only `agree_all` or `P_tensor` after refresh: `scores` receives the same inputs and returns the same assignments.
+FINDING CORRECTION: Include the co-consumption agreement in the code score and the normalized directed predecessor-region radar as a bounded tie-break, with the co-consumption term dominant and calibrated as specified. Ensure removing either signal changes that connected assignment computation.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-162 -> train_rqvae.py:496-551 | Static inspection traced the coupled score into the straight-through quantizer and its soft candidate loss. No runtime forward/backward was run in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:520-528, train_rqvae.py:532-542
+FINDING DETAIL: The `geometry_off` control is not the Euclidean replacement required for the comparison: `hyp` is always computed with Poincare distance, and `behaviour` always contains `hyp.square()`. The control only changes the negative-barycentre distance at line 535. Consequently it does not turn off the curved operation, so the geometry-off comparison cannot establish the effect of replacing the curve with Euclidean distance.
+FINDING REPRODUCTION: Set `self.mode = "geometry_off"` and inspect `scores`: lines 527-528 still compute `hyp = geodesic(x)`, and line 538 still uses `hyp.square()`. Only `neg_hyp` changes to a Euclidean squared distance. Thus the supposed geometry-off score still depends on Poincare geometry.
+FINDING CORRECTION: Make `geometry_off` use Euclidean distances for every geometry-dependent term in the score, including the item-latent term, and retain the current Poincare operations only in the curved mode. Compare both variants on identical inputs.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, train_rqvae.py:612-647, train_rqvae.py:816-890 | Static inspection checked repository-root and result-path derivation, the frozen embedding and training-parquet paths, item-ID-based export, write locations, torchrun launch configuration, and the `SINGLE_GPU_ENV` branch. Runtime execution was not performed in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The trainer reads the repository’s `stage0_build_parquet/train.parquet` and Stage 1 embedding, writes checkpoint/log/SID artifacts under its promoted arm directory, and exports rows by enumerated item ID. The launcher’s single-card branch reads `GENREC_SINGLE_GPU` and bypasses torchrun when set to `"1"`.
+FINDING REPRODUCTION: Inspect `train_rqvae.py:61-74` for paths, `train_rqvae.py:626-647` for data loading and IDs, `train_rqvae.py:851-859` for SID export, and `train_rqvae.py:866-895` for launcher and single-card handling.
+FINDING CORRECTION: none

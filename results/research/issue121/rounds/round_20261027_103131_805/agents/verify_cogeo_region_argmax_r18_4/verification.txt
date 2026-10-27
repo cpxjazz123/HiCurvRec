@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:499-566, model/layers.py:127-161 | Traced the training assignment call: VQLayer.forward passes item IDs and Euclidean distances to CoGeoAssignment.scores; that score combines the directed predecessor context, its hard-negative context and Poincare geodesic distances with the item’s Euclidean distance. The resulting choices feed the first quantization level.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The coupled assignment path uses both training-only transition-derived contexts and curved candidate-to-context distances in the same score. The behavior-off branch returns to the plain Euclidean assignment.
+FINDING REPRODUCTION: Source trace through model/layers.py:127-137 and train_rqvae.py:519-555.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:127-161, train_rqvae.py:519-555 | Traced the forward/backward path from the coupled score through the soft candidate distribution and its added quantization loss. The score is differentiable through the Euclidean distances and Poincare candidate distances; the hard selected SID itself is not the gradient path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:542-550
+FINDING DETAIL: The geometry-off control replaces the candidate-to-context geodesic distances with Euclidean distances, but does not replace the curved context construction. `bary` and `neg_bary` were already generated with Poincare projection and log-map operations in `_contexts` (lines 375-403). Thus geometry-off still depends on hyperbolic operations and is not the specified Euclidean control. A both-on versus geometry-off comparison cannot isolate the effect of curved geometry.
+FINDING REPRODUCTION: In geometry_off mode, inspect `scores`: it reads `self.bary[ids_np]` and `self.neg_bary[ids_np]` at lines 540-541 and directly compares them with raw code embeddings at lines 545-547. Those contexts come from `_contexts` at lines 375-403, which applies `project`, `log0`, and another `project` to construct them. The geometry-off score therefore uses contexts that were constructed in curved space.
+FINDING CORRECTION: In geometry-off mode, build positive and negative contexts from the predecessor assignments using Euclidean codepoint means, without Poincare projection or log/exp-map operations; use those contexts with Euclidean candidate distances. Keep the same transition counts, gate, coefficients and assignment pathway as both-on.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 627-715, 836-915 | Inspected the trainer’s repository-root and arm-result path resolution, frozen embedding and training-parquet inputs, item-ID-aware assignment setup, SID export, and launcher branches, including `SINGLE_GPU_ENV` at lines 123 and 886-891. Runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer resolves the repository root from repository markers, reads the Stage 1 embedding and Stage 0 training parquet, writes artifacts under the candidate’s own promoted-arm result directory, and exports item-indexed SIDs with collision extension. The launcher retains both the torchrun path and the `GENREC_SINGLE_GPU` single-card branch.
+FINDING REPRODUCTION: Source trace through the cited paths. No runtime trainer execution was performed.
+FINDING CORRECTION: none

@@ -1,0 +1,30 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:496-556 -> model/layers.py:127-160 | Traced the trainer-installed assignment hook into its score and forward paths, and inspected the profile and transition tensors built by refresh().
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:496-552
+FINDING DETAIL: The implemented score does not use the co-consumption profiles or agreement scores. Although refresh() computes `self.profiles` and `self.agree_all` (lines 429 and 468), `scores()` only uses Poincare distances and the predecessor/negative-context behaviour adjustment. The mechanism therefore couples directed context to curved geometry, not the proposal’s co-consumption-led Poincare region assignment; its defining symmetric behaviour signal is absent from the assignment computation.
+FINDING REPRODUCTION: Follow `scores()` from line 496: `self.profiles` is checked for initialization at line 507 but never read in the score; `self.agree_all` is also never read. The returned score is built from `euclidean_dist` and the curved contrast at lines 527-552. Changing only co-consumption profile values while holding the other inputs fixed cannot change the score or assignment.
+FINDING CORRECTION: Add the specified co-consumption agreement term, such as `lambda * agree_all[ids]`, to the per-item/per-code score, with the stated calibration and safeguards. Ensure the behavior-off comparison removes the directed term while retaining co-consumption, and that geometry-off replaces the curved distance while retaining the same behaviour terms.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-161 -> train_rqvae.py:729-737 | Inspected the real forward and loss/backward call path and the CPU smoke’s finite-loss and encoder-gradient assertions at smoke_test.py:55-61. The sandbox has no PyTorch/shell, so I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The coupled score is consumed to select the hard code, and its differentiable softmax-weighted code embedding contributes to `quant_loss` at lines 150-161. The score’s curved-distance calculations depend on the latent and code embeddings, with projection and denominator clamps that keep points inside the Poincare ball; the bounded behaviour adjustment also avoids an unbounded score term. This provides a differentiable path to encoder and codebook parameters rather than computing the coupled term and discarding it. The smoke test checks finite loss and encoder gradient, and its variant fixture checks assignment sensitivity to behaviour and geometry switches, though it does not assert gradient sensitivity for each switch.
+FINDING REPRODUCTION: Static trace: `coupled = assignment.scores(...)` at model/layers.py:132; `soft = torch.softmax(coupled / scale, ...) @ self.get_code_embs()` at lines 157-159; `quant_loss` includes `F.mse_loss(soft, x.detach())` at line 160. The smoke fixture compares both-on, behaviour-off, and geometry-off choices at smoke_test.py:122-132.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, 617-679, 821-899 | Inspected root and input path resolution, trainer setup, export/indexing, result paths, and launcher branches. Runtime execution is unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the frozen Stage0 `train.parquet` and Stage1 embedding file (lines 66-67, 631-638), derives its repository root from markers (lines 42-64), and writes checkpoint, logs, metrics, and SID outputs under its own promoted arm directory (lines 63-74). SID export enumerates the full embedding catalogue, extends collisions, checks uniqueness, and writes item-ID-keyed JSON using enumeration order (lines 849-863). The launcher uses torchrun for the four-card branch and returns to the single-process path when `GENREC_SINGLE_GPU` is `"1"` (lines 871-900, especially 875-876).
+FINDING REPRODUCTION: Static path trace confirms `RESULT_DIR` is `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax`; export creates one JSON entry per enumerated item ID. `_launch_via_torchrun()` checks the single-card environment switch before launching torchrun.
+FINDING CORRECTION: none
+
+The requested absolute output file was not written; the verification is provided here as requested for a no-write-permission sandbox.

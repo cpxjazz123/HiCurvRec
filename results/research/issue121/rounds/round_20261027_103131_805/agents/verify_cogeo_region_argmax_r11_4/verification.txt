@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:402-472, 496-552; model/layers.py:127-161 | Traced the trainer’s epoch refresh into the first-layer assignment hook and its score and straight-through quantization path; inspected the sparse profile and directed-context computations.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:465-472; results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-552
+FINDING DETAIL: The implemented assignment does not match the specified co-consumption-led mechanism. The trainer computes co-consumption agreement at line 468, but `scores()` never reads `agree_all` or `profiles`; its behavior adjustment uses only the predecessor/hard-negative Poincare contrast at lines 537-547. Thus symmetric co-consumption does not determine assignments jointly with geometry as required. The actual directed-context-plus-Poincare computation is connected, but it is not the proposed behavior pathway.
+FINDING REPRODUCTION: In `scores()`, trace all inputs used to form `cost`: `euclidean_dist`, `neg_bary`, `gate`, and code embeddings. Neither `agree_all` nor `profiles` is read. Changing only the co-consumption rows/profiles while holding the other values fixed leaves the assignment score unchanged.
+FINDING CORRECTION: Add the specified co-consumption profile agreement as a code-dependent term in the same candidate score as the Poincare distance, and exercise it with a fixture where changing the profiles changes the assignment. Keep directed context bounded as the tie-break.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/model/layers.py:127-162; results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:496-556; results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:47-63, 87-132 | Inspected the differentiable score-to-soft-assignment-to-quantization-loss path and the smoke test’s finite-loss/backward/encoder-gradient and behavior-off assignment assertions. The smoke test does not assert the geometry-off variant, but the source implements it by replacing the context geodesic distances with squared Euclidean distances at lines 529-534 and 539-542.
+FINDING SEVERITY: minor
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/smoke_test.py:122-132
+FINDING DETAIL: No blocking trainability defect found from source inspection. The score contributes to the soft candidate distribution and its quantization loss, so gradients can reach the encoder and code embeddings; the Poincare projection and distance clamps avoid the obvious float32 boundary hazards. The smoke test checks finite loss and an encoder gradient, and checks behavior-off returns the plain assignment. It does not explicitly assert that geometry-off changes assignments or gradients.
+FINDING REPRODUCTION: The geometry-off choice is included in `compare_variants()`, but the smoke assertions only check `both_on` versus `behaviour_off`; `choices["geometry_off"]` is not asserted.
+FINDING CORRECTION: No correction required to pass this check; optionally assert geometry-off sensitivity in the smoke fixture.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:40-75, 617-698, 821-895 | Traced repository-root and candidate result path resolution, stage-0 training parquet loading, whole-catalogue SID export/indexing, and the launcher’s four-card and `GENREC_SINGLE_GPU=1` branches. Did not run the trainer.
+FINDING SEVERITY: minor
+FINDING LOCATION: results/research/issue121/trees/round_20261027_103131_805/cogeo_region_argmax/train_rqvae.py:671-675
+FINDING DETAIL: No blocking integration defect found by inspection. The trainer reads the frozen `results/stage0_build_parquet/train.parquet`, writes artifacts to the promoted candidate’s `results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/` directory, exports rows in catalogue item-ID order, and preserves the single-card launcher branch. Runtime execution was not performed.
+FINDING REPRODUCTION: The permitted code-only review can verify the constants and control flow at the cited lines; it cannot establish runtime behavior without running the trainer.
+FINDING CORRECTION: No correction required to pass this check.

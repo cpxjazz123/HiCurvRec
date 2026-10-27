@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:496-555 → model/layers.py:131-136 | Traced the first-level quantizer’s score call and its assignment hook; the score uses directed predecessor contexts with Poincare distance, but does not use the symmetric co-consumption signal.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:537-550
+FINDING DETAIL: The implemented coupling is directed transition context × Poincare geometry, not the idea’s claimed co-consumption × Poincare assignment. `scores()` reads `bary`, `neg_bary`, and `gate`, but never reads the co-consumption profiles (`profiles`/`agree_all`). The symmetric co-consumption signal is only used to choose a hard negative and build diagnostics/profiles; it does not jointly determine each first-level assignment as the proposal’s novelty claim requires.
+FINDING REPRODUCTION: Trace `CoGeoAssignment.refresh()` at train_rqvae.py:465-472, which creates `agree_all` from the sparse co-consumption matrix, into `scores()` at train_rqvae.py:537-550: no co-consumption-derived assignment score is consumed. Changing `agree_all` alone cannot change `scores()`.
+FINDING CORRECTION: Connect a co-consumption-derived score or adjustment to the same first-level candidate score as the Poincare predecessor-context term, so changing either signal changes that assignment computation; alternatively, revise the implemented idea and its scope claim to match the directed-context-only mechanism.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-162 → train_rqvae.py:496-555 | Inspected the real quantizer forward path and its loss construction; `smoke_test.py:47-61` also contains a forward/backward finite-loss and encoder-gradient check, while lines 87-141 exercise switch-sensitive assignment variants. Runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection. The coupled score is consumed by the first-level assignment and its softmax path contributes to `quant_loss`; its candidate-code distances retain a differentiable path through the Poincare operations to codebook parameters. The bounded score and numerical clamps avoid an evident float32 overflow or NaN hazard. The smoke fixture checks behavior-off and geometry-off sensitivity, though it does not establish that every production batch changes assignment.
+FINDING REPRODUCTION: Inspect `model/layers.py:150-161` for the differentiable soft-score loss and `train_rqvae.py:516-550` for projection, geodesic distance, clipping, and gated score construction. `smoke_test.py:128-141` specifies the switch comparisons.
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-74, 620-702, 829-907 | Inspected repository/result path resolution, frozen Stage 0 training-data loading, trainer setup, SID export/indexing, and launcher branches, including `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at line 120 and its check at line 883. Runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The resolved output directory is the candidate’s promoted arm directory under `results/stage2_RQ-VAE/`; train inputs point to Stage 1 embeddings and the Stage 0 training parquet. Export enumerates all embedding rows by item ID and writes an item-ID-keyed JSON plus a uniqueness-extended SID array. The launcher includes both the single-GPU bypass and the torchrun path.
+FINDING REPRODUCTION: Check path constants at `train_rqvae.py:61-74`, input and model initialization at lines 633-655, SID export at lines 857-870, and launcher selection/command construction at lines 879-903.
+FINDING CORRECTION: none

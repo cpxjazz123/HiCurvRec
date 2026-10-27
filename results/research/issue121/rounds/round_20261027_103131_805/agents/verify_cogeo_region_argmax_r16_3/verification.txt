@@ -1,0 +1,28 @@
+The assignment hook is in the real quantizer path, and I found an integration concern in the DDP setup; I’m checking whether it actually disconnects the codebook/encoder updates before finalizing the three verdicts.
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:227-257, 362-400, 496-559; model/layers.py:127-135 | Traced the training-only directed adjacent-transition construction into predecessor contexts and then into the bounded Poincare candidate score used by the first-level quantizer. The geometry-off branch substitutes Euclidean context distances at train_rqvae.py:539-542.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:127-160; train_rqvae.py:516-550 | Inspected the quantizer forward path: the coupled score supplies a softmax-weighted codebook output to an added quantization loss and straight-through output, so the score’s context geometry and behaviour adjustment have a differentiable route to the encoder and codebook. The provided smoke test exercises finite forward/backward gradients and compares both-on, behaviour-off and geometry-off assignments in smoke_test.py:43-59, 90-140. Runtime execution was not performed, as specified.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical hazard found that warrants a finding for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:746-766; model/layers.py:127-133 | Traced the real trainer’s epoch refresh and quantizer forward calls. The trainer sets `region_item_ids` to the entire catalogue at train_rqvae.py:754, but each quantizer forward receives only the current batch latent at model/layers.py:126-133.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:754-755; model/layers.py:129-133
+FINDING DETAIL: The per-batch assignment call passes catalogue-wide item IDs alongside batch-sized latents. `scores()` checks that `current_latent` and the IDs have matching lengths and raises `RuntimeError("missing latent context for Poincare assignment")` otherwise. For the stated catalogue size and batch size, normal training batches cannot satisfy this check, so the real trainer will fail before completing training.
+FINDING REPRODUCTION: With `N > batch_size`, run the trainer with `COGEO_ENABLED=True` and `COGEO_MODE="both_on"`. After the epoch refresh sets `region_item_ids = arange(N)`, the first training batch sets `current_latent` to the batch latent; `scores()` receives N IDs and batch-sized `z` and raises at train_rqvae.py:511-513.
+FINDING CORRECTION: Set `region_item_ids` to the item IDs for the current batch before each quantizer forward, and ensure the batch’s item IDs are passed through the model to that layer. Keep the full-catalogue IDs for the full-catalogue refresh and SID export only.
