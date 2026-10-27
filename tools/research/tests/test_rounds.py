@@ -776,3 +776,40 @@ class RepairPlanTests(unittest.TestCase):
         self.assertEqual((tree / "model.py").read_text(), original)
         self.assertFalse((tree / "extra.py").exists())
 
+
+class ScorerSchemaTests(unittest.TestCase):
+    """The scorer's answer shape: a number per dimension and its own rationale."""
+
+    def test_a_proposal_without_a_rationale_is_refused_by_name(self):
+        from tools.research.rounds import scoring as scoring_module
+        from tools.research.rounds import plaintext
+
+        answer = ("SCORE: a | behavior_evidence=3 | geometry_necessity=3 | novelty=2 | "
+                  "downstream_mechanism=3 | falsifiability=3 | implementability=2 | "
+                  "exploration_value=3\n")
+        report = plaintext.parse_scores(answer)
+        with self.assertRaises(scoring_module.ScoreError) as caught:
+            scoring_module.validate_report(report, scorer="s1")
+        self.assertIn("RATIONALE", str(caught.exception))
+
+    def test_a_dimension_without_a_number_is_refused_with_the_way_out(self):
+        from tools.research.rounds import scoring as scoring_module
+        from tools.research.rounds import plaintext
+
+        answer = ("SCORE: a | behavior_evidence=3 | geometry_necessity=3 | novelty=UNKNOWN | "
+                  "downstream_mechanism=3 | falsifiability=3 | implementability=2 | "
+                  "exploration_value=3\n"
+                  "RATIONALE: a | numbers\n")
+        report = plaintext.parse_scores(answer)
+        with self.assertRaises(scoring_module.ScoreError) as caught:
+            scoring_module.validate_report(report, scorer="s1")
+        self.assertIn("never in the score line", str(caught.exception))
+
+    def test_the_prompt_says_what_a_block_looks_like(self):
+        from tools.research.rounds import agents as agent_contracts
+
+        prompt = agent_contracts.SCORE_PROMPT
+        self.assertIn("RATIONALE: <idea_id>", prompt)
+        self.assertIn("UNKNOWN is never a", prompt)
+        self.assertIn("its own rationale", prompt)
+

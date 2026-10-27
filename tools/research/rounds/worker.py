@@ -433,8 +433,19 @@ def _review_with_retry(root: Path, task_id: str, prompt: str) -> dict:
     while attempt < 2:
         suffix = "" if attempt == 0 else (
             "\n\nYour previous answer was rejected by the schema: " + str(last_error) +
-            "\nAnswer again, with one complete block per proposal (SCORE with all seven "
-            "dimensions, SCOPE, EVIDENCE, OBJECTION, RATIONALE).")
+            "\nAnswer again with one complete block per proposal, and keep the five lines "
+            "of a block together:\n"
+            "SCORE: <idea_id> | behavior_evidence=<0-5> | geometry_necessity=<0-5> | "
+            "novelty=<0-5> | downstream_mechanism=<0-5> | falsifiability=<0-5> | "
+            "implementability=<0-5> | exploration_value=<0-5>\n"
+            "SCOPE: <idea_id> | IN_SCOPE or OUT_OF_SCOPE | <why>\n"
+            "EVIDENCE: <idea_id> | <evidence ids>\n"
+            "OBJECTION: <idea_id> | <the strongest objection>\n"
+            "RATIONALE: <idea_id> | <why these numbers, and the uncertainty>\n"
+            "Every dimension value is a number from 0 to 5. A dimension you cannot ground "
+            "takes the number you can defend, and the RATIONALE says the dimension is "
+            "UNKNOWN; UNKNOWN is never a dimension value. Every proposal you score needs "
+            "its own RATIONALE line, carrying its own idea_id.")
         name = "scores.txt" if attempt == 0 else "scores_retry.txt"
         run_id = task_id if attempt == 0 else task_id + "_retry1"
         try:

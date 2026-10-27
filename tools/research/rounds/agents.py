@@ -141,7 +141,8 @@ SCORE_PROMPT = (
     "  the evidence ids you relied on (from the bundle);\n"
     "  one concrete objection, and a minimal counterexample when you claim a mathematical "
     "identity, a cancellation, leakage or a dimensional mismatch;\n"
-    "  a short rationale.\n"
+    "  its own rationale. The rationale belongs to ONE proposal: repeat the idea_id in "
+    "it, and do not let one proposal's rationale stand in for another's.\n"
     "Do not rank the proposals against each other here, do not veto a score, and do not "
     "predict a Recall@10: an Agent prediction is not a measurement. Do not score on Stage 2 "
     "quality diagnostics.\n"
@@ -154,7 +155,13 @@ SCORE_PROMPT = (
     "OBJECTION: <idea_id> | <the single strongest objection>\n"
     "COUNTEREXAMPLE: <idea_id> | <a minimal counterexample, when you claim one>\n"
     "RATIONALE: <idea_id> | <why these numbers, and the uncertainty>\n"
-    "One block per proposal, using the idea_id exactly as it is given."
+    "One block per proposal, using the idea_id exactly as it is given. The five lines of a "
+    "block belong together: a proposal without its own RATIONALE line, or with a RATIONALE "
+    "line that carries another proposal's idea_id, is rejected. Every one of the seven "
+    "dimension values is a NUMBER from 0 to 5. A dimension you cannot ground still takes "
+    "the number you can defend, and you say in the RATIONALE that the dimension is "
+    "UNKNOWN and which bounded check would resolve it; the word UNKNOWN is never a "
+    "dimension value."
 )
 
 EVIDENCE_REVISION_PROMPT = (

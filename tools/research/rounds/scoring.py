@@ -86,7 +86,10 @@ def validate_report(report: dict, *, scorer: str) -> dict:
         missing = [dimension for dimension in DIMENSIONS if dimension not in values]
         if missing:
             raise ScoreError("score for " + identifier + " is missing dimensions: " +
-                             ", ".join(missing))
+                             ", ".join(missing) +
+                             "; every dimension takes a number from 0 to 5, and a dimension "
+                             "you cannot ground is marked UNKNOWN in the RATIONALE line, "
+                             "never in the score line")
         for dimension in DIMENSIONS:
             value = values[dimension]
             if not _number(value):
@@ -96,7 +99,9 @@ def validate_report(report: dict, *, scorer: str) -> dict:
                 raise ScoreError("score for " + identifier + " is outside " +
                                  str(SCALE) + ": " + dimension)
         if not str(entry.get("rationale", "")).strip():
-            raise ScoreError("score for " + identifier + " has no rationale")
+            raise ScoreError("score for " + identifier + " has no rationale: write the line "
+                             "'RATIONALE: " + identifier + " | <why these numbers, and the "
+                             "uncertainty>' for this proposal, with its own idea_id")
         verdict = str(entry.get("scope_verdict", "")).upper()
         if verdict and verdict not in ("IN_SCOPE", "OUT_OF_SCOPE"):
             raise ScoreError("score for " + identifier + " has an unknown scope verdict: " +
