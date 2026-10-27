@@ -33,9 +33,11 @@ STATE_ROOT = Path("results/research") / DEFAULT_ISSUE / "rounds"
 #: less likely to hinge on a single proposal family.
 IDEA_AGENTS = 5
 SCORER_AGENTS = 3
-#: One reviewer per mechanism. The operator's decision: a single reviewer per
-#: implementation, so the review is one agent's verdict rather than a vote.
-VERIFIER_AGENTS = 1
+#: How many independent verifiers read one implementation revision. Five, so a
+#: single reviewer's subjective reading cannot decide the candidate on its own:
+#: the findings carry how many reviewers raised them, and the operator (the main
+#: agent) decides what to do with them.
+VERIFIER_AGENTS = 5
 #: How many repair rounds one implementation may have. The cap is a cost guard,
 #: not a scientific gate: a candidate that cannot be repaired stops costing
 #: agents and is recorded with its evidence instead of looping forever. The
@@ -318,6 +320,14 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
                              "detail": "verdict NEEDS_FIX without a stated blocking finding"})
         findings.extend(reported)
     record["verdicts"] = reports
+    # How many reviewers raised each finding: with five verifiers a single
+    # objection and a shared one are different things, and the main agent has to
+    # see the difference.
+    agreement: dict[str, int] = {}
+    for finding in findings:
+        key = str(finding.get("location", "")) + "|" + str(finding.get("detail", ""))[:120]
+        agreement[key] = agreement.get(key, 0) + 1
+    record["finding_agreement"] = agreement
     # The digest the reviewers saw is the tree's digest now: a stale one would make
     # the admission refuse a tree that was reviewed in exactly this state.
     record["source_digest"] = _source_digest(Path(record["tree"]))
@@ -592,8 +602,37 @@ def _implementation(state: dict, implementation_id: str) -> dict:
 
 
 def verified_implementations(state: dict) -> list:
+    """The candidates the main agent has ACCEPTED.
+
+    Five verifiers reading an implementation is a report, not a decision. The
+    decision is the main agent's: it reads the verdicts and the findings, and
+    only an accepted candidate may be dispatched to Stage 2.
+    """
     return [record for record in state.get("implementations", [])
-            if record.get("status") == "verified"]
+            if record.get("status") == "verified" and record.get("accepted")]
+
+
+def accept_verification(state: dict, implementation_id: str, note: str = "") -> dict:
+    """The main agent accepts a verified candidate, and it may then be trained."""
+    record = _implementation(state, implementation_id)
+    if record.get("status") != "verified":
+        raise RoundError("only a verified candidate can be accepted; " +
+                         implementation_id + " is " + str(record.get("status")))
+    record["accepted"] = True
+    record["acceptance_note"] = note
+    record_event(state, "verification_accepted", idea_id=implementation_id,
+                 note=note)
+    return state
+
+
+def decline_verification(state: dict, implementation_id: str, reason: str) -> dict:
+    """The main agent refuses a candidate the reviewers reported on."""
+    record = _implementation(state, implementation_id)
+    record["accepted"] = False
+    record["decline_reason"] = reason
+    record_event(state, "verification_declined", idea_id=implementation_id,
+                 reason=reason)
+    return state
 
 
 def selected_ideas(state: dict) -> list:

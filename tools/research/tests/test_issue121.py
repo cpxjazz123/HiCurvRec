@@ -589,7 +589,10 @@ class SeveritySentenceTests(unittest.TestCase):
                                                "detail": "no blocking defect found",
                                                "reproduction": "", "correction": ""}]}]}
             state = pipeline_module.apply_verification(
-                state, "coupled", [dict(minor, verifier="v1")])
+                state, "coupled",
+                [dict(minor, verifier="v1")] +
+                [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                 for index in range(2, 6)])
             self.assertEqual(state["implementations"][0]["status"], "verified")
 
     def test_a_preflight_failure_blocks_even_when_the_reviewer_passes(self):
@@ -608,19 +611,26 @@ class SeveritySentenceTests(unittest.TestCase):
                  "detail": "writes into the baseline", "reproduction": "", "correction": ""}]
             passing = {"verifier": "v", "verdict": "PASS", "checks": []}
             state = pipeline_module.apply_verification(
-                state, "coupled", [dict(passing, verifier="v1")])
+                state, "coupled",
+                [dict(passing, verifier="v1")] +
+                [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                 for index in range(2, 6)])
             self.assertEqual(state["implementations"][0]["status"], "needs_repair")
 
 
-class SingleVerifierTests(unittest.TestCase):
-    """One reviewer per mechanism, as the operator decided."""
+class VerifierQuorumTests(unittest.TestCase):
+    """Five reviewers per mechanism, and the main agent decides what happens."""
 
-    def test_one_verifier_is_configured(self):
+    def _verdicts(self, count=5, verdict="PASS"):
+        return [{"verifier": "v" + str(index), "verdict": verdict, "checks": []}
+                for index in range(1, count + 1)]
+
+    def test_five_verifiers_are_configured(self):
         from tools.research.rounds import worker as worker_module
-        self.assertEqual(pipeline_module.VERIFIER_AGENTS, 1)
-        self.assertEqual(worker_module.VERIFIERS, 1)
+        self.assertEqual(pipeline_module.VERIFIER_AGENTS, 5)
+        self.assertEqual(worker_module.VERIFIERS, 5)
 
-    def test_a_single_report_is_accepted_and_two_are_not(self):
+    def test_a_review_needs_five_reports(self):
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
             directory = pipeline_module.new_round(root, "round_one", objective="o")
@@ -631,13 +641,30 @@ class SingleVerifierTests(unittest.TestCase):
             state["implementations"] = [pipeline_module.implementation_record(
                 _coupled(), {"changed_files": ["model.py"]}, tree)]
             with self.assertRaises(pipeline_module.RoundError):
-                pipeline_module.apply_verification(
-                    state, "coupled",
-                    [{"verifier": "v1", "verdict": "PASS", "checks": []},
-                     {"verifier": "v2", "verdict": "PASS", "checks": []}])
+                pipeline_module.apply_verification(state, "coupled", self._verdicts(4))
             state = pipeline_module.apply_verification(
-                state, "coupled", [{"verifier": "v1", "verdict": "PASS", "checks": []}])
+                state, "coupled", self._verdicts(5))
             self.assertEqual(state["implementations"][0]["status"], "verified")
+
+    def test_a_verified_candidate_waits_for_the_main_agent_acceptance(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_one", objective="o")
+            tree = root / "coupled"
+            tree.mkdir()
+            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [pipeline_module.implementation_record(
+                _coupled(), {"changed_files": ["model.py"]}, tree)]
+            state = pipeline_module.apply_verification(
+                state, "coupled", self._verdicts(5))
+            # The reviewers report; only the main agent's acceptance makes the
+            # candidate dispatchable.
+            self.assertEqual(pipeline_module.verified_implementations(state), [])
+            state = pipeline_module.accept_verification(state, "coupled", "read")
+            self.assertEqual([record["idea_id"] for record
+                              in pipeline_module.verified_implementations(state)],
+                             ["coupled"])
 
     def test_the_verification_prompt_addresses_one_reviewer(self):
         from tools.research.rounds import agents as agents_module

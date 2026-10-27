@@ -32,7 +32,8 @@ from . import pipeline as pipeline_module
 IDEA_MIN = 2
 IDEA_MAX = 3
 SCORERS = 3
-VERIFIERS = 1
+#: How many independent verifiers read one implementation revision.
+VERIFIERS = pipeline_module.VERIFIER_AGENTS
 
 
 def _workspace(root: Path, task_id: str) -> Path:
@@ -558,7 +559,7 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
 
 
 def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> list:
-    """Three independent verifiers of one implementation revision."""
+    """Five independent verifiers of one implementation revision."""
     prompt = (agent_contracts.VERIFY_PROMPT.format(
         idea=plaintext.render_idea(idea), tree=str(tree),
         objective=agent_contracts.RESEARCH_OBJECTIVE,
@@ -761,6 +762,35 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
                                 for record in state.get("implementations", [])]}
 
 
+def phase_repair_plan(root: Path, round_id: str, idea_id: str, *, log=print) -> dict:
+    """Ask the repair PLANNER for the plan of one candidate, on the main agent's call.
+
+    The planner reads the findings and the tree and writes the change that would
+    fix each finding; it never edits the tree. The main agent applies the plan
+    and registers the execution.
+    """
+    directory = pipeline_module.find_round_directory(root, round_id)
+    state = pipeline_module.load_state(directory)
+    record = next((item for item in state.get("implementations", [])
+                   if item["idea_id"] == idea_id), None)
+    if record is None:
+        raise pipeline_module.RoundError("no implementation " + idea_id)
+    findings = record.get("blocking_findings") or []
+    if not findings:
+        raise pipeline_module.RoundError(idea_id + " has no blocking finding to plan for")
+    idea = ideas_module.idea_index(state["ideas"])[idea_id]
+    plan = run_repair_plan(directory, idea, Path(record["tree"]), findings,
+                           int(record.get("revision", 0)))
+    state = pipeline_module.apply_repair_plan(state, idea_id, plan)
+    pipeline_module.save_state(directory, state)
+    log("%s: repair plan ready (%d changes)" % (idea_id, len(plan.get("plans", []))))
+    return {"phase": "repair_plan", "ran": True, "idea_id": idea_id,
+            "revision": record.get("revision"),
+            "plans": plan.get("plans", []),
+            "remaining_issues": plan.get("remaining_issues", []),
+            "notes": plan.get("notes", "")}
+
+
 def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
     """Run the verifier of each implementation and the repair loop."""
     directory = pipeline_module.find_round_directory(root, round_id)
@@ -815,32 +845,39 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
                 pipeline_module.save_state(directory, state)
                 log("%s: revision capped" % record["idea_id"])
                 continue
-            try:
-                # The repair agent only plans: it reads the findings and the tree
-                # and writes the change that would fix each finding. The operator
-                # applies the plan to the tree and registers the execution, which
-                # is what reopens the review.
-                plan = run_repair_plan(agent_root, idea, Path(record["tree"]),
-                                       record.get("blocking_findings", []),
-                                       int(record.get("revision", 0)))
-                state = pipeline_module.apply_repair_plan(state, record["idea_id"], plan)
-            except Exception as exc:                       # noqa: BLE001
-                state = pipeline_module.mark_agent_error(
-                    state, record["idea_id"], "repair planning failed: " + str(exc))
+            # The findings are reported and the round waits. Whether they need a
+            # repair, and which of them do, is the main agent's decision: it can
+            # ask for a plan (research_round_plan_repair) or accept the candidate
+            # as it stands.
             pipeline_module.save_state(directory, state)
-            log("%s: %s" % (record["idea_id"], record.get("status")))
+            log("%s: %s (%d blocking findings)" % (
+                record["idea_id"], record.get("status"),
+                len(record.get("blocking_findings") or [])))
     # Stay in verification until every implementation is resolved: a repair
     # reopens the review, and the round must not move on with work in flight.
     pending = [record for record in state.get("implementations", [])
                if record.get("status") in ("implemented", "repaired", "needs_repair",
-                                           "repair_planned")
+                                           "repair_planned", "verified")
                or (record.get("status") == "agent_error"
                    and int(record.get("agent_error_attempts", 0))
                    <= pipeline_module.MAX_AGENT_RETRIES)]
     state["step"] = "verification" if pending else "stage2"
     pipeline_module.save_state(directory, state)
     return {"phase": "verification", "ran": True, "step": state["step"],
-            "verified": len(pipeline_module.verified_implementations(state)),
+            "verified": len([record for record in state.get("implementations", [])
+                             if record.get("status") == "verified"]),
+            "accepted": [record["idea_id"] for record
+                         in pipeline_module.verified_implementations(state)],
+            "verdicts": [{"idea_id": record["idea_id"],
+                          "status": record.get("status"),
+                          "verdicts": [str(report.get("verdict", "")).upper()
+                                       for report in (record.get("verdicts") or [])],
+                          "findings": [{"verifier": finding.get("verifier", ""),
+                                        "location": finding.get("location", ""),
+                                        "detail": str(finding.get("detail", ""))[:400]}
+                                       for finding in (record.get("blocking_findings") or [])],
+                          "agreement": record.get("finding_agreement", {})}
+                         for record in state.get("implementations", [])],
             "pending": [record["idea_id"] for record in pending],
             "plans_pending": [record["idea_id"] for record in pending
                               if record.get("status") == "repair_planned"],

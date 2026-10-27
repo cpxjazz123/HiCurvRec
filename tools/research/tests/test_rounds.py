@@ -13,6 +13,13 @@ from tools.research.rounds import pipeline as pipeline_module
 from tools.research.rounds import scoring as scoring_module
 
 
+def _five(first: dict, rest: list | None = None) -> list:
+    """The five verdicts a review now needs: the first plus four more."""
+    if rest is None:
+        rest = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                for index in range(2, 6)]
+    return [first] + rest
+
 def _idea(identifier, title="t", change="c", spec="s", **overrides):
     """A proposal that meets the joint behaviour x hyperbolic scope contract."""
     idea = {"idea_id": identifier, "title": title, "motivation": "m", "novelty": "n",
@@ -202,8 +209,9 @@ class RoundStateTests(unittest.TestCase):
                                "findings": [{"severity": "blocker", "location": "model.py:1",
                                              "detail": "NaN loss", "reproduction": "run it",
                                              "correction": "clamp"}]}]}
-        passing = {"verifier": "v2", "verdict": "PASS", "checks": []}
-        state = pipeline_module.apply_verification(state, "a", [blocker])
+        passing = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                   for index in range(2, 6)]
+        state = pipeline_module.apply_verification(state, "a", [blocker] + passing)
         record = state["implementations"][0]
         self.assertEqual(record["status"], "needs_repair")
         self.assertTrue(record["failure_signature"])
@@ -224,8 +232,13 @@ class RoundStateTests(unittest.TestCase):
         self.assertEqual(record["status"], "repaired")
         self.assertEqual(record["revision"], 1)
         state = pipeline_module.apply_verification(
-            state, "a", [{"verifier": "v1", "verdict": "PASS", "checks": []}])
+            state, "a", [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                         for index in range(1, 6)])
         self.assertEqual(state["implementations"][0]["status"], "verified")
+        # The five verifiers report; the main agent accepts. Nothing is
+        # dispatchable before that.
+        self.assertEqual(len(pipeline_module.verified_implementations(state)), 0)
+        state = pipeline_module.accept_verification(state, "a", "read the verdicts")
         self.assertEqual(len(pipeline_module.verified_implementations(state)), 1)
 
     def test_a_blocked_implementation_does_not_stop_the_round(self):
@@ -366,7 +379,7 @@ class VerdictSeverityTests(unittest.TestCase):
         for severity in ("blocking", "major", "BLOCKER", "correctness", ""):
             with self.subTest(severity=severity):
                 state = pipeline_module.apply_verification(
-                    self.state, "a", [self._verdict(severity)])
+                    self.state, "a", _five(self._verdict(severity)))
                 self.assertEqual(state["implementations"][0]["status"], "needs_repair")
 
     def test_a_harmless_severity_does_not_block(self):
@@ -375,17 +388,18 @@ class VerdictSeverityTests(unittest.TestCase):
                                 "findings": [{"severity": "minor", "location": "model.py:1",
                                               "detail": "naming", "reproduction": "",
                                               "correction": "rename"}]}]}
-        state = pipeline_module.apply_verification(self.state, "a", [harmless])
+        state = pipeline_module.apply_verification(self.state, "a", _five(harmless))
         self.assertEqual(state["implementations"][0]["status"], "verified")
 
     def test_a_needs_fix_verdict_blocks_even_when_the_finding_is_harmless(self):
         state = pipeline_module.apply_verification(self.state, "a",
-                                                   [self._verdict("minor")])
+                                                   _five(self._verdict("minor")))
         self.assertEqual(state["implementations"][0]["status"], "needs_repair")
 
     def test_a_needs_fix_verdict_without_a_finding_still_blocks(self):
         state = pipeline_module.apply_verification(
-            self.state, "a", [{"verifier": "v1", "verdict": "NEEDS_FIX", "checks": []}])
+            self.state, "a",
+            _five({"verifier": "v1", "verdict": "NEEDS_FIX", "checks": []}))
         self.assertEqual(state["implementations"][0]["status"], "needs_repair")
         self.assertTrue(state["implementations"][0]["failure_signature"])
 
@@ -549,7 +563,7 @@ class VerdictSeverityTests(unittest.TestCase):
         for severity in ("blocking", "major", "BLOCKER", "correctness", ""):
             with self.subTest(severity=severity):
                 state = pipeline_module.apply_verification(
-                    self.state, "a", [self._verdict(severity)])
+                    self.state, "a", _five(self._verdict(severity)))
                 self.assertEqual(state["implementations"][0]["status"], "needs_repair")
 
     def test_a_harmless_severity_does_not_block(self):
@@ -558,17 +572,18 @@ class VerdictSeverityTests(unittest.TestCase):
                                 "findings": [{"severity": "minor", "location": "model.py:1",
                                               "detail": "naming", "reproduction": "",
                                               "correction": "rename"}]}]}
-        state = pipeline_module.apply_verification(self.state, "a", [harmless])
+        state = pipeline_module.apply_verification(self.state, "a", _five(harmless))
         self.assertEqual(state["implementations"][0]["status"], "verified")
 
     def test_a_needs_fix_verdict_blocks_even_when_the_finding_is_harmless(self):
         state = pipeline_module.apply_verification(self.state, "a",
-                                                   [self._verdict("minor")])
+                                                   _five(self._verdict("minor")))
         self.assertEqual(state["implementations"][0]["status"], "needs_repair")
 
     def test_a_needs_fix_verdict_without_a_finding_still_blocks(self):
         state = pipeline_module.apply_verification(
-            self.state, "a", [{"verifier": "v1", "verdict": "NEEDS_FIX", "checks": []}])
+            self.state, "a",
+            _five({"verifier": "v1", "verdict": "NEEDS_FIX", "checks": []}))
         self.assertEqual(state["implementations"][0]["status"], "needs_repair")
         self.assertTrue(state["implementations"][0]["failure_signature"])
 
@@ -750,6 +765,8 @@ class RepairPlanTests(unittest.TestCase):
         self.assertEqual(record["source_digest"], pipeline_module._source_digest(tree))
         self.assertEqual(record["repairs"][-1]["changes"], ["clamped the loss"])
 
+
+
     def test_a_planner_that_edits_the_tree_is_rolled_back_and_its_plan_refused(self):
         from tools.research.rounds import worker as round_worker
 
@@ -775,6 +792,52 @@ class RepairPlanTests(unittest.TestCase):
                       "detail": "d", "reproduction": "r", "correction": "c"}], 0)
         self.assertEqual((tree / "model.py").read_text(), original)
         self.assertFalse((tree / "extra.py").exists())
+
+
+    def test_the_verifiers_report_and_the_main_agent_accepts(self):
+        tree = self._implementation()
+        self.state["implementations"] = [pipeline_module.implementation_record(
+            {"idea_id": "a"}, {}, tree)]
+        verdicts = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                    for index in range(1, 6)]
+        state = pipeline_module.apply_verification(self.state, "a", verdicts)
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "verified")
+        self.assertEqual(len(record["verdicts"]), 5)
+        # A verified candidate is not dispatchable until the main agent accepts it.
+        self.assertEqual(pipeline_module.verified_implementations(state), [])
+        state = pipeline_module.accept_verification(state, "a", "accepted")
+        self.assertEqual([r["idea_id"] for r in
+                          pipeline_module.verified_implementations(state)], ["a"])
+
+    def test_an_unaccepted_candidate_cannot_be_dispatched(self):
+        tree = self._implementation()
+        self.state["implementations"] = [pipeline_module.implementation_record(
+            {"idea_id": "a"}, {}, tree)]
+        verdicts = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                    for index in range(1, 6)]
+        pipeline_module.apply_verification(self.state, "a", verdicts)
+        self.assertEqual(pipeline_module.verified_implementations(self.state), [])
+
+    def test_the_finding_agreement_counts_the_reviewers_that_raised_it(self):
+        tree = self._implementation()
+        self.state["implementations"] = [pipeline_module.implementation_record(
+            {"idea_id": "a"}, {}, tree)]
+        blocker = {"verifier": "v1", "verdict": "NEEDS_FIX",
+                   "checks": [{"name": "trainability", "verdict": "NEEDS_FIX",
+                               "findings": [{"severity": "blocker", "location": "model.py:1",
+                                             "detail": "NaN loss", "reproduction": "run it",
+                                             "correction": "clamp"}]}]}
+        others = [{"verifier": "v" + str(index), "verdict": "NEEDS_FIX",
+                   "checks": [{"name": "trainability", "verdict": "NEEDS_FIX",
+                               "findings": [{"severity": "blocker", "location": "model.py:1",
+                                             "detail": "NaN loss", "reproduction": "run it",
+                                             "correction": "clamp"}]}]}
+                  for index in range(2, 6)]
+        state = pipeline_module.apply_verification(self.state, "a", [blocker] + others)
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "needs_repair")
+        self.assertEqual(list(record["finding_agreement"].values()), [5])
 
 
 class ScorerSchemaTests(unittest.TestCase):
@@ -812,4 +875,3 @@ class ScorerSchemaTests(unittest.TestCase):
         self.assertIn("RATIONALE: <idea_id>", prompt)
         self.assertIn("UNKNOWN is never a", prompt)
         self.assertIn("its own rationale", prompt)
-

@@ -2727,13 +2727,11 @@ def tool_research_round_verify(round_id: str) -> dict:
     already = {job["idea_id"] for job in _round_jobs(directory)["jobs"]
                if job["kind"] == "stage2"}
     fresh = [identifier for identifier in verified if identifier not in already]
-    if fresh:
-        # The launch owns the GPU boundary and the queue, and it is idempotent:
-        # it only starts what is not queued yet.
-        result["stage2"] = tool_research_round_launch(round_id)
-        result["dispatched"] = fresh
-    else:
-        result["dispatched"] = []
+    # The five verifiers report; the main agent decides. Nothing is dispatched
+    # from here: a candidate is trained only after the main agent accepts it
+    # with research_round_accept.
+    result["awaiting_acceptance"] = fresh
+    result["dispatched"] = []
     return result
 
 
@@ -2771,6 +2769,55 @@ def tool_research_round_apply_repair(round_id: str, idea_id: str, changes: list,
             "source_digest": record.get("source_digest"),
             "step": state.get("step"),
             "note": "the next verification pass reviews the applied tree"}
+
+
+def tool_research_round_accept(round_id: str, idea_id: str, note: str = "") -> dict:
+    """The main agent accepts a verified candidate, so it may be trained.
+
+    Five verifiers produce a report; this is the decision. The candidate has to
+    carry the ``verified`` status, and only an accepted candidate is dispatched
+    to Stage 2.
+    """
+    from tools.research.rounds import pipeline as round_pipeline
+
+    directory = _round_directory(round_id)
+    state = round_pipeline_state(directory)
+    try:
+        state = round_pipeline.accept_verification(state, idea_id, note)
+    except Exception as exc:                               # noqa: BLE001
+        return {"round_id": round_id, "idea_id": idea_id, "accepted": False,
+                "error": str(exc)}
+    round_pipeline.save_state(directory, state)
+    return {"round_id": round_id, "idea_id": idea_id, "accepted": True,
+            "note": note,
+            "accepted_candidates": [record["idea_id"] for record
+                                    in round_pipeline.verified_implementations(state)]}
+
+
+def tool_research_round_plan_repair(round_id: str, idea_id: str) -> dict:
+    """Ask the repair planner for the plan of one candidate.
+
+    The planner only writes the plan; the main agent applies it to the tree and
+    registers the execution with research_round_apply_repair.
+    """
+    from tools.research.rounds import lock as round_lock
+    from tools.research.rounds import worker as round_worker
+
+    directory = _round_directory(round_id)
+    lock = round_lock.RoundLock(directory)
+    try:
+        lock.acquire(owner="mcp:repair_plan")
+    except Exception as exc:                               # noqa: BLE001
+        return {"round_id": round_id, "idea_id": idea_id, "planned": False,
+                "error": str(exc)}
+    try:
+        result = round_worker.phase_repair_plan(REPO, round_id, idea_id)
+    except Exception as exc:                               # noqa: BLE001
+        return {"round_id": round_id, "idea_id": idea_id, "planned": False,
+                "error": str(exc)}
+    finally:
+        lock.release()
+    return {"round_id": round_id, "idea_id": idea_id, "planned": True, **result}
 
 
 def tool_research_round_run(round_id: str) -> dict:
@@ -3190,6 +3237,20 @@ TOOLS.update({
                        "edits the tree; the operator applies it through "
                        "research_round_apply_repair), and the distinction between an "
                        "infrastructure error and a defect. No GPU work is started.",
+    },
+    "research_round_accept": {
+        "fn": tool_research_round_accept,
+        "args": {"round_id": "string", "idea_id": "string", "note": "string"},
+        "description": "The main agent accepts a verified candidate, so it may be "
+                       "trained. The verifiers report; this is the decision. No GPU work.",
+    },
+    "research_round_plan_repair": {
+        "fn": tool_research_round_plan_repair,
+        "args": {"round_id": "string", "idea_id": "string"},
+        "description": "Ask the repair PLANNER for the plan of one candidate: it "
+                       "reads the findings and the tree and writes the change that "
+                       "would fix each finding, without touching the code. The operator "
+                       "applies it and registers the execution. No GPU work.",
     },
     "research_round_apply_repair": {
         "fn": tool_research_round_apply_repair,
