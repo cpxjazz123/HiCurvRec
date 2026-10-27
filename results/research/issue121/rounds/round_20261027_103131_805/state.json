@@ -24186,7 +24186,17 @@
         "cooccur_overlap_L3": 0.0339,
         "adjacency_L3": 0.0025
       },
-      "note": "diagnostics only: the behavioural metrics are not an admission gate, so Stage 3 runs anyway"
+      "note": "diagnostics only: the behavioural metrics are not an admission gate, so Stage 3 runs anyway",
+      "stage3": {
+        "test_recall@10": 0.039834,
+        "test_recall@5": 0.026463,
+        "test_ndcg@10": 0.021695,
+        "n_eval": 57439
+      },
+      "comparison": {
+        "baseline_control": 0.055537,
+        "delta": -0.015703
+      }
     }
   ],
   "stage3_jobs": [],

@@ -1,0 +1,30 @@
+{
+  "idea_id": "cogeo_region_argmax",
+  "variant": "TIGER_cogeo_region_argmax",
+  "design": "item-led Euclidean base + bounded gated behaviour adjustment + soft usage pull (0.02)",
+  "stage2": {
+    "epochs": 3000,
+    "total_seconds": 830.0,
+    "final_collision": 0.9367
+  },
+  "sid_diagnostics": {
+    "L1_codes": 2,
+    "largest_L1_share": 1.0,
+    "L2": 16,
+    "L3": 1557,
+    "ext_distinct": 247,
+    "cooccur_overlap_L3": 0.0339,
+    "adjacency_L3": 0.0025
+  },
+  "note": "diagnostics only: the behavioural metrics are not an admission gate, so Stage 3 runs anyway",
+  "stage3": {
+    "test_recall@10": 0.039834,
+    "test_recall@5": 0.026463,
+    "test_ndcg@10": 0.021695,
+    "n_eval": 57439
+  },
+  "comparison": {
+    "baseline_control": 0.055537,
+    "delta": -0.015703
+  }
+}

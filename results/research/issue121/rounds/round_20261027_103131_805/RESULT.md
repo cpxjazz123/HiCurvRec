@@ -75,3 +75,49 @@ profile agrees pick the same region. The next design has to keep the Euclidean t
 charge of the ordering and use the behaviour term as a bounded bias, with a balance
 constraint on the assignment; and it has to be screened on the L1 code count after a few
 hundred epochs, which costs minutes instead of a full run.
+
+## The item-led design, as prescribed, still fails — and the collapse is not the behaviour term
+
+| design | L1 codes | largest L1 | `cooccur_overlap_L3` | Stage 3 `test_recall@10` |
+|---|---|---|---|---|
+| baseline `TIGER_RQ-VAE` | 247 | ~0.02 | 0.0756 | **0.055537** |
+| context replaced the assignment | 116 | 0.985 | 0.0584 | 0.058497 |
+| Sinkhorn-balanced assignment | 104 | 0.693 | 0.0571 | not run |
+| coupled assignment, differentiable | 3 | 0.642 | 0.0601 | not run |
+| item-led + bounded context, usage pull 0.5 | 1 | 1.000 | 0.0275 | not run |
+| **item-led + bounded context, usage pull 0.02** | **2** | **1.000** | **0.0339** | **0.039834** |
+
+The last row is the design the operator asked for: the squared Euclidean distance of the
+item's own latent always orders the codes, the behaviour context is the clipped, gated
+contrast of the candidate code against the positive and the hard-negative context, and a
+soft usage pull keeps the first-level usage near the no-mechanism usage. It **also**
+collapsed, and it is the worst Stage 3 of the line — 0.0398, 0.0157 below the baseline.
+
+Three facts pin the cause down:
+
+1. The behaviour term is bounded to +/- 1 cost unit and the usage pull is 0.02, so neither
+   can move an item that the Euclidean term has already placed. The collapse therefore does
+   **not** come from the behaviour signal any more.
+2. The two runs of the item-led design differ only in that constant (0.5 vs 0.02) and their
+   final collisions were 0.99996 and 0.9367: the collapse tracks the usage pull, which means
+   it is being driven by the score path rather than by the behaviour term.
+3. The remaining difference from the baseline is the **straight-through path**: the coupled
+   score replaces the hard code in the soft estimate (`x_q = x_q + soft - soft.detach()`) and
+   the soft reconstruction enters the loss.
+
+The decisive next experiment is cheap and needs no new mechanism: train the arm with
+`COGEO_MODE = "behaviour_off"`, which by construction reduces the score to the plain squared
+Euclidean distance and drops the usage pull. If that ablation also collapses, the culprit is
+the straight-through path and the behaviour terms are exonerated; if it trains like the
+baseline, the culprit is in the coupled score. Twelve minutes of Stage 2 answers it.
+
+## The framework, as asked for in this session
+
+* five ideation agents, three scorers, **five verifiers** per implementation;
+* the verifiers **report**, the main agent **decides**: `research_round_accept`,
+  `research_round_plan_repair`, `research_round_apply_repair`;
+* the verification and repair-planner agents are **read-only** (no shell, no edit, no write;
+  their answer is read back from the opencode session stream and the framework writes it);
+* the agents of one phase run **concurrently**: a review round fell from 176-210 s to 48 s;
+* the repair cap counts the **review rounds**, not the source revisions, so a performance fix
+  no longer costs a candidate a repair round.
