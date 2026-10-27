@@ -101,9 +101,18 @@ def mark_workspace_project(workspace: Path) -> Path:
     return marker
 
 
+#: How long a role may take. The implementer writes a mechanism and runs its
+#: smoke test, which does not fit the review budget; the reviewers only read.
+ROLE_TIMEOUT_SECONDS = {
+    "implementation": 3600,
+    "repair": 1800,
+}
+
+
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
               binary="opencode", model="openai/gpt-6-luna", timeout=900,
               role: str = "verify") -> Path:
+    timeout = max(timeout, ROLE_TIMEOUT_SECONDS.get(str(role), 0))
     if (not output_name.endswith((".json", ".txt")) or "/" in output_name
             or "\\" in output_name or not task_id.replace("-", "").replace("_", "").isalnum()):
         raise ValueError("unsafe task id or output filename")

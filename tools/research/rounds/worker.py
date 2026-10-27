@@ -13,6 +13,7 @@ import json
 import shutil
 import sys
 import time
+import shutil
 from pathlib import Path
 
 from .. import settings
@@ -748,13 +749,21 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
         if any(record["idea_id"] == idea["idea_id"]
                for record in state.get("implementations", [])):
             continue
-        # The record exists before the agent runs, so a failure of the
-        # agent is recorded against the candidate instead of losing it.
-        state.setdefault("implementations", []).append(
-            pipeline_module.implementation_record(idea, {}, tree))
-        pipeline_module.save_state(directory, state)
+        # There is no implementation agent: the main agent writes the mechanism.
+        # The candidate tree is prepared here as a fresh copy of the one
+        # permitted baseline, and the record waits for the main agent to write
+        # the code and register it (research_round_register_implementation).
         try:
-            report = run_implementation(agent_root, idea, tree)
+            tree.parent.mkdir(parents=True, exist_ok=True)
+            if tree.exists():
+                shutil.rmtree(tree)
+            shutil.copytree(baseline_module.baseline_path(), tree)
+            record = pipeline_module.implementation_record(idea, {}, tree)
+            record["status"] = "awaiting_implementation"
+            record["implemented_by"] = "main_agent"
+            state.setdefault("implementations", []).append(record)
+            pipeline_module.save_state(directory, state)
+            log("%s: candidate tree prepared for the main agent" % idea["idea_id"])
         except baseline_module.BaselineError as exc:
             # The baseline is the one permitted source: if it is missing or
             # unreadable the candidate is not built from anything else.
@@ -763,14 +772,8 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
                 kind=pipeline_module.BASELINE_UNAVAILABLE)
             pipeline_module.save_state(directory, state)
             continue
-        except Exception as exc:                           # noqa: BLE001 - recorded, not raised
-            state = pipeline_module.mark_agent_error(
-                state, idea["idea_id"], "implementation failed: " + str(exc))
-            pipeline_module.save_state(directory, state)
-            continue
         record = [item for item in state["implementations"]
                   if item["idea_id"] == idea["idea_id"]][0]
-        record.update(pipeline_module.implementation_record(idea, report, tree))
         # The candidate must write only into its own result directory: a
         # candidate that would overwrite the baseline or a sibling is
         # refused before it can train.
@@ -898,7 +901,8 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
     # reopens the review, and the round must not move on with work in flight.
     pending = [record for record in state.get("implementations", [])
                if record.get("status") in ("implemented", "repaired", "needs_repair",
-                                           "repair_planned", "verified")
+                                           "repair_planned", "verified",
+                                           "awaiting_implementation")
                or (record.get("status") == "agent_error"
                    and int(record.get("agent_error_attempts", 0))
                    <= pipeline_module.MAX_AGENT_RETRIES)]

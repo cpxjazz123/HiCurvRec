@@ -626,6 +626,36 @@ def verified_implementations(state: dict) -> list:
             and not (record.get("blocking_findings") or [])]
 
 
+def register_implementation(state: dict, implementation_id: str, report: dict) -> dict:
+    """Record the implementation the MAIN AGENT wrote.
+
+    There is no implementation agent: the main agent writes the mechanism in the
+    candidate tree and registers what it did here. The record then carries the
+    changed files, the smoke it ran and the digest of the tree, and the verifiers
+    read exactly that tree.
+    """
+    record = _implementation(state, implementation_id)
+    tree = Path(record["tree"])
+    if not tree.is_dir():
+        raise RoundError("the candidate tree does not exist: " + str(tree))
+    digest = _source_digest(tree)
+    claimed = str(report.get("source_digest") or "")
+    if claimed and claimed != digest:
+        raise RoundError("the registered implementation claims digest " + claimed[:16] +
+                         " but the tree on disk hashes to " + digest[:16])
+    record["changed_files"] = list(report.get("changed_files", []))
+    record["deviations"] = list(report.get("deviations", []))
+    record["assumptions"] = list(report.get("assumptions", []))
+    record["smoke"] = report.get("smoke", {})
+    record["source_digest"] = digest
+    record["status"] = "implemented"
+    record["implemented_by"] = "main_agent"
+    record_event(state, "implementation_registered", idea_id=implementation_id,
+                 revision=int(record.get("revision", 0)),
+                 changed_files=len(record["changed_files"]))
+    return state
+
+
 def accept_verification(state: dict, implementation_id: str, note: str = "") -> dict:
     """The main agent accepts a candidate, and it may then be trained.
 

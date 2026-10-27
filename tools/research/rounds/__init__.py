@@ -1,9 +1,10 @@
 """The multi-agent research round of Issue #120.
 
 A round runs five independent ideation agents, then three independent scorers
-that each judge every idea, then selects several ideas, implements each of them
-in its own isolated tree, has **five independent verifiers** read each
-implementation, and finally trains the accepted candidates - in parallel where
+that each judge every idea, then selects several ideas. **There is no
+implementation agent**: the candidate tree is prepared from the baseline and the
+**main agent writes the mechanism** and registers it, then **five independent
+verifiers** read that tree, and finally the accepted candidates are trained - in parallel where
 the resources allow - and hands every technically valid Stage 2 result to
 Stage 3 automatically.
 

@@ -2771,6 +2771,37 @@ def tool_research_round_apply_repair(round_id: str, idea_id: str, changes: list,
             "note": "the next verification pass reviews the applied tree"}
 
 
+def tool_research_round_register_implementation(round_id: str, idea_id: str,
+                                               changes: list, notes: str = "",
+                                               smoke: str = "",
+                                               source_digest: str = "") -> dict:
+    """Register the implementation the main agent wrote in the candidate tree.
+
+    There is no implementation agent in the round: the main agent writes the
+    mechanism and records what it did here. The verifiers then read exactly the
+    tree that is on disk.
+    """
+    from tools.research.rounds import pipeline as round_pipeline
+
+    directory = _round_directory(round_id)
+    state = round_pipeline_state(directory)
+    try:
+        state = round_pipeline.register_implementation(
+            state, idea_id,
+            {"changed_files": list(changes or []), "notes": notes,
+             "smoke": {"result": smoke} if smoke else {},
+             "source_digest": source_digest})
+    except Exception as exc:                               # noqa: BLE001
+        return {"round_id": round_id, "idea_id": idea_id, "registered": False,
+                "error": str(exc)}
+    round_pipeline.save_state(directory, state)
+    record = next(item for item in state.get("implementations", [])
+                  if item["idea_id"] == idea_id)
+    return {"round_id": round_id, "idea_id": idea_id, "registered": True,
+            "status": record.get("status"), "source_digest": record.get("source_digest"),
+            "note": "the next verification pass reviews the tree on disk"}
+
+
 def tool_research_round_accept(round_id: str, idea_id: str, note: str = "") -> dict:
     """The main agent accepts a candidate, so it may be trained.
 
@@ -3238,6 +3269,15 @@ TOOLS.update({
                        "edits the tree; the operator applies it through "
                        "research_round_apply_repair), and the distinction between an "
                        "infrastructure error and a defect. No GPU work is started.",
+    },
+    "research_round_register_implementation": {
+        "fn": tool_research_round_register_implementation,
+        "args": {"round_id": "string", "idea_id": "string", "changes": "list",
+                 "notes": "string", "smoke": "string", "source_digest": "string"},
+        "description": "Register the implementation the main agent wrote in the "
+                       "candidate tree. There is no implementation agent: the main agent "
+                       "writes the mechanism and records it here, and the verifiers read "
+                       "that tree. No GPU work.",
     },
     "research_round_accept": {
         "fn": tool_research_round_accept,
