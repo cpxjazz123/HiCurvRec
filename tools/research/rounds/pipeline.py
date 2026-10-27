@@ -612,16 +612,35 @@ def verified_implementations(state: dict) -> list:
             if record.get("status") == "verified" and record.get("accepted")]
 
 
-def accept_verification(state: dict, implementation_id: str, note: str = "") -> dict:
-    """The main agent accepts a verified candidate, and it may then be trained."""
+def accept_verification(state: dict, implementation_id: str, note: str = "",
+                        decline_findings: bool = False) -> dict:
+    """The main agent accepts a candidate, and it may then be trained.
+
+    A candidate the reviewers rejected can still be accepted when the main
+    agent declines the findings: five reviewers are a report, and a finding that
+    the executable evidence contradicts is not a defect. Declining requires the
+    explicit flag and a note, and the declined findings stay on the record.
+    """
     record = _implementation(state, implementation_id)
-    if record.get("status") != "verified":
+    status = str(record.get("status"))
+    if status == "needs_repair":
+        if not decline_findings:
+            raise RoundError(
+                implementation_id + " has blocking findings; accepting it means "
+                "declining them, which needs decline_findings=True and a note")
+        record.setdefault("declined_findings", []).extend(
+            record.get("blocking_findings") or [])
+        record["blocking_findings"] = []
+        # The findings are declined, so the candidate is verified on the
+        # operator's decision and may be dispatched.
+        record["status"] = "verified"
+    elif status != "verified":
         raise RoundError("only a verified candidate can be accepted; " +
-                         implementation_id + " is " + str(record.get("status")))
+                         implementation_id + " is " + status)
     record["accepted"] = True
     record["acceptance_note"] = note
     record_event(state, "verification_accepted", idea_id=implementation_id,
-                 note=note)
+                 note=note, declined=bool(decline_findings))
     return state
 
 

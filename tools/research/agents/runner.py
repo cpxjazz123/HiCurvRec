@@ -19,19 +19,59 @@ def isolation_permissions(workspace: Path, role: str = "verify") -> dict:
     boundary was never in force. The roles are now stated in the schema the
     binary actually reads.
 
-    A verifier reviews code and does not run it, so it has no shell. An
-    implementer and a repair engineer must run the smoke test, so they keep the
-    shell but stay inside the workspace by prompt and by the framework's
-    output-path preflight, because this opencode version has no per-path edit
-    rule.
+    A verifier reviews code and does not run it, so it has no shell. The
+    verifier and the repair planner are **read-only**: they get neither a shell
+    nor an edit tool, so they cannot change the candidate tree or anything
+    else. Their answers are taken from the session stream, where the agent
+    printed them, and the framework writes the file.
+
+    An implementer must write the tree and run the smoke test, so it keeps the
+    shell and the edit tool inside the workspace, bounded by prompt and by the
+    framework's output-path preflight, because this opencode version has no
+    per-path edit rule.
     """
-    runs_code = str(role) in ("implementation", "repair")
+    runs_code = str(role) == "implementation"
+    read_only = str(role) in ("verify", "repair", "ideate", "score")
     return {
         "bash": "allow" if runs_code else "deny",
-        "edit": "allow",
+        "edit": "deny" if read_only else "allow",
+        "write": "deny" if read_only else "allow",
         "webfetch": "deny",
         "external_directory": "deny",
     }
+
+
+#: The roles that may not write anything. Their answer arrives through the
+#: session stream instead of a file they wrote.
+READ_ONLY_ROLES = ("verify", "repair", "ideate", "score")
+
+
+def session_answer(path: Path) -> str:
+    """The text an agent printed, read back from the opencode session stream.
+
+    A read-only role cannot create its answer file, so the framework takes the
+    answer from the session and writes the file itself.
+    """
+    chunks: list[str] = []
+    try:
+        lines = Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return ""
+    for line in lines:
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if event.get("type") != "text":
+            continue
+        part = event.get("part") or {}
+        text = part.get("text")
+        if isinstance(text, str) and text.strip():
+            chunks.append(text)
+    return "\n".join(chunks).strip()
 
 
 def write_isolation_config(workspace: Path, role: str = "verify") -> Path:
@@ -116,6 +156,11 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     # (candidate identity and source digest), so accept a bounded relocation and
     # record where it landed instead of discarding a real session.
     relocated = None
+    if not output.is_file() and str(role) in READ_ONLY_ROLES:
+        # A read-only role printed its answer instead of writing it.
+        printed = session_answer(workspace / "session.jsonl")
+        if printed:
+            output.write_text(printed, encoding="utf-8")
     if not output.is_file():
         matches = sorted(workspace.rglob(output_name))
         # A repaired run archives older answers under attempt-N/. Never
@@ -153,8 +198,11 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "isolation_config_sha256": digest_file(isolation),
         "project_marker": marker.name,
         "isolation_policy": "opencode v2 permission object: bash " +
-                            ("allowed (this role runs the smoke test)" if role in
-                             ("implementation", "repair") else "denied (this role reviews code)") +
+                            ("allowed (this role runs the smoke test)" if role == "implementation"
+                             else "denied") +
+                            ", edit and write " +
+                            ("denied (this role is read-only and its answer is read back from "
+                             "the session stream)" if role in READ_ONLY_ROLES else "allowed") +
                             ", webfetch and external_directory denied; the workspace is its "
                             "own opencode project so its opencode.json applies",
         "stderr_present": bool(stderr), "output_name": output_name,

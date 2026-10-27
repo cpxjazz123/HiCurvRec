@@ -767,6 +767,32 @@ class RepairPlanTests(unittest.TestCase):
 
 
 
+
+    def test_the_main_agent_can_decline_a_finding_and_accept(self):
+        tree = self._implementation()
+        self.state["implementations"] = [pipeline_module.implementation_record(
+            {"idea_id": "a"}, {}, tree)]
+        blocker = {"verifier": "v1", "verdict": "NEEDS_FIX",
+                   "checks": [{"name": "trainability", "verdict": "NEEDS_FIX",
+                               "findings": [{"severity": "blocker", "location": "model.py:1",
+                                             "detail": "claimed defect", "reproduction": "r",
+                                             "correction": "c"}]}]}
+        others = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                  for index in range(2, 6)]
+        state = pipeline_module.apply_verification(self.state, "a", [blocker] + others)
+        self.assertEqual(state["implementations"][0]["status"], "needs_repair")
+        # without the explicit flag the candidate cannot be accepted
+        with self.assertRaises(pipeline_module.RoundError):
+            pipeline_module.accept_verification(state, "a", "looks fine to me")
+        state = pipeline_module.accept_verification(
+            state, "a", "the four-rank run contradicts the finding",
+            decline_findings=True)
+        record = state["implementations"][0]
+        self.assertTrue(record["accepted"])
+        self.assertEqual(len(record["declined_findings"]), 1)
+        self.assertEqual([r["idea_id"] for r in
+                          pipeline_module.verified_implementations(state)], ["a"])
+
     def test_a_planner_that_edits_the_tree_is_rolled_back_and_its_plan_refused(self):
         from tools.research.rounds import worker as round_worker
 
