@@ -420,8 +420,19 @@ class RepairCapTests(unittest.TestCase):
 
     def test_the_cap_is_a_cost_budget(self):
         """The cap bounds the agent cost; the operator may raise it."""
-        self.assertGreaterEqual(pipeline_module.MAX_REVISIONS, 5)
-        self.assertLessEqual(pipeline_module.MAX_REVISIONS, 8)
+        self.assertGreaterEqual(pipeline_module.MAX_REVIEW_ROUNDS, 5)
+        self.assertLessEqual(pipeline_module.MAX_REVIEW_ROUNDS, 12)
+
+    def test_the_cap_counts_the_review_rounds_and_not_the_source_revisions(self):
+        """A performance fix must not cost the candidate a review round.
+
+        The revision counter moves with every source change, so a candidate that
+        needed a device fix and a proposal alignment would run out of budget
+        before the reviewers ever rejected its mechanism twice. The cap counts
+        the rejections.
+        """
+        self.assertNotEqual(pipeline_module.MAX_REVIEW_ROUNDS,
+                            pipeline_module.MAX_REVISIONS)
 
     def test_a_candidate_at_the_cap_is_recorded_instead_of_repaired(self):
         with tempfile.TemporaryDirectory() as work:
@@ -433,7 +444,7 @@ class RepairCapTests(unittest.TestCase):
             state = pipeline_module.load_state(directory)
             state["implementations"] = [pipeline_module.implementation_record(
                 _coupled(), {"changed_files": ["model.py"]}, tree)]
-            state["implementations"][0]["revision"] = pipeline_module.MAX_REVISIONS
+            state["implementations"][0]["review_rounds"] = pipeline_module.MAX_REVIEW_ROUNDS
             pipeline_module.save_state(directory, state)
             state = pipeline_module.mark_revision_capped(state, "coupled",
                                                          "the cap is reached")

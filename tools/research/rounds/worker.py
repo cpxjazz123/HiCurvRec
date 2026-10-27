@@ -75,24 +75,53 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     return parser(answer.read_text(encoding="utf-8", errors="replace"))
 
 
+def _run_agents_concurrently(tasks: list, worker, *, max_workers: int = 0) -> list:
+    """Run the agents of one phase concurrently.
+
+    Every agent of a phase has its own workspace, its own permission file and
+    its own subprocess, so the only shared thing is the machine. Running them
+    one after another made a review round cost the sum of five agents; running
+    them together costs the slowest one. The first failure is re-raised, so a
+    broken agent still fails the phase closed.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    if not tasks:
+        return []
+    workers = max_workers or len(tasks)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(worker, *task) for task in tasks]
+        results = []
+        failure = None
+        for future in futures:
+            try:
+                results.append(future.result())
+            except Exception as exc:                   # noqa: BLE001
+                failure = failure or exc
+        if failure is not None:
+            raise failure
+        return results
+
+
 def run_ideation(root: Path, objective: str) -> list:
     """Five independent ideation agents; each returns one to three ideas."""
     prompt_base = agent_contracts.IDEA_PROMPT.format(
         minimum=IDEA_MIN, maximum=IDEA_MAX,
         objective=agent_contracts.RESEARCH_OBJECTIVE,
         scope=agent_contracts.SCOPE_CONTRACT)
-    answers = []
-    for index in range(1, pipeline_module.IDEA_AGENTS + 1):
+    def ideate(index):
         task_id = "ideation_" + str(index)
         prompt = (prompt_base + "\n\nThe round objective: " + (objective or "improve the "
                      "item semantic IDs for a generative recommender") +
                      "\nYour answer must be a different set of ideas from the other " +
                      str(pipeline_module.IDEA_AGENTS - 1) +
                      " agents, which you cannot see.")
-        answers.append((task_id, _run_agent(root, task_id, prompt, "ideas.txt",
-                                            plaintext.parse_ideas,
-                                            role="ideate")))
-    return answers
+        return (task_id, _run_agent(root, task_id, prompt, "ideas.txt",
+                                    plaintext.parse_ideas,
+                                    role="ideate"))
+
+    return _run_agents_concurrently(
+        [tuple([index]) for index in range(1, pipeline_module.IDEA_AGENTS + 1)], ideate)
 
 
 def _rubric_text() -> str:
@@ -342,8 +371,7 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None,
     evidence_text = "\n\n".join(
         "### " + identifier + "\n" + evidence_module.render_bundle(item)
         for identifier, item in bundle.items())
-    reports = []
-    for index in range(1, SCORERS + 1):
+    def score(index):
         task_id = "scoring_" + str(index)
         prompt = (agent_contracts.SCORE_PROMPT.format(
             objective=agent_contracts.RESEARCH_OBJECTIVE,
@@ -356,7 +384,10 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None,
         report.setdefault("scorer", task_id)
         report["rubric_version"] = scoring_module.RUBRIC["version"]
         report["rubric_sha256"] = scoring_module.RUBRIC["sha256"]
-        reports.append(report)
+        return report
+
+    reports = _run_agents_concurrently(
+        [tuple([index]) for index in range(1, SCORERS + 1)], score)
     finalists = _finalist_ids(ideas, reports)
     comparisons = run_pairwise(root, ideas, finalists, evidence_text) if len(finalists) >= 2 else []
     return {"reports": reports, "bundles": bundle, "comparisons": comparisons,
@@ -564,8 +595,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
         idea=plaintext.render_idea(idea), tree=str(tree),
         objective=agent_contracts.RESEARCH_OBJECTIVE,
         scope=agent_contracts.SCOPE_CONTRACT))
-    reports = []
-    for index in range(1, VERIFIERS + 1):
+    def verify(index):
         # The revision is part of the workspace name: a fresh review after a
         # repair must be a fresh agent, never a replay of the previous answer.
         task_id = "verify_" + idea["idea_id"] + "_r" + str(revision) + "_" + str(index)
@@ -573,8 +603,10 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
                             plaintext.parse_verification,
                             role="verify")
         report.setdefault("verifier", task_id)
-        reports.append(report)
-    return reports
+        return report
+
+    return _run_agents_concurrently(
+        [tuple([index]) for index in range(1, VERIFIERS + 1)], verify)
 
 
 def run_repair_plan(root: Path, idea: dict, tree: Path, findings: list,
@@ -835,13 +867,17 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
         state = pipeline_module.apply_verification(state, record["idea_id"], reports)
         pipeline_module.save_state(directory, state)
         if record.get("blocking_findings"):
-            if int(record.get("revision", 0)) >= pipeline_module.MAX_REVISIONS:
+            if int(record.get("review_rounds", 0)) >= pipeline_module.MAX_REVIEW_ROUNDS:
                 # The candidate used up its repair rounds: it is recorded with
-                # its findings instead of asking for another agent.
+                # its findings instead of asking for another agent. The counter
+                # is the number of times the verifiers rejected it, not the
+                # number of source changes: a performance fix must not cost the
+                # candidate the same budget as a mechanism that was rejected
+                # again and again.
                 state = pipeline_module.mark_revision_capped(
                     state, record["idea_id"],
                     "the verifiers still reject the implementation after " +
-                    str(record.get("revision", 0)) + " repair rounds, which is the cap")
+                    str(record.get("review_rounds", 0)) + " review rounds, which is the cap")
                 pipeline_module.save_state(directory, state)
                 log("%s: revision capped" % record["idea_id"])
                 continue

@@ -38,12 +38,20 @@ SCORER_AGENTS = 3
 #: the findings carry how many reviewers raised them, and the operator (the main
 #: agent) decides what to do with them.
 VERIFIER_AGENTS = 5
-#: How many repair rounds one implementation may have. The cap is a cost guard,
-#: not a scientific gate: a candidate that cannot be repaired stops costing
-#: agents and is recorded with its evidence instead of looping forever. The
-#: operator raised it from 5 to 8 after the first round showed three candidates
-#: one or two concrete defects short of a working trainer.
-MAX_REVISIONS = 8
+#: How many times the verifiers may reject one implementation. The cap is a cost
+#: guard, not a scientific gate: a candidate that cannot be repaired stops
+#: costing agents and is recorded with its evidence instead of looping forever.
+#: It counts the **review rounds**, not the source revisions: a candidate that
+#: needed a performance fix, a device fix and a proposal alignment is not a
+#: candidate whose mechanism was rejected nine times. The operator raised it
+#: from 5 to 8 after the first round showed three candidates one or two concrete
+#: defects short of a working trainer.
+MAX_REVISIONS = 12
+
+#: How many times the verifiers may reject one implementation. The cap uses
+#: this counter; the revision counter only decides whether the next review runs
+#: with a fresh agent.
+MAX_REVIEW_ROUNDS = 8
 
 
 class RoundError(RuntimeError):
@@ -343,6 +351,7 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
     findings = record["blocking_findings"]
     if findings:
         record["status"] = "needs_repair"
+        record["review_rounds"] = int(record.get("review_rounds", 0)) + 1
         signature = _failure_signature(findings)
         record["failure_signature"] = signature
         state.setdefault("repairs", []).append(
