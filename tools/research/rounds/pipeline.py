@@ -616,40 +616,46 @@ def verified_implementations(state: dict) -> list:
     Five verifiers reading an implementation is a report, not a decision. The
     decision is the main agent's: it reads the verdicts and the findings, and
     only an accepted candidate may be dispatched to Stage 2.
+
+    The blocking findings are checked here as well, so that a candidate cannot
+    reach Stage 2 by a hand-set flag: the rule is that a blocking finding in
+    the last review has to be fixed and reviewed again first.
     """
     return [record for record in state.get("implementations", [])
-            if record.get("status") == "verified" and record.get("accepted")]
+            if record.get("status") == "verified" and record.get("accepted")
+            and not (record.get("blocking_findings") or [])]
 
 
-def accept_verification(state: dict, implementation_id: str, note: str = "",
-                        decline_findings: bool = False) -> dict:
+def accept_verification(state: dict, implementation_id: str, note: str = "") -> dict:
     """The main agent accepts a candidate, and it may then be trained.
 
-    A candidate the reviewers rejected can still be accepted when the main
-    agent declines the findings: five reviewers are a report, and a finding that
-    the executable evidence contradicts is not a defect. Declining requires the
-    explicit flag and a note, and the declined findings stay on the record.
+    **A candidate with a blocking finding in its last review cannot be
+    accepted.** The rule is hard: the finding is fixed, the implementation is
+    reviewed again, and only a review without a blocking finding opens the way
+    to Stage 2. The main agent decides what a review means and how the work is
+    done; it does not get to accept a known defect.
+
+    The main agent still has the whole decision: it can order a repair plan
+    (:func:`apply_repair_plan` after the planner ran), apply the plan itself
+    (:func:`apply_repair_execution`) and let the verifiers read the result
+    again. What it cannot do is train a candidate whose last review says there
+    is a blocking defect.
     """
     record = _implementation(state, implementation_id)
     status = str(record.get("status"))
-    if status == "needs_repair":
-        if not decline_findings:
-            raise RoundError(
-                implementation_id + " has blocking findings; accepting it means "
-                "declining them, which needs decline_findings=True and a note")
-        record.setdefault("declined_findings", []).extend(
-            record.get("blocking_findings") or [])
-        record["blocking_findings"] = []
-        # The findings are declined, so the candidate is verified on the
-        # operator's decision and may be dispatched.
-        record["status"] = "verified"
-    elif status != "verified":
+    findings = record.get("blocking_findings") or []
+    if findings:
+        raise RoundError(
+            implementation_id + " still carries " + str(len(findings)) +
+            " blocking finding(s) from its last review and cannot be accepted: " +
+            "; ".join(str(finding.get("detail", ""))[:160] for finding in findings[:3]))
+    if status != "verified":
         raise RoundError("only a verified candidate can be accepted; " +
                          implementation_id + " is " + status)
     record["accepted"] = True
     record["acceptance_note"] = note
     record_event(state, "verification_accepted", idea_id=implementation_id,
-                 note=note, declined=bool(decline_findings))
+                 note=note)
     return state
 
 

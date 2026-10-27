@@ -13,6 +13,12 @@ raised each finding, and dispatches nothing: the main agent accepts a candidate
 with `research_round_accept`, or asks for a repair plan with
 `research_round_plan_repair`. Only an accepted candidate is trained.
 
+**A blocking finding is a hard gate.** A candidate whose last review carries a
+blocking finding cannot be accepted and cannot be trained: it has to be fixed
+and reviewed again, and only a review without a blocking finding opens the way
+to Stage 2. The main agent decides how the work is done, not whether a known
+defect may be trained.
+
 The repair role does not touch code. When the verifiers reject an
 implementation, the repair agent reads the findings and the tree and writes a
 **plan** - the file, the line, the exact change and the check that proves it.

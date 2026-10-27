@@ -2771,21 +2771,20 @@ def tool_research_round_apply_repair(round_id: str, idea_id: str, changes: list,
             "note": "the next verification pass reviews the applied tree"}
 
 
-def tool_research_round_accept(round_id: str, idea_id: str, note: str = "",
-                               decline_findings: bool = False) -> dict:
-    """The main agent accepts a verified candidate, so it may be trained.
+def tool_research_round_accept(round_id: str, idea_id: str, note: str = "") -> dict:
+    """The main agent accepts a candidate, so it may be trained.
 
-    Five verifiers produce a report; this is the decision. The candidate has to
-    carry the ``verified`` status, and only an accepted candidate is dispatched
-    to Stage 2.
+    Five verifiers produce a report; this is the decision. A candidate whose
+    last review carries a blocking finding cannot be accepted: it has to be
+    fixed and reviewed again first. Only an accepted candidate is dispatched to
+    Stage 2.
     """
     from tools.research.rounds import pipeline as round_pipeline
 
     directory = _round_directory(round_id)
     state = round_pipeline_state(directory)
     try:
-        state = round_pipeline.accept_verification(state, idea_id, note,
-                                                    decline_findings=decline_findings)
+        state = round_pipeline.accept_verification(state, idea_id, note)
     except Exception as exc:                               # noqa: BLE001
         return {"round_id": round_id, "idea_id": idea_id, "accepted": False,
                 "error": str(exc)}
@@ -3242,12 +3241,11 @@ TOOLS.update({
     },
     "research_round_accept": {
         "fn": tool_research_round_accept,
-        "args": {"round_id": "string", "idea_id": "string", "note": "string",
-                 "decline_findings": "bool"},
+        "args": {"round_id": "string", "idea_id": "string", "note": "string"},
         "description": "The main agent accepts a candidate, so it may be trained. "
-                       "The verifiers report; this is the decision. A candidate with "
-                       "blocking findings can be accepted with decline_findings=True and "
-                       "a note, which records the declined findings. No GPU work.",
+                       "The verifiers report; this is the decision. A candidate whose "
+                       "last review carries a blocking finding is refused: it has to be "
+                       "fixed and reviewed again before Stage 2. No GPU work.",
     },
     "research_round_plan_repair": {
         "fn": tool_research_round_plan_repair,
