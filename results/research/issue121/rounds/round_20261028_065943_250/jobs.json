@@ -1,0 +1,74 @@
+{
+  "jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "finished_at": 1793139916.9400692,
+      "gpu": "0,1,2,3",
+      "idea_id": "interest_signature_hypball",
+      "job_id": "stage2:interest_signature_hypball",
+      "kind": "stage2",
+      "launch_mode": "ddp4",
+      "queued_at": 1793136866.3263235,
+      "result": {
+        "metrics": {},
+        "sid_path": "results/stage2_RQ-VAE/TIGER_interest_signature_hypball/item_sids.json",
+        "sid_sha256": "4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 1684,
+            "negative_hits": 34696,
+            "pairs": 52855,
+            "positive_hits": 3481,
+            "valid_l1_hard_er": 1.003285681346553,
+            "valid_l1_negative_hit_rate": 0.0656437423138776,
+            "valid_l1_positive_hit_rate": 0.06585942673351622
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_interest_signature_hypball",
+      "round_id": "round_20261028_065943_250",
+      "stage3_job_id": "stage3:interest_signature_hypball",
+      "started_at": 1793136866.3337195,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_interest_signature_hypball"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": 1793139917.2468243,
+      "idea_id": "interest_signature_hypball",
+      "job_id": "stage3:interest_signature_hypball",
+      "kind": "stage3",
+      "previous_attempts": [],
+      "queued_at": 1793139917.2276132,
+      "result": {
+        "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_interest_signature_hypball/ckpt/Amazon_2023_Instruments/Oct-28-2026_08-50-40/HG_Rec_best.pth",
+        "evidence": {
+          "checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_interest_signature_hypball/ckpt/Amazon_2023_Instruments/Oct-28-2026_08-50-40/HG_Rec_best.pth",
+          "run": "the launch of this variant, 2026-10-28 08:50-09:23",
+          "stage2_metrics": "results/stage2_RQ-VAE/TIGER_interest_signature_hypball/stage2_metrics/4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc.json",
+          "test_final": "results/stage3_T5Train/TIGER_interest_signature_hypball/logs/Amazon_2023_Instruments/Oct-28-2026_08-50-40/test_final.json"
+        },
+        "n_eval": 57439,
+        "test_ndcg@10": 0.028456964417855054,
+        "test_ndcg@5": 0.023246429355366787,
+        "test_recall@10": 0.05121955465798499,
+        "test_recall@5": 0.035028464980239905
+      },
+      "round_id": "round_20261028_065943_250",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_interest_signature_hypball/item_sids.json",
+      "stage2_job_id": "stage2:interest_signature_hypball",
+      "started_at": null,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_interest_signature_hypball"
+    }
+  ],
+  "schema": 1
+}

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_065943_250/interest_signature_hypball/train_rqvae.py:273-375 -> model/layers.py:273-331 | Traced training-only transition counts into cohort signatures, parent masks and tangent shifts, then through the first-level assignment’s Poincare maps and squared geodesic distance. The trainer supplies this context to both its training forward pass (train_rqvae.py:515-521) and SID export (train_rqvae.py:492-500). This is code inspection; no runtime execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The signature-derived behaviour shift and parent restriction feed the same first-level assignment that computes the curved distance; levels 2–3 use the ordinary quantizer.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_065943_250/interest_signature_hypball/model/layers.py:289-331, 333-355 | Inspected the coupled first-level assignment, straight-through code contribution and quantization loss, followed by the residual quantizer; the supplied smoke test exercises behaviour-on, behaviour-off and geometry-off assignments and checks encoder/codebook gradients at smoke_test.py:133-174. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level defect found. The assignment uses the behaviour shift and parent mask together with curved distance; the selected code participates in the straight-through reconstruction and quantization loss. Geometry-off substitutes Euclidean scoring, while behaviour-off zeros the shift and removes the parent restriction. The curved helpers keep inputs within the ball and clamp the distance’s denominators.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_065943_250/interest_signature_hypball/train_rqvae.py:40-75, 378-417, 621-627, 636-665 | Inspected repository-root and candidate result-path derivation, the training-parquet and embedding inputs, item-indexed SID export, the four-card launcher, and the single-card `GENREC_SINGLE_GPU` branch. `smoke_test.py:177-195` and `ddp_check.py:45-100` provide a four-rank check, but were not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The trainer reads the Stage 0 training parquet and Stage 1 embeddings, writes the checkpoint and SID files under its own promoted candidate directory, and exports rows keyed by item ID from 0 through `len(all_embeddings)-1`. The launcher retains both the four-card torchrun path and the requested single-card environment-variable branch.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:273-375, 452-489; model/layers.py:273-331 | Traced the training-only transition counts and cohort signature into the trainer’s per-item shift and parent mask, then through the real first-level quantizer. In model/layers.py:301-320, behaviour shifts the assignment point and restricts eligible codes, while Poincare maps and squared geodesic distance select among them. The provided smoke_test.py:133-160 compares both-on against behaviour-off and geometry-off assignments. I inspected this code; I did not run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:319-331, 344-355; model/hyperbolic.py:66-131; smoke_test.py:133-174 | Inspected the first-level assignment and loss path: hard assignment selects the code, and the existing straight-through quantization loss sends gradients through the residual and selected code embedding. The smoke test’s forward/backward checks finite assignment outcomes and encoder/codebook gradients, and asserts both switches change first-level assignments. The curved distance itself is used for discrete selection, not as a differentiable loss term; it is not computed and discarded. I did not execute the smoke test or trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level defect found. Runtime gradient and numerical proof remain unverified here, as permitted by the review constraints.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, 378-417, 452-500, 586-629, 636-665 | Traced repository-root discovery, the frozen embedding and training-parquet inputs, trainer setup, item-ID-aware batch/export flow, SID extension and JSON keys, candidate-specific result paths, and both launcher branches. The single-card branch explicitly bypasses torchrun when `GENREC_SINGLE_GPU=1` at lines 636-642; the four-card branch invokes the configured torchrun command at lines 643-660. This was a source inspection; I did not run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The SID JSON maps each embedding-row item ID to its exported SID, and model outputs are written under this candidate’s promoted result directory.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

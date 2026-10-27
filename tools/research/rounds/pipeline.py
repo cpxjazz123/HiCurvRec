@@ -132,10 +132,10 @@ def record_event(state: dict, event: str, **fields) -> None:
     state.setdefault("events", []).append({"event": event, "at": time.time(), **fields})
 
 
-def apply_ideation(state: dict, per_agent: list) -> dict:
+def apply_ideation(state: dict, per_agent: list, require_minimum: bool = True) -> dict:
     """Merge the answers of the ideation agents into the round's ideas."""
     try:
-        merged = ideas_module.collect_ideas(per_agent)
+        merged = ideas_module.collect_ideas(per_agent, require_minimum=require_minimum)
     except ideas_module.IdeaError as exc:
         record_event(state, "ideation_rejected", reason=str(exc))
         raise RoundError(str(exc)) from exc

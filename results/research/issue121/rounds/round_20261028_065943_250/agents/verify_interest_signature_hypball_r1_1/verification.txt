@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:273-375, train_rqvae.py:452-490, model/layers.py:273-331 | Traced training-only history/target transitions into cohort signatures and parents, then followed the per-item context into the first-level quantizer. With both switches on, the cohort-derived shift is combined with the latent through Poincare log/exp maps, parent codes are masked, and Poincare distance selects the first code (model/layers.py:301-321). No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:289-331, model/layers.py:333-355, smoke_test.py:133-174 | Inspected the forward path from the coupled first-level assignment through the straight-through code selection and quantization loss, and the backward assertions for encoder and codebook gradients. The switches are wired to change the shift/mask and curved versus Euclidean assignment (model/layers.py:293-320); the smoke test compares both-on against behaviour-off and geometry-off assignments (smoke_test.py:152-160). No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by code inspection. Curved assignment is discrete, but the selected code participates in the straight-through reconstruction and quantization loss, so the training gradient has a live path to the encoder and codebook. The supplied checks are source-level only here; no claim is made that the smoke test was run.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:378-408, train_rqvae.py:586-665 | Traced repository-root and candidate result paths, the frozen training parquet and embedding inputs, final SID export, and launcher branches. The single-card branch checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` and returns to run `main()` in-process (train_rqvae.py:636-665). The four-card path invokes torchrun; no trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by code inspection. The result directory resolves to this promoted candidate’s `results/stage2_RQ-VAE/TIGER_interest_signature_hypball/`; the exported JSON maps each enumerated item ID to its SID row (train_rqvae.py:624-629).
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

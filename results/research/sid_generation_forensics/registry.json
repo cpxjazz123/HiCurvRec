@@ -120,5 +120,69 @@
     },
     "stage2_metrics_report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/stage2_metrics/12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b.json",
     "family": "branch-anchored tangent quantization of the fine levels (round_20261028_004649_49)"
+  },
+  "hyper_l1_s42": {
+    "stage3": "tiger_fork_hyper_l1_s42",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/hyper_l1_s42/item_sids.json",
+    "sid_origin": "recovered from 19d0d69f^",
+    "reported": {
+      "test_recall@10": 0.0614042724
+    },
+    "stage2_diagnostics": {
+      "valid_l1_hard_er": 1.0,
+      "level2_distinct_prefixes": 97,
+      "level3_distinct_triples": 9324,
+      "l3_collision": 0.8421523569365925
+    },
+    "family": "curved first level (FORK step 2)"
+  },
+  "hyper_l1_br_euclid_s42": {
+    "stage3": "tiger_fork_hyper_l1_br_euclid_s42",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/hyper_l1_br_euclid_s42/item_sids.json",
+    "sid_origin": "recovered from 19d0d69f^",
+    "reported": {
+      "test_recall@10": 0.0625010881
+    },
+    "stage2_diagnostics": {
+      "valid_l1_hard_er": 1.0,
+      "level2_distinct_prefixes": 85,
+      "level3_distinct_triples": 9093,
+      "l3_collision": 0.8491072517997316
+    },
+    "family": "euclidean residual control (FORK step 4)"
+  },
+  "hyper_l1_br_s42": {
+    "stage3": "tiger_fork_hyper_l1_br_s42",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/inputs/hyper_l1_br_s42/item_sids.json",
+    "sid_origin": "recovered from 19d0d69f^",
+    "reported": {
+      "test_recall@10": 0.0406866415
+    },
+    "stage2_diagnostics": {
+      "valid_l1_hard_er": 1.0,
+      "level2_distinct_prefixes": 1,
+      "level3_distinct_triples": 1,
+      "l3_collision": 1.0
+    },
+    "family": "curved first level with boundary repulsion (FORK step 3)"
+  },
+  "interest_signature_hypball": {
+    "stage3": "TIGER_interest_signature_hypball",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_interest_signature_hypball/item_sids.json",
+    "sid_origin": "in-repo",
+    "reported": {
+      "test_recall@10": 0.05121955465798499,
+      "test_recall@5": 0.035028464980239905,
+      "test_ndcg@10": 0.028456964417855054
+    },
+    "stage2_diagnostics": {
+      "valid_l1_hard_er": 1.003285681346553,
+      "level2_distinct_prefixes": 1684,
+      "level3_distinct_triples": 16790,
+      "l3_collision": 0.48029446455443936,
+      "l3_refinement_gain_bits": 4.488734132341491
+    },
+    "stage2_metrics_report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_interest_signature_hypball/stage2_metrics/4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc.json",
+    "family": "interest-cohort parents with the hyperbolic first-level assignment (round_20261028_065943_250)"
   }
 }

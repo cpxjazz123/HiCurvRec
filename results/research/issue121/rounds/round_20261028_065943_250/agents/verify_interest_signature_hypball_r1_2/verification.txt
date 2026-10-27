@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_065943_250/interest_signature_hypball/train_rqvae.py:273-375,452-490 -> model/layers.py:273-331 | Static inspection traced training-only transition counts into cohort signatures, parent masks and behaviour shifts, then into the first-level assignment. The assignment applies the Poincare maps and geodesic distance jointly with the shift and parent restriction. The switch comparison is specified in smoke_test.py:133-160; it was inspected, not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_065943_250/interest_signature_hypball/model/layers.py:301-331,344-355; smoke_test.py:133-174 | Code inspection traced the selected code through the straight-through reconstruction and quantization loss, which provide gradients to the encoder and codebook. The smoke test defines finite/assignment-switch and gradient checks, including behaviour-off and Euclidean comparisons; it was inspected, not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 overflow/NaN hazard found. Runtime execution was not performed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_065943_250/interest_signature_hypball/train_rqvae.py:40-75,378-417,586-629,636-665 | Static inspection confirms the frozen embedding and training-parquet inputs, candidate-specific promoted output paths, item-ID-indexed SID JSON export, four-rank torchrun launcher, and the GENREC_SINGLE_GPU single-card branch. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

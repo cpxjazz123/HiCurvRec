@@ -1,0 +1,981 @@
+{
+  "decision_at": 1793135696.0212789,
+  "decision_hash": "45324fa799ef81a54dad2d882ce25f27f1ded3480b1add8cd63d39cce97e98e9",
+  "evidence": {
+    "flow_barycenter_geodesic_bottleneck": {
+      "bundle_sha256": "850aa27c151ccf25723208b667bddbb8bd41a78329466db0a9df7b5ef462b48b",
+      "literature_sha256": "90492227b6dc99263c04113603470b572e8f3a2a990a10ceca1b81493c0456a7",
+      "math_sha256": "443aac21dcc681cbc25db1391c2d25f8d011e269adec4b28e409a8c607cb79d4",
+      "probe_sha256": "461277e242ad7198a8d5a7ac75060436ea9ea80924c2f4dc1b98fab948a806b0"
+    },
+    "interest_signature_hypball": {
+      "bundle_sha256": "36135018542b7d73771cbd0e98f6a1ef263320876fc81e4ccc961a60dfce6822",
+      "literature_sha256": "544d1417556101c648500878359e91fd7b91082ffd19a9580d0c76e78c5ba0dd",
+      "math_sha256": "cd0b45e86f8bc3acceef40e0eae9e49c2428c0a2b72bc93f1e5311e317915c01",
+      "probe_sha256": "8392f93c8e1aa0bf99b7eee18b51572fc2c2dae8c00fab434d3d74ba5c941417"
+    },
+    "transition-radial-sector-vq": {
+      "bundle_sha256": "a98b4cb715dabd9fe9fe0ec88ac6045c346d0e925d041fcab92c2781e9639724",
+      "literature_sha256": "89b7b94d8fccb48df31f7e3f8717d362540be5c810ee162d06f7f7e935d06176",
+      "math_sha256": "dcfc9d44ada6835fe233bf2897e78e708bee9457c783808d06867eff38ddeccf",
+      "probe_sha256": "a15548c1418e12c0a22370c43691ff953fadd3782426e44fde7a4399e1c0b4ff"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [
+          "falsifiability"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "interest_signature_hypball",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E4",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "Hashing users into cohorts does not establish that the cohorts represent interests; the measured cohort-profile signal supports predecessor-cohort overlap, but not necessarily the proposed hashed-user cohorts or their connection to improved next-item recommendation. The constrained parent allocation may also strand first-level capacity.",
+          "scoring_2": "The hashed cohort-to-parent restriction can dominate the learned content geometry: a poor or arbitrary hash assigns items to disjoint first-level code subsets, and the stated fixed-curvature Poincare operation then cannot compare across those subsets. The evidence supports cohort-profile signal, but does not establish that hashing users into M cohorts captures the measured signal.",
+          "scoring_3": "Hashing user histories into M buckets has no measured support for this specific cohort definition; moreover, allocating codewords across nonempty parents with at least one each is infeasible if the number of nonempty parents exceeds K1."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4: E9 reports measured, non-degenerate cohort-profile overlap (positive 0.9291 vs negative 0.8871; overlap exceeds all ten negatives for 0.5898 of pairs), but that statistic is for predecessor cohorts, not the proposal’s hashed-user assignment, so the SID hypothesis is not fully audited. geometry_necessity=3: the curved log/exp and geodesic assignment are in the coupled pathway, but E6 records weaker results for existing geodesic-coarse variants than Euclidean L1 controls; no matched geometry argument rules out a Euclidean shift. novelty=2: the proposal differs in its user-hash signature and restricted code allocation, but E6–E7 show nearby successor-geodesic and tangent-residual mechanisms; a traceable prior-art comparison is UNKNOWN, resolvable by a bounded comparison against the cited mechanisms and ledger definitions. downstream_mechanism=4: the changed first-token assignment and intended prefix predictability are named; E6–E7 provide relevant existing prefix/beam measurements, not evidence for this proposal’s direction. falsifiability=4: the three switches are named and assignment/prefix diagnostics plus Stage3 Recall are specified, but exact matching of the off-switch controls is not fully detailed. implementability=3: the computation is specified, but allocation when parents exceed available codes and the scale/ball-boundary safeguards are unresolved; a bounded implementation audit would resolve these points. exploration_value=2: it is a variation in a family with measured nearby negative results. No Stage 3 outcome is measured here.",
+          "scoring_2": "behavior_evidence=4 because measured cohort-profile overlap separates positives from negatives (E9), but the proposal's hashed-user cohorts are not the measured 64 successor-cohort profile, so support is not fully transferable. geometry_necessity=3: log/exp maps and geodesic scoring act in the coupled first-token path (E12-E14), but a matched Euclidean displacement and cancellation analysis are absent. novelty=3: a continuous behavior-shifted point plus restricted curved assignment is computationally distinct in this bundle; external prior-art/ledger comparison is UNKNOWN, resolved by a bounded comparison against the cited work and local mechanism ledger. downstream_mechanism=4: cohort-derived shift and candidate restriction change first-token assignments while later residual levels retain identity; expected prefix predictability/assignment change is diagnostic. falsifiability=2 because the three named switch conditions are not specified as matched executable controls. implementability=3: computational outline and fixed projection are stated, but projection/map clipping at the ball boundary and safe codeword constraints are not specified; check implementation safeguards and actual batch/codebook dimensions before the single run. exploration_value=3: distinct user-cohort path, with informative hash-noise failure mode. No prediction of Recall is made.",
+          "scoring_3": "Behavior=3: training-only cohort transitions are explicit and E9 supports a related nondegenerate cohort-profile signal, but does not validate this hashed-user signature or its coverage. Geometry=3: exp/log maps and Poincare geodesic distance enter assignment, though no matched Euclidean control or argument ruling out equivalent behavior comes with the proposal. Novelty=3: continuous cohort signature plus restricted curved assignment differs computationally from listed successor-geodesic and tangent-successor mechanisms (E6), but no traceable external prior-art comparison is supplied. Downstream=3: changing first-token assignment plausibly changes prefix predictability and beam survival, consistent with E6, but direction is uncertain. Falsifiability=2: named diagnostics are useful, but required code switches and matched comparisons are not specified. Implementability=2: the pipeline is largely specified, but code allocation can be infeasible and the latent-dimensional projection/map safeguards are incomplete. Exploration=3: user-conditioned roles are a distinct failure mode worth testing; uncertainty remains because E9 measures a related, not identical, signal."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only user-cohort transition counts define a per-item signature and parent; Poincaré tangent shift and geodesic distance affect the first-token assignment on that parent’s code subset. Behavior-off, Euclidean, and both-on switches are specified, with assignment and Stage3 outcomes observable; only the both-on run is trained.",
+          "scoring_2": "Behavior and Poincare scoring are computationally coupled, but the proposal does not specify behavior-off, geometry-off/Euclidean, and both-on switches/comparisons as part of the mechanism; it only specifies the both-on computation. Add these exact switch paths, keeping all other computation matched.",
+          "scoring_3": "Behavior and Poincare operations are connected in the restricted first-level assignment, with later residual levels unchanged. Missing explicit behavior-off, geometry-off/Euclidean and both-on switches and their comparison definitions; the frozen run policy forbids training ablation arms but requires the switches to exist in code."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.2,
+          "scoring_2": 3.25,
+          "scoring_3": 2.8
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Behavior and Poincare scoring are computationally coupled, but the proposal does not specify behavior-off, geometry-off/Euclidean, and both-on switches/comparisons as part of the mechanism; it only specifies the both-on computation. Add these exact switch paths, keeping all other computation matched.",
+            "scorer": "scoring_2"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Behavior and Poincare operations are connected in the restricted first-level assignment, with later residual levels unchanged. Missing explicit behavior-off, geometry-off/Euclidean and both-on switches and their comparison definitions; the frozen run policy forbids training ablation arms but requires the switches to exist in code.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.25
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [
+          "falsifiability"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "flow_barycenter_geodesic_bottleneck",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E4",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E10",
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposed barycentre is built from frozen item embeddings, but the bundle’s measured behavioural evidence describes successor entropy and predecessor-cohort profiles; it does not establish that embedding barycentres encode useful continuation roles. The barycentre may also be dominated by popular destinations.",
+          "scoring_2": "The proposal relies on a successor-embedding barycentre being a meaningful displacement in the latent tangent space, but the evidence measures successor entropy and prior mechanisms, not alignment between frozen input-embedding barycentres and the encoder-latent directions.",
+          "scoring_3": "The proposal says the translated point moves first-level assignment while residual levels use the original latent, but does not specify how the assignment's straight-through reconstruction/update gradient is calibrated against this split path; a translation dominated by the barycentre can create coarse assignments that the unshifted residual cannot compensate for."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=3: the training-only signal and its computation are explicit, and E5 supports heterogeneous successor predictability, but no provided observed statistic validates successor-embedding barycentres or their coverage. geometry_necessity=3: Möbius addition and geodesic assignment are computationally coupled to the barycentre; the existing geodesic and tangent variants in E6–E7 underperform Euclidean L1 controls, and the proposal does not rule out a matched Euclidean translation. novelty=2: the per-item barycentre translation differs from a discrete parent constraint, but it is close to measured successor-geodesic/tangent mechanisms in E6–E7; prior-art distinction is UNKNOWN, resolvable by a bounded comparison with those mechanisms and their definitions. downstream_mechanism=4: the first-level assignment is explicitly changed while residual input remains unshifted, and prefix predictability/identity diagnostics are named; the expected direction is a hypothesis, not a measurement. falsifiability=4: the three switches and a Stage3 threshold are specified, with assignment and prefix diagnostics, though control matching is not fully formalized. implementability=3: core operations are stated, but normalization/centering details, curvature projection and boundary safeguards need precise implementation checks; the bounded check is a numerical audit on training latents. exploration_value=2: it is a nearby variation of previously measured successor-geometric mechanisms. No Stage 3 outcome is measured here.",
+          "scoring_2": "behavior_evidence=3: training successor structure is measured, including strong entropy stratification (E5), but there is no measured evidence that embedding barycentres align with useful next-token roles. geometry_necessity=3: Mobius translation, exp map, and geodesic assignment are explicit (E12-E13), but a matched Euclidean control argument and cancellation analysis are missing. novelty=3: continuous per-item successor barycentre translation before an unrestricted global quantizer differs computationally from a discrete partition; external prior-art/ledger trace is UNKNOWN, bounded check: compare the exact computation with cited work and local ledger. downstream_mechanism=4: translation changes first-token assignment while unshifted residual input is intended to preserve identity; assignments and prefix predictability are named diagnostics. falsifiability=2 because the required switch controls are not specified. implementability=3: broadly implementable, but zero/cancelled barycentres, ball projection/clipping and the precise scale/curvature numerical guards require bounded implementation checks. exploration_value=3: tests continuous barycentric translation rather than a discrete behavior partition; failure would inform whether this displacement is useful. No Recall prediction is made.",
+          "scoring_3": "Behavior=3: directed training transitions and smoothing are concrete and E5 supports heterogeneous successor predictability, but the bundle does not measure successor-embedding barycentre quality or coverage. Geometry=3: Mobius addition and geodesic distance are operational in the quantizer, but necessity versus a matched Euclidean translation is not argued. Novelty=3: per-item soft-flow translation before a global quantizer differs from the listed successor-geodesic coarse and tangent-successor residual methods (E6), without a traceable external prior-art or ledger analysis. Downstream=3: the first-token assignment can affect prefix survival; E6 shows related geometric successor methods did not establish improvement, so direction is uncertain. Falsifiability=2: diagnostics and a Stage3 threshold are named, but the three switches and matched controls are not defined. Implementability=3: sparse counts, barycentres, and maps are sufficiently specified and affordable in principle, though curvature/projection safeguards and gradient calibration remain risks. Exploration=3: soft successor barycentres as translations are a distinct mechanism, but their actual alignment is unmeasured."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only directed successor counts produce each item’s smoothed successor distribution and embedding barycentre; Möbius translation, exponential map, and Poincaré geodesic distance use that behaviour signal to alter unrestricted first-token assignment. Behaviour-off, Euclidean, and both-on switches are specified, with assignment and Stage3 outcomes observable; only the both-on run is trained.",
+          "scoring_2": "The successor-flow barycentre is translated through Mobius addition and geodesic assignment, so the core coupling is present; however, behavior-off, geometry-off/Euclidean, and both-on switches/comparisons are not specified as part of the mechanism. Add those paths and matched comparison definitions.",
+          "scoring_3": "Training-only successor flows translate latent points before curved first-level assignment, a connected behavior-geometry pathway. Missing explicit behavior-off, geometry-off/Euclidean and both-on switches and comparison definitions; the protocol requires those switches in code even though no ablation run is allowed."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.0,
+          "scoring_2": 3.05,
+          "scoring_3": 2.9
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The successor-flow barycentre is translated through Mobius addition and geodesic assignment, so the core coupling is present; however, behavior-off, geometry-off/Euclidean, and both-on switches/comparisons are not specified as part of the mechanism. Add those paths and matched comparison definitions.",
+            "scorer": "scoring_2"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Training-only successor flows translate latent points before curved first-level assignment, a connected behavior-geometry pathway. Missing explicit behavior-off, geometry-off/Euclidean and both-on switches and comparison definitions; the protocol requires those switches in code even though no ablation run is allowed.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.05
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 0.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 0.0
+        },
+        "disputed": [
+          "falsifiability"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "transition-radial-sector-vq",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E4",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The mechanism combines successor-profile sectors with a sector prototype shift, but the bundle does not measure whether profile-based clusters align with predictive prefixes. In addition, the specified “radial” title is not reflected in a separately defined radial operation; the actual curved operation is exponential mapping plus geodesic distance.",
+          "scoring_2": "The behavior-sector constraint and prototype addition may largely determine assignments before hyperbolic geometry contributes, while the measured prior successor-geodesic coarse variants were below the reported l1-only/resample reference on beam-survival evidence (E6); this proposal does not establish why its sector/prototype variant avoids that failure mode.",
+          "scoring_3": "The sector prototype is added to z_i, but its unit-norm value is scaled by median ||z|| and projected via PCA; the text does not specify normalization or safeguards for zero/degenerate profiles and the resulting scale can dominate assignment, making the claimed radial-sector effect unstable."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=3: the training-only directed signal and its computation are explicit, and E5 documents successor-entropy variation, but no observed statistic validates these KL sectors or their coverage. geometry_necessity=3: the curved mapping and geodesic assignment affect the behaviour-conditioned first-token computation, but the name “radial” adds no explicit radial operation, and E6 reports weaker existing geodesic-coarse results than Euclidean controls. novelty=2: sector-restricted assignment plus a prototype shift is distinct in combination but near measured successor-geodesic/coarse and tangent-residual mechanisms (E6–E7); prior-art traceability is UNKNOWN, resolvable by a bounded comparison against those ledger mechanisms. downstream_mechanism=4: the assignment change and intended coarse prefix/retained residual path are specified, with diagnostics named; expected improvement remains unmeasured. falsifiability=4: behaviour-off, geometry-off, and both-on are called for, and diagnostics plus a Stage3 criterion are given, though exact switch implementation/control matching is not supplied. implementability=3: profile clustering, PCA, scale, curvature and assignment are described, but details such as sparse KL handling, empty sectors and finite-ball clamping need a bounded implementation/numerical audit. exploration_value=2: it is a variation on previously measured successor-geometric/coarse mechanisms. No Stage 3 outcome is measured here.",
+          "scoring_2": "behavior_evidence=3: successor distributions and entropy stratification are measured (E5), but evidence does not measure this KL-sector assignment or its predictive value. geometry_necessity=3: fixed-curvature exp maps and geodesic distances are explicit in the assignment (E12-E14), but the proposal does not argue added value against a matched Euclidean counterpart or rule out sector restriction as the effective operation. novelty=2: behavior-defined sectors plus curved within-sector VQ are a routine variation of discrete behavior-conditioned candidate sets/coarse assignments in the supplied mechanism family; external prior-art status is UNKNOWN, resolvable by a bounded ledger/cited-work comparison. downstream_mechanism=4: sector prototypes and restricted first-level assignment are expected to change first tokens, while residual levels retain identity; the diagnostics are named. falsifiability=2 because the three required switches are not specified. implementability=3: steps are mostly specified, but sparse KL smoothing, empty/zero profiles, PCA sign/basis determinism and finite-ball projection safeguards need concrete implementation checks. exploration_value=2: close to existing successor-geodesic coarse and behavior-restricted mechanisms (E6), though with a sector-prototype variant. No Recall prediction is made.",
+          "scoring_3": "Behavior=3: a training-only smoothed successor distribution is specified and E5 shows meaningful successor-entropy variation, but no direct statistic validates these KL sectors or their coverage. Geometry=3: exponential maps and Poincare distance participate directly in assignment, but necessity over a matched Euclidean assignment is not established. Novelty=2: sector-restricted code sets plus behavior-conditioned assignment are close to the already measured successor-geodesic/coarse family in E6; radial scaling is a variation, and no cited-work/ledger distinction is substantiated. Downstream=3: sector-dependent first-token assignment could improve prefix predictability, while unchanged residual levels aim to preserve identity; E6 indicates related mechanisms have uncertain downstream outcomes. Falsifiability=2: descriptive diagnostics and Stage3 judgment are given, but required switches and matched controls are absent. Implementability=2: clustering, PCA, curvature scaling and allocation are described, but zero/degenerate-profile handling, map clipping, and feasibility when sectors outnumber available codes are not fully resolved. Exploration=2: this is a small variation on measured successor-geodesic coarse assignment (E6), with limited independent failure-mode value."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only popularity-smoothed directed successor profiles determine item sectors and prototypes; the behavior-conditioned point is mapped to the Poincaré ball and assigned by geodesic distance within its sector. Behaviour-off, Euclidean, and both-on switches are required by the proposal’s test plan, with assignment and Stage3 outcomes observable; only the both-on run is trained.",
+          "scoring_2": "Popularity-adjusted successor profiles condition sector prototypes and Poincare assignment, so there is a coupled pathway; nevertheless the required behavior-off, geometry-off/Euclidean, and both-on switches/comparisons are not specified. Add these controls as actual code paths, with matched remaining computations.",
+          "scoring_3": "Successor-profile sectors condition the point being geodesically quantized, so behavior and geometry are connected. Missing explicit behavior-off, geometry-off/Euclidean and both-on switches and comparison definitions; the required switches must exist even though no ablation arm is trained."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.0,
+          "scoring_2": 2.8,
+          "scoring_3": 2.55
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Popularity-adjusted successor profiles condition sector prototypes and Poincare assignment, so there is a coupled pathway; nevertheless the required behavior-off, geometry-off/Euclidean, and both-on switches/comparisons are not specified. Add these controls as actual code paths, with matched remaining computations.",
+            "scorer": "scoring_2"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Successor-profile sectors condition the point being geodesically quantized, so behavior and geometry are connected. Missing explicit behavior-off, geometry-off/Euclidean and both-on switches and comparison definitions; the required switches must exist even though no ablation arm is trained.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.8
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": false,
+        "pair": [
+          "flow_barycenter_geodesic_bottleneck",
+          "interest_signature_hypball"
+        ],
+        "votes": {
+          "flow_barycenter_geodesic_bottleneck": 0,
+          "interest_signature_hypball": 3
+        },
+        "winner": "interest_signature_hypball"
+      },
+      {
+        "disagreement": true,
+        "pair": [
+          "flow_barycenter_geodesic_bottleneck",
+          "transition-radial-sector-vq"
+        ],
+        "votes": {
+          "flow_barycenter_geodesic_bottleneck": 2,
+          "transition-radial-sector-vq": 1
+        },
+        "winner": "flow_barycenter_geodesic_bottleneck"
+      },
+      {
+        "disagreement": true,
+        "pair": [
+          "interest_signature_hypball",
+          "transition-radial-sector-vq"
+        ],
+        "votes": {
+          "interest_signature_hypball": 2,
+          "transition-radial-sector-vq": 1
+        },
+        "winner": "interest_signature_hypball"
+      }
+    ],
+    "copeland": {
+      "flow_barycenter_geodesic_bottleneck": 0,
+      "interest_signature_hypball": 2,
+      "transition-radial-sector-vq": -2
+    },
+    "cycles": [],
+    "position_bias": {
+      "first_listed_wins": 6,
+      "second_listed_wins": 3
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "36135018542b7d73771cbd0e98f6a1ef263320876fc81e4ccc961a60dfce6822",
+      "idea_id": "interest_signature_hypball",
+      "proposal_sha256": "b63261848f4a08924efa6d26a6babc0bfb989efba48d9a642a8b5a5bfccdf71e"
+    },
+    {
+      "evidence_sha256": "850aa27c151ccf25723208b667bddbb8bd41a78329466db0a9df7b5ef462b48b",
+      "idea_id": "flow_barycenter_geodesic_bottleneck",
+      "proposal_sha256": "80ba7e1a4a230ca7c0b115e5b32c062926e714da568c51916201e4d356844f48"
+    },
+    {
+      "evidence_sha256": "a98b4cb715dabd9fe9fe0ec88ac6045c346d0e925d041fcab92c2781e9639724",
+      "idea_id": "transition-radial-sector-vq",
+      "proposal_sha256": "9971f64a67865d46ae76caa17e29eeb70e7609baa66e1d40caabebc32e3dac40"
+    }
+  ],
+  "reviews": [
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "If all items have identical cohort signatures, their maximum-mass parent is identical; the behavior shift is common across items, so it need not improve their relative first-token assignments and can instead act as a shared distortion.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E4",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "interest_signature_hypball",
+          "missing_dimensions": [],
+          "objection": "Hashing users into cohorts does not establish that the cohorts represent interests; the measured cohort-profile signal supports predecessor-cohort overlap, but not necessarily the proposed hashed-user cohorts or their connection to improved next-item recommendation. The constrained parent allocation may also strand first-level capacity.",
+          "rationale": "behavior_evidence=4: E9 reports measured, non-degenerate cohort-profile overlap (positive 0.9291 vs negative 0.8871; overlap exceeds all ten negatives for 0.5898 of pairs), but that statistic is for predecessor cohorts, not the proposal’s hashed-user assignment, so the SID hypothesis is not fully audited. geometry_necessity=3: the curved log/exp and geodesic assignment are in the coupled pathway, but E6 records weaker results for existing geodesic-coarse variants than Euclidean L1 controls; no matched geometry argument rules out a Euclidean shift. novelty=2: the proposal differs in its user-hash signature and restricted code allocation, but E6–E7 show nearby successor-geodesic and tangent-residual mechanisms; a traceable prior-art comparison is UNKNOWN, resolvable by a bounded comparison against the cited mechanisms and ledger definitions. downstream_mechanism=4: the changed first-token assignment and intended prefix predictability are named; E6–E7 provide relevant existing prefix/beam measurements, not evidence for this proposal’s direction. falsifiability=4: the three switches are named and assignment/prefix diagnostics plus Stage3 Recall are specified, but exact matching of the off-switch controls is not fully detailed. implementability=3: the computation is specified, but allocation when parents exceed available codes and the scale/ball-boundary safeguards are unresolved; a bounded implementation audit would resolve these points. exploration_value=2: it is a variation in a family with measured nearby negative results. No Stage 3 outcome is measured here.",
+          "scope_reason": "Training-only user-cohort transition counts define a per-item signature and parent; Poincaré tangent shift and geodesic distance affect the first-token assignment on that parent’s code subset. Behavior-off, Euclidean, and both-on switches are specified, with assignment and Stage3 outcomes observable; only the both-on run is trained.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If an item has two equally weighted successors with embeddings x and −x, their weighted mean is zero; after centering, that item receives no behaviour displacement even though its successor distribution is nontrivial.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E4",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E10",
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "idea_id": "flow_barycenter_geodesic_bottleneck",
+          "missing_dimensions": [],
+          "objection": "The proposed barycentre is built from frozen item embeddings, but the bundle’s measured behavioural evidence describes successor entropy and predecessor-cohort profiles; it does not establish that embedding barycentres encode useful continuation roles. The barycentre may also be dominated by popular destinations.",
+          "rationale": "behavior_evidence=3: the training-only signal and its computation are explicit, and E5 supports heterogeneous successor predictability, but no provided observed statistic validates successor-embedding barycentres or their coverage. geometry_necessity=3: Möbius addition and geodesic assignment are computationally coupled to the barycentre; the existing geodesic and tangent variants in E6–E7 underperform Euclidean L1 controls, and the proposal does not rule out a matched Euclidean translation. novelty=2: the per-item barycentre translation differs from a discrete parent constraint, but it is close to measured successor-geodesic/tangent mechanisms in E6–E7; prior-art distinction is UNKNOWN, resolvable by a bounded comparison with those mechanisms and their definitions. downstream_mechanism=4: the first-level assignment is explicitly changed while residual input remains unshifted, and prefix predictability/identity diagnostics are named; the expected direction is a hypothesis, not a measurement. falsifiability=4: the three switches and a Stage3 threshold are specified, with assignment and prefix diagnostics, though control matching is not fully formalized. implementability=3: core operations are stated, but normalization/centering details, curvature projection and boundary safeguards need precise implementation checks; the bounded check is a numerical audit on training latents. exploration_value=2: it is a nearby variation of previously measured successor-geometric mechanisms. No Stage 3 outcome is measured here.",
+          "scope_reason": "Training-only directed successor counts produce each item’s smoothed successor distribution and embedding barycentre; Möbius translation, exponential map, and Poincaré geodesic distance use that behaviour signal to alter unrestricted first-token assignment. Behaviour-off, Euclidean, and both-on switches are specified, with assignment and Stage3 outcomes observable; only the both-on run is trained.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If all successor profiles are identical, deterministic clustering can place every item in one sector; the sector prototype then adds the same vector to every latent, leaving no item-specific behavioural distinction from that shift.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E4",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "transition-radial-sector-vq",
+          "missing_dimensions": [],
+          "objection": "The mechanism combines successor-profile sectors with a sector prototype shift, but the bundle does not measure whether profile-based clusters align with predictive prefixes. In addition, the specified “radial” title is not reflected in a separately defined radial operation; the actual curved operation is exponential mapping plus geodesic distance.",
+          "rationale": "behavior_evidence=3: the training-only directed signal and its computation are explicit, and E5 documents successor-entropy variation, but no observed statistic validates these KL sectors or their coverage. geometry_necessity=3: the curved mapping and geodesic assignment affect the behaviour-conditioned first-token computation, but the name “radial” adds no explicit radial operation, and E6 reports weaker existing geodesic-coarse results than Euclidean controls. novelty=2: sector-restricted assignment plus a prototype shift is distinct in combination but near measured successor-geodesic/coarse and tangent-residual mechanisms (E6–E7); prior-art traceability is UNKNOWN, resolvable by a bounded comparison against those ledger mechanisms. downstream_mechanism=4: the assignment change and intended coarse prefix/retained residual path are specified, with diagnostics named; expected improvement remains unmeasured. falsifiability=4: behaviour-off, geometry-off, and both-on are called for, and diagnostics plus a Stage3 criterion are given, though exact switch implementation/control matching is not supplied. implementability=3: profile clustering, PCA, scale, curvature and assignment are described, but details such as sparse KL handling, empty sectors and finite-ball clamping need a bounded implementation/numerical audit. exploration_value=2: it is a variation on previously measured successor-geometric/coarse mechanisms. No Stage 3 outcome is measured here.",
+          "scope_reason": "Training-only popularity-smoothed directed successor profiles determine item sectors and prototypes; the behavior-conditioned point is mapped to the Poincaré ball and assigned by geodesic distance within its sector. Behaviour-off, Euclidean, and both-on switches are required by the proposal’s test plan, with assignment and Stage3 outcomes observable; only the both-on run is trained.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "With M=2, suppose the same transition-role users are split evenly by hash, while two items have identical latent z and identical true use; add-one smoothing can make their maximum-mass cohort differ by one count. Their candidate code sets are then disjoint despite identical content and role, so the restriction—not curved distance—forces different first tokens.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "interest_signature_hypball",
+          "missing_dimensions": [],
+          "objection": "The hashed cohort-to-parent restriction can dominate the learned content geometry: a poor or arbitrary hash assigns items to disjoint first-level code subsets, and the stated fixed-curvature Poincare operation then cannot compare across those subsets. The evidence supports cohort-profile signal, but does not establish that hashing users into M cohorts captures the measured signal.",
+          "rationale": "behavior_evidence=4 because measured cohort-profile overlap separates positives from negatives (E9), but the proposal's hashed-user cohorts are not the measured 64 successor-cohort profile, so support is not fully transferable. geometry_necessity=3: log/exp maps and geodesic scoring act in the coupled first-token path (E12-E14), but a matched Euclidean displacement and cancellation analysis are absent. novelty=3: a continuous behavior-shifted point plus restricted curved assignment is computationally distinct in this bundle; external prior-art/ledger comparison is UNKNOWN, resolved by a bounded comparison against the cited work and local mechanism ledger. downstream_mechanism=4: cohort-derived shift and candidate restriction change first-token assignments while later residual levels retain identity; expected prefix predictability/assignment change is diagnostic. falsifiability=2 because the three named switch conditions are not specified as matched executable controls. implementability=3: computational outline and fixed projection are stated, but projection/map clipping at the ball boundary and safe codeword constraints are not specified; check implementation safeguards and actual batch/codebook dimensions before the single run. exploration_value=3: distinct user-cohort path, with informative hash-noise failure mode. No prediction of Recall is made.",
+          "scope_reason": "Behavior and Poincare scoring are computationally coupled, but the proposal does not specify behavior-off, geometry-off/Euclidean, and both-on switches/comparisons as part of the mechanism; it only specifies the both-on computation. Add these exact switch paths, keeping all other computation matched.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If two successor items have frozen embeddings x and -x with equal transition weight, their normalized weighted mean is zero (or undefined if normalization is attempted before centering); the behavior translation vanishes despite a nontrivial successor distribution, leaving the first-level computation effectively content-only for that item.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13"
+          ],
+          "idea_id": "flow_barycenter_geodesic_bottleneck",
+          "missing_dimensions": [],
+          "objection": "The proposal relies on a successor-embedding barycentre being a meaningful displacement in the latent tangent space, but the evidence measures successor entropy and prior mechanisms, not alignment between frozen input-embedding barycentres and the encoder-latent directions.",
+          "rationale": "behavior_evidence=3: training successor structure is measured, including strong entropy stratification (E5), but there is no measured evidence that embedding barycentres align with useful next-token roles. geometry_necessity=3: Mobius translation, exp map, and geodesic assignment are explicit (E12-E13), but a matched Euclidean control argument and cancellation analysis are missing. novelty=3: continuous per-item successor barycentre translation before an unrestricted global quantizer differs computationally from a discrete partition; external prior-art/ledger trace is UNKNOWN, bounded check: compare the exact computation with cited work and local ledger. downstream_mechanism=4: translation changes first-token assignment while unshifted residual input is intended to preserve identity; assignments and prefix predictability are named diagnostics. falsifiability=2 because the required switch controls are not specified. implementability=3: broadly implementable, but zero/cancelled barycentres, ball projection/clipping and the precise scale/curvature numerical guards require bounded implementation checks. exploration_value=3: tests continuous barycentric translation rather than a discrete behavior partition; failure would inform whether this displacement is useful. No Recall prediction is made.",
+          "scope_reason": "The successor-flow barycentre is translated through Mobius addition and geodesic assignment, so the core coupling is present; however, behavior-off, geometry-off/Euclidean, and both-on switches/comparisons are not specified as part of the mechanism. Add those paths and matched comparison definitions.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For two items with identical latent z but different sector labels whose allocated code sets are disjoint, sector restriction forces different first tokens even if the Poincare distances to a code in the other sector would be smaller; thus geodesic scoring cannot undo the discrete behavior partition.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "transition-radial-sector-vq",
+          "missing_dimensions": [],
+          "objection": "The behavior-sector constraint and prototype addition may largely determine assignments before hyperbolic geometry contributes, while the measured prior successor-geodesic coarse variants were below the reported l1-only/resample reference on beam-survival evidence (E6); this proposal does not establish why its sector/prototype variant avoids that failure mode.",
+          "rationale": "behavior_evidence=3: successor distributions and entropy stratification are measured (E5), but evidence does not measure this KL-sector assignment or its predictive value. geometry_necessity=3: fixed-curvature exp maps and geodesic distances are explicit in the assignment (E12-E14), but the proposal does not argue added value against a matched Euclidean counterpart or rule out sector restriction as the effective operation. novelty=2: behavior-defined sectors plus curved within-sector VQ are a routine variation of discrete behavior-conditioned candidate sets/coarse assignments in the supplied mechanism family; external prior-art status is UNKNOWN, resolvable by a bounded ledger/cited-work comparison. downstream_mechanism=4: sector prototypes and restricted first-level assignment are expected to change first tokens, while residual levels retain identity; the diagnostics are named. falsifiability=2 because the three required switches are not specified. implementability=3: steps are mostly specified, but sparse KL smoothing, empty/zero profiles, PCA sign/basis determinism and finite-ball projection safeguards need concrete implementation checks. exploration_value=2: close to existing successor-geodesic coarse and behavior-restricted mechanisms (E6), though with a sector-prototype variant. No Recall prediction is made.",
+          "scope_reason": "Popularity-adjusted successor profiles condition sector prototypes and Poincare assignment, so there is a coupled pathway; nevertheless the required behavior-off, geometry-off/Euclidean, and both-on switches/comparisons are not specified. Add these controls as actual code paths, with matched remaining computations.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "For the allocation constraint, if K1=2 and three parents are nonempty, each requiring at least one code, no allocation satisfies the specification.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "interest_signature_hypball",
+          "missing_dimensions": [],
+          "objection": "Hashing user histories into M buckets has no measured support for this specific cohort definition; moreover, allocating codewords across nonempty parents with at least one each is infeasible if the number of nonempty parents exceeds K1.",
+          "rationale": "Behavior=3: training-only cohort transitions are explicit and E9 supports a related nondegenerate cohort-profile signal, but does not validate this hashed-user signature or its coverage. Geometry=3: exp/log maps and Poincare geodesic distance enter assignment, though no matched Euclidean control or argument ruling out equivalent behavior comes with the proposal. Novelty=3: continuous cohort signature plus restricted curved assignment differs computationally from listed successor-geodesic and tangent-successor mechanisms (E6), but no traceable external prior-art comparison is supplied. Downstream=3: changing first-token assignment plausibly changes prefix predictability and beam survival, consistent with E6, but direction is uncertain. Falsifiability=2: named diagnostics are useful, but required code switches and matched comparisons are not specified. Implementability=2: the pipeline is largely specified, but code allocation can be infeasible and the latent-dimensional projection/map safeguards are incomplete. Exploration=3: user-conditioned roles are a distinct failure mode worth testing; uncertainty remains because E9 measures a related, not identical, signal.",
+          "scope_reason": "Behavior and Poincare operations are connected in the restricted first-level assignment, with later residual levels unchanged. Missing explicit behavior-off, geometry-off/Euclidean and both-on switches and their comparison definitions; the frozen run policy forbids training ablation arms but requires the switches to exist in code.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "No mathematical identity, cancellation, leakage, or dimensional mismatch is asserted here; no counterexample claimed.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E12",
+            "E13"
+          ],
+          "idea_id": "flow_barycenter_geodesic_bottleneck",
+          "missing_dimensions": [],
+          "objection": "The proposal says the translated point moves first-level assignment while residual levels use the original latent, but does not specify how the assignment's straight-through reconstruction/update gradient is calibrated against this split path; a translation dominated by the barycentre can create coarse assignments that the unshifted residual cannot compensate for.",
+          "rationale": "Behavior=3: directed training transitions and smoothing are concrete and E5 supports heterogeneous successor predictability, but the bundle does not measure successor-embedding barycentre quality or coverage. Geometry=3: Mobius addition and geodesic distance are operational in the quantizer, but necessity versus a matched Euclidean translation is not argued. Novelty=3: per-item soft-flow translation before a global quantizer differs from the listed successor-geodesic coarse and tangent-successor residual methods (E6), without a traceable external prior-art or ledger analysis. Downstream=3: the first-token assignment can affect prefix survival; E6 shows related geometric successor methods did not establish improvement, so direction is uncertain. Falsifiability=2: diagnostics and a Stage3 threshold are named, but the three switches and matched controls are not defined. Implementability=3: sparse counts, barycentres, and maps are sufficiently specified and affordable in principle, though curvature/projection safeguards and gradient calibration remain risks. Exploration=3: soft successor barycentres as translations are a distinct mechanism, but their actual alignment is unmeasured.",
+          "scope_reason": "Training-only successor flows translate latent points before curved first-level assignment, a connected behavior-geometry pathway. Missing explicit behavior-off, geometry-off/Euclidean and both-on switches and comparison definitions; the protocol requires those switches in code even though no ablation run is allowed.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "No mathematical identity, cancellation, leakage, or dimensional mismatch is asserted here; no counterexample claimed.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "transition-radial-sector-vq",
+          "missing_dimensions": [],
+          "objection": "The sector prototype is added to z_i, but its unit-norm value is scaled by median ||z|| and projected via PCA; the text does not specify normalization or safeguards for zero/degenerate profiles and the resulting scale can dominate assignment, making the claimed radial-sector effect unstable.",
+          "rationale": "Behavior=3: a training-only smoothed successor distribution is specified and E5 shows meaningful successor-entropy variation, but no direct statistic validates these KL sectors or their coverage. Geometry=3: exponential maps and Poincare distance participate directly in assignment, but necessity over a matched Euclidean assignment is not established. Novelty=2: sector-restricted code sets plus behavior-conditioned assignment are close to the already measured successor-geodesic/coarse family in E6; radial scaling is a variation, and no cited-work/ledger distinction is substantiated. Downstream=3: sector-dependent first-token assignment could improve prefix predictability, while unchanged residual levels aim to preserve identity; E6 indicates related mechanisms have uncertain downstream outcomes. Falsifiability=2: descriptive diagnostics and Stage3 judgment are given, but required switches and matched controls are absent. Implementability=2: clustering, PCA, curvature scaling and allocation are described, but zero/degenerate-profile handling, map clipping, and feasibility when sectors outnumber available codes are not fully resolved. Exploration=2: this is a small variation on measured successor-geodesic coarse assignment (E6), with limited independent failure-mode value.",
+          "scope_reason": "Successor-profile sectors condition the point being geodesically quantized, so behavior and geometry are connected. Missing explicit behavior-off, geometry-off/Euclidean and both-on switches and comparison definitions; the required switches must exist even though no ablation arm is trained.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    }
+  ],
+  "round_id": "round_20261028_065943_250",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "flow_barycenter_geodesic_bottleneck",
+        "status": "BACKUP",
+        "weighted_score": 3.05
+      },
+      {
+        "idea_id": "transition-radial-sector-vq",
+        "status": "BACKUP",
+        "weighted_score": 2.8
+      }
+    ],
+    "disagreement": {
+      "flow_barycenter_geodesic_bottleneck": 2.0,
+      "interest_signature_hypball": 2.0,
+      "transition-radial-sector-vq": 2.0
+    },
+    "disputed": {
+      "flow_barycenter_geodesic_bottleneck": [
+        "falsifiability"
+      ],
+      "interest_signature_hypball": [
+        "falsifiability"
+      ],
+      "transition-radial-sector-vq": [
+        "falsifiability"
+      ]
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": false,
+          "pair": [
+            "flow_barycenter_geodesic_bottleneck",
+            "interest_signature_hypball"
+          ],
+          "votes": {
+            "flow_barycenter_geodesic_bottleneck": 0,
+            "interest_signature_hypball": 3
+          },
+          "winner": "interest_signature_hypball"
+        },
+        {
+          "disagreement": true,
+          "pair": [
+            "flow_barycenter_geodesic_bottleneck",
+            "transition-radial-sector-vq"
+          ],
+          "votes": {
+            "flow_barycenter_geodesic_bottleneck": 2,
+            "transition-radial-sector-vq": 1
+          },
+          "winner": "flow_barycenter_geodesic_bottleneck"
+        },
+        {
+          "disagreement": true,
+          "pair": [
+            "interest_signature_hypball",
+            "transition-radial-sector-vq"
+          ],
+          "votes": {
+            "interest_signature_hypball": 2,
+            "transition-radial-sector-vq": 1
+          },
+          "winner": "interest_signature_hypball"
+        }
+      ],
+      "copeland": {
+        "flow_barycenter_geodesic_bottleneck": 0,
+        "interest_signature_hypball": 2,
+        "transition-radial-sector-vq": -2
+      },
+      "cycles": [],
+      "position_bias": {
+        "first_listed_wins": 6,
+        "second_listed_wins": 3
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "transition-radial-sector-vq",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.8 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.8
+      },
+      {
+        "idea_id": "flow_barycenter_geodesic_bottleneck",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.05
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "copeland": 2,
+        "idea_id": "interest_signature_hypball",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "weighted_score": 3.25
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  }
+}

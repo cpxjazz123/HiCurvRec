@@ -104,8 +104,14 @@ def _run_agents_concurrently(tasks: list, worker, *, max_workers: int = 0) -> li
         return results
 
 
-def run_ideation(root: Path, objective: str) -> list:
-    """Five independent ideation agents; each returns one to three ideas."""
+def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
+    """Five independent ideation agents; each returns one to three ideas.
+
+    With ``extra`` the agents are asked for a second, different set, written to
+    another file. That pass exists because agents that agree produce one
+    proposal between them, and a round needs three distinct ones to be
+    compared; agreement is a result, not a reason to end the round.
+    """
     prompt_base = agent_contracts.IDEA_PROMPT.format(
         minimum=IDEA_MIN, maximum=IDEA_MAX,
         objective=agent_contracts.RESEARCH_OBJECTIVE,
@@ -118,7 +124,12 @@ def run_ideation(root: Path, objective: str) -> list:
                      "\nYour answer must be a different set of ideas from the other " +
                      str(pipeline_module.IDEA_AGENTS - 1) +
                      " agents, which you cannot see.")
-        return (task_id, _run_agent(root, task_id, prompt, "ideas.txt",
+        if extra:
+            prompt += ("\n\nThe first set of ideas you gave has been collected. Give one "
+                       "MORE idea, and it must be different from the one you gave before "
+                       "and from what the other agents propose.")
+        return (task_id, _run_agent(root, task_id, prompt,
+                                    "ideas_extra.txt" if extra else "ideas.txt",
                                     plaintext.parse_ideas,
                                     role="ideate"))
 
@@ -688,7 +699,17 @@ def phase_ideation(root: Path, round_id: str, *, log=print) -> dict:
                 "ideas": len(state.get("ideas", [])),
                 "reason": "the round is no longer in the ideation phase"}
     answers = run_ideation(agent_root, state.get("objective", ""))
-    state = pipeline_module.apply_ideation(state, answers)
+    state = pipeline_module.apply_ideation(state, answers, require_minimum=False)
+    if len(state.get("ideas") or []) < ideas_module.MIN_ROUND_IDEAS:
+        # The agents agreed with each other. That is a result about the round's
+        # objective, not a reason to end it: ask the same agents for one more
+        # idea each, so the round has three distinct proposals to compare.
+        extra = run_ideation(agent_root, state.get("objective", ""), extra=True)
+        state = pipeline_module.apply_ideation(state, extra, require_minimum=False)
+        if len(state.get("ideas") or []) < ideas_module.MIN_ROUND_IDEAS:
+            raise pipeline_module.RoundError(
+                "a round needs at least " + str(ideas_module.MIN_ROUND_IDEAS) +
+                " distinct ideas, got " + str(len(state.get("ideas") or [])))
     pipeline_module.save_state(directory, state)
     log("ideation: %d ideas" % len(state["ideas"]))
     return {"phase": "ideation", "ran": True, "step": state["step"],

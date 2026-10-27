@@ -29,6 +29,11 @@ _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 #: so the bound is the structure, not a round-specific number.
 MAX_IDEAS_PER_ROUND = 15
 
+#: A round needs three distinct proposals before the scorers can compare them.
+#: The ideation phase asks the agents for one more idea each when they agree
+#: with each other and produce fewer than this.
+MIN_ROUND_IDEAS = 3
+
 
 class IdeaError(ValueError):
     """An idea cannot be made minimally specified."""
@@ -86,7 +91,7 @@ def _normalise(text: str) -> str:
     return "|".join(sorted(set(numbers)) + sorted(set(words)))
 
 
-def collect_ideas(per_agent: Iterable[dict]) -> list:
+def collect_ideas(per_agent: Iterable[dict], require_minimum: bool = True) -> list:
     """Merge the ideas of several agents, keeping every origin.
 
     A near-duplicate is recorded as a duplicate of the idea it repeats, with the
@@ -141,8 +146,9 @@ def collect_ideas(per_agent: Iterable[dict]) -> list:
         if rejected:
             collected_rejections.extend(rejected)
     merged = [canonical[key] for key in order]
-    if len(merged) < 3:
-        raise IdeaError("a round needs at least three distinct ideas, got " + str(len(merged)))
+    if require_minimum and len(merged) < MIN_ROUND_IDEAS:
+        raise IdeaError("a round needs at least " + str(MIN_ROUND_IDEAS) +
+                        " distinct ideas, got " + str(len(merged)))
     if len(merged) > MAX_IDEAS_PER_ROUND:
         raise IdeaError("a round may not hold more than " + str(MAX_IDEAS_PER_ROUND) +
                         " ideas, got " + str(len(merged)))
