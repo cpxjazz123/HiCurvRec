@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:402-404,442-455 -> model/model.py:29-39 -> model/layers.py:127-152,250-286 | Traced the training co-occurrence rows into refreshed hyperbolic neighbour contexts, then through the rank-based first-level code assignment and straight-through score path. The included smoke test exercises graph-derived contexts and compares curved and geometry-off distance scores (smoke_test.py:63-82,84-98). No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found. The training-only co-occurrence signal and Poincaré operations meet in the candidate-conditioned distance used for code ranking; the resulting scores also enter the quantizer’s gradient path.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:448-463 -> model/model.py:29-39,64-71 -> model/layers.py:98-124,127-152,250-286 | Inspected the forward, loss, and backward wiring and the numerical guards in the curved distance and ball operations. The smoke test includes a backward pass and checks that the codebook receives a nonzero gradient (smoke_test.py:100-108). No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking trainability defect found. With the mechanism enabled, rank-based indices drive hard assignment and differentiable candidate scores contribute a soft straight-through gradient. The behaviour-off and geometry-off branches are present in the scoring path (model/layers.py:145-152); the trainer selects the configured mode at train and export time (train_rqvae.py:103-105,454-455,499-501).
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74,338-371,524-600,603-605 | Inspected repository-root and candidate result-path resolution, the frozen embedding and training-parquet inputs, final SID export and indexing, and both launcher branches, including the GENREC_SINGLE_GPU check at lines 576-582. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by inspection. Output and checkpoint paths resolve under this candidate’s results/stage2_RQ-VAE/COOC_RANK_FRECHET directory; SIDs are emitted for item IDs in row order and the JSON keys are those IDs. The launcher uses four processes by default and bypasses torchrun when GENREC_SINGLE_GPU="1".
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

@@ -75,5 +75,32 @@
       "test_ndcg@10": 0.030372693416861364
     },
     "family": "behaviour cohesion in the quantised code space"
+  },
+  "probe_candidate": {
+    "stage3": "TIGER_probe_candidate",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+    "sid_origin": "in-repo",
+    "reported": {
+      "test_recall@10": 0.0
+    },
+    "family": "probe"
+  },
+  "cooc_rank_frechet": {
+    "stage3": "TIGER_COOC_RANK_FRECHET",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/item_sids.json",
+    "sid_origin": "in-repo",
+    "reported": {
+      "test_recall@10": 0.05000087048869235,
+      "test_recall@5": 0.033531224429394664,
+      "test_ndcg@10": 0.027597108428946793
+    },
+    "stage2_diagnostics": {
+      "valid_l1_hard_er": 1.834077380952381,
+      "level2_distinct_prefixes": 6810,
+      "level3_collision": 0.28555740838654575,
+      "l3_refinement_gain_bits": 2.3624901838120853
+    },
+    "stage2_metrics_report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/stage2_metrics/5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16.json",
+    "family": "co-occurrence rank sum over the hyperbolic code-conditioned distance (round_20261027_202919_817)"
   }
 }

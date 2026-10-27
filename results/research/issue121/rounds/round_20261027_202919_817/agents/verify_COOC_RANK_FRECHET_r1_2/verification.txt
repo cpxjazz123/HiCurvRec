@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:250-294, 420-427, 458-467, 473-478 → model/model.py:29-38 → model/layers.py:76-104, 208-235 | Traced the training-only co-occurrence construction through context refresh, scoring, and first-level quantizer assignment; inspected the smoke fixture in smoke_test.py:42-105.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:76-104
+FINDING DETAIL: The implemented candidate-dependent behaviour score does not match the specified operation. It ranks hyperbolic distances between each item context and code centroids computed from current assignments (train_rqvae.py:299-327); it does not form the specified candidate-conditioned point \(q_{ik}=\operatorname{Proj}_{\mathbb B}(z_i+c_k-b_i)\) or score its distance to \(b_i\). The co-occurrence context and curved distance are connected to code assignment, so this is not an unused-helper or disconnected-loss case, but it implements a materially different mechanism.
+FINDING REPRODUCTION: In model/layers.py:96-103, observe that the behaviour distance inputs are only `centroid` and `context`; `encoded` and candidate `codes` do not enter the curved distance. In train_rqvae.py:309-327, observe that `centroid` is formed from assigned representations rather than the specified \(q_{ik}\).
+FINDING CORRECTION: Compute each candidate’s \(q_{ik}\) from the current encoded item, that candidate code and its behaviour barycentre, project it into the ball, and rank \(d_{-1}(q_{ik},b_i)\) alongside reconstruction-error ranks. Keep the behaviour-off and Euclidean-distance switches on that same scoring path.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:473-486 → model/model.py:29-38 → model/layers.py:91-104, 208-235 | Static forward/backward-path inspection, including smoke_test.py:107-115. The assignment scores select codes at layers.py:212 and also feed the soft rank-weighted codebook path at lines 232-234; the quantization/reconstruction losses are checked for finiteness at train_rqvae.py:481-485.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect identified from the code. The rank operations are discrete, but their resulting scores feed a differentiable softmax/codebook path; the smoke test asserts that a backward pass reaches the codebook. The smoke test does not itself establish the requested assignment/gradient reversibility across all three modes, but the modes are wired into scoring at layers.py:89-104. Per the review instructions, runtime execution is not required here.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:43-73, 360-427, 547-623, 626-628 | Inspected root and result-path resolution, frozen input paths, export/indexing logic, trainer entry point and launcher branches. Could not execute the trainer in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:64-65
+FINDING DETAIL: `ARM_NAME` is hardcoded to `TIGER_COOC_RANK_FRECHET`, not the promoted tree name `COOC_RANK_FRECHET`. Therefore the trainer writes its checkpoint and SIDs into `results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/`, rather than the candidate’s required `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`. This directs output to a different candidate’s result directory.
+FINDING REPRODUCTION: Evaluate `RESULT_DIR` at train_rqvae.py:64-65: it resolves to `REPO_ROOT/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET`. `OUTPUT_SID` and `OUTPUT_JSON` inherit that directory at lines 69-70; export writes to them at lines 587-590.
+FINDING CORRECTION: Set `ARM_NAME` to the promoted tree name `COOC_RANK_FRECHET` so the checkpoint and SID exports land in this candidate’s required result directory.

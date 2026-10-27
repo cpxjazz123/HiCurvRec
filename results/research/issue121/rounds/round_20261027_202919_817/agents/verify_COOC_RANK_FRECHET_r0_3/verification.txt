@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:248-292, train_rqvae.py:308-376, train_rqvae.py:495-508 | Inspected the co-occurrence construction, context refresh, distance/rank calculation and trainer call path; smoke_test.py:41-99 also contains toy wiring checks, but I did not execute them.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:338-355
+FINDING DETAIL: The code does couple training co-occurrence context with a curved distance in the assignment ranking, but it does not implement the specified candidate-conditioned operation. The behaviour rank compares each item context against each code centroid (train_rqvae.py:353-354); it never constructs q_ik = Proj_B(z_i + c_k - b_i). Thus it ranks a different mechanism from the one proposed. Also, refresh_behaviour_state computes a log-map-at-origin weighted mean followed by projection (train_rqvae.py:330-334), not the specified Poincaré Fréchet barycentre. Co-occurrence weights are L1-normalized and truncated to 32 neighbours (train_rqvae.py:276-290), rather than the specified L2 row normalization.
+FINDING REPRODUCTION: Trace the “both_on” trainer path at train_rqvae.py:495-508 into coupled_assignment_scores: the behaviour-distance input is only centroid and context, so no candidate-specific q_ik can affect its rank. Inspect build_cooccurrence at lines 276-290 to see the normalization and neighbour truncation mismatch.
+FINDING CORRECTION: Implement the specified barycentre computation (or explicitly revise the mechanism specification), construct and project q_ik for every item/code candidate, and rank d_-1(q_ik,b_i). Apply the specified L2 row normalization and do not silently truncate neighbours unless the specification is amended.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:503-515, model/layers.py:115-148 | Inspected the real batch-to-loss-to-backward path and the assignment-score handling; smoke_test.py:88-96 describes a toy backward check, but was not executed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:503-508
+FINDING DETAIL: The trainer calculates assignment scores under torch.no_grad() using a separately computed encoder output. The rank operations in coupled_assignment_scores are discrete, and those detached scores are then used as weights in the soft codebook mixture at model/layers.py:145-147. Consequently, the coupled term does not provide a gradient through the behaviour context, curved distance, or ranking to the encoder; it can affect code selection and codebook gradients, but its score-derived gradient cannot update the encoder. The smoke test only asserts a nonzero codebook gradient (smoke_test.py:88-96), not that a coupled gradient reaches the intended encoder parameters or that switching behaviour/geometry off reverses the effect.
+FINDING REPRODUCTION: In the training path, replace the score construction at train_rqvae.py:503-508 with an autograd-enabled construction and inspect score.requires_grad and encoder gradients attributable to the score-based soft mixture. As written, score construction is inside no_grad and rank scores are non-differentiable, so that route cannot reach encoder parameters.
+FINDING CORRECTION: Make the intended differentiable coupled contribution explicit if encoder gradients from the mechanism are required, while retaining hard rank assignment for SID choice if desired. Extend the smoke check to compare both-on against behaviour-off and geometry-off for assignments and gradients, and verify finite loss and gradients for the actual coupled route.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:61-72, train_rqvae.py:403-429, train_rqvae.py:577-655 | Inspected path derivation, frozen input paths, export indexing and launcher configuration; no trainer execution was possible.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:629-655
+FINDING DETAIL: The trainer launcher has no single-card branch and does not read SINGLE_GPU_ENV = "GENREC_SINGLE_GPU". A normal invocation always sets CUDA_VISIBLE_DEVICES to four devices and launches torchrun with nproc_per_node=4 (lines 633-646), so it cannot honor the required single-card launch mode.
+FINDING REPRODUCTION: Set GENREC_SINGLE_GPU in the environment and invoke train_rqvae.py outside torchrun. The launcher does not inspect the variable and still constructs the four-process command with CUDA_VISIBLE_DEVICES="0,1,2,3".
+FINDING CORRECTION: Add the required single-card branch that reads GENREC_SINGLE_GPU and launches the trainer with the corresponding single-device configuration; retain the existing four-card branch for the frozen run.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, model/model.py:29-39, model/layers.py:108-165, model/layers.py:271-299 | Inspected the training-sequence co-occurrence construction, neighbour-context refresh, model assignment call, code-conditioned Poincaré distance, rank-sum selection and quantizer consumption. The path combines the training-only co-occurrence context and curved distance in the same first-level code assignment; the distance is candidate-dependent.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:445-465, model/model.py:29-40, model/layers.py:140-165, model/layers.py:291-299, smoke_test.py:102-124 | Inspected the real forward/backward path and the smoke-test checks. The hard assignment uses the rank sum; the differentiable candidate scores also feed the soft quantized estimate and quantization loss, connecting gradients to the encoder and codebook. The code defines behaviour-off and geometry-off controls. The smoke test checks that behaviour-off reduces to Euclidean assignment, that the curved and Euclidean distances differ, and that a graph change alters scores. Runtime execution is unavailable here, as specified.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-371, train_rqvae.py:527-575, train_rqvae.py:579-608 | Inspected the trainer entry point, frozen Stage 0 training-file path, output path derivation, SID export and launcher branches. The output directory is derived as the repository’s `results/stage2_RQ-VAE/COOC_RANK_FRECHET`; exported rows are enumerated by item ID, collision extension enforces uniqueness, and the single-card branch checks `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION:

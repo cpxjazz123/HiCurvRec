@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: COOC_RANK_FRECHET/train_rqvae.py:251-288,293-325,442-455 | Traced the frozen training-sequence co-occurrence rows into per-epoch Poincaré barycentres, then the batch’s item contexts into `RQVAE.forward` and `rank_assignment_scores` at `model/model.py:29-39` and `model/layers.py:140-165`. The candidate-conditioned Poincaré distance is computed at `model/layers.py:108-137` and contributes to the rank sum that selects the first-level code. Reviewed `smoke_test.py:57-100` for its toy graph and geometry-switch checks; did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: COOC_RANK_FRECHET/model/layers.py:140-165,263-299 | Code inspection shows the selected rank-sum index reaches quantization; differentiable Euclidean-plus-hyperbolic scores additionally form the soft code mixture and quantization loss. These provide a gradient path to the encoder and codebook. `behaviour_off` returns Euclidean assignment/scores at lines 158-160, and `geometry_off` uses Euclidean candidate distances at lines 122-124; the smoke fixture checks the switches and codebook gradient at `smoke_test.py:102-124`. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or clear float32 numerical hazard found in the coupled gradient path. The barycentre is intentionally refreshed under `no_grad` at `train_rqvae.py:293-325`; the candidate-distance term itself remains differentiable.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: COOC_RANK_FRECHET/train_rqvae.py:42-74,338-373,524-573,576-605 | Inspected repository-root and result-path resolution, frozen embedding and training-parquet inputs, trainer entry point, indexed SID export, and launcher branches. The four-card launcher is at lines 583-600; the `GENREC_SINGLE_GPU` branch is at lines 576-582. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The result path resolves to this promoted arm under `results/stage2_RQ-VAE/`, the input paths use the Stage 1 embedding and Stage 0 training parquet, and the export enumerates item IDs into both SID formats. The inspected paths show no write into the baseline or another candidate’s result directory.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

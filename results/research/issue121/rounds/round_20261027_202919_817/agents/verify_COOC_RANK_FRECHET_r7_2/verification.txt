@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, model/layers.py:108-165, model/model.py:26-41, model/layers.py:263-299 | Traced the frozen training co-occurrence rows into per-item hyperbolic neighbour contexts, then through code-conditioned Poincaré distances and rank-based first-code assignment. The supplied smoke_test.py:42-128 exercises toy co-occurrence construction, compares curved and Euclidean distances, and sends the coupled state through model.forward.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:140-165, model/model.py:26-41, model/layers.py:288-299, train_rqvae.py:451-465, smoke_test.py:102-124 | Inspected the forward/backward wiring: assignment scores feed a soft candidate-code path added to quantized output and quantization loss; backward therefore reaches encoder outputs and codebook parameters. The smoke test constructs a loss, calls backward, checks for a nonzero codebook gradient, and checks the behaviour-off route against plain Euclidean assignment. No runtime proof was run here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection. The curved distance uses guarded ball projection and a finite-at-zero asinh form (model/layers.py:20-24, 117-137); the behaviour score is used in the soft gradient path rather than computed and discarded (model/layers.py:291-299).
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-75, train_rqvae.py:338-410, train_rqvae.py:527-607 | Inspected the trainer entry point, frozen embedding and training-parquet paths, result-directory derivation, SID export and launcher branches, including the `GENREC_SINGLE_GPU` check at train_rqvae.py:583-585. Export enumerates embedding rows as item IDs and writes both NPY and string-keyed JSON to the candidate’s required `results/stage2_RQ-VAE/COOC_RANK_FRECHET/` directory (train_rqvae.py:564-572). The available logs show a single-card training process starting and finite early-epoch losses (logs/training_metrics.jsonl:1-20); no trainer was run as part of this review.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The four-card launcher and single-card bypass are both present; writes are directed to this candidate’s promoted result directory.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

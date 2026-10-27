@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:250-297, train_rqvae.py:423-431, train_rqvae.py:461-480 → model/model.py:29-39 → model/layers.py:122-147, model/layers.py:253-280 | Traced the training-only co-occurrence rows into per-item contexts and then into code-conditioned Poincaré distances and assignment scores used by the first quantization level. The assignment index and differentiable scores are consumed by the quantizer; this is one connected behaviour-and-geometry path. The code also defines behaviour-off and geometry-off controls. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:107-119, model/layers.py:138-147, model/layers.py:273-280 | Inspected the forward and backward graph in the real model path and the supplied smoke fixture in smoke_test.py:95-103. The behaviour score contributes to the soft quantization loss and straight-through output, so it has a gradient path to the encoder and codebook; the hard assignment index is rank-based. Runtime gradient execution was not performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:115-119
+FINDING DETAIL: The hyperbolic distance can produce an infinite or NaN gradient in float32 when the conditioned point equals the context, or is sufficiently close. In that case `argument` is clamped to `1e-12`, but `1.0 + argument` can round to exactly `1.0` in float32. `acosh` has an unbounded derivative at 1, so the backward path through the behavior score is numerically unstable. This undermines the required finite-gradient training path.
+FINDING REPRODUCTION: Call `behaviour_distance` with float32 tensors where `conditioned == context_point` (for example, zero encoded and context vectors with a zero code vector), then backpropagate the sum of the returned distances. The distance’s `acosh(1.0 + argument)` can evaluate at 1.0 and yield non-finite gradients.
+FINDING CORRECTION: Use a numerically stable Poincaré distance implementation, such as the equivalent `2 / sqrt(curvature) * asinh(sqrt(curvature * delta / denominator))`, with finite safeguards for the denominator; alternatively ensure the argument floor is large enough that `1 + argument` is representably greater than 1 in the input dtype and verify finite gradients at coincident points.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-73, train_rqvae.py:363-386, train_rqvae.py:550-599, train_rqvae.py:602-631 | Inspected repository-root discovery, the frozen embedding and parquet paths, result-directory derivation, SID export and item indexing, and launcher branches. The candidate result path is `results/stage2_RQ-VAE/COOC_RANK_FRECHET`; the single-card branch checks `GENREC_SINGLE_GPU` at train_rqvae.py:107 and train_rqvae.py:606-608. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

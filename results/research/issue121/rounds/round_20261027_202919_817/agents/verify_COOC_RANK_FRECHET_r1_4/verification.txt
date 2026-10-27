@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:250-327 → model/model.py:31-36 → model/layers.py:76-104, 202-235 | Inspected the co-occurrence construction, context refresh, model scoring, and quantizer assignment path. The training-only co-occurrence rows determine neighbour contexts; hyperbolic distances from those contexts to code centroids enter candidate rank sums that choose the first-level code. The Euclidean geometry-off counterpart and behaviour-off mode are present in the scoring code.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: model/layers.py:92-104
+FINDING DETAIL: The implemented curved candidate score is the Poincaré distance between a code centroid and an item’s co-occurrence context. The supplied specification instead calls for the code-conditioned point \(q_{ik}=\operatorname{Proj}(z_i+c_k-b_i)\) and its distance to the context. The code still has a connected behaviour–geometry assignment pathway, so this deviation does not invalidate the coupling check.
+FINDING REPRODUCTION: Compare the specified \(q_{ik}\) scoring expression with `rank_assignment_scores`: its distance is formed from `centroid` and `context`, with no `encoded`/candidate-conditioned point in the curved distance.
+FINDING CORRECTION: If fidelity to the submitted specification is required, compute each candidate’s projected code-conditioned point and rank its curved distance to the item context.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/model.py:26-39 → model/layers.py:76-104, 202-235 | Inspected the forward/backward graph and the supplied smoke test at `smoke_test.py:107-115`. The score’s ranks are produced by `argsort`; the smoke test only checks that the total loss gives some codebook gradient, not that the behaviour/geometry-dependent term contributes a gradient or that assignment/gradients change under the required switches.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:91-104, 227-234
+FINDING DETAIL: Both rank tensors are discrete `argsort` results, so the rank-sum score has no gradient to the encoded item, centroid, or context. The added softmax loss can update code embeddings, but its weights are derived from non-differentiable ranks; it cannot train the encoder or behaviour context through the coupled term. The test’s nonzero codebook gradient can come from the ordinary quantization loss and does not establish that the coupled term changes gradients, or that the behaviour-off and geometry-off switches change and restore them as required.
+FINDING REPRODUCTION: On a forward pass with `behaviour_state`, retain gradients on `encoded` and the score inputs, backpropagate only the added `F.mse_loss(soft, x.detach())` term, and inspect gradients: the rank-derived soft weights provide no gradient to `encoded`, `centroid`, or `context`. Compare that term’s gradients and selected assignments with `behaviour_off` and `geometry_off`; the supplied smoke test makes neither comparison.
+FINDING CORRECTION: Add a differentiable surrogate derived from the behaviour/curved candidate scores (while retaining rank-based hard selection if desired), and test that the coupled contribution yields finite, nonzero intended-parameter gradients and that the prescribed switches affect assignments or gradients.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:41-73, 360-429, 547-627 | Inspected the real trainer entry point, frozen data-path constants, export/indexing logic, result-directory derivation, and both launcher branches. Runtime execution was not performed, as specified.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:63-73
+FINDING DETAIL: The tree is named `COOC_RANK_FRECHET`, but its hard-coded `ARM_NAME` is `TIGER_COOC_RANK_FRECHET`. Consequently the trainer writes SIDs, checkpoint, and metrics to the TIGER-prefixed candidate directory rather than this candidate’s promoted result directory, which is keyed by the promoted tree name.
+FINDING REPRODUCTION: Resolve `RESULT_DIR` from `REPO_ROOT` using the configured `ARM_NAME`: it evaluates to `results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/`, not `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`.
+FINDING CORRECTION: Set `ARM_NAME` to this candidate’s promoted tree name, `COOC_RANK_FRECHET`, so Stage 3 and admission read the SID export produced by this trainer.

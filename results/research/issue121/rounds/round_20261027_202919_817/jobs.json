@@ -1,0 +1,101 @@
+{
+  "jobs": [
+    {
+      "attempts": 4,
+      "error": null,
+      "failure_evidence": {
+        "refused": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/COOC_RANK_FRECHET"
+      },
+      "finished_at": 1793103428.9754174,
+      "gpu": "0,1,2,3",
+      "idea_id": "COOC_RANK_FRECHET",
+      "job_id": "stage2:COOC_RANK_FRECHET",
+      "kind": "stage2",
+      "launch_mode": "ddp4",
+      "previous_attempts": [
+        {
+          "error": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/COOC_RANK_FRECHET",
+          "finished_at": 1793098081.2259486,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/COOC_RANK_FRECHET",
+          "finished_at": 1793098081.58883,
+          "status": "failed"
+        },
+        {
+          "error": "the worker died on a transient loader failure of the scratch mount",
+          "status": "running"
+        }
+      ],
+      "queued_at": 1793098081.1425297,
+      "result": {
+        "metrics": {
+          "full_unique_items": 24587,
+          "level2_distinct_prefixes": 6810,
+          "negative_hits": 8064,
+          "pairs": 52855,
+          "positive_hits": 1479,
+          "valid_l1_hard_er": 1.834077380952381,
+          "valid_l1_negative_hit_rate": 0.015256834736543374,
+          "valid_l1_positive_hit_rate": 0.02798221549522278
+        },
+        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/item_sids.json",
+        "sid_sha256": "5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 6810,
+            "negative_hits": 8064,
+            "pairs": 52855,
+            "positive_hits": 1479,
+            "valid_l1_hard_er": 1.834077380952381,
+            "valid_l1_negative_hit_rate": 0.015256834736543374,
+            "valid_l1_positive_hit_rate": 0.02798221549522278
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET",
+      "round_id": "round_20261027_202919_817",
+      "stage3_job_id": "stage3:COOC_RANK_FRECHET",
+      "started_at": 1793098938.3837712,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": 1793107182.6762767,
+      "idea_id": "COOC_RANK_FRECHET",
+      "job_id": "stage3:COOC_RANK_FRECHET",
+      "kind": "stage3",
+      "queued_at": 1793103429.2844212,
+      "result": {
+        "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_COOC_RANK_FRECHET/ckpt/Amazon_2023_Instruments/Oct-27-2026_22-43-30/HG_Rec_best.pth",
+        "evidence": {
+          "checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_COOC_RANK_FRECHET/ckpt/Amazon_2023_Instruments/Oct-27-2026_22-43-30/HG_Rec_best.pth",
+          "note": "the collect started a second, identical launch of the same SID; its evaluation hung after rank 1 of 4 and was killed, so the recorded numbers are the ones of the completed run",
+          "run": "the first launch of this variant, 2026-10-27 22:43-23:16",
+          "test_final": "results/stage3_T5Train/TIGER_COOC_RANK_FRECHET/logs/Amazon_2023_Instruments/Oct-27-2026_22-43-30/test_final.json"
+        },
+        "n_eval": 57439,
+        "test_ndcg@10": 0.027597108428946793,
+        "test_ndcg@5": 0.02227955975725459,
+        "test_recall@10": 0.05000087048869235,
+        "test_recall@5": 0.033531224429394664
+      },
+      "round_id": "round_20261027_202919_817",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/item_sids.json",
+      "stage2_job_id": "stage2:COOC_RANK_FRECHET",
+      "started_at": null,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET"
+    }
+  ],
+  "schema": 1
+}

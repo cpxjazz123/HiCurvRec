@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, train_rqvae.py:453-458, model/model.py:29-39, model/layers.py:117-178 | Traced the frozen training-sequence co-occurrence rows into per-item Poincaré barycentres, then through code-conditioned curved candidate distances and rank-sum assignment in the training forward. The smoke test at smoke_test.py:42-100 checks co-occurrence construction, curved versus Euclidean distance, and changed contexts.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:133-150, model/layers.py:169-178, model/layers.py:284-312, train_rqvae.py:451-467 | The curved candidate distances contribute to differentiable assignment scores; the quantizer uses those scores in its straight-through output and soft-code loss. The distance uses a stable asinh-based expression, and the code includes finite-loss checking and gradient clipping. smoke_test.py:102-123 performs backward and checks codebook gradients and behaviour-off assignment. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level defect found that prevents the coupled term from affecting gradients or assignments. Runtime smoke execution is unavailable here.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-421, train_rqvae.py:527-576, train_rqvae.py:579-608 | Inspected the trainer entry point, frozen embedding and training-parquet paths, candidate-specific result directory, indexed SID export, DDP launch branch, and `GENREC_SINGLE_GPU` branch. Export enumerates all embedding rows by item ID and verifies unique extended SIDs. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Results are directed to the candidate’s `results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/` directory, not a baseline or another candidate directory.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

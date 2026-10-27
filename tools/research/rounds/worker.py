@@ -757,7 +757,10 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
             tree.parent.mkdir(parents=True, exist_ok=True)
             if tree.exists():
                 shutil.rmtree(tree)
-            shutil.copytree(baseline_module.baseline_path(), tree)
+            # symlinks are copied as symlinks: the baseline carries links to
+            # dataset paths that do not exist on every host, and following them
+            # would fail the copy
+            shutil.copytree(baseline_module.baseline_path(), tree, symlinks=True)
             record = pipeline_module.implementation_record(idea, {}, tree)
             record["status"] = "awaiting_implementation"
             record["implemented_by"] = "main_agent"

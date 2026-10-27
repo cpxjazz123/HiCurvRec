@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:248-292, 308-376, 503-508 | Traced the frozen training co-occurrence rows into context refresh and then into the rank-based assignment scores used by the trainer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:330-334, 338-355
+FINDING DETAIL: The code has a connected behaviour-and-curvature assignment path, but it does not implement the specified mechanism. The context is an origin-tangent log-map weighted mean followed by projection, not the specified Poincaré Fréchet barycentre minimizer. More importantly, candidate behaviour ranks compare each code centroid to the item context; the specification requires the candidate-conditioned point q_ik = Proj(z_i + c_k - b_i) and its distance to b_i. The stated co-occurrence normalization is also L1 (line 289), rather than the specified row L2 normalization. Thus the implemented mechanism is not faithful to COOC_RANK_FRECHET as specified.
+FINDING REPRODUCTION: Trace an assignment in train_rqvae.py:503-508 into coupled_assignment_scores at lines 338-355. Its behaviour rank comes from behaviour_distances(centroid, context, mode), which has no z_i or candidate-conditioned q_ik. Inspect build_cooccurrence at lines 287-290: weights divide by the row sum, not its L2 norm.
+FINDING CORRECTION: Implement the specified fixed-curvature Fréchet barycentre computation with documented numerical safeguards; compute candidate distances from q_ik = Proj(z_i + c_k - b_i) to b_i; normalize each nonzero co-occurrence row by its L2 norm; and use the same specified pathway for training and export.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:503-515; model/layers.py:115-148 | Statically traced the real training call from score construction through quantization, loss, backward, clipping, and optimizer update; compared the score-producing path with the smoke test.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:503-507; model/layers.py:145-147
+FINDING DETAIL: The trainer computes the score-producing latent under `torch.no_grad()`, and the refreshed centroid/context are also computed under `torch.no_grad()`. Consequently the behaviour-conditioned scores cannot carry gradients into the encoder. The added soft assignment term can carry gradients to the codebook, but it is not a differentiable coupled behaviour/geometry term reaching the encoder. The supplied smoke test does not establish the required switch comparisons: it checks that distances differ and that a codebook gradient is nonzero, but does not check assignments or gradients changing under behaviour-off and geometry-off; its “different graph” case also uses newly sampled embeddings for the second context (smoke_test.py:57-60, 81-85), confounding that comparison.
+FINDING REPRODUCTION: In the trainer’s batch path, inspect `with torch.no_grad()` around `raw_module.encoder(batch)` at lines 503-504, then follow `assignment_scores` into the detached-code soft distribution at model/layers.py:145-147. The score computation has no encoder gradient path. In smoke_test.py, compare lines 57-60 with 81-85: each context is computed from a different random embedding tensor.
+FINDING CORRECTION: If the intended coupled gradient must reach the encoder, compute the score inputs with a differentiable path and ensure the behaviour-conditioned term contributes to the encoder update while retaining finite, stable geometry operations. Add deterministic fixed-input checks that compare assignment and gradient outcomes for both-on, behaviour-off, and geometry-off; these are wiring checks, not training ablation arms.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-72, 390-408, 629-655; train_rqvae.py:614-620 | Inspected root and data-path resolution, trainer entry and launcher branches, output location, and SID serialization/indexing.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:101-105, 629-655
+FINDING DETAIL: The required `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` launcher branch is absent. The entry point always launches four processes when invoked outside torchrun, and the only branch that bypasses launching checks `RANK`; setting `GENREC_SINGLE_GPU` has no effect. Also, the configured mode switches are not actually complete for the requested comparisons: `COGEO_ENABLED` gates all behaviour/geometry computation, while `COGEO_MODE` offers behaviour-off and geometry-off, but the trainer does not expose or honor a single-card launcher switch.
+FINDING REPRODUCTION: Invoke the entry point with `GENREC_SINGLE_GPU=1` and no `RANK` environment variable. `_launch_via_torchrun()` proceeds to construct a four-process torchrun command at lines 631-647; it never reads `GENREC_SINGLE_GPU`.
+FINDING CORRECTION: Restore a `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` branch in the launcher that runs `main()` directly on one card when set, while preserving the four-card torchrun default. Keep the branch’s environment semantics explicit and verify both launcher paths without running a training ablation arm.

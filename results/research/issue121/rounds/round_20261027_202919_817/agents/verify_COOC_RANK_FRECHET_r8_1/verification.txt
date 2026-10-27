@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, train_rqvae.py:453-458, model/layers.py:108-169, model/layers.py:275-303 | Inspected the trainer’s co-occurrence construction and refresh path into the model’s candidate-code rank assignment. The frozen training-sequence co-occurrence weights form Poincaré barycentres of current encoder representations; code-conditioned projected points are compared to those contexts by Poincaré distance, and the resulting ranks participate in the same first-level assignment as Euclidean reconstruction ranks. smoke_test.py:74-100 checks curved versus Euclidean distances and that changing the co-occurrence graph changes the scores.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:453-465, model/model.py:26-41, model/layers.py:144-169, model/layers.py:275-303, model/layers.py:20-59, model/layers.py:129-141 | Inspected the real forward/backward path. The hard assignment is rank-based; the coupled Euclidean and hyperbolic scores also feed a soft codebook estimate added to the quantization path, so the coupled score is not dead and its differentiable dependence on encoded representations and code vectors reaches the loss. The curved distance uses projection, Möbius addition, and a finite squared-distance form with bounded ball projections. smoke_test.py:102-124 checks codebook gradients and the behaviour-off control; lines 78-84 compare curved and Euclidean distances. Runtime execution was not performed.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-371, train_rqvae.py:527-575, train_rqvae.py:579-608 | Inspected the real trainer entry point, frozen embedding and training-parquet paths, result-directory derivation using this candidate’s ARM_NAME, indexed SID JSON export, and launcher branches. Export rows are enumerated by embedding item ID; outputs resolve to this candidate’s required results/stage2_RQ-VAE/COOC_RANK_FRECHET directory. The single-card branch checks SINGLE_GPU_ENV (“GENREC_SINGLE_GPU”) and bypasses torchrun; otherwise the configured four-card torchrun launcher is used. Runtime execution was not performed.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION:

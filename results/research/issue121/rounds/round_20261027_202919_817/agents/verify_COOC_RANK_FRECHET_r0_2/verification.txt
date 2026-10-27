@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:248-292, 325-376, 493-508 | Traced how training sequences build co-occurrence rows, how rows produce per-item contexts, and how those contexts enter code-distance ranks used for assignment. The connected behaviour-and-geometry assignment pathway is present.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:255-290
+FINDING DETAIL: The implemented behaviour signal does not match the specified co-occurrence rows. Sequences are not deduplicated before pair counting, so repeated items in a user’s longest sequence count a pair multiple times although the specification counts each pair once per user. Also, rows are truncated to 32 neighbours and normalized by the sum of retained counts, rather than using all nonzero co-occurrences with the specified L2 row normalization. Thus the behavior context and its effect on assignment can differ from the proposed mechanism.
+FINDING REPRODUCTION: Give one user a longest sequence [i, j, i]. The meshgrid pair pass counts (i,j) twice; the specified indicator counts it once. Separately, make i co-occur with more than 32 distinct items: the implementation drops some neighbours and renormalizes the remainder.
+FINDING CORRECTION: Deduplicate each user’s sequence before pair counting, retain the full nonzero row (or explicitly revise the proposal’s specification), and normalize each row by its L2 norm as specified.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:338-376, 503-508; /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:115-148 | Inspected the rank-based assignment scores flowing into the real quantizer forward and loss. The score selects the code; the selected code participates in the quantization loss and straight-through path. Behaviour-off returns Euclidean assignment scores, while geometry-off substitutes Euclidean context-to-centroid distances. No runtime smoke was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect identified by code inspection. The rank computation is discrete, so the curved behaviour score does not provide a differentiable gradient through the barycentre or distance; it affects training through code selection. The quantizer’s ordinary loss/straight-through path remains differentiable.
+FINDING REPRODUCTION: Not executed; the stated environment limitation precludes running the GPU smoke. The forward/backward path is visible at model/layers.py:125-148.
+FINDING CORRECTION: None required for the inspected training path.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:40-72, 403-455, 577-655 | Inspected root and input-path resolution, result/export paths, trainer entry point, and launcher. Verified the result path is scoped to this candidate arm and the export enumerates item IDs from zero. Checked for the required `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` contract: it is absent. The trainer was not run.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:629-655
+FINDING DETAIL: The launcher has no `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` declaration or single-card branch. It unconditionally launches four torchrun processes when not already under torchrun, which fails the required single-card launcher contract. The separate `LOG_DIR` is at `REPO_ROOT/stage2_RQ-VAE/<ARM_NAME>/logs`, rather than under `RESULT_DIR`.
+FINDING REPRODUCTION: Set `GENREC_SINGLE_GPU=1` and invoke the trainer entry point outside torchrun. `_launch_via_torchrun()` still launches with `--nproc_per_node=4` and `CUDA_VISIBLE_DEVICES=0,1,2,3`; there is no single-card path.
+FINDING CORRECTION: Add the required `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` contract and a branch that directly runs `main()` for the single-card mode. Ensure any trainer-created output, including logs, is written only to the candidate’s permitted locations.

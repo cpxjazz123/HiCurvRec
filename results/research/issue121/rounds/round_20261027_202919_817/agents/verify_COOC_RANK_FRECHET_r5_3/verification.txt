@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `COOC_RANK_FRECHET/train_rqvae.py:251-288` → `COOC_RANK_FRECHET/train_rqvae.py:442-455` → `COOC_RANK_FRECHET/model/model.py:29-39` → `COOC_RANK_FRECHET/model/layers.py:104-158` | Traced the training co-occurrence rows into per-item contexts, then into the code-conditioned Poincaré distance and rank-based first-level assignment. The included smoke-test code also checks that changing the co-occurrence graph changes scores and that curved and Euclidean distance outputs differ (`COOC_RANK_FRECHET/smoke_test.py:63-98`); I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `COOC_RANK_FRECHET/model/layers.py:82-101` | Inspected the rank implementation used by the real forward path. No trainer execution was performed. The code’s straight-through score path is present at `COOC_RANK_FRECHET/model/layers.py:284-292`, and the smoke-test code checks for a nonzero codebook gradient at `COOC_RANK_FRECHET/smoke_test.py:100-108`.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `COOC_RANK_FRECHET/model/layers.py:90-100`
+FINDING DETAIL: Tie handling copies the sorted values to CPU with `.tolist()` and then performs Python-level per-code comparisons for every batch row. With 1,024 items per rank and 256 candidates, this processes about 262,000 Python comparisons for each rank calculation, twice per training step. At 72,000 steps, that is on the order of 38 billion Python comparisons, in addition to the GPU work. This makes the frozen training budget impractical; the documented sorting cost does not account for this Python loop.
+FINDING REPRODUCTION: For each call to `_average_ranks`, instrument or count iterations of the `while stop < len(row)` loop: it traverses the candidate values for every batch row. Training calls this function twice per batch in `rank_assignment_scores` (`COOC_RANK_FRECHET/model/layers.py:155`).
+FINDING CORRECTION: Compute average ranks for ties with tensor operations on the device, or another vectorized ranking implementation that avoids per-row `.tolist()` and Python loops. Preserve ascending average ranks and deterministic lowest-index tie-breaking.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `COOC_RANK_FRECHET/train_rqvae.py:63-74`, `COOC_RANK_FRECHET/train_rqvae.py:338-355`, `COOC_RANK_FRECHET/train_rqvae.py:553-568`, `COOC_RANK_FRECHET/train_rqvae.py:576-605` | Inspected the trainer entry point, frozen embedding and training-data paths, repository-derived candidate result path, SID export/index construction, four-card launcher, and the `GENREC_SINGLE_GPU` branch. The sandbox constraints precluded executing the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

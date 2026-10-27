@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288,293-325,445-457 → model/model.py:29-39 → model/layers.py:108-169,275-303 | Traced the frozen training co-occurrence rows through the per-item Poincaré barycentre and code-conditioned curved distance into the first-level code assignment. `smoke_test.py:42-100` describes toy checks for graph-dependent context and curved-versus-Euclidean distance; I inspected the checks but did not execute them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:144-169,275-303 → train_rqvae.py:453-467 | Traced the coupled scores into the hard first-level assignment and the differentiable soft-code straight-through/quantization-loss path. The barycentre is refreshed under `no_grad` at `train_rqvae.py:293-325,437-447`; the coupled distance itself remains differentiable through the encoder and code vectors. The behavior-off branch returns plain Euclidean assignment scores at `model/layers.py:162-164`, and geometry-off uses the Euclidean counterpart at `model/layers.py:117-123`. I inspected, but did not execute, the toy gradient and switch checks in `smoke_test.py:102-124`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 numerical hazard found in the coupled forward/backward path. The smoke test does not assert that the *hard assignment index* changes between both-on and geometry-off; however, the implementation’s rank sum directly uses the curved distance to select that index, and the switches select distinct computations. This is a test-coverage limitation, not a demonstrated implementation defect.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74,338-421,527-608 | Inspected the trainer entry point, frozen Stage 1 embedding and Stage 0 training-parquet paths, result/export paths, final SID export/index construction, and launcher branches. The candidate writes checkpoint and SIDs to `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`; launcher honors `GENREC_SINGLE_GPU=1` at lines 579-585 and otherwise invokes four-card torchrun at lines 586-603. This was a static inspection; I did not run the trainer or launcher.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The SID extension preserves item-row indexing and ensures unique rows at lines 564-570. The result path is the required promoted candidate directory.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

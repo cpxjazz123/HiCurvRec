@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:251-288,293-325,442-455 | Traced the frozen training-sequence co-occurrence rows into per-epoch neighbour barycentres, then into the training forward pass. `model/layers.py:108-165` projects the encoded item, candidate code, and context into the Poincaré ball; computes a candidate-dependent curved distance; and combines its candidate ranks with Euclidean reconstruction-error ranks to select the first-level code.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Source inspection confirms that the training-only co-occurrence context and the curved distance participate in the same candidate-ranking path.
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:29-40; results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:117-165,263-299; results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:455-463 | Inspected the real forward/backward path and the source-level smoke fixture. The hard assignment uses the rank sum; the differentiable distance scores feed the soft code mixture and quantization loss, so gradients can reach the encoder and codebook. The behaviour-off branch returns plain Euclidean assignment scores; geometry-off replaces the curved candidate distance with a Euclidean one. The smoke fixture checks nonzero codebook gradient, graph-dependent scores, and behaviour-off assignment correspondence (`smoke_test.py:63-68,102-124`). Trainer execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No code-level dead term or evident numerical hazard found in the coupled path. The curved distance uses ball projection and bounded denominators/arguments, and a finite-loss guard is present in training.
+FINDING REPRODUCTION: Follow `rank_assignment_scores` into `VQLayer.forward`: its `assignment_scores` contribute to `soft`, which contributes to `quant_loss`; the hard selected index is also passed into quantization. The source fixture exercises the switches and checks a codebook gradient.
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:42-74,338-373,524-573,576-605 | Inspected the entry point, frozen input paths, output/export logic, launcher, and single-card branch. Inputs resolve to the repository’s Stage 1 embeddings and Stage 0 training parquet; outputs resolve to this candidate’s promoted Stage 2 result directory. Export enumerates embedding rows into item-ID keys and checks SID uniqueness. The launcher bypasses torchrun when `GENREC_SINGLE_GPU=1`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by source inspection. The trainer was not executed.
+FINDING REPRODUCTION: Trace `main()` from the module entry point, then check `RESULT_DIR`, `TRAIN_FILE`, the final SID export, and `_launch_via_torchrun()` including its `SINGLE_GPU_ENV` condition.
+FINDING CORRECTION: N/A

@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, model/layers.py:108-165, model/model.py:32-39, model/layers.py:271-299 | Traced the training-only co-occurrence rows through the per-epoch Poincaré barycentre refresh into the code-conditioned hyperbolic candidate distance and rank assignment. The toy checks in smoke_test.py:46-100 exercise co-occurrence construction, context refresh, and that changing the graph changes the assignment score.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-and-geometry assignment pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:140-165, model/layers.py:288-299, train_rqvae.py:453-465, smoke_test.py:102-124 | Inspected the rank decision and its differentiable surrogate through the quantizer and trainer backward path. The smoke fixture checks a nonzero codebook gradient and that behaviour-off produces Euclidean hard assignments.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:158-160, model/layers.py:291-299
+FINDING DETAIL: The behaviour-off switch does not restore the ordinary Euclidean quantizer’s gradient path. It returns `-euclidean` as assignment scores, and the quantizer then adds a soft-score reconstruction loss and a straight-through soft-code gradient. Thus behaviour-off still changes gradients and parameter updates relative to the Euclidean baseline, even though its hard assignment is Euclidean. The smoke test only checks the hard indices, so it misses this difference.
+FINDING REPRODUCTION: With identical model parameters and input, compare a forward/backward using no `behaviour_state` against one using `behaviour_state=(context, item_ids, "behaviour_off")`. The latter enters the `assignment_scores is not None` branch and adds the soft loss at model/layers.py:296-299; its encoder/codebook gradients therefore include an extra term.
+FINDING CORRECTION: Make behaviour-off bypass the coupled-score surrogate as well as the curved behaviour ranking: use the ordinary Euclidean quantizer path, or otherwise ensure its loss and gradients exactly match the no-behaviour Euclidean path. Add a gradient comparison to the smoke check.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-353, train_rqvae.py:527-575, train_rqvae.py:579-608 | Inspected repository-root and candidate-specific result-path resolution, the frozen embedding/train-parquet inputs, item-indexed SID export and collision extension, and both torchrun and `GENREC_SINGLE_GPU` launcher branches. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer writes Stage 2 outputs under this candidate’s promoted result directory and the single-card branch returns to run `main()` in-process.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

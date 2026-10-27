@@ -1,0 +1,55 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:402-404,442-455 | Traced frozen training-sequence co-occurrence construction into epoch-refreshed neighbour contexts and the model’s first-level assignment; inspected the smoke checks at smoke_test.py:63-100. The connected path continues through model/model.py:32-39 and model/layers.py:117-165, where a code-conditioned point is projected into the Poincaré ball, curved distance contributes to the rank-based choice, and scores feed the quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r6_2/verification.txt
+FINDING DETAIL: No defect found in this check.
+FINDING REPRODUCTION: The code path and smoke-check assertions above show the co-occurrence context and curved distance are used together in first-level code assignment.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r6_2/verification.txt | Static inspection only, as required in this sandbox: traced `RQVAE.forward` through `rank_assignment_scores`, `VQLayer.forward`, and the loss/backward path in `train_rqvae.py:455-463`; inspected the smoke assertions at smoke_test.py:102-124.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r6_2/verification.txt
+FINDING DETAIL: No defect found in this check. The coupled hard assignment uses the sum of ranks; its differentiable score supplies a soft straight-through gradient to the encoder and codebook. The behaviour-off branch returns plain Euclidean assignment and scores. Curved-distance evaluation uses projection, denominator clamps, and a finite-at-zero `asinh` formulation. Runtime gradient execution was not performed.
+FINDING REPRODUCTION: Inspect `model/layers.py:140-165,271-299` and `smoke_test.py:102-124`. The smoke test checks a nonzero codebook gradient and that switching behaviour off restores Euclidean assignment; it also checks curved and geometry-off distances differ.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r6_2/verification.txt | Static inspection of the trainer entry point and initialization path at train_rqvae.py:338-365,412-420,576-605, plus the frozen data and output paths at train_rqvae.py:63-73 and SID export at train_rqvae.py:553-567.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:412-420; results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:304-309
+FINDING DETAIL: The four-rank trainer deadlocks during codebook initialization. Only rank 0 calls `raw_module.init_codebook` (train_rqvae.py:413-418), but each codebook layer’s `init_codebook` calls `distributed.broadcast` whenever distributed is initialized (layers.py:307-309). The other ranks proceed directly to the barrier and never enter that broadcast. The launcher therefore cannot complete the required multi-card training path. The single-card environment branch is present at train_rqvae.py:576-582, but it does not resolve the four-rank deadlock.
+FINDING REPRODUCTION: Start the trainer through its normal four-process torchrun branch. Rank 0 enters `init_codebook` and waits in the broadcast at layers.py:308; ranks 1–3 skip that call and wait at the barrier at train_rqvae.py:419.
+FINDING CORRECTION: Make all ranks participate in codebook initialization’s broadcast: for example, have every rank call `init_codebook` with rank 0 as the source, or initialize only on rank 0 and explicitly broadcast the codebook tensors from all ranks’ matching control flow before the barrier. Ensure every collective is entered by every rank.
+
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:402-404,442-455 | Traced frozen training-sequence co-occurrence construction into epoch-refreshed neighbour contexts and the model’s first-level assignment; inspected the smoke checks at smoke_test.py:63-100. The connected path continues through model/model.py:32-39 and model/layers.py:117-165, where a code-conditioned point is projected into the Poincaré ball, curved distance contributes to the rank-based choice, and scores feed the quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r6_2/verification.txt
+FINDING DETAIL: No defect found in this check.
+FINDING REPRODUCTION: The code path and smoke-check assertions above show the co-occurrence context and curved distance are used together in first-level code assignment.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r6_2/verification.txt | Static inspection only, as required in this sandbox: traced `RQVAE.forward` through `rank_assignment_scores`, `VQLayer.forward`, and the loss/backward path in `train_rqvae.py:455-463`; inspected the smoke assertions at smoke_test.py:102-124.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r6_2/verification.txt
+FINDING DETAIL: No defect found in this check. The coupled hard assignment uses the sum of ranks; its differentiable score supplies a soft straight-through gradient to the encoder and codebook. The behaviour-off branch returns plain Euclidean assignment and scores. Curved-distance evaluation uses projection, denominator clamps, and a finite-at-zero `asinh` formulation. Runtime gradient execution was not performed.
+FINDING REPRODUCTION: Inspect `model/layers.py:140-165,271-299` and `smoke_test.py:102-124`. The smoke test checks a nonzero codebook gradient and that switching behaviour off restores Euclidean assignment; it also checks curved and geometry-off distances differ.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r6_2/verification.txt | Static inspection of the trainer entry point and initialization path at train_rqvae.py:338-365,412-420,576-605, plus the frozen data and output paths at train_rqvae.py:63-73 and SID export at train_rqvae.py:553-567.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:412-420; results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:304-309
+FINDING DETAIL: The four-rank trainer deadlocks during codebook initialization. Only rank 0 calls `raw_module.init_codebook` (train_rqvae.py:413-418), but each codebook layer’s `init_codebook` calls `distributed.broadcast` whenever distributed is initialized (layers.py:307-309). The other ranks proceed directly to the barrier and never enter that broadcast. The launcher therefore cannot complete the required multi-card training path. The single-card environment branch is present at train_rqvae.py:576-582, but it does not resolve the four-rank deadlock.
+FINDING REPRODUCTION: Start the trainer through its normal four-process torchrun branch. Rank 0 enters `init_codebook` and waits in the broadcast at layers.py:308; ranks 1–3 skip that call and wait at the barrier at train_rqvae.py:419.
+FINDING CORRECTION: Make all ranks participate in codebook initialization’s broadcast: for example, have every rank call `init_codebook` with rank 0 as the source, or initialize only on rank 0 and explicitly broadcast the codebook tensors from all ranks’ matching control flow before the barrier. Ensure every collective is entered by every rank.

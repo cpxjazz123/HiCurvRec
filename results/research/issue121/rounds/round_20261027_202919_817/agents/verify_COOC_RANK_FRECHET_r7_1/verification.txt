@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288,293-325,445-457 | Traced frozen training-sequence co-occurrence through encoder-neighbour barycentres into model/model.py:32-39 and model/layers.py:140-165, where code-conditioned Poincaré distance and Euclidean reconstruction ranks jointly choose the first-level code. Inspected smoke_test.py:74-100, which compares curved and geometry-off scores and changes the co-occurrence graph; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The implementation has a connected behaviour-and-curvature assignment pathway; no finding for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/model.py:29-41; model/layers.py:108-165,263-299 | Inspected the forward path from encoder output through rank assignment into the quantizer’s straight-through/soft score path and the resulting loss. Also inspected smoke_test.py:102-124 for its gradient and switch checks; I did not execute it.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:117-124
+FINDING DETAIL: The declared geometry-off comparison is not Euclidean: `behaviour_distance` projects the encoded item, context, and candidate-conditioned point into the Poincaré ball before checking `mode == "geometry_off"`. Thus the “geometry-off” distance still depends on curved-ball projection, so this required switch does not replace the curve with the Euclidean distance. The smoke test only checks that the two distances differ; it does not establish that geometry-off removes the curved operation or that the selected SID changes between both-on and geometry-off.
+FINDING REPRODUCTION: Call `behaviour_distance(encoded, codes, context, "geometry_off")` with vectors whose norms exceed the ball radius. Lines 117-120 project and alter those vectors before the Euclidean squared difference at lines 122-124. The geometry-off result therefore is not the Euclidean candidate distance computed from the original vectors. `smoke_test.py:112-124` does not compare both-on assignments against geometry-off assignments.
+FINDING CORRECTION: In geometry-off mode, compute the candidate-conditioned points and their squared Euclidean distances directly from the unprojected encoded vectors, codes, and context, without calling `ball_project` or any other curved operation. Extend the wiring check to verify the geometry-off branch’s Euclidean formula and compare its assignments with both-on; the smoke test should also verify finite losses and gradients reaching the encoder and codebook.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74,338-410,527-575,579-608 | Inspected repository-root discovery, frozen embedding and training-parquet paths, rank/DDP setup, epoch loop, export indexing and launcher branches. The result path resolves to the candidate’s `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`; export enumerates rows by embedding item index and writes both SID formats. The four-card launcher and `GENREC_SINGLE_GPU == "1"` in-process branch are present. I did not execute the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified by source inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

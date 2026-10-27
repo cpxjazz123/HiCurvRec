@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:250-297, 423-431, 461-481 | Traced the frozen training-sequence co-occurrence rows into the per-epoch Poincaré Fréchet context, then into the model’s candidate-ranking path at model/model.py:32-39 and model/layers.py:122-147. The pathway combines co-occurrence context with code-conditioned hyperbolic distance in the rank-based assignment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:257-270
+FINDING DETAIL: Co-occurrence pairs are counted per sequence position, not once per user. If a user’s longest sequence contains a repeated item, the meshgrid counts that item pair multiple times, contrary to the specified once-per-user co-occurrence. Those inflated counts can change the row-normalised neighbour weights and therefore the behaviour context used by the coupled assignment.
+FINDING REPRODUCTION: Give one user the sequence [0, 1, 0]. The pair (0, 1) is counted twice in each direction by the position-pair meshgrid, although the specification counts the item pair once for that user.
+FINDING CORRECTION: Deduplicate item IDs within each user’s longest sequence before generating pairs, or otherwise deduplicate each user’s item-pair set before accumulating counts.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:29-40, model/layers.py:122-147 and 245-281 | Inspected the forward path: the coupled score is used for the rank-selected index and its differentiable Euclidean-plus-hyperbolic values feed the soft assignment term, which contributes to quantisation loss and the straight-through output. The smoke test exercises a forward/backward and checks that codebook gradients are nonzero at smoke_test.py:95-103; it also checks context finiteness and compares curved and Euclidean distances at smoke_test.py:58-76. Per the stated sandbox limitation, I did not run the trainer.
+FINDING SEVERITY: minor
+FINDING LOCATION: smoke_test.py:67-93
+FINDING DETAIL: None. The smoke test does not assert that switching behaviour off or replacing the curve changes assignments or gradients, but the implementation provides those switches and the coupled scores are connected to the loss and quantizer. This test-coverage limitation is not a demonstrated trainability defect.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not required for this check.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-73, 363-431, 550-630 | Inspected root discovery, the frozen embedding and training-parquet paths, candidate-specific result paths, full-epoch training setup, SID export/index construction, and the launcher’s torchrun and `GENREC_SINGLE_GPU` branches. The export enumerates rows by item ID and writes unique extended SIDs to the candidate’s promoted result directory.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:602-631
+FINDING DETAIL: None found. The single-card branch checks `SINGLE_GPU_ENV` and returns to run `main()` in-process; the multi-card branch launches four processes. The candidate writes checkpoint and SID outputs under `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`, with metrics and launcher logs under the corresponding candidate-specific `stage2_RQ-VAE/COOC_RANK_FRECHET/logs/` path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not required for this check.

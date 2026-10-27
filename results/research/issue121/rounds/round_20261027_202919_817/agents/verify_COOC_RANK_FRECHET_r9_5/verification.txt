@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:251-288,293-325,445-457 -> results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:32-39 -> results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:108-169,275-303 | Traced the training path: the frozen training co-occurrence rows produce neighbour contexts from current encoder outputs; those contexts and candidate codes enter the code-conditioned Poincaré distance and rank-sum assignment, whose scores feed the quantizer’s straight-through gradient path. The smoke test at smoke_test.py:63-84,102-124 contains checks for context, curved-versus-flat distance, codebook gradient, and switches; it was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:124-141,144-169,275-303 | Inspected the forward/backward graph: the hard index comes from the rank sum, while the differentiable Euclidean-plus-hyperbolic scores feed the soft codebook estimate and quantization loss. Those operations depend on the encoded item and code vectors; the hyperbolic candidate distance also depends on the behaviour context. The smoke test’s gradient check is at smoke_test.py:102-110, and its switch checks are at :112-124; neither was run. Code inspection shows behaviour_off returns plain Euclidean assignments/scores, while geometry_off substitutes a Euclidean context distance.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:42-74,338-371,527-575,579-608 | Inspected the trainer’s repository-relative paths and frozen inputs, training/export flow, and launcher branches. The trainer reads stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet, writes the candidate’s promoted-name directory under results/stage2_RQ-VAE, and exports rows keyed by embedding/item index. The four-card torchrun branch and the GENREC_SINGLE_GPU=1 in-process branch are present; runtime execution was not possible.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

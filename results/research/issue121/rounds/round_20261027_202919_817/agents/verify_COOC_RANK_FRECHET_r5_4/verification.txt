@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, train_rqvae.py:442-455, model/model.py:29-39, model/layers.py:104-158, model/layers.py:264-292 | Traced the training co-occurrence construction through per-item Poincaré barycentre refresh, rank-based code assignment, and the quantizer’s straight-through score-gradient path. The smoke fixture in smoke_test.py:42-108 checks graph-dependent scores, curved-versus-Euclidean distances, and codebook gradient reach; no runtime was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:20-59, model/layers.py:104-158, model/layers.py:264-292, model/model.py:26-41, train_rqvae.py:448-463, smoke_test.py:100-108 | Inspected the differentiable distance and soft-score path: ranks choose the hard index, while the distance-derived soft assignment contributes to quantization loss and the straight-through output, allowing gradients to reach encoder and codebook parameters. The code provides behaviour_off and geometry_off branches at model/layers.py:151-158 and model/layers.py:118-130. The smoke test is source-level evidence only; it does not assert that the selected index changes under each switch. No runtime was run, as instructed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The inspected clamps and stable asinh distance expression do not reveal an obvious float32 overflow or singular-gradient hazard on the exercised path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-371, train_rqvae.py:524-573, train_rqvae.py:576-605 | Traced repository-root discovery, frozen embedding and training-parquet inputs, the candidate-specific Stage 2 result destination, item-indexed SID JSON export, and the launcher’s four-card and GENREC_SINGLE_GPU branches. No trainer runtime was run, as instructed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The result path resolves to results/stage2_RQ-VAE/COOC_RANK_FRECHET/, and the single-card branch checks SINGLE_GPU_ENV, whose value is GENREC_SINGLE_GPU (train_rqvae.py:108, train_rqvae.py:580-582).
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

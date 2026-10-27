@@ -1,0 +1,47 @@
+IDEA: cooc_hyp_rank
+
+TITLE: Co-occurrence barycentre ranks hyperbolic code candidates
+
+MOTIVATION: Items that occur in similar training sequences may have related recommendation roles even when their Euclidean reconstruction errors are close. Using co-occurrence context in code assignment could make SIDs reflect those roles and improve next-item prediction.
+
+NOVELTY: The co-occurrence context and hyperbolic geometry jointly affect the *same candidate-code assignment*: each code is ranked both by Euclidean reconstruction error and by its hyperbolic distance to the item’s co-occurrence barycentre. This does not use Sinkhorn, usage balancing, or a context derived from codebook initialization.
+
+CHANGE: Before Stage 2, compute frozen, L2-normalised symmetric co-occurrence rows from each user’s longest training sequence. During assignment, compute each item’s context as the Poincaré barycentre of its neighbours’ current encoder representations, then select the code with the lowest sum of reconstruction-error rank and hyperbolic candidate-to-context rank.
+
+SPECIFICATION: For item \(i\), let \(N_i\) be its training-only co-occurrence neighbours and \(w_{ij}\) their frozen L2-normalised weights. Let \(z_i\) be its encoder output and \(c_k\) the Euclidean code vectors. Map encoder outputs and code vectors to the curvature-\(-1\) Poincaré ball. Compute \(b_i=\operatorname{bar}_{\mathbb B}(\{\exp_0(z_j),w_{ij}:j\in N_i\})\). For each code \(k\), calculate \(e_{ik}=\|z_i-c_k\|_2^2\) and \(h_{ik}=d_{\mathbb B}(\exp_0(c_k),b_i)\). Assign \(a_i=\arg\min_k[\operatorname{rank}_k(e_{ik})+\operatorname{rank}_k(h_{ik})]\). The hyperbolic rank is over *candidate codes*; ranking the item-to-context distance would be constant across codes and would not define an assignment.
+
+COST: Co-occurrence preprocessing is one-time, sparse, and limited to training sequences. At the frozen scale (24,556 training items, 24 steps/epoch, 3,000 epochs), each step adds one neighbour-weighted barycentre per item in the batch and hyperbolic distances/ranks for each item-code pair. With batch size \(B\), embedding dimension \(d\), and \(K\) codes, this adds \(O(B\bar n d + BKd)\) arithmetic and \(O(BK)\) score storage, where \(\bar n\) is the batch’s mean number of neighbours. No pairwise item-item batch matrix is needed. The barycentre is recomputed from current representations; co-occurrence rows stay frozen.
+
+HYPOTHESIS: If training-sequence co-occurrence captures useful item relations beyond the encoder’s current representation, the joint ranks will change assignments toward codes near those relations without sacrificing too much reconstruction quality. Record assignment changes, co-occurrence adjacency, prefix behaviour predictability, and other behavioural diagnostics; judge the candidate by the frozen Stage 3 `test_recall@10`, with the target above 0.065.
+
+RISKS: Co-occurrence may overemphasise popular or broad-interest items; the rank sum gives both criteria equal ordinal influence regardless of their magnitude; sparse or empty neighbourhoods reduce coverage; barycentre computation may add material training time. A single run leaves seed noise as uncertainty.
+
+BEHAVIOR SIGNAL: Symmetric item co-occurrence in users’ training sequences.
+
+BEHAVIOR COMPUTATION: For each user, take only their longest training sequence; count each unordered pair of distinct items in that sequence once. Form each item’s co-occurrence row and L2-normalise it. Freeze the resulting neighbour indices and weights before Stage 2. Use no validation or test interactions.
+
+LEAKAGE BOUNDARY: Build the co-occurrence graph exclusively from the training split and freeze it before Stage 2. Validation and test sequences are not read for graph construction, neighbour lookup, barycentre formation, or SID assignment.
+
+HYPERBOLIC OPERATOR: Curvature-\(-1\) Poincaré exponential map, weighted hyperbolic barycentre, and Poincaré distance \(d_{\mathbb B}\). Use a fixed negative curvature; the curvature switch replaces these operations with their Euclidean counterparts.
+
+HYPERBOLIC LOCATION: Map current pre-quantisation encoder representations into the Poincaré ball to form each item’s neighbour barycentre. Map candidate code vectors into the same ball and compute candidate-to-barycentre distances during code assignment.
+
+COUPLING PATH: Frozen training co-occurrence weights select the current neighbour representations entering the hyperbolic barycentre; that barycentre determines each candidate’s hyperbolic-distance rank; that rank combines with reconstruction-error rank to select the code. Disabling either the behaviour input or the curved operations changes this assignment path.
+
+COUPLING EQUATION: \(b_i=\operatorname{bar}_{\mathbb B_{-1}}(\{\exp_0(z_j),w_{ij}\}_{j\in N_i})\); \(a_i=\arg\min_k\{\operatorname{rank}_k(\|z_i-c_k\|_2^2)+\operatorname{rank}_k(d_{\mathbb B_{-1}}(\exp_0(c_k),b_i))\}\). Each rank counts once; no coupling weight, temperature, or clip-bound hyperparameter is introduced.
+
+OBSERVABLES: With the full mechanism, assignments should differ from reconstruction-only assignments for items whose candidate reconstruction and context ranks disagree. Record the assignment-change rate, neighbour/context and prefix diagnostics, and Stage 3 `test_recall@10`; diagnostics are descriptive, not admission gates. Compare the full candidate’s recorded behaviour-off and geometry-off wiring outputs as diagnostics, not trained arms.
+
+ABLATION BEHAVIOR OFF: Defined but not trained: replace \(N_i\) with an empty set and omit the context-distance rank, leaving reconstruction-error rank as the assignment criterion.
+
+ABLATION GEOMETRY OFF: Defined but not trained: compute the context as the weighted Euclidean mean of current neighbour representations and rank candidates by Euclidean distance to that mean; retain the reconstruction-error rank.
+
+ABLATION BOTH ON: The sole trained candidate: training-only co-occurrence neighbours and weights form a current-representation Poincaré barycentre; Poincaré candidate-to-context ranks and Euclidean reconstruction-error ranks are added.
+
+SPEC EQUATIONS: For \(x,y\) in the unit ball, project inputs to norm at most \(1-\epsilon\), use \(d_{\mathbb B}(x,y)=\operatorname{arcosh}(1+2\|x-y\|^2/[(1-\|x\|^2)(1-\|y\|^2)])\), and compute the weighted barycentre with a documented fixed-iteration Karcher-mean routine. Rank ascending; resolve exact ties by average rank, then by lowest code index if summed ranks tie. For an item with no neighbours, omit the context term and assign by reconstruction rank. Use deterministic tie handling and finite-value checks.
+
+SPEC INPUTS OUTPUTS: Inputs are a training-only sparse co-occurrence row \((N_i,w_{ij})\), current encoder outputs \(z_i,z_j\), Euclidean code vectors \(c_k\), and the behaviour/geometry switches. Output is the selected code index \(a_i\), with optional per-code reconstruction and context ranks for diagnostics.
+
+SAFEGUARDS: Clamp ball norms below \(1-\epsilon\) before logarithms, divisions, and distance evaluation; use stable `acosh` and `exp`/`log` map implementations with finite checks. Normalise nonempty neighbour weights and skip zero-norm rows. Use fixed barycentre iteration limits and tolerances documented in code, not tuned against outcomes. Initialise code vectors through the existing Stage 2 initialisation before any assignment. Avoid materialising pairwise batch distances; compute only item-to-neighbour and candidate-to-context distances. No validation/test interactions, ablation runs, constant sweeps, or seed repetitions.
+
+END IDEA

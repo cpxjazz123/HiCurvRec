@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, model/layers.py:117-178, model/model.py:26-41 | Inspected the training-sequence co-occurrence construction, encoder-derived Poincaré barycentre, code-conditioned hyperbolic distance, rank-sum assignment, and the model forward wiring. The behaviour context and curved distance meet in the same candidate-ranking computation; the scores also feed the quantizer’s differentiable path. The toy smoke test at smoke_test.py:42-100 checks that changing the co-occurrence graph changes the scores and that curved and Euclidean distances differ. I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:29-41, model/layers.py:153-178, model/layers.py:276-312, train_rqvae.py:451-467 | Code inspection shows rank sums select the hard code, while differentiable Euclidean-plus-hyperbolic scores determine the soft code mixture used in the quantizer’s straight-through output and quantization loss. The hyperbolic distance uses projected points, Möbius displacement, and a numerically stable asinh form; projection and denominator safeguards are present. smoke_test.py:102-124 checks a codebook gradient and that the behaviour-off switch reduces to Euclidean assignment. Runtime execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-75, train_rqvae.py:338-406, train_rqvae.py:527-608 | Inspected the trainer entry point, frozen embedding and Stage 0 training-data paths, candidate-specific result directory, indexed SID JSON export, four-card launcher, and the GENREC_SINGLE_GPU single-card branch. The export enumerates item IDs from zero through the embedding rows and checks uniqueness after collision extension. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

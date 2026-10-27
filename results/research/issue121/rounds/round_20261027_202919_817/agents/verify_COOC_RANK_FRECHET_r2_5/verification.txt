@@ -1,0 +1,17 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:250-297 -> train_rqvae.py:423-431,468-470 -> model/model.py:32-39 -> model/layers.py:98-147 | Traced the training-time construction of training-sequence co-occurrence, refreshed neighbour context, and rank-based first-code assignment; also inspected smoke_test.py:42-103 as the proposed wiring check. The trainer was not run.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:257-270
+FINDING DETAIL: Co-occurrence counts do not implement “counting each pair once per user.” The sequence is used with repeated item occurrences intact, so a user can contribute the same item pair multiple times. That makes the behaviour signal occurrence-weighted rather than the specified per-user co-occurrence.
+FINDING REPRODUCTION: Give one user the longest sequence [0, 1, 0]. The meshgrid pair list contributes (0,1) twice and (1,0) twice for that user, so build_cooccurrence returns counts of 2 for both directed rows instead of 1.
+FINDING CORRECTION: Deduplicate item IDs within each selected user sequence before generating pairs, then count each distinct unordered pair once per user and retain the symmetric row construction and normalization.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:98-147,245-281,420-442; model/model.py:26-41; train_rqvae.py:471-489 | Inspected the forward/backward wiring: both-on rank assignment selects the first code using Euclidean and curved behaviour ranks; its differentiable Euclidean-plus-curved score is used in the quantizer’s soft straight-through path and auxiliary quantization loss. Thus gradients can reach the encoder and first codebook, while behaviour_off returns the Euclidean-only path and geometry_off uses the Euclidean distance counterpart. The provided smoke_test.py:95-103 checks codebook gradient reachability, but does not explicitly assert assignment/gradient reversal under both off-switch comparisons; trainability is judged from code as requested, not from a runtime execution.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-73,363-431,550-599,602-631 | Inspected the actual trainer entry point, data constants, export, and launcher branches. It resolves the repository root from markers, reads the Stage 1 embeddings and Stage 0 train parquet, writes outputs under results/stage2_RQ-VAE/COOC_RANK_FRECHET, extends and exports SIDs in item-row order to both NumPy and item_sids.json, and includes the GENREC_SINGLE_GPU branch plus four-card torchrun launch. The trainer was not run.

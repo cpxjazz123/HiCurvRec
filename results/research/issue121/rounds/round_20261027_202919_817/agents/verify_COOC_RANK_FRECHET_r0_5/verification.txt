@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:248-292,308-335,338-376,495-507` → `model/layers.py:119-127,298-307` | Traced the training-only co-occurrence rows into neighbour representations and a curved context, then into candidate-code behaviour-distance ranks combined with reconstruction ranks; the resulting scores select the first-level code. `smoke_test.py:41-86` also checks that changing the toy co-occurrence graph changes scores and that curved and Euclidean distances differ.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking finding for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:503-515` → `model/layers.py:125,137-147` | Traced the scores through hard assignment and the soft straight-through quantized output into the loss and backward pass; `smoke_test.py:88-96` checks that the codebook receives a gradient.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:503-507`; `model/layers.py:125,145-147`
+FINDING DETAIL: The score-producing encoder call is under `torch.no_grad()`, and the code vectors supplied to scoring are detached. Thus the coupled score and its soft candidate distribution have no gradient path to the encoder or through the curved behaviour computation. The soft term can reach the codebook, but the intended behaviour-conditioned curved mechanism does not update the encoder through that path. The smoke test only asserts a nonzero codebook gradient; it does not check encoder gradients or switch-dependent gradients.
+FINDING REPRODUCTION: In the real batch path, retain gradients on the encoder output and inspect its gradient attributable to the assignment-score soft term: it is absent because `latent` is computed under `no_grad` and scores depend on detached codes. The smoke test’s codebook-only assertion at `smoke_test.py:95-96` passes without detecting this.
+FINDING CORRECTION: If the mechanism is intended to train encoder parameters through the coupled term, compute the scoring latent and code-dependent score inputs with gradients enabled and ensure the coupled score contribution is differentiable; keep any discrete ranking/assignment operation separate as needed. Extend the one-run gradient smoke to verify the intended parameter gradients and switch-dependent behavior, without training ablation arms.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:390-417,577-655` | Inspected the real trainer entry point, frozen input paths, result and export paths, and launcher. The candidate writes to its own promoted result directory and exports rows keyed by enumerated item IDs; the data input paths point to the Stage 1 embeddings and Stage 0 training parquet.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:113-123,629-655`
+FINDING DETAIL: The launcher unconditionally starts four workers and has no single-card branch that reads `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"`. The requested distributed-launcher compatibility check therefore fails for the single-card environment.
+FINDING REPRODUCTION: Set `GENREC_SINGLE_GPU` in the environment and invoke `train_rqvae.py` outside torchrun. `_launch_via_torchrun()` does not inspect it and still invokes torchrun with `--nproc_per_node=4` and `CUDA_VISIBLE_DEVICES=0,1,2,3`.
+FINDING CORRECTION: Implement the required single-card branch by reading `GENREC_SINGLE_GPU` and launching the trainer in the supported single-card mode when it is set, while retaining the four-card branch otherwise.

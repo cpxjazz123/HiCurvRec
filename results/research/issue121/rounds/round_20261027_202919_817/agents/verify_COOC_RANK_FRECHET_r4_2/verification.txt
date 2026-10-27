@@ -1,0 +1,22 @@
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, train_rqvae.py:435-455, model/model.py:29-40, model/layers.py:98-152, model/layers.py:250-286 | Traced the frozen training-sequence co-occurrence rows into per-item barycentres of current encoder representations, then into code-conditioned Poincaré distances and rank-based first-level code selection in the model’s forward path. The provided smoke_test.py:42-98 checks that changing the toy co-occurrence graph changes the score and that curved and Euclidean behaviour distances differ. I did not run it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The co-occurrence context and curved candidate distance meet in the same assignment pathway; the hyperbolic computation is not an unused helper or a separate loss.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:29-40, model/layers.py:127-152, model/layers.py:250-286, train_rqvae.py:448-463, smoke_test.py:100-108 | Inspected the forward-to-loss-to-backward path. The hard rank-based choice feeds quantization, and the differentiable candidate scores feed the soft straight-through path and quantization loss, so the coupled scores are used and gradients can reach the encoder and codebook. The code provides `behaviour_off` and `geometry_off` branches at model/layers.py:145-152 and 112-124; the smoke test also contrasts curved and Euclidean distances. I did not run the test or trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by source inspection. The smoke test does not itself assert finite losses/gradients or demonstrate assignment changes and reversals under all three modes, but that missing assertion is not evidence of a dead term or a code-path defect. Runtime execution was not available or required here.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-420, train_rqvae.py:524-573, train_rqvae.py:576-605 | Inspected the trainer’s root and result-path derivation, Stage 2 input paths, training setup, export, and launcher. It reads the frozen Stage 1 embedding and Stage 0 training parquet paths; writes candidate-specific Stage 2 outputs and its own candidate log path; exports rows by enumerated item ID and checks SID uniqueness; and retains both the four-card torchrun branch and the `GENREC_SINGLE_GPU` branch at train_rqvae.py:576-582. I did not run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking integration defect found by inspection. The requested verification file was not written: this environment provides no write tool, and I made no filesystem changes.

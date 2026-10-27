@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:420-427, 459-467, 473-478 | Traced the frozen training-sequence co-occurrence rows from construction through the per-epoch behaviour state and into the model’s assignment-score calculation at model/model.py:29-38.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:91-104
+FINDING DETAIL: The implementation does not implement the specified code-conditioned point \(q_{ik}=\operatorname{Proj}_{\mathbb B}(z_i+c_k-b_i)\). Instead, it ranks distances from each code’s cluster centroid to the item’s behaviour context. This is a different mechanism from the proposal’s candidate-specific behaviour-context displacement. The curved distance and behaviour signal are connected in the assignment pathway, but the specified computational coupling is absent.
+FINDING REPRODUCTION: Inspect `rank_assignment_scores`: its hyperbolic branch projects `centroid` and `context` and ranks their pairwise distances (lines 96-103). It never uses `encoded` or each candidate code to form a curved candidate point for that distance. The centroid is computed from assignments in `train_rqvae.py:308-327`.
+FINDING CORRECTION: Compute each candidate’s specified point from the current item representation, candidate code, and behaviour barycentre; project it into the ball; then rank its hyperbolic distance to that barycentre alongside reconstruction error. Preserve the existing behaviour-off and Euclidean geometry-off switches for comparison.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/model.py:29-38 and model/layers.py:87-104, 208-235 | Performed a source-level forward/backward trace (runtime execution is unavailable in this sandbox). The rank sum selects codes, and the soft rank-score distribution is used by the quantizer’s forward and loss paths.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:91-104, 227-235
+FINDING DETAIL: The rank operations are non-differentiable, and the rank scores are formed from `argsort` results. Consequently, the coupled behaviour/geometry score has no gradient to the encoder or to the behaviour context; the context itself is also refreshed under `torch.no_grad()` in `train_rqvae.py:299-327`. The soft assignment adds a codebook-directed term, but its probabilities are fixed rank values, so it does not make the curved behaviour computation trainable. Moreover, the smoke test’s backward pass checks only that the codebook receives a gradient; it does not establish that the coupled term changes encoder gradients or that assignments change back under the required behaviour-off and geometry-off comparisons.
+FINDING REPRODUCTION: In `rank_assignment_scores`, call `.backward()` on a differentiable scalar formed from its output and inspect gradients for `encoded`, `centroid`, and `context`: the returned rank sums have no differentiable path to those inputs. For the smoke test, compare assignments under all three modes on the same fixed inputs; `smoke_test.py:65-115` instead checks score shapes, a distance difference, and one codebook gradient, without checking mode-dependent assignment reversibility.
+FINDING CORRECTION: Implement the specified candidate-conditioned curved computation with a differentiable scoring/gradient path to intended parameters, or otherwise ensure the actual curved behaviour computation—not merely its discrete rank outcome—participates in a trainable term. Extend the wiring check to compare assignments and gradients for both-on, behaviour-off, and geometry-off using identical fixed inputs. Do not train ablation arms.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:43-73, 360-427, 547-627 | Inspected the trainer’s data, output, export, and launcher paths, including the `GENREC_SINGLE_GPU` branch.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:64-65
+FINDING DETAIL: The candidate’s outputs resolve to `results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET`, not the promoted tree’s required result directory, `results/stage2_RQ-VAE/COOC_RANK_FRECHET`. This writes into a different arm’s directory, so the Stage 3 consumer will not read this candidate’s export from its expected location.
+FINDING REPRODUCTION: Substitute the repository root returned by `_repository_root()` into `RESULT_DIR`; the final path is `REPO_ROOT/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET`. `OUTPUT_SID` and `OUTPUT_JSON` are derived from that path at lines 69-70.
+FINDING CORRECTION: Set `ARM_NAME` to the promoted tree name `COOC_RANK_FRECHET`, so the checkpoint and SID exports land in this candidate’s required result directory. The frozen data inputs at lines 67-68, item-indexed export construction at lines 584-590, and single-card launcher branch at lines 603-605 otherwise appear consistent by inspection.

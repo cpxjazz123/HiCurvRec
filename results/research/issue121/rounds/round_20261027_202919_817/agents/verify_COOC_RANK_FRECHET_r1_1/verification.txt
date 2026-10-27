@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:250-294, train_rqvae.py:459-478, model/model.py:29-38, model/layers.py:76-104, model/layers.py:208-234 | Traced the training sequence co-occurrence rows through per-epoch context refresh, model scoring, and first-level code selection; inspected smoke_test.py:42-118 for the toy wiring checks. The path couples co-occurrence context, a Poincaré distance, and assignment, but does not implement the specified candidate point or row normalization.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:92-104; /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:289-292
+FINDING DETAIL: The curved rank is computed from the distance between each item’s behaviour context and each code’s assignment centroid (layers.py:96-103). It does not use the specified candidate-conditioned point q_ik = Proj(z_i + c_k - b_i). The co-occurrence rows are also normalized by the row sum, not the specified L2 norm. Thus the implemented assignment mechanism differs from the proposed mechanism in both its candidate behaviour score and its neighbour weights.
+FINDING REPRODUCTION: For any row with unequal positive co-occurrence counts, build_cooccurrence returns weights summing to 1 (train_rqvae.py:291), rather than weights whose L2 norm is 1. For candidate codes, inspect rank_assignment_scores: its behaviour distance depends on the context and code centroid, not on encoded z or a candidate-conditioned displacement from context.
+FINDING CORRECTION: Normalize each co-occurrence row by its L2 norm. Compute the behaviour score for each candidate from the specified projected q_ik and its Poincaré distance to b_i, then rank that score alongside reconstruction error.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:26-39, model/layers.py:76-104, model/layers.py:202-235, train_rqvae.py:471-486 | Inspected the forward, loss, backward, and optimizer-step code paths and the toy gradient check in smoke_test.py:107-115. The enabled rank score selects the first-level code; the straight-through quantizer and soft codebook term provide a differentiable training path. The score itself is rank-based and nondifferentiable, but the selected assignment is used by the quantizer and can change which code receives the ordinary quantization gradients. The supplied smoke check does not establish that all gradients are finite or compare assignments across both requested controls; no runtime execution was available.
+FINDING SEVERITY: minor
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/smoke_test.py:67-115
+FINDING DETAIL: No blocking trainability defect found by code inspection. The smoke check compares score tensors for curved versus Euclidean modes and checks that codebook gradient is nonzero, but it does not assert finite loss/gradients or demonstrate assignment changes under behaviour-off and geometry-off switches.
+FINDING REPRODUCTION: Inspect smoke_test.py:67-115: it does not compare selected tokens across all three modes or check torch.isfinite on the loss and gradients.
+FINDING CORRECTION: None required for this check under the stated runtime limitation; the real-trainer GPU gradient smoke should exercise finite loss/gradients and the three existing switch settings without training ablation arms.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-73, train_rqvae.py:360-429, train_rqvae.py:547-595, train_rqvae.py:599-628 | Inspected the trainer entry point, data paths, export/indexing, result-directory derivation, and launcher branches. The single-card branch explicitly reads SINGLE_GPU_ENV == "GENREC_SINGLE_GPU" at lines 603-605; the normal branch launches four workers.
+FINDING SEVERITY: minor
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:43-73, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:584-590
+FINDING DETAIL: No integration defect found by code inspection. The trainer reads the stage-1 embedding file and stage-0 training parquet, writes outputs under the derived repository’s stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET directory, and exports item IDs as string keys mapped to rows enumerated by item ID.
+FINDING REPRODUCTION: Follow REPO_ROOT, RESULT_DIR, EMBEDDING_FILE, and TRAIN_FILE at train_rqvae.py:43-73; follow SID construction and JSON export at lines 584-590. The launcher’s single-card branch is at lines 603-605.
+FINDING CORRECTION: None.

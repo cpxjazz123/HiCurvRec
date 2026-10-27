@@ -1,0 +1,29 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:251-288`, `train_rqvae.py:293-325`, `train_rqvae.py:453-458`, `model/model.py:32-39`, `model/layers.py:108-169` | Traced the training-sequence co-occurrence construction into per-item hyperbolic barycentres, then followed the trainer’s batch item IDs and contexts into the model’s rank assignment. The candidate-conditioned Poincaré distance contributes to the same candidate rank sum as reconstruction error.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `model/model.py:29-41`, `model/layers.py:144-169`, `model/layers.py:267-303`, `train_rqvae.py:451-467` | Inspected the forward/backward path in code. Rank-based hard indices select codes; differentiable Euclidean and curved scores also feed the soft straight-through path and quantization loss. `behaviour_off` returns Euclidean assignments/scores, while `geometry_off` substitutes Euclidean behaviour distances. Curved operations include projection, Möbius addition and a numerically stabilized Poincaré distance.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead-term or numerical-instability defect found. Per the stated sandbox constraint, I did not run the trainer or smoke test; runtime gradient proof is left to the specified MCP smoke.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:42-74`, `train_rqvae.py:338-421`, `train_rqvae.py:527-575`, `train_rqvae.py:579-608` | Traced the real entry point through frozen embedding and parquet paths, four-card torchrun setup, the `GENREC_SINGLE_GPU` branch, final SID export, and repository-relative result paths. Export rows are keyed by embedding-row/item ID using enumeration.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Outputs resolve to this candidate’s `results/stage2_RQ-VAE/COOC_RANK_FRECHET` directory; the export creates unique extended SIDs and writes the item-ID-to-SID JSON mapping.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+The requested absolute-path report file was not written; this review environment is read-only.

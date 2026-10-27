@@ -1,0 +1,29 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, train_rqvae.py:445-457, model/model.py:32-39, model/layers.py:108-169 | Traced the training-only co-occurrence construction into per-item neighbour barycentres, then followed the batch context into the code-conditioned Poincaré distance and rank-based first-level assignment. The coupled score also enters the quantizer’s soft straight-through path at model/layers.py:275-303. This is source inspection; no runtime execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:108-169, model/layers.py:275-303, model/model.py:26-41, train_rqvae.py:453-467, smoke_test.py:102-124 | Traced the finite curved-distance calculation through the rank scores, soft candidate distribution, quantizer loss and model loss to backward and optimizer step. The rank choice is discrete, but the score-derived soft path remains differentiable to the encoder and codebook. The code includes behaviour-off and geometry-off switches; smoke_test.py:112-124 checks the behaviour-off Euclidean assignment and that switching changes the score or assignment. No runtime proof was run, consistent with the sandbox constraint.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-371, train_rqvae.py:527-575, train_rqvae.py:579-608 | Inspected the real trainer entry point, frozen embedding and training-parquet paths, candidate-specific result directory, SID export and launcher. Export enumerates the full embedding matrix by item row, writes integer SID rows to NPY and item-ID-string keys to JSON, and adds unique suffixes for collisions. The launcher retains four-card torchrun and the GENREC_SINGLE_GPU=1 single-process branch. This is source inspection; the trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+Output note: I could not write the requested absolute-path file; this environment provides no file-writing tool for that path.

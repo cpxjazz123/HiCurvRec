@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:250-300, 465-484 → results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:32-39 → results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:98-124, 127-152 | Traced the training co-occurrence rows into refreshed Fréchet contexts, then into code-conditioned Poincaré distances and the first-level assignment scores used by the model. The curvature and behaviour context participate in the same candidate-scoring path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found in the existence of a connected behaviour-and-geometry assignment pathway.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r3_1/verification.txt | Inspected the real forward/backward path in results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:26-41 and results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:127-152, 250-286, plus the supplied smoke test. No runtime was executed, consistent with the stated sandbox limitation.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/smoke_test.py:55-63, 79-93
+FINDING DETAIL: The smoke test does not establish that changing the co-occurrence graph changes the assignment: it supplies different random embeddings to the two calls to refresh_behaviour_state (lines 58-60 and 84-86), and only checks that the resulting score tensors differ (line 92), not that assignments differ. It also checks that curved and flat distances differ, but not that geometry-off changes the assignment or gradient, and it never exercises behaviour_off. Thus the required switch comparisons are not demonstrated by the provided wiring check. The inspected implementation provides a differentiable score path, but the smoke test also does not verify finite gradients through the actual loss backward (it checks only that the codebook gradient exists).
+FINDING REPRODUCTION: Run smoke_test.py in the GPU/MCP environment and inspect the assertions: the two graph cases receive separately generated embeddings, while the only graph-effect assertion compares score tensors. No assertion compares behaviour_on, behaviour_off, and geometry_off assignments or gradients.
+FINDING CORRECTION: Reuse the same embedding tensor and assignments in both graph cases; assert the relevant assignment and/or gradient changes for both switches; and after backward assert finite loss and finite, nonzero gradients on the intended encoder and codebook parameters. This is a verification gap, not evidence that the inspected differentiable path is dead.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:41-73, 366-435, 553-633 | Inspected repository-root and result-path derivation, frozen embedding and training-parquet inputs, SID export/index construction, and launcher branches. The trainer could not be run in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:102-106, 322-326, 358-364
+FINDING DETAIL: The trainer’s behavior-off and geometry-off switches are not consistently implemented across training and export. In geometry_off mode, refresh_behaviour_state returns a plain Euclidean context, but _behaviour_state passes that context into the export path; behaviour_distance then projects it and evaluates a hyperbolic distance because geometry_off only selects Euclidean behavior at lines 112-114 of layers.py, whereas rank_assignment_scores geometry_off does so only when called for training as well. That geometry case is consistent. However, COGEO_ENABLED=False disables building and refreshing state, but the epoch-end and final exports call _behaviour_state, which returns None, so export uses ordinary Euclidean nearest-code assignment instead of the behavior-conditioned assignment used in training. This means the candidate’s exported SIDs do not reflect its trained assignment mechanism when behavior is enabled only through the state path? In the configured both_on mode state is present, so this is not the actual-run defect. No integration defect established.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

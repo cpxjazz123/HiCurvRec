@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, train_rqvae.py:442-455, model/model.py:26-40, model/layers.py:108-165 | Traced the frozen training-sequence co-occurrence rows into encoder-neighbour Poincaré barycentres, then into code-conditioned curved distances and the rank-based first-level assignment in the training forward path. Also inspected smoke_test.py:42-100, which checks that changing the co-occurrence graph changes the score and that curved and Euclidean behavior distances differ.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:20-59, model/layers.py:108-165, model/layers.py:263-299, train_rqvae.py:450-463, smoke_test.py:102-124 | Traced differentiable curved-distance scores through the soft code distribution and quantizer straight-through path into the encoder and codebook; inspected the smoke check for finite context, nonzero codebook gradient, and behavior-off assignment. The distance safeguards keep projected points inside the ball and use a finite-gradient distance expression at coincidence. No runtime training was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical hazard found that blocks the coupled forward/backward path. The smoke check does not explicitly assert finite gradients or compare geometry-off assignments against both-on assignments, but the code implements both switches and this omission is not a blocking correctness defect under the stated GPU smoke-test policy.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-75, train_rqvae.py:338-371, train_rqvae.py:524-573, train_rqvae.py:576-605 | Inspected the real trainer entry point, frozen embedding and training-parquet paths, candidate-specific result path, final SID export/index mapping, and launcher branches. The launcher recognizes `GENREC_SINGLE_GPU` at train_rqvae.py:108 and train_rqvae.py:576-582; the four-card torchrun path is at train_rqvae.py:583-600.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. The result path resolves under the repository to `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`; JSON keys are enumerated item IDs and each value is the corresponding SID row.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

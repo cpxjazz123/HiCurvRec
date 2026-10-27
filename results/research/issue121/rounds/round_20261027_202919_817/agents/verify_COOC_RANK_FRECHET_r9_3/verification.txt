@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:402-406,445-457 -> model/model.py:32-39 -> model/layers.py:144-169,108-141 | Traced the frozen training co-occurrence rows into refreshed hyperbolic neighbour contexts, then into code-conditioned Poincaré distance/rank scoring at the first quantizer level. `smoke_test.py:63-100` describes toy graph and curved-versus-Euclidean wiring checks; I inspected the code and did not run it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Behaviour and curved geometry participate in the same candidate assignment decision; the hyperbolic term is code-dependent through the projected conditioned point.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:124-169,267-303; train_rqvae.py:453-465 | Inspected the forward/backward path: candidate scores feed the quantizer’s soft straight-through term and quantization loss, while the rank-sum index selects the hard code. `smoke_test.py:102-124` specifies gradient and switch checks; I did not run it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level dead coupled term or evident float32 overflow/NaN hazard found. Behaviour-off returns Euclidean assignment; geometry-off substitutes Euclidean contexts/distances; both-on uses the curved distance. The code’s smoke fixture is intended to check that these switches affect scores or assignments. Runtime gradient proof is not claimed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74,251-288,338-421,527-608 | Inspected the trainer entry point, paths, co-occurrence construction, export and launcher branches. The data inputs point to the repository’s Stage 1 embedding and Stage 0 training parquet; output is scoped to `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`. The single-card branch checks `GENREC_SINGLE_GPU` at lines 108 and 583-585.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found in the inspected source. SID export enumerates embedding rows into integer-keyed JSON entries and applies the collision extension before writing. The launcher retains both the existing torchrun path and the named single-card environment branch. Trainer execution was not performed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

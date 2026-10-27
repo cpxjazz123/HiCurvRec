@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:402-404,442-455 → model/model.py:32-39 → model/layers.py:127-152,250-286 | Source inspection traces the frozen training co-occurrence rows into per-item contexts, then into code-conditioned Poincaré-distance ranks used in the first-level code assignment and straight-through score path. The supplied smoke_test.py:42-108 exercises toy co-occurrence/context construction and the curved score path; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:38-53,56-73,98-124 | Inspected the Poincaré log/exp map implementation used by train_rqvae.py:317-323 to form the behaviour barycentres. The assignment scores then have a differentiable path through model/model.py:32-39 and model/layers.py:278-286. Runtime execution was not available.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:41-45,48-53
+FINDING DETAIL: The purported Riemannian log and exp maps omit required operations, so the neighbour barycentre iteration is not the specified Poincaré Fréchet mean. `ball_log_map` computes `base ⊕ (-point)` rather than `(-base) ⊕ point`, reversing the displacement for non-origin bases. `ball_exp_map` applies the tangent step without the base-point conformal factor. Consequently `refresh_behaviour_state` iterates using an incorrect tangent displacement and update; the curved behaviour context and resulting assignment ranks do not faithfully implement the proposed barycentre mechanism. This is a correctness issue in the core coupling, not a demand for an ablation or a quality threshold.
+FINDING REPRODUCTION: Use a nonzero base and a distinct point in `ball_log_map(base, point)`: its displacement points according to `base ⊕ (-point)`, not the logarithmic displacement from base to point. Then apply `ball_exp_map` to that result at the same base; the omitted base conformal factor means it does not implement the corresponding Riemannian exponential update. The barycentre loop at train_rqvae.py:317-323 uses these operations directly.
+FINDING CORRECTION: Implement the Poincaré log map using `(-base) ⊕ point` and the correct conformal factor at the base; implement the exp map with the base conformal factor in its tangent scaling. Add a deterministic non-origin round-trip check and a small known barycentre check. Retain the existing behaviour-off and geometry-off switches; no ablation training is needed.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74,338-373,524-573,576-605 | Inspected root and candidate result-path resolution, frozen embedding and training-parquet inputs, indexed SID export, trainer entry point, and launcher branches, including `GENREC_SINGLE_GPU` at lines 103, 576-582. Runtime execution was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The output resolves to this candidate’s required `results/stage2_RQ-VAE/COOC_RANK_FRECHET/` directory, and the export enumerates rows by item ID.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

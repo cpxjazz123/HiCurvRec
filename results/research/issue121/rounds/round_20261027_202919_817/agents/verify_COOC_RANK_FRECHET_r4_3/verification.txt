@@ -1,0 +1,29 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:402-404 → train_rqvae.py:442-444 → model/model.py:32-36 → model/layers.py:98-124,127-152 | Traced the training co-occurrence rows into the refreshed neighbour barycentres and then into the code-conditioned Poincaré distance and rank assignment. `smoke_test.py:84-98` also constructs a different co-occurrence graph and checks that the resulting assignment scores change.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: None
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable; this check passes by code inspection and the wiring checks in `smoke_test.py`.
+FINDING CORRECTION: None.
+
+VERDICT: PASS
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:448-463 → model/model.py:29-40 → model/layers.py:127-152,250-286 | Traced the training forward and backward: the selected index comes from the rank sum, while the differentiable Euclidean-plus-hyperbolic scores feed the straight-through soft code estimate and quantization loss. `smoke_test.py:100-108` backpropagates through the real model path and asserts a nonzero codebook gradient. The `behaviour_off` and `geometry_off` branches are implemented at `model/layers.py:112-124,145-152`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: None
+FINDING DETAIL: No dead coupled term or evident numerical hazard found. The rank decision itself is discrete, but the coupled distances also contribute to the differentiable soft-code path.
+FINDING REPRODUCTION: Not applicable; no trainer execution was performed. The available smoke test checks codebook-gradient reachability, but does not explicitly assert encoder-gradient reachability or that the hard assignment changes under each switch.
+FINDING CORRECTION: None.
+
+VERDICT: NEEDS_FIX
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:63-74,338-372,524-573,576-605 | Inspected the root, data, output, export and launcher paths, including the `GENREC_SINGLE_GPU` branch at lines 580-582. The frozen parquet path is used, SIDs are emitted with item IDs as row indices, and the result directory is candidate-specific. No runtime trainer execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:414-419
+FINDING DETAIL: Codebook initialization is only performed on rank 0, but the codebook weights are not DDP parameters shared across ranks. The barrier only synchronizes processes; it does not broadcast the initialized codebooks. Consequently, the other ranks retain independently initialized codebooks and train on a different model state. The resulting distributed training and exported SIDs do not represent a consistent four-card run.
+FINDING REPRODUCTION: Launch with four ranks. After `init_codebook` and the barrier, compare `raw_module.rq.vq_layers[0].get_code_embs()` across ranks: rank 0 has KMeans centres, while other ranks retain their pre-initialization values. The barrier at line 419 does not make these tensors equal.
+FINDING CORRECTION: Broadcast every initialized codebook weight from rank 0 to all ranks after initialization and before the barrier, or initialize the codebooks identically on every rank. Make the same synchronization explicit for any non-DDP codebook state required by training.

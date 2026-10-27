@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:250-294` → `train_rqvae.py:465-467` → `model/model.py:31-36` → `model/layers.py:76-104` | Traced the training co-occurrence rows through refreshed contexts into the assignment scores. The path does combine training behaviour and curved distances, but it does not implement the specified candidate-conditioned operation.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `model/layers.py:93-103`; `train_rqvae.py:291`
+FINDING DETAIL: The stated mechanism requires the candidate-specific point `q_ik = Proj_B(z_i + c_k - b_i)` and its distance to the behaviour barycentre. Instead, the code ranks distances from each item context to each code centroid. That is a different mechanism. The co-occurrence rows are also normalized by the sum of counts and truncated to 32 neighbours, rather than using the specified L2-normalized rows; those weights feed the Frechet mean at `train_rqvae.py:325-326`.
+FINDING REPRODUCTION: Inspect `rank_assignment_scores`: its inputs are `centroid` and `context`, and its curved distance compares those directly; it has no item-specific `z_i`/`b_i` candidate displacement. For a row with more than 32 neighbours, `build_cooccurrence` retains only 32 and divides their counts by the sum of all row counts.
+FINDING CORRECTION: Implement the specified per-item, per-candidate projected displacement and Poincaré distance in the rank computation. Apply the specified L2 row normalization and do not silently cap the neighbour set unless the proposal is revised to specify that operation.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `model/model.py:29-38` → `model/layers.py:208-235` | Inspected the real forward/backward wiring. The assignment score affects the hard code choice, and the added soft term can update the codebook, but its rank-based construction does not provide the claimed differentiable behaviour/geometry gradient path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `model/layers.py:91-104`; `model/layers.py:227-235`
+FINDING DETAIL: Both rank tensors are produced by `argsort`, which is nondifferentiable; therefore `assignment_scores` has no gradient to `encoded`, `context`, or `centroid`. The softmax term can update code embeddings, but cannot carry a gradient through the rank computation to the encoder or behaviour context. Thus the comment claiming the behaviour and curvature train the encoder through this path is incorrect. The checked smoke test does not compare assignments/gradients across behaviour-off and geometry-off switches, so it does not establish the required switch reversibility.
+FINDING REPRODUCTION: In a forward/backward pass, inspect `assignment_scores.requires_grad` and gradients attributable to the rank-derived soft branch: the rank outputs are integer order indices cast to float, so there is no differentiable route back through those scores. The smoke test only asserts a nonzero codebook gradient at `smoke_test.py:107-115`; it does not isolate that gradient or test the off switches.
+FINDING CORRECTION: Preserve the rank-based hard decision if required, but add a differentiable behaviour/geometry score pathway with an explicit gradient to the intended encoder parameters, and verify finite losses/gradients plus assignment or gradient changes for both-on, behaviour-off, and geometry-off. Do not count ordinary reconstruction/quantization gradients as evidence for the coupled term.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `smoke_test.py:33-51` | Manually traced the fixture’s four longest sequences and the co-occurrence counts against the assertions. The advertised wiring smoke fails on its first neighbour-order assertion; trainer runtime itself cannot be executed in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `smoke_test.py:47-51`
+FINDING DETAIL: The toy fixture’s item 0 has neighbour counts 1:2, 2:4, and 3:2. `build_cooccurrence` sorts by descending count, so `index[0, 0]` is 2, not the asserted 1. The smoke test therefore fails before it exercises the later checks. Static inspection otherwise shows the frozen embedding/train-parquet inputs, candidate-named Stage 2 result outputs and SID JSON keyed by enumerated item IDs; it does not establish a successful trainer run while this smoke failure remains.
+FINDING REPRODUCTION: Run `build_cooccurrence(toy_frame(), 4, 4)` from the candidate tree: `index[0, 0]` is 2, making `assert index[0, 0] == 1` fail.
+FINDING CORRECTION: Correct the expected ordering/assertion or fixture, then run the smoke test and the prescribed real-trainer one-epoch gradient smoke. Keep the launcher’s `GENREC_SINGLE_GPU` branch at `train_rqvae.py:603-605` intact and confirm the promoted candidate name resolves to its own Stage 2 result directory.

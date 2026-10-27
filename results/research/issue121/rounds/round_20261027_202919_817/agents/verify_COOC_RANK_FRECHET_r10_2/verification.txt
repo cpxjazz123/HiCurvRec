@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, train_rqvae.py:445-458, model/model.py:29-39, model/layers.py:117-178, model/layers.py:284-312 | Traced the frozen training-sequence co-occurrence construction into per-epoch hyperbolic neighbour barycentres, then the batch’s item-indexed contexts into the code-conditioned Poincaré distances and rank assignment in the real training forward path. smoke_test.py:42-100 also checks that changing the graph changes the score and that curved and Euclidean behaviour distances differ.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:117-178, model/layers.py:284-312, train_rqvae.py:451-467, smoke_test.py:102-124 | Followed the finite Poincaré distance through the rank-selected VQ forward, the soft score-weighted code embedding straight-through path, quantization loss, and backward call. The smoke test checks codebook gradient presence and that behaviour-off is Euclidean; its score/assignment comparisons are wiring checks, not an executed real trainer gradient proof.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level defect found. The coupled scores are consumed by the quantizer, and their softmax path can contribute gradients to the encoder output and codebook. The ball projection and stable distance expression include finite safeguards.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-371, train_rqvae.py:527-575, train_rqvae.py:579-608 | Inspected the trainer entry point, frozen embedding and training-parquet paths, promoted candidate result directory, item-indexed SID export, and launcher branches. The single-card branch explicitly reads `GENREC_SINGLE_GPU` at train_rqvae.py:108 and train_rqvae.py:583-585. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Export rows are keyed by enumerated item IDs, and the result paths resolve under the repository’s `results/stage2_RQ-VAE/COOC_RANK_FRECHET` directory.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, 293-325, 445-457 -> model/model.py:29-39 -> model/layers.py:153-178, 276-312 | Traced the training co-occurrence rows into refreshed Poincaré barycentres, then into the code-conditioned curved candidate distances used for rank assignment and its differentiable score path. The supplied smoke_test.py:42-128 describes toy and gradient checks; I inspected it but did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:29-41 -> model/layers.py:153-178, 276-312; train_rqvae.py:451-467 | Inspected the forward/backward path: rank choice selects the hard code, while the softmax of differentiable Euclidean-plus-curved scores enters the quantized output and quantization loss. The hyperbolic distance uses a finite-at-zero squared asinh form (layers.py:141-150). The supplied smoke_test.py:102-124 checks codebook gradients and behavior-off wiring, but I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:42-74, 338-423, 527-608; train_rqvae.py:583-585 | Inspected the configured trainer entry point, frozen embedding and training-parquet paths, export indexing, result destination, and launcher branches. Runtime execution was unavailable.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:442-447
+FINDING DETAIL: Each epoch refreshes behaviour context, but the refresh is performed independently on each DDP rank using that rank’s local encoder parameters. DDP synchronizes gradients during backward, not parameters before this refresh; after the first optimizer step, rank-local parameters can differ. The subsequently rank-local contexts can therefore differ for the same item, producing different first-level assignments and inconsistent code usage across ranks. This undermines the real distributed training path.
+FINDING REPRODUCTION: Run with world_size=4 for two steps. After step one, compare encoder parameters across ranks, then compare refresh_behaviour_state outputs for identical all_embeddings and co-occurrence tensors. Any rank divergence yields different contexts and can yield different rank assignments for identical item IDs.
+FINDING CORRECTION: Make context refresh use identical encoder parameters on every rank (for example, synchronize the encoder parameters before refresh, or compute and broadcast rank 0’s context); ensure the resulting context used by each rank is identical for a given item.

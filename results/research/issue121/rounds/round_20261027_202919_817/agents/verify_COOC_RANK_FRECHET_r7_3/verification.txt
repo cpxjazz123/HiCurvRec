@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288,293-325,453-458 → model/model.py:29-39 → model/layers.py:108-165,263-299 | Traced the trainer’s frozen training-sequence co-occurrence rows into refreshed hyperbolic neighbour barycentres, then into code-conditioned Poincaré candidate distances and the first-level rank-sum assignment. The smoke test at smoke_test.py:63-100 checks that context is finite and nonzero, curved and Euclidean distances differ, and changing the co-occurrence graph changes the returned scores.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behavioural context and curved operation share the candidate-assignment pathway; the geometry is not merely an auxiliary loss or unused helper.
+FINDING REPRODUCTION: Source inspection of the exercised path above; no runtime execution performed.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:29-39 → model/layers.py:140-165,263-299; train_rqvae.py:451-465; smoke_test.py:102-124 | Traced the both-on score through the soft assignment term and straight-through quantizer into the loss and backward pass. The smoke test asserts a nonzero codebook gradient and checks that behaviour-off returns the plain Euclidean assignment and that both-on differs from behaviour-off in assignment or scores. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 instability found by inspection. The hard rank decision itself is nondifferentiable, but the implementation supplies a differentiable score path through the soft code mixture into the loss; it does not leave the coupled score computed and unused.
+FINDING REPRODUCTION: Source inspection of the forward/backward path and smoke assertions above. Per the review constraints, no PyTorch runtime proof was attempted.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:44-74,338-410,527-575,579-608 | Traced the entry point, repository-relative frozen embedding and training-parquet paths, arm-specific result paths, indexed SID export, and launcher branches. The single-card branch checks `GENREC_SINGLE_GPU` at train_rqvae.py:583-585; the default branch invokes four-card torchrun at :586-603. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The output is indexed by embedding-row item ID and written to the required `results/stage2_RQ-VAE/COOC_RANK_FRECHET/` directory; the trainer does not target the baseline or another candidate’s result directory.
+FINDING REPRODUCTION: Source inspection of the paths and entry-point branches above. No trainer or launcher execution was performed.
+FINDING CORRECTION: None.

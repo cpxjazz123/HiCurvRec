@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:251-288, 435-455; results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:29-40; results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:104-158, 256-292 | Traced the trainer’s frozen training-sequence co-occurrence construction through per-epoch context refresh and the model’s first-level rank assignment. The smoke fixture at smoke_test.py:42-98 checks that changing the graph changes the context-dependent scores and that the curved distance differs from its Euclidean counterpart. No trainer run was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:133-158, 256-292; results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/smoke_test.py:100-108 | Inspected the differentiable assignment-score and straight-through path, and the toy backward check. The code shows a gradient path through the soft score distribution to the encoder and codebook, but the checked test only asserts a nonzero codebook gradient for both-on; it does not establish the requested switch comparisons or finite gradients/losses.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/smoke_test.py:70-108
+FINDING DETAIL: The smoke check does not verify that switching behaviour off changes assignment or gradients, or that replacing the curved distance with the Euclidean counterpart changes assignment or gradients and changes back when both are restored. It compares curved and flat distances at lines 78-82, but not their assignment/gradient effects; it also asserts only that a codebook gradient is nonzero, without checking finiteness or encoder gradients. Thus the required switch-sensitive pathway and stable backward are not demonstrated by the provided checks. The source does contain switches and a differentiable score path, so this finding is about the missing verification, not a claim that the path is dead.
+FINDING REPRODUCTION: In smoke_test.py, compare `rank_assignment_scores` outputs and gradients for the same fixed inputs under `both_on`, `behaviour_off`, and `geometry_off`; the current test only checks distance inequality and a nonzero codebook gradient in `both_on`. A concrete counterexample to the existing assertions is a setup where the curved and flat distances differ but induce the same rank order: the assertions at lines 81-82 can pass without establishing an assignment change.
+FINDING CORRECTION: Extend the wiring check with fixed deterministic inputs that demonstrate assignment or gradient changes across the three modes, assert finite loss and finite nonzero gradients on intended encoder/codebook parameters, and assert that restoring both-on restores its output. This is a check-only correction; do not train ablation arms.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:42-74, 338-355, 524-604 | Inspected the trainer entry point, frozen embedding and training-parquet paths, promoted-arm output paths, indexed SID export, and launcher branches including the `GENREC_SINGLE_GPU` check. The code writes outputs to `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`, exports one row per embedding index, and the single-card branch returns to `main()` without spawning torchrun. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

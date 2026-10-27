@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, train_rqvae.py:453-458, model/model.py:29-39, model/layers.py:153-178 | Traced the frozen training co-occurrence rows through refreshed hyperbolic neighbour barycentres into the model’s assignment scores. The code-conditioned Poincaré distance contributes to the rank-sum choice; the distance scores also feed the quantizer’s straight-through gradient path. Reviewed the toy wiring checks in smoke_test.py:42-100, but did not execute them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:117-178, model/layers.py:276-312, model/model.py:26-41, train_rqvae.py:451-467 | Inspected the differentiable Euclidean and curved distance calculations, soft score-based straight-through path, quantization loss, and backward/optimizer step. The code retains explicit behaviour-off and geometry-off switches. smoke_test.py:102-124 checks codebook gradients and switch effects in source, but I did not execute it; runtime proof is not available here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 numerical hazard found in the coupled path. The intended assignment and gradient changes are checked by the supplied smoke-test code, not independently executed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-371, train_rqvae.py:527-575, train_rqvae.py:579-608 | Inspected repository-relative frozen input paths, candidate-specific result paths, training entry point, SID export/index construction, torchrun launcher, and the `GENREC_SINGLE_GPU` branch. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Inputs use the Stage 1 embeddings and Stage 0 training parquet; checkpoint and SID outputs resolve to this candidate’s required `results/stage2_RQ-VAE/COOC_RANK_FRECHET/` directory. Export enumerates embedding rows by item ID, and the launcher preserves both the four-card path and the single-card environment branch.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: None.

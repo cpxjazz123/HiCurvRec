@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `COOC_RANK_FRECHET/train_rqvae.py:251-288` → `train_rqvae.py:442-454` → `COOC_RANK_FRECHET/model/model.py:32-39` → `COOC_RANK_FRECHET/model/layers.py:98-152` | Traced the training co-occurrence rows into per-item contexts and then into code-conditioned Poincaré distances and the first-level assignment rank sum. `smoke_test.py:42-98` also checks that changing the toy co-occurrence graph changes the score and that the curved distance differs from the Euclidean counterpart.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The training assignment has one connected behaviour-and-geometry path: co-occurrence neighbours provide the context, and the curved code-conditioned distance participates in the same rank-based choice as reconstruction error.
+FINDING REPRODUCTION: Source trace above; no trainer execution claimed.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `COOC_RANK_FRECHET/model/layers.py:38-73` → `train_rqvae.py:317-325` → `train_rqvae.py:442-455` → `COOC_RANK_FRECHET/model/layers.py:250-286` | Inspected the barycentre update and the training forward/backward wiring. The included smoke test checks a finite context and a nonzero codebook gradient, but does not check the barycentre’s geometric update direction or verify finite gradients.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `COOC_RANK_FRECHET/model/layers.py:41-45`
+FINDING DETAIL: `ball_log_map(base, point)` computes `ball_add(base, -point)`. The Poincaré logarithm from `base` to `point` requires the displacement `(-base) ⊕ point`; this implementation instead uses `base ⊕ (-point)`, reversing the displacement at the origin and using the wrong displacement away from it. `frechet_mean` at lines 69-72 adds that incorrect tangent step to the estimate, so the alleged Fréchet iteration moves in the wrong direction. For example, with a one-dimensional estimate at 0 and a neighbour at 0.2, the computed tangent is negative, and the update moves away from the neighbour. Thus the behaviour context does not implement the specified hyperbolic barycentre.
+FINDING REPRODUCTION: On a one-dimensional ball, evaluate `ball_log_map(torch.tensor([[0.]]), torch.tensor([[0.2]]), 1.0)`: the result is negative, although the tangent from the origin toward the positive point must be positive. Then call `frechet_mean` on a single point at 0.2 with weight 1; its update moves away rather than toward that point.
+FINDING CORRECTION: Compute the logarithm displacement as `ball_add(-base, point, curvature)` and use an exponential map with the correct base-point conformal factor. Add a minimal one-point barycentre check asserting the result moves toward (and converges to) the point, plus finite forward/backward checks through the actual coupled path.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `COOC_RANK_FRECHET/train_rqvae.py:42-74`, `train_rqvae.py:338-455`, `train_rqvae.py:524-604` | Inspected the real entry point, frozen Stage 1 embedding and Stage 0 training-parquet paths, candidate-specific result path and indexed SID export, DDP launch branch, and the `GENREC_SINGLE_GPU` branch. The code routes outputs to `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`, creates item IDs from embedding row indexes in the export, and avoids launching torchrun when `GENREC_SINGLE_GPU=1`. This is a source inspection; the trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found in the inspected entry point, data paths, export indexing, output directory, or launcher branches.
+FINDING REPRODUCTION: Source trace above; no trainer execution claimed.
+FINDING CORRECTION: none

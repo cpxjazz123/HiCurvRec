@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:259-296, train_rqvae.py:301-333, model/model.py:29-40, model/layers.py:117-178 | Traced the frozen training-sequence co-occurrence rows into the neighbour barycentre, then into candidate-conditioned Poincaré distances and rank-based assignment. The supplied smoke test exercises the graph/context and curved-versus-Euclidean scoring paths at smoke_test.py:42-100.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Behaviour and curved geometry meet in the candidate assignment computation; neither is merely an auxiliary loss or unused helper.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:153-178, model/layers.py:276-312, model/model.py:26-41, train_rqvae.py:462-481 | Inspected the forward path from rank-based choice and differentiable assignment scores through the quantiser’s straight-through output and soft-code surrogate into the loss and backward update. The supplied smoke test checks finite context, nonzero codebook gradient, and behavior-off/geometry-off controls at smoke_test.py:63-84 and smoke_test.py:102-124.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled score term or evident numerical hazard found in the inspected path. The hard rank choice determines the selected code; the differentiable score surrogate can update the encoder and codebook. Behaviour-off returns the Euclidean assignment, and geometry-off substitutes Euclidean context scoring.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-82, train_rqvae.py:346-389, train_rqvae.py:541-590, train_rqvae.py:593-622 | Inspected repository-root and candidate result-path resolution, frozen input paths, item-indexed training data, final SID export, DDP setup/teardown, and launcher branches including `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at train_rqvae.py:116 and train_rqvae.py:595-600.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer reads the Stage 1 embeddings and Stage 0 training parquet, writes outputs to its candidate-specific Stage 2 result directory, and exports rows keyed by enumerated item ID. The four-card launcher and single-card environment branch are present.
+FINDING REPRODUCTION: Not applicable; trainer execution was not performed.
+FINDING CORRECTION: Not applicable.

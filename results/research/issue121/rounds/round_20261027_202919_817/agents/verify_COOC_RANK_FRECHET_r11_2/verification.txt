@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:251-288`, `train_rqvae.py:293-325`, `train_rqvae.py:445-458`, `model/model.py:29-39`, `model/layers.py:117-178`, `model/layers.py:284-312` | Traced the frozen training-sequence co-occurrence rows through refreshed neighbour barycentres into code-conditioned Poincaré distances and rank-based first-level assignment. The same scores feed the quantizer’s straight-through path. The supplied `smoke_test.py:63-84, 90-100` describes checks for graph- and geometry-dependent scores; I inspected the test code but did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `model/layers.py:153-178`, `model/layers.py:284-312`, `train_rqvae.py:451-467`, `smoke_test.py:102-124` | Inspected the forward/loss/backward wiring and the provided gradient and switch checks. The hard choice uses the rank sum; differentiable Euclidean and curved scores feed the soft straight-through path, which connects to the encoder and codebook. The code includes behaviour-off and geometry-off paths. Per the stated constraint, I did not run the trainer or smoke test.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical hazard blocking trainability was identified. This is a source inspection, not an executed runtime proof.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:42-74`, `train_rqvae.py:338-420`, `train_rqvae.py:527-576`, `train_rqvae.py:579-608` | Traced repository-root and promoted-candidate result-path resolution, the frozen embedding and training parquet inputs, training entry point, SID export/index construction, and launcher branches. The single-card branch reads `SINGLE_GPU_ENV` (`GENREC_SINGLE_GPU`) at lines 108 and 583-585. The result directory resolves to `results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/`. I inspected these paths statically; I did not run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect was found by source inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:250-300, train_rqvae.py:471-484, model/model.py:29-39, model/layers.py:127-152 | Traced the training-only co-occurrence rows into the refreshed barycentre, then into the first-level rank assignment and quantizer. smoke_test.py:42-103 describes toy checks for graph and curve changes and a gradient reaching the codebook; I could not execute them in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:283-298
+FINDING DETAIL: The co-occurrence construction discards neighbours beyond COGEO_NEIGHBOURS=32, although the specified behaviour context uses every positive-weight co-occurrence neighbour. It also normalizes retained weights by the norm of the full row before truncation, then frechet_mean renormalizes the retained weights, so the actual context is a top-32 approximation, not the specified barycentre.
+FINDING REPRODUCTION: Create an item with 33 or more co-occurrence neighbours of unequal counts. build_cooccurrence(..., slots=32) returns only 32; the omitted neighbour cannot contribute to the context or rank_assignment_scores, despite having positive W_ij in the specified signal.
+FINDING CORRECTION: Preserve all positive-weight neighbours for the context (use sparse/ragged rows or an equivalent full-neighbour reduction), and compute the barycentre with the specified weights. If a capped neighbourhood is intended instead, it changes the proposal and must be explicitly specified rather than silently substituted.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:29-40, model/layers.py:98-124, model/layers.py:127-152, model/layers.py:250-286, train_rqvae.py:477-492 | Inspected the forward path from encoder outputs through code-conditioned curved distances and assignment, then through the soft score term in quantization loss and backward. The implementation includes a geometry-off Euclidean path and a behaviour-off path; the listed toy smoke code checks a curve-dependent score and a codebook gradient. Runtime execution was unavailable as stipulated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect found by code inspection. The discrete rank choice is nondifferentiable, but the returned differentiable Euclidean-plus-curved score is used in the straight-through quantizer’s soft term, so it is not a dead computation. The curved distance uses a finite squared-asinh form and bounded ball projection.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable; no correction required.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-73, train_rqvae.py:366-445, train_rqvae.py:553-602, train_rqvae.py:605-634 | Traced the real trainer entry point, frozen embedding and training-parquet paths, candidate-specific result paths, indexed SID export, and launcher branches. The single-card branch checks SINGLE_GPU_ENV at train_rqvae.py:107 and train_rqvae.py:609-611; the multi-card branch invokes torchrun at train_rqvae.py:612-629. Runtime execution was unavailable as stipulated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The trainer resolves the repository root from markers, writes checkpoint and SID outputs under results/stage2_RQ-VAE/COOC_RANK_FRECHET, exports rows keyed by enumerated item ID, and retains both launcher branches.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable; no correction required.

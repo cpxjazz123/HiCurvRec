@@ -1,0 +1,29 @@
+I’ll inspect the candidate tree and its launcher/trainer wiring, then report three separate checks in the requested plain-text format. I will not modify or write any files.
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, model/model.py:26-39, model/layers.py:117-178 | Traced the training-only co-occurrence construction through the per-epoch hyperbolic neighbour context into candidate-conditioned Poincaré distances, rank-sum assignment, and the quantizer. Inspected smoke_test.py:42-100 for toy graph and curved-versus-Euclidean switch checks; did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The co-occurrence-derived context and curved candidate distance meet in the same assignment computation; this is not an auxiliary loss or unused helper.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:29-40, model/layers.py:153-178, model/layers.py:276-312, train_rqvae.py:451-467 | Source-traced the real forward and backward path. In both-on mode the rank sum selects the hard code, while differentiable Euclidean-plus-hyperbolic scores feed the soft codebook estimate and quantization loss; gradients can reach the encoded batch and codebook. Inspected smoke_test.py:102-124 for the codebook-gradient and switch checks. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level dead term or evident float32 numerical hazard found on the coupled path. Projection bounds points inside the ball; the distance uses the stable asinh form, and denominators and norms are clamped. The explicit behaviour-off and geometry-off paths are present. The available smoke source asserts that switches affect scores/assignments, but this review does not claim those runtime assertions passed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:63-74, train_rqvae.py:338-371, train_rqvae.py:527-575, train_rqvae.py:579-608 | Inspected the trainer’s path constants, frozen Stage 1 embedding and Stage 0 training-parquet inputs, final SID export, DDP setup/launcher, and the GENREC_SINGLE_GPU branch. Did not execute the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found in the inspected source. Output resolves under the candidate’s promoted result directory, item IDs are carried with training batches, and export enumerates embedding rows into the SID JSON keys. The four-card launcher and single-card environment branch are both present.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:402-455` → `model/model.py:29-39` → `model/layers.py:133-158` | Traced the training path: frozen co-occurrence rows are built, item contexts are refreshed from encoder outputs, and both context and candidate codes enter the curved candidate-distance/rank assignment used by the quantizer. `smoke_test.py:42-108` supplies a toy co-occurrence graph and calls the coupled model forward/backward path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:54-59` → `train_rqvae.py:317-324` | Inspected the Poincaré log/exp iteration used to refresh contexts and the forward/backward path through `rank_assignment_scores` and `VQLayer.forward` at `layers.py:133-158, 256-292`. The assignment scores have a differentiable route to the encoder and codebook, but the barycentre update is not the stated Poincaré Fréchet update.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:57-59`
+FINDING DETAIL: `ball_exp_map` omits the Poincaré conformal factor at the base point. For curvature \(c\), the exponential map’s tangent scaling depends on \(\lambda_x=2/(1-c\|x\|^2)\); the implemented scaling is only `tanh(sqrt(c)*norm/2)/(sqrt(c)*norm)`. Consequently, the eight-step iteration called as the Fréchet barycentre in `train_rqvae.py:317-324` does not perform the specified Riemannian update except at the origin. This undermines the proposal’s curved behaviour context and makes the geometry-off comparison unreliable as a test of that mechanism.
+FINDING REPRODUCTION: Use two distinct points in the unit Poincaré ball with a nonzero base point, compute `ball_exp_map(base, tangent, 1.0)`, then compute `ball_log_map(base, result, 1.0)`. The result will not recover the input tangent in general; the discrepancy grows away from the origin. This breaks the exp/log inverse required by the barycentre iteration.
+FINDING CORRECTION: Implement the Poincaré exponential-map scale with the base-point conformal factor, preserving the existing small-norm and ball-projection safeguards; then verify exp/log recovery for nonzero bases and confirm the context refresh uses that corrected map. The specified one-run policy does not require training an ablation arm.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `results/research/issue121/20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:63-74, 338-373, 524-605` | Inspected the actual trainer entry point, frozen embedding and training-parquet paths, candidate-specific result paths, SID export/index mapping, and launcher branches. The single-card branch checks `GENREC_SINGLE_GPU` at lines 108 and 580-582; the multi-card branch launches four processes at lines 583-600.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

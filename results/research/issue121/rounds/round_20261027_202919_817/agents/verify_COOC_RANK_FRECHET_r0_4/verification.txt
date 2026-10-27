@@ -1,0 +1,29 @@
+I’ll inspect only the specified candidate tree and its integration references, without modifying files; I’ll return the requested plain-text review here.
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:248-292, train_rqvae.py:308-376, train_rqvae.py:488-508 | Traced the training-only co-occurrence rows from construction through the epoch refresh into the batch assignment scores and compared the implemented operations with the stated mechanism. The path does couple co-occurrence context and Poincaré distance in the same rank-based assignment decision.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:325-334, train_rqvae.py:358-376
+FINDING DETAIL: The implementation does not implement the specified Poincaré Fréchet barycentre or code-conditioned candidate point. It instead averages neighbours’ log-map vectors and projects the result (a tangent-space mean approximation), then ranks each code centroid by its distance to that context. The proposed assignment explicitly requires \(b_i=\arg\min_b\sum_j W_{ij}d(b,z_j)^2\) and \(q_{ik}=\operatorname{Proj}(z_i+c_k-b_i)\), with candidate distance \(d(q_{ik},b_i)\). Thus the exercised path is behaviour–geometry coupled, but it is a materially different mechanism from the submitted idea.
+FINDING REPRODUCTION: Inspect `refresh_behaviour_state` at lines 330-334: no Fréchet objective or iterative minimisation is performed. Inspect `behaviour_distances` at lines 368-376: distances are from `context` to `centroid`; no item latent `z` or candidate-conditioned `q_ik` is used.
+FINDING CORRECTION: Compute the specified barycentre with a numerically safeguarded fixed-point minimisation of the weighted squared Poincaré distances. For each item and candidate, form and project `q_ik = z_i + c_k - b_i`, then rank `d(q_ik,b_i)` alongside the Euclidean reconstruction error. Keep the behaviour-off and geometry-off modes as explicit controls.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:502-513, smoke_test.py:88-96 | Inspected the real batch path: assignment scores are passed into the model before loss computation and backward; the smoke test constructs a differentiable score path and checks that a codebook gradient is nonzero. Runtime execution is unavailable in this sandbox, so this is a code inspection, not an executed gradient proof.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:352-355, train_rqvae.py:371-376
+FINDING DETAIL: The smoke test does not establish the required switch-dependent assignment or gradient behaviour. The training assignment uses hard nested `argsort` ranks, so the rank-sum score has no gradient to `centroid`, `context`, or the encoder latent used to form the scores. The test’s nonzero codebook gradient can come from the ordinary quantization/reconstruction loss and therefore does not show that the coupled term is live. More importantly, its curved-versus-flat assertion only checks that distance values differ; it never checks that assignments or gradients change and change back across all three modes.
+FINDING REPRODUCTION: In `smoke_test.py:88-96`, replace the coupled scores with any detached assignment scores while retaining the model loss: the test’s codebook-gradient assertion can still be satisfied by the standard model loss. `smoke_test.py:72-75` checks only `allclose` on distance tensors, not mode-dependent selected codes or gradients.
+FINDING CORRECTION: Because this mechanism acts through discrete code assignment, explicitly test selected assignments under both-on, behaviour-off, and geometry-off fixtures chosen to distinguish them; do not claim differentiability of the rank operation. Separately verify finite training loss and gradients to the intended trainable model/codebook parameters through the real trainer path. Implement the corrected candidate-conditioned geometry from check (a) before validating its effect.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-71, train_rqvae.py:391-430, train_rqvae.py:617-655 | Inspected repository-root resolution, frozen Stage 0/Stage 1 inputs, training-ID handling, output indexing, and the top-level launcher. The code reads `results/stage0_build_parquet/train.parquet` and the Stage 1 embedding; it exports item-indexed JSON keys from `enumerate(sid)` into its own `results/stage2_RQ-VAE/TIGER_cooc_rank_frechet` directory.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:113-123, train_rqvae.py:629-655
+FINDING DETAIL: The launcher has no `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` setting or single-card branch. Invoking the candidate entry point directly always launches four torchrun processes with `CUDA_VISIBLE_DEVICES=0,1,2,3`; setting `GENREC_SINGLE_GPU=1` cannot select a one-card execution path. This fails the required launcher integration check.
+FINDING REPRODUCTION: Set `GENREC_SINGLE_GPU=1` and run `python train_rqvae.py` in a GPU environment. `_launch_via_torchrun()` still constructs a command with `--nproc_per_node=4` and overrides visible devices to `0,1,2,3`.
+FINDING CORRECTION: Add the required `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` branch to the entry-point launcher. When it is set, bypass the four-card torchrun launch and run the trainer on the single visible card; retain the existing four-card launch otherwise.

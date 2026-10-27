@@ -1,0 +1,17 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: COOC_RANK_FRECHET/train_rqvae.py:250-297 -> COOC_RANK_FRECHET/train_rqvae.py:461-480 -> COOC_RANK_FRECHET/model/model.py:32-39 -> COOC_RANK_FRECHET/model/layers.py:98-147 | Traced the frozen training-parquet co-occurrence through per-epoch context construction and the candidate-conditioned Poincaré distance into first-level code assignment. The connected behaviour/geometry path is present, but the co-occurrence construction does not implement the specified once-per-user pair counting for repeated items.
+FINDING SEVERITY: blocking
+FINDING LOCATION: COOC_RANK_FRECHET/train_rqvae.py:257-270
+FINDING DETAIL: The implementation builds pair counts from every occurrence in the selected sequence without deduplicating item IDs first. Thus a pair can be counted multiple times for one user, although the specification requires each pair once per user’s longest training sequence. This changes the frozen behaviour signal feeding the hyperbolic barycentres and therefore the coupled assignment.
+FINDING REPRODUCTION: Use one user sequence [a, a, b]. The meshgrid at lines 268-270 contributes the directed pair (a,b) twice and (b,a) twice, rather than once each. A repeated item in an actual sequence has the same effect.
+FINDING CORRECTION: Deduplicate each selected sequence’s item IDs before generating pair keys (while preserving the intended self-pair policy), so every unordered co-occurring pair contributes once per user.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: COOC_RANK_FRECHET/model/layers.py:122-147, 245-281; COOC_RANK_FRECHET/model/model.py:26-41; COOC_RANK_FRECHET/train_rqvae.py:474-489 | Source-traced the forward/backward path: the rank sum selects the hard code, while the differentiable Euclidean-plus-hyperbolic scores feed the soft codebook estimate and quantization loss; backward and optimizer step follow. `behaviour_off` returns Euclidean-only scores/index, and `geometry_off` substitutes a Euclidean candidate distance. The rank and straight-through paths are intentionally discrete, but the coupled score also has a live differentiable path to encoder/codebook parameters. The supplied smoke test checks finite context, changed scores under a changed graph/metric, and codebook gradients; no runtime execution was performed.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: COOC_RANK_FRECHET/train_rqvae.py:41-73, 363-435, 550-599, 602-631 | Inspected the trainer entry point and path/launcher wiring. It reads the frozen Stage 1 embedding file and Stage 0 training parquet; writes checkpoint and SID artifacts to `results/stage2_RQ-VAE/COOC_RANK_FRECHET`; exports item-ID-keyed JSON by enumerating SID rows; and retains both the four-card torchrun path and the `GENREC_SINGLE_GPU = "GENREC_SINGLE_GPU"` branch. The source paths resolve from the repository marker rather than an absolute path.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:259-296, train_rqvae.py:301-333, train_rqvae.py:467-472, model/model.py:29-40, model/layers.py:153-178, model/layers.py:276-312 | Traced the training sequence co-occurrence rows through the refreshed neighbour barycentre into the code-conditioned Poincaré distance, rank-sum assignment, and differentiable quantizer path. Also inspected smoke_test.py:42-100, which compares changed co-occurrence contexts and curved versus Euclidean distances on a toy fixture.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:467-480, model/model.py:29-40, model/layers.py:117-178, model/layers.py:301-312 | Inspected the forward, loss, backward, and optimizer path. The coupled scores affect the hard rank-sum choice and the soft straight-through gradient path; the hyperbolic distance uses a finite-at-zero asinh form. Inspected smoke_test.py:102-124 for codebook-gradient and behaviour-off wiring checks.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level trainability or numerical-stability defect found. The behaviour and geometry switches are implemented; no ablation arm is required or claimed here.
+FINDING REPRODUCTION: Not applicable. Runtime execution was not performed.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-82, train_rqvae.py:259-296, train_rqvae.py:346-361, train_rqvae.py:541-617 | Traced repository/data path resolution, training setup, result-directory selection, SID export, and launcher branches. The data inputs are stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet; the candidate writes to results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET. The launcher checks SINGLE_GPU_ENV at lines 116 and 593-599.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found in the inspected code. SID export enumerates embedding rows into item IDs at lines 569-584, and the result directory is the candidate’s own promoted-arm directory.
+FINDING REPRODUCTION: Not applicable. The trainer was not run.
+FINDING CORRECTION: Not applicable.

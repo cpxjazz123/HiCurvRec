@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, train_rqvae.py:442-455, model/model.py:26-40, model/layers.py:108-165, model/layers.py:263-299 | Traced the training-only co-occurrence construction through per-epoch hyperbolic barycentre refresh and into the rank-based first-code assignment and its differentiable score path. The geometry-off and behaviour-off switches are explicitly wired at model/layers.py:122-124 and model/layers.py:158-160.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable; the inspected path computes the training co-occurrence context, uses Poincaré operations to produce code-conditioned candidate distances, and feeds those distances into the assignment decision.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:29-40, model/layers.py:108-165, model/layers.py:271-299, train_rqvae.py:448-463, smoke_test.py:102-124 | Inspected the forward/backward wiring and the source-level smoke checks. The rank sum selects the code; the differentiable negative distance scores also feed the soft codebook estimate and quantization loss. The Poincaré distance uses guarded denominators and the finite-gradient asinh form at model/layers.py:125-137. The smoke test checks codebook gradient reachability and switch wiring, but I did not run it or the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level defect found that makes the coupled score dead, disconnected from gradients, or numerically unstable by inspection. Runtime execution was not performed.
+FINDING REPRODUCTION: Not applicable; the environment limitation prevents execution, and runtime proof is assigned to the stated MCP one-epoch gradient smoke.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-355, train_rqvae.py:524-573, train_rqvae.py:576-605 | Inspected the entry point, frozen Stage 0 parquet and embedding paths, candidate-specific result paths, SID export/index construction, and launcher branches. The single-card branch checks SINGLE_GPU_ENV, whose value is "GENREC_SINGLE_GPU", at train_rqvae.py:103-108 and train_rqvae.py:576-582.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. SIDs are emitted as item-id-indexed rows, with the corresponding JSON keyed by enumerated item ID. Trainer outputs resolve under this candidate’s results/stage2_RQ-VAE/COOC_RANK_FRECHET directory.
+FINDING REPRODUCTION: Not applicable; the trainer and launcher could not be run in this environment.
+FINDING CORRECTION: None.

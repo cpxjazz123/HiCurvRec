@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288, train_rqvae.py:293-325, model/model.py:29-40, model/layers.py:117-178, model/layers.py:284-312 | Traced frozen training-sequence co-occurrence rows into per-item hyperbolic contexts, then into code-conditioned Poincaré distances and rank-based first-level assignment. The assignment scores also feed the quantizer’s straight-through path. The smoke-test source exercises co-occurrence and curved-vs-Euclidean scoring at smoke_test.py:42-100.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-and-geometry pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:153-178, model/layers.py:284-312, train_rqvae.py:451-467 | The hard index comes from the rank sum; differentiable negative Euclidean-plus-hyperbolic scores form a soft code mixture whose straight-through gradient reaches the encoder and codebook. The behaviour-off branch returns plain Euclidean assignment and scores; geometry-off substitutes Euclidean context and candidate distances. The smoke test checks finite context and nonzero codebook gradient at smoke_test.py:63-68 and :102-110, and checks switch effects at :112-124.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 numerical hazard found by code inspection. The gradient smoke is present as source, but was not executed here.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:42-74, train_rqvae.py:338-410, train_rqvae.py:527-603 | Inspected repository-root and result-path resolution, frozen embedding/train-parquet inputs, trainer loop, SID export, and launcher branches. The checked-in run metrics record a completed 3000-epoch run, but its export paths point to the baseline directory.
+FINDING SEVERITY: blocking
+FINDING LOCATION: logs/training_metrics.jsonl:3003
+FINDING DETAIL: The completed run records `output_sid` and `output_json` under `results/stage2_RQ-VAE/TIGER_RQ-VAE/`, the baseline directory, rather than this candidate’s directory. This conflicts with the inspected trainer’s current `ARM_NAME = "TIGER_COOC_RANK_FRECHET"` at train_rqvae.py:65 and `RESULT_DIR` construction at :66. The checked-in run artifact therefore does not establish that the candidate trainer wrote its export to its own result directory; if this is the run used for promotion, it wrote into the baseline location.
+FINDING REPRODUCTION: Read `logs/training_metrics.jsonl` line 3003 and compare its `output_sid`/`output_json` paths with `train_rqvae.py:65-71`. The paths name `TIGER_RQ-VAE`, while the current source names `TIGER_COOC_RANK_FRECHET`.
+FINDING CORRECTION: Re-run the candidate trainer with its candidate-specific `ARM_NAME` and verify the resulting metrics and both exported files resolve under `results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/` (or the exact promoted tree name). Do not use the baseline export as this candidate’s SID output.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:250-300, train_rqvae.py:471-484, model/model.py:29-40, model/layers.py:127-152 | Traced training-sequence co-occurrence rows into the per-item context, then into rank-based code assignment and the quantizer. In both-on mode, each candidate’s code-conditioned point is compared with the behaviour context using a Poincaré distance; the resulting behaviour-dependent candidate scores are passed into the first quantization level. No runtime execution was possible in this environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:38-73, model/layers.py:98-124, model/layers.py:127-152, model/layers.py:250-286, train_rqvae.py:479-493 | Inspected the differentiable score path from encoded representations and code vectors through the straight-through quantizer and training loss. The rank-based hard choice is nondifferentiable, but the code also uses differentiable candidate scores in the quantizer’s soft straight-through path. The Fréchet barycentre iteration itself has an incorrect log-map direction.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:41-45, model/layers.py:69-72
+FINDING DETAIL: `ball_log_map(base, point)` computes `ball_add(base, -point)`, which points from `point` toward `base`, rather than the tangent from `base` toward `point`. `frechet_mean` then averages those reversed vectors and applies them with `ball_exp_map`, moving its estimate away from the neighbours instead of toward them. This makes the context used in the coupled ranking an incorrect barycentre and can drive the iteration toward the ball boundary; the current clamps can conceal that divergence rather than correct it.
+FINDING REPRODUCTION: Take a one-dimensional ball point `base=0` and a neighbour `point=a` for any nonzero `0 < a < 1`. The implemented log map returns a negative tangent, and the exp-map update moves the estimate below zero—away from `a`. With a single positive-weight neighbour, a Fréchet mean should return that neighbour.
+FINDING CORRECTION: Implement the Poincaré log map with the tangent direction from `base` to `point` (for example, use `(-base) ⊕ point` in the Mobius difference), then verify that a one-point weighted mean returns that point and that a multi-point iteration remains finite and moves toward its neighbours. The environment’s lack of PyTorch/shell prevents runtime gradient verification; this is a source-level correctness defect.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-73, train_rqvae.py:366-445, train_rqvae.py:553-634 | Inspected repository-root and candidate result-path resolution, frozen embedding/train-parquet inputs, training setup, SID export, and launcher branches. The result path names this candidate; export enumerates embedding rows into item-ID keys; the single-card branch checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 107 and 609-611, and the default branch launches four ranks. This was a code inspection, not a trainer execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

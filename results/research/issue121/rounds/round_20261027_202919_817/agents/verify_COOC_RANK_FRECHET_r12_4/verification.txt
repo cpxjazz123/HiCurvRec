@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:259-296,301-333,453-455,467-472 -> results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:29-39 -> results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:117-178,284-312 | Inspected the trainer’s frozen training-sequence co-occurrence construction, per-epoch neighbour-representation barycentre refresh, and the forward assignment path into the rank-sum decision and straight-through score path. Also inspected the toy wiring checks in smoke_test.py:42-100. I could not execute them in this environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:117-178,284-312 | Traced how the code-conditioned Poincaré distance contributes to per-candidate scores, how the rank sum selects the hard index, and how the score softmax reaches the encoder and first codebook through the quantizer’s differentiable path. The smoke test at smoke_test.py:102-124 checks codebook gradients and compares the behaviour-off assignment; runtime execution was unavailable.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 numerical hazard found by inspection. The context is intentionally refreshed under no_grad, while its values still condition the differentiable candidate-distance computation.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:44-82,259-296,346-412,541-590,593-622 | Inspected root and candidate result-path resolution, the frozen embedding and training-parquet paths, export indexing by embedding row, final SID JSON generation, and both torchrun and SINGLE_GPU_ENV launcher branches. No trainer execution was possible here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The trainer targets its candidate-specific results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET directory, writes SID rows keyed by enumerated item IDs, and returns without launching torchrun when GENREC_SINGLE_GPU is "1".
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

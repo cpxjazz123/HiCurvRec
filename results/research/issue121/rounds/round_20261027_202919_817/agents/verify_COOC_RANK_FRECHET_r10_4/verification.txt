@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:251-288,293-325,445-457 -> /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:29-39 -> /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:117-178 | Traced the frozen training-sequence co-occurrence rows into per-epoch neighbour contexts, then into the model’s first-level rank-assignment path. The candidate-conditioned Poincaré distance participates in the rank sum that selects the code; the returned scores also feed the quantizer’s straight-through gradient path. Reviewed the toy and batch checks in smoke_test.py:42-128; did not execute them or the trainer.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:153-178,276-312 -> /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:26-41 | Inspected the forward/backward graph statically and reviewed smoke_test.py:102-124. The hard code index comes from the combined ranks; differentiable Euclidean-plus-curved scores feed the soft candidate assignment and quantizer loss. The behaviour-off switch reduces assignment to Euclidean nearest-code selection, and geometry-off replaces the curved candidate distance with its Euclidean counterpart. Numerical safeguards include ball projection, denominator clamps and the stable asinh distance expression.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by code inspection. Runtime finite-loss and gradient execution was not performed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:42-74,338-410,527-608 | Traced the trainer’s repository-root discovery, frozen embedding and Stage 0 training-parquet paths, candidate-specific result paths, item-indexed SID export, and launcher branches. The single-card branch explicitly checks SINGLE_GPU_ENV at lines 579-585. The export enumerates every embedding row as its item ID and writes both NPY and JSON under this candidate’s required promoted result directory. Trainer execution and artifact validation were not performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:251-288,442-455 | Traced the frozen training-sequence co-occurrence rows into per-item curved contexts, then through `RQVAE.forward` to the rank assignment in `model/layers.py:133-158`; the smoke fixture also constructs co-occurrence contexts and compares curved and Euclidean distances in `smoke_test.py:42-98`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The code has one connected assignment pathway: training-only co-occurrence determines the neighbour context, and the code-conditioned Poincaré distance participates in candidate rank selection. It is not an auxiliary loss or an unused import. No runtime trainer execution was performed.
+FINDING REPRODUCTION: Source trace: `train_rqvae.py:402-405` builds the frozen rows; `train_rqvae.py:442-455` refreshes and passes the context; `model/model.py:32-39` calls rank scoring; `model/layers.py:149-158` ranks Euclidean error and curved behaviour distance.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:104-158,256-292 | Source-traced the score, hard assignment, straight-through quantizer, and auxiliary soft-score gradient; inspected the smoke assertions at `smoke_test.py:70-108`. No trainer execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:70-108
+FINDING DETAIL: The smoke test does not establish the requested switch-effect check. It compares curved and flat *scores* and distances, but never asserts that the assignments or gradients change when behaviour is switched off or geometry is replaced by Euclidean distance. Its gradient assertion only checks that some codebook gradient is nonzero, which the ordinary quantization loss can produce even if the coupled term is dead. The implementation does include the switches, and the source path is differentiable through the soft score, but this test does not distinguish that coupled gradient from the baseline quantizer gradient.
+FINDING REPRODUCTION: Run the smoke check and observe that `curved_index` and `flat_index` are never compared (`smoke_test.py:72-82`), nor are `behaviour_off` assignments/gradients computed; the sole gradient assertion is `gradient.abs().sum() > 0` (`smoke_test.py:100-108`). A minimal counterexample is a fixture where both modes choose the same code: the current assertions still pass even if the coupling never changes the hard assignment.
+FINDING CORRECTION: Extend the wiring check to use a deterministic fixture that demonstrates a changed hard assignment with `both_on` versus `behaviour_off` and with `both_on` versus `geometry_off`; compare the coupled contribution’s gradients against those switches as well. Keep this as a smoke check only, not a trained ablation arm or a parameter sweep.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-74,338-405,524-604 | Inspected the trainer’s frozen embedding and parquet inputs, promoted-arm output paths, indexed SID export, and launcher branches, including the `GENREC_SINGLE_GPU` check. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The input paths resolve from the repository root to the frozen Stage 1 embeddings and Stage 0 training parquet (`train_rqvae.py:68-71`). Checkpoint and SID outputs target this candidate’s promoted result directory (`train_rqvae.py:63-72,531-567`); JSON keys are enumerated item IDs. The launcher returns for an existing torchrun process and for `GENREC_SINGLE_GPU=1`, otherwise invokes four-card torchrun (`train_rqvae.py:576-605`). The source does write its own named training log under `stage2_RQ-VAE/COOC_RANK_FRECHET/logs` (`train_rqvae.py:73-74,583-599`), not into another candidate’s result directory.
+FINDING REPRODUCTION: Static path and control-flow inspection of the cited lines; the sandbox constraints preclude running the trainer or validating generated files.
+FINDING CORRECTION: none

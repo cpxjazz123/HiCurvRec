@@ -1,0 +1,28 @@
+I’ll inspect the candidate tree and trace the assignment path, trainer/data/export integration, and launcher branches. I won’t write files; I’ll return the requested plain-text report here.
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:250-297, 423-431, 461-481 -> results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:32-39 -> results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:98-147, 253-280 | Traced the trainer’s frozen training-sequence co-occurrence rows through per-epoch context refresh and rank-based assignment, including the code-conditioned Poincaré distance and its score path. The source includes a toy wiring check at smoke_test.py:42-103; I inspected it but did not execute it.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:265-295
+FINDING DETAIL: The co-occurrence builder counts a pair once per pair of sequence positions, not once per user. Repeated occurrences of distinct items therefore inflate C_ij, contrary to the specified once-per-user co-occurrence signal. The resulting weights and neighbour selection can depend on repetition counts rather than just whether the pair co-occurs in that user’s longest sequence.
+FINDING REPRODUCTION: Pass a one-user frame whose longest sequence is [0, 1, 0, 1] to build_cooccurrence. The implementation emits two directed occurrences each for (0,1) and (1,0), so their counts are 2 rather than the specified 1 per directed pair for that user.
+FINDING CORRECTION: Deduplicate item IDs within each user’s selected longest sequence before generating pair keys, then count each distinct directed pair once per user and apply the specified row normalization.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r2_4/verification.txt | Code-inspected the forward/backward wiring; did not execute runtime tests. The encoder and code vectors feed differentiable Euclidean and curved candidate scores at model/layers.py:122-147. Those scores enter the straight-through/soft quantizer path at model/layers.py:253-280, and the trainer backpropagates the resulting loss at train_rqvae.py:474-489. The behaviour-off and geometry-off branches are explicit at model/layers.py:140-147 and 112-119. The inspected formulas project points inside the ball and bound the distance denominator; I found no dead coupled term or evident float32 overflow/NaN hazard in this path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No trainability defect identified by source inspection. No forward/backward runtime execution was performed.
+FINDING REPRODUCTION: Not applicable; this review did not execute the smoke test or trainer.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261027_202919_817/agents/verify_COOC_RANK_FRECHET_r2_4/verification.txt | Inspected the trainer entry point, path constants, export, and launcher branches. The trainer uses the repository’s stage1 embedding file and Stage 0 train parquet at train_rqvae.py:62-70, 377-384; exports item-indexed SIDs and JSON into the candidate’s required results/stage2_RQ-VAE/COOC_RANK_FRECHET directory at train_rqvae.py:550-595; and has torchrun and GENREC_SINGLE_GPU branches at train_rqvae.py:602-631. The single-card branch checks SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at lines 107 and 606-608. This is a static inspection; the trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified by source inspection. The output directory is the candidate’s required Stage 2 result directory, not a baseline or another candidate’s directory.
+FINDING REPRODUCTION: Not applicable; this review did not execute the trainer or distributed launcher.
+FINDING CORRECTION: Not applicable.

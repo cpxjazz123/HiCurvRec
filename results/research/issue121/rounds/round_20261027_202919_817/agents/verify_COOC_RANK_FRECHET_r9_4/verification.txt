@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:402-447 → model/model.py:32-39 → model/layers.py:108-169 | Traced the frozen co-occurrence construction, per-epoch context refresh, and first-level assignment score. The checked-in smoke test also builds two toy co-occurrence graphs and compares curved and Euclidean distance scores at smoke_test.py:42-100; it does not execute the real trainer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:38-59
+FINDING DETAIL: The context is described and used as a Poincaré Fréchet barycentre, but the implemented log and exponential maps omit the base-point conformal factor. In the Poincaré ball, the log map at base x includes 1/λ_x, and the exponential map includes λ_x, where λ_x = 2 / (1 − c||x||²). These implementations instead use origin-based factors at every base point, so the iteration in train_rqvae.py:317-324 is not the specified Riemannian barycentre computation. The behaviour signal and curved distance do meet in candidate scoring, but the behaviour context feeding that pathway is not computed by the stated curved operation.
+FINDING REPRODUCTION: Use two or more non-identical points with positive weights whose current estimate is not the origin. Evaluate ball_log_map(base, point) and ball_exp_map(base, tangent) for that base: the implemented maps omit λ_base and do not implement the Poincaré tangent displacement and its inverse. Repeating the refresh iteration therefore does not establish the specified Fréchet barycentre.
+FINDING CORRECTION: Implement the Poincaré log and exponential maps with the base-point conformal factor and retain the projection/numerical safeguards; use those corrected maps in the barycentre iteration.
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/layers.py:144-169, 267-303 | Source inspection shows that the hard assignment is the rank sum, while the differentiable score is consumed by the soft straight-through path at lines 295-302. The smoke test’s forward/backward path at smoke_test.py:102-110 asserts a nonzero codebook gradient. The test also checks that behaviour-off is the Euclidean assignment and that the on/off scores differ at lines 112-124. No trainer run was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No separate trainability defect found by code inspection. The behaviour-conditioned score depends differentiably on the encoded item and candidate code; the context itself is refreshed under no_grad, but is still an input to the score. The hard assignment remains discrete, while the soft score path provides gradients. The checked-in smoke test does not assert that switching the curve off changes the final assignment or the gradients, only that curved and Euclidean distance scores differ; however, the source has a geometry_off branch and uses its resulting score on the same path.
+FINDING REPRODUCTION: The specified GPU smoke can verify finite loss and gradients on the real trainer before the full run; the available source-only smoke test is not that real-trainer runtime proof.
+FINDING CORRECTION: none
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:42-73, 338-371, 527-575, 579-608 | Inspected repository-root and result-path resolution, frozen embedding and training-data paths, training setup, indexed SID export, distributed teardown, and launcher branches. Confirmed the single-card branch reads SINGLE_GPU_ENV at lines 103-108 and 583-585. Did not run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The result directory resolves to results/stage2_RQ-VAE/COOC_RANK_FRECHET, and the trainer exports item-indexed SIDs with an explicit uniqueness check. The launcher retains the four-card torchrun path and the GENREC_SINGLE_GPU single-card bypass.
+FINDING REPRODUCTION: Source inspection of the cited entry-point, launcher, and export paths; execution was not performed.
+FINDING CORRECTION: none

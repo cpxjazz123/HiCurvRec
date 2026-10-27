@@ -1,0 +1,1739 @@
+{
+  "decision_at": 1793094750.7167428,
+  "decision_hash": "8acb70ff0e90e4b9ce5f1619c9db6b911feed05ab4656ade305e6ca98ae13018",
+  "evidence": {
+    "COOC_RANK_FRECHET": {
+      "bundle_sha256": "aa3d562fb4e0725909626480275139689c353044d091640a12df199c25bc35e8",
+      "literature_sha256": "a8a64f7679ba81833ec9094fbd901f3a8016d9192afec9715aeb69a4861ab7d7",
+      "math_sha256": "6b97f17f08c7f348175f5bd6883c40fbbc7d1276b50ca7e610477ecd0d8373f2",
+      "probe_sha256": "f3c01fc0b3a4393e43b2d71fb9199e17597c652ddadbe8ea2a056b7914baa1cf"
+    },
+    "co_rank_all_levels": {
+      "bundle_sha256": "07292dc6f340e4fe1a571f8ab4599f0b6673d6f41df1f4ec44b3feeeadd52f54",
+      "literature_sha256": "d32c184b8d8ddb3a7e2d84e9d76ac97ca5a8d0a9ea6b7bc017d375807c62097e",
+      "math_sha256": "3fa1303c954fa96c9b9dc66bbc2dc61b96afbe3274c708fd392e114c8f3efd89",
+      "probe_sha256": "f572ffa4b37e48168fab13d8f1af7e8976256e6793363e36e827ddd47da3cea8"
+    },
+    "co_rank_coarse": {
+      "bundle_sha256": "ec0f61c769df48addc536286bac5cbe033ea843d52594777ce672b66dfde373f",
+      "literature_sha256": "d8472a0188caa87bbfe5a62b1368e45f364733e37f6febd5b93e78b83b8d4cdc",
+      "math_sha256": "cb3582a2077d15be0d57a9cd6394e07aea901196e99f287252d05ba97f1c1123",
+      "probe_sha256": "3a9882dc39ec661b02ecec40416e9b7dd0a65a3c0c83f86a1ba819cc9b3d4593"
+    },
+    "cofrechet_rank": {
+      "bundle_sha256": "4b0a0e5f748be2b58f4fa94cafc883d35ec28ffb4aee1d25eb31e475edbf899d",
+      "literature_sha256": "1009614824ec42e2a977e90f39b7d7478f6741757142852a9786c7927fdef1b0",
+      "math_sha256": "f7e176400f77468dabebdbdef09ab5a7d8c3f006cc92d0385ea80a026ab89aaf",
+      "probe_sha256": "1cea6e1d50ab203a84b30d24099b12111a15a1f79deedecbf0012bd2d722fe46"
+    },
+    "cofreq_frechet_rank": {
+      "bundle_sha256": "9446d10c23dec68cdf30938b30228b71bdb203ade9cf18e442173c74d2a23067",
+      "literature_sha256": "dbd315344003fdb544171272dbba62b7d3446a53500231d30616a842826f7886",
+      "math_sha256": "c7787c1bc868947183cc6a683e9e2e4853270ef1a8a3b646a0db39675bdfff88",
+      "probe_sha256": "726c48eed19deedd5417bb598817930a73298f984a88733927ff7373a8b73954"
+    },
+    "cofreq_tangent_rank": {
+      "bundle_sha256": "88a0d46b1095a390632b26271865e4cee51a9355685bd9082283b947910b8837",
+      "literature_sha256": "7aaa8e61e127a5b987afd6e363e0a86aaa646deced34d6148380f0ee5d0507ac",
+      "math_sha256": "65d65d12beaa437f0f104c6163c6c929e4fad718494f2cab3fb423564783d7bc",
+      "probe_sha256": "c0f0b521f117c39de7f27a12ef55dd6dc4bb142909df6875c7f345290fe1b14a"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "co_rank_coarse",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 4.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The rank sum discards reconstruction margins, so a tiny reconstruction distinction can be overturned as readily as a large one; the evidence bundle also reports weaker Recall for prior successor-geodesic mechanisms than Euclidean baselines (E6), making geometric benefit uncertain.",
+          "scoring_2": "The rubric evidence does not directly measure that this particular symmetric co-occurrence graph predicts useful next-item roles; measured successor-entropy/cohort evidence is supportive but not the same statistic.",
+          "scoring_3": "Rank fusion discards reconstruction and distance margins, and E5 supports successor concentration rather than proving this symmetric co-occurrence graph predicts the relevant transitions; novelty against the full mechanism ledger is not present in the supplied bundle."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4 because the proposal computes a leak-excluded co-occurrence graph (E1-E3) and the bundle has auditable train-only cohort/profile and graph statistics (E9-E11), though those statistics do not directly validate this exact co-occurrence hypothesis. geometry_necessity=3: candidate code mapped into the ball is compared to a hyperbolic barycentre, but no demonstrated advantage over the matched Euclidean rank control is given. novelty=2: coarse-level behavior/geodesic coupling is close to the measured successor-geodesic coarse family in E6, with different behavior statistic and rank fusion. downstream_mechanism=4: first-token assignment can change, potentially changing prefix survival and next-item beam reachability; E6 shows prefix survival matters, but direction is only hypothesized. falsifiability=4: three switches and assignment/prefix/Recall observables are specified; a refutation is no assignment/diagnostic movement or failure of the sole Stage3 criterion, while no arms are trained. implementability=3: cost and chunking are stated, but numerical guards for projection, barycentre convergence and empty neighborhoods are not fully fixed. exploration_value=2: modest coarse-level variation. UNKNOWN: exact co-occurrence support coverage and matched-control geometric necessity; bounded checks are graph coverage/degree audit and static comparison of the specified curved score with its Euclidean counterpart, not extra training runs.",
+          "scoring_2": "behavior_evidence=3 because E5/E9 provide plausible train-side behavioural structure but not audited direct support for this graph's SID hypothesis. geometry_necessity=3: the candidate-dependent curved distance is real, but E15's matched Euclidean comparison does not establish necessity or rule out equivalent rank orderings. novelty=3: rank fusion at coarse RQ assignment is computationally distinct as stated; no traceable cited-work/ledger comparison is supplied here. downstream_mechanism=4: altered coarse assignment can alter the generated prefix and beam survival. falsifiability=4: behaviour-off, Euclidean-off, both-on and assignment/prefix diagnostic are specified; no ablation arm is allowed. implementability=3: ranks and barycentre are specified, but safeguards/convergence and actual budget overhead are not fully grounded. exploration_value=3: a distinct assignment mechanism with a diagnostic failure lesson.",
+          "scoring_3": "E5 gives a measured, stratified successor-entropy statistic, but it is indirect evidence for symmetric co-occurrence (3, not 4+). E12-E15 specify actual curved candidate scoring and a matched Euclidean control, so the curve plausibly changes the computation; necessity beyond Euclidean is not established (3). The first-layer assignment-to-prefix-to-beam pathway is explicit (4), and the three switches plus a single Stage-3 judgement are stated (3). Barycentre safeguards, implementation details and frozen-scale work are partly specified but no validated runtime/numerical method is evidenced (3). Novelty and exploration are UNKNOWN relative to prior-art/ledger: bounded check is compare this exact rank-sum computation against the recorded successor-geodesic/cohesion mechanisms and cited work; no such ledger is supplied here. E6 shows relevant beam failure, not a prediction of this candidate's Recall; no Recall prediction is made."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only symmetric co-occurrence is specified and enters the first-level candidate choice through a code-dependent Poincare-distance rank; switches are stated for behaviour-off, Euclidean geometry-off and both-on comparisons. The requested switches need to be wired explicitly for those exact controls; only the both-on candidate is trained.",
+          "scoring_2": "Training-only symmetric co-occurrence is defined; candidate-dependent Poincare distance ranks the first-level candidates in the same decision as reconstruction. Behaviour-off, Euclidean geometry-off, and both-on comparisons are identifiable switches, though no ablation is run.",
+          "scoring_3": "Training-only symmetric co-occurrence is explicitly counted and row-normalized; a fixed-curvature Poincare Frechet context and candidate-code geodesic-distance rank affect the first-level argmin alongside reconstruction. Behaviour-off, Euclidean-geometry-off, and both-on switches are required by the contract but no ablation arm is trained."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.2,
+          "scoring_2": 3.25,
+          "scoring_3": 2.9
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.0
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 0.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "co_rank_all_levels",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 2.0,
+          "falsifiability": 4.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "Reusing the same absolute neighbour context at every residual level may repeatedly steer residual assignments toward a context unrelated to the current residual, compounding bias when residual reconstruction distinctions are already small.",
+          "scoring_2": "The same absolute context is compared with every level's codebook while residual inputs change; repeated rank pressure may dominate later residual assignment without a level-specific behavioural rationale.",
+          "scoring_3": "Reusing the same neighbour context at every residual level may repeatedly favor the same codes and overwhelm small residual distinctions; the supplied evidence does not establish suffix-level benefit or runtime within budget."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4: explicit train-only graph construction and measured behavior evidence are available (E1-E3, E9-E11), but not a direct measured test of this exact signal. geometry_necessity=3: Poincare distances enter each candidate ranking, while superiority to matched Euclidean scoring is not established. novelty=2: extension of co-occurrence rank fusion from coarse to all levels is a routine placement variation, and prior behavior/geodesic mechanisms are in E6. downstream_mechanism=4: changed residual code tuples alter suffixes and potentially complete SID prediction; E6-E7 document deep-prefix survival limitations, but the expected direction remains a hypothesis. falsifiability=4: three switches, assignments, diagnostics and Stage3 threshold are stated; failure of assignment/prefix change or Stage3 threshold refutes it. implementability=3: pseudocode and asymptotic overhead are given, but projection/iteration safeguards and convergence criteria are not adequately specified. exploration_value=2: measured-family extension rather than a substantially distinct mechanism. UNKNOWN: the evidence does not quantify co-occurrence graph coverage for all training items or show geometric advantage; bounded graph coverage audit and static matched-score check resolve this without another run.",
+          "scoring_2": "behavior_evidence=3: E5/E9 support behavioural predictability generally, not the claimed benefit at every suffix level. geometry_necessity=3: Poincare distance changes candidate scores, but matched Euclidean order preservation/cancellation is not ruled out. novelty=3: applying the coupled rank decision to every residual level is a distinct placement, but cited-work and ledger comparison are absent. downstream_mechanism=4: changed level assignments change the SID tuple and could affect prefix-conditioned generation. falsifiability=4: the switches and assignment/prefix observables support a discriminating test; experiment policy forbids switch-off runs. implementability=3: equations and approximate complexity are present, while robust curvature safeguards and runtime risk remain underspecified. exploration_value=3: the all-level repetition tests a distinct over-steering failure mode.",
+          "scoring_3": "E5 supports non-uniform successor behavior but is indirect support for co-occurrence (3). E12-E16 specify curved operations and a matched Euclidean control, but do not rule out an equally effective matched transform (3). The chain through changed assignments and multi-level SIDs to prefix prediction is named (4). Three conceptual switch comparisons and judgement/failure target are present, but no detailed falsifier or matched runtime evidence (3). Implementable in broad terms, though residual/context geometry and guarded barycentre details are underspecified (3). Novelty and exploration are UNKNOWN absent a traceable prior-art/ledger comparison; bounded check: compare the per-level rank computation with already measured successor-geodesic and behaviour-cohesion mechanisms. E6 documents beam-stage headroom, not an outcome prediction."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Frozen training-sequence co-occurrence and candidate-dependent hyperbolic code distances are used at every residual assignment, with behavior-off, Euclidean and both-on switches required in code; the candidate run itself remains both-on only.",
+          "scoring_2": "Frozen train-only co-occurrence and candidate-specific Poincare distances jointly rank candidates at each residual level; the three switch settings can be represented in code, with only both-on trained.",
+          "scoring_3": "Frozen training-only co-occurrence and live neighbour representations feed a Poincare barycentre; candidate-code hyperbolic distances rank against reconstruction at every residual assignment. Behaviour-off, geometry-off/Euclidean and both-on switches must exist, with only the both-on candidate trained."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.2,
+          "scoring_2": 3.25,
+          "scoring_3": 2.9
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.0
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 2.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "disputed": [
+          "downstream_mechanism",
+          "exploration_value",
+          "falsifiability",
+          "geometry_necessity",
+          "implementability",
+          "novelty"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "cofrechet_rank",
+        "max_disagreement": 3.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 2.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 3.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 4.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 0.0,
+            "implementability": 2.0,
+            "novelty": 1.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The code-conditioned point q_ik=Proj(z_i+c_k-b_i) is an ad hoc displacement construction: it may make rank reflect candidate-code displacement rather than whether the candidate represents a useful co-occurrence relation, and the rank has no score-margin calibration.",
+          "scoring_2": "The behaviour score in the operative assignment equation is candidate-independent, contradicting the claim that the context participates in code selection.",
+          "scoring_3": "The specification contradicts itself: its initial hyperbolic score is constant over k, while the later code-conditioned displacement repairs that defect but does not fully reconcile which representation (h, c, residual) occupies the hyperbolic space; that ambiguity risks implementing a different mechanism."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4: signal construction and training-only boundary are explicit (E1-E3), and E9-E11 provide audited behavior statistics, although support is not fully specified for this exact graph. geometry_necessity=3: intrinsic Frechet context and Poincare distance are genuine curved operations, but a matched Euclidean counterpart is not enough to establish unique added value. novelty=3: candidate-conditioned displacement is computationally distinct from the cited successor-geodesic/cohesion family in E6, though still within behavior-curved assignment ranking. downstream_mechanism=4: q_ik changes candidate assignment, hence SID and recommendation prefix; diagnostics and Stage3 judgement are named. falsifiability=4: three comparisons and observable assignments/Recall are given, and a null assignment change or Recall below threshold refutes the hypothesis. implementability=4: equations, scaling, stop-gradient, tie handling, cost and ball projection are described; fixed inner-iteration stopping/safeguards remain a risk. exploration_value=3: the code-conditioned context displacement offers a distinct mechanism and an informative null. UNKNOWN: novelty against external cited work and measured graph coverage are not fully grounded by the bundle; bounded prior-art/ledger lookup and graph support audit resolve those uncertainties without additional training.",
+          "scoring_2": "behavior_evidence=3 because train-only co-occurrence is plausible and measured neighbouring evidence exists (E5/E9), but this specified computation fails to couple it. geometry_necessity=0 because the Poincare distance is constant over candidates. novelty=1 because the claimed operative mechanism collapses to reconstruction assignment plus an inert term. downstream_mechanism=1: no behaviour-driven assignment change follows. falsifiability=2: switches are discussed, but no functional behaviour-on comparison exists as written. implementability=2: code can implement the literal equation, but realizing the stated intent requires redesign. exploration_value=1: as written it is a near-repeat/inert variant. Bounded resolution: make q_ik the actual argument of the scored distance, then audit its matched Euclidean counterpart and cancellation conditions before considering a run.",
+          "scoring_3": "E5 is measured training behavior evidence but only indirectly supports within-sequence co-occurrence (3). Poincare Frechet context and distance are explicit, but the Euclidean comparator/cancellation argument is incomplete (3). The candidate-conditioned q is computationally distinct from a separate loss, but prior art/ledger support is absent (2). Downstream assignment effect is plausible, but the contradictory score definition weakens the chain (3). The three controls and failure criterion are not adequately operationalized in the proposal (2). Numerically guarded inner solve, projections, dimensions and exact residual-space mapping need resolution, so implementability needs a bounded clarification (2). Novelty/exploration are UNKNOWN; bounded check: resolve the h-versus-q definition and compare exact resulting operator with the cited and internal ledger mechanisms. No Stage 3 result is inferred from diagnostics."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Training-only symmetric co-occurrence contexts are combined with candidate-dependent curved context displacement q_ik in the actual rank-based assignment. The proposal gives both behaviour-off and Euclidean counterparts; they must exist as switches, not be trained as arms.",
+          "scoring_2": "The stated h_ik=d(exp_0(s h_i),m_i) is independent of k, so its rank is constant across candidates and behaviour cannot change the argmin. The later q_ik sentence asserts a candidate-conditioned point but does not replace h_ik in the assignment equation; a corrected equation and matched control are missing.",
+          "scoring_3": "The final stated code-conditioned point q_ik=Proj(z_i+c_k-b_i) makes the training co-occurrence context and Poincare distance candidate-dependent in the same rank-sum assignment. The earlier h_ik=d(z_i,b_i) clause is code-independent and would fail scope if implemented literally; the later q_ik clause must govern. Required behavior-off, geometry-off/Euclidean and both-on switches are not fully specified as executable switches, though only one run is allowed."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.55,
+          "scoring_2": 1.4,
+          "scoring_3": 2.55
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The stated h_ik=d(exp_0(s h_i),m_i) is independent of k, so its rank is constant across candidates and behaviour cannot change the argmin. The later q_ik sentence asserts a candidate-conditioned point but does not replace h_ik in the assignment equation; a corrected equation and matched control are missing.",
+            "scorer": "scoring_2"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.55
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 1.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [
+          "downstream_mechanism",
+          "falsifiability"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "COOC_RANK_FRECHET",
+        "max_disagreement": 3.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 4.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The specification is internally inconsistent: it first defines h_ik=d(z_i,b_i), which is constant over k, then replaces it with distance from q_ik. Implementing the initial expression rather than the correction silently removes the behavior-to-assignment pathway.",
+          "scoring_2": "The code-conditioned point adds the same item-code displacement to a shared barycentre, so any assignment change may be driven mainly by candidate displacement geometry rather than meaningful co-occurrence structure; no evidence establishes that this construction represents a useful behavioural relation.",
+          "scoring_3": "The central candidate-distance rank is mathematically code-independent as written, so the advertised coupled assignment does not occur."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4: co-occurrence computation/leak boundary are clear (E1-E3) and observed behavior statistics give plausible support (E9-E11), but not exact graph coverage for this formulation. geometry_necessity=3: barycentre and Poincare distances are explicit, but the intrinsic choice is not established against a matched Euclidean control. novelty=3: the displacement-based code-conditioned point is a distinct computational detail from prior successor-geodesic variants in E6; external prior-art traceability is absent. downstream_mechanism=4: corrected candidate ranks can change code assignments and SID predictions; prefix survival and Stage3 are appropriate observables. falsifiability=4: controls, assignment diagnostics and Stage3 criterion are stated; implementation of the uncorrected expression would invalidate rather than test the mechanism. implementability=3: equations and safeguards/cost are partly stated, but the contradictory distance definition and cache/recompute ambiguity create implementation risk. exploration_value=3: a potentially informative candidate-conditioned displacement, if implemented consistently. UNKNOWN: direct evidence of graph support and external novelty is unavailable; bounded graph coverage audit and prior-art/ledger check would resolve it without runs.",
+          "scoring_2": "behavior_evidence=3: E5/E9 offer plausible behavioural support but not direct audited evidence for co-occurrence barycentres. geometry_necessity=3: explicit curved Frechet and candidate-conditioned distance computations are present, but their added value over a matched Euclidean construction and rank cancellations are not ruled out. novelty=3: candidate-conditioned displacement plus Frechet context is a distinct computation in this bundle; traceable prior-art/ledger analysis is absent. downstream_mechanism=4: changed assignments can alter the SID sequence and generated prefix. falsifiability=4: three switches and assignment diagnostics give a discriminating check without requiring forbidden ablations. implementability=3: computation is specified, but the barycentre solver's numerical safeguards and wall-time fit require bounded verification. exploration_value=3: tests a distinct context-conditioned candidate geometry.",
+          "scoring_3": "E5 supplies measured but indirect support for the behavior motivation (3). The curved barycentre/distance are real operations (3), but geometry cannot affect code ranking under this definition. Novelty is UNKNOWN versus the ledger; bounded check: inspect the actual scoring expression and compare against existing mechanisms (2). The stated recommendation chain is only a hope because assignment is unchanged (1). Although controls are mentioned conceptually, no valid both-on coupled computation or failure discriminator is available (2). Implementation would require redesigning the distance to depend on k (2). Exploration value is limited because the specified core effect cancels; no prediction of Recall is made."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It specifies training-only co-occurrence and a code-dependent hyperbolic rank via q_ik=Proj(z_i+c_k-b_i), which couples behavior and curvature in the assignment. The earlier h_ik expression is candidate-independent, but the subsequent explicit q_ik correction resolves that defect; the controls must implement the corrected form.",
+          "scoring_2": "Training-only co-occurrence forms the Frechet context, and candidate-conditioned q_ik=Proj(z_i+c_k-b_i) is compared to that context with Poincare distance in the same rank-sum decision. The switches can be implemented; only both-on is trained under policy.",
+          "scoring_3": "Although it computes training-only co-occurrence barycentres and Poincare distances, the specified h_ik=d(q_ik,b_i) is constant across candidate k because q_ik is not used in that distance. Thus behaviour/geometry do not alter the core code choice. Missing: a candidate-dependent curved score in the actual assignment; the three switches cannot repair a constant score. No ablation arm should be trained."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.45,
+          "scoring_2": 3.25,
+          "scoring_3": 2.25
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Although it computes training-only co-occurrence barycentres and Poincare distances, the specified h_ik=d(q_ik,b_i) is constant across candidate k because q_ik is not used in that distance. Thus behaviour/geometry do not alter the core code choice. Missing: a candidate-dependent curved score in the actual assignment; the three switches cannot repair a constant score. No ablation arm should be trained.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 2,
+        "weighted_score": 3.25
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 2.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [
+          "geometry_necessity"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "cofreq_frechet_rank",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 2.0,
+          "implementability": 3.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 2.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 0.0,
+            "implementability": 2.0,
+            "novelty": 1.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The proposed behavior score is constant across candidate codes, making the claimed behavior-conditioned assignment mathematically ineffective; despite the explicit claim otherwise, the equation uses only x_i and b_i.",
+          "scoring_2": "The specified behaviour rank is constant over k, making the operative argmin exactly the reconstruction-error argmin.",
+          "scoring_3": "As written, the behavior rank cancels from every code comparison, contradicting the stated direct assignment influence."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4: training-only co-occurrence is concretely computed and E9-E11 offer measured behavioral evidence, though the exact co-occurrence support is not fully audited. geometry_necessity=2: a curved operation is present, but it does not affect candidate selection and thus is not necessary to the claimed mechanism. novelty=2: nominally a co-occurrence rank variation, but its operative computation cancels; it is close to the related rank-fusion family and not distinct in effect. downstream_mechanism=2: there is a gap because the assignment cannot respond to the context rank. falsifiability=3: behavior/geometry/both-on controls and a failure criterion can be stated, but as written the controls expose a constant term rather than the claimed coupled mechanism. implementability=3: the equation is implementable but contradicts its asserted code dependence; numerical projection and Frechet safeguards are incomplete. exploration_value=1: near-repeat of rank fusion with an algebraically inert behavior term. UNKNOWN: none needed to establish the cancellation; bounded check is a static unit test asserting candidate-wise variation of h across a nonempty context, without training.",
+          "scoring_2": "behavior_evidence=3 because the train-only signal is plausible and E5/E9 support related behavioural structure, but the proposed score cannot use it. geometry_necessity=0: curved distance is computed but cancels from candidate ranking. novelty=1: literal computation is an inert auxiliary rank, not the claimed new assignment mechanism. downstream_mechanism=1: the stated pathway has no behaviour-induced SID change. falsifiability=2: the switches are named but the behaviour-on arm is functionally equivalent to behaviour-off. implementability=2: literal code is straightforward, but the intended coupling needs redesign. exploration_value=1: near-repeat with a mathematical cancellation. Bounded resolution: replace h_ik with a candidate-dependent curved quantity and confirm nonconstant candidate scores; then specify a matched Euclidean control.",
+          "scoring_3": "E5 offers measured but indirect support for co-occurrence, not direct evidence that this row definition predicts next-item roles (3). Poincare Frechet context is explicit, yet its candidate-independent distance is reproducible as a constant Euclidean score and contributes no curved assignment computation (2). Novelty is UNKNOWN; bounded check: compare the actual scoring operator with the internal ledger after fixing candidate dependence (2). No effective downstream assignment chain exists as specified (1). Three comparisons are suggested but not operationally matched and the mechanism has an immediate algebraic falsifier (2). The computation is broadly implementable but would need a candidate-dependent redesign to meet objective (3). No Recall outcome is predicted."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "h_ik=d_B(phi(x_i),b_i) contains no candidate code k, so its rank is identical for all codes and cannot couple behavior to the assignment. Empty-row fallback is specified, but the nonempty-row behavior term also cancels. To qualify, define a candidate-dependent curved point/distance and make behavior-off, geometry-off and both-on switches operational.",
+          "scoring_2": "h_ik=d_B(phi(x_i),b_i) does not depend on candidate k. Its rank is therefore identical for every candidate, so the co-occurrence context cannot affect the assignment. Empty-row fallback does not repair this for nonempty rows; a candidate-dependent curved score is missing.",
+          "scoring_3": "The stated hyperbolic term h_ik=d_B(phi(x_i),b_i) contains no candidate code k. Its rank is therefore the same tie for all candidates, so the co-occurrence behavior and geometry do not alter the reconstruction argmin. Missing: candidate-dependent curved scoring. The behaviour-off/geometry-off/both-on switches are not defined as functional switches for this score; no ablation should be run."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.55,
+          "scoring_2": 1.4,
+          "scoring_3": 2.15
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "h_ik=d_B(phi(x_i),b_i) contains no candidate code k, so its rank is identical for all codes and cannot couple behavior to the assignment. Empty-row fallback is specified, but the nonempty-row behavior term also cancels. To qualify, define a candidate-dependent curved point/distance and make behavior-off, geometry-off and both-on switches operational.",
+            "scorer": "scoring_1"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "h_ik=d_B(phi(x_i),b_i) does not depend on candidate k. Its rank is therefore identical for every candidate, so the co-occurrence context cannot affect the assignment. Empty-row fallback does not repair this for nonempty rows; a candidate-dependent curved score is missing.",
+            "scorer": "scoring_2"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The stated hyperbolic term h_ik=d_B(phi(x_i),b_i) contains no candidate code k. Its rank is therefore the same tie for all candidates, so the co-occurrence behavior and geometry do not alter the reconstruction argmin. Missing: candidate-dependent curved scoring. The behaviour-off/geometry-off/both-on switches are not defined as functional switches for this score; no ablation should be run.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 0,
+        "weighted_score": 2.1
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 2.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [
+          "geometry_necessity"
+        ],
+        "evidence_gaps": [],
+        "idea_id": "cofreq_tangent_rank",
+        "max_disagreement": 2.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 1.0,
+          "falsifiability": 2.0,
+          "geometry_necessity": 2.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 2.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 0.0,
+            "implementability": 2.0,
+            "novelty": 1.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_2": [
+            "E1",
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "scoring_3": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The tangent aggregation may be a real curved context computation, but the distance ranked for each candidate is the same p_i-to-b_i distance; thus the expensive geometric pathway cannot change code selection.",
+          "scoring_2": "The item-to-context distance is repeated for every code, so the behaviour term cannot change the Euclidean reconstruction argmin.",
+          "scoring_3": "The advertised tangent context and geodesic score do not participate in code discrimination because the score is identical for every candidate."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behavior_evidence=4: training-only graph definition is explicit and the bundle has measured behavior evidence (E9-E11), but not direct support for this exact co-occurrence signal. geometry_necessity=2: genuine Log/Exp and distance operations exist, yet candidate selection is unchanged by them. novelty=2: tangent-space context is a variation of the same co-occurrence ranking family, and the operative scoring term is inert. downstream_mechanism=2: no code assignment change follows from behavior when ranks are constant. falsifiability=3: the three switches can demonstrate the null and assignment diagnostics identify it, but the proposal lacks a matched operational both-on mechanism. implementability=3: the equations are implementable; boundary safeguards for p_i and curvature maps are mentioned only as risks. exploration_value=1: near-repeat whose central coupling cancels. UNKNOWN: none for cancellation; bounded check is a no-training test that verifies h varies across candidates for a nonempty graph row. A candidate-conditioned curved displacement would be a redesign, not this proposal.",
+          "scoring_2": "behavior_evidence=3: E5/E9 make train-only behavioural structure plausible, but do not rescue the candidate-independent assignment term. geometry_necessity=0 because the curved operation is assignment-inert. novelty=1 because the literal mechanism is a reconstruction rank plus a constant. downstream_mechanism=1 because no behaviour-driven code change follows. falsifiability=2: switches are described, but behaviour-off and both-on produce the same decision absent some separate effect. implementability=2: the equation is implementable, but intended coupling requires redesign and safeguards. exploration_value=1: this is an inert variant rather than a distinct effective mechanism. Bounded resolution: use a candidate-dependent geodesic score, check it varies across codes and against the matched Euclidean counterpart, then retain one-run-only evaluation policy.",
+          "scoring_3": "E5 is a measured train behavior statistic, but indirectly motivates symmetric co-occurrence (3). Log/Exp maps are explicit, but the assignment score reduces to a candidate-independent constant and a matched Euclidean control would reproduce its assignment effect (2). Novelty is UNKNOWN; bounded check: first correct candidate dependence, then compare the exact operator with cited work and ledger (2). There is no effective assignment-to-recommendation pathway as specified (1). The required three controls do not provide a valid coupled both-on comparison, and the constant-rank identity is a direct failure criterion (2). Near-boundary safeguards and dimension/space mapping are incomplete (2). The negative would mainly diagnose a specification failure, not a distinct mechanism (2). Stage 3 Recall remains the judgement; no prediction is made."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "OUT_OF_SCOPE",
+          "scoring_2": "OUT_OF_SCOPE",
+          "scoring_3": "OUT_OF_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "Although the tangent Log/Exp operations construct a context from training co-occurrence, the specified assignment score h_ik=d(p_i,b_i) is independent of k. Its behavior rank is constant across codes and cancels, so it does not computationally couple behavior and geometry to assignment. Specify a candidate-conditioned curved score and the three switches to meet scope.",
+          "scoring_2": "The specified h_ik=d_{-1}(p_i,b_i) is independent of candidate k. The tangent-space context depends on co-occurrence, but its distance rank is constant across candidate codes and cannot couple behaviour and geometry to assignment. A candidate-dependent curved scoring equation is missing.",
+          "scoring_3": "The tangent-space context b_i is computed from training co-occurrence neighbors, but the specified candidate score h_ik=d(p_i,b_i) does not depend on k. Its rank is constant across codes and cannot couple behavior or curvature to assignment. Missing: a candidate-dependent curved operation in the argmin; required switches are not concretely defined. No ablation arm is authorized."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.55,
+          "scoring_2": 1.4,
+          "scoring_3": 2.05
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "Although the tangent Log/Exp operations construct a context from training co-occurrence, the specified assignment score h_ik=d(p_i,b_i) is independent of k. Its behavior rank is constant across codes and cancels, so it does not computationally couple behavior and geometry to assignment. Specify a candidate-conditioned curved score and the three switches to meet scope.",
+            "scorer": "scoring_1"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The specified h_ik=d_{-1}(p_i,b_i) is independent of candidate k. The tangent-space context depends on co-occurrence, but its distance rank is constant across candidate codes and cannot couple behaviour and geometry to assignment. A candidate-dependent curved scoring equation is missing.",
+            "scorer": "scoring_2"
+          },
+          {
+            "label": "OUT_OF_SCOPE",
+            "reason": "The tangent-space context b_i is computed from training co-occurrence neighbors, but the specified candidate score h_ik=d(p_i,b_i) does not depend on k. Its rank is constant across codes and cannot couple behavior or curvature to assignment. Missing: a candidate-dependent curved operation in the argmin; required switches are not concretely defined. No ablation arm is authorized.",
+            "scorer": "scoring_3"
+          }
+        ],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 0,
+        "weighted_score": 2.0
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
+  "pairwise": {
+    "comparisons": [
+      {
+        "disagreement": false,
+        "pair": [
+          "COOC_RANK_FRECHET",
+          "co_rank_all_levels"
+        ],
+        "votes": {
+          "COOC_RANK_FRECHET": 3,
+          "co_rank_all_levels": 0
+        },
+        "winner": "COOC_RANK_FRECHET"
+      },
+      {
+        "disagreement": false,
+        "pair": [
+          "COOC_RANK_FRECHET",
+          "co_rank_coarse"
+        ],
+        "votes": {
+          "COOC_RANK_FRECHET": 0,
+          "co_rank_coarse": 3
+        },
+        "winner": "co_rank_coarse"
+      },
+      {
+        "disagreement": true,
+        "pair": [
+          "co_rank_all_levels",
+          "co_rank_coarse"
+        ],
+        "votes": {
+          "co_rank_all_levels": 1,
+          "co_rank_coarse": 2
+        },
+        "winner": "co_rank_coarse"
+      }
+    ],
+    "copeland": {
+      "COOC_RANK_FRECHET": 0,
+      "co_rank_all_levels": -2,
+      "co_rank_coarse": 2,
+      "cofrechet_rank": 0,
+      "cofreq_frechet_rank": 0,
+      "cofreq_tangent_rank": 0
+    },
+    "cycles": [],
+    "position_bias": {
+      "first_listed_wins": 7,
+      "second_listed_wins": 2
+    },
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "ties": []
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "ec0f61c769df48addc536286bac5cbe033ea843d52594777ce672b66dfde373f",
+      "idea_id": "co_rank_coarse",
+      "proposal_sha256": "d47494fc33372ecb66e808f5512e8c3984db70a71be4e517739d8151afdc867e"
+    },
+    {
+      "evidence_sha256": "07292dc6f340e4fe1a571f8ab4599f0b6673d6f41df1f4ec44b3feeeadd52f54",
+      "idea_id": "co_rank_all_levels",
+      "proposal_sha256": "052a18c1afea3d61a62aa1b16f99b6d91f0364789abb2b0bae0b72b444a86745"
+    },
+    {
+      "evidence_sha256": "4b0a0e5f748be2b58f4fa94cafc883d35ec28ffb4aee1d25eb31e475edbf899d",
+      "idea_id": "cofrechet_rank",
+      "proposal_sha256": "459ec6a7b18d24fabe8d88260e2ba871f684c1b452d9c4db8aa04ddb306a8e13"
+    },
+    {
+      "evidence_sha256": "aa3d562fb4e0725909626480275139689c353044d091640a12df199c25bc35e8",
+      "idea_id": "COOC_RANK_FRECHET",
+      "proposal_sha256": "9e4fd875dfb9bf3fc6e3e8b8ca27c4ef9611cf9a135035f8fcbc78301422879a"
+    },
+    {
+      "evidence_sha256": "9446d10c23dec68cdf30938b30228b71bdb203ade9cf18e442173c74d2a23067",
+      "idea_id": "cofreq_frechet_rank",
+      "proposal_sha256": "c640c100e95e9d7074050af7578a08e6e89d63c70c93c51db0339ac6693e3089"
+    },
+    {
+      "evidence_sha256": "88a0d46b1095a390632b26271865e4cee51a9355685bd9082283b947910b8837",
+      "idea_id": "cofreq_tangent_rank",
+      "proposal_sha256": "398c134ef7e7b252fa1eda8c9bbc6659d7f75769a40b762c0f50275fda1fdde6"
+    }
+  ],
+  "reviews": [
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1",
+      "scores": [
+        {
+          "counterexample": "No identity or cancellation is asserted. In a one-dimensional tangent example with two codes e1=0,e2=1 and z_i=0, context at e2 makes candidate geodesic ranks oppose reconstruction ranks, so the selected code can change; if the two candidate geodesic distances tie, behaviour has no effect for that item.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "co_rank_coarse",
+          "missing_dimensions": [],
+          "objection": "The rank sum discards reconstruction margins, so a tiny reconstruction distinction can be overturned as readily as a large one; the evidence bundle also reports weaker Recall for prior successor-geodesic mechanisms than Euclidean baselines (E6), making geometric benefit uncertain.",
+          "rationale": "behavior_evidence=4 because the proposal computes a leak-excluded co-occurrence graph (E1-E3) and the bundle has auditable train-only cohort/profile and graph statistics (E9-E11), though those statistics do not directly validate this exact co-occurrence hypothesis. geometry_necessity=3: candidate code mapped into the ball is compared to a hyperbolic barycentre, but no demonstrated advantage over the matched Euclidean rank control is given. novelty=2: coarse-level behavior/geodesic coupling is close to the measured successor-geodesic coarse family in E6, with different behavior statistic and rank fusion. downstream_mechanism=4: first-token assignment can change, potentially changing prefix survival and next-item beam reachability; E6 shows prefix survival matters, but direction is only hypothesized. falsifiability=4: three switches and assignment/prefix/Recall observables are specified; a refutation is no assignment/diagnostic movement or failure of the sole Stage3 criterion, while no arms are trained. implementability=3: cost and chunking are stated, but numerical guards for projection, barycentre convergence and empty neighborhoods are not fully fixed. exploration_value=2: modest coarse-level variation. UNKNOWN: exact co-occurrence support coverage and matched-control geometric necessity; bounded checks are graph coverage/degree audit and static comparison of the specified curved score with its Euclidean counterpart, not extra training runs.",
+          "scope_reason": "Training-only symmetric co-occurrence is specified and enters the first-level candidate choice through a code-dependent Poincare-distance rank; switches are stated for behaviour-off, Euclidean geometry-off and both-on comparisons. The requested switches need to be wired explicitly for those exact controls; only the both-on candidate is trained.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "No identity or cancellation is asserted. For two levels, if every level's candidate-to-context ranks favor code 1, then both residual choices can be driven toward code 1 even when the second residual's Euclidean best is code 2; conversely equal context distances make the behavior term inert.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "co_rank_all_levels",
+          "missing_dimensions": [],
+          "objection": "Reusing the same absolute neighbour context at every residual level may repeatedly steer residual assignments toward a context unrelated to the current residual, compounding bias when residual reconstruction distinctions are already small.",
+          "rationale": "behavior_evidence=4: explicit train-only graph construction and measured behavior evidence are available (E1-E3, E9-E11), but not a direct measured test of this exact signal. geometry_necessity=3: Poincare distances enter each candidate ranking, while superiority to matched Euclidean scoring is not established. novelty=2: extension of co-occurrence rank fusion from coarse to all levels is a routine placement variation, and prior behavior/geodesic mechanisms are in E6. downstream_mechanism=4: changed residual code tuples alter suffixes and potentially complete SID prediction; E6-E7 document deep-prefix survival limitations, but the expected direction remains a hypothesis. falsifiability=4: three switches, assignments, diagnostics and Stage3 threshold are stated; failure of assignment/prefix change or Stage3 threshold refutes it. implementability=3: pseudocode and asymptotic overhead are given, but projection/iteration safeguards and convergence criteria are not adequately specified. exploration_value=2: measured-family extension rather than a substantially distinct mechanism. UNKNOWN: the evidence does not quantify co-occurrence graph coverage for all training items or show geometric advantage; bounded graph coverage audit and static matched-score check resolve this without another run.",
+          "scope_reason": "Frozen training-sequence co-occurrence and candidate-dependent hyperbolic code distances are used at every residual assignment, with behavior-off, Euclidean and both-on switches required in code; the candidate run itself remains both-on only.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "The proposal itself identifies the relevant cancellation: if h_ik=d(phi(z_i),b_i) alone, then h_i1=h_i2 for every pair of codes, so its ranks cannot change the argmin. Minimal example: K=2, any z_i,b_i, and unequal reconstruction errors; the same constant h rank is added to both and the reconstruction winner remains winner. The code-conditioned q_ik is necessary to avoid that cancellation.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "cofrechet_rank",
+          "missing_dimensions": [],
+          "objection": "The code-conditioned point q_ik=Proj(z_i+c_k-b_i) is an ad hoc displacement construction: it may make rank reflect candidate-code displacement rather than whether the candidate represents a useful co-occurrence relation, and the rank has no score-margin calibration.",
+          "rationale": "behavior_evidence=4: signal construction and training-only boundary are explicit (E1-E3), and E9-E11 provide audited behavior statistics, although support is not fully specified for this exact graph. geometry_necessity=3: intrinsic Frechet context and Poincare distance are genuine curved operations, but a matched Euclidean counterpart is not enough to establish unique added value. novelty=3: candidate-conditioned displacement is computationally distinct from the cited successor-geodesic/cohesion family in E6, though still within behavior-curved assignment ranking. downstream_mechanism=4: q_ik changes candidate assignment, hence SID and recommendation prefix; diagnostics and Stage3 judgement are named. falsifiability=4: three comparisons and observable assignments/Recall are given, and a null assignment change or Recall below threshold refutes the hypothesis. implementability=4: equations, scaling, stop-gradient, tie handling, cost and ball projection are described; fixed inner-iteration stopping/safeguards remain a risk. exploration_value=3: the code-conditioned context displacement offers a distinct mechanism and an informative null. UNKNOWN: novelty against external cited work and measured graph coverage are not fully grounded by the bundle; bounded prior-art/ledger lookup and graph support audit resolve those uncertainties without additional training.",
+          "scope_reason": "Training-only symmetric co-occurrence contexts are combined with candidate-dependent curved context displacement q_ik in the actual rank-based assignment. The proposal gives both behaviour-off and Euclidean counterparts; they must exist as switches, not be trained as arms.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 4.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "With K=2 and any fixed z_i,b_i, h_i1=h_i2=d(z_i,b_i); adding the same rank to both candidate scores cannot alter their reconstruction ordering. Therefore the uncorrected h definition cancels exactly. The corrected q_ik can differ by code and avoid this cancellation.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "COOC_RANK_FRECHET",
+          "missing_dimensions": [],
+          "objection": "The specification is internally inconsistent: it first defines h_ik=d(z_i,b_i), which is constant over k, then replaces it with distance from q_ik. Implementing the initial expression rather than the correction silently removes the behavior-to-assignment pathway.",
+          "rationale": "behavior_evidence=4: co-occurrence computation/leak boundary are clear (E1-E3) and observed behavior statistics give plausible support (E9-E11), but not exact graph coverage for this formulation. geometry_necessity=3: barycentre and Poincare distances are explicit, but the intrinsic choice is not established against a matched Euclidean control. novelty=3: the displacement-based code-conditioned point is a distinct computational detail from prior successor-geodesic variants in E6; external prior-art traceability is absent. downstream_mechanism=4: corrected candidate ranks can change code assignments and SID predictions; prefix survival and Stage3 are appropriate observables. falsifiability=4: controls, assignment diagnostics and Stage3 criterion are stated; implementation of the uncorrected expression would invalidate rather than test the mechanism. implementability=3: equations and safeguards/cost are partly stated, but the contradictory distance definition and cache/recompute ambiguity create implementation risk. exploration_value=3: a potentially informative candidate-conditioned displacement, if implemented consistently. UNKNOWN: direct evidence of graph support and external novelty is unavailable; bounded graph coverage audit and prior-art/ledger check would resolve it without runs.",
+          "scope_reason": "It specifies training-only co-occurrence and a code-dependent hyperbolic rank via q_ik=Proj(z_i+c_k-b_i), which couples behavior and curvature in the assignment. The earlier h_ik expression is candidate-independent, but the subsequent explicit q_ik correction resolves that defect; the controls must implement the corrected form.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "Let K=2, x_i and b_i be fixed, and e_i1 and e_i2 have different reconstruction errors. Then h_i1=h_i2=d_B(phi(x_i),b_i), so r^h_i1=r^h_i2; adding the same rank preserves the Euclidean argmin exactly. A nonempty neighborhood does not change this result.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cofreq_frechet_rank",
+          "missing_dimensions": [],
+          "objection": "The proposed behavior score is constant across candidate codes, making the claimed behavior-conditioned assignment mathematically ineffective; despite the explicit claim otherwise, the equation uses only x_i and b_i.",
+          "rationale": "behavior_evidence=4: training-only co-occurrence is concretely computed and E9-E11 offer measured behavioral evidence, though the exact co-occurrence support is not fully audited. geometry_necessity=2: a curved operation is present, but it does not affect candidate selection and thus is not necessary to the claimed mechanism. novelty=2: nominally a co-occurrence rank variation, but its operative computation cancels; it is close to the related rank-fusion family and not distinct in effect. downstream_mechanism=2: there is a gap because the assignment cannot respond to the context rank. falsifiability=3: behavior/geometry/both-on controls and a failure criterion can be stated, but as written the controls expose a constant term rather than the claimed coupled mechanism. implementability=3: the equation is implementable but contradicts its asserted code dependence; numerical projection and Frechet safeguards are incomplete. exploration_value=1: near-repeat of rank fusion with an algebraically inert behavior term. UNKNOWN: none needed to establish the cancellation; bounded check is a static unit test asserting candidate-wise variation of h across a nonempty context, without training.",
+          "scope_reason": "h_ik=d_B(phi(x_i),b_i) contains no candidate code k, so its rank is identical for all codes and cannot couple behavior to the assignment. Empty-row fallback is specified, but the nonempty-row behavior term also cancels. To qualify, define a candidate-dependent curved point/distance and make behavior-off, geometry-off and both-on switches operational.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 2.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For two codes and any nonempty neighbor set, h_i1=d(p_i,b_i)=h_i2. Both receive the same average rank, so if e_i1<e_i2 the summed-rank winner remains code 1. Curved context calculation does not prevent this cancellation.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "cofreq_tangent_rank",
+          "missing_dimensions": [],
+          "objection": "The tangent aggregation may be a real curved context computation, but the distance ranked for each candidate is the same p_i-to-b_i distance; thus the expensive geometric pathway cannot change code selection.",
+          "rationale": "behavior_evidence=4: training-only graph definition is explicit and the bundle has measured behavior evidence (E9-E11), but not direct support for this exact co-occurrence signal. geometry_necessity=2: genuine Log/Exp and distance operations exist, yet candidate selection is unchanged by them. novelty=2: tangent-space context is a variation of the same co-occurrence ranking family, and the operative scoring term is inert. downstream_mechanism=2: no code assignment change follows from behavior when ranks are constant. falsifiability=3: the three switches can demonstrate the null and assignment diagnostics identify it, but the proposal lacks a matched operational both-on mechanism. implementability=3: the equations are implementable; boundary safeguards for p_i and curvature maps are mentioned only as risks. exploration_value=1: near-repeat whose central coupling cancels. UNKNOWN: none for cancellation; bounded check is a no-training test that verifies h varies across candidates for a nonempty graph row. A candidate-conditioned curved displacement would be a redesign, not this proposal.",
+          "scope_reason": "Although the tangent Log/Exp operations construct a context from training co-occurrence, the specified assignment score h_ik=d(p_i,b_i) is independent of k. Its behavior rank is constant across codes and cancels, so it does not computationally couple behavior and geometry to assignment. Specify a candidate-conditioned curved score and the three switches to meet scope.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 2.0,
+            "exploration_value": 1.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2",
+      "scores": [
+        {
+          "counterexample": "For two codes with equal reconstruction rank, if their mapped code points have equal Poincare distance to the barycentre, the behavioural term cannot distinguish them; more importantly, if all candidate distances preserve the reconstruction ordering, rank fusion changes no assignment.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "co_rank_coarse",
+          "missing_dimensions": [],
+          "objection": "The rubric evidence does not directly measure that this particular symmetric co-occurrence graph predicts useful next-item roles; measured successor-entropy/cohort evidence is supportive but not the same statistic.",
+          "rationale": "behavior_evidence=3 because E5/E9 provide plausible train-side behavioural structure but not audited direct support for this graph's SID hypothesis. geometry_necessity=3: the candidate-dependent curved distance is real, but E15's matched Euclidean comparison does not establish necessity or rule out equivalent rank orderings. novelty=3: rank fusion at coarse RQ assignment is computationally distinct as stated; no traceable cited-work/ledger comparison is supplied here. downstream_mechanism=4: altered coarse assignment can alter the generated prefix and beam survival. falsifiability=4: behaviour-off, Euclidean-off, both-on and assignment/prefix diagnostic are specified; no ablation arm is allowed. implementability=3: ranks and barycentre are specified, but safeguards/convergence and actual budget overhead are not fully grounded. exploration_value=3: a distinct assignment mechanism with a diagnostic failure lesson.",
+          "scope_reason": "Training-only symmetric co-occurrence is defined; candidate-dependent Poincare distance ranks the first-level candidates in the same decision as reconstruction. Behaviour-off, Euclidean geometry-off, and both-on comparisons are identifiable switches, though no ablation is run.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "If at a level the hyperbolic-distance rank has the same ordering as reconstruction rank, summing ranks leaves the selected code unchanged; if all hyperbolic distances tie, it is exactly inert.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "co_rank_all_levels",
+          "missing_dimensions": [],
+          "objection": "The same absolute context is compared with every level's codebook while residual inputs change; repeated rank pressure may dominate later residual assignment without a level-specific behavioural rationale.",
+          "rationale": "behavior_evidence=3: E5/E9 support behavioural predictability generally, not the claimed benefit at every suffix level. geometry_necessity=3: Poincare distance changes candidate scores, but matched Euclidean order preservation/cancellation is not ruled out. novelty=3: applying the coupled rank decision to every residual level is a distinct placement, but cited-work and ledger comparison are absent. downstream_mechanism=4: changed level assignments change the SID tuple and could affect prefix-conditioned generation. falsifiability=4: the switches and assignment/prefix observables support a discriminating test; experiment policy forbids switch-off runs. implementability=3: equations and approximate complexity are present, while robust curvature safeguards and runtime risk remain underspecified. exploration_value=3: the all-level repetition tests a distinct over-steering failure mode.",
+          "scope_reason": "Frozen train-only co-occurrence and candidate-specific Poincare distances jointly rank candidates at each residual level; the three switch settings can be represented in code, with only both-on trained.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "With two codes whose Euclidean errors are 1 and 2, the same h_i-to-b_i value is assigned to both; adding its identical rank preserves the reconstruction winner for every possible context.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "cofrechet_rank",
+          "missing_dimensions": [],
+          "objection": "The behaviour score in the operative assignment equation is candidate-independent, contradicting the claim that the context participates in code selection.",
+          "rationale": "behavior_evidence=3 because train-only co-occurrence is plausible and measured neighbouring evidence exists (E5/E9), but this specified computation fails to couple it. geometry_necessity=0 because the Poincare distance is constant over candidates. novelty=1 because the claimed operative mechanism collapses to reconstruction assignment plus an inert term. downstream_mechanism=1: no behaviour-driven assignment change follows. falsifiability=2: switches are discussed, but no functional behaviour-on comparison exists as written. implementability=2: code can implement the literal equation, but realizing the stated intent requires redesign. exploration_value=1: as written it is a near-repeat/inert variant. Bounded resolution: make q_ik the actual argument of the scored distance, then audit its matched Euclidean counterpart and cancellation conditions before considering a run.",
+          "scope_reason": "The stated h_ik=d(exp_0(s h_i),m_i) is independent of k, so its rank is constant across candidates and behaviour cannot change the argmin. The later q_ik sentence asserts a candidate-conditioned point but does not replace h_ik in the assignment equation; a corrected equation and matched control are missing.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 0.0,
+            "implementability": 2.0,
+            "novelty": 1.0
+          }
+        },
+        {
+          "counterexample": "If all candidate vectors c_k are identical, q_ik and its distance rank are identical for all k, so the behaviour term cannot break the assignment tie; likewise, if candidate displacement rankings coincide with reconstruction ranks, rank fusion has no effect.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E9",
+            "E10",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "COOC_RANK_FRECHET",
+          "missing_dimensions": [],
+          "objection": "The code-conditioned point adds the same item-code displacement to a shared barycentre, so any assignment change may be driven mainly by candidate displacement geometry rather than meaningful co-occurrence structure; no evidence establishes that this construction represents a useful behavioural relation.",
+          "rationale": "behavior_evidence=3: E5/E9 offer plausible behavioural support but not direct audited evidence for co-occurrence barycentres. geometry_necessity=3: explicit curved Frechet and candidate-conditioned distance computations are present, but their added value over a matched Euclidean construction and rank cancellations are not ruled out. novelty=3: candidate-conditioned displacement plus Frechet context is a distinct computation in this bundle; traceable prior-art/ledger analysis is absent. downstream_mechanism=4: changed assignments can alter the SID sequence and generated prefix. falsifiability=4: three switches and assignment diagnostics give a discriminating check without requiring forbidden ablations. implementability=3: computation is specified, but the barycentre solver's numerical safeguards and wall-time fit require bounded verification. exploration_value=3: tests a distinct context-conditioned candidate geometry.",
+          "scope_reason": "Training-only co-occurrence forms the Frechet context, and candidate-conditioned q_ik=Proj(z_i+c_k-b_i) is compared to that context with Poincare distance in the same rank-sum decision. The switches can be implemented; only both-on is trained under policy.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        {
+          "counterexample": "For any two candidates with reconstruction errors 3 and 5, h_i1=h_i2=d_B(phi(x_i),b_i); their behaviour ranks tie, and candidate 1 wins exactly as under baseline, regardless of b_i.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cofreq_frechet_rank",
+          "missing_dimensions": [],
+          "objection": "The specified behaviour rank is constant over k, making the operative argmin exactly the reconstruction-error argmin.",
+          "rationale": "behavior_evidence=3 because the train-only signal is plausible and E5/E9 support related behavioural structure, but the proposed score cannot use it. geometry_necessity=0: curved distance is computed but cancels from candidate ranking. novelty=1: literal computation is an inert auxiliary rank, not the claimed new assignment mechanism. downstream_mechanism=1: the stated pathway has no behaviour-induced SID change. falsifiability=2: the switches are named but the behaviour-on arm is functionally equivalent to behaviour-off. implementability=2: literal code is straightforward, but the intended coupling needs redesign. exploration_value=1: near-repeat with a mathematical cancellation. Bounded resolution: replace h_ik with a candidate-dependent curved quantity and confirm nonconstant candidate scores; then specify a matched Euclidean control.",
+          "scope_reason": "h_ik=d_B(phi(x_i),b_i) does not depend on candidate k. Its rank is therefore identical for every candidate, so the co-occurrence context cannot affect the assignment. Empty-row fallback does not repair this for nonempty rows; a candidate-dependent curved score is missing.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 0.0,
+            "implementability": 2.0,
+            "novelty": 1.0
+          }
+        },
+        {
+          "counterexample": "For two codes with errors 1 and 4, the same d(p_i,b_i) gives both the same behaviour rank; the first code wins for every tangent mean, including a mean that changes with neighbours.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "cofreq_tangent_rank",
+          "missing_dimensions": [],
+          "objection": "The item-to-context distance is repeated for every code, so the behaviour term cannot change the Euclidean reconstruction argmin.",
+          "rationale": "behavior_evidence=3: E5/E9 make train-only behavioural structure plausible, but do not rescue the candidate-independent assignment term. geometry_necessity=0 because the curved operation is assignment-inert. novelty=1 because the literal mechanism is a reconstruction rank plus a constant. downstream_mechanism=1 because no behaviour-driven code change follows. falsifiability=2: switches are described, but behaviour-off and both-on produce the same decision absent some separate effect. implementability=2: the equation is implementable, but intended coupling requires redesign and safeguards. exploration_value=1: this is an inert variant rather than a distinct effective mechanism. Bounded resolution: use a candidate-dependent geodesic score, check it varies across codes and against the matched Euclidean counterpart, then retain one-run-only evaluation policy.",
+          "scope_reason": "The specified h_ik=d_{-1}(p_i,b_i) is independent of candidate k. The tangent-space context depends on co-occurrence, but its distance rank is constant across candidate codes and cannot couple behaviour and geometry to assignment. A candidate-dependent curved scoring equation is missing.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 1.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 0.0,
+            "implementability": 2.0,
+            "novelty": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3",
+      "scores": [
+        {
+          "counterexample": "If all candidate codes have identical hyperbolic context ranks, adding those ranks is a constant and the assignment is exactly the reconstruction-rank assignment; e.g. two codes with ranks (1,2) and context ranks (1,1) remain ordered as before. Here candidate-dependent distances are specified, but ties/symmetry can still produce this case.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "co_rank_coarse",
+          "missing_dimensions": [],
+          "objection": "Rank fusion discards reconstruction and distance margins, and E5 supports successor concentration rather than proving this symmetric co-occurrence graph predicts the relevant transitions; novelty against the full mechanism ledger is not present in the supplied bundle.",
+          "rationale": "E5 gives a measured, stratified successor-entropy statistic, but it is indirect evidence for symmetric co-occurrence (3, not 4+). E12-E15 specify actual curved candidate scoring and a matched Euclidean control, so the curve plausibly changes the computation; necessity beyond Euclidean is not established (3). The first-layer assignment-to-prefix-to-beam pathway is explicit (4), and the three switches plus a single Stage-3 judgement are stated (3). Barycentre safeguards, implementation details and frozen-scale work are partly specified but no validated runtime/numerical method is evidenced (3). Novelty and exploration are UNKNOWN relative to prior-art/ledger: bounded check is compare this exact rank-sum computation against the recorded successor-geodesic/cohesion mechanisms and cited work; no such ledger is supplied here. E6 shows relevant beam failure, not a prediction of this candidate's Recall; no Recall prediction is made.",
+          "scope_reason": "Training-only symmetric co-occurrence is explicitly counted and row-normalized; a fixed-curvature Poincare Frechet context and candidate-code geodesic-distance rank affect the first-level argmin alongside reconstruction. Behaviour-off, Euclidean-geometry-off, and both-on switches are required by the contract but no ablation arm is trained.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "If the context-distance ranking is identical for every candidate, it adds the same rank to each reconstruction rank and cannot change any layer's argmin; a symmetric context/code configuration can yield exactly this tie case.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E8",
+            "E12",
+            "E13",
+            "E14",
+            "E15",
+            "E16"
+          ],
+          "idea_id": "co_rank_all_levels",
+          "missing_dimensions": [],
+          "objection": "Reusing the same neighbour context at every residual level may repeatedly favor the same codes and overwhelm small residual distinctions; the supplied evidence does not establish suffix-level benefit or runtime within budget.",
+          "rationale": "E5 supports non-uniform successor behavior but is indirect support for co-occurrence (3). E12-E16 specify curved operations and a matched Euclidean control, but do not rule out an equally effective matched transform (3). The chain through changed assignments and multi-level SIDs to prefix prediction is named (4). Three conceptual switch comparisons and judgement/failure target are present, but no detailed falsifier or matched runtime evidence (3). Implementable in broad terms, though residual/context geometry and guarded barycentre details are underspecified (3). Novelty and exploration are UNKNOWN absent a traceable prior-art/ledger comparison; bounded check: compare the per-level rank computation with already measured successor-geodesic and behaviour-cohesion mechanisms. E6 documents beam-stage headroom, not an outcome prediction.",
+          "scope_reason": "Frozen training-only co-occurrence and live neighbour representations feed a Poincare barycentre; candidate-code hyperbolic distances rank against reconstruction at every residual assignment. Behaviour-off, geometry-off/Euclidean and both-on switches must exist, with only the both-on candidate trained.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For fixed i, h_ik=d(z_i,b_i) is identical for every k, so rank_h is a tie for all codes and adds no assignment information; for two codes with reconstruction ranks 1 and 2, adding equal behaviour ranks 1 and 1 leaves code 1 selected. The subsequent q_ik term avoids this identity only if it replaces h_ik.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14",
+            "E15"
+          ],
+          "idea_id": "cofrechet_rank",
+          "missing_dimensions": [],
+          "objection": "The specification contradicts itself: its initial hyperbolic score is constant over k, while the later code-conditioned displacement repairs that defect but does not fully reconcile which representation (h, c, residual) occupies the hyperbolic space; that ambiguity risks implementing a different mechanism.",
+          "rationale": "E5 is measured training behavior evidence but only indirectly supports within-sequence co-occurrence (3). Poincare Frechet context and distance are explicit, but the Euclidean comparator/cancellation argument is incomplete (3). The candidate-conditioned q is computationally distinct from a separate loss, but prior art/ledger support is absent (2). Downstream assignment effect is plausible, but the contradictory score definition weakens the chain (3). The three controls and failure criterion are not adequately operationalized in the proposal (2). Numerically guarded inner solve, projections, dimensions and exact residual-space mapping need resolution, so implementability needs a bounded clarification (2). Novelty/exploration are UNKNOWN; bounded check: resolve the h-versus-q definition and compare exact resulting operator with the cited and internal ledger mechanisms. No Stage 3 result is inferred from diagnostics.",
+          "scope_reason": "The final stated code-conditioned point q_ik=Proj(z_i+c_k-b_i) makes the training co-occurrence context and Poincare distance candidate-dependent in the same rank-sum assignment. The earlier h_ik=d(z_i,b_i) clause is code-independent and would fail scope if implemented literally; the later q_ik clause must govern. Required behavior-off, geometry-off/Euclidean and both-on switches are not fully specified as executable switches, though only one run is allowed.",
+          "scope_verdict": "IN_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For any two codes k=1,2, h_i1=h_i2=d(q_i,b_i); both receive the same tied behaviour rank. If reconstruction ranks are 1 and 2, their rank sums retain that ordering exactly. This holds for every i and any barycentre.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "COOC_RANK_FRECHET",
+          "missing_dimensions": [],
+          "objection": "The central candidate-distance rank is mathematically code-independent as written, so the advertised coupled assignment does not occur.",
+          "rationale": "E5 supplies measured but indirect support for the behavior motivation (3). The curved barycentre/distance are real operations (3), but geometry cannot affect code ranking under this definition. Novelty is UNKNOWN versus the ledger; bounded check: inspect the actual scoring expression and compare against existing mechanisms (2). The stated recommendation chain is only a hope because assignment is unchanged (1). Although controls are mentioned conceptually, no valid both-on coupled computation or failure discriminator is available (2). Implementation would require redesigning the distance to depend on k (2). Exploration value is limited because the specified core effect cancels; no prediction of Recall is made.",
+          "scope_reason": "Although it computes training-only co-occurrence barycentres and Poincare distances, the specified h_ik=d(q_ik,b_i) is constant across candidate k because q_ik is not used in that distance. Thus behaviour/geometry do not alter the core code choice. Missing: a candidate-dependent curved score in the actual assignment; the three switches cannot repair a constant score. No ablation arm should be trained.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "With two codes having reconstruction ranks 1 and 2, the same h_i for both codes yields equal behavior ranks, so the rank sums still select code 1. No choice of barycentre changes this identity while h_i omits k.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cofreq_frechet_rank",
+          "missing_dimensions": [],
+          "objection": "As written, the behavior rank cancels from every code comparison, contradicting the stated direct assignment influence.",
+          "rationale": "E5 offers measured but indirect support for co-occurrence, not direct evidence that this row definition predicts next-item roles (3). Poincare Frechet context is explicit, yet its candidate-independent distance is reproducible as a constant Euclidean score and contributes no curved assignment computation (2). Novelty is UNKNOWN; bounded check: compare the actual scoring operator with the internal ledger after fixing candidate dependence (2). No effective downstream assignment chain exists as specified (1). Three comparisons are suggested but not operationally matched and the mechanism has an immediate algebraic falsifier (2). The computation is broadly implementable but would need a candidate-dependent redesign to meet objective (3). No Recall outcome is predicted.",
+          "scope_reason": "The stated hyperbolic term h_ik=d_B(phi(x_i),b_i) contains no candidate code k. Its rank is therefore the same tie for all candidates, so the co-occurrence behavior and geometry do not alter the reconstruction argmin. Missing: candidate-dependent curved scoring. The behaviour-off/geometry-off/both-on switches are not defined as functional switches for this score; no ablation should be run.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        {
+          "counterexample": "For any two codes k and l, d(p_i,b_i)=d(p_i,b_i), hence their behaviour ranks tie. Adding that same rank to reconstruction ranks 1 and 2 leaves the first candidate preferred; this is an exact identity, not a numerical approximation.",
+          "evidence_ids": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E6",
+            "E12",
+            "E13",
+            "E14"
+          ],
+          "idea_id": "cofreq_tangent_rank",
+          "missing_dimensions": [],
+          "objection": "The advertised tangent context and geodesic score do not participate in code discrimination because the score is identical for every candidate.",
+          "rationale": "E5 is a measured train behavior statistic, but indirectly motivates symmetric co-occurrence (3). Log/Exp maps are explicit, but the assignment score reduces to a candidate-independent constant and a matched Euclidean control would reproduce its assignment effect (2). Novelty is UNKNOWN; bounded check: first correct candidate dependence, then compare the exact operator with cited work and ledger (2). There is no effective assignment-to-recommendation pathway as specified (1). The required three controls do not provide a valid coupled both-on comparison, and the constant-rank identity is a direct failure criterion (2). Near-boundary safeguards and dimension/space mapping are incomplete (2). The negative would mainly diagnose a specification failure, not a distinct mechanism (2). Stage 3 Recall remains the judgement; no prediction is made.",
+          "scope_reason": "The tangent-space context b_i is computed from training co-occurrence neighbors, but the specified candidate score h_ik=d(p_i,b_i) does not depend on k. Its rank is constant across codes and cannot couple behavior or curvature to assignment. Missing: a candidate-dependent curved operation in the argmin; required switches are not concretely defined. No ablation arm is authorized.",
+          "scope_verdict": "OUT_OF_SCOPE",
+          "scores": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 1.0,
+            "exploration_value": 2.0,
+            "falsifiability": 2.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          }
+        }
+      ]
+    }
+  ],
+  "round_id": "round_20261027_202919_817",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "co_rank_all_levels",
+        "status": "BACKUP",
+        "weighted_score": 3.0
+      },
+      {
+        "idea_id": "co_rank_coarse",
+        "status": "BACKUP",
+        "weighted_score": 3.0
+      },
+      {
+        "idea_id": "cofrechet_rank",
+        "status": "BACKUP",
+        "weighted_score": 2.55
+      }
+    ],
+    "disagreement": {
+      "COOC_RANK_FRECHET": 3.0,
+      "co_rank_all_levels": 1.0,
+      "co_rank_coarse": 1.0,
+      "cofrechet_rank": 3.0,
+      "cofreq_frechet_rank": 2.0,
+      "cofreq_tangent_rank": 2.0
+    },
+    "disputed": {
+      "COOC_RANK_FRECHET": [
+        "downstream_mechanism",
+        "falsifiability"
+      ],
+      "co_rank_all_levels": [],
+      "co_rank_coarse": [],
+      "cofrechet_rank": [
+        "downstream_mechanism",
+        "exploration_value",
+        "falsifiability",
+        "geometry_necessity",
+        "implementability",
+        "novelty"
+      ],
+      "cofreq_frechet_rank": [
+        "geometry_necessity"
+      ],
+      "cofreq_tangent_rank": [
+        "geometry_necessity"
+      ]
+    },
+    "pairwise": {
+      "comparisons": [
+        {
+          "disagreement": false,
+          "pair": [
+            "COOC_RANK_FRECHET",
+            "co_rank_all_levels"
+          ],
+          "votes": {
+            "COOC_RANK_FRECHET": 3,
+            "co_rank_all_levels": 0
+          },
+          "winner": "COOC_RANK_FRECHET"
+        },
+        {
+          "disagreement": false,
+          "pair": [
+            "COOC_RANK_FRECHET",
+            "co_rank_coarse"
+          ],
+          "votes": {
+            "COOC_RANK_FRECHET": 0,
+            "co_rank_coarse": 3
+          },
+          "winner": "co_rank_coarse"
+        },
+        {
+          "disagreement": true,
+          "pair": [
+            "co_rank_all_levels",
+            "co_rank_coarse"
+          ],
+          "votes": {
+            "co_rank_all_levels": 1,
+            "co_rank_coarse": 2
+          },
+          "winner": "co_rank_coarse"
+        }
+      ],
+      "copeland": {
+        "COOC_RANK_FRECHET": 0,
+        "co_rank_all_levels": -2,
+        "co_rank_coarse": 2,
+        "cofrechet_rank": 0,
+        "cofreq_frechet_rank": 0,
+        "cofreq_tangent_rank": 0
+      },
+      "cycles": [],
+      "position_bias": {
+        "first_listed_wins": 7,
+        "second_listed_wins": 2
+      },
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "ties": []
+    },
+    "rejected": [
+      {
+        "idea_id": "cofrechet_rank",
+        "max_disagreement": 3.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.55 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.55
+      },
+      {
+        "idea_id": "cofreq_frechet_rank",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.1 below 3.0",
+          "BELOW_MINIMUM_DIMENSION: downstream_mechanism, exploration_value",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 0"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.1
+      },
+      {
+        "idea_id": "cofreq_tangent_rank",
+        "max_disagreement": 2.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.0 below 3.0",
+          "BELOW_MINIMUM_DIMENSION: downstream_mechanism, exploration_value",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 0"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.0
+      },
+      {
+        "idea_id": "co_rank_coarse",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.0
+      },
+      {
+        "idea_id": "co_rank_all_levels",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "weighted_score": 3.0
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "copeland": 0,
+        "idea_id": "COOC_RANK_FRECHET",
+        "max_disagreement": 3.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 3.0,
+          "falsifiability": 4.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "weighted_score": 3.25
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  }
+}

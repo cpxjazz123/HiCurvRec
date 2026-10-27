@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:402-406,445-447,453-458` → `model/model.py:32-39` → `model/layers.py:144-169,108-141` | Inspected the real trainer call path and the smoke fixture in `smoke_test.py:63-100`: frozen co-occurrence rows form neighbour contexts, and code-conditioned Poincaré distance contributes to candidate ranking.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: not applicable
+FINDING CORRECTION: not applicable
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `model/layers.py:144-169,275-303` | Static inspection of the loss/backward path and `smoke_test.py:102-124`; no runtime execution performed. The rank sum chooses the hard index, while the soft gradient path uses `-(euclidean + hyperbolic)`.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `model/layers.py:82-105,155-169`
+FINDING DETAIL: The differentiable path is not the specified rank-based mechanism. `_average_ranks` uses discrete sorting and its result is used only for `index` at lines 166-167; it has no gradient. The differentiable `scores` instead sum raw Euclidean squared error and hyperbolic distance, which is a distinct, unnormalised objective. As a result, the coupled rank decision itself has no gradient path, and the claimed gradients from that rank-based mechanism are not established. The smoke test only checks that some gradient reaches the codebook; it does not show that the coupled rank term affects the gradient or that replacing the geometry changes it. Also, `geometry_off` is not used to verify assignment/gradient reversal in the smoke test.
+FINDING REPRODUCTION: In `rank_assignment_scores`, observe that `total` is formed from `_average_ranks` but discarded after `argmin`; `scores` is independently formed from raw distances. In `VQLayer.forward`, backpropagation through `softmax(assignment_scores)` therefore differentiates raw distance sums, not the rank sums. A minimal counterexample is a pair of candidate configurations where the rank ordering is unchanged but the raw distance magnitudes change: the hard assignment remains rank-based while the soft gradient changes with those magnitudes.
+FINDING CORRECTION: Define and document a differentiable surrogate for the rank assignment that is faithful to the intended mechanism, or remove the claim that the rank-based coupled term trains parameters and demonstrate that the actual intended differentiable objective is used. Extend the wiring smoke to compare both-on, behaviour-off, and geometry-off assignments and parameter gradients on the same fixed fixture; do not train separate ablation arms.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:42-74,338-371,564-570,579-608` | Inspected trainer entry point, configured paths, export/index construction, and launcher branches; trainer execution was not available.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:251-288,398-406`
+FINDING DETAIL: `build_cooccurrence` ignores its `slots` argument and returns every neighbour edge, while the trainer passes `COGEO_NEIGHBOURS=32` as that argument. `refresh_behaviour_state` then processes every edge each epoch. This violates the specified capped-neighbour input and makes the computation unbounded by the declared neighbour limit; dense users can create a prohibitive pair expansion and assignment-refresh cost. This is an integration/runtime-cost defect on the frozen 3000-epoch protocol.
+FINDING REPRODUCTION: Call `build_cooccurrence` with a row containing more than 32 co-occurring items and inspect the returned row: it contains all `n_items-1` neighbours, irrespective of `slots`. The trainer then sends all returned edges to `refresh_behaviour_state` at lines 445-447.
+FINDING CORRECTION: Implement deterministic per-row neighbour selection capped at the declared slot count, with corresponding renormalisation of selected weights, or remove the misleading cap and establish that the full sparse edge set fits the frozen training budget before running the candidate.

@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:407-414, 446-455, 467-472 → model/model.py:29-39 → model/layers.py:153-178, 276-312 | Traced the training path: the trainer builds frozen co-occurrence rows from training sequences, refreshes a curved neighbour context, and passes that context into the model. The model computes the rank assignment using code-conditioned Poincaré distances; the quantizer uses that assignment and its differentiable scores.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable; source-path inspection only. The supplied sandbox limitation precludes running the trainer.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:29-39; model/layers.py:117-178, 276-312; smoke_test.py:102-124 | Traced the score-to-quantizer path: the discrete rank-sum index selects the hard code, while the differentiable Euclidean-plus-hyperbolic scores form a soft code mixture that contributes to quantizer output and loss. The smoke test checks finite context, codebook gradient presence, and behavior-off equivalence to Euclidean assignment. The geometry-off branch substitutes Euclidean context and distance.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead score term or evident float32 numerical hazard found by code inspection. The smoke test does not directly assert encoder gradients or that replacing the curve changes the *hard assignment*; it checks distance changes and checks that behavior-off changes the assignment or scores. This is a coverage limitation, not evidence of a trainability defect: the scores are used in differentiable operations on the training path.
+FINDING REPRODUCTION: Not applicable; source-path inspection only. No runtime execution was performed.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-82, 346-414, 541-590, 593-622 | Inspected repository/data/output path resolution, training and export flow, SID construction/indexing, and launcher branches. The root is found from repository markers; outputs resolve under `results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/`; SID rows are emitted by item-row index, with an added collision-unique level. The launcher preserves both torchrun and `GENREC_SINGLE_GPU="1"` branches.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The configured input paths are the Stage 1 embedding file and Stage 0 training parquet; the trainer’s result directory is the candidate’s own promoted-name directory.
+FINDING REPRODUCTION: Not applicable; source-path inspection only. No trainer execution was performed.
+FINDING CORRECTION: Not applicable.

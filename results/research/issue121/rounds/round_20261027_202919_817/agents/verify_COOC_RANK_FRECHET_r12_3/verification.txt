@@ -1,0 +1,29 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:407-414, 445-455, 467-472 → model/model.py:29-39 → model/layers.py:153-178, 276-312 | Traced the training path from frozen training-sequence co-occurrence construction through per-epoch neighbour-context refresh into the model’s first-level assignment. The rank sum uses Euclidean reconstruction ranks and code-conditioned Poincaré-distance ranks; its differentiable scores are passed into the quantiser’s straight-through path. I inspected smoke_test.py:42-100 for the toy wiring checks; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behaviour signal and curved operation participate in one candidate-assignment pathway; neither is merely an auxiliary loss or unused helper.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable; no correction required.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:26-41 → model/layers.py:153-178, 276-312; smoke_test.py:102-124 | Inspected the real forward path: hard indices come from the rank sum, while differentiable candidate scores feed a soft codebook mixture added to the straight-through quantiser output. The quantisation loss and reconstruction loss are then backpropagated at train_rqvae.py:472-480. The source-level switches are present: behaviour_off returns Euclidean assignment at model/layers.py:171-173; geometry_off uses Euclidean context-conditioned distance at lines 126-132; both_on uses ball projection, Möbius displacement and Poincaré distance at lines 133-150. The smoke test contains checks for finite context, codebook gradient, and switch effects, but I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level dead term or evident float32 overflow/NaN hazard was found in the coupled gradient path. The behaviour distance contributes to differentiable scores, which affect the soft codebook mixture and thus the loss gradient; the Euclidean alternative and behaviour-off path are explicitly implemented. Runtime gradient proof was not performed.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable; no correction required.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-82, 346-414, 541-589, 593-622 | Inspected repository-relative path resolution, the Stage 1 embedding and Stage 0 training-parquet inputs, the 3000-epoch trainer, output directory guard, item-indexed SID export, and launcher branches. The launcher checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 115-116 and returns without spawning torchrun when that variable is `"1"` at lines 595-599. I did not run the trainer or launcher.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer reads the frozen repository data paths, writes results under its own promoted arm directory, and exports each row under its enumerated item ID to `item_sids.json`. The single-card environment-variable branch is present.
+FINDING REPRODUCTION: Not applicable; no finding.
+FINDING CORRECTION: Not applicable; no correction required.
+
+Verification text is provided here; I did not write the requested file.

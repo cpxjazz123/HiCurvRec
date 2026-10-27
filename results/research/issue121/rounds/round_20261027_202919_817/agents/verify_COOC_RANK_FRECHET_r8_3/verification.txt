@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: COOC_RANK_FRECHET/train_rqvae.py:251-288, 293-325, 453-458 | Traced frozen training-sequence co-occurrences into refreshed neighbour barycentres, then into the per-batch model assignment; inspected the code-conditioned Poincaré distance and rank sum in model/layers.py:108-169. The supplied smoke_test.py:42-100 describes toy checks for graph- and geometry-dependent scores, but I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The co-occurrence-derived context and curved, code-conditioned distance meet in the same candidate-ranking computation used by the first quantization level. The behaviour-off and geometry-off switches are present; no ablation run is required or implied.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: COOC_RANK_FRECHET/model/model.py:29-40, model/layers.py:144-169 and 267-303 | Statically traced the forward path from encoder and code vectors through assignment scores to the straight-through quantizer and quantization loss. The supplied smoke_test.py:102-124 describes a codebook-gradient and switch check; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The hard rank choice is nondifferentiable, but its score-derived soft straight-through path is consumed by the quantizer and adds a loss term, so it is not a computed-but-unused term. The distance implementation uses projection and denominator safeguards and a stable squared-distance expression near coincidence. The code provides the behaviour-off and geometry-off comparisons; this review does not claim runtime gradient proof or require training ablation arms.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: COOC_RANK_FRECHET/train_rqvae.py:42-74, 338-371, 527-575 and 579-608 | Statically checked root and candidate-specific paths, frozen input paths, trainer setup, SID export/index construction, and launcher branches, including the SINGLE_GPU_ENV check at lines 583-585. I did not execute the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The input paths resolve from the repository root; checkpoint and SID outputs target this candidate’s promoted results/stage2_RQ-VAE directory; the JSON keys enumerate embedding-row item IDs; and the launcher retains both the single-card branch and four-card torchrun branch. Logs are also arm-specific.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

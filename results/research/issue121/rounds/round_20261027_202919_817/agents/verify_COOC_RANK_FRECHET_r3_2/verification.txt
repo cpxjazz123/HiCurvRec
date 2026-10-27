@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:250-300, 327-333, 471-484 → model/model.py:32-39 → model/layers.py:98-152, 250-286 | Traced training co-occurrence construction through refreshed Poincaré Fréchet contexts, code-conditioned curved distances, rank-based first-code selection, and quantizer use. `smoke_test.py:65-77` also compares curved and Euclidean scores, and lines 79-93 alter the co-occurrence graph.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:257-266
+FINDING DETAIL: The implementation chooses a user’s “longest” sequence only after deduplicating its items. The specification requires the longest training sequence, then counts each pair once within it. These can be different sequences: a shorter sequence with many unique items can displace a longer sequence with repeated items, changing the frozen behaviour graph and therefore the coupled context and assignment.
+FINDING REPRODUCTION: For one user, provide a history/target sequence of length 5 with 2 unique items and another of length 4 with 4 unique items. `seq = np.unique(seq)` makes the second sequence win the `seq.size > current.size` comparison, although it is not the user’s longest sequence.
+FINDING CORRECTION: Compare sequence lengths before deduplication, retain the longest raw sequence, then deduplicate that selected sequence for once-per-user pair counting. Preserve a deterministic tie rule for equally long sequences.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:26-41 → model/layers.py:127-152, 250-286 | Code inspection shows the rank sum selects the first-level code; the differentiable Euclidean-plus-curved score feeds the soft assignment term, which enters `quant_loss` and the straight-through quantized output. The curved distance uses the finite-gradient `asinh` form at `layers.py:115-124`; behaviour-off and geometry-off branches are present at lines 145-152 and 112-114. `smoke_test.py:95-103` checks that backward reaches the codebook.
+FINDING SEVERITY: minor
+FINDING LOCATION: smoke_test.py:65-93
+FINDING DETAIL: The smoke test does not establish that the hard SID assignment changes when behaviour is switched off or the curve is replaced by Euclidean distance; it checks score differences, which need not change the winning rank-sum code. This is a test-coverage gap, not evidence of a dead or unstable training path.
+FINDING REPRODUCTION: In the fixture, compare `curved_index` with indices from `rank_assignment_scores(..., "behaviour_off")` and `"geometry_off"`; the test currently makes neither comparison.
+FINDING CORRECTION: No correction is required for the code-path trainability verdict. If strengthening the smoke check, use a deterministic fixture where the hard assignment differs under each switch and assert the assignment changes; do not train ablation arms.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:41-73, 366-484, 553-634 | Inspected root/path derivation, frozen embedding and parquet inputs, 3000-epoch loop, export indexing, and launcher branches. The candidate result path is `results/stage2_RQ-VAE/COOC_RANK_FRECHET/`; the single-card branch reads `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 107 and 609-611, while the default launcher invokes four-card torchrun at lines 612-629.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:72-73
+FINDING DETAIL: `LOG_DIR` resolves to the repository’s `stage2_RQ-VAE/COOC_RANK_FRECHET/logs`, rather than beneath the promoted result directory. It is still scoped to this candidate and inside the repository, so it does not violate the stated write-path restrictions.
+FINDING REPRODUCTION: Evaluate `LOG_DIR` from the constants at lines 62-73; it is distinct from `RESULT_DIR` but names the same candidate arm.
+FINDING CORRECTION: No correction is required under the stated integration contract.

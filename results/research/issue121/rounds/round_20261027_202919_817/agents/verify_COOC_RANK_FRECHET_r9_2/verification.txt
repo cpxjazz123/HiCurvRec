@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:402-406,445-447,453-458 -> model/model.py:32-39 -> model/layers.py:108-169,275-302 | Traced the training co-occurrence rows into per-item encoder-representation barycentres and then into candidate-conditioned Poincaré distances, rank-based code selection, and the quantizer’s score-gradient path. smoke_test.py:63-100 checks that the graph changes the context/scores and that curved and Euclidean distances differ.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:124-141,160-169,292-302 | Inspected the curved-distance operations and the soft-score straight-through path into the encoder and codebook. smoke_test.py:102-124 checks codebook gradient flow and the behaviour-off control against Euclidean assignment. No GPU runtime was performed; the review is based on the code and supplied smoke-test path.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead coupled term or evident float32 instability found. The rank decision is discrete, but the same candidate scores feed the quantizer’s differentiable surrogate and added quantization loss.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-73,338-371,527-575,579-608 | Inspected repository-root and candidate result-path resolution, the Stage 1 embedding and Stage 0 training-data paths, training/export indexing, and both launcher branches. The single-card branch checks `GENREC_SINGLE_GPU` at lines 583-585; the four-card branch invokes torchrun at lines 594-603. Runtime execution was not performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. SID export enumerates embedding rows into item IDs and writes the JSON and NumPy files under the candidate’s `results/stage2_RQ-VAE/COOC_RANK_FRECHET` directory.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

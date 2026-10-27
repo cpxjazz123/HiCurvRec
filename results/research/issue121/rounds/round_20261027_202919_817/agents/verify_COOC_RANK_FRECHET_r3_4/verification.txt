@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:250-300, 426-434, 464-484; model/layers.py:98-152 | Traced the training-sequence co-occurrence construction into the per-epoch context refresh and then through the model’s code-conditioned Poincaré-distance rank assignment. The path couples behaviour and curved geometry in the assignment decision. Static inspection only; I did not run the trainer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:106, 283-298
+FINDING DETAIL: The implementation silently truncates each co-occurrence row to 32 neighbours, although the specified W uses every co-occurring item and requires row L2 normalization. The retained weights are divided by the norm of the full row, so the stored truncated row is not normalized as specified. This changes the behaviour context and therefore the coupled assignment computation.
+FINDING REPRODUCTION: Build a row with 33 positive co-occurrence neighbours. `build_cooccurrence(..., slots=COGEO_NEIGHBOURS)` retains only 32 (`take = min(slots, stop - start)`); its retained weights use the norm of all 33 counts (`row_norm`), so the returned row omits a positive entry and its L2 norm is less than one.
+FINDING CORRECTION: Preserve every positive neighbour in a sparse/ragged representation, or otherwise retain all entries in the barycentre computation; normalize the complete row as specified. Do not use the fixed 32-neighbour truncation unless the proposal specification is explicitly changed to justify it.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/model/model.py:26-41; model/layers.py:98-152, 250-286; train_rqvae.py:477-493 | Statically traced both-on forward from encoder output through the code-conditioned curved distance and rank-selected code, then the differentiable soft-score path through quantization loss and straight-through output. The behaviour-off path returns Euclidean argmin and Euclidean scores; geometry-off uses Euclidean behaviour distance in the rank sum. The distances use a finite squared-distance form at coincidence. No runtime forward/backward was run.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No blocking trainability defect identified by code inspection. The gradient smoke in smoke_test.py:95-103 checks a nonzero codebook gradient, but does not assert that gradients or assignments differ across both-on, behaviour-off, and geometry-off modes. This limits that smoke’s coverage, not the presence of the switches or the differentiable coupled path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not required for this verdict; the available runtime smoke may additionally compare assignments and gradients across the modes, without training ablation arms.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261027_202919_817/COOC_RANK_FRECHET/train_rqvae.py:41-73, 366-434, 553-601, 605-634 | Inspected the real `main()` entry point, repository-root and frozen data-path constants, export/index construction, result-directory destinations, torchrun launcher, and the `GENREC_SINGLE_GPU` branch. Static inspection only; the trainer was not run.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified by code inspection. The trainer reads the frozen Stage 1 embedding and Stage 0 training parquet paths, writes checkpoint/SID outputs under the candidate’s `results/stage2_RQ-VAE/COOC_RANK_FRECHET/` directory, exports rows keyed by enumerated item IDs, and returns without forking when `GENREC_SINGLE_GPU=1`.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not required for this verdict.
