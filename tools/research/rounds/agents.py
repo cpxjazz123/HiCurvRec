@@ -1,10 +1,12 @@
-"""Agent contracts for the Issue #120 round: ideate, score, implement, verify, repair.
+"""Agent contracts for the Issue #120 round: ideate, score, implement, verify, plan.
 
 The prompts state what each role must return and what it must not do. The
 verification role is a correctness reviewer of an implementation, not a scientific
 paper referee: the issue is explicit that scientific paperwork completeness is
 not a pre-training gate, while actual correctness, numerical stability and a
-runnable trainer are.
+runnable trainer are. The repair role is a **planner**: it writes the change
+that would fix a finding and never edits the tree, because the operator applies
+the change and owns the code.
 """
 from __future__ import annotations
 
@@ -315,16 +317,20 @@ VERIFY_PROMPT = (
     "Repeat the CHECK block for every check, and the finding lines for every finding."
 )
 
-REPAIR_PROMPT = (
-    "You are the dedicated repair engineer for one implementation. The verifiers "
-    "rejected it with these findings:\n{findings}\n"
+REPAIR_PLAN_PROMPT = (
+    "You are the repair PLANNER for one implementation. The verifiers rejected it with "
+    "these findings:\n{findings}\n"
     "THE RESEARCH OBJECTIVE:\n{objective}\n"
     "THE SCOPE CONTRACT:\n{scope}\n"
-    "Fix exactly the reported defects in this tree:\n{tree}\n"
-    "Keep the frozen protocol and everything the idea requires that is not reported as "
-    "defective. For every finding, state what you changed and how you know it is fixed. "
-    "Run the smoke test and report its real output. Do not modify anything outside "
-    "this tree.\n"
+    "The candidate tree is:\n{tree}\n"
+    "YOU MUST NOT MODIFY ANY FILE. You do not repair the code: you plan the repair and the "
+    "operator applies it. Read the tree, work out the exact change for every reported "
+    "finding, and write the plan. Any edit you make to the tree is discarded and your plan "
+    "is rejected.\n"
+    "For every finding give the file and the line, the change in enough detail that it can "
+    "be applied without guessing (the code to replace and the code to write), and the check "
+    "that proves the fix (the command to run and what it must print). Keep the frozen "
+    "protocol and everything the idea requires that is not reported as defective.\n"
     "Three requirements hold whatever the findings say: the behaviour signal and the "
     "curved operation must meet in one connected pathway that the training loop "
     "calls; the trainer must be able to run on ONE GPU through the frozen single-card "
@@ -334,9 +340,7 @@ REPAIR_PROMPT = (
     "REPO_ROOT / \"results\" / \"stage2_RQ-VAE\" / ARM_NAME, never into the baseline "
     "tree, the baseline's result directory or another candidate's directory.\n"
     "Write PLAIN TEXT, in exactly this shape:\n"
-    "REPAIR: <the finding you fixed> | <what you changed> | <how you know it is fixed>\n"
-    "REMAINING ISSUE: <one thing you could not fix>\n"
-    "SMOKE COMMAND: <the command you ran>\n"
-    "SMOKE RESULT: <what it printed>\n"
-    "NOTES: <anything the next reviewers should know>"
+    "PLAN: <the finding> | <file:line> | <the exact change> | <the check that proves it>\n"
+    "REMAINING ISSUE: <one thing you could not plan a fix for>\n"
+    "NOTES: <anything the operator should know>"
 )

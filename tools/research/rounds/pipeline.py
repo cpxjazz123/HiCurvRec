@@ -28,7 +28,10 @@ from . import scoring as scoring_module
 #: filed with #121 and not with the framework issue that built the machinery.
 DEFAULT_ISSUE = "issue120"
 STATE_ROOT = Path("results/research") / DEFAULT_ISSUE / "rounds"
-IDEAE_AGENTS = 3
+#: How many independent ideation agents run per round. Five, so the proposal
+#: space is wider than the three-agent rounds produced and the selection is
+#: less likely to hinge on a single proposal family.
+IDEA_AGENTS = 5
 SCORER_AGENTS = 3
 #: One reviewer per mechanism. The operator's decision: a single reviewer per
 #: implementation, so the review is one agent's verdict rather than a vote.
@@ -120,7 +123,7 @@ def record_event(state: dict, event: str, **fields) -> None:
 
 
 def apply_ideation(state: dict, per_agent: list) -> dict:
-    """Merge the answers of the three ideation agents into the round's ideas."""
+    """Merge the answers of the ideation agents into the round's ideas."""
     try:
         merged = ideas_module.collect_ideas(per_agent)
     except ideas_module.IdeaError as exc:
@@ -352,16 +355,57 @@ def _failure_signature(findings: list) -> str:
     return hashlib.sha256("||".join(payload).encode("utf-8")).hexdigest()[:16]
 
 
-def apply_repair(state: dict, implementation_id: str, report: dict) -> dict:
-    """Record a repair subagent's work and open the next review round."""
+def apply_repair_plan(state: dict, implementation_id: str, plan: dict) -> dict:
+    """Record a repair PLAN and wait for the operator to apply it.
+
+    The repair agent does not touch the code: it reads the findings and the
+    tree and writes the change that would fix each finding. The operator (the
+    main agent) applies the plan to the tree and then registers the execution
+    with :func:`apply_repair_execution`, which is what opens the next review
+    round. Until that happens the tree is unchanged, so the revision and the
+    digest stay as they were and no review may be scheduled.
+    """
     record = _implementation(state, implementation_id)
+    record["status"] = "repair_planned"
+    record.setdefault("repair_plans", []).append({
+        "revision": int(record.get("revision", 0)),
+        "plans": plan.get("plans", []),
+        "remaining_issues": plan.get("remaining_issues", []),
+        "notes": plan.get("notes", ""),
+        "source_digest_at_plan": _source_digest(Path(record["tree"])),
+    })
+    record_event(state, "repair_plan_ready", idea_id=implementation_id,
+                 revision=int(record.get("revision", 0)),
+                 plans=len(plan.get("plans", [])))
+    return state
+
+
+def apply_repair_execution(state: dict, implementation_id: str,
+                            execution: dict) -> dict:
+    """Record that the operator applied a repair plan, and reopen the review.
+
+    ``execution`` carries what was changed and, optionally, the digest the
+    operator expects. The digest on disk wins: it is what the next reviewer
+    will read, and a mismatch with the tree is a closed failure rather than a
+    record that claims a change nobody made.
+    """
+    record = _implementation(state, implementation_id)
+    tree = Path(record["tree"])
+    digest = _source_digest(tree)
+    expected = str(execution.get("source_digest") or "")
+    if expected and expected != digest:
+        raise RoundError(
+            "the recorded repair execution claims digest " + expected[:16] +
+            " but the tree on disk hashes to " + digest[:16])
     record["revision"] = int(record.get("revision", 0)) + 1
     record["status"] = "repaired"
     record["repairs"] = record.get("repairs", []) + [{
-        "revision": record["revision"], "repairs": report.get("repairs", []),
-        "remaining_issues": report.get("remaining_issues", []),
-        "smoke": report.get("smoke", {})}]
-    record["source_digest"] = _source_digest(Path(record["tree"]))
+        "revision": record["revision"],
+        "changes": execution.get("changes", []),
+        "notes": execution.get("notes", ""),
+        "applied_by": execution.get("applied_by", "operator"),
+    }]
+    record["source_digest"] = digest
     # A runtime finding described the code before the repair: the repaired tree
     # is checked again by the runtime itself (the Stage 2 smoke), so the old
     # observation is archived rather than carried forward.

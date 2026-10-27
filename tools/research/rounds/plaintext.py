@@ -337,24 +337,36 @@ def parse_implementation(text: str) -> dict:
     }
 
 
-REPAIR_KEYS = ("REPAIR", "REMAINING ISSUE", "SMOKE COMMAND", "SMOKE RESULT", "NOTES")
+REPAIR_PLAN_KEYS = ("PLAN", "REMAINING ISSUE", "NOTES")
 
 
-def parse_repair(text: str) -> dict:
-    """Read a repair agent's report."""
-    fields = parse_fields(text, REPAIR_KEYS)
-    repairs = []
-    for value in _values(fields, "REPAIR"):
+def parse_repair_plan(text: str) -> dict:
+    """Read a repair agent's PLAN.
+
+    The planner does not touch the code, so the answer carries the change and
+    the check that proves it, not a smoke result: the operator applies the plan
+    and then runs the check.
+
+    A plan without a single PLAN line is refused rather than accepted as an
+    empty plan: an empty plan would send the candidate back to the verifiers
+    unchanged and burn another round on the same finding.
+    """
+    fields = parse_fields(text, REPAIR_PLAN_KEYS)
+    plans = []
+    for value in _values(fields, "PLAN"):
         parts = [part.strip() for part in value.split("|")]
-        while len(parts) < 3:
+        while len(parts) < 4:
             parts.append("")
-        repairs.append({"finding": parts[0], "change": parts[1], "verification": parts[2]})
+        plans.append({"finding": parts[0], "location": parts[1],
+                      "change": parts[2], "check": parts[3]})
+    if not plans:
+        raise PlainTextError(
+            "the repair planner wrote no PLAN line: the answer must plan one change "
+            "per finding as 'PLAN: <finding> | <file:line> | <change> | <check>'")
     return {
-        "repairs": repairs,
+        "plans": plans,
         "remaining_issues": [value.strip() for value in _values(fields, "REMAINING ISSUE")
                              if value.strip()],
-        "smoke": {"command": _first(fields, "SMOKE COMMAND"),
-                  "result": _first(fields, "SMOKE RESULT")},
         "notes": _first(fields, "NOTES"),
     }
 

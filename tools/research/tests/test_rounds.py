@@ -1,6 +1,7 @@
 """Issue #120 regressions: ideas, scoring, the round state machine and the queue."""
 import importlib.util
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -206,8 +207,22 @@ class RoundStateTests(unittest.TestCase):
         record = state["implementations"][0]
         self.assertEqual(record["status"], "needs_repair")
         self.assertTrue(record["failure_signature"])
-        state = pipeline_module.apply_repair(state, "a", {"repairs": [{"finding": "NaN"}]})
-        self.assertEqual(state["implementations"][0]["revision"], 1)
+        # The repair agent only plans: the tree is untouched and the candidate
+        # waits for the operator.
+        state = pipeline_module.apply_repair_plan(
+            state, "a", {"plans": [{"finding": "NaN loss", "location": "model.py:1",
+                                    "change": "clamp the loss", "check": "run the smoke"}]})
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "repair_planned")
+        self.assertEqual(record["revision"], 0)
+        self.assertEqual(len(record["repair_plans"]), 1)
+        # The operator applies the plan and registers the execution.
+        (Path(state["implementations"][0]["tree"]) / "model.py").write_text("x = 2\n")
+        state = pipeline_module.apply_repair_execution(
+            state, "a", {"changes": ["clamped the loss"]})
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "repaired")
+        self.assertEqual(record["revision"], 1)
         state = pipeline_module.apply_verification(
             state, "a", [{"verifier": "v1", "verdict": "PASS", "checks": []}])
         self.assertEqual(state["implementations"][0]["status"], "verified")
@@ -434,13 +449,20 @@ class PlainTextContractTests(unittest.TestCase):
         self.assertEqual(parsed["deviations"][0]["reason"], "it only has to prove the path")
         self.assertEqual(parsed["smoke"]["result"], "ok")
 
-    def test_a_repair_report_is_read_from_plain_text(self):
+    def test_a_repair_plan_is_read_from_plain_text(self):
         from tools.research.rounds import plaintext
-        answer = ("REPAIR: wrong export path | repointed it | the smoke passes\n"
+        answer = ("PLAN: wrong export path | model.py:12 | repoint it | the smoke passes\n"
                   "REMAINING ISSUE: none\n")
-        parsed = plaintext.parse_repair(answer)
-        self.assertEqual(parsed["repairs"][0]["finding"], "wrong export path")
-        self.assertEqual(parsed["repairs"][0]["change"], "repointed it")
+        parsed = plaintext.parse_repair_plan(answer)
+        self.assertEqual(parsed["plans"][0]["finding"], "wrong export path")
+        self.assertEqual(parsed["plans"][0]["location"], "model.py:12")
+        self.assertEqual(parsed["plans"][0]["change"], "repoint it")
+        self.assertEqual(parsed["plans"][0]["check"], "the smoke passes")
+
+    def test_a_repair_plan_without_a_plan_line_is_refused(self):
+        from tools.research.rounds import plaintext
+        with self.assertRaises(plaintext.PlainTextError):
+            plaintext.parse_repair_plan("I would fix the export path somehow.\n")
 
     def test_an_agent_answer_without_the_promised_shape_is_refused(self):
         from tools.research.rounds import plaintext
@@ -610,13 +632,15 @@ class PlainTextContractTests(unittest.TestCase):
         self.assertEqual(parsed["deviations"][0]["reason"], "it only has to prove the path")
         self.assertEqual(parsed["smoke"]["result"], "ok")
 
-    def test_a_repair_report_is_read_from_plain_text(self):
+    def test_a_repair_plan_is_read_from_plain_text(self):
         from tools.research.rounds import plaintext
-        answer = ("REPAIR: wrong export path | repointed it | the smoke passes\n"
+        answer = ("PLAN: wrong export path | model.py:12 | repoint it | the smoke passes\n"
                   "REMAINING ISSUE: none\n")
-        parsed = plaintext.parse_repair(answer)
-        self.assertEqual(parsed["repairs"][0]["finding"], "wrong export path")
-        self.assertEqual(parsed["repairs"][0]["change"], "repointed it")
+        parsed = plaintext.parse_repair_plan(answer)
+        self.assertEqual(parsed["plans"][0]["finding"], "wrong export path")
+        self.assertEqual(parsed["plans"][0]["location"], "model.py:12")
+        self.assertEqual(parsed["plans"][0]["change"], "repoint it")
+        self.assertEqual(parsed["plans"][0]["check"], "the smoke passes")
 
     def test_an_agent_answer_without_the_promised_shape_is_refused(self):
         from tools.research.rounds import plaintext
@@ -675,3 +699,80 @@ class IncompleteAnswerTests(unittest.TestCase):
              "rationale": "because"} for idea in ideas]}
         with self.assertRaises(scoring_module.ScoreError):
             scoring_module.evaluate(ideas, [full, partial, third])
+
+
+class RepairPlanTests(unittest.TestCase):
+    """The repair agent plans; the operator applies."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.directory = pipeline_module.new_round(self.root, "round_plan", objective="o")
+        self.state = pipeline_module.load_state(self.directory)
+
+    def _implementation(self):
+        tree = self.root / "a"
+        tree.mkdir()
+        (tree / "model.py").write_text("x = 1\n")
+        self.state["implementations"] = [pipeline_module.implementation_record(
+            {"idea_id": "a"}, {}, tree)]
+        return tree
+
+    def test_the_round_asks_five_ideation_agents(self):
+        self.assertEqual(pipeline_module.IDEA_AGENTS, 5)
+
+    def test_a_plan_leaves_the_tree_untouched_and_waits_for_the_operator(self):
+        tree = self._implementation()
+        before = pipeline_module._source_digest(tree)
+        state = pipeline_module.apply_repair_plan(
+            self.state, "a", {"plans": [{"finding": "NaN", "location": "model.py:1",
+                                         "change": "clamp", "check": "smoke"}]})
+        self.assertEqual(pipeline_module._source_digest(tree), before)
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "repair_planned")
+        self.assertEqual(record["revision"], 0)
+
+    def test_a_claimed_digest_that_does_not_match_the_tree_is_refused(self):
+        tree = self._implementation()
+        with self.assertRaises(pipeline_module.RoundError):
+            pipeline_module.apply_repair_execution(
+                self.state, "a", {"changes": ["x"], "source_digest": "0" * 64})
+
+    def test_the_operator_registers_what_it_changed(self):
+        tree = self._implementation()
+        (tree / "model.py").write_text("x = 2\n")
+        state = pipeline_module.apply_repair_execution(
+            self.state, "a", {"changes": ["clamped the loss"], "notes": "applied by hand"})
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "repaired")
+        self.assertEqual(record["revision"], 1)
+        self.assertEqual(record["source_digest"], pipeline_module._source_digest(tree))
+        self.assertEqual(record["repairs"][-1]["changes"], ["clamped the loss"])
+
+    def test_a_planner_that_edits_the_tree_is_rolled_back_and_its_plan_refused(self):
+        from tools.research.rounds import worker as round_worker
+
+        tree = self._implementation()
+        original = (tree / "model.py").read_text()
+
+        class _Agent:
+            def __init__(self):
+                self.calls = 0
+
+            def __call__(self, *args, **kwargs):
+                # a planner that edits the tree anyway
+                (tree / "model.py").write_text("x = 99\n")
+                (tree / "extra.py").write_text("y = 1\n")
+                return {"plans": [{"finding": "f", "location": "model.py:1",
+                                   "change": "c", "check": "k"}]}
+
+        with patch.object(round_worker, "_run_agent", _Agent()):
+            with self.assertRaises(pipeline_module.RoundError):
+                round_worker.run_repair_plan(
+                    Path(self.directory), {"idea_id": "a"}, tree,
+                    [{"severity": "blocking", "location": "model.py:1",
+                      "detail": "d", "reproduction": "r", "correction": "c"}], 0)
+        self.assertEqual((tree / "model.py").read_text(), original)
+        self.assertFalse((tree / "extra.py").exists())
+

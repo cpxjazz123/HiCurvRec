@@ -2561,7 +2561,7 @@ def write_round_worker() -> Path:
 
 def tool_research_round_start(objective: str = "", issue: str = "issue121",
                               run: bool = False) -> dict:
-    """Start one multi-agent round: three ideation agents, then three scorers.
+    """Start one multi-agent round: five ideation agents, then three scorers.
 
     The round is asynchronous; research_round_status reports where it is. The
     research objective is the one the issue fixes, and an extra objective may
@@ -2715,12 +2715,14 @@ def tool_research_round_verify(round_id: str) -> dict:
     Stage 2 queue in the same call, so review and training overlap.
     """
     result = _round_phase(round_id, "verification")
-    if not result.get("ran"):
-        return result
     from tools.research.rounds import pipeline as round_pipeline
 
     directory = _round_directory(round_id)
     state = round_pipeline.load_state(directory)
+    result["plans_pending"] = [record["idea_id"] for record in state.get("implementations", [])
+                               if record.get("status") == "repair_planned"]
+    if not result.get("ran"):
+        return result
     verified = [record["idea_id"] for record in round_pipeline.verified_implementations(state)]
     already = {job["idea_id"] for job in _round_jobs(directory)["jobs"]
                if job["kind"] == "stage2"}
@@ -2738,6 +2740,37 @@ def tool_research_round_verify(round_id: str) -> dict:
 def _round_jobs(directory: Path) -> dict:
     from tools.research.rounds import jobs as round_jobs
     return round_jobs.JobQueue(directory).report()
+
+
+def tool_research_round_apply_repair(round_id: str, idea_id: str, changes: list,
+                                     notes: str = "", source_digest: str = "") -> dict:
+    """Register a repair the operator applied to a candidate tree.
+
+    The repair agent of a round only writes a plan; the operator applies it and
+    registers the execution here. The tree on disk is the truth: the digest is
+    recomputed and a claimed digest that does not match it is a closed failure.
+    """
+    from tools.research.rounds import pipeline as round_pipeline
+
+    directory = _round_directory(round_id)
+    state = round_pipeline_state(directory)
+    try:
+        state = round_pipeline.apply_repair_execution(
+            state, idea_id,
+            {"changes": list(changes or []), "notes": notes,
+             "source_digest": source_digest,
+             "applied_by": "operator"})
+    except Exception as exc:                               # noqa: BLE001
+        return {"round_id": round_id, "idea_id": idea_id, "applied": False,
+                "error": str(exc)}
+    round_pipeline.save_state(directory, state)
+    record = next(item for item in state.get("implementations", [])
+                  if item["idea_id"] == idea_id)
+    return {"round_id": round_id, "idea_id": idea_id, "applied": True,
+            "revision": record.get("revision"), "status": record.get("status"),
+            "source_digest": record.get("source_digest"),
+            "step": state.get("step"),
+            "note": "the next verification pass reviews the applied tree"}
 
 
 def tool_research_round_run(round_id: str) -> dict:
@@ -3152,10 +3185,19 @@ TOOLS.update({
     "research_round_verify": {
         "fn": tool_research_round_verify,
         "args": {"round_id": "string"},
-        "description": "Phase 4 of a round: three independent verifiers per "
-                       "implementation, the dedicated repair loop for real defects, and "
-                       "the distinction between an infrastructure error and a defect. "
-                       "No GPU work is started.",
+        "description": "Phase 4 of a round: the verifiers per implementation, the "
+                       "repair PLANNER for real defects (it writes the change and never "
+                       "edits the tree; the operator applies it through "
+                       "research_round_apply_repair), and the distinction between an "
+                       "infrastructure error and a defect. No GPU work is started.",
+    },
+    "research_round_apply_repair": {
+        "fn": tool_research_round_apply_repair,
+        "args": {"round_id": "string", "idea_id": "string", "changes": "list",
+                 "notes": "string", "source_digest": "string"},
+        "description": "Register a repair the operator applied to a candidate tree. "
+                       "The repair agent only plans; the operator makes the change and "
+                       "records it here, which reopens the review. No GPU work.",
     },
     "research_round_run": {
         "fn": tool_research_round_run,

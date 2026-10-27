@@ -1,6 +1,6 @@
 """The round worker: the agent half of an Issue #120 round.
 
-It runs the three ideation agents, the three scoring agents, and then, for every
+It runs the five ideation agents, the three scoring agents, and then, for every
 selected idea, one implementation agent followed by three verification agents
 and, when they reject, a dedicated repair agent. It never trains anything: the
 Stage 2 and Stage 3 jobs are prepared here and executed by the MCP, which owns
@@ -75,18 +75,19 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
 
 
 def run_ideation(root: Path, objective: str) -> list:
-    """Three independent ideation agents; each returns one to three ideas."""
+    """Five independent ideation agents; each returns one to three ideas."""
     prompt_base = agent_contracts.IDEA_PROMPT.format(
         minimum=IDEA_MIN, maximum=IDEA_MAX,
         objective=agent_contracts.RESEARCH_OBJECTIVE,
         scope=agent_contracts.SCOPE_CONTRACT)
     answers = []
-    for index in range(1, pipeline_module.IDEAE_AGENTS + 1):
+    for index in range(1, pipeline_module.IDEA_AGENTS + 1):
         task_id = "ideation_" + str(index)
         prompt = (prompt_base + "\n\nThe round objective: " + (objective or "improve the "
                      "item semantic IDs for a generative recommender") +
-                     "\nYour answer must be a different set of ideas from the other two "
-                     "agents, which you cannot see.")
+                     "\nYour answer must be a different set of ideas from the other " +
+                     str(pipeline_module.IDEA_AGENTS - 1) +
+                     " agents, which you cannot see.")
         answers.append((task_id, _run_agent(root, task_id, prompt, "ideas.txt",
                                             plaintext.parse_ideas,
                                             role="ideate")))
@@ -564,20 +565,71 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
     return reports
 
 
-def run_repair(root: Path, idea: dict, tree: Path, findings: list,
-               revision: int = 0) -> dict:
-    """The dedicated repair agent for one implementation revision."""
-    prompt = (agent_contracts.REPAIR_PROMPT.format(
+def run_repair_plan(root: Path, idea: dict, tree: Path, findings: list,
+                    revision: int = 0) -> dict:
+    """The repair PLANNER for one implementation revision.
+
+    The planner may read the tree but must not change it. The rule is enforced,
+    not merely requested: the tree's sources are copied aside before the agent
+    runs and the digest is compared afterwards, so an agent that edits anyway
+    has its edit rolled back and its plan rejected.
+    """
+    prompt = (agent_contracts.REPAIR_PLAN_PROMPT.format(
         findings=plaintext.render_findings(findings), tree=str(tree),
         objective=agent_contracts.RESEARCH_OBJECTIVE,
         scope=agent_contracts.SCOPE_CONTRACT))
-    return _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),
-                      prompt, "repair.txt", plaintext.parse_repair,
+    backup = _tree_backup(tree)
+    before = pipeline_module._source_digest(tree)
+    plan = _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),
+                      prompt, "repair.txt", plaintext.parse_repair_plan,
                       role="repair")
+    after = pipeline_module._source_digest(tree)
+    if after != before:
+        _tree_restore(tree, backup)
+        raise pipeline_module.RoundError(
+            "the repair planner modified the candidate tree, which it may not do; "
+            "the tree was restored and the plan was discarded")
+    plan["tree_digest"] = before
+    return plan
+
+
+def _tree_backup(tree: Path) -> dict:
+    """A copy of every source file in the tree, for a rollback."""
+    import shutil
+    import tempfile
+
+    directory = Path(tempfile.mkdtemp(prefix="repair_backup_"))
+    files = {}
+    for path in sorted(Path(tree).rglob("*.py")):
+        if "__pycache__" in path.relative_to(tree).parts:
+            continue
+        target = directory / path.relative_to(tree)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+        files[str(path.relative_to(tree))] = target
+    return {"directory": directory, "files": files}
+
+
+def _tree_restore(tree: Path, backup: dict) -> None:
+    """Put the backed-up sources back and delete what the planner added."""
+    import shutil
+
+    tree = Path(tree)
+    for path in sorted(tree.rglob("*.py")):
+        if "__pycache__" in path.relative_to(tree).parts:
+            continue
+        relative = str(path.relative_to(tree))
+        if relative not in backup["files"]:
+            path.unlink()
+    for relative, source in backup["files"].items():
+        target = tree / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+    shutil.rmtree(backup["directory"], ignore_errors=True)
 
 
 def phase_ideation(root: Path, round_id: str, *, log=print) -> dict:
-    """Run the three ideation agents and merge what they proposed."""
+    """Run the ideation agents and merge what they proposed."""
     directory = pipeline_module.find_round_directory(root, round_id)
     state = pipeline_module.load_state(directory)
     agent_root = directory
@@ -724,6 +776,8 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
             pipeline_module.save_state(directory, state)
         if record.get("status") not in ("implemented", "repaired", "agent_error",
                                         "needs_repair"):
+            # "repair_planned" waits for the operator: the tree is unchanged, so
+            # there is nothing new to review and nothing new to plan.
             continue
         idea = ideas_module.idea_index(state["ideas"])[record["idea_id"]]
         try:
@@ -751,31 +805,24 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
                 log("%s: revision capped" % record["idea_id"])
                 continue
             try:
-                repair = run_repair(agent_root, idea, Path(record["tree"]),
-                                    record.get("blocking_findings", []),
-                                    int(record.get("revision", 0)))
-                state = pipeline_module.apply_repair(state, record["idea_id"], repair)
-                # The repair may have fixed the output paths: re-run the
-                # preflight so a stale finding cannot block the candidate.
-                running = set()
-                job_file = directory / "jobs.json"
-                if job_file.is_file():
-                    import json as _json
-                    jobs = _json.loads(job_file.read_text(encoding="utf-8"))
-                    running = {job["idea_id"] for job in jobs.get("jobs", [])
-                               if job.get("kind") == "stage2"
-                               and job.get("status") == "running"}
-                state = pipeline_module.recheck_output_paths(
-                    state, record["idea_id"], skip_if_running=running)
+                # The repair agent only plans: it reads the findings and the tree
+                # and writes the change that would fix each finding. The operator
+                # applies the plan to the tree and registers the execution, which
+                # is what reopens the review.
+                plan = run_repair_plan(agent_root, idea, Path(record["tree"]),
+                                       record.get("blocking_findings", []),
+                                       int(record.get("revision", 0)))
+                state = pipeline_module.apply_repair_plan(state, record["idea_id"], plan)
             except Exception as exc:                       # noqa: BLE001
                 state = pipeline_module.mark_agent_error(
-                    state, record["idea_id"], "repair failed: " + str(exc))
+                    state, record["idea_id"], "repair planning failed: " + str(exc))
             pipeline_module.save_state(directory, state)
             log("%s: %s" % (record["idea_id"], record.get("status")))
     # Stay in verification until every implementation is resolved: a repair
     # reopens the review, and the round must not move on with work in flight.
     pending = [record for record in state.get("implementations", [])
-               if record.get("status") in ("implemented", "repaired", "needs_repair")
+               if record.get("status") in ("implemented", "repaired", "needs_repair",
+                                           "repair_planned")
                or (record.get("status") == "agent_error"
                    and int(record.get("agent_error_attempts", 0))
                    <= pipeline_module.MAX_AGENT_RETRIES)]
@@ -784,6 +831,8 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
     return {"phase": "verification", "ran": True, "step": state["step"],
             "verified": len(pipeline_module.verified_implementations(state)),
             "pending": [record["idea_id"] for record in pending],
+            "plans_pending": [record["idea_id"] for record in pending
+                              if record.get("status") == "repair_planned"],
             "blocked": [entry["idea_id"] for entry in state.get("blocked", [])],
             "agent_errors": [entry["idea_id"] for entry in state.get("agent_errors", [])]}
 
