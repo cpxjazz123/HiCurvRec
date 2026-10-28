@@ -2957,6 +2957,42 @@ def tool_research_round_run(round_id: str) -> dict:
     return {"round_id": round_id, "ran": True, "summary": summary}
 
 
+def tool_research_round_run_detached(round_id: str) -> dict:
+    """Run the remaining agent phases of a round in a detached worker.
+
+    The call returns at once. A phase of a round takes minutes - five agents,
+    five minutes each - and a synchronous call would hold the MCP server for
+    the whole of it, so the client would see a timeout and the work would still
+    be running. The worker writes the round state; the phases themselves are
+    the same code the synchronous tool uses.
+    """
+    directory = _round_directory(round_id)
+    state = round_pipeline_state(directory)
+    running = state.get("worker_pid")
+    if running and state_process_live(int(running), HARNESS_DIR / ("round_" + round_id + ".log")):
+        return {"round_id": round_id, "worker_pid": int(running),
+                "worker_alive": True,
+                "reason": "a worker is already running this round"}
+    worker = write_round_worker()
+    log = HARNESS_DIR / ("round_" + round_id + ".log")
+    with log.open("wb") as sink:
+        process = subprocess.Popen(
+            [sys.executable, str(worker), json.dumps({"round_id": round_id})],
+            cwd=str(REPO),
+            stdout=sink,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    state["worker_pid"] = process.pid
+    state["worker_log"] = str(log)
+    from tools.research.rounds import pipeline as round_pipeline
+    round_pipeline.record_event(state, "round_worker_started", pid=process.pid)
+    round_pipeline.save_state(directory, state)
+    return {"round_id": round_id, "worker_pid": process.pid, "worker_log": str(log),
+            "worker_alive": True, "next": "research_round_status"}
+
+
 def tool_research_round_status(round_id: str) -> dict:
     """Where the round is, what it produced and what is still open."""
     from tools.research.rounds import jobs as round_jobs
@@ -3415,6 +3451,15 @@ TOOLS.update({
         "description": "Run every remaining agent phase of a round in one call, "
                        "until it waits for Stage 2. The one-shot form of the phase "
                        "tools. No GPU work is started.",
+    },
+    "research_round_run_detached": {
+        "fn": tool_research_round_run_detached,
+        "args": {"round_id": "string"},
+        "description": "Run the remaining agent phases of a round in a detached "
+                       "worker and return at once. The phases take minutes, so a "
+                       "synchronous call would hold the server while the client "
+                       "waits; research_round_status reports the progress. "
+                       "No GPU work is started.",
     },
     "research_round_status": {
         "fn": tool_research_round_status,

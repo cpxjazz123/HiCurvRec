@@ -31,8 +31,12 @@ from . import plaintext
 from . import scoring as scoring_module
 from . import pipeline as pipeline_module
 
-IDEA_MIN = 2
-IDEA_MAX = 3
+#: One idea per agent. A round takes five agents, so it collects five
+#: proposals (the contract wants three to nine), and one idea block fits in the
+#: five minutes an agent has: a proposal that takes longer than the deadline is
+#: a proposal that never arrives.
+IDEA_MIN = 1
+IDEA_MAX = 1
 SCORERS = 3
 #: How many independent verifiers read one implementation revision.
 VERIFIERS = pipeline_module.VERIFIER_AGENTS
@@ -150,8 +154,11 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
               "or read your file back as a verdict. Each record says the goal of "
               "the check, what you read, what you observed, where the evidence "
               "is, your short reasoning, and what is still open. Append a "
-              "correction when you overturn an earlier conclusion, and append a "
-              "final record before the deadline.")
+              "correction when you overturn an earlier conclusion. Append each "
+              "result you produce as its own record as soon as you have it (one "
+              "answer block per record), and append the complete answer as the "
+              "last record: a task that ends early leaves the framework reading "
+              "these records, so each one has to stand on its own.")
     if deadline_seconds is None:
         deadline_seconds = settings.AGENT_DEADLINE_SECONDS
     if allowed_roots is None:
@@ -170,20 +177,40 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
                    if match.is_file()
                    and not any(part.startswith("attempt-")
                                for part in match.relative_to(workspace).parts)]
-        if not matches:
-            raise pipeline_module.RoundError("agent " + task_id + " wrote no " + output_name)
-        answer = matches[0]
-    report = parser(answer.read_text(encoding="utf-8", errors="replace"))
+        if matches:
+            answer = matches[0]
+    progress_file = workspace / runner.PROGRESS_FILE_NAME
+    records = progress_server.read_records(progress_file)
+    text = ""
+    answer_from_progress = False
+    if answer.is_file():
+        text = answer.read_text(encoding="utf-8", errors="replace").strip()
+    if not text:
+        # The task ended before it replied. The records it saved are what it
+        # delivered: the last one that carries a complete answer is taken.
+        for record in reversed(records):
+            content = str(record.get("content", "")).strip()
+            if not content:
+                continue
+            try:
+                parser(content)
+            except Exception:                              # noqa: BLE001
+                continue
+            text = content
+            answer_from_progress = True
+            break
+    if not text:
+        raise pipeline_module.RoundError("agent " + task_id + " wrote no " + output_name)
+    report = parser(text)
     report["boundary_version"] = policy.BOUNDARY_VERSION
     report["boundary_sha256"] = expected_boundary
     report["receipt"] = str(receipt)
     # The stage records the agent delivered before the deadline: the main agent
     # judges from what was actually saved, not from what the model meant.
-    progress_file = workspace / runner.PROGRESS_FILE_NAME
-    records = progress_server.read_records(progress_file)
     report["progress_file"] = str(progress_file)
     report["progress_records"] = records
     report["progress_count"] = len(records)
+    report["answer_from_progress"] = answer_from_progress
     report["deadline_seconds"] = deadline_seconds
     return report
 
@@ -293,6 +320,7 @@ def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
     """
     prompt_base = agent_contracts.IDEA_PROMPT.format(
         minimum=IDEA_MIN, maximum=IDEA_MAX,
+        agents=pipeline_module.IDEA_AGENTS,
         objective=agent_contracts.RESEARCH_OBJECTIVE,
         scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
         agent_contracts.EXPERIMENT_POLICY)
@@ -319,8 +347,17 @@ def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
                                     role="ideate", read_paths=[],
                                     allowed_roots=_round_roots(root)))
 
-    return _run_agents_concurrently(
-        [tuple([index]) for index in range(1, pipeline_module.IDEA_AGENTS + 1)], ideate)
+    try:
+        return _run_agents_concurrently(
+            [tuple([index]) for index in range(1, pipeline_module.IDEA_AGENTS + 1)], ideate)
+    except AgentPhaseIncomplete as exc:
+        # An agent that ran out of its five minutes has proposed nothing. The
+        # proposals that did arrive are kept: a round needs three distinct
+        # proposals to compare, and a missing proposer is not a reason to throw
+        # the others away.
+        if not exc.results:
+            raise
+        return exc.results
 
 
 def _rubric_text() -> str:

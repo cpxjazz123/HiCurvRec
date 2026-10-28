@@ -175,6 +175,44 @@ class MountTests(unittest.TestCase):
         self.assertNotIn("opencode.db", output)
 
 
+class BindDestinationTests(unittest.TestCase):
+    """No bind destination may run through a symlinked component.
+
+    The namespace creates the parents of a bind destination inside its own
+    root. When the destination runs through a symlink - the repository is
+    reachable through a symlinked home - that creates the link as a directory,
+    and the operation that wanted to create it as a link fails. The failure
+    looked like an unrelated sandbox error, so the rule is pinned here.
+    """
+
+    def test_no_destination_has_a_symlinked_ancestor(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            private = root / "private"
+            (private / ".local" / "share" / "opencode").mkdir(parents=True)
+            (private / ".cache" / "opencode").mkdir(parents=True)
+            command = runner.sandbox_command(["/bin/sh", "-c", "true"], workspace,
+                                             [], Path("/bin/sh"), private)
+            offenders = []
+            for index, item in enumerate(command):
+                if item not in ("--bind", "--ro-bind", "--ro-bind-try"):
+                    continue
+                destination = Path(command[index + 2])
+                for ancestor in destination.parents:
+                    if ancestor == Path("/"):
+                        break
+                    if ancestor.is_symlink():
+                        offenders.append(str(destination) + " through " + str(ancestor))
+                        break
+            self.assertEqual(offenders, [], "bind destinations through a symlink: " +
+                             repr(offenders))
+
+    def test_the_progress_server_is_mounted_by_a_resolved_path(self):
+        self.assertEqual(runner.PROGRESS_SERVER, runner.PROGRESS_SERVER.resolve())
+
+
 class SingleEntryTests(unittest.TestCase):
     """There is one launcher, and the boundary cannot be switched off."""
 

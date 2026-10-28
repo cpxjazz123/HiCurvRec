@@ -1,4 +1,6 @@
 """Real OpenCode CLI with cooperative cancellation and process receipts."""
+from __future__ import annotations
+
 import json
 import os
 import shutil
@@ -30,8 +32,11 @@ SANDBOX_PYTHON = "/usr/bin/python3"
 
 #: The append-only progress channel. The server is a framework runtime
 #: dependency: it is mounted read-only, it is the only writer of the agent's
-#: progress file, and it is the agent's only write.
-PROGRESS_SERVER = Path(__file__).with_name("progress_server.py")
+#: progress file, and it is the agent's only write. The path is resolved,
+#: because the repository is reachable through a symlinked home and a bind
+#: destination under that link would create the link as a directory and break
+#: the namespace.
+PROGRESS_SERVER = Path(__file__).resolve().with_name("progress_server.py")
 PROGRESS_FILE_NAME = "progress.jsonl"
 
 #: Tables that can carry another session's text, another project's paths or a
@@ -205,8 +210,18 @@ def _private_provider_db(source: Path, target: Path) -> None:
 
 
 def agent_sandbox_home(workspace: Path) -> Path:
-    """A private HOME for one sandboxed agent, with no shared session data."""
-    home = Path(tempfile.mkdtemp(prefix="genrec-agent-"))
+    """A private HOME for one sandboxed agent, with no shared session data.
+
+    The directory is created outside the masked home: the namespace resolves a
+    bind source against its own root, and a path under the home would either be
+    invisible or would recreate the links the namespace hides.
+    """
+    base = Path(tempfile.gettempdir()).resolve()
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        base = Path("/tmp")
+    home = Path(tempfile.mkdtemp(prefix="genrec-agent-", dir=str(base)))
     data = home / ".local" / "share" / "opencode"
     cache = home / ".cache" / "opencode"
     data.mkdir(parents=True, exist_ok=True)
@@ -464,16 +479,21 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     env = _agent_environment(workspace)
     started = time.monotonic()
     cancelled, timed_out, stderr = False, False, ""
+    # The standard error of the agent goes to a file, not to a pipe: a pipe is
+    # inherited by the agent's own children, and a child that outlives the
+    # agent keeps the pipe open, so the wait for the agent never ends.
+    stderr_path = workspace / "stderr.log"
     try:
-        with (workspace / "session.jsonl").open("w", encoding="utf-8") as log:
+        with (workspace / "session.jsonl").open("w", encoding="utf-8") as log, \
+                stderr_path.open("w", encoding="utf-8") as errors:
             process = subprocess.Popen(cmd, cwd=workspace, env=env, stdout=log,
-                                       stderr=subprocess.PIPE, text=True,
+                                       stderr=errors, text=True,
                                        start_new_session=True)
             atomic_json(workspace / "running.json", {"pid": process.pid,
                         "started_at": time.time(), "task_id": task_id})
             while True:
                 try:
-                    _, stderr = process.communicate(timeout=1)
+                    process.wait(timeout=1)
                     break
                 except subprocess.TimeoutExpired:
                     if (root / "cancel.json").is_file():
@@ -483,10 +503,10 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
                     if cancelled or timed_out:
                         os.killpg(process.pid, signal.SIGTERM)
                         try:
-                            _, stderr = process.communicate(timeout=5)
+                            process.wait(timeout=5)
                         except subprocess.TimeoutExpired:
                             os.killpg(process.pid, signal.SIGKILL)
-                            _, stderr = process.communicate()
+                            process.wait()
                         break
     except OSError as exc:
         atomic_json(workspace / "execution.json",
@@ -497,6 +517,10 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         (workspace / "running.json").unlink(missing_ok=True)
         if private_home is not None:
             shutil.rmtree(private_home, ignore_errors=True)
+    try:
+        stderr = stderr_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        stderr = ""
     # The Agent is told the absolute destination, but a model can still write the
     # answer into a nested or slightly misnamed directory of its own workspace.
     # The artifact is what matters and the caller validates its content
@@ -540,6 +564,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "argv_shape": ["bwrap", "--unshare-all", "--share-net",
                        "opencode", "run", "--standalone", "--format", "json",
                        "--auto", "--model", "<model>", "--title", task_id, "<prompt>"],
+        "sandbox_argv": [str(item) for item in cmd],
         "prompt_sha256": digest_bytes(prompt.encode()),
         "session_sha256": digest_file(workspace / "session.jsonl"),
         "isolation_config": isolation.name,
@@ -576,7 +601,9 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
             ("allowed" if allow_write else "denied") +
             ", read and external_directory deny-by-default with the explicit "
             "allowlist)"),
-        "stderr_present": bool(stderr), "output_name": output_name,
+        "stderr_present": bool(stderr),
+        "stderr_tail": (stderr or "")[-4000:],
+        "output_name": output_name,
         "output_sha256": digest_file(output) if output.is_file() else None,
         "verified": valid,
         "limitations": ("The mount namespace is the filesystem guarantee; the model "

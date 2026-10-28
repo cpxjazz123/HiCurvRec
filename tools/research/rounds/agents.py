@@ -78,10 +78,11 @@ IDEA_FIELDS = (
 )
 
 IDEA_PROMPT = (
-    "Propose {minimum} to {maximum} DISTINCT, implementable ideas for improving the "
-    "item semantic IDs that a generative recommender consumes. You are one of three "
-    "independent ideation agents: aim for a different part of the design space than "
-    "the others, and do not copy an existing mechanism in the repository.\n"
+    "Propose exactly {minimum} DISTINCT, implementable idea for improving the "
+    "item semantic IDs that a generative recommender consumes. You are one of "
+    "{agents} independent ideation agents: aim for a different part of the design "
+    "space than the others, and do not copy an existing mechanism in the "
+    "repository.\n"
     "THE RESEARCH OBJECTIVE:\n{objective}\n"
     "THE SCOPE CONTRACT (a proposal that misses it is sent back, not scored):\n"
     "{scope}\n"

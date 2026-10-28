@@ -5,12 +5,14 @@ on:
       - "tools/genrec-mcp/stage2_quality_gate.py"
       - "tools/genrec-mcp/server.py"
       - "tools/research/tests/test_stage2_quality_gate.py"
+      - "tools/research/**"
       - ".github/workflows/stage3-quality-gate-regression.yml"
   pull_request:
     paths:
       - "tools/genrec-mcp/stage2_quality_gate.py"
       - "tools/genrec-mcp/server.py"
       - "tools/research/tests/test_stage2_quality_gate.py"
+      - "tools/research/**"
       - ".github/workflows/stage3-quality-gate-regression.yml"
 
 jobs:
@@ -41,3 +43,9 @@ jobs:
           assert "stage2_validity_admission" in server
           print("Stage3 admission checks technical validity only")
           PY
+      - name: The research package imports on this interpreter
+        run: |
+          # The MCP server is started by the harness with the system python, and
+          # a 3.10-only annotation takes the whole tool surface down at call
+          # time. The matrix covers 3.9 and 3.10 for exactly this reason.
+          python -m unittest discover -s tools/research/tests -p "test_import_surface.py" -v
