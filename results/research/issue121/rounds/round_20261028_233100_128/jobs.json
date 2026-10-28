@@ -71,17 +71,24 @@
     {
       "attempts": 0,
       "error": null,
-      "finished_at": null,
+      "finished_at": 1793202098.4492052,
       "idea_id": "poincare-frechet-successor-codebook",
       "job_id": "stage3:poincare-frechet-successor-codebook",
       "kind": "stage3",
       "queued_at": 1793199669.9039066,
-      "result": null,
+      "result": {
+        "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_poincare-frechet-successor-codebook/ckpt/Amazon_2023_Instruments/Oct-29-2026_02-06-58/HG_Rec_best.pth",
+        "n_eval": 57439,
+        "test_ndcg@10": 0.029094302825308862,
+        "test_ndcg@5": 0.02343369468287704,
+        "test_recall@10": 0.053169449328853216,
+        "test_recall@5": 0.03565521683873327
+      },
       "round_id": "round_20261028_233100_128",
       "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook/item_sids.json",
       "stage2_job_id": "stage2:poincare-frechet-successor-codebook",
       "started_at": null,
-      "status": "pending",
+      "status": "done",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook"
     }
   ],
