@@ -455,6 +455,20 @@ def saved_answer(workspace: Path, parser=None, assemble: bool = False) -> str:
     return ""
 
 
+def _geometry_contract() -> dict:
+    """The shared mathematical contract every agent reads, with its digest."""
+    import hashlib
+    path = Path(__file__).resolve().parents[1] / "contracts" / "HYPERBOLIC_GEOMETRY_CONTRACT.md"
+    text = path.read_text(encoding="utf-8")
+    version = "poincare-contract/v1"
+    for line in text.splitlines():
+        if line.startswith("Status:") and "`" in line:
+            version = line.split("`")[1]
+            break
+    return {"path": str(path), "version": version,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
               binary=None, model=None, timeout=None,
               role: str = "verify", read_paths=None, allowed_roots=None,
@@ -496,6 +510,13 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     # The policy decides what the task may read. It refuses a wider view, a
     # missing path and the directory that holds the other agents' answers, so
     # the caller cannot hand the agent the repository.
+    # Every research agent reads the geometry contract: it is shared background,
+    # it is inside the roots, and its digest is written on the receipt so a cached
+    # answer cannot survive a change of contract.
+    contract = _geometry_contract()
+    read_paths = list(read_paths or []) + (
+        [] if contract["path"] in (read_paths or []) else [contract["path"]])
+    allowed_roots = list(allowed_roots or []) + [str(Path(contract["path"]).parent)]
     allowed = policy.check_read_paths(read_paths, roots=allowed_roots,
                                       task_root=root, candidate_tree=candidate_tree)
     if shutil.which(SANDBOX_BINARY) is None:
@@ -572,7 +593,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
                 timed_out = True
     except OSError as exc:
         atomic_json(workspace / "execution.json",
-                    {"task_id": task_id, "error_type": type(exc).__name__,
+                    {"geometry_contract": _geometry_contract(),
+                     "task_id": task_id, "error_type": type(exc).__name__,
                      "verified": False})
         raise
     finally:
@@ -634,6 +656,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "read_allowlist": [str(entry) for entry in allowed] +
                           [str(entry.resolve()) for entry in allowed
                            if str(entry.resolve()) != str(entry)],
+        "geometry_contract": _geometry_contract(),
         "boundary_version": policy.BOUNDARY_VERSION,
         "boundary_sha256": boundary_fingerprint(workspace, role, allowed,
                                                 allow_shell, allow_write,

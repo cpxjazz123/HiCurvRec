@@ -80,6 +80,27 @@ class AgentPhaseIncomplete(RuntimeError):
         self.classes = classes
 
 
+#: The framework's mathematics. Every research agent reads the contract, and the
+#: roles that inspect implementations also read the module that implements it.
+GEOMETRY_CONTRACT = Path(__file__).resolve().parents[1] / "contracts" / "HYPERBOLIC_GEOMETRY_CONTRACT.md"
+GEOMETRY_MODULE = Path(__file__).resolve().parents[1] / "geometry" / "poincare_contract.py"
+
+
+def geometry_contract() -> dict:
+    """The shared mathematical input: its path, version and digest."""
+    import hashlib
+    text = GEOMETRY_CONTRACT.read_text(encoding="utf-8")
+    version = "poincare-contract/v1"
+    for line in text.splitlines():
+        if line.startswith("Status:") and "`" in line:
+            version = line.split("`")[1]
+            break
+    return {"path": str(GEOMETRY_CONTRACT),
+            "sha256": hashlib.sha256(GEOMETRY_CONTRACT.read_bytes()).hexdigest(),
+            "version": version,
+            "module": str(GEOMETRY_MODULE)}
+
+
 def _round_roots(root: Path) -> list:
     """The directories a task of this round may read from.
 
