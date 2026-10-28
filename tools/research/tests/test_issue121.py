@@ -211,18 +211,24 @@ class BaselineTests(unittest.TestCase):
         provenance = baseline_module.copy_baseline(candidate, baseline=self.baseline)
         self.assertTrue((candidate / "train_rqvae.py").is_file())
         self.assertFalse((candidate / "logs").exists())
-        self.assertEqual(provenance["baseline_digest"], provenance["candidate_digest"])
+        # the copy differs from the baseline in exactly two framework-owned ways:
+        # the arm constant and the canonical geometry module it carries
+        self.assertNotEqual(provenance["baseline_digest"], provenance["candidate_digest"])
+        self.assertTrue(baseline_module._same_source_except_arm(self.baseline, candidate))
+        self.assertEqual(provenance["framework_files"], ["model/poincare_contract.py"])
 
     def test_two_candidates_get_two_independent_copies(self):
         first = self.root / "one"
         second = self.root / "two"
         baseline_module.copy_baseline(first, baseline=self.baseline)
         baseline_module.copy_baseline(second, baseline=self.baseline)
+        # two copies of the same baseline agree with each other; the canonical
+        # geometry module is part of what runs, so it is part of the digest
+        self.assertEqual(baseline_module.source_digest(first),
+                         baseline_module.source_digest(second))
         (first / "train_rqvae.py").write_text("changed = True\n", encoding="utf-8")
         self.assertNotEqual(baseline_module.source_digest(first),
                             baseline_module.source_digest(second))
-        self.assertEqual(baseline_module.source_digest(second),
-                         baseline_module.source_digest(self.baseline))
 
     def test_a_changed_baseline_is_detected(self):
         before = baseline_module.source_digest(self.baseline)
