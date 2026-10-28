@@ -35,8 +35,6 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
-from model.hyperbolic import ball_distance, ball_exp_map
-from model.hyperbolic import ball_distance, ball_exp_map
 
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
@@ -116,8 +114,6 @@ GEOMETRY_ON         = True
 GEOMETRIC_CURVATURE = 1.0
 # 每个物品保留的邻居上限: k = min(8, degree), 规格固定, 不做扫描.
 NEIGHBOUR_TOPK      = 8
-# 共享后继的枚举上限: 按转移计数从多到少取前若干个, 避免热门后继的成对爆炸.
-FANOUT_LIMIT        = 1024
 NUM_WORKERS         = 0  # 2026-09-24: 0 防 DDP fork storm (4 rank × 4 worker = 16 子进程在 barrier 后挂死)
 EVAL_INTERVAL       = 50
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
@@ -591,21 +587,20 @@ def _launch_via_torchrun() -> None:
     env["NCCL_SHM_DISABLE"]    = "1"
     env["NCCL_TIMEOUT"]        = "3600"
     env["TORCH_NCCL_BLOCKING_WAIT"] = "1"
-    cmd = [
-        _LAUNCHER["torchrun"],
-        "--standalone",
-        f"--nproc_per_node={_LAUNCHER['nproc']}",
-        f"--master_port={_LAUNCHER['master_port']}",
-        _LAUNCHER["script"],
-    ]
-    # The four ranks run with the RESULT directory as their working directory.
-    # The candidate tree is replaced whenever the framework promotes it again,
-    # and a process whose working directory disappears dies on its next
-    # os.getcwd() call, which torch makes while it is imported.
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
-    with open(_LAUNCHER["log"], "w", encoding="utf-8") as fout:
-        rc = subprocess.call(cmd, stdout=fout, stderr=subprocess.STDOUT, env=env,
-                            cwd=str(LOG_DIR))
+    # The four ranks are started by the framework's launcher: the port, the
+    # world size, the working directory and the log belong to the frozen
+    # contract, and the candidate must not rebuild them. The launcher runs the
+    # ranks in the RESULT directory, which no promotion replaces.
+    sys.path.insert(0, str(REPO_ROOT))
+    from tools.research.stage2 import contract as stage2_contract
+    from tools.research.stage2 import launcher as stage2_launcher
+    rc = stage2_launcher.launch(
+        entry=_LAUNCHER["script"], result_dir=RESULT_DIR,
+        port=stage2_contract.STAGE2_PORT, world_size=int(_LAUNCHER["nproc"]),
+        python=_LAUNCHER["torchrun"].rsplit("/", 1)[0] + "/python3.9",
+        env_extra={k: env[k] for k in ("CUDA_VISIBLE_DEVICES", "NCCL_IB_DISABLE",
+                                       "NCCL_P2P_DISABLE", "NCCL_SHM_DISABLE",
+                                       "NCCL_TIMEOUT", "TORCH_NCCL_BLOCKING_WAIT")})
     sys.exit(rc)
 
 

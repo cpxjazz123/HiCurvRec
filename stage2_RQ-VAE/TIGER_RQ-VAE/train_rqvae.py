@@ -445,15 +445,19 @@ def _launch_via_torchrun() -> None:
     env["NCCL_SHM_DISABLE"]    = "1"
     env["NCCL_TIMEOUT"]        = "3600"
     env["TORCH_NCCL_BLOCKING_WAIT"] = "1"
-    cmd = [
-        _LAUNCHER["torchrun"],
-        "--standalone",
-        f"--nproc_per_node={_LAUNCHER['nproc']}",
-        f"--master_port={_LAUNCHER['master_port']}",
-        _LAUNCHER["script"],
-    ]
-    with open(_LAUNCHER["log"], "w", encoding="utf-8") as fout:
-        rc = subprocess.call(cmd, stdout=fout, stderr=subprocess.STDOUT, env=env)
+    # The four ranks are started by the framework's launcher, not by this file:
+    # the port, the world size, the working directory and the log belong to the
+    # frozen contract, so that no candidate has to re-implement them.
+    sys.path.insert(0, str(REPO_ROOT))
+    from tools.research.stage2 import contract as stage2_contract
+    from tools.research.stage2 import launcher as stage2_launcher
+    rc = stage2_launcher.launch(
+        entry=_LAUNCHER["script"], result_dir=RESULT_DIR,
+        port=stage2_contract.STAGE2_PORT, world_size=int(_LAUNCHER["nproc"]),
+        python=_LAUNCHER["torchrun"].rsplit("/", 1)[0] + "/python3.9",
+        env_extra={k: env[k] for k in ("CUDA_VISIBLE_DEVICES", "NCCL_IB_DISABLE",
+                                       "NCCL_P2P_DISABLE", "NCCL_SHM_DISABLE",
+                                       "NCCL_TIMEOUT", "TORCH_NCCL_BLOCKING_WAIT")})
     sys.exit(rc)
 
 

@@ -115,13 +115,53 @@ ROLE_TIMEOUT_SECONDS = {
 }
 
 
+class AgentFailure(RuntimeError):
+    """An agent run that produced no usable answer, with the class of failure.
+
+    ``auth`` means the provider refused the credentials: retrying the same call
+    cannot help and the caller pauses. ``timeout``, ``cancel``, ``crash`` and
+    ``empty`` are execution faults of one agent and are retried in place.
+    """
+
+    def __init__(self, failure_class: str, receipt: str, message: str):
+        super().__init__(message)
+        self.failure_class = failure_class
+        self.receipt = receipt
+
+
+def class_of_failure(session: Path, *, timed_out: bool, cancelled: bool,
+                     exit_code: int, wrote_answer: bool) -> str:
+    """Why an agent run produced no usable answer."""
+    text = ""
+    if session.is_file():
+        try:
+            text = session.read_text(encoding="utf-8", errors="replace")[-200000:]
+        except OSError:
+            text = ""
+    if "provider.auth" in text or "authentication token has expired" in text:
+        return "auth"
+    if "provider.quota" in text or "rate limit" in text.lower():
+        return "quota"
+    if timed_out:
+        return "timeout"
+    if cancelled:
+        return "cancel"
+    if exit_code != 0:
+        return "crash"
+    return "empty" if not wrote_answer else "unusable"
+
+
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
-              binary=None, model=None, timeout=900,
+              binary=None, model=None, timeout=None,
               role: str = "verify") -> Path:
     # The binary and the model come from the one source of configuration.
     binary = binary or settings.AGENT_BINARY
     model = model or settings.AGENT_MODEL
-    timeout = max(timeout, ROLE_TIMEOUT_SECONDS.get(str(role), 0))
+    # The role budget is the DEFAULT, and an explicit timeout wins: a caller that
+    # asks for two seconds (a test, or a deliberate short probe) must not be
+    # silently given the reviewer's forty minutes.
+    if timeout is None:
+        timeout = ROLE_TIMEOUT_SECONDS.get(str(role)) or settings.AGENT_TIMEOUT_SECONDS
     if (not output_name.endswith((".json", ".txt")) or "/" in output_name
             or "\\" in output_name or not task_id.replace("-", "").replace("_", "").isalnum()):
         raise ValueError("unsafe task id or output filename")
@@ -228,12 +268,20 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "verified": valid,
         "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
     }
+    record["failure_class"] = "none" if valid else class_of_failure(
+        workspace / "session.jsonl", timed_out=timed_out, cancelled=cancelled,
+        exit_code=process.returncode, wrote_answer=output.is_file())
     receipt = workspace / "execution.json"
     atomic_json(receipt, record)
     if not valid:
-        reason = ("OpenCode failed, cancelled, timed out or returned invalid JSON: "
-                  if output_name.endswith(".json")
-                  else "OpenCode failed, cancelled, timed out or wrote no usable "
-                       "answer file: ")
-        raise RuntimeError(reason + str(receipt))
+        # An answer is published only when the run was valid. A timed-out run can
+        # leave half a report behind, and a half report read as an answer is how a
+        # cancelled reviewer became a verdict.
+        if output.is_file():
+            partial = workspace / "partial"
+            partial.mkdir(parents=True, exist_ok=True)
+            output.replace(partial / output_name)
+        raise AgentFailure(record["failure_class"], str(receipt),
+                           "OpenCode did not produce a usable answer (" +
+                           record["failure_class"] + "): " + str(receipt))
     return receipt

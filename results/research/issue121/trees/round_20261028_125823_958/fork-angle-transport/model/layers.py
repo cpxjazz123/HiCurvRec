@@ -324,13 +324,11 @@ class RQLayer(nn.Module):
         # The reconstruction is the exponential map of the residual with the
         # selected code subtracted in the tangent space, so the gradient of the
         # commitment passes through the curved map and not around it.
+        # The residual update of the specification: the selected code is
+        # subtracted in the tangent space, and the next level sees what is
+        # left of the tangent.
         selected = code_tangent[indices]
         reconstruction_tangent = tangent - selected
-        if geometry_on:
-            reconstruction = ball_exp_map(torch.zeros_like(reconstruction_tangent),
-                                          reconstruction_tangent, curvature)
-        else:
-            reconstruction = reconstruction_tangent
         # The commitment keeps the FORM of the baseline: the code is pulled
         # towards the residual it stands for, and the residual it does not
         # cover is what the next level sees. It is measured in the tangent

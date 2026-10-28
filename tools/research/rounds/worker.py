@@ -41,6 +41,39 @@ def _workspace(root: Path, task_id: str) -> Path:
     return Path(root) / "agents" / task_id
 
 
+class RoundIncomplete(RoundError if "RoundError" in globals() else RuntimeError):
+    """A round phase is missing agents; the work that exists is kept.
+
+    The main agent decides what to do next: retry the missing agents when the
+    class is an execution fault, pause when the class is an authentication or a
+    quota fault, and never read the missing answers as a negative verdict on the
+    mechanism.
+    """
+
+    def __init__(self, message: str, *, results: list, failures: list, classes: set):
+        super().__init__(message)
+        self.results = results
+        self.failures = failures
+        self.classes = classes
+        self.waiting = bool(classes & {"auth", "quota"})
+
+
+class AgentPhaseIncomplete(RuntimeError):
+    """Some agents of a phase produced no answer; the others did.
+
+    ``results`` holds the answers that exist, so a phase can persist them and ask
+    only for the missing ones next time instead of paying for all of them again.
+    ``classes`` says why the others failed: an ``auth`` or ``quota`` class means
+    the service, not the candidate, is the problem.
+    """
+
+    def __init__(self, summary: str, *, results: list, failures: list, classes: set):
+        super().__init__("the phase is incomplete: " + summary)
+        self.results = results
+        self.failures = failures
+        self.classes = classes
+
+
 def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
                role: str = "verify") -> dict:
     """Run one agent in its own workspace and parse its plain-text answer.
@@ -53,14 +86,31 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     # the agent answers in prose and writes no file.
     destination = Path(root) / "agents" / task_id / output_name
     # Resumability: an answer that is already on disk is reused, so a round that
-    # was interrupted does not pay for the same agents twice.
+    # was interrupted does not pay for the same agents twice. The reuse requires
+    # the receipt to say the run was valid: a partial answer left by a timed-out
+    # or cancelled run is not an answer, and reading it as one is how a cancelled
+    # reviewer became a verdict.
+    receipt_path = Path(root) / "agents" / task_id / "execution.json"
     if destination.is_file():
-        return parser(destination.read_text(encoding="utf-8", errors="replace"))
+        verified = False
+        if receipt_path.is_file():
+            try:
+                verified = bool(json.loads(receipt_path.read_text()).get("verified"))
+            except (OSError, ValueError):
+                verified = False
+        if verified:
+            return parser(destination.read_text(encoding="utf-8", errors="replace"))
+        # Keep the unverified answer as evidence and let the agent run again.
+        stale = Path(root) / "agents" / task_id / "unverified"
+        stale.mkdir(parents=True, exist_ok=True)
+        destination.replace(stale / (output_name + ".unverified"))
+        if receipt_path.is_file():
+            receipt_path.replace(stale / "execution.json.unverified")
     prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
               " (this absolute path). Write nowhere else.")
     run_agent(task_id, prompt, output_name, Path(root),
               binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
-              timeout=settings.AGENT_TIMEOUT_SECONDS, role=role)
+              role=role)
     # run_agent returns its execution receipt, not the answer: locate the file
     # the agent wrote, accepting the same bounded relocation the runner allows.
     workspace = Path(root) / "agents" / task_id
@@ -82,8 +132,12 @@ def _run_agents_concurrently(tasks: list, worker, *, max_workers: int = 0) -> li
     Every agent of a phase has its own workspace, its own permission file and
     its own subprocess, so the only shared thing is the machine. Running them
     one after another made a review round cost the sum of five agents; running
-    them together costs the slowest one. The first failure is re-raised, so a
-    broken agent still fails the phase closed.
+    them together costs the slowest one.
+
+    A failure is returned, not raised: one agent that crashed must not throw
+    away the answers of the others, and the phase decides whether it has enough
+    to continue. The failures carry the class of the fault, so an expired
+    credential pauses the service instead of being retried five times.
     """
     from concurrent.futures import ThreadPoolExecutor
 
@@ -91,17 +145,23 @@ def _run_agents_concurrently(tasks: list, worker, *, max_workers: int = 0) -> li
         return []
     workers = max_workers or len(tasks)
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = [pool.submit(worker, *task) for task in tasks]
-        results = []
-        failure = None
-        for future in futures:
+        futures = [(task, pool.submit(worker, *task)) for task in tasks]
+        results: list = []
+        failures: list = []
+        for task, future in futures:
             try:
                 results.append(future.result())
             except Exception as exc:                   # noqa: BLE001
-                failure = failure or exc
-        if failure is not None:
-            raise failure
-        return results
+                failures.append({"task": str(task[0]) if task else "",
+                                 "error": str(exc)[:400],
+                                 "failure_class": getattr(exc, "failure_class", "unknown")})
+    if failures:
+        classes = {entry["failure_class"] for entry in failures}
+        summary = "; ".join(str(entry["task"]) + " (" + entry["failure_class"] + ")"
+                            for entry in failures)
+        raise AgentPhaseIncomplete(summary, results=results, failures=failures,
+                                   classes=classes)
+    return results
 
 
 def round_history(repo: Path, limit: int = 3) -> str:
@@ -653,8 +713,15 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
         report.setdefault("verifier", task_id)
         return report
 
-    return _run_agents_concurrently(
-        [tuple([index]) for index in range(1, VERIFIERS + 1)], verify)
+    try:
+        return _run_agents_concurrently(
+            [tuple([index]) for index in range(1, VERIFIERS + 1)], verify)
+    except AgentPhaseIncomplete as exc:
+        # The verdicts that exist are kept and reported. The candidate is not
+        # judged: it waits for the missing reviewers, and the class of the fault
+        # says whether waiting can help.
+        raise RoundIncomplete(str(exc), results=exc.results, failures=exc.failures,
+                              classes=exc.classes) from exc
 
 
 def run_repair_plan(root: Path, idea: dict, tree: Path, findings: list,
@@ -920,6 +987,25 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
         try:
             reports = run_verification(agent_root, idea, Path(record["tree"]),
                                        int(record.get("revision", 0)))
+        except RoundIncomplete as exc:
+            # Some reviewers answered and some did not. The answers that exist
+            # are kept and the candidate WAITS: a missing reviewer is not a
+            # verdict on the mechanism. An authentication or quota fault pauses
+            # the service instead of spending the retry budget on a call that
+            # cannot succeed.
+            report = {"idea_id": record["idea_id"], "partial_verdicts": [
+                str(item.get("verdict", "")).upper() for item in exc.results],
+                "failures": exc.failures, "classes": sorted(exc.classes),
+                "waiting": exc.waiting}
+            state = pipeline_module.mark_agent_error(
+                state, record["idea_id"],
+                "verification incomplete: " + str(exc), details=report)
+            pipeline_module.save_state(directory, state)
+            log("%s: waiting for %d reviewer(s) (%s)" % (
+                record["idea_id"], len(exc.failures), ",".join(sorted(exc.classes))))
+            if exc.waiting:
+                break
+            continue
         except Exception as exc:                           # noqa: BLE001
             # A reviewer that crashed says nothing about the mechanism: the
             # branch is retried, and only an exhausted retry is recorded as

@@ -471,7 +471,8 @@ def mark_blocked(state: dict, implementation_id: str, reason: str,
     return state
 
 
-def mark_agent_error(state: dict, implementation_id: str, error: str) -> dict:
+def mark_agent_error(state: dict, implementation_id: str, error: str,
+                     details: dict | None = None) -> dict:
     """Record an infrastructure failure of the agent, and keep the mechanism open.
 
     An agent that crashed, timed out or wrote an unusable answer says nothing
@@ -482,6 +483,11 @@ def mark_agent_error(state: dict, implementation_id: str, error: str) -> dict:
     record["agent_error_attempts"] = attempts
     record["agent_error"] = {"error": error, "attempts": attempts,
                               "kind": AGENT_INFRA_ERROR}
+    if details:
+        # What did arrive before the fault: the verdicts of the reviewers that
+        # answered, and the class of the fault, so that a missing reviewer is
+        # not read as a verdict on the mechanism.
+        record["agent_error"].update(details)
     if attempts > MAX_AGENT_RETRIES:
         record["status"] = "agent_error"
     else:

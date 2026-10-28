@@ -2184,6 +2184,33 @@ def run_agent_verification(tree: Path, verification_id: str) -> dict:
                 "refused": "verification engine error: " + type(exc).__name__ + ": " + str(exc)}
 
 
+def _conformance_report(tree: Path, digest: str) -> dict:
+    """The frozen engineering checks of one tree, cached by its source digest."""
+    import importlib
+
+    cache_root = REPO_ROOT / "results" / "research" / "_conformance"
+    cache_root.mkdir(parents=True, exist_ok=True)
+    key = (digest or "unknown")[:32] + "__" + tree.name + ".json"
+    cache = cache_root / key
+    if cache.is_file():
+        try:
+            cached = json.loads(cache.read_text(encoding="utf-8"))
+            if cached.get("passed") is not None:
+                return cached
+        except (OSError, ValueError):
+            pass
+    try:
+        stage2_checks = importlib.import_module("tools.research.stage2.checks")
+        report = stage2_checks.run_all(tree)
+    except Exception as exc:                                  # noqa: BLE001
+        report = {"tree": str(tree), "passed": False,
+                  "checks": [{"status": "FAIL", "name": "conformance",
+                              "detail": "the checks could not run: " + str(exc)[:200]}]}
+    report["digest"] = digest
+    atomic_json(cache, report)
+    return report
+
+
 def round_admission(tree: Path, verification_id: str) -> dict:
     """Admission for a round candidate (Issues #120/#121).
 
@@ -2232,6 +2259,20 @@ def round_admission(tree: Path, verification_id: str) -> dict:
         if check.get("status") == "FAIL":
             failures.append("math check failed: " + str(check.get("check")) +
                             ": " + str(check.get("detail"))[:160])
+    # The frozen engineering invariants are checked by the framework, not by the
+    # candidate's own smoke test: the entry point runs one epoch, the identifier
+    # it exports is valid, the four ranks finish, and the frozen constants and
+    # the launcher are the framework's. The report is cached by the source
+    # digest, so a revision pays for it once.
+    conformance = _conformance_report(Path(tree), record.get("source_digest") or "")
+    if not conformance.get("passed"):
+        failing = [check["name"] + ": " + check["detail"]
+                   for check in conformance.get("checks", [])
+                   if check["status"] != "PASS"]
+        return {"passed": False,
+                "refused": "the candidate fails the frozen engineering checks: " +
+                           "; ".join(failing)}
+
     if failures:
         # The probe measures the proposal with a GENERIC proxy: it does not
         # exercise the candidate's own quantizer path, and the joint dependency
