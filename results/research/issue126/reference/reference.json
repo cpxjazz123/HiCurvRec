@@ -1,0 +1,59 @@
+{
+  "arrays": {
+    "path": "results/research/issue126/reference/reference.npz",
+    "sha256": "28e33a37552578d04b581b6577eb5809a2ec2298752f09ab62ccdb76eb01c790",
+    "source_shape": [
+      24587,
+      32
+    ],
+    "target_shape": [
+      24587,
+      32
+    ]
+  },
+  "cost": {
+    "batch_size": 4096,
+    "device": "cuda:0",
+    "epochs": 20,
+    "pairs": 323633
+  },
+  "heldout": {
+    "all_negatives_ranked_below": 0.31616684794425964,
+    "mean_delta": 0.9217615723609924,
+    "median_delta": 0.8156099319458008,
+    "negatives_per_pair": 10,
+    "pair_accuracy": 0.7412505745887756,
+    "pairs": 52855
+  },
+  "items": 24587,
+  "spec": {
+    "ball_eps": 0.0001,
+    "batch_size": 4096,
+    "checkpoint": "last step (no early stopping, no selection)",
+    "curvature": 1.0,
+    "digest": "48a6d359e5ed2c7dd2231468611096e42a9622f7f0a7b8aab772462b9eb0da31",
+    "dim": 32,
+    "epochs": 20,
+    "hidden": 256,
+    "inputs": {
+      "embeddings": {
+        "path": "stage1_GeneEmbedding/output/sentence_t5.npy",
+        "sha256": "6490c71753952b2d8788bb7e4e52cff6a5b0b59819a2cfbd737bee7bc07a77fb"
+      },
+      "train_pairs": {
+        "path": "results/stage3_T5Train/monotonicity/behavior_pairs_s42.npz",
+        "sha256": "28eee576863bde599cfde76c99133a6732f9de8c31324c3d4603f32f1977709f"
+      },
+      "valid_pairs": {
+        "path": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+        "sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0"
+      }
+    },
+    "learning_rate": 0.001,
+    "seed": 42,
+    "temperature_rule": "median |delta| over the first 20000 train pairs at the end of the fit",
+    "version": "issue126-reference-v1",
+    "weight_decay": 0.0001
+  },
+  "temperature": 1.195016860961914
+}

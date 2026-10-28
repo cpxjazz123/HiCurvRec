@@ -1,0 +1,204 @@
+{
+  "conclusions": {
+    "association": "positive and stable under leave-one-out with these seven SIDs (+0.821, p=0.023; family-only +0.771, p=0.072), and not explained by the number of buckets (+0.286) or the same-bucket ratio (-0.536). Seven points cannot establish a correlation: the honest statement is \"the direction is consistent and the sample is too small to call it established\".",
+    "decision": "proceed to the proxy candidate. The association is the only one of the three questions that can be answered now, and it is positive but small-sample; the proxy is the only way to answer the other two, and the issue requires that its hard score be frozen before its Stage 3 result is read.",
+    "downstream": "not tested yet: no candidate trained with the proxy exists.",
+    "optimisability": "not tested yet: the differentiable proxy is the next stage and has not run."
+  },
+  "correlation": {
+    "bucket_count_vs_r10": {
+      "kendall": 0.2381,
+      "kendall_p": 0.5619,
+      "n": 7,
+      "p": 0.5345,
+      "spearman": 0.2857
+    },
+    "leave_one_out": [
+      [
+        "transition_busemann_gate",
+        0.771
+      ],
+      [
+        "COOC_RANK_FRECHET",
+        0.886
+      ],
+      [
+        "BRANCH_CONDITIONED_FRECHET_RESIDUAL",
+        0.714
+      ],
+      [
+        "interest_signature_hypball",
+        0.886
+      ],
+      [
+        "branch-geodesic-rank",
+        0.886
+      ],
+      [
+        "poincare-frechet-successor-codebook",
+        0.714
+      ],
+      [
+        "TIGER_RQ-VAE",
+        0.771
+      ]
+    ],
+    "q_h_vs_bucket_count": {
+      "kendall": 0.2381,
+      "kendall_p": 0.5619,
+      "n": 7,
+      "p": 0.4821,
+      "spearman": 0.3214
+    },
+    "q_h_vs_r10": {
+      "kendall": 0.619,
+      "kendall_p": 0.069,
+      "n": 7,
+      "p": 0.0234,
+      "spearman": 0.8214
+    },
+    "q_h_vs_r10_family_only": {
+      "kendall": 0.6,
+      "kendall_p": 0.1361,
+      "n": 6,
+      "p": 0.0724,
+      "spearman": 0.7714
+    },
+    "same_bucket_vs_r10": {
+      "kendall": -0.4286,
+      "kendall_p": 0.2389,
+      "n": 7,
+      "p": 0.2152,
+      "spearman": -0.5357
+    }
+  },
+  "issue": 126,
+  "limitations": [
+    "n=7 SIDs, all produced by one code lineage; the mechanism family alone gives +0.771 (p=0.072).",
+    "the frozen baseline is one of the seven and it is the only point far above the rest on R@10.",
+    "no confirmatory pair exists yet; the association is retrospective.",
+    "the reference orders a held-out validation relation correctly 74.1% of the time (all ten negatives below the positive for 31.6% of queries): a real but moderate teacher."
+  ],
+  "metric": {
+    "barycentre": {
+      "init": "exp_0(mean_i log_0(v_i))",
+      "iteration": "mu <- exp_mu(mean_i log_mu(v_i))",
+      "step_size": 1.0,
+      "steps": 300,
+      "tol": 1e-10
+    },
+    "curvature": 1.0,
+    "ignores": "tokens after the first level, and the disambiguation token",
+    "score": {
+      "aggregate": "1 - mean over queries / ln 2",
+      "delta": "d(u_a, mu_b(j-))^2 - d(u_a, mu_b(i+))^2",
+      "per_query": "mean over the fixed negatives of softplus(-delta/tau)",
+      "temperature": "the frozen reference's temperature"
+    },
+    "version": "issue126-hard-v1"
+  },
+  "pairs": [
+    {
+      "buckets": 243,
+      "finished_at": 1792907943.8981717,
+      "idea": "transition_busemann_gate",
+      "ndcg10": 0.03047498281369757,
+      "q_h": 0.1860738770892254,
+      "r10": 0.0548233778443218,
+      "round": "round_20261025_155054_155",
+      "same_bucket": 0.019097530980985714,
+      "sid": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_transition_busemann_gate/item_sids.json"
+    },
+    {
+      "buckets": 254,
+      "finished_at": 1793107182.6762767,
+      "idea": "COOC_RANK_FRECHET",
+      "ndcg10": 0.027597108428946793,
+      "q_h": 0.06655299403930981,
+      "r10": 0.05000087048869235,
+      "round": "round_20261027_202919_817",
+      "same_bucket": 0.0160476776085517,
+      "sid": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/item_sids.json"
+    },
+    {
+      "buckets": 253,
+      "finished_at": 1793130621.3820858,
+      "idea": "BRANCH_CONDITIONED_FRECHET_RESIDUAL",
+      "ndcg10": 0.029830042735162276,
+      "q_h": 0.18055113055730942,
+      "r10": 0.05459705078431031,
+      "round": "round_20261028_004649_49",
+      "same_bucket": 0.016620944092328067,
+      "sid": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/item_sids.json"
+    },
+    {
+      "buckets": 16,
+      "finished_at": 1793139917.2468243,
+      "idea": "interest_signature_hypball",
+      "ndcg10": 0.028456964417855054,
+      "q_h": 5.271245133919855e-05,
+      "r10": 0.05121955465798499,
+      "round": "round_20261028_065943_250",
+      "same_bucket": 0.06743354460315959,
+      "sid": "results/stage2_RQ-VAE/TIGER_interest_signature_hypball/item_sids.json"
+    },
+    {
+      "buckets": 27,
+      "finished_at": 1793152573.8263159,
+      "idea": "branch-geodesic-rank",
+      "ndcg10": 0.027248654225454434,
+      "q_h": 0.11568853319789385,
+      "r10": 0.04967008478559864,
+      "round": "round_20261028_093017_952",
+      "same_bucket": 0.05173398921577902,
+      "sid": "results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/item_sids.json"
+    },
+    {
+      "buckets": 203,
+      "finished_at": 1793202098.4492052,
+      "idea": "poincare-frechet-successor-codebook",
+      "ndcg10": 0.029094302825308862,
+      "q_h": 0.16858818136613696,
+      "r10": 0.053169449328853216,
+      "round": "round_20261028_233100_128",
+      "same_bucket": 0.03072746192413206,
+      "sid": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook/item_sids.json"
+    },
+    {
+      "buckets": 247,
+      "finished_at": null,
+      "idea": "TIGER_RQ-VAE",
+      "ndcg10": null,
+      "q_h": 0.18406783014305605,
+      "r10": 0.09555,
+      "round": "frozen-baseline",
+      "same_bucket": 0.015323053637309621,
+      "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json"
+    }
+  ],
+  "reference": {
+    "arrays_sha256": "28e33a37552578d04b581b6577eb5809a2ec2298752f09ab62ccdb76eb01c790",
+    "cost": {
+      "batch_size": 4096,
+      "device": "cuda:0",
+      "epochs": 20,
+      "pairs": 323633
+    },
+    "heldout": {
+      "all_negatives_ranked_below": 0.31616684794425964,
+      "mean_delta": 0.9217615723609924,
+      "median_delta": 0.8156099319458008,
+      "negatives_per_pair": 10,
+      "pair_accuracy": 0.7412505745887756,
+      "pairs": 52855
+    },
+    "spec_digest": "48a6d359e5ed2c7dd2231468611096e42a9622f7f0a7b8aab772462b9eb0da31",
+    "temperature": 1.195016860961914
+  },
+  "stage": "A-C (metric research; no new Stage2/Stage3 launched)",
+  "trustworthiness": {
+    "confirmatory": 0,
+    "exploratory": 7,
+    "why": "Every Stage 3 result here was produced before the score was defined, so the association was computed after the fact on results that had already been read. The SID file bound to each arm is the current one, which is the file its Stage 3 read for the round-era arms, but the historical table in analysis_sid_recall/ reports that 39 of 67 older records cannot prove the exact bytes, so none of these pairs is treated as confirmatory. A prospective check needs a new candidate whose Q_H is frozen before its Stage 3 runs."
+  }
+}
