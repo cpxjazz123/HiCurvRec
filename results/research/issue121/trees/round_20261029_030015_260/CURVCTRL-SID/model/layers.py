@@ -72,6 +72,9 @@ class VQLayer(nn.Module):
         # The candidate's mechanism: the codebook of this level moves by the
         # successor-weighted Frechet step, and the assignment and the commitment
         # use the same curve and the same weights.
+        # Set by the candidate that owns this layer (CURVCTRL-SID sets
+        # _tangent_codebook on every layer after construction).
+        self._tangent_codebook = False
         self.frechet = (FrechetCodebook(self.n_embed, self.dim,
                                         use_behaviour=use_behaviour,
                                         use_curvature=use_curvature,
@@ -98,18 +101,26 @@ class VQLayer(nn.Module):
         return float(getattr(frechet, "curvature", 1.0)) if frechet is not None else 1.0
 
     def assignment_cost(self, latent: torch.Tensor) -> torch.Tensor:
-        """The cost of every code at this level's current curvature."""
+        """The cost of every code at this level's current curvature.
+
+        Both sides are mapped by the same origin exponential, as the proposal
+        states: the latent into the ball of curvature ``-c`` and every code vector
+        with it. Mapping only the latent would compare a ball point with tangent
+        vectors.
+        """
         curvature = self.curvature()
-        point = exp0_c(latent, curvature)
         if self.frechet is None:
             return self._distances(latent)
-        return squared_distance_c(point.unsqueeze(1), self.get_code_embs().unsqueeze(0),
-                                  curvature)
+        point = exp0_c(latent, curvature)
+        codes = exp0_c(self.get_code_embs(), curvature)
+        return squared_distance_c(point.unsqueeze(1), codes.unsqueeze(0), curvature)
 
     def _copy_init_embed(self, init_embed: torch.Tensor) -> None:
-        if self.frechet is not None:
-            # The codebook of the curved path lives in the ball: the KMeans
-            # centres of the tangent space are mapped into it.
+        if self.frechet is not None and not self._tangent_codebook:
+            # The inherited mechanism keeps its codebook in the ball: the KMeans
+            # centres of the tangent space are mapped into it. CURVCTRL-SID does
+            # NOT: its E_l are tangent vectors that every step maps with the
+            # measured curvature, so a stored ball point would be mapped twice.
             init_embed = exp_0(init_embed)
         self.embed.weight.data.copy_(init_embed)
 
@@ -167,14 +178,17 @@ class VQLayer(nn.Module):
         latent = x.view(-1, self.dim)
         curved = self.frechet is not None and item_ids is not None
         if curved:
-            # The item's point in the ball, the slot it belongs to, and the
-            # weight of the successor attraction that moves the slot.
+            # The item's point in the ball and the slot it belongs to. The cost is
+            # the one `assignment_cost` defines, so the assignment, the commitment
+            # and the projection all read the same curvature and the same mapping.
             codebook = self.get_code_embs()
             point = exp0_c(latent, self.curvature())
-            weights = self.frechet.weight_of(item_ids)
-            cost = self.frechet.distances(point, codebook)
+            cost = self.assignment_cost(latent)
             embed_ind = torch.argmin(cost, dim=-1)
-            self.frechet.remember(point, embed_ind, weights)
+            # CURVCTRL-SID has no per-item behaviour weight: the statistic is one
+            # scalar per level, so the remembered weights are uniform.
+            self.frechet.remember(point, embed_ind,
+                                  torch.ones(latent.shape[0], device=latent.device))
         else:
             embed_ind = self._indices(self._distances(latent), infer_use_sk)
         onehot = F.one_hot(embed_ind, self.n_embed)
@@ -187,21 +201,19 @@ class VQLayer(nn.Module):
         unused_codes = int((used == 0).sum().item())
 
         if curved:
-            # The decoder receives the Euclidean tangent image of the chosen
-            # code; the commitment is the weighted curved distance. The codebook
-            # is detached: its only estimator is the Frechet step, not a
-            # gradient, and the encoder keeps its own side of the objective.
-            tangent = log_0(self.get_code_embs()[embed_ind])
-            if self.curvature() != 1.0:
-                # at a general curvature the decoder receives the origin log of the
-                # code in that ball, which is the same map with c applied
-                from model.curvature_control import log0_c
-                tangent = log0_c(self.get_code_embs()[embed_ind], self.curvature())
-            x_q = tangent.view(x.shape)
-            commitment = squared_distance_c(
-                point, self.get_code_embs()[embed_ind].detach(), self.curvature())
-            quant_loss = (self.beta * (weights * commitment).mean()
-                          + F.mse_loss(x, x_q.detach()))
+            # The proposal's composition, exactly: the residual stays in the
+            # tangent space and is the RAW code vector (z_{l+1} = z_l - E[k*]), the
+            # commitment is the curved distance to the MAPPED code, and the
+            # codebook keeps the baseline RQ term so its gradient trains it.
+            curvature = self.curvature()
+            codes = exp0_c(self.get_code_embs(), curvature)
+            # The commitment is a penalty on the encoder's point: the code side is
+            # detached, exactly as the baseline VQ layer detaches x_q. The codebook
+            # is trained by its own term below, not twice.
+            commitment = squared_distance_c(point, codes[embed_ind].detach(), curvature)
+            x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
+            quant_loss = (F.mse_loss(x_q, x.detach())
+                          + self.beta * commitment.mean())
         else:
             x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
             quant_loss = F.mse_loss(x_q, x.detach()) + self.beta * F.mse_loss(x, x_q.detach())
@@ -218,18 +230,13 @@ class VQLayer(nn.Module):
             distributed.broadcast(centers, 0)
         self._copy_init_embed(centers.clone())
         if self.frechet is not None:
-            # Same cost and same residual as the training step: a Euclidean
-            # assignment here would start levels 2 and 3 in another geometry than
-            # the one the mechanism moves in. ``x`` is a TANGENT (the encoder
-            # output at level 1, the residual of the previous level above it), so
-            # it has to be mapped into the ball before the curved distance is
-            # taken: feeding a tangent of norm above one to the distance saturates
-            # the atanh and assigns by a clamped value that means nothing.
+            # The start uses the same cost and the same residual as the step.
+            # ``x`` is a TANGENT, so the assignment maps it into the ball of the
+            # current curvature together with every code, exactly as the training
+            # step does, and hands on the raw tangent difference.
             with torch.no_grad():
-                point = clamp_ball(exp_0(x))
-                embed_ind = torch.argmin(
-                    self.frechet.distances(point, self.get_code_embs()), dim=-1)
-                return x - log_0(self.embed_code(embed_ind))
+                embed_ind = torch.argmin(self.assignment_cost(x), dim=-1)
+                return x - self.embed_code(embed_ind)
         embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])
         return x - self.embed_code(embed_ind)
 
@@ -355,6 +362,7 @@ class RQLayer(nn.Module):
                                 frechet_eta=float(config.frechet_eta),
                                 codebook_gradient=bool(
                                     getattr(config, "codebook_gradient", False)))
+                layer._tangent_codebook = bool(getattr(config, "tangent_codebook", False))
             elif self.vq_type == "ema":
                 layer = EMAVQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations, config.ema_decay)
             elif self.vq_type == "simvq":

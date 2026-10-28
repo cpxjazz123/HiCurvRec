@@ -961,9 +961,14 @@ def changed_files(patch: str) -> list:
     """The files a unified diff touches, from its headers."""
     import re
     seen = []
-    for match in re.finditer(r"^diff --git a/(\S+) b/\S+$", patch or "", re.M):
-        if match.group(1) not in seen:
-            seen.append(match.group(1))
+    # unified_diff writes "--- a/path" / "+++ b/path" pairs; a git-style
+    # "diff --git a/path b/path" header is accepted too, so the parser does not
+    # depend on which tool produced the patch.
+    for match in re.finditer(r"^(?:diff --git a/(\S+) b/\S+|\+\+\+ b/(\S+))$",
+                             patch or "", re.M):
+        path = match.group(1) or match.group(2)
+        if path and path != "/dev/null" and path not in seen:
+            seen.append(path)
     return seen
 
 

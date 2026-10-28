@@ -63,7 +63,13 @@ def prefix_hit_rate(prefixes: torch.Tensor, edges) -> torch.Tensor:
         rows = rows.unsqueeze(-1)
     sources = torch.tensor([int(edge[0]) for edge in edges], dtype=torch.long)
     targets = torch.tensor([int(edge[1]) for edge in edges], dtype=torch.long)
-    hit = (rows[sources] == rows[targets]).to(torch.float64)      # [edges, levels]
+    # CUMULATIVE prefixes, as the proposal defines p_l(i) = (c_1(i), ..., c_l(i)):
+    # an edge counts at level l only when its first l codes all match. Comparing
+    # the columns on their own would measure P(c_l equal), which is larger, not
+    # monotone in l, and drives a different curvature at every level above the
+    # first.
+    same = (rows[sources] == rows[targets])                        # [edges, levels]
+    hit = same.to(torch.float64).cumprod(dim=1)
     return hit.mean(dim=0).clamp_min(Q_MIN)
 
 

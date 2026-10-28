@@ -287,6 +287,7 @@ VERIFIER_ROLES = (
     {
         "id": "gradient-update",
         "reads": ["model/layers.py", "model/model.py", "model/curvature_control.py",
+                  "model/frechet_poincare.py", "model/utils.py",
                   "train_rqvae.py", "tests/test_mechanism.py",
                   "tests/test_curvature_wiring.py"],
         "name": "gradients and parameter updates",
@@ -315,7 +316,8 @@ VERIFIER_ROLES = (
     },
     {
         "id": "distributed-state",
-        "reads": ["train_rqvae.py", "model/model.py", "model/curvature_control.py",
+        "reads": ["train_rqvae.py", "model/model.py", "model/layers.py",
+                  "model/curvature_control.py", "model/frechet_poincare.py",
                   "tests/test_ddp.py"],
         "name": "distributed execution and shared state",
         "scope": "train_rqvae.py (DDP construction, the step loop, collectives), "
@@ -343,7 +345,7 @@ VERIFIER_ROLES = (
     {
         "id": "behaviour-sid",
         "reads": ["train_rqvae.py", "model/layers.py", "model/curvature_control.py",
-                  "tests/test_mechanism.py"],
+                  "model/frechet_poincare.py", "tests/test_mechanism.py"],
         "name": "behaviour signal and SID consistency",
         "scope": "train_rqvae.py (the behaviour statistics, the export), "
                  "model/layers.py (the curved assignment), model/model.py",

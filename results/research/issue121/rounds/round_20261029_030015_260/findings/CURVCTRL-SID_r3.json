@@ -1,0 +1,60 @@
+{
+  "findings": [
+    {
+      "check": "gradients: which parameter is updated by which objective -- name the parameter, the objective and the code path",
+      "correction": "`commitment = squared_distance_c(point, codes[embed_ind].detach(), curvature)` -- detach the code image, leave `point` live, so L_commit trains only the encoder and L_codebook (layers.py:211-212) is the codebook's single estimator.",
+      "detail": "In the curved branch the commitment is `commitment = squared_distance_c(point, codes[embed_ind], curvature)` with `codes = exp0_c(self.get_code_embs(), curvature)`; `get_code_embs()` is `self.embed.weight`, a `requires_grad=True` parameter in AdamW (train_rqvae.py:402, `USE_FRECHET_STEP=False` so `codebook_gradient=True`). The code side is NOT detached, so `embed.weight` is trained by two opposing estimators at the same time: (a) `F.mse_loss(x_q, x.detach())` (layers.py:211-212) pulls each code towards the encoder output (the baseline RQ codebook term, which the proposal keeps), and (b) `beta * commitment.mean()` (layers.py:213) pushes the same mapped code AWAY from the encoder point. The proposal says \"the codebook update stays the baseline Euclidean/RQ update, deliberately NOT a curved Frechet update\" and lists L_commit and L_codebook as separate terms; the baseline non-curved branch shows the intended pattern (`F.mse_loss(x, x_q.detach())`, code side detached, encoder side live, layers.py:216). The curved branch has no such detach, so the codebook estimator is not the baseline one and the commitment is not a pure encoder-side term. This is the exact defect class the brief names as blocking (a parameter trained by two estimators at once).",
+      "location": "model/layers.py:209-213",
+      "reproduction": "minimal: layer = VQLayer(4,2,beta=.25,sk_epsilon=-1,sk_iters=-1,frechet=True,codebook_gradient=True); layer._tangent_codebook=True; layer.frechet.curvature=2.0; forward a latent with item_ids; `loss.backward()`; `layer.get_code_embs().grad` is nonzero, and it equals grad(mse)+beta*grad(d_c^2) with the two summands of opposite sign along the latent direction (verify by calling backward twice on each term separately). In the baseline branch (curvature 0) the commitment contributes exactly zero to that grad.",
+      "severity": "blocking",
+      "verifier": "verify_CURVCTRL-SID_r2_2"
+    },
+    {
+      "check": "detach, STE and the loss composition -- every cut, every additive term, every weight",
+      "correction": "in train_rqvae.py replace the direct read with `values = level_curvatures(curvature_state, use_behaviour=USE_BEHAVIOUR, use_geometry=USE_GEOMETRY)` (and `from model.curvature_control import ..., level_curvatures`), or make `measure_levels` apply the same pinning before storing.",
+      "detail": "The two removal switches never reach the applied curvature. `measure_levels(residuals, prefixes, edges, *, curvature_state, use_behaviour, use_geometry, epoch)` takes both flags and its body (lines 154-168) never reads either of them: it always stores the measured `c_l` in `curvature_state[\"values\"]`. The only function that implements the switch contract, `level_curvatures` (lines 136-142: geometry_off -> 0.0, behaviour_off -> 1.0), is called nowhere in the real path -- only by tests/test_curvature_wiring.py:91. The trainer then applies `curvature_state[\"values\"][level]` directly (train_rqvae.py:487-490). Consequence: behaviour_off does not pin c_l = 1.0 and geometry_off does not pin c_l = 0, so all three arms run bit-identically the measured-curvature geometry; the coupling is untestable and the required off-switches are dead code. The brief requires the switches to exist AND be correct.",
+      "location": "model/curvature_control.py:145-168 and train_rqvae.py:484-490",
+      "reproduction": "unit level: `state={}; measure_levels([torch.randn(8,2)],[torch.randint(0,4,(8,3))],[(0,1),(2,3)],curvature_state=state,use_behaviour=False,use_geometry=False,epoch=0)` returns `state[\"values\"]` equal to the derived finite c_l, not to 0.0; and `level_curvatures(state, use_behaviour=False, use_geometry=True)` (the documented contract) disagrees with what the trainer applies.",
+      "severity": "blocking",
+      "verifier": "verify_CURVCTRL-SID_r2_2"
+    },
+    {
+      "check": "detach, STE and the loss composition -- every cut, every additive term, every weight",
+      "correction": "`% len(edge_sample)`.",
+      "detail": "`print(\"[curvature] frozen edge sample: %d directed transitions\" % len(edges), flush=True)` references `edges`, which is not defined in this scope (the variable is `edge_sample`, line 459; `edges` appears nowhere else in the file). With `USE_BEHAVIOUR = USE_GEOMETRY = True` (lines 107-108) the branch at line 447 is taken and rank 0 raises NameError before the first epoch, so the frozen run cannot start. Adjacent in the same block: the message at 461 is the only diagnostic of the frozen sample, so this is on the mandatory path.",
+      "location": "train_rqvae.py:461",
+      "reproduction": "`python -c \"import ast,sys; ast.parse(open('train_rqvae.py').read())\"` passes, but executing the module up to line 461 raises `NameError: name 'edges' is not defined`; the same is visible by reading the scope: no `edges =` binding exists in `main`/`train` between 444 and 461.",
+      "severity": "blocking",
+      "verifier": "verify_CURVCTRL-SID_r2_2"
+    },
+    {
+      "check": "detach, STE and the loss composition -- every cut, every additive term, every weight",
+      "correction": "ship model/frechet_poincare.py (with FrechetCodebook, clamp_ball, exp_0, log_0, poincare_distance) and model/__init__.py in the tree, and re-run the suite in the tree.",
+      "detail": "Both modules import `from .frechet_poincare import FrechetCodebook, clamp_ball, exp_0, log_0, poincare_distance` / `from model.frechet_poincare import clamp_ball, poincare_distance`, but the tree contains no `model/frechet_poincare.py` (glob of `**/*.py` under the candidate tree returns only model/layers.py, model/model.py, model/curvature_control.py, train_rqvae.py, tests/test_mechanism.py, tests/test_curvature_wiring.py; there is not even a model/__init__.py). `import model.layers` therefore raises ImportError and the trainer cannot import the model at all. The same holds for the file the brief says was added, tests/test_curvature_spec.py, which is absent. Consequently the claimed smoke (\"87 tests pass ... real forward/backward on GPU\") cannot have been produced from this tree, and the numerical safeguards of the curved distance (`clamp_ball`, `poincare_distance`) -- the ones that decide whether `squared_distance_c` overflows or saturates -- are unverifiable.",
+      "location": "model/layers.py:19 and model/curvature_control.py:19",
+      "reproduction": "`python -c \"import model.layers\"` from the tree root -> `ModuleNotFoundError: No module named 'model.frechet_poincare'`; `ls model/` shows only layers.py, model.py, curvature_control.py.",
+      "severity": "blocking",
+      "verifier": "verify_CURVCTRL-SID_r2_2"
+    },
+    {
+      "check": "integration: entry point, frozen configuration and launch contract",
+      "correction": "`% len(edge_sample)` (or bind `edges = edge_sample` once and use it).",
+      "detail": "The print at line 461 formats `len(edges)`, but `edges` is never bound in this module: the list built at 452 is `raw_edges` and the frozen sample at 459 is `edge_sample`. Because `USE_BEHAVIOUR or USE_GEOMETRY` is True (107-108), this block always runs, and it runs on rank 0 (460) in every launch including the single-card branch (`GENREC_SINGLE_GPU`, line 645). The process raises NameError after DDP init and after the KMeans initialisation, before the epoch loop at 497 is ever entered; ranks 1-3 then block in the broadcast at 434-436 / barrier until the 3600 s NCCL timeout. The frozen configuration itself is correct (EPOCHS=3000 line 82, BATCH_SIZE_PER_RANK=1024 line 83, LR=1e-3 line 84, SEED=42 line 100, nproc=4 line 132, warmup 50, no early stop), and the launcher does hand torchrun/port/cwd to the framework (`stage2_launcher.launch`, port from `stage2_contract.STAGE2_PORT`, line 664-670); the run nevertheless never starts.",
+      "location": "train_rqvae.py:461",
+      "reproduction": "`grep -n edges train_rqvae.py` shows line 461 as the only unbound read; execute the block with `rank = 0` (e.g. `GENREC_SINGLE_GPU=1 python train_rqvae.py`) and it raises `NameError: name 'edges' is not defined` at line 461 right after `freeze_edges` returns.",
+      "severity": "blocking",
+      "verifier": "verify_CURVCTRL-SID_r2_5"
+    },
+    {
+      "check": "paths, cost and interfaces",
+      "correction": "in `_measure_curvature`, replace the direct read with `values = level_curvatures(curvature_state, use_behaviour=USE_BEHAVIOUR, use_geometry=USE_GEOMETRY)` before assigning `layer.frechet.curvature`, and make `measure_levels`/`assignment_cost` honour the same flags (c_l = 0 must take the `float(c)==0.0` Euclidean branch, c_l = 1.0 must be fixed); add a test that runs the trainer's `_measure_curvature` with each flag off and asserts the applied values.",
+      "detail": "The behaviour-off and geometry-off switches do not exist in the computation. `level_curvatures()` (curvature_control.py:136-142) is the only code that pins c_l to 1.0 / 0.0, and it has no production caller; `measure_levels()` accepts `use_behaviour`/`use_geometry` and never reads them; `_measure_curvature` then applies `curvature_state[\"values\"]` directly (487-490). So `USE_BEHAVIOUR=False` still derives c_l from the measured Q_l, and `USE_GEOMETRY=False` still runs the measured curved metric (`assignment_cost` consults only `self.frechet is not None`, never `frechet.use_curvature`; the curved branch at 203-213 calls `exp0_c`/`squared_distance_c` unconditionally). The behaviour switch is doubly dead because `forward` remembers `torch.ones` (190-191), so `frechet.use_behaviour`/`weight_of` cannot change anything either. The required removals (\"Q_l pinned so c_l = 1.0\", \"c_l := 0, exp = identity, d = squared Euclidean\") are therefore not implemented in the entry point, and the coupling cannot be shown to be real by its own switches.",
+      "location": "train_rqvae.py:485-490 with model/curvature_control.py:136-168 and model/layers.py:111-116,190-191",
+      "reproduction": "set `USE_GEOMETRY = False` at train_rqvae.py:108 (or `USE_BEHAVIOUR = False` at 107) and follow the code: `_tokenizer_config` only forwards the flag to `FrechetCodebook.use_curvature`, which `assignment_cost`/`VQLayer.forward` never call; after the first measurement at line 532 every level still runs `c_l = state[\"values\"][l] > 0`, so the SID and the gradients are bit-identical to the both-on arm. The unit test `test_the_three_arms_are_three_computations` only sees a difference because `build()` runs sklearn `KMeans` without `random_state` (numpy RNG, not reset by `torch.manual_seed`) at model/layers.py:224, i.e. the inequality is KMeans noise, not the switch.",
+      "severity": "blocking",
+      "verifier": "verify_CURVCTRL-SID_r2_5"
+    }
+  ],
+  "idea_id": "CURVCTRL-SID",
+  "reviewed_revision": 3
+}

@@ -269,6 +269,9 @@ def _tokenizer_config() -> SimpleNamespace:
         # CURVCTRL-SID keeps the baseline codebook update: the gradient trains it,
         # the inherited Frechet step is off (USE_FRECHET_STEP = False).
         codebook_gradient=not USE_FRECHET_STEP,
+        # CURVCTRL-SID: the codebook is a tangent-space table, mapped at the
+        # measured curvature by every step; it is never stored inside the ball.
+        tangent_codebook=True,
     )
 
 
@@ -442,7 +445,7 @@ def main() -> None:
     curvature_state: dict = {"values": {}}
     edge_sample = None
     if USE_BEHAVIOUR or USE_GEOMETRY:
-        from model.curvature_control import freeze_edges, measure_levels
+        from model.curvature_control import freeze_edges, level_curvatures, measure_levels
         frame = pd.read_parquet(TRAIN_FILE, columns=["user", "history", "target"])
         frame = frame.sort_values("user", kind="stable")
         last = frame.groupby("user", sort=False).tail(1)
@@ -455,7 +458,7 @@ def main() -> None:
         # deterministic and capped: the same sample on every epoch and every rank
         edge_sample = freeze_edges(raw_edges, CURVATURE_EDGE_CAP)
         if rank == 0:
-            print("[curvature] frozen edge sample: %d directed transitions" % len(edges),
+            print("[curvature] frozen edge sample: %d directed transitions" % len(edge_sample),
                   flush=True)
 
     def _measure_curvature(epoch_number: int) -> None:
@@ -481,8 +484,11 @@ def main() -> None:
             measure_levels(residuals, prefixes, pairs, curvature_state=curvature_state,
                            use_behaviour=USE_BEHAVIOUR, use_geometry=USE_GEOMETRY,
                            epoch=epoch_number)
-            values = [curvature_state["values"][level]
-                      for level in sorted(curvature_state["values"])]
+            # The switches act HERE: behaviour-off runs the frozen unit ball,
+            # geometry-off runs the Euclidean limit, and the measurement is kept
+            # as the diagnostic either way.
+            values = level_curvatures(curvature_state, use_behaviour=USE_BEHAVIOUR,
+                                      use_geometry=USE_GEOMETRY)
             for layer, value in zip(raw_module.rq.vq_layers, values):
                 layer.frechet.curvature = float(value)
             if rank == 0:

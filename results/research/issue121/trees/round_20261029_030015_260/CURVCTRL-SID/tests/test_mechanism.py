@@ -120,15 +120,20 @@ class SwitchTests(unittest.TestCase):
             self.assertTrue(torch.allclose(layer.frechet.weight_of(torch.tensor([0, 1])),
                                            torch.ones(2)))
 
-    def test_the_commitment_weights_are_the_successor_attraction(self):
-        """The same weights must reach the commitment, not only the step."""
+    def test_the_mechanism_carries_no_per_item_behaviour_weight(self):
+        """CURVCTRL-SID's statistic is one scalar per level, not a weight per item.
+
+        The inherited Frechet candidate weighted the commitment by the successor
+        attraction of every item; this proposal deliberately does not, so the
+        remembered weights are uniform and the curvature is what carries the
+        behaviour signal.
+        """
         model, embeddings, ids, weights = build()
         layer = model.rq.vq_layers[0]
         with torch.no_grad():
             model(embeddings, ids)
             seen = layer.frechet._last["weights"]
-        expected = layer.frechet.weight_of(ids)
-        self.assertTrue(torch.allclose(seen, expected))
+        self.assertTrue(torch.allclose(seen, torch.ones_like(seen)))
 
 
 class InitTests(unittest.TestCase):

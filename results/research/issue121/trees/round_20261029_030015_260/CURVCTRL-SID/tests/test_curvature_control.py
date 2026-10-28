@@ -21,9 +21,10 @@ class HitRateTests(unittest.TestCase):
         edges = [(0, 1), (0, 2), (1, 2), (3, 3)]
         q = prefix_hit_rate(prefixes, edges)
         # level 1: 0==0 yes, 0==1 no, 0==1 no, 2==2 yes -> 0.5
-        # level 2: 0==1 no, 0==0 yes, 1==0 no, 2==2 yes -> 0.5
+        # level 2 is CUMULATIVE: only the edge whose first two codes both match
+        # counts, which here is edge (3,3) alone -> 0.25
         self.assertAlmostEqual(float(q[0]), 0.5, places=6)
-        self.assertAlmostEqual(float(q[1]), 0.5, places=6)
+        self.assertAlmostEqual(float(q[1]), 0.25, places=6)
 
     def test_a_level_whose_prefixes_never_meet_is_clipped_not_zero(self):
         prefixes = torch.tensor([[0], [1], [2]])

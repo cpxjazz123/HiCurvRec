@@ -38,7 +38,8 @@ class LayerTests(unittest.TestCase):
         cost_low = low.assignment_cost(latent)
         cost_high = high.assignment_cost(latent)
         point = exp0_c(latent, 2.0)
-        expected = squared_distance_c(point.unsqueeze(1), high.get_code_embs().unsqueeze(0), 2.0)
+        mapped_codes = exp0_c(high.get_code_embs(), 2.0)
+        expected = squared_distance_c(point.unsqueeze(1), mapped_codes.unsqueeze(0), 2.0)
         self.assertTrue(torch.allclose(cost_high, expected, atol=1e-5))
         euclid = (exp0_c(latent, 0.0).unsqueeze(1) - low.get_code_embs().unsqueeze(0)).pow(2).sum(-1)
         self.assertTrue(torch.allclose(cost_low, euclid, atol=1e-6))
@@ -52,10 +53,11 @@ class LayerTests(unittest.TestCase):
         the same codes, which is the only way the measured curvature can change a
         SID.
         """
-        latent = torch.tensor([[0.30, 0.10]])
+        latent = torch.tensor([[0.35, 0.05]])
         chosen = {c: int(torch.argmin(_layer(curvature=c).assignment_cost(latent)))
                   for c in (0.0, 4.0)}
-        self.assertNotEqual(chosen[0.0], chosen[4.0])
+        self.assertEqual(chosen[0.0], 1)
+        self.assertEqual(chosen[4.0], 0)
 
     def test_zero_curvature_is_the_geometry_off_arm(self):
         layer = _layer(curvature=0.0, use_geometry=False)
