@@ -338,6 +338,15 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
                          repr(sorted(boundaries)))
     record["boundary_version"] = boundaries.pop()
     record["boundary_sha256"] = str(reports[0].get("boundary_sha256") or "")
+    # Where the stage records of this review are: the main agent reads them
+    # from those files, and they are what the task actually delivered before
+    # its deadline.
+    record["progress"] = [
+        {"verifier": str(report.get("verifier", "")),
+         "file": str(report.get("progress_file", "")),
+         "records": int(report.get("progress_count", 0)),
+         "deadline_seconds": report.get("deadline_seconds")}
+        for report in reports]
     # How many reviewers raised each finding: with five verifiers a single
     # objection and a shared one are different things, and the main agent has to
     # see the difference.

@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from .. import settings
 from ..core.evidence import atomic_json, digest_bytes, digest_file
-from . import policy
+from . import policy, progress_server
 
 
 #: The roles that may not write anything. Their answer arrives through the
@@ -22,6 +22,17 @@ READ_ONLY_ROLES = ("verify", "repair", "ideate", "score")
 #: opencode's own ``permission`` object is still written as a second layer, but
 #: a tool that ignores it cannot escape the mount namespace.
 SANDBOX_BINARY = "bwrap"
+
+#: The interpreter that runs inside the namespace. It must exist in the
+#: namespace, so it is the system one: the namespace carries /usr and /bin and
+#: nothing from the research environment.
+SANDBOX_PYTHON = "/usr/bin/python3"
+
+#: The append-only progress channel. The server is a framework runtime
+#: dependency: it is mounted read-only, it is the only writer of the agent's
+#: progress file, and it is the agent's only write.
+PROGRESS_SERVER = Path(__file__).with_name("progress_server.py")
+PROGRESS_FILE_NAME = "progress.jsonl"
 
 #: Tables that can carry another session's text, another project's paths or a
 #: snapshot of files the agent must not see. Only credentials, the model catalog
@@ -135,7 +146,8 @@ def session_answer(path: Path) -> str:
 
 def write_isolation_config(workspace: Path, role: str = "verify",
                            read_paths=None, allow_shell: bool = False,
-                           allow_write: bool = False) -> Path:
+                           allow_write: bool = False,
+                           mcp_servers: dict | None = None) -> Path:
     """Write the agent's private permission boundary next to its session."""
     workspace = Path(workspace)
     workspace.mkdir(parents=True, exist_ok=True)
@@ -143,6 +155,8 @@ def write_isolation_config(workspace: Path, role: str = "verify",
     config = {"$schema": "https://opencode.ai/config.json",
               "permission": isolation_permissions(workspace, role, read_paths,
                                                  allow_shell, allow_write)}
+    if mcp_servers:
+        config["mcp"] = {"servers": mcp_servers}
     path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -262,6 +276,8 @@ def sandbox_command(command: list, workspace: Path, read_paths, binary: Path,
         str(home / ".local" / "share" / "opencode"),
         "--bind", str(private_home / ".cache" / "opencode"),
         str(home / ".cache" / "opencode"),
+        # The progress server: a framework runtime dependency, read-only.
+        "--ro-bind", str(PROGRESS_SERVER), str(PROGRESS_SERVER),
     ]
     entries = [Path(workspace), *[Path(item) for item in (read_paths or [])]]
     workspace_raw = str(Path(workspace))
@@ -372,22 +388,33 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
               binary=None, model=None, timeout=None,
               role: str = "verify", read_paths=None, allowed_roots=None,
               candidate_tree=None, allow_shell: bool = False,
-              allow_write: bool = False) -> Path:
+              allow_write: bool = False,
+              deadline_seconds: int | None = None) -> Path:
     """Run one agent. This is the only place an opencode process is started.
 
     The boundary is not optional: the agent always runs in a mount namespace
     that holds the workspace, the policy-accepted read allowlist and the
     opencode runtime, and nothing else. A caller cannot widen the view (the
     policy refuses it) and cannot switch the namespace off.
+
+    The agent's one write is its progress file: the ``append_progress`` tool
+    appends a record to a file that was bound before the agent started, and the
+    generic write and edit tools stay denied.
     """
     # The binary and the model come from the one source of configuration.
     binary = binary or settings.AGENT_BINARY
     model = model or settings.AGENT_MODEL
+    # The deadline is counted from the moment the task is dispatched: the
+    # initialisation, the model calls, the retries and the wrap-up all fit in
+    # it, and the process is stopped when it passes.
+    deadline_epoch = (time.time() + float(deadline_seconds)) if deadline_seconds else 0.0
     # The role budget is the DEFAULT, and an explicit timeout wins: a caller that
     # asks for two seconds (a test, or a deliberate short probe) must not be
     # silently given the reviewer's forty minutes.
     if timeout is None:
         timeout = ROLE_TIMEOUT_SECONDS.get(str(role)) or settings.AGENT_TIMEOUT_SECONDS
+    if deadline_seconds:
+        timeout = min(int(timeout), int(deadline_seconds))
     if (not output_name.endswith((".json", ".txt")) or "/" in output_name
             or "\\" in output_name or not task_id.replace("-", "").replace("_", "").isalnum()):
         raise ValueError("unsafe task id or output filename")
@@ -405,8 +432,29 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     output = workspace / output_name
     if output.exists():
         raise RuntimeError("refuse to overwrite previous role output")
+    # The agent's own progress file, bound before it starts. The controller
+    # writes the first record (the task's start), and the append tool adds the
+    # stage records after it. Nothing else writes this file.
+    progress_path = workspace / PROGRESS_FILE_NAME
+    progress = progress_server.ProgressFile(
+        progress_path, task_id, deadline_epoch or None,
+        settings.AGENT_WRAPUP_MARGIN_SECONDS)
+    progress.append(json.dumps({"goal": "the task started", "role": str(role),
+                                 "deadline_seconds": deadline_seconds},
+                                ensure_ascii=False))
+    mcp_servers = {
+        "progress": {
+            "type": "local",
+            "enabled": True,
+            "command": [SANDBOX_PYTHON, str(PROGRESS_SERVER),
+                        "--file", str(progress_path),
+                        "--task-id", task_id,
+                        "--deadline-epoch", str(deadline_epoch),
+                        "--wrapup-margin", str(settings.AGENT_WRAPUP_MARGIN_SECONDS)],
+        },
+    }
     isolation = write_isolation_config(workspace, role, allowed, allow_shell,
-                                       allow_write)
+                                       allow_write, mcp_servers)
     marker = mark_workspace_project(workspace)
     inner_binary = Path(shutil.which(binary) or binary).resolve()
     cmd = [str(inner_binary), "run", "--standalone", "--format", "json", "--auto",
@@ -502,6 +550,13 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "boundary_version": policy.BOUNDARY_VERSION,
         "boundary_sha256": boundary_fingerprint(workspace, role, allowed,
                                                 allow_shell, allow_write),
+        "progress": {
+            "file": str(progress_path),
+            "records": len(progress_server.read_records(progress_path)),
+            "sha256": digest_file(progress_path) if progress_path.is_file() else None,
+            "deadline_seconds": deadline_seconds,
+            "deadline_epoch": deadline_epoch or None,
+        },
         "sandbox": {
             "enabled": True,
             "binary": SANDBOX_BINARY,

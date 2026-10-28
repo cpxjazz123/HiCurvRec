@@ -2978,6 +2978,8 @@ def tool_research_round_status(round_id: str) -> dict:
         {"idea_id": record["idea_id"], "status": record.get("status"),
          "revision": record.get("revision", 0), "tree": record.get("tree"),
          "verdicts": [verdict.get("verdict") for verdict in record.get("verdicts", [])],
+         "boundary_version": record.get("boundary_version"),
+         "progress": record.get("progress", []),
          "failure_signature": record.get("failure_signature")}
         for record in state.get("implementations", [])]
     return summary

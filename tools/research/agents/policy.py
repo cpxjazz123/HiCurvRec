@@ -14,13 +14,14 @@ Three rules make the boundary a fact rather than a request:
 
 ``BOUNDARY_VERSION`` changes whenever these rules change. Every receipt carries
 it, so a verdict produced under an older boundary is visible as such and is not
-reused silently.
+reused silently. Version 3 added the append-only progress channel: the agent
+has exactly one write, and it appends to the file that was bound for it.
 """
 from pathlib import Path
 from .. import settings
 
 #: The version of the boundary itself. Bump it when the rules below change.
-BOUNDARY_VERSION = "agent-boundary/2"
+BOUNDARY_VERSION = "agent-boundary/3"
 
 #: The one source tree a candidate may be read against.
 BASELINE_ARM = "TIGER_RQ-VAE"

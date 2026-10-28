@@ -111,6 +111,35 @@ allowed file is readable, and another round, another agent's answer, a parent
 traversal, a symlink out of the allowlist, the global configuration and the
 shared session data are not.
 
+## The progress channel of a sub-agent
+
+One agent, one file, append only. The agent's only write is the
+`append_progress` tool, which is served by `agents/progress_server.py` inside
+the namespace:
+
+- the tool takes the record's **content and nothing else** - no path, no task
+  id - so the agent cannot write anywhere else, cannot write into another
+  agent's file and cannot choose where the record goes;
+- the file was bound before the agent started, and it is only ever opened for
+  appending: a record that is already there is never rewritten;
+- the generic `write` and `edit` tools stay denied for the read-only roles, so
+  the append tool is the only way to record anything;
+- each record is one JSON object per line: the sequence number, the task id and
+  the time are added by the framework, and the agent writes the goal of the
+  check, what it read, what it observed, where the evidence is, its short
+  reasoning and what is still open. A line is written, flushed and synced
+  before the tool answers, and a reader ignores an incomplete tail line;
+- the task's deadline is `settings.AGENT_DEADLINE_SECONDS` (five minutes),
+  counted from the dispatch: the initialisation, the model calls, the retries
+  and the wrap-up all fit in it. The tool refuses after it, asks for a final
+  record a minute before it, and the framework stops the process when it
+  passes. A timeout is never a passing verdict: the main agent judges from the
+  records that were saved, and may open a smaller follow-up task for what is
+  still open.
+
+The records are the evidence the main agent reads: `research_round_status`
+carries the progress file of each reviewer with its record count.
+
 ## Boundaries
 
 Output state is isolated to `results/research/issue117/`, live OpenCode Agents are disabled by default, and the model/execution environment requires real filesystem isolation before live work.

@@ -23,11 +23,24 @@ ACTION = "inspect"  # inspect | behavior | worker
 # its project from PWD; leaving it at the server's directory silently disabled
 # every per-workspace rule. Every receipt carries the boundary version, and
 # evidence produced under another boundary is not reused.
+#
+# The agent's only write is its own progress file: the append_progress tool
+# appends one JSONL record to a file that was bound before the agent started.
+# The deadline below is counted from the dispatch and closes that file; a task
+# that runs out of time has delivered what it delivered, and no more.
 LIVE_AGENTS_ALLOWED = True
 RESEARCH_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
 AGENT_BINARY = "opencode"
 AGENT_MODEL = "opencode-go/deepseek-v4.1-flash"
 AGENT_TIMEOUT_SECONDS = 1800
+#: The deadline of one sub-agent of a round, counted from the moment the task is
+#: dispatched: the initialisation, the model calls, the retries and the
+#: wrap-up all fit in it. The agent's progress file is frozen when it passes,
+#: and a timeout is never a passing verdict.
+AGENT_DEADLINE_SECONDS = 300
+#: How long before the deadline the agent is asked to wrap up. The progress
+#: tool says so in its answer, so the last record lands while there is time.
+AGENT_WRAPUP_MARGIN_SECONDS = 60
 LEASE_SECONDS = 1200
 #: No numeric cap on repairable errors or evidence-based MATERIAL revisions.
 #: FATAL/PARKED scientific verdicts, cancellation and resource failures remain stops.

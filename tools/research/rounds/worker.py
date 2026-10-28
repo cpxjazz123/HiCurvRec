@@ -17,8 +17,8 @@ import shutil
 from pathlib import Path
 
 from .. import settings
-from ..agents.runner import READ_ONLY_ROLES, boundary_fingerprint, run_agent
-from ..agents import policy
+from ..agents.runner import (READ_ONLY_ROLES, boundary_fingerprint, run_agent)
+from ..agents import policy, progress_server, runner
 from ..core.evidence import atomic_json, digest_file, read_json
 from . import agents as agent_contracts
 from . import baseline as baseline_module
@@ -89,7 +89,8 @@ def _round_roots(root: Path) -> list:
 def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
                role: str = "verify", read_paths=None, sandbox: bool = True,
                allowed_roots=None, candidate_tree=None,
-               allow_shell: bool = False, allow_write: bool = False) -> dict:
+               allow_shell: bool = False, allow_write: bool = False,
+               deadline_seconds: int | None = None) -> dict:
     """Run one agent in its own workspace and parse its plain-text answer.
 
     The agent writes a labelled text file, not JSON: a language model that
@@ -143,13 +144,24 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     else:
         prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
                   " (this absolute path). Write nowhere else.")
+    prompt = (prompt + "\n\nPROGRESS: record every meaningful step with the "
+              "append_progress tool. It is your only write: it appends one stage "
+              "record to your own progress file, and nothing else can write there "
+              "or read your file back as a verdict. Each record says the goal of "
+              "the check, what you read, what you observed, where the evidence "
+              "is, your short reasoning, and what is still open. Append a "
+              "correction when you overturn an earlier conclusion, and append a "
+              "final record before the deadline.")
+    if deadline_seconds is None:
+        deadline_seconds = settings.AGENT_DEADLINE_SECONDS
     if allowed_roots is None:
         allowed_roots = _round_roots(Path(root))
     receipt = run_agent(task_id, prompt, output_name, Path(root),
                         binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
                         role=role, read_paths=read_paths,
                         allowed_roots=allowed_roots, candidate_tree=candidate_tree,
-                        allow_shell=allow_shell, allow_write=allow_write)
+                        allow_shell=allow_shell, allow_write=allow_write,
+                        deadline_seconds=deadline_seconds)
     # run_agent returns its execution receipt, not the answer: locate the file
     # the agent wrote, accepting the same bounded relocation the runner allows.
     answer = workspace / output_name
@@ -165,6 +177,14 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     report["boundary_version"] = policy.BOUNDARY_VERSION
     report["boundary_sha256"] = expected_boundary
     report["receipt"] = str(receipt)
+    # The stage records the agent delivered before the deadline: the main agent
+    # judges from what was actually saved, not from what the model meant.
+    progress_file = workspace / runner.PROGRESS_FILE_NAME
+    records = progress_server.read_records(progress_file)
+    report["progress_file"] = str(progress_file)
+    report["progress_records"] = records
+    report["progress_count"] = len(records)
+    report["deadline_seconds"] = deadline_seconds
     return report
 
 
