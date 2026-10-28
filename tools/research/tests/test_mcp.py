@@ -147,3 +147,23 @@ class ResearchMCPTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConformanceCacheRootTests(unittest.TestCase):
+    """The conformance cache writes under the repository, not into a NameError."""
+
+    def test_the_report_runs_without_an_undefined_root(self):
+        import importlib.util
+        from pathlib import Path
+        import tempfile
+        server_path = Path(__file__).resolve().parents[2] / "genrec-mcp" / "server.py"
+        spec = importlib.util.spec_from_file_location("genrec_server_conformance", server_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "TIGER_probe"
+            tree.mkdir()
+            (tree / "train_rqvae.py").write_text("ARM_NAME = 'TIGER_probe'\n", encoding="utf-8")
+            report = module._conformance_report(tree, "digestprobe")
+        self.assertIsNotNone(report.get("passed"))
+        self.assertTrue((module.REPO / "results" / "research" / "_conformance").is_dir())

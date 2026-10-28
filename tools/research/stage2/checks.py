@@ -150,10 +150,15 @@ def check_identifier(tree: Path | str) -> dict:
 def check_four_rank(tree: Path | str) -> dict:
     """The four-rank step finishes and a rank-0 evaluation does not wait."""
     tree = Path(tree).resolve()
-    script = (tree / "ddp_check.py")
+    # The four-rank property is a framework invariant, not the mechanism's own
+    # artifact: the probe lives in the framework and runs with the candidate tree
+    # as its working directory, so a candidate that ships no script of its own is
+    # still probed. A tree that does ship one keeps using it.
+    own = tree / "ddp_check.py"
+    script = own if own.is_file() else Path(__file__).resolve().parent / "ddp_probe.py"
     if not script.is_file():
         return {"status": "NOT_RUN", "name": "four_rank",
-                "detail": "the candidate ships no four-rank script"}
+                "detail": "the framework's four-rank probe is missing"}
     torchrun = Path(_python_for()).with_name("torchrun")
     attempts = []
     for attempt in range(2):

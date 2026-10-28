@@ -2184,13 +2184,28 @@ def run_agent_verification(tree: Path, verification_id: str) -> dict:
                 "refused": "verification engine error: " + type(exc).__name__ + ": " + str(exc)}
 
 
+def _checks_fingerprint() -> str:
+    """A digest of the conformance checks themselves, for the cache key."""
+    import hashlib
+    digest = hashlib.sha256()
+    for name in ("checks.py", "ddp_probe.py"):
+        path = REPO / "tools" / "research" / "stage2" / name
+        if path.is_file():
+            digest.update(path.read_bytes())
+    return digest.hexdigest()[:12]
+
+
 def _conformance_report(tree: Path, digest: str) -> dict:
     """The frozen engineering checks of one tree, cached by its source digest."""
     import importlib
 
-    cache_root = REPO_ROOT / "results" / "research" / "_conformance"
+    cache_root = REPO / "results" / "research" / "_conformance"
     cache_root.mkdir(parents=True, exist_ok=True)
-    key = (digest or "unknown")[:32] + "__" + tree.name + ".json"
+    # The report is a verdict of the CHECKS as well as of the tree: a cached
+    # report from an older checks module described an older policy and would keep
+    # refusing a candidate long after the check was fixed. The key therefore
+    # carries the checks' own fingerprint.
+    key = (digest or "unknown")[:32] + "__" + tree.name + "__" + _checks_fingerprint() + ".json"
     cache = cache_root / key
     if cache.is_file():
         try:
@@ -2207,7 +2222,19 @@ def _conformance_report(tree: Path, digest: str) -> dict:
                   "checks": [{"status": "FAIL", "name": "conformance",
                               "detail": "the checks could not run: " + str(exc)[:200]}]}
     report["digest"] = digest
-    atomic_json(cache, report)
+    report["checks_fingerprint"] = _checks_fingerprint()
+    # A check that could not run is not a verdict: caching NOT_RUN would turn a
+    # missing probe into a permanent refusal.
+    if any(check.get("status") == "NOT_RUN" for check in report.get("checks", [])):
+        return report
+    # The conformance report is cached by the source digest so a revision pays
+    # for the one-epoch check once. A crash here must not take the admission
+    # down with it: a report that cannot be cached is still a report.
+    try:
+        from tools.research.core.evidence import atomic_json
+        atomic_json(cache, report)
+    except Exception:                                      # noqa: BLE001
+        pass
     return report
 
 
