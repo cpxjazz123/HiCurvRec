@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-509, train_rqvae.py:530-569, train_rqvae.py:705-741 | Traced the training-only transition counts into popularity-adjusted successor-overlap affinities, batch triplet sampling, and the ranking loss on encoder latents. The loss exp-maps those latents and ranks Poincare geodesic distances before the unchanged RQ-VAE quantizer. The behavior and geometry switches are read by this same loss path at train_rqvae.py:539-565. Code inspection only; no trainer execution.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:530-569, train_rqvae.py:739-747, model/hyperbolic.py:110-136, smoke_test.py:135-218 | Inspected the ranking term’s differentiable path from the geodesic-distance loss through the encoder, and the trainer’s loss addition, finite-loss check, backward pass, and gradient clipping. The geometry operations include projection/clamping safeguards, and the loss is not computed and discarded. The smoke test specifies finite encoder-gradient checks and comparisons of behavior/geometry configurations; no runtime execution was performed.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:586-611, train_rqvae.py:806-849, train_rqvae.py:856-885 | Inspected the trainer entry point and path constants: embeddings come from the Stage 1 sentence_t5 file, training transitions from the Stage 0 train parquet, and exports are indexed by enumerated item ID. The result directory is this candidate’s promoted directory. The launcher retains the four-card torchrun branch and the GENREC_SINGLE_GPU single-process branch. Code inspection only; no trainer execution.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION:

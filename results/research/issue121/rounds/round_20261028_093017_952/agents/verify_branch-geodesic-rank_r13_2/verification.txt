@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, 427-508, 530-569, 679-741 | Inspected the exercised trainer path from training-parquet transitions to successor-overlap affinities, batch triplets, and the ranking loss. The loss ranks Poincare geodesic distances after exp-mapping encoder outputs; both switches alter this same loss pathway.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:530-569, 709-747; smoke_test.py:135-218, 221-291 | Inspected the differentiable loss-to-encoder path and the behavior-off and geometry-off branches. The smoke test exercises finite gradients reaching encoder parameters and checks that changing either switch changes the loss or gradient. The trainer adds the ranking term to the baseline objective before backward; the sandbox limitation prevents running it here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found. The smoke test’s token-shape assertion alone does not prove SID assignments change, but the trainer’s coupled loss has a differentiable path into the encoder used by the quantizer, and the switches alter the ranking computation. This is not a demonstrated dead term or numerical hazard.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:63-77, 572-611, 806-849, 856-885; smoke_test.py:294-312 | Inspected the real entry point, frozen embedding and training-parquet paths, output/index construction, candidate-specific result and log paths, and four-card/single-card launcher branches. The smoke test contains a four-rank check, but runtime execution is unavailable here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by code inspection. `GENREC_SINGLE_GPU` is read by the launcher at train_rqvae.py:860, and the candidate exports indexed `item_sids.json` to its promoted result directory.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

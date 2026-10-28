@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:271-381`, `train_rqvae.py:435-519`, `train_rqvae.py:541-580`, `train_rqvae.py:723-752` | Traced the training-only transition counts through sparse, popularity-corrected successor-overlap affinity and rank-triplet sampling into a ranking loss over exp-mapped encoder outputs using Poincare geodesic distances. The trainer adds that loss before backpropagation. The behavior and geometry switches are read in the ranking term (`train_rqvae.py:550-577`); the included smoke test exercises the ranking path and the switch effects (`smoke_test.py:138-253`).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:541-580`, `train_rqvae.py:719-759`, `smoke_test.py:167-209`, `smoke_test.py:211-253` | Inspected the differentiable path from encoder output through ball mapping, geodesic distances, and softplus ranking loss into `loss.backward()`. The smoke-test code checks finite gradients reaching encoder parameters, checks that behavior/geometry switches change gradients, and checks that the coupled update can change SID assignments. Runtime execution is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical hazard that blocks training was found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:42-78`, `train_rqvae.py:583-613`, `train_rqvae.py:817-860`, `train_rqvae.py:867-896`, `smoke_test.py:329-347` | Inspected the real trainer entry point, its frozen Stage 2 embedding and Stage 0 training-parquet paths, and its promoted candidate result path. The export enumerates embedding rows as item IDs and writes unique extended SIDs to NPY and JSON. The launcher has both the four-rank torchrun path and the `GENREC_SINGLE_GPU` in-process branch. The included four-rank smoke is conditional on four visible cards and invokes `ddp_check.py`; no runtime execution is claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

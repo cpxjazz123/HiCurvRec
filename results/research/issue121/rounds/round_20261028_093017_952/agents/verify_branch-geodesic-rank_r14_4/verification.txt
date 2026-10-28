@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:271-373`, `train_rqvae.py:427-511`, `train_rqvae.py:533-573`, `train_rqvae.py:715-744`, `model/hyperbolic.py:110-125` | Traced the training-only directed transitions through successor-overlap affinity and triplet sampling into the Poincare exp-map/geodesic ranking loss on encoder outputs, which are the quantizer inputs. Inspected the behaviour-off and geometry-off branches at `train_rqvae.py:514-531` and `train_rqvae.py:542-572`; the smoke test defines checks for this path at `smoke_test.py:135-218`. Trainer execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:533-573`, `train_rqvae.py:741-749`, `smoke_test.py:164-218` | Inspected the differentiable ranking term: encoder outputs are exp-mapped, Poincare distances are computed, and the softplus loss is added to the baseline objective before `backward()`. The smoke test specifies finite-gradient, encoder-gradient, and switch-effect checks. No trainer or smoke test was executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead term or clear numerical hazard found in the coupled path by code inspection. The ranking distance scale has a positive floor at `train_rqvae.py:675`, and the trainer checks the combined loss for finiteness at `train_rqvae.py:745-746`.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:63-77`, `train_rqvae.py:575-605`, `train_rqvae.py:809-852`, `train_rqvae.py:859-888`, `ddp_check.py:56-91` | Inspected the trainer entry point, frozen embedding and Stage 0 training-parquet paths, candidate-specific promoted result directory, SID export keyed by enumerated item IDs, and launcher branches including `GENREC_SINGLE_GPU`. Also inspected the four-rank collective check; neither the trainer nor that check was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Outputs resolve to `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`, and the single-card branch returns to run the trainer in-process.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

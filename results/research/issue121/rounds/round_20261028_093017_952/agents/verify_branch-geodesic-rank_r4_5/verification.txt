@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:266-356,398-468,471-498,656-666 | Source-traced the training-only transition counts and successor-overlap affinity into batch triplet sampling, then into the Poincare exp-map/geodesic ranking loss added to the encoder’s training objective. The curved operation and behavior-derived ordering share this loss pathway; the Euclidean and behavior-off switches are present.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The sandbox limitation prevented running the trainer; this check is based on code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:471-498,656-673; smoke_test.py:135-174; model/hyperbolic.py:110-136 | Traced ranking-loss gradients from encoded latents through the exponential map and geodesic distances to the encoder, then into backward and optimizer step. The smoke test checks encoder gradients and compares curved versus Euclidean loss; the trainer’s sampler switches between affinity-derived triplets and behavior-independent triplets.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: smoke_test.py:149-174,177-217
+FINDING DETAIL: No trainability defect found by source inspection. The local smoke tests do not directly exercise the trainer’s `BEHAVIOR_ON` switch: `loss_of` passes fixed triplets, while the behavior-off test constructs random triplets separately rather than calling `rank_triplets` with the switch disabled. This limits what those tests demonstrate, but the trainer switch itself changes triplet generation at `train_rqvae.py:606-634`.
+FINDING REPRODUCTION: In `smoke_test.py`, compare `loss_of(True, True)` and `loss_of(True, False)`: both calls use the same fixed triplets, and `ranking_loss_term` does not inspect `behavior_on`. The behavior-off test at lines 205-217 samples random indices directly.
+FINDING CORRECTION: Not required for this verdict. To make the smoke test substantiate the behavior-switch claim, invoke the trainer’s triplet-sampling path with `BEHAVIOR_ON` both enabled and disabled and verify the resulting ordering differs. No ablation training run is needed.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78,501-531,731-778,781-810 | Inspected repository-root resolution, frozen Stage 0 parquet and embedding inputs, training/export paths, SID construction and JSON indexing, and the launcher’s four-rank default and `GENREC_SINGLE_GPU` branch. Export assigns rows by enumerated item ID and writes the promoted candidate’s result directory.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found in the trainer entry point or source paths. The provided logs are not evidence of this candidate’s run: `train_migrated.log` names `TIGER_bootstrap_consensus_sid`, and the metrics show `world_size=1`. I therefore do not treat them as proof that this candidate’s four-card launch completed.
+FINDING REPRODUCTION: Compare `train_migrated.log:1` and `training_metrics.jsonl:1` with `train_rqvae.py:69-70,103-104,135-140,781-805`; the recorded run names a different arm and has world size one.
+FINDING CORRECTION: Not applicable to the source-level verdict. The candidate’s actual four-card execution remains for the prescribed runtime smoke; no additional training or ablation run is requested.

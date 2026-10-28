@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:260-348, 506-549, 571-579` | Static trace from training-only transition counts to successor-overlap affinities, batch triplets, Poincaré-mapped geodesic ranking loss, and addition to the baseline loss before backpropagation. The ranking term acts on encoder outputs, so it can change the representation read by the quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The candidate contains one connected behavior–geometry pathway; the named switches are present. The requested runtime smoke could not be run in this environment, so this is a code-path inspection, not an executed runtime proof.
+FINDING REPRODUCTION: Follow `main()` from `build_successor_affinity()` through `rank_triplets()` and `rank_loss()` to `loss.backward()`.
+FINDING CORRECTION: None required for this check.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:364-415, 506-549` | Inspected the sampler and both switch branches, and traced the ranking loss into the encoder parameters at `train_rqvae.py:571-585`. The smoke test’s switch checks are in `smoke_test.py:134-173`.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:513-519`
+FINDING DETAIL: `BEHAVIOR_ON=False` does not turn off the behavior signal. It permutes the sampled positive and negative arrays but leaves anchors in their original order. The permuted pairs still originate from the behavior affinity graph, and they are merely reassigned to different anchors. This is not a behavior-off control, so the required comparison cannot establish that the behavior signal changes the core computation. The smoke test does not exercise this branch.
+FINDING REPRODUCTION: Use a batch with two anchors whose sampled positive/negative pairs differ. With `BEHAVIOR_ON=False`, inspect the triplets returned by `rank_triplets()`: positives and negatives are permuted, but their anchors are not. The pairs remain those selected from the cached affinity.
+FINDING CORRECTION: Make the behavior-off switch construct triplets independently of successor affinities while preserving the same triplet count and geometry path; add a check that behavior-off triplets do not depend on the affinity ordering. Do not train an ablation arm.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:40-76, 98-101, 418-457, 644-687, 694-723` | Inspected repository-root and result-path resolution, frozen embedding and training-parquet paths, indexed SID export, and both launcher branches. The export assigns rows by embedding/item index and writes both `sids_for_hgrec.npy` and string-keyed `item_sids.json`; the result directory is the promoted candidate’s required directory. The `GENREC_SINGLE_GPU` branch returns to run in-process; otherwise the launcher invokes four-rank torchrun. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: Code inspection found no integration defect in the specified paths. Runtime trainer, export, and distributed-launcher behavior remain unexecuted here.
+FINDING REPRODUCTION: Inspect the path constants and `main()` export and launcher flow at the cited lines.
+FINDING CORRECTION: None required for this check.

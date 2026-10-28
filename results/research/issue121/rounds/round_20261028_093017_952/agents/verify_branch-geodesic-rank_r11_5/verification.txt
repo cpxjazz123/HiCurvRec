@@ -1,0 +1,29 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271,427,530,707-738 | Traced the training-only transition counts through sparse successor-overlap affinity and rank-triplet sampling into the Poincare exp-map/geodesic ranking loss, which is added to the encoder’s training objective. The smoke test exercises the ranking-term gradient path at smoke_test.py:135-190.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-and-geometry pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261028_093017_952/agents/verify_branch-geodesic-rank_r11_5/verification.txt | Code inspection only; the sandbox does not provide PyTorch or a runnable shell. Inspected the ranking loss and its encoder gradient path at train_rqvae.py:530-558,707-744, and the switch branches at train_rqvae.py:666-688.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:669-674
+FINDING DETAIL: The behaviour-off switch crashes instead of disabling the behaviour ordering: this branch passes `anchors`, `positives`, and `negatives` to `behaviour_off_triplets` before those local variables are assigned. The variables are assigned only by the sampler later in the behaviour-on branch at lines 680-682. Therefore the required behaviour-off comparison cannot run. The geometry-off branch is implemented as squared Euclidean distance at lines 548-555; the smoke test checks that it changes the loss and that the ranking term reaches encoder parameters, but does not directly assert that SID assignments change.
+FINDING REPRODUCTION: Set `BEHAVIOR_ON = False` and enter the first training batch with `rank_triplets(batch_ids)`. It raises `UnboundLocalError` at the call to `behaviour_off_triplets`.
+FINDING CORRECTION: Sample the behaviour-on triplets first, then, when behaviour is off, permute their positive and negative slots before returning them. Ensure the same sampled anchors and triplet count are retained, and exercise the actual switch branch in the smoke test.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261028_093017_952/agents/verify_branch-geodesic-rank_r11_5/verification.txt | Inspected the trainer entry point, paths, export, and launcher branches in train_rqvae.py:42-77,561-591,803-849,853-882.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The trainer reads the Stage 1 embedding file and Stage 0 training parquet; output paths resolve to this promoted arm’s `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/` directory. SID export enumerates item IDs in row order, extends collisions to unique codes, and writes both `.npy` and JSON outputs. The launcher has a four-card torchrun branch and the `GENREC_SINGLE_GPU` single-card branch.
+FINDING REPRODUCTION: Not applicable; runtime execution is unavailable in this sandbox.
+FINDING CORRECTION: Not applicable.
+
+NOTE: I cannot write to the requested absolute path in this no-write-permission review.

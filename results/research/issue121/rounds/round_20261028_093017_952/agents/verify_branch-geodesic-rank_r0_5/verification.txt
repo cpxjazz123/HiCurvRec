@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) Behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: branch-geodesic-rank/train_rqvae.py:316-321 → branch-geodesic-rank/model/model.py:26-30 → branch-geodesic-rank/model/layers.py:273-290 | Statically traced the trainer’s batch forward/loss path and searched the candidate for successor, ranking-loss, and Poincaré operations. The trainer only calls the unchanged Euclidean RQ-VAE; the Poincaré helpers in model/utils.py are not imported or called by this path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: branch-geodesic-rank/train_rqvae.py:316-321; branch-geodesic-rank/model/model.py:26-30
+FINDING DETAIL: The candidate does not implement the specified successor-overlap ranking mechanism. No training-only successor graph or pair sampler is constructed, and no behaviour-conditioned Poincaré ranking term is added to the loss. The hyperbolic helpers elsewhere in model/utils.py do not participate in the trainer’s computation.
+FINDING REPRODUCTION: Trace each batch at train_rqvae.py:316-321: it calls model(batch), then compute_loss(batch, reconstructed, quant_loss). model.forward calls the Euclidean RQLayer and returns only its quantization loss; compute_loss adds only reconstruction and quantization losses. Searching the candidate finds no successor/ranking implementation.
+FINDING CORRECTION: Implement the cached training-transition overlap pairs and deterministic batch triplets, then compute the specified exp-mapped Poincaré distance ranking loss and add its first-batch-calibrated term to the actual trainer objective. Include functioning behaviour-off and Euclidean-distance switches.
+
+CHECK: b) Trainability and switch effects
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: branch-geodesic-rank/train_rqvae.py:316-327 → branch-geodesic-rank/model/model.py:26-30,43-50 | Statically traced the forward, objective, backward, clipping, and optimizer-step path; no runtime trainer execution was attempted.
+FINDING SEVERITY: blocking
+FINDING LOCATION: branch-geodesic-rank/train_rqvae.py:319-327; branch-geodesic-rank/model/model.py:43-50
+FINDING DETAIL: The objective contains no coupled ranking term or behaviour/geometry switches. Consequently, there is no implemented pathway whose finite gradients or SID effects can be assessed, and switching behaviour off or replacing the curve with Euclidean distance cannot change the computation. This is not a finding about runtime execution; the required mechanism and switches are absent from source.
+FINDING REPRODUCTION: Follow the objective at train_rqvae.py:319-327: loss is computed from reconstruction and quantization only, then backpropagated. model.py:43-50 confirms compute_loss returns exactly reconstruction MSE plus quant_loss. No ranking term or comparison switches appear in the candidate.
+FINDING CORRECTION: Add the connected ranking term to the actual objective, with explicit behaviour-off and geometry-off/Euclidean branches, and verify the term contributes finite gradients to the encoder before quantization. Keep the requested switches available without training ablation arms.
+
+CHECK: c) Trainer integration, data, export, output paths, and launcher
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: branch-geodesic-rank/train_rqvae.py:40-67,232-263,386-429,436-462 | Statically traced path resolution, frozen embedding/train data inputs, trainer entry point, SID export/indexing, and launcher. Also inspected the candidate’s existing train log, which reports a single-GPU launch from a different promoted candidate’s tree.
+FINDING SEVERITY: blocking
+FINDING LOCATION: branch-geodesic-rank/train_rqvae.py:58-67,97-107,436-462
+FINDING DETAIL: The candidate trainer is still configured as the baseline: ARM_NAME is "TIGER_RQ-VAE", so checkpoint and SID outputs resolve to the baseline result directory, while logs resolve to the baseline stage2 directory. This violates candidate isolation and risks overwriting baseline outputs. The launcher also has no SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" handling and unconditionally launches four processes when not already under torchrun. The candidate log at branch-geodesic-rank/logs/train_migrated.log:1 further identifies a run from TIGER_bootstrap_consensus_sid, not this candidate’s trainer.
+FINDING REPRODUCTION: Read train_rqvae.py:58-67: RESULT_DIR and LOG_DIR are built using ARM_NAME = "TIGER_RQ-VAE". With GENREC_SINGLE_GPU=1 and no RANK set, _launch_via_torchrun at lines 436-457 still starts four processes. The checked-in log’s first line names a different candidate’s single-GPU run.
+FINDING CORRECTION: Set ARM_NAME to "branch-geodesic-rank" so outputs resolve only to this candidate’s promoted result directory. Add the required GENREC_SINGLE_GPU branch so that the requested single-card launch bypasses torchrun while retaining the normal distributed launcher. The frozen input paths and item-indexed export logic are otherwise present at lines 61-64 and 415-427.

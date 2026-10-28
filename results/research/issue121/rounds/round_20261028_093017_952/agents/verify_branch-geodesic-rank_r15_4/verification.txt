@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-379, train_rqvae.py:433-517, train_rqvae.py:539-578, train_rqvae.py:721-750 | Traced training-only directed transitions into sparse successor-overlap affinities, affinity-ordered batch triplets, and the ranking loss on encoder outputs. The loss exp-maps those outputs into the Poincare ball and ranks squared geodesic distances; its result is added to the baseline objective.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:539-578, train_rqvae.py:747-757, smoke_test.py:138-221, smoke_test.py:224-294 | Inspected the trainer’s loss-to-backward path and the smoke test’s checks for finite encoder gradients and changed losses/gradients under behaviour-off and geometry-off controls. The controls are wired in the ranking loss at train_rqvae.py:548-575. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical hazard found in the coupled ranking path. The code inspection supports trainability; no executed SID-change proof is claimed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:581-620, train_rqvae.py:815-858, train_rqvae.py:865-894, smoke_test.py:297-315, ddp_check.py:32-91 | Inspected the configured Stage 1 embedding and Stage 0 training-parquet inputs, candidate-specific promoted result path, all-item SID export indexed by item ID, and launcher branches including the `GENREC_SINGLE_GPU` check. The DDP smoke path is present, but neither it nor the trainer was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

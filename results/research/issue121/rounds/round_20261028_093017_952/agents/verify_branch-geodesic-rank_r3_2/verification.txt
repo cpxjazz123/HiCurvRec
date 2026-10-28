@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:260-350, 364-415, 525-549, 571-579 | Statically traced the training-only transition counts into sparse successor-overlap affinities and batch triplets, then traced those triplets and encoded batch vectors into the Poincare exp-map/geodesic ranking loss added to the training objective. The behaviour and geometry are in one connected loss path; both switches are present at train_rqvae.py:103-114 and 506-549. No trainer execution was possible in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: not applicable
+FINDING CORRECTION: not applicable
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:525-549, 571-585; model/hyperbolic.py:124-136 | Statically traced the ranking loss from the batch encoder output through exp_0 and squared Poincare geodesic distances into the scalar loss and backward call. The loss has a differentiable path to the encoder, and the geometry-off branch substitutes squared Euclidean distances. The smoke test describes intended checks at smoke_test.py:134-173, but was not run here.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:506-523
+FINDING DETAIL: The behaviour-off switch does not implement an independent behaviour-off control. It permutes positives and negatives with the same permutation but leaves anchors in place. This preserves the positive/negative pairing and reassigns that pair to a different anchor; the result is not a controlled removal of the successor-affinity ordering. Consequently the required behaviour-off comparison does not establish that removing behaviour changes the core computation in the specified way.
+FINDING REPRODUCTION: With a batch containing two anchors and two distinct triplets, let anchors be [a,b], positives [p_a,p_b], and negatives [n_a,n_b]. For permutation [1,0], the switch returns anchors [a,b], positives [p_b,p_a], negatives [n_b,n_a]. The affinity-derived positive/negative ordering remains intact; only which anchor receives each pair changes.
+FINDING CORRECTION: Make the behaviour-off branch replace affinity-derived triplets with triplets sampled independently of the affinity (or otherwise randomize positive-versus-negative ordering), while preserving the geometry and comparable triplet count. Verify the switch changes the ranking gradients relative to both-on and restores them when switched back on.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-76, 418-457, 694-723, 662-705 | Statically inspected the root and path resolution, frozen Stage 1 embedding and Stage 0 training-parquet inputs, 3000-epoch loop, launcher and single-card branch, and final SID export. Export enumerates rows against item IDs and writes the promoted candidate’s result directory. Runtime training and distributed execution were not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The candidate result directory is the required promoted-tree location, and the launcher checks SINGLE_GPU_ENV == "GENREC_SINGLE_GPU" through the constant at train_rqvae.py:101 and branch at train_rqvae.py:698-700.
+FINDING REPRODUCTION: not applicable
+FINDING CORRECTION: not applicable

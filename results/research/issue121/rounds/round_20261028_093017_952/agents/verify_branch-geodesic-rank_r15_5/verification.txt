@@ -1,0 +1,29 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:271-379`, `train_rqvae.py:433-578`, `train_rqvae.py:721-750` | Inspected the training-only transition construction, batch triplet sampler, ranking loss, and the trainer’s call path. The affinity comes from directed transitions in `train.parquet`; those triplets determine which encoder vectors are compared by Poincaré geodesic distance before quantization.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The pathway uses successor-overlap ranks and curved distances in the same ranking loss, and the loss is added to the training objective.
+FINDING REPRODUCTION: Code inspection of the cited path.
+FINDING CORRECTION: None.
+
+VERDICT: PASS
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:539-578`, `train_rqvae.py:747-755`, `model/hyperbolic.py:110-136` | Inspected the real ranking-loss call, backward and optimizer step, and the curved mapping/distance implementation. `smoke_test.py:138-221` exercises finite gradients and compares geometry-on/off gradients; `smoke_test.py:224-294` exercises the behavior-off switch. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The ranking loss is connected to the encoder and participates in backpropagation; its behavior and geometry switches alter the ranking computation. The inspected maps and distance use finite safeguards. No code-level dead term or blocking numerical hazard found.
+FINDING REPRODUCTION: Follow `train_rqvae.py:747-755` from the ranking term through `loss.backward()` and inspect the switch branches at `train_rqvae.py:548-575`. The candidate’s smoke checks are at the cited `smoke_test.py` lines; GPU runtime is not available here.
+FINDING CORRECTION: None.
+
+VERDICT: PASS
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:42-78`, `train_rqvae.py:581-620`, `train_rqvae.py:815-893` | Inspected repository-root and promoted-result path resolution, the Stage 1 embedding and Stage 0 training-parquet inputs, indexed SID export, and both launcher branches, including `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the frozen input paths, writes checkpoint and SID outputs under its own promoted result directory, and exports item IDs by embedding-row index. The launcher preserves the four-card torchrun path and returns directly to `main()` when `GENREC_SINGLE_GPU=1`. No blocking integration defect found by inspection.
+FINDING REPRODUCTION: Trace the constants and paths at `train_rqvae.py:63-78`, the data load at `train_rqvae.py:595-612`, the export at `train_rqvae.py:843-856`, and launcher branches at `train_rqvae.py:865-894`.
+FINDING CORRECTION: None.

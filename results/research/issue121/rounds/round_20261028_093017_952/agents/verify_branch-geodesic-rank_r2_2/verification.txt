@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:260-348, train_rqvae.py:545-563, train_rqvae.py:422-455, train_rqvae.py:585-595 | Inspected the training-only transition-count and successor-overlap construction, its batch triplets, and the loss that applies Poincare exp-map and geodesic distances to encoder outputs. The ranking term is added to the training objective, so the behaviour order and curved distance are used in one connected pathway.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:381-382
+FINDING DETAIL: The sampler materializes a dense batch-by-batch affinity matrix, despite the specification’s sparse candidate sampling and O(B) triplet-cost description. This does not sever the coupled pathway, but it makes sampling O(B²) in memory and work.
+FINDING REPRODUCTION: With batch size B, `affinity[batch_ids][:, batch_ids].toarray()` allocates a dense B×B array, including when the cached affinity is sparse.
+FINDING CORRECTION: Sample from sparse rows/candidate lists for the batch without converting the full batch block to dense; otherwise update the stated cost and budget to account for O(B²).
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:422-455, train_rqvae.py:585-601, smoke_test.py:134-173 | Inspected the differentiable encoder → exp-map → geodesic-distance → softplus path and the backward call. The smoke test checks that the ranking term has a nonzero encoder gradient and that Euclidean geometry changes its loss; it does not execute here.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:364-419, train_rqvae.py:552-563
+FINDING DETAIL: The behaviour-off switch does not implement a behaviour-independent control: triplets are first selected only from cached positive-affinity edges, with negatives selected by comparing their affinity to each selected positive. The subsequent independent permutations only shuffle those already behaviour-selected positive and negative pools across triplets. Thus behaviour remains in the candidate membership and pool composition when the switch is off; the smoke test only checks that a separate permutation can break some orderings, not that the trainer’s switch removes behaviour from the computation.
+FINDING REPRODUCTION: Construct a batch where only a few items participate in positive-affinity edges. Call `sample_rank_triplets` and then apply the two permutations used by `rank_triplets` with `BEHAVIOR_ON=False`. Every resulting positive and negative still comes from pools selected by affinity, and batches with no positive-affinity edge produce no ranking term at all.
+FINDING CORRECTION: Make behaviour-off generate triplets independently of the affinity graph while preserving the intended loss shape and count policy, or define a behaviour-off baseline that otherwise uses the same batch items without affinity-dependent sampling. Test the actual trainer switch on a counterexample where the affinity graph is sparse, and verify that the switched-off loss/gradient no longer depends on affinity.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, train_rqvae.py:457-487, train_rqvae.py:660-703, train_rqvae.py:710-739 | Inspected repository-root and candidate result-path resolution, the frozen train parquet and embedding inputs, SID export indexed by enumerated item ID, output uniqueness extension, and launcher handling for both torchrun ranks and `GENREC_SINGLE_GPU=1`. The single-card branch returns to in-process `main()`; the multi-card branch launches four ranks.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:260-348
+FINDING DETAIL: No integration defect found. The transition signal reads only the frozen training parquet, output paths resolve under this candidate’s promoted result directory, and the launcher’s single-card environment variable is present and checked.
+FINDING REPRODUCTION: Static inspection of the referenced path, data-loading, export, and launcher code.
+FINDING CORRECTION: None.

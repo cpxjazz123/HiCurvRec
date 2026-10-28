@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-508, train_rqvae.py:530-558, train_rqvae.py:703-738 | Traced the training-only transition counts through sparse successor-overlap affinity and batch triplet sampling into the Poincare exp-map/geodesic ranking loss, then to the encoder and quantizer input. `smoke_test.py:135-190` exercises the trainer’s ranking function and encoder gradient on toy inputs; I did not run it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:666-688, train_rqvae.py:710-738, train_rqvae.py:741-744 | Inspected the real training loop’s triplet selection, ranking-loss addition, finite-loss check, backward pass and gradient clipping. The curved ranking term differentiates through `ball_exp_map` and `ball_distance` into the encoder; however, the behaviour-off switch cannot execute its intended path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:669-674
+FINDING DETAIL: When `BEHAVIOR_ON` is false, `rank_triplets` calls `behaviour_off_triplets(anchors, positives, negatives, ...)` before those local variables have been assigned. A batch that reaches this branch raises `UnboundLocalError` rather than producing a behaviour-off comparison. This means the required behaviour switch is not correct, and the claimed comparison that the coupled pathway changes back when behaviour is switched off is not established by the implementation. `smoke_test.py:193-238` tests the helper directly, not this broken trainer branch.
+FINDING REPRODUCTION: Set `BEHAVIOR_ON = False` and run a training batch for which `rank_triplets(batch_ids)` is called. The first statement in the branch references unassigned `anchors` (and `positives`, `negatives`), so the call raises `UnboundLocalError`.
+FINDING CORRECTION: Sample the original triplets first with `sample_rank_triplets(...)`; then, only when behaviour is off, pass those returned arrays to `behaviour_off_triplets(...)`. Return `None` when the sampler returns no triplets. Add a test that invokes the trainer’s `rank_triplets` branch with `BEHAVIOR_ON = False` and verifies it returns valid triplet indices.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:561-606, train_rqvae.py:803-846, train_rqvae.py:853-882 | Inspected repository-root and candidate result-path resolution, frozen Stage 2 input paths and epoch configuration, indexed SID export, and launcher branches. The launcher explicitly checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at `train_rqvae.py:101-103, 853-859`; no trainer run was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

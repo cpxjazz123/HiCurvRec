@@ -1,0 +1,28 @@
+I’ll inspect the candidate tree and its trainer/data/export/launcher paths statically, then return the requested plain-text review. I will not write any files because you specified no write permission.
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-364, train_rqvae.py:418-499, train_rqvae.py:502-531, train_rqvae.py:687-719 | Traced the training-only transition counts into sparse successor-overlap affinities, affinity-ordered batch triplets, and the ranking loss on encoder outputs. With geometry enabled, that loss exp-maps the encoder vectors and ranks their Poincare geodesic distances; the same loss is added to the trainer objective and backpropagated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:502-531, train_rqvae.py:639-672, train_rqvae.py:713-723, smoke_test.py:135-174 | Static trace: the ranking loss uses differentiable exp-map and geodesic-distance operations on encoder outputs, is added to the baseline loss when triplets exist, and reaches the encoder through backward. The geometry-off branch uses squared Euclidean distance on the mapped points; the behaviour-off sampler returns batch-position triplets without consulting affinity. The smoke test defines checks for geometry-switch loss differences and nonzero encoder gradients; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:534-574, train_rqvae.py:781-824, train_rqvae.py:831-860 | Static trace: the trainer reads the Stage 1 embedding file and Stage 0 training parquet, exports SIDs as rows indexed by embedding item ID, writes to the candidate’s promoted result directory, and retains both the four-card torchrun path and the GENREC_SINGLE_GPU single-card branch. I did not execute the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

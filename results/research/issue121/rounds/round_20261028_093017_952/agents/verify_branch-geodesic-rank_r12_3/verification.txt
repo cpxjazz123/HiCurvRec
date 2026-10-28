@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-508, train_rqvae.py:530-558, train_rqvae.py:707-735 | Traced training-only transitions into sparse successor-overlap affinities, sampled affinity-ranked triplets, and followed those triplets into the Poincare geodesic ranking loss on encoder outputs. The smoke test defines checks for the affinity, sampler and ranking path in smoke_test.py:57-119 and smoke_test.py:135-190; this sandbox cannot run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:511-558, train_rqvae.py:666-685, train_rqvae.py:707-741 | Inspected the behavior-off and geometry-off code paths and the loss/backward integration. The smoke test checks a ranking-term encoder gradient and geometry-off loss difference in smoke_test.py:149-190, but does not exercise the actual behavior switch through the trainer loss path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:530-558
+FINDING DETAIL: `ranking_loss_term` never reads `context["behavior_on"]`; the behavior-off intervention happens earlier by independently permuting the positive and negative arrays in `behaviour_off_triplets` at train_rqvae.py:511-527. As a result, it is not verified that switching behavior off changes the ranking gradients or SID assignments in the real training path. The smoke test’s `loss_of(geometry_on, behaviour_on)` accepts the behavior flag but uses the same fixed triplets regardless of its value at smoke_test.py:149-162. Its gradient comparison manually swaps positive and negative indices at smoke_test.py:177-189 rather than invoking the behavior-off switch.
+FINDING REPRODUCTION: In `smoke_test.py`, call `loss_of(True, True)` and `loss_of(True, False)` with the same fixed encoded batch and triplets: the function passes `behaviour_on` only into a context field that `ranking_loss_term` ignores, so the losses and gradients are identical. The current test’s swapped-triplet comparison does not reproduce the trainer’s switch.
+FINDING CORRECTION: Make the behavior-off control explicit in the tested ranking path: feed the actual sampled triplets through the trainer’s behavior switch, then compare both-on and behavior-off gradients using the same encoder inputs and controlled RNG. Assert that the switch changes the gradients; if asserting SID changes, exercise the quantizer/export assignment path as well.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:82-103, train_rqvae.py:561-591, train_rqvae.py:800-847, train_rqvae.py:850-879 | Inspected the trainer’s data, output, export and launch paths. The trainer uses the Stage 0 `train.parquet` and Stage 1 embedding path, targets the candidate’s promoted result directory, exports item-indexed JSON keys, and has both four-card torchrun and `GENREC_SINGLE_GPU` branches.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Runtime execution was unavailable in this sandbox.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

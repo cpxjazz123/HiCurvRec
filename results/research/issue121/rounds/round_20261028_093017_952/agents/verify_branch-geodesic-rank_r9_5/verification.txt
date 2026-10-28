@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, 427-508, 511-539, 647-680, 702-730 | Inspected the training-only transition counting and overlap affinity, batch triplet sampler, and training loss path. The sampled behaviour-ranked triplets feed the Poincare geodesic ranking loss on encoder outputs before the unchanged quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:347-352
+FINDING DETAIL: Candidate truncation takes the first 128 candidates from the sparse index order, not the highest-affinity candidates or a deterministic rank-based sample. This can omit shared-successor pairs arbitrarily relative to affinity and makes the implemented behaviour signal depend on sparse storage ordering.
+FINDING REPRODUCTION: Construct a row with more than 128 candidate items and reorder the same CSR row indices; the retained candidate subset can change even though all affinities are unchanged.
+FINDING CORRECTION: Select the retained candidates with a deterministic rule tied to the specified affinity (or a documented deterministic sampling rule), rather than slicing sparse-index order.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:511-539, 702-735; smoke_test.py:135-174 | Inspected the ranking-loss gradient path and the smoke assertions. The loss is differentiable through encoder outputs; the smoke checks a nonzero encoder gradient and compares curved versus Euclidean loss.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:177-217
+FINDING DETAIL: The claimed behaviour-off test does not exercise the trainer's `BEHAVIOR_ON=False` branch. It builds its own random pairs, and its “higher affinity” check indexes the affinity matrix using the positive item as both row and column (`block[off_positives[index]][off_positives[index]]`), rather than comparing the off-control positive and negative against the same anchor. Consequently, the test does not establish that the behaviour switch removes the behaviour-derived ordering or that the switch comparison is valid.
+FINDING REPRODUCTION: Run `check_behaviour_off_breaks_the_ordering`: its assertion compares diagonal/self-affinity against an unrelated negative, and the sampler/control arrays never come from `rank_triplets` with `BEHAVIOR_ON=False`.
+FINDING CORRECTION: Exercise the actual `rank_triplets` function with the switch on and off, holding the batch and seed fixed; for each triplet compare affinity(anchor, positive) with affinity(anchor, negative). Also compare resulting ranking gradients (or SID assignments) across both behaviour settings and the Euclidean geometry setting.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 542-563, 795-838, 845-874 | Inspected repository-root and candidate result-path resolution, the trainer’s input paths, final SID export/index construction, and launcher branches. The input is `results/stage0_build_parquet/train.parquet`; output is the candidate’s promoted `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`; JSON keys are enumerated item IDs; the launcher checks `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:845-869
+FINDING DETAIL: No defect found in the inspected integration path. Runtime execution was not performed.
+FINDING REPRODUCTION: Source inspection only; trainer execution was not attempted.
+FINDING CORRECTION: No correction required.

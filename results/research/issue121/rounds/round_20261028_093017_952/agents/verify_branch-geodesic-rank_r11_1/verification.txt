@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-508, train_rqvae.py:530-558, train_rqvae.py:703-738 | Traced the training-only directed-transition counts into popularity-corrected successor-overlap affinities, batch triplets, and the Poincare exp-map/geodesic ranking loss added to the baseline objective. The ranking term differentiates through the encoder before quantization. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:666-688, train_rqvae.py:710-738, train_rqvae.py:530-558 | Inspected the trainer’s triplet-selection and ranking-loss paths, and the smoke-test source at smoke_test.py:135-190. The curved loss has a differentiable path to encoder parameters, but the trainer’s behavior-off branch cannot produce triplets as written. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:669-678
+FINDING DETAIL: When BEHAVIOR_ON is false, `rank_triplets` calls `behaviour_off_triplets(anchors, positives, negatives, ...)` before those names are assigned in the function. The function raises `UnboundLocalError`, so the required behavior-off comparison cannot run. The smoke test does not catch this trainer-branch defect: its behavior-off check calls the helper directly.
+FINDING REPRODUCTION: Set `BEHAVIOR_ON = False` and process any batch through the training loop. On the first call to `rank_triplets(batch_ids)`, Python attempts to read the unassigned local `anchors` at train_rqvae.py:672 and raises `UnboundLocalError`.
+FINDING CORRECTION: Sample triplets with `sample_rank_triplets(...)` first, return `None` when there are none, then apply `behaviour_off_triplets(...)` to those sampled arrays when behavior is off. Add a smoke check that exercises `rank_triplets`’s actual off branch and verifies it changes the ranking gradients.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:561-590, train_rqvae.py:803-846, train_rqvae.py:853-882 | Inspected repository-root and promoted-result path resolution, the frozen Stage 0 training parquet and Stage 1 embedding inputs, indexed SID export, and the launcher including its `GENREC_SINGLE_GPU` branch. The candidate writes to its own promoted result directory and exports one JSON SID per embedding-row index. Trainer execution was not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

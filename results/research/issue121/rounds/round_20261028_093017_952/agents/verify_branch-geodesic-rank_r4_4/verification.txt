@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:266-356, train_rqvae.py:398-468, train_rqvae.py:471-498, train_rqvae.py:656-666 | Traced the training-only transition counts into popularity-corrected successor-overlap affinities, the affinity-ordered triplet sampler, and the Poincare exp-map/geodesic ranking loss added to the trainer objective. The sampler and ranking-path checks are defined in smoke_test.py:57-119 and smoke_test.py:135-174; I inspected these paths without executing them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:471-498, train_rqvae.py:653-671, model/hyperbolic.py:110-136 | Inspected the differentiable path from encoded vectors through the ball exponential map and squared Poincare distances, softplus ranking term, combined loss, and backward pass. The ranking smoke checks encoder gradients and geometry-off loss change at smoke_test.py:135-174; the trainer routes behavior-off triplets through a separate sampler at train_rqvae.py:606-634. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code defect found in the differentiable pathway or its safeguards. The behaviour and geometry switches affect different parts of the connected computation: behavior controls triplet construction, while geometry controls the metric used by the ranking term.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:501-531, train_rqvae.py:731-774, train_rqvae.py:781-810 | Inspected repository-root and candidate result-path resolution, the Stage 1 embedding and Stage 0 training-parquet inputs, indexed SID export, and the four-card launcher plus `GENREC_SINGLE_GPU` branch. The SID export enumerates rows by item ID at train_rqvae.py:771-772. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The result path is the candidate’s promoted Stage 2 directory, and the launcher retains both the four-card and single-card branches.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,32 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:260,366,548-565,587-597 | Traced training-only transitions from `train_frame` into cached successor-overlap affinities, affinity-ordered batch triplets, and then the exp-mapped Poincare ranking loss used during training. The smoke test identifies this ranking path at `smoke_test.py:134-173`; I did not run it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The connected pathway is present: behavior determines triplet ordering, and the Poincare distance ranks the encoder representations used before quantization. The behavior-off control changes triplet generation at `train_rqvae.py:551-557`; the geometry-off control selects squared Euclidean distance at `train_rqvae.py:442-448`.
+FINDING REPRODUCTION: Source inspection of the cited trainer path.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:424-457,548-565,587-603 | Traced the loss and triplet switches statically; `smoke_test.py:148-173` describes a loss/gradient check, but does not actually run the trainer or test the trainer’s behavior-off branch.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/smoke_test.py:203-214
+FINDING DETAIL: The behavior-off check does not test whether behavior is switched off in the trainer or whether the ranking gradients change back. It creates random `off_positives` and `off_negatives`, then compares `block[off_positives][off_positives]`—the diagonal affinity, normally zero—to `block[off_positives][off_negatives]`. It does not use `off_positives` as the anchor and therefore cannot establish that the random triplets break affinity ordering. Separately, `check_trainer_ranking_path` passes the same explicit triplets for both `behaviour_on=True` and `False` nowhere; its `behavior_on` context value is unused by `ranking_loss_term` (`train_rqvae.py:433-435`). Thus the required behavior-switch effect on the core computation is not verified.
+FINDING REPRODUCTION: In `check_behaviour_off_breaks_the_ordering`, inspect lines 209-212: the first index into `block` is `off_positives[index]` for both the row and column. A minimal counterexample is a zero-diagonal affinity matrix with positive off-diagonal entries: the comparison counts `0 >= positive_affinity`, which is false regardless of whether the sampled triplet ordering is meaningful. The current check also never invokes the trainer’s `rank_triplets` with `BEHAVIOR_ON=False`.
+FINDING CORRECTION: Exercise the actual `rank_triplets` behavior-off branch and verify that behavior-derived ordering is removed. Compare encoder gradients (or SID assignments from the resulting updated parameters) for identical input/model state under behavior-on and behavior-off, and likewise compare geometry-on versus geometry-off. Fix the indexing in the ordering assertion so it evaluates affinity from the sampled anchor to positive and negative.
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:451-457
+FINDING DETAIL: The distance scale is described as the median squared distance of the first deterministic batch, but it is computed only when `triplets` are present and uses distances from that batch’s sampled triplets. The trainer’s loader is shuffled, and in DDP each rank initializes its own scale from its own first eligible batch. This is not the specified first-batch median over pairwise distances and can produce rank-dependent loss scaling.
+FINDING REPRODUCTION: Follow `rank_triplets` and `ranking_loss_term`: batches without triplets skip scale initialization; the first batch with triplets sets the median over concatenated positive/negative triplet distances. In a multi-rank run, distinct local batches can set distinct values.
+FINDING CORRECTION: Derive the frozen scale from the specified deterministic first batch and make it identical across ranks, for example by computing it before the training loop and broadcasting the resulting scalar.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:40-75,460-499,662-705,712-741 | Inspected root and result-path resolution, the frozen Stage 0 training parquet input, export indexing, and both launcher branches; no trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads `results/stage0_build_parquet/train.parquet`, writes checkpoint and SID exports under its own promoted result directory `results/stage2_RQ-VAE/TIGER_branch_geodesic_rank`, and enumerates `all_embeddings` rows into the JSON item-ID keys. The launcher checks `GENREC_SINGLE_GPU` and returns to run in-process when set to `"1"`; otherwise it invokes four-rank torchrun.
+FINDING REPRODUCTION: Static inspection of the cited paths and branches. Runtime integration was not tested.
+FINDING CORRECTION: None.

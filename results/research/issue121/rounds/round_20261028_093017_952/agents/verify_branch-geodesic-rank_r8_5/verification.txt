@@ -1,0 +1,36 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-364, train_rqvae.py:418-499, train_rqvae.py:502-531, train_rqvae.py:694-722 | Traced training transitions into sparse successor-overlap affinities and batch triplets, then followed those triplets into the Poincare exp-map/geodesic ranking loss and its addition to the RQ-VAE objective. The ranking term backpropagates through the encoder before quantization.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:502-531, train_rqvae.py:694-729, smoke_test.py:135-174, smoke_test.py:177-217 | Inspected the ranking term’s differentiable path through the encoder, its finite-loss check, and gradient clipping. The code’s smoke test checks that the ranking gradient reaches encoder parameters and that replacing geodesic distance with Euclidean distance changes the loss. The behavior-off branch in train_rqvae.py:642-663 samples triplets without affinity; the geometry-off branch in train_rqvae.py:520-528 uses Euclidean distance.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:271-364 | Inspected the real trainer’s preprocessing of training transitions into a sparse affinity graph. This is a code inspection only; the trainer cannot be run in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:337-351
+FINDING DETAIL: The candidate-generation cap does not bound the number of candidate items or the size of the dense intermediate arrays. For each item, `precursor[rare].indices` can include nearly every item; `probability[candidates]` then materializes all those rows, and `right[:, shared].toarray()` can allocate an item-count-by-shared-successor dense array. This can cause preprocessing to exhaust memory before training begins, contradicting the specified bounded sparse preprocessing.
+FINDING REPRODUCTION: Construct a training transition graph where many items share the same successor. For an item with that successor, its rare-successor selection can still yield a precursor list containing most items; `right_dense` then scales with that list and the item’s shared-successor count. Increasing the number of items sharing the successor increases the dense allocation proportionally, despite `fanout_limit` being 256.
+FINDING CORRECTION: Compute overlaps directly from sparse row indices and values, accumulating only the capped candidate pairs without materializing dense candidate-by-successor arrays. Bound candidate-pair generation itself (using a documented, deterministic cap) and preserve the intended overlap calculation for retained pairs.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:547-565, train_rqvae.py:787-830, train_rqvae.py:837-866 | Inspected repository-root discovery, the frozen embedding and training-parquet paths, candidate-specific promoted result paths, item-ID-indexed SID export, and launcher control flow. The single-card branch checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 101-103 and 841-843; the four-card branch constructs the torchrun command at lines 844-861.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

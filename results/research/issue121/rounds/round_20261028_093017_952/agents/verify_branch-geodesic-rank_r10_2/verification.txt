@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, 427-509, 531-559, 667-688, 735-738 | Inspected the training-only successor-affinity construction and the trainer’s triplet-to-Poincare-ranking path. The ranking term uses affinity-ordered triplets and Poincare distances in one differentiable computation before quantization.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:531-559, 710-738 | Inspected the forward loss construction and backward call; smoke_test.py:135-174 exercises the ranking loss and encoder gradient, and lines 177-226 exercise the behaviour-off sampler. The code has a differentiable route to the encoder, but the smoke test does not verify the required switch comparisons on gradients or SID assignments.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:135-174, 177-226
+FINDING DETAIL: The behaviour-off test verifies that random triplets break the affinity ordering, but does not pass those triplets through the ranking term and compare gradients or SIDs with behaviour-on. The ranking test verifies that geometry changes the loss value, but does not compare gradients or SIDs with geometry-off. Thus the required observable change-and-change-back evidence for the switches is absent; the code’s switch branches alone do not establish that the coupled pathway changes as specified.
+FINDING REPRODUCTION: Run smoke_test.py and inspect check_trainer_ranking_path and check_behaviour_off_breaks_the_ordering: neither computes and compares encoder gradients or quantizer indices across both-on, behaviour-off, and geometry-off conditions.
+FINDING CORRECTION: Add a deterministic toy check that evaluates the trainer’s actual ranking term with both-on, behaviour-off, and geometry-off inputs; assert finite nonzero gradients and that each switch changes the ranking gradient or resulting SID assignment relative to both-on. Do not train ablation arms.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-77, 562-588, 803-845, 853-882 | Inspected root and candidate-specific output path resolution, the frozen training parquet and embedding inputs, SID export/index construction, and the four-card launcher plus GENREC_SINGLE_GPU branch. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

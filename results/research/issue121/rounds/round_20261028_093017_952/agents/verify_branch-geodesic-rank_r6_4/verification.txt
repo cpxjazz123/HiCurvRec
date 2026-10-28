@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-361, 403-503, 611-644, 663-683 | Traced training-only transitions into popularity-corrected successor-overlap affinities, the affinity-based triplet sampler, and the Poincare distance ranking loss applied to encoder outputs before quantization. The behaviour and geometry switches select alternative inputs/metrics for that same ranking pathway. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:476-503, 663-689; smoke_test.py:135-174, 177-217 | Inspected the ranking loss’s differentiable path through exp-mapped latents and geodesic distances, and its addition to the baseline loss before backward. The smoke-test code exercises geometry-on versus Euclidean loss and checks that ranking gradients reach encoder parameters; the trainer’s behaviour-off branch samples without affinity. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical hazard blocking training was found. The ranking term uses a positive scale and finite-clamped geodesic distance inputs; the trainer also checks the total loss for finiteness and clips gradients.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 506-545, 748-795, 798-827 | Traced repository-root and result-path resolution, the frozen Stage 0 training parquet and Stage 1 embedding inputs, final SID export indexed by item ID, and the torchrun and `GENREC_SINGLE_GPU` launcher branches. The code inspection shows outputs directed to this candidate’s promoted result directory. Trainer execution and Stage 3 consumption were not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

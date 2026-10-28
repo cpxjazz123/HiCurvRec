@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:260-350, 536-565, 587-597; train_rqvae.py:424-457 | Inspected training-transition affinity construction, batch triplet sampling, and the trainer’s ranking-loss call into Poincare exp mapping and geodesic distance. The resulting ranking term is added to the objective before backward; it acts on the encoder representation that feeds the RQ-VAE quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:587-603, 424-457 | Inspected the training forward/backward path and `smoke_test.py:134-173`, which exercises the ranking loss, compares curved and Euclidean losses, and checks encoder gradients. Runtime execution is not available in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:551-560
+FINDING DETAIL: The behaviour-off switch does not reliably produce a valid contrastive control: it samples anchor, positive, and negative positions independently, so they can coincide. In particular, a triplet with all three positions equal has identical distances and a constant `softplus(0)` loss, with zero gradient. The smoke test does not exercise this trainer switch; it constructs random off-triplets itself and contains an indexing error at lines 210-211 (it indexes the affinity row using `off_positives` rather than the anchor), so it does not validate the claimed behaviour-off comparison. As a result the required behaviour-off comparison is not demonstrated by the code’s exercised path.
+FINDING REPRODUCTION: Set `BEHAVIOR_ON=False` and use a batch of one item: `rank_triplets` returns three index arrays all containing position 0. `ranking_loss_term` then compares an item with itself in both slots and has zero gradient. With larger batches, independent draws can also produce coincident triplets.
+FINDING CORRECTION: Make behaviour-off sample distinct anchor/positive/negative positions (or otherwise guarantee non-degenerate triplets) and update the smoke test to invoke the trainer’s actual `rank_triplets` switch path, correctly comparing each sampled positive and negative affinity against its anchor. Ensure the test checks finite, nonzero gradients and changes under behaviour-off.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-77, 712-741 | Inspected repository-root and result-path derivation, the fixed training inputs, SID export/indexing, and the launcher including `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:67-75
+FINDING DETAIL: The candidate writes to `results/stage2_RQ-VAE/TIGER_branch_geodesic_rank/`, not the required promoted candidate directory `results/stage2_RQ-VAE/branch-geodesic-rank/`. This directs checkpoint and SID outputs to a different name than the candidate’s promoted tree and can leave Stage 3/admission looking for `item_sids.json` at the candidate-specific path without finding it.
+FINDING REPRODUCTION: Evaluate `RESULT_DIR` from the declared `ARM_NAME`: it resolves to `REPO_ROOT/results/stage2_RQ-VAE/TIGER_branch_geodesic_rank`; `OUTPUT_JSON` consequently resolves beneath that directory.
+FINDING CORRECTION: Set `ARM_NAME` to the exact promoted tree name expected by admission and Stage 3 (`branch-geodesic-rank`), then verify that `OUTPUT_JSON` resolves to that candidate’s own `results/stage2_RQ-VAE/<promoted tree name>/item_sids.json`.

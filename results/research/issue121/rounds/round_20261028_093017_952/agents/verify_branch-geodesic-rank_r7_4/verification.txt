@@ -1,0 +1,30 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-364, train_rqvae.py:418-499, train_rqvae.py:502-531, train_rqvae.py:687-716 | Traced the training-only transition counts into popularity-corrected successor overlap, batch triplets, and the Poincare-distance ranking loss on encoder outputs. The loss is added to the baseline objective, so its gradient can affect the latents passed to the quantizer. The behavior and geometry switches are wired into these paths at train_rqvae.py:639-672 and train_rqvae.py:511-528.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:697-716 | Inspected the calibration and ranking-loss path, including the smoke coverage at smoke_test.py:135-174. The smoke test checks that a ranking gradient reaches encoder parameters and that geometry-off changes the loss, but does not exercise the trainer’s first-batch calibration when that batch has no sampled triplets.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:703-712
+FINDING DETAIL: If the first batch has no triplets, `local_mean` remains zero and is clamped to `1e-8` at line 707. That value is then frozen as the ranking-loss divisor. A later batch with triplets adds `ranking / 1e-8`, which can produce an enormous loss and gradients; gradient clipping limits the gradient norm but does not correct the loss scale or make the calibration match the ranking loss. Thus a valid sparse-affinity batch pattern can cause unstable, unintended training.
+FINDING REPRODUCTION: On rank 0, make `rank_triplets` return `None` on the first batch and return a nonempty triplet set on the next batch. The calibration becomes `1e-8`; the next update divides the ranking term by that value.
+FINDING CORRECTION: Calibrate from a deterministic probe batch guaranteed to contain triplets, or defer calibration until a nonempty triplet batch and synchronize that value across ranks. Do not freeze the `1e-8` fallback as the scale.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:547-565, train_rqvae.py:781-824, train_rqvae.py:831-860 | Inspected repository-root and promoted-arm path construction, the Stage 1 embedding and Stage 0 training-parquet inputs, final SID export, and launcher branches. `SINGLE_GPU_ENV` is `GENREC_SINGLE_GPU` and the single-card branch returns before spawning torchrun at lines 835-837. The SID export enumerates all embedding rows and writes item IDs as their row indices. Runtime execution is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

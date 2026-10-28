@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271-373, 647-680, 727-730, 511-539 | Traced the training-only transition counts into popularity-corrected successor-overlap affinities, then into positive/lower-affinity triplets, and finally through the Poincare exp-map and geodesic ranking loss on encoder outputs. The loss gradients feed the encoder before the unchanged quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behaviour signal determines triplet ordering in the same computation whose distances are Poincare geodesic distances.
+FINDING REPRODUCTION: Not applicable; this is a PASS.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:402-413, 511-539, 647-680, 727-735; /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/model/hyperbolic.py:110-136 | Inspected the finite-scale ball mapping, squared geodesic distances, softplus ranking term, and backward path from the ranking term through the encoder. Verified in code that behaviour-off changes triplet sampling and geometry-off uses squared Euclidean distances with the same scale. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found by code inspection. The coupled term is consumed by the total loss and its gradient reaches encoder parameters; the switches select distinct behaviour and geometry computations. No definite numerical hazard was found in the inspected path.
+FINDING REPRODUCTION: Not applicable; this is a PASS. Runtime proof is the specified GPU smoke.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:42-77, 542-581, 795-838, 845-874 | Traced repository-root and candidate result-path resolution, the Stage 1 embedding and Stage 0 training-parquet inputs, item-indexed SID JSON export, and the launcher branches including `GENREC_SINGLE_GPU`. The candidate writes under its own promoted result directory. Static inspection only; trainer execution was unavailable.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The data inputs use the stated frozen paths, the SID export enumerates item IDs by row index, output paths use this candidate’s promoted name, and the launcher retains both four-card torchrun and single-card branches.
+FINDING REPRODUCTION: Not applicable; this is a PASS. Runtime launch and export are covered by the specified GPU smoke.
+FINDING CORRECTION: None.

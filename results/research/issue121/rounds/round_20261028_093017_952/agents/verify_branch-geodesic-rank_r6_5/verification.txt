@@ -1,0 +1,31 @@
+VERDICT: NEEDS_FIX
+
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-361, train_rqvae.py:403-473, train_rqvae.py:476-503, train_rqvae.py:666-683 | Traced the trainer path: training-frame transitions produce successor-overlap affinities; those affinities select ordered triplets; the trainer applies a Poincare exp-map and geodesic-distance ranking loss to encoder outputs. The behavior and geometry switches are present at train_rqvae.py:611-644 and train_rqvae.py:476-500; the code trains both on.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: not applicable
+FINDING CORRECTION: not applicable
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:476-503, train_rqvae.py:666-689, model/hyperbolic.py:124-136 | Inspected the ranking loss and backward path, and the smoke-test assertions at smoke_test.py:135-174. The ranking term is differentiable through the encoder and its gradient is added to the baseline loss. However, the specified geometry-off comparison is not correctly implemented.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:494-500
+FINDING DETAIL: The geometry-off branch uses squared Euclidean distance on `encoded * normalizer`, whereas geometry-on maps `encoded * normalizer` with `exp_0` and measures Poincare distance. This does not isolate the metric: it also changes the representation from mapped ball coordinates to tangent coordinates. Thus the geometry switch does not provide the required controlled replacement of the curve by Euclidean distance on the same representation, so a behavior-on geometry-off comparison cannot establish the geometry effect as specified.
+FINDING REPRODUCTION: Call `ranking_loss_term` with fixed `encoded` and triplets once with `geometry_on=True` and once with `geometry_on=False`. The two branches compute distances on different coordinates (`ball_exp_map(...)` versus `encoded * normalizer`). A minimal correction is to compute `mapped = ball_exp_map(...)` in both cases, then use Poincare distance for geometry-on and squared Euclidean distance between those same mapped points for geometry-off. Update the smoke test accordingly; its current test at smoke_test.py:160-162 checks only that the loss differs, not that the comparison changes only the metric.
+FINDING CORRECTION: Use the same exp-mapped points in both branches and switch only the distance metric; make the smoke test assert that geometry-off is the Euclidean metric on those mapped coordinates.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:519-545, train_rqvae.py:748-795, train_rqvae.py:798-827 | Inspected the trainer’s root and data-path derivation, fixed 3000-epoch configuration, final SID export, and launcher branches. The inputs resolve to the repository’s Stage 1 embeddings and Stage 0 training parquet; outputs resolve to this candidate’s promoted `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/` directory. Export enumerates item IDs into JSON and extends collisions to unique SIDs. The launcher returns directly when `GENREC_SINGLE_GPU=1` and otherwise invokes four-rank torchrun. Runtime execution is unavailable in this sandbox, as stipulated.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: not applicable
+FINDING CORRECTION: not applicable

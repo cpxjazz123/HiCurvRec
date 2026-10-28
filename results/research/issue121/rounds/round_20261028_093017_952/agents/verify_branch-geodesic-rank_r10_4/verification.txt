@@ -1,0 +1,30 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271 | Traced the training-only directed transition counts and popularity-corrected successor overlap through triplet sampling at lines 636–688, then through the encoder output, Poincare exp map and geodesic ranking loss at lines 710–738 and 531–559. The affinity determines the positive/lower-affinity negative ordering, and those same items’ encoded vectors are compared with curved distances before the unchanged quantizer. Code inspection only; trainer execution is unavailable in this sandbox.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/branch-geodesic-rank/train_rqvae.py:531 | Inspected the loss implementation and its caller: the curved branch maps encoded vectors with `ball_exp_map`, computes Poincare distances, and returns a differentiable softplus ranking loss; the trainer adds it to the baseline objective before backward at lines 735–743. Behaviour-off changes triplet construction at lines 667–679; geometry-off uses Euclidean distances at lines 543–559. `smoke_test.py:135–174` checks encoder gradients and a geometry-off loss difference, and lines 177–226 check that behaviour-off breaks the affinity ordering. These are code-level checks; I did not run the trainer or tests.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead ranking term or evident non-finite float32 operation found in the exercised code path. Both switches are wired into the mechanism. The sandbox limitation prevents runtime confirmation of SID or gradient changes across switch settings.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/branch-geodesic-rank/train_rqvae.py:42 | Inspected repository-root discovery and the frozen input/output constants at lines 42–77, trainer data loading and training configuration at lines 82–103 and 575–617, SID export and item indexing at lines 803–846, and launcher branches at lines 853–881. The trainer reads the Stage 1 embedding file and Stage 0 training parquet, writes candidate-named outputs under `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`, enumerates every embedding row by item ID in the JSON export, and includes the `GENREC_SINGLE_GPU` branch. The four-rank smoke path is defined in `smoke_test.py:229–247` and `ddp_check.py:40–91`; execution was not possible here.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The trainer and launcher were not executed in this sandbox.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

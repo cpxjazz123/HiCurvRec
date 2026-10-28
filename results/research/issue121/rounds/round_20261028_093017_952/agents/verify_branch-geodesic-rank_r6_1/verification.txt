@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-361, train_rqvae.py:403-473, train_rqvae.py:476-503, train_rqvae.py:666-683 | Traced training-only directed transitions through popularity-adjusted successor overlap and batch triplet sampling into the Poincare-distance ranking loss on encoder latents before quantization. The both-on path is connected; behavior-off changes triplet generation and geometry-off uses squared Euclidean distance. The smoke test’s ranking and sampler checks are at smoke_test.py:89-119 and smoke_test.py:135-174. I inspected code only; runtime execution is unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:592-604
+FINDING DETAIL: The ranking-distance scale is measured from a fixed prefix of up to 1024 training items, not the first deterministic batch specified in the proposal. This is a specification mismatch, but the scale is measured, frozen, and remains a connected part of the ranking computation.
+FINDING REPRODUCTION: Compare the scale-probe construction at train_rqvae.py:597-604 with the proposal’s first-batch scale definition.
+FINDING CORRECTION: If exact specification fidelity is required, measure the median squared geodesic distance on the first deterministic batch and freeze that value.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:476-503, train_rqvae.py:670-683, train_rqvae.py:684-689 | The ranking loss computes differentiable Poincare distances from the encoder output and is added to the RQ-VAE objective before backward. The smoke test constructs the ranking loss and checks nonzero encoder gradients and a geometry-off loss difference at smoke_test.py:135-174. The sampler and behavior-off control are implemented at train_rqvae.py:611-644. I cannot run the runtime smoke here, as stipulated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: smoke_test.py:177-217
+FINDING DETAIL: The behavior-off check generates unrelated random triplets itself; it does not exercise the trainer’s `BEHAVIOR_ON=False` branch at train_rqvae.py:611-635 or compare resulting gradients/SID assignments. Thus the smoke test does not substantiate its claim that switching behavior off changes the trainer’s core computation. The trainer code does implement that switch.
+FINDING REPRODUCTION: In `check_behaviour_off_breaks_the_ordering`, inspect lines 205-216: the off triplets are drawn directly from the test RNG, not by calling the trainer’s `rank_triplets` with behavior disabled.
+FINDING CORRECTION: Have the smoke test exercise the trainer’s actual behavior-off sampler and compare the resulting triplets or gradients against behavior-on using the same batch and encoder state.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:42-77, train_rqvae.py:519-545, train_rqvae.py:580-610, train_rqvae.py:677-683, train_rqvae.py:748-795, train_rqvae.py:798-827 | Traced root and candidate result paths, frozen Stage 1 embedding and Stage 0 training parquet inputs, final SID export/indexing, and launcher branches including `GENREC_SINGLE_GPU`. No trainer execution was possible in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:669-683
+FINDING DETAIL: DDP ranks enter the calibration broadcast only when their local batch produced triplets. Since triplet sampling is local and depends on each rank’s shuffled batch, rank 0 can have no triplets while another rank does. In that case, the latter blocks at `dist.broadcast` and rank 0 continues training: the distributed job hangs. Also, when rank 0 has triplets but another rank does not, the rank with triplets can broadcast a different locally measured calibration mean from the one used on rank 0.
+FINDING REPRODUCTION: In a four-rank run, construct a step where rank 0’s batch yields no triplets and rank 1’s batch yields at least one. Rank 1 enters the calibration broadcast at lines 677-682; rank 0 skips that block at line 669 and proceeds to backward. Conversely, if rank 0 and rank 1 both have triplets but different first-batch ranking means, rank 1’s value is overwritten by rank 0’s broadcast even though its local calibration state is set from its own value.
+FINDING CORRECTION: Make calibration a rank-consistent collective executed by every rank in the same order, including ranks with no triplets. Compute it once from a shared deterministic probe or broadcast a rank-0 value unconditionally before training; ensure no rank independently establishes a different calibration.

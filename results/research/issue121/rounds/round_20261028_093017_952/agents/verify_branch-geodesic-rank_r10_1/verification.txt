@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-509, train_rqvae.py:531-559, train_rqvae.py:703-738 | Traced the training-only transition counts into popularity-corrected successor overlap, affinity-ordered batch triplets, and the Poincare-distance ranking loss on encoder outputs. The trainer’s smoke test exercises the ranking path and its geometry and behaviour controls at smoke_test.py:135-226. I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:531-559, train_rqvae.py:710-743, smoke_test.py:135-174 | Inspected the differentiable encoder-to-exp-map-to-geodesic-ranking-loss path and its addition to the optimized loss; inspected the smoke assertions for finite loss behavior by implication, geometry-switch loss change, and nonzero encoder gradients. The behaviour-off branch supplies affinity-independent triplets at train_rqvae.py:511-528 and 670-679; smoke_test.py:177-226 checks that it breaks affinity ordering. I did not execute the smoke test or claim runtime proof.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The ranking term is consumed by backpropagation, and the geometry-off branch uses squared Euclidean distances with the same normalizer and triplets.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:562-642, train_rqvae.py:803-850, train_rqvae.py:853-882 | Inspected the trainer entry point, repository-relative frozen embedding and training-parquet paths, candidate-specific result paths, full-item SID export, and launcher branches. The four-rank smoke is defined in smoke_test.py:229-247 and ddp_check.py:40-91; the required single-card environment branch is at train_rqvae.py:853-859. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Outputs resolve to the promoted candidate directory, and the exported SID rows are enumerated by item ID at train_rqvae.py:831-845. The launcher honors GENREC_SINGLE_GPU and retains its four-card torchrun path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

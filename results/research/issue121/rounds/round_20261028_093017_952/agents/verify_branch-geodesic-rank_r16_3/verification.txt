@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, train_rqvae.py:435-519, train_rqvae.py:541-580, train_rqvae.py:723-752 | Traced training-only directed transitions into sparse, popularity-corrected successor-overlap affinities, then affinity-ordered triplets into exp-mapped Poincare distances in the ranking loss. The ranking loss is added to the trainer objective when triplets exist.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:541-580, train_rqvae.py:749-757, smoke_test.py:138-221 | Code inspection shows a differentiable ranking-loss path through exp-map and Poincare distance to encoder output, and a loss integration before backward. The smoke test exercises a toy encoder and checks gradients/switch-dependent loss values, but does not test the actual SID-change claim.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:211-220
+FINDING DETAIL: The test does not establish that the coupled update changes SID assignments, nor that assignments change back when behaviour is switched off or geometry is replaced by Euclidean distance. It computes `before` and `after` tokens from separate random input batches, performs no optimizer step between them, and never applies the behaviour-off or geometry-off controls to the quantizer. The switch tests only compare ranking losses or gradients. This leaves the requested SID/gradient coupling verification incomplete; in particular the purported token-change check can pass without the ranking term affecting assignments.
+FINDING REPRODUCTION: Inspect `check_trainer_ranking_path`: lines 213-219 feed different `torch.randn(...)` batches to `before` and `after`, with only `backward()` between them and no optimizer update. Identical model parameters therefore suffice; the code does not compare SIDs across both-on, behaviour-off, and geometry-off conditions.
+FINDING CORRECTION: Use the same fixed inputs and initialized model for each condition; perform the ranking-loss optimizer update and quantize those same inputs afterward. Compare resulting SIDs and/or encoder gradients for both-on against behaviour-off and geometry-off using the trainer’s actual switch path, asserting the expected differences. Do not train extra experiment arms; this is a deterministic smoke check.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-77, train_rqvae.py:583-613, train_rqvae.py:817-860, train_rqvae.py:867-896, train_rqvae.py:101-103 | Inspected path constants and trainer flow: embeddings load from Stage1 `sentence_t5.npy`, training data from Stage0 `train.parquet`; output resolves to this candidate’s promoted `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`; export enumerates item IDs into both SID array and JSON mapping. Verified the launcher’s four-rank torchrun branch and `GENREC_SINGLE_GPU` in-process branch in code. Runtime execution is unavailable per the stated sandbox constraint.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

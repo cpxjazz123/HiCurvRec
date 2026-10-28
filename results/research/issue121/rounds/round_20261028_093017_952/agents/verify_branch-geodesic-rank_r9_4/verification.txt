@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271-373, 427-508, 511-539, 647-680, 702-730 | Traced training-only directed transitions into successor-overlap affinities and rank triplets, then into the Poincare exp-map/geodesic ranking loss on encoder outputs before quantization. The behaviour and geometry switches are implemented at train_rqvae.py:647-680 and :523-536. The smoke-test code at smoke_test.py:135-174 checks the geometry-on/off loss difference and encoder gradient; :177-217 checks the affinity ordering and a randomized behaviour-off control. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261028_093017_952/agents/verify_branch-geodesic-rank_r9_4/verification.txt | Inspected the ranking loss at train_rqvae.py:511-539 and its use in the trainer at :702-735, along with the gradient/switch checks in smoke_test.py:135-174. The loss remains differentiable through the exp map and geodesic distances to encoder outputs; it is added to the baseline loss before backward. The distance scale is floored at :640 and the encoder-derived ball normalizer is bounded against a zero median at :402-413. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261028_093017_952/agents/verify_branch-geodesic-rank_r9_4/verification.txt | Inspected repository-root and result-path resolution, frozen embedding/train data inputs and 3000-epoch setting at train_rqvae.py:44-83; training item indexing at :555-573; SID export and item-ID mapping at :795-838; and the torchrun and GENREC_SINGLE_GPU branches at :845-874. The output directory is this candidate’s promoted result directory. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

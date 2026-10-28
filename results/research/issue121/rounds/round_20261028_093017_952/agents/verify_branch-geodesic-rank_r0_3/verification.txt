@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: branch-geodesic-rank/train_rqvae.py:316-321 → branch-geodesic-rank/model/model.py:26-30 | Traced the trainer’s batch forward and loss construction into the RQ-VAE. It uses only reconstruction and quantization losses; no training-transition data, successor-overlap sampler, or behaviour-conditioned ranking loss enters that path. The Poincaré helper in model/utils.py:55 is not called by this trainer/model path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: branch-geodesic-rank/train_rqvae.py:316-321
+FINDING DETAIL: The proposed connected behaviour–geometry ranking mechanism is absent. The exercised training path does not load or compute the training-only successor signal and does not compute Poincaré distances; model/model.py:26-30 passes encoded vectors to the unchanged Euclidean residual quantizer.
+FINDING REPRODUCTION: Follow `main()` from the batch loop at train_rqvae.py:316 through `model(batch)` and `compute_loss`. The only objective terms are reconstruction and quantization loss. Searching the candidate Python files for successor/overlap/rank logic finds none; the Poincaré code is in a separate helper path.
+FINDING CORRECTION: Implement and call the specified training-only successor-overlap pair sampler and Poincaré-distance ranking loss on encoder latents before quantization, including the required behaviour-off and Euclidean-distance switches. Do not train ablation arms.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: branch-geodesic-rank/train_rqvae.py:316-327 → branch-geodesic-rank/model/model.py:26-30, 43-50 | Inspected the actual forward, objective, backward, and optimizer-step path. The proposed coupled term is not present in this path, so no finite-gradient or switch-effect claim for that term can be established from the code.
+FINDING SEVERITY: blocking
+FINDING LOCATION: branch-geodesic-rank/train_rqvae.py:319-327
+FINDING DETAIL: The required trainable coupled pathway is missing from the real training step. Consequently there is no behaviour-on/behaviour-off or Poincaré/Euclidean switch in the objective, and no way for the proposed ranking term to alter encoder gradients or SID assignments. This is a missing mechanism, not a demand for an executed GPU smoke test.
+FINDING REPRODUCTION: Inspect the loss passed to `backward()` at train_rqvae.py:321-324: it is created by `raw_module.compute_loss`, whose implementation at model/model.py:43-50 returns only MSE reconstruction plus quantization loss. Neither the helper’s Poincaré functions nor any behaviour-derived values feed that loss.
+FINDING CORRECTION: Add the differentiable ranking term to the actual trainer objective, with finite-safe geometry and scale calibration as specified, and make its behaviour and geometry switches affect that same computation. Keep the baseline loss and quantizer otherwise unchanged.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: branch-geodesic-rank/train_rqvae.py:40-67, 232-262, 386-427, 436-462 | Inspected the candidate’s path resolution, data loading, export, and launcher code; did not run the trainer. The paths resolve from the candidate file’s repository root, but the result arm is hard-coded to the baseline name and the launcher has no `GENREC_SINGLE_GPU` branch.
+FINDING SEVERITY: blocking
+FINDING LOCATION: branch-geodesic-rank/train_rqvae.py:57-67
+FINDING DETAIL: `ARM_NAME` is `"TIGER_RQ-VAE"`, so this candidate writes its checkpoint and SID files into the baseline result directory (`results/stage2_RQ-VAE/TIGER_RQ-VAE/`) rather than its promoted candidate directory. This violates candidate isolation and can overwrite baseline outputs. Separately, `_launch_via_torchrun()` always launches four ranks and does not read `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"`, so the required single-card launcher branch is absent. The frozen input paths (`stage1_GeneEmbedding/output/sentence_t5.npy` and `results/stage0_build_parquet/train.parquet`) and row-indexed SID JSON export are otherwise consistent with the inspected code.
+FINDING REPRODUCTION: With this candidate copy, evaluate `RESULT_DIR` at train_rqvae.py:59: it ends in `TIGER_RQ-VAE`, not `branch-geodesic-rank`. Set `GENREC_SINGLE_GPU=1` and invoke the script: the launcher at lines 436-462 does not inspect that variable and still constructs a four-process torchrun command.
+FINDING CORRECTION: Set `ARM_NAME` to the promoted candidate tree name so all checkpoint/SID outputs target that candidate’s `results/stage2_RQ-VAE/<candidate>/` directory. Add the required `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` handling so the single-card mode runs directly instead of forking four ranks.

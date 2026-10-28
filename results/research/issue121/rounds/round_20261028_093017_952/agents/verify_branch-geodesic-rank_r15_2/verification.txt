@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-379, train_rqvae.py:433-517, train_rqvae.py:539-578, train_rqvae.py:721-750 | Traced training-only directed transitions into popularity-corrected successor-overlap affinities, sampled affinity-ordered triplets, and followed those triplets into the Poincare-distance ranking loss on encoder outputs. The real training loop adds that loss to the baseline objective. Inspected smoke_test.py:138-221 and smoke_test.py:224-294 for checks of the ranking path and behavior-off control; did not execute them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:539-578, train_rqvae.py:747-755, smoke_test.py:138-221 | Inspected the differentiable ranking computation and its addition before backward. The curved branch uses exp-mapping and Poincare distance; the controls switch to permuted behavior ranks or squared Euclidean distance. The smoke code checks finite, differing gradients and encoder reachability. I did not execute the smoke or trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:581-611, train_rqvae.py:815-858, train_rqvae.py:865-894, train_rqvae.py:101-103 | Inspected root and candidate result-path resolution, the Stage 1 embedding and Stage 0 training-parquet inputs, indexed SID export, the four-rank launcher, and the GENREC_SINGLE_GPU branch. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:260-350, train_rqvae.py:366-421, train_rqvae.py:424-457, train_rqvae.py:587-597 | Traced the training-only successor-transition counts into popularity-corrected successor overlap, sampled affinity-ordered triplets, then followed the same triplets through exp-mapping and Poincaré-distance ranking loss into the encoder loss used before quantization.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The code contains a connected behaviour-and-geometry pathway: the overlap-derived triplet order determines which latent pairs are compared by the curved distance, and the resulting loss is added to the training objective. No finding for this check.
+FINDING REPRODUCTION: Static trace through the cited functions; no trainer execution performed.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:424-457, train_rqvae.py:587-603, smoke_test.py:134-173 | Inspected the ranking-loss computation and its use in the trainer’s backward step; inspected the smoke test’s checks for geometry-dependent loss and nonzero encoder gradients. The behaviour switch changes triplet generation in train_rqvae.py:548-565; the geometry switch selects Poincaré versus Euclidean distance in train_rqvae.py:436-448.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The ranking term is used in the loss and remains differentiable through the encoder; the curved distance uses bounded ball inputs and a clamped acosh argument. Both switches select distinct computations. The local smoke test does not itself demonstrate SID changes or test the trainer’s behaviour-off branch end to end, but inspection finds no dead ranking term or numerical defect that warrants a blocking finding.
+FINDING REPRODUCTION: Static trace through the cited trainer lines and smoke-test assertions. Runtime execution was not performed.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:260-350, train_rqvae.py:383-385, train_rqvae.py:489-499, train_rqvae.py:712-741, train_rqvae.py:697-705 | Inspected the trainer’s input paths, batch sampler, launcher branches, and SID export/indexing logic. The trainer could not be executed in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:383-385
+FINDING DETAIL: The per-step sampler materializes the entire batch affinity block as a dense count × count matrix. At the configured total batch size of 4096 this allocates 16,777,216 entries per rank, before the per-anchor loop, and contradicts the specified sparse/O(B) triplet sampling cost. This creates a major per-step memory and runtime burden across the frozen 3000-epoch run, potentially preventing the prescribed training run. The other inspected integration paths use the training parquet and embedding inputs, write SIDs indexed by enumerated item ID to the candidate’s promoted result directory, and preserve the GENREC_SINGLE_GPU branch.
+FINDING REPRODUCTION: With a batch of 4096 IDs, evaluate `affinity[batch_ids][:, batch_ids].toarray()` at train_rqvae.py:384: it creates a dense 4096 × 4096 array on every rank and every training step, even though the affinity is sparse.
+FINDING CORRECTION: Sample from the sparse batch affinity without converting the full block to dense—for example, iterate only nonzero affinity entries for positive candidates and obtain lower-affinity negatives from implicit-zero items plus sparse nonzero entries. Preserve the same affinity ordering and deterministic sampling while keeping work and memory proportional to the sparse candidates and sampled triplets.

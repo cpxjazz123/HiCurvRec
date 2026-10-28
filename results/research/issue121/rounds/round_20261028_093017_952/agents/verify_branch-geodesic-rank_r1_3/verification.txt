@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:260-348, 506-549, 571-579 | Traced training-only directed transitions into sparse successor-overlap affinities, affinity-based triplets, and then the Poincare-distance ranking loss applied to encoder outputs. This is a connected behaviour-and-geometry path whose gradients reach the encoder before quantization. No runtime exercise was possible in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the existence of the both-on coupled pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:364-415, 506-523, 525-549, 571-585 | Inspected the actual batch sampler and ranking-loss call chain, and compared it with smoke_test.py:89-118, 134-173. The smoke test checks a separately constructed ranking loss and does not exercise the trainer’s triplet sampler or actual `rank_loss`.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:400-408
+FINDING DETAIL: The negative pool includes zero-affinity items (`row < positive_weight`), but the weighted sampling branch assigns them zero probability. If every lower-affinity candidate has zero affinity—which is possible, for example, when the anchor has exactly one positive in the batch—`total` is zero and the fallback samples uniformly from that pool, including the anchor itself. That creates a zero-distance negative. `ball_distance` computes `acosh(1)` for that self-pair, whose derivative is singular; the resulting ranking gradient can be non-finite. Also, the positive affinity is not used to exclude the anchor from the fallback pool.
+FINDING REPRODUCTION: Use a batch with an anchor having one positive-affinity item and all other batch items at zero affinity. The positive is selected; the lower pool consists of zero-affinity items and includes the anchor. With the zero-total fallback, the anchor can be selected as the negative. Then evaluate the trainer’s Poincare ranking loss and backward pass for that triplet; the negative distance is zero and its `acosh` derivative is numerically unstable.
+FINDING CORRECTION: Exclude the anchor from negative candidates. Define an explicit deterministic policy for lower-affinity candidates when their sampling weights sum to zero (for example, sample uniformly from the non-self zero-affinity items). Add a trainer-path test that constructs this sparse-affinity case and verifies finite loss and finite, nonzero gradients.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-76, 418-458, 644-687, 694-723 | Inspected repository-root discovery, frozen embedding and training-parquet paths, promoted-candidate result paths, training and export indexing, and launcher branches. The export enumerates embedding rows into string item-ID keys; the candidate writes to its own promoted Stage 2 directory. The launcher checks `GENREC_SINGLE_GPU` at lines 99-101 and 694-700, and otherwise launches four ranks. Runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

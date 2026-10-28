@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:266-356, train_rqvae.py:398-498, train_rqvae.py:656-666 | Traced training-only transitions into popularity-corrected successor-overlap affinities, affinity-ranked triplet sampling, and the ranking loss on encoder outputs. The loss maps those outputs into the Poincare ball and compares squared geodesic distances; its gradient is added to the baseline objective before the optimizer step. The connection is exercised in code, not inferred from an imported helper.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:471-499, train_rqvae.py:606-634, train_rqvae.py:656-671 | Inspected the trainer’s triplet construction and ranking loss, then followed the result through backward and gradient clipping. `smoke_test.py:135-174` checks that a ranking gradient reaches encoder parameters and that geometry-off changes the loss; actual runtime execution is unavailable in this review.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:604-605, train_rqvae.py:662-666
+FINDING DETAIL: The ranking-loss calibration is local to each distributed rank. Every rank initializes its own `ranking_rank_calibration["mean"]` from that rank’s first batch, but the scale is never broadcast or otherwise synchronized. Since DDP averages gradients, ranks can therefore apply different effective weights to the same coupled term. This makes the distributed training update depend on each rank’s first sampled triplets, rather than the specified single first-batch calibration.
+FINDING REPRODUCTION: In a multi-rank run, arrange for rank 0 and rank 1 to have first-batch triplets with different ranking-loss means. At their first ranking step, `ranking_rank_calibration["mean"]` is set independently on each rank; subsequent `ranking / ranking_rank_calibration["mean"]` values use different denominators.
+FINDING CORRECTION: Calibrate the first ranking mean once on a designated rank and broadcast the scalar to all ranks before using it, or compute a globally reduced calibration value. Preserve the one-run policy; do not add an ablation or tuning run.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:501-531, train_rqvae.py:731-778, train_rqvae.py:781-810 | Inspected the trainer entry point, paths, data loading, export, and launcher branches. The inputs resolve to the repository’s Stage 1 embeddings and Stage 0 training parquet; outputs target this candidate’s promoted `TIGER_branch-geodesic-rank` Stage 2 result directory. Export enumerates all embedding rows into item-indexed JSON keys and extends colliding codes to unique SIDs. The single-card branch reads `GENREC_SINGLE_GPU`; the default launcher invokes four-rank torchrun. The environment limitation prevents runtime execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION:

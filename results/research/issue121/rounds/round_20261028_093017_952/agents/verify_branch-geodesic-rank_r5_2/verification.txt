@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:266-356,398-468,471-498,656-666 | Traced training-only transitions from `train_frame` into popularity-corrected successor-overlap affinities, batch triplets, and the ranking loss. The loss exp-maps encoder outputs and ranks their Poincare distances; it is added to the baseline loss before backpropagation through the encoder used by the quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behaviour-derived ordering and curved distance meet in the same differentiable ranking computation, and both switches are present in the trainer.
+FINDING REPRODUCTION: Source inspection only; the sandbox limitation means the trainer was not run.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:471-498,606-634,653-671 | Traced the trainer’s ranking term from encoder output to the combined loss and backward pass. `BEHAVIOR_ON` selects affinity-derived versus random triplets; `GEOMETRY_ON` selects Poincare distance versus squared Euclidean distance. The ranking term is connected to encoder parameters, and its gradients can affect subsequent quantizer inputs and SIDs. Distance/map safeguards keep the inspected operations finite for valid finite inputs.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead ranking term or source-visible numerical hazard found. The smoke test also contains source-level checks for a nonzero encoder gradient and for the geometry switch changing the loss, but does not execute here; no claim of runtime proof is made.
+FINDING REPRODUCTION: Inspect `ranking_loss_term` and its call site; the code path differentiates through mapped encoder vectors. The behavior-off sampler branch is at `train_rqvae.py:609-625`, and the Euclidean branch is at `train_rqvae.py:489-495`.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:42-77,501-531,731-778,781-810 | Inspected root and path derivation, the frozen Stage 0 training-parquet input, item-ID handling, final SID export, the four-card launcher, and the `GENREC_SINGLE_GPU` single-card branch. Export enumerates embedding rows as item IDs and writes both SID formats to this candidate’s promoted result directory.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer uses `results/stage0_build_parquet/train.parquet`, writes candidate outputs to `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`, and does not redirect outputs to the baseline or another candidate’s directory. Runtime execution was not performed.
+FINDING REPRODUCTION: Trace the path constants at `train_rqvae.py:63-77`, export at `train_rqvae.py:766-774`, and launcher branches at `train_rqvae.py:781-810`.
+FINDING CORRECTION: none

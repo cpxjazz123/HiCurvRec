@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:266-356, train_rqvae.py:398-468, train_rqvae.py:471-498, train_rqvae.py:656-666 | Traced the training-only transition counts through successor-overlap affinity and triplet sampling, then through exp-mapped Poincare distances and the ranking loss added to the training objective. The affinity is built from TRAIN_FILE at train_rqvae.py:515-516 and train_rqvae.py:575-580; the loss acts on encoder outputs before the unchanged RQ-VAE quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The geometry-off Euclidean path is at train_rqvae.py:489-495; the behaviour-off sampler path is at train_rqvae.py:606-634. Both switches are wired into the training computation. The mechanism and its switches are implemented; this report does not recommend running ablation arms.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:471-498, train_rqvae.py:653-671, model/hyperbolic.py:110-136, smoke_test.py:135-174 | Inspected the ranking-loss forward path, its connection to the encoder output, and the trainer’s backward and gradient-clipping steps. The smoke test calls the trainer’s ranking loss for curved and Euclidean distances and checks that a backward pass gives the encoder a nonzero gradient. Runtime execution was not performed, consistent with the stated sandbox limitation.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead ranking term or evident float32 overflow/NaN hazard found. Both-on ranking is added to the baseline objective at train_rqvae.py:661-666. The behaviour-off triplet sampling and Euclidean geometry path are present at train_rqvae.py:606-634 and train_rqvae.py:489-495 respectively; the smoke test checks the geometry loss change at smoke_test.py:149-162 and the encoder gradient at smoke_test.py:164-174. The assignment is generated from the trained encoder by model/model.py:32-36 and exported after training by train_rqvae.py:759-772.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:501-531, train_rqvae.py:731-778, train_rqvae.py:781-810 | Inspected root and path resolution, frozen training-file selection, output naming and SID export, distributed setup, and the launcher’s single-card branch. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The trainer reads the Stage 0 training parquet at train_rqvae.py:72-73 and train_rqvae.py:515-516; writes the candidate’s promoted result directory at train_rqvae.py:63-76; exports item-indexed IDs at train_rqvae.py:766-772; and selects the single-card branch using SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at train_rqvae.py:101-103 and train_rqvae.py:781-787. The four-card launcher is at train_rqvae.py:788-805.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

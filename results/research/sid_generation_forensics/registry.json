@@ -184,5 +184,24 @@
     },
     "stage2_metrics_report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_interest_signature_hypball/stage2_metrics/4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc.json",
     "family": "interest-cohort parents with the hyperbolic first-level assignment (round_20261028_065943_250)"
+  },
+  "branch_geodesic_rank": {
+    "stage3": "TIGER_branch-geodesic-rank",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/item_sids.json",
+    "sid_origin": "in-repo",
+    "reported": {
+      "test_recall@10": 0.04967008478559864,
+      "test_recall@5": 0.032887062797054264,
+      "test_ndcg@10": 0.027248654225454434
+    },
+    "stage2_diagnostics": {
+      "valid_l1_hard_er": 2.7395965986115103,
+      "level2_distinct_prefixes": 3156,
+      "level3_distinct_triples": 22858,
+      "l3_collision": 0.1321836742994265,
+      "l3_refinement_gain_bits": 3.278793820909105
+    },
+    "stage2_metrics_report": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/stage2_metrics/de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a.json",
+    "family": "successor-overlap ranking in the Poincare ball (round_20261028_093017_952)"
   }
 }

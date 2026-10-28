@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, train_rqvae.py:435-519, train_rqvae.py:541-580, train_rqvae.py:723-752 | Statically traced the training-only successor-transition counts into popularity-corrected overlap affinities, batch triplet sampling, and the Poincare-distance ranking loss applied to encoder outputs. The loss is added to the baseline objective and backpropagates through the encoder before the unchanged RQ-VAE quantizer.
+FINDING SEVERITY: N/A
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, train_rqvae.py:749-757, model/hyperbolic.py:110-136 | Statically traced the ranking loss through the differentiable exp-map and geodesic-distance operations to the encoded vectors, then through the encoder parameters. The behavior and geometry switches select different ranking inputs/metrics, and the ranking term is included in backward. The clamps and projection margins keep the geometric operations inside their finite domains. No runtime smoke was run, consistent with the stated sandbox limitation.
+FINDING SEVERITY: N/A
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:63-78, train_rqvae.py:582-613, train_rqvae.py:817-860, train_rqvae.py:867-896, train_rqvae.py:101-103 | Statically inspected the trainer entry point, frozen Stage 1 embedding and Stage 0 training-parquet paths, candidate-specific promoted result directory, item-indexed SID JSON export, four-rank torchrun launcher, and the `GENREC_SINGLE_GPU` branch. The trainer uses the final checkpoint and exports rows keyed by item IDs; the result path resolves to `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`. No runtime launch was attempted.
+FINDING SEVERITY: N/A
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

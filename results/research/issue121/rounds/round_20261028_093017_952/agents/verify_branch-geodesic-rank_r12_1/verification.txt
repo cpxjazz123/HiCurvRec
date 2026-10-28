@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:271-373`, `train_rqvae.py:427-508`, `train_rqvae.py:666-685`, `train_rqvae.py:530-558`, `train_rqvae.py:733-735` | Traced the training-only transition counts into popularity-corrected successor-overlap affinities, the affinity-ranked batch triplets, and the ranking loss on encoded vectors before quantization. The loss uses exp-mapped vectors and Poincare distances when geometry is on. The supplied `smoke_test.py:135-190` exercises the trainer’s ranking function and compares curved and Euclidean losses; `smoke_test.py:193-247` exercises the sampler and behaviour-off control. I inspected these paths but did not run them.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:707-741`, `train_rqvae.py:530-558`, `smoke_test.py:135-190` | Inspected the forward, loss addition, backward, gradient clipping, and optimizer step. The ranking term is not detached; it is added to the baseline loss and differentiates through the encoder. The smoke test checks encoder gradients, a changed gradient when the positive/negative ordering is swapped, and a changed loss with geometry off. The actual runtime smoke was not run, as instructed. No specific numerical hazard preventing finite float32 computation is evident in the exercised ranking path.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION: 
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:42-78`, `train_rqvae.py:575-591`, `train_rqvae.py:800-843`, `train_rqvae.py:850-879` | Inspected the repository-root and candidate-specific result paths, training parquet and embedding inputs, item-ID indexing and SID JSON export, and launcher branches. Stage 2 uses `results/stage0_build_parquet/train.parquet`; export enumerates all embedding rows so JSON keys correspond to item IDs, and the collision extension enforces unique SIDs. Results target `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`, not the baseline or another candidate. The single-card branch checks `GENREC_SINGLE_GPU`; otherwise the launcher invokes four-rank torchrun. I did not execute the trainer or launcher.
+FINDING SEVERITY: 
+FINDING LOCATION: 
+FINDING DETAIL: 
+FINDING REPRODUCTION: 
+FINDING CORRECTION:

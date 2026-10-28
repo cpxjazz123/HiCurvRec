@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:266-356, train_rqvae.py:398-468, train_rqvae.py:471-498, train_rqvae.py:606-634, train_rqvae.py:656-666 | Traced training-only transition counting into sparse successor-overlap affinities, affinity-ordered triplets, and then a ranking loss on encoder outputs. With geometry enabled, those same triplets score exp-mapped vectors using Poincare geodesic distances; with geometry disabled, they use squared Euclidean distances.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:653-671, train_rqvae.py:471-498, model/hyperbolic.py:110-136, smoke_test.py:135-174 | Inspected the trainer’s forward, coupled-loss, backward, and optimizer-step path, and the smoke test’s direct gradient check. The ranking term is added to the baseline loss when triplets exist and differentiates through the encoder and curved distance computation. The behaviour switch changes triplet generation at train_rqvae.py:606-634; the geometry switch changes the metric at train_rqvae.py:483-495. The available smoke-test code checks that geometry changes the loss and that the ranking term reaches encoder parameters; no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:501-531, train_rqvae.py:731-778, train_rqvae.py:781-810, smoke_test.py:220-238 | Inspected repository-root and candidate result-path resolution, the frozen Stage 0 parquet and Stage 1 embedding inputs, indexed SID export, and launcher branches. The trainer reads `GENREC_SINGLE_GPU` at train_rqvae.py:101-103 and bypasses torchrun when it is `"1"` at train_rqvae.py:783-787; otherwise it launches the four-rank job. The smoke test contains a four-rank check, but no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

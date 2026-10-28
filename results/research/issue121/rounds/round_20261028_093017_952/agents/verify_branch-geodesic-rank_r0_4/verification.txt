@@ -1,0 +1,33 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:316-321, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/model/model.py:26-30 | Inspected the trainer’s batch forward/loss path and the model’s encoder-to-quantizer path, and searched the candidate tree for successor, Poincare, hyperbolic, and ranking-loss code. The training path uses only the unchanged RQ-VAE objective; no coupled mechanism is present.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:316-321
+FINDING DETAIL: The candidate does not implement the proposed training-only successor-overlap signal or any curved operation. Each batch computes `model(batch)` and then `compute_loss` on reconstruction and quantization only. The model encodes directly into the existing Euclidean residual quantizer. Thus no connected behaviour–geometry pathway exists.
+FINDING REPRODUCTION: Follow the real training loop at lines 316-321 into `model/model.py:26-30` and `model/model.py:43-50`: there is no successor data, Poincare mapping/distance, or ranking term. The candidate-tree search also finds no relevant implementation symbols.
+FINDING CORRECTION: Implement the training-only successor-overlap pair/triplet construction and Poincare geodesic ranking loss on encoder latents, connect that loss to the trainer’s baseline objective, and include working behaviour-off and Euclidean-geometry switches without training ablation arms.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:316-327, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/model/model.py:26-30 | Traced the forward, loss, backward, optimizer step, and SID inference paths in code; runtime execution was not available in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:319-327
+FINDING DETAIL: The implemented baseline reconstruction/quantization path is differentiable, but the proposed coupled term and its three switches do not exist. Consequently there is no code path to establish finite ranking-loss gradients to encoder parameters, or to demonstrate that enabling the coupling changes SID assignments/gradients and that disabling behaviour or replacing the curve with Euclidean distance changes them back.
+FINDING REPRODUCTION: The loop’s only loss is returned by `raw_module.compute_loss(batch, reconstructed, quant_loss)` at line 321, then backpropagated at line 324. `model/model.py:43-50` defines that loss as reconstruction plus quantization only. No coupled loss or switch is available to exercise.
+FINDING CORRECTION: Add the specified ranking computation to the actual training loss, with numerically safe Poincare operations and behaviour/geometry switches that select the corresponding computations. Ensure the switched-on loss remains connected to encoder latents before quantization.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:56-67, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:386-427, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:436-461 | Inspected path resolution, data inputs, export/indexing, and launcher code. Did not run the trainer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:57-67
+FINDING DETAIL: The candidate’s `ARM_NAME` is `"TIGER_RQ-VAE"`, so its checkpoint and SID exports resolve to the baseline’s `results/stage2_RQ-VAE/TIGER_RQ-VAE/` directory, not this promoted candidate’s result directory. This risks overwriting the baseline output and makes the candidate’s Stage 3 SID input resolve to the wrong arm.
+FINDING REPRODUCTION: Evaluate `RESULT_DIR` at line 59: it is `REPO_ROOT/results/stage2_RQ-VAE/TIGER_RQ-VAE`; `OUTPUT_JSON` at line 64 therefore targets the baseline’s `item_sids.json`. The export at lines 424-427 writes there.
+FINDING CORRECTION: Set `ARM_NAME` to the promoted tree name `branch-geodesic-rank` so checkpoint and SID outputs resolve to this candidate’s own required `results/stage2_RQ-VAE/<promoted tree name>/` directory.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:436-457
+FINDING DETAIL: The launcher always launches four processes with visible devices `0,1,2,3`; it does not read `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` or provide a single-card branch. The required single-card launcher behavior is therefore absent.
+FINDING REPRODUCTION: Set `GENREC_SINGLE_GPU` and invoke the trainer outside torchrun. `_launch_via_torchrun` does not inspect that variable and still constructs a torchrun command with `--nproc_per_node=4` and `CUDA_VISIBLE_DEVICES=0,1,2,3`.
+FINDING CORRECTION: Restore the required launcher branch that checks `GENREC_SINGLE_GPU` and launches the trainer on one card when set, while retaining the four-card torchrun path otherwise.

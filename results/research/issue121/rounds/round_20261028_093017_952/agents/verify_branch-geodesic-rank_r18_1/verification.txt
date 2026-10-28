@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, train_rqvae.py:435-519, train_rqvae.py:541-580, train_rqvae.py:723-752 | Inspected the path from training-frame directed transitions and successor-overlap affinity, through batch triplet sampling, to a ranking loss using exp-mapped encoder vectors and Poincare geodesic distances; the loss is added to the baseline objective. The smoke test exercises the trainer’s ranking function and checks the behaviour and geometry switches at smoke_test.py:138-253. I did not run it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behavior-off and geometry-off branches are read by the ranking computation; the behavior signal and curved distance participate in one connected loss pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, train_rqvae.py:749-759, smoke_test.py:138-253 | Traced the differentiable ranking loss through the encoder to `loss.backward()` and the optimizer update. The smoke test describes checks for finite loss/gradients, encoder gradient flow, and differing gradients and SID assignments under the switches. I did not run it; as instructed, I judged trainability from the code.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead ranking term or apparent float32 numerical hazard found in the exercised pathway. The mapped points come from the origin exponential map, and the distance implementation clamps its denominator and `acosh` argument. The smoke test’s SID-switch comparisons are code-level checks only, not evidence from a full training run.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-79, train_rqvae.py:582-703, train_rqvae.py:817-864, train_rqvae.py:867-896, ddp_check.py:40-92 | Inspected the real entry point, frozen training inputs, 3000-epoch configuration, result-path derivation, SID export/index mapping, DDP setup and launcher, including the single-card branch that checks `GENREC_SINGLE_GPU` at train_rqvae.py:867-873. The export enumerates all embedding rows into integer-keyed JSON and writes the NPY and JSON under this candidate’s promoted result directory. I did not run the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The configured output is `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`, and the launcher retains both the four-card torchrun path and the single-card in-process path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-364, train_rqvae.py:418-499, train_rqvae.py:502-531, train_rqvae.py:687-722 | Inspected how training transitions form popularity-corrected successor-overlap affinities, how the sampler uses those affinities to order batch triplets, and how the trainer applies the resulting ranking loss to encoder outputs using Poincare geodesic distances before quantization. `smoke_test.py:58-86`, `smoke_test.py:93-128`, and `smoke_test.py:135-174` exercise affinity construction, triplet ordering, and the trainer’s curved ranking path.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:502-531, train_rqvae.py:687-729, smoke_test.py:135-217 | Inspected the differentiable ranking computation and its addition to the baseline loss before backward and optimizer update. The smoke-test code checks that the curved ranking term changes when the metric switch is off, produces a nonzero encoder gradient, and that the behavior-based sampler puts higher-affinity items in the positive slot while its behavior-off control breaks that ordering. The curved map includes finite-radius safeguards in `model/hyperbolic.py:114-133`.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:63-78, train_rqvae.py:534-614, train_rqvae.py:787-849, model/layers.py:124-126, ddp_check.py:32-89 | Inspected the real trainer entry path, frozen embedding and training-parquet inputs, candidate-specific promoted result directory, indexed SID JSON export, launcher branches including `GENREC_SINGLE_GPU`, and the four-rank check’s DDP training/evaluation path. Runtime execution was not performed, as instructed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

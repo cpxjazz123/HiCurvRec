@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:281-356, 606-634, 656-666; train_rqvae.py:471-498 | Traced training-only transition counting through successor-overlap affinity and triplet sampling into the Poincare-distance ranking loss, which is added to the baseline loss. `smoke_test.py:135-174` checks that the ranking term changes under Euclidean geometry and sends gradients to the encoder; `smoke_test.py:177-217` checks affinity ordering and a randomized behavior-off control.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The exercised training path connects the training-only behavior signal and curved distance in one ranking loss. No coupling defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:385-396, 471-498, 649-675; smoke_test.py:149-174, 177-217 | Inspected the ranking loss’s differentiable encoder path, fixed-scale calibration, and training switches. The smoke checks encoder gradients and geometry-off loss change, but its behavior-off test generates random triplets separately rather than exercising `rank_triplets` with `BEHAVIOR_ON=False`.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:116-123, 318-330
+FINDING DETAIL: The mechanism’s sampling controls include fixed `TARGET_RADIUS_FRACTION = 0.7`, `MAX_ANCHORS_PER_BATCH = 512`, `TOP_PARTNER_CAP = 64`, `MAX_POSITIVES_PER_ANCHOR = 8`, and a separate `fanout_limit = 64`. These values affect the mapped geometry or which behavior pairs and triplets contribute to the loss, but the code does not derive them from a measured quantity or identify them as documented defaults. This conflicts with the binding no-tuning policy requiring mechanism constants to be derived, rather than chosen by trying values. The smoke test also does not exercise the actual behavior-off branch or verify that turning it off changes the trainer’s loss/gradients.
+FINDING REPRODUCTION: Inspect the listed constants and `build_successor_affinity`; the fanout and partner caps truncate the behavior-derived pair set, while radius fraction changes the Poincare mapping. For the switch gap, `check_behaviour_off_breaks_the_ordering` constructs random triplets itself (smoke_test.py:207-217) and never calls the trainer’s `rank_triplets` branch at train_rqvae.py:606-634 with behavior off.
+FINDING CORRECTION: Replace mechanism-affecting constants with documented defaults or scale/data-derived values, and derive the fanout cap consistently with the stated cost bound. Extend the smoke test to call the actual trainer sampler with `BEHAVIOR_ON` both true and false on a deterministic batch, then compare resulting triplets and ranking gradients/loss; do not train an ablation arm.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 501-531, 731-778, 781-810 | Inspected repository/data path resolution, trainer data loading, final SID export and indexing, result destination, and launcher branches. The code reads `results/stage0_build_parquet/train.parquet`, writes the promoted candidate’s `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/` outputs, exports rows keyed by item ID, and checks SID uniqueness. The four-card launcher uses torchrun; the single-card branch checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 101-103 and 785-787. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

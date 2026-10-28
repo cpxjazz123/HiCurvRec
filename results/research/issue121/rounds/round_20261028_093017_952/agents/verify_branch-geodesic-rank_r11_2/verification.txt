@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:271-373` → `train_rqvae.py:680-688` → `train_rqvae.py:530-558` | Traced the training-only directed-transition successor-overlap affinity into positive/lower-affinity triplet sampling, then into the encoder’s exp-mapped Poincare-distance ranking loss at `train_rqvae.py:710-738`. The same ranking computation uses both the behavior-derived ordering and the curved distances, and its gradients are added to the baseline objective.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: not applicable
+FINDING CORRECTION: not applicable
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:666-688` → `train_rqvae.py:530-558` → `train_rqvae.py:735-745` | Inspected the real training call path and the behavior-off control. The both-on path has a differentiable route through the Poincare distances to the encoder, and the ranking term is added before backward. However, the required behavior-off switch cannot execute.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:669-682`
+FINDING DETAIL: When `BEHAVIOR_ON` is false, `rank_triplets` reads `anchors`, `positives`, and `negatives` before assigning them locally. Calling the control therefore raises `UnboundLocalError`; it does not produce behavior-off triplets. This prevents verifying the required switch and means the three-way mechanism comparison is not correctly implemented.
+FINDING REPRODUCTION: Set `BEHAVIOR_ON = False` and call `rank_triplets` for any batch. At line 672, `anchors` is read before the assignment from `sample_rank_triplets` at line 680, so execution fails.
+FINDING CORRECTION: Sample the behavior-derived triplets first, handle the empty result, then apply `behaviour_off_triplets` to those sampled arrays when `BEHAVIOR_ON` is false. Convert and return the resulting indices as in the both-on path.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:42-78`, `train_rqvae.py:561-591`, `train_rqvae.py:803-846`, `train_rqvae.py:853-882` | Inspected the trainer entry point, path constants, export, and launcher branches. The trainer reads the Stage 0 training parquet and Stage 1 embeddings, writes checkpoint/SID/JSON under its own promoted `TIGER_branch-geodesic-rank` result directory, and exports rows keyed by enumerated item IDs. The four-card launcher and the `GENREC_SINGLE_GPU` in-process branch are present. Runtime execution was not performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: not applicable
+FINDING CORRECTION: not applicable

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, 435-519, 541-580, 723-752 | Traced the trainer path from training-parquet transitions to popularity-corrected successor overlap, affinity-ordered batch triplets, and a ranking loss that maps encoder outputs into the Poincare ball and compares squared geodesic distances. The ranking term is added to the baseline loss and backpropagated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found. The training-only behaviour order and curved distance participate in the same encoder-ranking computation; the loss can therefore affect latents passed to the RQ-VAE quantizer and its SIDs.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, 723-759; model/hyperbolic.py:66-136; smoke_test.py:138-253 | Inspected the ranking term’s differentiable exp-map/geodesic-distance path, its addition before backward, and the geometry and behaviour switches. The smoke-test code checks finite gradients to encoder parameters, differing gradients under the switches, and changed toy SID assignments. Runtime training was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No code-level dead term or evident float32 overflow/NaN hazard found in the coupled path. The geometry-off branch uses squared Euclidean distance, while the behaviour-off branch permutes the candidate ordering when given the trainer’s generator. The toy smoke checks are source evidence, not an independently executed runtime result.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 82-104, 583-620, 817-860, 867-896 | Inspected repository-root and candidate result-path derivation, the configured frozen Stage 2 inputs and 3000-epoch budget, SID export/indexing, and launcher branches. The single-card branch explicitly checks GENREC_SINGLE_GPU at lines 871-873; the four-card branch constructs the torchrun invocation at lines 874-890. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by source inspection. The trainer reads the Stage 1 embedding file and Stage 0 training parquet, writes outputs under results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/, and exports rows keyed by enumerated item ID. The requested single-card and four-card launcher branches are present.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

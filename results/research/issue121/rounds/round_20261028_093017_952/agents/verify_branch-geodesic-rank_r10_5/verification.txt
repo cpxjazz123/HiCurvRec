@@ -1,0 +1,37 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-509, train_rqvae.py:531-559, train_rqvae.py:710-738 | Traced training-only transition counts through successor-overlap affinity and triplet sampling into the Poincare-distance ranking loss added to the baseline objective. `smoke_test.py:57-119` and `smoke_test.py:135-174` exercise affinity construction, sampler ordering, the trainer’s ranking loss, and its geometry switch. The switches are controls only; the described run trains both on.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:647-660
+FINDING DETAIL: The specified distance scale is “the median squared distance over the first deterministic batch.” The trainer instead uses all pairwise distances in a fixed slice of up to 1024 training items. This is a different calibration quantity and costs quadratic memory for the distance matrix.
+FINDING REPRODUCTION: With 1024 probe items, `probe_distances` has shape 1024×1024 at lines 655-660; its median is used as the scale, rather than the first batch’s squared distances.
+FINDING CORRECTION: Calibrate from squared distances in the first deterministic training batch and freeze that value, or document and implement a scale-relative alternative consistent with the proposal.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:710-743, train_rqvae.py:531-559 | The ranking term is computed from encoder outputs, added to the baseline loss, and backpropagated before the optimizer step. `smoke_test.py:135-174` exercises a gradient reaching encoder parameters and checks that the geometry switch changes the loss; `smoke_test.py:177-226` checks that the behaviour-off sampler no longer preserves affinity ordering. These are code-level checks, not a runtime execution of the trainer.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:511-528
+FINDING DETAIL: The behaviour-off switch does not reliably turn behaviour off: it generates random batch triplets, including their anchor/positive/negative identities, without the affinity. The check at `smoke_test.py:205-225` only establishes that the random triplets do not *systematically* follow the affinity ranking. For a given batch, the random triplets can still encode affinity ordering by chance, so changing the switch does not guarantee removal of the behavior signal from the core computation. Also, `ranking_loss_term` does not use its `behavior_on` context field; the switch takes effect only through separately sampled triplets.
+FINDING REPRODUCTION: Construct a batch with affinity values such that one particular random triplet from `behaviour_off_triplets` has a higher-affinity positive than negative. That triplet’s ranking loss then still trains on the behavior ordering despite `BEHAVIOR_ON=False`. The existing smoke test permits such individual triplets.
+FINDING CORRECTION: Make the behavior-off control produce triplets independently of affinity and explicitly prevent accidental affinity-based ordering—for example, sample from a fixed, behavior-independent pairing rule whose triplet ordering is not derived from affinity. Exercise the trainer’s actual switch path and verify the resulting triplets/loss do not retain the behavior ordering.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:44-77, train_rqvae.py:853-882, train_rqvae.py:831-846 | Inspected repository-root and output-path constants, launcher branches, and final SID export. The trainer loads the Stage 1 embedding file and Stage 0 training parquet (`train_rqvae.py:72-75`, `train_rqvae.py:576-583`), exports one SID row per embedding index with JSON keys enumerated from those rows (`train_rqvae.py:831-846`), and identifies the single-card environment as `GENREC_SINGLE_GPU` (`train_rqvae.py:101-103`, `train_rqvae.py:853-859`). The four-card branch is configured at `train_rqvae.py:136-146` and `train_rqvae.py:860-877`. Runtime execution was not performed.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:67-70
+FINDING DETAIL: The code comment says an output-path preflight refuses a candidate whose result path is not its own promoted directory, but there is no such preflight. `RESULT_DIR` is formed from the repository root and `ARM_NAME` without validating that the destination is this candidate’s promoted directory. A stale or edited `ARM_NAME` can therefore direct checkpoint and SID writes into another candidate’s directory.
+FINDING REPRODUCTION: Change `ARM_NAME` to another candidate’s promoted name and run the trainer: `RESULT_DIR`, `OUTPUT_JSON`, `OUTPUT_SID`, and `CHECKPOINT` resolve to that other candidate’s directory, and the code contains no check that rejects it.
+FINDING CORRECTION: Add an explicit path preflight that validates `ARM_NAME` and the resolved output paths against the expected promoted candidate directory before training or writing artifacts.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:77, train_rqvae.py:144, train_rqvae.py:875-876
+FINDING DETAIL: The trainer writes its launcher log to `REPO_ROOT / "stage2_RQ-VAE" / ARM_NAME / "logs"`, outside the result directory under `results/stage2_RQ-VAE/<ARM_NAME>/`. That path is separate from the expected results tree and is not the specified promoted result location.
+FINDING REPRODUCTION: Resolve `LOG_DIR` from the constants at lines 70 and 77: it points to `<repo>/stage2_RQ-VAE/<ARM_NAME>/logs`, whereas the promoted result directory is `<repo>/results/stage2_RQ-VAE/<ARM_NAME>`.
+FINDING CORRECTION: Keep launcher logs within the candidate’s own result directory, or otherwise ensure the launcher does not write outside its allowed candidate-specific locations.

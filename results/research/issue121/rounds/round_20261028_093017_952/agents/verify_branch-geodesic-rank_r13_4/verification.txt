@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-508, train_rqvae.py:530-569, train_rqvae.py:705-741 | Traced the training-only directed transitions into the sparse successor-overlap affinity and triplet sampler, then traced those triplets through the Poincare distance ranking loss on encoder outputs. The training loop adds that loss to the baseline objective before backpropagation. The behavior-off and geometry-off branches are present at train_rqvae.py:539-569.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:530-569, train_rqvae.py:739-747, model/hyperbolic.py:110-136 | Inspected the differentiable path from the ranking term through the ball exponential map and geodesic distance to the encoder output, and the trainer’s backward and gradient-clipping calls. The behavior and geometry switches alter the ranking computation; smoke_test.py:164-206 describes checks that the term reaches encoder parameters and that curved and Euclidean gradients differ. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:571-611, train_rqvae.py:806-849, train_rqvae.py:856-885 | Inspected the trainer entry point, its Stage 0 training parquet and Stage 1 embedding paths, candidate-specific result-directory construction, zero-based item-ID JSON export, torchrun launcher, and the `GENREC_SINGLE_GPU` branch. The exported SID rows are enumerated by item ID. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

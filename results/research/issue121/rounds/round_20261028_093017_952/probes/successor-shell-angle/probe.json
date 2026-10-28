@@ -1,0 +1,64 @@
+{
+  "budget_seconds": 120.0,
+  "elapsed_seconds": 84.399,
+  "hypothesis_family": "branch",
+  "idea_id": "successor-shell-angle",
+  "metrics": {
+    "branch": {
+      "branch_degree_quantiles": {
+        "median": 3,
+        "p10": 1,
+        "p90": 10
+      },
+      "coverage_note": "branching is measured on the train split only",
+      "items_with_successors": 21699,
+      "mean_branch_entropy_nats": 1.1081,
+      "status": "OK"
+    },
+    "transition": {
+      "coverage_note": "counts are over the sampled users only; the coverage is the number of users and items the probe read",
+      "distinct_edges": 115582,
+      "edge_density": 5.3266,
+      "edges": 118315,
+      "mean_outgoing_degree": 5.4526,
+      "mean_transition_entropy_nats": 1.1063,
+      "outgoing_degree_quantiles": {
+        "median": 3,
+        "p10": 1,
+        "p90": 10
+      },
+      "permuted_null_edges": 118315,
+      "popular_successor_hit_rate": 0.0044,
+      "popularity_only_edge_mass": 0.0044,
+      "source_items": 21699,
+      "status": "OK",
+      "target_items": 21790
+    }
+  },
+  "schema": 1,
+  "schema_discovery": {
+    "columns": {
+      "history": "object",
+      "seen_history": "object",
+      "target": "int64",
+      "user": "int64"
+    },
+    "distinct_items_seen": 23782,
+    "has_ordered_history": true,
+    "has_target": true,
+    "has_user": true,
+    "leakage_note": "the train split only; validation, test and the Stage 3 labels are never read here",
+    "rows": 396958,
+    "source": "results/stage0_build_parquet/train.parquet",
+    "source_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "status": "OK",
+    "unique_users": 57439
+  },
+  "seed": 20261025,
+  "sequences_read": 20000,
+  "sha256": "738ba45289661c43ca2c3cf1902603a77b46709d8551f2295d2002fa9400adf7",
+  "started_at": 3529142.350537188,
+  "status": "OK",
+  "users_read": 20000,
+  "within_budget": true
+}

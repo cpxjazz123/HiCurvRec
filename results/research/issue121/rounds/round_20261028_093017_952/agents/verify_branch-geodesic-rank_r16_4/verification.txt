@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, train_rqvae.py:435-520, train_rqvae.py:541-580, train_rqvae.py:723-752 | Traced training-only transition counts through successor-overlap affinity and affinity-ranked batch triplets into exp-mapped Poincare distances and the ranking loss added to the baseline objective. The geometry and behaviour switches are read by that same loss path.
+FINDING SEVERITY: -
+FINDING LOCATION: -
+FINDING DETAIL: -
+FINDING REPRODUCTION: -
+FINDING CORRECTION: -
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, train_rqvae.py:749-759, model/hyperbolic.py:110-136, smoke_test.py:138-221, smoke_test.py:224-294 | Inspected the differentiable ranking path from encoder output through the curved distance and softplus loss into backward, and the switch branches for behaviour-off and Euclidean geometry. The smoke-test code checks finite gradients reaching encoder parameters and different gradients under the geometry switch; the trainer adds the active term to its optimized loss. Runtime training was not attempted, consistent with the stated sandbox limitation.
+FINDING SEVERITY: -
+FINDING LOCATION: -
+FINDING DETAIL: -
+FINDING REPRODUCTION: -
+FINDING CORRECTION: -
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:583-603, train_rqvae.py:817-860, train_rqvae.py:867-896, train_rqvae.py:101-103 | Inspected the repository-relative frozen embedding and training-parquet inputs, candidate-specific promoted result directory, final SID export keyed by enumerated item IDs, and the launcher’s four-card and `GENREC_SINGLE_GPU` branches. The trainer writes its checkpoint and SID files under its own `TIGER_branch-geodesic-rank` result directory; no path to the baseline or another candidate’s result directory was found. Runtime execution was not attempted, consistent with the stated sandbox limitation.
+FINDING SEVERITY: -
+FINDING LOCATION: -
+FINDING DETAIL: -
+FINDING REPRODUCTION: -
+FINDING CORRECTION: -

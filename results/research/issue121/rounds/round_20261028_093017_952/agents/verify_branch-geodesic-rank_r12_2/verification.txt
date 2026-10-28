@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:271-373`, `train_rqvae.py:427-508`, `train_rqvae.py:530-558`, `train_rqvae.py:666-685`, `train_rqvae.py:707-735` | Traced the training-only directed-transition counts through popularity-corrected successor overlap and triplet sampling into the ranking loss on encoder outputs. The loss maps those outputs with `ball_exp_map` and ranks their `ball_distance` values. `smoke_test.py:135-190` exercises the trainer’s loss path and checks that Euclidean geometry changes the loss and that the ranking term reaches the encoder.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:530-558`, `train_rqvae.py:733-742`, `train_rqvae.py:511-527` | Inspected the ranking-loss forward path, its addition to the baseline loss, and the subsequent backward/optimizer step. `smoke_test.py:149-190` checks nonzero encoder gradients and a changed gradient for swapped behavior ordering; `smoke_test.py:193-247` exercises the behavior-off permutation. The geometry-off branch uses squared Euclidean distance at `train_rqvae.py:548-555`. Hyperbolic distance clamps its domain away from the singular boundary at `model/hyperbolic.py:124-136`; the trainer also checks loss finiteness before backward at `train_rqvae.py:736-738`. The code establishes a differentiable route to encoder parameters and the resulting quantizer input; no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:42-78`, `train_rqvae.py:561-591`, `train_rqvae.py:800-843`, `train_rqvae.py:850-879` | Inspected the entry point, frozen embedding and training-parquet paths, four-process launcher, `GENREC_SINGLE_GPU` branch, and export. The export enumerates rows by item ID and writes both SID formats to this candidate’s promoted result directory. `smoke_test.py:250-268` contains a four-rank check, but it was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

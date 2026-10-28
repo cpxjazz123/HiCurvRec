@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:260-348, 422-454, 545-595 | Inspected the training-only successor-affinity construction, batch triplet sampling and the ranking loss called on encoder outputs before the RQ-VAE quantizer. The loss ranks Poincare geodesic distances using triplets ordered by successor overlap.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:582-601, 585-595, 422-454; model/hyperbolic.py:124-131; smoke_test.py:134-173 | Inspected the trainer’s forward/backward path and the smoke’s ranking-loss gradient check. The ranking term is connected to the encoder, but the geodesic distance implementation can produce non-finite gradients in float32 when its acosh argument rounds to 1.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/hyperbolic.py:131
+FINDING DETAIL: `acosh` has an unbounded derivative at 1. The clamp only enforces a minimum of 1, so when distinct, very close float32 points produce an argument rounded to 1, the computed distance is zero but its gradient through `acosh` can be infinite. In the squared-distance ranking loss, this can yield NaN gradients and contaminate encoder updates. The smoke exercises float64 geometry convention checks and a ranking gradient, but does not test near-coincident float32 points or assert all gradients are finite. The trainer’s finite-loss check at train_rqvae.py:596 does not catch non-finite gradients.
+FINDING REPRODUCTION: In float32, call `ball_distance(x, y, 1.0)` with `x` and `y` distinct but close enough that `1 + 2 * ||x-y||² / ((1-||x||²)(1-||y||²))` rounds to 1. Backpropagate the squared distance and check whether the gradients are finite. This is reachable from the ranking term when mapped item representations are sufficiently close.
+FINDING CORRECTION: Stabilize the distance near zero so its derivative remains finite—for example, use a differentiable small-positive floor on the acosh argument above 1, chosen to avoid float32 rounding to 1, and add a float32 near-coincident gradient-finiteness check. Also check gradient finiteness before the optimizer step.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-77, 457-512, 660-738 | Inspected the real trainer entry point, its Stage 0 training parquet and Stage 1 embedding paths, its promoted candidate-specific Stage 2 output paths, indexed SID export, four-rank torchrun launcher, and the `GENREC_SINGLE_GPU` branch. The trainer cannot be executed in this review environment; integration is judged from the code.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

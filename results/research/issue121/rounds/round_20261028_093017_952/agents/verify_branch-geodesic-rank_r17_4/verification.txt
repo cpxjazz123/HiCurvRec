@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271-381, 435-519, 541-580, 723-752 | Traced training-only directed transitions from `train_frame` into the sparse successor-overlap affinity, then into batch triplets and the ranking loss. The loss exp-maps encoder outputs and ranks Poincare geodesic distances; it is added to the training objective, so both signals affect the encoder path that feeds the quantizer. `smoke_test.py:138-255` exercises this trainer loss and the geometry/behaviour switches in toy checks; no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:541-580, 749-757 | Inspected the differentiable ranking-loss path and the smoke checks at `smoke_test.py:138-255`, which invoke that loss, backpropagate, inspect encoder gradients, and compare switched configurations. No runtime execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/smoke_test.py:235-247
+FINDING DETAIL: The SID-switch check does not compare the same initial model and codebooks. `switched_tokens` copies `model.rq.vq_layers[0].embed.weight` into every layer of a fresh model, so the switched controls start with codebooks different from the `after` model. It also compares controls after a single optimizer update with `after` after 20 updates. Thus the asserted SID differences at lines 251-254 do not establish that toggling behaviour or geometry changes the SID assignment, nor that switching either back restores the both-on assignment. This leaves the specified SID-switch effect unverified by the supplied smoke test.
+FINDING REPRODUCTION: Run `check_trainer_ranking_path()` in `smoke_test.py`. The test’s “after” tokens come from the 20-step update at lines 219-228; each switched token set comes from a separately initialized model and one backward pass without an optimizer step at lines 235-247. Passing these unequal-state comparisons is not evidence of the claimed switch effect.
+FINDING CORRECTION: Compare both-on, behaviour-off, and geometry-off from identical cloned model parameters, codebooks, probe inputs, and optimizer state; apply the same number of updates under each setting, then compare resulting gradients and SIDs. If claiming a “change back,” also restore both switches on that same initial state and confirm it reproduces the both-on result.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:42-78, 582-603, 817-860, 867-896 | Inspected root and result-path derivation, the Stage 1 embedding and Stage 0 training-parquet inputs, SID export/index construction, and the launcher’s `GENREC_SINGLE_GPU` branch and four-card `torchrun` path. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

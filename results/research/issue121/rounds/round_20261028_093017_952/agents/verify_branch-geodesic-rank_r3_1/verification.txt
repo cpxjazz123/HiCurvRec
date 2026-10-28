@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:260-350`, `train_rqvae.py:366-421`, `train_rqvae.py:424-457`, `train_rqvae.py:548-565`, `train_rqvae.py:587-597` | Traced the training-only directed-transition affinity into the batch triplet sampler and then into the Poincare exp-map/geodesic ranking loss, which is added to the baseline objective. `smoke_test.py:134-173` checks the trainer’s ranking loss, a geometry-off loss difference, and encoder gradient flow.
+FINDING SEVERITY: minor
+FINDING LOCATION: `train_rqvae.py:260-350`
+FINDING DETAIL: The implemented affinity omits shared-successor contributions for successors outside the 64 “rarest” successors selected at lines 317-324. Thus it is a truncated successor-overlap signal rather than the specified full overlap for every pair with a common successor. The resulting signal is still training-only behaviour and is coupled to the curved ranking computation.
+FINDING REPRODUCTION: Construct an item with more than 64 successors, all shared with another item, and assign the shared successors equal fanout. The affinity calculation considers only the first 64 selected successors, so overlap contributed by the others is absent.
+FINDING CORRECTION: Preserve all shared-successor contributions when calculating the specified affinity, or explicitly define a sparse approximation whose selection and resulting affinity retain the intended overlap semantics.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:424-457`, `train_rqvae.py:587-603`, `smoke_test.py:134-173`, `smoke_test.py:176-215` | Inspected the differentiable encoder → ball exp map → Poincare distance → ranking loss path and its addition before backward. The smoke code checks a nonzero encoder gradient, distinguishes the Euclidean loss, and checks behaviour-derived triplet ordering versus random triplets. No trainer execution was attempted.
+FINDING SEVERITY: minor
+FINDING LOCATION: `smoke_test.py:203-214`
+FINDING DETAIL: The behaviour-off smoke assertion does not exercise the trainer’s `BEHAVIOR_ON=False` branch at `train_rqvae.py:548-557`. It manually draws random positive and negative positions, then compares affinities using each positive as the anchor, rather than checking the sampler’s behaviour-off triplets. It therefore does not validate the actual switch behavior.
+FINDING REPRODUCTION: Run `check_behaviour_off_breaks_the_ordering`; its behaviour-off section never calls the trainer’s `rank_triplets` function or sets `BEHAVIOR_ON=False`.
+FINDING CORRECTION: Test the actual behaviour-off triplet-generation branch and verify that it no longer preserves the affinity ordering, while keeping the same loss and geometry path.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:61-76`, `train_rqvae.py:180-201`, `train_rqvae.py:460-499`, `train_rqvae.py:662-705`, `train_rqvae.py:712-741` | Inspected root and artifact path resolution, training input loading, ID-indexed SID JSON export, and both launcher branches. The single-card branch explicitly reads `SINGLE_GPU_ENV` at lines 101 and 716-718. The environment does not permit running the trainer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:383-387`
+FINDING DETAIL: The per-batch sampler materializes a dense `count × count` affinity block before producing at most 512 anchors. With the configured per-rank batch size of 1024, this performs quadratic batch work and allocates a dense matrix on every training batch, contradicting the stated O(B) triplet-sampling cost and creating substantial avoidable overhead across the frozen 3000-epoch run.
+FINDING REPRODUCTION: For a full 1024-item batch, `affinity[batch_ids][:, batch_ids].toarray()` allocates 1,048,576 dense values before the loop over all 1024 anchors; this occurs on every batch at `train_rqvae.py:558-559`.
+FINDING CORRECTION: Sample candidate triplets directly from the sparse batch-restricted affinity (or its sparse rows), limiting work to the required anchors and candidates without converting the full batch block to a dense array.

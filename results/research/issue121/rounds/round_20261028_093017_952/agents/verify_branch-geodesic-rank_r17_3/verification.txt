@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, 435-580, 690-752 | Traced training-only directed transitions into sparse popularity-corrected successor overlap and affinity-ranked triplets, then into the trainer’s Poincare exp-map/geodesic ranking loss on encoder outputs. The loss is added to the RQ-VAE objective before the ordinary quantizer; both behaviour and geometry switches are read by that loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Source inspection only; the requested runtime execution is unavailable in this sandbox.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, 719-759; model/hyperbolic.py:110-136; smoke_test.py:138-255 | Inspected the differentiable encoder → exp-map/geodesic-distance → ranking-loss path and its addition to the optimized loss. The smoke test exercises finite encoder gradients, behaviour-off and geometry-off gradient changes, and SID changes after ranking updates. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or numerical hazard that blocks the coupled gradient path was found.
+FINDING REPRODUCTION: Source inspection only; no PyTorch runtime was available to execute the smoke test.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 82-103, 583-620, 817-864, 867-896 | Inspected repository-root and candidate-specific result-path resolution, the frozen embedding and training-parquet inputs, final SID export keyed by enumerated item ID, fixed 3000-epoch loop without early stopping, four-rank torchrun launcher, and the `GENREC_SINGLE_GPU` branch. The output resolves to `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`, the candidate’s own promoted result directory.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection.
+FINDING REPRODUCTION: Traced the entry point and output paths in source; the trainer could not be run in this sandbox.
+FINDING CORRECTION: None.

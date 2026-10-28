@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-364, train_rqvae.py:418-499, train_rqvae.py:502-531, train_rqvae.py:694-716 | Traced the trainer path from training-frame successor transitions, through sparse popularity-corrected overlap and affinity-ordered triplets, into exp-mapped Poincaré distances in the ranking loss, which is added to the baseline loss. The ranking acts on encoder outputs before the unchanged quantizer. The behaviour-off and geometry-off branches are present at train_rqvae.py:642-672 and train_rqvae.py:514-528; no ablation run is required.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:502-531, train_rqvae.py:713-723, smoke_test.py:135-174 | Inspected the differentiable ranking-loss path and its use in the real training loop. The loss is added before backward; the distance operations depend on encoded vectors, so the term can update encoder parameters. The smoke test checks encoder gradients and compares curved versus Euclidean losses. The behaviour switch changes triplet construction in the trainer at train_rqvae.py:642-672; the geometry switch changes the metric at train_rqvae.py:514-528. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident numerical hazard found in the coupled path. The distance-scale calibration is clamped at train_rqvae.py:632, and the ranking mean used as its loss normalization is clamped at train_rqvae.py:706-712. Runtime GPU verification remains the prescribed smoke proof.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:547-565, train_rqvae.py:781-824, train_rqvae.py:831-860 | Inspected repository-root and output-path resolution, Stage 0 training-parquet loading, item-ID-based training data construction, final SID export, and launcher branches. The export enumerates every embedding row into the JSON mapping at train_rqvae.py:821-822 and extends collisions to unique SIDs at train_rqvae.py:816-818. The promoted result path is candidate-specific at train_rqvae.py:69-76. The launcher honors `GENREC_SINGLE_GPU` at train_rqvae.py:835-837 and otherwise invokes four-rank torchrun at train_rqvae.py:838-855. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

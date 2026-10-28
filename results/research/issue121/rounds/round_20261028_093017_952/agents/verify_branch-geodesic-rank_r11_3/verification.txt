@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:635-645, train_rqvae.py:666-688, train_rqvae.py:703-738, train_rqvae.py:530-558 | Static trace: training transitions build the successor-overlap affinity; the batch sampler uses it to order positive/negative items; the trainer applies the Poincare-distance ranking loss to encoder outputs and adds it to the baseline loss. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The both-on training path connects training-only behaviour to Poincare geodesic ranking on encoder latents before quantization. The ranking loss has a differentiable path to the encoder, whose outputs feed the quantizer.
+FINDING REPRODUCTION: Static code trace as described above.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:666-688, train_rqvae.py:710-738, train_rqvae.py:741-745, train_rqvae.py:511-528 | Static trace: the both-on ranking term is differentiated through the encoder; the behaviour-off trainer branch was inspected but not executed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:669-674
+FINDING DETAIL: With BEHAVIOR_ON=False, `rank_triplets` calls `behaviour_off_triplets(anchors, positives, negatives, ...)` before those local variables are assigned. The function raises `UnboundLocalError` instead of producing behaviour-off triplets. Thus the required behaviour switch does not work, and the requested comparison that should demonstrate the pathway changes back when behaviour is off cannot be made through the trainer.
+FINDING REPRODUCTION: Set `BEHAVIOR_ON = False` and reach `rank_triplets(batch_ids)` during training. The first call raises `UnboundLocalError` at the call to `behaviour_off_triplets`.
+FINDING CORRECTION: Sample triplets first using `sample_rank_triplets(...)`, return `None` if none are available, and then pass those arrays through `behaviour_off_triplets(...)` when behaviour is off. Convert the resulting arrays to device tensors as in the behaviour-on branch.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:561-606, train_rqvae.py:803-846, train_rqvae.py:853-882 | Static inspection: checked repository-root and frozen input paths, candidate-specific output path, training entry point and launcher branches, and SID export/index construction. Runtime training and distributed execution were not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the frozen `results/stage0_build_parquet/train.parquet` and stage-1 embeddings, targets `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`, exports SID rows keyed by embedding-row item ID, and has both the four-card torchrun path and the `GENREC_SINGLE_GPU` single-card branch. No integration defect was found by static inspection.
+FINDING REPRODUCTION: Static inspection of the cited paths and launcher logic.
+FINDING CORRECTION: none

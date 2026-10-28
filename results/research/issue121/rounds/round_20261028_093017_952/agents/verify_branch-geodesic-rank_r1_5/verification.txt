@@ -1,0 +1,32 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:260-348, train_rqvae.py:506-549, train_rqvae.py:571-579 | Traced training-only directed transitions into the cached successor-overlap affinity, sampled batch triplets, then followed encoder outputs through the Poincare exp map and geodesic ranking loss. The ranking term is added to the training objective before backpropagation; those encoder representations also feed the quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:506-549, train_rqvae.py:571-585, smoke_test.py:134-173 | Inspected the real trainer’s triplet sampler, Poincare ranking loss, objective addition and backward path, and compared them with the smoke test’s loss/gradient checks. The ranking loss has a differentiable route to the encoder, but the configured behaviour-off switch does not remove behaviour from the mechanism.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:513-519
+FINDING DETAIL: With BEHAVIOR_ON=False, the code permutes positives and negatives using the same permutation. This only reorders the triplets; it preserves each positive/negative pairing and the mean ranking loss, so the switch leaves the behaviour-derived ordering intact and does not provide the required behaviour-off comparison.
+FINDING REPRODUCTION: Use any non-empty triplet set and compare the triplets’ positive/negative item pairs before and after setting BEHAVIOR_ON=False. They are the same pairs in a different order; because rank_loss takes a mean, the loss and its gradient are unchanged apart from stochastic effects elsewhere.
+FINDING CORRECTION: Implement a behaviour-off control that replaces the affinity-derived ordering with a deterministic behaviour-independent ordering or labels while preserving the triplet count and geometry; verify that it changes the ranking term and its encoder gradient. Do not train an ablation arm.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:394-410
+FINDING DETAIL: The sampler appends an anchor before checking whether that positive has any strictly lower-affinity negative. When none exists, it continues without appending the corresponding positive or negative. This can return arrays of different lengths, so rank_loss can fail during indexed distance subtraction instead of producing a finite loss.
+FINDING REPRODUCTION: Give an anchor two or more positive candidates with equal positive affinity and no lower-affinity candidate in its batch row. For each sampled positive, `lower.size == 0`; the anchor is appended but the positive and negative are not. The returned anchor array is then longer than the positive/negative arrays.
+FINDING CORRECTION: Append the anchor only after a valid negative has been found, or otherwise ensure all three returned arrays contain exactly one aligned entry per valid triplet. Add a sampler test for tied affinities and an empty valid-triplet result.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-76, train_rqvae.py:418-457, train_rqvae.py:644-722, smoke_test.py:176-194 | Inspected root and output-path resolution, the frozen embedding and training-parquet paths, the trainer entry point and its four-card launcher plus `GENREC_SINGLE_GPU` branch, and the indexed SID export. Runtime execution is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found from code inspection. The output is directed to the promoted candidate’s `results/stage2_RQ-VAE/TIGER_branch_geodesic_rank/` directory, and the export enumerates embedding rows into item-ID keys.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

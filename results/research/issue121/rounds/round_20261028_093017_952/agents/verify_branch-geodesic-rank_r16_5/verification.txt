@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, 435-519, 541-580, 723-752 | Traced training-only transitions from `train_frame` into sparse popularity-corrected successor-overlap affinities, then into batch triplets and the trainer’s ranking loss. The loss applies the Poincare origin exponential map and geodesic distance to encoder outputs; its gradient is added to the baseline objective before the optimizer step. Inspected the behavior-off and geometry-off branches at train_rqvae.py:550-580.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. Behaviour-derived affinity ordering and curved distance are used together in one differentiable ranking pathway.
+FINDING REPRODUCTION: Source inspection only; the sandbox does not provide PyTorch or a shell for executing the trainer.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, 723-759; model/hyperbolic.py:110-136 | Traced the ranking term from encoder output through the ball map and geodesic distance to the scalar loss, then through `loss.backward()` and `optimizer.step()`. Inspected the smoke checks for encoder gradients and behavior/geometry switch effects at smoke_test.py:138-221 and 224-294.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level defect found. The ranking term is consumed by the objective, is differentiable with respect to encoder parameters, and the controls alter the ranking computation. The distance path clamps the `acosh` argument away from its singular point and protects denominators.
+FINDING REPRODUCTION: Static inspection of the trainer and smoke-test assertions; no runtime execution was possible in this sandbox.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 582-613, 817-860, 867-896 | Traced repository-root and candidate-specific output path resolution, loading of the Stage 0 training parquet and Stage 1 embeddings, final SID export, and both launcher branches. Inspected `SINGLE_GPU_ENV` handling at train_rqvae.py:101-103 and 867-873.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Training reads the frozen Stage 0/Stage 1 paths; outputs resolve to this promoted candidate’s `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/` directory. SID rows are exported by item-row index, and the JSON keys are generated from the same row enumeration. The four-card torchrun path and the `GENREC_SINGLE_GPU=1` in-process branch are present.
+FINDING REPRODUCTION: Static inspection only; the trainer and distributed launcher were not run in this sandbox.
+FINDING CORRECTION: none

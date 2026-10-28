@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:271-361, train_rqvae.py:403-473, train_rqvae.py:476-503, train_rqvae.py:659-683 | Traced the training-only transition counts and successor-overlap affinity through triplet sampling into the Poincare-distance ranking loss and the loss added before backward. The smoke test also calls the trainer’s ranking-loss function and checks that Euclidean mode changes the loss (smoke_test.py:135-174).
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:364-387, train_rqvae.py:429-463
+FINDING DETAIL: The sampler ranks pairs using a truncated top-64 affinity table, not the actual affinity matrix. It treats every omitted partner as having zero affinity (line 450), even when that pair has a positive affinity in the computed successor-overlap graph. Thus a sampled “negative” can have greater true affinity than its positive, so the ranking target does not reliably match the specified successor-overlap order. The smoke test checks ordering only against a synthetic graph whose partners fit within the cap (smoke_test.py:89-119), and does not expose this case.
+FINDING REPRODUCTION: Use an anchor with 65 positive-affinity partners, assign the omitted 65th partner a higher affinity than a partner retained in the top 64, and put the anchor and both partners in one batch. The retained lower-affinity partner can be sampled as positive while the omitted higher-affinity partner is treated as zero and sampled as negative.
+FINDING CORRECTION: Ensure candidate negatives are lower-affinity according to the full sparse affinity row, including omitted positive-affinity partners; alternatively, define and document the truncated graph as the actual training target and sample negatives only where its ordering is valid.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:476-503, train_rqvae.py:659-689 | Inspected the forward/backward path: the ranking term is added to the reconstruction/quantization objective before backward, and its curved distances depend differentiably on the encoder output. The smoke test exercises the ranking loss, checks that geometry-off changes its value, and verifies a nonzero encoder gradient (smoke_test.py:135-174). The behaviour-off sampler in the trainer draws distinct positions without consulting affinity (train_rqvae.py:611-635). I did not execute the trainer or claim runtime proof; the supplied smoke test does not establish that the switches change exported SIDs.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:506-545, train_rqvae.py:748-795, train_rqvae.py:798-827 | Inspected the trainer entry point, its paths and launch branches. It reads the Stage 0 training parquet and Stage 1 embeddings, writes checkpoint/SID/JSON under this candidate’s promoted result directory, exports rows keyed by embedding-row item IDs, and uses the four-card torchrun path unless `GENREC_SINGLE_GPU=1`; the single-card branch is at lines 798-804. The supplied DDP check exercises a four-rank model/ranking step and rank-0 evaluation path (ddp_check.py:40-91), but I did not execute it or the real trainer.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

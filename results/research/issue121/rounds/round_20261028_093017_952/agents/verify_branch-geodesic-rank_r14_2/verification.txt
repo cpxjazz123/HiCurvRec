@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271-373, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:427-512, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:533-572, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:649-694, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:715-744 | Inspected the real trainer path from training-parquet transition counts and successor-overlap affinity, through affinity-ordered batch triplets and Poincare exp-map/geodesic-distance ranking, to the encoder loss. The ranking term is added to the baseline objective. The included smoke test describes exercise of affinity, sampler ordering, ranking, switches and encoder gradient at smoke_test.py:57-218; I did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:533-572, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:741-750, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/model/hyperbolic.py:110-136 | Inspected that the coupled rank loss differentiates through mapped encoder latents and curved distances, is added before backward, and is followed by gradient clipping and optimizer update. The behaviour-off branch changes the compared positive/negative indices; the geometry-off branch uses squared Euclidean distances. The smoke test lays out checks for finite encoder gradients and different gradients under the switches at smoke_test.py:135-218. The SID-change assertion there compares tokens from separate random inputs, so it does not establish SID changes; however, the criterion permits changed gradients, and the code path provides them. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:42-79, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:191-213, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:575-615, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:809-855, /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:859-888 | Inspected the trainer entry point, repository-relative frozen embedding/train-parquet inputs, candidate-specific result directory, final SID export/index construction, and launcher branches including GENREC_SINGLE_GPU at lines 101-103 and 859-865. Four-rank smoke coverage is defined in smoke_test.py:294-312. I did not run the trainer or smoke test.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

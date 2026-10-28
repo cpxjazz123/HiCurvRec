@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:316-321 → model/model.py:26-30 → model/layers.py:98-134 | Inspected the actual training forward and loss call, then searched the candidate tree for successor-graph, overlap, sampling, and ranking-loss implementation. Training only computes the unchanged RQ-VAE objective; no behaviour signal or coupled ranking term is present.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:316-323
+FINDING DETAIL: The proposed training-only successor-overlap ranking mechanism is not implemented. The trainer loads target IDs and embeddings, then optimizes only reconstruction and quantization loss. The Poincare helpers in model/utils.py:42-59 are not imported or used by the trainer/model path. Thus no connected behaviour-and-curved-geometry computation exists.
+FINDING REPRODUCTION: Follow the executed training loop at train_rqvae.py:316-323 into model/model.py:26-30 and compute_loss at model/model.py:43-50. Neither path reads transition counts or computes sampled triplets, exp-mapped latents for a ranking objective, geodesic distances, or a ranking loss.
+FINDING CORRECTION: Implement training-only successor counts and popularity-corrected shared-successor affinities, deterministic positive/lower-affinity triplet sampling, and a Poincare-distance ranking loss on exp-mapped encoder outputs; add that loss to the baseline objective with the specified first-batch scale calibration. Include explicit behavior-off and Euclidean-geometry switches, but do not train ablation arms.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:316-327 → model/model.py:26-30,43-50 → model/layers.py:98-134 | Inspected the real forward/backward loss path and whether the proposed term can reach intended parameters; no runtime trainer execution was attempted.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:319-327
+FINDING DETAIL: The intended coupled term does not exist in the loss passed to backward, so it cannot produce gradients or affect latents/SID assignments. There are no behavior-off, geometry-off/Euclidean, and both-on mechanism switches in this candidate. Trainability of the proposed mechanism therefore cannot be established from this implementation.
+FINDING REPRODUCTION: The only loss passed to `loss.backward()` is returned by `raw_module.compute_loss(batch, reconstructed, quant_loss)` at train_rqvae.py:321. That function returns reconstruction loss plus quantization loss at model/model.py:49-50. Neither term depends on successor-overlap samples or a Poincare ranking computation.
+FINDING CORRECTION: Add the differentiable ranking term to the trainer’s actual objective, retaining its graph through encoder latents and using numerically guarded Poincare operations and the specified frozen first-batch scale. Implement the three comparison switches as mechanism controls and confirm finite loss/gradients and switch-dependent gradients/SIDs in the required pre-run smoke.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:40-67,232-263,386-429,436-462 | Inspected path constants, data loading, export, and launcher branches statically; no trainer execution was attempted.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:58-67
+FINDING DETAIL: The candidate hard-codes `ARM_NAME = "TIGER_RQ-VAE"`, which points results and logs at the baseline directory rather than this candidate’s promoted tree directory. Running it would overwrite/write baseline result artifacts. The launcher also has no `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` handling or corresponding single-card branch, so the required single-card launcher behavior is absent. The data source (`results/stage0_build_parquet/train.parquet`), target-ID validation, and row-indexed SID JSON export are otherwise consistent with the inspected code.
+FINDING REPRODUCTION: Resolve `RESULT_DIR` and `LOG_DIR` using lines 58-67: both use `TIGER_RQ-VAE`; compare with the required promoted tree name `branch-geodesic-rank`. Search this tree for `GENREC_SINGLE_GPU` / `SINGLE_GPU_ENV`: no matches. The launcher at lines 436-457 always launches four processes when not already under torchrun.
+FINDING CORRECTION: Set `ARM_NAME` to the promoted candidate name so result artifacts resolve to `results/stage2_RQ-VAE/branch-geodesic-rank/` and logs remain candidate-scoped. Restore the launcher’s `GENREC_SINGLE_GPU` branch so the documented single-card environment selects the single-GPU path while preserving the four-card launch otherwise.

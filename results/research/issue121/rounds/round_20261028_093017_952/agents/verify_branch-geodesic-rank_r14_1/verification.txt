@@ -1,0 +1,37 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:271-373` → `train_rqvae.py:427-512` → `train_rqvae.py:533-572` → `train_rqvae.py:715-744` | Inspected the training-only transition affinity, triplet sampler, ranking loss, and trainer call site. The affinity determines positive/negative ordering; the loss compares exp-mapped latents with Poincaré geodesic distances and is added to the training objective.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-and-geometry pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:533-572`, `train_rqvae.py:741-750`, `model/hyperbolic.py:110-136` | Inspected the ranking term’s differentiable path from encoder output through exp-map and geodesic distance to the loss, and its backward call in the trainer. `smoke_test.py:135-218` contains a finite-gradient check and exercises both switches; runtime execution was not attempted, consistent with the sandbox limitation.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or clear numerical hazard found. The ranking loss is used in the objective, and its gradients can reach encoder parameters.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:42-78`, `train_rqvae.py:575-605`, `train_rqvae.py:809-852`, `train_rqvae.py:859-888` | Inspected root/data/result path resolution, trainer inputs, SID export, and both launcher branches. The four-rank helper is `ddp_check.py:40-91`; it tests a separate ranking-loss implementation, not the trainer’s `ranking_loss_term`.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:286-298`
+FINDING DETAIL: The affinity builder counts every adjacent pair in `history + [target]` as a training transition. If histories contain left-padding or other negative sentinel IDs, those padding positions are skipped individually, but this still creates a false transition across the padding gap between the last real item and the target. That contaminates the training-only successor distributions and therefore the behavior ranking used in the coupled mechanism.
+FINDING REPRODUCTION: Give `build_successor_affinity` a row with `history=[1, -1, 2]`, `target=3`, and `n_items > 4`. The current loop skips `1→-1` and `-1→2`, but counts `2→3`; for left-padded histories this example does not cross a gap, while a history such as `[1, -1, -1]` with target `3` counts no transition. The counterexample that exposes a gap is a history representation with an interior sentinel, e.g. `[1, -1, 2]`: the current code counts `2→3` but cannot distinguish that from a valid immediate predecessor. More directly, a left-padded row `[-1, -1, 2]` with target `3` also yields `2→3`, which is valid; the defect occurs when padding is not guaranteed to be a single sentinel or histories contain masked positions. The code does not consult lengths or masks, so it cannot reliably establish adjacency from the stored history alone.
+FINDING CORRECTION: Use the training data’s authoritative sequence lengths/mask (or construct transitions before padding) and count only adjacent real events. Confirm the parquet representation and ensure no transition is formed across a masked gap.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: `smoke_test.py:208-218`
+FINDING DETAIL: The purported SID-change check does not compare assignments on the same inputs: `before` and `after` each encode a fresh random tensor, and the code never applies an optimizer update. It therefore cannot establish that a ranking-gradient update changes SID assignments.
+FINDING REPRODUCTION: Inspect the two independent `torch.randn(8, 32)` calls at lines 210 and 211. Even with no parameter update, their tokens can differ due to different inputs.
+FINDING CORRECTION: If assignment change is the evidence used, use one fixed input batch, apply a ranking-only optimizer step, then compare tokens before and after. Otherwise rely on the valid gradient-path check without claiming assignment change.

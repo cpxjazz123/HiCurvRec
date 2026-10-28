@@ -1,0 +1,30 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-508, train_rqvae.py:530-558, train_rqvae.py:707-735 | Traced the training-only transition counts through sparse popularity-corrected successor overlap, affinity-ordered batch triplets, exp-mapped Poincare distances, and the added ranking loss. The smoke test describes checks for the affinity and sampler at smoke_test.py:57-119 and the trainer’s ranking function at smoke_test.py:135-190; I inspected these paths but did not execute them.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:323-351
+FINDING DETAIL: The implementation truncates rare-successor fanout at 256 and each item’s candidate list at 128, whereas the specification describes capping candidate overlaps at the naturally observed batch-pair count. The second cap keeps the first 128 candidate IDs, so it can systematically omit higher-ID shared-successor pairs. The coupled pathway still exists, but the cached behaviour signal is not the specified candidate set.
+FINDING REPRODUCTION: For an item with more than 128 shared-successor candidates, arrange a high-affinity candidate after the first 128 candidate IDs. `build_successor_affinity` truncates before computing overlaps, so that pair is absent from the affinity matrix and cannot supply the intended rank target.
+FINDING CORRECTION: Bound candidate overlap work using the specified naturally observed batch-pair count (or another documented deterministic, non-ID-biased rule consistent with the specification), rather than truncating the sorted candidate IDs.
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:666-685, train_rqvae.py:707-740, smoke_test.py:135-247 | Traced the ranking loss into `loss.backward()` and checked the smoke-test coverage for gradient reach and geometry/behaviour controls. The code’s gradient path is differentiable into the encoder, but the behaviour-off runtime control is not actually wired to the ranking-loss function.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:530-558
+FINDING DETAIL: `ranking_loss_term` reads `geometry_on` but ignores `behavior_on`; its loss depends only on the triplet indices. More importantly, the smoke test’s behaviour-off check calls `behaviour_off_triplets` directly (smoke_test.py:221-247), rather than exercising `rank_triplets` with `BEHAVIOR_ON=False` and checking the resulting loss/gradient or SID. Thus it does not establish the required switch comparison for the connected pathway. A toggle that changes only a test helper is not a verified behaviour-off control for training.
+FINDING REPRODUCTION: Call `ranking_loss_term(encoded, triplets, {"geometry_on": True, "behavior_on": False, ...})` and compare it with `behavior_on=True`: the function takes the same branch and returns the same loss. The smoke test does not call `rank_triplets` under both values of `BEHAVIOR_ON`, so it will not detect this.
+FINDING CORRECTION: Make the behaviour-off switch part of the exercised training pathway (for example, inject the behaviour-off permutation at the sampler/triplet boundary and verify its effect on the ranking loss or encoder gradient). Extend the smoke check to toggle the trainer’s actual `BEHAVIOR_ON` branch and verify both-on versus behaviour-off outcomes, without training an ablation arm.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:149-190
+FINDING DETAIL: The trainability smoke does not verify finite loss/gradients, does not compare gradients under `geometry_on=False` (it compares only scalar loss), and does not test an actual SID assignment change. Therefore it does not establish the requested switch-dependent training effect or the numerical/assignment behaviour.
+FINDING REPRODUCTION: `check_trainer_ranking_path` asserts nonzero encoder gradients for one curved configuration and different scalar losses for Euclidean geometry, but never calls `get_indices` under both configurations or checks all loss/gradient values for finiteness.
+FINDING CORRECTION: Add deterministic smoke assertions for finite loss and gradients; compare encoder gradients with behaviour and geometry switched independently through the trainer’s actual path; and verify SID assignments or gradients change under the switches. Keep this as smoke validation only, not additional training runs.
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-79, train_rqvae.py:561-585, train_rqvae.py:800-843, train_rqvae.py:850-879 | Inspected the trainer entry point, frozen Stage 1 embedding and Stage 0 training-parquet paths, promoted candidate-specific output directory, item-ID enumeration during SID JSON export, four-rank torchrun launcher, and `GENREC_SINGLE_GPU` branch. No trainer execution was performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:1-8
+FINDING DETAIL: The module header still claims the output path is hardcoded to `results/stage2_RQ-VAE/TIGER_RQ-VAE/`, which contradicts the candidate-specific `ARM_NAME` and `RESULT_DIR` constants at lines 64-76. The executable path is candidate-specific; this is a stale comment, not an output-path defect.
+FINDING REPRODUCTION: Compare the header’s stated output directory with `RESULT_DIR` at train_rqvae.py:69-70.
+FINDING CORRECTION: Update the header comment to describe the promoted candidate-specific output directory.

@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-364, train_rqvae.py:418-499, train_rqvae.py:502-531, train_rqvae.py:694-722 | Traced the training-only transition counts into sparse successor-overlap affinities, the batch triplet sampler, and the geodesic ranking loss added to the baseline objective. Both behaviour-derived triplets and Poincaré distance act in the same differentiable path before quantization; no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:502-531, train_rqvae.py:642-672, train_rqvae.py:694-727, smoke_test.py:135-217 | Inspected the trainer’s actual ranking-loss and triplet-selection paths and the smoke checks. The curved loss is connected to the encoder and is included before backward. However, the geometry-off switch and the behaviour-off test do not establish the specified controls.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:520-528; smoke_test.py:177-217
+FINDING DETAIL: The documented geometry-off control says the maps become identity and the metric becomes squared Euclidean distance, but both switch branches first apply `ball_exp_map`; the off branch then computes Euclidean distance between those curved coordinates. It therefore does not replace the curved operation with the Euclidean latent-space operation, so it cannot isolate the geometry as specified. Separately, the behaviour-off smoke check never sets `BEHAVIOR_ON=False` or calls the trainer’s `rank_triplets`; it makes unrelated random arrays and compares the wrong affinity entries (`block[off_positives[index]][off_positives[index]]`). Thus it does not verify the trainer’s behaviour switch or that turning it off changes the coupled pathway.
+FINDING REPRODUCTION: In `ranking_loss_term`, call with the same `encoded` tensor and triplets, once with `geometry_on=True` and once with `geometry_on=False`: the off branch still executes `ball_exp_map` at line 526. For the behaviour switch, run `rank_triplets` with the same batch and seed under `BEHAVIOR_ON=True` and `False`; the existing smoke test does not do this and cannot expose whether the switch removes affinity ordering.
+FINDING CORRECTION: Make geometry-off use the un-mapped `encoded` vectors for squared Euclidean distances (while keeping triplets and scale fixed), and have the smoke test assert that control against the trainer’s loss. Test behaviour-off by exercising the trainer’s actual `rank_triplets` with `BEHAVIOR_ON=False`, verifying it does not use affinity ordering, and compare the resulting loss or gradients with both-on.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:271-364, train_rqvae.py:534-572, train_rqvae.py:787-865 | Inspected repository-root and candidate result-path resolution, the frozen `results/stage0_build_parquet/train.parquet` input, transition construction, single-/four-card launcher branches including `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"`, and indexed SID export. Export enumerates item rows into matching JSON keys and writes the NumPy and JSON SID artifacts under this candidate’s promoted result directory. Runtime trainer execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

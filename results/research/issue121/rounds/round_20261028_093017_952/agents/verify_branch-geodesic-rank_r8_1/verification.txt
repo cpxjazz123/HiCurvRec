@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-364, 418-499, 502-531, 608-672, 694-722 | Static inspection: training transitions produce successor-overlap affinities; those affinities determine positive/lower-affinity triplets; the trainer applies a Poincare-distance ranking loss to encoder outputs. The ranking term is added to the training objective, so its gradients can reach the encoder before quantization. I did not run the smoke test or trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-to-geodesic-ranking path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:502-531, 639-672, 694-727; model/hyperbolic.py:110-136 | Static inspection of the forward and backward computation: triplet indices select encoded vectors, exp mapping and geodesic distance feed the ranking loss, and the trainer adds that loss before backward. The ranking term is differentiable to the encoder. Runtime execution was not available.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:520-528
+FINDING DETAIL: The geometry-off control still exp-maps latent vectors into the Poincare ball and then measures Euclidean distance between those curved coordinates. This is not the specified Euclidean-distance replacement on the encoder representation: the curved map remains in the core computation, so geometry-off does not isolate replacing the curved geometry with Euclidean geometry. The smoke test only checks that this altered loss differs from the Poincare loss (smoke_test.py:160-162); it does not establish the required Euclidean control.
+FINDING REPRODUCTION: Call ranking_loss_term on fixed encoded vectors and triplets with geometry_on=False. The implementation at train_rqvae.py:526-528 computes ||exp_0(normalizer*z_i) - exp_0(normalizer*z_j)||², rather than the Euclidean control on the un-mapped encoded vectors.
+FINDING CORRECTION: In the geometry-off branch, compute squared Euclidean distances directly from the encoded vectors (using the same frozen scale convention); reserve exp mapping and Poincare distance for geometry-on. Add a check that the geometry-off result matches that Euclidean computation.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 547-565, 787-830, 837-866 | Static inspection: verified the training parquet path, promoted candidate-specific result directory, item-ID keyed JSON export over all embedding rows, fixed 3000-epoch loop, four-process launcher, and the `GENREC_SINGLE_GPU` single-card branch. The trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The trainer writes artifacts under `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`, exports rows indexed by enumerated item ID, and retains the required launcher branches.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

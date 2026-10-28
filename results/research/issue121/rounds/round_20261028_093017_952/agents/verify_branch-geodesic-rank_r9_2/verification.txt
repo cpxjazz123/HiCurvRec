@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:647-680, train_rqvae.py:511-539 | Traced the training-only transition counts through popularity-corrected successor overlap, affinity-ranked triplet sampling, and the Poincare-distance ranking loss on encoder outputs. smoke_test.py:57-119 exercises affinity construction and sampler ordering; smoke_test.py:135-174 exercises the trainer’s ranking loss and its curved-versus-Euclidean comparison.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behaviour signal determines the positive/lower-affinity triplet order, and those triplets are scored using squared Poincare geodesic distances in a connected loss pathway that can update the encoder.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:647-680, train_rqvae.py:699-735 | Traced the training step from triplet selection through encoder evaluation, ranking-loss addition, backward, gradient clipping and optimizer update. smoke_test.py:135-174 checks that the ranking loss reaches encoder parameters and that the Euclidean switch changes the loss; train_rqvae.py:650-671 implements the behaviour-off triplet path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level defect found in the differentiable ranking path. The geometric distance clamps its domain before acosh, and the rank term is added to the objective before backward. With behaviour off, triplets are sampled without affinity; with geometry off, the same scale and triplet ordering use squared Euclidean distances.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:542-581, train_rqvae.py:795-838, train_rqvae.py:845-874 | Inspected repository-root and candidate result-path resolution, frozen embedding and training-parquet inputs, trainer setup, indexed SID export, and launcher branches. Confirmed the single-card branch checks SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" at train_rqvae.py:849-851 and the four-card torchrun branch is at train_rqvae.py:852-869.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Outputs resolve to this candidate’s promoted result directory, SID rows are exported by item index with unique collision extensions, and the launcher retains both the single-card and four-card paths. The trainer was not run in this environment.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

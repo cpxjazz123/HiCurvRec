@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, train_rqvae.py:435-519, train_rqvae.py:541-580, train_rqvae.py:723-752 | Traced training-only transition counting into popularity-corrected successor overlap, batch triplet sampling, and the ranking loss on encoder outputs. The loss exp-maps latents into the Poincare ball and ranks squared geodesic distances; it is added to the baseline objective and can backpropagate through the encoder.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, train_rqvae.py:749-759, smoke_test.py:138-221, smoke_test.py:224-294 | Inspected the differentiable loss and its backward path into encoder outputs and parameters, plus the behaviour-off and geometry-off branches. The ranking term is consumed by the total loss before backward; the controls alter the triplet ordering or replace the curved map and distance with scaled Euclidean distance. Smoke-test code checks finite gradients and differences between control configurations. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:583-620, train_rqvae.py:817-860, train_rqvae.py:867-896 | Traced root and candidate result-directory resolution, the frozen Stage 1 embedding and Stage 0 training-parquet inputs, trainer entry point and launcher branches, and final SID export. Export rows are enumerated by item ID and written as both NumPy SIDs and an item-ID-keyed JSON mapping. The result path resolves to this candidate’s promoted directory; the single-card branch checks `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No blocking defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

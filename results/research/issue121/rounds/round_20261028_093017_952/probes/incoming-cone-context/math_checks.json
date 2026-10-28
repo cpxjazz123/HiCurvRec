@@ -1,0 +1,80 @@
+{
+  "checks": [
+    {
+      "check": "geometry_operator_valid",
+      "curved_euclidean_ratio": 1.4284764736829607,
+      "detail": "log_0(exp_0(v)) error 2.78e-17, sectional curvature -0.5, curved/euclidean ratio 1.4285, domain guard holds",
+      "domain_limit": 1.4142121481595324,
+      "implication": "a valid operator says nothing about the coupling: the behaviour must still reach the same computation",
+      "round_trip_error": 2.7755575615628914e-17,
+      "scope": "OPERATOR_ONLY",
+      "sectional_curvature": -0.5,
+      "status": "PASS"
+    },
+    {
+      "check": "behavior_dependency",
+      "detail": "a positive row scalar leaves every arg-min unchanged (measured: True), so it can never move an assignment; a codeword-dependent weight moved False of the top-1 indices; a codeword-independent offset is also invariant (True)",
+      "implication": "behaviour must enter the score in a codeword-dependent way; a row scale or a common offset is an invariance, not a coupling",
+      "scope": "PROXY",
+      "status": "FAIL",
+      "witness": {
+        "codeword_weight_changes_assignment": false,
+        "margins_behavior_off": [
+          3.0071937752078792,
+          3.738259417813131,
+          1.7606954149815075,
+          4.096799413871968
+        ],
+        "margins_both_on": [
+          3.0071937752078792,
+          14.015759849375165,
+          1.7606954149815075,
+          0.5174832507691249
+        ],
+        "offset_invariance": true,
+        "row_scalar_invariance": true
+      }
+    },
+    {
+      "check": "geometry_dependency",
+      "detail": "the matched Euclidean intervention changed 1 of the top-1 indices",
+      "implication": "the curved and the Euclidean computations must differ in the quantity the mechanism claims",
+      "scope": "PROXY",
+      "status": "PASS",
+      "witness": {
+        "both_on_top1": [
+          1,
+          2,
+          1,
+          1
+        ],
+        "geometry_off_top1": [
+          2,
+          1,
+          2,
+          0
+        ]
+      }
+    },
+    {
+      "check": "joint_path_dependency",
+      "detail": "the candidate's own quantizer path is not exercised by the generic proxy; the joint dependency needs the implemented tree",
+      "implication": "only the candidate path check can admit a Stage 2 run",
+      "scope": "PROXY",
+      "status": "CANDIDATE_PATH_NOT_RUN"
+    }
+  ],
+  "elapsed_seconds": 0.008,
+  "failed_checks": [
+    "behavior_dependency"
+  ],
+  "idea_id": "incoming-cone-context",
+  "implementation_digest": "b91281011f612c50",
+  "note": "the operator checks and the proxies are not the candidate's own pathway; the joint path needs the implemented candidate",
+  "operator_family": "poincare",
+  "schema": 2,
+  "seed": 20261025,
+  "sha256": "764030a7cfc6a9060f0862026288a44ed90360aa1b28cb74717c45d6ccff6ac1",
+  "status": "INCONCLUSIVE",
+  "tensor_size": 4
+}

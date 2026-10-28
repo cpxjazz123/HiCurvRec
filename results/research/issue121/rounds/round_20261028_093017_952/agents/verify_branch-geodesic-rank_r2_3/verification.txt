@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:260-348`, `train_rqvae.py:545-563`, `train_rqvae.py:585-595`, `train_rqvae.py:422-455` | Traced training-only directed transitions into popularity-corrected successor-overlap affinities, batch triplets, and a ranking loss on encoder latents mapped into the Poincaré ball and scored by geodesic distance. The loss is added to the trainer’s baseline objective and backpropagates before quantization.
+FINDING SEVERITY: N/A
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:422-455`, `train_rqvae.py:552-563`, `train_rqvae.py:585-600`, `smoke_test.py:134-173`, `smoke_test.py:176-214` | Inspected the ranking loss’s differentiable distance operations and trainer integration. The smoke test exercises a backward pass reaching encoder parameters, checks that geometry-off changes the loss, and checks that the behaviour-off permutation can break the affinity ordering. The trainer’s switches select the corresponding paths; the geometry-off branch uses squared Euclidean distances.
+FINDING SEVERITY: N/A
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found. The requested GPU runtime proof is outside this review’s available environment.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:40-76`, `train_rqvae.py:457-486`, `train_rqvae.py:660-707`, `train_rqvae.py:710-739`, `smoke_test.py:217-235`, `ddp_check.py:40-91` | Inspected the real trainer entry point, frozen embedding and training-parquet paths, promoted-candidate result directory, enumerated SID export, and launcher branches. The single-card branch checks `GENREC_SINGLE_GPU`; the four-rank smoke script checks a DDP training step and rank-0-only evaluation path. Runtime execution was not available in this review.
+FINDING SEVERITY: N/A
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

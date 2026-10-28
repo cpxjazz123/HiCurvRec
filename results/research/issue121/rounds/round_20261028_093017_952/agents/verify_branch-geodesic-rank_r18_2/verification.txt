@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, train_rqvae.py:435-519, train_rqvae.py:541-580, train_rqvae.py:723-752 | Traced the training-only transition counts into popularity-corrected successor overlap, batch triplet sampling, and the trainer’s ranking loss. The loss ranks Poincare geodesic distances between exp-mapped encoder outputs using those sampled behaviour ranks; its gradient is added to the baseline loss before the encoder’s representations feed the RQ-VAE quantizer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, train_rqvae.py:749-759, model/hyperbolic.py:110-136, smoke_test.py:138-253 | Inspected the trainer’s curved and Euclidean branches and the loss’s backward path into encoder outputs. The smoke test exercises finite encoder gradients, differences between behaviour-on/off and curved/Euclidean gradients, and SID changes after coupled updates. The map and distance safeguards keep the exp-map outputs bounded and clamp distance denominators and acosh inputs away from their singular boundaries. Runtime execution was not attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No code-level trainability defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:583-620, train_rqvae.py:817-860, train_rqvae.py:867-896, smoke_test.py:329-347 | Traced repository-root discovery, the frozen Stage 0 training parquet and Stage 1 embedding inputs, the candidate-specific promoted result path and item-indexed SID JSON export, and both launcher branches. The four-rank smoke test is present but was not run; the single-card branch explicitly checks GENREC_SINGLE_GPU at train_rqvae.py:871-873.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

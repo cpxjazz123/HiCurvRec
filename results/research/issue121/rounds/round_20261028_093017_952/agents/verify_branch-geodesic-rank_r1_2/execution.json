@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_branch-geodesic-rank_r1_2",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1793143105.1463046,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "52866d9fbc90471fc219d09ced94eb3ed014fc57fe769731127c9f8419f256fb",
+  "isolation_policy": "opencode v2 permission object: bash denied, edit and write denied (this role is read-only and its answer is read back from the session stream), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "verification.txt",
+  "output_sha256": "5637a92566ffed8d810830bdc30dda1b84bde848fcef426651a58959ea1ec684",
+  "pid": 3657782,
+  "project_marker": ".git",
+  "prompt_sha256": "c580d84d8df758e146eab718033bda001387594d74e147501f20b26b0a5b4b51",
+  "session_sha256": "1a1beaacdd28785df3b55661b62342c1d42c0e74a0272bd4e38dbe615291e290",
+  "stderr_present": false,
+  "task_id": "verify_branch-geodesic-rank_r1_2",
+  "timed_out": false,
+  "verified": true
+}

@@ -1,0 +1,17 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:271-364`, `train_rqvae.py:418-499`, `train_rqvae.py:502-531`, `train_rqvae.py:694-716` | Traced the training-only transition counts through successor-overlap affinity and triplet sampling into the Poincare exp-map/geodesic ranking loss on encoder outputs; the loss is added to the training objective. `smoke_test.py:135-174` checks that the ranking term prefers the closer positive, that replacing the metric changes the loss, and that its gradient reaches encoder parameters. The behaviour-off switch changes triplet generation at `train_rqvae.py:639-672`.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:694-716`, `train_rqvae.py:717-723` | Inspected the real loss, calibration, backward, and optimizer path, along with the gradient and geometry-switch smoke assertions in `smoke_test.py:149-174`. No runtime execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:704-716`
+FINDING DETAIL: The first-batch ranking calibration can be zero. If that batch has no sampled triplets, `local_mean` stays `0.0` and is stored as the calibration mean at lines 709-712. A later batch with triplets then divides its ranking loss by zero at line 716, producing a non-finite training loss and stopping the run at line 718. The unconditional DDP broadcast avoids a collective mismatch but does not ensure a positive calibration value.
+FINDING REPRODUCTION: Make the first batch have no eligible shared-successor triplets and a later batch have at least one. Calibration remains zero, and the later ranking-loss addition evaluates as `ranking / 0.0`.
+FINDING CORRECTION: Ensure the calibration value is strictly positive before storing it—for example, calibrate from a deterministic probe that always forms triplets and clamp the resulting mean to a documented positive numerical floor. Apply the same value consistently across ranks.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:42-78`, `train_rqvae.py:534-565`, `train_rqvae.py:781-824`, `train_rqvae.py:831-860` | Inspected root and frozen training-data resolution, the trainer entry point and launcher branches, and SID export/indexing. The result directory is candidate-specific under `results/stage2_RQ-VAE/`; exported rows use embedding/item indices, and the single-card branch checks `GENREC_SINGLE_GPU` at lines 101-103 and 831-837. No runtime execution was performed.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-512, train_rqvae.py:533-572, train_rqvae.py:715-744 | Inspected the training-only transition counting, popularity-corrected sparse successor overlap, affinity-ranked batch triplets, and the ranking term that applies Poincare exp mapping and geodesic distances to encoder outputs. The term is added to the trainer’s baseline loss, so both the behaviour-derived ordering and curved geometry act on the encoder path before quantization.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable; this check passes by code inspection.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:533-572, train_rqvae.py:741-750, smoke_test.py:135-218, smoke_test.py:221-291 | Inspected the differentiable ranking-loss path through the exp map and geodesic distance, the encoder gradient and loss checks, and the behaviour/geometry switch branches. The smoke test’s ranking checks exercise the trainer’s own loss function and check finite gradients, encoder gradient flow, and different losses/gradients when switches change. Runtime execution is unavailable in this review environment, as stipulated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-inspectable defect found in the coupled loss path or its numerical safeguards.
+FINDING REPRODUCTION: Not applicable; this check passes by code inspection.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:101-103, train_rqvae.py:575-605, train_rqvae.py:809-855, train_rqvae.py:859-888 | Inspected the trainer entry point, its Stage 1 embedding and Stage 0 training-parquet paths, candidate-specific promoted result directory, final SID export and item-ID enumeration, and launcher branches. The single-card branch reads `GENREC_SINGLE_GPU` at lines 863-865; the normal launcher invokes four-rank torchrun at lines 866-883. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The result directory resolves to `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`, and the SID JSON keys are generated from row/item enumeration.
+FINDING REPRODUCTION: Not applicable; this check passes by code inspection.
+FINDING CORRECTION: Not applicable.

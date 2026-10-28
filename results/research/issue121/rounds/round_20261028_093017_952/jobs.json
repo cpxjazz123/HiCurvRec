@@ -1,0 +1,88 @@
+{
+  "jobs": [
+    {
+      "attempts": 3,
+      "error": null,
+      "failure_evidence": {
+        "refused": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch-geodesic-rank: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_geodesic_rank"
+      },
+      "finished_at": 1793152573.5009985,
+      "gpu": "0,1,2,3",
+      "idea_id": "branch-geodesic-rank",
+      "job_id": "stage2:branch-geodesic-rank",
+      "kind": "stage2",
+      "launch_mode": "ddp4",
+      "previous_attempts": [
+        {
+          "error": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch-geodesic-rank: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_geodesic_rank",
+          "finished_at": 1793144362.8125088,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the output-path preflight failed: the candidate writes outside its arm directory /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch-geodesic-rank: RESULT_DIR -> /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch_geodesic_rank",
+          "finished_at": 1793144363.1394472,
+          "status": "failed"
+        }
+      ],
+      "queued_at": 1793144362.7355692,
+      "result": {
+        "metrics": {},
+        "sid_path": "results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/item_sids.json",
+        "sid_sha256": "de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 3156,
+            "negative_hits": 24343,
+            "pairs": 52855,
+            "positive_hits": 6669,
+            "valid_l1_hard_er": 2.7395965986115103,
+            "valid_l1_negative_hit_rate": 0.04605619146722165,
+            "valid_l1_positive_hit_rate": 0.12617538548860088
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_branch-geodesic-rank",
+      "round_id": "round_20261028_093017_952",
+      "stage3_job_id": "stage3:branch-geodesic-rank",
+      "started_at": 1793146518.9701645,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch-geodesic-rank"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": 1793152573.8263159,
+      "idea_id": "branch-geodesic-rank",
+      "job_id": "stage3:branch-geodesic-rank",
+      "kind": "stage3",
+      "queued_at": 1793152573.8056166,
+      "result": {
+        "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_branch-geodesic-rank/ckpt/Amazon_2023_Instruments/Oct-28-2026_12-21-45/HG_Rec_best.pth",
+        "evidence": {
+          "checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_branch-geodesic-rank/ckpt/Amazon_2023_Instruments/Oct-28-2026_12-21-45/HG_Rec_best.pth",
+          "run": "the launch of this variant, 2026-10-28 12:21-12:55",
+          "stage2_metrics": "results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/stage2_metrics/de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a.json",
+          "test_final": "results/stage3_T5Train/TIGER_branch-geodesic-rank/logs/Amazon_2023_Instruments/Oct-28-2026_12-21-45/test_final.json"
+        },
+        "n_eval": 57439,
+        "test_ndcg@10": 0.027248654225454434,
+        "test_ndcg@5": 0.021834782784257708,
+        "test_recall@10": 0.04967008478559864,
+        "test_recall@5": 0.032887062797054264
+      },
+      "round_id": "round_20261028_093017_952",
+      "sid_path": "results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/item_sids.json",
+      "stage2_job_id": "stage2:branch-geodesic-rank",
+      "started_at": null,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_branch-geodesic-rank"
+    }
+  ],
+  "schema": 1
+}

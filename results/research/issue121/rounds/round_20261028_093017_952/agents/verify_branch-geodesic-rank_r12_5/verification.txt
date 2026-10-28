@@ -1,0 +1,29 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271-373, 427-508, 666-685, 733-735; model/hyperbolic.py:124-136 | Traced training-parquet transitions into popularity-corrected successor-overlap affinities, then into ranked batch triplets and the Poincare-distance ranking loss on encoder outputs before quantization. The smoke test at smoke_test.py:135-190 checks the loss path, geometry-off loss difference, and encoder gradient; smoke_test.py:193-247 checks the behavior-off ordering control.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The training-only successor signal determines positive/negative ordering in the same ranking computation that measures squared Poincare geodesic distances.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:530-558, 703-741; model/hyperbolic.py:66-72, 82-107, 124-136 | Inspected the real trainer’s ranking-loss call and backward path, the geometry safeguards, and smoke_test.py:164-190, which backpropagates through the trainer’s ranking term and checks that encoder gradients are nonzero and differ when the ranking order or geometry changes.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The ranking term is added to the baseline loss and backpropagates through the encoder; its behavior and geometry switches alter the ranking computation. The code inspection supports finite, bounded geometry operations for the configured mapping. The smoke test checks gradient changes, not a guaranteed SID change for every input; gradient changes satisfy the requested observable-effect alternative.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:42-78, 561-591, 800-843, 850-879 | Inspected the trainer entry point, frozen Stage 2 embedding and training-parquet paths, promoted candidate result path, indexed SID export, four-card torchrun launcher, and `GENREC_SINGLE_GPU` branch. The trainer cannot be run in this environment, as specified.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. The result directory resolves to this candidate’s promoted Stage 2 directory; SID rows are exported by embedding-row item ID, and the JSON keys are the corresponding zero-based IDs. The launcher returns to in-process training when `GENREC_SINGLE_GPU=1`.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+I cannot write to `/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_093017_952/agents/verify_branch-geodesic-rank_r12_5/verification.txt` with the available tools; the report is provided here, and no file was written.

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-509, train_rqvae.py:530-569, train_rqvae.py:712-741 | Traced the training-only transition counts into popularity-corrected successor-overlap affinities, batch triplets, and the ranking loss on encoder outputs. The loss applies exp₀ and Poincaré distance to the same affinity-ranked triplets; its gradient is added to the baseline objective before quantization.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:530-569, train_rqvae.py:712-747, model/hyperbolic.py:110-136, smoke_test.py:135-218, smoke_test.py:221-291 | Inspected the differentiable ranking computation, its finite-value guard, and the gradient path through `raw_module.encoder(batch)`. The curved and Euclidean branches use the same triplet inputs and scale; the behavior-off branch permutes positive and negative indices. The smoke code checks finite gradients reaching encoder parameters and differences between switch settings. Runtime execution was not performed, consistent with the stated sandbox limitation.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:63-77, train_rqvae.py:582-611, train_rqvae.py:806-853, train_rqvae.py:856-885, smoke_test.py:294-312, ddp_check.py:40-91 | Inspected the trainer entry point, frozen embedding and training-parquet paths, candidate-specific result directory, indexed SID export, and torchrun launcher. The launcher checks `GENREC_SINGLE_GPU` through `SINGLE_GPU_ENV` at lines 101-103 and 856-862. DDP smoke code covers the four-rank step and rank-0-only evaluation; runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

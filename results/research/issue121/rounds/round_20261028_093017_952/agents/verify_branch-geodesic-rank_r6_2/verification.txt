@@ -1,0 +1,25 @@
+VERDICT: NEEDS_FIX
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271-361, 403-503, 611-683 | Static code trace: training parquet histories/targets produce directed counts and normalized successor rows; sampled training-batch triplets feed exp-mapped encoder outputs and Poincare squared geodesic distances in the same ranking objective added to baseline loss.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:323-336
+FINDING DETAIL: The affinity builder discards all but 64 rarest successors per item before constructing candidate pairs. Consequently it does not compute the specified full successor-distribution overlap: pairs whose only shared successor has fanout above 64 receive no affinity, even though their true overlap is positive. Since that affinity determines which pairs become positives, the behavior-to-geodesic ranking pathway can train on an altered or absent target for these pairs.
+FINDING REPRODUCTION: Minimal counterexample: 66 items each have an outgoing transition to the same successor, and two selected items have no other successors. Their specified overlap is positive (their normalized rows both put probability 1 on that successor), but its precursor fanout is 66, beyond fanout_limit=64; for each item that successor is dropped by the rare-successor slice, so the pair is absent from affinity. The resulting training sampler cannot use this valid successor-overlap pair.
+FINDING CORRECTION: Preserve exact overlap for every sparse shared-successor candidate, or introduce a candidate pruning rule that retains the exact affinity for retained pairs and is explicitly part of the mechanism/specification; do not silently remove shared successors before overlap calculation. Keep the sparse representation and bound pair candidates separately if needed.
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:476-503, 659-689; results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/model/hyperbolic.py:110-136; results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/smoke_test.py:135-174 | Static differentiability and numerical-safeguard review; traced the smoke test's both-on backward, geometry-off loss comparison, and encoder-gradient assertion (runtime execution is not required in this environment).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:42-79, 101-103, 506-545, 748-827; results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/ddp_check.py:40-92 | Static trace of the real entry point, frozen embedding/train inputs, candidate-specific output locations and indexed item-ID export; inspected launcher handling for torchrun and GENREC_SINGLE_GPU, plus four-rank smoke harness.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

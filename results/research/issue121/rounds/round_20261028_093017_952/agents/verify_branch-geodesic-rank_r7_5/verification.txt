@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-364, train_rqvae.py:418-499, train_rqvae.py:502-531, train_rqvae.py:687-716 | Inspected the path from training-frame transitions to popularity-adjusted successor overlap, triplet sampling, and the Poincare-distance ranking loss added to the encoder’s training objective. The sampler’s behavior-on path determines the positive/lower-affinity ordering, and the loss computes curved distances on the corresponding batch encodings before quantization.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:697-716, train_rqvae.py:502-531 | Code inspection of the first-batch ranking-loss calibration and its later use as the divisor for the ranking term; no runtime execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:704-716
+FINDING DETAIL: If rank 0 has no sampled triplets on the first training batch, its calibration mean remains zero and is clamped to 1e-8 at line 708. That value is then frozen as the divisor. When a later batch does have triplets, the ranking term is divided by 1e-8, potentially producing an excessively large gradient or a non-finite loss. This prevents relying on the code’s finite-loss check as evidence that the coupled training path is numerically safe.
+FINDING REPRODUCTION: Arrange the first rank-0 batch so `rank_triplets(batch_ids)` returns `None`, then a later batch so it returns triplets. Calibration records 1e-8 on the first batch; the later ranking loss is divided by that value at line 716.
+FINDING CORRECTION: Calibrate from a deterministic probe that is guaranteed to contain valid triplets, or use an unconditional finite positive scale derived independently of whether the first batch has triplets. Ensure the scale is established before training and is identical across ranks.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:547-575, train_rqvae.py:781-828, train_rqvae.py:831-860 | Inspected repository-root and candidate result-path derivation, the Stage 1 embedding and Stage 0 training-parquet inputs, final item-indexed SID export, and launcher branches including `GENREC_SINGLE_GPU`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, train_rqvae.py:435-519, train_rqvae.py:541-580, train_rqvae.py:723-752 | Traced the training-parquet transitions into popularity-corrected sparse successor-overlap affinities, the batch triplet sampler, and the ranking loss. The loss uses those behavior-ranked triplets to compare Poincare geodesic distances after exp-mapping encoder outputs; its gradients are added to the baseline objective before quantization. Inspected the behavior-off and geometry-off branches at train_rqvae.py:550-577. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behavior signal and curved operation participate in the same connected ranking pathway, and the trainer applies that pathway to encoder representations consumed by the quantizer.
+FINDING REPRODUCTION: Static trace: build_successor_affinity computes training-only transitions and overlap; sample_rank_triplets produces higher-affinity positives and lower-affinity negatives; ranking_loss_term applies the Poincare distance ranking to encoded batch items; train_rqvae.py:749-752 adds the result to the training loss.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, train_rqvae.py:723-759, smoke_test.py:138-255 | Inspected the differentiable loss path through exp mapping, Poincare distance, softplus ranking, encoder output, backward, and optimizer step. The smoke test defines checks for finite gradients, encoder gradient reach, geometry/behavior switch effects, and SID changes, but was not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 overflow/NaN hazard found in the exercised ranking path. The loss is connected to the encoder and is added before backward; the switches select behavior-rank permutation and curved versus Euclidean distance. Runtime gradient and SID assertions remain unexecuted in this review.
+FINDING REPRODUCTION: Static trace the trainer path at train_rqvae.py:723-759. The candidate’s proposed runtime checks are in smoke_test.py:167-255; runtime execution was not performed.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-77, train_rqvae.py:582-663, train_rqvae.py:817-865, train_rqvae.py:867-896 | Inspected root and result path resolution, frozen embedding and training-parquet inputs, training setup, indexed SID export, and launcher branches. The single-card branch checks SINGLE_GPU_ENV at train_rqvae.py:871-873; the four-card launcher is defined at train_rqvae.py:136-146 and invoked at train_rqvae.py:894-896. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Output targets this candidate’s promoted result directory; SID rows are exported by enumerating embedding rows, with unique extension and matching JSON keys. The frozen data paths and both launcher branches are present.
+FINDING REPRODUCTION: Static inspection of the cited paths; trainer, export, and launcher were not executed.
+FINDING CORRECTION: None.

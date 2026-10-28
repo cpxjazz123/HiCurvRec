@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, train_rqvae.py:435-519, train_rqvae.py:541-580, train_rqvae.py:690-752 | Traced the training-only directed transition counts through popularity-corrected successor overlap and batch triplet sampling into the ranking loss on encoder outputs. The loss maps those outputs with `ball_exp_map` and compares Poincare geodesic distances; its gradients are connected to the encoder before the unchanged RQ-VAE quantizer. The both-on path is configured at train_rqvae.py:111-112.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Source inspection; runtime execution was not available in this sandbox.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, train_rqvae.py:719-759, model/hyperbolic.py:66-136, smoke_test.py:138-255 | Inspected the differentiable ranking term and trainer backward/optimizer path. The term is added to the baseline loss when triplets exist; the trainer rejects non-finite total loss and clips gradients. The smoke-test code checks encoder gradients, compares curved and Euclidean gradients, and checks SID changes after updates and with the switches changed. These checks were inspected, not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level dead term or numerical hazard requiring a correction was found.
+FINDING REPRODUCTION: Source inspection; no PyTorch runtime execution was available.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:582-663, train_rqvae.py:817-895, model/layers.py:124-134 | Traced repository-root and promoted candidate result paths, frozen embedding/train-parquet inputs, SID export indexed by embedding row, and launcher branches. `GENREC_SINGLE_GPU` is read at train_rqvae.py:103 and the single-card branch returns without spawning torchrun at train_rqvae.py:867-873. The four-rank smoke path is defined in smoke_test.py:331-349 and ddp_check.py:40-91; runtime execution was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level integration defect found. The output is written to the candidate’s promoted result directory, `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/`.
+FINDING REPRODUCTION: Source inspection only; the trainer and distributed launcher were not run.
+FINDING CORRECTION: None.

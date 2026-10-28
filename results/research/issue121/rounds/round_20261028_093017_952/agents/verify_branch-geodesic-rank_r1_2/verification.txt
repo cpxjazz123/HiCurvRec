@@ -1,0 +1,39 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:260-348, 506-549, 571-579 | Traced training-only directed transitions through successor-overlap affinity and sampled triplets into the Poincare exp-map/geodesic ranking loss, which is added to the RQ-VAE objective and differentiates through the encoder before quantization. The geometry-off path at lines 529-541 uses Euclidean distance on the same triplets.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/rounds/round_20261028_093017_952/agents/verify_branch-geodesic-rank_r1_2/verification.txt | Static inspection only, as requested: traced triplet construction at train_rqvae.py:386-415 into indexing and ranking at lines 525-549 and the backward call at lines 580-584. The smoke test’s gradient check at smoke_test.py:164-173 exercises a separate toy loss, not the trainer’s triplet construction or its switch controls.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:394-410
+FINDING DETAIL: If a positive is sampled for an anchor but the row has no lower-affinity candidate, the code appends the anchor at line 397 and then continues at line 402 before appending the positive or negative. The returned anchor, positive and negative arrays can therefore have different lengths. The training ranking loss then indexes those misaligned arrays (lines 532-535), causing an indexing/shape error or incorrect triplets instead of a valid forward/backward step.
+FINDING REPRODUCTION: Use a batch affinity row with one positive entry and all other entries equal to that positive affinity (or a batch containing only one positive candidate and zero-affinity entries are excluded from `row < positive_weight` only when positive weight is zero). The sampled positive has no strictly lower affinity; `anchors` grows while `positives` and `negatives` do not. A minimal reliable example is a two-item batch with a single positive affinity and no zero-affinity batch member.
+FINDING CORRECTION: Only append the anchor after confirming a lower-affinity candidate exists, or append all three arrays atomically after selecting the negative. Add a trainer-path test asserting equal triplet-array lengths and finite ranking loss/backward for batches with no valid lower-affinity candidate.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:513-519
+FINDING DETAIL: The behaviour-off switch does not switch off the behaviour signal. Triplets have already been selected using successor affinity, and positives and negatives already encode its higher/lower ordering. Applying the same permutation to both arrays preserves each positive-negative pair and the ranking target; it only reorders triplets. Thus the required behaviour-off comparison is not a valid control.
+FINDING REPRODUCTION: With `BEHAVIOR_ON=False`, inspect any returned triplet: it is still sampled from a positive affinity entry and a lower-affinity candidate at lines 386-410. Permuting both arrays with the same `order` leaves each pair intact, so the loss still ranks according to the cached behaviour affinity.
+FINDING CORRECTION: Implement behaviour-off triplets whose ordering is independent of the successor affinity while holding the geometry, number of triplets, and sampling workload fixed; verify that the off path no longer uses affinity-derived positive/negative ordering. Do not train an ablation arm.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/smoke_test.py:134-173
+FINDING DETAIL: The ranking smoke test does not validate the trainer’s coupled pathway or the behaviour-off switch. It compares a hand-built loss on arbitrary indices and separately checks a geodesic-distance gradient, so it can pass despite the trainer triplet-array defect and despite the behaviour-off switch retaining affinity-derived pairings. It also does not check that switching the mechanism changes and restores actual SID assignments or trainer gradients.
+FINDING REPRODUCTION: Run the current smoke test: `check_ranking_loss` constructs its own anchors/positives/negatives and never calls `train_rqvae.rank_triplets` or toggles `BEHAVIOR_ON`. The trainer defect and ineffective switch are therefore not covered by that check.
+FINDING CORRECTION: Exercise the trainer’s triplet sampler and ranking loss in the smoke path, test the three required configurations with fixed inputs, and assert finite losses/gradients plus the expected behaviour-off and geometry-off changes. Do not train ablation arms.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:40-76, 418-457, 644-687, 694-723 | Inspected the trainer’s repository-root discovery and candidate-specific promoted result path, training parquet and embedding inputs, SID export and item-ID enumeration, and launcher branches including `GENREC_SINGLE_GPU`. The code sets `RESULT_DIR` to `results/stage2_RQ-VAE/TIGER_branch_geodesic_rank`, writes checkpoint/SID/JSON there, and uses the four-rank torchrun branch unless already under torchrun or the single-card environment switch is set. Runtime execution was not available in this sandbox.
+
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

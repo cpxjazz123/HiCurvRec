@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, 427-508, 511-539, 647-680, 727-730 | Traced training-only transition counting through popularity-corrected successor overlap, affinity-ordered batch triplets and the encoder’s exp-mapped Poincare-distance ranking loss. The behaviour-off sampler and geometry-off Euclidean path are present in the trainer; reviewed their code paths without running the trainer.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:511-539, 699-735; smoke_test.py:135-174 | Inspected the differentiable ranking computation and its addition to the training objective; the smoke test specifies a forward/backward check and checks that a nonzero gradient reaches encoder parameters. Code inspection shows the behaviour switch changes triplet construction, while the geometry switch replaces the curved map and distance with the Euclidean path. No trainer runtime was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 542-573, 795-869 | Inspected repository-root and candidate-specific result-path resolution, the Stage 1 embedding and Stage 0 training-parquet inputs, SID export and indexing, and the four-card launcher plus the GENREC_SINGLE_GPU single-card branch. The exported JSON enumerates embedding row IDs; the launcher delegates to four-card torchrun unless already under torchrun or the single-card environment switch is set. No trainer runtime was attempted.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

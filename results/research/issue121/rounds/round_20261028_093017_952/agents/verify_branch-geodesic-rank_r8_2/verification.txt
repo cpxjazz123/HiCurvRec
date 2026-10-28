@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-364, train_rqvae.py:610-614, train_rqvae.py:639-672, train_rqvae.py:694-722, train_rqvae.py:502-531 | Inspected the trainer’s data flow: training-only transitions produce popularity-corrected successor-overlap affinities; the sampler uses those affinities to order batch triplets; the ranking loss applies Poincare geodesic distances to the encoder outputs and adds the result to the training objective. The imported geometry functions are called in this loss path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:502-531, train_rqvae.py:694-729, smoke_test.py:135-174, smoke_test.py:177-200 | Inspected the differentiable ranking path and its use in the trainer, and inspected smoke-test coverage for ranking-loss ordering, geometry-switch loss changes, encoder gradients, and behaviour-off sampling. The ranking term is added to the objective before backward; it is not computed and discarded. Runtime execution was not attempted, consistent with the stated sandbox limitation.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead ranking term or evident float32 numerical hazard found. The supplied smoke test’s switch checks are source-level coverage; no runtime result is claimed.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:82-103, train_rqvae.py:534-572, train_rqvae.py:787-830, train_rqvae.py:837-866 | Inspected the trainer entry point, frozen Stage 1 embedding and Stage 0 training-parquet paths, fixed 3000-epoch setting, promoted candidate result directory, item-ID-indexed SID export, torchrun launcher, and `GENREC_SINGLE_GPU` single-card branch. The code inspection was static; the trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found in the inspected paths. Checkpoint and SID outputs resolve to this candidate’s promoted result directory; the JSON export enumerates embedding rows as item IDs.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

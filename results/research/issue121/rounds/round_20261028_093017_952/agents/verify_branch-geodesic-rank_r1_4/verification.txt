@@ -1,0 +1,34 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:260-348`, `train_rqvae.py:506-549`, `train_rqvae.py:571-579` | Traced the training-only transition counts and popularity-corrected successor overlap into per-batch triplets, then into the ranking loss on encoder outputs before quantization. The loss uses `ball_exp_map` and Poincaré distance when geometry is on; the same loss’s Euclidean branch is at `train_rqvae.py:525-549`.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `train_rqvae.py:364-415`, `train_rqvae.py:506-549`, `train_rqvae.py:571-585`, `smoke_test.py:134-173` | Inspected the training sampler and backward path, and the smoke-test assertions. The ranking term is differentiated through the encoder, but the checked gradient smoke does not exercise the real ranking loss and does not check the behavior-off control or SID changes.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:513-519`
+FINDING DETAIL: `BEHAVIOR_ON=False` does not remove the successor-affinity ordering from the mechanism. It permutes positive indices while leaving each anchor fixed and permutes the negatives separately, so each negative remains a lower-affinity item for its original anchor, while positives are reassigned across anchors. The loss therefore still uses behavior-derived negative selections and is not a correct behavior-off control. This prevents the required comparison from demonstrating that removing behavior changes the core computation.
+FINDING REPRODUCTION: Use a batch containing two anchors with different successor-affinity rows, each having a positive and a lower-affinity negative. Call `rank_triplets` with `BEHAVIOR_ON=False`. The returned triplets still contain negatives chosen from the original anchor’s lower-affinity set; only the positive assignments are shuffled. The resulting control still depends on the behavior-derived affinity.
+FINDING CORRECTION: Implement behavior-off triplet generation from a behavior-independent deterministic sampler, with the same triplet count and comparable compute, rather than permuting the behavior-derived indices. Ensure both positive and negative selection are independent of affinity in that branch.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: `smoke_test.py:164-173`
+FINDING DETAIL: The gradient assertion backpropagates an unrelated mean of squared distances for encoder outputs, not the actual `rank_loss` used by the trainer. The switch assertions compare scalar losses on fixed hand-written indices, not the trainer’s sampled triplets; they also do not check that behaviour-off changes the gradient or that either switch changes SID assignments. Thus the committed smoke does not establish the requested trainability and switch behavior.
+FINDING REPRODUCTION: In `check_ranking_loss`, the backward computation is `distance.mean().backward()` at lines 167-170; it never calls `rank_loss` or uses the sampled affinity triplets. The function can pass even if the training ranking-loss path is disconnected or has a dead gradient.
+FINDING CORRECTION: Extend the smoke to call the trainer’s actual triplet-generation and ranking-loss functions, backpropagate the resulting ranking term, and verify finite loss/gradients on intended parameters. Check switch effects against the same controlled batch and verify SID or gradient differences; keep these as smoke checks, not training ablation arms.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:40-75`, `train_rqvae.py:418-449`, `train_rqvae.py:644-687`, `train_rqvae.py:694-723` | Inspected the real trainer entry point, frozen input paths, output path derivation and export logic, plus the distributed and single-card launcher branches. The single-card branch checks `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at `train_rqvae.py:101` and `train_rqvae.py:698-700`. Runtime execution was not performed, as specified.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

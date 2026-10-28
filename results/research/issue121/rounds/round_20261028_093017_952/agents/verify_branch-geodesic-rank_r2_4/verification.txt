@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:260-348, 364-419, 422-454, 531-563, 585-595 | Traced the training-only directed-transition counts into cached successor-overlap affinities, sampled affinity-ordered triplets, and followed those triplets into the exp-mapped Poincaré-distance ranking loss on encoder outputs before quantization. The geometric and behavioural computations meet in that ranking loss, whose gradients are added to the training objective.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:381-382
+FINDING DETAIL: Each batch materializes a dense batch-by-batch affinity block with `.toarray()`. With the configured total batch size of 4096, that is a 4096×4096 dense array on every rank and step, rather than sparse candidate sampling as the proposal’s cost description specifies. This is an implementation-cost mismatch, not a failure of the coupled pathway.
+FINDING REPRODUCTION: Follow `sample_rank_triplets` at lines 381-382 with a 4096-item batch: the affinity submatrix is densified before any triplets are sampled.
+FINDING CORRECTION: Sample candidate pairs from the sparse affinity rows or a sparse batch-local index, without materializing the full batch-by-batch matrix.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:422-454, 545-563, 585-601; smoke_test.py:134-173, 176-214 | Inspected the trainer’s differentiable ranking-loss path and the smoke checks. The ranking loss is connected to the encoder, but the smoke tests do not verify the trainer’s actual behavior-off switch, and the Euclidean control does not preserve the latent scaling used by the curved path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:434-445
+FINDING DETAIL: The geometry-off branch computes squared Euclidean distance on unscaled `encoded`, while geometry-on first scales it by `normalizer` before applying `exp_0`. Thus the geometry comparison changes both the metric and the representation scale; it is not the specified curve-replaced-by-Euclidean comparison with the rest of the mechanism held fixed. Separately, `behavior_on` is not read in `ranking_loss_term`; its effect exists only in the caller’s triplet permutation at lines 552-559, and the smoke test checks a separately performed permutation rather than toggling that trainer switch and checking its loss/gradients or SID effect.
+FINDING REPRODUCTION: Call `ranking_loss_term(encoded, triplets, {"geometry_on": False, "normalizer": 3.0, "scale": {"value": 1.0}})`: the distance branch uses `encoded` directly, whereas the curved branch uses `encoded * 3.0`. For the behavior switch, compare trainer execution with `BEHAVIOR_ON=True` and `False`; `check_behaviour_off_breaks_the_ordering` only permutes arrays locally and never sets or exercises the trainer switch.
+FINDING CORRECTION: Apply the same normalizer to the latent vectors in both geometry branches, replacing only the curved maps/distance with Euclidean distance. Add a smoke check that exercises the trainer’s actual behavior switch and confirms the resulting coupled loss/gradient changes; verify the resulting SID assignment if the available smoke environment supports it.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:40-75, 457-487, 660-703, 710-739 | Inspected repository-root and output-path resolution, the frozen embedding and training-parquet inputs, item-ID handling through export, and both launcher branches. The trainer reads the stage1 embedding and stage0 training parquet, exports rows keyed by enumerated item IDs to its own promoted result directory, and the `GENREC_SINGLE_GPU` branch returns to run `main()` in-process.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: train_rqvae.py:710-739
+FINDING DETAIL: No integration defect found by source inspection. Runtime execution was not performed, consistent with the stated sandbox limitation.
+FINDING REPRODUCTION: Inspect `_launch_via_torchrun`: an existing `RANK` avoids relaunch, `GENREC_SINGLE_GPU=1` runs in-process, and otherwise it launches the configured four-rank torchrun command.
+FINDING CORRECTION: None.

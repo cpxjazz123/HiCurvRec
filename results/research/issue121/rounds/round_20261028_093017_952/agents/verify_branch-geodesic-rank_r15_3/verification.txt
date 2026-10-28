@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271-379, 433-517, 539-578, 721-750 | Inspected the training-only transition-count/overlap builder, affinity-ordered triplet sampler, and trainer’s ranking loss. The loss uses those sampled item indices to compare squared Poincare distances of exp-mapped encoder outputs, and is added to the objective that trains the encoder.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:331-351
+FINDING DETAIL: The overlap builder caps each item’s precursor fanout at 256 and candidate set at 128, and truncates candidates in index order. This can omit valid common-successor pairs, so the implemented affinity is a capped approximation rather than the full sparse overlap specified. The remaining pathway is still a genuine behaviour–geometry coupling.
+FINDING REPRODUCTION: Construct a training graph where an item shares a successor with more than 128 candidate items, with the high-overlap candidate having an ID beyond the first 128. The loop truncates before computing that pair’s overlap, so the pair is absent unless retained from the other item’s candidate list.
+FINDING CORRECTION: Make candidate truncation deterministic by an affinity-relevant criterion or document the pair-candidate cap as an approximation to the specified overlap; ensure the cap does not silently imply index-order selection.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:539-578, 721-755 | Inspected the ranking-loss autograd path from encoded vectors through the exp map and Poincare distance, and its addition before backward. The smoke code invokes this loss and checks encoder gradients, but I did not run it.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/smoke_test.py:180-209, 211-220
+FINDING DETAIL: The control comparisons do not hold the encoded input fixed: each gradient helper calls `torch.randn` separately, and the purported SID check also uses different random inputs before and after. Thus differences cannot be attributed to the behaviour or geometry switches, and the SID assertion checks only shape—not whether assignments change. The code has switch branches, but this smoke does not establish the requested controlled comparison.
+FINDING REPRODUCTION: Run `check_trainer_ranking_path`: `gradient_of` creates new random inputs for each configuration; `geometry_gradient` does likewise. In the SID section, `before` and `after` are quantized from separate random batches, and only their shapes are compared.
+FINDING CORRECTION: Use one fixed encoded tensor and identical triplets for both switch settings, compare losses/gradients on that shared input, and use a fixed latent batch plus a controlled parameter update to compare SID assignments (or explicitly limit the claim to gradient changes).
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:42-78, 581-612, 815-858, 865-894 | Inspected root and result-path resolution, frozen train embedding/parquet inputs, final SID generation and item-ID enumeration, and launcher branches including `GENREC_SINGLE_GPU`. The trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:117-128, 331-351
+FINDING DETAIL: Preprocessing’s fanout and candidate caps are fixed constants, not derived from a measured quantity or documented default, contrary to the binding rule for mechanism constants. The candidate output path itself is the required promoted-tree result directory; no path defect found.
+FINDING REPRODUCTION: Inspect the fixed values `fanout_limit = 256`, `candidate_limit = 128`, `MAX_ANCHORS_PER_BATCH = 512`, and the partner/positive caps. No derivation or documented default justifies the overlap caps.
+FINDING CORRECTION: Derive and document the caps from a stated resource bound or measured graph quantity; do not tune them by running candidate sweeps.

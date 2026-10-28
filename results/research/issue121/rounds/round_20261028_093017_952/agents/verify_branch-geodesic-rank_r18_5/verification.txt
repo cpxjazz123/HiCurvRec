@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:271-381,541-580,657-752 | Traced training-only transitions from `train_frame` into popularity-corrected sparse successor-overlap affinities and batch triplets, then into the ranking loss on encoder outputs. The loss applies `ball_exp_map` and Poincaré `ball_distance` to those same triplets; both outputs are added to the RQ-VAE objective. The behavior and geometry switches select the ranking order and metric in this path.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: None
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:541-580,749-759; results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/smoke_test.py:138-253 | Inspected the differentiable ranking computation and its addition before `backward()`. The smoke test exercises finite gradients into encoder parameters, compares behavior-on/off and curved/Euclidean gradients, and checks SID changes after updates. Runtime execution is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: None
+FINDING DETAIL: No code-level defect found. The inspected ranking term is consumed by the objective, and the tested path reaches encoder parameters.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:44-77,597-603,817-860,867-896 | Traced root and result path resolution, the Stage0 training parquet and Stage1 embedding inputs, final item-indexed SID export, four-card torchrun launch, and the `GENREC_SINGLE_GPU` single-card branch. The existing training log and metrics show the trainer entry point ran in single-card mode; source inspection confirms the four-card launcher branch and frozen data paths.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: None
+FINDING DETAIL: No integration defect found. Results resolve to this candidate’s `results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/` directory, and the SID JSON is constructed by enumerating embedding rows as item IDs.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

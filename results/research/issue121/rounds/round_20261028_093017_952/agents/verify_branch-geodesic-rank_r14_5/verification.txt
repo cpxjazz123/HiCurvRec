@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:271-373, 427-512, 533-572, 715-744 | Traced training-transition counting into successor-overlap affinities, batch triplet sampling, Poincare distance ranking, and addition of the ranking loss to the RQ-VAE objective. The ranking term differentiably acts on encoder outputs before quantization.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:323-366
+FINDING DETAIL: The specified pair affinity is symmetric, but candidate generation and truncation are directional: each item independently keeps a capped candidate list, then stores only that row's pairs. A pair may therefore have an affinity in one direction and no affinity in the other. Sampling uses the anchor's row, so reversing the same pair can give a different training target (positive in one direction, zero-affinity negative in the other). The code does not preserve the specified symmetric successor-overlap order.
+FINDING REPRODUCTION: Use three items A, B, C with shared-successor affinities A-B > A-C, and arrange the candidate truncation so A retains B while B does not retain A. The stored CSR then has affinity[A,B] > 0 but affinity[B,A] == 0; sampling with A as anchor and B as anchor sees different pair ranks. The cap/truncation sites are train_rqvae.py:340-351.
+FINDING CORRECTION: Construct each retained pair once using a deterministic symmetric candidate rule and store its computed affinity in both directions. Apply any candidate cap symmetrically so truncation cannot make the target rank depend on anchor direction.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:533-572, 741-750; smoke_test.py:135-218 | Inspected the trainer’s ranking-loss computation and its encoder-gradient path. The smoke code exercises finite gradients reaching encoder parameters and checks geometry-on versus Euclidean gradients; the trainer includes the term in the loss before backward and optimizer step.
+FINDING SEVERITY: minor
+FINDING LOCATION: smoke_test.py:177-206
+FINDING DETAIL: The smoke comparison helpers generate a fresh random encoder input for each compared gradient, so those assertions do not isolate the switch as the sole cause of the gradient difference. The loss has an evident differentiable path, but this comparison is not controlled evidence for the switch effect.
+FINDING REPRODUCTION: Inspect gradient_of and geometry_gradient: each call evaluates model.encoder(torch.randn(...)) independently before comparing the resulting gradients.
+FINDING CORRECTION: Reuse one fixed input tensor and one fixed encoded latent across each on/off pair of comparisons, then compare losses and gradients.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 575-615, 809-852, 859-888 | Inspected repository-root and result-path resolution, the training parquet and embedding inputs, SID export/indexing, and launcher branches. The single-card branch reads SINGLE_GPU_ENV at train_rqvae.py:103 and is honored at lines 861-865; the multi-card launcher retains the four-rank torchrun path.
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:663-675
+FINDING DETAIL: The frozen ranking-distance scale is computed from pairwise distances for the fixed probe slice, requiring a 1024 × 1024 distance tensor per rank. This is bounded and not an integration blocker, but it differs from the idea’s stated first-batch median calibration.
+FINDING REPRODUCTION: Follow the initialization before the epoch loop: the code selects train_ids[:SCALE_PROBE_ITEMS] and forms all pairwise probe distances, without using the first training batch.
+FINDING CORRECTION: If fidelity to the specification is required, calibrate from the deterministic first batch and freeze that value, while keeping calibration collective behavior safe under DDP.

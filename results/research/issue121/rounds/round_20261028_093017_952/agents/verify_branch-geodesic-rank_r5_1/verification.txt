@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:577-585, 606-634, 656-666, 471-498 | Traced training-only successor transitions into the cached affinity and batch triplet sampler, then into the Poincare-distance ranking loss on encoder outputs. `geometry_on` selects geodesic versus Euclidean distance; the sampled triplet ordering is supplied by the behavior-derived affinity. `smoke_test.py:135-174` checks the ranking loss and encoder gradient.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:606-634, 656-671, 471-498 | Inspected the actual trainer switches and loss path, and compared them with `smoke_test.py:177-217`. The ranking term differentiates through `raw_module.encoder(batch)` and uses the resulting loss in `backward()`. The smoke checks are source-level only here; I did not run them or the trainer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:615-622
+FINDING DETAIL: The behavior-off switch can hang indefinitely when the batch contains exactly one item. With `ids.shape[0] == 1`, every random index is zero, so the loop that requires a positive index different from the anchor never terminates. The negative-index loop has the same issue. This makes the required switch incorrect for a valid final singleton batch, and prevents that training step from completing.
+FINDING REPRODUCTION: Call the behavior-off branch’s sampling logic with a batch of one item. `rank_generator.integers(0, 1, size=1)` always returns zero, so execution remains in the `while positives[index] == anchors[index]` loop at lines 619-620.
+FINDING CORRECTION: Handle batches smaller than three before entering the resampling loops: return no triplets (or otherwise skip the ranking term) for such batches. Ensure the no-triplet path proceeds with the baseline loss.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-77, 501-531, 731-774, 781-810 | Inspected root and output-path derivation, the frozen Stage 0 training parquet and Stage 1 embedding inputs, ID-indexed SID JSON export, and both launcher branches. The single-card branch explicitly reads `GENREC_SINGLE_GPU` at lines 101-103 and 785-787; the multi-card branch invokes four-rank torchrun at lines 796-805. Runtime execution was not performed.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

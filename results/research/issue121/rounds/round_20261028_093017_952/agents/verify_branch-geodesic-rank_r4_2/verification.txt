@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: branch-geodesic-rank/train_rqvae.py:266-356, 398-468, 471-499, 656-666 | Traced training-only transitions from the training parquet into popularity-adjusted successor-overlap affinities, then into sampled triplets. The trainer encodes batch items and applies the triplet ranking loss using Poincare exp maps and geodesic distances before the unchanged RQ-VAE quantizer. The smoke-test code exercises the trainer’s ranking function, checks that geometry-on and Euclidean losses differ, and checks that the ranking gradient reaches encoder parameters at branch-geodesic-rank/smoke_test.py:135-174. No runtime test was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking fidelity defect found. The behavior-off control changes triplet generation, and the geometry-off control substitutes identity mapping and squared Euclidean distance in the ranking term (branch-geodesic-rank/train_rqvae.py:606-634, 483-498). Both controls exist; the candidate is configured with both on.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: branch-geodesic-rank/train_rqvae.py:653-673 | Inspected the real forward, ranking-loss addition, finite-loss guard, backward pass, gradient clipping, and optimizer step. The ranking term is differentiable through the encoder output and is added to the optimized loss when triplets exist. The smoke test checks a nonzero encoder gradient and a changed loss under the Euclidean control at branch-geodesic-rank/smoke_test.py:149-174. No runtime test was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: branch-geodesic-rank/smoke_test.py:177-217
+FINDING DETAIL: The smoke test’s behavior-off check does not call the trainer’s behavior-off triplet-generation path. It constructs random triplets itself, and its affinity comparison indexes the matrix using the positive position as the anchor (lines 211-213), rather than the sampled anchor. Thus this test does not establish that the trainer’s behavior-off switch changes the coupled pathway. This is a test-coverage defect, not evidence that the trainer’s switch implementation is dead: the trainer branches on BEHAVIOR_ON at lines 609-634.
+FINDING REPRODUCTION: Inspect check_behaviour_off_breaks_the_ordering at branch-geodesic-rank/smoke_test.py:205-216; it samples off_positives/off_negatives directly and compares block[off_positives[index]] rather than block[anchors[index]].
+FINDING CORRECTION: Exercise the trainer’s behavior-off branch by calling rank_triplets with BEHAVIOR_ON=False, then verify its generated triplets no longer use affinity ordering and that the resulting loss/gradient differs from behavior-on for a deterministic fixture. No ablation training run is needed.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: branch-geodesic-rank/train_rqvae.py:42-77, 501-531, 731-778, 781-810 | Inspected repository-root and promoted-arm output-path derivation, the frozen stage1 embedding and stage0 training-parquet inputs, final SID export and JSON item indexing, and launcher handling including SINGLE_GPU_ENV at lines 101-103 and 781-805. The output resolves to results/stage2_RQ-VAE/TIGER_branch_geodesic_rank, not the baseline or another candidate directory. No runtime test was run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking integration defect found by code inspection. The single-card branch returns from the launcher when GENREC_SINGLE_GPU is "1"; otherwise the launcher starts the configured four-process torchrun job. The SID export enumerates every embedding row and writes integer item IDs as JSON keys.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

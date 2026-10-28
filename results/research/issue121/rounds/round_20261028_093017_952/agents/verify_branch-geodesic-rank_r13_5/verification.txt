@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-373, train_rqvae.py:427-508, train_rqvae.py:530-569, train_rqvae.py:712-741 | Inspected the transition-affinity construction, batch triplet sampler, and ranking loss wired into the trainer. Training-only adjacent transitions determine positive/negative affinity ranks; the loss compares squared Poincare distances of exp-mapped encoder outputs. The behaviour-off and geometry-off switches are read by that same loss.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behavior-derived ordering and curved distance participate in one connected ranking computation that backpropagates into the encoder before the unchanged quantizer.
+FINDING REPRODUCTION: Code inspection of the cited path; no trainer execution performed.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:530-569, train_rqvae.py:738-747, smoke_test.py:135-218 | Inspected the ranking term’s differentiable distance operations, its addition to the baseline loss, and backward/gradient checks in the smoke test. The smoke test checks encoder gradients and compares behavior- and geometry-switched gradients. No trainer execution performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 overflow/NaN hazard found in the coupled loss path. The Poincare map and distance use bounded/clamped inputs, and the ranking loss is backpropagated into the encoder. The smoke test does not establish SID changes: its before/after token check uses different random inputs and checks only shape. This is not a blocking finding because the connected gradient path is present and no runtime proof is required here.
+FINDING REPRODUCTION: Inspect smoke_test.py:208-218; the two token calls use separate random inputs and the assertion checks only equal shapes. The gradient path itself is visible at train_rqvae.py:739-747.
+FINDING CORRECTION: None required for this code-level verdict. For a meaningful SID-change assertion, reuse identical inputs and model state, then compare assignments after a controlled parameter update.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:582-612, train_rqvae.py:806-849, train_rqvae.py:856-885 | Inspected repository-root and output-path resolution, the frozen embedding/training-parquet inputs, training loop, indexed SID export, and launcher including the single-card environment branch.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Inputs resolve to the repository’s Stage 1 embeddings and Stage 0 training parquet; checkpoint and SID outputs resolve to this promoted candidate’s result directory. Export enumerates embedding rows into item-ID keys, extends collisions, and checks uniqueness. The launcher handles torchrun ranks, GENREC_SINGLE_GPU=1, and the default four-card path. Runtime execution was not performed.
+FINDING REPRODUCTION: Static inspection of the cited entry-point and export paths.
+FINDING CORRECTION: None.

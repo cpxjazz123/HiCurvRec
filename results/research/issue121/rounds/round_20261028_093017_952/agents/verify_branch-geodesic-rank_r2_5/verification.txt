@@ -1,0 +1,29 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:260-348, 545-563, 585-595, 422-454 | Inspected the training-only transition affinity, batch triplet sampler, and the trainer’s exp-mapped Poincare-distance ranking loss. This is one connected path: successor overlap selects the triplet ordering, and geodesic distances on encoder outputs receive the ranking gradients.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:299-301, 339-341
+FINDING DETAIL: The popularity correction does not implement the specified denominator. The required denominator is sqrt(f_i * f_j), where f_i = 1 + log(1 + pop_i). The code sets correction[i] to f_i and divides overlap by correction[i] * correction[j], yielding f_i * f_j instead. This changes the behaviour signal that feeds the coupled pathway.
+FINDING REPRODUCTION: For items with f_i=4 and f_j=9, the specified denominator is 6, while this code divides by 36. The resulting affinity is six times smaller than specified for that pair.
+FINDING CORRECTION: Compute f_i = 1 + log1p(popularity[i]) and use sqrt(f_i * f_j) as the pair denominator when appending each affinity.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:422-454, 585-601 | Inspected the differentiable ranking computation, its addition to the reconstruction/quantization loss, backward call, and optimizer step. The ranking term operates on encoder outputs through ball_exp_map and ball_distance, and the geometry-off branch substitutes squared Euclidean distances. The behaviour-off switch changes positive and negative triplet ordering in the trainer at lines 552-559. The code contains no dead ranking term or evident float32 overflow in this pathway. Runtime execution was not performed, as stipulated; the code provides the required gradient path and switches.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_093017_952/branch-geodesic-rank/train_rqvae.py:40-75, 457-487, 660-703, 710-739 | Inspected the trainer entry point, repository-relative path resolution, frozen Stage 1 embedding and Stage 0 training-parquet inputs, final SID export, and launcher branches. The result paths resolve to the candidate’s promoted directory, `results/stage2_RQ-VAE/TIGER_branch_geodesic_rank/`; export enumerates rows by item ID and writes both the array and JSON mapping. The launcher checks `GENREC_SINGLE_GPU` at lines 101 and 714-716 and otherwise invokes the four-rank torchrun branch at lines 717-734. No writes to the baseline or another candidate’s result directory are present in the inspected code.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

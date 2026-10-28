@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:271-381, train_rqvae.py:435-519, train_rqvae.py:541-580, train_rqvae.py:723-752 | Inspected the training-only directed-transition affinity construction, batch triplet sampler and trainer call path. The resulting ranking loss applies the Poincare exp map and geodesic distance to encoder outputs; its gradients are added to the baseline loss before the optimizer step.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking defect found. The behavior signal and curved operation participate in one connected ranking pathway.
+FINDING REPRODUCTION: Not applicable; this is a passing check.
+FINDING CORRECTION: None.
+
+CHECK: trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:541-580, train_rqvae.py:749-759, smoke_test.py:138-255 | Inspected the differentiable loss-to-encoder path and the smoke assertions for finite, nonzero encoder gradients and changes under behavior-off and geometry-off controls. The smoke also checks that a coupled update changes SID assignments. Runtime execution was not available, as stipulated.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-inspectable blocking defect found. The ranking term is consumed by the total loss and backpropagates through the encoder; the smoke code checks both switches’ effects on gradients and SID assignments.
+FINDING REPRODUCTION: Not applicable; this is a passing check.
+FINDING CORRECTION: None.
+
+CHECK: integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:583-663, train_rqvae.py:817-860, train_rqvae.py:867-896 | Inspected repository-root and candidate result-path resolution, the frozen embedding and training-parquet inputs, final SID export, and launch branches. Export enumerates embedding rows as item IDs; output files are placed in this candidate’s promoted result directory. The launcher checks `GENREC_SINGLE_GPU` through `SINGLE_GPU_ENV` and otherwise invokes four-rank torchrun.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No blocking integration defect found. The candidate writes its own result directory, uses the stated Stage 2 data paths, exports indexed SIDs, and retains both launcher branches.
+FINDING REPRODUCTION: Not applicable; this is a passing check.
+FINDING CORRECTION: None.
