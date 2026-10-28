@@ -404,15 +404,33 @@ def boundary_fingerprint(workspace: Path, role: str, read_paths,
     return digest_bytes(json.dumps(payload, sort_keys=True).encode())
 
 
-def saved_answer(workspace: Path, parser=None) -> str:
+def saved_answer(workspace: Path, parser=None, assemble: bool = False) -> str:
     """The last saved record that carries a complete answer.
 
     A task that ran out of time still saved its records. The last one that
     parses as an answer is what the agent delivered; the caller decides whether
     a partial delivery counts (an idea does, a verdict does not).
+
+    With ``assemble`` the records are joined in order and the parser is tried
+    on the whole of them: a task that delivered its answer one block at a time
+    (one proposal per record) did deliver the answer. The flag is not used for
+    a verdict, where a stage record must never become the final judgement.
     """
     path = Path(workspace) / PROGRESS_FILE_NAME
-    for record in reversed(progress_server.read_records(path)):
+    records = progress_server.read_records(path)
+    if assemble and parser is not None and records:
+        # A task that delivered its answer one block at a time did deliver the
+        # answer: the blocks are joined in the order they were saved.
+        joined = "\n\n".join(str(record.get("content", "")) for record in records
+                             if str(record.get("content", "")).strip())
+        if joined:
+            try:
+                parser(joined)
+            except Exception:                              # noqa: BLE001
+                pass
+            else:
+                return joined
+    for record in reversed(records):
         content = str(record.get("content", "")).strip()
         if not content:
             continue
@@ -423,6 +441,15 @@ def saved_answer(workspace: Path, parser=None) -> str:
         except Exception:                                  # noqa: BLE001
             continue
         return content
+    if assemble and parser is not None and records:
+        joined = "\n\n".join(str(record.get("content", "")) for record in records
+                             if str(record.get("content", "")).strip())
+        if joined:
+            try:
+                parser(joined)
+            except Exception:                              # noqa: BLE001
+                return ""
+            return joined
     return ""
 
 

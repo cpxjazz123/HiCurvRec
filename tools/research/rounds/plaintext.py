@@ -153,94 +153,44 @@ def parse_ideas(text: str) -> dict:
     return {"ideas": ideas}
 
 
-SCORE_KEYS = ("SCORE", "SCOPE", "RATIONALE", "EVIDENCE", "OBJECTION",
-              "COUNTEREXAMPLE", "NOTE")
-
-#: The rubric's dimensions, read from the policy file: the prompt, the parser
-#: and the matrix must agree exactly (Issue #122).
-from . import rubric as _rubric
-
-_RUBRIC = _rubric.load_rubric()
-_SCORE_DIMENSIONS = tuple(_RUBRIC["dimension_names"])
+RANK_KEYS = ("RANK",)
 
 
-def parse_scores(text: str) -> dict:
-    """Read one scorer's grades.
+def parse_ranks(text: str) -> dict:
+    """Read one reviewer's ranking of the proposals.
 
-    ``SCORE: <idea_id> | novelty=4 | feasibility=5 ...`` gives the numbers and
-    ``RATIONALE: <idea_id>`` gives the reason for the idea it follows.
+    ``RANK: <idea_id> | position=<n> | reason=<why>`` places a proposal. The
+    positions must be a permutation of 1..N: a missing proposal, a repeated one
+    or a tie is not a ranking.
     """
-    fields = parse_fields(text, SCORE_KEYS)
-    scores: list[dict] = []
-    rationales: dict[str, str] = {}
-    scopes: dict[str, dict] = {}
-    evidence: dict[str, list] = {}
-    objections: dict[str, str] = {}
-    counterexamples: dict[str, str] = {}
+    fields = parse_fields(text, RANK_KEYS)
+    ranking = []
     for name, value in fields:
-        if name == "EVIDENCE":
-            head, _, rest = value.partition("|")
-            identifier = head.strip()
-            if identifier:
-                evidence[identifier] = [item.strip() for item in rest.replace(",", " ").split()
-                                        if item.strip()]
+        if name != "RANK":
             continue
-        if name == "OBJECTION":
-            head, _, rest = value.partition("|")
-            if head.strip():
-                objections[head.strip()] = rest.strip() or value.strip()
+        parts = [part.strip() for part in value.split("|")]
+        identifier = parts[0].strip()
+        if not identifier:
             continue
-        if name == "COUNTEREXAMPLE":
-            head, _, rest = value.partition("|")
-            if head.strip():
-                counterexamples[head.strip()] = rest.strip() or value.strip()
-            continue
-        if name == "SCOPE":
-            parts = [part.strip() for part in value.split("|")]
-            identifier = parts[0].strip()
-            verdict = parts[1].strip().upper() if len(parts) > 1 else ""
-            reason = parts[2] if len(parts) > 2 else ""
-            if identifier:
-                scopes[identifier] = {"verdict": verdict, "reason": reason}
-            continue
-        if name == "SCORE":
-            parts = [part.strip() for part in value.split("|")]
-            identifier = parts[0].strip()
-            if not identifier:
-                continue
-            numbers: dict[str, float] = {}
-            for part in parts[1:]:
-                if "=" not in part:
-                    continue
-                key, _, raw = part.partition("=")
-                key = key.strip().lower().replace(" ", "_")
+        position = None
+        reason = ""
+        for part in parts[1:]:
+            key, _, raw = part.partition("=")
+            key = key.strip().lower()
+            if key == "position":
                 try:
-                    numbers[key] = float(raw.strip())
+                    position = int(raw.strip())
                 except ValueError:
-                    continue
-            scores.append({"idea_id": identifier, "scores": numbers})
-        elif name == "RATIONALE":
-            head, _, rest = value.partition("|")
-            identifier = head.strip()
-            if identifier:
-                rationales[identifier] = rest.strip() or value.strip()
-    for entry in scores:
-        entry["rationale"] = rationales.get(entry["idea_id"], "")
-        scope = scopes.get(entry["idea_id"])
-        entry["scope_verdict"] = (scope or {}).get("verdict", "")
-        entry["scope_reason"] = (scope or {}).get("reason", "")
-        entry["evidence_ids"] = evidence.get(entry["idea_id"], [])
-        entry["objection"] = objections.get(entry["idea_id"], "")
-        entry["counterexample"] = counterexamples.get(entry["idea_id"], "")
-        entry["missing_dimensions"] = [dimension for dimension in _SCORE_DIMENSIONS
-                                       if dimension not in entry["scores"]]
-        if not entry["rationale"]:
-            # A scorer that ran out of words still gave a usable number; the gap
-            # is recorded instead of throwing the whole report away.
-            entry["rationale_missing"] = True
-    if not scores:
-        raise PlainTextError("the answer holds no score line")
-    return {"scores": scores}
+                    position = None
+            elif key == "reason":
+                reason = raw.strip()
+        ranking.append({"idea_id": identifier, "position": position,
+                         "reason": reason})
+    if not ranking:
+        raise PlainTextError("the answer holds no rank line")
+    ranking.sort(key=lambda entry: (entry["position"] is None, entry["position"] or 0,
+                                    entry["idea_id"]))
+    return {"ranking": ranking}
 
 
 VERIFY_KEYS = ("VERDICT", "CHECK", "CHECK VERDICT", "EXERCISED PATH",
@@ -406,21 +356,6 @@ def render_findings(findings: list) -> str:
 
 
 PAIRWISE_KEYS = ("WINNER", "FIRST LISTED", "ARGUMENT", "FAILURE RISK")
-
-
-def parse_pairwise(text: str) -> dict:
-    """Read one reviewer's A-vs-B comparison."""
-    fields = parse_fields(text, PAIRWISE_KEYS)
-    winner = _first(fields, "WINNER").strip()
-    if not winner:
-        raise PlainTextError("the comparison names no winner")
-    return {"winner": winner,
-            "first_listed": _first(fields, "FIRST LISTED").strip(),
-            "argument": _first(fields, "ARGUMENT").strip(),
-            "failure_risk": _first(fields, "FAILURE RISK").strip()}
-
-
-REBUTTAL_KEYS = ("CHANGE", "UNCHANGED", "REMAINING")
 
 
 def parse_rebuttal(text: str) -> dict:

@@ -126,12 +126,12 @@ class ScopeGateTests(unittest.TestCase):
             ("agent2", {"ideas": [_coupled(idea_id="c", title="gamma")]}),
             ("agent3", {"ideas": [_coupled(idea_id="d", title="delta")]}),
         ])
-        reports = []
-        for scorer in ("s1", "s2", "s3"):
-            scores = [{"idea_id": idea["idea_id"],
-                       "scores": {dimension: 5 for dimension in scoring_module.DIMENSIONS},
-                       "rationale": "it looks strong"} for idea in ideas]
-            reports.append({"scorer": scorer, "scores": scores})
+        order = [idea["idea_id"] for idea in ideas]
+        reports = [{"reviewer": reviewer,
+                    "ranking": [{"idea_id": identifier, "position": position,
+                                 "reason": "the reviewers rank it here"}
+                                for position, identifier in enumerate(order, start=1)]}
+                   for reviewer in ("s1", "s2", "s3")]
         matrix = scoring_module.build_matrix(ideas, reports)
         for row in matrix["rows"]:
             if row["idea_id"] == "a":
@@ -149,21 +149,18 @@ class ScopeGateTests(unittest.TestCase):
             ("agent2", {"ideas": [_coupled(idea_id="b", title="beta")]}),
             ("agent3", {"ideas": [_coupled(idea_id="c", title="gamma")]}),
         ])
-        reports = []
-        for scorer in ("s1", "s2", "s3"):
-            scores = [{"idea_id": idea["idea_id"],
-                       "scores": {dimension: 4 for dimension in scoring_module.DIMENSIONS},
-                       "rationale": "fine",
-                       "scope_verdict": "IN_SCOPE" if scorer != "s2" else "OUT_OF_SCOPE",
-                       "scope_reason": "the coupling looks weak" if scorer == "s2" else ""}
-                      for idea in ideas]
-            reports.append({"scorer": scorer, "scores": scores})
+        order = [idea["idea_id"] for idea in ideas]
+        reports = [{"reviewer": reviewer,
+                    "ranking": [{"idea_id": identifier, "position": position,
+                                 "reason": "the reviewers rank it here"}
+                                for position, identifier in enumerate(order, start=1)]}
+                   for reviewer in ("s1", "s2", "s3")]
         matrix = scoring_module.build_matrix(ideas, reports)
         row = [entry for entry in matrix["rows"] if entry["idea_id"] == "a"][0]
-        # One reviewer's label does not decide the idea: the proposal's own
-        # content does, and the disagreement is recorded.
+        # The scope decision is the proposal's own content, and the reason is
+        # recorded with it: a reviewer has no label to impose.
         self.assertEqual(row["scope_verdict"], "IN_SCOPE")
-        self.assertEqual([entry["scorer"] for entry in row["scope_disagreements"]], ["s2"])
+        self.assertEqual(row["scope_decision_basis"].split(":")[0], "proposal content")
 
     def test_an_out_of_scope_idea_is_never_the_fallback(self):
         ideas = ideas_module.collect_ideas([
@@ -171,17 +168,12 @@ class ScopeGateTests(unittest.TestCase):
             ("agent2", {"ideas": [_coupled(idea_id="b", title="beta")]}),
             ("agent3", {"ideas": [_coupled(idea_id="c", title="gamma")]}),
         ])
-        reports = []
-        for scorer in ("s1", "s2", "s3"):
-            scores = []
-            for idea in ideas:
-                if idea["idea_id"] == "a":
-                    values = {dimension: 5 for dimension in scoring_module.DIMENSIONS}
-                else:
-                    values = {dimension: 1 for dimension in scoring_module.DIMENSIONS}
-                scores.append({"idea_id": idea["idea_id"], "scores": values,
-                               "rationale": "r"})
-            reports.append({"scorer": scorer, "scores": scores})
+        order = [idea["idea_id"] for idea in ideas]
+        reports = [{"reviewer": reviewer,
+                    "ranking": [{"idea_id": identifier, "position": position,
+                                 "reason": "the reviewers rank it here"}
+                                for position, identifier in enumerate(order, start=1)]}
+                   for reviewer in ("s1", "s2", "s3")]
         matrix = scoring_module.build_matrix(ideas, reports)
         selection = scoring_module.select(matrix)
         self.assertEqual([entry["idea_id"] for entry in selection["selected"]], ["a"])
@@ -313,12 +305,6 @@ class StateDistinctionTests(unittest.TestCase):
         summary = pipeline_module.summary(state)
         self.assertEqual(summary["agent_errors"], 1)
         self.assertEqual(summary["blocked"], 0)
-
-
-if __name__ == "__main__":
-    unittest.main()
-
-
 class DigestLocationTests(unittest.TestCase):
     """A tree's digest does not depend on where the tree is filed."""
 
@@ -734,35 +720,33 @@ class OneMechanismPerRoundTests(unittest.TestCase):
         ])
 
     def test_the_rule_selects_one_mechanism_even_when_several_qualify(self):
+        """A round keeps one mechanism even when several are ranked highly."""
         ideas = self._round_ideas()
-        reports = []
-        for scorer, base in (("s1", 5), ("s2", 4), ("s3", 4)):
-            reports.append({"scorer": scorer, "scores": [
-                {"idea_id": idea["idea_id"],
-                 "scores": {dimension: base for dimension in scoring_module.DIMENSIONS},
-                 "rationale": "qualified"} for idea in ideas]})
+        order = [idea["idea_id"] for idea in ideas]
+        reports = [{"reviewer": reviewer,
+                    "ranking": [{"idea_id": identifier, "position": position,
+                                 "reason": "the reviewers rank it here"}
+                                for position, identifier in enumerate(order, start=1)]}
+                   for reviewer in ("s1", "s2", "s3")]
         matrix = scoring_module.build_matrix(ideas, reports)
         selection = scoring_module.select(matrix)
         self.assertEqual(len(selection["selected"]), 1)
         self.assertFalse(selection["selection_is_multiple"])
         self.assertTrue(selection["rejected"])
-
-    def test_the_best_qualified_mechanism_is_the_one_kept(self):
+    def test_the_best_placed_mechanism_is_the_one_kept(self):
+        """The proposal the reviewers place first is the one that is kept."""
         ideas = self._round_ideas()
-        reports = []
-        for scorer in ("s1", "s2", "s3"):
-            scores = []
-            for idea in ideas:
-                value = 5 if idea["idea_id"] == "c" else 2
-                scores.append({"idea_id": idea["idea_id"],
-                               "scores": {dimension: value
-                                          for dimension in scoring_module.DIMENSIONS},
-                               "rationale": "r"})
-            reports.append({"scorer": scorer, "scores": scores})
+        identifiers = [idea["idea_id"] for idea in ideas]
+        best = "c" if "c" in identifiers else identifiers[0]
+        order = [best] + [identifier for identifier in identifiers if identifier != best]
+        reports = [{"reviewer": reviewer,
+                    "ranking": [{"idea_id": identifier, "position": position,
+                                 "reason": "the reviewers rank it here"}
+                                for position, identifier in enumerate(order, start=1)]}
+                   for reviewer in ("s1", "s2", "s3")]
         matrix = scoring_module.build_matrix(ideas, reports)
         selection = scoring_module.select(matrix)
-        self.assertEqual([entry["idea_id"] for entry in selection["selected"]], ["c"])
-
+        self.assertEqual([entry["idea_id"] for entry in selection["selected"]], [best])
     def test_the_single_mechanism_still_has_to_carry_its_own_implementation(self):
         """The round is not finished when the mechanism is selected."""
         with tempfile.TemporaryDirectory() as work:
@@ -773,28 +757,38 @@ class OneMechanismPerRoundTests(unittest.TestCase):
             self.assertEqual(pipeline_module.summary(state)["step"], "implementation")
 
 
-class ScoreDimensionTests(unittest.TestCase):
-    """The matrix must aggregate exactly the dimensions the scorers are asked for."""
+class RankAggregateTests(unittest.TestCase):
+    """The aggregate must be exactly the ranks the reviewers gave."""
 
-    def test_the_matrix_dimensions_match_the_scoring_contract(self):
+    def test_the_prompt_and_the_parser_agree_on_the_ranking(self):
+        from tools.research.rounds import agents as agent_contracts
         from tools.research.rounds import plaintext as plaintext_module
-        self.assertEqual(tuple(scoring_module.DIMENSIONS),
-                         tuple(plaintext_module._SCORE_DIMENSIONS))
+        self.assertIn("RANK:", agent_contracts.RANK_PROMPT)
+        parsed = plaintext_module.parse_ranks(
+            "RANK: a | position=1 | reason=first\nRANK: b | position=2 | reason=second\n")
+        self.assertEqual([entry["idea_id"] for entry in parsed["ranking"]], ["a", "b"])
 
-    def test_every_scored_dimension_reaches_the_aggregate(self):
+    def test_every_reviewers_rank_reaches_the_aggregate(self):
         ideas = ideas_module.collect_ideas([
             ("agent1", {"ideas": [_coupled(idea_id="a")]}),
             ("agent2", {"ideas": [_coupled(idea_id="b", title="beta")]}),
             ("agent3", {"ideas": [_coupled(idea_id="c", title="gamma")]}),
         ])
-        reports = []
-        for scorer, value in (("s1", 3), ("s2", 4), ("s3", 5)):
-            reports.append({"scorer": scorer, "scores": [
-                {"idea_id": idea["idea_id"],
-                 "scores": {dimension: value for dimension in scoring_module.DIMENSIONS},
-                 "rationale": "r"} for idea in ideas]})
+        order = [idea["idea_id"] for idea in ideas]
+        reports = [{"reviewer": reviewer,
+                    "ranking": [{"idea_id": identifier, "position": position,
+                                 "reason": "the reviewers rank it here"}
+                                for position, identifier in enumerate(order, start=1)]}
+                   for reviewer in ("s1", "s2", "s3")]
         matrix = scoring_module.build_matrix(ideas, reports)
         row = matrix["rows"][0]
-        self.assertEqual(list(row["medians"].keys()), list(scoring_module.DIMENSIONS))
-        self.assertTrue(all(value is not None for value in row["medians"].values()))
-        self.assertEqual(row["weighted_score"], 4.0)
+        self.assertEqual(sorted(row["per_reviewer_position"]), ["s1", "s2", "s3"])
+        # Every reviewer places this proposal first: 1 + 1 + 1.
+        self.assertEqual(row["total_rank"], 3)
+        self.assertEqual(row["mean_rank"], 1.0)
+        self.assertEqual(row["first_places"], 3)
+        self.assertTrue(row["per_reviewer_reason"]["s1"])
+
+
+if __name__ == "__main__":
+    unittest.main()

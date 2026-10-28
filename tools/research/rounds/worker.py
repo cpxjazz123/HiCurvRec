@@ -109,10 +109,30 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     # the agent answers in prose and writes no file.
     destination = Path(root) / "agents" / task_id / output_name
     workspace = Path(root) / "agents" / task_id
-    # The boundary this task would run under. An answer is only reusable when it
-    # was produced under the same boundary: a policy change (a wider view, a
-    # different sandbox, a new rule) makes the old answer unusable, and the
-    # agent runs again instead.
+    if str(role) in READ_ONLY_ROLES:
+        # A read-only role has no write tool, and the permission object now
+        # enforces that. The answer is its reply: the runner reads the session
+        # stream and writes the file itself.
+        prompt = (prompt + "\n\nYour session has no write tool and no shell: your reply IS "
+                  "the answer. Print the complete answer in exactly the format above, "
+                  "and print nothing else.")
+    else:
+        prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
+                  " (this absolute path). Write nowhere else.")
+    prompt = (prompt + "\n\nPROGRESS: record every meaningful step with the "
+              "append_progress tool. It is your only write: it appends one stage "
+              "record to your own progress file, and nothing else can write there "
+              "or read your file back as a verdict. Each record says the goal of "
+              "the check, what you read, what you observed, where the evidence "
+              "is, your short reasoning, and what is still open. Append a "
+              "correction when you overturn an earlier conclusion. Append each "
+              "result you produce as its own record as soon as you have it (one "
+              "answer block per record), and append the complete answer as the "
+              "last record: a task that ends early leaves the framework reading "
+              "these records, so each one has to stand on its own.")
+    # The boundary this task would run under, computed from the FINAL prompt:
+    # the fingerprint has to be the one the executor will write, or no answer is
+    # ever reusable and every restart pays for every agent again.
     expected_boundary = boundary_fingerprint(workspace, role, read_paths or [],
                                              allow_shell, allow_write, prompt,
                                              settings.AGENT_MODEL)
@@ -138,6 +158,11 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
             report = parser(destination.read_text(encoding="utf-8", errors="replace"))
             report["boundary_version"] = policy.BOUNDARY_VERSION
             report["boundary_sha256"] = boundary
+            report["progress_file"] = str(workspace / runner.PROGRESS_FILE_NAME)
+            report["progress_records"] = progress_server.read_records(
+                report["progress_file"])
+            report["progress_count"] = len(report["progress_records"])
+            report["cached"] = True
             return report
         # Keep the unverified answer as evidence and let the agent run again.
         stale = workspace / "unverified"
@@ -145,27 +170,6 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
         destination.replace(stale / (output_name + ".unverified"))
         if receipt_path.is_file():
             receipt_path.replace(stale / "execution.json.unverified")
-    if str(role) in READ_ONLY_ROLES:
-        # A read-only role has no write tool, and the permission object now
-        # enforces that. The answer is its reply: the runner reads the session
-        # stream and writes the file itself.
-        prompt = (prompt + "\n\nYour session has no write tool and no shell: your reply IS "
-                  "the answer. Print the complete answer in exactly the format above, "
-                  "and print nothing else.")
-    else:
-        prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
-                  " (this absolute path). Write nowhere else.")
-    prompt = (prompt + "\n\nPROGRESS: record every meaningful step with the "
-              "append_progress tool. It is your only write: it appends one stage "
-              "record to your own progress file, and nothing else can write there "
-              "or read your file back as a verdict. Each record says the goal of "
-              "the check, what you read, what you observed, where the evidence "
-              "is, your short reasoning, and what is still open. Append a "
-              "correction when you overturn an earlier conclusion. Append each "
-              "result you produce as its own record as soon as you have it (one "
-              "answer block per record), and append the complete answer as the "
-              "last record: a task that ends early leaves the framework reading "
-              "these records, so each one has to stand on its own.")
     if deadline_seconds is None:
         deadline_seconds = settings.AGENT_DEADLINE_SECONDS
     if allowed_roots is None:
@@ -204,8 +208,11 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
         text = answer.read_text(encoding="utf-8", errors="replace").strip()
     if not text:
         # The task ended before it replied. The records it saved are what it
-        # delivered: the last one that carries a complete answer is taken.
-        text = runner.saved_answer(workspace, parser)
+        # delivered: the last one that carries a complete answer is taken. A
+        # scorer that delivered one block per record is assembled; a verdict is
+        # not, because a stage record is never the final judgement.
+        text = runner.saved_answer(workspace, parser,
+                                   assemble=(parser is plaintext.parse_ranks))
         answer_from_progress = bool(text)
     if not text:
         if partial:
@@ -215,6 +222,13 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
                 " stage records are kept as evidence")
         raise pipeline_module.RoundError("agent " + task_id + " wrote no " + output_name)
     report = parser(text)
+    if isinstance(report, dict) and isinstance(report.get("scores"), list):
+        # The records of several attempts are joined in order, so an idea can
+        # appear more than once; the latest judgement is the one that stands.
+        latest = {}
+        for entry in report["scores"]:
+            latest[str(entry.get("idea_id"))] = entry
+        report["scores"] = list(latest.values())
     report["boundary_version"] = policy.BOUNDARY_VERSION
     report["boundary_sha256"] = expected_boundary
     report["receipt"] = str(receipt)
@@ -375,17 +389,6 @@ def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
         if not exc.results:
             raise
         return exc.results
-
-
-def _rubric_text() -> str:
-    """The rubric as the reviewers read it: names, weights and anchored meanings."""
-    rubric = scoring_module.RUBRIC
-    lines = []
-    for entry in rubric["dimensions"]:
-        lines.append("  " + entry["name"] + " (" + str(int(entry["weight"])) + "%)")
-        for anchor in sorted(entry["anchors"]):
-            lines.append("    " + anchor + ": " + entry["anchors"][anchor])
-    return "\n".join(lines)
 
 
 def _run_probe_subprocess(idea: dict, *, repo: Path, budget: float,
@@ -653,37 +656,39 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None,
     evidence_text = "\n\n".join(
         "### " + identifier + "\n" + evidence_module.render_bundle(item)
         for identifier, item in bundle.items())
-    def score(index):
+    def rank(index):
         task_id = "scoring_" + str(index)
-        prompt = (agent_contracts.SCORE_PROMPT.format(
+        prompt = (agent_contracts.RANK_PROMPT.format(
             objective=agent_contracts.RESEARCH_OBJECTIVE,
             scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
             agent_contracts.EXPERIMENT_POLICY,
             rubric_version=scoring_module.RUBRIC["version"],
-            rubric=_rubric_text()) +
-            "\n\nThe proposals, all of them:\n" + payload +
-            "\n\nThe frozen evidence bundle:\n" + evidence_text)
-        report = _review_with_retry(root, task_id, prompt)
-        report.setdefault("scorer", task_id)
+            proposals=payload,
+            evidence=evidence_text))
+        report = _rank_with_retry(root, task_id, prompt)
+        report.setdefault("reviewer", task_id)
         report["rubric_version"] = scoring_module.RUBRIC["version"]
         report["rubric_sha256"] = scoring_module.RUBRIC["sha256"]
         return report
 
     try:
         reports = _run_agents_concurrently(
-            [tuple([index]) for index in range(1, SCORERS + 1)], score)
+            [tuple([index]) for index in range(1, SCORERS + 1)], rank)
     except AgentPhaseIncomplete as exc:
-        # A reviewer that ran out of its budget did not review. The reviews that
-        # did arrive are kept: the matrix shows the disagreement, and the rule
-        # asks for two reviewers above the threshold, not for three.
+        # A reviewer that ran out of its budget did not rank. The rankings that
+        # did arrive are kept: the aggregate is over the reviewers who answered.
         reports = [report for report in exc.results
                    if not (report.get("partial") or report.get("timed_out"))]
         if len(reports) < MIN_SCORERS_FOR_A_MATRIX:
             raise
-    finalists = _finalist_ids(ideas, reports)
-    comparisons = run_pairwise(root, ideas, finalists, evidence_text) if len(finalists) >= 2 else []
-    return {"reports": reports, "bundles": bundle, "comparisons": comparisons,
-            "finalists": finalists}
+    # The reviewers rank; the aggregate decides. There is no score, no threshold
+    # and no head-to-head phase: the proposal the reviewers place best in total
+    # is the round's mechanism.
+    order = _rank_order(ideas, reports)
+    return {"reports": reports, "bundles": bundle, "comparisons": [],
+            "finalists": order,
+            "finalist_scores": {identifier: entry["total_rank"]
+                                 for identifier, entry in order.items()}}
 
 
 HARD_OBJECTION_TERMS = ("cancel", "identity", "leak", "dimension", "degenerat",
@@ -749,13 +754,13 @@ def _one_bounded_revision(directory: Path, agent_root: Path, repo: Path, state: 
     return state, reports, outcome
 
 
-def _review_with_retry(root: Path, task_id: str, prompt: str) -> dict:
-    """One review, and one bounded retry if its schema is broken.
+def _rank_with_retry(root: Path, task_id: str, prompt: str) -> dict:
+    """One ranking, and one bounded retry if its schema is broken.
 
-    The rubric schema is strict on purpose: a renamed, unknown or missing field
-    is an error, not a partial average. A reviewer that breaks it is told what
-    was wrong and asked once more, with a fresh workspace, so a stale answer can
-    never be reused.
+    The ranking schema is strict on purpose: a missing proposal, a repeated one
+    or a tied position is an error, not a partial average. A reviewer that
+    breaks it is told what was wrong and asked once more, with a fresh
+    workspace, so a stale answer can never be reused.
     """
     attempt = 0
     last_error = None
@@ -787,70 +792,32 @@ def _review_with_retry(root: Path, task_id: str, prompt: str) -> dict:
         run_id = task_id if attempt == 0 else task_id + "_retry1"
         try:
             report = _run_agent(root, run_id, prompt + suffix, name,
-                                plaintext.parse_scores, role="score",
+                                plaintext.parse_ranks, role="score",
                                 read_paths=[],
                                 allowed_roots=_round_roots(root),
                                 deadline_seconds=max(1, int(remaining)))
-            scoring_module.validate_report(report, scorer=task_id)
+            scoring_module.validate_report(report, reviewer=task_id)
             return report
         except (scoring_module.ScoreError, pipeline_module.RoundError) as exc:
             last_error = exc
             attempt += 1
-    raise pipeline_module.RoundError("reviewer " + task_id + " broke the rubric schema "
+    raise pipeline_module.RoundError("reviewer " + task_id + " broke the ranking schema "
                                      "twice: " + str(last_error))
 
 
-def _finalist_ids(ideas: list, reports: list) -> list:
-    """The top few proposals by weighted score, computed without mutating state."""
-    try:
-        matrix = scoring_module.build_matrix(ideas, reports)
-    except scoring_module.ScoreError:
-        return []
-    rule = scoring_module.DEFAULT_SELECTION
-    rows = [row for row in matrix["rows"] if row.get("weighted_score") is not None]
-    rows.sort(key=lambda row: (-(row["weighted_score"] or 0.0), row["idea_id"]))
-    return [row["idea_id"] for row in rows[:rule["pairwise_finalists"]]]
+def _rank_order(ideas: list, reports: list) -> dict:
+    """The aggregate order of the proposals: the reviewers' ranks added up.
 
-
-def run_pairwise(root: Path, ideas: list, finalists: list, evidence_text: str) -> list:
-    """Order-balanced A-vs-B comparisons of the finalists, one per reviewer."""
-    by_id = {idea["idea_id"]: idea for idea in ideas}
-    pairs = []
-    for index, (left, right) in enumerate(itertools.combinations(finalists, 2)):
-        # Balance the printed order across the three reviewers.
-        first, second = (left, right) if index % 2 == 0 else (right, left)
-        pairs.append((first, second))
-        comparisons = []
-        try:
-            for index in range(1, SCORERS + 1):
-                task_id = "pairwise_" + str(index)
-                blocks = []
-                for position, (first, second) in enumerate(pairs):
-                    prompt = agent_contracts.PAIRWISE_PROMPT.format(
-                        rubric_version=scoring_module.RUBRIC["version"],
-                        rubric=_rubric_text(),
-                        first=plaintext.render_idea(by_id[first]),
-                        second=plaintext.render_idea(by_id[second]),
-                        evidence=evidence_text)
-                    report = _run_agent(root, task_id + "_" + str(position), prompt,
-                                        "pairwise.txt", plaintext.parse_pairwise, role="score",
-                                        read_paths=[],
-                                        allowed_roots=_round_roots(root))
-                    report["reviewer"] = task_id
-                    report["first"] = first
-                    report["second"] = second
-                    comparisons.append(report)
-                    blocks.append(report)
-                if not blocks:
-                    continue
-        except AgentPhaseIncomplete as exc:
-            # A reviewer that ran out of its budget did not compare. The
-            # comparisons that did arrive are kept.
-            comparisons = [report for report in exc.results
-                           if not (report.get("partial") or report.get("timed_out"))]
-            if len(comparisons) < MIN_SCORERS_FOR_A_MATRIX:
-                raise
-    return comparisons
+    The proposal the reviewers place first most often, and in total least far
+    down, is the round's mechanism. The order is returned as a mapping from the
+    idea id to its row, already sorted.
+    """
+    matrix = scoring_module.build_matrix(ideas, reports)
+    rows = sorted(matrix["rows"],
+                  key=lambda row: (row.get("total_rank", 0),
+                                   -row.get("first_places", 0),
+                                   row["idea_id"]))
+    return {row["idea_id"]: row for row in rows}
 
 
 def run_rebuttal(root: Path, idea: dict, objection: str, counterexample: str,
@@ -1084,6 +1051,7 @@ def phase_scoring(root: Path, round_id: str, *, log=print) -> dict:
             "decision_hash": state.get("decision_hash"),
             "scorers": len(reports),
             "finalists": outcome.get("finalists"),
+            "finalist_scores": outcome.get("finalist_scores"),
             "selected": [entry["idea_id"] for entry in selection.get("selected", [])],
             "backups": [entry["idea_id"] for entry in selection.get("backups", [])],
             "rejected": [(entry["idea_id"], entry.get("status"))

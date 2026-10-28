@@ -56,10 +56,15 @@ def _idea(identifier, title="t", change="c", spec="s", **overrides):
     return idea
 
 
-def _scores(identifier, value):
-    return {"idea_id": identifier,
-            "scores": {dimension: value for dimension in scoring_module.DIMENSIONS},
-            "rationale": "r", "uncertainties": "u"}
+def _rank(identifier, position, reason="the evidence puts it here"):
+    """One proposal's place in a reviewer's ranking."""
+    return {"idea_id": identifier, "position": position, "reason": reason}
+
+
+def _ranking(*identifiers):
+    """A reviewer's ranking: the identifiers in the order given."""
+    return [_rank(identifier, position)
+            for position, identifier in enumerate(identifiers, start=1)]
 
 
 class IdeaTests(unittest.TestCase):
@@ -104,34 +109,34 @@ class ScoringTests(unittest.TestCase):
             ("agent2", {"ideas": [_idea("c", title="gamma", change="3")]}),
         ])
 
-    def test_a_scorer_that_skips_an_idea_is_rejected(self):
+    def test_a_reviewer_that_skips_an_idea_is_rejected(self):
         reports = [
-            {"scorer": "s1", "scores": [_scores("a", 4), _scores("b", 4), _scores("c", 4)]},
-            {"scorer": "s2", "scores": [_scores("a", 4), _scores("b", 4)]},
-            {"scorer": "s3", "scores": [_scores("a", 4), _scores("b", 4), _scores("c", 4)]},
+            {"reviewer": "s1", "ranking": _ranking("a", "b", "c")},
+            {"reviewer": "s2", "ranking": _ranking("a", "b")},
+            {"reviewer": "s3", "ranking": _ranking("a", "b", "c")},
         ]
         with self.assertRaises(scoring_module.ScoreError):
             scoring_module.build_matrix(self.ideas, reports)
 
-    def test_the_matrix_carries_weighted_medians_and_disagreement(self):
+    def test_the_matrix_carries_the_aggregate_order(self):
         reports = [
-            {"scorer": "s1", "scores": [_scores("a", 5), _scores("b", 2), _scores("c", 4)]},
-            {"scorer": "s2", "scores": [_scores("a", 4), _scores("b", 4), _scores("c", 4)]},
-            {"scorer": "s3", "scores": [_scores("a", 1), _scores("b", 4), _scores("c", 4)]},
+            {"reviewer": "s1", "ranking": _ranking("a", "b", "c")},
+            {"reviewer": "s2", "ranking": _ranking("b", "a", "c")},
+            {"reviewer": "s3", "ranking": _ranking("a", "b", "c")},
         ]
         matrix = scoring_module.build_matrix(self.ideas, reports)
         rows = {row["idea_id"]: row for row in matrix["rows"]}
-        self.assertEqual(rows["b"]["medians"]["novelty"], 4)
-        self.assertEqual(rows["a"]["max_disagreement"], 4.0)
+        self.assertEqual(rows["a"]["total_rank"], 1 + 2 + 1)
+        self.assertEqual(rows["a"]["first_places"], 2)
+        self.assertEqual(rows["a"]["mean_rank"], round(4 / 3, 4))
         self.assertEqual(len(matrix["reviewers"]), 3)
-        self.assertIn("weighted_score", matrix["rows"][0])
 
-    def test_one_agent_cannot_veto_an_idea(self):
-        # Two scorers like it, one dislikes it: the median keeps it eligible.
+    def test_one_reviewer_cannot_veto_an_idea(self):
+        # Two reviewers place it first, one places it last: it still wins.
         reports = [
-            {"scorer": "s1", "scores": [_scores("a", 4), _scores("b", 1), _scores("c", 1)]},
-            {"scorer": "s2", "scores": [_scores("a", 4), _scores("b", 1), _scores("c", 1)]},
-            {"scorer": "s3", "scores": [_scores("a", 1), _scores("b", 1), _scores("c", 1)]},
+            {"reviewer": "s1", "ranking": _ranking("a", "b", "c")},
+            {"reviewer": "s2", "ranking": _ranking("a", "b", "c")},
+            {"reviewer": "s3", "ranking": _ranking("c", "b", "a")},
         ]
         matrix = scoring_module.build_matrix(self.ideas, reports)
         selection = scoring_module.select(matrix)
@@ -139,7 +144,7 @@ class ScoringTests(unittest.TestCase):
 
     def test_the_selection_keeps_one_mechanism_and_records_the_rejections(self):
         reports = [
-            {"scorer": name, "scores": [_scores("a", 5), _scores("b", 4), _scores("c", 1)]}
+            {"reviewer": name, "ranking": _ranking("a", "b", "c")}
             for name in ("s1", "s2", "s3")
         ]
         selection = scoring_module.select(scoring_module.build_matrix(self.ideas, reports))
@@ -147,21 +152,19 @@ class ScoringTests(unittest.TestCase):
         # One mechanism per exploration: the rest are recorded as rejected.
         self.assertEqual(selected, ["a"])
         self.assertFalse(selection["selection_is_multiple"])
-        # "b" is rejected by the single-mechanism cap, "c" by the score rule.
-        self.assertEqual([entry["idea_id"] for entry in selection["rejected"]], ["c", "b"])
+        self.assertEqual([entry["idea_id"] for entry in selection["rejected"]], ["b", "c"])
         self.assertTrue(selection["rejected"][0]["reasons"])
 
     def test_the_rule_is_explicit_and_configurable(self):
         reports = [
-            {"scorer": name, "scores": [_scores("a", 4), _scores("b", 3), _scores("c", 1)]}
+            {"reviewer": name, "ranking": _ranking("a", "b", "c")}
             for name in ("s1", "s2", "s3")
         ]
         matrix = scoring_module.build_matrix(self.ideas, reports)
         strict = scoring_module.select(matrix, rule={**scoring_module.DEFAULT_SELECTION,
-                                                     "median_threshold": 3.5,
-                                                     "mean_threshold": 3.5})
+                                                    "min_reviewers": 3})
         self.assertEqual([entry["idea_id"] for entry in strict["selected"]], ["a"])
-        self.assertEqual(strict["rule"]["median_threshold"], 3.5)
+        self.assertEqual(strict["rule"]["min_reviewers"], 3)
 
     def test_a_round_with_no_qualified_idea_says_so(self):
         ideas = ideas_module.collect_ideas([
@@ -169,10 +172,9 @@ class ScoringTests(unittest.TestCase):
             ("agent2", {"ideas": [_idea("c", title="gamma")]}),
             ("agent3", {"ideas": [_idea("d", title="delta")]}),
         ])
-        reports = [{"scorer": name, "scores": [
-            {"idea_id": idea["idea_id"],
-             "scores": {dimension: 1 for dimension in scoring_module.DIMENSIONS},
-             "rationale": "weak"} for idea in ideas]} for name in ("s1", "s2", "s3")]
+        reports = [{"reviewer": name, "ranking": _ranking(*[idea["idea_id"]
+                                                            for idea in ideas])}
+                   for name in ("s1",)]
         evaluation = scoring_module.evaluate(ideas, reports)
         self.assertEqual(evaluation["selection"]["status"],
                          scoring_module.STATUS_NO_QUALIFIED)
@@ -195,8 +197,7 @@ class RoundStateTests(unittest.TestCase):
     def test_a_round_moves_from_ideation_to_selection(self):
         state = pipeline_module.load_state(self.directory)
         state = pipeline_module.apply_ideation(state, self._idea_payload())
-        reports = [{"scorer": name, "scores": [_scores("a", 5), _scores("b", 4),
-                                               _scores("c", 4), _scores("d", 2)]}
+        reports = [{"reviewer": name, "ranking": _ranking("a", "b", "c", "d")}
                    for name in ("s1", "s2", "s3")]
         state = pipeline_module.apply_scoring(state, reports)
         pipeline_module.save_state(self.directory, state)
@@ -355,8 +356,8 @@ class CostFeasibilityTests(unittest.TestCase):
             ("agent3", {"ideas": [_idea("c", title="gamma", change="3")]}),
         ])
         ideas[0]["cost_estimate_hours"] = 900.0
-        reports = [{"scorer": name,
-                    "scores": [_scores(idea["idea_id"], 5) for idea in ideas]}
+        order = [idea["idea_id"] for idea in ideas]
+        reports = [{"reviewer": name, "ranking": _ranking(*order)}
                    for name in ("s1", "s2", "s3")]
         matrix = scoring_module.build_matrix(ideas, reports)
         selection = scoring_module.select(matrix)
@@ -443,15 +444,14 @@ class PlainTextContractTests(unittest.TestCase):
         parsed = plaintext.parse_ideas(answer)
         self.assertIn("line two", parsed["ideas"][0]["specification"])
 
-    def test_scores_are_read_from_plain_text(self):
+    def test_a_ranking_is_read_from_plain_text(self):
         from tools.research.rounds import plaintext
-        answer = ("SCORE: a | novelty=4 | scientific_motivation=3 | feasibility=5 | "
-                  "downstream_impact=2 | experimental_distinctness=1\n"
-                  "RATIONALE: a | it is new\n")
-        parsed = plaintext.parse_scores(answer)
-        self.assertEqual(parsed["scores"][0]["idea_id"], "a")
-        self.assertEqual(parsed["scores"][0]["scores"]["novelty"], 4)
-        self.assertEqual(parsed["scores"][0]["rationale"], "it is new")
+        answer = ("RANK: a | position=1 | reason=the evidence puts it first\n"
+                  "RANK: b | position=2 | reason=it comes second\n")
+        parsed = plaintext.parse_ranks(answer)
+        self.assertEqual([entry["idea_id"] for entry in parsed["ranking"]], ["a", "b"])
+        self.assertEqual(parsed["ranking"][0]["position"], 1)
+        self.assertEqual(parsed["ranking"][0]["reason"], "the evidence puts it first")
 
     def test_a_verification_is_read_from_plain_text(self):
         from tools.research.rounds import plaintext
@@ -510,41 +510,37 @@ class PlainTextContractTests(unittest.TestCase):
 class IncompleteAnswerTests(unittest.TestCase):
     """One missing line must not throw away a whole agent answer."""
 
-    def test_a_score_without_a_rationale_is_a_schema_error(self):
+    def test_a_ranking_without_a_reason_is_a_schema_error(self):
         from tools.research.rounds import plaintext
-        answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
-                  "implementability=2 | downstream_potential=1 | experimental_diversity=1\n")
-        parsed = plaintext.parse_scores(answer)
-        self.assertTrue(parsed["scores"][0]["rationale_missing"])
+        answer = "RANK: a | position=1\n"
+        parsed = plaintext.parse_ranks(answer)
+        self.assertEqual(parsed["ranking"][0]["reason"], "")
         with self.assertRaises(scoring_module.ScoreError):
-            scoring_module.validate_report(parsed, scorer="s1")
+            scoring_module.validate_report(parsed, reviewer="s1")
 
-    def test_a_score_without_one_dimension_is_a_schema_error(self):
+    def test_a_ranking_that_skips_a_proposal_is_a_schema_error(self):
         from tools.research.rounds import plaintext
-        answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
-                  "implementability=1 | experimental_distinctness=1\nRATIONALE: a | why\n")
-        parsed = plaintext.parse_scores(answer)
-        self.assertTrue(parsed["scores"][0]["missing_dimensions"])
+        ideas = ideas_module.collect_ideas([
+            ("agent1", {"ideas": [_idea("a", title="alpha", change="1")]}),
+            ("agent2", {"ideas": [_idea("b", title="beta", change="2")]}),
+            ("agent3", {"ideas": [_idea("c", title="gamma", change="3")]}),
+        ])
+        parsed = plaintext.parse_ranks("RANK: a | position=1 | reason=because\n")
         with self.assertRaises(scoring_module.ScoreError):
-            scoring_module.validate_report(parsed, scorer="s1")
+            scoring_module.build_matrix(ideas, [{"reviewer": "s1", "ranking":
+                                                 parsed["ranking"]}])
 
-    def test_a_missing_dimension_never_becomes_a_partial_average(self):
+    def test_a_missing_proposal_never_becomes_a_partial_order(self):
         ideas = ideas_module.collect_ideas([
             ("agent1", {"ideas": [_idea("a", title="alpha", change="1"),
                                  _idea("b", title="beta", change="2")]}),
             ("agent2", {"ideas": [_idea("c", title="gamma", change="3")]}),
             ("agent3", {"ideas": [_idea("d", title="delta", change="4")]}),
         ])
-        dims = scoring_module.DIMENSIONS
-        full = {"scorer": "s1", "scores": [
-            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims},
-             "rationale": "because"} for idea in ideas]}
-        partial = {"scorer": "s2", "scores": [
-            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims if d != dims[0]},
-             "rationale": "because"} for idea in ideas]}
-        third = {"scorer": "s3", "scores": [
-            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims},
-             "rationale": "because"} for idea in ideas]}
+        order = [idea["idea_id"] for idea in ideas]
+        full = {"reviewer": "s1", "ranking": _ranking(*order)}
+        partial = {"reviewer": "s2", "ranking": _ranking(*order[:-1])}
+        third = {"reviewer": "s3", "ranking": _ranking(*order)}
         with self.assertRaises(scoring_module.ScoreError):
             scoring_module.evaluate(ideas, [full, partial, third])
 
@@ -627,15 +623,14 @@ class PlainTextContractTests(unittest.TestCase):
         parsed = plaintext.parse_ideas(answer)
         self.assertIn("line two", parsed["ideas"][0]["specification"])
 
-    def test_scores_are_read_from_plain_text(self):
+    def test_a_ranking_is_read_from_plain_text(self):
         from tools.research.rounds import plaintext
-        answer = ("SCORE: a | novelty=4 | scientific_motivation=3 | feasibility=5 | "
-                  "downstream_impact=2 | experimental_distinctness=1\n"
-                  "RATIONALE: a | it is new\n")
-        parsed = plaintext.parse_scores(answer)
-        self.assertEqual(parsed["scores"][0]["idea_id"], "a")
-        self.assertEqual(parsed["scores"][0]["scores"]["novelty"], 4)
-        self.assertEqual(parsed["scores"][0]["rationale"], "it is new")
+        answer = ("RANK: a | position=1 | reason=the evidence puts it first\n"
+                  "RANK: b | position=2 | reason=it comes second\n")
+        parsed = plaintext.parse_ranks(answer)
+        self.assertEqual([entry["idea_id"] for entry in parsed["ranking"]], ["a", "b"])
+        self.assertEqual(parsed["ranking"][0]["position"], 1)
+        self.assertEqual(parsed["ranking"][0]["reason"], "the evidence puts it first")
 
     def test_a_verification_is_read_from_plain_text(self):
         from tools.research.rounds import plaintext
@@ -689,41 +684,37 @@ class PlainTextContractTests(unittest.TestCase):
 class IncompleteAnswerTests(unittest.TestCase):
     """One missing line must not throw away a whole agent answer."""
 
-    def test_a_score_without_a_rationale_is_a_schema_error(self):
+    def test_a_ranking_without_a_reason_is_a_schema_error(self):
         from tools.research.rounds import plaintext
-        answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
-                  "implementability=2 | downstream_potential=1 | experimental_diversity=1\n")
-        parsed = plaintext.parse_scores(answer)
-        self.assertTrue(parsed["scores"][0]["rationale_missing"])
+        answer = "RANK: a | position=1\n"
+        parsed = plaintext.parse_ranks(answer)
+        self.assertEqual(parsed["ranking"][0]["reason"], "")
         with self.assertRaises(scoring_module.ScoreError):
-            scoring_module.validate_report(parsed, scorer="s1")
+            scoring_module.validate_report(parsed, reviewer="s1")
 
-    def test_a_score_without_one_dimension_is_a_schema_error(self):
+    def test_a_ranking_that_skips_a_proposal_is_a_schema_error(self):
         from tools.research.rounds import plaintext
-        answer = ("SCORE: a | novelty=4 | behavior_problem_meaning=3 | coupling_strength=5 | "
-                  "implementability=1 | experimental_distinctness=1\nRATIONALE: a | why\n")
-        parsed = plaintext.parse_scores(answer)
-        self.assertTrue(parsed["scores"][0]["missing_dimensions"])
+        ideas = ideas_module.collect_ideas([
+            ("agent1", {"ideas": [_idea("a", title="alpha", change="1")]}),
+            ("agent2", {"ideas": [_idea("b", title="beta", change="2")]}),
+            ("agent3", {"ideas": [_idea("c", title="gamma", change="3")]}),
+        ])
+        parsed = plaintext.parse_ranks("RANK: a | position=1 | reason=because\n")
         with self.assertRaises(scoring_module.ScoreError):
-            scoring_module.validate_report(parsed, scorer="s1")
+            scoring_module.build_matrix(ideas, [{"reviewer": "s1", "ranking":
+                                                 parsed["ranking"]}])
 
-    def test_a_missing_dimension_never_becomes_a_partial_average(self):
+    def test_a_missing_proposal_never_becomes_a_partial_order(self):
         ideas = ideas_module.collect_ideas([
             ("agent1", {"ideas": [_idea("a", title="alpha", change="1"),
                                  _idea("b", title="beta", change="2")]}),
             ("agent2", {"ideas": [_idea("c", title="gamma", change="3")]}),
             ("agent3", {"ideas": [_idea("d", title="delta", change="4")]}),
         ])
-        dims = scoring_module.DIMENSIONS
-        full = {"scorer": "s1", "scores": [
-            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims},
-             "rationale": "because"} for idea in ideas]}
-        partial = {"scorer": "s2", "scores": [
-            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims if d != dims[0]},
-             "rationale": "because"} for idea in ideas]}
-        third = {"scorer": "s3", "scores": [
-            {"idea_id": idea["idea_id"], "scores": {d: 4 for d in dims},
-             "rationale": "because"} for idea in ideas]}
+        order = [idea["idea_id"] for idea in ideas]
+        full = {"reviewer": "s1", "ranking": _ranking(*order)}
+        partial = {"reviewer": "s2", "ranking": _ranking(*order[:-1])}
+        third = {"reviewer": "s3", "ranking": _ranking(*order)}
         with self.assertRaises(scoring_module.ScoreError):
             scoring_module.evaluate(ideas, [full, partial, third])
 
@@ -884,37 +875,35 @@ class RepairPlanTests(unittest.TestCase):
 
 
 class ScorerSchemaTests(unittest.TestCase):
-    """The scorer's answer shape: a number per dimension and its own rationale."""
+    """The reviewer's answer shape: one place per proposal and its own reason."""
 
-    def test_a_proposal_without_a_rationale_is_refused_by_name(self):
+    def test_a_proposal_without_a_reason_is_refused_by_name(self):
         from tools.research.rounds import scoring as scoring_module
         from tools.research.rounds import plaintext
 
-        answer = ("SCORE: a | behavior_evidence=3 | geometry_necessity=3 | novelty=2 | "
-                  "downstream_mechanism=3 | falsifiability=3 | implementability=2 | "
-                  "exploration_value=3\n")
-        report = plaintext.parse_scores(answer)
+        answer = "RANK: a | position=1\n"
+        report = plaintext.parse_ranks(answer)
         with self.assertRaises(scoring_module.ScoreError) as caught:
-            scoring_module.validate_report(report, scorer="s1")
-        self.assertIn("RATIONALE", str(caught.exception))
+            scoring_module.validate_report(report, reviewer="s1")
+        self.assertIn("reason", str(caught.exception))
 
-    def test_a_dimension_without_a_number_is_refused_with_the_way_out(self):
+    def test_a_tied_position_is_refused_with_the_way_out(self):
         from tools.research.rounds import scoring as scoring_module
         from tools.research.rounds import plaintext
 
-        answer = ("SCORE: a | behavior_evidence=3 | geometry_necessity=3 | novelty=UNKNOWN | "
-                  "downstream_mechanism=3 | falsifiability=3 | implementability=2 | "
-                  "exploration_value=3\n"
-                  "RATIONALE: a | numbers\n")
-        report = plaintext.parse_scores(answer)
+        answer = ("RANK: a | position=1 | reason=first\n"
+                  "RANK: b | position=1 | reason=also first\n")
+        report = plaintext.parse_ranks(answer)
         with self.assertRaises(scoring_module.ScoreError) as caught:
-            scoring_module.validate_report(report, scorer="s1")
-        self.assertIn("never in the score line", str(caught.exception))
+            scoring_module.validate_report(report, reviewer="s1")
+        self.assertIn("permutation", str(caught.exception))
 
-    def test_the_prompt_says_what_a_block_looks_like(self):
+    def test_the_prompt_says_what_a_ranking_looks_like(self):
         from tools.research.rounds import agents as agent_contracts
 
-        prompt = agent_contracts.SCORE_PROMPT
-        self.assertIn("RATIONALE: <idea_id>", prompt)
-        self.assertIn("UNKNOWN is never a", prompt)
-        self.assertIn("its own rationale", prompt)
+        prompt = agent_contracts.RANK_PROMPT
+        self.assertIn("RANK: <idea_id>", prompt)
+        self.assertIn("position=", prompt)
+        self.assertIn("exactly once", prompt)
+
+

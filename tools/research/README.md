@@ -369,33 +369,32 @@ Stage 3 Recall will improve.
 The probe never rewrites a score. It can lower one: evidence that contradicts a
 hypothesis is evidence, not a promotion.
 
-## Weighted scientific scoring (Issue #122)
+## Ranking and selection (Issue #122)
 
-Selection is not "0–5 scores, unweighted average, highest wins". A round
+The reviewers do not score the proposals: they **rank** them. A round
 
 1. assembles one **frozen evidence bundle** per proposal (behavioural evidence,
    geometric necessity, prior work, the experiment ledger with its comparability
    tags, implementation and cost). A section that cannot be grounded says
    `UNKNOWN`; a literature search that was not run says `NOT_CHECKED`;
-2. has the three independent reviewers score **every** proposal on the seven
-   dimensions of the versioned rubric, with evidence ids, one objection and a
-   counterexample when they claim a defect;
+2. has the three independent reviewers **order every** proposal, best first,
+   with one reason each that names the evidence they used;
 3. gives a proposal whose objection names a mathematical identity, a
-   cancellation, a leakage or a dimension mismatch **one bounded revision**, then
-   reviews the revised proposal afresh under a new proposal hash;
-4. compares the finalists head to head (order-balanced A-vs-B), aggregates with
-   Copeland and records ties, cycles and the measured position bias;
-5. writes an **immutable decision record** (`decision.json`) with the rubric
-   version and digest, the proposal and evidence digests, the three raw reviews,
-   the weighted matrix, the pairwise result, the winner and its ordered backups.
+   cancellation, a leakage or a defect **one bounded revision**, then reviews the
+   revised proposal afresh under a new proposal hash;
+4. adds the ranks up: the proposal with the lowest total rank (and the most
+   first places, and then the lowest idea id) is the round's mechanism. The
+   runners-up stay as ordered backups and the rest are recorded as rejected;
+5. writes an **immutable decision record** (`decision.json`) with the policy
+   version and digest, the proposal and evidence digests, the three raw
+   rankings, the rank matrix, the winner and its ordered backups.
 
-The rubric lives in `rounds/rubric_v1.json`: seven dimensions whose weights sum
-to 100% (behaviour evidence 20, geometry necessity 20, novelty 20, downstream
-mechanism 15, falsifiability 10, implementability 10, exploration value 5), each
-with anchored 0–5 meanings. **Change the weights only before a new round
-starts** — a decision is scored with the rubric it pinned. The prompt, the
-parser and the matrix read the same names, and an unknown, renamed or missing
-dimension is a schema error, never a partial average.
+The policy lives in `rounds/rubric_v1.json`: the rule that turns the ranks into
+one mechanism, with the version and digest a round pins. **Change it only
+before a new round starts** — a decision is made with the policy it pinned. The
+prompt, the parser and the matrix read the same shape, and a ranking that skips
+a proposal, repeats one, ties two positions or carries no reason is a schema
+error, never a partial order.
 
 There is no automatic fallback: when nobody qualifies the round reports
 `NO_QUALIFIED_IDEA` and goes back to ideation. A later recalculation writes

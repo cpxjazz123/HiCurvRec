@@ -2,7 +2,7 @@
 
 When a round finishes scoring, its decision is written once, with everything
 that produced it: the rubric identity, the proposal and evidence digests, the
-three raw reviews, the weighted matrix, the pairwise result and the winner with
+three raw reviews, the rank matrix and the winner with
 its backups. Later recalculation -- a fixed bug, a changed policy -- writes a
 separate ``rescored_audit_<timestamp>.json`` and never edits the original
 decision or the results that followed from it.
@@ -43,7 +43,8 @@ def build_snapshot(*, round_id: str, evaluation: dict, reports: list,
                        "evidence_sha256": (bundles.get(idea["idea_id"]) or {}).get("sha256")}
                       for idea in proposals],
         "reviews": [{key: report.get(key) for key in
-                     ("scorer", "rubric_version", "rubric_sha256", "scores")}
+                     ("reviewer", "scorer", "rubric_version", "rubric_sha256",
+                      "ranking")}
                     for report in reports],
         "evidence": {identifier: {"bundle_sha256": (bundle or {}).get("sha256"),
                                   "probe_sha256": (bundle or {}).get("probe_sha256"),
@@ -51,7 +52,6 @@ def build_snapshot(*, round_id: str, evaluation: dict, reports: list,
                                   "math_sha256": (bundle or {}).get("math_sha256")}
                       for identifier, bundle in (bundles or {}).items()},
         "matrix": evaluation.get("matrix"),
-        "pairwise": evaluation.get("pairwise"),
         "selection": evaluation.get("selection"),
         "lineage": {},
     }

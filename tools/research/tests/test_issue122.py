@@ -1,11 +1,9 @@
-"""Issue #122 regressions: weighted rubric, pairwise debate, immutable decisions.
+"""Issue #122 regressions: the ranking policy, the aggregate order, immutable decisions.
 
-The policy these tests pin is the one the issue asks for: seven weighted
-dimensions that must agree across the prompt, the parser and the matrix; a
-strict schema that refuses an incomplete review instead of averaging over it;
-pairwise comparisons that are deterministic and expose order bias, ties and
-cycles; no automatic fallback; and a decision record that a later recalculation
-cannot rewrite.
+The policy these tests pin is the one the issue asks for: the reviewers RANK
+the proposals, the aggregate order is auditable, a strict schema that refuses an
+incomplete ranking instead of averaging over it, no automatic fallback, and a
+decision record that a later recalculation cannot rewrite.
 """
 import json
 import tempfile
@@ -57,127 +55,161 @@ def _round_ideas(count=3):
                                        ("agent3", {"ideas": [_coupled("c", title="gamma")]})])
 
 
-def _reports(ideas, *, value=4, per_idea=None):
-    per_idea = per_idea or {}
-    reports = []
-    for scorer in ("s1", "s2", "s3"):
-        scores = []
-        for idea in ideas:
-            score = per_idea.get(idea["idea_id"], value)
-            scores.append({"idea_id": idea["idea_id"],
-                           "scores": {dimension: score for dimension in scoring_module.DIMENSIONS},
-                           "rationale": "r", "evidence_ids": ["E1"],
-                           "objection": "", "counterexample": ""})
-        reports.append({"scorer": scorer, "scores": scores})
-    return reports
+def _ranking(ideas, order=None, reason="the evidence puts it here"):
+    """One reviewer's ranking of the proposals, best first."""
+    order = order or [idea["idea_id"] for idea in ideas]
+    return [{"idea_id": identifier, "position": position, "reason": reason}
+            for position, identifier in enumerate(order, start=1)]
 
 
-class RubricPolicyTests(unittest.TestCase):
-    def test_the_seven_dimensions_sum_to_one_hundred(self):
+def _order(ideas, best):
+    """The ranking of every proposal, with one of them first."""
+    identifiers = [idea["idea_id"] for idea in ideas]
+    return [best] + [identifier for identifier in identifiers if identifier != best]
+
+
+def _reports(ideas, *, order=None, reviewers=("s1", "s2", "s3")):
+    """The reviewers' rankings of the same proposals."""
+    return [{"reviewer": reviewer, "ranking": _ranking(ideas, order),
+             "rubric_version": scoring_module.RUBRIC["version"],
+             "rubric_sha256": scoring_module.RUBRIC["sha256"]}
+            for reviewer in reviewers]
+
+
+class PolicyTests(unittest.TestCase):
+    def test_the_policy_names_the_selection_rule(self):
         rubric = rubric_module.load_rubric()
-        self.assertEqual(len(rubric["dimension_names"]), 7)
-        self.assertEqual(sum(rubric["weight_by_dimension"].values()), 100.0)
-        self.assertEqual(rubric["weight_by_dimension"]["behavior_evidence"], 20.0)
-        self.assertEqual(rubric["weight_by_dimension"]["exploration_value"], 5.0)
+        self.assertEqual(rubric["selection"]["max_selected"], 1)
+        self.assertGreaterEqual(rubric["selection"]["min_reviewers"], 1)
+        self.assertIn("total_rank", rubric["selection"]["tie_break_order"])
+        self.assertIn("idea_id", rubric["selection"]["tie_break_order"])
 
     def test_the_policy_carries_a_version_and_a_digest(self):
         rubric = rubric_module.load_rubric()
         self.assertTrue(rubric["version"])
         self.assertEqual(len(rubric["sha256"]), 64)
 
-    def test_a_rubric_with_weights_that_do_not_sum_to_one_hundred_is_refused(self):
+    def test_a_policy_without_a_selection_rule_is_refused(self):
         with tempfile.TemporaryDirectory() as work:
             path = Path(work) / "rubric.json"
             payload = json.loads(Path(rubric_module.RUBRIC_FILE).read_text())
-            payload["dimensions"][0]["weight"] = 21
+            del payload["selection"]
             path.write_text(json.dumps(payload))
             with self.assertRaises(rubric_module.RubricError):
                 rubric_module.load_rubric(path)
 
-    def test_the_weighted_score_uses_the_weights(self):
-        rubric = rubric_module.load_rubric()
-        medians = {dimension: (5 if dimension == "exploration_value" else 0)
-                   for dimension in rubric["dimension_names"]}
-        self.assertEqual(rubric_module.weighted_score(medians, rubric), 0.25)
+    def test_a_policy_without_a_version_is_refused(self):
+        with tempfile.TemporaryDirectory() as work:
+            path = Path(work) / "rubric.json"
+            payload = json.loads(Path(rubric_module.RUBRIC_FILE).read_text())
+            payload["version"] = "  "
+            path.write_text(json.dumps(payload))
+            with self.assertRaises(rubric_module.RubricError):
+                rubric_module.load_rubric(path)
 
-    def test_prompt_parser_and_matrix_agree(self):
-        self.assertEqual(tuple(plaintext_module._SCORE_DIMENSIONS),
-                         tuple(scoring_module.DIMENSIONS))
-        prompt = __import__("tools.research.rounds.agents", fromlist=["SCORE_PROMPT"]).SCORE_PROMPT
-        for dimension in scoring_module.DIMENSIONS:
-            self.assertIn(dimension, prompt)
+    def test_the_prompt_and_the_parser_agree_on_the_ranking(self):
+        prompt = __import__("tools.research.rounds.agents",
+                            fromlist=["RANK_PROMPT"]).RANK_PROMPT
+        self.assertIn("RANK:", prompt)
+        self.assertIn("position=", prompt)
+        parsed = plaintext_module.parse_ranks(
+            "RANK: a | position=1 | reason=first\nRANK: b | position=2 | reason=second\n")
+        self.assertEqual([entry["idea_id"] for entry in parsed["ranking"]], ["a", "b"])
 
 
 class StrictSchemaTests(unittest.TestCase):
-    def test_a_renamed_dimension_is_a_schema_error(self):
-        ideas = _round_ideas(1)
-        reports = _reports(ideas)
-        reports[0]["scores"][0]["scores"]["novelty_"] = reports[0]["scores"][0]["scores"].pop("novelty")
-        with self.assertRaises(scoring_module.ScoreError):
-            scoring_module.evaluate(ideas, reports)
-
-    def test_a_missing_dimension_is_a_schema_error(self):
-        ideas = _round_ideas(1)
-        reports = _reports(ideas)
-        del reports[0]["scores"][0]["scores"]["falsifiability"]
-        with self.assertRaises(scoring_module.ScoreError):
-            scoring_module.evaluate(ideas, reports)
-
     def test_a_reviewer_that_skips_a_proposal_is_a_schema_error(self):
         ideas = _round_ideas(2)
         reports = _reports(ideas)
-        reports[2]["scores"] = reports[2]["scores"][:-1]
+        reports[2]["ranking"] = reports[2]["ranking"][:-1]
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.evaluate(ideas, reports)
+
+    def test_a_reviewer_that_repeats_a_proposal_is_a_schema_error(self):
+        ideas = _round_ideas(2)
+        reports = _reports(ideas)
+        reports[0]["ranking"][1]["idea_id"] = reports[0]["ranking"][0]["idea_id"]
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.evaluate(ideas, reports)
+
+    def test_a_tied_position_is_a_schema_error(self):
+        ideas = _round_ideas(2)
+        reports = _reports(ideas)
+        reports[0]["ranking"][1]["position"] = 1
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.evaluate(ideas, reports)
+
+    def test_a_position_outside_the_range_is_a_schema_error(self):
+        ideas = _round_ideas(2)
+        reports = _reports(ideas)
+        reports[0]["ranking"][0]["position"] = 7
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.evaluate(ideas, reports)
+
+    def test_a_ranking_without_a_reason_is_a_schema_error(self):
+        ideas = _round_ideas(1)
+        reports = _reports(ideas)
+        reports[0]["ranking"][0]["reason"] = "  "
+        with self.assertRaises(scoring_module.ScoreError):
+            scoring_module.evaluate(ideas, reports)
+
+    def test_a_missing_proposal_is_never_a_partial_average(self):
+        ideas = _round_ideas(2)
+        reports = _reports(ideas, reviewers=("s1", "s2"))
+        reports[1]["ranking"] = [entry for entry in reports[1]["ranking"]
+                                 if entry["idea_id"] != ideas[0]["idea_id"]]
         with self.assertRaises(scoring_module.ScoreError):
             scoring_module.evaluate(ideas, reports)
 
 
-class PairwiseTests(unittest.TestCase):
-    def test_a_majority_win_is_awarded_deterministically(self):
-        rows = [{"idea_id": "a"}, {"idea_id": "b"}]
-        comparisons = [
-            {"first": "a", "second": "b", "winner": "a", "reviewer": "s1", "first_listed": "a"},
-            {"first": "a", "second": "b", "winner": "a", "reviewer": "s2", "first_listed": "a"},
-            {"first": "b", "second": "a", "winner": "b", "reviewer": "s3", "first_listed": "b"},
-        ]
-        result = scoring_module.pairwise(rows, comparisons)
-        self.assertEqual(result["copeland"]["a"], 1)
-        self.assertEqual(result["copeland"]["b"], -1)
-        self.assertFalse(result["ties"])
+class AggregateOrderTests(unittest.TestCase):
+    def test_the_best_placed_proposal_is_the_one_kept(self):
+        ideas = _round_ideas(3)
+        order = _order(ideas, ideas[0]["idea_id"])
+        reports = _reports(ideas, order=order)
+        selection = scoring_module.evaluate(ideas, reports)["selection"]
+        self.assertEqual(len(selection["selected"]), 1)
+        self.assertEqual(selection["selected"][0]["idea_id"], order[0])
+        self.assertEqual(selection["status"], scoring_module.STATUS_SELECTED)
 
-    def test_a_tie_is_recorded(self):
-        rows = [{"idea_id": "a"}, {"idea_id": "b"}]
-        comparisons = [
-            {"first": "a", "second": "b", "winner": "a", "reviewer": "s1", "first_listed": "a"},
-            {"first": "b", "second": "a", "winner": "b", "reviewer": "s2", "first_listed": "b"},
-        ]
-        result = scoring_module.pairwise(rows, comparisons)
-        self.assertEqual(result["ties"], [["a", "b"]])
-        self.assertEqual(result["copeland"]["a"], 0)
+    def test_the_aggregate_order_is_auditable(self):
+        ideas = _round_ideas(3)
+        order = _order(ideas, ideas[0]["idea_id"])
+        reports = _reports(ideas, order=order)
+        matrix = scoring_module.evaluate(ideas, reports)["matrix"]
+        row = next(entry for entry in matrix["rows"]
+                   if entry["idea_id"] == ideas[1]["idea_id"])
+        self.assertEqual(row["total_rank"], 2 * 3)
+        self.assertEqual(row["first_places"], 0)
+        self.assertEqual(row["per_reviewer_position"]["s2"], 2)
+        self.assertIn("evidence", row["per_reviewer_reason"]["s1"])
 
-    def test_a_cycle_is_detected(self):
-        rows = [{"idea_id": idea} for idea in ("a", "b", "c")]
-        comparisons = [
-            {"first": "a", "second": "b", "winner": "a", "reviewer": "s1"},
-            {"first": "b", "second": "c", "winner": "b", "reviewer": "s1"},
-            {"first": "c", "second": "a", "winner": "c", "reviewer": "s1"},
+    def test_the_reviewers_disagreeing_changes_the_winner(self):
+        ideas = _round_ideas(3)
+        best = ideas[0]["idea_id"]
+        second = ideas[1]["idea_id"]
+        third = ideas[2]["idea_id"]
+        reports = [
+            {"reviewer": "s1", "ranking": _ranking(ideas, _order(ideas, best))},
+            {"reviewer": "s2", "ranking": _ranking(ideas, _order(ideas, best))},
+            {"reviewer": "s3", "ranking": _ranking(ideas, _order(ideas, second))},
         ]
-        result = scoring_module.pairwise(rows, comparisons)
-        self.assertEqual(result["cycles"], [["a", "b", "c"]])
+        selection = scoring_module.evaluate(ideas, reports)["selection"]
+        self.assertEqual(selection["selected"][0]["idea_id"], best)
+        # second is placed first once and second twice: 1 + 2 + 2 = 5.
+        self.assertEqual(selection["aggregate"][second]["total_rank"], 5)
+        self.assertEqual(selection["aggregate"][best]["first_places"], 2)
 
-    def test_the_position_bias_is_measured(self):
-        rows = [{"idea_id": "a"}, {"idea_id": "b"}]
-        comparisons = [
-            {"first": "a", "second": "b", "winner": "a", "reviewer": "s1", "first_listed": "a"},
-            {"first": "b", "second": "a", "winner": "b", "reviewer": "s2", "first_listed": "b"},
+    def test_a_tie_in_the_aggregate_is_broken_deterministically(self):
+        ideas = _round_ideas(2)
+        first, second = ideas[0]["idea_id"], ideas[1]["idea_id"]
+        reports = [
+            {"reviewer": "s1", "ranking": _ranking(ideas, _order(ideas, first))},
+            {"reviewer": "s2", "ranking": _ranking(ideas, _order(ideas, second))},
         ]
-        result = scoring_module.pairwise(rows, comparisons)
-        self.assertEqual(result["position_bias"],
-                         {"first_listed_wins": 2, "second_listed_wins": 0})
-
-    def test_a_malformed_comparison_is_refused(self):
-        with self.assertRaises(scoring_module.ScoreError):
-            scoring_module.pairwise([{"idea_id": "a"}, {"idea_id": "b"}],
-                                    [{"first": "a", "second": "b", "winner": "c"}])
+        selection = scoring_module.evaluate(ideas, reports)["selection"]
+        self.assertEqual(len(selection["selected"]), 1)
+        self.assertEqual(selection["selected"][0]["idea_id"], min(first, second))
 
 
 class DecisionRecordTests(unittest.TestCase):
@@ -197,6 +229,16 @@ class DecisionRecordTests(unittest.TestCase):
             self.assertTrue(path.is_file())
             with self.assertRaises(RuntimeError):
                 decision_module.write_snapshot(directory, dict(snapshot, decision_hash="other"))
+
+    def test_the_decision_records_the_rankings(self):
+        ideas, reports, evaluation = self._evaluation()
+        with tempfile.TemporaryDirectory() as work:
+            snapshot = decision_module.build_snapshot(
+                round_id="r1", evaluation=evaluation, reports=reports, bundles={},
+                proposals=ideas)
+            self.assertTrue(snapshot["reviews"])
+            self.assertTrue(snapshot["reviews"][0]["ranking"])
+            self.assertNotIn("pairwise", snapshot)
 
     def test_a_recalculation_is_an_additive_audit(self):
         ideas, reports, evaluation = self._evaluation()
@@ -256,16 +298,33 @@ class EvidenceBundleTests(unittest.TestCase):
 
 
 class NoFallbackTests(unittest.TestCase):
-    def test_nobody_qualified_means_no_qualified_idea(self):
-        ideas = _round_ideas(1)
-        reports = _reports(ideas, value=1)
+    def test_an_out_of_scope_proposal_is_never_selected(self):
+        ideas = _round_ideas(2)
+        # b is out of scope: a behaviour suffix on an unchanged quantiser
+        ideas[1]["coupling_path"] = "a behaviour suffix is appended after the quantiser"
+        ideas[1]["coupling_equation"] = "L = L_rec + lambda_b * L_behaviour"
+        idea_index = {idea["idea_id"]: idea for idea in ideas}
+        verdict = scope_module.check_scope(idea_index[ideas[1]["idea_id"]])
+        self.assertFalse(verdict["in_scope"])
+        order = _order(ideas, ideas[1]["idea_id"])
+        reports = _reports(ideas, order=order)
+        selection = scoring_module.evaluate(ideas, reports)["selection"]
+        self.assertNotIn(ideas[1]["idea_id"],
+                         [entry["idea_id"] for entry in selection["selected"]])
+        rejected = [entry for entry in selection["rejected"]
+                    if entry["idea_id"] == ideas[1]["idea_id"]][0]
+        self.assertEqual(rejected["status"], scoring_module.REASON_OUT_OF_SCOPE)
+
+    def test_a_proposal_nobody_ranked_is_not_qualified(self):
+        ideas = _round_ideas(2)
+        reports = _reports(ideas, reviewers=("s1",))
         selection = scoring_module.evaluate(ideas, reports)["selection"]
         self.assertEqual(selection["status"], scoring_module.STATUS_NO_QUALIFIED)
         self.assertEqual(selection["selected"], [])
 
     def test_the_round_goes_back_to_ideation(self):
         ideas = _round_ideas(1)
-        reports = _reports(ideas, value=1)
+        reports = _reports(ideas, reviewers=("s1",))
         with tempfile.TemporaryDirectory() as work:
             directory = pipeline_module.new_round(Path(work), "round_nf", objective="o")
             state = pipeline_module.load_state(directory)
@@ -275,43 +334,20 @@ class NoFallbackTests(unittest.TestCase):
             self.assertEqual(state["step"], "ideation")
             self.assertIn("no_qualified_idea", [event["event"] for event in state["events"]])
 
-    def test_an_out_of_scope_proposal_with_perfect_scores_is_not_selected(self):
-        ideas = _round_ideas(2)
-        # b is out of scope: a behaviour suffix on an unchanged quantiser
-        ideas[1]["coupling_path"] = "a behaviour suffix is appended after the quantiser"
-        ideas[1]["coupling_equation"] = "L = L_rec + lambda_b * L_behaviour"
-        idea_index = {idea["idea_id"]: idea for idea in ideas}
-        verdict = scope_module.check_scope(idea_index[ideas[1]["idea_id"]])
-        self.assertFalse(verdict["in_scope"])
-        reports = _reports(ideas, value=5)
-        selection = scoring_module.evaluate(ideas, reports)["selection"]
-        self.assertNotIn(ideas[1]["idea_id"], [entry["idea_id"] for entry in selection["selected"]])
-        rejected = [entry for entry in selection["rejected"]
-                    if entry["idea_id"] == ideas[1]["idea_id"]][0]
-        self.assertEqual(rejected["status"], scoring_module.REASON_OUT_OF_SCOPE)
-
 
 class BackupsAndCapTests(unittest.TestCase):
     def test_one_is_selected_and_the_rest_become_ordered_backups(self):
-        ideas = _round_ideas(2)
-        reports = _reports(ideas, per_idea={ideas[0]["idea_id"]: 5,
-                                            ideas[1]["idea_id"]: 4,
-                                            ideas[2]["idea_id"]: 3})
+        ideas = _round_ideas(3)
+        order = _order(ideas, ideas[0]["idea_id"])
+        reports = _reports(ideas, order=order)
         selection = scoring_module.evaluate(ideas, reports)["selection"]
         self.assertEqual(len(selection["selected"]), 1)
         self.assertTrue(selection["backups"])
-        self.assertLessEqual(len(selection["backups"]),
-                             scoring_module.DEFAULT_SELECTION["pairwise_finalists"])
-        self.assertIn(ideas[0]["idea_id"], [entry["idea_id"] for entry in selection["selected"]])
-
-    def test_a_resource_blocked_proposal_keeps_its_science(self):
-        ideas = _round_ideas(1)
-        ideas[0]["cost_estimate_hours"] = 900
-        reports = _reports(ideas, value=5)
-        selection = scoring_module.evaluate(ideas, reports)["selection"]
-        rejected = selection["rejected"][0]
-        self.assertEqual(rejected["status"], scoring_module.REASON_RESOURCE)
-        self.assertNotIn(rejected["status"], ("OUT_OF_SCOPE", "REFUTED"))
+        self.assertEqual([entry["idea_id"] for entry in selection["backups"]],
+                         [entry["idea_id"] for entry in selection["backups"]])
+        self.assertEqual(len(selection["backups"]), len(ideas) - 1)
+        totals = [entry["total_rank"] for entry in selection["backups"]]
+        self.assertEqual(totals, sorted(totals))
 
 
 if __name__ == "__main__":

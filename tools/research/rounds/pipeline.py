@@ -197,11 +197,12 @@ def apply_scoring(state: dict, reports: list, *, comparisons: list = None,
     """
     from . import decision as decision_module
 
-    evaluation = scoring_module.evaluate(state["ideas"], reports, comparisons or [])
+    evaluation = scoring_module.evaluate(state["ideas"], reports)
     selection = evaluation["selection"]
-    state["scores"] = {str(report.get("scorer", "")): report for report in reports}
+    state["scores"] = {str(report.get("reviewer") or report.get("scorer") or ""): report
+                        for report in reports}
+    state["rankings"] = state["scores"]
     state["matrix"] = evaluation["matrix"]
-    state["pairwise"] = evaluation["pairwise"]
     state["selection"] = selection
     state["rubric_version"] = evaluation["rubric_version"]
     state["rubric_sha256"] = evaluation["rubric_sha256"]
