@@ -185,10 +185,51 @@ def check_four_rank(tree: Path | str) -> dict:
     return {"status": "FAIL", "name": "four_rank", "detail": " | ".join(attempts[-1:])}
 
 
+#: The operators a candidate may not define: the geometry belongs to the
+#: framework's contract module.
+_FORBIDDEN_OPERATORS = ("expmap0", "logmap0", "expmap", "logmap", "mobius_add",
+                        "poincare_distance", "clamp_ball", "exp0_c", "log0_c",
+                        "squared_distance_c", "distance_c")
+
+
+def check_geometry_contract(tree: Path | str) -> dict:
+    """The candidate uses the canonical geometry module and defines no other.
+
+    A candidate that writes its own exponential or distance re-opens exactly the
+    class of defect the contract exists to stop: two files that disagree about
+    what curvature means.
+    """
+    import hashlib
+    import re
+
+    tree = Path(tree).resolve()
+    canonical = Path(__file__).resolve().parents[1] / "geometry" / "poincare_contract.py"
+    copy = tree / "model" / "poincare_contract.py"
+    if not copy.is_file():
+        return {"status": "FAIL", "name": "geometry_contract",
+                "detail": "the candidate does not carry the canonical geometry module"}
+    if canonical.is_file():
+        if hashlib.sha256(copy.read_bytes()).hexdigest() != \
+                hashlib.sha256(canonical.read_bytes()).hexdigest():
+            return {"status": "FAIL", "name": "geometry_contract",
+                    "detail": "the candidate's copy of the geometry module was modified"}
+    for path in sorted((tree / "model").glob("*.py")):
+        if path.name == "poincare_contract.py":
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for name in _FORBIDDEN_OPERATORS:
+            if re.search(r"^\s*def\s+" + re.escape(name) + r"\s*\(", text, re.M):
+                return {"status": "FAIL", "name": "geometry_contract",
+                        "detail": "the candidate defines its own " + name +
+                                  " in " + path.name + "; the geometry is the framework's"}
+    return {"status": "PASS", "name": "geometry_contract",
+            "detail": "the candidate uses the canonical geometry module and defines no other"}
+
+
 def run_all(tree: Path | str) -> dict:
     """The conformance report of one candidate tree."""
     tree = Path(tree).resolve()
     checks = [check_constants(tree), check_entry(tree), check_identifier(tree),
-              check_four_rank(tree)]
+              check_geometry_contract(tree), check_four_rank(tree)]
     passed = all(check["status"] == "PASS" for check in checks)
     return {"tree": str(tree), "passed": passed, "checks": checks}

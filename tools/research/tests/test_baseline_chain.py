@@ -114,3 +114,36 @@ class CopyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CanonicalGeometryTests(unittest.TestCase):
+    """A candidate receives the canonical module and may not redefine the geometry."""
+
+    def test_the_copy_carries_the_canonical_module(self):
+        from tools.research.rounds import baseline as baseline_module
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            source = root / "stage2_RQ-VAE" / "TIGER_baseline"
+            source.mkdir(parents=True)
+            (source / "train_rqvae.py").write_text(
+                'ARM_NAME = "TIGER_baseline"\n', encoding="utf-8")
+            destination = root / "trees" / "round" / "idea"
+            baseline_module.copy_baseline(destination, baseline=source)
+            self.assertTrue((destination / "model" / "poincare_contract.py").is_file())
+
+    def test_a_candidate_that_redefines_the_geometry_is_refused(self):
+        from tools.research.stage2 import checks
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "TIGER_candidate"
+            (tree / "model").mkdir(parents=True)
+            (tree / "train_rqvae.py").write_text("x = 1\n", encoding="utf-8")
+            (tree / "model" / "poincare_contract.py").write_text(
+                (Path(__file__).resolve().parents[1] / "geometry" /
+                 "poincare_contract.py").read_text(encoding="utf-8"), encoding="utf-8")
+            report = checks.check_geometry_contract(tree)
+            self.assertEqual(report["status"], "PASS", report)
+            (tree / "model" / "mine.py").write_text(
+                "def expmap0(v, c):\n    return v\n", encoding="utf-8")
+            report = checks.check_geometry_contract(tree)
+            self.assertEqual(report["status"], "FAIL")
+            self.assertIn("expmap0", report["detail"])

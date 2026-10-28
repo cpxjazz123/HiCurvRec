@@ -114,11 +114,18 @@ def copy_baseline(destination: Path, *, baseline: Path = None) -> dict:
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source, destination,
                     ignore=shutil.ignore_patterns(*_RUN_ARTIFACTS))
+    # The geometry is the framework's: the candidate receives the canonical module
+    # and may not write its own.
+    canonical = Path(__file__).resolve().parents[1] / "geometry" / "poincare_contract.py"
+    if canonical.is_file():
+        (destination / "model").mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(canonical, destination / "model" / "poincare_contract.py")
     # The arm name belongs to the framework, not to the mechanism: a candidate
     # copied from a previous implementation would otherwise keep that arm's name
     # and write into its result directory. Only this one constant is rewritten.
     renamed = _rename_arm(destination)
     provenance = {
+        "framework_files": list(_FRAMEWORK_FILES),
         "baseline": str(source),
         "baseline_digest": source_digest(source),
         "candidate": str(destination.resolve()),
@@ -150,13 +157,20 @@ def _rename_arm(tree: Path) -> dict:
     return {"from": found.group(1), "to": wanted}
 
 
+#: The geometry module is the framework's; the copy carries it and it is not part
+#: of the comparison with the baseline.
+_FRAMEWORK_FILES = ("model/poincare_contract.py",)
+
+
 def _canonical_source(tree: Path) -> dict:
-    """Per-file digests with the framework-owned arm constant neutralised."""
+    """Per-file digests with the framework-owned files neutralised."""
     tree = Path(tree)
     table = {}
     for path in sorted(tree.rglob("*.py")):
         relative = path.relative_to(tree)
         if any(part in _RUN_ARTIFACTS for part in relative.parts):
+            continue
+        if str(relative).replace("\\", "/") in _FRAMEWORK_FILES:
             continue
         text = path.read_text(encoding="utf-8")
         found = _arm_line(text)
