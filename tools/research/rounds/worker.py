@@ -17,7 +17,7 @@ import shutil
 from pathlib import Path
 
 from .. import settings
-from ..agents.runner import run_agent
+from ..agents.runner import READ_ONLY_ROLES, run_agent
 from ..core.evidence import atomic_json, digest_file, read_json
 from . import agents as agent_contracts
 from . import baseline as baseline_module
@@ -75,7 +75,7 @@ class AgentPhaseIncomplete(RuntimeError):
 
 
 def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
-               role: str = "verify") -> dict:
+               role: str = "verify", read_paths=None, sandbox: bool = False) -> dict:
     """Run one agent in its own workspace and parse its plain-text answer.
 
     The agent writes a labelled text file, not JSON: a language model that
@@ -106,11 +106,19 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
         destination.replace(stale / (output_name + ".unverified"))
         if receipt_path.is_file():
             receipt_path.replace(stale / "execution.json.unverified")
-    prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
-              " (this absolute path). Write nowhere else.")
+    if str(role) in READ_ONLY_ROLES:
+        # A read-only role has no write tool, and the permission object now
+        # enforces that. The answer is its reply: the runner reads the session
+        # stream and writes the file itself.
+        prompt = (prompt + "\n\nYour session has no write tool and no shell: your reply IS "
+                  "the answer. Print the complete answer in exactly the format above, "
+                  "and print nothing else.")
+    else:
+        prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
+                  " (this absolute path). Write nowhere else.")
     run_agent(task_id, prompt, output_name, Path(root),
               binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
-              role=role)
+              role=role, read_paths=read_paths, sandbox=sandbox)
     # run_agent returns its execution receipt, not the answer: locate the file
     # the agent wrote, accepting the same bounded relocation the runner allows.
     workspace = Path(root) / "agents" / task_id
@@ -254,7 +262,7 @@ def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
         return (task_id, _run_agent(root, task_id, prompt,
                                     "ideas_extra.txt" if extra else "ideas.txt",
                                     plaintext.parse_ideas,
-                                    role="ideate"))
+                                    role="ideate", read_paths=[], sandbox=True))
 
     return _run_agents_concurrently(
         [tuple([index]) for index in range(1, pipeline_module.IDEA_AGENTS + 1)], ideate)
@@ -588,7 +596,8 @@ def _review_with_retry(root: Path, task_id: str, prompt: str) -> dict:
         run_id = task_id if attempt == 0 else task_id + "_retry1"
         try:
             report = _run_agent(root, run_id, prompt + suffix, name,
-                                plaintext.parse_scores, role="score")
+                                plaintext.parse_scores, role="score",
+                                read_paths=[], sandbox=True)
             scoring_module.validate_report(report, scorer=task_id)
             return report
         except (scoring_module.ScoreError, pipeline_module.RoundError) as exc:
@@ -630,7 +639,8 @@ def run_pairwise(root: Path, ideas: list, finalists: list, evidence_text: str) -
                 second=plaintext.render_idea(by_id[second]),
                 evidence=evidence_text)
             report = _run_agent(root, task_id + "_" + str(position), prompt,
-                                "pairwise.txt", plaintext.parse_pairwise, role="score")
+                                "pairwise.txt", plaintext.parse_pairwise, role="score",
+                                read_paths=[], sandbox=True)
             report["reviewer"] = task_id
             report["first"] = first
             report["second"] = second
@@ -647,7 +657,8 @@ def run_rebuttal(root: Path, idea: dict, objection: str, counterexample: str,
     prompt = agent_contracts.REBUTTAL_PROMPT.format(objection=objection,
                                                     counterexample=counterexample or "none")
     return _run_agent(root, "rebuttal_" + idea["idea_id"] + "_r" + str(revision),
-                      prompt, "rebuttal.txt", plaintext.parse_rebuttal, role="score")
+                      prompt, "rebuttal.txt", plaintext.parse_rebuttal, role="score",
+                      read_paths=[], sandbox=True)
 
 
 def _repository_root(start: Path) -> Path:
@@ -673,6 +684,10 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
         objective=agent_contracts.RESEARCH_OBJECTIVE,
         scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
         agent_contracts.EXPERIMENT_POLICY))
+    # No implementation agent runs in the Issue #121 flow: the framework copies
+    # the baseline and the main agent writes the mechanism. If this role is
+    # re-enabled, it also needs the Stage 0/1 inputs and the interpreter as read
+    # paths (it must run the smoke); the tree alone is not enough.
     report = _run_agent(root, "implementation_" + idea["idea_id"], prompt,
                         "implementation.txt", plaintext.parse_implementation,
                         role="implementation")
@@ -709,7 +724,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
         task_id = "verify_" + idea["idea_id"] + "_r" + str(revision) + "_" + str(index)
         report = _run_agent(root, task_id, prompt, "verification.txt",
                             plaintext.parse_verification,
-                            role="verify")
+                            role="verify", read_paths=[tree], sandbox=True)
         report.setdefault("verifier", task_id)
         return report
 
@@ -742,7 +757,7 @@ def run_repair_plan(root: Path, idea: dict, tree: Path, findings: list,
     before = pipeline_module._source_digest(tree)
     plan = _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),
                       prompt, "repair.txt", plaintext.parse_repair_plan,
-                      role="repair")
+                      role="repair", read_paths=[tree], sandbox=True)
     after = pipeline_module._source_digest(tree)
     if after != before:
         _tree_restore(tree, backup)

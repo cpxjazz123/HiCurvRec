@@ -52,7 +52,8 @@ def test_partial_answer_is_not_published() -> str:
             destination = root / "agents" / "t1" / "verification.txt"
             try:
                 runner.run_agent("t1", "prompt", "verification.txt", root,
-                                 binary=str(binary), timeout=2, role="verify")
+                                 binary=str(binary), timeout=2, role="verify",
+                                 sandbox=False)
             except runner.AgentFailure as exc:
                 assert exc.failure_class == "timeout", exc.failure_class
             else:
@@ -75,7 +76,8 @@ def test_expired_credential_is_classified() -> str:
                                     'exit 1\n')
         try:
             runner.run_agent("t2", "prompt", "verification.txt", root,
-                             binary=str(binary), timeout=30, role="verify")
+                             binary=str(binary), timeout=30, role="verify",
+                             sandbox=False)
         except runner.AgentFailure as exc:
             assert exc.failure_class == "auth", exc.failure_class
         else:

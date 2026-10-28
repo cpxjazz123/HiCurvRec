@@ -1,23 +1,74 @@
 """Real OpenCode CLI with cooperative cancellation and process receipts."""
 import json
 import os
+import shutil
 import signal
+import sqlite3
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from .. import settings
 from ..core.evidence import atomic_json, digest_bytes, digest_file
 
 
-def isolation_permissions(workspace: Path, role: str = "verify") -> dict:
+#: The roles that may not write anything. Their answer arrives through the
+#: session stream instead of a file they wrote.
+READ_ONLY_ROLES = ("verify", "repair", "ideate", "score")
+
+#: The only filesystem boundary that is a guarantee rather than a request: a
+#: user mount namespace in which the paths outside the allowlist do not exist.
+#: opencode's own ``permission`` object is still written as a second layer, but
+#: a tool that ignores it cannot escape the mount namespace.
+SANDBOX_BINARY = "bwrap"
+
+#: Tables that can carry another session's text, another project's paths or a
+#: snapshot of files the agent must not see. Only credentials, the model catalog
+#: and the migration ledger survive into an agent's private opencode database.
+_PRIVATE_TABLES_TO_CLEAR = (
+    "event", "message", "part", "session", "session_v2", "session_message",
+    "session_inbox", "session_pending", "session_share", "todo",
+    "instruction_blob", "instruction_entry", "instruction_state",
+    "project", "project_directory", "worktree", "workspace",
+    "account", "account_state", "control_account",
+)
+
+
+def _read_patterns(path: Path) -> list:
+    """The permission patterns that name this path, under both spellings.
+
+    The repository is reachable through a symlinked home, and an agent may be
+    given either spelling. Binding only the resolved one is enough for the mount
+    namespace, but opencode matches the permission rule against the text of the
+    path it was asked to read.
+    """
+    raw = Path(path)
+    resolved = raw.resolve()
+    suffix = "" if resolved.is_file() else "/**"
+    patterns = [str(resolved) + suffix]
+    if raw.is_absolute() and str(raw) != str(resolved):
+        patterns.append(str(raw) + suffix)
+    return list(dict.fromkeys(patterns))
+
+
+def isolation_permissions(workspace: Path, role: str = "verify",
+                          read_paths=None) -> dict:
     """The opencode permission object that confines an agent to its workspace.
 
     opencode v2 reads a single ``permission`` object whose keys are the tool
-    names and whose values are ``ask``/``allow``/``deny``. An earlier version of
-    this function wrote a ``permissions`` array of action/resource/effect
-    rules; opencode ignores that shape, so every agent kept a full shell and the
-    boundary was never in force. The roles are now stated in the schema the
-    binary actually reads.
+    names and whose values are ``ask``/``allow``/``deny``, or a rule object whose
+    keys are path patterns and whose last match wins. An earlier version of this
+    function wrote a ``permissions`` array of action/resource/effect rules;
+    opencode ignores that shape, so every agent kept a full shell and the
+    boundary was never in force.
+
+    ``read_paths`` is the allowlist of directories the role may read outside its
+    own workspace. When it is given, both ``read`` and ``external_directory``
+    become deny-by-default and only those directories (plus the workspace) are
+    allowed; when it is ``None`` the legacy behaviour is preserved. A caller that
+    hands a verifier the candidate tree must pass exactly that tree, never the
+    repository root: ``results/`` also holds the other arms, their Stage 3
+    answers and the earlier reviews.
 
     A verifier reviews code and does not run it, so it has no shell. The
     verifier and the repair planner are **read-only**: they get neither a shell
@@ -27,23 +78,36 @@ def isolation_permissions(workspace: Path, role: str = "verify") -> dict:
 
     An implementer must write the tree and run the smoke test, so it keeps the
     shell and the edit tool inside the workspace, bounded by prompt and by the
-    framework's output-path preflight, because this opencode version has no
-    per-path edit rule.
+    framework's output-path preflight.
     """
+    workspace = Path(workspace)
     runs_code = str(role) == "implementation"
-    read_only = str(role) in ("verify", "repair", "ideate", "score")
-    return {
+    read_only = str(role) in READ_ONLY_ROLES
+    permissions = {
         "bash": "allow" if runs_code else "deny",
         "edit": "deny" if read_only else "allow",
         "write": "deny" if read_only else "allow",
         "webfetch": "deny",
-        "external_directory": "deny",
+        "websearch": "deny",
+        "task": "deny",
+        "lsp": "deny",
     }
-
-
-#: The roles that may not write anything. Their answer arrives through the
-#: session stream instead of a file they wrote.
-READ_ONLY_ROLES = ("verify", "repair", "ideate", "score")
+    if read_paths is None:
+        permissions["external_directory"] = "deny"
+        return permissions
+    allowed = []
+    external = {}
+    for pattern in _read_patterns(workspace):
+        if pattern not in allowed:
+            allowed.append(pattern)
+    for entry in read_paths:
+        for pattern in _read_patterns(Path(entry)):
+            if pattern not in allowed:
+                allowed.append(pattern)
+            external[pattern] = "allow"
+    permissions["read"] = {"*": "deny", **{pattern: "allow" for pattern in allowed}}
+    permissions["external_directory"] = {"*": "deny", **external}
+    return permissions
 
 
 def session_answer(path: Path) -> str:
@@ -74,13 +138,14 @@ def session_answer(path: Path) -> str:
     return "\n".join(chunks).strip()
 
 
-def write_isolation_config(workspace: Path, role: str = "verify") -> Path:
+def write_isolation_config(workspace: Path, role: str = "verify",
+                           read_paths=None) -> Path:
     """Write the agent's private permission boundary next to its session."""
     workspace = Path(workspace)
     workspace.mkdir(parents=True, exist_ok=True)
     path = workspace / "opencode.json"
     config = {"$schema": "https://opencode.ai/config.json",
-              "permission": isolation_permissions(workspace, role)}
+              "permission": isolation_permissions(workspace, role, read_paths)}
     path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -99,6 +164,121 @@ def mark_workspace_project(workspace: Path) -> Path:
     marker = Path(workspace) / ".git"
     marker.mkdir(parents=True, exist_ok=True)
     return marker
+
+
+def _private_provider_db(source: Path, target: Path) -> None:
+    """Give the sandboxed agent its own opencode database.
+
+    The shared database holds every session's prompt, output and file snapshot;
+    mounting it would hand the reviewer the earlier reviews. Only the rows that
+    make the provider route work (credentials, model catalog, migration ledger)
+    are copied into a fresh database.
+    """
+    if not source.is_file():
+        return
+    reader = sqlite3.connect("file:" + str(source) + "?mode=ro", uri=True)
+    writer = sqlite3.connect(str(target))
+    try:
+        reader.backup(writer)
+        for table in _PRIVATE_TABLES_TO_CLEAR:
+            try:
+                writer.execute('delete from "' + table + '"')
+            except sqlite3.OperationalError:
+                continue
+        writer.commit()
+        writer.execute("vacuum")
+        writer.commit()
+    finally:
+        writer.close()
+        reader.close()
+
+
+def agent_sandbox_home(workspace: Path) -> Path:
+    """A private HOME for one sandboxed agent, with no shared session data."""
+    home = Path(tempfile.mkdtemp(prefix="genrec-agent-"))
+    data = home / ".local" / "share" / "opencode"
+    cache = home / ".cache" / "opencode"
+    data.mkdir(parents=True, exist_ok=True)
+    cache.mkdir(parents=True, exist_ok=True)
+    shared = Path.home() / ".local" / "share" / "opencode"
+    auth = shared / "auth.json"
+    if auth.is_file():
+        shutil.copy2(auth, data / "auth.json")
+    _private_provider_db(shared / "opencode.db", data / "opencode.db")
+    return home
+
+
+def _symlink_components(path: Path) -> list:
+    """The symlinks on the way to ``path``, as (link, target) pairs.
+
+    The repository is reached through a symlinked home. The sandbox masks the
+    home directory, so those links have to be recreated inside it or the path
+    the agent was given simply does not exist there.
+    """
+    parts = Path(path).parts
+    if not parts:
+        return []
+    current = Path(parts[0])
+    found = []
+    for part in parts[1:]:
+        current = current / part
+        if current.is_symlink():
+            found.append((str(current), str(current.resolve())))
+            current = Path(current.resolve())
+    return found
+
+
+def sandbox_command(command: list, workspace: Path, read_paths, binary: Path,
+                    private_home: Path) -> list:
+    """Wrap one CLI invocation in a mount namespace with an explicit allowlist.
+
+    The sandbox is the guarantee: the repository, the other arms' results and the
+    earlier agent sessions are not mounted at all, so no tool, prompt or model
+    mistake can read them. ``opencode``'s own permission object is still written
+    as a second layer, but the mount namespace is what holds if that layer is
+    bypassed (as it was while ``PWD`` still pointed at the repository).
+
+    The network is shared because the model provider needs it; nothing else
+    outside the allowlist is reachable.
+    """
+    home = Path.home()
+    config = Path(os.environ.get("XDG_CONFIG_HOME") or (home / ".config")) / "opencode"
+    binary = Path(binary).resolve()
+    private_home = Path(private_home)
+    args = [
+        SANDBOX_BINARY, "--unshare-all", "--share-net", "--die-with-parent",
+        "--ro-bind", "/usr", "/usr",
+        "--ro-bind", "/bin", "/bin",
+        "--ro-bind", "/etc", "/etc",
+        "--ro-bind-try", "/lib", "/lib",
+        "--ro-bind-try", "/lib64", "/lib64",
+        "--ro-bind-try", "/sbin", "/sbin",
+        "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
+        # Mask the home directory first, then expose only what the CLI needs.
+        "--tmpfs", str(home),
+        "--ro-bind", str(binary.parent), str(binary.parent),
+        "--ro-bind-try", str(home / ".opencode"), str(home / ".opencode"),
+        "--ro-bind-try", str(config), str(config),
+        # A private database and cache: the shared session history is not visible.
+        "--bind", str(private_home / ".local" / "share" / "opencode"),
+        str(home / ".local" / "share" / "opencode"),
+        "--bind", str(private_home / ".cache" / "opencode"),
+        str(home / ".cache" / "opencode"),
+    ]
+    entries = [Path(workspace), *[Path(item) for item in (read_paths or [])]]
+    workspace_raw = str(Path(workspace))
+    # Recreate the links that the masked home took away, so the path the agent
+    # was given resolves inside the namespace. They come first: a link and a
+    # bind cannot occupy the same path.
+    for link, target in dict.fromkeys(
+            pair for entry in entries for pair in _symlink_components(entry)):
+        args += ["--symlink", target, link]
+    for entry in entries:
+        resolved = entry.resolve()
+        mode = "--bind" if entry == Path(workspace) else "--ro-bind"
+        args += [mode, str(resolved), str(resolved)]
+    args += ["--chdir", workspace_raw]
+    return args + list(command)
 
 
 #: How long a role may take. The implementer writes a mechanism and runs its
@@ -151,9 +331,30 @@ def class_of_failure(session: Path, *, timed_out: bool, cancelled: bool,
     return "empty" if not wrote_answer else "unusable"
 
 
+def _agent_environment(workspace: Path, sandbox: bool) -> dict:
+    """The environment of one agent process.
+
+    A sandboxed agent gets only the variables the CLI needs, not the parent's
+    provider keys for every other service: a read of /proc/self/environ must not
+    hand it credentials it has no business holding. It also gets ``PWD`` set to
+    its workspace, because opencode resolves its project from ``PWD``: a child
+    that inherits the server's directory reads the REPOSITORY's config and
+    silently ignores the workspace boundary.
+    """
+    if not sandbox:
+        return dict(os.environ)
+    keep = {"HOME", "PATH", "USER", "LOGNAME", "SHELL", "TERM", "TMPDIR"}
+    env = {key: value for key, value in os.environ.items()
+           if key in keep or key.startswith(("OPENCODE_", "XDG_", "LC_"))}
+    env.setdefault("HOME", str(Path.home()))
+    env["PWD"] = str(Path(workspace))
+    return env
+
+
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
               binary=None, model=None, timeout=None,
-              role: str = "verify") -> Path:
+              role: str = "verify", read_paths=None,
+              sandbox: bool = True) -> Path:
     # The binary and the model come from the one source of configuration.
     binary = binary or settings.AGENT_BINARY
     model = model or settings.AGENT_MODEL
@@ -165,21 +366,38 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     if (not output_name.endswith((".json", ".txt")) or "/" in output_name
             or "\\" in output_name or not task_id.replace("-", "").replace("_", "").isalnum()):
         raise ValueError("unsafe task id or output filename")
+    # A missing allowlisted path means the role cannot do its work; fail closed
+    # instead of running it with a smaller view and calling the answer valid.
+    # The path is kept as the caller spelled it: the permission rules match the
+    # text of the path, and the repository is reachable through a symlinked home.
+    allowed = [Path(entry) for entry in (read_paths or [])]
+    for entry in allowed:
+        if not entry.exists():
+            raise RuntimeError("the agent read allowlist names a missing path: " + str(entry))
+    if sandbox and shutil.which(SANDBOX_BINARY) is None:
+        raise RuntimeError("bubblewrap (" + SANDBOX_BINARY + ") is required for a "
+                           "sandboxed agent and is not installed")
     root = Path(root)
     workspace = root / "agents" / task_id
     workspace.mkdir(parents=True, exist_ok=True)
     output = workspace / output_name
     if output.exists():
         raise RuntimeError("refuse to overwrite previous role output")
-    isolation = write_isolation_config(workspace, role)
+    isolation = write_isolation_config(workspace, role, allowed)
     marker = mark_workspace_project(workspace)
-    cmd = [binary, "run", "--standalone", "--format", "json", "--auto",
+    inner_binary = Path(shutil.which(binary) or binary).resolve()
+    cmd = [str(inner_binary), "run", "--standalone", "--format", "json", "--auto",
            "--model", model, "--title", task_id, prompt]
+    private_home = None
+    if sandbox:
+        private_home = agent_sandbox_home(workspace)
+        cmd = sandbox_command(cmd, workspace, allowed, inner_binary, private_home)
+    env = _agent_environment(workspace, sandbox)
     started = time.monotonic()
     cancelled, timed_out, stderr = False, False, ""
     try:
         with (workspace / "session.jsonl").open("w", encoding="utf-8") as log:
-            process = subprocess.Popen(cmd, cwd=workspace, stdout=log,
+            process = subprocess.Popen(cmd, cwd=workspace, env=env, stdout=log,
                                        stderr=subprocess.PIPE, text=True,
                                        start_new_session=True)
             atomic_json(workspace / "running.json", {"pid": process.pid,
@@ -208,6 +426,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         raise
     finally:
         (workspace / "running.json").unlink(missing_ok=True)
+        if private_home is not None:
+            shutil.rmtree(private_home, ignore_errors=True)
     # The Agent is told the absolute destination, but a model can still write the
     # answer into a nested or slightly misnamed directory of its own workspace.
     # The artifact is what matters and the caller validates its content
@@ -248,25 +468,52 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "task_id": task_id, "pid": process.pid,
         "finished_utc_epoch": time.time(), "exit_code": process.returncode,
         "timed_out": timed_out, "cancelled": cancelled, "model": model,
-        "argv_shape": ["opencode", "run", "--standalone", "--format", "json",
+        "argv_shape": (["bwrap", "--unshare-all", "--share-net"]
+                       if sandbox else []) +
+                      ["opencode", "run", "--standalone", "--format", "json",
                        "--auto", "--model", "<model>", "--title", task_id, "<prompt>"],
         "prompt_sha256": digest_bytes(prompt.encode()),
         "session_sha256": digest_file(workspace / "session.jsonl"),
         "isolation_config": isolation.name,
         "isolation_config_sha256": digest_file(isolation),
+        "read_allowlist": [str(entry) for entry in allowed] +
+                          [str(entry.resolve()) for entry in allowed
+                           if str(entry.resolve()) != str(entry)],
+        "sandbox": {
+            "enabled": bool(sandbox),
+            "binary": SANDBOX_BINARY if sandbox else None,
+            "private_home": bool(private_home),
+            "network": "shared (model provider)" if sandbox else None,
+        },
         "project_marker": marker.name,
-        "isolation_policy": "opencode v2 permission object: bash " +
-                            ("allowed (this role runs the smoke test)" if role == "implementation"
-                             else "denied") +
-                            ", edit and write " +
-                            ("denied (this role is read-only and its answer is read back from "
-                             "the session stream)" if role in READ_ONLY_ROLES else "allowed") +
-                            ", webfetch and external_directory denied; the workspace is its "
-                            "own opencode project so its opencode.json applies",
+        "isolation_policy": (
+            "bubblewrap mount namespace: only the workspace, the read allowlist, the "
+            "opencode runtime and the config exist; the repository, the other arms' "
+            "results and the earlier sessions are not mounted; plus the opencode v2 "
+            "permission object (bash " +
+            ("allowed (this role runs the smoke test)" if role == "implementation"
+             else "denied") +
+            ", edit and write " +
+            ("denied (read-only role; its answer is read back from the session stream)"
+             if role in READ_ONLY_ROLES else "allowed") +
+            ", read and external_directory deny-by-default with the explicit allowlist)"
+            if sandbox else
+            "opencode v2 permission object: bash " +
+            ("allowed (this role runs the smoke test)" if role == "implementation"
+             else "denied") +
+            ", edit and write " +
+            ("denied (this role is read-only and its answer is read back from "
+             "the session stream)" if role in READ_ONLY_ROLES else "allowed") +
+            ", webfetch denied, external_directory denied; PWD is the workspace so "
+            "the workspace opencode.json is the one that applies"),
         "stderr_present": bool(stderr), "output_name": output_name,
         "output_sha256": digest_file(output) if output.is_file() else None,
         "verified": valid,
-        "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+        "limitations": ("The sandbox is the filesystem guarantee; the model provider "
+                        "is reachable over the shared network."
+                        if sandbox else
+                        "A cwd is NOT a sandbox; this run relies on the permission "
+                        "object and the caller must not treat it as a guarantee."),
     }
     record["failure_class"] = "none" if valid else class_of_failure(
         workspace / "session.jsonl", timed_out=timed_out, cancelled=cancelled,

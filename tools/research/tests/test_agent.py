@@ -1,10 +1,13 @@
 import json
 import os
+import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from tools.research import settings
-from tools.research.agents.runner import isolation_permissions, run_agent
+from tools.research.agents.runner import (isolation_permissions, run_agent,
+                                          sandbox_command)
 from tools.research.core.evidence import read_json
 
 
@@ -34,6 +37,75 @@ class AgentTests(unittest.TestCase):
             self.assertEqual(worker["webfetch"], "deny")
             self.assertEqual(worker["external_directory"], "deny")
 
+    @unittest.skipUnless(shutil.which("bwrap"), "bubblewrap is not installed")
+    def test_pwd_is_the_workspace_so_the_project_config_applies(self):
+        """A child inherits the server's PWD; opencode resolves the project from it.
+
+        The old runner passed ``cwd=workspace`` but left ``PWD`` at the repository
+        root, so opencode loaded the repository project, ignored the workspace
+        ``opencode.json`` and ran read-only roles with a shell. That is how a
+        verifier read the previous round's answer.
+        """
+        with tempfile.TemporaryDirectory() as work:
+            binary = Path(work) / "fake-opencode"
+            binary.write_text(
+                "#!/usr/bin/env python3\n"
+                "import json, os\n"
+                "from pathlib import Path\n"
+                "Path('pwd_probe.json').write_text(json.dumps("
+                "{'pwd': os.environ.get('PWD'), 'cwd': os.getcwd()}))\n"
+                "Path('answer.json').write_text(json.dumps({'ok': True}))\n"
+                "print(json.dumps({'type': 'mock'}))\n",
+                encoding="utf-8")
+            binary.chmod(0o700)
+            receipt = run_agent("pwd_probe", "write answer", "answer.json",
+                                Path(work) / "out", binary=str(binary), timeout=10,
+                                sandbox=True)
+            probe = json.loads((receipt.parent / "pwd_probe.json").read_text())
+            self.assertEqual(probe["pwd"], str(receipt.parent))
+            self.assertEqual(Path(probe["cwd"]).resolve(), receipt.parent.resolve())
+
+    def test_a_read_allowlist_denies_every_other_path(self):
+        with tempfile.TemporaryDirectory() as work:
+            workspace = Path(work) / "agents" / "task"
+            tree = Path(work) / "trees" / "candidate"
+            tree.mkdir(parents=True)
+            policy = isolation_permissions(workspace, "verify", [tree])
+            self.assertEqual(policy["read"]["*"], "deny")
+            self.assertEqual(policy["read"][str(tree.resolve()) + "/**"], "allow")
+            self.assertEqual(policy["read"][str(workspace.resolve()) + "/**"], "allow")
+            self.assertEqual(policy["external_directory"]["*"], "deny")
+            self.assertEqual(policy["external_directory"][str(tree.resolve()) + "/**"],
+                             "allow")
+            # A reviewer may not delegate to a subagent with different rules.
+            self.assertEqual(policy["task"], "deny")
+
+    @unittest.skipUnless(shutil.which("bwrap"), "bubblewrap is not installed")
+    def test_the_sandbox_hides_every_path_outside_the_allowlist(self):
+        with tempfile.TemporaryDirectory() as work:
+            workspace = Path(work) / "ws"
+            workspace.mkdir()
+            allowed = Path(work) / "allowed"
+            allowed.mkdir()
+            (allowed / "ok.txt").write_text("ALLOWED", encoding="utf-8")
+            forbidden = Path(work) / "forbidden"
+            forbidden.mkdir()
+            (forbidden / "secret.txt").write_text("SECRET", encoding="utf-8")
+            private = Path(work) / "home"
+            (private / ".local" / "share" / "opencode").mkdir(parents=True)
+            (private / ".cache" / "opencode").mkdir(parents=True)
+            script = ("cat " + str(allowed / "ok.txt") + "; "
+                      "cat " + str(forbidden / "secret.txt") + " 2>/dev/null "
+                      "|| echo DENIED")
+            command = sandbox_command(["/bin/sh", "-c", script], workspace,
+                                      [allowed], Path("/bin/sh"), private)
+            completed = subprocess.run(command, capture_output=True, text=True,
+                                       timeout=30)
+            self.assertEqual(completed.returncode, 0, completed.stderr[-800:])
+            self.assertIn("ALLOWED", completed.stdout)
+            self.assertIn("DENIED", completed.stdout)
+            self.assertNotIn("SECRET", completed.stdout)
+
     def test_a_read_only_role_answers_through_the_session_stream(self):
         """A role that may not write still delivers its answer."""
         with tempfile.TemporaryDirectory() as work:
@@ -50,7 +122,7 @@ class AgentTests(unittest.TestCase):
             binary.chmod(0o700)
             receipt = run_agent("test_readonly", "answer", "verification.txt",
                                 Path(work) / "out", binary=str(binary), timeout=10,
-                                role="verify")
+                                role="verify", sandbox=False)
             evidence = read_json(receipt)
             self.assertTrue(evidence["verified"])
             answer = receipt.parent / "verification.txt"
@@ -71,7 +143,8 @@ class AgentTests(unittest.TestCase):
             )
             binary.chmod(0o700)
             receipt = run_agent("test_agent", "Write answer", "answer.json",
-                                Path(work) / "out", binary=str(binary), timeout=10)
+                                Path(work) / "out", binary=str(binary), timeout=10,
+                                sandbox=False)
             evidence = read_json(receipt)
             self.assertTrue(evidence["verified"])
             self.assertGreater(evidence["pid"], 0)
@@ -108,7 +181,8 @@ class AgentTests(unittest.TestCase):
             from tools.research.agents.runner import AgentFailure
             with self.assertRaises(AgentFailure) as caught:
                 run_agent("geometry", "Write candidate", "candidate.json",
-                          Path(work) / "out", binary=str(binary), timeout=10)
+                          Path(work) / "out", binary=str(binary), timeout=10,
+                          sandbox=False)
             self.assertIn(caught.exception.failure_class, {"empty", "unusable", "crash"})
             self.assertFalse((workspace / "candidate.json").is_file(),
                              "an archived candidate was adopted as the new answer")

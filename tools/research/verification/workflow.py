@@ -128,10 +128,14 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
         task_id = candidate_id + "_" + role_key
         _archive_workspace(run_root / "agents" / task_id, request_id)
         prompt = _prompt(role, task_id, data, output, root=run_root)
+        # The Issue #117 surface is the old flow, not a round: its roles read
+        # the candidate tree by relative path and write into the run directory,
+        # so it keeps the repository visible. The round is the sandboxed path.
         execution = run_agent(task_id, prompt, output, run_root,
                               binary=settings.AGENT_BINARY,
                               model=settings.AGENT_MODEL,
-                              timeout=settings.AGENT_TIMEOUT_SECONDS)
+                              timeout=settings.AGENT_TIMEOUT_SECONDS,
+                              sandbox=False)
         payload = read_json(execution.parent / output)
         if payload.get("candidate_id") != candidate_id or payload.get("source_sha256") != data["source_sha256"]:
             raise AdmissionError("independent author changed candidate/source identity")
@@ -195,7 +199,8 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str,
     return run_agent(candidate_id + "_review", prompt, "review.json",
                      run_root, binary=settings.AGENT_BINARY,
                      model=settings.AGENT_MODEL,
-                     timeout=settings.AGENT_TIMEOUT_SECONDS)
+                     timeout=settings.AGENT_TIMEOUT_SECONDS,
+                     sandbox=False)
 
 
 def freeze_reviewed_manifest(candidate_id: str, tree: Path, run_id: str) -> Path:

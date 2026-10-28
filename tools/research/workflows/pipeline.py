@@ -230,10 +230,13 @@ def run_agent_until_valid(task: str, root: Path, manifest: dict, prompt: str,
             dag.renew(task_id, owner, settings.LEASE_SECONDS)
         attempt += 1
         try:
+            # The Issue #117 surface is the old flow, not a round: it keeps
+            # the repository visible. The round is the sandboxed path.
             evidence = run_agent(task, prompt, OUTPUTS[task], root,
                                  binary=settings.AGENT_BINARY,
                                  model=settings.AGENT_MODEL,
-                                 timeout=settings.AGENT_TIMEOUT_SECONDS)
+                                 timeout=settings.AGENT_TIMEOUT_SECONDS,
+                                 sandbox=False)
             verify_science_output(task, root, manifest)
             return evidence
         except (ValueError, RuntimeError) as exc:

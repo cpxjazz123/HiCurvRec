@@ -75,6 +75,28 @@ The MCP `verification_check(source_dir, verification_id)` verifies all source, p
 
 The research package never starts GPU training directly, never uses validation/test future behavior to build SID, and never accepts textual Agent approval as proof of test execution.
 
+## Agent filesystem boundary
+
+A round agent does not inherit the repository. `agents/runner.py` starts a
+sandboxed role in a bubblewrap mount namespace whose only visible paths are its
+own workspace, the explicit read allowlist, the opencode runtime and its config.
+The repository, the other arms' results, the Stage 3 answers and the earlier
+agent sessions are not mounted; the model provider stays reachable over the
+shared network. A private opencode database holds the credentials and model
+catalog but none of the other sessions.
+
+The opencode `permission` object is written as a second layer: `read` and
+`external_directory` are deny-by-default with the same allowlist, `task` is
+denied, and the read-only roles keep no shell and no edit tool. `PWD` is set to
+the workspace because opencode resolves its project from `PWD`; leaving it at the
+server's directory made every per-workspace rule inert and is how a verifier once
+read the previous round's answer.
+
+The round passes `read_paths=[tree]` to a verifier and to the repair planner, and
+`read_paths=[]` to ideation, scoring and pairwise roles. `run_agent(...,
+sandbox=True)` fails closed when bubblewrap is missing; the permission object
+alone is advisory, not a guarantee.
+
 ## Boundaries
 
 Output state is isolated to `results/research/issue117/`, live OpenCode Agents are disabled by default, and the model/execution environment requires real filesystem isolation before live work.
@@ -99,7 +121,12 @@ Test drafts are only written to the run evidence area and require independent so
 
 The existing `verification_check(source_dir, verification_id)` and `stage2_start(source_dir, verification_id)` remain separate, deterministic, privileged MCP tools with their source-bound four-suite tests and live Trainer smoke checks.
 
-**Deployment safety**: `LIVE_AGENTS_ALLOWED = False` disables all OpenCode child processes by default, while a research run can still execute DATA using the configured train-data interpreter; running Agent code requires operating-system-level filesystem/tool isolation before enabling live mode.
+**Deployment safety**: `LIVE_AGENTS_ALLOWED` is `True` in the current source, and
+every round agent runs inside the bubblewrap filesystem boundary described above;
+setting it `False` disables all OpenCode child processes. A research run can
+still execute DATA with the configured train-data interpreter. The permission
+object alone is not the boundary: `run_agent(..., sandbox=True)` fails closed
+when bubblewrap is unavailable.
 
 **Cancellation**: `research_cancel` marks the global DAG and a run-local cancellation token, and active OpenCode subprocesses terminate cooperatively; actual worker death and incomplete cancellation are reported rather than silently claimed successful.
 
