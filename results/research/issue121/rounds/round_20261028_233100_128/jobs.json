@@ -1,0 +1,89 @@
+{
+  "jobs": [
+    {
+      "attempts": 4,
+      "error": null,
+      "failure_evidence": {
+        "refused": "independent executable verification: the candidate fails the frozen engineering checks: four_rank: the candidate ships no four-rank script"
+      },
+      "finished_at": 1793199669.606666,
+      "gpu": "0,1,2,3",
+      "idea_id": "poincare-frechet-successor-codebook",
+      "job_id": "stage2:poincare-frechet-successor-codebook",
+      "kind": "stage2",
+      "launch_mode": "ddp4",
+      "previous_attempts": [
+        {
+          "error": "the Stage 2 start raised: name 'REPO_ROOT' is not defined",
+          "finished_at": 1793198042.1260688,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the candidate fails the frozen engineering checks: four_rank: the candidate ships no four-rank script",
+          "finished_at": 1793198191.8694592,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the candidate fails the frozen engineering checks: four_rank: the candidate ships no four-rank script",
+          "finished_at": 1793199008.9857478,
+          "status": "failed"
+        }
+      ],
+      "queued_at": 1793198042.055226,
+      "result": {
+        "metrics": {
+          "full_unique_items": 24587,
+          "level2_distinct_prefixes": 1867,
+          "negative_hits": 14824,
+          "pairs": 52855,
+          "positive_hits": 7221,
+          "valid_l1_hard_er": 4.871154883971937,
+          "valid_l1_negative_hit_rate": 0.028046542427395706,
+          "valid_l1_positive_hit_rate": 0.13661905212373474
+        },
+        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook/item_sids.json",
+        "sid_sha256": "67f77d170c7977d0462567d8553ea8c7d5f7b52b290cd585525586723c2a8063",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 1867,
+            "negative_hits": 14824,
+            "pairs": 52855,
+            "positive_hits": 7221,
+            "valid_l1_hard_er": 4.871154883971937,
+            "valid_l1_negative_hit_rate": 0.028046542427395706,
+            "valid_l1_positive_hit_rate": 0.13661905212373474
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook",
+      "round_id": "round_20261028_233100_128",
+      "stage3_job_id": "stage3:poincare-frechet-successor-codebook",
+      "started_at": 1793199036.2173855,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": null,
+      "idea_id": "poincare-frechet-successor-codebook",
+      "job_id": "stage3:poincare-frechet-successor-codebook",
+      "kind": "stage3",
+      "queued_at": 1793199669.9039066,
+      "result": null,
+      "round_id": "round_20261028_233100_128",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook/item_sids.json",
+      "stage2_job_id": "stage2:poincare-frechet-successor-codebook",
+      "started_at": null,
+      "status": "pending",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook"
+    }
+  ],
+  "schema": 1
+}

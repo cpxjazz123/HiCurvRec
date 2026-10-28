@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "verify_fork-angle-transport_r9_2",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1793168271.0033374,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "52866d9fbc90471fc219d09ced94eb3ed014fc57fe769731127c9f8419f256fb",
+  "isolation_policy": "opencode v2 permission object: bash denied, edit and write denied (this role is read-only and its answer is read back from the session stream), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "opencode-go/deepseek-v4.1-flash",
+  "output_name": "verification.txt",
+  "output_sha256": "b8c2f72f5b7a3d3395831fded086f67f92fcf21ae3ab5fb0192631cdf916a606",
+  "pid": 1192674,
+  "project_marker": ".git",
+  "prompt_sha256": "b58d735b1657615deedb06417de0fbfc29b5894062eedaad0c77a13e4fb81bed",
+  "session_sha256": "9651e0a76fb0759371e258f91c7e04cf5d380128f46ad65dad0ea04b637be6b6",
+  "stderr_present": false,
+  "task_id": "verify_fork-angle-transport_r9_2",
+  "timed_out": false,
+  "verified": true
+}

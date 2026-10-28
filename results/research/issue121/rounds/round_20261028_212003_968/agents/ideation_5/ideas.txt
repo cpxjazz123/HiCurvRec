@@ -1,0 +1,47 @@
+IDEA: LORENTZ_CONE_RQ
+
+TITLE: Behaviour-weighted Lorentz future-cone ordering inside geodesic residual quantisation
+
+MOTIVATION: RQ-VAE semantic IDs are built by residual reconstruction error alone, so a level-2 prefix is chosen because it reduces distortion, not because the item actually follows the level-1 item in user behaviour. A generative next-item model then has to rediscover transition direction from a prefix code that has already discarded it, and every extra level of RQ depth adds a distortion-driven split that cuts across real user trajectories.
+
+NOVELTY: The mechanism is not a behaviour-weighted distance, not a hyperbolic latent inserted before an unchanged Euclidean quantiser, and not a standalone hyperbolic auxiliary loss. It makes the SID codebook a partially ordered object: consecutive-level centroids are put under a Lorentz causal-cone order whose strength is the training-only directed transition mass between the corresponding code pairs, and the same centroids serve as the base and target of the log/exp residual step. Removing the behaviour term or the curvature term changes the centroid geometry and therefore the emitted SID prefixes, not merely an auxiliary loss.
+
+CHANGE: Replace the Euclidean residual quantiser with a Lorentz geodesic residual quantiser (log map at the parent centroid, nearest tangent codebook, exp map back), and add a transition-mass-weighted future-cone hinge on the same per-level centroids at every optimiser step, so codebook geometry is jointly shaped by reconstruction and by measured transition order.
+
+SPECIFICATION: Let c = exp(rho), kappa = -c^2, rho initialised to 0 and clamped to [-1.5, 1.5]. Lorentz inner product <x,y>_L = -x0*y0 + x_s . y_s, hyperboloid <x,x>_L = -1/c^2. A point y is in the future cone of x iff <y-x, y-x>_L <= 0 and (y0 - x0) > 0. Build M_l once from the Stage-2 training split. At each residual level l = 1..3, the code is q_l = argmin_k || log_{e_{l-1}}(x_{l-1}) - T_l[k] ||^2 and the level output is x_l = exp_{e_{l-1}}(T_l[q_l]) with e_0 = origin. Train with L = L_rec + L_rq + 0.1 * L_cone / mean_positive_M, where L_cone = sum_{l,a,b} M_l[a,b] * relu( <e_{l+1,b} - e_{l,a}, e_{l+1,b} - e_{l,a}>_L + m ) and m = 0.1 * median over sampled training transition pairs of (-<Delta,Delta>_L) at initialisation.
+
+COST: At the frozen scale (24556 training items, 24 steps per epoch, 3000 epochs = 72,000 steps) the transition matrix is built in one pass over training transitions before training, under 60 s and about 0.1% of the run. Per step the extra work is about 3 levels x 2048 sampled transition pairs = roughly 6k hinge evaluations plus a 256x256 gather and one additional aggregation pass for the geodesic Fréchet-style centroid update; estimated +3 to +6% step time, and 0.8M floats of memory for three 256x256 matrices. No extra epochs and no extra forward passes.
+
+HYPOTHESIS: If transition direction is information the prefix should carry, then forcing frequent successor codes into the future cone of their parent code will lower the cone-violation rate and raise the accuracy with which the level-2 code is predicted from the level-1 code, and the Stage-3 generative model will convert that into test Recall@10 above 0.065 in the single frozen run. If the generative model already recovers order from position and session context, the cone term will be inert and recall will stay at baseline.
+
+RISKS: The cone hinge can fight reconstruction and raise effective rank or collision pressure at level 1; M may be too sparse at level 1 because item pairs spread over 256 codes; log/exp near the hyperboloid boundary can produce large tangent norms and unstable gradients; a strong cone constraint could collapse many successors into one cone and hurt diversity; the frozen single run gives no way to distinguish a real gain from seed noise.
+
+BEHAVIOR SIGNAL: Popularity-adjusted directed item-transition mass, aggregated onto consecutive-level codebook pairs.
+
+BEHAVIOR COMPUTATION: Only from the Stage-2 training sequences. For each ordered item pair (i, j) with j in the next three positions of the same training session, count n_ij. Form PMI_ij = log((n_ij * N) / (n_i * n_j)) using item marginals n_i, n_j from the same split, clip to [-4, 4], and keep max(PMI_ij, 0). Aggregate to level l as M_l[a,b] = sum over i with code_l(i)=a and j with code_(l+1)(j)=b of the clipped PMI, row-normalise, and keep the top 8 successors per row.
+
+LEAKAGE BOUNDARY: Transition counts, item marginals and M_l are computed once from the Stage-2 training split before RQ-VAE training starts, then frozen. Validation and test sequences are never read, no validation interaction is used to choose the margin, the top-8 cut or the cone weight, and Stage 3 only consumes the already emitted SIDs.
+
+HYPERBOLIC OPERATOR: Lorentz model with trainable negative curvature kappa = -c^2 (c = exp(rho)), geodesic distance d_L(x,y) = (1/c) arcosh(-c^2 <x,y>_L), geodesic log and exp maps at the parent centroid, and the Lorentz future-cone order.
+
+HYPERBOLIC LOCATION: Inside the Stage-2 residual quantiser, at every quantisation level and every optimiser step: the log map produces the residual to be quantised, the exp map produces the code vector that becomes the SID, and the cone hinge acts on the same centroids that the log and exp maps use.
+
+COUPLING PATH: Parent code a selects row M_l[a, :] of the transition matrix; that row weights a cone hinge on the centroid pair (e_{l,a}, e_{l+1,b}); those same centroids are the base point and the codeword of the log/exp residual step; the exp map output is the quantised vector whose nearest codeword index becomes the SID prefix. Remove behaviour and the weights stop carrying transition structure; remove curvature and there is no cone, no log/exp and no geodesic distance; in both cases the emitted SID assignment changes.
+
+COUPLING EQUATION: L_cone = sum_{l,a,b} M_l[a,b] * relu( <e_{l+1,b} - e_{l,a}, e_{l+1,b} - e_{l,a}>_L + m ), with x_l = exp_{e_{l,a}}( T_l[ argmin_k || log_{e_{l,a}}(x_{l-1}) - T_l[k] ||^2 ] ).
+
+OBSERVABLES: Cone-violation rate over positive-M_l training transition pairs, at initialisation versus end of Stage 2; level-2 prefix predictability from the level-1 code on training transitions; SID assignment churn between epoch 500 and epoch 3000; and Stage-3 test Recall@10 against the 0.065 target.
+
+ABLATION BEHAVIOR OFF: M_l is replaced by the constant 1 on the same top-8 support, so the hinge is uniform over the same graph support and carries no measured transition mass or direction.
+
+ABLATION GEOMETRY OFF: The Euclidean surrogate: d_L becomes ||x - y||_2, log and exp become the identity, and the cone hinge becomes a radial-order hinge relu( ||e_{l+1,b}|| - ||e_{l,a}|| + m ), keeping the same M_l weights and the same codebook roles.
+
+ABLATION BOTH ON: The coupled run specified above, trained once on the frozen budget with no early stopping.
+
+SPEC EQUATIONS: (1) Embedding: for v in R^d, x0 = sqrt(1/c^2 + ||v_s||^2), x = (x0, v_s). (2) log_e(x) = (d_L / sinh(c*d_L)) * (x - cosh(c*d_L)*e), with d_L = (1/c) arcosh(-c^2 <e,x>_L). (3) exp_e(u) = cosh(c*||u||_L)*e + sinh(c*||u||_L)*u/(c*||u||_L). (4) For l = 1..3: r_l = log_{e_{l-1}}(x_{l-1}); q_l = argmin_k ||r_l - T_l[k]||^2; x_l = exp_{e_{l-1}}(T_l[q_l]); SID prefix = (q_1, q_2, q_3). (5) Total loss L = L_rec + L_rq + 0.1 * L_cone / mean_positive_M. (6) Margin m = 0.1 * median over sampled training transition pairs of (-<Delta,Delta>_L) computed once at initialisation; the 0.1 scale and the normaliser are documented defaults, not swept.
+
+SPEC INPUTS OUTPUTS: Inputs are the Stage-2 item representation batch, the frozen per-level transition matrices M_l, the tangent codebooks T_l (256 entries per level), and the curvature parameter rho. Outputs are the quantised Lorentz code vectors x_1..x_3, the integer code indices that form the SID prefix, the reconstruction and RQ losses, and the scalar cone penalty with its gradient on centroids and encoder.
+
+SAFEGUARDS: Clamp the arcosh argument to at least 1 + 1e-6; renormalise every centroid onto the hyperboloid after each update; clamp ||u||_L to [1e-4, 20/c]; skip cone terms with M_l below 1e-6; gradient clip 1.0; if a centroid norm exceeds 1e4 in float32, reset it to its parent centroid; keep c = exp(rho) and clamp rho to [-1.5, 1.5] so curvature stays strictly negative; fall back to plain Euclidean RQ for a level if fewer than 16 positive-M pairs exist at that level.
+
+END IDEA

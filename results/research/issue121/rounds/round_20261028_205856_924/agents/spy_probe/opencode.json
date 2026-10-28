@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "bash": "deny",
+    "edit": "deny",
+    "write": "deny",
+    "webfetch": "deny",
+    "websearch": "deny",
+    "task": "deny",
+    "lsp": "deny",
+    "read": {
+      "*": "deny",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_205856_924/agents/spy_probe/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_205856_924/agents/spy_probe/**": "allow"
+    },
+    "external_directory": {
+      "*": "deny"
+    }
+  },
+  "mcp": {
+    "servers": {
+      "progress": {
+        "type": "local",
+        "enabled": true,
+        "command": [
+          "/usr/bin/python3",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/agents/progress_server.py",
+          "--file",
+          "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_205856_924/agents/spy_probe/progress.jsonl",
+          "--task-id",
+          "spy_probe",
+          "--deadline-epoch",
+          "1793182008.011432",
+          "--wrapup-margin",
+          "60"
+        ]
+      }
+    }
+  }
+}

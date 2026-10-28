@@ -1,0 +1,46 @@
+VERDICT: NEEDS_FIX
+
+CHECK: (a) behaviour x geometry fidelity — one connected pathway using the training-only behaviour signal and the curved operation
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/model.py:26-30 -> model/layers.py:283-289 -> model/layers.py:121 -> model/layers.py:106-113 -> model/layers.py:98-104 | Traced the real RQ-VAE forward call chain statically (RQVAE.forward -> RQLayer.forward -> VQLayer.forward -> _indices -> _distances) and grepped every *.py in the tree for markov/transition/diffus/B_bt/alpha/poincare/artanh/mobius/einstein/klein/curvature; no runtime because this sandbox has no PyTorch.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:106-113 (and model/layers.py:98-104)
+FINDING DETAIL: The assignment is exactly the baseline Euclidean one: _distances computes ||latent||^2 - 2*latent@C^T + ||C||^2 and _indices returns argmin, or the inherited Euclidean Sinkhorn for the last level only. There is no training-only behaviour signal anywhere in the executed path: no directed-transition matrix is built, no Markov diffusion step P <- (1-alpha)P + alpha*(B_bt @ P), no column/row marginal projection with a usage prior q, and no successor-conditioned plan. train_rqvae.py:246-253 reads train.parquet only for its "target" column to select item ids; it never constructs item-item transitions. The proposed mechanism is simply not implemented, so there is no connected behaviour x curvature pathway to exercise.
+FINDING REPRODUCTION: Read model/layers.py:98-113 and model/model.py:26-30; grep -n "markov|transition|diffus|B_bt|alpha|poincare" over the tree's *.py returns no hit in the executed code. Switching any hypothesised behaviour flag is impossible because no such flag or tensor exists.
+FINDING CORRECTION: Implement the specified level-wise block: exp_0 residual, Poincare ground cost D_ij, K=exp(-D/tau) with measured tau=median(D), three Sinkhorn sweeps interleaved with P <- (1-alpha)P + alpha*(B_bt @ P), argmax plan for j*(i), straight-through log_0(c_j*), and the closed-form hyperbolic weighted barycenter codebook update, with behaviour/geometry switches wired into the same call, then call it from RQLayer.forward for every level.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/utils.py:17-59 and model/utils.py:162-276; model/__init__.py:3-4
+FINDING DETAIL: The only hyperbolic code (artanh, expmap0/logmap0, mobius_add, poincare_distance, HVectorQuantization) is dead: model/__init__.py imports only .layers and .model, and no file imports model.utils (grep "utils|HVector" finds only its own definition). It is inherited unused code, which the scope contract explicitly excludes. Even if it were wired, it would not match the proposal: curvature is fixed self.c=1.0 (utils.py:179), there is no transition diffusion at all, and the codebook is updated by embedding gradients/commitment loss (utils.py:260-263), not by an Einstein/Klein weighted barycenter.
+FINDING REPRODUCTION: grep -rn "from .utils|import utils|HVectorQuantization" in the tree shows no importer. The trainer imports "from model import RQVAE" (train_rqvae.py:37), which resolves to model/model.py -> model/layers.py only.
+FINDING CORRECTION: Either delete the dead hyperbolic module or, preferably, implement the missing mechanism inside the executed quantizer; do not count imported-but-unused helpers as geometry.
+
+CHECK: (b) trainability — real forward/backward, finite gradients reaching intended parameters, coupled pathway changes SID assignment when on and reverts when behaviour is off / geometry is Euclidean
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:115-134 and model/model.py:43-50 (loss/gradient path); model/layers.py:81-96 and 260 (only Sinkhorn, last level, Euclidean) | Read the forward/loss/backward chain and the switch logic; there is no coupled term to differentiate, and the sandbox cannot run torch, so judgement is from the code as the review rules allow.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:106-113, model/layers.py:258-263
+FINDING DETAIL: There is no behaviour-on/behaviour-off or geometry-off switch in the code (no alpha, no B_bt, no Euclidean-vs-Poincare flag), so the required "on changes the assignment, off reverts" comparison cannot even be expressed. The only assignment rule present is the baseline Euclidean argmin/Sinkhorn, so gradients flow through the encoder and codebook only via the unchanged reconstruction plus quant_loss (model/model.py:49-50); no gradient can reach a transition-diffused plan or a hyperbolic barycenter because neither exists. Baseline quant_loss is at least used, so there is no dead-term problem in the baseline itself; the defect is the absence of the proposed trainable pathway.
+FINDING REPRODUCTION: Instantiate the trainer model and look for any parameter or buffer representing B_bt, alpha, q, tau, or curvature; there are none. Remove or add a behaviour flag: SIDs from model/layers.py:121 are bit-identical, because _indices depends only on Euclidean distances and the fixed codebook.
+FINDING CORRECTION: Add the coupled loss/assignment term with differentiable straight-through gradients, make the behaviour-off branch call plain argmin on Euclidean cost and the geometry-off branch use Euclidean cost in the same Sinkhorn block, and verify with the MCP one-epoch gradient smoke that gradients reach encoder/codebook and the switches change the exported SIDs.
+
+CHECK: (c) integration — trainer entry point, frozen data path, valid indexed SID export, own result directory, distributed launcher including the SINGLE_GPU_ENV single-card branch
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:42-67 (paths), 232-300 (entry/data/model), 421-429 (SID export), 436-461 (launcher) | Read the trainer entry point and path constants, checked the frozen train.parquet/sentence_t5.npy usage and the _extend_collisions index construction (train_rqvae.py:195-208), and compared the launcher with the bundled logs.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:58-59
+FINDING DETAIL: ARM_NAME is still the baseline arm name "TIGER_RQ-VAE" (comment on line 57 says a candidate copy changes only this line), so RESULT_DIR resolves to results/stage2_RQ-VAE/TIGER_RQ-VAE and the run would overwrite the baseline's rqvae_best.pth, sids_for_hgrec.npy and item_sids.json instead of writing the candidate's promoted arm directory results/stage2_RQ-VAE/cocond-markov-poincare-ot/. Admission/Stage3 then cannot read the candidate's SIDs at the expected path.
+FINDING REPRODUCTION: Evaluate REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME with ARM_NAME from train_rqvae.py:58; it prints .../stage2_RQ-VAE/TIGER_RQ-VAE, not .../cocond-markov-poincare-ot.
+FINDING CORRECTION: Set ARM_NAME = "cocond-markov-poincare-ot" (the promoted tree name) so RESULT_DIR, CHECKPOINT, OUTPUT_SID, OUTPUT_JSON and LOG_DIR all point at the candidate arm.
+
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:436-461 (and _LAUNCHER at 98-107)
+FINDING DETAIL: _launch_via_torchrun always calls stage2_launcher.launch with world_size=int(_LAUNCHER["nproc"])=4; there is no single-card branch and the string GENREC_SINGLE_GPU / SINGLE_GPU_ENV appears nowhere in the tree. The bundled logs/train_migrated.log:1 claims "launching single-GPU run (CUDA_VISIBLE_DEVICES=1, batch=4096)", but that string is not produced by this file and the log references /fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_bootstrap_consensus_sid/model/layers.py, i.e. another candidate's code, so the conformance log cannot be evidence that this launcher supports the single-card branch.
+FINDING REPRODUCTION: grep -n "SINGLE_GPU_ENV|GENREC_SINGLE_GPU" over the tree returns no hit; grep -n "launching single-GPU" over the tree's Python returns no hit while logs/train_migrated.log:1 contains it and points at TIGER_bootstrap_consensus_sid.
+FINDING CORRECTION: Add the frozen single-card branch: when os.environ.get("SINGLE_GPU_ENV") == "GENREC_SINGLE_GPU", launch one rank on the chosen visible GPU with the frozen batch and skip the 4-rank contract launcher; otherwise keep the existing stage2_launcher path.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: train_rqvae.py:390-407
+FINDING DETAIL: The checkpoint records "collision"/"raw_unique" from the last EVAL_INTERVAL evaluation or inf/0 if EPOCHS is not a multiple of EVAL_INTERVAL, but this affects only metadata; the exported SIDs (train_rqvae.py:421-429) are correctly recomputed from the final weights and _extend_collisions produces unique integer rows indexed by item_id 0..N-1, so the SID payload itself is valid.
+FINDING REPRODUCTION: EPOCHS=3000 with EVAL_INTERVAL=50 always evaluates, so this is latent; setting EPOCHS=1 leaves final_collision=inf while item_sids.json is still valid.
+FINDING CORRECTION: Recompute collision after loading the final_state before saving, or document the field as optional metadata.

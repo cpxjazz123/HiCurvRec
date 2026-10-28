@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "bash": "deny",
+    "edit": "deny",
+    "write": "deny",
+    "webfetch": "deny",
+    "websearch": "deny",
+    "task": "deny",
+    "lsp": "deny",
+    "read": {
+      "*": "deny",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_221240_652/agents/pairwise_1_0/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_221240_652/agents/pairwise_1_0/**": "allow"
+    },
+    "external_directory": {
+      "*": "deny"
+    }
+  },
+  "mcp": {
+    "servers": {
+      "progress": {
+        "type": "local",
+        "enabled": true,
+        "command": [
+          "/usr/bin/python3",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/agents/progress_server.py",
+          "--file",
+          "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_221240_652/agents/pairwise_1_0/progress.jsonl",
+          "--task-id",
+          "pairwise_1_0",
+          "--deadline-epoch",
+          "1793189463.1531491",
+          "--wrapup-margin",
+          "60"
+        ]
+      }
+    }
+  }
+}

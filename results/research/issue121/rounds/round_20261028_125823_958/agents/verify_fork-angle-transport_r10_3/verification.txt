@@ -1,0 +1,157 @@
+VERDICT: PASS
+
+CHECK: a) behaviour x geometry fidelity: one connected pathway in which the training-only behaviour signal and the curved operation are used together
+CHECK VERDICT: PASS
+EXERCISED PATH:
+  train_rqvae.py:259-322 (build_successor_neighbourhood: N(i) from train.parquet history/target only,
+  S_ij = Jaccard of successor sets, top-k retained, b_i = sum_j S_ij log(1+|N(j)|) at :320-321) ->
+  train_rqvae.py:401-402 (built once from the training frame) -> train_rqvae.py:410-429
+  (build_fork_context: per-item weighted mean of the neighbour encoder latents at :418-420,
+  scale = b_i/(1+b_i) at :422, behaviour-off zeroing at :423-427) -> model/model.py:42-56
+  (shift_l = scale * W_l(mean) at model.py:53, one learned W_l per level at model.py:30-32) ->
+  model/model.py:36-38 -> model/layers.py:385-387 (dispatch into _fork_forward) ->
+  model/layers.py:290 (tangent = residual + shift) -> model/layers.py:297-308
+  (codewords projected into the ball, point = Exp_0(tangent), codewords = Exp_0(projected codes),
+  squared Poincare distance in double) -> model/layers.py:322-323 (argmin, Sinkhorn on the last level)
+  -> model/layers.py:330-331 and :368-371 (tangent residual to the next level) -> model/layers.py:349
+  (curved commitment on the same point) -> model/layers.py:394 writes the index into the SID column;
+  the exporter recomputes the SAME context at train_rqvae.py:431-439 and :553-556.
+  How I exercised it: with the project interpreter (/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9,
+  torch 2.8, 4x L40S) and the frozen inputs (stage1_GeneEmbedding/output/sentence_t5.npy 24587x768,
+  results/stage0_build_parquet/train.parquet, 24556 train items). (1) Ran the tree's own smoke_test.py:
+  5/5 PASS (geometry convention, successor neighbourhood, displacement+switches, reconstruction
+  gradient, four-rank DDP), SMOKE_PASS. (2) Built the successor table with the tree's own
+  build_successor_neighbourhood: 2.5 s, shape (24587,8), 24472/24587 items covered, Jaccard weights in
+  [0,1], b mean 1.554 / max 5.380 / 115 items with b=0. (3) Drove the real RQVAE (trainer's own
+  _tokenizer_config, 3x256 codes, dim 32, KMeans init) on 1024 real items with the context built exactly
+  as build_fork_context builds it: shift norms 0.0429/0.0434/0.0411 per level against an encoder norm of
+  0.0799 (scale mean 0.598), so the behaviour signal moves the point the quantizer actually reads.
+  Both-on vs behaviour-off changed 1016/1024 SID rows (per level 690/993/966); both-on vs geometry-off
+  changed 65/1024 rows (per level 18/9/64); re-running behaviour-off reproduced the behaviour-off tokens
+  bit-for-bit. The behaviour signal is a sparse successor lookup (no separate loss) inside the same
+  tangent that the exp map and the geodesic assignment consume, and the SID column is the argmin of that
+  curved distance, so this is one pathway, not a suffix on an unchanged Euclidean quantizer and not two
+  unrelated losses. Executed end to end as well: one real epoch of the real main() on one card
+  (loss 0.01270) and on four ranks (loss 0.01427) both exported SIDs from this path.
+  Observation, not a finding: at the latent scale the model produces (||z||~0.08, c=1 fixed by the
+  proposal) the geodesic ordering is locally close to the L2 ordering, which is why only ~6% of rows flip
+  when the curve is replaced by the identity/L2 branch; the curve is nevertheless computed, used in the
+  assignment, in the residual update and in the commitment gradient, and c=1 is the proposal's own value.
+FINDING SEVERITY: minor
+FINDING LOCATION: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:316 (against the docstring at train_rqvae.py:264-266 and NEIGHBOUR_TOPK at train_rqvae.py:116)
+FINDING DETAIL: the retained set is the top min(8, number of items with a nonzero Jaccard overlap), not the
+  top min(8, |N(i)|) of the proposal's "k derived as min(8, degree)". Line 316 slices the candidate list
+  (all items sharing at least one successor with i), and that list can be longer than i's successor set, so
+  for low-out-degree items the neighbourhood is over-filled and b_i at :320-321 sums more overlap terms
+  than the literal formula, inflating the ambiguity scale b/(1+b) for exactly those items. Measured on the
+  frozen train split: 13,887 of the 24,474 covered items retain more neighbours than min(8, |N(i)|)
+  (mean successor degree 13.16). The behaviour signal is still the training-only successor overlap and the
+  coupling is unchanged, so this is a formula-fidelity deviation, not a broken pathway.
+FINDING REPRODUCTION: in the tree, read results/stage0_build_parquet/train.parquet, rebuild the
+  source->destination indicator exactly as train_rqvae.py:276-295 does (sparse csr, data set to 1), take
+  deg = indicator.sum(axis=1), then ids, w, b = build_successor_neighbourhood(frame, 24587),
+  ret = (ids >= 0).sum(1); ((ret > np.minimum(8, deg)) & (deg > 0)).sum() prints 13887.
+FINDING CORRECTION: either cap the retained set with
+  keep = np.argsort(-overlaps)[:min(NEIGHBOUR_TOPK, int(degree[item]))] and recompute b_i over that set
+  (rows left at -1 are already masked by build_fork_context), or state in the docstring that "degree" is
+  the successor-overlap-graph degree (the candidate count) so that the formula and the code agree.
+
+CHECK: b) trainability: real forward/backward, finite losses and gradients on the intended parameters, live coupled term, stable numerics, both switches change and revert
+CHECK VERDICT: PASS
+EXERCISED PATH:
+  model/layers.py:273-371 (_fork_forward) reached from model/model.py:34-40 and train_rqvae.py:454-469,
+  with backward through model/layers.py:349 (curved commitment, ball_distance at model/hyperbolic.py:125-137)
+  and model/layers.py:360 (the straight-through decoder input) | Real forward and real backward, not a
+  source reading: 1024 real items, the trainer's own config and the real successor context. both-on:
+  loss 1.632e-2 (recon 4.63e-4, quant 1.586e-2), all finite; gradients reach encoder.mlp weight (abs-sum
+  25.6), all three fork maps (0.341 / 0.268 / 0.168), all three codebooks (1.67 / 1.30 / 0.86) and the
+  decoder; pre-clip grad norm 0.864 < GRADIENT_CLIP_NORM 1.0; no parameter has a None gradient; zero
+  non-finite gradient entries. A reconstruction-only backward still reaches every fork map
+  (3.2e-4 / 2.1e-4 / 1.1e-4) and the encoder (2.3e-2), so the decoder sees the transformed point and not a
+  bare codebook lookup. Switch response: behaviour-off (train_rqvae.py:423-427) gives exactly 0.0 on all
+  three fork maps and moves 1016/1024 SIDs; geometry-off (model/layers.py:313-316) keeps small non-zero
+  fork gradients (8.1e-4 / 5.9e-4 / 3.5e-4) and moves 65/1024 SIDs; recomputing with behaviour off returns
+  the behaviour-off tokens exactly, so the effect does not leak. Stability: 60 real AdamW steps at the
+  frozen lr 1e-3 / weight-decay 1e-4 / clip 1.0 on random real batches stayed finite, loss 1.326e-2 ->
+  3.36e-4, grad norm 0.986 -> 0.011, level-0 max code norm bounded at 0.435; every safeguard I exercised
+  is finite in double (acosh argument clamped at 1+1e-7, ball projection at radius (1-1e-5)/sqrt(c),
+  exp_0 bounded by tanh), and the point never leaves the ball. The real trainer's own one-epoch runs
+  (single card loss 0.01270, four ranks loss 0.01427) were finite with no nan/inf.
+FINDING SEVERITY: minor
+FINDING LOCATION: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:346-352 (against model/layers.py:313-316 and the docstring at model/layers.py:279-283)
+FINDING DETAIL: the geometry-off switch is not the metric-only control the docstring promises. With
+  geometry on the commitment is mean_over_batch(d_c(point, selected_code)^2), a per-sample SUM over the 32
+  dimensions of a differentiable point; with geometry off it is
+  F.mse_loss(selected, tangent.detach()), a mean over batch AND dimensions whose point is detached, so it
+  contributes no gradient to the tangent, the encoder or the fork maps. Measured on the same 1024-item
+  batch and the same weights: quant 1.586e-2 with geometry on versus 1.539e-4 with geometry off (~103x),
+  and the fork-map gradients 0.341 / 0.268 / 0.168 versus 8.1e-4 / 5.9e-4 / 3.5e-4. So the switch changes
+  the metric and the objective normalisation/gradient routing together. The trained (both-on) run is
+  unaffected and no arm is trained with the switch off this round, so this is a defect of the named
+  control, not of the mechanism that will run.
+FINDING REPRODUCTION: build the trainer's model, take one real batch plus its real build_fork_context, then
+  run model(batch, fork_context=ctx) with ctx["geometry_on"] True and False and print the returned
+  quant_loss (1.586e-2 vs 1.539e-4); backpropagate only the commitment and observe the tangent gradient
+  is zero in the geometry-off branch because the target is detached at model/layers.py:351.
+FINDING CORRECTION: make the Euclidean branch the exact analogue of the curved one, e.g.
+  curved_term = (tangent - selected).square().sum(-1).mean() (no detach, per-sample sum as the geodesic
+  term has), so that identity-vs-exp/log and L2-vs-geodesic are the only differences; the both-on path
+  need not change.
+FINDING SEVERITY: minor
+FINDING LOCATION: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/model.py:42 (the `encoded` parameter of _fork_context)
+FINDING DETAIL: _fork_context never reads its `encoded` argument; the shift is built only from
+  fork_context["neighbour_mean"] and fork_context["scale"] at model/model.py:51-53. This is an unused
+  declaration: it changes no computation and no gradient, but it suggests the item's own latent enters the
+  displacement when it does not.
+FINDING REPRODUCTION: read model/model.py:42-56: `encoded` appears in the signature and nowhere in the body;
+  `grep -n encoded model/model.py` shows only line 42.
+FINDING CORRECTION: drop the parameter (def _fork_context(self, fork_context)), or use it if the
+  displacement is meant to depend on the item's own encoded vector; the caller at model/model.py:37 can
+  drop the argument with it.
+
+CHECK: c) integration: real entry point, frozen data path, valid and correctly indexed SID export, writes only into its own result directory, distributed launcher including the single-card branch that reads SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"
+CHECK VERDICT: PASS
+EXERCISED PATH:
+  train_rqvae.py:608-610 (entry -> _launch_via_torchrun -> main), :42-58 (_repository_root marker walk),
+  :61-78 (paths, ARM_NAME, RESULT_DIR), :325-471 (main), :431-439 and :527-568 (export),
+  :575-605 (launcher), :103-105 and :579-581 (single-card branch) | I ran the real entry point, not a
+  reimplementation, and redirected only the six output constants to a scratch directory outside the
+  repository so the candidate's result directory was not polluted by a 1-epoch artefact.
+  (1) Single card: with GENREC_SINGLE_GPU=1, _launch_via_torchrun() returned in-process without forking
+  (train_rqvae.py:579-581) and main() completed one epoch: all_items=24587, train_items=24556 from
+  stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet (the same
+  frozen inputs and the same EPOCHS=3000 / BATCH_SIZE_PER_RANK=1024 / LR / BETA / clip / seed constants as
+  the baseline trainer; only the mechanism and the log location were added), neighbourhood_items=24472
+  topk=8 behaviour_on=True geometry_on=True, KMeans init, 24 coupled steps, rank-0 eval
+  (loss 0.01270, raw_unique 6953/24587), final checkpoint, export.
+  (2) Four ranks: the same main() under torchrun --standalone --nproc_per_node=4 (4000-class NCCL env, port
+  50391) finished one epoch (loss 0.01427), the rank-0-only evaluation plus _skip_ddp_reduce
+  (train_rqvae.py:491-523) did not wait in a collective, find_unused_parameters=False raised no unused
+  parameter error, and the export ran once; the tree's ddp_check.py also printed DDP_PASS.
+  (3) SID export and indexing: sids_for_hgrec.npy is int64 (24587,4) with 24587 unique rows, levels 0-2 in
+  [0,255] and level 3 = 768+occurrence (the baseline _extend_collisions convention, train_rqvae.py:222-235);
+  item_sids.json has exactly the keys "0".."24586", each row 4 JSON ints, and payload[str(i)] equals npy
+  row i for all 24587 rows (rows taken in embedding order via torch.arange(len(all_embeddings)), :554-556),
+  which is what stage3_T5Train/data/dataset.py:79-111 accepts and what item2code maps to zero-based codes.
+  (4) Write isolation: the project's own preflight tools/research/rounds/baseline.guard_output_paths(tree)
+  returns PASS and resolves RESULT_DIR/OUTPUT_SID/OUTPUT_JSON/CHECKPOINT/LOG_DIR/METRICS_PATH to
+  /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_fork-angle-transport{,/logs}; arm_name(tree) =
+  "TIGER_fork-angle-transport" equals the declared ARM_NAME (train_rqvae.py:67), tree_arm() is None so the
+  server's tree_result_dir() is the same directory, and the launcher's children run with cwd=RESULT_DIR/logs
+  (:604). The only write sites are METRICS_PATH, OUTPUT_SID, OUTPUT_JSON, CHECKPOINT and LOG_DIR (:149-158,
+  :532-541, :563-566, :582, :602); the 1-epoch run wrote exactly those five files under the scratch
+  directory and nothing in the baseline's directory, another candidate's directory, or the source tree.
+  (5) Launcher: <interpreter>/torchrun is resolved next to sys.executable (:128) and the fork command is
+  torchrun --standalone --nproc_per_node=4 --master_port=50202 <absolute script> with CUDA_VISIBLE_DEVICES
+  0,1,2,3 and the NCCL env (:583-596); SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" is declared at :105 and the
+  branch at :579-581 returns before the fork when it is "1", which is exactly the branch I exercised.
+  Observation, not a finding: the allowlist copy stage2_RQ-VAE/TIGER_fork-angle-transport (15:29) is older
+  than the reviewed tree (17:00); the launch path re-copies the reviewed tree first
+  (tools/genrec-mcp/server.py:2963-2997 called from :3035), so the copy is not the code that will run, and
+  the tree's own stale logs/ are excluded from that copy and never written by this trainer (LOG_DIR lives
+  under RESULT_DIR).
+FINDING SEVERITY: none (no defect found in this check)
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: not applicable
+FINDING CORRECTION: none

@@ -1,0 +1,74 @@
+IDEA: GEO-STE-GATE
+TITLE: Curved straight-through gradient: Poincare parallel transport of the quantizer gradient, gated by measured transition branching.
+MOTIVATION: RQ-VAE copies the codebook gradient back to the encoder as an identity map, i.e. as if the latent were flat. Items near the ball boundary and items in dense transition regions are then updated with the wrong magnitude and the wrong direction, so coarse prefixes stop being behaviourally coherent, and the generator has to memorise prefix transitions it could have inferred from geometry.
+NOVELTY: The curvature acts in the BACKWARD pass (the straight-through estimator), not in a loss, not in an assignment cost, and not in the codebook. The behaviour signal multiplies the very same transported vector, so the two are one expression rather than two co-located terms. No existing mechanism in this repository touches the STE.
+CHANGE: Replace the identity STE by the parallel transport of the reconstruction gradient from the item's ball point to the reconstruction point, rescaled by the ball conformal factors, multiplied by a per-item behaviour gate.
+SPECIFICATION: Forward = tangent-space RQ with Poincare assignment: v0 = z_e; for l = 1..L: p_l = exp_0(v_{l-1}); k_l = argmin_k d_c(p_l, e_{l,k}); a_l = log_0(e_{l,k_l}); v_l = v_{l-1} - a_l; zhat = sum_l a_l; phat = exp_0(zhat); u = exp_0(z_e); L = ||log_phat(u)||^2 + commitment. Backward: dL/dz_e := w_b(i) * (lambda_phat / lambda_u) * gyr[u, -phat](g_u) with g_u = dL/du. Gate w_b(i) = 1 + tanh((H_out(i) - mu_H)/sigma_H), computed once, detached.
+COST: O(B d) for one gyration (two Mobius additions) plus two conformal scalars; at B=1024, d=64 this is ~0.1 MFLOP per step against an encoder step of order 1e2-1e3 MFLOP. Under 0.5% of Stage-2 step time, roughly 1-3 minutes over the 72000 steps (3000 epochs x 24 steps). One extra scalar (curvature) parameter; Stage 3 untouched. No extra memory beyond one B-vector.
+HYPOTHESIS: If radial depth really controls how far an item may move, the transported gradient produces a per-item update-norm spread of more than 1.5x across the ball and raises coarse-prefix transition coherence; that shows up as Stage-3 test recall@10 above 0.065 in the single run.
+RISKS: In low dimension the gyration is nearly trivial, so the mechanism degenerates into a learning-rate multiplier and buys little; the sign of the gate (diffuse items move more) could be wrong; lambda blow-up near the boundary can destabilise late training.
+BEHAVIOR SIGNAL: Directed item-to-item transition branching entropy H_out(i) of each item.
+BEHAVIOR COMPUTATION: From training sessions only, consecutive pairs (i,j) give counts C_ij; p_ij = C_ij / sum_j C_ij; H_out(i) = -sum_j p_ij log p_ij; items with no outgoing edge get H = mu_H. mu_H and sigma_H are measured over all training items.
+LEAKAGE BOUNDARY: H_out is a frozen offline table computed from the training split before Stage 2 starts; validation and test interactions never enter it, and it is never refreshed during training.
+HYPERBOLIC OPERATOR: Poincare ball B_c^d with curvature -c, c = softplus(rho) initialised at 1; distance d_c; exp/log maps; parallel transport PT_{x->y}(g) = (lambda_x/lambda_y) * gyr[y,-x] g with gyr[u,v]w = (-(u (+) v)) (+) (u (+) (v (+) w)).
+HYPERBOLIC LOCATION: In the straight-through estimator that connects the quantizer to the encoder during Stage-2 training.
+COUPLING PATH: behaviour gate -> multiplied into the transported gradient -> encoder parameter update -> encoder output z_e -> assignment p_l -> SID codes. Removing the gate makes every item move identically; removing the transport makes the ball flat.
+COUPLING EQUATION: dL/dz_e(i) = [1 + tanh((H_out(i) - mu_H)/sigma_H)] * (lambda^c_phat / lambda^c_u) * gyr[u, -phat](g_u)
+OBSERVABLES: per-item update-norm ratio correlated with radial depth, mean c||p||^2 over training, per-level code usage entropy, prefix transition coherence, Stage-3 test recall@10.
+ABLATION BEHAVIOR OFF: w_b == 1 for every item, transport unchanged.
+ABLATION GEOMETRY OFF: c forced to the Euclidean branch, PT replaced by identity, i.e. plain STE, gate unchanged.
+ABLATION BOTH ON: the full expression above.
+SPEC EQUATIONS: as in SPECIFICATION; the gate is a per-item constant (no gradient flows through H_out).
+SPEC INPUTS OUTPUTS: inputs z_e (B x d), phat, u, per-item gate w_b; output the transported tangent gradient (B x d) written into the encoder's autograd path in place of the STE identity.
+SAFEGUARDS: clamp ||z_e|| <= (1-1e-3)/sqrt(c) before exp_0; clip the artanh argument to 1-1e-7; if ||u|| or ||phat|| < 1e-6 use PT = I; clip c to [1e-3, 10]; gate lies in (0,2) by construction; on non-finite output fall back to the identity STE for that step.
+END IDEA
+
+IDEA: GEO-SHELL-RQ
+TITLE: Codebook atoms placed on radial shells whose radius is the measured branching of the training transition tree.
+MOTIVATION: RQ-VAE spreads every level's codebook over the same latent volume, so a coarse prefix covering a huge behavioural subtree occupies no more room than a leaf covering three items. The generator then has to memorise which of 256 equally sized prefixes is broad, which is exactly the prefix behaviour predictability Stage 3 struggles with.
+NOVELTY: The behaviour statistic sets the RADIUS of each individual atom inside the curved ball, i.e. the atom positions, not the assignment weight and not a loss. The radius is a closed-form tree-embedding quantity, so nothing is tuned.
+CHANGE: Each atom is an anchor plus a small learnable tangent offset; the anchor is the Frechet-mean direction of its training-interaction community placed at the hyperbolic radius implied by that community's measured leaf mass, and every step atoms are geodesically projected back into their shell.
+SPECIFICATION: Symmetrise training transition counts A = C + C^T; build an L-level community tree (recursive Leiden / normalised cut) with N level-L leaves; for level-l community g, B_g = measured number of leaf descendants; r_lg = (N - B_g)/(N + B_g); rho_lg = (2/sqrt(c)) artanh(sqrt(c) r_lg); u_hat = unit direction of the Frechet mean of the frozen item content embeddings in g; m = exp_0(rho_lg u_hat); e = exp_m(eps); forward RQ identical to the baseline except that distances are d_c; after each optimiser step project e along the geodesic diameter onto [rho_lg - delta, rho_lg + delta].
+COST: One-off tree construction and Frechet precompute over 24556 items on CPU (minutes, before training). Per step only the O(K L d) = 256*3*64 ~ 5e4 elementwise projection plus the d_c terms already computed for assignment, well under 1% of Stage-2 wall clock, and zero marginal Stage-3 cost.
+HYPOTHESIS: If the ball radius given to a prefix should match how many leaves it must separate, broad behaviour communities will occupy large-radius shells and their token will become predictable from a short history; prefix-conditional accuracy rises and Stage-3 recall@10 clears 0.065.
+RISKS: The community tree may disagree with the content geometry and put anchor directions in the wrong cones; hard shell projection can freeze atoms; the Sarkar radius saturates near 1 for huge subtrees and loses radial resolution exactly where branching is largest.
+BEHAVIOR SIGNAL: Hierarchical branching (leaf mass B_g) of the training directed-transition graph.
+BEHAVIOR COMPUTATION: Training sessions only: consecutive pairs give C; A = C + C^T with self-loops dropped; L-level Leiden partition; B_g = number of level-L leaves under g weighted by item mass; N = total leaf mass.
+LEAKAGE BOUNDARY: The tree is built once from the training split before Stage 2 and frozen; no validation or test sequence contributes an edge, and the anchor directions come from the frozen item content features that the encoder already consumes, never from val/test interactions.
+HYPERBOLIC OPERATOR: Poincare ball with curvature -c (fixed c = 1 unless the shared scalar is enabled), geodesic diameters, exp/log maps, Frechet mean by Karcher iteration.
+HYPERBOLIC LOCATION: In the codebook parameterisation and in the per-step geodesic projection of atoms, i.e. at quantization time inside Stage 2.
+COUPLING PATH: measured B_g -> r_lg -> hyperbolic radius rho_lg -> anchor position m -> d_c assignment -> code index -> SID.
+COUPLING EQUATION: e_{l,k} = exp_{m_{l,k}}(eps_{l,k}) with m_{l,k} = exp_0( (2/sqrt(c)) artanh( sqrt(c) (N - B_g)/(N + B_g) ) * u_hat_{l,k} )
+OBSERVABLES: radial distribution of atoms per level, code usage as a function of B_g, prefix predictability, Stage-3 test recall@10.
+ABLATION BEHAVIOR OFF: every community gets B_g = N/K, i.e. uniform shells r_lg = (K-1)/(K+1) per level; geometry and learnable offsets unchanged.
+ABLATION GEOMETRY OFF: Euclidean branch with anchor radius (B_g/N)^(1/d), arithmetic Frechet mean, Euclidean distance and linear projection onto the shell.
+ABLATION BOTH ON: the full coupled expression.
+SPEC EQUATIONS: as above, plus delta = half the gap between adjacent anchors' rho values.
+SPEC INPUTS OUTPUTS: inputs are training transition counts and frozen item content embeddings; outputs are L codebooks of K atoms in B_c^d and, per forward pass, one code index per level per item.
+SAFEGUARDS: clip r_lg to [1e-3, 1-1e-3]; keep ||eps|| <= 0.25*(rho_lg - rho_parent); clip the artanh argument; communities with no assigned items fall back to the parent anchor; Karcher iteration capped at 10 with a step-norm clip.
+END IDEA
+
+IDEA: GYRO-TARGET-RQ
+TITLE: The autoencoder reconstructs a geodesic-shifted successor barycentre instead of the item itself.
+MOTIVATION: Many items are interchangeable given the same successor distribution; giving each its own code wastes generator capacity on distinctions the behaviour does not make. What the next-item predictor needs is the item's behavioural role, not its identity.
+NOVELTY: The behaviour signal changes the RECONSTRUCTION TARGET inside the curved ball. It is not an extra loss term, not a reweighted assignment and not a codebook prior, so the coupling cannot be removed by dropping a regulariser.
+CHANGE: The reconstruction target of item i is a point on the geodesic from its own ball point toward the hyperbolic mean of its training successors, displaced by a fraction fixed by the item's measured transition concentration.
+SPECIFICATION: S_i = immediate next items of i in training sessions; c_i = max_j p(i->j); eta_i = c_i/(1+c_i) in [0,1/2]; b_i = exp_{p_i}( eta_i * (1/|S_i|) sum_{j in S_i} log_{p_i}(sg(p_j)) ); loss = d_c(phat_i, b_i)^2 + commitment; successor points p_j come from a stop-gradient table refreshed once per epoch.
+COST: Successor table refresh is O(E d) once per epoch (E ~ 1e5 edges, d = 64, ~6e6 flops, amortised to ~2.5e5 flops per step) plus one extra exp/log pair per item, O(B d), against the existing encoder step. Negligible in Stage 2, a few MB of CSR storage, Stage 3 unchanged.
+HYPOTHESIS: If SIDs encode behavioural role, items with the same successor set collapse onto one code and the generator's next-prefix prediction becomes easier; observed as fewer distinct codes per successor-set cluster, higher prefix conditional accuracy, and Stage-3 recall@10 above 0.065.
+RISKS: Over-smoothing can merge genuinely distinct items and collapse recall; the momentum table can lag and create a moving target early in training; c_i is noisy for rare items and can over-shift them.
+BEHAVIOR SIGNAL: Sequential co-consumption, specifically each item's set of immediate successors and the concentration of that successor distribution.
+BEHAVIOR COMPUTATION: From training sessions only: for each adjacent pair (i,j) add j to S_i; c_i = max_j count(i,j) / |S_i|.
+LEAKAGE BOUNDARY: S_i and c_i are computed from training sequences only and frozen; the successor point table is refreshed from forward passes over training items only; no validation or test sequence, label or interaction is ever read.
+HYPERBOLIC OPERATOR: Poincare ball with curvature -c, exp/log maps based at the item point p_i, geodesic interpolation along the log direction, and a d_c reconstruction loss.
+HYPERBOLIC LOCATION: In the reconstruction target of Stage-2 training, and hence in the gradient that shapes both encoder and codebooks.
+COUPLING PATH: behaviour concentration eta_i -> length of the geodesic displacement from p_i -> target b_i -> reconstruction loss -> encoder and codebook update -> SID.
+COUPLING EQUATION: b_i = exp_{p_i}( eta_i * (1/|S_i|) sum_{j in S_i} log_{p_i}(sg(p_j)) ), eta_i = c_i/(1+c_i)
+OBSERVABLES: mean number of items per code, code reuse across items with identical successor sets, prefix conditional accuracy, Stage-3 test recall@10.
+ABLATION BEHAVIOR OFF: eta_i = 0 so b_i = p_i, the standard autoencoder target.
+ABLATION GEOMETRY OFF: Euclidean branch with b_i = p_i + eta_i * mean_j (p_j - p_i) and a Euclidean reconstruction loss.
+ABLATION BOTH ON: the full coupled expression.
+SPEC EQUATIONS: as above, plus the baseline commitment term of the RQ-VAE.
+SPEC INPUTS OUTPUTS: inputs are item i, its successor set S_i, its concentration c_i, the current point p_i and the successor table; outputs are the target b_i and the reconstruction gradient.
+SAFEGUARDS: eta <= 1/2 by construction; set eta = 0 when |S_i| < 2; fully detach the successor table; clamp ||b_i|| <= (1-1e-3)/sqrt(c); clip the log-map argument; skip the update if the target norm is non-finite.
+END IDEA

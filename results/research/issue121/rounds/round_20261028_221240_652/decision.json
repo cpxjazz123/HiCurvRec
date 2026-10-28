@@ -1,0 +1,537 @@
+{
+  "decision_at": 1793190327.6430798,
+  "decision_hash": "3a0ccf8694d87f8a5ce18103b5ffe3bdf647d26bb54b310f5e0dd573616cd825",
+  "evidence": {
+    "CURVCELL-SID": {
+      "bundle_sha256": "e9e97242e0e9ed08261d19121ef3f9f9bc7aeb18d4273e814763e4ac07ebfd87",
+      "literature_sha256": "2ad96c5e312a161f018de8cd6c254a6cb11e020c7ffb08e86317a18684127776",
+      "math_sha256": "e690e13291360c878ed4a4f956dcb9a676382b73164676dfeb21b000c68780a1",
+      "probe_sha256": "85a05ff55a7f4aa6ead8298066709615ce62128cad8229d5565d8241305416b9"
+    },
+    "SUCCFAN-CURV-RQ": {
+      "bundle_sha256": "404ea254563870a6c782411c01f6a7da507cd8f77aa1a536a5b73048c282a80b",
+      "literature_sha256": "714227b0e40f7b0e7d3683f386d40ed296000b01d50908b2ddaae926f2c3110f",
+      "math_sha256": "df73bcf1c3395b6d472613047a39be104f0dce7e3dd189b43db01cc42d7c34cf",
+      "probe_sha256": "bd1d243409004558db97c1694f8e1b9b09e8d227b1a127eebaf6c15cfef2a6e2"
+    },
+    "cocond-markov-poincare-ot": {
+      "bundle_sha256": "bc19762831440f872fdc76b452ff554a9bd0b8d1f579a571d073312d85df2fef",
+      "literature_sha256": "0c94f46ff7aa8c21c728102776441143ecdd1e77b0b470b43818422c7377ae4f",
+      "math_sha256": "87d225858beb46241491aafa34bdae22b3c2852f1bce99957c646273e33c8b81",
+      "probe_sha256": "b0ab0625bd68925d4174e8dab79e716103d533e56427671533ba44fb1152922f"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "dimensions": [
+      "behavior_evidence",
+      "geometry_necessity",
+      "novelty",
+      "downstream_mechanism",
+      "falsifiability",
+      "implementability",
+      "exploration_value"
+    ],
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "disagreement": {
+          "behavior_evidence": 1.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 1.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 0.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "SUCCFAN-CURV-RQ",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 2.0,
+          "implementability": 2.0,
+          "novelty": 2.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 2.0,
+            "implementability": 2.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 2.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E5",
+            "E6",
+            "E8",
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "scoring_2": [
+            "E2",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "scoring_3": [
+            "E4",
+            "E5",
+            "E6",
+            "E8",
+            "E10",
+            "E11",
+            "E12",
+            "E13"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The \"curvature\" is a positive scalar gain on a Euclidean residual, so the whole mechanism is a per-prefix codebook rescale: for a fixed prefix, argmin_k ||lambda_p r - c_k|| = argmin_k ||r - c_k/lambda_p||. There is no exp/log map, no geodesic, no Mobius step; the number of codes per level is unchanged, so amplification only reallocates which existing codes are used, and the assignment is exactly reproducible by a Euclidean quantizer with a per-prefix code scale. A second, independent defect is that the stated geometry-off limit is arithmetically wrong: at c=0 the stated factor is 2/(1-0)=2, not the claimed 1.",
+          "scoring_2": "lambda_p enters only as a positive scalar gain on the residual and encode multiplies while decode divides, so the reconstructed item is unchanged and the only live effect is a per-node temperature on the next level's argmin; a per-node learnable gain g_p (one Euclidean scalar per node) is a matched control that reproduces this for every finite norm, and the proposal never argues what the functional form 2/(1-c||x||^2) adds beyond g_p.",
+          "scoring_3": "The \"curved\" step is a positive scalar gain applied to a Euclidean residual: argmin_j ||lambda_p r - c_j||^2 = argmin_j ||r - c_j/lambda_p||^2, so the whole mechanism is a per-node radial dilation of a Euclidean codebook, and the exact same numbers come out of a Euclidean radial gain g(||r||)=2/(1-c_p||r||^2). No exp/log map, no distance, no Mobius operation is evaluated, so nothing in the computation is hyperbolic rather than curved-looking."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behaviour 4: E5 is a measured, covered stratification (five bins, 4895 items in the lowest bin, top-1 successor mass 0.4375 vs 0.0543, support 2.77 vs 44.3, Spearman -0.973), so \"most items have one or two successors and a minority fan out to dozens\" is auditable, and E11 (same_first_prefix_rate 0.0907 vs permuted null 0.067) supports the prefix-instability side; I withheld 5 because the further claim that flat resolution is the binding bottleneck is only indirect (E6, E8) and E8 in fact argues that coarse level-1 clusters keep behavioural neighbours together, which is a coarser-not-finer pressure. geometry 2: the conformal factor is a real curved object but a matched Euclidean per-prefix code rescale reproduces the assignment exactly (counterexample) and no argument is made against that control. novelty 2: the proposal's own ledger places \"per-branch curvature\" among already-used mechanisms and this is a per-prefix variant of it; whether that earlier arm was run is UNKNOWN to me, and the bounded check is the round ledger's mechanism list compared by computation rather than by name. downstream 3: the chain \"bigger lambda -> more distinct level-2/3 codes -> lower conditional entropy\" has a gap, because with a fixed 256-code level the hub gain is another prefix's loss, and making hub successors more distinct raises rather than lowers the next-token entropy the generator faces; the two stated diagnostics (higher code entropy in the top fanout quartile, higher prefix-conditional next-code accuracy) pull in opposite directions. falsifiability 3: three switches and a failure criterion exist, but the geometry-off arm as written is a constant factor 2 rather than a matched Euclidean control, so the comparison differs by more than the intended switch. implementability 2: the mapping from f_i to c_p is missing (the SPEC EQUATIONS block is referenced but absent and E2 truncates at \"For level-l\"), the root-prefix curvature is undefined, no clamp on 1 - c_p||x||^2 is given although the E12 range (0.1,10) lets the denominator vanish, and the spec uses levels 1..3 while the measured SIDs carry four tokens (E6 depth 4, E7 T1..T4). exploration 3: a clean negative on capacity reallocation without any behaviour loss would be informative on its own, but the family overlap with per-branch curvature limits it.",
+          "scoring_2": "behavior 4: E5 measures the fanout spread with support (mean distinct successors 2.72 -> 41.41 across quintiles, per-bin item counts) and E11 adds the SID-level statistic (same first prefix 0.0907 vs permuted null 0.067); the step from \"fanout is heterogeneous\" to \"hub prefixes need finer residual resolution\" is an inference, not a measurement, hence not 5. geometry 2: the operation is a scalar multiplier whose argmin equals a rescaled codebook and whose encode/decode pair cancels in reconstruction, so a matched Euclidean transform reproduces it; the assignment-score form is truncated in E12 (\"the conformal approximatio...\") so an exact verdict there is UNKNOWN, and the bounded check is to read the missing SPEC EQUATIONS and compare its score with ||r - c/lambda||. novelty 3: the injection point (residual scale rather than distance) is a distinct computation, but a per-prefix/per-branch curvature field is already in this program's lineage (named in cocond's prior-art list) and no ledger entry is argued against by id, so not 4. downstream 3: the chain names the assignment change and two diagnostics, but there is a gap - giving the hub item's own deeper levels more room does not move its successors toward it, and successor proximity is replaced by code entropy. falsifiability 4: three distinct arms, a failure criterion and the top-fanout-quartile discriminator are stated; the geometry-off arm necessarily renders the behaviour inert, so it differs from both-on in two ways, which is why not 5. implementability 2: cost is credible but the c_p formula, its aggregation and the guard ||x|| < 1/sqrt(c_p) are all deferred to an absent block, so an implementer must redesign the mapping. exploration 3: a different failure mode (resolution vs relocation) with a clear lesson, in a family that has already produced four sub-baseline arms in E6.",
+          "scoring_3": "behaviour=3 because the fanout heterogeneity itself is strongly measured (E5: top-1 successor mass 0.4375 in the lowest quintile against 0.0543 in the highest, support 2.77 vs 44.3, 4895 items in bin 1; E10 118315 edges, mean out-degree 5.4526) but the SID hypothesis that follows from it is in tension with the bundle: E6 has every curvature-flavoured successor arm at 0.0467-0.0550 against Euclidean 0.0621-0.0636, and E8 locates the ceiling in first-level co-clustering (K=256 -> 0.0822 share vs 0.0129 negatives), not in within-prefix resolution, so \"flat resolution is the bottleneck\" is a hypothesis with contrary evidence rather than a supported conclusion. geometry=2 because the operation is exactly reproducible by a Euclidean radial gain and the conformal factor is used as a multiplier rather than as a metric; E12 is truncated mid-sentence at \"the conformal approximatio[n]\", so whether a genuine distance term exists for the assignment score is UNKNOWN and the bounded check is reading the full SPEC EQUATIONS block. novelty=2: it is a routine variation of the per-node/per-branch curvature family already exercised in the ledger, differing by where the scalar is applied. downstream=3: the affected assignment and the expected direction are named, but the radial-gain argument says a larger lambda also shrinks the radius the fixed 256 codes can cover (the codebook supports |c| <= C, so effective radius in r-space is C/lambda), so hubs get finer cells and simultaneously lose reach, and the residual handed to level l+1 is already scaled by lambda_l, compounding to lambda1*lambda2*lambda3 <= 1000 in the worst case the proposal itself flags. falsifiability=3: the switches exist and the target 0.065 plus the two diagnostics (per-level entropy in the top fanout quartile, prefix-conditional next-code accuracy) are stated, but the geometry-off arm is arithmetically wrong as written and there is no sentence on what would refute the mechanism. implementability=3: the per-level multiply/divide inverts exactly in the no-quantization-error case and the cost is genuinely under a few percent, but the lambda pole and sign flip require a norm clamp that the visible spec does not state, and decode must divide by the product of all lambda along the prefix. exploration=2: a small variation of a family whose measured negatives are already in E6. Overall uncertainty is concentrated in the truncated spec: if E12/E13 do contain a real Mobius/distance assignment term, geometry_necessity could move to 3, but the encode/decode residual multiply described in the CHANGE field is a dilation either way."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It names one training-only signal (popularity-adjusted directed successor fanout f_i, E1/E2), one curved operation (per-prefix negative curvature through the Poincare conformal factor applied inside the residual chain, E12/E13), and uses them in one pathway (c_p derived from the fanout of the items in prefix p multiplies the level-l residual), with USE_BEHAVIOUR and USE_HYPERBOLIC named. Nothing required by the contract is missing outright; what is weak is quality, not scope: the \"SPEC EQUATIONS\" block that would define f_i -> c_p is referenced but absent, and the geometry-off switch is stated wrongly (c->0 gives lambda=2, not 1).",
+          "scoring_2": "Behaviour is a named train-only popularity-adjusted successor fanout aggregated onto the prefix node (E2); geometry is a per-node negative curvature entering the Poincare conformal factor on the residual chain (E12, E13); the two sit on one path (fanout -> c_p -> lambda_p -> level-l residual, divided back at decode), so removing behaviour (all c_p = 1) or geometry (c -> 0, lambda = 1) changes the core quantizer. Missing but not scope-fatal: the shipped SPEC is a pointer to a \"SPEC EQUATIONS\" block that is not in the bundle, so the fanout-to-c_p map and the positivity guard on 1 - c_p",
+          "scoring_3": "it names a training-only signal (popularity-adjusted directed successor fanout per prefix node, E1/E2), a curved operation (Poincare conformal factor with per-node negative curvature, E12) that enters the residual recursion at every level (E13), a single pathway where the curvature multiplies the residual, and three switches (USE_BEHAVIOUR, USE_HYPERBOLIC, both-on); nothing is missing for admission. The defect is geometric substance, not scope."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.7,
+          "scoring_2": 3.0,
+          "scoring_3": 2.55
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.7
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 0.0,
+          "exploration_value": 0.0,
+          "falsifiability": 1.0,
+          "geometry_necessity": 1.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "cocond-markov-poincare-ot",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 4.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 4.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 2.0,
+            "novelty": 4.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 4.0,
+            "geometry_necessity": 4.0,
+            "implementability": 3.0,
+            "novelty": 4.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 4.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 4.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E3",
+            "E5",
+            "E8",
+            "E10",
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "scoring_2": [
+            "E2",
+            "E5",
+            "E6",
+            "E10",
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "scoring_3": [
+            "E4",
+            "E5",
+            "E9",
+            "E10",
+            "E11",
+            "E12",
+            "E13"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The diffusion operator is batch-local and, at the frozen batch, almost none of a batch's transition edges are inside the batch. With B=1023 items drawn from the ~24556-item catalogue and mean out-degree 5.4526 (E10), an item has on average 5.45 * 1023/24556 = 0.227 in-batch successors, so about 80% of the rows of B_bt are exactly identity rows and the few hundred surviving edges touch only a small minority of items; after three damped steps the plan stays within a few percent of the undiffused curved Sinkhorn plan, so the behaviour switch is nearly a no-op and the one permitted run cannot test the stated coupling.",
+          "scoring_2": "The mechanism's predicted signature is \"consecutive items share early prefixes, conditional code entropy falls\", which is exactly the signature of the worst measured arm in E6: l1_br has the gold prefix alive at depths 1/2/3 at 1.000/1.000/1.000 (a collapsed, everything-shares-level-1 partition) with recall@10 0.04671 against 0.06207 for l1_br_euclid, so the proposal optimises the axis the evidence says destroys recall once the early prefix stops discriminating.",
+          "scoring_3": "The Markov step is specified on the batch (B_bt @ P) while the transition matrix is global, and at the frozen batch size the operator is nearly the identity: with 24556 items and batches of 1023, the probability that a given training successor of item i is also in i's batch is 1023/24556 = 0.0417, so even at the measured mean out-degree 5.4526 (E10) the expected in-batch successor mass per row is at most 1-(1-0.0417)^5.45 = 0.21 and in practice far less once session locality is accounted for. With alpha<1 the T=3 loop then reduces to plain curved Sinkhorn plus a small neighbour ripple, and the behaviour switch is nearly inert while the curvature switch carries the whole run - the single run then tests geometry, not coupling."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behaviour 4: the named problem is measured - baseline SIDs give same_first_prefix_rate 0.0907 against a permuted null of 0.067 (E11) and K=256 keeps only 0.0822 of canonical pairs together (E8) - so \"consecutive items land on unrelated codes\" is auditable; I did not lean on the cohort-profile lift (0.9291 vs 0.8871), which is too weak to distinguish positives from negatives. geometry 3: Poincare distance, exp_0, Mobius addition and the Einstein midpoint are genuine curved operations and the barycenter is not an arithmetic mean, but near the origin D = 2 artanh(||(-p)(+)c||) = 2||c-p||(1+O(||c-p||^2)) and exp_0 is a monotone radial squash, so a matched Euclidean control with rescaled codes reproduces the cost ordering to third order, and no argument rules that out. novelty 4: OT assignment with a transition-diffused plan is a different computation from the ledger's rank losses, tangent transport and prefix losses; it stops short of 5 because no external prior art is cited and the ledger contrast is the proposal's own assertion, which is UNKNOWN to me - the bounded check is the round ledger's mechanism list. downstream 4: the affected assignment, the expected direction (prefix hit-rate up, conditional code entropy down) and the diagnostics are all named, but the chain omits the competing path that pushing consecutive items onto shared prefixes raises SID collision and shrinks the set of decodable SIDs, which can offset the prefix gain. falsifiability 3: three comparisons are described in prose with no code flags, behaviour-off is ambiguous between alpha=0 and B=I, and the geometry-off kernel/barycenter pair is not written down, so the controls are not yet matched. implementability 2: alpha and q are said to be \"measured, never tuned (see SAFEGUARDS)\" but no SAFEGUARDS text exists in the proposal; tau is frozen from one forward batch and therefore depends on initialisation and batch order; and the passed vector log_0(c_j*) is not the hyperbolic residual log_0((-c_j*)(+)p_i) - for ||c||=0.9 the first has norm 2.944 against 0.9, a factor 3.3 - so the residual recursion and its decode are under-specified. exploration 4: a negative here separates \"assignment coordination does not help\" from \"the SID route does not help\", which is a lesson in its own right.",
+          "scoring_2": "behavior 4: E10 gives the transition graph and its coverage (118,315 edges, 115,582 distinct, mean out-degree 5.45, sampled users) and E11 the direct SID statistic (9.07% same first prefix vs 6.7% permuted null), so \"the assignment is behaviour-blind\" is measured with stated coverage; the sampling caveat in E10 blocks 5. geometry 4: the Klein/Einstein barycenter is not an arithmetic mean and the cost kernel is not a Euclidean metric, and the Euclidean control (d_E plus arithmetic mean) is named and separable; but tau = median(D) absorbs any global metric scale, so only radial distortion survives, and the proposal does not rule out that this survivor is a fixed radial warp of Euclidean distance - that unruled-out cancellation is why not 5. novelty 4: the first candidate here to move the assignment plan itself, argued against the prior rounds (ranks, fork-angle, shells, cones, tangent residuals, per-branch curvature, geodesic prefix losses) with a computational difference; traceability stops short of ids, so not 5. downstream 4: the assignment change (which column wins, where the code moves) and the expected direction are named with two diagnostics; not 5 because those diagnostics cannot separate \"successors made coherent\" from \"early prefixes made uninformative\", which E6 shows have opposite signs. falsifiability 4: the three removals and an explicit \"decorative structure\" refutation are stated; not 5 because the flags are not declared and geometry-off changes the cost kernel and the mean operator together. implementability 3: the five equations, exp/log maps and detached codebook step are concrete, but the mass mismatch must be fixed, alpha and q are undefined, and the cost claim looks low (Poincare distance with Mobius addition is ~15 flops per dimension, so 3 levels x 262k pairs x d exceeds the quoted 5-8 MFLOPs and the 3 MB-per-level activation figure). exploration 4: a substantially different injection point whose failure would separate \"the assignment step is the bottleneck\" from \"the generator cannot use the codes\".",
+          "scoring_3": "behaviour=4: this is the only proposal of the three whose named behavioural problem is measured on the SIDs themselves - E11 reports same_first_prefix_rate 0.0907 against a permuted null 0.067 for the existing baseline SIDs, which is exactly \"consecutive items land on codes with unrelated prefixes\" - on top of E10 (118315 edges, mean out-degree 5.4526, explicit coverage note that the count is over sampled users) and E9 (positive shares a successor cohort 0.9291 vs 0.8871; profile entropy 1.65 nats over 7.5 cohorts, so the transition profile is not degenerate); the reason it is not a 5 is that the absolute prefix effect is small (9.07% vs 6.7%) and E11's own coverage is not shown in the bundle, so support is auditable but thin. geometry=3: Poincare distance, exp/log and the Einstein midpoint are genuine curved computations and the level-1 exp_0 is monotone in ||r||, so the curvature only bites through code-code Mobius geometry and boundary saturation; the proposal argues the switches are coupled but never specifies the matched Euclidean counterpart (Euclidean-distance RBF kernel plus Euclidean weighted mean) nor rules out the cancellation that the entropic kernel exp(-D/tau) is a monotone function of D and therefore close to a Euclidean RBF on the same points. novelty=3: moving the assignment plan itself with a diffused OT plan plus a hyperbolic barycenter is not in the ledger (E6 lists geodesic rank matching, shells, cones, tangent residuals, per-branch curvature, entropy variants) and is a distinct computation, but the argument is against our own ledger only and no external prior art is traced. downstream=4: the chain is specific (plan argmax -> code -> prefix; barycenter -> codebook), the expected direction is named for three observables - prefix hit-rate up, conditional code entropy down, recall above 0.065 - and the proposal states the discriminating reading (a rises while c does not => decorative structure). falsifiability=3: three arms are described but not enumerated as flags, \"both off\" is Sinkhorn-with-T=3 rather than the Euclidean argmin baseline, and the alpha value lives in a SAFEGUARDS section that is truncated, so the arms cannot be certified as differing in exactly one switch. implementability=3: the equations are complete enough to code, the straight-through path and the norm clamp are given, the cost is affordable under a sparse operator; but a code that draws zero plan mass has no defined Einstein midpoint, tau frozen from the first forward batch is a single-batch measurement, and the dense-vs-sparse discrepancy above is an unnamed risk. exploration=4: it is a substantially different mechanism (the assignment plan, not the latent, the loss or the rank order) and a negative result would be informative because it would say that behaviour-coupled assignment does not survive into the generator even when prefix structure improves."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It names one training-only signal (popularity-adjusted directed transitions as a row-stochastic operator, E1/E2/E3), one explicit curved operation (Poincare distance as the Sinkhorn ground cost, origin exp/log, Mobius addition, Einstein midpoint, E12/E13), and couples them in one connected block: the diffused plan sets the assignment and the same plan's weights set the codebook barycenter, so removing behaviour changes the plan and the weights and removing curvature changes the kernel and the mean operator. The observable changes and the three comparisons are named. The defects are quality: alpha and q are deferred to an absent SAFEGUARDS block, and the Euclidean control operator is only described in prose.",
+          "scoring_2": "Behaviour is the popularity-normalised transition matrix that diffuses the plan and weights the barycenter (E2); geometry is a kappa=-1 Poincare cost kernel plus a Klein/Einstein barycenter inside the same assignment block (E12, E13); the pathway is single (residual -> exp_0 -> cost -> plan -> Markov diffusion -> argmax and codebook), so each removal changes the core. Missing but not scope-fatal: no explicit USE_BEHAVIOUR / USE_HYPERBOLIC flags are written, and the alpha/q \"measured, never tuned\" definitions point to a SAFEGUARDS section that is absent.",
+          "scoring_3": "behaviour is the popularity-adjusted directed transition matrix restricted to training sessions (E1/E2, row-stochastic, sqrt(deg_out*deg_in) normalisation); geometry is an explicit curved computation (origin exp map, Mobius addition, Poincare distance as the Sinkhorn ground cost, Klein/Einstein weighted barycenter as the codebook operator, E12/E13); both act inside the same assignment block so removing either changes the plan, the argument or the code means. All five clauses hold."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 3.5,
+          "scoring_2": 3.9,
+          "scoring_3": 3.4
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 3,
+        "weighted_score": 3.6
+      },
+      {
+        "disagreement": {
+          "behavior_evidence": 0.0,
+          "downstream_mechanism": 1.0,
+          "exploration_value": 0.0,
+          "falsifiability": 0.0,
+          "geometry_necessity": 1.0,
+          "implementability": 1.0,
+          "novelty": 1.0
+        },
+        "disputed": [],
+        "evidence_gaps": [],
+        "idea_id": "CURVCELL-SID",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 3.0,
+          "downstream_mechanism": 3.0,
+          "exploration_value": 3.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 2.0,
+          "implementability": 3.0,
+          "novelty": 3.0
+        },
+        "per_scorer": {
+          "scoring_1": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 2.0
+          },
+          "scoring_2": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 3.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 2.0,
+            "implementability": 3.0,
+            "novelty": 3.0
+          },
+          "scoring_3": {
+            "behavior_evidence": 3.0,
+            "downstream_mechanism": 4.0,
+            "exploration_value": 3.0,
+            "falsifiability": 3.0,
+            "geometry_necessity": 3.0,
+            "implementability": 4.0,
+            "novelty": 3.0
+          }
+        },
+        "per_scorer_evidence": {
+          "scoring_1": [
+            "E1",
+            "E2",
+            "E5",
+            "E8",
+            "E10",
+            "E12",
+            "E13"
+          ],
+          "scoring_2": [
+            "E2",
+            "E5",
+            "E8",
+            "E10",
+            "E11",
+            "E12",
+            "E13"
+          ],
+          "scoring_3": [
+            "E4",
+            "E5",
+            "E6",
+            "E8",
+            "E10",
+            "E12",
+            "E13"
+          ]
+        },
+        "per_scorer_objection": {
+          "scoring_1": "The curvature enters only as a per-code scalar divisor on a distance, so the mechanism is a per-code metric scale rather than a curvature field on one manifold: comparing d_B(eps,c_k)/s_k across codes with different kappa adds lengths measured in different units, so the \"cells\" are not geodesic balls of a single space and the score is not a distance. Decompose the score: the first-order term in the operating regime is the behaviour gain 1/s_k, while the artanh warp contributes only O(||c||^2), so the curved part is a second-order correction on top of something a Euclidean per-prototype scale does directly. A separate numerical gap: a cell with B=0 gives s=0 and divides by zero in both the search and the commitment term, and the promised clamp bound is never stated.",
+          "scoring_2": "The statistic is measured one level off from where it is used: B[l][k] is how the items in cell (l,k) spread their successors over level-l sibling groups, but the remedy enlarges cell (l,k) itself, and a larger parent cell does not separate the successors - it absorbs more items, which raises B further; the risk list admits drift to a few huge cells but does not break the loop.",
+          "scoring_3": "Behaviour reaches the quantizer only through kappa[l][k], so the declared geometry-off arm - \"keeps the behaviour weights but removes curvature\" - has no implementable pathway: with curvature removed there is no place for B[l][k] to enter, and geometry-off is bit-identical to behaviour-off, so the three named switches are really two arms and the one run cannot separate the behaviour switch from the geometry switch. Secondary: each cell sets s[l][k] independently, with no volume budget (sum_k vol_k = const), so a uniform rise in B across codes multiplies every kappa and just rescales all distances - the field's contrast, not its level, carries the mechanism."
+        },
+        "per_scorer_rationale": {
+          "scoring_1": "behaviour 3: the item-level branching spread is measured (E5), but the cell-level claim that \"cells are sized by content density, not branching\" is not measured - B[l][k] does not exist in the bundle - and E8 shows the K=256 partition already lifts canonical-pair sharing to 0.0822 against 0.0129 for negatives, so the partition is not obviously branching-blind; the hypothesis's own diagnostic (Spearman |A_k| vs B_k positive) is a to-be-run check, which makes the problem plausible and testable but not yet supported. geometry 2: the curvature acts as a per-code scalar divisor on d_B and the only curved content beyond that is the artanh warp, which is a monotone radial function that a matched Euclidean transform on radially warped latents reproduces, and no argument is made against that control. novelty 2: per-branch curvature is in the proposal's own ledger and this is a per-code, self-refreshed variant of it; whether the earlier arm was static-global is UNKNOWN to me, bounded check = the round ledger's mechanism list. downstream 3: the assignment change and the expected direction are named with diagnostics, but the pivotal step runs the wrong way - a larger s makes a code win more often, so a high-branching code gets a bigger cell and more items share its prefix, which raises rather than lowers the conditional next-code entropy, and the 256 codes available below are not increased, so \"more resolution below hubs\" is a zero-sum reallocation. falsifiability 3: behaviour-off and geometry-off are named with a failure criterion (Spearman near zero implies redundancy), but geometry-off is left as \"keep the behaviour weights, remove curvature\", which is not written as a Euclidean operator and is therefore not a matched control. implementability 3: the equations, the 12-refresh geometric schedule, the cumulative mean, the no-gradient-on-s rule and the negligible cost are all given; missing are the clamp bound, the atanh domain guard, and any rule for empty cells (B=0 -> s=0 -> division by zero). exploration 3: a self-consistent curvature/branching fixed point is a different failure mode (drift or oscillation at refresh epochs) from the loss-based arms, and a negative would say whether fixed-point cell sizing can do anything at all, though the family overlap caps the lesson.",
+          "scoring_2": "behavior 3: E5 and E10 supply the transition statistics and E8 shows the first-level capacity ceiling (K=16 keeps 31.06% of canonical pairs together vs 8.22% at K=256), which supports \"partition geometry matters\", but the specific claim \"cells are sized by content density rather than branch count\" is never measured - no |A_k| vs B_k statistic is in the bundle, so the behavioural support here is UNKNOWN pending that one bounded probe (Spearman between cell size and cell branching on the baseline SIDs). geometry 2: d_B(eps,c)/s is a per-code inverse temperature on a distance, a per-code Euclidean radius reproduces the selection exactly, and the residual update keeps Mobius addition at curvature -1 regardless of the per-code kappa, so the \"curvature field\" is not a coherent single geometry. novelty 3: the self-consistent EM refresh is a distinct computation relative to static per-branch curvature, but no ledger entry is argued against by id and the geometric content is a per-code scale. downstream 3: a plausible chain with named observables and directions, but the sign serves cell size rather than resolution and the level index is off, which is a gap rather than a named assignment change. falsifiability 3: three arms and a failure criterion exist and the Spearman diagnostic genuinely discriminates, but the two off-arms coincide under the natural reading, which is a control-identifiability problem. implementability 3: equations, refresh schedule and the tanh clamp on z are concrete and cost is negligible, but the empty-cell guard, the s clamp and the geometry-off definition are missing. exploration 3: a different failure mode (self-consistent cell sizing) in the same family; a negative would mostly confirm the per-code-curvature negative already implied by E6.",
+          "scoring_3": "behaviour=3: E5 measures the branching heterogeneity the mechanism consumes very strongly (support 2.77 -> 44.3 distinct successors, top-1 mass 0.4375 -> 0.0543, Spearman(entropy, top-1) -0.973, 4895 items in the lowest bin) and E10 supplies the transition base (118315 edges, mean out-degree 5.4526), so the signal exists; but the proposal's premise that \"prefix entropy is limited by curvature budget\" is contradicted where it can be checked, because E8 puts the ceiling at first-level capacity (K=256 -> 0.0822 co-cluster share vs 0.0129 negatives, K=16 -> 0.3106) and E6 has every curvature-flavoured arm at 0.0467-0.0550 against Euclidean 0.0621-0.0636, so the statistic is strong while the SID hypothesis that follows from it is not. geometry=3: the arithmetic is internally correct - s = sqrt(kappa) = log(1+B)/((d-1)R) is exactly the inverse-radius scale of curvature -kappa because a hyperbolic ball of radius R in d dimensions has log-volume ~ (d-1)R sqrt(kappa), and dividing the unit-ball distance by sqrt(kappa) is the metric of curvature -kappa, so this is not a dimensional mismatch or a cancellation; what is missing is that the executed operation is a per-code scalar division that a per-code temperature in a weighted Euclidean nearest-neighbour rule reproduces, and no matched Euclidean control is specified, so the only genuinely non-Euclidean content is the exponential volume argument and that is not argued against a control. novelty=3: per-code and refreshed rather than global and static is a distinct computation from the ledger's global curvature and shells, and the self-consistency loop is new here, but no external prior art is traced and per-branch curvature already sits in the ledger family. downstream=4: the affected assignment (level-l cell boundaries, hence the prefix) and the expected direction of three observables are named - positive Spearman between |A_k| and B_k, falling H(next code | level-0 code), recall above 0.065 - and the failure reading is explicit. falsifiability=3: the switches exist and the criterion is stated, but the geometry-off arm is not implementable as described (see objection), so the arms are two rather than three matched controls. implementability=4: equations, refresh epochs {1,2,4,...,2048} derived from the 3000-epoch budget, cumulative-mean damping with no tuned decay, tanh*(1-1e-6) guarding the atanh, explicit clamping of s, no gradient into s, L*K = 1024 extra floats and roughly +1.05M scalar ops per step; the remaining risks are named, and the only unnamed one is the un-normalised volume budget. exploration=3: a different failure mode from the family (a self-consistent curvature field that can drift or go flat) whose negative would still be informative, but it lives in the same curvature-of-prefix family that E6 has already measured below the Euclidean arms. The dimension I cannot fully ground is the level-1 branch-count pooling: E5 reports global successor stratification, not per-cell B[l][k] at K=256, and the bounded check that would resolve it is one pass over the training transitions counting distinct successor cells per level-1 code."
+        },
+        "per_scorer_scope": {
+          "scoring_1": "IN_SCOPE",
+          "scoring_2": "IN_SCOPE",
+          "scoring_3": "IN_SCOPE"
+        },
+        "per_scorer_scope_reason": {
+          "scoring_1": "It names one training-only signal (directed training transitions aggregated into the effective successor-group branching B[l][k], E1/E2), one explicit curved operation (per-code negative curvature applied as d_B(eps,c)/sqrt(kappa) in the nearest-code search, the commitment term and the Mobius residual, E12/E13), and couples them because the same kappa sets both the cell and the loss; behaviour-off (unit curvature) and geometry-off are named and the observable is stated. The geometry-off arm is defined only verbally, which is a quality defect rather than a missing contract element.",
+          "scoring_2": "The train-only transition matrix is aggregated into per-cell successor branching B[l][k] (E2), per-code negative curvature scales the Poincare distance and the commitment inside the quantizer (E12, E13), and behaviour reaches the computation only through that scale, in one path. Defective part: \"behaviour-off = single unit curvature\" and \"geometry-off = remove curvature\" collapse to the same configuration unless geometry-off is defined as d_E/s (Euclidean distance keeping the behaviour scale), so the three-way isolation is not identifiable as written.",
+          "scoring_3": "behaviour is the effective number of distinct successor code-groups B[l][k] of each current SID cell, built from consecutive training-session pairs only (E1/E2, E3); geometry is per-code negative curvature entering as the curvature-rescaled Poincare distance d_B(eps,c)/sqrt(kappa) in both the nearest-code search and the commitment term, with the Mobius residual chain (E12/E13); the two are one pathway (behaviour sets kappa, kappa sets cell size, the partition re-measures behaviour) so removing either changes the core computation. All five clauses hold."
+        },
+        "per_scorer_weighted": {
+          "scoring_1": 2.6,
+          "scoring_2": 2.8,
+          "scoring_3": 3.25
+        },
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_disagreements": [],
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "scorers_above_threshold": 1,
+        "weighted_score": 2.8
+      }
+    ],
+    "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+    "rubric_version": "rubric-2026-10-v1",
+    "scale": [
+      0,
+      5
+    ],
+    "weights": {
+      "behavior_evidence": 20.0,
+      "downstream_mechanism": 15.0,
+      "exploration_value": 5.0,
+      "falsifiability": 10.0,
+      "geometry_necessity": 20.0,
+      "implementability": 10.0,
+      "novelty": 20.0
+    }
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "404ea254563870a6c782411c01f6a7da507cd8f77aa1a536a5b73048c282a80b",
+      "idea_id": "SUCCFAN-CURV-RQ",
+      "proposal_sha256": "f2a5d74b5386abc9e3acc26935bb1cbbb27865fbc8bfcd0f7f45a50f1ed744e4"
+    },
+    {
+      "evidence_sha256": "bc19762831440f872fdc76b452ff554a9bd0b8d1f579a571d073312d85df2fef",
+      "idea_id": "cocond-markov-poincare-ot",
+      "proposal_sha256": "1bb76e06068ecdedaeef68d274300b3435604c350e5421600ec88fda513d551e"
+    },
+    {
+      "evidence_sha256": "e9e97242e0e9ed08261d19121ef3f9f9bc7aeb18d4273e814763e4ac07ebfd87",
+      "idea_id": "CURVCELL-SID",
+      "proposal_sha256": "d03e738c62c35faf557bf9ddba6489a446942a9b73547bd8a768e7e2a3e7457e"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": null,
+      "reviewer": null,
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_1"
+    },
+    {
+      "ranking": null,
+      "reviewer": null,
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_2"
+    },
+    {
+      "ranking": null,
+      "reviewer": null,
+      "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+      "rubric_version": "rubric-2026-10-v1",
+      "scorer": "scoring_3"
+    }
+  ],
+  "round_id": "round_20261028_221240_652",
+  "rubric_sha256": "4031b1c990f8ec1b5551b15cf9b99ed8d3adaf3ed3892409424ade3ede135d6a",
+  "rubric_version": "rubric-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "backups": [
+      {
+        "idea_id": "CURVCELL-SID",
+        "status": "BACKUP",
+        "weighted_score": 2.8
+      },
+      {
+        "idea_id": "SUCCFAN-CURV-RQ",
+        "status": "BACKUP",
+        "weighted_score": 2.7
+      }
+    ],
+    "disagreement": {
+      "CURVCELL-SID": 1.0,
+      "SUCCFAN-CURV-RQ": 1.0,
+      "cocond-markov-poincare-ot": 1.0
+    },
+    "disputed": {
+      "CURVCELL-SID": [],
+      "SUCCFAN-CURV-RQ": [],
+      "cocond-markov-poincare-ot": []
+    },
+    "pairwise": null,
+    "rejected": [
+      {
+        "idea_id": "SUCCFAN-CURV-RQ",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.7 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.7
+      },
+      {
+        "idea_id": "CURVCELL-SID",
+        "max_disagreement": 1.0,
+        "reasons": [
+          "BELOW_MINIMUM_SCORE: weighted 2.8 below 3.0",
+          "TOO_FEW_REVIEWERS_ABOVE_THRESHOLD: 1"
+        ],
+        "status": "BELOW_MINIMUM_SCORE",
+        "weighted_score": 2.8
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "fallback_to_best": false,
+      "max_selected": 1,
+      "min_reviewers_above_threshold": 2,
+      "minimum_dimension_median": 2.0,
+      "minimum_weighted_score": 3.0,
+      "pairwise_finalists": 3,
+      "tie_break_order": [
+        "scope",
+        "evidence_completeness_and_feasibility",
+        "weighted_score",
+        "pairwise_copeland",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "copeland": 0,
+        "idea_id": "cocond-markov-poincare-ot",
+        "max_disagreement": 1.0,
+        "medians": {
+          "behavior_evidence": 4.0,
+          "downstream_mechanism": 4.0,
+          "exploration_value": 4.0,
+          "falsifiability": 3.0,
+          "geometry_necessity": 3.0,
+          "implementability": 3.0,
+          "novelty": 4.0
+        },
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "weighted_score": 3.6
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "evidence_completeness_and_feasibility",
+      "weighted_score",
+      "pairwise_copeland",
+      "idea_id"
+    ]
+  }
+}
