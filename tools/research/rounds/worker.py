@@ -1066,16 +1066,45 @@ def write_manifest(root: Path, idea_id: str, revision: int, tree: Path) -> str:
 
 
 def role_read_paths(tree: Path, role: dict) -> list:
-    """The absolute paths one role may read: its declared scope, nothing else."""
+    """The paths one role may read: its declared scope, under both of its names.
+
+    The framework hands the agent a ``/home/...`` path while ``Path.resolve()``
+    answers ``/fs04/...`` on this host, and a permission entry written with one
+    name does not match a read made with the other. Both forms are emitted, so the
+    allowlist matches whichever alias the agent uses.
+    """
     tree = Path(tree)
     paths = []
     for relative in role.get("reads") or ():
-        candidate = (tree / relative).resolve()
-        if candidate.exists():
-            paths.append(str(candidate))
-    if not paths:
-        paths.append(str(tree.resolve()))
+        candidate = tree / relative
+        if not candidate.exists():
+            continue
+        for form in (candidate, candidate.resolve()):
+            text = str(form)
+            if text not in paths:
+                paths.append(text)
+    # No fallback to the whole tree: a scope whose files are all missing is a
+    # coverage gap that the caller records, not a licence to read everything.
     return paths
+
+
+def read_gaps(paths) -> list:
+    """The allowlist entries this process cannot actually open.
+
+    A path that is mounted but unreadable turns a review into an inference from the
+    prompt; the gap is recorded so the report says what was not read.
+    """
+    gaps = []
+    for path in paths:
+        entry = Path(path)
+        try:
+            if entry.is_dir():
+                next(iter(entry.iterdir()), None)
+            else:
+                entry.open("rb").close()
+        except OSError as exc:
+            gaps.append({"path": str(entry), "error": type(exc).__name__})
+    return gaps
 
 
 
@@ -1150,6 +1179,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
                         "reviewed revision to diff against\n" + change_brief)
     prompts = {}
     reads = {}
+    gaps = {}
     role_index = {role["id"]: position for position, role in enumerate(VERIFIER_ROLES, 1)}
     for index, role in enumerate(roles, 1):
         prompts[index] = agent_contracts.VERIFY_PROMPT.format(
@@ -1166,6 +1196,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
             scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
             agent_contracts.EXPERIMENT_POLICY)
         reads[index] = role_read_paths(tree, role) + [findings_path, manifest]
+        gaps[index] = read_gaps(reads[index])
 
     def verify(index):
         # The revision is part of the workspace name: a fresh review after a
@@ -1184,6 +1215,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
                             source_digest=pipeline_module._source_digest(Path(tree)))
         report.setdefault("verifier", task_id)
         report["role"] = roles[index - 1]["id"]
+        report["coverage_gaps"] = gaps.get(index) or []
         return report
 
     try:

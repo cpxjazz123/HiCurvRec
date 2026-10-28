@@ -253,3 +253,34 @@ class FindingOwnershipTests(unittest.TestCase):
             record = state["implementations"][0]
             self.assertTrue(record.get("blocking_findings"),
                             "a PASS from another role must not close an open blocker")
+
+
+class ReadCoverageTests(unittest.TestCase):
+    """The allowlist must match the alias the agent uses, and gaps are recorded."""
+
+    def test_the_scope_is_listed_under_both_aliases(self):
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "tree"
+            (tree / "model").mkdir(parents=True)
+            (tree / "model" / "m.py").write_text("x = 1\n", encoding="utf-8")
+            paths = worker_module.role_read_paths(tree, {"reads": ["model/m.py"]})
+            self.assertGreaterEqual(len(paths), 1)
+            self.assertIn(str(tree / "model" / "m.py"), paths)
+            self.assertIn(str((tree / "model" / "m.py").resolve()), paths)
+
+    def test_an_unreadable_entry_is_reported_as_a_gap(self):
+        with tempfile.TemporaryDirectory() as work:
+            missing = Path(work) / "nope.py"
+            gaps = worker_module.read_gaps([str(missing)])
+            self.assertEqual(len(gaps), 1)
+            readable = Path(work) / "ok.py"
+            readable.write_text("x = 1\n", encoding="utf-8")
+            self.assertEqual(worker_module.read_gaps([str(readable)]), [])
+
+    def test_a_role_without_existing_files_does_not_fall_back_to_the_whole_tree(self):
+        """The fallback widened the scope and hid the gap it should have reported."""
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "tree"
+            tree.mkdir()
+            paths = worker_module.role_read_paths(tree, {"reads": ["model/absent.py"]})
+            self.assertEqual(paths, [])
