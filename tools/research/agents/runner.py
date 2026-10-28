@@ -516,7 +516,11 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     contract = _geometry_contract()
     read_paths = list(read_paths or []) + (
         [] if contract["path"] in (read_paths or []) else [contract["path"]])
-    allowed_roots = list(allowed_roots or []) + [str(Path(contract["path"]).parent)]
+    # A task that declares no roots is refused BEFORE the shared contract widens
+    # anything: the contract is background for a bounded task, not a substitute for
+    # declaring the boundary.
+    if allowed_roots is not None:
+        allowed_roots = list(allowed_roots) + [str(Path(contract["path"]).parent)]
     allowed = policy.check_read_paths(read_paths, roots=allowed_roots,
                                       task_root=root, candidate_tree=candidate_tree)
     if shutil.which(SANDBOX_BINARY) is None:
