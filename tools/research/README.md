@@ -2,6 +2,30 @@
 
 The only active research orchestration lives in `tools/research/`; formal training and job status remain in `tools/genrec-mcp/server.py`.
 
+## What is live, and what is the Issue #117 surface
+
+Two research surfaces live in this package and they are not the same thing.
+
+**Live research path (Issue #121 rounds):** `rounds/` (the round state machine,
+its phases and its jobs), `stage2/` (the frozen engineering contract: paths, the
+launcher, the conformance checks and their regression tests) and `agents/` (the
+real OpenCode subprocess and its receipts). A candidate carries its mechanism;
+everything else about running it belongs to `stage2/`.
+
+**Shared infrastructure:** `core/` (the canonical ledger and the atomic evidence
+helpers) and `science/` (train-only measurements, the SID layer record and the
+forensics study). Both are used by the live path.
+
+**Issue #117 surface, still mounted by the MCP:** `mcp/` (the async handlers and
+the detached workers behind `research_start` and `research_verify_*`),
+`workflows/` (DATA, LITERATURE, GEOMETRY, REVIEW), `verification/` (independent
+test authoring, review and admission) and `integrations/` (read-only preflight).
+They stay because `tools/genrec-mcp/server.py` imports them; they are not part of
+a round.
+
+`tests/` holds the offline regressions of all of it. A test that needs torch runs
+only in the Stage 2 interpreter and skips elsewhere; a skipped check is not a pass.
+
 ## Source structure
 
 ```text

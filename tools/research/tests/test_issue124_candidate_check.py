@@ -2,10 +2,19 @@
 from __future__ import annotations
 
 import unittest
+import importlib.util as _importlib_util
+
+# The checks in this file need torch, which only the Stage 2 interpreter has.
+# A missing torch is an unrunnable check, not a defect: the cases skip and say
+# so, instead of reporting an error that looks like a broken test.
+
+TORCH_AVAILABLE = _importlib_util.find_spec("torch") is not None
+
 
 from tools.research.rounds import candidate_checks
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")
 class CandidateCheckIdentityTests(unittest.TestCase):
     def test_the_verdicts_are_distinct_and_named(self):
         verdicts = {candidate_checks.VERDICT_VERIFIED,

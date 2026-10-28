@@ -103,9 +103,15 @@ class AgentTests(unittest.TestCase):
                 "print(json.dumps({'type':'mock','status':'no_output'}))\n",
                 encoding="utf-8")
             binary.chmod(0o700)
-            with self.assertRaisesRegex(RuntimeError, "invalid JSON"):
+            # The contract is that the archived answer is NOT adopted as this
+            # run's output; the wording of the failure is not the contract.
+            from tools.research.agents.runner import AgentFailure
+            with self.assertRaises(AgentFailure) as caught:
                 run_agent("geometry", "Write candidate", "candidate.json",
                           Path(work) / "out", binary=str(binary), timeout=10)
+            self.assertIn(caught.exception.failure_class, {"empty", "unusable", "crash"})
+            self.assertFalse((workspace / "candidate.json").is_file(),
+                             "an archived candidate was adopted as the new answer")
             receipt = read_json(workspace / "execution.json")
             self.assertFalse(receipt["verified"])
             self.assertIsNone(receipt["output_sha256"])

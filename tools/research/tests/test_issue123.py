@@ -9,6 +9,14 @@ reaches all three reviewers unchanged.
 import json
 import tempfile
 import unittest
+import importlib.util as _importlib_util
+
+# The checks in this file need torch, which only the Stage 2 interpreter has.
+# A missing torch is an unrunnable check, not a defect: the cases skip and say
+# so, instead of reporting an error that looks like a broken test.
+
+TORCH_AVAILABLE = _importlib_util.find_spec("torch") is not None
+
 from pathlib import Path
 from unittest.mock import patch
 
@@ -37,6 +45,7 @@ def _idea(identifier="idea", **overrides):
     return idea
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")
 class SchemaDiscoveryTests(unittest.TestCase):
     def test_the_train_split_really_carries_ordered_user_histories(self):
         report = probes_module.discover_schema(Path("."))
@@ -54,6 +63,7 @@ class SchemaDiscoveryTests(unittest.TestCase):
             self.assertIn("not on disk", report["reason"])
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")
 class ProbeBehaviourTests(unittest.TestCase):
     def test_the_probe_measures_train_only_statistics(self):
         idea = _idea("t1")
@@ -86,6 +96,7 @@ class ProbeBehaviourTests(unittest.TestCase):
             self.assertNotIn(forbidden, source)
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")
 class MathCheckTests(unittest.TestCase):
     def test_the_checks_run_on_small_tensors(self):
         report = math_checks_module.run_math_checks(_idea("m1"))
@@ -120,6 +131,7 @@ class MathCheckTests(unittest.TestCase):
         self.assertIn("only the candidate path check", joint["implication"])
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")
 class LiteratureTests(unittest.TestCase):
     def test_the_queries_name_the_mechanism(self):
         queries = literature_module.mechanism_queries(_idea("l1"))
@@ -150,6 +162,7 @@ class LiteratureTests(unittest.TestCase):
                                  literature_module.MAX_PAPERS_PER_IDEA)
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")
 class BundleFreezeTests(unittest.TestCase):
     def test_the_measured_statistics_replace_the_proposal_claims(self):
         base = evidence_module.build_bundle(_idea("b1"), root=Path("."))

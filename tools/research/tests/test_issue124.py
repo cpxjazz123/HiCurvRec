@@ -11,6 +11,14 @@ import hashlib
 import json
 import tempfile
 import unittest
+import importlib.util as _importlib_util
+
+# The checks in this file need torch, which only the Stage 2 interpreter has.
+# A missing torch is an unrunnable check, not a defect: the cases skip and say
+# so, instead of reporting an error that looks like a broken test.
+
+TORCH_AVAILABLE = _importlib_util.find_spec("torch") is not None
+
 from pathlib import Path
 
 from tools.research.rounds import decision as decision_module
@@ -37,6 +45,7 @@ def _idea(**overrides):
     return idea
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")
 class RowScalarInvarianceTests(unittest.TestCase):
     """The defect the issue names, reproduced and measured."""
 
@@ -77,6 +86,7 @@ class RowScalarInvarianceTests(unittest.TestCase):
         self.assertNotIn(report["status"], (math_checks_module.STATUS_PASS,))
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")
 class ScopedStatusTests(unittest.TestCase):
     def test_the_four_scopes_are_reported_separately(self):
         report = math_checks_module.run_math_checks(_idea())
@@ -102,6 +112,7 @@ class ScopedStatusTests(unittest.TestCase):
         self.assertEqual(report["status"], math_checks_module.STATUS_NOT_RUN)
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")
 class HistoricalEvidenceTests(unittest.TestCase):
     """The scored round's artifacts are read-only evidence."""
 

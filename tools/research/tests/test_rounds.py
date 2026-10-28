@@ -1,4 +1,6 @@
 """Issue #120 regressions: ideas, scoring, the round state machine and the queue."""
+from __future__ import annotations
+
 import importlib.util
 import json
 import shutil
