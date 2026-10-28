@@ -103,15 +103,24 @@ def mark_workspace_project(workspace: Path) -> Path:
 
 #: How long a role may take. The implementer writes a mechanism and runs its
 #: smoke test, which does not fit the review budget; the reviewers only read.
+#: The reviewer budget follows the model: DeepSeek V4.1 Flash needs longer on
+#: the long review prompts than the previous model did, and a reviewer that is
+#: cancelled for time leaves the round without a verdict.
 ROLE_TIMEOUT_SECONDS = {
     "implementation": 3600,
-    "repair": 1800,
+    "repair": 2400,
+    "verify": 2400,
+    "ideate": 2400,
+    "scoring": 2400,
 }
 
 
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
-              binary="opencode", model="openai/gpt-6-luna", timeout=900,
+              binary=None, model=None, timeout=900,
               role: str = "verify") -> Path:
+    # The binary and the model come from the one source of configuration.
+    binary = binary or settings.AGENT_BINARY
+    model = model or settings.AGENT_MODEL
     timeout = max(timeout, ROLE_TIMEOUT_SECONDS.get(str(role), 0))
     if (not output_name.endswith((".json", ".txt")) or "/" in output_name
             or "\\" in output_name or not task_id.replace("-", "").replace("_", "").isalnum()):

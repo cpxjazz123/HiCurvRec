@@ -162,6 +162,32 @@ def check_displacement_and_switches() -> str:
     return "the displacement is the scaled map of the neighbourhood mean, both switches change the assignment, the gradient reaches the encoder and the map"
 
 
+def check_reconstruction_gradient() -> str:
+    """The reconstruction gradient reaches the encoder and the displacement maps.
+
+    The reviewer of the previous revision measured that the decoder received a
+    plain lookup of the codeword, so the reconstruction had no path to the
+    encoder and the encoder was trained by the commitment term alone. This is
+    that measurement, as a running check.
+    """
+    model = _toy_model()
+    embeddings = torch.randn(12, 32) * 0.05
+    context = _toy_context(12)
+    model.zero_grad(set_to_none=True)
+    reconstructed, quant_loss, _unused, _tokens = model(embeddings, fork_context=context)
+    reconstructed.square().mean().backward()
+    encoder_linear = next(module for module in model.encoder.mlp.modules()
+                           if isinstance(module, torch.nn.Linear))
+    assert encoder_linear.weight.grad is not None, \
+        "the reconstruction gradient does not reach the encoder"
+    assert float(encoder_linear.weight.grad.abs().sum()) > 0, \
+        "the reconstruction gradient at the encoder is zero"
+    for level, mapping in enumerate(model.fork_maps):
+        assert mapping.weight.grad is not None and float(mapping.weight.grad.abs().sum()) > 0, \
+            "the reconstruction gradient does not reach the displacement map of level " + str(level)
+    return "the reconstruction gradient reaches the encoder and every displacement map"
+
+
 def check_four_rank_step() -> str:
     """The four-rank step finishes and a rank-0 evaluation does not wait."""
     tree = Path(__file__).resolve().parent
@@ -188,6 +214,7 @@ def main() -> int:
         ("geometry", check_geometry_convention),
         ("neighbourhood", check_neighbourhood),
         ("displacement", check_displacement_and_switches),
+        ("reconstruction_gradient", check_reconstruction_gradient),
         ("ddp", check_four_rank_step),
     ]
     failures = []

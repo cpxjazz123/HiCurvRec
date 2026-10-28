@@ -24,8 +24,8 @@ ACTION = "inspect"  # inspect | behavior | worker
 LIVE_AGENTS_ALLOWED = True
 RESEARCH_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
 AGENT_BINARY = "opencode"
-AGENT_MODEL = "openai/gpt-6-luna"
-AGENT_TIMEOUT_SECONDS = 900
+AGENT_MODEL = "opencode-go/deepseek-v4.1-flash"
+AGENT_TIMEOUT_SECONDS = 1800
 LEASE_SECONDS = 1200
 #: No numeric cap on repairable errors or evidence-based MATERIAL revisions.
 #: FATAL/PARKED scientific verdicts, cancellation and resource failures remain stops.

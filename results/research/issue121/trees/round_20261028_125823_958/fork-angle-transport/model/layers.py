@@ -281,7 +281,7 @@ class RQLayer(nn.Module):
         identity map and the squared Euclidean distance on the SAME shifted
         point, so that only the metric differs.
         """
-        from .hyperbolic import ball_distance, ball_exp_map, ball_log_map, ball_project
+        from .hyperbolic import ball_distance, ball_exp_map, ball_project
 
         curvature = float(context.get("curvature", 1.0))
         geometry_on = bool(context.get("geometry_on", True))
@@ -354,8 +354,12 @@ class RQLayer(nn.Module):
         quant_loss = curved_term + float(vq_layer.beta) * F.mse_loss(tangent, selected.detach())
         # What the decoder receives is the code vector itself, as in the
         # baseline: the ball points have the radius of the ball and would
-        # change the scale of the decoder input by an order of magnitude.
-        x_q = F.embedding(indices, codes).view(residual.shape)
+        # change the scale of the decoder input by an order of magnitude. The
+        # straight-through form is the baseline's form, so the gradient of the
+        # reconstruction reaches the tangent, and with it the residual, the
+        # encoder and the displacement maps. A plain lookup of the codeword
+        # would leave the encoder trained by the commitment term alone.
+        x_q = (tangent + (selected - tangent).detach()).view(residual.shape)
         onehot = F.one_hot(indices, vq_layer.n_embed)
         used = onehot.sum(0)
         skip_reduce = (getattr(vq_layer, "_skip_ddp_reduce", False)

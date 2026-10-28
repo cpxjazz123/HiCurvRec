@@ -35,8 +35,6 @@ from torch.utils.data import DataLoader, TensorDataset, DistributedSampler
 from tqdm import tqdm
 
 from model import RQVAE
-from model.hyperbolic import ball_distance, ball_exp_map
-from model.hyperbolic import ball_distance, ball_exp_map
 
 
 # === 路径常量（无绝对路径；由文件自身向上找仓库标记推导）===
@@ -116,8 +114,6 @@ GEOMETRY_ON         = True
 GEOMETRIC_CURVATURE = 1.0
 # 每个物品保留的邻居上限: k = min(8, degree), 规格固定, 不做扫描.
 NEIGHBOUR_TOPK      = 8
-# 共享后继的枚举上限: 按转移计数从多到少取前若干个, 避免热门后继的成对爆炸.
-FANOUT_LIMIT        = 1024
 NUM_WORKERS         = 0  # 2026-09-24: 0 防 DDP fork storm (4 rank × 4 worker = 16 子进程在 barrier 后挂死)
 EVAL_INTERVAL       = 50
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,

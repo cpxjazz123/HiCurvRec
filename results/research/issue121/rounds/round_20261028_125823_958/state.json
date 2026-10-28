@@ -23,6 +23,18 @@
       "error": "verification failed: OpenCode failed, cancelled, timed out or wrote no usable answer file: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_125823_958/agents/verify_fork-angle-transport_r7_1/execution.json",
       "idea_id": "fork-angle-transport",
       "kind": "AGENT_INFRA_ERROR"
+    },
+    {
+      "attempts": 5,
+      "error": "verification failed: OpenCode failed, cancelled, timed out or wrote no usable answer file: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_125823_958/agents/verify_fork-angle-transport_r7_1/execution.json",
+      "idea_id": "fork-angle-transport",
+      "kind": "AGENT_INFRA_ERROR"
+    },
+    {
+      "attempts": 6,
+      "error": "verification failed: the answer has no PASS or NEEDS_FIX verdict",
+      "idea_id": "fork-angle-transport",
+      "kind": "AGENT_INFRA_ERROR"
     }
   ],
   "blocked": [],
@@ -243,6 +255,53 @@
       "error": "verification failed: OpenCode failed, cancelled, timed out or wrote no usable answer file: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_125823_958/agents/verify_fork-angle-transport_r7_1/execution.json",
       "event": "agent_error",
       "idea_id": "fork-angle-transport"
+    },
+    {
+      "at": 1793165468.6624637,
+      "attempts": 5,
+      "error": "verification failed: OpenCode failed, cancelled, timed out or wrote no usable answer file: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_125823_958/agents/verify_fork-angle-transport_r7_1/execution.json",
+      "event": "agent_error",
+      "idea_id": "fork-angle-transport"
+    },
+    {
+      "at": 1793165544.7476077,
+      "attempts": 6,
+      "error": "verification failed: the answer has no PASS or NEEDS_FIX verdict",
+      "event": "agent_error",
+      "idea_id": "fork-angle-transport"
+    },
+    {
+      "at": 1793165610.5834694,
+      "event": "implementation_registered",
+      "idea_id": "fork-angle-transport",
+      "reason": "the review runs with the new agent model and its longer budget; the partial answers of the cancelled run are kept aside"
+    },
+    {
+      "at": 1793166959.106842,
+      "event": "verification_needs_repair",
+      "idea_id": "fork-angle-transport",
+      "revision": 8,
+      "signature": "fb4fb1c64274430d"
+    },
+    {
+      "at": 1793167257.5787442,
+      "changed_files": 23,
+      "event": "implementation_registered",
+      "idea_id": "fork-angle-transport",
+      "revision": 8
+    },
+    {
+      "at": 1793167257.7156818,
+      "event": "implementation_registered",
+      "idea_id": "fork-angle-transport",
+      "reason": "the gradient path the new reviewer measured is fixed and checked"
+    },
+    {
+      "at": 1793167335.6142154,
+      "changed_files": 23,
+      "event": "implementation_registered",
+      "idea_id": "fork-angle-transport",
+      "revision": 9
     }
   ],
   "evidence_bundles": {
@@ -34499,11 +34558,11 @@
       "acceptance_note": "Five of five verifiers pass on revision 6.",
       "accepted": true,
       "agent_error": {
-        "attempts": 4,
-        "error": "verification failed: OpenCode failed, cancelled, timed out or wrote no usable answer file: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_125823_958/agents/verify_fork-angle-transport_r7_1/execution.json",
+        "attempts": 6,
+        "error": "verification failed: the answer has no PASS or NEEDS_FIX verdict",
         "kind": "AGENT_INFRA_ERROR"
       },
-      "agent_error_attempts": 4,
+      "agent_error_attempts": 6,
       "assumptions": [],
       "baseline": null,
       "baseline_digest": null,
@@ -34527,279 +34586,262 @@
         "model/layers.py: the codewords are projected into the ball before the assignment, and the tangent representation of the selected code is that projected codeword, so the map used for the assignment and the one used for the tangent are inverse to each other.",
         "train_rqvae.py: the logs and the metrics are written with the result of the candidate, because that is where the admission tooling and the cost projection read them from.",
         "model/layers.py: the commitment has a curved part, the squared geodesic distance between the point and the selected codeword, so its gradient passes through the exponential map, and the straight part keeps the form of the baseline, which is what keeps the codebook from collapsing.",
-        "train_rqvae.py: the four ranks run with the result directory as their working directory, because the framework replaces the candidate tree whenever it promotes the candidate again and a process whose working directory disappears dies on its next os.getcwd() call, which torch makes while it is imported."
+        "train_rqvae.py: the four ranks run with the result directory as their working directory, because the framework replaces the candidate tree whenever it promotes the candidate again and a process whose working directory disappears dies on its next os.getcwd() call, which torch makes while it is imported.",
+        "model/layers.py: the straight-through form is the baseline form again, so the gradient of the reconstruction reaches the tangent, and with it the residual, the encoder and the displacement maps.",
+        "model/layers.py: the unused hyperbolic import is gone.",
+        "train_rqvae.py: the unused fan-out constant and the duplicated hyperbolic import are gone.",
+        "smoke_test.py: the reconstruction gradient is checked to reach the encoder and every displacement map.",
+        "tools/research/rounds/agents.py: the verification prompt states what blocking and minor mean, because the severity decides whether the candidate may train."
       ],
       "deviations": [],
-      "failure_signature": "8d95e1ae08a96375",
-      "finding_agreement": {},
+      "failure_signature": "fb4fb1c64274430d",
+      "finding_agreement": {
+        "verification.json|verdict NEEDS_FIX without a stated blocking finding": 4
+      },
       "idea_id": "fork-angle-transport",
       "implemented_by": "main_agent",
       "notes": "",
       "proposal_sha256": null,
-      "review_rounds": 6,
-      "revision": 7,
+      "review_rounds": 7,
+      "revision": 9,
       "smoke": {
         "result": "MCP one-epoch gradient smoke: passed=True, dead_terms=[]; tree smoke_test.py: four checks PASS including the four-rank check"
       },
-      "source_digest": "2a47b432522dd04dca362a8aeb08c56b2d990a5db58e8ff7a65c216df642e45e",
-      "status": "agent_error",
+      "source_digest": "ea128b972908bf5fdb5074f6684f6b864c39b586dbdb05848b2ec145e260647e",
+      "status": "implemented",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport",
       "tree_exists": true,
       "verdicts": [
         {
           "checks": [
             {
-              "exercised_how": "Traced the training-only transition data into the per-item successor-overlap and branching values, then through the learned tangent shift into Poincare mapping and geodesic assignment. smoke_test.py:123-162 checks both switches alter assignments and checks the shift formula; this was code inspection, not runtime execution.",
-              "exercised_path": "train_rqvae.py:263-326, train_rqvae.py:414-433, model/model.py:42-56, model/layers.py:273-369",
-              "findings": [
-                {
-                  "correction": "N/A",
-                  "detail": "No defect found. The behaviour signal changes the point used by the curved assignment, and the curved assignment and commitment use that same shifted point. The behaviour-off and geometry-off controls are present.",
-                  "location": "N/A",
-                  "reproduction": "N/A",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "a) behaviour x geometry fidelity",
-              "verdict": "PASS"
-            },
-            {
-              "exercised_how": "Traced the differentiable path from encoder and learned fork maps through the tangent shift, exponential map and geodesic commitment, and through the reconstruction loss. The smoke code checks nonzero gradients for an encoder layer and the first fork map, as well as assignment changes under both switches. No runtime execution was performed.",
-              "exercised_path": "model/layers.py:284-354, model/model.py:34-40, smoke_test.py:151-162",
-              "findings": [
-                {
-                  "correction": "N/A",
-                  "detail": "No code-level dead term or evident float32 overflow/NaN hazard found in the coupled path. Distance computation converts mapped points to double before evaluating the Poincare distance; the selected-code and residual terms remain connected to the training loss. The requested runtime gradient proof remains the GPU smoke run.",
-                  "location": "N/A",
-                  "reproduction": "N/A",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "b) trainability",
-              "verdict": "PASS"
-            },
-            {
-              "exercised_how": "Inspected the trainer entry point, frozen embedding and training-parquet paths, per-candidate result paths, SID export and distributed launcher. The single-card branch reads `GENREC_SINGLE_GPU` at lines 105-107 and 583-585. This was code inspection; the trainer was not run.",
-              "exercised_path": "train_rqvae.py:42-80, train_rqvae.py:329-433, train_rqvae.py:435-443, train_rqvae.py:529-575, train_rqvae.py:579-608",
-              "findings": [
-                {
-                  "correction": "N/A",
-                  "detail": "No integration defect found. The trainer reads the Stage 1 embeddings and Stage 0 training parquet, writes outputs under `results/stage2_RQ-VAE/TIGER_fork-angle-transport/`, and exports rows keyed by enumerated item ID with uniqueness validation. The launcher preserves both the four-rank torchrun path and the single-card branch.",
-                  "location": "N/A",
-                  "reproduction": "N/A",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
-              "name": "c) integration",
-              "verdict": "PASS"
-            }
-          ],
-          "verdict": "PASS",
-          "verifier": "verify_fork-angle-transport_r6_1"
-        },
-        {
-          "checks": [
-            {
-              "exercised_how": "Traced the training-only successor-set overlap and branching mass into the batch context, through the learned displacement maps, and into the same residual assignment path that applies Poincare maps and distance. The smoke test defines checks for the overlap and for both switches at smoke_test.py:53-98 and smoke_test.py:123-162; I inspected these checks but did not run them.",
-              "exercised_path": "train_rqvae.py:263-326 -> train_rqvae.py:414-433 -> model/model.py:42-56 -> model/layers.py:273-369",
+              "exercised_how": "One connected pathway exists and I exercised it with the real model and real data (project interpreter /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9, real stage1_GeneEmbedding/output/sentence_t5.npy). build_successor_neighbourhood builds N(i) from train.parquet transitions only, computes Jaccard S_ij over the exact sparse indicator product, keeps top-8 and b_i=sum_j S_ij log(1+",
+              "exercised_path": "results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:263-326 -> train_rqvae.py:414-433 -> model/model.py:42-56 -> model/layers.py:273-369",
               "findings": [
                 {
                   "correction": "none",
                   "detail": "none",
                   "location": "none",
-                  "reproduction": "none",
-                  "severity": "none"
+                  "reproduction": "not applicable",
+                  "severity": "none (no defect found in this check)"
                 }
               ],
-              "name": "a) behaviour × geometry fidelity",
+              "name": "a) behaviour x geometry fidelity",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Inspected the forward and backward path: the shift affects the assignment distances and residual reconstruction, and the curved distance contributes to the quantization loss; the switch comparisons and gradient assertions are specified in smoke_test.py:123-162. The sandbox limitation prevents runtime execution. The code path is differentiable to the encoder, codebook, and fork maps; I found no dead coupled term or clear float32 numerical hazard in the exercised path.",
-              "exercised_path": "model/layers.py:284-354 -> model/model.py:34-40 -> train_rqvae.py:461-470",
+              "exercised_how": "Real forward and real backward, not a source-only reading. With the trainer's own config (512/256/128, 3x256 codes, dim 32, beta 0.25, sk on the last level) and one batch of 256 real embeddings: loss 0.010512 finite, recon 4.94e-4, quant 0.010020; finite non-zero grads reach encoder.mlp[1].weight (abs-sum 15.5), fork_maps[0] (0.232), fork_maps[2], all three codebooks (1.396 on level 0) and the decoder; total grad norm 0.490 < GRADIENT_CLIP_NORM 1.0, so the frozen clip does not bind at init and there is no clamp/overflow hazard on the exercised path (the geodesic distance is evaluated in double at layers.py:306 and 350, acosh is clamped at hyperbolic.py:136, the ball is projected at hyperbolic.py:67-73). 300 AdamW steps at the frozen lr 1e-3 / clip 1.0 stayed finite with the loss falling 0.0104 -> 0.00037, first-level code norm max stable 0.233, and raw SID uniqueness rising 244 -> 415 of 512. The switches behave: total grad norm 0.490 (both on) vs 0.004 (behaviour off) vs 0.002 (Euclidean metric). One dead piece remains and is the finding below; it does not make the loss non-finite and does not stop the trainer.",
+              "exercised_path": "results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:284-369 -> model/model.py:34-40 -> train_rqvae.py:458-471",
+              "findings": [
+                {
+                  "correction": "delete FANOUT_LIMIT or actually apply it in build_successor_neighbourhood, and remove the duplicated and unused imports.",
+                  "detail": "FANOUT_LIMIT is declared as the shared-successor fanout cap of the mechanism and is never read anywhere, the same `from model.hyperbolic import ball_distance, ball_exp_map` line appears twice, and ball_log_map is imported inside _fork_forward but no longer called there (the code tangent is taken as the projected code at line 312). These are leftovers, not live parameters, but the declared-but-unused cap misstates the mechanism's constants.",
+                  "location": "results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:120 (FANOUT_LIMIT), train_rqvae.py:38-39 (duplicated import), model/layers.py:284 (unused ball_log_map import)",
+                  "reproduction": "`grep -n FANOUT_LIMIT train_rqvae.py` returns only line 120; `grep -n ball_log_map model/layers.py` returns only the import at line 284; `sed -n '38,39p' train_rqvae.py` shows the duplicated line.",
+                  "severity": "minor (cosmetic dead declarations; no effect on the computation)"
+                }
+              ],
+              "name": "b) trainability",
+              "verdict": "NEEDS_FIX"
+            },
+            {
+              "exercised_how": "I ran the real entry point, not a reimplementation: imported the candidate's train_rqvae, redirected only the output constants to a scratch directory outside the repository, set GENREC_SINGLE_GPU=1 and ran main() on one L40S with the frozen inputs. It loaded all_items=24587 / train_items=24556 from stage1_GeneEmbedding/output/sentence_t5.npy and results/stage0_build_parquet/train.parquet (the same constants as the baseline trainer train_rqvae.py:72-73), built the successor neighbourhood (24472 items covered, topk 8, behaviour_on=True, geometry_on=True), ran the KMeans init, one full epoch with the coupled fork context (24 steps, loss finite), evaluated and exported. Export: sids_for_hgrec.npy (24587, 4) int64, 24587 unique rows, levels 0-2 in [0,255], level 3 = 768+occurrence, item_sids.json with 24587 keys \"0\"..\"24586\" and 4 integers per row; this matches the baseline result (results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json has the same 4-column convention and the same key set, and stage1_GeneEmbedding/output/item_ids.json is the identity list 0..24586, so row index = item id). Checkpoint state_dict contains fork_maps.0/1/2.weight and epoch=1; metrics events train_start/train/ckpt_saved/train_end. Output routing: RESULT_DIR resolves to /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_fork-angle-transport and LOG_DIR/METRICS_PATH/OUTPUT_* all live under it (lines 70-80, 136); nothing was written to the baseline or another candidate. Launcher: _launch_via_torchrun forks `torchrun --standalone --nproc_per_node=4 --master_port=50202 <abs script>` with cwd=LOG_DIR (a directory inside the result dir, created before the fork at 605); I exercised that fork path by pointing _LAUNCHER at a driver and it ran the real main() to completion with the child's output in RESULT_DIR/logs/train_migrated.log. The single-card branch reads the constant SINGLE_GPU_ENV=\"GENREC_SINGLE_GPU\" (line 107) and returns before any fork when it is \"1\" (lines 583-585). Because the real trainer calls raw_module.encoder outside the DDP-wrapped forward (build_fork_context, line 422), I also ran a 4-rank torchrun step that reproduces exactly that pattern with the real 3x256x32 model: 3 steps finished with finite loss and non-zero encoder and fork-map gradients on every rank, and the rank-0-only get_indices with _skip_ddp_reduce=True completed at the barrier (DDP_MIMIC_PASS). No collective mismatch, no unused-parameter error with find_unused_parameters=False.",
+              "exercised_path": "results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:612-614 (entry) / 63-80 (paths) / 329-471 (main) / 44-60 (root resolution) / 529-572 (export) / 579-609 (launcher), plus ddp_check.py:27-82",
               "findings": [
                 {
                   "correction": "none",
                   "detail": "none",
                   "location": "none",
-                  "reproduction": "none",
-                  "severity": "none"
-                }
-              ],
-              "name": "b) trainability",
-              "verdict": "PASS"
-            },
-            {
-              "exercised_how": "Inspected the real trainer entry point, its frozen Stage 0 parquet and Stage 1 embedding paths, output location under the candidate’s promoted Stage 2 result directory, item-ID-ordered SID export, and both launcher branches. The four-rank check is defined in ddp_check.py:27-77; the single-card branch reads GENREC_SINGLE_GPU at train_rqvae.py:105-107 and train_rqvae.py:579-585. Runtime execution was not available.",
-              "exercised_path": "train_rqvae.py:42-80, train_rqvae.py:329-433, train_rqvae.py:529-575, train_rqvae.py:579-608",
-              "findings": [
-                {
-                  "correction": "none",
-                  "detail": "none",
-                  "location": "none",
-                  "reproduction": "none",
-                  "severity": "none"
+                  "reproduction": "not applicable",
+                  "severity": "none (no defect found in this check)"
                 }
               ],
               "name": "c) integration",
               "verdict": "PASS"
             }
           ],
-          "verdict": "PASS",
-          "verifier": "verify_fork-angle-transport_r6_2"
+          "verdict": "NEEDS_FIX",
+          "verifier": "verify_fork-angle-transport_r8_1"
         },
         {
           "checks": [
             {
-              "exercised_how": "Traced the trainer’s training-only successor-neighbour table and batch context into the per-layer quantizer. The neighbour mean and branch scale produce a learned tangent shift; with geometry enabled, that shifted point and the codewords are mapped into the Poincare ball and assigned by geodesic distance. `smoke_test.py:123-162` specifies checks that both switches alter assignments and that gradients reach the encoder and shift map. I inspected those checks but could not execute them in this environment.",
-              "exercised_path": "`fork-angle-transport/train_rqvae.py:403-433` → `fork-angle-transport/model/model.py:42-56` → `fork-angle-transport/model/layers.py:273-354`",
+              "exercised_how": "",
+              "exercised_path": "results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:405-433 -> model/model.py:42-56 (model.py:53, the per-level shift) -> model/layers.py:286-312 (point = Exp_0(residual + shift), codewords projected and mapped, assignment = argmin squared geodesic distance at layers.py:306-308) and model/layers.py:348-354 (the curved commitment that carries the gradient) -> the same indices are written into the SID at layers.py:368 and exported through train_rqvae.py:435-443 / 504-506 / 558-560.\n  How I exercised it: I imported the tree's own trainer and model with the Stage 2 interpreter (/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9, torch 2.8) and drove the identical closures. The successor table was built by the trainer's own build_successor_neighbourhood on the frozen results/stage0_build_parquet/train.parquet (396,958 rows): 2.6 s, 24,472 of 24,587 items covered, 194,968 retained edges, Jaccard in [0,1], b_i max 5.38 / mean over nonzero 1.56. The model was the real tokenizer config (3 x 256 codes, dim 32, hidden 512/256/128) on 1024 real rows of stage1_GeneEmbedding/output/sentence_t5.npy, codebook KMeans-initialised through the tree's init_codebook. With both switches on, zeroing the behaviour (mean/scale = 0, train_rqvae.py:427-431) moved 1021/1024 items in at least one level (per level 397/976/864) and replacing Exp/d_c by identity/L2 on the same shifted point (layers.py:313-316) moved 17/1024; after 150 real AdamW steps (frozen lr 1e-3, clip 1.0) the same switches moved 2048/2048 and 7/2048 respectively. Gradients also follow the coupled path: with both on, the quant term alone gives encoder 24.24 and fork maps 0.349 / 0.265 / 0.168 (abs-sum); behaviour off gives fork grads exactly 0, geometry off gives 6.8e-4 / 5.2e-4 / 3.3e-4. So the behaviour signal is not a suffix on an unchanged Euclidean quantizer: it changes the tangent point that the curved metric reads, and the curved metric is the assignment AND the commitment gradient, and the export uses the same context. Observation (not a defect): the codes sit at ball radius ~0.14 and the shifted residuals at ~0.03, deep inside the c=1 ball, so d_c there is a small perturbation of the L2 ordering and the geometry switch moves only 0.3-1.7% of assignments; the switch is live and changes both the assignment and the gradients, so the scope condition is met, but the curved metric is a weak discriminant at the scale this model actually reaches.",
               "findings": [
                 {
-                  "correction": "Not applicable.",
-                  "detail": "No defect found.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "-",
+                  "detail": "-",
+                  "location": "-",
+                  "reproduction": "-",
+                  "severity": "none - no defect found for this check"
                 }
               ],
               "name": "a) behaviour x geometry fidelity",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Inspected the forward and backward graph: the shift enters the transformed assignment point, and the curved commitment distance is computed from that point and the selected mapped code. Its differentiable path reaches the residual and shift; the shift is produced by the learned maps in `model/model.py:42-56`. The switch assertions and gradient checks are specified in `smoke_test.py:123-162`; runtime execution was not available.",
-              "exercised_path": "`fork-angle-transport/model/layers.py:273-369`",
+              "exercised_how": "Real forward and backward on the real model and real embeddings: loss 0.0151 (recon 5.07e-4, quant 1.46e-2), all finite; non-zero finite gradients reach the encoder (24.24), all three fork maps (0.349 / 0.265 / 0.168), the level-0 codebook (1.68) and the decoder (6.2e-4). 150 AdamW steps at the frozen lr 1e-3 / clip 1.0 on real 1024-item batches stayed finite (loss 1.61e-2 -> 2.5e-4, quant 1.56e-2 -> 3.7e-5, recon 4.65e-4 -> 2.1e-4, code gradient still 0.020, max code norm stable 0.5643, all parameters finite). The double-precision distance at layers.py:306-308 and the acosh floor at hyperbolic.py:136 cause no inf/nan, and no clamp overflows: point radius tanh(",
+              "exercised_path": "model/layers.py:286-369 (the coupled quantizer) with backward through layers.py:348-354, and the base losses through model/model.py:71-78 / train_rqvae.py:462-473",
               "findings": [
                 {
-                  "correction": "Not applicable.",
-                  "detail": "No dead coupled term or evident float32 numerical hazard found in the inspected path. Assignment selection itself is discrete, but the curved commitment term supplies a differentiable path through the shifted point.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "delete FANOUT_LIMIT and the duplicated/unused imports (or, if a fan-out cap is intended, read it in build_successor_neighbourhood and say so in the cost), so the declared configuration surface matches what the code executes.",
+                  "detail": "`FANOUT_LIMIT = 1024` is declared under the mechanism constants with a comment about capping the shared-successor enumeration, but it is never read: `grep -n FANOUT_LIMIT train_rqvae.py` returns only line 120, and the overlaps are formed exactly with the sparse product at train_rqvae.py:301. The same `from model.hyperbolic import ball_distance, ball_exp_map` line appears twice, and `_fork_forward` imports `ball_log_map` without using it. Read as a whole, the file advertises a mechanism knob and a hyperbolic helper that are inert.",
+                  "location": "train_rqvae.py:118-120 (FANOUT_LIMIT), train_rqvae.py:38-39 (duplicated hyperbolic import), model/layers.py:284 (ball_log_map imported and never used)",
+                  "reproduction": "`grep -n FANOUT_LIMIT train_rqvae.py` -> only line 120; `sed -n 38,39p train_rqvae.py` -> the same import twice; `grep -n ball_log_map model/layers.py` -> only the import at line 284.",
+                  "severity": "minor (cosmetic dead configuration; it does not change any computation, but it advertises a safeguard that does not exist)"
                 }
               ],
               "name": "b) trainability",
-              "verdict": "PASS"
+              "verdict": "NEEDS_FIX"
             },
             {
-              "exercised_how": "Inspected the entry point, data loading, output paths, export indexing, and launcher branches. The trainer reads the frozen Stage 1 embedding and Stage 0 training parquet paths, constructs the behaviour signal from training transitions, writes results to its promoted candidate directory, and exports rows indexed by item ID. The four-rank smoke path is specified in `smoke_test.py:165-183` and `ddp_check.py:27-77`; the single-card launcher branch checks `GENREC_SINGLE_GPU` at `train_rqvae.py:583-585`. I could not run the trainer or launcher here.",
-              "exercised_path": "`fork-angle-transport/train_rqvae.py:42-80`, `329-433`, `451-471`, `529-575`, `579-608`",
+              "exercised_how": "I ran the real entry point, not only the tests. (1) `T.main()` with EPOCHS=1, EVAL_INTERVAL=1 and the five output constants redirected to a scratch directory: it ran end to end in 21.9 s on one card, printed \"neighbourhood_items=24472 topk=8 behaviour_on=True geometry_on=True\", and wrote a (24587, 4) SID: 24,587 unique rows, levels [0..255] x3 and the collision level [768..1949], item_sids.json with 24,587 keys indexed 0..24586, each row 4 ints, and the JSON equal to sids_for_hgrec.npy row by row. (2) The frozen data path is unchanged from the previous promoted tree (diff of stage2_RQ-VAE/TIGER_branch-geodesic-rank/train_rqvae.py against this tree touches only the mechanism, LOG_DIR, EXPORT_BLOCK and the export call; EMBEDDING_FILE = stage1_GeneEmbedding/output/sentence_t5.npy, TRAIN_FILE = results/stage0_build_parquet/train.parquet, ARM_NAME = \"TIGER_fork-angle-transport\" = the promoted tree name, and tree_result_dir() in tools/genrec-mcp/server.py:649-664 resolves to the same results/stage2_RQ-VAE/TIGER_fork-angle-transport). (3) Writes: the trainer writes only METRICS_PATH, CHECKPOINT, OUTPUT_SID, OUTPUT_JSON (train_rqvae.py:74-80) and the launcher log (line 136), all under RESULT_DIR = results/stage2_RQ-VAE/TIGER_fork-angle-transport, which is where the MCP reads logs (tools/genrec-mcp/server.py:361, 409) and item_sids.json; nothing resolves outside the repository and nothing targets TIGER_RQ-VAE. (4) Launcher: with RANK unset and GENREC_SINGLE_GPU unset, _launch_via_torchrun builds ['<env>/bin/torchrun','--standalone','--nproc_per_node=4','--master_port=50202','.../train_rqvae.py'] with cwd = results/stage2_RQ-VAE/TIGER_fork-angle-transport/logs and CUDA_VISIBLE_DEVICES=0,1,2,3; with GENREC_SINGLE_GPU=1 it returns immediately and forks nothing (line 583-585), and the marker regex used by the MCP (SINGLE_GPU_ENV\\\\s*=\\\\s*\"GENREC_SINGLE_GPU\") matches line 107. (5) The distributed step itself: I ran a 4-rank torchrun that mimics the trainer's real iteration (the extra encoder call inside the fork context, the DDP wrapper with find_unused_parameters=False, the all_reduce in _fork_forward, clipping, optimizer step, then a rank-0-only eval with _skip_ddp_reduce): 3 steps, finite losses, and the rank-0 eval finished without hanging (DDP_MIMIC_PASS). No defect found.",
+              "exercised_path": "train_rqvae.py:612-614 (entry point) -> 329-343 (device/rank, frozen data paths at 72-73) -> 344-368 (train.parquet targets = the 24,556 training items, DistributedSampler) -> 391-409 (KMeans init + successor precompute) -> 451-473 (frozen 3000-epoch loop, no early stop) -> 529-572 (checkpoint and SID export) ; launcher at 579-609 and 107",
               "findings": [
                 {
-                  "correction": "Not applicable.",
-                  "detail": "No integration defect found by source inspection. The trainer’s output directory is this candidate’s promoted result directory, as required.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "-",
+                  "detail": "-",
+                  "location": "-",
+                  "reproduction": "-",
+                  "severity": "none - no defect found for this check"
                 }
               ],
               "name": "c) integration",
               "verdict": "PASS"
             }
           ],
-          "verdict": "PASS",
-          "verifier": "verify_fork-angle-transport_r6_3"
+          "verdict": "NEEDS_FIX",
+          "verifier": "verify_fork-angle-transport_r8_2"
         },
         {
           "checks": [
             {
-              "exercised_how": "Traced the training-only successor-set Jaccard construction and branching mass into the per-batch context, through the learned displacement map, and into the shifted Poincare assignment and curved commitment. The candidate smoke test exercises the neighbourhood and displacement/switch path in smoke_test.py:53-98 and smoke_test.py:123-162; I inspected the code rather than running it.",
-              "exercised_path": "train_rqvae.py:263-326 → train_rqvae.py:414-433 → model/model.py:42-56 → model/layers.py:273-354",
-              "findings": [
-                {
-                  "correction": "Not applicable.",
-                  "detail": "No defect found.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
+              "exercised_how": "I loaded the frozen stage1_GeneEmbedding/output/sentence_t5.npy (24587x768) and results/stage0_build_parquet/train.parquet, called the tree's build_successor_neighbourhood (24472 items covered, max Jaccard 1.0, max b_i 5.38), built the real RQVAE with the trainer config (3x256 codes, dim 32, KMeans init), and ran a 512-item batch through model(batch, fork_context=build_fork_context(ids)). The single used pathway is: training-only successor Jaccard table (train_rqvae.py:263-326) -> weighted encoder mean and b/(1+b) scale (train_rqvae.py:414-433) -> one learned W_l per level (model/model.py:51-55) -> tangent = residual + shift (model/layers.py:290) -> Exp_0 and squared Poincare distance for argmin (model/layers.py:298-308) -> curved commitment distance (model/layers.py:348-351). The tree's own smoke_test geometry, neighbourhood and displacement checks all passed. On the real batch, both-on versus behaviour-off changed 507/512 SID rows (per level 379/492/483) and drove the three fork-map gradients to 0.0; both-on versus geometry-off changed 28/512 rows (per level 4/6/27). The behaviour signal is read from the train split only, and the curve is the operation that turns the shifted tangent into the assignment point, so removing either changes the same computation.",
+              "exercised_path": "train_rqvae.py:405-409 and 414-433 -> model/model.py:51-55 -> model/layers.py:290-308 and 348-354",
+              "findings": [],
               "name": "a) behaviour x geometry fidelity",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Inspected the differentiable forward path from encoder and learned fork maps through the curved assignment/commitment and reconstruction, then the trainer’s finite-loss check, backward pass, gradient clipping, and optimizer step. The smoke test checks assignment changes for both switches and nonzero encoder/map gradients in smoke_test.py:123-162; I inspected those checks and their implementation without running them.",
-              "exercised_path": "model/model.py:34-40 → model/model.py:42-56 → model/layers.py:273-369 → train_rqvae.py:461-470",
+              "exercised_how": "Real forward and backward with the real model and real data: loss 0.01369 finite, recon 4.36e-4, quant 1.33e-2; encoder grad 35.78, decoder 4.17e-4, fork maps 0.223/0.194/0.118, codebooks 1.54/1.29/0.84; all gradients finite. 200 AdamW steps at the frozen lr 1e-3 and clip 1.0 stayed finite (loss 0.0131 -> 2.2e-4, quant 0.0127 -> 9e-6), with bounded code norms (level maxima 0.435/0.162/0.0128) and no NaNs. The coupled path moves the assignment and the gradients: behaviour-off gives fork grads 0.0 and encoder grad 2.11; geometry-off gives encoder grad 0.069 and quant 1.29e-4; both-on gives the values above. A 4-rank torchrun probe that calls raw_module.encoder outside the DDP forward, exactly as the trainer does at train_rqvae.py:422 and 462, completed with finite, all-reduced encoder gradients. The defect is the reconstruction path below: the reconstruction gradient never reaches the transformed point, and reconstruction is computed and then discarded.",
+              "exercised_path": "model/layers.py:290-358 and model/model.py:36-40, 71-78",
               "findings": [
                 {
-                  "correction": "Not applicable.",
-                  "detail": "No defect found. The behaviour-off branch zeros the shift, while geometry-off uses the same shifted tangent with Euclidean assignment. The Poincare distance is evaluated in double precision before conversion back to the tangent dtype, and its lower clamp avoids an infinite float32 derivative at coincident points.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "Remove the unused constant and the duplicated/unused imports so the configuration surface matches the code that is actually read.",
+                  "detail": "`FANOUT_LIMIT` is documented as a mechanism cap but is never read; the exact sparse product is used instead. The `from model.hyperbolic import ball_distance, ball_exp_map` line is duplicated and neither imported name is used in train_rqvae.py; `ball_log_map` is imported in `_fork_forward` but not used. These are leftovers, not live parameters.",
+                  "location": "train_rqvae.py:120 (FANOUT_LIMIT), train_rqvae.py:38-39 (duplicate import), model/layers.py:284 (unused ball_log_map import)",
+                  "reproduction": "`grep -n FANOUT_LIMIT train_rqvae.py` returns only line 120; `grep -n \"ball_distance, ball_exp_map\" train_rqvae.py` returns lines 38-39 and no use; `grep -n ball_log_map model/layers.py` returns only line 284.",
+                  "severity": "minor (cosmetic leftovers; no runtime effect)"
                 }
               ],
               "name": "b) trainability",
-              "verdict": "PASS"
+              "verdict": "NEEDS_FIX"
             },
             {
-              "exercised_how": "Inspected root and input-path resolution, the trainer entry point and training data load, final SID/checkpoint export, output-directory selection, and launcher branches. The single-card branch checks SINGLE_GPU_ENV via GENREC_SINGLE_GPU at train_rqvae.py:105-107 and train_rqvae.py:579-585; the four-rank smoke path is specified in smoke_test.py:165-183. Runtime execution was not performed.",
-              "exercised_path": "train_rqvae.py:42-80, train_rqvae.py:329-360, train_rqvae.py:529-576, train_rqvae.py:579-608",
-              "findings": [
-                {
-                  "correction": "Not applicable.",
-                  "detail": "No defect found. The trainer reads the Stage 0 training parquet and Stage 1 embeddings, writes results under its own promoted candidate directory, exports item-indexed JSON keys from enumerate(sid), and retains both the single-card and torchrun launcher branches.",
-                  "location": "none",
-                  "reproduction": "Not applicable.",
-                  "severity": "minor when it does not stop the work"
-                }
-              ],
+              "exercised_how": "I ran the real `main()` with `EPOCHS=0`, `WARMUP_EPOCHS=0`, and `RESULT_DIR/LOG_DIR/OUTPUT_SID/OUTPUT_JSON/CHECKPOINT` redirected to a scratch directory outside the repository. It loaded all_items=24587 and train_items=24556 from the frozen `stage1_GeneEmbedding/output/sentence_t5.npy` and `results/stage0_build_parquet/train.parquet` (the same constants as the baseline trainer), ran the KMeans codebook init and the successor precompute (24472 covered), and exported `sids_for_hgrec.npy` of shape (24587, 4) int64 with 24587 unique rows; levels 0-2 are in [0,255] and level 3 is 768 + occurrence (max 1308), `item_sids.json` has 24587 keys \"0\"..\"24586\", row i equals sid row i, and the checkpoint state_dict contains all three `fork_maps.l.weight` tensors. Nothing was written into `results/stage2_RQ-VAE/TIGER_fork-angle-transport` by that redirected run (before/after listing was `{'logs'}`), and `RESULT_DIR` resolves to that candidate's own directory. With `GENREC_SINGLE_GPU=1`, `_launch_via_torchrun` returned in-process and `main()` ran on cuda:0. The 4-rank torchrun probe of the trainer pattern (encoder called outside DDP forward, rank-0 export with `_skip_ddp_reduce`) passed with synced gradients. The data-path constants are unchanged from the baseline; the output constants `ARM_NAME` and `LOG_DIR` point at the candidate's promoted result directory.",
+              "exercised_path": "train_rqvae.py:63-80 (paths), 405-443 (context and chunked export), 455-472 (training step), 529-572 (checkpoint and SID export), 579-609 (launcher), 612-614 (entry)",
+              "findings": [],
               "name": "c) integration",
               "verdict": "PASS"
             }
           ],
-          "verdict": "PASS",
-          "verifier": "verify_fork-angle-transport_r6_4"
+          "verdict": "NEEDS_FIX",
+          "verifier": "verify_fork-angle-transport_r8_3"
         },
         {
           "checks": [
             {
-              "exercised_how": "Inspected the real forward path and the smoke test at smoke_test.py:123-162. Training-only successor overlap and branching mass are built in train_rqvae.py:263-326, then converted into learned tangent shifts in model/model.py:42-56. Each shift changes the point used for Poincare assignment and the curved commitment computation in model/layers.py:288-354.",
-              "exercised_path": "model/model.py:34-38 -> model/layers.py:273-369 -> model/hyperbolic.py:111-137",
+              "exercised_how": "I built the real successor table with train_rqvae.build_successor_neighbourhood on results/stage0_build_parquet/train.parquet (24,472 of 24,587 items covered, 2.6 s), built the context exactly as train_rqvae.py:416-433 does (encoder of the top-8 Jaccard-weighted successors, scale = b_i/(1+b_i)), and ran the real RQVAE with the frozen config on 24,587x768 sentence_t5.npy. The behaviour shift (model.py:53) is added to the residual (layers.py:290), the sum is mapped by exp_0 (layers.py:298) and assigned by the freed geodesic distance (layers.py:306, argmin at 323). With 512 items: both-on vs behaviour-off changed 1353/1536 tokens; both-on vs geometry-off (identity + L2, layers.py:314-315) changed 21/1536 tokens; delta on the curve changed the gradient too (clip-norm 0.833 -> 0.0242 -> 0.0022). No import-only hyperbolic helper is doing the work: the used functions are ball_project/ball_exp_map/ball_distance (layers.py:297-308) and the shift is produced by fork_maps inside the same graph. The residual accumulation issue is reported under check (b).",
+              "exercised_path": "train_rqvae.py:414-433 -> model/model.py:53 -> model/layers.py:290,298,306,323",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "No defect found. The behaviour signal and curved operation participate in one connected assignment and loss pathway; both switches are present at train_rqvae.py:109-116 and affect that pathway at train_rqvae.py:414-433.",
-                  "location": "none",
-                  "reproduction": "The code-level exercise is smoke_test.py:123-162: it compares both-on assignments against behaviour-off and geometry-off assignments, checks the learned shift, and backpropagates through the model.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "keep = np.argsort(-overlaps)[:min(NEIGHBOUR_TOPK, int(degree[item]))], so the retained set is min(8, degree) as stated, and the remaining rows stay -1 (build_fork_context already masks -1).",
+                  "detail": "the retained neighbourhood is not the specified \"top-k with k = min(8, degree)\": line 320 always keeps min(8, number of items with nonzero overlap). An item i with |N(i)| = 1 whose single successor is also a successor of many others therefore receives 8 neighbours instead of 1, and b_i (line 324) sums 8 overlaps instead of at most degree(1) terms. This changes scale = b/(1+b) for exactly the rare items the proposal itself lists as a risk. It does not detach the behaviour from the geometry, so the coupling itself is intact.",
+                  "location": "train_rqvae.py:320 (with the docstring at train_rqvae.py:269 and the spec constant NEIGHBOUR_TOPK at train_rqvae.py:118)",
+                  "reproduction": "from the built table, count items where (nids[:,1] >= 0) & (degree == 1); e.g. inspect any item with degree 1: nids[i,1:8] are >= 0 while min(8, degree[i]) = 1.",
+                  "severity": "minor"
                 }
               ],
-              "name": "a) behaviour x geometry fidelity",
+              "name": "a) behaviour x geometry fidelity (one connected pathway)",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Inspected the forward and loss path plus smoke_test.py:123-162. The assignment is discrete, but the curved distance commitment and tangent commitment are differentiable; the smoke test checks finite/nonzero gradients to the encoder and the learned displacement map and checks assignment changes for both controls. Runtime execution is not claimed.",
-              "exercised_path": "model/layers.py:288-354",
+              "exercised_how": "one real forward/backward with the frozen config on 512 real items and the real neighbourhood: loss 0.01473, recon 4.9e-4, quant 0.01424, all finite; grads reached encoder (26.06), fork_maps[0] (0.281) and all three codebooks (23.7 / 22.2 / 9.1); 20 AdamW steps at lr 1e-3 stayed finite and decreased 0.0158 -> 0.00073. Switches were exercised in the same run (numbers above) and in the toy model. One intended path is dead: the reconstruction gradient never reaches the encoder (finding 1).",
+              "exercised_path": "model/layers.py:290-358",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "No code-level dead term or evident float32 overflow/NaN hazard found in the exercised path. The smoke test’s specified assignment-change assertions and gradient checks cover the requested switch behavior.",
-                  "location": "none",
-                  "reproduction": "Inspect smoke_test.py:134-161 and model/layers.py:297-354. As instructed, this is a code-level review; no trainer execution was attempted.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "keep the level target u = residual + shift for the assignment, but return residual - selected (or tangent - shift - selected) as the next residual, so only the current level's displacement enters the target.",
+                  "detail": "the residual update is (residual + shift) - selected, not the specified \"ordinary RQ residual update from the selected code\". Because the returned reconstruction_tangent is fed back as `residual` in RQLayer.forward, the shift of level l is re-injected into level l+1 and l+2. The level targets become x+s0, x+s0+s1-c0, x+s0+s1+s2-c0-c1 while the decoder reconstructs only c0+c1+c2, so the displacement is counted repeatedly (1+2+3 = 6 times over three levels) and the quantizer's residual is no longer the part of the input that the codes leave unexplained. This is the reason the both-on quant loss is ~8x the geometry-only quant loss (0.01424 vs 0.00183) at equal init.",
+                  "location": "model/layers.py:328 (returned as the next residual at model/layers.py:368-369; interacts with model/layers.py:290)",
+                  "reproduction": "call m.rq._fork_forward(layer0, residual=zeros, level=0, ctx with shift=s, False) -> returned residual = s - c0; feed it to level 1 -> tangent = 2s - c0, where the specification gives (0 - c0) + s.",
+                  "severity": "minor"
                 }
               ],
-              "name": "b) trainability",
+              "name": "b) trainability (real forward/backward, gradients reach the intended parameters, switches change the result)",
+              "verdict": "NEEDS_FIX"
+            },
+            {
+              "exercised_how": "I imported the trainer inside the tree and ran _launch_via_torchrun() with GENREC_SINGLE_GPU=1: it returned without forking and RESULT_DIR resolved to /fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_fork-angle-transport (train_rqvae.py:63-80); the MCP regex SINGLE_GPU_MARKER at tools/genrec-mcp/server.py:262 matches the declaration at train_rqvae.py:107. Data path is the frozen one (EMBEDDING_FILE = stage1_GeneEmbedding/output/sentence_t5.npy, TRAIN_FILE = results/stage0_build_parquet/train.parquet, lines 72-73; no valid/test read). I ran the export path end to end on CPU: 12 blocks of EXPORT_BLOCK=2048 through get_indices with a fork_context for all 24,587 items, then _extend_collisions -> sid shape (24587,4), all rows unique, last column 768..1301, JSON payload keys 0..24586 in embedding-row order, which is the baseline's indexing. All write targets (OUTPUT_SID/OUTPUT_JSON/CHECKPOINT at 74-76, LOG_DIR/METRICS_PATH at 79-80, launcher log at 136) are under the candidate's own result directory, and the torchrun child's cwd is that logs directory (608). The 4-rank branch is the baseline's torchrun --standalone --nproc_per_node=4 --master_port=50202 with CUDA_VISIBLE_DEVICES=0,1,2,3 (594-600); the script is passed as an absolute path so \"from model import RQVAE\" still resolves from the script directory. I did not run the full 3000-epoch main or the 4-rank launch (no writes permitted, and no runtime proof is required); the 20-step real-data loop above exercises the same per-step code path that main() calls at line 462.",
+              "exercised_path": "train_rqvae.py:612-614 and 579-609",
+              "findings": [],
+              "name": "c) integration (entry point, frozen data path, SID export, output directory, distributed launcher incl. SINGLE_GPU_ENV branch)",
+              "verdict": "PASS"
+            }
+          ],
+          "verdict": "NEEDS_FIX",
+          "verifier": "verify_fork-angle-transport_r8_4"
+        },
+        {
+          "checks": [
+            {
+              "exercised_how": "I ran the real entry point (train_rqvae.main()) on the frozen data: once single-process (GENREC_SINGLE_GPU=1, one epoch, patched EPOCHS/RESULT_DIR only) and once as four real DDP ranks with RANK/LOCAL_RANK/WORLD_SIZE set as torchrun sets them. I also pushed a real 1024-item batch from results/stage0_build_parquet/train.parquet through model.forward with the real successor table built by build_successor_neighbourhood, measured the shift/assignment, and ran a backward from the curved term alone (ball_distance(point, mapped_codes)^2 without the commitment or reconstruction terms): it produced d/d(fork_maps[0]).abs().sum()=10.44, d/d(encoder)=8.35, d/d(codebook)=26.62, so the curved term alone drives the behaviour map. Behaviour-off (scale and mean zeroed, train_rqvae.py:427-431) changes 2536/3072 code slots (622/967/947 per level) and makes the fork-map gradient exactly 0.0; geometry-off changes 113/3072 slots (13/16/84). One pathway, both switches live.",
+              "exercised_path": "train_rqvae.py:414-433 (successor-neighbour mean + b/(1+b) scale) -> model/model.py:53 (scale * W_l(mean)) -> model/layers.py:290 (tangent = residual + shift) -> model/layers.py:298 (Exp_0 of the shifted tangent) -> model/layers.py:306-308 (squared Poincare distance to Exp_0 of the codes) -> model/layers.py:323 (argmin) -> model/layers.py:358 (decoder input) and model/layers.py:350-354 (curved commitment in the loss)",
+              "findings": [
+                {
+                  "correction": "Delete the unused Frechet/tangent helpers (or move them to a test-only module) and drop the unused imports, so the only hyperbolic code reachable from the trainer is the one that is coupled to the behaviour signal.",
+                  "detail": "The module carries a second, unrelated mechanism (branch_frechet_means, frechet_mean, tangent_codes, tangent_quantize, with its own geometry_on argument) that nothing in the trainer or the model ever calls; grep for these names outside model/hyperbolic.py returns nothing. _fork_forward also imports ball_log_map at model/layers.py:284 and never uses it, and train_rqvae.py:38-39 imports ball_distance/ball_exp_map twice, unused. The cheap check for \"an imported but unused hyperbolic helper\" therefore fires on these names even though the coupling that is actually exercised (layers.py:290-323) is genuine.",
+                  "location": "model/hyperbolic.py:140-195 and model/hyperbolic.py:198-267 (dead), model/layers.py:284 (unused import)",
+                  "reproduction": "cd to the tree and run: for n in tangent_quantize tangent_codes branch_frechet_means frechet_mean; do grep -rn \"$n\" --include=*.py . | grep -v model/hyperbolic.py; done   -> no output; grep -n \"ball_log_map\" model/layers.py -> only the import at 284.",
+                  "severity": "minor"
+                }
+              ],
+              "name": "a) behaviour x geometry fidelity: one connected pathway using the training-only behaviour signal and the curved operation",
               "verdict": "PASS"
             },
             {
-              "exercised_how": "Inspected the trainer entry point, frozen Stage 1 embedding and Stage 0 training-parquet paths, training-only neighbourhood construction, SID export, output directory, and launcher branches. The single-card branch checks GENREC_SINGLE_GPU at train_rqvae.py:579-585; the four-card torchrun configuration is at train_rqvae.py:128-138 and 586-603.",
-              "exercised_path": "train_rqvae.py:42-80, 263-326, 329-433, 529-608",
+              "exercised_how": "Real 1024-item batch of the frozen data, batch norm 1e-3 or 1: quant_loss 0.0167, total loss 0.0172, reconstruction finite; per-step gradients encoder 26.4, fork_maps 0.350/0.276/0.169, codebooks 1.720/1.347/0.855. Twenty AdamW steps at the frozen lr/weight-decay fell from 0.01703 to 0.00090 with finite fork maps and codebooks. Behaviour-off makes all three fork grad sums exactly 0.0 (the zero tensor still reaches DDP, so find_unused_parameters=False cannot hang on the control arm); geometry-off still trains (one full epoch, loss 0.000576, SID exported). Stress test at 20x/200x/2000x input and codebook scale: loss 554 / 2.98e6 / 2.98e10, all finite, no NaN/inf, acosh argument clamps hold at the ball boundary. The extreme-geometry hinge in ball_log_map never binds on this data because _fork_forward never calls it.",
+              "exercised_path": "model/layers.py:273-369 (_fork_forward) driven from train_rqvae.py:462 and exported from train_rqvae.py:440-441",
               "findings": [
                 {
-                  "correction": "None.",
-                  "detail": "No integration defect found by inspection. Outputs resolve under the candidate’s promoted result directory; the SID export enumerates embedding rows into item-indexed JSON and extends collisions before checking uniqueness.",
-                  "location": "none",
-                  "reproduction": "Inspect train_rqvae.py:63-80 for paths, 435-443 and 557-572 for export, and 579-608 for launcher behavior. Runtime execution was not attempted.",
-                  "severity": "minor when it does not stop the work"
+                  "correction": "Make the Euclidean control the exact analogue, curved_term = (tangent - selected).square().mean() (no detach) or F.mse_loss(selected, tangent), so that switching geometry only replaces Exp/d_c with identity/L2 and leaves the gradient routing identical.",
+                  "detail": "The geometry-off arm is not a pure metric swap: with geometry_on the first quant term is d_c(point, selected_point)^2, differentiable in point, but with geometry_on=False it is F.mse_loss(selected, tangent.detach()), which detaches the residual. The control therefore removes the curvature AND the first term's gradient path to the encoder/W_l, so a future geometry-off run would confound the metric with the gradient routing. No ablation arm is trained in this round, so the trained mechanism is unaffected; only the correctness of the named switch is affected.",
+                  "location": "model/layers.py:348-354",
+                  "reproduction": "set GEOMETRY_ON=False, take a batch, and inspect model/layers.py:353: the only remaining path from the loss to tangent is the beta*F.mse_loss(tangent, selected.detach()) term at line 354, whereas with geometry_on the curved term at 350-351 also carries gradient to tangent.",
+                  "severity": "minor"
                 }
               ],
-              "name": "c) integration",
+              "name": "b) trainability: real forward/backward, finite losses and gradients on the intended parameters, live coupled term, stable numerics, switches change the computation",
+              "verdict": "PASS"
+            },
+            {
+              "exercised_how": "The real main() completed one full epoch six times: single-process with GENREC_SINGLE_GPU=1 (ephemeral RESULT_DIR so nothing was written into the candidate or baseline result directory) and as four DDP ranks with the torchrun environment variables. Four-rank epoch: loss 0.01436218, recon 0.00046242, 1.352 s/epoch, exported raw_shape=(24587,3), sid_shape=(24587,4), 24587 unique rows; sids_for_hgrec.npy int64 (24587,4); item_sids.json has exactly the keys \"0\"..\"24586\", each row equal to the npy row, all values ints, 4th level 768..1863 exactly as the baseline's own export (768..809). torchrun --nproc_per_node=4 ddp_check.py prints DDP_PASS, so the rank-0-only evaluation does not wait in the VQ all_reduce. The launcher path resolves from the promoted copy stage2_RQ-VAE/TIGER_fork-angle-transport to REPO_ROOT=/fs04/ar57/wenyu/GeneRec and RESULT_DIR=results/stage2_RQ-VAE/TIGER_fork-angle-transport, matching tools/genrec-mcp/server.py:652-661; SINGLE_GPU_MARKER at tools/genrec-mcp/server.py:262 matches train_rqvae.py:107; the only writes are OUTPUT_SID/OUTPUT_JSON/CHECKPOINT/METRICS_PATH/LOG_DIR under RESULT_DIR and the launcher log under RESULT_DIR/logs, and the smoke test passes in both locations. Measured cost note, not a defect: 1.35 s/epoch on four cards against the frozen recipe's 0.12-0.16 s/epoch (tools/research/rounds/evidence.py:17), i.e. about 9x, because of the double-precision distance and the 8x neighbour-encoder gather; 3000 epochs is about 70 minutes.",
+              "exercised_path": "train_rqvae.py:611-614 (__main__ -> _launch_via_torchrun -> main) and train_rqvae.py:563-572 (export)",
+              "findings": [
+                {
+                  "correction": "Keep the baseline LOG_DIR (REPO_ROOT/stage2_RQ-VAE/ARM_NAME/logs) and write the three result artifacts from RESULT_DIR, or write/copy the metrics and train_migrated.log to both places so the status reader finds the live run.\n\nNOTES: This candidate is not an ablation control; both switches default to True (train_rqvae.py:113-114) and exactly one both-on configuration is trained. Data path is the frozen one (stage1_GeneEmbedding/output/sentence_t5.npy, results/stage0_build_parquet/train.parquet), the frozen protocol constants are untouched versus stage2_RQ-VAE/TIGER_RQ-VAE/train_rqvae.py (3000 epochs, 1024/rank, lr 1e-3, AdamW, warmup 50, 3x256 codes, dim 32, seed 42, final-epoch checkpoint), the behaviour signal is built only from the training split, and the SID export applies the same behaviour-conditioned context as training (train_rqvae.py:440-441), so the trained mechanism is what is exported. The three minor code findings above do not stop the run and do not invalidate the coupling; they are comment/dead-code, gradient-routing and logging hygiene issues.",
+                  "detail": "LOG_DIR was moved from the baseline's REPO_ROOT/stage2_RQ-VAE/ARM_NAME/logs to RESULT_DIR/logs (results/stage2_RQ-VAE/TIGER_fork-angle-transport/logs). The admission check tools/genrec-mcp/server.py:352-367 and the cost projection at 402-411 both look in result_dir/logs first, so they are fine, but the status tool uses tree_log_paths(tree), which reads stage2_RQ-VAE/<tree>/logs, so its metrics/native_log point at a file that will never exist and the run's progress tail will look empty. The trainer itself is correct and writes only inside its own result directory.",
+                  "location": "train_rqvae.py:77-80 versus tools/genrec-mcp/server.py:677-714 and 1781-1782",
+                  "reproduction": "start a run from the MCP, then Path(result_dir)/\"logs\"/\"training_metrics.jsonl\" exists while stage2_RQ-VAE/TIGER_fork-angle-transport/logs/training_metrics.jsonl does not, and the status payload's \"logs\" is tree_log_paths(tree), which returns the latter path.",
+                  "severity": "minor"
+                }
+              ],
+              "name": "c) integration: real entry point, frozen data path, valid and correctly indexed SID export, writes only its own result directory, working distributed launcher and single-card branch",
               "verdict": "PASS"
             }
           ],
           "verdict": "PASS",
-          "verifier": "verify_fork-angle-transport_r6_5"
+          "verifier": "verify_fork-angle-transport_r8_5"
         }
       ]
     }
@@ -40202,6 +40244,41 @@
       "idea_id": "fork-angle-transport",
       "revision": 5,
       "signature": "8d95e1ae08a96375"
+    },
+    {
+      "findings": [
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_fork-angle-transport_r8_1"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_fork-angle-transport_r8_2"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_fork-angle-transport_r8_3"
+        },
+        {
+          "check": "verdict",
+          "detail": "verdict NEEDS_FIX without a stated blocking finding",
+          "location": "verification.json",
+          "severity": "blocking",
+          "verifier": "verify_fork-angle-transport_r8_4"
+        }
+      ],
+      "idea_id": "fork-angle-transport",
+      "revision": 8,
+      "signature": "fb4fb1c64274430d"
     }
   ],
   "review_bundles": {
@@ -41252,8 +41329,8 @@
     }
   ],
   "stage3_jobs": [],
-  "step": "stage2",
-  "updated_at": 1793162394.5389142,
+  "step": "verification",
+  "updated_at": 1793167335.614218,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261028_125823_958.log",
   "worker_pid": 319287,
