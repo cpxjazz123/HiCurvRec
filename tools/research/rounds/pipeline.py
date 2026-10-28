@@ -749,6 +749,33 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
     return state
 
 
+def close_proposal(state: dict, implementation_id: str, *, reason: str,
+                   evidence: dict = None) -> dict:
+    """End a candidate because its PROPOSAL is defective, not its code.
+
+    A proposal-level defect (a control law that saturates, a coupling that is inert
+    over the operating range) cannot be repaired in the tree: it needs a new
+    proposal. The record keeps the evidence and a terminal status the scheduler
+    honours, so the round stops waiting for a repair that will never come and the
+    next round can start.
+    """
+    record = _implementation(state, implementation_id)
+    record["status"] = "proposal_rejected"
+    record["closed_reason"] = str(reason)
+    record["closed_at"] = time.time()
+    record["close_evidence"] = dict(evidence or {})
+    record["blocking_findings"] = []
+    record["accepted"] = False
+    record_event(state, "proposal_closed", idea_id=implementation_id,
+                 reason=str(reason)[:200], evidence=str((evidence or {}).get("file", "")))
+    pending = [item for item in state.get("implementations", [])
+               if item.get("status") in ("implemented", "repaired", "needs_repair",
+                                         "repair_planned", "verified",
+                                         "awaiting_implementation")]
+    state["step"] = "verification" if pending else "stage2"
+    return state
+
+
 def _refresh_output_isolation(state: dict, record: dict) -> None:
     """Re-run the output-path guard on the tree as it is now.
 

@@ -2941,6 +2941,38 @@ def tool_research_round_accept(round_id: str, idea_id: str, note: str = "") -> d
                                     in round_pipeline.verified_implementations(state)]}
 
 
+def tool_research_round_close_proposal(round_id: str, idea_id: str, reason: str,
+                                       evidence: str = "") -> dict:
+    """End a candidate because its PROPOSAL is defective, with the evidence on disk.
+
+    A control law that saturates over its operating range, or a coupling that is
+    inert, cannot be repaired in the candidate tree: the record gets a terminal
+    status, the round stops waiting for a repair, and the next round starts from a
+    new proposal. Nothing is trained and nothing is deleted: the tree and the
+    evidence stay in the round.
+    """
+    from tools.research.rounds import pipeline as round_pipeline
+
+    if not str(reason).strip():
+        return {"round_id": round_id, "idea_id": idea_id, "closed": False,
+                "error": "a proposal close needs a reason"}
+    directory = _round_directory(round_id)
+    state = round_pipeline.load_state(directory)
+    try:
+        state = round_pipeline.close_proposal(state, idea_id, reason=reason,
+                                              evidence={"file": str(evidence)})
+    except Exception as exc:                               # noqa: BLE001
+        return {"round_id": round_id, "idea_id": idea_id, "closed": False,
+                "error": type(exc).__name__ + ": " + str(exc)}
+    round_pipeline.save_state(directory, state)
+    record = [item for item in state.get("implementations", [])
+              if item.get("idea_id") == idea_id][-1]
+    return {"round_id": round_id, "idea_id": idea_id, "closed": True,
+            "status": record.get("status"), "step": state.get("step"),
+            "reason": record.get("closed_reason"),
+            "evidence": record.get("close_evidence")}
+
+
 def tool_research_round_plan_repair(round_id: str, idea_id: str) -> dict:
     """Ask the repair planner for the plan of one candidate.
 
@@ -3473,6 +3505,13 @@ TOOLS.update({
                        "The verifiers report; this is the decision. A candidate whose "
                        "last review carries a blocking finding is refused: it has to be "
                        "fixed and reviewed again before Stage 2. No GPU work.",
+    },
+    "research_round_close_proposal": {
+        "fn": tool_research_round_close_proposal,
+        "args": {"round_id": "string", "idea_id": "string", "reason": "string",
+                 "evidence": "string, optional path"},
+        "description": "End a candidate whose PROPOSAL is defective: terminal "
+                       "status, evidence on disk, no repair and no training.",
     },
     "research_round_plan_repair": {
         "fn": tool_research_round_plan_repair,

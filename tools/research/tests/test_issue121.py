@@ -945,3 +945,44 @@ class RankAggregateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProposalCloseTests(unittest.TestCase):
+    """A proposal-level defect needs a terminal state the scheduler honours."""
+
+    def test_closing_a_proposal_records_the_evidence_and_ends_the_review(self):
+        with tempfile.TemporaryDirectory() as work:
+            directory = pipeline_module.new_round(Path(work), "round_close", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["step"] = "verification"
+            state["implementations"] = [{
+                "implementation_id": "i", "idea_id": "i", "tree": str(directory),
+                "status": "needs_repair", "revision": 6,
+                "blocking_findings": [{"severity": "blocking", "location": "f.py:1",
+                                       "detail": "d", "verifier": "verify_i_r0_1"}]}]
+            pipeline_module.save_state(directory, state)
+            state = pipeline_module.close_proposal(
+                pipeline_module.load_state(directory), "i",
+                reason="the cap makes the behaviour signal inert",
+                evidence={"file": "proposal_defect.json"})
+            record = state["implementations"][0]
+            self.assertEqual(record["status"], "proposal_rejected")
+            self.assertEqual(record["closed_reason"], "the cap makes the behaviour signal inert")
+            self.assertEqual(record["blocking_findings"], [])
+            self.assertEqual(state["step"], "stage2")
+
+    def test_a_closed_proposal_is_not_dispatchable(self):
+        with tempfile.TemporaryDirectory() as work:
+            directory = pipeline_module.new_round(Path(work), "round_close2", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [{
+                "implementation_id": "i", "idea_id": "i", "tree": str(directory),
+                "status": "verified", "revision": 1, "verdicts": [{"verifier": "v"}],
+                "accepted": True}]
+            state["step"] = "stage2"
+            pipeline_module.save_state(directory, state)
+            state = pipeline_module.close_proposal(
+                pipeline_module.load_state(directory), "i",
+                reason="proposal defect", evidence={})
+            self.assertEqual(pipeline_module.verified_implementations(state), [])
+            self.assertEqual(state["step"], "stage2")

@@ -190,6 +190,13 @@
       "idea_id": "CURVCTRL-SID",
       "revision": 5,
       "signature": "f5548f2e58d45895"
+    },
+    {
+      "at": 1793229839.6955707,
+      "event": "proposal_closed",
+      "evidence": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_030015_260/proposal_defect_CURVCTRL-SID.json",
+      "idea_id": "CURVCTRL-SID",
+      "reason": "proposal-level defect: the curvature cap clips the behaviour signal over the whole operating range. c = clip((1/Q-1)/(rho^2+eps), 1e-4, 0.99/M^2) saturates whenever Q < 1/(1+0.99 (rho/M)^2), which for"
     }
   ],
   "evidence_bundles": {
@@ -15271,6 +15278,7 @@
   "ideas_rejected": [],
   "implementations": [
     {
+      "accepted": false,
       "agent_error": {
         "attempts": 1,
         "classes": [
@@ -15293,26 +15301,7 @@
       "assumptions": [],
       "baseline": null,
       "baseline_digest": null,
-      "blocking_findings": [
-        {
-          "check": "mathematics and geometry: formulas, domains and identities",
-          "correction": "use exp_0^c(z)=tanh(sqrt(c)||z||/2)/(sqrt(c)||z||/2) z with the matching log_0, or define d_c with a 1/sqrt(c) prefactor instead of 2/sqrt(c); then recompute rho_l as the geodesic radius (or divide the rho^2 in c_l_raw by 4) so that the statistic and the curvature it sets use one convention.",
-          "detail": "`exp_0^c(z) = tanh(sqrt(c)||z||)/(sqrt(c)||z||) z` and `d_c(u,v) = 2/sqrt(c) artanh(sqrt(c)||(-u)(+)v||)` are not the exponential and the distance of one and the same metric. With c=1, z=0.5 e1: exp_0(z)=tanh(0.5)=0.462117, but d_c(0,exp_0(z))=2 artanh(0.462117)=1.0, i.e. d(0,exp_0(z))=2||z||. If log_0 is the log of this distance, log_0(y)=2 artanh(||y||)=1.0 for y=0.462117, and exp_0(log_0(y))=tanh(1.0)=0.761594 != y; the midpoint exp_0(0.5 log_0(y))=tanh(0.5)=0.462117 equals y itself, not the midpoint (the true c=1 midpoint of 0 and 0.462117 is 0.244919). So exp_x(log_x(y))=y and \"the midpoint halves the arc\" fail for the stated pair. The two formulas are consistent only if exp_0 uses tanh(sqrt(c)||z||/2), or if d is halved. Because c_l_raw=(1/Q-1)/(rho_l^2+1e-8) treats the Euclidean latent norm rho as the tangent magnitude of this distance, the factor 2 (factor 4 in c) propagates into the measured curvature. The other identities do hold: with c=1, y=0.5, 0(+)y=((1+0.25)*0+(1-0)*0.5)/1=0.5; x(+)0=x; the denominator 1+2c<x,y>+c^2||x||^2||y||^2 is positive; and kappa_l=-c_l with c_l>0 is the standard negative-curvature convention.",
-          "location": "model/frechet_poincare.py (`exp_0` / `poincare_distance` as named by the specification); specification section 4 and section 2",
-          "reproduction": "c=1, z=(0.5,0): exp_0(z)=0.462117 and d_c(0,0.462117)=2*artanh(0.462117)=1.0 != 0.5; exp_0(0.5*2*artanh(0.462117))=tanh(0.5)=0.462117=y.",
-          "severity": "blocking",
-          "verifier": "verify_CURVCTRL-SID_r5_1"
-        },
-        {
-          "check": "numerical behaviour at the degenerate points: boundary, origin, zero tangent, saturation, clamp behaviour",
-          "correction": "replace the hard min by a strictly monotone bounded map, e.g. c_l = c_raw/(1 + c_raw*M_l^2/0.99), which keeps sqrt(c_l)*M_l<0.995 and is strictly increasing in c_raw (hence strictly decreasing in Q); derive M_l from all points entering exp_0, M_l=max(max_i||z_l(i)||, max_k||e_{l,k}||), not only the latents.",
-          "detail": "the derived cap removes the behaviour signal over the range of Q that matters. It binds whenever (1/Q-1) > 0.99*(rho/max)^2. With a homogeneous norm distribution rho=max this is Q<0.5025: Q=0.25 gives c_raw=3.0 and Q=0.01 gives 99.0, and both are clamped to the same 0.99. With any spread the threshold rises: rho/max=0.5 gives Q<0.802, and rho=1,max=5 gives cap=0.0396 and every Q<0.962 is clamped. The new cumulative Q_l is non-increasing and the candidate's own test now has Q_2=0.25, so levels 2 and 3 lie below the threshold and c_l depends only on max||z_l||, not on measured Q_l: the loop is open exactly at the levels the idea says it fixes. The cap is applied to c, not to the radial coordinate, so it cannot be tightened without deleting the controller.",
-          "location": "specification section 2, `c_l_raw = min(c_l_raw, 0.99/(max_i ||z_l(i)||^2+1e-8))` (the corresponding clamp in the curvature controller)",
-          "reproduction": "rho_l=max_i||z_l(i)||=1: c_l_raw is 3.0 at Q=0.25 and 99.0 at Q=0.01; both become 0.99. With rho=1 and max=5, both become 0.0396 even at Q=0.6 (raw 0.667).",
-          "severity": "blocking",
-          "verifier": "verify_CURVCTRL-SID_r5_1"
-        }
-      ],
+      "blocking_findings": [],
       "boundary_sha256": "cff1aca40d0af3b3839a4c2ec5da49de64e0f57877dd2123c62e9fecf548ecf3",
       "boundary_version": "agent-boundary/3",
       "candidate_digest_before_agent": null,
@@ -16575,6 +16564,11 @@
         "r",
         "."
       ],
+      "close_evidence": {
+        "file": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_030015_260/proposal_defect_CURVCTRL-SID.json"
+      },
+      "closed_at": 1793229839.6955667,
+      "closed_reason": "proposal-level defect: the curvature cap clips the behaviour signal over the whole operating range. c = clip((1/Q-1)/(rho^2+eps), 1e-4, 0.99/M^2) saturates whenever Q < 1/(1+0.99 (rho/M)^2), which for rho/M ~ 0.25 is about 0.94, so the applied curvature is the constant 0.99/M^2 for every realistic prefix hit rate and Q drives nothing inside that band. Verified numerically at four latent scales (rounds/round_20261029_030015_260/proposal_defect_CURVCTRL-SID.json), and corrected there: the saturation is of the DIRECT response to Q (the curvature can still move with the remeasured M), and normalising the latent does NOT remove it because rho/M is invariant. The tree is kept with its 105 tests; no Stage 2 or Stage 3 run was spent.",
       "deviations": [],
       "failure_signature": "f5548f2e58d45895",
       "finding_agreement": {
@@ -16616,7 +16610,7 @@
         "result": "The candidate's own suite: 99 tests pass (2 DDP tests skip outside torchrun). Previous smoke after the composition fixes: c=1 loss 1.0035 / encoder gradient 5.40, c=4 loss 2.3027 / gradient 16.99 with varied tokens, c=0 loss 0.9248 / gradient 1.84."
       },
       "source_digest": "4698278b7f96e26d5273993baeeddc8437eefc223bfb01bee138333f570ff056",
-      "status": "needs_repair",
+      "status": "proposal_rejected",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_030015_260/CURVCTRL-SID",
       "tree_exists": true,
       "verdicts": [
@@ -19076,8 +19070,8 @@
   },
   "stage2_jobs": [],
   "stage3_jobs": [],
-  "step": "verification",
-  "updated_at": 1793208512.5057805,
+  "step": "stage2",
+  "updated_at": 1793229839.6955736,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261029_030015_260.log",
   "worker_pid": 199725,
