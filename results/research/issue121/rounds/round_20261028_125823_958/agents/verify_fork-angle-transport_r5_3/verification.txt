@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:261-324, train_rqvae.py:412-431, model/model.py:42-56, model/layers.py:273-357 | Traced the training-only successor-set overlap and branching mass into the learned per-layer tangent shifts, then into the Poincare exponential-map and geodesic-distance assignment. The same shifted tangent feeds the quantization loss and residual update. The code’s behavior and geometry switches are defined at train_rqvae.py:107-114 and consumed in that path. Source inspection only; no trainer execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:34-40, model/model.py:42-56, model/layers.py:284-357, smoke_test.py:123-162 | Inspected the forward and backward path: the shifted tangent contributes to the commitment loss, which differentiates through the shift into `fork_maps` and the neighbour encoder; assignment uses the same behavior-conditioned point and curved distance. The smoke test checks assignment changes with behavior off and with geometry off, and checks nonzero gradients to the encoder and displacement map. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 numerical hazard found in the exercised coupled path. The source includes projection, denominator safeguards, and double-precision geodesic distance computation.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:327-357, train_rqvae.py:433-441, train_rqvae.py:527-570, train_rqvae.py:577-606, smoke_test.py:165-183 | Traced the trainer entry point, frozen Stage 1 embedding and Stage 0 training-parquet paths, export of all embedding rows indexed by item ID, and promotion-specific result directory. Verified the launcher’s four-card path and its `GENREC_SINGLE_GPU` single-card bypass in source. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The result directory resolves to `results/stage2_RQ-VAE/TIGER_fork-angle-transport/`, and the SID export writes unique, integer codes with item IDs as JSON keys.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

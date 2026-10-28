@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:263-326 → train_rqvae.py:414-433 → model/model.py:42-56 → model/layers.py:273-354 | Traced the training-only successor-set Jaccard construction and branching mass into the per-batch context, through the learned displacement map, and into the shifted Poincare assignment and curved commitment. The candidate smoke test exercises the neighbourhood and displacement/switch path in smoke_test.py:53-98 and smoke_test.py:123-162; I inspected the code rather than running it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:34-40 → model/model.py:42-56 → model/layers.py:273-369 → train_rqvae.py:461-470 | Inspected the differentiable forward path from encoder and learned fork maps through the curved assignment/commitment and reconstruction, then the trainer’s finite-loss check, backward pass, gradient clipping, and optimizer step. The smoke test checks assignment changes for both switches and nonzero encoder/map gradients in smoke_test.py:123-162; I inspected those checks and their implementation without running them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behaviour-off branch zeros the shift, while geometry-off uses the same shifted tangent with Euclidean assignment. The Poincare distance is evaluated in double precision before conversion back to the tangent dtype, and its lower clamp avoids an infinite float32 derivative at coincident points.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-80, train_rqvae.py:329-360, train_rqvae.py:529-576, train_rqvae.py:579-608 | Inspected root and input-path resolution, the trainer entry point and training data load, final SID/checkpoint export, output-directory selection, and launcher branches. The single-card branch checks SINGLE_GPU_ENV via GENREC_SINGLE_GPU at train_rqvae.py:105-107 and train_rqvae.py:579-585; the four-rank smoke path is specified in smoke_test.py:165-183. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The trainer reads the Stage 0 training parquet and Stage 1 embeddings, writes results under its own promoted candidate directory, exports item-indexed JSON keys from enumerate(sid), and retains both the single-card and torchrun launcher branches.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

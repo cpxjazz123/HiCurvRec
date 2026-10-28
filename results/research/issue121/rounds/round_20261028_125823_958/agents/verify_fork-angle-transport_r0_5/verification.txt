@@ -1,0 +1,28 @@
+I’ll inspect the candidate tree and its trainer/data/export/launcher paths, then return the requested plain-text review in the response. I won’t write any files.
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: fork-angle-transport/model/layers.py:273-290 | Followed `RQVAE.forward` into `RQLayer.forward` and the per-level `VQLayer.forward` assignment path; the candidate contains only ordinary Euclidean residual quantization, with no successor-overlap computation or Poincare operation.
+FINDING SEVERITY: blocking
+FINDING LOCATION: fork-angle-transport/model/layers.py:98-113, 273-290
+FINDING DETAIL: The stated coupled mechanism is absent. Assignments use squared Euclidean distance in `_distances`, and residual quantization calls that unchanged Euclidean path at every level. No training-only successor signal, behaviour/geometry switches, exponential map, Poincare distance, or connected behaviour-conditioned curved assignment is present.
+FINDING REPRODUCTION: Inspect `RQLayer.forward` at lines 273-290: it passes each residual directly to `vq_layer`; `VQLayer._distances` at lines 98-104 computes Euclidean squared distances, and `_indices` at lines 106-113 selects from those distances.
+FINDING CORRECTION: Implement the specified training-only successor-overlap preprocessing and ambiguity-weighted tangent shift in the residual assignment path, then apply the fixed-curvature map and Poincare distance there. Include functioning behaviour-off and geometry-off switches, while keeping the prescribed training run single-candidate and without ablation arms.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: fork-angle-transport/model/model.py:26-30 | Inspected the actual forward path and its quantization loss/straight-through implementation in `model/layers.py:115-134`; runtime execution is unavailable in this sandbox as specified.
+FINDING SEVERITY: blocking
+FINDING LOCATION: fork-angle-transport/model/layers.py:98-134, 273-290
+FINDING DETAIL: The coupled parameters and term do not exist, so there is no way for the specified behaviour-conditioned curved path to contribute gradients or to demonstrate assignment/gradient changes under the three switches. The existing Euclidean quantizer does have a differentiable ordinary quantization-loss path, but that does not establish trainability of this proposal.
+FINDING REPRODUCTION: The model forward invokes `self.rq(encoded)` at `model/model.py:26-30`; quantizer assignment and loss are entirely Euclidean at `model/layers.py:115-134`. Searching the candidate source for successor, Poincare, Exp, or the named switches finds no implementation.
+FINDING CORRECTION: Add the coupled computation to the live forward/assignment path and ensure its transformed point participates in the assignment and differentiable quantization loss. Verify finite forward/backward losses and intended parameter gradients in the required pre-run smoke; no ablation training runs are needed.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: fork-angle-transport/train_rqvae.py:232-263, 436-462 | Statically traced `main()` and the launcher; checked configured paths and export code against the candidate name and frozen-input contract. No trainer execution was attempted.
+FINDING SEVERITY: blocking
+FINDING LOCATION: fork-angle-transport/train_rqvae.py:56-67, 436-461
+FINDING DETAIL: The trainer is wired to the baseline rather than this candidate: `ARM_NAME` is `"TIGER_RQ-VAE"` at line 58. Consequently its checkpoint, SID exports and logs resolve to the baseline directories, violating candidate isolation and risking baseline overwrite. The required single-card launcher branch reading `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` is also absent; the current launcher always attempts four-card torchrun when not already inside torchrun.
+FINDING REPRODUCTION: Evaluate the path constants at lines 56-67: `RESULT_DIR` resolves to `results/stage2_RQ-VAE/TIGER_RQ-VAE`, and `LOG_DIR` likewise resolves to the baseline. Inspect `_launch_via_torchrun` at lines 436-461: it checks only `RANK` and otherwise always launches with `nproc_per_node=4`; there is no `GENREC_SINGLE_GPU` handling.
+FINDING CORRECTION: Set `ARM_NAME` to the promoted fork-angle-transport candidate name so outputs resolve only to its own `results/stage2_RQ-VAE/<candidate>/` and matching Stage 2 log directory. Restore the launcher’s `GENREC_SINGLE_GPU` branch so the frozen single-card execution path is preserved. The training input constants already point to the frozen Stage 1 embedding and Stage 0 training parquet; SID export enumerates embedding rows as item IDs at lines 415-427, but the candidate-scoped output path must be corrected before this integration is safe.

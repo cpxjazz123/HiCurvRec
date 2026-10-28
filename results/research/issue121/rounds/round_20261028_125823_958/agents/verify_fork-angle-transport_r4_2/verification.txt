@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: fork-angle-transport/train_rqvae.py:261-324, fork-angle-transport/train_rqvae.py:412-431, fork-angle-transport/model/model.py:42-56, fork-angle-transport/model/layers.py:273-350 | Traced the training-only successor sets through Jaccard overlap and branching mass, batch context, learned tangent shifts, and Poincare mapping and distance in the quantizer. The code’s smoke test at fork-angle-transport/smoke_test.py:123-162 checks that both switches alter assignments and that the displacement is the scaled neighbour mean. I inspected the path; I did not run the trainer.
+FINDING SEVERITY: minor
+FINDING LOCATION: fork-angle-transport/model/layers.py:305
+FINDING DETAIL: The curved assignment maps codebook vectors with `Exp_0` for distance calculation, but obtains their tangent representatives by calling `ball_log_map` on the raw code vectors. If a code vector is outside the Poincare ball, this is not the logarithm of the mapped code used by the distance calculation. This makes reconstruction and residual updates inconsistent with the curved assignment’s code points. It does not eliminate the connected behaviour-and-geometry assignment pathway.
+FINDING REPRODUCTION: Use a code vector of norm 2 with curvature 1. The assignment compares against `Exp_0(code)` at a point inside the ball, while line 305 passes the norm-2 vector directly to `ball_log_map`; its output is not the original tangent code and does not invert the preceding `Exp_0`.
+FINDING CORRECTION: Compute the tangent representative from the mapped code, or use the code vector itself as the tangent code and use that same convention consistently for mapping, residual updates, and commitment.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: fork-angle-transport/model/layers.py:284-350, fork-angle-transport/model/model.py:34-40, fork-angle-transport/smoke_test.py:123-162 | Inspected the differentiable forward path from encoder output and neighbour context through the shift, curved assignment, reconstruction and commitment loss. The smoke test contains assertions for assignment changes under both switches and nonzero gradients to the encoder and first fork map; I did not execute it or the trainer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: fork-angle-transport/model/layers.py:305
+FINDING DETAIL: The curved path takes the logarithm of raw codebook vectors rather than the code points mapped into the ball. When code vectors leave the ball, the clamped log calculation is not the inverse of the map used for assignment, so the selected code contribution and next residual do not correspond to the code point used to select that code. This breaks the specified curved quantization computation and can distort its gradients and updates.
+FINDING REPRODUCTION: Set a codebook vector to any norm greater than 1 (for example, norm 2) with curvature 1. `ball_exp_map(0, code)` yields an in-ball point, but `ball_log_map(0, code)` receives the out-of-ball vector and clamps its atanh argument. The resulting tangent is not the tangent whose exponential produced the assignment point.
+FINDING CORRECTION: Derive code tangents from `ball_log_map(0, ball_exp_map(0, codes, curvature), curvature)`, or establish a consistent projected-code convention for both assignment and residual/commitment operations. Add a regression check for code vectors outside the ball and finite, nonzero gradients on that path.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: fork-angle-transport/train_rqvae.py:42-78, fork-angle-transport/train_rqvae.py:327-431, fork-angle-transport/train_rqvae.py:527-605, fork-angle-transport/model/layers.py:124-129 | Inspected the trainer entry point, repository-root and candidate-specific output paths, training-parquet input, item-ID-indexed export, DDP initialization/teardown and launcher branches. The four-rank check is specified in fork-angle-transport/ddp_check.py:27-77, and the single-card branch reads `GENREC_SINGLE_GPU` at fork-angle-transport/train_rqvae.py:577-605. I did not run the trainer or distributed check.
+FINDING SEVERITY: minor
+FINDING LOCATION: fork-angle-transport/train_rqvae.py:42-78
+FINDING DETAIL: None.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable

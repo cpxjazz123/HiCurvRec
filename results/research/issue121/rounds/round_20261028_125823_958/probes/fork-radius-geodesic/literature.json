@@ -1,0 +1,290 @@
+{
+  "elapsed_seconds": 0.003,
+  "idea_id": "fork-radius-geodesic",
+  "limits": {
+    "papers": 15,
+    "queries": 3
+  },
+  "note": "a match is only a collision when the retrieved record itself concerns the mechanism; no result is never read as novelty",
+  "paper_count": 15,
+  "papers": [
+    {
+      "abstract": "",
+      "authors": [
+        "Shangyu Chen",
+        "Pengfei Fang",
+        "Mehrtash Tafazzoli Harandi",
+        "Trung Le",
+        "Jianfei Cai",
+        "Dinh Phung"
+      ],
+      "cited_by": 2,
+      "doi": "https://doi.org/10.1016/j.cviu.2025.104392",
+      "match": "same_operator_or_path",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4410556348",
+      "title": "HVQ-VAE: Variational auto-encoder with hyperbolic vector quantization",
+      "url": "https://doi.org/10.1016/j.cviu.2025.104392",
+      "year": 2025
+    },
+    {
+      "abstract": "The success of models operating on tokenized data has heightened the need for effective tokenization methods, particularly in vision and auditory tasks where inputs are naturally continuous. A common solution is to employ Vector Quantization (VQ) within VQ Variational Autoencoders (VQVAEs), transforming inputs into discrete tokens by clustering embeddings in Euclidean space. However, Euclidean embeddings not only suffer from inefficient packing and limited separation - due to their polynomial volume growth - but are also prone to codebook collapse, where only a small subset of codebook vectors are effectively utilized. To address these limitations, we introduce HyperVQ, a novel approach that formulates VQ as a hyperbolic Multinomial Logistic Regression (MLR) problem, leveraging the exponential volume growth in hyperbolic space to mitigate collapse and improve cluster separability. Additionally, HyperVQ represents codebook vectors as geometric representatives of hyperbolic decision hyperplanes, encouraging disentangled and robust latent representations. Our experiments demonstrate that HyperVQ matches traditional VQ in generative and reconstruction tasks, while surpassing it in disc",
+      "authors": [
+        "Nabarun Goswami",
+        "Yusuke Mukuta",
+        "Tatsuya Harada"
+      ],
+      "cited_by": 0,
+      "doi": "https://doi.org/10.48550/arxiv.2403.13015",
+      "match": "same_operator_or_path",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4393064046",
+      "title": "HyperVQ: MLR-based Vector Quantization in Hyperbolic Space",
+      "url": "https://doi.org/10.48550/arxiv.2403.13015",
+      "year": 2024
+    },
+    {
+      "abstract": "In the last few decades, the kernel method has been successfully used in the field of adaptive filtering to solve nonlinear problems. Mercer kernel is used to map data from input space to reproducing kernel Hilbert space (RKHS) by kernel adaptive filter (KAF). In regenerated kernel Hilbert spaces, the inner product can be easily calculated by computing the so-called kernel trick. The Kernel adaptive filtering algorithm is superior to common adaptive filtering algorithm in solving nonlinear problems and nonlinear channel equalization. For nonlinear problems, a robust kernel least inverse hyperbolic sine (KLIHS) algorithm is proposed by combining the kernel method with the inverse of hyperbolic sine function.The main disadvantage of KAF is that the radial-basis function (RBF) network grows with every new data sample, which increases the computational-complexity and requires more momories. The vector quantization (VQ) has been proposed to address this problem and has been successfully applied to the current kernel adaptive filtering algorithm. The main idea of the VQ method is to compress the input space through quantization to curb the network-size growth. In this paper, vector quant",
+      "authors": [
+        "Yuanlian Huo",
+        "Li-Hua Tuo",
+        "Yongfeng Qi",
+        "Yin Zhang"
+      ],
+      "cited_by": 4,
+      "doi": "https://doi.org/10.7498/aps.71.20221065",
+      "match": "related_but_different",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4291001699",
+      "title": "Quantized kernel least inverse hyperbolic sine adaptive filtering algorithm",
+      "url": "https://doi.org/10.7498/aps.71.20221065",
+      "year": 2022
+    },
+    {
+      "abstract": "",
+      "authors": [
+        "Yibo Huang",
+        "Xiaoli Yan",
+        "Zhiling Hu",
+        "Zhiyong Li",
+        "Qiuyu Zhang"
+      ],
+      "cited_by": 2,
+      "doi": "https://doi.org/10.1007/s00034-025-03228-0",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4412162676",
+      "title": "Quantized Exponential Hyperbolic Sine Robust Adaptive Filtering Algorithm",
+      "url": "https://doi.org/10.1007/s00034-025-03228-0",
+      "year": 2025
+    },
+    {
+      "abstract": "",
+      "authors": [
+        "Yibo Huang",
+        "Hu Zhiling",
+        "Huo Yuanlian",
+        "Qi Yongfeng",
+        "Liu Jie",
+        "Zhiyong Li"
+      ],
+      "cited_by": 1,
+      "doi": "https://doi.org/10.1007/s11760-024-03072-w",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4392893221",
+      "title": "A quantized minimum kernel risk hyperbolic secant adaptive filtering algorithm",
+      "url": "https://doi.org/10.1007/s11760-024-03072-w",
+      "year": 2024
+    },
+    {
+      "abstract": "",
+      "authors": [
+        "Lei Li",
+        "Tingting Liu",
+        "Chengyu Wang",
+        "Minghui Qiu",
+        "Cen Chen",
+        "Ming Xuan Gao",
+        "Aoying Zhou"
+      ],
+      "cited_by": 4,
+      "doi": "https://doi.org/10.1007/s00530-023-01065-2",
+      "match": "related_but_different",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4323363197",
+      "title": "Resizing codebook of vector quantization without retraining",
+      "url": "https://doi.org/10.1007/s00530-023-01065-2",
+      "year": 2023
+    },
+    {
+      "abstract": "We present a novel vector quantization (VQ) module for the two state-of-the-art long-range simultaneous localization and mapping (SLAM) algorithms. The VQ task in SLAM is generally performed using unsupervised methods. We provide an alternative approach trough embedding a semisupervised hyperbolic graph convolutional neural network (HGCN) in the VQ step of the SLAM processes. The SLAM platforms we have utilized for this purpose are fast appearance-based mapping (FABMAP) and oriented fast and rotated short (ORB), both of which rely on extracting the features of the captured images in their loop closure detection (LCD) module. For the first time, we have considered the space formed by these SURF features, robust image descriptors, as a graph, enabling us to apply an HGCN in the VQ section which results in an improved LCD performance. The HGCN vector quantizes the SURF feature space, leading to a bag-of-word (BoW) representation construction of the images. This representation is subsequently used to determine LCD accuracy and recall. Our approaches in this study are referred to as HGCN-FABMAP and HGCN-ORB. The main advantage of using HGCN in the LCD section is that it scales linearly ",
+      "authors": [
+        "Amir Zarringhalam",
+        "Saeid Shiry Ghidari",
+        "Ali Mohades",
+        "Seyed‐Ali Sadegh‐Zadeh"
+      ],
+      "cited_by": 3,
+      "doi": "https://doi.org/10.1155/2024/9992159",
+      "match": "same_operator_or_path",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4392770396",
+      "title": "Semisupervised Vector Quantization in Visual SLAM Using HGCN",
+      "url": "https://doi.org/10.1155/2024/9992159",
+      "year": 2024
+    },
+    {
+      "abstract": "",
+      "authors": [
+        "Pierre Bieliavsky A",
+        "Stéphane Detournay",
+        "Ph. Spindel"
+      ],
+      "cited_by": 30,
+      "doi": "https://doi.org/10.1007/s00220-008-0697-9",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W2053621654",
+      "title": "The Deformation Quantizations of the Hyperbolic Plane",
+      "url": "https://doi.org/10.1007/s00220-008-0697-9",
+      "year": 2009
+    },
+    {
+      "abstract": "Residual Vector Quantization turns continuous representations into discrete, multi-level token sequences. Yet most methods operate in Euclidean space, despite the coarse-to-fine structure of the resulting codes and the latent hierarchies present in many data domains. Hyperbolic geometry offers a natural alternative for hierarchical representations, but naive hyperbolic extensions introduce geometric inconsistencies: non-associative hyperbolic addition prevents consistent residual aggregation, while standard straight-through gradient estimation ignores the geometry of the latent space. We propose a geometry-aware hyperbolic residual quantization that addresses these issues in both the forward and backward passes. In the forward pass, Hyperbolic Residual Aggregation restores the telescoping behavior of residual quantization on the Poincare ball. In the backward pass, a discounted Hyperbolic Straight-Through Estimator routes the reconstruction gradient through the quantizer as a single geometric block, avoiding unstable recursive gradient transport across residual stages. Evaluations on hierarchical prediction, recommendation, image tokenization, and neural audio coding tasks show tha",
+      "authors": [
+        "Alessio Colombo",
+        "Melika Ayoughi"
+      ],
+      "cited_by": 0,
+      "doi": "https://doi.org/10.48550/arxiv.2609.26342",
+      "match": "related_but_different",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W7214127201",
+      "title": "Geometry-Aware Hyperbolic Residual-Quantized Variational Autoencoders",
+      "url": "https://doi.org/10.48550/arxiv.2609.26342",
+      "year": 2026
+    },
+    {
+      "abstract": "We develop a cannonical quantization for massive vector fields on a globally hyperbolic Lorentzian manifold.",
+      "authors": [
+        "Edward P. Furlani"
+      ],
+      "cited_by": 22,
+      "doi": "https://doi.org/10.1063/1.532718",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W2016198614",
+      "title": "Quantization of massive vector fields in curved space–time",
+      "url": "https://doi.org/10.1063/1.532718",
+      "year": 1999
+    },
+    {
+      "abstract": "Most high-performance block-coding systems for image compression, such as JPEG, have been designed for software or dedicated digital hardware implementations where the data are already assumed to be available in digital format. In modern CMOS photosensors, smart-pixel technologies have allowed the realization of basic signal processing tasks at the pixel level, in analog format before analog-to-digital (A/D) conversion. The elimination of A/D converters and implementation of block-coding directly over analog blocks of pixels in such sensors can be attractive both in terms of area savings and power consumption. The design of block encoders, under the strong hardware constraints that derive from the A/D converter removal, has been investigated in this paper. We present a comparison of three systems in terms of rate, distortion and complexity, and present a numerical simulation analysis of their sensitivity to implementation errors. The conclusion of the analysis is that linear-transform coding vector quantizers outperform full-search vector quantizers and warping hyperbolic-tangent neural networks, in terms of performance, complexity and robustness, for a CMOS imaging sensor implemen",
+      "authors": [
+        "José Gabriel R. C. Gomes",
+        "Sanjit K. Mitra"
+      ],
+      "cited_by": 0,
+      "doi": "https://doi.org/10.1109/iscas.2004.1329913",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W1960090645",
+      "title": "Sensitivity analysis of low-complexity vector quantizers for focal-plane image compression",
+      "url": "https://doi.org/10.1109/iscas.2004.1329913",
+      "year": 2004
+    },
+    {
+      "abstract": "Vector quantization is a technique in machine learning that discretizes continuous representations into a set of discrete vectors. It is widely employed in tokenizing data representations for large language models, diffusion models, and other generative models. Despite its prevalence, the characteristics and behaviors of vector quantization in generative models remain largely underexplored. In this study, we investigate representation collapse in vector quantization - a critical degradation where codebook tokens or latent embeddings lose their discriminative power by converging to a limited subset of values. This collapse fundamentally compromises the model's ability to capture diverse data patterns. By leveraging both synthetic and real datasets, we identify the severity of each type of collapses and triggering conditions. Our analysis reveals that restricted initialization and limited encoder capacity result in tokens collapse and embeddings collapse. Building on these findings, we propose potential solutions aimed at mitigating each collapse. To the best of our knowledge, this is the first comprehensive study examining representation collapsing problems in vector quantization.",
+      "authors": [
+        "Wenhao Zhao",
+        "Zou, Qiran",
+        "Rushi Shah",
+        "Dianbo Liu"
+      ],
+      "cited_by": 1,
+      "doi": "https://doi.org/10.48550/arxiv.2411.16550",
+      "match": "related_but_different",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4404987867",
+      "title": "Representation Collapsing Problems in Vector Quantization",
+      "url": "https://doi.org/10.48550/arxiv.2411.16550",
+      "year": 2024
+    },
+    {
+      "abstract": "Machine learning algorithms have been shown to be highly effective in solving optimization problems in a wide range of applications. Such algorithms typically use gradient descent with backpropagation and the chain rule. Hence, the backpropagation fails if intermediate gradients are zero for some functions in the computational graph, because it causes the gradients to collapse when multiplying with zero. Vector quantization is one of those challenging functions for machine learning algorithms, since it is a piece-wise constant function and its gradient is zero almost everywhere. A typical solution is to apply the straight through estimator which simply copies the gradients over the vector quantization function in the backpropagation. Other solutions are based on smooth or stochastic approximation. This study proposes a vector quantization technique called NSVQ, which approximates the vector quantization behavior by substituting a multiplicative noise so that it can be used for machine learning problems. Specifically, the vector quantization error is replaced by product of the original error and a normalized noise vector, the samples of which are drawn from a zero-mean, unit-varianc",
+      "authors": [
+        "Mohammad Hassan Vali",
+        "Tom Bäckström"
+      ],
+      "cited_by": 16,
+      "doi": "https://doi.org/10.1109/access.2022.3147670",
+      "match": "related_but_different",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4210560636",
+      "title": "NSVQ: Noise Substitution in Vector Quantization for Machine Learning",
+      "url": "https://doi.org/10.1109/access.2022.3147670",
+      "year": 2022
+    },
+    {
+      "abstract": "We establish stable quantum ergodicity for spin Hamiltonians, also known as Pauli-Schrödinger operators. Our approach combines new analytic techniques of mixed quantization, inspired by local index theory, with stable ergodicity results for partially hyperbolic systems.",
+      "authors": [
+        "Snir Ben Ovadia",
+        "Qiaochu Ma",
+        "Federico Rodríguez-Hertz"
+      ],
+      "cited_by": 0,
+      "doi": "https://doi.org/10.48550/arxiv.2409.13660",
+      "match": "not_established",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W4403780012",
+      "title": "Mixed quantization and partial hyperbolicity",
+      "url": "https://doi.org/10.48550/arxiv.2409.13660",
+      "year": 2024
+    },
+    {
+      "abstract": "",
+      "authors": [
+        "Yan Liu",
+        "Yingpeng Du",
+        "Thanh-Son Nguyen",
+        "Erik Cambria"
+      ],
+      "cited_by": 0,
+      "doi": "https://doi.org/10.1007/978-3-032-38410-2_40",
+      "match": "same_operator_or_path",
+      "source": "openalex",
+      "source_id": "https://openalex.org/W7213244214",
+      "title": "HQA-Rec: Hyperbolic Quantization Alignment for Citation Recommendation",
+      "url": "https://doi.org/10.1007/978-3-032-38410-2_40",
+      "year": 2026
+    }
+  ],
+  "queries": [
+    {
+      "query": "hyperbolic vector quantization",
+      "reason": null,
+      "results": 15,
+      "source": "openalex",
+      "status": "OK"
+    },
+    {
+      "query": "user behavior conditioned codebook learning",
+      "reason": null,
+      "results": 15,
+      "source": "openalex",
+      "status": "OK"
+    },
+    {
+      "query": "adaptive curvature recommender semantic ID",
+      "reason": null,
+      "results": 15,
+      "source": "openalex",
+      "status": "OK"
+    }
+  ],
+  "retrieved_at": 1793153802.4437916,
+  "schema": 1,
+  "sha256": "f8dc947d3f166fadb70130790db5d39c7f9092115d0f3528bc3d38bde0abdac5",
+  "status": "OK"
+}

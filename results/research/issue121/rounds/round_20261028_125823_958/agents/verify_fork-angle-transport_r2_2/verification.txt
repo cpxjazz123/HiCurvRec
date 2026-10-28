@@ -1,0 +1,28 @@
+I’ll inspect the candidate tree and its trainer/launcher paths read-only, then return the requested three-check report in the specified format. I can’t write the requested file with the available constraints, so I’ll provide the report in my response.
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: fork-angle-transport/train_rqvae.py:261-327 | Traced training-only successor-set construction into `build_fork_context` at lines 415-433, then through `RQVAE._fork_context` at model/model.py:40-54 and `RQLayer._fork_forward` at model/layers.py:273-316. The forward path adds the behaviour-derived shift before the Poincare mapping and geodesic-distance assignment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: fork-angle-transport/model/hyperbolic.py:60-72
+FINDING DETAIL: The implemented projection uses `PROJECTION_EPS = 0.05`, giving a maximum radius of 0.95 for the specified curvature c=1. The proposal specifies a radius of `(1 - 1e-5) / sqrt(c)`. The code therefore implements a materially different geometric safeguard without deriving it from a measured scale or documenting it as a fixed default. This is a mechanism-specification mismatch, not a failure of the behaviour–geometry coupling itself.
+FINDING REPRODUCTION: Read `ball_project`: its default epsilon is 0.05, so any projected point has norm at most 0.95 when c=1, rather than the specified 0.99999.
+FINDING CORRECTION: Implement the proposal’s specified projection bound, or provide a scale-relative derived bound and update the mechanism specification consistently. Do not select the bound by tuning.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: fork-angle-transport/model/layers.py:273-316 | Inspected the real forward computation and the candidate’s executable checks at smoke_test.py:123-162. The tangent shift feeds the Poincare assignment, and the straight-through path plus quantization loss provides gradients through the shifted tangent; the smoke checks compare both-on assignments with behaviour-off and geometry-off, and check gradients to the encoder and displacement map. Runtime execution was not performed, as instructed.
+FINDING SEVERITY: minor
+FINDING LOCATION: fork-angle-transport/smoke_test.py:151-161
+FINDING DETAIL: None.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: fork-angle-transport/train_rqvae.py:42-78, 330-433, 435-443, 529-608 | Inspected the trainer’s root and path resolution, frozen embedding/parquet inputs, training loop, SID export, and launcher. The output is the candidate’s promoted directory `results/stage2_RQ-VAE/TIGER_fork-angle-transport/`; SIDs are emitted by enumerating embedding rows and keyed by that item ID in JSON. The four-card launcher and `GENREC_SINGLE_GPU` branch are present. Runtime execution was not performed, as instructed.
+FINDING SEVERITY: minor
+FINDING LOCATION: fork-angle-transport/train_rqvae.py:583-585
+FINDING DETAIL: None.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

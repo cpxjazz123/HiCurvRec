@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:261-327 -> model/model.py:42-56 -> model/layers.py:273-350 | Inspected the training-only successor-neighbourhood construction, context preparation, and quantizer forward path; smoke_test.py:123-162 specifies switch and gradient checks, but I could not execute it in this environment.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:285-305
+FINDING DETAIL: The behaviour signal is coupled to Poincare assignment in one connected path, but the implemented successor-overlap neighbours are not the specified top-k over all items with nonzero Jaccard overlap. Candidate enumeration truncates each item's successor destinations at FANOUT_LIMIT=1024 before collecting shared-successor candidates. For high-out-degree items, this can omit valid higher-Jaccard neighbours and change the displacement and assignments from the proposed mechanism.
+FINDING REPRODUCTION: Construct training successor sets where an item has more than 1024 distinct successors and a candidate sharing only a successor beyond the first 1024 has higher Jaccard overlap than the candidates found within the cap. build_successor_neighbourhood will not consider that candidate, even if it belongs in the global top 8.
+FINDING CORRECTION: Enumerate all shared-successor candidates before selecting the top 8 by Jaccard, or specify and justify a bounded candidate rule that preserves the intended top-k result; do not silently truncate the successor set used for candidate discovery.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:273-350 -> model/model.py:34-40, 42-56 | Inspected the forward computation and autograd dependencies. smoke_test.py:123-162 contains a toy forward/backward check and compares assignments with behaviour and geometry switched off; execution was unavailable, so this is a code-path judgment rather than a runtime result.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: None
+FINDING DETAIL: No code-level dead coupled term or evident float32 overflow/NaN hazard found. The shifted tangent participates in the curved assignment and commitment loss; the displacement maps and encoder receive a differentiable path. The geometry-off branch uses the same shift with Euclidean distance, and the behaviour-off context zeros both mean and scale.
+FINDING REPRODUCTION: Static inspection of model/layers.py:288-335 shows the shift added before either curved or Euclidean assignment and used in the commitment loss; model/model.py:53-55 constructs the learned shifts from the behaviour context.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 103-105, 261-327, 330-434, 452-477, 530-609 | Inspected the trainer entry point, frozen input paths, result and export paths, neighbourhood construction, fixed epoch loop, and launcher including the GENREC_SINGLE_GPU branch. Runtime execution was unavailable.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: None
+FINDING DETAIL: The trainer reads the Stage 1 embedding file and Stage 0 training parquet, sets 3000 epochs with no early stopping, writes candidate outputs under results/stage2_RQ-VAE/TIGER_fork-angle-transport, and exports rows by embedding item ID with a uniqueness extension. The four-card torchrun path and single-card environment branch are present. No integration defect established by inspection.
+FINDING REPRODUCTION: Inspect train_rqvae.py:70-78 for candidate-specific outputs, :72-73 for frozen inputs, :452-477 for the fixed epoch loop, :565-571 for SID export, and :580-609 for launcher branches.
+FINDING CORRECTION: None.

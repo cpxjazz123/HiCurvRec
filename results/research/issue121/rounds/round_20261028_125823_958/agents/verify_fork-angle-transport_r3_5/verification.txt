@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:404-434 -> model/model.py:42-56 -> model/layers.py:273-350 | Traced the trainer’s training-parquet successor context through the learned per-layer shift to the Poincare assignment and tangent reconstruction; inspected smoke_test.py:123-162 for both switch comparisons and the gradient-path checks. Runtime execution was unavailable in this review.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The training-only successor overlap and branching mass feed learned shifts that participate in the same curved assignment and quantization-loss pathway. Behaviour-off zeros the shift; geometry-off uses the same shifted vector with Euclidean assignment.
+FINDING REPRODUCTION: Static trace: train_rqvae.py:261-327 constructs successor overlaps from train_frame; train_rqvae.py:415-434 builds the batch context; model/model.py:42-56 maps it to per-level shifts; model/layers.py:284-335 uses the shifts in curved assignment and loss. The smoke checks at smoke_test.py:134-161 specify assignment-switch and gradient assertions.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:284-350 | Inspected the forward path from shifted residual through Poincare mapping, geodesic distance, selected-code commitment loss, and tangent residual update; inspected smoke_test.py:151-161 and ddp_check.py:54-62 for finite-path gradient assertions. Runtime execution was unavailable in this review.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 numerical hazard found. The shift enters both assignment distances and the differentiable commitment loss; selected code tangents and the transformed residual preserve gradients to the encoder, codebook, and fork maps. The smoke specifies that both switches change assignments and checks gradients to the encoder and fork map.
+FINDING REPRODUCTION: Inspect model/layers.py:289-335: the shift is added before the curved mapping, and the same shifted tangent is used in the loss; inspect smoke_test.py:134-161 for the both-on, behaviour-off, geometry-off, and gradient checks. These checks were not executed in this review.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:42-78, 103-105, 330-345, 436-444, 530-577, 580-609 | Traced root and output-path resolution, frozen embedding/train inputs, the single-card and torchrun launcher branches, training loop, and final SID export. Runtime execution was unavailable in this review.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. The trainer reads the Stage 1 embedding and Stage 0 training parquet, writes to its own promoted candidate result directory, exports rows keyed by enumerated item ID, extends collisions to unique SIDs, and honors GENREC_SINGLE_GPU while retaining the four-card torchrun path.
+FINDING REPRODUCTION: Inspect train_rqvae.py:63-78 for repository-relative paths and the candidate-specific result directory; :343-345 for the input files; :565-573 for indexed SID export; and :580-609 for launcher behavior, including GENREC_SINGLE_GPU at :584-586. No runtime trainer execution was performed.
+FINDING CORRECTION: none

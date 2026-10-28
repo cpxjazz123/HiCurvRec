@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:261-324 -> train_rqvae.py:412-431 -> model/model.py:42-56 -> model/layers.py:273-350 | Traced the training-only successor-overlap construction into the batch context, learned displacement, and per-layer quantizer. The quantizer adds that displacement before the Poincare exponential map and uses Poincare distance for assignment. The geometry-off branch uses the same shifted point with Euclidean distance; the behavior-off branch zeroes the displacement.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Source inspection of the cited path shows both signals used together in the same assignment computation; no trainer execution was performed.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:273-350 -> model/layers.py:363-374; smoke_test.py:123-162 | Inspected the forward and loss path: the shifted residual participates in the curved assignment, the selected code is subtracted for the next residual, and commitment loss is computed from the shifted tangent. The smoke test specifies behavior-on, behavior-off, geometry-off assignment comparisons and verifies gradients to the encoder and learned fork map. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident numerical hazard found by code inspection. The Poincare distance clamps its acosh argument above one, maps protect their denominators, and the smoke test asserts assignment changes under both switches.
+FINDING REPRODUCTION: Inspect model/layers.py:291-335 for the differentiable shifted-tangent and curved-distance path, and smoke_test.py:134-161 for the specified switch and gradient checks.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:327-357, train_rqvae.py:527-570, train_rqvae.py:577-606 | Inspected the trainer entry point, its training-parquet and embedding paths, its promoted-candidate result paths, item-ID-indexed SID export, and launcher branches. The code has a four-rank torchrun path and returns to in-process execution when GENREC_SINGLE_GPU=1. The runtime trainer and distributed launcher were not executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. Stage 2 reads results/stage0_build_parquet/train.parquet; SID outputs and checkpoint target this candidate’s promoted result directory; export enumerates embedding rows as item IDs and writes JSON keyed by those IDs. The log path is also scoped to this candidate’s arm.
+FINDING REPRODUCTION: Inspect train_rqvae.py:69-78 for candidate-scoped paths, :341-357 for data loading and training IDs, :562-570 for SID export, and :577-605 for launcher handling.
+FINDING CORRECTION: None.

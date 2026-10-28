@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:273-290 | Inspected the RQLayer forward path and its VQLayer distance/assignment path at lines 98-134. The path computes ordinary Euclidean distances and residual quantization; it does not compute successor overlap or a curved operation.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:98-134
+FINDING DETAIL: The proposed coupled mechanism is absent. VQLayer assigns codes using Euclidean squared distance to untransformed latents; no training-only successor signal, Poincare map/distance, or behavior/geometry switches appear in the quantizer. The model therefore does not implement fork-angle-transport.
+FINDING REPRODUCTION: Follow RQLayer.forward at lines 283-289 into VQLayer.forward at line 121 and _distances at lines 98-104. The assignment is made from Euclidean distances, and there is no successor or hyperbolic computation in that path.
+FINDING CORRECTION: Implement the training-only successor-overlap input and ambiguity-weighted tangent shift in the quantizer’s assignment path, use the specified Poincare operation there, and include the behavior-off and geometry-off switches.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:316-327 | Inspected the real trainer’s forward, loss, backward, and optimizer-step path alongside the model and quantizer forwards. The trainer has a differentiable baseline reconstruction/quantization path, but no coupled path or mechanism switches to inspect.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:98-134
+FINDING DETAIL: The requested trainability behavior cannot occur because the coupled term and its switches are missing. Consequently, this code cannot demonstrate that both-on changes SID assignments or gradients, or that switching behavior off or replacing the curve with Euclidean distance changes them back. This is a defect in the implementation, not a request for an ablation run.
+FINDING REPRODUCTION: Inspect VQLayer._distances and forward at lines 98-134: the only assignment input is the latent and Euclidean codebook distances. There are no behavior_on or geometry_on branches or parameters for the proposed transform.
+FINDING CORRECTION: Add the coupled transformation and both switches to the quantizer’s forward path, keeping the transformed point on the differentiable reconstruction/commitment path; verify the switches alter assignments or gradients in the prescribed smoke check.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:40-67, 232-263, 386-429, 436-462 | Inspected path resolution, frozen input paths, training/export code, and launcher entry point. No trainer runtime was attempted.
+FINDING SEVERITY: blocking
+FINDING LOCATION: /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:58-67
+FINDING DETAIL: ARM_NAME is still "TIGER_RQ-VAE", so RESULT_DIR, checkpoint and SID outputs resolve to the baseline’s directory rather than this candidate’s promoted result directory. Running this candidate would overwrite baseline outputs. In addition, the launcher has no SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" contract or single-card branch, so the required single-card launch mode is unsupported. The frozen train.parquet and embedding paths are used, and the export enumerates embedding rows into item IDs, but those do not remedy the output-path and launcher defects.
+FINDING REPRODUCTION: Evaluate RESULT_DIR at lines 56-67: its final component is TIGER_RQ-VAE, not the promoted tree name fork-angle-transport. Inspect _launch_via_torchrun and the entry point at lines 436-462: it unconditionally launches four processes when not already under torchrun and does not read GENREC_SINGLE_GPU.
+FINDING CORRECTION: Set ARM_NAME to the promoted tree name so outputs land in that candidate’s results/stage2_RQ-VAE directory. Add and honor SINGLE_GPU_ENV = "GENREC_SINGLE_GPU" in the launcher, bypassing four-card torchrun when the single-card mode is requested.

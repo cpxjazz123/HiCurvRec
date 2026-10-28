@@ -104,6 +104,63 @@ def _run_agents_concurrently(tasks: list, worker, *, max_workers: int = 0) -> li
         return results
 
 
+def round_history(repo: Path, limit: int = 3) -> str:
+    """What the earlier rounds measured, for the ideation agents to read.
+
+    The proposals of a round are not revised inside the round. What the earlier
+    rounds measured, what their reviews objected to and what their runs scored is
+    therefore the material the next round starts from.
+    """
+    rounds_root = Path(repo) / "results" / "research"
+    if not rounds_root.is_dir():
+        return ""
+    blocks: list = []
+    for issue in sorted(rounds_root.iterdir()):
+        if not issue.is_dir():
+            continue
+        for directory in sorted((issue / "rounds").glob("round_*")):
+            state_path = directory / "state.json"
+            if not state_path.is_file():
+                continue
+            try:
+                state = json.loads(state_path.read_text())
+            except (OSError, ValueError):
+                continue
+            lines = [directory.name]
+            selected = {entry.get("idea_id")
+                        for entry in (state.get("selection") or {}).get("selected", [])}
+            for idea in state.get("ideas") or []:
+                if idea.get("idea_id") in selected:
+                    lines.append("  selected: " + str(idea.get("idea_id")) + " | " +
+                                 str(idea.get("title"))[:90])
+            for identifier, outcome in (state.get("probe_results") or {}).items():
+                statuses = []
+                probe = (outcome.get("probe") or {}).get("status")
+                math_report = (outcome.get("math") or {}).get("status")
+                literature = (outcome.get("literature") or {}).get("status")
+                if probe and probe != "OK":
+                    statuses.append("probe=" + str(probe))
+                if math_report and math_report != "OK":
+                    statuses.append("math=" + str(math_report))
+                if literature and literature != "OK":
+                    statuses.append("literature=" + str(literature))
+                if statuses:
+                    lines.append("  probe of " + identifier + ": " + ", ".join(statuses))
+            for job in (state.get("stage2_jobs") or []):
+                lines.append("  run: " + str(job.get("idea_id")) + " -> " +
+                             str(job.get("status")) + " " + str(job.get("error"))[:80])
+            for job in (state.get("stage3_jobs") or []):
+                result = job.get("result") or {}
+                if result:
+                    lines.append("  stage3 of " + str(job.get("idea_id")) + ": recall@10=" +
+                                 str(result.get("test_recall@10")))
+            if len(lines) > 1:
+                blocks.append("\n".join(lines))
+    if not blocks:
+        return ""
+    return "\n".join(blocks[-limit:])
+
+
 def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
     """Five independent ideation agents; each returns one to three ideas.
 
@@ -124,6 +181,12 @@ def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
                      "\nYour answer must be a different set of ideas from the other " +
                      str(pipeline_module.IDEA_AGENTS - 1) +
                      " agents, which you cannot see.")
+        history = round_history(Path(root))
+        if history:
+            prompt += ("\n\nWHAT THE EARLIER ROUNDS MEASURED, AND WHAT THEY FAILED ON:\n"
+                       + history +
+                       "\nUse it to aim at something the earlier rounds did not measure. "
+                       "Do not restate a proposal that was already made and rejected.")
         if extra:
             prompt += ("\n\nThe first set of ideas you gave has been collected. Give one "
                        "MORE idea, and it must be different from the one you gave before "
@@ -257,11 +320,18 @@ def _write_probe_artifacts(directory: Path, identifier: str, outcome: dict,
 
 
 def _probe_gaps(outcome: dict) -> list:
-    """What the probe could not establish, as the proposal author must answer it."""
+    """What the probe CONTRADICTED, as the proposal author must answer it.
+
+    A status that means "the probe did not measure this" is not a gap in the
+    proposal: the probe module states that such a status is neither a
+    measurement nor evidence against the idea. Only a measured FAIL and an
+    inconclusive measurement are answered with a revision, because those are the
+    cases where the author can change something.
+    """
     gaps = []
     probe = outcome.get("probe") or {}
     for name, value in (probe.get("metrics") or {}).items():
-        if isinstance(value, dict) and value.get("status") not in ("OK",):
+        if isinstance(value, dict) and value.get("status") in ("FAIL", "INCONCLUSIVE"):
             gaps.append(name + ": " + str(value.get("reason") or value.get("status")))
     math_report = outcome.get("math") or {}
     for check in math_report.get("checks", []):
@@ -271,20 +341,6 @@ def _probe_gaps(outcome: dict) -> list:
     if literature.get("status") != "OK":
         gaps.append("literature: " + str(literature.get("status")))
     return gaps
-
-
-def run_evidence_revision(root: Path, idea: dict, gaps: list, revision: int) -> dict:
-    """One bounded, evidence-driven revision of a proposal.
-
-    The author answers the specific gaps the probe found; the proposal hash
-    changes and only the affected probes are run again.
-    """
-    prompt = agent_contracts.EVIDENCE_REVISION_PROMPT.format(
-        gaps="\n".join("- " + gap for gap in gaps),
-        proposal=plaintext.render_idea(idea))
-    return _run_agent(root, "evidence_revision_" + idea["idea_id"] + "_r" + str(revision),
-                      prompt, "revision.txt", plaintext.parse_evidence_revision,
-                      role="ideate")
 
 
 def phase_probe(root: Path, round_id: str, *, log=print) -> dict:
@@ -313,44 +369,20 @@ def phase_probe(root: Path, round_id: str, *, log=print) -> dict:
     state["evidence_bundles"] = bundles
     for identifier, bundle in bundles.items():
         _write_probe_artifacts(directory, identifier, outcomes.get(identifier, {}), bundle)
-    # One bounded evidence-driven revision per proposal, then the affected probes
-    # run again. A revision can lower a score as well: it is evidence, not a
-    # promotion.
-    revisions = []
-    for idea in list(ideas):
-        identifier = idea["idea_id"]
-        gaps = _probe_gaps(outcomes.get(identifier, {}))
-        if not gaps:
-            continue
-        try:
-            answer = run_evidence_revision(directory, idea, gaps, 0)
-        except Exception as exc:                            # noqa: BLE001
-            pipeline_module.record_event(state, "evidence_revision_failed",
-                                         idea_id=identifier, error=str(exc)[:200])
-            continue
-        updated = dict(idea)
-        updated["proposal_revision"] = 1
-        updated["evidence_revision"] = answer
-        state["ideas"] = [updated if entry["idea_id"] == identifier else entry
-                          for entry in state["ideas"]]
-        revisions.append({"idea_id": identifier, "gaps": gaps,
-                          "revision": answer.get("revision", "")[:200]})
-        # Only the affected probes run again, within the same budget.
-        refreshed = run_probes(directory, [updated], repo=Path(root))
-        outcomes[identifier] = refreshed[identifier]
-        base = evidence_module.build_bundle(updated, root=Path(root))
-        bundles[identifier] = evidence_module.merge_probe_evidence(
-            base, probe=refreshed[identifier].get("probe"),
-            literature=refreshed[identifier].get("literature"),
-            math_report=refreshed[identifier].get("math"))
-        _write_probe_artifacts(directory, identifier, refreshed[identifier],
-                               bundles[identifier])
+    # The probe does NOT revise the proposals. It measures them, and the
+    # evidence is handed to the scorers unchanged. A revision here would let a
+    # proposal be rewritten until it satisfies the measurement, and the
+    # rewritten proposal would be a different research mechanism with its own
+    # novelty, its own evidence and its own hypothesis. A proposal whose claim
+    # is contradicted by a measurement keeps the counterexample and goes to the
+    # scorers; the ideation agents of the NEXT round may propose a new version,
+    # which is scored as a new proposal.
     state["evidence_bundles"] = bundles
     state["probe_results"] = {identifier: {
         "probe": outcome.get("probe"), "literature": outcome.get("literature"),
         "math": outcome.get("math")}
         for identifier, outcome in outcomes.items()}
-    state["evidence_revisions"] = revisions
+    state["evidence_revisions"] = []
     state["step"] = "scoring"
     pipeline_module.record_event(state, "probe_complete", ideas=len(ideas))
     pipeline_module.save_state(directory, state)

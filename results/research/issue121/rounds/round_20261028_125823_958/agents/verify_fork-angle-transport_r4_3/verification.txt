@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:401-431 -> model/model.py:51-55 -> model/layers.py:273-325 | Traced the training-only successor-neighbourhood construction and batch context into the learned tangent shift, then into the Poincare mapping and geodesic assignment. The both-on path uses the behaviour shift in the point being assigned; this is a connected behaviour–geometry pathway.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:291-335 | Inspected the forward computation from shifted tangent through assignment, selected-code conversion, residual reconstruction and commitment loss. The code includes a gradient smoke path in smoke_test.py:151-161; runtime execution is unavailable in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:305
+FINDING DETAIL: Assignment compares the mapped codeword `mapped_codes = Exp_0(codes)` at line 296, but then converts the selected code using `ball_log_map(0, codes)` at line 305—as if the raw, unconstrained tangent-space code were already a point in the Poincare ball. The resulting `code_tangent` is not the tangent representation of the codeword used for assignment. Consequently, reconstruction and commitment use a different effective code than the one selected by the curved distance, breaking the intended coupled quantizer computation. It also creates a numerical hazard: raw code norms can exceed the ball radius, while `ball_add` at lines 91-95 of `model/hyperbolic.py` clamps only the atanh argument and still divides by the raw norm.
+FINDING REPRODUCTION: For any code vector whose norm is greater than 1, compare the current `ball_log_map(zeros_like(codes), codes, curvature)` with `ball_log_map(zeros_like(codes), mapped_codes, curvature)`, where `mapped_codes = ball_exp_map(zeros_like(codes), codes, curvature)`. They represent different tangent vectors; the first treats an out-of-ball raw code as a ball point. The toy smoke initializes small codes and does not check this assignment/reconstruction consistency.
+FINDING CORRECTION: Compute `code_tangent` by taking the log map of `mapped_codes` (or, equivalently for this origin-based mapping, use the original tangent-space `codes`). Ensure assignment, selected-code reconstruction and commitment all use that same code representation.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:42-78, 327-342, 433-441, 562-568, 577-606 | Inspected the trainer entry point, frozen embedding and training-parquet paths, candidate-specific promoted result directory, item-indexed SID export, four-rank torchrun branch, and the `GENREC_SINGLE_GPU` single-card branch. Runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

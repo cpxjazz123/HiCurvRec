@@ -1,0 +1,28 @@
+VERDICT: PASS
+
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:263-326 -> train_rqvae.py:414-433 -> model/model.py:42-56 -> model/layers.py:273-369 | Traced the training-only successor-set overlap and branching mass into the batch context, through the learned displacement maps, and into the same residual assignment path that applies Poincare maps and distance. The smoke test defines checks for the overlap and for both switches at smoke_test.py:53-98 and smoke_test.py:123-162; I inspected these checks but did not run them.
+FINDING SEVERITY: none
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:284-354 -> model/model.py:34-40 -> train_rqvae.py:461-470 | Inspected the forward and backward path: the shift affects the assignment distances and residual reconstruction, and the curved distance contributes to the quantization loss; the switch comparisons and gradient assertions are specified in smoke_test.py:123-162. The sandbox limitation prevents runtime execution. The code path is differentiable to the encoder, codebook, and fork maps; I found no dead coupled term or clear float32 numerical hazard in the exercised path.
+FINDING SEVERITY: none
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-80, train_rqvae.py:329-433, train_rqvae.py:529-575, train_rqvae.py:579-608 | Inspected the real trainer entry point, its frozen Stage 0 parquet and Stage 1 embedding paths, output location under the candidate’s promoted Stage 2 result directory, item-ID-ordered SID export, and both launcher branches. The four-rank check is defined in ddp_check.py:27-77; the single-card branch reads GENREC_SINGLE_GPU at train_rqvae.py:105-107 and train_rqvae.py:579-585. Runtime execution was not available.
+FINDING SEVERITY: none
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none

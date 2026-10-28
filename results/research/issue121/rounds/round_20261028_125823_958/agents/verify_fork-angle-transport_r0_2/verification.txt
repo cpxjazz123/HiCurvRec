@@ -1,0 +1,28 @@
+I’ll inspect the candidate tree and the frozen trainer/data/export/launcher paths, then report only code-grounded findings. I won’t modify or create files; I’ll return the requested plain-text report here.
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:273-290; results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/utils.py:42-59 | Inspected the quantizer forward path and searched the candidate Python files for successor/overlap and geometry-switch usage. The quantizer uses ordinary Euclidean distances; the Poincaré helpers are not called by this quantizer.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:98-113, 273-290
+FINDING DETAIL: The candidate does not implement the proposed connected behaviour-and-geometry pathway. `VQLayer` assigns codes with Euclidean `_distances` and `argmin`/Sinkhorn, while `RQLayer` performs ordinary residual quantization. The candidate contains Poincaré helpers in `model/utils.py`, but this forward path does not use them; no successor-overlap signal, tangent shift, or behaviour/geometry switches are implemented.
+FINDING REPRODUCTION: Follow `RQLayer.forward` into `VQLayer.forward`: code assignment calls `_distances(latent)` at lines 115-121 and `_indices` at lines 106-113. Search the candidate `.py` files for a successor-overlap computation or a call to `poincare_distance`; the helper definition in `model/utils.py:55-59` is not called from this path.
+FINDING CORRECTION: Implement the training-only successor-overlap input and the specified branch-scaled tangent shift in the quantizer’s assignment path, use the curved map and Poincaré distance there, and add behavior-off and geometry-off switches that select the required comparison paths.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/model.py:26-30; results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:115-134, 283-290 | Traced the trainer’s model forward through quantization and loss construction. No runtime execution was performed; the candidate does not contain the proposed coupled term or its switches to assess.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:115-134, 273-290
+FINDING DETAIL: The real forward/backward path has no coupled mechanism to train or compare. Gradients can flow through the baseline Euclidean straight-through quantizer, but the proposed behaviour-conditioned Poincaré assignment, its gradients, and the behavior-off/geometry-off reversibility are absent. This prevents verifying the stated trainability requirement from code.
+FINDING REPRODUCTION: Trace `RQVAE.forward` (`model/model.py:26-30`) into `RQLayer.forward`; it calls only `vq_layer(residual, infer_use_sk)` and updates the residual with the selected Euclidean quantized value. There is no behaviour or geometry switch in that call chain.
+FINDING CORRECTION: Add the coupled assignment computation and both required switches to the actual forward path, ensuring the transformed point participates in assignment and the differentiable quantization loss.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:42-67, 232-262, 421-427, 436-462 | Inspected the trainer entry point, path constants, data loading/export, and launcher. Compared the single-card contract with the required `GENREC_SINGLE_GPU` marker; no trainer execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:49-59, 436-462
+FINDING DETAIL: The trainer has multiple integration defects. First, `_repository_root()` accepts any ancestor containing `stage2_RQ-VAE`; for this tree, the `results` ancestor meets that condition before the repository root, so paths resolve beneath `results/results/...`. Second, `ARM_NAME` remains `TIGER_RQ-VAE`, so even if the root were corrected, candidate outputs would target the baseline directory. Third, the launcher has no `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` contract or single-card branch, and unconditionally launches four processes.
+FINDING REPRODUCTION: From this tree’s path, walk ancestors in `_repository_root()`: the `results` ancestor contains `stage2_RQ-VAE`, so it is returned before the repository root. Inspect `RESULT_DIR` at line 59 to see the baseline arm name. Set `GENREC_SINGLE_GPU=1` and inspect `_launch_via_torchrun()` at lines 436-457: it still sets four visible devices and uses `nproc=4`.
+FINDING CORRECTION: Make root discovery require the repository marker (for example, `.git` as well as `stage2_RQ-VAE`); set `ARM_NAME` to this candidate’s promoted tree name; and implement the required `GENREC_SINGLE_GPU` branch while retaining the four-card launcher path.

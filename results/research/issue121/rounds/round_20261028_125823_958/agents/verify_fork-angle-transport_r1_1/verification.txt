@@ -1,0 +1,29 @@
+I’ll inspect the promoted tree and compare its trainer/data/export/launcher paths against the stated contract. I won’t modify files; I’ll return the exact plain-text report here.
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:40-54 -> model/layers.py:273-308 | Traced the real trainer batch path at train_rqvae.py:415-433 and :462: training-only successor-overlap context produces learned tangent shifts, which are added to the residual before Poincare exp-map and geodesic-distance code assignment. The assignment uses both signals in one connected computation; the geometry-off path uses the same shifted tangent with squared Euclidean distance.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found for this check.
+FINDING REPRODUCTION: Source inspection of the exercised path above.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:273-316 | Inspected the real forward path and smoke-test assertions at smoke_test.py:123-162. The smoke test checks that assignments differ across switches and that gradients reach the encoder and fork map, but it does not establish that geometry is in the differentiable reconstruction/commitment path.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:291-308
+FINDING DETAIL: The curved point and geodesic distances at lines 291-295 affect only `argmin`/Sinkhorn indices at lines 299-304. The returned straight-through value and quantization loss are instead built from the untransformed `tangent` and Euclidean `codes` at lines 305-308. Consequently, reconstruction/commitment gradients do not pass through the specified Poincare-transformed point; the geometry affects the forward assignment only. This fails the stated mechanism specification and leaves geometry out of the differentiable quantization path.
+FINDING REPRODUCTION: Trace a backward pass through `_fork_forward`: `distances` feed only the discrete assignment indices, while `quant_loss` is computed from `tangent` and `x_q` selected from raw `codes`. The smoke test's nonzero-gradient checks at lines 151-161 do not compare gradients across geometry-on and geometry-off, and cannot show a curved gradient pathway.
+FINDING CORRECTION: Define the quantized/reconstruction and commitment computation using the same curved representation used for assignment, with a differentiable path through the map/distance (and a suitable straight-through estimator for discrete selection). Extend the smoke check to compare gradients with geometry on versus Euclidean mode, as well as with behaviour off.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, :261-327, :330-433, :529-608 | Inspected the trainer entry point, frozen embedding and training-parquet paths, result path, SID export/indexing, and launcher. The result directory resolves to `results/stage2_RQ-VAE/TIGER_fork-angle-transport/`; export enumerates embedding row IDs and writes matching integer-keyed JSON entries. The single-card branch checks `GENREC_SINGLE_GPU` at lines 583-585; otherwise the launcher starts four ranks.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Runtime execution was not performed.
+FINDING REPRODUCTION: Source inspection of the exercised paths above.
+FINDING CORRECTION: None.

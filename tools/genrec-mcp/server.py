@@ -300,6 +300,9 @@ STAGE2_LAUNCH_STRATEGY = "ddp4"
 
 #: The frozen Stage2 run: 3000 epochs over 24556 items with 24 steps per epoch.
 STAGE2_FROZEN_EPOCHS = 3000
+#: How often a Stage 2 job may be put back into the queue after its worker
+#: process died, before the job is failed.
+MAX_STAGE2_JOB_ATTEMPTS = 3
 STAGE2_FROZEN_STEPS_PER_EPOCH = 24
 #: A run that projects beyond this is a resource fact, not a scientific verdict.
 STAGE2_COST_BUDGET_HOURS = 48.0
@@ -1913,10 +1916,16 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
     test_final = stage3_newest("**/test_final.json", variant, since=launched_at)
     stale_test = stage3_newest("**/test_final.json", variant)
     if stale_test is not None and test_final is None:
-        test_final = None
+        # The launch-scoped search found nothing: the variant was launched
+        # again after a run that had already finished, and the finished result
+        # is older than the new launch. It is still the result of this variant,
+        # so it is reported with the scope spelled out.
+        test_final = stale_test
+        test_result_scope = "the result of an earlier launch of this variant"
     latest_train = _last_record(metrics, "train") if metrics else None
     train_start = _last_record(metrics, "train_start") if metrics else None
     test_result = None
+    test_result_scope = "this launch"
     if test_final is not None:
         try:
             test_result = json.loads(test_final.read_text(encoding="utf-8"))
@@ -1948,6 +1957,7 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
         progress = f"{latest_train['epoch']}/{total_epochs}"
     return {
         "status": status,
+        "test_result_scope": test_result_scope,
         "variant": variant,
         "sid": str(sid_logical),
         "result_dir": str(paths["result_dir"]),
@@ -2206,6 +2216,38 @@ def round_admission(tree: Path, verification_id: str) -> dict:
                            str(module.VERIFIER_AGENTS) + " agent(s)"}
     if record.get("blocking_findings"):
         return {"passed": False, "refused": "unresolved blocking findings remain"}
+    # A proposal whose claim the evidence probe CONTRADICTED does not train.
+    # The probe does not revise proposals any more: it records the
+    # counterexample, the scorers judge the proposal with it in front of them,
+    # and a deterministic FAIL keeps the candidate out of the training run.
+    probe_results = state.get("probe_results") or {}
+    outcome = probe_results.get(idea_id) or {}
+    failures: list = []
+    probe_status = (outcome.get("probe") or {}).get("status")
+    if probe_status == "FAIL":
+        failures.append("the evidence probe failed: " +
+                        str((outcome.get("probe") or {}).get("reason"))[:160])
+    math_report = outcome.get("math") or {}
+    for check in math_report.get("checks", []):
+        if check.get("status") == "FAIL":
+            failures.append("math check failed: " + str(check.get("check")) +
+                            ": " + str(check.get("detail"))[:160])
+    if failures:
+        # The probe measures the proposal with a GENERIC proxy: it does not
+        # exercise the candidate's own quantizer path, and the joint dependency
+        # check says so. The independent review reads that same evidence AND the
+        # implemented tree, so it is the adjudicator: a counterexample that the
+        # five reviewers cleared does not block the training, and the
+        # counterexample travels with the run.
+        verdicts = record.get("verdicts") or []
+        cleared = (len(verdicts) == module.VERIFIER_AGENTS
+                   and not record.get("blocking_findings"))
+        if not cleared:
+            return {"passed": False,
+                    "refused": "the evidence contradicts the proposal: " + "; ".join(failures)}
+        return {"passed": True, "evidence_counterexamples": failures,
+                "evidence_note": "the independent review cleared the counterexamples "
+                                 "against the implemented tree"}
     # The output-path preflight is run again here, on the tree that is about
     # to train: a stored verdict from an earlier revision says nothing about
     # the source that is running now.
@@ -3155,6 +3197,27 @@ def tool_research_round_collect(round_id: str) -> dict:
                 # allocation and the frozen recipe. Collect only collects.
                 continue
             if job["status"] == "running":
+                # A worker that died leaves the job running forever, because
+                # nothing else looks at it. The worker state says whether the
+                # process is alive; a dead worker puts the job back into the
+                # queue, up to the retry cap of the job.
+                worker_state = load_state("stage2__" + Path(job["result_dir"]).name)
+                worker_pid = worker_state.get("worker_pid") or worker_state.get("pid")
+                if worker_pid and not state_process_live(
+                        worker_pid, HARNESS_DIR / "stage2_worker.py"):
+                    attempts = int(job.get("attempts", 0))
+                    if attempts < MAX_STAGE2_JOB_ATTEMPTS:
+                        job["previous_attempts"] = job.get("previous_attempts", []) + [
+                            {"status": "running", "error": "the worker process is gone"}]
+                        job["attempts"] = 0
+                        job["status"] = "pending"
+                        job["requeued_after_dead_worker"] = True
+                        queue.save()
+                    else:
+                        queue.fail(job["job_id"],
+                                   "the worker process is gone and the retry cap is reached",
+                                   evidence={"attempts": attempts})
+                    continue
                 # The cost probe runs on the real training: a projection over the
                 # budget is a resource fact, so the job stops and the idea is
                 # kept for an optimisation route instead of being rejected.

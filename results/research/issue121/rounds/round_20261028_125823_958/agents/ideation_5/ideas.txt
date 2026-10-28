@@ -1,0 +1,49 @@
+IDEA: fork_shell_transport
+TITLE: Fork-conditioned hyperbolic shell transport
+MOTIVATION: Successor branching can encode how predictable an item's next step is: high-entropy successors should occupy a broad, near-origin region while low-entropy items can be placed farther out where angular distinctions are sharper.
+NOVELTY: Unlike existing successor-entropy curvature arms that alter quantization geometry/radial gating directly, this supervises the encoder representation with a per-item radial target and uses successor overlap to set an angular target jointly in one distance objective.
+CHANGE: Build a training-only successor distribution for each item, then pull its encoded point toward a hyperbolic target whose radius is determined by branching entropy and whose direction is a weighted successor-profile embedding. Quantization continues on the same representation, so the supervision changes the assignments it feeds.
+SPECIFICATION: For item i let p_i(j)=count(i→j)/sum_k count(i→k), H_i=−Σ_j p_i(j)log p_i(j), r_i=R(1−H_i/log max(2,d_i)) for d_i>1 else 0. Make a fixed target vector u_i by normalized projection of p_i through a deterministic seeded random matrix A; target y_i=exp_0^c(r_i u_i). Minimize L_i=α_i d_c(z_i,y_i)^2, where α_i is normalized outgoing count, z_i=exp_0^c(h_i) and d_c is Poincare distance. Set R from the 99th percentile norm of the unregularized training latents, detached once after epoch 1; α_i=count_i/mean(count), clipped at its empirical 99th percentile.
+COST: One sparse successor-profile projection per batch plus one Poincare distance per item, O(B·nnz(profile)+B·D); at frozen scale 24,556 items/24 steps/epoch/3000 epochs, batch work is 1,023 distance evaluations per step and 73,728,000 total, typically under 5% step overhead; target profiles precomputed once.
+HYPOTHESIS: If next-item predictability has a meaningful branching hierarchy, coupled radial/angular supervision changes encoder gradients and SID assignments to align predictable items with usable hierarchy; retain only if the single frozen Stage3 test Recall@10 exceeds 0.065.
+RISKS: Sparse successor vectors may be noisy for rare items; radial target may merely encode popularity, and fixed projection may lose successor semantics.
+BEHAVIOR SIGNAL: Directed, user-local next-item transition counts and successor branching distribution.
+BEHAVIOR COMPUTATION: In training split only, count adjacent item pairs (i,j) within each user's time-ordered sequence; aggregate outgoing counts and normalize per source item.
+LEAKAGE BOUNDARY: Build counts solely from training interactions before Stage2; validation and test events are never loaded by the target builder, and targets are frozen before Stage3.
+HYPERBOLIC OPERATOR: Poincare exp map at origin and geodesic distance for fixed negative curvature c=1.
+HYPERBOLIC LOCATION: Encoder-side behavior supervision during each Stage2 minibatch, on the latent representation immediately before residual quantization.
+COUPLING PATH: Transition counts determine both target radius and target direction; geodesic distance from the quantizer's encoder latent to that target supplies the gradient that moves the latent and therefore its code assignments.
+COUPLING EQUATION: L_i=α_i d_{P,c=1}(exp_0(h_i), exp_0(r_i·u_i))²; r_i=R(1−H(p_i)/log d_i), u_i=normalize(Ap_i).
+OBSERVABLES: Behavior-on changes latent gradients and code assignments by successor branching class; log radial latent norm, target-distance distributions, assignment changes, and final Stage3 test Recall@10.
+ABLATION BEHAVIOR OFF: Switch target construction off (α_i=0 and y_i=0), leaving the baseline RQ-VAE objective; this is a comparison definition, not a training arm.
+ABLATION GEOMETRY OFF: Replace exp/log and Poincare distance with Euclidean target r_i u_i and squared Euclidean distance; this is a comparison definition, not a training arm.
+ABLATION BOTH ON: Use training-only transition-derived r_i,u_i and Poincare geodesic supervision exactly as specified; train this sole candidate once.
+SPEC EQUATIONS: c=1; exp_0(v)=tanh(||v||)v/||v||; d(x,y)=acosh(1+2||x−y||²/((1−||x||²)(1−||y||²))). p_i from training adjacent pairs; H_i=−Σp log p; q_i=H_i/log(max(2,d_i)); r_i=R(1−q_i); u_i=normalize(Ap_i); L_beh=mean_i α_i d(exp_0(h_i),exp_0(r_i u_i))². Add L_beh to the existing encoder/RQ-VAE loss with its scale derived as the ratio of baseline reconstruction-loss median to detached behavior-loss median on the first training minibatch, then freeze that scale.
+SPEC INPUTS OUTPUTS: Inputs: training-only transition CSR rows, encoder latents h_i, quantizer and existing loss. Output: differentiable scalar behavior loss and updated encoder/code assignments.
+SAFEGUARDS: Clamp norms below 1−1e−5; use stable acosh(max(argument,1+1e−7)); log with p>0 only; use zero target direction when profile is empty and zero radial target; normalize with epsilon 1e−8; detach empirical scale and loss calibration; clip α at empirical percentile.
+END IDEA
+
+IDEA: successor-cone-contrast
+TITLE: Hyperbolic successor-cone contrastive shaping
+MOTIVATION: Items with similar next-item distributions should share a semantic direction, while items with distinct successor distributions should be separated; ordinary pairwise Euclidean similarity does not naturally encode nested specificity.
+NOVELTY: This uses sampled directed-transition distribution similarity as the positive/negative selector inside a hyperbolic cone containment objective, rather than behavior-weighted codeword assignment, Frechet residuals, or geodesic ranking of existing codes.
+CHANGE: For each source item, sample a positive source with high successor-distribution overlap and a negative with low overlap. Optimize the encoder latent so the positive lies inside a Poincare angular cone rooted at the anchor while the negative violates containment, with cone aperture set by anchor successor entropy.
+SPECIFICATION: For items i,k compute J(i,k)=Σ_j min(p_i(j),p_k(j)) over train successor distributions. Sample positive k from top overlap candidates and negative n from bottom candidates using deterministic hash-based cycling. Map z_i=exp_0^c(h_i); define cone angle θ_i=atan2(||z_k−z_i||, 1−z_i·z_k) and aperture β_i=β_min+(β_max−β_min)H_i/log(max(2,d_i)). L_i=softplus(θ(i,k)−β_i+m)+softplus(β_i+m−θ(i,n)); margins derived from the median angular separation of a deterministic first-minibatch sample, frozen thereafter.
+COST: Precompute sparse successor overlaps using inverted successor lists and retain top/bottom 16 candidates/item; per step evaluate two Poincare angles and two softplus terms per item, O(BD); 1,023 pairs per step, 73.7M pairs over frozen run, about 3–6% added compute and modest candidate-table memory.
+HYPOTHESIS: Distribution overlap reflects shared recommendation futures, and entropy-adaptive cones encode coarse-to-specific successor structure in quantizer latents; observable via changed assignments and Stage3 test Recall@10, retained only above 0.065.
+RISKS: Top/bottom overlap may be unstable for sparse rows; angular cone semantics in the ball can be sensitive near the boundary; repeated sampled pairs can overfit popular destinations.
+BEHAVIOR SIGNAL: Similarity of directed successor distributions between source items.
+BEHAVIOR COMPUTATION: From training-only adjacent item transitions, normalize each source's successor counts into p_i; compute sparse overlap Jaccard-mass against candidate sources.
+LEAKAGE BOUNDARY: Candidate pairs and distributions are generated only from the training interaction file, deterministically before training; no evaluation interactions are available to this component.
+HYPERBOLIC OPERATOR: Poincare exp map and ball-model angular geodesic cone scoring at fixed curvature c=1.
+HYPERBOLIC LOCATION: Pairwise encoder-latent contrastive objective before quantization, whose gradients alter the vectors assigned by the residual codebooks.
+COUPLING PATH: Training successor overlap chooses positive/negative pairs and entropy determines aperture; Poincare angular containment scores those same behavior-selected pairs and backpropagates to quantizer inputs.
+COUPLING EQUATION: L_i=softplus(θ_c(z_i,z_{k+})−β(H_i)+m)+softplus(β(H_i)+m−θ_c(z_i,z_{k−})); (k+,k−) selected from J(i,k).
+OBSERVABLES: Latent angular neighborhoods and code assignments become more predictive of successor-distribution overlap; record positive/negative cone violation and Stage3 test Recall@10.
+ABLATION BEHAVIOR OFF: Use deterministic random positive/negative pairs and constant aperture; comparison only, not an additional trained arm.
+ABLATION GEOMETRY OFF: Replace ball mapping and cone angle with Euclidean cosine-angle containment; comparison only, not an additional trained arm.
+ABLATION BOTH ON: Use training-overlap pair selection, entropy aperture, and Poincare cone scores in the sole run.
+SPEC EQUATIONS: p_i(j)=count_train(i→j)/outcount(i); J(i,k)=Σ_j min(p_i(j),p_k(j)); β_i=β_min+(β_max−β_min)H_i/log(max(2,d_i)); z=exp_0^1(h); θ_c(i,k)=atan2(||z_k−z_i||,1−z_i·z_k); L_i=softplus(θ(i,k+)−β_i+m)+softplus(β_i+m−θ(i,k−)). Use candidate set of top/bottom 16 J values, cycling deterministically per epoch.
+SPEC INPUTS OUTPUTS: Inputs: train transition CSR, batch item latents and candidate pair table. Output: scalar contrastive loss and gradients to encoder latents.
+SAFEGUARDS: Project ball points to norm ≤1−1e−5; clamp angle denominator to 1e−7; clamp cosine to [−1+1e−7,1−1e−7]; ignore empty successor rows; set β bounds from the 10th/90th percentile empirical first-minibatch positive angles, no sweep; normalize loss by valid pair count.
+END IDEA

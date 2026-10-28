@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:415-433 → model/model.py:40-53 → model/layers.py:273-307 | Traced the trainer’s training-only successor context into per-layer shifts, then through the curved assignment branch. The behaviour-derived shift is added to the residual before the Poincare exponential map and geodesic-distance comparison; the geometry-off branch instead uses the same shifted tangent with squared Euclidean distance. The smoke test encodes checks for both switches at smoke_test.py:123-162; I inspected those checks but did not execute them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-and-geometry pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/model.py:28-30 | Inspected RQVAE construction and the forward/backward checks specified in smoke_test.py:101-162. The model cannot be constructed as written, so the proposed gradient checks cannot reach the forward pass.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/model.py:28-30
+FINDING DETAIL: `nn.ParameterList` accepts `torch.nn.Parameter` objects, not `nn.Linear` modules. Constructing `RQVAE` with the trainer’s config therefore raises a `TypeError` while adding the first `nn.Linear` to the list. This prevents a real forward/backward, so finite losses, gradients to the intended parameters, and switch-dependent assignment changes are not established.
+FINDING REPRODUCTION: Instantiate `RQVAE(config, in_dim=...)` with the config shape created by `_tokenizer_config()` in `train_rqvae.py:240-258`. Construction fails at the first `self.fork_maps.append(nn.Linear(...))` equivalent on model.py:28-30.
+FINDING CORRECTION: Store the per-level linear maps in `nn.ModuleList` rather than `nn.ParameterList`, then verify the real forward/backward and switch comparisons with the smoke test.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:63-77, 103-105, 579-608 | Inspected the trainer entry point, repository-root and result-path construction, launcher’s four-card path, and its `GENREC_SINGLE_GPU` branch. I could not run the trainer in this sandbox; the construction defect at model.py:28-30 prevents the trainer from reaching training or SID export.
+FINDING SEVERITY: blocking
+FINDING LOCATION: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/model.py:28-30
+FINDING DETAIL: The real trainer instantiates `RQVAE` at train_rqvae.py:353 and will hit the invalid `ParameterList` construction before it can train or export `item_sids.json`. The configured result directory is the candidate’s own promoted directory (`results/stage2_RQ-VAE/TIGER_fork-angle-transport`), and the single-card environment branch is present at train_rqvae.py:583-585; neither makes the trainer runnable while model construction fails.
+FINDING REPRODUCTION: Start the trainer entry point (or instantiate the model as described in check b). It fails during model construction before the training loop, checkpoint, or SID export.
+FINDING CORRECTION: Replace `nn.ParameterList` with `nn.ModuleList` for `fork_maps`, then run the prescribed trainer smoke and verify indexed SID export in the configured candidate result directory.

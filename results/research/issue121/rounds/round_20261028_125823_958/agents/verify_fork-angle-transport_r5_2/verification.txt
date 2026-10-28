@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:261-324, 412-431, 460 | Static trace: training transitions build sparse successor-overlap weights and branching mass; batch contexts turn those into learned tangent shifts; model/layers.py:273-342 adds each shift before Poincare mapping and geodesic code assignment. smoke_test.py:123-162 defines assignment-switch and displacement checks, but I did not execute them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:34-40, 42-56; model/layers.py:273-357, 359-381; train_rqvae.py:459-469 | Static forward/backward trace: the context shift is included in the residual used for commitment loss and residual updates; the selected code also contributes to reconstruction. The geometry and behaviour switches select distinct assignment paths. smoke_test.py:123-162 and ddp_check.py:49-62 specify the gradient and switch checks, but I did not execute them.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No dead coupled term or evident float32 overflow/NaN hazard found by code inspection. I could not execute the runtime smoke.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 327-357, 527-570, 577-606 | Static trace: the trainer reads the frozen Stage 0 train parquet and Stage 1 embeddings, writes the candidate’s promoted result directory, exports zero-based item-id keyed JSON, and has both the four-card torchrun launcher and the GENREC_SINGLE_GPU single-process branch. No trainer or launcher was executed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by static inspection.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

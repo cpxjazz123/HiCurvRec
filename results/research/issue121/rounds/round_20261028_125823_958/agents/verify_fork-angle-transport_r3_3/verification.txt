@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:404-434 -> model/model.py:42-56 -> model/layers.py:273-350 | Traced the training-only successor-neighbourhood construction and batch context into the per-layer quantizer. The shifted residual is mapped into the Poincare ball and assigned by squared geodesic distance; the behavior-off and geometry-off switches are wired into that same path at train_rqvae.py:428-434 and model/layers.py:291-309. The smoke test exercises both switches and checks that assignments change at smoke_test.py:123-162.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:317-350 -> model/model.py:34-40 | Inspected the forward path: the shifted residual participates in the commitment loss, the selected code determines the next residual and reconstruction, and the loss remains connected to the encoder, codebook, and learned fork maps. smoke_test.py:151-161 checks finite nonzero gradient flow to the encoder and fork map; smoke_test.py:134-142 checks assignment changes with behavior and geometry switches. Static inspection only; no runtime execution.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level trainability or numerical-safety defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 261-327, 330-435, 436-444, 530-573, 580-609 | Inspected the trainer entry point, frozen Stage 1 embedding and Stage 0 training-parquet paths, training-only neighbourhood input, SID export and indexing, candidate-specific result directory, and four-card launcher. The single-card branch reads `GENREC_SINGLE_GPU` at train_rqvae.py:103-105 and 580-586. The SID JSON is keyed by enumerated item IDs at train_rqvae.py:565-571. This is a code inspection; the trainer was not run.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

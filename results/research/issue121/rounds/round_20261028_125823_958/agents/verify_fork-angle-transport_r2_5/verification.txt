@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:261-327 -> train_rqvae.py:415-433 -> model/model.py:40-54 -> model/layers.py:273-316 | Traced the training-only successor overlap through batch context and learned tangent shifts into the curved Poincare assignment. The connected behaviour-plus-geometry pathway is present; compared its implemented scale with the stated specification.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:425-433
+FINDING DETAIL: The specification scales the shift by b_i/(1+b_i), but the trainer passes raw b_i as `scale`; `model/model.py:49-52` multiplies the learned map output by that value. This is not the specified bounded branch-ambiguity coefficient and can make the shift exceed its intended scale.
+FINDING REPRODUCTION: For any item with b_i=1, the specified shift multiplier is 1/2, while `build_fork_context` passes scale 1 and `_fork_context` applies the full mapped neighbour mean. Values b_i>1 similarly produce an unbounded multiplier rather than one below 1.
+FINDING CORRECTION: Pass `branching_t[ids] / (1 + branching_t[ids])` as the scale (with an appropriate safeguard for finite values), keeping the existing behaviour-off path zeroed.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:284-316 and :329-340; train_rqvae.py:459-470; smoke_test.py:123-162 | Inspected the real forward/backward path and the smoke assertions. The shifted tangent is used in curved distance assignment and in the quantization loss; gradients can flow through the transformed point to the encoder and `fork_maps`. The smoke test checks finite/nonzero map and encoder gradients and that both behaviour-off and geometry-off alter assignments. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No trainability defect identified by code inspection; this verdict does not claim an executed runtime proof.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, :330-433, :435-443, :529-608 | Inspected the trainer entry point, frozen embedding and training-parquet paths, output path, export/indexing logic, and launcher branches. The candidate writes to its promoted result directory, exports rows keyed by embedding item index, and includes both four-card torchrun launch and the `GENREC_SINGLE_GPU` single-card branch. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect identified by code inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

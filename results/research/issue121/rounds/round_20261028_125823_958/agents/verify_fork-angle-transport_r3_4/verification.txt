@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:261-327, 415-435; model/model.py:42-56; model/layers.py:273-350 | Traced the training-parquet successor-overlap computation into the batch context, learned tangent shift, Poincare exponential map and geodesic code assignment. The smoke-test source also exercises the neighbourhood and displacement/switch checks at smoke_test.py:53-98 and 123-162.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behaviour signal and curved assignment are on one connected path: the overlap-weighted neighbour representation produces a scaled shift, which changes the point used by the Poincare distance assignment.
+FINDING REPRODUCTION: Source path is train_rqvae.py:406-410 → train_rqvae.py:415-435 → model/model.py:51-55 → model/layers.py:288-316.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:284-350; model/model.py:34-40, 42-56; smoke_test.py:123-162 | Inspected the forward and backward computation and the source-level smoke checks for finite geometry, assignment changes under both switches, and gradients reaching the encoder and displacement map. Runtime execution is unavailable in this sandbox; the supplied runtime limitation does not count as a defect.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 instability found. Quantization loss depends on the shifted tangent (model/layers.py:334-335), so gradients reach the behaviour map; geometry-on uses mapped points and geodesic distances (model/layers.py:291-305). The behaviour-off and geometry-off branches are implemented at model/layers.py:291-309 and train_rqvae.py:428-432.
+FINDING REPRODUCTION: The source-level switch and gradient checks are at smoke_test.py:134-161. The exercised model path is model/model.py:36-39 → model/layers.py:363-374 → model/layers.py:284-350.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 330-370, 530-573, 580-609 | Inspected repository-root and candidate-result path derivation, frozen Stage 0 parquet and Stage 1 embedding inputs, indexed SID export, and both launcher branches. The supplied four-rank source check is at ddp_check.py:27-77; runtime execution is unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. Outputs target this candidate’s promoted result directory, `results/stage2_RQ-VAE/TIGER_fork-angle-transport/` (train_rqvae.py:69-76); exported rows are keyed by zero-based item ID (train_rqvae.py:565-571). The single-card branch reads `GENREC_SINGLE_GPU` and returns without forking (train_rqvae.py:103-105, 580-586); the normal branch launches four ranks (train_rqvae.py:587-604).
+FINDING REPRODUCTION: Trace input loading at train_rqvae.py:343-346, output indexing at train_rqvae.py:559-571, and launcher dispatch at train_rqvae.py:580-609. No trainer execution was performed.
+FINDING CORRECTION: None.

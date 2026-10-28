@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:34-38 -> model/layers.py:273-369 -> model/hyperbolic.py:111-137 | Inspected the real forward path and the smoke test at smoke_test.py:123-162. Training-only successor overlap and branching mass are built in train_rqvae.py:263-326, then converted into learned tangent shifts in model/model.py:42-56. Each shift changes the point used for Poincare assignment and the curved commitment computation in model/layers.py:288-354.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The behaviour signal and curved operation participate in one connected assignment and loss pathway; both switches are present at train_rqvae.py:109-116 and affect that pathway at train_rqvae.py:414-433.
+FINDING REPRODUCTION: The code-level exercise is smoke_test.py:123-162: it compares both-on assignments against behaviour-off and geometry-off assignments, checks the learned shift, and backpropagates through the model.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:288-354 | Inspected the forward and loss path plus smoke_test.py:123-162. The assignment is discrete, but the curved distance commitment and tangent commitment are differentiable; the smoke test checks finite/nonzero gradients to the encoder and the learned displacement map and checks assignment changes for both controls. Runtime execution is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 overflow/NaN hazard found in the exercised path. The smoke test’s specified assignment-change assertions and gradient checks cover the requested switch behavior.
+FINDING REPRODUCTION: Inspect smoke_test.py:134-161 and model/layers.py:297-354. As instructed, this is a code-level review; no trainer execution was attempted.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-80, 263-326, 329-433, 529-608 | Inspected the trainer entry point, frozen Stage 1 embedding and Stage 0 training-parquet paths, training-only neighbourhood construction, SID export, output directory, and launcher branches. The single-card branch checks GENREC_SINGLE_GPU at train_rqvae.py:579-585; the four-card torchrun configuration is at train_rqvae.py:128-138 and 586-603.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by inspection. Outputs resolve under the candidate’s promoted result directory; the SID export enumerates embedding rows into item-indexed JSON and extends collisions before checking uniqueness.
+FINDING REPRODUCTION: Inspect train_rqvae.py:63-80 for paths, 435-443 and 557-572 for export, and 579-608 for launcher behavior. Runtime execution was not attempted.
+FINDING CORRECTION: None.

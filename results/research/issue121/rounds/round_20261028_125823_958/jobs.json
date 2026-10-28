@@ -1,0 +1,37 @@
+{
+  "jobs": [
+    {
+      "attempts": 3,
+      "error": "the worker process is gone and the retry cap is reached",
+      "failure_evidence": {
+        "attempts": 3
+      },
+      "finished_at": 1793161709.140331,
+      "gpu": "0,1,2,3",
+      "idea_id": "fork-angle-transport",
+      "job_id": "stage2:fork-angle-transport",
+      "kind": "stage2",
+      "launch_mode": "ddp4",
+      "previous_attempts": [
+        {
+          "error": "independent executable verification: the evidence contradicts the proposal: math check failed: behavior_dependency: a positive row scalar leaves every arg-min unchanged (measured: True), so it can never move an assignment; a codeword-dependent weight moved False of the top-1 ",
+          "finished_at": 1793158304.4651406,
+          "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the evidence contradicts the proposal: math check failed: behavior_dependency: a positive row scalar leaves every arg-min unchanged (measured: True), so it can never move an assignment; a codeword-dependent weight moved False of the top-1 ",
+          "finished_at": 1793158304.7999341,
+          "status": "failed"
+        }
+      ],
+      "queued_at": 1793158304.3896847,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_fork-angle-transport",
+      "round_id": "round_20261028_125823_958",
+      "started_at": 1793158386.4747756,
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_fork-angle-transport"
+    }
+  ],
+  "schema": 1
+}

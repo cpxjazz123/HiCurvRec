@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:261-324 -> train_rqvae.py:412-431 -> model/model.py:42-56 -> model/layers.py:273-357 | Traced the training-only successor overlap and branching mass into the learned tangent shift, then into the Poincare assignment and residual update; smoke_test.py:123-162 checks that behaviour-off and geometry-off alter assignments and that the displacement map receives a gradient.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in this check.
+FINDING REPRODUCTION: The checked code path is shown above; no runtime trainer execution was performed.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:34-40 -> model/layers.py:273-357 -> train_rqvae.py:459-469 | Inspected the differentiable forward and backward path: the shifted tangent feeds the curved distance and assignment, the commitment loss depends on the shifted tangent, and the straight-through reconstruction feeds the decoder. smoke_test.py:123-162 and ddp_check.py:49-62 contain gradient and switch checks; per the review constraints, no trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the trainability pathway by code inspection. The toy smoke is not runtime evidence that a real training step has finite gradients, but the code follows the connected loss path and uses double precision for the Poincare distances before casting back.
+FINDING REPRODUCTION: Inspect model/layers.py:289-342 and the backward call at train_rqvae.py:465; the provided sandbox does not permit runtime execution.
+FINDING CORRECTION: None.
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:327-431, train_rqvae.py:527-605 | Inspected the real trainer entry point, frozen Stage 2 data paths, export construction, output routing, and launcher branches. The candidate code is in the requested round tree; no trainer execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:77
+FINDING DETAIL: Training metrics and launcher logs are written under the candidate source tree at `stage2_RQ-VAE/TIGER_fork-angle-transport/logs`, while the promoted candidate result directory is under `results/stage2_RQ-VAE/TIGER_fork-angle-transport`. This does not redirect the SID artifacts, but it violates the requirement that the trainer write only into its own result directory and separates the run logs from the promoted candidate’s results.
+FINDING REPRODUCTION: Run the trainer with `GENREC_SINGLE_GPU=1`; `_record` writes `METRICS_PATH` at train start and `_launch_via_torchrun` creates its log directory at train startup. Both resolve from `LOG_DIR` on line 77, which is outside `RESULT_DIR` on line 70.
+FINDING CORRECTION: Set `LOG_DIR` to `RESULT_DIR / "logs"` so metrics and launcher logs remain within this candidate’s promoted result directory.

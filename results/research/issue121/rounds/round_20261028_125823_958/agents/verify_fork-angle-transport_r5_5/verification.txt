@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:42-55 -> model/layers.py:288-315 | Traced the trainer’s batch context from train_rqvae.py:412-431 into each quantization layer. Training-only successor overlaps are built at train_rqvae.py:261-324; their weighted neighbour representations and branch scale form the shift, which is added before the Poincare map and distance-based assignment. The geometry-off path uses the same shifted point with Euclidean distance.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The behaviour signal and curved operation are used together in one assignment pathway. This check passes.
+FINDING REPRODUCTION: Code-path inspection; the sandbox cannot run the trainer.
+FINDING CORRECTION: None.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:288-342 | Traced the shifted tangent through the Poincare assignment and the quantization loss. The supplied smoke test at smoke_test.py:123-162 checks that switches change assignments and that gradients reach the encoder and fork map, but I could not execute it in this sandbox.
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:301-308, 317-342
+FINDING DETAIL: The curved distance affects only the discrete assignment indices (`argmin`, or Sinkhorn followed by `argmax`). The differentiable quantization loss at lines 341-342 is Euclidean tangent-space MSE; it does not use the curved distance or the curved reconstruction. The computed `reconstruction` at lines 329-333 is unused, and the next residual is the tangent residual at lines 356-357. Consequently there is no differentiable curved-operation path to the intended parameters: geometry changes the selected code, but does not directly alter the loss gradient for a fixed assignment. The smoke test’s nonzero fork-map gradient does not establish that the curved operation contributes to that gradient; its own `geometry_off` assertion only tests assignment changes.
+FINDING REPRODUCTION: Hold the selected code indices fixed (or choose inputs where both geometry settings select the same indices). Backpropagate the reported loss with `geometry_on=True` and `False`: the loss computation and its gradients are the same for that fixed assignment, because the geometric distance and reconstruction are absent from the loss. The resulting gradient can still reach the fork map through the Euclidean tangent loss, but it is not a gradient through the curved operation.
+FINDING CORRECTION: Make the curved representation or distance participate in a differentiable training loss, in addition to using it for assignment, and ensure the resulting loss has a live gradient path through the intended curved computation. Keep the Euclidean control as the corresponding geometry-off version, and verify both settings’ losses and gradients as well as assignment changes.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:63-77, 261-324, 412-441, 449-469, 550-570, 577-605 | Inspected the trainer’s repository-root and output paths, training-parquet neighbourhood construction, full item-ID export, fixed epoch loop, and launcher branches, including `SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"` at lines 103-105 and 581-583. Runtime execution was unavailable in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The inspected integration paths point to the frozen Stage 1 embeddings and Stage 0 training parquet, write candidate outputs to `results/stage2_RQ-VAE/TIGER_fork-angle-transport/`, export rows by enumerated item ID, and retain the single-card launcher branch. No integration defect was found by code inspection.
+FINDING REPRODUCTION: Inspect the listed trainer paths; the sandbox cannot run the trainer or distributed launcher.
+FINDING CORRECTION: None.

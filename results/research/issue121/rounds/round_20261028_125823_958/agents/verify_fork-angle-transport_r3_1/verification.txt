@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:261-327 → train_rqvae.py:415-434 → model/model.py:42-56 → model/layers.py:273-350 | Traced the training-only successor-set construction into the batch context, learned tangent shift, and curved assignment; inspected smoke_test.py:123-162 for the both-on and switch comparisons. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The exercised training path computes successor-set Jaccard neighbours and branching mass only from the training parquet, uses them to form a learned tangent displacement, and feeds the shifted tangent into Poincare mapping and geodesic code assignment. The same shifted tangent participates in the quantization loss and residual update. The geometry-off path uses that same shifted vector with Euclidean distance.
+FINDING REPRODUCTION: Static path inspection: train_rqvae.py:404-434 builds the context; model/model.py:49-56 turns its mean and scale into per-layer shifts; model/layers.py:288-335 uses each shift in the assignment and loss. smoke_test.py:134-141 checks both-on versus behaviour-off and geometry-off assignments.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:288-350 → model/layers.py:363-374 | Inspected the forward and loss graph, including the gradient assertions in smoke_test.py:151-162 and the assignment-switch assertions in smoke_test.py:129-149. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The shifted tangent remains differentiable through the learned fork map and encoder into the quantization loss; the loss also provides a gradient path to the selected code. The curved path maps the tangent and codes into the ball and compares them with Poincare distance. The inspected safeguards keep map and distance operations finite for the stated finite inputs. The smoke code checks nonzero encoder and fork-map gradients and verifies that both switches change assignments.
+FINDING REPRODUCTION: Inspect model/layers.py:288-335 for the differentiable shift, curved distance, and quantization loss; model/layers.py:363-374 for level-to-level residual propagation. smoke_test.py:134-161 contains the switch and gradient assertions. No runtime smoke was run.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, train_rqvae.py:330-434, train_rqvae.py:530-609 | Inspected root and result-path resolution, frozen input paths, training/export indexing, and launcher branches, including SINGLE_GPU_ENV. Runtime execution was not performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: The trainer reads the stage-one embedding matrix and stage-zero training parquet, resolves the repository root from markers, and writes outputs to the promoted arm’s result directory. Export enumerates embedding rows by item ID, creates unique extended SIDs, and writes the JSON mapping using those same row indices. The launcher uses four-card torchrun by default and returns to in-process training when GENREC_SINGLE_GPU is set to "1".
+FINDING REPRODUCTION: Inspect train_rqvae.py:63-78 for paths; :343-345 for inputs; :436-444 and :558-573 for indexed export; and :580-609 for launcher and single-card branch. No runtime trainer or distributed run was performed.
+FINDING CORRECTION: Not applicable.

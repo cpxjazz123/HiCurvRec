@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: fork-angle-transport/train_rqvae.py:261-327 -> fork-angle-transport/model/model.py:40-54 -> fork-angle-transport/model/layers.py:273-316 | Traced training-only successor construction through the batch context and learned shift into Poincare mapping and geodesic assignment; the wiring couples behaviour and geometry, but the implemented behaviour scale does not match the specified mechanism.
+FINDING SEVERITY: blocking
+FINDING LOCATION: fork-angle-transport/train_rqvae.py:425-433
+FINDING DETAIL: The specified shift multiplier is b_i/(1+b_i), but the trainer passes raw b_i as `scale`; `model/model.py:51` multiplies the learned neighbour mean by that value. Thus the implemented shift is b_i W_l(mean), not the specified bounded branch-ambiguity shift. For b_i > 0, this can grow without the specified saturation and changes the candidate’s core computation.
+FINDING REPRODUCTION: For any item with branching mass b_i=1, `build_fork_context` returns scale 1 at lines 425-426, so `_fork_context` produces W_l(mean); the specified multiplier would be 1/2.
+FINDING CORRECTION: Return `branching_t[ids] / (1 + branching_t[ids])` as the scale, preserving the behavior-off zeroing, and keep the same scale for both-on and geometry-off paths.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: fork-angle-transport/model/layers.py:284-316 and :329-340; fork-angle-transport/train_rqvae.py:459-470; fork-angle-transport/smoke_test.py:123-162 | Source-traced the finite-valued Poincare mapping/distance and assignment path into the transformed-point quantization loss and backward call. The smoke test encodes checks for both switch-dependent assignment changes and nonzero gradients to the encoder and fork map; execution is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: fork-angle-transport/model/layers.py:291-308
+FINDING DETAIL: No additional trainability defect found. The curved distance determines the discrete code assignment; the differentiable quantization loss is computed on the shifted tangent, so the shift and its learned map receive gradients. Numerical safeguards keep the mapped points and distance calculation within finite ranges for ordinary finite inputs.
+FINDING REPRODUCTION: The source-level gradient and switch checks are in `smoke_test.py:134-161`; the training loop checks finite loss and calls backward at `train_rqvae.py:465-467`.
+FINDING CORRECTION: No correction required for this check.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: fork-angle-transport/train_rqvae.py:42-78, :330-433, :435-443, :529-575, :579-608 | Traced the trainer’s repository-root resolution, frozen embedding and training-parquet paths, output path, ID-based batch context, all-item export and SID JSON construction, and launcher branches. Runtime execution was unavailable and is not claimed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: fork-angle-transport/train_rqvae.py:69-78, :564-570, :579-608
+FINDING DETAIL: No integration defect found by source inspection. The trainer writes to its promoted candidate directory under `results/stage2_RQ-VAE/`, indexes the export by enumerated item ID, and the launcher preserves the four-card torchrun path and the `GENREC_SINGLE_GPU` single-card branch.
+FINDING REPRODUCTION: The destination is derived from the repository root and candidate-specific `ARM_NAME` at lines 63-78; export rows and JSON keys use item IDs at lines 564-570; launcher branch handling is at lines 581-608.
+FINDING CORRECTION: No correction required for this check.

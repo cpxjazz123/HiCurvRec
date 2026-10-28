@@ -1,0 +1,25 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/train_rqvae.py:261-324, 412-431; results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/model.py:42-56; results/research/issue121/trees/round_20261028_125823_958/fork-angle-transport/model/layers.py:273-357 | Traced training-only successor-set construction into the batch context, learned tangent shift, Poincare mapping and geodesic code assignment. The smoke test at smoke_test.py:123-162 defines checks for both switches and the displacement; execution was not available here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261028_125823_958/agents/verify_fork-angle-transport_r5_1/verification.txt | Source inspection only: followed the forward path from model.py:34-40 through layers.py:273-357 and the loss/backward path in train_rqvae.py:459-469. The smoke test specifies finite displacement and assignment-switch checks and gradient assertions reaching the encoder and fork map at smoke_test.py:123-162; no runtime execution was available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found. The displacement participates in tangent residuals and commitment loss; its transformed point and curved distance determine assignments. The behavior-off and geometry-off paths are implemented. The code’s hard assignment is discrete, but the selected code and changed residual feed the differentiable loss path.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: results/research/issue121/rounds/round_20261028_125823_958/agents/verify_fork-angle-transport_r5_1/verification.txt | Inspected trainer setup, data loading, output destinations, export, and launcher branches in train_rqvae.py:42-78, 103-105, 327-357, 527-601; inspected the four-rank check in ddp_check.py:27-77. Runtime execution was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No defect found. The trainer uses the repository’s Stage 1 embedding and Stage 0 training parquet paths, writes to the candidate’s promoted result directory, exports item-indexed JSON entries, and includes the `GENREC_SINGLE_GPU` single-card branch plus the four-rank torchrun launch path.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

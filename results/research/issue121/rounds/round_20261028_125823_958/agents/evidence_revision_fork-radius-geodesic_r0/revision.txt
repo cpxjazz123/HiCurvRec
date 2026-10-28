@@ -1,0 +1,3 @@
+REVISION: The proposal is limited to supervising latent radius; it does not claim this radial signal changes quantized assignments or survives quantization, because the evidence shows a positive row scalar leaves arg-min assignments unchanged. | This answers the gap between radial-only supervision and the unsupported claim of changed SID assignments.
+WITHDRAWN: The claim that the radial gradients will move assignments or that the signal survives quantization.
+EVIDENCE NOTE: Positive row scalar leaves every arg-min unchanged: True. Codeword-dependent weight moved False of the top-1; denominator UNKNOWN.

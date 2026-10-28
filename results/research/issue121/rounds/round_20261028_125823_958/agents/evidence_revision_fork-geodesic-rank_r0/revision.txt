@@ -1,0 +1,3 @@
+REVISION: The proposal claims only to supervise pairwise ranking of pre-quantization encoder representations; it does not claim that this changes quantized assignments, which the evidence does not establish | answers the behavior_dependency gap: a positive row scalar cannot change any arg-min, and the tested codeword-dependent weight changed 0 top-1 assignments; neither measurement tests this pairwise geodesic objective
+WITHDRAWN: Any implication that this mechanism is established to move assignments or improve Recall@10
+EVIDENCE NOTE: Positive row scalar leaves every arg-min unchanged: True; codeword-dependent weight moved 0 top-1 assignments. No measured result for the proposed geodesic-rank loss: UNKNOWN

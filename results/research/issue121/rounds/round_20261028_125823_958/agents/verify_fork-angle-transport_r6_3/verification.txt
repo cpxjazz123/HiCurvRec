@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `fork-angle-transport/train_rqvae.py:403-433` → `fork-angle-transport/model/model.py:42-56` → `fork-angle-transport/model/layers.py:273-354` | Traced the trainer’s training-only successor-neighbour table and batch context into the per-layer quantizer. The neighbour mean and branch scale produce a learned tangent shift; with geometry enabled, that shifted point and the codewords are mapped into the Poincare ball and assigned by geodesic distance. `smoke_test.py:123-162` specifies checks that both switches alter assignments and that gradients reach the encoder and shift map. I inspected those checks but could not execute them in this environment.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: `fork-angle-transport/model/layers.py:273-369` | Inspected the forward and backward graph: the shift enters the transformed assignment point, and the curved commitment distance is computed from that point and the selected mapped code. Its differentiable path reaches the residual and shift; the shift is produced by the learned maps in `model/model.py:42-56`. The switch assertions and gradient checks are specified in `smoke_test.py:123-162`; runtime execution was not available.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No dead coupled term or evident float32 numerical hazard found in the inspected path. Assignment selection itself is discrete, but the curved commitment term supplies a differentiable path through the shifted point.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `fork-angle-transport/train_rqvae.py:42-80`, `329-433`, `451-471`, `529-575`, `579-608` | Inspected the entry point, data loading, output paths, export indexing, and launcher branches. The trainer reads the frozen Stage 1 embedding and Stage 0 training parquet paths, constructs the behaviour signal from training transitions, writes results to its promoted candidate directory, and exports rows indexed by item ID. The four-rank smoke path is specified in `smoke_test.py:165-183` and `ddp_check.py:27-77`; the single-card launcher branch checks `GENREC_SINGLE_GPU` at `train_rqvae.py:583-585`. I could not run the trainer or launcher here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by source inspection. The trainer’s output directory is this candidate’s promoted result directory, as required.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

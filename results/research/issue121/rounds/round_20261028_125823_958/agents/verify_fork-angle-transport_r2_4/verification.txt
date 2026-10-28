@@ -1,0 +1,28 @@
+VERDICT: NEEDS_FIX
+
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:273-307 | Traced the trainer’s training and export calls through RQLayer._fork_forward: the successor-derived shift is added to the residual, then the shifted point and code vectors are mapped into the Poincaré ball and compared by squared geodesic distance. The geometry-off branch uses the same shifted tangent with Euclidean distance.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No defect found. The training-only successor overlap is constructed in train_rqvae.py:261-327 and supplies the neighbourhood context and branching scale used by the quantizer in train_rqvae.py:415-433.
+FINDING REPRODUCTION: Source-traced the training call at train_rqvae.py:462 through model/model.py:32-37 and model/layers.py:329-340; also traced export at train_rqvae.py:435-443.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:273-316 | Inspected the forward and gradient path from the behaviour shift through assignment, straight-through quantization, quantization loss, and residual update; inspected smoke_test.py:123-162 for its intended switch and gradient checks. No runtime execution was performed.
+FINDING SEVERITY: blocking
+FINDING LOCATION: smoke_test.py:137-141
+FINDING DETAIL: The test’s geometry-off comparison does not actually switch geometry off. It sets `geometry_on=False` in the context, but `model/model.py:40-54` rebuilds that context from `fork_context` and overwrites `shifts` only; `model/layers.py:286-287` reads `geometry_on` from the context passed to the quantizer. In this test the flag is passed through, so it does switch off; however, the claimed check only asserts assignment changes on one toy input. More importantly, neither this test nor the code guarantees finite losses and gradients for the real configured mechanism. A concrete numerical hazard is `model/hyperbolic.py:135`: the distance argument is clamped to `1 + 1e-7`; in float32, `acosh` at that value is finite, but its derivative is large. I found no demonstrated overflowing clamp or dead pathway, so this is not a code defect. The blocking defect is that the switch comparisons are not valid controls for the specified mechanism: `geometry_on=False` selects Euclidean distance, but `behavior_on=False` is implemented by zeroing both the mean and scale in the trainer only (`train_rqvae.py:427-431`), and the smoke test simulates that manually. The trainer’s behavior switch is not tested by the smoke test and the geometry switch’s assignment-change assertion is input-dependent, not guaranteed.
+FINDING REPRODUCTION: Run `check_displacement_and_switches()` repeatedly with different toy inputs/model initialization; the assertion that assignments differ is not guaranteed because argmin indices are discrete and can remain unchanged even when distances change. Separately, set `BEHAVIOR_ON=False` in the trainer and inspect the only checked path: the smoke test does not read or exercise that trainer switch.
+FINDING CORRECTION: Exercise the actual behavior and geometry switches through the quantizer in a deterministic test that verifies changed distances or gradients as well as assignments; wire the behavior switch into the same context construction used by the trainer and test that code path. Confirm finite loss and gradients in the prescribed GPU smoke before training.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-77, 261-327, 330-433, 435-443, 529-608 | Inspected repository-root and output-path derivation, frozen embedding and training-parquet inputs, training-only neighbourhood construction, indexed SID export, and launcher branches. Runtime execution was unavailable and is not required here.
+FINDING SEVERITY: minor
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found. The result directory is the candidate’s promoted directory; the SID JSON is keyed by enumerated embedding-row item IDs; the launcher has both the four-card torchrun path and the `GENREC_SINGLE_GPU` single-process branch.
+FINDING REPRODUCTION: Source-traced `TRAIN_FILE` and `EMBEDDING_FILE` at train_rqvae.py:72-75, export at train_rqvae.py:557-570, and launcher selection at train_rqvae.py:579-608.
+FINDING CORRECTION: Not applicable.

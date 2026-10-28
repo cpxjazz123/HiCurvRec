@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour × geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:261-324 → train_rqvae.py:412-431 → model/model.py:34-40, 42-56 → model/layers.py:273-349 | Traced the trainer’s training-only successor-overlap construction and batch context into the learned per-layer shift, then into the Poincaré exp-map/geodesic-distance assignment and tangent residual update. The smoke test at smoke_test.py:123-162 checks that both switches change assignments and that the shift matches the scaled learned map.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Code-path inspection; the sandbox does not permit running the trainer.
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:34-40, 42-56 → model/layers.py:273-349 | Inspected the forward and loss path: the shift affects the residual used for assignment and commitment; the selected code and residual feed reconstruction and the next quantization level. The smoke test at smoke_test.py:134-162 compares both-on, behaviour-off and geometry-off assignments and checks gradients reach the encoder and fork map. Runtime execution was not available here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No code-level dead term or evident float32 numerical hazard found in the exercised coupled path. The smoke test’s finite-gradient checks are source evidence, not a runtime result from this review.
+FINDING REPRODUCTION: Inspect model/layers.py:284-349 and smoke_test.py:134-162.
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 103-105, 327-431, 433-441, 527-601 | Inspected the trainer entry point, frozen embedding/train parquet inputs, candidate-specific promoted output directory, item-ID-indexed SID export, and launcher branches. The four-rank smoke path is defined in smoke_test.py:165-183 and ddp_check.py:27-78; neither it nor the trainer was run in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No integration defect found by code inspection. Outputs resolve to results/stage2_RQ-VAE/TIGER_fork-angle-transport/, and the single-card launcher branch reads GENREC_SINGLE_GPU at train_rqvae.py:581-583.
+FINDING REPRODUCTION: Inspect the cited entry-point and export paths.
+FINDING CORRECTION: none

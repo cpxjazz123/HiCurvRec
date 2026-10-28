@@ -1,0 +1,27 @@
+VERDICT: PASS
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:40-53 -> model/layers.py:273-308 | Inspected the trainer-built context and model forward into each quantizer layer. Training-only successor overlaps and branching mass are computed in train_rqvae.py:261-327,408-433; the resulting learned shift is added to the residual before Poincare mapping and geodesic-distance assignment. The smoke test specifies both-on, behaviour-off and geometry-off assignment comparisons at smoke_test.py:123-162; I inspected it but did not execute it.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: -
+FINDING DETAIL: No defect found.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:32-38,40-53 -> model/layers.py:273-340 | Traced the forward and backward graph in code: shifted residuals feed quantization loss and the straight-through selected-code result; the shifts depend on trainable fork maps and encoder-produced neighbour representations. The smoke test checks finite-nonzero gradients to the encoder and fork map and both switch effects at smoke_test.py:129-162. It is source inspection only; no runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: -
+FINDING DETAIL: No code-level dead term or apparent float32 overflow/NaN hazard found in the coupled path.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78,103-105,261-327,330-433,435-443,451-475,529-575,579-608 | Inspected trainer entry, data loading, launch branches, and export. It reads the frozen Stage 0 training parquet and Stage 1 embeddings; writes to the promoted candidate’s `results/stage2_RQ-VAE/TIGER_fork-angle-transport/` directory; exports unique, item-indexed SID rows and JSON keys; and retains both four-card torchrun and the `GENREC_SINGLE_GPU` branch. No trainer execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: -
+FINDING DETAIL: No integration defect found by source inspection.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

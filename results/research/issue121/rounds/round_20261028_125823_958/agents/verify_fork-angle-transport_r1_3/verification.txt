@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:404-433` → `model/model.py:32-36,40-54` → `model/layers.py:273-316` | Traced the trainer’s training-only successor neighbourhood into the learned tangent shift and the Poincare-geodesic assignment. The geometry-off path uses the same shifted vector with Euclidean distance (`layers.py:291-297`); the behaviour-off path zeros the shift inputs (`train_rqvae.py:427-433`).
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No defect found in the connected behaviour-and-geometry pathway.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.
+
+CHECK: b) trainability
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: `model/model.py:40-54` → `model/layers.py:273-316,329-340` | Source-traced the forward and backward graph and the smoke-test cases for both switches (`smoke_test.py:123-162`). The test asserts assignment changes for both controls and nonzero encoder and fork-map gradients, but this environment cannot run it.
+FINDING SEVERITY: blocking
+FINDING LOCATION: `train_rqvae.py:415-433`
+FINDING DETAIL: The specified bounded ambiguity coefficient `b_i/(1+b_i)` is not applied. `build_fork_context` passes raw `branching_t[ids]` as `scale`, and `_fork_context` multiplies it directly by the learned map output. Consequently the shift coefficient is unbounded, contrary to the mechanism’s stated bounded scale and risk control; large branching mass can let the behaviour shift dominate the residual. The smoke test only supplies arbitrary scales and does not check the specified formula.
+FINDING REPRODUCTION: For an item with `branching_np[i] == 2`, the specified coefficient is `2/3`, but `build_fork_context` returns `scale == 2`; the resulting displacement is three times the specified displacement. Larger branching mass increases that discrepancy without a bound.
+FINDING CORRECTION: Set the training context scale to `branching_t[ids] / (1 + branching_t[ids])` before returning it. Add a source-level or smoke assertion that checks this scale formula and its bounded range.
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: `train_rqvae.py:42-78,261-327,330-433,435-443,529-608` | Inspected the trainer entry point, frozen embedding and training-parquet paths, neighbourhood construction, indexed token export and SID extension, output directory resolution, and launcher branches including `GENREC_SINGLE_GPU` (`train_rqvae.py:579-608`). Runtime execution is unavailable here.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: No source-level integration defect found. The result directory is this candidate’s promoted Stage 2 directory, the JSON export enumerates embedding-row item IDs, and the single-card launcher branch is present.
+FINDING REPRODUCTION: Not applicable.
+FINDING CORRECTION: Not applicable.

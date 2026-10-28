@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:404-433 -> model/model.py:49-53 -> model/layers.py:273-307 | Inspected the trainer’s training-only successor context construction, its use to form per-layer shifts, and the Poincare-map/geodesic-distance assignment alongside the geometry-off Euclidean branch. The connected behavior-plus-geometry assignment path is present.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:425-433; model/model.py:49-51
+FINDING DETAIL: The implemented shift scale is the raw branching mass b_i, but the specification requires b_i/(1+b_i). The raw mass is not bounded to [0,1), so the core behavior-conditioned tangent displacement differs from the specified mechanism and can grow with successor-neighbour overlap mass.
+FINDING REPRODUCTION: For an item with branching mass b_i=2, build_fork_context returns scale=2 at train_rqvae.py:426, and _fork_context applies 2*W_l(mean) at model/model.py:50-51. The specified scale for that input is 2/3.
+FINDING CORRECTION: Set the context scale to branching_t[ids] / (1 + branching_t[ids]) before applying the behavior-off switch, preserving zero scale when behavior is off.
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:273-316; model/model.py:32-38; smoke_test.py:123-162 | Code inspection confirms the shifted point and code vectors enter the Poincare assignment, while the shifted tangent enters the differentiable quantization loss and straight-through output. The smoke test defines checks that both switches alter assignments and that gradients reach the encoder and fork map. Runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No additional trainability defect found by code inspection. The bounded-scale fidelity defect is reported under check a.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A
+
+CHECK: c) integration
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-78, 261-327, 330-433, 529-608 | Inspected the trainer’s repository-root and promoted-candidate result paths, frozen Stage 0 training parquet input, item-indexed SID export, full-epoch loop, launcher, and the GENREC_SINGLE_GPU single-card branch. The candidate writes to its own promoted result directory and exports rows by item ID; runtime execution was not available in this sandbox.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: N/A
+FINDING DETAIL: No integration defect found by code inspection.
+FINDING REPRODUCTION: N/A
+FINDING CORRECTION: N/A

@@ -1,0 +1,33 @@
+{
+  "argv_shape": [
+    "opencode",
+    "run",
+    "--standalone",
+    "--format",
+    "json",
+    "--auto",
+    "--model",
+    "<model>",
+    "--title",
+    "rebuttal_fork-geodesic-rank_r0",
+    "<prompt>"
+  ],
+  "cancelled": false,
+  "exit_code": 0,
+  "finished_utc_epoch": 1793154590.7022927,
+  "isolation_config": "opencode.json",
+  "isolation_config_sha256": "52866d9fbc90471fc219d09ced94eb3ed014fc57fe769731127c9f8419f256fb",
+  "isolation_policy": "opencode v2 permission object: bash denied, edit and write denied (this role is read-only and its answer is read back from the session stream), webfetch and external_directory denied; the workspace is its own opencode project so its opencode.json applies",
+  "limitations": "A cwd is NOT a sandbox; deployment must confine actual agent tools.",
+  "model": "openai/gpt-6-luna",
+  "output_name": "rebuttal.txt",
+  "output_sha256": "2d1269b8d870993d9389c664b19cf57c1c0c9dcc7d22f2294433a5358523bf8b",
+  "pid": 530909,
+  "project_marker": ".git",
+  "prompt_sha256": "9701b59cbf4195d4116c56289a54a80b5e65d8ec3ccde85bfe9749aacbf5291d",
+  "session_sha256": "868faac0538a019622897911dec7398db17dfdfa20c822d3ac5a6bb6688c075a",
+  "stderr_present": false,
+  "task_id": "rebuttal_fork-geodesic-rank_r0",
+  "timed_out": false,
+  "verified": true
+}

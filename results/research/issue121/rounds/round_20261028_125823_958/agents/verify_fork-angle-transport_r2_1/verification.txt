@@ -1,0 +1,27 @@
+VERDICT: NEEDS_FIX
+CHECK: a) behaviour x geometry fidelity
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:273-316 | Source inspection follows the trainer’s batch context from train_rqvae.py:415-433 through RQVAE._fork_context in model/model.py:40-54 into RQLayer._fork_forward. The successor-derived shift is added to the residual before the Poincare exp-map and geodesic-distance assignment; the geometry-off branch uses the same shifted point with Euclidean distance. smoke_test.py:123-162 encodes checks that both switches change assignments, but runtime execution was unavailable.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: b) trainability
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:32-38, model/layers.py:273-316 | Source inspection shows the learned fork maps produce shifts used in the assignment input and in the commitment loss input (layers.py:305-308); the reconstruction and quantization losses are combined before backward in train_rqvae.py:462-470. The Poincare maps, distance, and float safeguards are in model/hyperbolic.py:66-79 and 82-136. smoke_test.py:123-162 checks assignment changes for both switches and nonzero gradients for the encoder and fork map. No runtime execution was performed.
+FINDING SEVERITY: minor when it does not stop the work
+FINDING LOCATION: none
+FINDING DETAIL: none
+FINDING REPRODUCTION: none
+FINDING CORRECTION: none
+
+CHECK: c) integration
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: train_rqvae.py:261-327, 330-433, 451-470, 529-608 | Inspected the trainer’s data loading and neighbourhood construction, training loop, final SID export, and launcher, including the GENREC_SINGLE_GPU branch at lines 579-608. The frozen training parquet and embedding paths are set at lines 72-75; exported rows map item IDs by enumeration at lines 564-570. Runtime execution was unavailable.
+FINDING SEVERITY: blocking
+FINDING LOCATION: train_rqvae.py:299-305
+FINDING DETAIL: Successor-overlap candidate enumeration truncates each item’s successors to FANOUT_LIMIT=256 before collecting candidate neighbours. Because successors are sets and the transition “counts” at lines 289-291 are therefore always 1, this truncation selects an arbitrary subset when an item has more than 256 distinct successors. A candidate sharing successors only outside that subset is never considered, so the retained top-k can omit valid higher-overlap neighbours. This means the behaviour signal is not the specified top-k nonzero Jaccard neighbours computed over the full successor sets.
+FINDING REPRODUCTION: Construct an item i with 257 distinct successors, and another item j whose successor set overlaps i on a successor excluded by the 256-entry slice. Make j share all but one of its successors with i, and include another candidate sharing only one included successor. The omitted j cannot enter i’s candidate pool even though its Jaccard overlap is larger, so i’s stored top neighbour is incorrect. The set iteration order may make which successor is omitted vary.
+FINDING CORRECTION: Enumerate all distinct successors when constructing candidate pools, or use a bounded candidate-generation method with a correctness guarantee for the full successor sets. Preserve the full-set Jaccard calculation and choose the top-k from all nonzero-overlap candidates; do not truncate the successor set before candidate generation.
