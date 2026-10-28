@@ -326,3 +326,27 @@ class ExternalDirectoryTests(unittest.TestCase):
             self.assertEqual(external.get(directory_pattern), "allow")
             self.assertEqual(external.get(str(scoped.resolve())), "allow")
             self.assertEqual(permissions["read"].get(str(scoped.resolve())), "allow")
+
+
+class ReadTrackingTests(unittest.TestCase):
+    """The receipt says what the agent could read, not only what it was allowed to."""
+
+    def test_denied_reads_are_recorded(self):
+        import json
+        from tools.research.agents import runner
+        with tempfile.TemporaryDirectory() as work:
+            session = Path(work) / "session.jsonl"
+            lines = [
+                {"type": "tool_use", "part": {"tool": "read", "state": {
+                    "status": "error", "input": {"path": "/tmp/x.py"},
+                    "error": "Permission denied: read"}}},
+                {"type": "tool_use", "part": {"tool": "read", "state": {
+                    "status": "completed", "input": {"path": "/tmp/y.py"}}}},
+                {"type": "text", "part": {"text": "answer"}},
+            ]
+            session.write_text("\n".join(json.dumps(line) for line in lines),
+                               encoding="utf-8")
+            outcome = runner.session_reads(session)
+        self.assertEqual(len(outcome["reads_denied"]), 1)
+        self.assertEqual(outcome["reads_denied"][0]["target"], "/tmp/x.py")
+        self.assertEqual(outcome["files_read"], ["/tmp/y.py"])

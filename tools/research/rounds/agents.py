@@ -257,6 +257,7 @@ VERIFIER_ROLES = (
         "id": "math-geometry",
         "reads": ["model/frechet_poincare.py", "model/curvature_control.py",
                   "model/behaviour_radius.py", "model/utils.py",
+                  "tools/research/geometry/poincare_contract.py",
                   "tests/test_geometry.py", "tests/test_codebook_step.py"],
         "name": "mathematics and geometry",
         "scope": "model/frechet_poincare.py, tests/test_geometry.py, "
@@ -288,8 +289,9 @@ VERIFIER_ROLES = (
         "id": "gradient-update",
         "reads": ["model/layers.py", "model/model.py", "model/curvature_control.py",
                   "model/behaviour_radius.py", "model/frechet_poincare.py",
-                  "model/utils.py", "train_rqvae.py", "tests/test_mechanism.py",
-                  "tests/test_curvature_wiring.py"],
+                  "model/utils.py", "train_rqvae.py",
+                  "tools/research/geometry/poincare_contract.py",
+                  "tests/test_mechanism.py", "tests/test_curvature_wiring.py"],
         "name": "gradients and parameter updates",
         "scope": "model/layers.py, model/model.py, train_rqvae.py (the optimiser, the "
                  "backward and the parameter updates), tests/test_mechanism.py",

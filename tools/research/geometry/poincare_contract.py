@@ -36,14 +36,21 @@ def c_of_radius(radius) -> torch.Tensor:
 
 
 def tanhc(x: torch.Tensor) -> torch.Tensor:
-    """``tanh(x)/x`` with the limit 1 at ``x = 0`` (explicit, not a guard)."""
-    return torch.where(x.abs() < 1e-8, torch.ones_like(x), torch.tanh(x) / x.clamp_min(1e-30))
+    """``tanh(x)/x`` with the limit 1 at ``x = 0`` (explicit, not a guard).
+
+    The denominator keeps the SIGN of the argument: clamping it to a small
+    positive number would turn ``tanhc(-0.2)`` into a huge negative value
+    instead of the finite limit it has.
+    """
+    safe = torch.where(x.abs() < 1e-8, torch.ones_like(x), x)
+    return torch.where(x.abs() < 1e-8, torch.ones_like(x), torch.tanh(safe) / safe)
 
 
 def atanhc(x: torch.Tensor) -> torch.Tensor:
-    """``artanh(x)/x`` with the limit 1 at ``x = 0``."""
-    return torch.where(x.abs() < 1e-8, torch.ones_like(x),
-                       torch.atanh(x.clamp(max=1 - ARTANH_EPS)) / x.clamp_min(1e-30))
+    """``artanh(x)/x`` with the limit 1 at ``x = 0``, keeping the sign."""
+    clipped = x.clamp(max=1 - ARTANH_EPS)
+    safe = torch.where(x.abs() < 1e-8, torch.ones_like(x), clipped)
+    return torch.where(x.abs() < 1e-8, torch.ones_like(x), torch.atanh(safe) / safe)
 
 
 def project(x: torch.Tensor, c) -> torch.Tensor:
@@ -81,8 +88,8 @@ def expmap0(v: torch.Tensor, c) -> torch.Tensor:
     if float(c) == 0.0:
         return v.clone()
     root = torch.sqrt(c)
-    norm = v.norm(dim=-1, keepdim=True).clamp_min(1e-30)
-    return project(torch.tanh(root * norm) / (root * norm) * v, c)
+    norm = v.norm(dim=-1, keepdim=True)
+    return project(tanhc(root * norm) * v, c)
 
 
 def logmap0(y: torch.Tensor, c) -> torch.Tensor:
@@ -92,7 +99,8 @@ def logmap0(y: torch.Tensor, c) -> torch.Tensor:
         return y.clone()
     root = torch.sqrt(c)
     norm = y.norm(dim=-1, keepdim=True)
-    return (torch.atanh((root * norm).clamp(max=1 - ARTANH_EPS)) / (root * norm.clamp_min(1e-30))) * y
+    # atanhc keeps the limit at zero, so the origin has the identity gradient
+    return atanhc(root * norm) * y
 
 
 def lambda_x(x: torch.Tensor, c) -> torch.Tensor:
@@ -110,7 +118,10 @@ def expmap(x: torch.Tensor, v: torch.Tensor, c) -> torch.Tensor:
         return x + v
     root = torch.sqrt(c)
     norm = v.norm(dim=-1, keepdim=True).clamp_min(1e-30)
-    scaled = (torch.tanh(root * lambda_x(x, c) * norm / 2.0) / (root * norm)) * v
+    # tanh(z) v/(sqrt(c)|v|) with z = sqrt(c) lambda_x |v| / 2 equals
+    # tanhc(z) (lambda_x/2) v, and the stable limit keeps the origin regular
+    scale = lambda_x(x, c)
+    scaled = tanhc(root * scale * norm / 2.0) * (scale / 2.0) * v
     return project(mobius_add(x, scaled, c), c)
 
 
@@ -145,8 +156,13 @@ def squared_distance(x: torch.Tensor, y: torch.Tensor, c) -> torch.Tensor:
 
 
 def frechet_mean(points: torch.Tensor, c, *, weights: torch.Tensor = None,
-                 steps: int = 100, tol: float = 1e-9) -> torch.Tensor:
-    """The Karcher mean by the fixed-point iteration, with a stated tolerance."""
+                 steps: int = 100, tol: float = 1e-9, report: bool = False):
+    """The Karcher mean by the fixed-point iteration, with a stated tolerance.
+
+    With ``report=True`` the call returns ``(mean, converged, steps_taken)``: a
+    mean that ran out of iterations is reported as NOT converged, so a caller
+    never publishes a number it did not earn.
+    """
     c = _tensor(c, points)
     points = torch.as_tensor(points)
     if points.shape[0] == 1:
@@ -155,14 +171,20 @@ def frechet_mean(points: torch.Tensor, c, *, weights: torch.Tensor = None,
                if weights is None else torch.as_tensor(weights, dtype=points.dtype,
                                                        device=points.device))
     centre = expmap0(logmap0(points, c).mean(dim=0), c) if float(c) > 0 else points.mean(0)
+    converged = False
+    taken = 0
     for _ in range(int(steps)):
+        taken += 1
         step = (weights.unsqueeze(-1) * logmap(
             centre.unsqueeze(0).expand_as(points), points, c)).sum(0) / weights.sum()
         moved = expmap(centre, step, c)
         shift = float(logmap(centre, moved, c).norm()) if float(c) > 0 else float(step.norm())
         centre = moved
         if shift < tol:
+            converged = True
             break
+    if report:
+        return centre, converged, taken
     return centre
 
 

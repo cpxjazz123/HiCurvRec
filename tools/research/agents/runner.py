@@ -130,6 +130,43 @@ def isolation_permissions(workspace: Path, role: str = "verify",
     return permissions
 
 
+def session_reads(path: Path) -> dict:
+    """What the agent actually read, and what it was refused.
+
+    A report that claims to have reviewed code it could not open is not a source
+    review. The session stream knows: every read tool call carries its status and
+    its path, so the denied reads are a fact the framework can record instead of
+    a thing a reader has to notice.
+    """
+    read: list = []
+    denied: list = []
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return {"files_read": read, "reads_denied": denied}
+    for line in lines:
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            continue
+        if entry.get("type") != "tool_use":
+            continue
+        part = entry.get("part") or {}
+        tool = str(part.get("tool") or "")
+        state = part.get("state") or {}
+        if tool not in ("read", "glob", "grep", "edit", "write"):
+            continue
+        target = str((state.get("input") or {}).get("path")
+                     or (state.get("input") or {}).get("pattern") or "")
+        status = str(state.get("status") or "")
+        error = str(state.get("error") or "")
+        if status == "error" and "ermission" in error:
+            denied.append({"tool": tool, "target": target, "error": error[:120]})
+        elif status == "completed" and target:
+            read.append(target)
+    return {"files_read": read, "reads_denied": denied}
+
+
 def session_answer(path: Path) -> str:
     """The text an agent printed, read back from the opencode session stream.
 
@@ -670,6 +707,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
                           [str(entry.resolve()) for entry in allowed
                            if str(entry.resolve()) != str(entry)],
         "geometry_contract": _geometry_contract(),
+        "reads": session_reads(workspace / "session.jsonl"),
         "boundary_version": policy.BOUNDARY_VERSION,
         "boundary_sha256": boundary_fingerprint(workspace, role, allowed,
                                                 allow_shell, allow_write,

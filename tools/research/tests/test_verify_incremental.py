@@ -284,3 +284,13 @@ class ReadCoverageTests(unittest.TestCase):
             tree.mkdir()
             paths = worker_module.role_read_paths(tree, {"reads": ["model/absent.py"]})
             self.assertEqual(paths, [])
+
+
+class CoverageGapTests(unittest.TestCase):
+    """A report whose reads were refused is not a source review."""
+
+    def test_the_report_marks_refused_reads(self):
+        source = (Path(__file__).resolve().parents[1] / "rounds" /
+                  "worker.py").read_text(encoding="utf-8")
+        self.assertIn('report["source_review"] = False', source)
+        self.assertIn('"kind": "read_denied"', source)

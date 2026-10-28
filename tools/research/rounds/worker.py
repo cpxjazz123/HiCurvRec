@@ -1237,6 +1237,15 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
         report.setdefault("verifier", task_id)
         report["role"] = roles[index - 1]["id"]
         report["coverage_gaps"] = gaps.get(index) or []
+        # What the agent could actually open: a report whose reads were refused is
+        # an inference from the prompt, and it is marked as such instead of
+        # counting as a source review.
+        denied = list((report.get("reads") or {}).get("reads_denied") or [])
+        if denied:
+            report["coverage_gaps"] = list(report["coverage_gaps"]) + [
+                {"kind": "read_denied", "detail": "%d refused reads, first: %s" % (
+                    len(denied), str(denied[0].get("target"))[:120])}]
+            report["source_review"] = False
         return report
 
     try:

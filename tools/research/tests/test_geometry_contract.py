@@ -214,3 +214,57 @@ class ContractEnforcementTests(unittest.TestCase):
                      "expmap0", "logmap0", "distance", "squared_distance", "lambda_x",
                      "frechet_mean", "tanhc", "atanhc"):
             self.assertTrue(callable(getattr(g, name, None)), name)
+
+
+class SignedLimitTests(unittest.TestCase):
+    """The stable limits keep the sign of their argument and the gradient at 0."""
+
+    @unittest.skipUnless(HAVE_TORCH, "needs the project interpreter")
+    def test_tanhc_keeps_the_sign_of_a_negative_argument(self):
+        for value in (-0.2, -1.0, -3.0):
+            got = float(g.tanhc(torch.tensor([value]))[0])
+            expected = math.tanh(value) / value
+            self.assertAlmostEqual(got, expected, places=6)
+
+    @unittest.skipUnless(HAVE_TORCH, "needs the project interpreter")
+    def test_atanhc_keeps_the_sign_of_a_negative_argument(self):
+        for value in (-0.2, -0.5, -0.9):
+            got = float(g.atanhc(torch.tensor([value]))[0])
+            expected = math.atanh(value) / value
+            self.assertAlmostEqual(got, expected, places=6)
+
+    @unittest.skipUnless(HAVE_TORCH, "needs the project interpreter")
+    def test_the_log_map_has_the_identity_gradient_at_the_origin(self):
+        """D log_0^c(0) = I: the origin is a regular point of the logarithm."""
+        for curvature in CURVATURES:
+            point = torch.zeros(1, 2, requires_grad=True)
+            g.logmap0(point, curvature).sum().backward()
+            self.assertTrue(torch.allclose(point.grad, torch.ones(1, 2), atol=1e-6),
+                            "c=%s: %r" % (curvature, point.grad.tolist()))
+
+    @unittest.skipUnless(HAVE_TORCH, "needs the project interpreter")
+    def test_the_exp_map_has_the_identity_gradient_at_the_origin(self):
+        for curvature in CURVATURES:
+            tangent = torch.zeros(1, 2, requires_grad=True)
+            g.expmap0(tangent, curvature).sum().backward()
+            self.assertTrue(torch.allclose(tangent.grad, torch.ones(1, 2), atol=1e-6),
+                            "c=%s: %r" % (curvature, tangent.grad.tolist()))
+
+    @unittest.skipUnless(HAVE_TORCH, "needs the project interpreter")
+    def test_the_maps_are_inverse_in_the_gradient_too(self):
+        tangent = torch.tensor([[0.3, -0.2]], requires_grad=True)
+        point = g.expmap0(tangent, 0.25)
+        back = g.logmap0(point, 0.25)
+        self.assertTrue(torch.allclose(back, tangent.detach(), atol=1e-5))
+
+
+class ConvergenceTests(unittest.TestCase):
+    """The Frechet mean reports whether it converged."""
+
+    @unittest.skipUnless(HAVE_TORCH, "needs the project interpreter")
+    def test_the_mean_reports_its_convergence(self):
+        points = g.expmap0(torch.tensor([[0.2, 0.0], [0.6, 0.0]]), 1.0)
+        mean, converged, steps = g.frechet_mean(points, 1.0, report=True)
+        self.assertTrue(converged)
+        self.assertGreater(steps, 0)
+        self.assertLessEqual(steps, 100)
