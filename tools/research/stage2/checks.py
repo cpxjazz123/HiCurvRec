@@ -35,7 +35,8 @@ def _scratch_dir(tree: Path) -> Path:
 
 def _python_for() -> str:
     """The Stage 2 interpreter, as the frozen contract sets it."""
-    return "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
+    from . import contract
+    return contract.STAGE2_PYTHON
 
 
 def check_constants(tree: Path | str) -> dict:

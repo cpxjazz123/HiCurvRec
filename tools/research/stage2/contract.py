@@ -38,6 +38,10 @@ STAGE2_PORT = 50202
 STAGE3_PORT = 50201
 WORLD_SIZE = 4
 
+#: The interpreter the Stage 2 candidates run under. It is the one with torch,
+#: and an agent that has to execute the trainer needs it as well.
+STAGE2_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9"
+
 #: The environment variable that tells a trainer to run in this process instead
 #: of forking the four-rank job. It is part of the frozen contract: the MCP
 #: single-card smoke sets it, and a trainer that ignores it breaks the smoke.

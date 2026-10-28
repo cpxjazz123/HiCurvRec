@@ -10,6 +10,8 @@ from ..agents.prompts import build_prompt
 from ..agents.runner import run_agent
 from ..core import failures as failure_registry
 from ..core.dag import StateError, TaskStore
+from ..rounds import baseline as baseline_module
+from ..stage2 import contract
 from ..core.evidence import atomic_json, digest_bytes, digest_file, read_json
 from ..integrations.preflight import audit_surviving_mainline
 from ..science.behavior import run as analyze_train_behavior
@@ -50,6 +52,12 @@ def manifest_for(task, root):
     literature = root / "agents" / "literature" / "literature.json"
     proposal = root / "agents" / "geometry" / "candidate.json"
     manifest = {"task_id": task, "research": "issue117-behavior-first"}
+    # The paths the agent may read, named absolutely: the agent's working
+    # directory is its own workspace, so a relative path would not resolve.
+    manifest["readable_paths"] = {
+        "baseline": str(baseline_module.CANONICAL_BASELINE),
+        "stage2_python": contract.STAGE2_PYTHON,
+    }
     if task == "literature":
         manifest["research_question"] = (
             "Research verified literature where user next-item behavior, "
@@ -230,13 +238,18 @@ def run_agent_until_valid(task: str, root: Path, manifest: dict, prompt: str,
             dag.renew(task_id, owner, settings.LEASE_SECONDS)
         attempt += 1
         try:
-            # The Issue #117 surface is the old flow, not a round: it keeps
-            # the repository visible. The round is the sandboxed path.
+            # The Issue #117 surface runs under the same boundary as a round:
+            # the one permitted baseline is the only source tree it may read,
+            # and the run's other agents' answers are not among the files it
+            # sees.
             evidence = run_agent(task, prompt, OUTPUTS[task], root,
                                  binary=settings.AGENT_BINARY,
                                  model=settings.AGENT_MODEL,
                                  timeout=settings.AGENT_TIMEOUT_SECONDS,
-                                 sandbox=False)
+                                 read_paths=[baseline_module.CANONICAL_BASELINE],
+                                 allowed_roots=[settings.ROOT,
+                                                Path(contract.STAGE2_PYTHON).parent.parent],
+                                 allow_shell=True, allow_write=True)
             verify_science_output(task, root, manifest)
             return evidence
         except (ValueError, RuntimeError) as exc:

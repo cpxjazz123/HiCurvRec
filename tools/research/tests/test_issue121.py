@@ -14,6 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.research.agents import policy
 from tools.research.rounds import baseline as baseline_module
 from tools.research.rounds import ideas as ideas_module
 from tools.research.rounds import pipeline as pipeline_module
@@ -601,8 +602,12 @@ class SeveritySentenceTests(unittest.TestCase):
                                                "reproduction": "", "correction": ""}]}]}
             state = pipeline_module.apply_verification(
                 state, "coupled",
-                [dict(minor, verifier="v1")] +
-                [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                [dict(minor, verifier="v1",
+                      boundary_version=policy.BOUNDARY_VERSION,
+                      boundary_sha256="test-boundary")] +
+                [{"verifier": "v" + str(index), "verdict": "PASS", "checks": [],
+                  "boundary_version": policy.BOUNDARY_VERSION,
+                  "boundary_sha256": "test-boundary"}
                  for index in range(2, 6)])
             self.assertEqual(state["implementations"][0]["status"], "verified")
 
@@ -623,8 +628,12 @@ class SeveritySentenceTests(unittest.TestCase):
             passing = {"verifier": "v", "verdict": "PASS", "checks": []}
             state = pipeline_module.apply_verification(
                 state, "coupled",
-                [dict(passing, verifier="v1")] +
-                [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                [dict(passing, verifier="v1",
+                      boundary_version=policy.BOUNDARY_VERSION,
+                      boundary_sha256="test-boundary")] +
+                [{"verifier": "v" + str(index), "verdict": "PASS", "checks": [],
+                  "boundary_version": policy.BOUNDARY_VERSION,
+                  "boundary_sha256": "test-boundary"}
                  for index in range(2, 6)])
             self.assertEqual(state["implementations"][0]["status"], "needs_repair")
 
@@ -633,7 +642,10 @@ class VerifierQuorumTests(unittest.TestCase):
     """Five reviewers per mechanism, and the main agent decides what happens."""
 
     def _verdicts(self, count=5, verdict="PASS"):
-        return [{"verifier": "v" + str(index), "verdict": verdict, "checks": []}
+        # A verdict names the filesystem boundary its reviewers read under.
+        return [{"verifier": "v" + str(index), "verdict": verdict, "checks": [],
+                 "boundary_version": policy.BOUNDARY_VERSION,
+                 "boundary_sha256": "test-boundary"}
                 for index in range(1, count + 1)]
 
     def test_five_verifiers_are_configured(self):

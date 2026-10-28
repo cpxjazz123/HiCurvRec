@@ -20,6 +20,7 @@ import json
 import time
 from pathlib import Path
 
+from ..agents import policy
 from ..core.evidence import atomic_json, digest_file, read_json
 from . import ideas as ideas_module
 from . import scoring as scoring_module
@@ -328,6 +329,15 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
                              "detail": "verdict NEEDS_FIX without a stated blocking finding"})
         findings.extend(reported)
     record["verdicts"] = reports
+    # The boundary the reviewers read the candidate with. All of them must have
+    # run under the same one, and the record keeps it, so an acceptance can
+    # refuse a review that was produced under older rules.
+    boundaries = {str(report.get("boundary_version") or "") for report in reports}
+    if len(boundaries) != 1 or "" in boundaries:
+        raise RoundError("the verifiers did not run under one filesystem boundary: " +
+                         repr(sorted(boundaries)))
+    record["boundary_version"] = boundaries.pop()
+    record["boundary_sha256"] = str(reports[0].get("boundary_sha256") or "")
     # How many reviewers raised each finding: with five verifiers a single
     # objection and a shared one are different things, and the main agent has to
     # see the difference.
@@ -688,10 +698,20 @@ def accept_verification(state: dict, implementation_id: str, note: str = "") -> 
     if status != "verified":
         raise RoundError("only a verified candidate can be accepted; " +
                          implementation_id + " is " + status)
+    # A review is evidence about the candidate under the boundary it was read
+    # with. When the boundary changed, the old verdicts describe a view of the
+    # files the reviewers no longer have, so they are not accepted as current.
+    produced_under = str(record.get("boundary_version") or "")
+    if produced_under != policy.BOUNDARY_VERSION:
+        raise RoundError(
+            implementation_id + " was reviewed under boundary '" +
+            (produced_under or "none") + "' and the current policy is '" +
+            policy.BOUNDARY_VERSION + "': re-verify it under the current "
+            "boundary before accepting it")
     record["accepted"] = True
     record["acceptance_note"] = note
     record_event(state, "verification_accepted", idea_id=implementation_id,
-                 note=note)
+                 note=note, boundary_version=policy.BOUNDARY_VERSION)
     return state
 
 

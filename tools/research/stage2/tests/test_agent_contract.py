@@ -26,6 +26,27 @@ from tools.research.agents import runner
 from tools.research.rounds import plaintext, worker
 
 
+class plain_process:
+    """The executor without the namespace.
+
+    The contract under test is the answer contract, not the mount namespace, so
+    the fake binary runs directly. There is no production seam: ``run_agent``
+    always builds the namespace.
+    """
+
+    def __enter__(self):
+        self._sandbox = runner.sandbox_command
+        self._home = runner.agent_sandbox_home
+        runner.sandbox_command = lambda command, *args, **kwargs: list(command)
+        runner.agent_sandbox_home = lambda workspace: Path(tempfile.mkdtemp())
+        return self
+
+    def __exit__(self, *exc):
+        runner.sandbox_command = self._sandbox
+        runner.agent_sandbox_home = self._home
+        return False
+
+
 def _fake_agent(directory: Path, body: str) -> Path:
     path = directory / "fake-opencode"
     path.write_text("#!/bin/sh\n" + body, encoding="utf-8")
@@ -51,9 +72,10 @@ def test_partial_answer_is_not_published() -> str:
             (root / "agents" / "t1").mkdir(parents=True)
             destination = root / "agents" / "t1" / "verification.txt"
             try:
-                runner.run_agent("t1", "prompt", "verification.txt", root,
-                                 binary=str(binary), timeout=2, role="verify",
-                                 sandbox=False)
+                with plain_process():
+                    runner.run_agent("t1", "prompt", "verification.txt", root,
+                                     binary=str(binary), timeout=2, role="verify",
+                                     read_paths=[], allowed_roots=[root])
             except runner.AgentFailure as exc:
                 assert exc.failure_class == "timeout", exc.failure_class
             else:
@@ -75,9 +97,10 @@ def test_expired_credential_is_classified() -> str:
                                     '"message":"Your authentication token has expired."}}\'\n'
                                     'exit 1\n')
         try:
-            runner.run_agent("t2", "prompt", "verification.txt", root,
-                             binary=str(binary), timeout=30, role="verify",
-                             sandbox=False)
+            with plain_process():
+                runner.run_agent("t2", "prompt", "verification.txt", root,
+                                 binary=str(binary), timeout=30, role="verify",
+                                 read_paths=[], allowed_roots=[root])
         except runner.AgentFailure as exc:
             assert exc.failure_class == "auth", exc.failure_class
         else:

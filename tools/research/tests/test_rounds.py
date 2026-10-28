@@ -9,10 +9,18 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from tools.research.agents import policy
 from tools.research.rounds import ideas as ideas_module
 from tools.research.rounds import jobs as jobs_module
 from tools.research.rounds import pipeline as pipeline_module
 from tools.research.rounds import scoring as scoring_module
+
+
+def _boundary(report: dict) -> dict:
+    """A verdict that names the filesystem boundary its reviewers read under."""
+    report.setdefault("boundary_version", policy.BOUNDARY_VERSION)
+    report.setdefault("boundary_sha256", "test-boundary")
+    return report
 
 
 def _five(first: dict, rest: list | None = None) -> list:
@@ -20,7 +28,7 @@ def _five(first: dict, rest: list | None = None) -> list:
     if rest is None:
         rest = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
                 for index in range(2, 6)]
-    return [first] + rest
+    return [_boundary(report) for report in [first] + rest]
 
 def _idea(identifier, title="t", change="c", spec="s", **overrides):
     """A proposal that meets the joint behaviour x hyperbolic scope contract."""
@@ -213,7 +221,8 @@ class RoundStateTests(unittest.TestCase):
                                              "correction": "clamp"}]}]}
         passing = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
                    for index in range(2, 6)]
-        state = pipeline_module.apply_verification(state, "a", [blocker] + passing)
+        state = pipeline_module.apply_verification(
+            state, "a", _five(blocker, passing))
         record = state["implementations"][0]
         self.assertEqual(record["status"], "needs_repair")
         self.assertTrue(record["failure_signature"])
@@ -234,8 +243,9 @@ class RoundStateTests(unittest.TestCase):
         self.assertEqual(record["status"], "repaired")
         self.assertEqual(record["revision"], 1)
         state = pipeline_module.apply_verification(
-            state, "a", [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
-                         for index in range(1, 6)])
+            state, "a", _five({"verifier": "v1", "verdict": "PASS", "checks": []},
+                              [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                               for index in range(2, 6)]))
         self.assertEqual(state["implementations"][0]["status"], "verified")
         # The five verifiers report; the main agent accepts. Nothing is
         # dispatchable before that.
@@ -782,7 +792,7 @@ class RepairPlanTests(unittest.TestCase):
                                              "correction": "c"}]}]}
         others = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
                   for index in range(2, 6)]
-        state = pipeline_module.apply_verification(self.state, "a", [blocker] + others)
+        state = pipeline_module.apply_verification(self.state, "a", _five(blocker, others))
         self.assertEqual(state["implementations"][0]["status"], "needs_repair")
         # the main agent may not accept a candidate with a blocking finding
         with self.assertRaises(pipeline_module.RoundError) as caught:
@@ -792,8 +802,9 @@ class RepairPlanTests(unittest.TestCase):
         # after the fix and a clean review the candidate may be accepted
         state["implementations"][0]["blocking_findings"] = []
         state = pipeline_module.apply_verification(
-            state, "a", [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
-                         for index in range(1, 6)])
+            state, "a", _five({"verifier": "v1", "verdict": "PASS", "checks": []},
+                              [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
+                               for index in range(2, 6)]))
         state = pipeline_module.accept_verification(state, "a", "clean review")
         self.assertTrue(state["implementations"][0]["accepted"])
         self.assertEqual([r["idea_id"] for r in
@@ -832,7 +843,7 @@ class RepairPlanTests(unittest.TestCase):
             {"idea_id": "a"}, {}, tree)]
         verdicts = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
                     for index in range(1, 6)]
-        state = pipeline_module.apply_verification(self.state, "a", verdicts)
+        state = pipeline_module.apply_verification(self.state, "a", _five(verdicts[0], verdicts[1:]))
         record = state["implementations"][0]
         self.assertEqual(record["status"], "verified")
         self.assertEqual(len(record["verdicts"]), 5)
@@ -848,7 +859,7 @@ class RepairPlanTests(unittest.TestCase):
             {"idea_id": "a"}, {}, tree)]
         verdicts = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": []}
                     for index in range(1, 6)]
-        pipeline_module.apply_verification(self.state, "a", verdicts)
+        pipeline_module.apply_verification(self.state, "a", _five(verdicts[0], verdicts[1:]))
         self.assertEqual(pipeline_module.verified_implementations(self.state), [])
 
     def test_the_finding_agreement_counts_the_reviewers_that_raised_it(self):
@@ -866,7 +877,7 @@ class RepairPlanTests(unittest.TestCase):
                                              "detail": "NaN loss", "reproduction": "run it",
                                              "correction": "clamp"}]}]}
                   for index in range(2, 6)]
-        state = pipeline_module.apply_verification(self.state, "a", [blocker] + others)
+        state = pipeline_module.apply_verification(self.state, "a", _five(blocker, others))
         record = state["implementations"][0]
         self.assertEqual(record["status"], "needs_repair")
         self.assertEqual(list(record["finding_agreement"].values()), [5])

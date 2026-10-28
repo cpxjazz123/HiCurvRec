@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import shutil
@@ -5,10 +6,27 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 from tools.research import settings
+from tools.research.agents import runner
 from tools.research.agents.runner import (isolation_permissions, run_agent,
                                           sandbox_command)
 from tools.research.core.evidence import read_json
+
+
+@contextlib.contextmanager
+def plain_process():
+    """The executor without the namespace.
+
+    The namespace is the subject of its own test; these tests are about the
+    answer contract, so the fake binary runs directly. There is no production
+    seam: ``run_agent`` always builds the namespace.
+    """
+    with mock.patch.object(runner, "sandbox_command",
+                           side_effect=lambda command, *args, **kwargs: list(command)), \
+         mock.patch.object(runner, "agent_sandbox_home",
+                           side_effect=lambda workspace: Path(tempfile.mkdtemp())):
+        yield
 
 
 class AgentTests(unittest.TestCase):
@@ -58,9 +76,10 @@ class AgentTests(unittest.TestCase):
                 "print(json.dumps({'type': 'mock'}))\n",
                 encoding="utf-8")
             binary.chmod(0o700)
-            receipt = run_agent("pwd_probe", "write answer", "answer.json",
-                                Path(work) / "out", binary=str(binary), timeout=10,
-                                sandbox=True)
+            with plain_process():
+                receipt = run_agent("pwd_probe", "write answer", "answer.json",
+                                    Path(work) / "out", binary=str(binary), timeout=10,
+                                    read_paths=[], allowed_roots=[Path(work)])
             probe = json.loads((receipt.parent / "pwd_probe.json").read_text())
             self.assertEqual(probe["pwd"], str(receipt.parent))
             self.assertEqual(Path(probe["cwd"]).resolve(), receipt.parent.resolve())
@@ -120,9 +139,11 @@ class AgentTests(unittest.TestCase):
                 encoding="utf-8",
             )
             binary.chmod(0o700)
-            receipt = run_agent("test_readonly", "answer", "verification.txt",
-                                Path(work) / "out", binary=str(binary), timeout=10,
-                                role="verify", sandbox=False)
+            with plain_process():
+                receipt = run_agent("test_readonly", "answer", "verification.txt",
+                                    Path(work) / "out", binary=str(binary), timeout=10,
+                                    role="verify", read_paths=[],
+                                    allowed_roots=[Path(work)])
             evidence = read_json(receipt)
             self.assertTrue(evidence["verified"])
             answer = receipt.parent / "verification.txt"
@@ -142,9 +163,10 @@ class AgentTests(unittest.TestCase):
                 encoding="utf-8",
             )
             binary.chmod(0o700)
-            receipt = run_agent("test_agent", "Write answer", "answer.json",
-                                Path(work) / "out", binary=str(binary), timeout=10,
-                                sandbox=False)
+            with plain_process():
+                receipt = run_agent("test_agent", "Write answer", "answer.json",
+                                    Path(work) / "out", binary=str(binary), timeout=10,
+                                    read_paths=[], allowed_roots=[Path(work)])
             evidence = read_json(receipt)
             self.assertTrue(evidence["verified"])
             self.assertGreater(evidence["pid"], 0)
@@ -180,9 +202,10 @@ class AgentTests(unittest.TestCase):
             # run's output; the wording of the failure is not the contract.
             from tools.research.agents.runner import AgentFailure
             with self.assertRaises(AgentFailure) as caught:
-                run_agent("geometry", "Write candidate", "candidate.json",
-                          Path(work) / "out", binary=str(binary), timeout=10,
-                          sandbox=False)
+                with plain_process():
+                    run_agent("geometry", "Write candidate", "candidate.json",
+                              Path(work) / "out", binary=str(binary), timeout=10,
+                              read_paths=[], allowed_roots=[Path(work)])
             self.assertIn(caught.exception.failure_class, {"empty", "unusable", "crash"})
             self.assertFalse((workspace / "candidate.json").is_file(),
                              "an archived candidate was adopted as the new answer")

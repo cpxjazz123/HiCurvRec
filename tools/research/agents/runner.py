@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 from .. import settings
 from ..core.evidence import atomic_json, digest_bytes, digest_file
+from . import policy
 
 
 #: The roles that may not write anything. Their answer arrives through the
@@ -52,7 +53,8 @@ def _read_patterns(path: Path) -> list:
 
 
 def isolation_permissions(workspace: Path, role: str = "verify",
-                          read_paths=None) -> dict:
+                          read_paths=None, allow_shell: bool = False,
+                          allow_write: bool = False) -> dict:
     """The opencode permission object that confines an agent to its workspace.
 
     opencode v2 reads a single ``permission`` object whose keys are the tool
@@ -63,30 +65,23 @@ def isolation_permissions(workspace: Path, role: str = "verify",
     boundary was never in force.
 
     ``read_paths`` is the allowlist of directories the role may read outside its
-    own workspace. When it is given, both ``read`` and ``external_directory``
-    become deny-by-default and only those directories (plus the workspace) are
-    allowed; when it is ``None`` the legacy behaviour is preserved. A caller that
-    hands a verifier the candidate tree must pass exactly that tree, never the
-    repository root: ``results/`` also holds the other arms, their Stage 3
-    answers and the earlier reviews.
+    own workspace, and the policy module has already refused anything wider.
+    ``read`` and ``external_directory`` are deny-by-default and name exactly
+    those directories plus the workspace.
 
-    A verifier reviews code and does not run it, so it has no shell. The
-    verifier and the repair planner are **read-only**: they get neither a shell
-    nor an edit tool, so they cannot change the candidate tree or anything
-    else. Their answers are taken from the session stream, where the agent
-    printed them, and the framework writes the file.
-
-    An implementer must write the tree and run the smoke test, so it keeps the
-    shell and the edit tool inside the workspace, bounded by prompt and by the
-    framework's output-path preflight.
+    A role that may not write gets neither a shell nor an edit tool, so it
+    cannot change the candidate tree or anything else; its answer is taken from
+    the session stream, where the agent printed it. A role that does get a shell
+    is bounded by the mount namespace instead: it can run code, but only over
+    the files the policy allowed.
     """
     workspace = Path(workspace)
     runs_code = str(role) == "implementation"
     read_only = str(role) in READ_ONLY_ROLES
     permissions = {
-        "bash": "allow" if runs_code else "deny",
-        "edit": "deny" if read_only else "allow",
-        "write": "deny" if read_only else "allow",
+        "bash": "allow" if (runs_code or allow_shell) else "deny",
+        "edit": "allow" if (allow_write or not read_only) else "deny",
+        "write": "allow" if (allow_write or not read_only) else "deny",
         "webfetch": "deny",
         "websearch": "deny",
         "task": "deny",
@@ -139,13 +134,15 @@ def session_answer(path: Path) -> str:
 
 
 def write_isolation_config(workspace: Path, role: str = "verify",
-                           read_paths=None) -> Path:
+                           read_paths=None, allow_shell: bool = False,
+                           allow_write: bool = False) -> Path:
     """Write the agent's private permission boundary next to its session."""
     workspace = Path(workspace)
     workspace.mkdir(parents=True, exist_ok=True)
     path = workspace / "opencode.json"
     config = {"$schema": "https://opencode.ai/config.json",
-              "permission": isolation_permissions(workspace, role, read_paths)}
+              "permission": isolation_permissions(workspace, role, read_paths,
+                                                 allow_shell, allow_write)}
     path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -242,7 +239,6 @@ def sandbox_command(command: list, workspace: Path, read_paths, binary: Path,
     outside the allowlist is reachable.
     """
     home = Path.home()
-    config = Path(os.environ.get("XDG_CONFIG_HOME") or (home / ".config")) / "opencode"
     binary = Path(binary).resolve()
     private_home = Path(private_home)
     args = [
@@ -255,10 +251,12 @@ def sandbox_command(command: list, workspace: Path, read_paths, binary: Path,
         "--ro-bind-try", "/sbin", "/sbin",
         "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
         # Mask the home directory first, then expose only what the CLI needs.
+        # The global opencode configuration is NOT exposed: it can declare MCP
+        # servers and plugins, and a server that reads a file for the agent
+        # would read it from the host, where the mount namespace cannot stop it.
+        # The agent runs with the workspace's own opencode.json and nothing else.
         "--tmpfs", str(home),
         "--ro-bind", str(binary.parent), str(binary.parent),
-        "--ro-bind-try", str(home / ".opencode"), str(home / ".opencode"),
-        "--ro-bind-try", str(config), str(config),
         # A private database and cache: the shared session history is not visible.
         "--bind", str(private_home / ".local" / "share" / "opencode"),
         str(home / ".local" / "share" / "opencode"),
@@ -331,7 +329,7 @@ def class_of_failure(session: Path, *, timed_out: bool, cancelled: bool,
     return "empty" if not wrote_answer else "unusable"
 
 
-def _agent_environment(workspace: Path, sandbox: bool) -> dict:
+def _agent_environment(workspace: Path) -> dict:
     """The environment of one agent process.
 
     A sandboxed agent gets only the variables the CLI needs, not the parent's
@@ -341,8 +339,6 @@ def _agent_environment(workspace: Path, sandbox: bool) -> dict:
     that inherits the server's directory reads the REPOSITORY's config and
     silently ignores the workspace boundary.
     """
-    if not sandbox:
-        return dict(os.environ)
     keep = {"HOME", "PATH", "USER", "LOGNAME", "SHELL", "TERM", "TMPDIR"}
     env = {key: value for key, value in os.environ.items()
            if key in keep or key.startswith(("OPENCODE_", "XDG_", "LC_"))}
@@ -351,10 +347,39 @@ def _agent_environment(workspace: Path, sandbox: bool) -> dict:
     return env
 
 
+def boundary_fingerprint(workspace: Path, role: str, read_paths,
+                         allow_shell: bool = False, allow_write: bool = False) -> str:
+    """The identity of the boundary one run was executed under.
+
+    Two runs with the same fingerprint had the same view of the filesystem; a
+    different fingerprint means the evidence was produced under different rules
+    and may not be reused as if it were current.
+    """
+    payload = {
+        "version": policy.BOUNDARY_VERSION,
+        "role": str(role),
+        "workspace": str(Path(workspace).resolve()),
+        "allow_shell": bool(allow_shell),
+        "allow_write": bool(allow_write),
+        "read_paths": sorted(str(Path(entry).resolve()) for entry in (read_paths or [])),
+        "permissions": isolation_permissions(workspace, role, read_paths,
+                                            allow_shell, allow_write),
+    }
+    return digest_bytes(json.dumps(payload, sort_keys=True).encode())
+
+
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
               binary=None, model=None, timeout=None,
-              role: str = "verify", read_paths=None,
-              sandbox: bool = True) -> Path:
+              role: str = "verify", read_paths=None, allowed_roots=None,
+              candidate_tree=None, allow_shell: bool = False,
+              allow_write: bool = False) -> Path:
+    """Run one agent. This is the only place an opencode process is started.
+
+    The boundary is not optional: the agent always runs in a mount namespace
+    that holds the workspace, the policy-accepted read allowlist and the
+    opencode runtime, and nothing else. A caller cannot widen the view (the
+    policy refuses it) and cannot switch the namespace off.
+    """
     # The binary and the model come from the one source of configuration.
     binary = binary or settings.AGENT_BINARY
     model = model or settings.AGENT_MODEL
@@ -366,33 +391,29 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     if (not output_name.endswith((".json", ".txt")) or "/" in output_name
             or "\\" in output_name or not task_id.replace("-", "").replace("_", "").isalnum()):
         raise ValueError("unsafe task id or output filename")
-    # A missing allowlisted path means the role cannot do its work; fail closed
-    # instead of running it with a smaller view and calling the answer valid.
-    # The path is kept as the caller spelled it: the permission rules match the
-    # text of the path, and the repository is reachable through a symlinked home.
-    allowed = [Path(entry) for entry in (read_paths or [])]
-    for entry in allowed:
-        if not entry.exists():
-            raise RuntimeError("the agent read allowlist names a missing path: " + str(entry))
-    if sandbox and shutil.which(SANDBOX_BINARY) is None:
-        raise RuntimeError("bubblewrap (" + SANDBOX_BINARY + ") is required for a "
-                           "sandboxed agent and is not installed")
     root = Path(root)
     workspace = root / "agents" / task_id
+    # The policy decides what the task may read. It refuses a wider view, a
+    # missing path and the directory that holds the other agents' answers, so
+    # the caller cannot hand the agent the repository.
+    allowed = policy.check_read_paths(read_paths, roots=allowed_roots,
+                                      task_root=root, candidate_tree=candidate_tree)
+    if shutil.which(SANDBOX_BINARY) is None:
+        raise RuntimeError("bubblewrap (" + SANDBOX_BINARY + ") is required for an "
+                           "agent run and is not installed")
     workspace.mkdir(parents=True, exist_ok=True)
     output = workspace / output_name
     if output.exists():
         raise RuntimeError("refuse to overwrite previous role output")
-    isolation = write_isolation_config(workspace, role, allowed)
+    isolation = write_isolation_config(workspace, role, allowed, allow_shell,
+                                       allow_write)
     marker = mark_workspace_project(workspace)
     inner_binary = Path(shutil.which(binary) or binary).resolve()
     cmd = [str(inner_binary), "run", "--standalone", "--format", "json", "--auto",
            "--model", model, "--title", task_id, prompt]
-    private_home = None
-    if sandbox:
-        private_home = agent_sandbox_home(workspace)
-        cmd = sandbox_command(cmd, workspace, allowed, inner_binary, private_home)
-    env = _agent_environment(workspace, sandbox)
+    private_home = agent_sandbox_home(workspace)
+    cmd = sandbox_command(cmd, workspace, allowed, inner_binary, private_home)
+    env = _agent_environment(workspace)
     started = time.monotonic()
     cancelled, timed_out, stderr = False, False, ""
     try:
@@ -468,9 +489,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "task_id": task_id, "pid": process.pid,
         "finished_utc_epoch": time.time(), "exit_code": process.returncode,
         "timed_out": timed_out, "cancelled": cancelled, "model": model,
-        "argv_shape": (["bwrap", "--unshare-all", "--share-net"]
-                       if sandbox else []) +
-                      ["opencode", "run", "--standalone", "--format", "json",
+        "argv_shape": ["bwrap", "--unshare-all", "--share-net",
+                       "opencode", "run", "--standalone", "--format", "json",
                        "--auto", "--model", "<model>", "--title", task_id, "<prompt>"],
         "prompt_sha256": digest_bytes(prompt.encode()),
         "session_sha256": digest_file(workspace / "session.jsonl"),
@@ -479,41 +499,34 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
         "read_allowlist": [str(entry) for entry in allowed] +
                           [str(entry.resolve()) for entry in allowed
                            if str(entry.resolve()) != str(entry)],
+        "boundary_version": policy.BOUNDARY_VERSION,
+        "boundary_sha256": boundary_fingerprint(workspace, role, allowed,
+                                                allow_shell, allow_write),
         "sandbox": {
-            "enabled": bool(sandbox),
-            "binary": SANDBOX_BINARY if sandbox else None,
+            "enabled": True,
+            "binary": SANDBOX_BINARY,
             "private_home": bool(private_home),
-            "network": "shared (model provider)" if sandbox else None,
+            "network": "shared (model provider)",
+            "global_config_mounted": False,
         },
         "project_marker": marker.name,
         "isolation_policy": (
-            "bubblewrap mount namespace: only the workspace, the read allowlist, the "
-            "opencode runtime and the config exist; the repository, the other arms' "
-            "results and the earlier sessions are not mounted; plus the opencode v2 "
-            "permission object (bash " +
-            ("allowed (this role runs the smoke test)" if role == "implementation"
-             else "denied") +
+            "bubblewrap mount namespace: only the workspace, the policy-accepted "
+            "read allowlist and the opencode runtime exist; the repository, the "
+            "other arms' results, the earlier sessions and the global opencode "
+            "configuration (its MCP servers and plugins) are not mounted; plus the "
+            "opencode v2 permission object (bash " +
+            ("allowed" if allow_shell else "denied") +
             ", edit and write " +
-            ("denied (read-only role; its answer is read back from the session stream)"
-             if role in READ_ONLY_ROLES else "allowed") +
-            ", read and external_directory deny-by-default with the explicit allowlist)"
-            if sandbox else
-            "opencode v2 permission object: bash " +
-            ("allowed (this role runs the smoke test)" if role == "implementation"
-             else "denied") +
-            ", edit and write " +
-            ("denied (this role is read-only and its answer is read back from "
-             "the session stream)" if role in READ_ONLY_ROLES else "allowed") +
-            ", webfetch denied, external_directory denied; PWD is the workspace so "
-            "the workspace opencode.json is the one that applies"),
+            ("allowed" if allow_write else "denied") +
+            ", read and external_directory deny-by-default with the explicit "
+            "allowlist)"),
         "stderr_present": bool(stderr), "output_name": output_name,
         "output_sha256": digest_file(output) if output.is_file() else None,
         "verified": valid,
-        "limitations": ("The sandbox is the filesystem guarantee; the model provider "
-                        "is reachable over the shared network."
-                        if sandbox else
-                        "A cwd is NOT a sandbox; this run relies on the permission "
-                        "object and the caller must not treat it as a guarantee."),
+        "limitations": ("The mount namespace is the filesystem guarantee; the model "
+                        "provider is reachable over the shared network, so a model "
+                        "that was shown a file can still send it away."),
     }
     record["failure_class"] = "none" if valid else class_of_failure(
         workspace / "session.jsonl", timed_out=timed_out, cancelled=cancelled,

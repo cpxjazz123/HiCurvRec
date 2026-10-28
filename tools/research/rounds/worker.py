@@ -17,7 +17,8 @@ import shutil
 from pathlib import Path
 
 from .. import settings
-from ..agents.runner import READ_ONLY_ROLES, run_agent
+from ..agents.runner import READ_ONLY_ROLES, boundary_fingerprint, run_agent
+from ..agents import policy
 from ..core.evidence import atomic_json, digest_file, read_json
 from . import agents as agent_contracts
 from . import baseline as baseline_module
@@ -74,8 +75,21 @@ class AgentPhaseIncomplete(RuntimeError):
         self.classes = classes
 
 
+def _round_roots(root: Path) -> list:
+    """The directories a task of this round may read from.
+
+    The round's own directory and the round's trees. Anything else - another
+    round, the arms' results, the Stage 3 outputs, the earlier sessions - is
+    outside the boundary, and the policy refuses it.
+    """
+    root = Path(root)
+    return [root, root.parent / "trees"]
+
+
 def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
-               role: str = "verify", read_paths=None, sandbox: bool = False) -> dict:
+               role: str = "verify", read_paths=None, sandbox: bool = True,
+               allowed_roots=None, candidate_tree=None,
+               allow_shell: bool = False, allow_write: bool = False) -> dict:
     """Run one agent in its own workspace and parse its plain-text answer.
 
     The agent writes a labelled text file, not JSON: a language model that
@@ -85,23 +99,36 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     # The runner gives the agent a workspace but not a destination; without this
     # the agent answers in prose and writes no file.
     destination = Path(root) / "agents" / task_id / output_name
+    workspace = Path(root) / "agents" / task_id
+    # The boundary this task would run under. An answer is only reusable when it
+    # was produced under the same boundary: a policy change (a wider view, a
+    # different sandbox, a new rule) makes the old answer unusable, and the
+    # agent runs again instead.
+    expected_boundary = boundary_fingerprint(workspace, role, read_paths or [],
+                                             allow_shell, allow_write)
     # Resumability: an answer that is already on disk is reused, so a round that
     # was interrupted does not pay for the same agents twice. The reuse requires
     # the receipt to say the run was valid: a partial answer left by a timed-out
     # or cancelled run is not an answer, and reading it as one is how a cancelled
     # reviewer became a verdict.
-    receipt_path = Path(root) / "agents" / task_id / "execution.json"
+    receipt_path = workspace / "execution.json"
     if destination.is_file():
         verified = False
+        boundary = None
         if receipt_path.is_file():
             try:
-                verified = bool(json.loads(receipt_path.read_text()).get("verified"))
+                receipt = json.loads(receipt_path.read_text())
+                verified = bool(receipt.get("verified"))
+                boundary = receipt.get("boundary_sha256")
             except (OSError, ValueError):
                 verified = False
-        if verified:
-            return parser(destination.read_text(encoding="utf-8", errors="replace"))
+        if verified and boundary == expected_boundary:
+            report = parser(destination.read_text(encoding="utf-8", errors="replace"))
+            report["boundary_version"] = policy.BOUNDARY_VERSION
+            report["boundary_sha256"] = boundary
+            return report
         # Keep the unverified answer as evidence and let the agent run again.
-        stale = Path(root) / "agents" / task_id / "unverified"
+        stale = workspace / "unverified"
         stale.mkdir(parents=True, exist_ok=True)
         destination.replace(stale / (output_name + ".unverified"))
         if receipt_path.is_file():
@@ -116,12 +143,15 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     else:
         prompt = (prompt + "\n\nWrite the answer to " + str(destination) +
                   " (this absolute path). Write nowhere else.")
-    run_agent(task_id, prompt, output_name, Path(root),
-              binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
-              role=role, read_paths=read_paths, sandbox=sandbox)
+    if allowed_roots is None:
+        allowed_roots = _round_roots(Path(root))
+    receipt = run_agent(task_id, prompt, output_name, Path(root),
+                        binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
+                        role=role, read_paths=read_paths,
+                        allowed_roots=allowed_roots, candidate_tree=candidate_tree,
+                        allow_shell=allow_shell, allow_write=allow_write)
     # run_agent returns its execution receipt, not the answer: locate the file
     # the agent wrote, accepting the same bounded relocation the runner allows.
-    workspace = Path(root) / "agents" / task_id
     answer = workspace / output_name
     if not answer.is_file():
         matches = [match for match in sorted(workspace.rglob(output_name))
@@ -131,7 +161,11 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
         if not matches:
             raise pipeline_module.RoundError("agent " + task_id + " wrote no " + output_name)
         answer = matches[0]
-    return parser(answer.read_text(encoding="utf-8", errors="replace"))
+    report = parser(answer.read_text(encoding="utf-8", errors="replace"))
+    report["boundary_version"] = policy.BOUNDARY_VERSION
+    report["boundary_sha256"] = expected_boundary
+    report["receipt"] = str(receipt)
+    return report
 
 
 def _run_agents_concurrently(tasks: list, worker, *, max_workers: int = 0) -> list:
@@ -262,7 +296,8 @@ def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
         return (task_id, _run_agent(root, task_id, prompt,
                                     "ideas_extra.txt" if extra else "ideas.txt",
                                     plaintext.parse_ideas,
-                                    role="ideate", read_paths=[], sandbox=True))
+                                    role="ideate", read_paths=[],
+                                    allowed_roots=_round_roots(root)))
 
     return _run_agents_concurrently(
         [tuple([index]) for index in range(1, pipeline_module.IDEA_AGENTS + 1)], ideate)
@@ -597,7 +632,8 @@ def _review_with_retry(root: Path, task_id: str, prompt: str) -> dict:
         try:
             report = _run_agent(root, run_id, prompt + suffix, name,
                                 plaintext.parse_scores, role="score",
-                                read_paths=[], sandbox=True)
+                                read_paths=[],
+                                allowed_roots=_round_roots(root))
             scoring_module.validate_report(report, scorer=task_id)
             return report
         except (scoring_module.ScoreError, pipeline_module.RoundError) as exc:
@@ -640,7 +676,8 @@ def run_pairwise(root: Path, ideas: list, finalists: list, evidence_text: str) -
                 evidence=evidence_text)
             report = _run_agent(root, task_id + "_" + str(position), prompt,
                                 "pairwise.txt", plaintext.parse_pairwise, role="score",
-                                read_paths=[], sandbox=True)
+                                read_paths=[],
+                                allowed_roots=_round_roots(root))
             report["reviewer"] = task_id
             report["first"] = first
             report["second"] = second
@@ -658,7 +695,8 @@ def run_rebuttal(root: Path, idea: dict, objection: str, counterexample: str,
                                                     counterexample=counterexample or "none")
     return _run_agent(root, "rebuttal_" + idea["idea_id"] + "_r" + str(revision),
                       prompt, "rebuttal.txt", plaintext.parse_rebuttal, role="score",
-                      read_paths=[], sandbox=True)
+                      read_paths=[],
+                      allowed_roots=_round_roots(root))
 
 
 def _repository_root(start: Path) -> Path:
@@ -724,7 +762,9 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
         task_id = "verify_" + idea["idea_id"] + "_r" + str(revision) + "_" + str(index)
         report = _run_agent(root, task_id, prompt, "verification.txt",
                             plaintext.parse_verification,
-                            role="verify", read_paths=[tree], sandbox=True)
+                            role="verify", read_paths=[tree],
+                            allowed_roots=_round_roots(root),
+                            candidate_tree=tree)
         report.setdefault("verifier", task_id)
         return report
 
@@ -757,7 +797,9 @@ def run_repair_plan(root: Path, idea: dict, tree: Path, findings: list,
     before = pipeline_module._source_digest(tree)
     plan = _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),
                       prompt, "repair.txt", plaintext.parse_repair_plan,
-                      role="repair", read_paths=[tree], sandbox=True)
+                      role="repair", read_paths=[tree],
+                      allowed_roots=_round_roots(root),
+                      candidate_tree=tree)
     after = pipeline_module._source_digest(tree)
     if after != before:
         _tree_restore(tree, backup)

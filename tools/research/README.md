@@ -77,25 +77,39 @@ The research package never starts GPU training directly, never uses validation/t
 
 ## Agent filesystem boundary
 
-A round agent does not inherit the repository. `agents/runner.py` starts a
-sandboxed role in a bubblewrap mount namespace whose only visible paths are its
-own workspace, the explicit read allowlist, the opencode runtime and its config.
-The repository, the other arms' results, the Stage 3 answers and the earlier
-agent sessions are not mounted; the model provider stays reachable over the
-shared network. A private opencode database holds the credentials and model
-catalog but none of the other sessions.
+A round agent does not inherit the repository. `agents/runner.py` is the only
+place an opencode process is started, and it always starts one inside a
+bubblewrap mount namespace. Four rules hold that line:
 
-The opencode `permission` object is written as a second layer: `read` and
-`external_directory` are deny-by-default with the same allowlist, `task` is
-denied, and the read-only roles keep no shell and no edit tool. `PWD` is set to
-the workspace because opencode resolves its project from `PWD`; leaving it at the
-server's directory made every per-workspace rule inert and is how a verifier once
-read the previous round's answer.
+1. **One entry, no switch.** `run_agent` has no parameter that turns the
+   namespace off; a missing bubblewrap fails the run closed. The Issue #117
+   surface runs under the same executor as a round.
+2. **The task names its research files.** The caller passes the read
+   allowlist and the roots it may live in; `agents/policy.py` refuses the
+   repository root, another arm's results, the Stage 3 outputs, the shared
+   opencode data, the global opencode configuration and the directory that
+   holds the other agents' answers. The agent cannot widen this: it has no
+   write tool and no way to add a mount.
+3. **Every channel obeys the same list.** The namespace holds the workspace,
+   the accepted allowlist, the opencode runtime and the system libraries, and
+   nothing else. The global opencode configuration is *not* mounted, so no MCP
+   server or plugin can read a file for the agent from the host, where the
+   namespace could not stop it. The agent runs with a private opencode database
+   (credentials and the model catalog, none of the other sessions) and an
+   environment that carries no other service's keys. The opencode `permission`
+   object is the second layer: `read` and `external_directory` are
+   deny-by-default with the same allowlist, `task` is denied, and `PWD` is the
+   workspace because opencode resolves its project from `PWD`.
+4. **A changed boundary invalidates old evidence.** Every receipt carries the
+   boundary version and its fingerprint. A cached answer is reused only when
+   its fingerprint matches the boundary the task would run under now, and a
+   candidate whose review was produced under another boundary cannot be
+   accepted: it has to be reviewed again.
 
-The round passes `read_paths=[tree]` to a verifier and to the repair planner, and
-`read_paths=[]` to ideation, scoring and pairwise roles. `run_agent(...,
-sandbox=True)` fails closed when bubblewrap is missing; the permission object
-alone is advisory, not a guarantee.
+`tools/research/tests/test_agent_boundary.py` is the acceptance suite: the
+allowed file is readable, and another round, another agent's answer, a parent
+traversal, a symlink out of the allowlist, the global configuration and the
+shared session data are not.
 
 ## Boundaries
 
