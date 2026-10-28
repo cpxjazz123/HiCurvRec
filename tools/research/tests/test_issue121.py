@@ -409,6 +409,25 @@ class PhaseToolTests(unittest.TestCase):
             self.assertEqual(record["reviewers_expected"], pipeline_module.VERIFIER_AGENTS)
             self.assertEqual(record["reviewers_missing"], ["v2", "v3", "v4", "v5"])
 
+    def test_a_registration_after_a_review_is_a_new_revision(self):
+        """A fix must not be filed under the revision it replaces."""
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_rev", objective="o")
+            tree = directory / "candidate"
+            tree.mkdir()
+            (tree / "m.py").write_text("x = 1\n", encoding="utf-8")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [{
+                "implementation_id": "idea-r", "idea_id": "idea-r", "tree": str(tree),
+                "status": "reviewed", "revision": 0,
+                "verdicts": [{"verifier": "v1", "verdict": "NEEDS_FIX"}]}]
+            pipeline_module.save_state(directory, state)
+            state = pipeline_module.register_implementation(
+                pipeline_module.load_state(directory), "idea-r",
+                {"changed_files": ["m.py"], "smoke": {"ok": True}})
+            self.assertEqual(state["implementations"][0]["revision"], 1)
+
     def test_a_fresh_registration_reopens_the_review(self):
         """A submission after a failed pass must not inherit its step or budget.
 
@@ -770,6 +789,34 @@ class SeverityClassificationTests(unittest.TestCase):
         from tools.research.rounds import pipeline as pipeline_module
         for word in ("", None, "blocking", "critical", "weird-but-serious"):
             self.assertTrue(pipeline_module._is_blocking(word), repr(word))
+
+
+class CandidateCopyTests(unittest.TestCase):
+    """A prepared candidate must point at itself, not at its baseline."""
+
+    def test_the_prepared_tree_renames_the_arm_and_records_provenance(self):
+        from tools.research.rounds import baseline as baseline_module
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            source = root / "stage2_RQ-VAE" / "TIGER_baseline"
+            source.mkdir(parents=True)
+            (source / "train_rqvae.py").write_text(
+                'ARM_NAME = "TIGER_baseline"\n', encoding="utf-8")
+            destination = root / "trees" / "round" / "idea"
+            provenance = baseline_module.copy_baseline(destination, baseline=source)
+            text = (destination / "train_rqvae.py").read_text(encoding="utf-8")
+            self.assertIn('ARM_NAME = "TIGER_idea"', text)
+            self.assertEqual(provenance["arm_renamed"]["to"], "TIGER_idea")
+            self.assertEqual(provenance["baseline"], str(source.resolve()))
+
+    def test_the_round_implementation_uses_the_provenance_copy(self):
+        """The phase must not leave the candidate on the baseline's result path."""
+        source = (Path(__file__).resolve().parents[1] / "rounds" /
+                  "worker.py").read_text(encoding="utf-8")
+        phase = source[source.index("def phase_implementation"):]
+        phase = phase[:phase.index("\ndef ")]
+        self.assertIn("copy_baseline(tree)", phase)
+        self.assertNotIn("shutil.copytree(baseline_module.baseline_path()", phase)
 
 
 class NoAbsolutePathTests(unittest.TestCase):

@@ -63,6 +63,8 @@ class PromptTests(unittest.TestCase):
                 role_checks=worker_module._format_role_checks(role),
                 idea=worker_module.plaintext.render_idea(idea), tree="/tmp/tree",
                 change_brief=worker_module._format_change_brief(record or {}),
+                change_diff="diff --git a/model/frechet_poincare.py b/model/frechet_poincare.py\n",
+                findings_file="/tmp/findings.json",
                 previous_findings=worker_module._format_findings(
                     (record or {}).get("blocking_findings")),
                 objective=agent_contracts.RESEARCH_OBJECTIVE,

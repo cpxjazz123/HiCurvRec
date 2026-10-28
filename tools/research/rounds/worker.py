@@ -888,6 +888,143 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
 
 VERIFIER_ROLES = agent_contracts.VERIFIER_ROLES
 
+#: The cap on the diff a reviewer is shown. A revision that rewrites half the
+#: tree is reviewed from the whole file list anyway; the patch names what moved.
+DIFF_LIMIT = 60000
+
+#: Files that belong to a run, not to the source: never part of a snapshot or a
+#: diff, because they say nothing about what was implemented.
+_DIFF_IGNORED = ("logs", "results", "dataset", "__pycache__", "ckpt", ".git")
+
+
+def _source_files(root: Path) -> list:
+    root = Path(root)
+    files = []
+    for path in sorted(root.rglob("*.py")):
+        relative = path.relative_to(root)
+        if any(part in _DIFF_IGNORED for part in relative.parts):
+            continue
+        files.append(relative)
+    return files
+
+
+def snapshot_tree(root: Path, idea_id: str, revision: int, tree: Path) -> str:
+    """Keep the source of one reviewed revision, so the next one has a baseline.
+
+    The snapshot is what the NEXT review diffs against: a reviewer of revision r
+    sees exactly what changed since revision r-1 was reviewed, not a diff against
+    the original baseline that grows with every fix.
+    """
+    root, tree = Path(root), Path(tree)
+    target = root / "snapshots" / (idea_id + "_r" + str(int(revision)))
+    if target.exists():
+        shutil.rmtree(target)
+    for relative in _source_files(tree):
+        destination = target / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(tree / relative, destination)
+    return str(target)
+
+
+def tree_diff(root: Path, idea_id: str, previous_revision: int, tree: Path) -> str:
+    """The unified diff between the last reviewed snapshot and the tree now."""
+    import difflib
+
+    root, tree = Path(root), Path(tree)
+    snapshot = root / "snapshots" / (idea_id + "_r" + str(int(previous_revision)))
+    if not snapshot.is_dir():
+        return ""
+    chunks = []
+    for relative in _source_files(tree):
+        old_path = snapshot / relative
+        new_path = tree / relative
+        old = old_path.read_text(encoding="utf-8", errors="replace").splitlines(True) \
+            if old_path.is_file() else []
+        new = new_path.read_text(encoding="utf-8", errors="replace").splitlines(True)
+        chunks.extend(difflib.unified_diff(old, new, fromfile="a/" + str(relative),
+                                           tofile="b/" + str(relative), n=3))
+    removed = []
+    for relative in _source_files(snapshot):
+        if not (tree / relative).is_file():
+            removed.extend(difflib.unified_diff(
+                (snapshot / relative).read_text(encoding="utf-8",
+                                                errors="replace").splitlines(True),
+                [], fromfile="a/" + str(relative), tofile="/dev/null", n=3))
+    text = "".join(chunks + removed)
+    if len(text) > DIFF_LIMIT:
+        text = text[:DIFF_LIMIT] + "\n... truncated: the patch is longer than " + \
+            str(DIFF_LIMIT) + " characters, read the files for the rest\n"
+    return text
+
+
+def changed_files(patch: str) -> list:
+    """The files a unified diff touches, from its headers."""
+    import re
+    seen = []
+    for match in re.finditer(r"^diff --git a/(\S+) b/\S+$", patch or "", re.M):
+        if match.group(1) not in seen:
+            seen.append(match.group(1))
+    return seen
+
+
+def affected_roles(patch: str, findings=None, reported=None) -> list:
+    """The roles whose area the patch touches, plus the ones that complained.
+
+    A role that raised a finding keeps its seat until the finding is resolved:
+    the fix is exactly what it has to check. When nothing can be attributed, all
+    roles are dispatched, because a review with no reviewer is not a review.
+    """
+    files = changed_files(patch)
+    roles = []
+    if files:
+        for role in VERIFIER_ROLES:
+            reads = [str(item) for item in role.get("reads") or ()]
+            # "." means "may list the tree", not "owns every file": a role whose
+            # scope is the whole tree would otherwise be dispatched for every
+            # change and the targeting would be pointless.
+            if any(changed == read or changed.startswith(read.rstrip("/") + "/")
+                   for changed in files for read in reads if read != "."):
+                roles.append(role["id"])
+    for finding in findings or []:
+        role_id = finding.get("role")
+        if not role_id:
+            verifier = str(finding.get("verifier") or "")
+            for index, role in enumerate(VERIFIER_ROLES, 1):
+                if verifier.endswith("_" + str(index)):
+                    role_id = role["id"]
+                    break
+        if role_id and role_id not in roles:
+            roles.append(role_id)
+    if not roles:
+        roles = [role["id"] for role in VERIFIER_ROLES]
+    ordered = [role["id"] for role in VERIFIER_ROLES if role["id"] in roles]
+    return ordered or [role["id"] for role in VERIFIER_ROLES]
+
+
+def write_findings_file(root: Path, idea_id: str, revision: int, findings) -> str:
+    """The full previous findings, so the prompt never has to truncate them."""
+    root = Path(root)
+    target = root / "findings" / (idea_id + "_r" + str(int(revision)) + ".json")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"idea_id": idea_id, "reviewed_revision": int(revision),
+               "findings": list(findings or [])}
+    target.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return str(target)
+
+
+def role_read_paths(tree: Path, role: dict) -> list:
+    """The absolute paths one role may read: its declared scope, nothing else."""
+    tree = Path(tree)
+    paths = []
+    for relative in role.get("reads") or ():
+        candidate = (tree / relative).resolve()
+        if candidate.exists():
+            paths.append(str(candidate))
+    if not paths:
+        paths.append(str(tree.resolve()))
+    return paths
+
+
 
 def _format_role_checks(role: dict) -> str:
     """The CHECK blocks one reviewer must report, as prompt lines."""
@@ -941,20 +1078,37 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
     scratch.
     """
     record = record or {}
-    roles = list(VERIFIER_ROLES)
+    previous_revision = max(0, int(revision) - 1)
+    patch = tree_diff(root, str(idea["idea_id"]), previous_revision, tree) \
+        if int(revision) > 0 else ""
+    findings = list(record.get("blocking_findings") or [])
+    findings_path = write_findings_file(root, str(idea["idea_id"]), int(revision), findings)
+    # The tree this review reads becomes the baseline of the NEXT review's diff:
+    # without this the second revision would be diffed against nothing.
+    snapshot_tree(root, str(idea["idea_id"]), int(revision), tree)
+    wanted = affected_roles(patch, findings)
+    roles = [role for role in VERIFIER_ROLES if role["id"] in wanted]
     change_brief = _format_change_brief(record)
-    previous_findings = _format_findings(record.get("blocking_findings"))
+    previous_findings = _format_findings(findings)
+    if not patch:
+        change_brief = ("  the tree was renamed or first submitted: there is no previous "
+                        "reviewed revision to diff against\n" + change_brief)
     prompts = {}
+    reads = {}
     for index, role in enumerate(roles, 1):
         prompts[index] = agent_contracts.VERIFY_PROMPT.format(
             role_index=index, role_total=len(roles), role_name=role["name"],
             role_must="\n".join("  - " + item for item in role["must"]),
             role_scope=role["scope"], role_checks=_format_role_checks(role),
             idea=plaintext.render_idea(idea), tree=str(tree),
-            change_brief=change_brief, previous_findings=previous_findings,
+            change_brief=change_brief,
+            change_diff=(patch or "  none: this is the first review of this candidate"),
+            findings_file=findings_path,
+            previous_findings=previous_findings,
             objective=agent_contracts.RESEARCH_OBJECTIVE,
             scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
             agent_contracts.EXPERIMENT_POLICY)
+        reads[index] = role_read_paths(tree, role) + [findings_path]
 
     def verify(index):
         # The revision is part of the workspace name: a fresh review after a
@@ -963,7 +1117,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
         prompt = prompts[index]
         report = _run_agent(root, task_id, prompt, "verification.txt",
                             plaintext.parse_verification,
-                            role="verify", read_paths=[tree],
+                            role="verify", read_paths=reads[index],
                             allowed_roots=_round_roots(root),
                             candidate_tree=tree,
                             source_digest=pipeline_module._source_digest(Path(tree)))
@@ -1155,13 +1309,15 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
         # the code and register it (research_round_register_implementation).
         try:
             tree.parent.mkdir(parents=True, exist_ok=True)
-            if tree.exists():
-                shutil.rmtree(tree)
-            # symlinks are copied as symlinks: the baseline carries links to
-            # dataset paths that do not exist on every host, and following them
-            # would fail the copy
-            shutil.copytree(baseline_module.baseline_path(), tree, symlinks=True)
+            # One copy path for every candidate: it renames the framework-owned
+            # ARM_NAME to this tree, records the baseline path and both digests,
+            # and refuses a copy that changed anything else. A plain copytree left
+            # the candidate pointing at the baseline's result directory.
+            provenance = baseline_module.copy_baseline(tree)
             record = pipeline_module.implementation_record(idea, {}, tree)
+            record["baseline"] = provenance["baseline"]
+            record["baseline_digest"] = provenance["baseline_digest"]
+            record["arm_renamed"] = provenance["arm_renamed"]
             record["status"] = "awaiting_implementation"
             record["implemented_by"] = "main_agent"
             state.setdefault("implementations", []).append(record)

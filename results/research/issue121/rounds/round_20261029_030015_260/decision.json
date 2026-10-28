@@ -1,0 +1,350 @@
+{
+  "decision_at": 1793204170.7730343,
+  "decision_hash": "803f4e47fce18a20a7f09ee83144705834fd9482c64dca98864561d8674555aa",
+  "evidence": {
+    "CURVCTRL-SID": {
+      "bundle_sha256": "61bfdc6f1780e90400376594cd38213d9b9307b97de344fcb59057c6dad56b91",
+      "literature_sha256": "88e3b4b773f30b7e754b70619a8744594eebae9792cdfdba444034f69fb67f90",
+      "math_sha256": "9db8daf0e955cfbcebab2306e65aa398a7cd972beea40fc9dc6e4990b1d46e13",
+      "probe_sha256": "6915bf8c70cd7939865c8b914cf07c88aab1d3efd9336d19c938e00ccd4df3ce"
+    },
+    "LORENTZ-SUCCPROFILE-SMOOTH-RQ": {
+      "bundle_sha256": "252d0d1a393713ba60a67990c44c86af91b98460075aabeee3831c4aa0c162d3",
+      "literature_sha256": "d0226e286cb42266db0a923765aad553867b8b508db5f49b6d5a5b052613fa4a",
+      "math_sha256": "4ebf052554aa84db7fc6ecc7ef056923004126b0081ff5ac7a921b18b382496f",
+      "probe_sha256": "61c89c114682e3090543bc290a150ec388f2567a8bd54d6ad201a8d7a03ea168"
+    },
+    "behcone-prefix-rq": {
+      "bundle_sha256": "9768fd6894a0783b25a7fa41731298c503c2bcaaa1302d2e2a7571e9af233954",
+      "literature_sha256": "5ea54feb1a6ff03ce2301a87dedaee4085ee3d31bb46a3b7f47348069ec1f542",
+      "math_sha256": "15b5504c3a8fa4b165a0b7733949ed505069b8ed643ac4eac80317f6fdaf9c80",
+      "probe_sha256": "9bb73ebcaba1297626b36f9ba4d6baa85cd06c073bf544cb719c8e2ea387ffd7"
+    },
+    "succboost-geoshift": {
+      "bundle_sha256": "45cb4724a3d051b0fac19feb00617f25b3ecd49ab1c2230c34e739ca9cc05a70",
+      "literature_sha256": "444c4ab98d7eb778a302f67416a4d6fc253a862666790b493cec1c29b3271c42",
+      "math_sha256": "6e0118ca2bbc3c3d55498d81f21e0c25659cc7c8399461bb510f74cffed9cadb",
+      "probe_sha256": "88ac35025f632dcc64ac949202d2262ff66c18e267193b8f3e22e5708568a53b"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 2,
+        "idea_id": "CURVCTRL-SID",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 1,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "its own safeguard kills the loop: the cap binds whenever Q_l<0.5025 (since max",
+          "scoring_2": "Only proposal whose measured per-level prefix statistic sets a per-level curvature used inside the same level's assignment and commitment, so it can reach the depth-3/4 survival collapse that E6/E7 identify as the binding failure; it also has derived caps/floors and all three switches explicit, with E11's same-first-prefix 0.0907 vs null 0.067 as its (weak but non-zero) state variable.",
+          "scoring_3": "E7 shows the frozen baseline's entire deficit sits at the deepest token (l1_br T1..T4 NLL 0.00/0.00/0.00/9.03 with E6 gold level-1 prefix alive 1.000), so the only mechanism that derives a per-level curvature and hands the measured Q_l into that same level's assignment and commitment metric is the only one aimed where the generator actually fails, with no added loss term and a real closed loop (Q_l -> c_l -> metric -> assignment), though at levels >=2 Q_l collapses toward Q_min so c_l sits on its 0.99/max"
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "behcone-prefix-rq",
+        "mean_rank": 3.6667,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 4,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "the level-1 position it optimises is already solved for the competitive SIDs (E7 T1 NLL 0.00 for l1_br_euclid and l1_only; E6 depth-1 survival 1.000) and E8 caps the K=256 level-1 gain at 0.0822 against a 0.0129 negative, while the quantizer is explicitly left unchanged so the cone is only an auxiliary penalty and the specification gives no cone weight and no log-map/angle safeguards, failing the no-tuning rule and the minimal-spec criterion.",
+          "scoring_2": "It acts on level 1 only, but E7 shows the strong SIDs already have T1 NLL 0.00 (l1_br_euclid, l1_only) while the best-recall resample has T1 4.55, and E6's closest measured analogue successor_entropy is 0.0512; the quantizer is left unchanged and no off switches are specified, so it is aimed at a non-binding position at the weakest coupling.",
+          "scoring_3": "it spends an auxiliary cone loss on level 1, the stage the evidence says is already solved (E7 T1 NLL 0.00, E6 gold level-1 prefix alive 1.000) on a level whose behavioural signal is only 0.0907 against a 0.067 permuted null (E11) and whose K=256 capacity ceiling is 0.0822 (E8); it also keeps the Euclidean quantiser and adds a hyperbolic term beside it, the closest of the four to a standalone hyperbolic loss."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 11
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "succboost-geoshift",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 2,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "fullest minimal spec with no free coupling weight (gamma=1/sigma measured from the train split, R=0.9 documented) and E8 backs reserving scarce level-1 capacity (K=256 shares only 0.0822 of behavioural pairs), but recomputing its own statistic on E5's bins yields 0.086/0.014/0.014/0.015/0.102, non-monotone, so the most diffuse bin (top-1 0.054) is pulled inward like the most predictable one (top-1 0.438) and gamma pins at the 8 ceiling, while pushing diffuse items into levels 2-3 adds pressure exactly where E6 depth survival falls to 0.161.",
+          "scoring_2": "Its behaviour signal is the best-measured one (E5 top-1 successor mass 0.4375 vs 0.0543, Spearman -0.973) and it reallocates level-1 capacity in the direction E8 says matters (K=256 cohesion 0.0822 vs 0.3106 at K=16), with explicit switches and no competing loss; but it is radial-only and E6's nearest analogues (successor_entropy 0.0512, successor_geodesic 0.0550) are the worst measured, so it ranks behind CURVCTRL.",
+          "scoring_3": "E5's entropy stratification is strong (top-1 mass 0.4375 vs 0.0543, Spearman -0.973) and the exp-map plus d_P genuinely lives inside assignment and the residual chain, but E6 already measured an entropy-conditioned SID (successor_entropy 0.05122, second worst of eight and below every euclid/l1/resample arm) and the radial push loads diffuse items into exactly the deep levels whose T4 NLL is 9.03, with encoder cancellation left unmitigated."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "LORENTZ-SUCCPROFILE-SMOOTH-RQ",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 3,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "E9 is the only out-of-sample-validated behaviour relation in the bundle (positives share a successor cohort 0.9291 vs 0.8871 for negatives; profile overlap beats all ten negatives for 0.5898 of 52,855 held-out pairs) and E10 supplies a measured K (mean out-degree 5.45), while the coupling is load-bearing: the Lorentz consensus replaces the point entering the residual chain, so behaviour-off and geometry-off both change the assignment itself rather than a side term, and it reaches levels 2-3 where E6 shows survival collapsing 0.829 to 0.161.",
+          "scoring_2": "Successor-profile equivalence is observed and non-degenerate (E9 positives share a successor cohort 0.9291 vs 0.8871 negatives, profile entropy 1.65 over 7.5 cohorts) and it directly targets the E8/E11 same-prefix gap, but the 50/50 Minkowski smoothing risks the content fidelity that E6 shows separates the 0.062-0.064 variants from the 0.051-0.055 ones, and the frozen text gives no off switches.",
+          "scoring_3": "it carries the best-grounded behaviour signal in the bundle (E9: 0.9291 vs 0.8871 cohort sharing for positives over negatives, and the positive's profile overlap beats all ten negatives for 0.5898 of pairs) and intervenes on which point is quantised, the axis where E6's best arm resample (0.06363) sits; but its twin relation is the outgoing successor profile whereas E9 measured a predecessor/context profile, and E8's K=256 first-level ceiling of 0.0822 against the baseline's 0.0907 (E11) leaves little level-1 headroom to buy."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "61bfdc6f1780e90400376594cd38213d9b9307b97de344fcb59057c6dad56b91",
+      "idea_id": "CURVCTRL-SID",
+      "proposal_sha256": "af774678c05cc575c29cb4e07a3c9caea1c87a61a0ec5108ee676f0a9992f7d5"
+    },
+    {
+      "evidence_sha256": "9768fd6894a0783b25a7fa41731298c503c2bcaaa1302d2e2a7571e9af233954",
+      "idea_id": "behcone-prefix-rq",
+      "proposal_sha256": "d0d70000831affeac8f62fc055dc0a6aabfb597ef9a38028f2c3be29a02e10c8"
+    },
+    {
+      "evidence_sha256": "45cb4724a3d051b0fac19feb00617f25b3ecd49ab1c2230c34e739ca9cc05a70",
+      "idea_id": "succboost-geoshift",
+      "proposal_sha256": "b545df6545464db007e8fed46501000914949ca480a16d9aec2bf5acd0a3bef9"
+    },
+    {
+      "evidence_sha256": "252d0d1a393713ba60a67990c44c86af91b98460075aabeee3831c4aa0c162d3",
+      "idea_id": "LORENTZ-SUCCPROFILE-SMOOTH-RQ",
+      "proposal_sha256": "fbdc6f8b27b0e69917737f5ffa7c4c4722b88459613da812d9c515173dabe6c0"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "LORENTZ-SUCCPROFILE-SMOOTH-RQ",
+          "position": 1,
+          "reason": "E9 is the only out-of-sample-validated behaviour relation in the bundle (positives share a successor cohort 0.9291 vs 0.8871 for negatives; profile overlap beats all ten negatives for 0.5898 of 52,855 held-out pairs) and E10 supplies a measured K (mean out-degree 5.45), while the coupling is load-bearing: the Lorentz consensus replaces the point entering the residual chain, so behaviour-off and geometry-off both change the assignment itself rather than a side term, and it reaches levels 2-3 where E6 shows survival collapsing 0.829 to 0.161."
+        },
+        {
+          "idea_id": "succboost-geoshift",
+          "position": 2,
+          "reason": "fullest minimal spec with no free coupling weight (gamma=1/sigma measured from the train split, R=0.9 documented) and E8 backs reserving scarce level-1 capacity (K=256 shares only 0.0822 of behavioural pairs), but recomputing its own statistic on E5's bins yields 0.086/0.014/0.014/0.015/0.102, non-monotone, so the most diffuse bin (top-1 0.054) is pulled inward like the most predictable one (top-1 0.438) and gamma pins at the 8 ceiling, while pushing diffuse items into levels 2-3 adds pressure exactly where E6 depth survival falls to 0.161."
+        },
+        {
+          "idea_id": "behcone-prefix-rq",
+          "position": 3,
+          "reason": "the level-1 position it optimises is already solved for the competitive SIDs (E7 T1 NLL 0.00 for l1_br_euclid and l1_only; E6 depth-1 survival 1.000) and E8 caps the K=256 level-1 gain at 0.0822 against a 0.0129 negative, while the quantizer is explicitly left unchanged so the cone is only an auxiliary penalty and the specification gives no cone weight and no log-map/angle safeguards, failing the no-tuning rule and the minimal-spec criterion."
+        },
+        {
+          "idea_id": "CURVCTRL-SID",
+          "position": 4,
+          "reason": "its own safeguard kills the loop: the cap binds whenever Q_l<0.5025 (since max"
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "CURVCTRL-SID",
+          "position": 1,
+          "reason": "Only proposal whose measured per-level prefix statistic sets a per-level curvature used inside the same level's assignment and commitment, so it can reach the depth-3/4 survival collapse that E6/E7 identify as the binding failure; it also has derived caps/floors and all three switches explicit, with E11's same-first-prefix 0.0907 vs null 0.067 as its (weak but non-zero) state variable."
+        },
+        {
+          "idea_id": "succboost-geoshift",
+          "position": 2,
+          "reason": "Its behaviour signal is the best-measured one (E5 top-1 successor mass 0.4375 vs 0.0543, Spearman -0.973) and it reallocates level-1 capacity in the direction E8 says matters (K=256 cohesion 0.0822 vs 0.3106 at K=16), with explicit switches and no competing loss; but it is radial-only and E6's nearest analogues (successor_entropy 0.0512, successor_geodesic 0.0550) are the worst measured, so it ranks behind CURVCTRL."
+        },
+        {
+          "idea_id": "LORENTZ-SUCCPROFILE-SMOOTH-RQ",
+          "position": 3,
+          "reason": "Successor-profile equivalence is observed and non-degenerate (E9 positives share a successor cohort 0.9291 vs 0.8871 negatives, profile entropy 1.65 over 7.5 cohorts) and it directly targets the E8/E11 same-prefix gap, but the 50/50 Minkowski smoothing risks the content fidelity that E6 shows separates the 0.062-0.064 variants from the 0.051-0.055 ones, and the frozen text gives no off switches."
+        },
+        {
+          "idea_id": "behcone-prefix-rq",
+          "position": 4,
+          "reason": "It acts on level 1 only, but E7 shows the strong SIDs already have T1 NLL 0.00 (l1_br_euclid, l1_only) while the best-recall resample has T1 4.55, and E6's closest measured analogue successor_entropy is 0.0512; the quantizer is left unchanged and no off switches are specified, so it is aimed at a non-binding position at the weakest coupling."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "CURVCTRL-SID",
+          "position": 1,
+          "reason": "E7 shows the frozen baseline's entire deficit sits at the deepest token (l1_br T1..T4 NLL 0.00/0.00/0.00/9.03 with E6 gold level-1 prefix alive 1.000), so the only mechanism that derives a per-level curvature and hands the measured Q_l into that same level's assignment and commitment metric is the only one aimed where the generator actually fails, with no added loss term and a real closed loop (Q_l -> c_l -> metric -> assignment), though at levels >=2 Q_l collapses toward Q_min so c_l sits on its 0.99/max"
+        },
+        {
+          "idea_id": "LORENTZ-SUCCPROFILE-SMOOTH-RQ",
+          "position": 2,
+          "reason": "it carries the best-grounded behaviour signal in the bundle (E9: 0.9291 vs 0.8871 cohort sharing for positives over negatives, and the positive's profile overlap beats all ten negatives for 0.5898 of pairs) and intervenes on which point is quantised, the axis where E6's best arm resample (0.06363) sits; but its twin relation is the outgoing successor profile whereas E9 measured a predecessor/context profile, and E8's K=256 first-level ceiling of 0.0822 against the baseline's 0.0907 (E11) leaves little level-1 headroom to buy."
+        },
+        {
+          "idea_id": "succboost-geoshift",
+          "position": 3,
+          "reason": "E5's entropy stratification is strong (top-1 mass 0.4375 vs 0.0543, Spearman -0.973) and the exp-map plus d_P genuinely lives inside assignment and the residual chain, but E6 already measured an entropy-conditioned SID (successor_entropy 0.05122, second worst of eight and below every euclid/l1/resample arm) and the radial push loads diffuse items into exactly the deep levels whose T4 NLL is 9.03, with encoder cancellation left unmitigated."
+        },
+        {
+          "idea_id": "behcone-prefix-rq",
+          "position": 4,
+          "reason": "it spends an auxiliary cone loss on level 1, the stage the evidence says is already solved (E7 T1 NLL 0.00, E6 gold level-1 prefix alive 1.000) on a level whose behavioural signal is only 0.0907 against a 0.067 permuted null (E11) and whose K=256 capacity ceiling is 0.0822 (E8); it also keeps the Euclidean quantiser and adds a hyperbolic term beside it, the closest of the four to a standalone hyperbolic loss."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261029_030015_260",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "CURVCTRL-SID": {
+        "first_places": 2,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      },
+      "LORENTZ-SUCCPROFILE-SMOOTH-RQ": {
+        "first_places": 1,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      },
+      "behcone-prefix-rq": {
+        "first_places": 0,
+        "mean_rank": 3.6667,
+        "total_rank": 11
+      },
+      "succboost-geoshift": {
+        "first_places": 0,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      }
+    },
+    "backups": [
+      {
+        "first_places": 1,
+        "idea_id": "LORENTZ-SUCCPROFILE-SMOOTH-RQ",
+        "mean_rank": 2.0,
+        "status": "BACKUP",
+        "total_rank": 6
+      },
+      {
+        "first_places": 0,
+        "idea_id": "succboost-geoshift",
+        "mean_rank": 2.3333,
+        "status": "BACKUP",
+        "total_rank": 7
+      },
+      {
+        "first_places": 0,
+        "idea_id": "behcone-prefix-rq",
+        "mean_rank": 3.6667,
+        "status": "BACKUP",
+        "total_rank": 11
+      }
+    ],
+    "disagreement": {
+      "CURVCTRL-SID": 3,
+      "LORENTZ-SUCCPROFILE-SMOOTH-RQ": 2,
+      "behcone-prefix-rq": 1,
+      "succboost-geoshift": 1
+    },
+    "rejected": [
+      {
+        "idea_id": "LORENTZ-SUCCPROFILE-SMOOTH-RQ",
+        "mean_rank": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 6
+      },
+      {
+        "idea_id": "succboost-geoshift",
+        "mean_rank": 2.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 7
+      },
+      {
+        "idea_id": "behcone-prefix-rq",
+        "mean_rank": 3.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 11
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 2,
+        "idea_id": "CURVCTRL-SID",
+        "mean_rank": 2.0,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 6
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}

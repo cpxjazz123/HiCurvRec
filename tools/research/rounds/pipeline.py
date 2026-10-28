@@ -714,6 +714,11 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
     record["source_digest"] = digest
     record["status"] = "implemented"
     record["implemented_by"] = "main_agent"
+    # A registration that follows a review is a new revision: the reviewers'
+    # workspaces, the snapshot and the diff all key on it, so a fix must not be
+    # filed under the revision number of the tree it replaces.
+    if record.get("verdicts"):
+        record["revision"] = int(record.get("revision", 0)) + 1
     # A fresh implementation reopens the review, whatever the previous pass left
     # behind: the tree changed, so an earlier verdict and its fingerprint do not
     # describe it. The retry counter of an earlier infrastructure failure is

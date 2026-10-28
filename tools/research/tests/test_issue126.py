@@ -11,7 +11,24 @@ from pathlib import Path
 
 import numpy as np
 
-from tools.research.science import hyperbolic_sid_quality as quality
+
+def _numeric_stack() -> bool:
+    """These checks need the project interpreter (numpy and torch).
+
+    The framework suite runs on the stdlib-only interpreter of the MCP server, so
+    the numeric checks skip there instead of failing for a missing dependency.
+    """
+    try:
+        import torch  # noqa: F401
+    except Exception:                                      # noqa: BLE001
+        return False
+    return True
+
+
+HAVE_NUMERIC = _numeric_stack()
+
+if HAVE_NUMERIC:
+    from tools.research.science import hyperbolic_sid_quality as quality
 
 
 def _sid(rows) -> dict:
@@ -43,6 +60,7 @@ def _probe(directory: Path) -> Path:
     return path
 
 
+@unittest.skipUnless(HAVE_NUMERIC, "needs the project interpreter with numpy and torch")
 class BarycentreTests(unittest.TestCase):
 
     def test_the_centre_of_identical_points_is_the_point(self):
@@ -68,6 +86,7 @@ class BarycentreTests(unittest.TestCase):
         self.assertGreater(float(np.linalg.norm(centre - (a + b) / 2)), 1e-6)
 
 
+@unittest.skipUnless(HAVE_NUMERIC, "needs the project interpreter with numpy and torch")
 class ScoreInvariantTests(unittest.TestCase):
 
     def setUp(self):
@@ -135,6 +154,7 @@ class ScoreInvariantTests(unittest.TestCase):
         self.assertIn("spec", report)
 
 
+@unittest.skipUnless(HAVE_NUMERIC, "needs the project interpreter with numpy and torch")
 class ReferenceContractTests(unittest.TestCase):
 
     def test_the_reference_spec_is_frozen_and_hashed(self):

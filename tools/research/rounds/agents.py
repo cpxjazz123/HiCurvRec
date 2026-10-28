@@ -255,6 +255,9 @@ IMPLEMENT_PROMPT = (
 VERIFIER_ROLES = (
     {
         "id": "math-geometry",
+        "reads": ["model/frechet_poincare.py", "model/curvature_control.py",
+                  "model/utils.py", "tests/test_geometry.py",
+                  "tests/test_codebook_step.py"],
         "name": "mathematics and geometry",
         "scope": "model/frechet_poincare.py, tests/test_geometry.py, "
                  "tests/test_codebook_step.py",
@@ -283,6 +286,9 @@ VERIFIER_ROLES = (
     },
     {
         "id": "gradient-update",
+        "reads": ["model/layers.py", "model/model.py", "model/curvature_control.py",
+                  "train_rqvae.py", "tests/test_mechanism.py",
+                  "tests/test_curvature_wiring.py"],
         "name": "gradients and parameter updates",
         "scope": "model/layers.py, model/model.py, train_rqvae.py (the optimiser, the "
                  "backward and the parameter updates), tests/test_mechanism.py",
@@ -309,6 +315,8 @@ VERIFIER_ROLES = (
     },
     {
         "id": "distributed-state",
+        "reads": ["train_rqvae.py", "model/model.py", "model/curvature_control.py",
+                  "tests/test_ddp.py"],
         "name": "distributed execution and shared state",
         "scope": "train_rqvae.py (DDP construction, the step loop, collectives), "
                  "model/model.py (the codebook step plumbing), tests/test_ddp.py",
@@ -334,6 +342,8 @@ VERIFIER_ROLES = (
     },
     {
         "id": "behaviour-sid",
+        "reads": ["train_rqvae.py", "model/layers.py", "model/curvature_control.py",
+                  "tests/test_mechanism.py"],
         "name": "behaviour signal and SID consistency",
         "scope": "train_rqvae.py (the behaviour statistics, the export), "
                  "model/layers.py (the curved assignment), model/model.py",
@@ -361,6 +371,8 @@ VERIFIER_ROLES = (
     },
     {
         "id": "integration-resources",
+        "reads": ["train_rqvae.py", "model/utils.py", "model/curvature_control.py",
+                  "tests/test_paths.py", "."],
         "name": "integration and resources",
         "scope": "train_rqvae.py (entry point, paths, run configuration, epoch loop), "
                  "model/utils.py, tests/test_paths.py",
@@ -403,9 +415,12 @@ VERIFY_PROMPT = (
     "The tree:\n{tree}\n"
     "WHAT CHANGED SINCE THE LAST REVIEW (the main agent's brief; verify it, do not "
     "trust it):\n{change_brief}\n"
+    "THE CODE THAT CHANGED SINCE THE LAST REVIEWED REVISION (a unified diff; read it "
+    "together with the files in your scope):\n{change_diff}\n"
     "THE PREVIOUS REVIEW'S FINDINGS (are they actually fixed? A finding whose defect "
     "is still present is still blocking, and a fix that introduced a new defect is a "
-    "finding of this review):\n{previous_findings}\n"
+    "finding of this review; the complete list is in {findings_file}):\n"
+    "{previous_findings}\n"
     "Every area is still in scope for judging whether the candidate may train; the "
     "three questions the whole panel answers are:\n"
     "  a) behaviour x geometry fidelity: is there ONE connected pathway in which the "

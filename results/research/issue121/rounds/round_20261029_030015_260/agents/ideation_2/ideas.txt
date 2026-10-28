@@ -1,0 +1,91 @@
+IDEA: CURVCTRL-SID
+TITLE: Feedback curvature: the measured hard prefix-transition score of each RQ level sets that level's negative curvature, which then reshapes the same level's quantizer metric.
+MOTIVATION: A generative recommender emits a level-1 code first, then conditions on it. If the level-1 code barely predicts which level-2 code the next item carries, the generator's prefix becomes a coin flip and downstream recall collapses no matter how good the reconstruction is. Issue #126 showed that the hard prefix-transition score Q_H, computed from training-only transitions, ranks downstream test recall across seven SIDs (Spearman +0.821, exploratory). That score is currently only a DIAGNOSTIC: a proxy was built to rank prefixes, but nothing closed the loop. CURVCTRL-SID turns the hard score into the state variable of the geometry, so the quantizer's own metric is reshaped by exactly the quantity that predicts recall, at the level where the prediction fails.
+NOVELTY: All earlier mechanisms put user behaviour into a per-item quantity: successor mass, transition mass, Fréchet weights, Sinkhorn cost rows, cone/tangent directions, or a prefix-rank proxy loss term. CURVCTRL-SID adds NO loss term and NO per-item behaviour weight. It uses a single per-level SCALAR measured statistic, the hard prefix hit rate Q_l of the training transition set, as the curvature of the Poincaré metric used by that same RQ level. Curvature is therefore neither a hyperparameter nor a learned parameter: it is a closed-loop controller output, recomputed each epoch from the current SID assignment. It is also the only proposal in which the geometry VARIES ACROSS RQ LEVELS, and it is the direct answer to issue #126's open question: instead of optimising the ranking proxy, the hard score is fed back as the metric in which the next assignment is made.
+CHANGE: At the start of every K-th epoch we measure, per RQ level l, the fraction Q_l of training directed transitions whose two endpoints share the same level-l SID prefix, plus the mean encoder latent norm rho_l. From these two measured numbers we DERIVE a positive curvature magnitude c_l, and the level-l assignment and commitment term then use the Poincaré distance of curvature -c_l (encoder output and code vectors pushed into that ball by the origin exponential map). Poorer prefix predictability at a level means a larger c_l, which stretches the ball near its boundary and forces that level's codes to separate radially instead of only angularly.
+SPECIFICATION:
+Notation: L RQ levels (L=3 in the frozen baseline), K codes per level (K=256), N=24556 training items, d latent dim.
+1. Behaviour statistics, recomputed from the TRAINING split only, on epochs t where t mod K_meas == 0 (K_meas=5):
+   E = observed directed transitions (i -> j, i != j, consecutive within a training session), subsampled once and frozen to at most 2^20 edges by a fixed hash of (i,j) so the same sample is reused for all epochs.
+   p_l(i) = (c_1(i),...,c_l(i)) = current hard SID prefix of item i.
+   Q_l = (1/|E|) * sum over (i,j) in E of 1[ p_l(i) == p_l(j) ], clipped to [Q_min, 1], Q_min = 1e-3.
+   rho_l = (1/N) * sum over training items i of || z_l(i) ||_2, where z_l is the level-l residual input (stop-gradient).
+2. Derived curvature, one positive scalar per level:
+   c_l_raw = ( 1/Q_l - 1 ) / ( rho_l^2 + 1e-8 )
+   c_l_raw = min( c_l_raw, 0.99 / ( max_i ||z_l(i)||^2 + 1e-8 ) )   [derived cap: keeps mapped points inside the ball]
+   c_l_raw = max( c_l_raw, 1e-4 )                                    [documented floor for artanh stability]
+3. Anti-oscillation smoothing (the only other constant, a documented harmonic average, not tuned):
+   c_l <- c_l_prev + (c_l_raw - c_l_prev) / min(t + 1, 10), and c_l is additionally clipped to [c_l_prev/2, 2*c_l_prev] per update.
+4. Curved operators used at level l (curvature kappa_l = -c_l):
+   exp_0^c(z) = ( tanh( sqrt(c) * ||z|| ) / ( sqrt(c) * ||z|| + 1e-12 ) ) * z
+   x (+) y   = ( (1 + 2c<x,y> + c||y||^2) x + (1 - c||x||^2) y ) / ( 1 + 2c<x,y> + c^2 ||x||^2 ||y||^2 )
+   d_c(u,v)  = ( 2 / sqrt(c) ) * artanh( sqrt(c) * || (-u) (+) v || ), artanh argument clipped to 1 - 1e-7
+5. Quantizer at level l (this replaces only the distance; the codebook update stays the baseline Euclidean/RQ update, deliberately NOT a curved Fréchet update):
+   u = exp_0^{c_l}(z_l);  e_k = exp_0^{c_l}(e_{l,k})
+   c_l* = argmin_k d_{c_l}(u, e_k)
+   z_{l+1} = z_l - e_{l,c_l*}                        (residual stays Euclidean, standard RQ)
+   L_commit += beta * d_{c_l}(u, e_{l,c_l*})^2,  beta = 0.25 (baseline value)
+   Total loss = L_recon + L_commit + L_codebook, everything else unchanged.
+6. Switches (must exist in code; only BOTH_ON is trained):
+   behaviour_on: Q_l as measured.  behaviour_off: Q_l pinned so that c_l = 1.0 for all l (fixed unit negative curvature, no adaptation).
+   geometry_on: d_c / exp_0^c with c_l.  geometry_off: c_l := 0, exp = identity, d = squared Euclidean.
+SPEC INPUTS OUTPUTS: Inputs: the frozen training transition sample E (at most 2^20 directed pairs), the current hard SID table for the 24556 training items, the level-l residual latents z_l and the level-l code matrix (K x d). Output: L scalars c_1..c_L (updated every 5 epochs, held constant in between) plus, per forward pass, the level-l hard code index c_l* and the curved commitment scalar. No new trainable parameters are introduced.
+SAFEGUARDS:
+- All Möbius additions and artanh calls for the statistics run in float64; the batched distances run in float32 with the artanh argument clipped to 1-1e-7.
+- c_l is capped by 0.99/max||z_l||^2 so no mapped point reaches the ball boundary; rho_l has a 1e-8 floor.
+- c_l changes by at most a factor of 2 per update and is smoothed by a 1/10 harmonic average, so the metric cannot jump between epochs.
+- Q_l is clipped to [1e-3, 1]; if Q_l == 1 for all l the curvature collapses to the floor 1e-4 and the run behaves like the Euclidean baseline, a safe degenerate mode rather than a NaN.
+- Code-usage entropy per level is logged every epoch; if a level's entropy drops below 10 percent of log K the run still completes (diagnostic only, no gating).
+- No parameter is initialised from behaviour and no eval-time data is touched, so checkpoint selection stays on the frozen protocol.
+COST: No new parameters and no extra forward pass over the encoder. Extra per step at the frozen scale (24556 items, K=256, L=3): the level-l assignment now costs N*K = 6.29e6 curved distance evaluations instead of a dot product, i.e. 1.89e7 pairs per forward and roughly 5.7e7 with the backward, about 6-8 flops-equivalents each (two inner products, three norms, one artanh, one division) versus one inner product before. On the same GPU family this is +8 to +20 ms per step on top of a transformer step that is already tens to hundreds of ms; over 24 steps x 3000 epochs = 72000 steps that is +10 to +24 minutes of wall clock per card (the four data-parallel cards each pay it, so the run length grows by that amount, roughly 1-3 percent of Stage 2). The statistic pass is one reduction over at most 2^20 frozen edges every 5 epochs = 600 passes at about 5 ms each, under 5 s total. Memory grows only by caching one (N x d) latent per level for the norm statistics.
+HYPOTHESIS: If the level-l prefix is the thing the generator has to predict, then making the level-l metric more negatively curved exactly when the measured prefix hit rate is low should force level-l codes to separate along the radial (hierarchical) direction rather than only by angle, so that a child prefix becomes more nearly a function of its parent prefix. This must show up as (a) Q_l rising over Stage 2 epochs while the behaviour-off arm's Q_l stays flat, (b) deeper levels receiving larger c_l because Q_l is non-increasing in l, and (c) Stage3 test_recall@10 above 0.065 with no validation-based early stopping. The mechanism is worth keeping if the observed Q_l trend is monotone and the final recall clears the target; the Q_l trace, not recall alone, is what shows the loop actually ran.
+RISKS: The main failure is that Q_l is dominated by the level-1 partition and is nearly constant across epochs, so the controller produces a near-fixed curvature and the mechanism degenerates to a fixed-curvature Poincaré quantizer; the epoch-wise Q_l trace reveals this immediately. Second, a feedback loop can oscillate or collapse onto the boundary cap, mitigated by the factor-2 clamp and harmonic smoothing but not eliminated. Third, Poincaré distances saturate near the boundary, so the commitment gradient can vanish exactly where curvature is largest; the c_l cap and float64 statistics reduce but do not remove this. Fourth, the extra distances could slow Stage 2 enough to interact with the fixed epoch budget, though the estimated overhead is small. Fifth, with one run the effect is confounded with seed noise; the Q_l trajectory is the only internal evidence that the coupling did anything.
+BEHAVIOR SIGNAL: The hard training prefix-transition hit rate Q_l per RQ level, plus the per-level mean latent norm rho_l. Both are aggregate scalars over the training split, not per-item weights and not a loss term.
+BEHAVIOR COMPUTATION: From the training split only. For each training session, consecutive item pairs (i_t, i_{t+1}) with i_t != i_{t+1} form the directed edge multiset; a fixed hash subsample of at most 2^20 edges is frozen once at the start of training and reused. At every 5th epoch the current hard SID table is applied to both endpoints of every sampled edge and Q_l is the indicator average 1[p_l(i) == p_l(j)] for l = 1..L. rho_l is the mean over the 24556 training items of the Euclidean norm of the level-l residual input, taken with stop-gradient. Both are recomputed from the current encoder and codebooks, so the signal tracks the partition as it moves.
+LEAKAGE BOUNDARY: Only the training split's user-item sequences are read; no validation or test interaction is ever loaded into the Q_l or rho_l computation, and the statistic depends only on aggregate counts over training items. Nothing per-user is stored or attached to a SID, so there is no path by which a held-out interaction could influence an item's code. The curvature scalars are global per level, hence cannot memorise an evaluation item. SID construction, the curvature update and the commitment term never see the Stage 3 prompt construction or the recall harness.
+HYPERBOLIC OPERATOR: The Poincaré ball of derived negative curvature kappa_l = -c_l: origin exponential map exp_0^c(z) = tanh(sqrt(c)||z||)/(sqrt(c)||z||) z, Möbius addition (+), and Poincaré distance d_c(u,v) = (2/sqrt(c)) artanh(sqrt(c)||(-u)(+)v||). c_l is a data-derived scalar per level, not a learned parameter.
+HYPERBOLIC LOCATION: Inside the RQ quantizer, at the level-l nearest-code assignment and in the level-l commitment term of the RQ-VAE objective; the codebook update itself stays Euclidean.
+COUPLING PATH: training transitions -> hard SID prefixes -> Q_l and rho_l -> derived curvature c_l -> exp_0^{c_l} and d_{c_l} at level l -> argmin code index and commitment penalty -> encoder and codebook gradients -> new SID prefixes -> next epoch's Q_l. Behaviour enters only through c_l; geometry enters only through d_c and exp_0^c. Pinning Q_l (behaviour off) removes the loop; setting c_l = 0 (geometry off) makes the behaviour term inert. Either removal changes the same computation, so the pathway is genuinely joint.
+COUPLING EQUATION: c_l = (1/Q_l - 1) / (rho_l^2 + 1e-8), and the level-l assignment is c_l* = argmin_k (2/sqrt(c_l)) artanh( sqrt(c_l) * || ( -exp_0^{c_l}(z_l) ) (+) exp_0^{c_l}(e_{l,k}) || ), with commitment beta * d_{c_l}( exp_0^{c_l}(z_l), exp_0^{c_l}(e_{l,c_l*}) )^2. The behaviour term is the prefix-confusion odds (1/Q_l - 1); the curved term is d_{c_l}; they meet in the single scalar c_l that multiplies the geometry.
+OBSERVABLES:
+- Q_l per epoch for l = 1..L: expected to rise, and expected to stay flat in the behaviour-off arm.
+- c_l per epoch: expected to increase with depth (Q_l is non-increasing in l) and to track dips in Q_l.
+- Stage3 test_recall@10 at the end of the frozen protocol, against the 0.065 target and the recorded baseline SID.
+- Prefix behaviour predictability on training transitions under the fixed Q_H harness inherited from issue #126, recorded before and after Stage 2.
+- Level-wise code usage entropy and the mean number of distinct level-2 children per level-1 code (a direct measure of whether the tree became more prefix-predictable).
+- Curved commitment magnitude and the conformal factor 1/(1 - c_l ||u||^2) at the mean radius, which should rise with c_l.
+- Number of items whose code index flips between consecutive epochs, which should shrink as c_l stabilises.
+ABLATION BEHAVIOR OFF: Q_l is pinned so that c_l = 1.0 for every level; the code executes the identical exp_0^c and d_c at unit negative curvature, so geometry is present but no longer driven by transitions. This arm isolates the feedback loop, not the geometry.
+ABLATION GEOMETRY OFF: c_l := 0, exp_0^0 is the identity and d_0 is squared Euclidean in the same code, while Q_l is still computed and logged. Behaviour exists but has no geometric channel, so this arm isolates whether the curvature is doing the work.
+ABLATION BOTH ON: Q_l measured from training transitions, c_l derived and smoothed as specified, level-l assignment and commitment evaluated with exp_0^{c_l} and d_{c_l}. This is the only arm trained in this round.
+SPEC EQUATIONS:
+  for t in 1..3000 epochs:
+    for step in 1..24:
+      z_1 = encoder(batch)                       # L x B x d residuals
+      for l in 1..L:
+        u  = exp_0^{c_l}(z_l)                    # c_l from the last measurement
+        E_ = exp_0^{c_l}(E_l)                    # K x d codes mapped
+        D  = poincare_dist(u, E_)                # B x K, curvature -c_l
+        k* = argmin(D, axis=1)
+        z_{l+1} = z_l - E_l[k*]
+        L_commit += 0.25 * D[b, k*]^2
+      loss = L_recon + L_commit + L_codebook
+      update(encoder, codebooks)
+    if t mod 5 == 0 and behaviour_on:
+      Q_l   = mean over frozen edge sample of 1[p_l(i) == p_l(j)]
+      rho_l = mean_i ||z_l(i)||  (no grad)
+      c_raw = clip((1/Q_l - 1)/(rho_l^2 + 1e-8), 1e-4, 0.99/max_i||z_l(i)||^2)
+      c_l   = clip(c_l + (c_raw - c_l)/min(t+1,10), c_l/2, 2*c_l)
+    if not behaviour_on: c_l = 1.0
+    if not geometry_on:  c_l = 0.0   # exp = id, d = squared Euclidean
+
+  exp_0^c(z) = tanh(sqrt(c)||z||)/(sqrt(c)||z|| + 1e-12) * z
+  poincare_dist(u,v):
+    x = -u ; y = v
+    num = (1 + 2c<x,y> + c||y||^2) x + (1 - c||x||^2) y
+    den = 1 + 2c<x,y> + c^2 ||x||^2 ||y||^2
+    r   = clip(sqrt(c) * ||num/den||, 0, 1 - 1e-7)
+    return (2/sqrt(c)) * artanh(r)
+SPEC INPUTS OUTPUTS: Inputs: the frozen training edge sample (<=2^20 directed pairs), the current hard SID table over the 24556 training items, the level-l residual latents z_l and the level-l K x d code matrix. Outputs: L scalars c_1..c_L refreshed every 5 epochs, and per forward pass the level-l code index c_l* and the curved commitment value. No new trainable parameters.
+SAFEGUARDS: float64 for all statistics; artanh argument clipped to 1-1e-7; c_l capped at 0.99/max||z_l||^2 and floored at 1e-4; factor-2 change clamp plus 1/10 harmonic smoothing; Q_l clipped to [1e-3,1]; rho_l floored at 1e-8; the degenerate Q_l == 1 case reduces exactly to the Euclidean baseline with no division by zero and no NaN.
+END IDEA
