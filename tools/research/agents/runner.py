@@ -112,10 +112,19 @@ def isolation_permissions(workspace: Path, role: str = "verify",
         if pattern not in allowed:
             allowed.append(pattern)
     for entry in read_paths:
-        for pattern in _read_patterns(Path(entry)):
+        path = Path(entry)
+        for pattern in _read_patterns(path):
             if pattern not in allowed:
                 allowed.append(pattern)
             external[pattern] = "allow"
+        # opencode decides whether a path is outside the project at the DIRECTORY
+        # level: naming only the file left every read of the candidate tree denied
+        # while the exact file still matched nothing. The containing directory is
+        # therefore declared too; which files inside it may be opened is still
+        # bounded by `read` above.
+        parent = path if path.is_dir() else path.parent
+        for pattern in _read_patterns(parent):
+            external.setdefault(pattern, "allow")
     permissions["read"] = {"*": "deny", **{pattern: "allow" for pattern in allowed}}
     permissions["external_directory"] = {"*": "deny", **external}
     return permissions

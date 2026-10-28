@@ -307,3 +307,22 @@ class StaleEvidenceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExternalDirectoryTests(unittest.TestCase):
+    """A file allowlist must also declare the directory it lives in."""
+
+    def test_the_containing_directory_is_declared(self):
+        from tools.research.agents import runner
+        with tempfile.TemporaryDirectory() as work:
+            workspace = Path(work) / "ws"
+            workspace.mkdir()
+            scoped = Path(work) / "tree" / "model" / "m.py"
+            scoped.parent.mkdir(parents=True)
+            scoped.write_text("x = 1\n", encoding="utf-8")
+            permissions = runner.isolation_permissions(workspace, "verify", [str(scoped)])
+            external = permissions["external_directory"]
+            directory_pattern = str(scoped.parent.resolve()) + "/**"
+            self.assertEqual(external.get(directory_pattern), "allow")
+            self.assertEqual(external.get(str(scoped.resolve())), "allow")
+            self.assertEqual(permissions["read"].get(str(scoped.resolve())), "allow")
