@@ -351,12 +351,14 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
             for finding in check.get("findings", []):
                 if _is_blocking(finding.get("severity")):
                     reported.append({"verifier": report.get("verifier", ""),
+                                     "role": report.get("role", ""),
                                      "check": check.get("name", ""), **finding})
         if verdict == "NEEDS_FIX" and not reported:
             # The verifier asked for a correction without naming a blocking
             # finding. That is still a refusal to approve, so it must not be
             # recorded as an approval.
             reported.append({"verifier": report.get("verifier", ""),
+                             "role": report.get("role", ""),
                              "check": "verdict",
                              "severity": "blocking",
                              "location": "verification.json",
@@ -404,7 +406,17 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
     # it. Only a source change clears it, because then the code is different.
     earlier = [finding for finding in (record.get("blocking_findings") or [])
                if finding.get("verifier") in FRAMEWORK_FINDING_SOURCES]
-    record["blocking_findings"] = earlier + findings
+    # A reviewer's finding stays open until the SAME role re-reviews the tree. A
+    # PASS from another role says nothing about the area that complained, and
+    # treating it as a closure is how "verified with no blocking findings" could be
+    # reported while an old blocker was never re-checked.
+    responding = {str(report.get("role") or "") for report in reports}
+    carried = [finding for finding in (record.get("blocking_findings") or [])
+               if finding.get("verifier") not in FRAMEWORK_FINDING_SOURCES
+               and str(finding.get("role") or "") not in responding]
+    record["blocking_findings"] = earlier + carried + findings
+    if carried:
+        record["carried_findings"] = len(carried)
     # A failed output-path preflight blocks just as a reviewer's finding does.
     findings = record["blocking_findings"]
     if findings:

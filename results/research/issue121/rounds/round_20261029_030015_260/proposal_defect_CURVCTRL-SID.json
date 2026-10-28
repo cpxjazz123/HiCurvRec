@@ -1,5 +1,12 @@
 {
   "action": "not accepted for training; no GPU run was spent on an inert coupling. The rule could be amended derivably (normalise the latent by max|z| so the map lands inside the ball for any c and the cap disappears), but that changes the frozen proposal and needs a new proposal revision, not an implementation patch.",
+  "corrections": {
+    "distance_convention": "A separate real defect was found in the implementation of the variable-curvature distance: exp_0 used sqrt(c) while the inherited distance divided by c. The standard pair is (2/sqrt(c)) artanh(sqrt(c)||(-x)(+)y||), and with c=4, z=0.4 it gives 0.8 where the inherited formula gave 4.202811. Fixed and pinned by tests.",
+    "false_positive": "The last review's 'exp/log differ by a factor of 2' blocking finding was a false positive: exp0_c(0.5, 1) = 0.462117 and log0_c(0.462117, 1) = 0.5, and the Euclidean norm of a tangent vector is not the metric norm at a point.",
+    "normalisation_claim": "RETRACTED: normalising the latent by max|z| does NOT remove the saturation. The trigger is Q < 1 / (1 + 0.99 (rho/M)^2), which depends only on the ratio rho/M, and that ratio is invariant under such a rescaling. Only removing or redesigning the cap changes the control law.",
+    "saturation_wording": "The cap saturates the DIRECT response to Q inside the saturated band; the applied curvature can still move between measurement epochs because M is remeasured. The original report said 'fixed curvature' and that was too strong.",
+    "test_domain": "The test that demonstrated 'lower Q gives higher curvature' used mean norm 0.2 with max norm 0.05, which cannot occur in real data and hid the cap. Test inputs are now inside the feasible domain (max >= mean)."
+  },
   "cost": {
     "review_rounds": 6,
     "stage2_runs": 0,

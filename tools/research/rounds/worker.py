@@ -957,6 +957,26 @@ def tree_diff(root: Path, idea_id: str, previous_revision: int, tree: Path) -> s
     return text
 
 
+def full_change_list(root: Path, idea_id: str, previous_revision: int, tree: Path) -> list:
+    """Every path that was added, modified or deleted since the last snapshot."""
+    root, tree = Path(root), Path(tree)
+    snapshot = root / "snapshots" / (idea_id + "_r" + str(int(previous_revision)))
+    if not snapshot.is_dir():
+        return []
+    changed = []
+    for relative in _source_files(tree):
+        old_path = snapshot / relative
+        if not old_path.is_file():
+            changed.append(str(relative))
+            continue
+        if old_path.read_bytes() != (tree / relative).read_bytes():
+            changed.append(str(relative))
+    for relative in _source_files(snapshot):
+        if not (tree / relative).is_file():
+            changed.append(str(relative))          # a deletion changes the area too
+    return changed
+
+
 def changed_files(patch: str) -> list:
     """The files a unified diff touches, from its headers."""
     import re
@@ -972,14 +992,18 @@ def changed_files(patch: str) -> list:
     return seen
 
 
-def affected_roles(patch: str, findings=None, reported=None) -> list:
+def affected_roles(patch: str, findings=None, reported=None, files=None) -> list:
     """The roles whose area the patch touches, plus the ones that complained.
 
     A role that raised a finding keeps its seat until the finding is resolved:
     the fix is exactly what it has to check. When nothing can be attributed, all
     roles are dispatched, because a review with no reviewer is not a review.
+
+    ``files`` is the complete changed-file list when the caller has it: the role
+    selection must not depend on the TRUNCATED patch that goes into the prompt,
+    or a change past the cutoff is silently left unreviewed.
     """
-    files = changed_files(patch)
+    files = list(files) if files is not None else changed_files(patch)
     roles = []
     if files:
         for role in VERIFIER_ROLES:
@@ -1014,6 +1038,30 @@ def write_findings_file(root: Path, idea_id: str, revision: int, findings) -> st
     payload = {"idea_id": idea_id, "reviewed_revision": int(revision),
                "findings": list(findings or [])}
     target.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return str(target)
+
+
+def write_manifest(root: Path, idea_id: str, revision: int, tree: Path) -> str:
+    """The list of source files a reviewer must know exists.
+
+    A read scope hides files on purpose, but a reviewer that cannot see a file must
+    not conclude it is absent: the manifest names every source file and its size,
+    so "there is no model/model.py" is a statement about the tree rather than about
+    the allowlist. It is written for every revision and given to every reviewer.
+    """
+    root, tree = Path(root), Path(tree)
+    target = root / "manifests" / (idea_id + "_r" + str(int(revision)) + ".txt")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["# source manifest of the candidate tree",
+             "# path | lines | bytes",
+             "# a file absent from this list does not exist; a file in this list may",
+             "# still be outside your read scope, and that is not a defect."]
+    for relative in _source_files(tree):
+        path = tree / relative
+        text = path.read_text(encoding="utf-8", errors="replace")
+        lines.append("%s | %d lines | %d bytes" % (relative, text.count("\n") + 1,
+                                                   path.stat().st_size))
+    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return str(target)
 
 
@@ -1086,12 +1134,14 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
     previous_revision = max(0, int(revision) - 1)
     patch = tree_diff(root, str(idea["idea_id"]), previous_revision, tree) \
         if int(revision) > 0 else ""
+    moved = full_change_list(root, str(idea["idea_id"]), previous_revision, tree)
     findings = list(record.get("blocking_findings") or [])
     findings_path = write_findings_file(root, str(idea["idea_id"]), int(revision), findings)
+    manifest = write_manifest(root, str(idea["idea_id"]), int(revision), tree)
     # The tree this review reads becomes the baseline of the NEXT review's diff:
     # without this the second revision would be diffed against nothing.
     snapshot_tree(root, str(idea["idea_id"]), int(revision), tree)
-    wanted = affected_roles(patch, findings)
+    wanted = affected_roles(patch, findings, files=moved)
     roles = [role for role in VERIFIER_ROLES if role["id"] in wanted]
     change_brief = _format_change_brief(record)
     previous_findings = _format_findings(findings)
@@ -1100,6 +1150,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
                         "reviewed revision to diff against\n" + change_brief)
     prompts = {}
     reads = {}
+    role_index = {role["id"]: position for position, role in enumerate(VERIFIER_ROLES, 1)}
     for index, role in enumerate(roles, 1):
         prompts[index] = agent_contracts.VERIFY_PROMPT.format(
             role_index=index, role_total=len(roles), role_name=role["name"],
@@ -1109,16 +1160,21 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
             change_brief=change_brief,
             change_diff=(patch or "  none: this is the first review of this candidate"),
             findings_file=findings_path,
+            manifest_file=manifest,
             previous_findings=previous_findings,
             objective=agent_contracts.RESEARCH_OBJECTIVE,
             scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
             agent_contracts.EXPERIMENT_POLICY)
-        reads[index] = role_read_paths(tree, role) + [findings_path]
+        reads[index] = role_read_paths(tree, role) + [findings_path, manifest]
 
     def verify(index):
         # The revision is part of the workspace name: a fresh review after a
         # repair must be a fresh agent, never a replay of the previous answer.
-        task_id = "verify_" + idea["idea_id"] + "_r" + str(revision) + "_" + str(index)
+        # The number is the role's position in the FULL role list, not in the
+        # filtered dispatch: a stable id is what lets a later review attribute an
+        # old finding to the reviewer that raised it.
+        task_id = ("verify_" + idea["idea_id"] + "_r" + str(revision) + "_" +
+                   str(role_index[roles[index - 1]["id"]]))
         prompt = prompts[index]
         report = _run_agent(root, task_id, prompt, "verification.txt",
                             plaintext.parse_verification,

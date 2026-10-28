@@ -256,8 +256,8 @@ VERIFIER_ROLES = (
     {
         "id": "math-geometry",
         "reads": ["model/frechet_poincare.py", "model/curvature_control.py",
-                  "model/utils.py", "tests/test_geometry.py",
-                  "tests/test_codebook_step.py"],
+                  "model/behaviour_radius.py", "model/utils.py",
+                  "tests/test_geometry.py", "tests/test_codebook_step.py"],
         "name": "mathematics and geometry",
         "scope": "model/frechet_poincare.py, tests/test_geometry.py, "
                  "tests/test_codebook_step.py",
@@ -287,8 +287,8 @@ VERIFIER_ROLES = (
     {
         "id": "gradient-update",
         "reads": ["model/layers.py", "model/model.py", "model/curvature_control.py",
-                  "model/frechet_poincare.py", "model/utils.py",
-                  "train_rqvae.py", "tests/test_mechanism.py",
+                  "model/behaviour_radius.py", "model/frechet_poincare.py",
+                  "model/utils.py", "train_rqvae.py", "tests/test_mechanism.py",
                   "tests/test_curvature_wiring.py"],
         "name": "gradients and parameter updates",
         "scope": "model/layers.py, model/model.py, train_rqvae.py (the optimiser, the "
@@ -317,8 +317,8 @@ VERIFIER_ROLES = (
     {
         "id": "distributed-state",
         "reads": ["train_rqvae.py", "model/model.py", "model/layers.py",
-                  "model/curvature_control.py", "model/frechet_poincare.py",
-                  "tests/test_ddp.py"],
+                  "model/curvature_control.py", "model/behaviour_radius.py",
+                  "model/frechet_poincare.py", "tests/test_ddp.py"],
         "name": "distributed execution and shared state",
         "scope": "train_rqvae.py (DDP construction, the step loop, collectives), "
                  "model/model.py (the codebook step plumbing), tests/test_ddp.py",
@@ -344,8 +344,10 @@ VERIFIER_ROLES = (
     },
     {
         "id": "behaviour-sid",
-        "reads": ["train_rqvae.py", "model/layers.py", "model/curvature_control.py",
-                  "model/frechet_poincare.py", "tests/test_mechanism.py"],
+        "reads": ["train_rqvae.py", "model/model.py", "model/__init__.py",
+                  "model/layers.py", "model/curvature_control.py",
+                  "model/behaviour_radius.py", "model/frechet_poincare.py",
+                  "tests/test_mechanism.py"],
         "name": "behaviour signal and SID consistency",
         "scope": "train_rqvae.py (the behaviour statistics, the export), "
                  "model/layers.py (the curved assignment), model/model.py",
@@ -374,7 +376,7 @@ VERIFIER_ROLES = (
     {
         "id": "integration-resources",
         "reads": ["train_rqvae.py", "model/utils.py", "model/curvature_control.py",
-                  "tests/test_paths.py", "."],
+                  "model/behaviour_radius.py", "tests/test_paths.py", "."],
         "name": "integration and resources",
         "scope": "train_rqvae.py (entry point, paths, run configuration, epoch loop), "
                  "model/utils.py, tests/test_paths.py",
@@ -419,6 +421,10 @@ VERIFY_PROMPT = (
     "trust it):\n{change_brief}\n"
     "THE CODE THAT CHANGED SINCE THE LAST REVIEWED REVISION (a unified diff; read it "
     "together with the files in your scope):\n{change_diff}\n"
+    "YOUR READ SCOPE IS DELIBERATELY NARROW. The complete list of the tree's source "
+    "files is in {manifest_file}; a file that is not in it does not exist, and a "
+    "file that is in it but outside your scope is NOT a defect -- say you did not "
+    "read it instead of reporting it missing.\n"
     "THE PREVIOUS REVIEW'S FINDINGS (are they actually fixed? A finding whose defect "
     "is still present is still blocking, and a fix that introduced a new defect is a "
     "finding of this review; the complete list is in {findings_file}):\n"

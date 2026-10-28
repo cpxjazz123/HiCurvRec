@@ -135,3 +135,121 @@ class FindingsFileTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ManifestTests(unittest.TestCase):
+    """A reviewer must know what exists even when its scope cannot read it.
+
+    The alternative produced a blocking finding that a module was "absent from the
+    delivered tree" when the module existed and simply was not in that role's read
+    scope.
+    """
+
+    def test_the_manifest_lists_every_source_file_with_its_size(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            tree = root / "trees" / "idea"
+            (tree / "model").mkdir(parents=True)
+            (tree / "train_rqvae.py").write_text("x = 1\n", encoding="utf-8")
+            (tree / "model" / "model.py").write_text("y = 2\nz = 3\n", encoding="utf-8")
+            path = worker_module.write_manifest(root, "idea", 2, tree)
+            text = Path(path).read_text(encoding="utf-8")
+            self.assertIn("train_rqvae.py", text)
+            self.assertIn("model/model.py", text)
+            self.assertIn("lines", text)
+
+    def test_every_reviewer_receives_the_manifest(self):
+        source = (Path(__file__).resolve().parents[1] / "rounds" /
+                  "worker.py").read_text(encoding="utf-8")
+        self.assertIn("write_manifest(", source)
+        block = source[source.index("def run_verification"):]
+        block = block[:block.index("def verify(")]
+        self.assertIn("manifest", block)
+        self.assertIn("reads[index] = role_read_paths(tree, role) + [findings_path, manifest]",
+                      block)
+
+
+class FullChangeListTests(unittest.TestCase):
+    """Role selection must not depend on the truncated prompt text."""
+
+    def _trees(self, work):
+        root = Path(work)
+        tree = root / "trees" / "idea"
+        (tree / "model").mkdir(parents=True)
+        (tree / "train_rqvae.py").write_text("x = 1\n", encoding="utf-8")
+        (tree / "model" / "m.py").write_text("y = 1\n", encoding="utf-8")
+        worker_module.snapshot_tree(root, "idea", 0, tree)
+        return root, tree
+
+    def test_a_change_past_the_truncation_is_still_dispatched(self):
+        with tempfile.TemporaryDirectory() as work:
+            root, tree = self._trees(work)
+            (tree / "model" / "m.py").write_text("# long\n" * 40000, encoding="utf-8")
+            (tree / "train_rqvae.py").write_text("x = 2\n", encoding="utf-8")
+            patch = worker_module.tree_diff(root, "idea", 0, tree)
+            self.assertIn("truncated", patch)
+            self.assertNotIn("train_rqvae.py", worker_module.changed_files(patch))
+            files = worker_module.full_change_list(root, "idea", 0, tree)
+            self.assertIn("train_rqvae.py", files)
+            roles = worker_module.affected_roles("", files=files)
+            self.assertIn("integration-resources", roles)
+
+    def test_a_deletion_changes_the_file_list(self):
+        with tempfile.TemporaryDirectory() as work:
+            root, tree = self._trees(work)
+            (tree / "train_rqvae.py").unlink()
+            files = worker_module.full_change_list(root, "idea", 0, tree)
+            self.assertIn("train_rqvae.py", files)
+
+    def test_the_reviewer_number_is_the_full_list_position(self):
+        source = (Path(__file__).resolve().parents[1] / "rounds" /
+                  "worker.py").read_text(encoding="utf-8")
+        self.assertIn("role_index[roles[index - 1][\"id\"]]", source)
+
+
+class FindingOwnershipTests(unittest.TestCase):
+    """An unresolved blocking finding stays until its own role re-reviews."""
+
+    def test_a_finding_keeps_its_role_across_passes(self):
+        from tools.research.rounds import pipeline as pipeline_module
+        with tempfile.TemporaryDirectory() as work:
+            directory = pipeline_module.new_round(Path(work), "round_own", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [{
+                "implementation_id": "i", "idea_id": "i", "tree": str(directory),
+                "status": "implemented", "revision": 0}]
+            state = pipeline_module.apply_verification(state, "i", [{
+                "verifier": "verify_i_r0_3", "role": "distributed-state",
+                "verdict": "NEEDS_FIX", "checks": [{"name": "c", "verdict": "NEEDS_FIX",
+                                                    "findings": [{"severity": "blocking",
+                                                                  "location": "f.py:1",
+                                                                  "detail": "d"}]}],
+                "boundary_version": "b", "boundary_sha256": "0" * 64,
+                "missing_reviewers": []}])
+            record = state["implementations"][0]
+            self.assertEqual(record["blocking_findings"][0]["role"], "distributed-state")
+
+    def test_an_old_finding_survives_a_pass_by_another_role(self):
+        from tools.research.rounds import pipeline as pipeline_module
+        with tempfile.TemporaryDirectory() as work:
+            directory = pipeline_module.new_round(Path(work), "round_own2", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [{
+                "implementation_id": "i", "idea_id": "i", "tree": str(directory),
+                "status": "implemented", "revision": 0}]
+            state = pipeline_module.apply_verification(state, "i", [{
+                "verifier": "verify_i_r0_3", "role": "distributed-state",
+                "verdict": "NEEDS_FIX", "checks": [{"name": "c", "verdict": "NEEDS_FIX",
+                                                    "findings": [{"severity": "blocking",
+                                                                  "location": "f.py:1",
+                                                                  "detail": "d"}]}],
+                "boundary_version": "b", "boundary_sha256": "0" * 64,
+                "missing_reviewers": []}])
+            state = pipeline_module.apply_verification(state, "i", [{
+                "verifier": "verify_i_r1_1", "role": "math-geometry",
+                "verdict": "PASS", "checks": [],
+                "boundary_version": "b", "boundary_sha256": "0" * 64,
+                "missing_reviewers": []}])
+            record = state["implementations"][0]
+            self.assertTrue(record.get("blocking_findings"),
+                            "a PASS from another role must not close an open blocker")

@@ -48,10 +48,24 @@ class DerivationTests(unittest.TestCase):
         c = derive_curvature(0.5, 0.2, max_norm=0.9)
         self.assertAlmostEqual(float(c), 0.99 / (0.9 ** 2), places=4)
 
-    def test_a_lower_hit_rate_means_a_larger_curvature(self):
-        low = float(derive_curvature(0.1, 0.2, max_norm=0.05))
-        high = float(derive_curvature(0.9, 0.2, max_norm=0.05))
+    def test_a_lower_hit_rate_means_a_larger_curvature_below_the_band(self):
+        # max_norm must be at least the mean norm: 0.2 / 0.05 cannot happen in real
+        # data, and such an input hides the cap the proposal has.
+        low = float(derive_curvature(0.99, 0.2, max_norm=0.8))
+        high = float(derive_curvature(0.999, 0.2, max_norm=0.8))
         self.assertGreater(low, high)
+
+    def test_the_cap_saturates_the_response_inside_the_band(self):
+        """The recorded proposal defect: Q = 0.1 and Q = 0.9 give the same c.
+
+        The trigger is Q < 1 / (1 + 0.99 (rho/M)^2), which for rho/M = 0.25 is
+        about 0.94, so every realistic hit rate lands on the cap. This test states
+        the behaviour instead of hiding it behind an infeasible max_norm.
+        """
+        low = float(derive_curvature(0.1, 0.2, max_norm=0.8))
+        high = float(derive_curvature(0.9, 0.2, max_norm=0.8))
+        self.assertEqual(low, high)
+        self.assertAlmostEqual(low, 0.99 / (0.8 ** 2), places=4)
 
     def test_the_cap_keeps_the_mapped_points_inside_the_ball(self):
         c = float(derive_curvature(0.001, 0.01, max_norm=1.5))

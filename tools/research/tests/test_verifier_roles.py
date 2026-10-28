@@ -65,6 +65,7 @@ class PromptTests(unittest.TestCase):
                 change_brief=worker_module._format_change_brief(record or {}),
                 change_diff="diff --git a/model/frechet_poincare.py b/model/frechet_poincare.py\n",
                 findings_file="/tmp/findings.json",
+                manifest_file="/tmp/manifest.txt",
                 previous_findings=worker_module._format_findings(
                     (record or {}).get("blocking_findings")),
                 objective=agent_contracts.RESEARCH_OBJECTIVE,

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import torch
 
-from model.frechet_poincare import clamp_ball, poincare_distance
+from model.frechet_poincare import clamp_ball, mobius_add, poincare_distance
 
 #: The floor of a measured hit rate: a level whose prefixes never meet has an
 #: infinite confusion odds, and the floor keeps the derived curvature finite.
@@ -136,7 +136,14 @@ def squared_distance_c(x: torch.Tensor, y: torch.Tensor, curvature) -> torch.Ten
     c = torch.as_tensor(curvature, dtype=x.dtype, device=x.device)
     if float(c) == 0.0:
         return (x - y).pow(2).sum(dim=-1)
-    return poincare_distance(x, y, float(c)) ** 2
+    # The standard pair for the ball of curvature -c: the exponential uses sqrt(c),
+    # so the distance must use it too. d_c(0, exp_0^c(v)) == |v| holds only with
+    # this convention; the inherited distance divides by c instead of sqrt(c) and
+    # reports a different metric.
+    root = torch.sqrt(c)
+    difference = mobius_add(-x, y, c)
+    norm = difference.norm(dim=-1).clamp_max(1 - 1e-7)
+    return ((2.0 / root) * torch.atanh(root * norm)) ** 2
 
 
 def level_curvatures(state: dict, *, use_behaviour: bool, use_geometry: bool) -> list:
