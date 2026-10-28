@@ -1,0 +1,40 @@
+I'll start by exploring the tree structure and reading the primary scope files.
+VERDICT: PASS
+CHECK: gradients: which parameter is updated by which objective
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:178-196 (VQLayer.forward curved branch) -> model/model.py:60-92 (frechet_step_sums / apply_frechet_codebook_step) -> train_rqvae.py:438-459 (backward -> clip -> optimizer.step -> Fréchet step); traced every leaf parameter of RQVAE statically.
+FINDING SEVERITY: n/a
+FINDING LOCATION: n/a
+FINDING DETAIL: (1) Encoder (model.py:31, MLP over sizes (in,512,256,128,32)) is updated by two objectives, both intended: the reconstruction MSE of model.py:104 (which reaches it through the straight-through identity at layers.py:190, x_q = x + (x_q - x).detach()) and the weighted curved commitment beta*mean(w_hat * d_kappa(z_i, sg[c])^2) at layers.py:186-188, which reaches it through point = clamp_ball(exp_0(latent)) (layers.py:184). The two are separate additive terms, neither cancels the other. (2) Decoder is updated only by the reconstruction MSE. (3) The three codebooks (embed.weight, requires_grad_(False) at layers.py:88-96) are NOT in the optimiser at all (train_rqvae.py:386 filters on p.requires_grad) and are moved only by FrechetCodebook.apply (frechet_poincare.py:181-201) under torch.no_grad, invoked from train_rqvae.py:451-459. That is exactly the proposal's "estimator, not a gradient path": one estimator per codebook, no parameter trained by two estimators at once, no int-optimiser parameter without a gradient (DDP is therefore also safe with find_unused_parameters=False). (4) The proposal's claim "the encoder still gets gradients through d_kappa and the commitment term" is true: point carries grad, the code is .detach()ed at layers.py:187.
+FINDING REPRODUCTION: n/a
+FINDING CORRECTION: n/a
+
+CHECK: detach, STE and the loss composition -- every cut, every additive term, every weight
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:183-192 (cuts and STE), model/layers.py:392-400 (per-level sum, /codebook_num), model/frechet_poincare.py:183-215 (accumulate/apply, remember .detach), model/model.py:104-106 (recon + quant), train_rqvae.py:441-459.
+FINDING SEVERITY: n/a
+FINDING LOCATION: n/a
+FINDING DETAIL: Cuts are exactly five and all correct: (a) the code is detached inside the commitment (layers.py:187), which is the proposal's sg[c]); (b) the batch is detached before the step (frechet_poincare.py:206, remember stores point.detach()); (c) the step itself runs under no_grad and writes via .data.copy_ (model.py:88-92), so the codebook is never differentiated even though it is a Parameter; (d) the straight-through at layers.py:190 gives the decoder a path to the encoder; (e) x_q.detach() in the codebook-side term. Terms and weights: recon MSE (weight 1) + quant_loss summed over the three levels and divided by codebook_num (layers.py:397-399), where each level contributes BETA*(w_hat*commitment).mean() + mse(x, x_q.detach()); BETA = 0.25 (train_rqvae.py:90) multiplies only the commitment, matching the baseline's beta on the encoder-side term, and the batch-normalised weights w_hat enter both the commitment and the step (layers.py:185, frechet_poincare.py:150-159). One dead sub-term exists (see finding).
+FINDING REPRODUCTION: see findings.
+FINDING CORRECTION: see findings.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: model/layers.py:189
+FINDING DETAIL: In the curved branch, quant_loss adds F.mse_loss(x, x_q.detach()) where x_q = log_0(get_code_embs()[embed_ind]) and get_code_embs() is the non-grad codebook, so the term is an exact constant: it carries no gradient to any parameter and changes no update. It only inflates the reported loss (it is the baseline's codebook-side MSE, meaningless once the codebook is a detached estimator). Not blocking, because nothing is silently overwritten: it is dead, not misdirected.
+FINDING REPRODUCTION: model/layers.py:189 together with layers.py:96 (embed.weight.requires_grad_(False)) and layers.py:191 (tangent = log_0(...)); an autograd walk from that term reaches no Parameter, so removing it leaves every p.grad bit-identical.
+FINDING CORRECTION: delete it in the curved branch, or log it outside the optimised loss if a baseline-comparable curve is wanted.
+
+FINDING SEVERITY: minor
+FINDING LOCATION: model/layers.py:191
+FINDING DETAIL: The residual fed to level l+1 is residual - log_0(c_{a(i)}) (a Euclidean difference in the tangent space at the origin), not the proposal's r_i = log^kappa_{c_{a(i)}}(z_i). The curved assignment, the weighted commitment and the Fréchet step are all unaffected, so the behaviour x geometry coupling is still the exercised pathway; only the inter-level transport differs from the written equation, so levels 2 and 3 quantise a vector that is not the geodesic tangent the specification names. It changes level-2/3 inputs but not any of the gradient destinations or the estimator itself, hence minor rather than blocking.
+FINDING REPRODUCTION: layers.py:191 and layers.py:394; log_at(codebook[embed_ind], point) exists (frechet_poincare.py:81-90) but is used only inside the estimator, never for the residual.
+FINDING CORRECTION: set quant per level to log_at(codebook[embed_ind], point) (parallel-transported to the origin if a single latent space is kept), so the residual is the tangent the proposal defines.
+
+CHECK: gradient scale: can the curved term saturate, vanish or explode at lr=1e-3 with clip 1.0
+CHECK VERDICT: PASS
+EXERCISED PATH: model/frechet_poincare.py:56-64 (exp_0), 52-68 (clamp_ball), 71-79 (exp_at), 92-112 (log_at/poincare_distance, float64 artanh, atanh cap 1-1e-7), model/layers.py:183-187; frozen lr 1e-3 / AdamW / clip 1.0 at train_rqvae.py:84,99,445.
+FINDING SEVERITY: n/a
+FINDING LOCATION: n/a
+FINDING DETAIL: The derivative, not the forward value: write r = tanh(|v|/2) = |exp_0(v)|. For a step that only changes the radius, d d_kappa/d|v| = [1/(1-r^2)] * dr/d|v| with dr/d|v| = (1-r^2)/2, so the metric factor cancels and the pullback derivative of d_kappa(exp_0(v), c) with respect to v is O(1) (the composition is 1-Lipschitz up to the constant), and d(d^2) grows only like 2*d (d <= 2*atanh(0.9999) ~ 9.9 for interior points). For tangential directions the same cancellation holds because exp_0's Jacobian carries the 1/(1-r^2) factor diagonally. Hence the commitment cannot blow up through the exp_0 map, and it does not vanish either: tanh's saturation is exactly compensated, so the encoder keeps a non-zero pull towards the assigned slot up to the boundary. Two bounded safeguards exist: poincare_distance caps the artanh argument at 1-1e-7 (distance hard-capped at ~16.1, computed in float64 so the cap is not reached in float32 precision), and clamp_ball at BALL_EPS=1e-4 makes the only uncancelled path: if |v| ever exceeds 2*atanh(1-1e-4) ~ 9.90 the clamp rescales the point, the metric factor 1/(1-r^2) ~ 5e3 survives, and the per-item commitment gradient becomes ~2*d*5e3 ~ 1e5*beta*w_hat, which clip_grad_norm_(1.0) would then scale down, dominating that step. This is a boundary that the frozen initialisation (Xavier on the 128->32 output layer, latent norms O(1), r ~ 0.2-0.5) does not approach, and the commitment pulls the point inward rather than pushing it out, so no systematic drift to the boundary exists. Also all non-differentiable arithmetic (accumulate/apply) is inside no_grad, and index_add_ weights are per-item scalars, so no inf/nan can be produced: mobius_add clamps its denominator at 1e-12 and every map is finite at the cap. Verdict PASS, with the |v|>9.9 region noted as the only conditional hazard.
+FINDING REPRODUCTION: n/a
+FINDING CORRECTION: n/a

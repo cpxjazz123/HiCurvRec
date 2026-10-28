@@ -67,6 +67,39 @@ def _ranking(*identifiers):
             for position, identifier in enumerate(identifiers, start=1)]
 
 
+class VerificationParseTests(unittest.TestCase):
+    """The verifier's answer format is parsed, not guessed."""
+
+    def test_a_check_keeps_every_finding_it_reports(self):
+        """A blocking finding followed by a minor one must not lose the blocker.
+
+        The earlier parser folded both severity lines into one finding and kept
+        the last, so a report whose only blocker was followed by a remark read as
+        "NEEDS_FIX without a stated blocking finding" and the round moved on.
+        """
+        from tools.research.rounds.plaintext import parse_verification
+        text = "\n".join([
+            "VERDICT: NEEDS_FIX",
+            "CHECK: c) integration",
+            "CHECK VERDICT: NEEDS_FIX",
+            "FINDING SEVERITY: blocking",
+            "FINDING LOCATION: train_rqvae.py:344-345",
+            "FINDING DETAIL: the codebook parameter never receives a gradient",
+            "FINDING REPRODUCTION: run two steps",
+            "FINDING CORRECTION: drop requires_grad",
+            "FINDING SEVERITY: minor",
+            "FINDING LOCATION: model/frechet_poincare.py:174",
+            "FINDING DETAIL: the loop is slow",
+        ])
+        report = parse_verification(text)
+        findings = report["checks"][0]["findings"]
+        self.assertEqual(len(findings), 2)
+        self.assertEqual(findings[0]["severity"], "blocking")
+        self.assertEqual(findings[0]["location"], "train_rqvae.py:344-345")
+        self.assertEqual(findings[1]["severity"], "minor")
+        self.assertEqual(findings[1]["detail"], "the loop is slow")
+
+
 class IdeaTests(unittest.TestCase):
     def test_an_idea_missing_a_field_is_rejected(self):
         idea = _idea("a")

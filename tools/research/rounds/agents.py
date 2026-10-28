@@ -246,14 +246,168 @@ IMPLEMENT_PROMPT = (
     "NOTES: <anything the reviewers should know>"
 )
 
+#: The five verification roles. Each reviewer still reads the whole tree, but one
+#: area is its primary responsibility and it must report on that area's checks.
+#: Five identical full-scope reviews are a coverage lottery: what each one finds
+#: depends on where it happens to look. The roles make the union of the five
+#: reviews cover the five classes of defect that actually killed candidates --
+#: geometry, gradients, distributed state, behaviour/SID consistency, integration.
+VERIFIER_ROLES = (
+    {
+        "id": "math-geometry",
+        "name": "mathematics and geometry",
+        "scope": "model/frechet_poincare.py, tests/test_geometry.py, "
+                 "tests/test_codebook_step.py",
+        "must": (
+            "every map (exp, log, Mobius sum, distance, Frechet mean, projection) "
+            "has the formula its name implies and the domain it claims; check the "
+            "identities numerically on paper (0 (+) y = y, exp_x(log_x(y)) = y, "
+            "symmetry, distance against the closed form on a geodesic, the midpoint "
+            "halving the arc), and check the sign of every term",
+            "the curvature convention is one convention: which c, which ball radius, "
+            "and no place that silently uses the Euclidean distance inside a curved "
+            "path or the reverse",
+            "numerical degeneracy: what happens at the boundary, at the origin, to a "
+            "zero tangent, to a huge latent (saturation of tanh/atanh), and whether a "
+            "clamp removes information or a gradient",
+            "the weighting: is the weighted mean the one the proposal defines, is the "
+            "normalisation the stated one, and does the weight of an item follow from "
+            "the training data rather than from a constant",
+        ),
+        "checks": (
+            ("mathematics and geometry: formulas, domains and identities",
+             "report the identity you checked and the numbers you checked it with"),
+            ("numerical behaviour at the degenerate points",
+             "boundary, origin, zero tangent, saturation, clamp behaviour"),
+        ),
+    },
+    {
+        "id": "gradient-update",
+        "name": "gradients and parameter updates",
+        "scope": "model/layers.py, model/model.py, train_rqvae.py (the optimiser, the "
+                 "backward and the parameter updates), tests/test_mechanism.py",
+        "must": (
+            "for every parameter: which objective updates it, and does that match the "
+            "proposal; a parameter that is in the optimiser but never receives a "
+            "gradient, or that is trained by two estimators at once, is a blocking "
+            "defect",
+            "detach, straight-through and stop-gradient placements: exactly where the "
+            "gradient is cut, and whether the cut still leaves the encoder the path the "
+            "proposal wants",
+            "the loss composition: every additive term is used, has the stated weight, "
+            "and none cancels another",
+            "gradient scale: could a term saturate, vanish or explode at the frozen "
+            "learning rate and clip? Check the derivative of the curved term near the "
+            "boundary rather than a single forward value",
+        ),
+        "checks": (
+            ("gradients: which parameter is updated by which objective",
+             "name the parameter, the objective and the code path"),
+            ("detach, STE and the loss composition",
+             "every cut, every additive term, every weight"),
+        ),
+    },
+    {
+        "id": "distributed-state",
+        "name": "distributed execution and shared state",
+        "scope": "train_rqvae.py (DDP construction, the step loop, collectives), "
+                 "model/model.py (the codebook step plumbing), tests/test_ddp.py",
+        "must": (
+            "DDP: is every parameter that requires grad reduced on every step? A "
+            "parameter that is in the module but outside the loss graph fails the "
+            "reducer on the second step with find_unused_parameters=False; a manual "
+            ".data write is not broadcast by DDP",
+            "collectives: same order and same count on every rank, no branch that only "
+            "one rank takes, no collective inside a conditional that can differ",
+            "shared state: a codebook, cache, counter or buffer initialised once must "
+            "be identical on every rank, and a step that writes it must be reduced "
+            "before it is used",
+            "the single-process branch and the four-rank branch must both be reachable "
+            "and must not disagree about what they compute",
+        ),
+        "checks": (
+            ("distributed execution: reduction, collectives and rank symmetry",
+             "name the collective and the step where it runs"),
+            ("shared state: codebook, cache and counters across ranks",
+             "how the state is initialised and how it is kept equal"),
+        ),
+    },
+    {
+        "id": "behaviour-sid",
+        "name": "behaviour signal and SID consistency",
+        "scope": "train_rqvae.py (the behaviour statistics, the export), "
+                 "model/layers.py (the curved assignment), model/model.py",
+        "must": (
+            "data boundary: the behaviour signal is built from the TRAINING split only; "
+            "no validation or test interaction, no future behaviour of the target user, "
+            "no statistic that would be unavailable at prediction time",
+            "the pathway: the behaviour signal and the curved operation meet in one "
+            "connected computation that decides the assignment; a behaviour suffix on an "
+            "unchanged Euclidean quantizer, or two unrelated losses, do not count",
+            "training/export consistency: the SID exported for an item must be the code "
+            "the trained quantizer assigns to it, computed the same way for every "
+            "item, the same for every user and every request, with the deterministic "
+            "disambiguation token kept",
+            "the two switches: with the behaviour off and with the curve off the "
+            "mechanism must still be the same mechanism with that one element replaced, "
+            "not the untouched baseline",
+        ),
+        "checks": (
+            ("behaviour signal: boundary, statistics and the connected pathway",
+             "name the exercised path file:line and the split the statistic comes from"),
+            ("SID consistency: training, export and global uniqueness",
+             "how the export is computed and why it cannot differ per rank or per user"),
+        ),
+    },
+    {
+        "id": "integration-resources",
+        "name": "integration and resources",
+        "scope": "train_rqvae.py (entry point, paths, run configuration, epoch loop), "
+                 "model/utils.py, tests/test_paths.py",
+        "must": (
+            "the real entry point runs with the frozen configuration: epochs, batch, "
+            "learning rate, seed, and the launch contract (the framework owns torchrun, "
+            "the ports and the working directory; the candidate must not fork them)",
+            "paths: the repository root comes from an unambiguous marker and not from a "
+            "parent count; the result directory is the candidate's own; nothing is "
+            "written into the baseline, another candidate, or outside the repository",
+            "cost: the per-step work at the frozen scale (items, codes, steps per epoch, "
+            "3000 epochs) must fit the budget; a Python loop over slots with a device "
+            "sync per slot is a blocking performance defect",
+            "interfaces: the modules still expose what the trainer and the framework "
+            "call, and a changed signature has one caller shape only",
+        ),
+        "checks": (
+            ("integration: entry point, frozen configuration and launch contract",
+             "name the constant you checked and the line it lives on"),
+            ("paths, cost and interfaces",
+             "the path resolution, the per-step cost and the module interfaces"),
+        ),
+    },
+)
+
+
 VERIFY_PROMPT = (
-    "You are the verifier of an implementation. Inspect the code, do not trust a "
-    "passing test.\n"
+    "You are verifier {role_index} of {role_total} on an implementation. Your primary "
+    "responsibility is {role_name}; the other four reviewers own the other areas, so "
+    "spend your effort here and go deep rather than broad. Inspect the code, do not "
+    "trust a passing test.\n"
+    "YOUR AREA (what you must cover):\n{role_must}\n"
+    "YOUR PRIMARY READ SCOPE: {role_scope}. Read anything else you need, and report a "
+    "defect you find outside your area -- the division only guarantees coverage, it "
+    "does not forbid a cross-area finding.\n"
+    "THE CHECKS YOU MUST REPORT, one CHECK block each:\n{role_checks}\n"
     "THE RESEARCH OBJECTIVE:\n{objective}\n"
     "THE SCOPE CONTRACT:\n{scope}\n"
     "The idea it implements:\n{idea}\n"
     "The tree:\n{tree}\n"
-    "Check three things and report each with file and line references:\n"
+    "WHAT CHANGED SINCE THE LAST REVIEW (the main agent's brief; verify it, do not "
+    "trust it):\n{change_brief}\n"
+    "THE PREVIOUS REVIEW'S FINDINGS (are they actually fixed? A finding whose defect "
+    "is still present is still blocking, and a fix that introduced a new defect is a "
+    "finding of this review):\n{previous_findings}\n"
+    "Every area is still in scope for judging whether the candidate may train; the "
+    "three questions the whole panel answers are:\n"
     "  a) behaviour x geometry fidelity: is there ONE connected pathway in which the "
     "training-only behaviour signal and the curved operation are used together? Name "
     "the exercised path (file and line) and say how you exercised it. An imported but "

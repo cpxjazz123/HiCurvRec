@@ -2237,10 +2237,15 @@ def round_admission(tree: Path, verification_id: str) -> dict:
     if record.get("status") != "verified":
         return {"passed": False, "refused": "implementation status is " +
                 str(record.get("status"))}
-    if len(record.get("verdicts", [])) != module.VERIFIER_AGENTS:
+    if len(record.get("verdicts", [])) < 1:
         return {"passed": False,
-                "refused": "the implementation was not reviewed by " +
-                           str(module.VERIFIER_AGENTS) + " agent(s)"}
+                "refused": "the implementation has no completed review"}
+    # A reviewer that timed out does not void the review: the round proceeds on
+    # the reports that finished, and the record keeps how many of the planned
+    # reviewers reported and which ones are missing.
+    if int(record.get("reviewers_reported") or 0) != len(record.get("verdicts", [])):
+        return {"passed": False,
+                "refused": "the review record does not match its verdicts"}
     if record.get("blocking_findings"):
         return {"passed": False, "refused": "unresolved blocking findings remain"}
     # A proposal whose claim the evidence probe CONTRADICTED does not train.

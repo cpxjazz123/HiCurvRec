@@ -376,6 +376,70 @@ class PhaseToolTests(unittest.TestCase):
         for phase in worker_module.PHASES:
             self.assertTrue(callable(getattr(worker_module, "phase_" + phase)))
 
+    def test_the_admission_quorum_is_one_completed_report(self):
+        """A timed-out reviewer must not block a candidate the others approved.
+
+        The gate reads the same rule the verification phase applies: one
+        finished report is a review, and the record keeps how many of the
+        planned reviewers reported and which ones are missing.
+        """
+        source = (Path(__file__).resolve().parents[3] / "tools" / "genrec-mcp" /
+                  "server.py").read_text(encoding="utf-8")
+        gate = source[source.index("def round_admission"):]
+        gate = gate[:gate.index("\ndef ")]
+        self.assertIn("len(record.get(\"verdicts\", [])) < 1", gate)
+        self.assertNotIn("!= module.VERIFIER_AGENTS", gate)
+        self.assertIn("reviewers_reported", gate)
+        from tools.research.rounds import pipeline as pipeline_module
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_quorum", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [{
+                "implementation_id": "idea-q", "idea_id": "idea-q",
+                "tree": str(directory), "status": "implemented", "revision": 0}]
+            state = pipeline_module.apply_verification(
+                state, "idea-q",
+                [{"verifier": "v1", "verdict": "PASS", "checks": [],
+                  "boundary_version": "test-boundary", "boundary_sha256": "0" * 64,
+                  "missing_reviewers": ["v2", "v3", "v4", "v5"]}])
+            record = state["implementations"][0]
+            self.assertEqual(len(record["verdicts"]), 1)
+            self.assertEqual(record["reviewers_reported"], 1)
+            self.assertEqual(record["reviewers_expected"], pipeline_module.VERIFIER_AGENTS)
+            self.assertEqual(record["reviewers_missing"], ["v2", "v3", "v4", "v5"])
+
+    def test_a_fresh_registration_reopens_the_review(self):
+        """A submission after a failed pass must not inherit its step or budget.
+
+        The candidate's tree changed, so the round is back in verification; the
+        retry counter of the infrastructure failure belongs to the older
+        submission and would otherwise leave the round parked at "stage2" with
+        nobody reviewing the new tree.
+        """
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            directory = pipeline_module.new_round(root, "round_registration", objective="o")
+            tree = directory / "candidate"
+            (tree / "model").mkdir(parents=True)
+            (tree / "model" / "m.py").write_text("x = 1\n", encoding="utf-8")
+            state = pipeline_module.load_state(directory)
+            state["step"] = "stage2"
+            state["implementations"] = [{
+                "implementation_id": "idea-a", "idea_id": "idea-a", "tree": str(tree),
+                "status": "agent_error", "agent_error_attempts": 4, "revision": 0}]
+            pipeline_module.save_state(directory, state)
+            state = pipeline_module.register_implementation(
+                pipeline_module.load_state(directory), "idea-a",
+                {"changed_files": ["model/m.py"], "smoke": {"ok": True}})
+            record = state["implementations"][0]
+            # The stub tree has no output-isolation contract of its own, so the
+            # refreshed check records that finding instead of "implemented"; the
+            # point of the test is the reopened review and the cleared budget.
+            self.assertIn(record["status"], ("implemented", "needs_repair"))
+            self.assertEqual(record["agent_error_attempts"], 0)
+            self.assertEqual(state["step"], "verification")
+
     def test_a_phase_refuses_a_round_that_is_not_in_it(self):
         from tools.research.rounds import worker as worker_module
         with tempfile.TemporaryDirectory() as work:
@@ -639,7 +703,13 @@ class VerifierQuorumTests(unittest.TestCase):
         self.assertEqual(pipeline_module.VERIFIER_AGENTS, 5)
         self.assertEqual(worker_module.VERIFIERS, 5)
 
-    def test_a_review_needs_five_reports(self):
+    def test_a_review_needs_one_reporter(self):
+        """One reviewer that finished is enough; a missing one is not a veto.
+
+        A reviewer that runs out of its budget delivers records, not a verdict.
+        The verdicts that exist still decide, and the record says how many
+        reported and which ones are missing.
+        """
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
             directory = pipeline_module.new_round(root, "round_one", objective="o")
@@ -650,10 +720,13 @@ class VerifierQuorumTests(unittest.TestCase):
             state["implementations"] = [pipeline_module.implementation_record(
                 _coupled(), {"changed_files": ["model.py"]}, tree)]
             with self.assertRaises(pipeline_module.RoundError):
-                pipeline_module.apply_verification(state, "coupled", self._verdicts(4))
+                pipeline_module.apply_verification(state, "coupled", [])
             state = pipeline_module.apply_verification(
-                state, "coupled", self._verdicts(5))
-            self.assertEqual(state["implementations"][0]["status"], "verified")
+                state, "coupled", self._verdicts(4))
+            record = state["implementations"][0]
+            self.assertEqual(record["status"], "verified")
+            self.assertEqual(record["reviewers_reported"], 4)
+            self.assertEqual(record["reviewers_expected"], pipeline_module.VERIFIER_AGENTS)
 
     def test_a_verified_candidate_waits_for_the_main_agent_acceptance(self):
         with tempfile.TemporaryDirectory() as work:
@@ -675,10 +748,28 @@ class VerifierQuorumTests(unittest.TestCase):
                               in pipeline_module.verified_implementations(state)],
                              ["coupled"])
 
-    def test_the_verification_prompt_addresses_one_reviewer(self):
+    def test_the_verification_prompt_addresses_one_reviewer_of_five(self):
         from tools.research.rounds import agents as agents_module
-        self.assertIn("You are the verifier", agents_module.VERIFY_PROMPT)
+        self.assertIn("You are verifier {role_index} of {role_total}",
+                      agents_module.VERIFY_PROMPT)
+        self.assertIn("Your primary responsibility is {role_name}",
+                      agents_module.VERIFY_PROMPT)
         self.assertNotIn("one of three", agents_module.VERIFY_PROMPT)
+
+
+class SeverityClassificationTests(unittest.TestCase):
+    """A PASS reviewer that writes FINDING SEVERITY: n/a must not block."""
+
+    def test_a_placeholder_severity_is_harmless(self):
+        from tools.research.rounds import pipeline as pipeline_module
+        for word in ("n/a", "N/A", "n.a.", "none", "-", "--", "no finding", "minor"):
+            self.assertFalse(pipeline_module._is_blocking(word), word)
+
+    def test_an_unknown_or_empty_severity_still_blocks(self):
+        """Fail closed: a word nobody recognises is not an approval."""
+        from tools.research.rounds import pipeline as pipeline_module
+        for word in ("", None, "blocking", "critical", "weird-but-serious"):
+            self.assertTrue(pipeline_module._is_blocking(word), repr(word))
 
 
 class NoAbsolutePathTests(unittest.TestCase):
@@ -689,13 +780,28 @@ class NoAbsolutePathTests(unittest.TestCase):
         self.assertEqual(re.findall(r'["\']/(?:home|fs04|tmp)[^"\']*["\']', text), [])
         self.assertEqual(re.findall(r"parents\[\d+\]", text), [])
 
-    def test_the_baseline_derives_its_paths_from_the_marker(self):
-        root = baseline_module.baseline_path()
+    def test_the_frozen_baseline_derives_its_paths_from_the_marker(self):
+        """The seed tree, not the current baseline: this pins the frozen paths.
+
+        The round baseline is now the previous complete mechanism, so the frozen
+        tree is read directly instead of through baseline_path().
+        """
+        root = baseline_module.CANONICAL_BASELINE.resolve()
         resolved = baseline_module.guard_output_paths(
             root, baseline=root, repo_root=root.parent.parent.resolve(),
             location=root, check_collision=False)
         self.assertEqual(resolved["OUTPUT_JSON"].split("GeneRec/")[-1],
                          "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json")
+
+    def test_the_round_baseline_is_the_previous_complete_mechanism(self):
+        """A new mechanism starts on the last one that finished the chain."""
+        previous = baseline_module.previous_implementation()
+        if previous is None:
+            self.assertEqual(baseline_module.baseline_path(),
+                             baseline_module.CANONICAL_BASELINE.resolve())
+        else:
+            self.assertEqual(baseline_module.baseline_path(), previous)
+            self.assertTrue((previous / "train_rqvae.py").is_file())
 
     def test_a_trainer_with_an_absolute_path_is_refused(self):
         with tempfile.TemporaryDirectory() as work:

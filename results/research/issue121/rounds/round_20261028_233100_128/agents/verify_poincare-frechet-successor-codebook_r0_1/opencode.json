@@ -1,0 +1,44 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "bash": "deny",
+    "edit": "deny",
+    "write": "deny",
+    "webfetch": "deny",
+    "websearch": "deny",
+    "task": "deny",
+    "lsp": "deny",
+    "read": {
+      "*": "deny",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_233100_128/agents/verify_poincare-frechet-successor-codebook_r0_1/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_233100_128/agents/verify_poincare-frechet-successor-codebook_r0_1/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_233100_128/poincare-frechet-successor-codebook/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_233100_128/poincare-frechet-successor-codebook/**": "allow"
+    },
+    "external_directory": {
+      "*": "deny",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_233100_128/poincare-frechet-successor-codebook/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261028_233100_128/poincare-frechet-successor-codebook/**": "allow"
+    }
+  },
+  "mcp": {
+    "servers": {
+      "progress": {
+        "type": "local",
+        "enabled": true,
+        "command": [
+          "/usr/bin/python3",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/agents/progress_server.py",
+          "--file",
+          "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261028_233100_128/agents/verify_poincare-frechet-successor-codebook_r0_1/progress.jsonl",
+          "--task-id",
+          "verify_poincare-frechet-successor-codebook_r0_1",
+          "--deadline-epoch",
+          "1793197106.2314637",
+          "--wrapup-margin",
+          "60"
+        ]
+      }
+    }
+  }
+}

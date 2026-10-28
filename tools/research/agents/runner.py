@@ -380,7 +380,8 @@ def _agent_environment(workspace: Path) -> dict:
 
 def boundary_fingerprint(workspace: Path, role: str, read_paths,
                          allow_shell: bool = False, allow_write: bool = False,
-                         prompt: str = "", model: str = "") -> str:
+                         prompt: str = "", model: str = "",
+                         source_digest: str = "") -> str:
     """The identity of one run: the boundary, the task and the model.
 
     Two runs with the same fingerprint had the same view of the filesystem and
@@ -400,6 +401,7 @@ def boundary_fingerprint(workspace: Path, role: str, read_paths,
                                             allow_shell, allow_write),
         "prompt_sha256": digest_bytes(str(prompt).encode()),
         "model": str(model),
+        "source_digest": str(source_digest),
     }
     return digest_bytes(json.dumps(payload, sort_keys=True).encode())
 

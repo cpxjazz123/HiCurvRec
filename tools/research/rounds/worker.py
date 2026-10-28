@@ -98,7 +98,8 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
                role: str = "verify", read_paths=None, sandbox: bool = True,
                allowed_roots=None, candidate_tree=None,
                allow_shell: bool = False, allow_write: bool = False,
-               deadline_seconds: int | None = None) -> dict:
+               deadline_seconds: int | None = None,
+               source_digest: str = "") -> dict:
     """Run one agent in its own workspace and parse its plain-text answer.
 
     The agent writes a labelled text file, not JSON: a language model that
@@ -133,9 +134,13 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     # The boundary this task would run under, computed from the FINAL prompt:
     # the fingerprint has to be the one the executor will write, or no answer is
     # ever reusable and every restart pays for every agent again.
+    # The identity of the run: the boundary, the task and the model. A role that
+    # reads a tree also carries the digest of that tree, so an answer about an
+    # older tree is never reused for a newer one.
     expected_boundary = boundary_fingerprint(workspace, role, read_paths or [],
                                              allow_shell, allow_write, prompt,
-                                             settings.AGENT_MODEL)
+                                             settings.AGENT_MODEL,
+                                             source_digest=source_digest)
     # Resumability: an answer that is already on disk is reused, so a round that
     # was interrupted does not pay for the same agents twice. The reuse requires
     # the receipt to say the run was valid: a partial answer left by a timed-out
@@ -881,49 +886,119 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
     return report
 
 
-def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> list:
-    """Five independent verifiers of one implementation revision."""
-    prompt = (agent_contracts.VERIFY_PROMPT.format(
-        idea=plaintext.render_idea(idea), tree=str(tree),
-        objective=agent_contracts.RESEARCH_OBJECTIVE,
-        scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
-        agent_contracts.EXPERIMENT_POLICY))
+VERIFIER_ROLES = agent_contracts.VERIFIER_ROLES
+
+
+def _format_role_checks(role: dict) -> str:
+    """The CHECK blocks one reviewer must report, as prompt lines."""
+    lines = []
+    for index, (name, guidance) in enumerate(role.get("checks") or (), 1):
+        lines.append("  %d) CHECK: %s -- %s" % (index, name, guidance))
+    return "\n".join(lines)
+
+
+def _format_findings(findings) -> str:
+    """The previous review's blocking findings, with where each one was."""
+    entries = list(findings or [])
+    if not entries:
+        return "  none: this is the first review of this revision"
+    lines = []
+    for finding in entries[:12]:
+        lines.append("  - [%s] %s: %s" % (
+            str(finding.get("severity") or "blocking"),
+            str(finding.get("location") or "?"),
+            str(finding.get("detail") or "")[:400]))
+    if len(entries) > 12:
+        lines.append("  ... and %d more, see the round state" % (len(entries) - 12))
+    return "\n".join(lines)
+
+
+def _format_change_brief(record: dict) -> str:
+    """What the main agent changed, in its own words, plus its own evidence."""
+    parts = []
+    changed = list(record.get("changed_files") or [])
+    parts.append("  files: " + (", ".join(changed) if changed else "not stated"))
+    for key, label in (("changes", "changes"), ("notes", "mechanism"),
+                       ("smoke", "the author's own smoke"), ("deviations", "deviations"),
+                       ("assumptions", "assumptions")):
+        value = record.get(key)
+        if not value:
+            continue
+        if isinstance(value, (list, tuple)):
+            value = "; ".join(str(item) for item in value)
+        parts.append("  %s: %s" % (label, str(value)[:1200]))
+    return "\n".join(parts)
+
+
+def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
+                     record: dict = None) -> list:
+    """Five independent verifiers of one implementation revision.
+
+    The five are not five copies of the same review: each has a fixed primary
+    area (VERIFIER_ROLES) with its own must-cover items, and all five receive the
+    same mechanism brief and the previous review's findings, so a repair is
+    checked against what it claimed to fix instead of being re-discovered from
+    scratch.
+    """
+    record = record or {}
+    roles = list(VERIFIER_ROLES)
+    change_brief = _format_change_brief(record)
+    previous_findings = _format_findings(record.get("blocking_findings"))
+    prompts = {}
+    for index, role in enumerate(roles, 1):
+        prompts[index] = agent_contracts.VERIFY_PROMPT.format(
+            role_index=index, role_total=len(roles), role_name=role["name"],
+            role_must="\n".join("  - " + item for item in role["must"]),
+            role_scope=role["scope"], role_checks=_format_role_checks(role),
+            idea=plaintext.render_idea(idea), tree=str(tree),
+            change_brief=change_brief, previous_findings=previous_findings,
+            objective=agent_contracts.RESEARCH_OBJECTIVE,
+            scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
+            agent_contracts.EXPERIMENT_POLICY)
+
     def verify(index):
         # The revision is part of the workspace name: a fresh review after a
         # repair must be a fresh agent, never a replay of the previous answer.
         task_id = "verify_" + idea["idea_id"] + "_r" + str(revision) + "_" + str(index)
+        prompt = prompts[index]
         report = _run_agent(root, task_id, prompt, "verification.txt",
                             plaintext.parse_verification,
                             role="verify", read_paths=[tree],
                             allowed_roots=_round_roots(root),
-                            candidate_tree=tree)
+                            candidate_tree=tree,
+                            source_digest=pipeline_module._source_digest(Path(tree)))
         report.setdefault("verifier", task_id)
+        report["role"] = roles[index - 1]["id"]
         return report
 
     try:
         reports = _run_agents_concurrently(
-            [tuple([index]) for index in range(1, VERIFIERS + 1)], verify)
+            [tuple([index]) for index in range(1, len(roles) + 1)], verify)
     except AgentPhaseIncomplete as exc:
-        # The verdicts that exist are kept and reported. The candidate is not
-        # judged: it waits for the missing reviewers, and the class of the fault
-        # says whether waiting can help.
-        raise RoundIncomplete(str(exc), results=exc.results, failures=exc.failures,
-                              classes=exc.classes) from exc
-    # A reviewer that ran out of its budget delivered records, not a verdict.
-    # Its report is kept as evidence and the candidate waits for it.
+        # A reviewer that ran out of its budget does not void the review: the
+        # verdicts that exist are kept, the missing ones are recorded, and the
+        # candidate is judged on the opinions the round actually has. Only a
+        # round where no reviewer finished waits.
+        reports = [report for report in exc.results
+                   if not (report.get("partial") or report.get("timed_out"))]
+        if not reports:
+            raise RoundIncomplete(str(exc), results=exc.results, failures=exc.failures,
+                                  classes=exc.classes) from exc
+        missing = sorted(str(entry.get("task", "")) for entry in exc.failures)
+        for report in reports:
+            report["missing_reviewers"] = missing
+        return reports
+    # A reviewer that ran out of its budget delivered records, not a verdict: it
+    # is not a verdict and it does not block the ones that are.
+    finished = [report for report in reports
+                if not (report.get("partial") or report.get("timed_out"))]
     unfinished = [report.get("verifier", "?") for report in reports
                   if report.get("partial") or report.get("timed_out")]
     if unfinished:
-        raise RoundIncomplete(
-            "the reviewers " + ", ".join(str(name) for name in unfinished) +
-            " did not finish inside their budget; their stage records are kept "
-            "and the candidate is not judged",
-            results=[report for report in reports
-                     if not (report.get("partial") or report.get("timed_out"))],
-            failures=[{"task": str(name), "error": "the reviewer did not finish",
-                       "failure_class": "timeout"} for name in unfinished],
-            classes={"timeout"})
-    return reports
+        missing = sorted(str(name) for name in unfinished)
+        for report in finished:
+            report["missing_reviewers"] = missing
+    return finished
 
 
 def run_repair_plan(root: Path, idea: dict, tree: Path, findings: list,
@@ -1201,10 +1276,17 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
             # "repair_planned" waits for the operator: the tree is unchanged, so
             # there is nothing new to review and nothing new to plan.
             continue
+        # The output isolation is checked again before the reviewers read the
+        # tree: a finding of an earlier pass described an older tree, and the
+        # reviewers must not carry it into this one.
+        pipeline_module._refresh_output_isolation(state, record)
+        if record.get("status") == "needs_repair":
+            pipeline_module.save_state(directory, state)
+            continue
         idea = ideas_module.idea_index(state["ideas"])[record["idea_id"]]
         try:
             reports = run_verification(agent_root, idea, Path(record["tree"]),
-                                       int(record.get("revision", 0)))
+                                       int(record.get("revision", 0)), record=record)
         except RoundIncomplete as exc:
             # Some reviewers answered and some did not. The answers that exist
             # are kept and the candidate WAITS: a missing reviewer is not a

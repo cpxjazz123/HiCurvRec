@@ -1,0 +1,350 @@
+{
+  "decision_at": 1793191274.7786803,
+  "decision_hash": "4dc8542d6a185e53f336ec9bb682c88d4fc997c245b2e220211bc0b4fc3651b4",
+  "evidence": {
+    "BFRQ-KARCHER-MASS": {
+      "bundle_sha256": "59d5537a06b2c42e284e19ec4de918d9b1f5daa7988f5ef1a4b04ddde9986f50",
+      "literature_sha256": "a3139edb540d9ff478cda8304431d5207d8d061a57042c38fbba0a7f3609bb96",
+      "math_sha256": "6cfd9547af98ea3281ea28f197f88f50d360a2b4ef7efb9282388c8662217688",
+      "probe_sha256": "e2006e0f8bb8e1a4c686881c14b328438839bdd5995c5bd5d5e90276d6bd9629"
+    },
+    "MIXCURV-FIBRE-RQ": {
+      "bundle_sha256": "c533b1153c3faa6e6ff06f7cfeb2c5e904022165f6ee8a47a76aab38913a4e42",
+      "literature_sha256": "2eed6f32080598ff917ee5ba265dcaa7bb7608064e4161e08f34a0778fa5865e",
+      "math_sha256": "deacfe7a8dc7bbedb61ba750defd597dff9fcbf697cff767ad36e3e4aee5ad21",
+      "probe_sha256": "6fac9e01d150cdeb1fae2b6e4979400141bceb8b0bef2647fce00c3d246f821a"
+    },
+    "SUCC-GEO-CBTAB": {
+      "bundle_sha256": "8bef1936fe52fe0d86ca33a26994d284f45acb8ef565ac736efab137c1628afb",
+      "literature_sha256": "7a4623c264bfb330b11fb7c3b90cb447ab7e585464899937d823c6a7051a4c37",
+      "math_sha256": "87506927ca3479861f825cd5d7178d3311c9d9d940d2b7041e18826b1d187df3",
+      "probe_sha256": "0c83de4d9417c79fc242bd8b68f99ddc8d51aabeec8994c33b2c3dd02047cd98"
+    },
+    "poincare-frechet-successor-codebook": {
+      "bundle_sha256": "3a34d4b40fe8f322defa9022eb72a4775c2cc4479287084e01a707e6314e65e6",
+      "literature_sha256": "8c26ee9f46fb7efb7e094040171463d808ae5131995a80ace325b3ac2e729902",
+      "math_sha256": "40cbc6ae20fe15e1ea6ad638c4c36298f0225a7d2c56f48910414b0986503337",
+      "probe_sha256": "f377818e9e26389ed3187d5c768cf4aace25897b2aca14104c4eff3bd056ee77"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "SUCC-GEO-CBTAB",
+        "mean_rank": 4.0,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 4,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "its specified CHANGE/SPEC give a softplus triplet margin with no margin value and no coefficient against the RQ-VAE loss, i.e. free tunable constants in violation of the no-tuning policy, and its declared observables (level-1/level-2 successor prefix hit rate) target a dimension already saturated in E6/E7 (l1_br gold prefix alive 1.000/1.000/1.000/0.068 with recall 0.04671, the loss being at depth 4), while forcing level-L successor pairs together collides a near-unique SID space (E11 same_first_prefix_rate 0.0907 vs permuted null 0.067), the same family that scored 0.0550 in E6.",
+          "scoring_2": "best-evidenced signal (E5 top-1 0.4375 vs 0.0543) but the family already measured losing (E6 successor_geodesic_coarse 0.05500, _v2 0.05463, tangent 0.05500, l1_br 0.04671 with prefixes alive 1.000/1.000/1.000 yet T4 NLL 9.03 in E7 - its own duplicate-code risk); pointer spec with an un-derived triplet margin breaks the derived-constant policy.",
+          "scoring_3": "Weakest specification in the bundle (SPEC deferred to \"see SPEC EQUATIONS\", triplet margin constant neither stated nor derived) and codebook-only gradient with untouched assignment, while its own risk list concedes slow relocation and duplicate-code collapse; the nearest observed precedent, the E6 geodesic-successor variants at 0.05500/0.05463, sits below the 0.062-0.064 Euclidean baselines."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 12
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "BFRQ-KARCHER-MASS",
+        "mean_rank": 1.6667,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "E12/E13 put the curved operation only in the code-vector estimator (Poincare Karcher step) while assignment, encoder, decoder, loss and Stage 3 stay untouched, which is the one footprint matching the frozen arm ordering in E6 where the Euclidean-assignment/prefix arms (l1_br_euclid 0.06207, l1_only 0.06233, resample 0.06363) beat every geometry-flavoured arm (successor_geodesic_coarse 0.05500, v2 0.05463, tangent_successor_residual 0.05500), and every constant is derived from data (tau = median",
+          "scoring_2": "Euclidean assignment dodges the curved arms measured at 0.055 in E6 and its constants are derived (tau=median",
+          "scoring_3": "Same curved-estimator family and its tau=median"
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 5
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "MIXCURV-FIBRE-RQ",
+        "mean_rank": 3.0,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 3,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "the gating statistic (directed local clustering coefficient C_i) is never measured in the bundle - E10 reports only edge counts and out-degree, nothing on cycles among successors - and g_i defaults to 0.5 whenever k_i<5 while E5 shows the two lowest successor-count quintiles average 2.72 and 4.54 distinct successors, so roughly 40% of items stay inert; it also adds an unvalidated spherical fibre and two trainable curvatures back into the assignment metric, though its constants are at least documented defaults rather than tuned.",
+          "scoring_2": "cleanest switch statement (removing behaviour collapses to unweighted product, removing curvature to weighted Euclidean) but C_i is measured nowhere in the bundle (E5/E9 measure successor entropy and cohort profiles) and E10's mean out-degree 5.45 leaves most items at the k<5 prior g=0.5, so the gate is inert for the tail; E12 k_H<0 init -1 contradicts the spec's softplus init at +1.0.",
+          "scoring_3": "A real product-manifold coupling with a measured per-item clustering statistic, but the evidence does not localise the failure at level-1 hierarchy/lateral mixing (E7 gives T1 NLL 0.00 for l1_br while E6 shows collapse at depth 3, 0.161), and the spherical fibre plus trainable curvatures add an unconstrained rotational degree of freedom in a single 72000-step run."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 9
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 2,
+        "idea_id": "poincare-frechet-successor-codebook",
+        "mean_rank": 1.3333,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 1,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "same estimator-level coupling but E12/E13 also move the assignment to Poincare distance and weight the commitment term, re-introducing the assignment-side curvature surface that lost in E6; its (indeg+1)/(n_v+2) clip[0.25,4] batch-normalised weights do guarantee a 16x spread so it will fire, unlike BFRQ's mild log1p weights, but eta=1 jumps at ~4 points per code cell (E10 mean out-degree 5.45) with none of BFRQ's 1/(1+N_k) damping.",
+          "scoring_2": "one train-only weight drives geodesic assignment, geodesic commitment and the per-slot Frechet codebook step, so removing behaviour or curvature changes the core computation, not a suffix; only spec with a stated safeguard (tanh-bounded ball points, log-map residual chain, eta=1 so 3000 epochs cannot lag), on E5's stratified successor structure and E10's 115,582 sparse directed edges.",
+          "scoring_3": "Only arm where behaviour weights and Poincare geometry share one live path at assignment, weighted commitment and the Frechet code estimator with eta=1, so it can move SIDs; its popularity-adjusted clipped weights stay anchored to assigned latents, targeting the weak first-prefix alignment in E11 (0.0907 vs 0.067 null) and the small-K grouping advantage in E8 without a separate margin loss."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 4
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "8bef1936fe52fe0d86ca33a26994d284f45acb8ef565ac736efab137c1628afb",
+      "idea_id": "SUCC-GEO-CBTAB",
+      "proposal_sha256": "1520091541f32fae50ea3b02bae4d54f619ef732f7940917c941bd5077dee472"
+    },
+    {
+      "evidence_sha256": "59d5537a06b2c42e284e19ec4de918d9b1f5daa7988f5ef1a4b04ddde9986f50",
+      "idea_id": "BFRQ-KARCHER-MASS",
+      "proposal_sha256": "a91dc38de0aefc4adb207653705cffd2e0eb8988d75b411cd08eb630d6d0820d"
+    },
+    {
+      "evidence_sha256": "c533b1153c3faa6e6ff06f7cfeb2c5e904022165f6ee8a47a76aab38913a4e42",
+      "idea_id": "MIXCURV-FIBRE-RQ",
+      "proposal_sha256": "53a5df2577f556ea54d35daa87ebf1cfb461f838d0319a4dcf3734a0e76c431e"
+    },
+    {
+      "evidence_sha256": "3a34d4b40fe8f322defa9022eb72a4775c2cc4479287084e01a707e6314e65e6",
+      "idea_id": "poincare-frechet-successor-codebook",
+      "proposal_sha256": "d42888770eee1eef6942319086e32eb518c26bf9c555f5192419102a57e153d0"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "BFRQ-KARCHER-MASS",
+          "position": 1,
+          "reason": "E12/E13 put the curved operation only in the code-vector estimator (Poincare Karcher step) while assignment, encoder, decoder, loss and Stage 3 stay untouched, which is the one footprint matching the frozen arm ordering in E6 where the Euclidean-assignment/prefix arms (l1_br_euclid 0.06207, l1_only 0.06233, resample 0.06363) beat every geometry-flavoured arm (successor_geodesic_coarse 0.05500, v2 0.05463, tangent_successor_residual 0.05500), and every constant is derived from data (tau = median"
+        },
+        {
+          "idea_id": "poincare-frechet-successor-codebook",
+          "position": 2,
+          "reason": "same estimator-level coupling but E12/E13 also move the assignment to Poincare distance and weight the commitment term, re-introducing the assignment-side curvature surface that lost in E6; its (indeg+1)/(n_v+2) clip[0.25,4] batch-normalised weights do guarantee a 16x spread so it will fire, unlike BFRQ's mild log1p weights, but eta=1 jumps at ~4 points per code cell (E10 mean out-degree 5.45) with none of BFRQ's 1/(1+N_k) damping."
+        },
+        {
+          "idea_id": "MIXCURV-FIBRE-RQ",
+          "position": 3,
+          "reason": "the gating statistic (directed local clustering coefficient C_i) is never measured in the bundle - E10 reports only edge counts and out-degree, nothing on cycles among successors - and g_i defaults to 0.5 whenever k_i<5 while E5 shows the two lowest successor-count quintiles average 2.72 and 4.54 distinct successors, so roughly 40% of items stay inert; it also adds an unvalidated spherical fibre and two trainable curvatures back into the assignment metric, though its constants are at least documented defaults rather than tuned."
+        },
+        {
+          "idea_id": "SUCC-GEO-CBTAB",
+          "position": 4,
+          "reason": "its specified CHANGE/SPEC give a softplus triplet margin with no margin value and no coefficient against the RQ-VAE loss, i.e. free tunable constants in violation of the no-tuning policy, and its declared observables (level-1/level-2 successor prefix hit rate) target a dimension already saturated in E6/E7 (l1_br gold prefix alive 1.000/1.000/1.000/0.068 with recall 0.04671, the loss being at depth 4), while forcing level-L successor pairs together collides a near-unique SID space (E11 same_first_prefix_rate 0.0907 vs permuted null 0.067), the same family that scored 0.0550 in E6."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "poincare-frechet-successor-codebook",
+          "position": 1,
+          "reason": "one train-only weight drives geodesic assignment, geodesic commitment and the per-slot Frechet codebook step, so removing behaviour or curvature changes the core computation, not a suffix; only spec with a stated safeguard (tanh-bounded ball points, log-map residual chain, eta=1 so 3000 epochs cannot lag), on E5's stratified successor structure and E10's 115,582 sparse directed edges."
+        },
+        {
+          "idea_id": "BFRQ-KARCHER-MASS",
+          "position": 2,
+          "reason": "Euclidean assignment dodges the curved arms measured at 0.055 in E6 and its constants are derived (tau=median"
+        },
+        {
+          "idea_id": "MIXCURV-FIBRE-RQ",
+          "position": 3,
+          "reason": "cleanest switch statement (removing behaviour collapses to unweighted product, removing curvature to weighted Euclidean) but C_i is measured nowhere in the bundle (E5/E9 measure successor entropy and cohort profiles) and E10's mean out-degree 5.45 leaves most items at the k<5 prior g=0.5, so the gate is inert for the tail; E12 k_H<0 init -1 contradicts the spec's softplus init at +1.0."
+        },
+        {
+          "idea_id": "SUCC-GEO-CBTAB",
+          "position": 4,
+          "reason": "best-evidenced signal (E5 top-1 0.4375 vs 0.0543) but the family already measured losing (E6 successor_geodesic_coarse 0.05500, _v2 0.05463, tangent 0.05500, l1_br 0.04671 with prefixes alive 1.000/1.000/1.000 yet T4 NLL 9.03 in E7 - its own duplicate-code risk); pointer spec with an un-derived triplet margin breaks the derived-constant policy."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "poincare-frechet-successor-codebook",
+          "position": 1,
+          "reason": "Only arm where behaviour weights and Poincare geometry share one live path at assignment, weighted commitment and the Frechet code estimator with eta=1, so it can move SIDs; its popularity-adjusted clipped weights stay anchored to assigned latents, targeting the weak first-prefix alignment in E11 (0.0907 vs 0.067 null) and the small-K grouping advantage in E8 without a separate margin loss."
+        },
+        {
+          "idea_id": "BFRQ-KARCHER-MASS",
+          "position": 2,
+          "reason": "Same curved-estimator family and its tau=median"
+        },
+        {
+          "idea_id": "MIXCURV-FIBRE-RQ",
+          "position": 3,
+          "reason": "A real product-manifold coupling with a measured per-item clustering statistic, but the evidence does not localise the failure at level-1 hierarchy/lateral mixing (E7 gives T1 NLL 0.00 for l1_br while E6 shows collapse at depth 3, 0.161), and the spherical fibre plus trainable curvatures add an unconstrained rotational degree of freedom in a single 72000-step run."
+        },
+        {
+          "idea_id": "SUCC-GEO-CBTAB",
+          "position": 4,
+          "reason": "Weakest specification in the bundle (SPEC deferred to \"see SPEC EQUATIONS\", triplet margin constant neither stated nor derived) and codebook-only gradient with untouched assignment, while its own risk list concedes slow relocation and duplicate-code collapse; the nearest observed precedent, the E6 geodesic-successor variants at 0.05500/0.05463, sits below the 0.062-0.064 Euclidean baselines."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261028_233100_128",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "BFRQ-KARCHER-MASS": {
+        "first_places": 1,
+        "mean_rank": 1.6667,
+        "total_rank": 5
+      },
+      "MIXCURV-FIBRE-RQ": {
+        "first_places": 0,
+        "mean_rank": 3.0,
+        "total_rank": 9
+      },
+      "SUCC-GEO-CBTAB": {
+        "first_places": 0,
+        "mean_rank": 4.0,
+        "total_rank": 12
+      },
+      "poincare-frechet-successor-codebook": {
+        "first_places": 2,
+        "mean_rank": 1.3333,
+        "total_rank": 4
+      }
+    },
+    "backups": [
+      {
+        "first_places": 1,
+        "idea_id": "BFRQ-KARCHER-MASS",
+        "mean_rank": 1.6667,
+        "status": "BACKUP",
+        "total_rank": 5
+      },
+      {
+        "first_places": 0,
+        "idea_id": "MIXCURV-FIBRE-RQ",
+        "mean_rank": 3.0,
+        "status": "BACKUP",
+        "total_rank": 9
+      },
+      {
+        "first_places": 0,
+        "idea_id": "SUCC-GEO-CBTAB",
+        "mean_rank": 4.0,
+        "status": "BACKUP",
+        "total_rank": 12
+      }
+    ],
+    "disagreement": {
+      "BFRQ-KARCHER-MASS": 1,
+      "MIXCURV-FIBRE-RQ": 0,
+      "SUCC-GEO-CBTAB": 0,
+      "poincare-frechet-successor-codebook": 1
+    },
+    "rejected": [
+      {
+        "idea_id": "BFRQ-KARCHER-MASS",
+        "mean_rank": 1.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 5
+      },
+      {
+        "idea_id": "MIXCURV-FIBRE-RQ",
+        "mean_rank": 3.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 9
+      },
+      {
+        "idea_id": "SUCC-GEO-CBTAB",
+        "mean_rank": 4.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 12
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 2,
+        "idea_id": "poincare-frechet-successor-codebook",
+        "mean_rank": 1.3333,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 4
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}

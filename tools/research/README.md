@@ -389,6 +389,11 @@ The reviewers do not score the proposals: they **rank** them. A round
    version and digest, the proposal and evidence digests, the three raw
    rankings, the rank matrix, the winner and its ordered backups.
 
+A review of an implementation needs **one reviewer that finished**: a reviewer
+that ran out of its budget is not a verdict, and it does not void the verdicts
+that exist. The record says how many reviewers reported and which ones are
+missing, so the decision still shows what the round had.
+
 The policy lives in `rounds/rubric_v1.json`: the rule that turns the ranks into
 one mechanism, with the version and digest a round pins. **Change it only
 before a new round starts** — a decision is made with the policy it pinned. The

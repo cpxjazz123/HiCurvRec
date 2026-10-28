@@ -232,10 +232,11 @@ def parse_verification(text: str) -> dict:
             current["verdict"] = value.strip().upper()
             continue
         if name == "FINDING SEVERITY":
-            if finding is None:
-                finding = {}
-                current["findings"].append(finding)
-            finding["severity"] = value.strip()
+            # Every severity line opens a finding: a check may report a blocking
+            # one and a minor one, and folding the second into the first would
+            # keep the minor severity and silently drop the blocker.
+            finding = {"severity": value.strip()}
+            current["findings"].append(finding)
             continue
         if finding is None:
             finding = {}

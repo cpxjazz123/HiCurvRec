@@ -12,6 +12,8 @@ from __future__ import annotations
 import hashlib
 import re
 import shutil
+import json
+import re
 from pathlib import Path
 
 #: The only tree a new mechanism may be built from.
@@ -29,12 +31,49 @@ class BaselineError(RuntimeError):
     """The baseline is missing, unreadable, or a candidate would overwrite it."""
 
 
-def baseline_path() -> Path:
-    """The canonical baseline, resolved.
+def previous_implementation(root: Path = None) -> Path | None:
+    """The tree of the last mechanism that went through the whole chain.
 
-    The issue names an absolute path, so the check is on that path and not on
-    whatever happens to sit in the working tree.
+    From the second round on, a new mechanism is built on the last COMPLETE
+    mechanism implementation, not on the frozen baseline: implemented, reviewed,
+    trained and evaluated in Stage 3. The chain is the evidence, so a round whose
+    Stage 3 never finished is not a baseline. The frozen tree stays the seed for
+    the first round and the fallback while no complete implementation exists.
     """
+    repo = Path(root) if root is not None else _repo_root()
+    rounds = repo / "results" / "research" / "issue121" / "rounds"
+    if not rounds.is_dir():
+        return None
+    for directory in sorted(rounds.iterdir(), reverse=True):
+        jobs_file = directory / "jobs.json"
+        if not jobs_file.is_file():
+            continue
+        try:
+            payload = json.loads(jobs_file.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        completed = [
+            str(job.get("idea_id")) for job in payload.get("jobs", [])
+            if job.get("kind") == "stage3" and job.get("status") == "done"
+            and job.get("idea_id")
+        ]
+        for idea_id in sorted(completed):
+            tree = repo / "stage2_RQ-VAE" / arm_name(Path(idea_id))
+            if (tree / "train_rqvae.py").is_file():
+                return tree.resolve()
+    return None
+
+
+def baseline_path(root: Path = None) -> Path:
+    """The tree a new candidate is copied from.
+
+    The last complete mechanism implementation when there is one, otherwise the
+    frozen baseline. The issue names an absolute path for that first one, so the
+    check is on that path and not on whatever happens to sit in the working tree.
+    """
+    previous = previous_implementation(root)
+    if previous is not None:
+        return previous
     if not CANONICAL_BASELINE.is_dir():
         raise BaselineError("the canonical baseline does not exist: " + str(CANONICAL_BASELINE))
     if not (CANONICAL_BASELINE / "train_rqvae.py").is_file():
@@ -75,16 +114,61 @@ def copy_baseline(destination: Path, *, baseline: Path = None) -> dict:
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source, destination,
                     ignore=shutil.ignore_patterns(*_RUN_ARTIFACTS))
+    # The arm name belongs to the framework, not to the mechanism: a candidate
+    # copied from a previous implementation would otherwise keep that arm's name
+    # and write into its result directory. Only this one constant is rewritten.
+    renamed = _rename_arm(destination)
     provenance = {
         "baseline": str(source),
         "baseline_digest": source_digest(source),
         "candidate": str(destination.resolve()),
         "candidate_digest": source_digest(destination),
+        "arm_renamed": renamed,
     }
-    if provenance["candidate_digest"] != provenance["baseline_digest"]:
+    if not _same_source_except_arm(source, destination):
         # A copy that changed the baseline's own source is not a copy of it.
         raise BaselineError("the candidate copy does not match the baseline digest")
     return provenance
+
+
+def _arm_line(text: str):
+    return re.search(r'^ARM_NAME\s*=\s*"([^"]*)"', text, re.M)
+
+
+def _rename_arm(tree: Path) -> dict:
+    """Point the copy's ARM_NAME at the copy, and say what it was."""
+    trainer = Path(tree) / "train_rqvae.py"
+    text = trainer.read_text(encoding="utf-8")
+    found = _arm_line(text)
+    if found is None:
+        return {}
+    wanted = arm_name(Path(tree))
+    if found.group(1) == wanted:
+        return {}
+    trainer.write_text(text[:found.start()] + 'ARM_NAME = "' + wanted + '"' +
+                       text[found.end():], encoding="utf-8")
+    return {"from": found.group(1), "to": wanted}
+
+
+def _canonical_source(tree: Path) -> dict:
+    """Per-file digests with the framework-owned arm constant neutralised."""
+    tree = Path(tree)
+    table = {}
+    for path in sorted(tree.rglob("*.py")):
+        relative = path.relative_to(tree)
+        if any(part in _RUN_ARTIFACTS for part in relative.parts):
+            continue
+        text = path.read_text(encoding="utf-8")
+        found = _arm_line(text)
+        if found is not None:
+            text = text[:found.start()] + 'ARM_NAME = "<arm>"' + text[found.end():]
+        table[str(relative)] = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return table
+
+
+def _same_source_except_arm(source: Path, candidate: Path) -> bool:
+    """Whether the copy is the baseline apart from the arm constant."""
+    return _canonical_source(source) == _canonical_source(candidate)
 
 
 def _split_path_parts(expr: str) -> list:

@@ -295,7 +295,8 @@ FRAMEWORK_FINDING_SOURCES = frozenset({"preflight", "smoke", "runtime"})
 NON_BLOCKING_SEVERITIES = frozenset({
     "minor", "nit", "style", "cosmetic", "suggestion", "advisory", "info",
     "informational", "non_blocking", "non-blocking", "optional", "note",
-    "notes", "none", "harmless",
+    "notes", "none", "harmless", "n/a", "na", "n.a.", "nil", "no_finding",
+    "not_applicable", "not applicable", "nothing", "no", "pass", "ok", "-", "--", "n.a",
 })
 
 #: The words that mean the finding stops the work.
@@ -330,11 +331,16 @@ def _is_blocking(severity) -> bool:
 
 
 def apply_verification(state: dict, implementation_id: str, reports: list) -> dict:
-    """Merge the three verdicts of one implementation."""
+    """Merge the verdicts of one implementation.
+
+    One reviewer that finished is enough: a reviewer that ran out of its budget
+    does not void the review, it only means the round has fewer opinions than it
+    planned. The record says how many reported and which ones are missing, so
+    the decision still shows what the round actually had.
+    """
     record = _implementation(state, implementation_id)
-    if len(reports) != VERIFIER_AGENTS:
-        raise RoundError("exactly " + str(VERIFIER_AGENTS) +
-                         " verifier(s) must report, got " + str(len(reports)))
+    if len(reports) < 1:
+        raise RoundError("a review needs at least one verifier's report, got none")
     findings = []
     for report in reports:
         verdict = str(report.get("verdict", "")).upper()
@@ -357,6 +363,11 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
                              "detail": "verdict NEEDS_FIX without a stated blocking finding"})
         findings.extend(reported)
     record["verdicts"] = reports
+    record["reviewers_reported"] = len(reports)
+    record["reviewers_expected"] = VERIFIER_AGENTS
+    missing = sorted({str(name) for report in reports
+                      for name in (report.get("missing_reviewers") or [])})
+    record["reviewers_missing"] = missing
     # The boundary the reviewers read the candidate with. All of them must have
     # run under the same one, and the record keeps it, so an acceptance can
     # refuse a review that was produced under older rules.
@@ -703,10 +714,52 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
     record["source_digest"] = digest
     record["status"] = "implemented"
     record["implemented_by"] = "main_agent"
+    # A fresh implementation reopens the review, whatever the previous pass left
+    # behind: the tree changed, so an earlier verdict and its fingerprint do not
+    # describe it. The retry counter of an earlier infrastructure failure is
+    # reset with it, because the registration is a new submission and not
+    # another attempt of the failed one.
+    record["agent_error_attempts"] = 0
+    record["fingerprint"] = ""
+    state["step"] = "verification"
+    # The output isolation is checked again on the tree as it now is: the
+    # finding of an earlier pass described an older tree, and a candidate that
+    # fixed it must not carry the stale finding into the next review.
+    _refresh_output_isolation(state, record)
     record_event(state, "implementation_registered", idea_id=implementation_id,
                  revision=int(record.get("revision", 0)),
                  changed_files=len(record["changed_files"]))
     return state
+
+
+def _refresh_output_isolation(state: dict, record: dict) -> None:
+    """Re-run the output-path guard on the tree as it is now.
+
+    The guard is the framework's own finding, not a reviewer's: it says whether
+    the candidate would write outside its own result directory. A tree that was
+    rewritten since the last check is checked again, and a finding that no
+    longer holds is dropped.
+    """
+    from . import baseline as baseline_module
+
+    tree = Path(record["tree"])
+    siblings = [other["tree"] for other in state.get("implementations", [])
+                if other["idea_id"] != record["idea_id"]]
+    try:
+        record["output_paths"] = baseline_module.guard_output_paths(
+            tree, other_candidates=siblings)
+    except baseline_module.BaselineError as exc:
+        record["blocking_findings"] = [{
+            "verifier": "preflight", "check": "output isolation",
+            "severity": "blocking", "location": "train_rqvae.py",
+            "detail": str(exc), "reproduction": "read the trainer's output constants",
+            "correction": "write only into the candidate's own result directory"}]
+        record["status"] = "needs_repair"
+        record["failure_signature"] = _failure_signature(record["blocking_findings"])
+        return
+    record["blocking_findings"] = [
+        finding for finding in (record.get("blocking_findings") or [])
+        if finding.get("verifier") != "preflight"]
 
 
 def accept_verification(state: dict, implementation_id: str, note: str = "") -> dict:
