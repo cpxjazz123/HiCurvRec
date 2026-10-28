@@ -113,5 +113,10 @@ def check_read_paths(paths, *, roots, task_root=None, candidate_tree=None) -> li
             if _inside(resolved, agents):
                 raise PolicyError("the read allowlist may not contain " + str(entry) +
                                   ": it holds the other agents' answers")
+            if _inside(agents, resolved):
+                # The path contains the directory that holds the other agents'
+                # answers, so it contains them too.
+                raise PolicyError("the read allowlist may not contain " + str(entry) +
+                                  ": it contains the other agents' answers")
         accepted.append(path)
     return accepted

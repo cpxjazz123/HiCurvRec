@@ -49,3 +49,9 @@ jobs:
           # a 3.10-only annotation takes the whole tool surface down at call
           # time. The matrix covers 3.9 and 3.10 for exactly this reason.
           python -m unittest discover -s tools/research/tests -p "test_import_surface.py" -v
+      - name: The offline research suite
+        run: |
+          # The agent boundary, the progress channel and the acceptance
+          # scenarios are part of the contract, not of the local machine: they
+          # run on every interpreter of the matrix.
+          python -m unittest discover -s tools/research/tests -v

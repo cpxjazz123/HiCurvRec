@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import itertools
 import json
+import os
+import signal
 import shutil
 import sys
 import time
-import shutil
 from pathlib import Path
 
 from .. import settings
@@ -82,12 +83,15 @@ class AgentPhaseIncomplete(RuntimeError):
 def _round_roots(root: Path) -> list:
     """The directories a task of this round may read from.
 
-    The round's own directory and the round's trees. Anything else - another
+    The round's own directory and the round's trees. The trees live beside the
+    rounds, under the issue: ``results/research/<issue>/trees/<round_id>``, and
+    the candidate tree of an idea is one of them. Anything else - another
     round, the arms' results, the Stage 3 outputs, the earlier sessions - is
     outside the boundary, and the policy refuses it.
     """
-    root = Path(root)
-    return [root, root.parent / "trees"]
+    root = Path(root).resolve()
+    issue_dir = root.parent.parent
+    return [root, issue_dir / "trees" / root.name]
 
 
 def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
@@ -110,12 +114,15 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     # different sandbox, a new rule) makes the old answer unusable, and the
     # agent runs again instead.
     expected_boundary = boundary_fingerprint(workspace, role, read_paths or [],
-                                             allow_shell, allow_write)
+                                             allow_shell, allow_write, prompt,
+                                             settings.AGENT_MODEL)
     # Resumability: an answer that is already on disk is reused, so a round that
     # was interrupted does not pay for the same agents twice. The reuse requires
     # the receipt to say the run was valid: a partial answer left by a timed-out
     # or cancelled run is not an answer, and reading it as one is how a cancelled
-    # reviewer became a verdict.
+    # reviewer became a verdict. The receipt also has to name the same boundary,
+    # the same prompt and the same model: a task that is asked again with a
+    # different question is not answered by the old answer.
     receipt_path = workspace / "execution.json"
     if destination.is_file():
         verified = False
@@ -163,12 +170,23 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
         deadline_seconds = settings.AGENT_DEADLINE_SECONDS
     if allowed_roots is None:
         allowed_roots = _round_roots(Path(root))
-    receipt = run_agent(task_id, prompt, output_name, Path(root),
-                        binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
-                        role=role, read_paths=read_paths,
-                        allowed_roots=allowed_roots, candidate_tree=candidate_tree,
-                        allow_shell=allow_shell, allow_write=allow_write,
-                        deadline_seconds=deadline_seconds)
+    progress_file = workspace / runner.PROGRESS_FILE_NAME
+    partial = False
+    failure_class = ""
+    try:
+        receipt = run_agent(task_id, prompt, output_name, Path(root),
+                            binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
+                            role=role, read_paths=read_paths,
+                            allowed_roots=allowed_roots, candidate_tree=candidate_tree,
+                            allow_shell=allow_shell, allow_write=allow_write,
+                            deadline_seconds=deadline_seconds)
+    except runner.AgentFailure as failure:
+        # The task did not finish inside its budget. What it saved is what it
+        # delivered: the records are handed to the main agent, marked as a
+        # partial delivery, and never as a completed answer.
+        partial = True
+        failure_class = failure.failure_class
+        receipt = Path(failure.receipt)
     # run_agent returns its execution receipt, not the answer: locate the file
     # the agent wrote, accepting the same bounded relocation the runner allows.
     answer = workspace / output_name
@@ -179,7 +197,6 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
                                for part in match.relative_to(workspace).parts)]
         if matches:
             answer = matches[0]
-    progress_file = workspace / runner.PROGRESS_FILE_NAME
     records = progress_server.read_records(progress_file)
     text = ""
     answer_from_progress = False
@@ -188,18 +205,14 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     if not text:
         # The task ended before it replied. The records it saved are what it
         # delivered: the last one that carries a complete answer is taken.
-        for record in reversed(records):
-            content = str(record.get("content", "")).strip()
-            if not content:
-                continue
-            try:
-                parser(content)
-            except Exception:                              # noqa: BLE001
-                continue
-            text = content
-            answer_from_progress = True
-            break
+        text = runner.saved_answer(workspace, parser)
+        answer_from_progress = bool(text)
     if not text:
+        if partial:
+            raise pipeline_module.RoundError(
+                "agent " + task_id + " did not finish (" + failure_class +
+                ") and saved no complete answer; its " + str(len(records)) +
+                " stage records are kept as evidence")
         raise pipeline_module.RoundError("agent " + task_id + " wrote no " + output_name)
     report = parser(text)
     report["boundary_version"] = policy.BOUNDARY_VERSION
@@ -212,6 +225,10 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     report["progress_count"] = len(records)
     report["answer_from_progress"] = answer_from_progress
     report["deadline_seconds"] = deadline_seconds
+    # A delivery that did not finish says so. The main agent may use a partial
+    # proposal; it may never read a partial review as a verdict.
+    report["partial"] = partial
+    report["failure_class"] = failure_class
     return report
 
 
@@ -260,7 +277,7 @@ def round_history(repo: Path, limit: int = 3) -> str:
     rounds measured, what their reviews objected to and what their runs scored is
     therefore the material the next round starts from.
     """
-    rounds_root = Path(repo) / "results" / "research"
+    rounds_root = _repository_root(Path(repo)) / "results" / "research"
     if not rounds_root.is_dir():
         return ""
     blocks: list = []
@@ -381,6 +398,7 @@ def _run_probe_subprocess(idea: dict, *, repo: Path, budget: float,
     process when it overruns.
     """
     import subprocess
+    import tempfile
 
     from .. import settings
 
@@ -389,19 +407,32 @@ def _run_probe_subprocess(idea: dict, *, repo: Path, budget: float,
             "--idea", json.dumps(idea, ensure_ascii=False),
             "--repo", str(repo), "--budget", str(budget),
             "--max-users", str(max_users), "--seed", str(seed)]
-    try:
-        finished = subprocess.run(argv, cwd=str(repo), capture_output=True, text=True,
-                                  timeout=budget + 30.0)
-    except subprocess.TimeoutExpired:
+    # The output goes to files, not to pipes: a pipe is inherited by the
+    # probe's own children, and a child that outlives the probe keeps the pipe
+    # open, so the wait for the probe would never end.
+    with tempfile.TemporaryDirectory() as work:
+        out_path = Path(work) / "out.txt"
+        err_path = Path(work) / "err.txt"
+        with out_path.open("w", encoding="utf-8") as out, \
+                err_path.open("w", encoding="utf-8") as err:
+            process = subprocess.Popen(argv, cwd=str(repo), stdout=out, stderr=err,
+                                       text=True, start_new_session=True)
+            try:
+                process.wait(timeout=budget + 30.0)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                return {"status": "UNKNOWN", "idea_id": idea.get("idea_id"),
+                        "reason": "the probe overran its budget and was stopped",
+                        "metrics": {}}
+        stdout = out_path.read_text(encoding="utf-8", errors="replace")
+        stderr = err_path.read_text(encoding="utf-8", errors="replace")
+    if process.returncode != 0:
         return {"status": "UNKNOWN", "idea_id": idea.get("idea_id"),
-                "reason": "the probe overran its budget and was stopped",
-                "metrics": {}}
-    if finished.returncode != 0:
-        return {"status": "UNKNOWN", "idea_id": idea.get("idea_id"),
-                "reason": "the probe process failed: " + finished.stderr[-300:],
+                "reason": "the probe process failed: " + stderr[-300:],
                 "metrics": {}}
     try:
-        return json.loads(finished.stdout.strip().splitlines()[-1])
+        return json.loads(stdout.strip().splitlines()[-1])
     except (ValueError, IndexError):
         return {"status": "UNKNOWN", "idea_id": idea.get("idea_id"),
                 "reason": "the probe produced no readable report", "metrics": {}}
@@ -410,23 +441,34 @@ def _run_probe_subprocess(idea: dict, *, repo: Path, budget: float,
 def _run_math_subprocess(idea: dict, *, seed: int) -> dict:
     """The math checks, in the project's interpreter (the only one with torch)."""
     import subprocess
+    import tempfile
 
     from .. import settings
 
     python = getattr(settings, "RESEARCH_PYTHON", sys.executable)
     argv = [python, "-m", "tools.research.rounds.math_checks",
             "--idea", json.dumps(idea, ensure_ascii=False), "--seed", str(seed)]
-    try:
-        finished = subprocess.run(argv, cwd=str(Path.cwd()), capture_output=True,
-                                  text=True, timeout=120.0)
-    except subprocess.TimeoutExpired:
+    with tempfile.TemporaryDirectory() as work:
+        out_path = Path(work) / "out.txt"
+        err_path = Path(work) / "err.txt"
+        with out_path.open("w", encoding="utf-8") as out, \
+                err_path.open("w", encoding="utf-8") as err:
+            process = subprocess.Popen(argv, cwd=str(Path.cwd()), stdout=out, stderr=err,
+                                       text=True, start_new_session=True)
+            try:
+                process.wait(timeout=120.0)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                return {"status": "NOT_RUN", "idea_id": idea.get("idea_id"), "checks": [],
+                        "reason": "the checks overran their budget"}
+        stdout = out_path.read_text(encoding="utf-8", errors="replace")
+        stderr = err_path.read_text(encoding="utf-8", errors="replace")
+    if process.returncode != 0:
         return {"status": "NOT_RUN", "idea_id": idea.get("idea_id"), "checks": [],
-                "reason": "the checks overran their budget"}
-    if finished.returncode != 0:
-        return {"status": "NOT_RUN", "idea_id": idea.get("idea_id"), "checks": [],
-                "reason": "the checks could not run: " + finished.stderr[-300:]}
+                "reason": "the checks could not run: " + stderr[-300:]}
     try:
-        return json.loads(finished.stdout.strip().splitlines()[-1])
+        return json.loads(stdout.strip().splitlines()[-1])
     except (ValueError, IndexError):
         return {"status": "NOT_RUN", "idea_id": idea.get("idea_id"), "checks": [],
                 "reason": "the checks produced no readable report"}
@@ -444,19 +486,45 @@ def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None) -
     cache_dir = Path(cache_dir) if cache_dir is not None else (repo / "results" /
                                                             "research" / "issue121" /
                                                             "literature_cache")
-    outcomes = {}
-    for idea in ideas:
+    from concurrent.futures import ThreadPoolExecutor
+
+    def measure(idea: dict) -> tuple:
+        """The three measurements of one proposal, at the same time.
+
+        The data probe and the math checks are separate processes and the
+        literature pass is the network: running them one after another made the
+        phase cost the sum of their budgets for every proposal.
+        """
         identifier = idea["idea_id"]
-        probe = _run_probe_subprocess(
-            idea, repo=repo, budget=probes_module.DEFAULT_BUDGET_SECONDS,
-            max_users=probes_module.DEFAULT_MAX_USERS, seed=probes_module.DEFAULT_SEED)
-        probe["sha256"] = _probe_digest(probe)
-        literature = literature_module.run_literature(idea, cache_dir=cache_dir)
-        literature["sha256"] = _probe_digest(literature)
-        math_report = _run_math_subprocess(idea, seed=math_checks_module.SEED)
-        math_report["sha256"] = _probe_digest(math_report)
-        outcomes[identifier] = {"probe": probe, "literature": literature,
-                                "math": math_report}
+
+        def data():
+            report = _run_probe_subprocess(
+                idea, repo=repo, budget=probes_module.DEFAULT_BUDGET_SECONDS,
+                max_users=probes_module.DEFAULT_MAX_USERS,
+                seed=probes_module.DEFAULT_SEED)
+            report["sha256"] = _probe_digest(report)
+            return report
+
+        def math():
+            report = _run_math_subprocess(idea, seed=math_checks_module.SEED)
+            report["sha256"] = _probe_digest(report)
+            return report
+
+        def literature():
+            report = literature_module.run_literature(idea, cache_dir=cache_dir)
+            report["sha256"] = _probe_digest(report)
+            return report
+
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            futures = [pool.submit(data), pool.submit(math), pool.submit(literature)]
+            probe, math_report, lit = [future.result() for future in futures]
+        return identifier, {"probe": probe, "literature": lit, "math": math_report}
+
+    # The proposals are independent, so they are measured at the same time.
+    outcomes = {}
+    with ThreadPoolExecutor(max_workers=min(len(ideas), 6) or 1) as pool:
+        for identifier, outcome in pool.map(measure, ideas):
+            outcomes[identifier] = outcome
     return outcomes
 
 
@@ -510,6 +578,15 @@ def phase_probe(root: Path, round_id: str, *, log=print) -> dict:
     if state["step"] not in ("probe", "scoring"):
         return {"phase": "probe", "ran": False, "step": state["step"],
                 "reason": "the round is not in the probe phase"}
+    if state.get("evidence_bundles") and state.get("probe_results"):
+        # The measurement is done: the bundles are frozen and the results are
+        # recorded. Re-probing would replace evidence the scorers have already
+        # seen, and it would move the round back a step for no reason.
+        if state["step"] != "scoring":
+            state["step"] = "scoring"
+            pipeline_module.save_state(directory, state)
+        return {"phase": "probe", "ran": False, "step": state["step"],
+                "reason": "the evidence bundles are already frozen"}
     ideas = state["ideas"]
     state["step"] = "probe"
     pipeline_module.save_state(directory, state)
@@ -592,8 +669,17 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None,
         report["rubric_sha256"] = scoring_module.RUBRIC["sha256"]
         return report
 
-    reports = _run_agents_concurrently(
-        [tuple([index]) for index in range(1, SCORERS + 1)], score)
+    try:
+        reports = _run_agents_concurrently(
+            [tuple([index]) for index in range(1, SCORERS + 1)], score)
+    except AgentPhaseIncomplete as exc:
+        # A reviewer that ran out of its budget did not review. The reviews that
+        # did arrive are kept: the matrix shows the disagreement, and the rule
+        # asks for two reviewers above the threshold, not for three.
+        reports = [report for report in exc.results
+                   if not (report.get("partial") or report.get("timed_out"))]
+        if len(reports) < MIN_SCORERS_FOR_A_MATRIX:
+            raise
     finalists = _finalist_ids(ideas, reports)
     comparisons = run_pairwise(root, ideas, finalists, evidence_text) if len(finalists) >= 2 else []
     return {"reports": reports, "bundles": bundle, "comparisons": comparisons,
@@ -602,6 +688,11 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None,
 
 HARD_OBJECTION_TERMS = ("cancel", "identity", "leak", "dimension", "degenerat",
                         "counterexample", "equivalence", "invariant")
+
+#: How many reviewers a matrix needs. The selection rule asks for two
+#: reviewers above the threshold, so two reviews are enough to decide; one is
+#: not, because a single reviewer cannot show a disagreement.
+MIN_SCORERS_FOR_A_MATRIX = 2
 
 
 def _hard_objection(report: dict) -> tuple:
@@ -668,7 +759,15 @@ def _review_with_retry(root: Path, task_id: str, prompt: str) -> dict:
     """
     attempt = 0
     last_error = None
+    # The budget belongs to the task, not to the attempt: a retry does not get
+    # a second five minutes.
+    import time as _time
+    budget = float(settings.AGENT_DEADLINE_SECONDS)
+    started = _time.monotonic()
     while attempt < 2:
+        remaining = budget - (_time.monotonic() - started)
+        if remaining <= 1.0:
+            break
         suffix = "" if attempt == 0 else (
             "\n\nYour previous answer was rejected by the schema: " + str(last_error) +
             "\nAnswer again with one complete block per proposal, and keep the five lines "
@@ -690,7 +789,8 @@ def _review_with_retry(root: Path, task_id: str, prompt: str) -> dict:
             report = _run_agent(root, run_id, prompt + suffix, name,
                                 plaintext.parse_scores, role="score",
                                 read_paths=[],
-                                allowed_roots=_round_roots(root))
+                                allowed_roots=_round_roots(root),
+                                deadline_seconds=max(1, int(remaining)))
             scoring_module.validate_report(report, scorer=task_id)
             return report
         except (scoring_module.ScoreError, pipeline_module.RoundError) as exc:
@@ -720,28 +820,36 @@ def run_pairwise(root: Path, ideas: list, finalists: list, evidence_text: str) -
         # Balance the printed order across the three reviewers.
         first, second = (left, right) if index % 2 == 0 else (right, left)
         pairs.append((first, second))
-    comparisons = []
-    for index in range(1, SCORERS + 1):
-        task_id = "pairwise_" + str(index)
-        blocks = []
-        for position, (first, second) in enumerate(pairs):
-            prompt = agent_contracts.PAIRWISE_PROMPT.format(
-                rubric_version=scoring_module.RUBRIC["version"],
-                rubric=_rubric_text(),
-                first=plaintext.render_idea(by_id[first]),
-                second=plaintext.render_idea(by_id[second]),
-                evidence=evidence_text)
-            report = _run_agent(root, task_id + "_" + str(position), prompt,
-                                "pairwise.txt", plaintext.parse_pairwise, role="score",
-                                read_paths=[],
-                                allowed_roots=_round_roots(root))
-            report["reviewer"] = task_id
-            report["first"] = first
-            report["second"] = second
-            comparisons.append(report)
-            blocks.append(report)
-        if not blocks:
-            continue
+        comparisons = []
+        try:
+            for index in range(1, SCORERS + 1):
+                task_id = "pairwise_" + str(index)
+                blocks = []
+                for position, (first, second) in enumerate(pairs):
+                    prompt = agent_contracts.PAIRWISE_PROMPT.format(
+                        rubric_version=scoring_module.RUBRIC["version"],
+                        rubric=_rubric_text(),
+                        first=plaintext.render_idea(by_id[first]),
+                        second=plaintext.render_idea(by_id[second]),
+                        evidence=evidence_text)
+                    report = _run_agent(root, task_id + "_" + str(position), prompt,
+                                        "pairwise.txt", plaintext.parse_pairwise, role="score",
+                                        read_paths=[],
+                                        allowed_roots=_round_roots(root))
+                    report["reviewer"] = task_id
+                    report["first"] = first
+                    report["second"] = second
+                    comparisons.append(report)
+                    blocks.append(report)
+                if not blocks:
+                    continue
+        except AgentPhaseIncomplete as exc:
+            # A reviewer that ran out of its budget did not compare. The
+            # comparisons that did arrive are kept.
+            comparisons = [report for report in exc.results
+                           if not (report.get("partial") or report.get("timed_out"))]
+            if len(comparisons) < MIN_SCORERS_FOR_A_MATRIX:
+                raise
     return comparisons
 
 
@@ -826,7 +934,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
         return report
 
     try:
-        return _run_agents_concurrently(
+        reports = _run_agents_concurrently(
             [tuple([index]) for index in range(1, VERIFIERS + 1)], verify)
     except AgentPhaseIncomplete as exc:
         # The verdicts that exist are kept and reported. The candidate is not
@@ -834,6 +942,21 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0) -> l
         # says whether waiting can help.
         raise RoundIncomplete(str(exc), results=exc.results, failures=exc.failures,
                               classes=exc.classes) from exc
+    # A reviewer that ran out of its budget delivered records, not a verdict.
+    # Its report is kept as evidence and the candidate waits for it.
+    unfinished = [report.get("verifier", "?") for report in reports
+                  if report.get("partial") or report.get("timed_out")]
+    if unfinished:
+        raise RoundIncomplete(
+            "the reviewers " + ", ".join(str(name) for name in unfinished) +
+            " did not finish inside their budget; their stage records are kept "
+            "and the candidate is not judged",
+            results=[report for report in reports
+                     if not (report.get("partial") or report.get("timed_out"))],
+            failures=[{"task": str(name), "error": "the reviewer did not finish",
+                       "failure_class": "timeout"} for name in unfinished],
+            classes={"timeout"})
+    return reports
 
 
 def run_repair_plan(root: Path, idea: dict, tree: Path, findings: list,
@@ -1092,6 +1215,19 @@ def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
                                          idea_id=record["idea_id"],
                                          revision=record["revision"])
             pipeline_module.save_state(directory, state)
+        # A review produced under another boundary is not an approval under this
+        # one: the candidate goes back to the queue and is reviewed again.
+        if record.get("boundary_version") and \
+                record["boundary_version"] != policy.BOUNDARY_VERSION:
+            record["revision"] = int(record.get("revision", 0)) + 1
+            record["status"] = "implemented"
+            record["blocking_findings"] = []
+            pipeline_module.record_event(state, "boundary_changed_before_review",
+                                         idea_id=record["idea_id"],
+                                         revision=record["revision"],
+                                         boundary_version=record["boundary_version"],
+                                         current_boundary=policy.BOUNDARY_VERSION)
+            pipeline_module.save_state(directory, state)
         if record.get("status") not in ("implemented", "repaired", "agent_error",
                                         "needs_repair"):
             # "repair_planned" waits for the operator: the tree is unchanged, so
@@ -1192,8 +1328,19 @@ PHASES = ("ideation", "probe", "scoring", "implementation", "verification")
 
 def advance(root: Path, round_id: str, *, log=print) -> dict:
     """Run the agent stages of a round until it waits for Stage 2."""
-    for phase in (phase_ideation, phase_probe, phase_scoring, phase_implementation,
-                  phase_verification):
-        phase(root, round_id, log=log)
+    from . import lock as lock_module
+    from . import pipeline as pipeline_module
+
+    directory = pipeline_module.find_round_directory(root, round_id)
+    lock = lock_module.RoundLock(directory)
+    # One runner per round: the lock keeps a detached worker and a synchronous
+    # phase call from paying for the same agents twice.
+    lock.acquire(owner="worker:" + str(round_id))
+    try:
+        for phase in (phase_ideation, phase_probe, phase_scoring, phase_implementation,
+                      phase_verification):
+            phase(root, round_id, log=log)
+    finally:
+        lock.release()
     return pipeline_module.summary(
         pipeline_module.load_state(pipeline_module.find_round_directory(root, round_id)))

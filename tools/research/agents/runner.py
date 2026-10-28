@@ -379,12 +379,15 @@ def _agent_environment(workspace: Path) -> dict:
 
 
 def boundary_fingerprint(workspace: Path, role: str, read_paths,
-                         allow_shell: bool = False, allow_write: bool = False) -> str:
-    """The identity of the boundary one run was executed under.
+                         allow_shell: bool = False, allow_write: bool = False,
+                         prompt: str = "", model: str = "") -> str:
+    """The identity of one run: the boundary, the task and the model.
 
-    Two runs with the same fingerprint had the same view of the filesystem; a
-    different fingerprint means the evidence was produced under different rules
-    and may not be reused as if it were current.
+    Two runs with the same fingerprint had the same view of the filesystem and
+    were given the same task; a different fingerprint means the evidence was
+    produced under different rules and may not be reused as if it were current.
+    The prompt and the model are part of it, so a re-asked task with a changed
+    question or a changed model is not answered by the old answer.
     """
     payload = {
         "version": policy.BOUNDARY_VERSION,
@@ -395,8 +398,32 @@ def boundary_fingerprint(workspace: Path, role: str, read_paths,
         "read_paths": sorted(str(Path(entry).resolve()) for entry in (read_paths or [])),
         "permissions": isolation_permissions(workspace, role, read_paths,
                                             allow_shell, allow_write),
+        "prompt_sha256": digest_bytes(str(prompt).encode()),
+        "model": str(model),
     }
     return digest_bytes(json.dumps(payload, sort_keys=True).encode())
+
+
+def saved_answer(workspace: Path, parser=None) -> str:
+    """The last saved record that carries a complete answer.
+
+    A task that ran out of time still saved its records. The last one that
+    parses as an answer is what the agent delivered; the caller decides whether
+    a partial delivery counts (an idea does, a verdict does not).
+    """
+    path = Path(workspace) / PROGRESS_FILE_NAME
+    for record in reversed(progress_server.read_records(path)):
+        content = str(record.get("content", "")).strip()
+        if not content:
+            continue
+        if parser is None:
+            return content
+        try:
+            parser(content)
+        except Exception:                                  # noqa: BLE001
+            continue
+        return content
+    return ""
 
 
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
@@ -419,9 +446,11 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     # The binary and the model come from the one source of configuration.
     binary = binary or settings.AGENT_BINARY
     model = model or settings.AGENT_MODEL
-    # The deadline is counted from the moment the task is dispatched: the
-    # initialisation, the model calls, the retries and the wrap-up all fit in
-    # it, and the process is stopped when it passes.
+    # The clock starts HERE, at the dispatch: the initialisation, the model
+    # calls, the retries and the teardown all fit in the budget, and the timer
+    # is never reset. A run that spends its budget in the setup has no budget
+    # left for the agent.
+    dispatched = time.monotonic()
     deadline_epoch = (time.time() + float(deadline_seconds)) if deadline_seconds else 0.0
     # The role budget is the DEFAULT, and an explicit timeout wins: a caller that
     # asks for two seconds (a test, or a deliberate short probe) must not be
@@ -477,7 +506,6 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     private_home = agent_sandbox_home(workspace)
     cmd = sandbox_command(cmd, workspace, allowed, inner_binary, private_home)
     env = _agent_environment(workspace)
-    started = time.monotonic()
     cancelled, timed_out, stderr = False, False, ""
     # The standard error of the agent goes to a file, not to a pipe: a pipe is
     # inherited by the agent's own children, and a child that outlives the
@@ -498,7 +526,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
                 except subprocess.TimeoutExpired:
                     if (root / "cancel.json").is_file():
                         cancelled = True
-                    if time.monotonic() - started > timeout:
+                    if time.monotonic() - dispatched > timeout:
                         timed_out = True
                     if cancelled or timed_out:
                         os.killpg(process.pid, signal.SIGTERM)
@@ -508,6 +536,11 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
                             os.killpg(process.pid, signal.SIGKILL)
                             process.wait()
                         break
+            # A run that finished on its own still has to be inside the budget:
+            # the budget covers the whole call, not only the part after the
+            # process started.
+            if not timed_out and time.monotonic() - dispatched > timeout:
+                timed_out = True
     except OSError as exc:
         atomic_json(workspace / "execution.json",
                     {"task_id": task_id, "error_type": type(exc).__name__,
@@ -574,7 +607,10 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
                            if str(entry.resolve()) != str(entry)],
         "boundary_version": policy.BOUNDARY_VERSION,
         "boundary_sha256": boundary_fingerprint(workspace, role, allowed,
-                                                allow_shell, allow_write),
+                                                allow_shell, allow_write,
+                                                prompt, model),
+        "elapsed_seconds": round(time.monotonic() - dispatched, 3),
+        "deadline_passed": bool(timed_out),
         "progress": {
             "file": str(progress_path),
             "records": len(progress_server.read_records(progress_path)),

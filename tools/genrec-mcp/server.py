@@ -2966,27 +2966,40 @@ def tool_research_round_run_detached(round_id: str) -> dict:
     be running. The worker writes the round state; the phases themselves are
     the same code the synchronous tool uses.
     """
+    from tools.research.rounds import lock as round_lock
+    from tools.research.rounds import pipeline as round_pipeline
+
     directory = _round_directory(round_id)
     state = round_pipeline_state(directory)
     running = state.get("worker_pid")
-    if running and state_process_live(int(running), HARNESS_DIR / ("round_" + round_id + ".log")):
+    # The liveness check looks for the round id in the worker's command line:
+    # the log path is not part of it, so a check against the log path would
+    # never find a running worker and would start a second one.
+    if running and state_process_live(int(running), round_id):
         return {"round_id": round_id, "worker_pid": int(running),
                 "worker_alive": True,
                 "reason": "a worker is already running this round"}
+    try:
+        lock = round_lock.RoundLock(directory)
+        lock.acquire(owner="mcp:detached")
+    except round_lock.RoundBusy as exc:
+        return {"round_id": round_id, "ran": False, "reason": str(exc)}
     worker = write_round_worker()
     log = HARNESS_DIR / ("round_" + round_id + ".log")
-    with log.open("wb") as sink:
-        process = subprocess.Popen(
-            [sys.executable, str(worker), json.dumps({"round_id": round_id})],
-            cwd=str(REPO),
-            stdout=sink,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.DEVNULL,
-            start_new_session=True,
-        )
+    try:
+        with log.open("wb") as sink:
+            process = subprocess.Popen(
+                [sys.executable, str(worker), json.dumps({"round_id": round_id})],
+                cwd=str(REPO),
+                stdout=sink,
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+    finally:
+        lock.release()
     state["worker_pid"] = process.pid
     state["worker_log"] = str(log)
-    from tools.research.rounds import pipeline as round_pipeline
     round_pipeline.record_event(state, "round_worker_started", pid=process.pid)
     round_pipeline.save_state(directory, state)
     return {"round_id": round_id, "worker_pid": process.pid, "worker_log": str(log),

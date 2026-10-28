@@ -109,6 +109,24 @@ def _archive_workspace(workspace: Path, request_id: str = "") -> Path | None:
     return target
 
 
+def _answer_path(workspace: Path, output: str) -> Path:
+    """Where the answer of a role is, file or progress record.
+
+    A role that only appends records has no answer file: the last record that
+    carries a complete answer is written to the expected place, so the caller
+    reads the same file either way.
+    """
+    from ..agents import runner
+    workspace = Path(workspace)
+    path = workspace / output
+    if path.is_file():
+        return path
+    text = runner.saved_answer(workspace)
+    if text:
+        path.write_text(text, encoding="utf-8")
+    return path
+
+
 def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
                       request_id: str = "") -> dict:
     """Write untrusted test drafts only to results/, never into tracked cases."""
@@ -131,17 +149,16 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
         prompt = _prompt(role, task_id, data, output, root=run_root)
         # The Issue #117 surface runs under the same boundary as a round: the
         # candidate tree it reviews and the Stage 2 interpreter are the only
-        # research files it may read, and the run's other agents' answers are
-        # not among them.
+        # research files it may read, the run's other agents' answers are not
+        # among them, and the agent's only write is its progress file.
         execution = run_agent(task_id, prompt, output, run_root,
                               binary=settings.AGENT_BINARY,
                               model=settings.AGENT_MODEL,
-                              timeout=settings.AGENT_TIMEOUT_SECONDS,
                               read_paths=[tree, Path(contract.STAGE2_PYTHON).parent.parent],
                               allowed_roots=[settings.ROOT, Path(contract.STAGE2_PYTHON).parent.parent],
                               candidate_tree=tree,
-                              allow_shell=True, allow_write=True)
-        payload = read_json(execution.parent / output)
+                              deadline_seconds=settings.AGENT_DEADLINE_SECONDS)
+        payload = read_json(_answer_path(execution.parent, output))
         if payload.get("candidate_id") != candidate_id or payload.get("source_sha256") != data["source_sha256"]:
             raise AdmissionError("independent author changed candidate/source identity")
         emitted = {}
@@ -204,11 +221,10 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str,
     return run_agent(candidate_id + "_review", prompt, "review.json",
                      run_root, binary=settings.AGENT_BINARY,
                      model=settings.AGENT_MODEL,
-                     timeout=settings.AGENT_TIMEOUT_SECONDS,
                      read_paths=[tree, Path(contract.STAGE2_PYTHON).parent.parent],
                      allowed_roots=[settings.ROOT, Path(contract.STAGE2_PYTHON).parent.parent],
                      candidate_tree=tree,
-                     allow_shell=True, allow_write=True)
+                     deadline_seconds=settings.AGENT_DEADLINE_SECONDS)
 
 
 def freeze_reviewed_manifest(candidate_id: str, tree: Path, run_id: str) -> Path:

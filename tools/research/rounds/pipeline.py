@@ -133,6 +133,33 @@ def record_event(state: dict, event: str, **fields) -> None:
     state.setdefault("events", []).append({"event": event, "at": time.time(), **fields})
 
 
+def _merge_ideas(previous: list, fresh: list) -> list:
+    """The proposals of a round, keeping the ones an earlier pass collected.
+
+    A second pass asks the same agents for one more idea each, and the
+    proposals of the first pass are not thrown away: a round that collects two
+    ideas and then two more has four, not two.
+    """
+    merged = list(previous or [])
+    known = {str(idea.get("idea_id")) for idea in merged}
+    for idea in fresh or []:
+        identifier = str(idea.get("idea_id"))
+        if identifier in known:
+            for existing in merged:
+                if str(existing.get("idea_id")) == identifier:
+                    existing.setdefault("also_proposed_by", [])
+                    for other in idea.get("also_proposed_by", []):
+                        if other not in existing["also_proposed_by"]:
+                            existing["also_proposed_by"].append(other)
+                    existing["duplicate_count"] = max(
+                        int(existing.get("duplicate_count", 1)),
+                        int(idea.get("duplicate_count", 1)))
+            continue
+        known.add(identifier)
+        merged.append(idea)
+    return merged
+
+
 def apply_ideation(state: dict, per_agent: list, require_minimum: bool = True) -> dict:
     """Merge the answers of the ideation agents into the round's ideas."""
     try:
@@ -140,14 +167,14 @@ def apply_ideation(state: dict, per_agent: list, require_minimum: bool = True) -
     except ideas_module.IdeaError as exc:
         record_event(state, "ideation_rejected", reason=str(exc))
         raise RoundError(str(exc)) from exc
-    state["ideas"] = merged
+    state["ideas"] = _merge_ideas(state.get("ideas") or [], merged)
     state["ideas_rejected"] = [
         {"agent": agent, "reason": "duplicate or unusable"} for agent, _ in per_agent
-        if not any(idea["origin_agent"] == str(agent) for idea in merged)]
+        if not any(idea["origin_agent"] == str(agent) for idea in state["ideas"])]
     state["duplicates"] = [
         {"idea_id": idea["idea_id"], "also_proposed_by": idea["also_proposed_by"],
          "duplicate_count": idea["duplicate_count"]}
-        for idea in merged if idea["duplicate_count"] > 1]
+        for idea in state["ideas"] if idea.get("duplicate_count", 1) > 1]
     record_event(state, "ideation_complete", ideas=len(merged),
                  duplicates=len(state["duplicates"]))
     # The evidence probe runs before the first score (Issue #123): the reviewers

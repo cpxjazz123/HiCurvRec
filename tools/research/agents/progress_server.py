@@ -50,15 +50,39 @@ class ProgressFile:
         self._sequence = self._count_records()
 
     def _count_records(self) -> int:
+        """How many whole records the file holds.
+
+        A line that is not a whole JSON object was never confirmed, so it does
+        not count: the sequence number must not skip a number because a
+        previous run was killed mid-write.
+        """
         count = 0
-        try:
-            with self.path.open("r", encoding="utf-8", errors="replace") as handle:
-                for line in handle:
-                    if line.strip():
-                        count += 1
-        except OSError:
-            return 0
+        for record in read_records(self.path):
+            count += 1
         return count
+
+    def _isolate_fragment(self) -> None:
+        """Separate a truncated tail from the next record.
+
+        A run that was killed while writing leaves a half line. Appending
+        straight after it would glue the fragment and the new record into one
+        line, and the reader would ignore both. The fragment gets a line of its
+        own, where it is ignored, and the new record stands alone.
+        """
+        try:
+            if not self.path.exists() or self.path.stat().st_size == 0:
+                return
+            with self.path.open("rb") as handle:
+                handle.seek(-1, os.SEEK_END)
+                last = handle.read(1)
+        except OSError:
+            return
+        if last == b"\n":
+            return
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
 
     def remaining_seconds(self) -> float | None:
         if self.deadline is None:
@@ -77,6 +101,7 @@ class ProgressFile:
         if remaining is not None and remaining <= 0:
             raise TimeoutError("the task's deadline has passed; the record was not saved")
         with _LOCK:
+            self._isolate_fragment()
             size_before = self.path.stat().st_size if self.path.exists() else 0
             self._sequence += 1
             record = {

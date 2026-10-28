@@ -28,6 +28,19 @@ OUTPUTS = {"literature": "literature.json", "geometry": "candidate.json",
 AGENT_ROLES = ("LITERATURE", "GEOMETRY", "REVIEW")
 
 
+def _answer_path(workspace: Path, output: str) -> Path:
+    """Where the answer of a role is, file or progress record."""
+    from ..agents import runner
+    workspace = Path(workspace)
+    path = workspace / output
+    if path.is_file():
+        return path
+    text = runner.saved_answer(workspace)
+    if text:
+        path.write_text(text, encoding="utf-8")
+    return path
+
+
 def store():
     return TaskStore(settings.STATE_ROOT)
 
@@ -92,7 +105,7 @@ def manifest_for(task, root):
 
 
 def verify_science_output(task, root, manifest):
-    output = read_json(root / "agents" / task / OUTPUTS[task])
+    output = read_json(_answer_path(root / "agents" / task, OUTPUTS[task]))
     if task == "literature":
         if not isinstance(output.get("sources"), list) or not output["sources"]:
             raise ValueError("literature requires real cited/qualified sources")
@@ -240,16 +253,15 @@ def run_agent_until_valid(task: str, root: Path, manifest: dict, prompt: str,
         try:
             # The Issue #117 surface runs under the same boundary as a round:
             # the one permitted baseline is the only source tree it may read,
-            # and the run's other agents' answers are not among the files it
-            # sees.
+            # the run's other agents' answers are not among the files it sees,
+            # and the agent's only write is its progress file.
             evidence = run_agent(task, prompt, OUTPUTS[task], root,
                                  binary=settings.AGENT_BINARY,
                                  model=settings.AGENT_MODEL,
-                                 timeout=settings.AGENT_TIMEOUT_SECONDS,
                                  read_paths=[baseline_module.CANONICAL_BASELINE],
                                  allowed_roots=[settings.ROOT,
                                                 Path(contract.STAGE2_PYTHON).parent.parent],
-                                 allow_shell=True, allow_write=True)
+                                 deadline_seconds=settings.AGENT_DEADLINE_SECONDS)
             verify_science_output(task, root, manifest)
             return evidence
         except (ValueError, RuntimeError) as exc:
