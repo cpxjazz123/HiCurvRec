@@ -178,6 +178,18 @@
       "event": "implementation_registered",
       "idea_id": "CURVCTRL-SID",
       "revision": 5
+    },
+    {
+      "at": 1793208211.6714497,
+      "event": "round_worker_started",
+      "pid": 199725
+    },
+    {
+      "at": 1793208512.4054554,
+      "event": "verification_needs_repair",
+      "idea_id": "CURVCTRL-SID",
+      "revision": 5,
+      "signature": "f5548f2e58d45895"
     }
   ],
   "evidence_bundles": {
@@ -15283,34 +15295,25 @@
       "baseline_digest": null,
       "blocking_findings": [
         {
-          "check": "gradients: which parameter is updated by which objective — name the parameter, the objective and the code path",
-          "correction": "ship model/frechet_poincare.py (clamp_ball, exp_0, log_0, poincare_distance, FrechetCodebook) and model/__init__.py exporting RQVAE in the tree, then re-run tests/test_curvature_wiring.py and tests/test_mechanism.py from the tree root. If these are supplied by the frozen repo at run time, state that explicitly and add the module to the tree so the reviewer can check the clamp/artanh gradient, which is where the commitment derivative lives.",
-          "detail": "the two modules every path in this mechanism imports are not in the tree. model/layers.py:19 does `from .frechet_poincare import (FrechetCodebook, clamp_ball, exp_0, log_0, poincare_distance)`, model/curvature_control.py:19 does `from model.frechet_poincare import clamp_ball, poincare_distance`, and train_rqvae.py:37 does `from model import RQVAE`, which also needs a model/__init__.py exporting RQVAE. Neither model/frechet_poincare.py nor model/__init__.py exists in the tree. So no parameter is updated by any objective: the import dies before the optimiser at train_rqvae.py:402 and before loss.backward() at :516. The coupling also cannot be verified, because the curved distance that both assignment_cost (layers.py:116) and the commitment (layers.py:213) call is defined in the missing file, as is FrechetCodebook (set_weights/remember/_last/accumulate/apply/curvature). The brief claims model.frechet_poincare imports cleanly; that is not true of the tree.",
-          "location": "model/layers.py:19 and model/curvature_control.py:19 against the tree contents; train_rqvae.py:37",
-          "reproduction": "`ls /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_030015_260/CURVCTRL-SID/model` yields only layers.py, model.py, curvature_control.py. `python -c \"import model.layers\"` raises ModuleNotFoundError: No module named 'model.frechet_poincare'; `python -c \"from model import RQVAE\"` raises ImportError because there is no model/__init__.py.",
+          "check": "mathematics and geometry: formulas, domains and identities",
+          "correction": "use exp_0^c(z)=tanh(sqrt(c)||z||/2)/(sqrt(c)||z||/2) z with the matching log_0, or define d_c with a 1/sqrt(c) prefactor instead of 2/sqrt(c); then recompute rho_l as the geodesic radius (or divide the rho^2 in c_l_raw by 4) so that the statistic and the curvature it sets use one convention.",
+          "detail": "`exp_0^c(z) = tanh(sqrt(c)||z||)/(sqrt(c)||z||) z` and `d_c(u,v) = 2/sqrt(c) artanh(sqrt(c)||(-u)(+)v||)` are not the exponential and the distance of one and the same metric. With c=1, z=0.5 e1: exp_0(z)=tanh(0.5)=0.462117, but d_c(0,exp_0(z))=2 artanh(0.462117)=1.0, i.e. d(0,exp_0(z))=2||z||. If log_0 is the log of this distance, log_0(y)=2 artanh(||y||)=1.0 for y=0.462117, and exp_0(log_0(y))=tanh(1.0)=0.761594 != y; the midpoint exp_0(0.5 log_0(y))=tanh(0.5)=0.462117 equals y itself, not the midpoint (the true c=1 midpoint of 0 and 0.462117 is 0.244919). So exp_x(log_x(y))=y and \"the midpoint halves the arc\" fail for the stated pair. The two formulas are consistent only if exp_0 uses tanh(sqrt(c)||z||/2), or if d is halved. Because c_l_raw=(1/Q-1)/(rho_l^2+1e-8) treats the Euclidean latent norm rho as the tangent magnitude of this distance, the factor 2 (factor 4 in c) propagates into the measured curvature. The other identities do hold: with c=1, y=0.5, 0(+)y=((1+0.25)*0+(1-0)*0.5)/1=0.5; x(+)0=x; the denominator 1+2c<x,y>+c^2||x||^2||y||^2 is positive; and kappa_l=-c_l with c_l>0 is the standard negative-curvature convention.",
+          "location": "model/frechet_poincare.py (`exp_0` / `poincare_distance` as named by the specification); specification section 4 and section 2",
+          "reproduction": "c=1, z=(0.5,0): exp_0(z)=0.462117 and d_c(0,0.462117)=2*artanh(0.462117)=1.0 != 0.5; exp_0(0.5*2*artanh(0.462117))=tanh(0.5)=0.462117=y.",
           "severity": "blocking",
-          "verifier": "verify_CURVCTRL-SID_r4_1"
+          "verifier": "verify_CURVCTRL-SID_r5_1"
         },
         {
-          "check": "detach, STE and the loss composition — every cut, every additive term, every weight",
-          "correction": "build the cumulative prefix before comparing, e.g. compare `rows[sources][:, :l+1] == rows[targets][:, :l+1]`.all(dim=1) per level, or compare the cumulative tuple/hash of the prefix. Ensure Q_l is non-increasing in l and add a unit test with two edges that share the level-2 code but not the level-1 code.",
-          "detail": "Q_l is not the hard prefix-transition score the proposal defines. The proposal sets p_l(i)=(c_1(i),…,c_l(i)) and Q_l = mean over edges of 1[p_l(i)==p_l(j)], i.e. the cumulative prefix. The code compares the per-level code columns independently: `hit = (rows[sources] == rows[targets])` builds an [E, L] matrix and `hit.mean(dim=0)` averages each column, so Q_2 = P(c_2 equal) and Q_3 = P(c_3 equal), not P(c_1..c_2 equal) and P(c_1..c_3 equal). The implementation's Q_2/Q_3 are therefore ≥ the specified values, they are not non-increasing in l (which the hypothesis's observable (b) relies on), and they produce smaller and differently ordered c_l for exactly the levels this candidate claims to fix. The central state variable of the loop is a different statistic from the frozen proposal, and it is the same code path that feeds derive_curvature (curvature_control.py:70-81) and layer.frechet.curvature (train_rqvae.py:493).",
-          "location": "model/curvature_control.py:66-67",
-          "reproduction": "with prefixes [[0,0,0],[0,1,1]] and edge (0,1), the code returns hit=[1.0, 0.0, 0.0]; the specified prefix score is [1.0, 0.0, 0.0] only for level 1 and is 0 for level 2 because c_1 and c_2 both differ, whereas a pair with equal level-2 code but different level-1 code yields hit[1]=1 in the code and prefix Q_2=0 in the spec.",
+          "check": "numerical behaviour at the degenerate points: boundary, origin, zero tangent, saturation, clamp behaviour",
+          "correction": "replace the hard min by a strictly monotone bounded map, e.g. c_l = c_raw/(1 + c_raw*M_l^2/0.99), which keeps sqrt(c_l)*M_l<0.995 and is strictly increasing in c_raw (hence strictly decreasing in Q); derive M_l from all points entering exp_0, M_l=max(max_i||z_l(i)||, max_k||e_{l,k}||), not only the latents.",
+          "detail": "the derived cap removes the behaviour signal over the range of Q that matters. It binds whenever (1/Q-1) > 0.99*(rho/max)^2. With a homogeneous norm distribution rho=max this is Q<0.5025: Q=0.25 gives c_raw=3.0 and Q=0.01 gives 99.0, and both are clamped to the same 0.99. With any spread the threshold rises: rho/max=0.5 gives Q<0.802, and rho=1,max=5 gives cap=0.0396 and every Q<0.962 is clamped. The new cumulative Q_l is non-increasing and the candidate's own test now has Q_2=0.25, so levels 2 and 3 lie below the threshold and c_l depends only on max||z_l||, not on measured Q_l: the loop is open exactly at the levels the idea says it fixes. The cap is applied to c, not to the radial coordinate, so it cannot be tightened without deleting the controller.",
+          "location": "specification section 2, `c_l_raw = min(c_l_raw, 0.99/(max_i ||z_l(i)||^2+1e-8))` (the corresponding clamp in the curvature controller)",
+          "reproduction": "rho_l=max_i||z_l(i)||=1: c_l_raw is 3.0 at Q=0.25 and 99.0 at Q=0.01; both become 0.99. With rho=1 and max=5, both become 0.0396 even at Q=0.6 (raw 0.667).",
           "severity": "blocking",
-          "verifier": "verify_CURVCTRL-SID_r4_1"
-        },
-        {
-          "check": "detach, STE and the loss composition — every cut, every additive term, every weight",
-          "correction": "either pass the residual chain with gradient (e.g. keep the curved commitment on the un-detached residual by computing it before the STE detach, or add an explicit residual path `residual = residual - code.detach()` with `code` differentiable where the commitment is wanted), or document that only level 1 trains the encoder and drop the l≥2 commitment from the loss so the term is not silently dead. Then add a per-level gradient test.",
-          "detail": "the curved commitment is a dead term at levels 2 and 3. `x_q = x + (x_q - x).detach()` (layers.py:220) makes the next residual `residual = residual - quant` (layers.py:390) equal to `-(code - residual).detach()`, i.e. a constant with requires_grad=False. At level 2 and 3 the commitment `squared_distance_c(point, codes[embed_ind].detach(), curvature)` therefore takes a non-grad `point` and a detached code, so it contributes an identically zero gradient to the encoder and to every other parameter; only the Euclidean codebook term `F.mse_loss(x_q, x.detach())` remains live. The proposal's L_commit at level l is meant to be a training term (\"the level-l assignment and commitment term then use the Poincaré distance\", and its own risk list discusses \"the commitment gradient can vanish exactly where curvature is largest\"); at l≥2 that gradient is zero for every value of c, so the measured c_2/c_3 can only change the discrete argmin, never a gradient. The candidate's tests cannot see this: test_the_encoder_keeps_its_gradient only sums encoder grads (level 1 is enough).",
-          "location": "model/layers.py:213-216 with model/layers.py:220 and model/layers.py:387-391",
-          "reproduction": "run one forward/backward on a 3-level model and compare `layer.frechet._last[\"point\"].requires_grad` per level: level 0 is True, levels 1 and 2 are False; or zero the grad and backprop only the level-2 quant_loss term, and observe that encoder.grad stays None/zero.",
-          "severity": "blocking",
-          "verifier": "verify_CURVCTRL-SID_r4_1"
+          "verifier": "verify_CURVCTRL-SID_r5_1"
         }
       ],
-      "boundary_sha256": "d0ddd1b3adfe3967b1d4381d57348ae22295f27c91cdf27d203dd1a2fc3964be",
+      "boundary_sha256": "cff1aca40d0af3b3839a4c2ec5da49de64e0f57877dd2123c62e9fecf548ecf3",
       "boundary_version": "agent-boundary/3",
       "candidate_digest_before_agent": null,
       "changed_files": [
@@ -16573,11 +16576,10 @@
         "."
       ],
       "deviations": [],
-      "failure_signature": "4dc984e2b66e9ea2",
+      "failure_signature": "f5548f2e58d45895",
       "finding_agreement": {
-        "model/curvature_control.py:66-67|Q_l is not the hard prefix-transition score the proposal defines. The proposal sets p_l(i)=(c_1(i),…,c_l(i)) and Q_l = m": 1,
-        "model/layers.py:19 and model/curvature_control.py:19 against the tree contents; train_rqvae.py:37|the two modules every path in this mechanism imports are not in the tree. model/layers.py:19 does `from .frechet_poincar": 1,
-        "model/layers.py:213-216 with model/layers.py:220 and model/layers.py:387-391|the curved commitment is a dead term at levels 2 and 3. `x_q = x + (x_q - x).detach()` (layers.py:220) makes the next re": 1
+        "model/frechet_poincare.py (`exp_0` / `poincare_distance` as named by the specification); specification section 4 and section 2|`exp_0^c(z) = tanh(sqrt(c)||z||)/(sqrt(c)||z||) z` and `d_c(u,v) = 2/sqrt(c) artanh(sqrt(c)||(-u)(+)v||)` are not the ex": 1,
+        "specification section 2, `c_l_raw = min(c_l_raw, 0.99/(max_i ||z_l(i)||^2+1e-8))` (the corresponding clamp in the curvature controller)|the derived cap removes the behaviour signal over the range of Q that matters. It binds whenever (1/Q-1) > 0.99*(rho/max": 1
       },
       "fingerprint": "",
       "idea_id": "CURVCTRL-SID",
@@ -16594,100 +16596,118 @@
       "progress": [
         {
           "deadline_seconds": 300,
-          "file": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_030015_260/agents/verify_CURVCTRL-SID_r4_1/progress.jsonl",
-          "records": 2,
-          "verifier": "verify_CURVCTRL-SID_r4_1"
+          "file": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_030015_260/agents/verify_CURVCTRL-SID_r5_1/progress.jsonl",
+          "records": 3,
+          "verifier": "verify_CURVCTRL-SID_r5_1"
         }
       ],
       "proposal_sha256": null,
-      "review_rounds": 5,
+      "review_rounds": 6,
       "reviewers_expected": 5,
-      "reviewers_missing": [],
+      "reviewers_missing": [
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
       "reviewers_reported": 1,
       "revision": 5,
       "smoke": {
         "result": "The candidate's own suite: 99 tests pass (2 DDP tests skip outside torchrun). Previous smoke after the composition fixes: c=1 loss 1.0035 / encoder gradient 5.40, c=4 loss 2.3027 / gradient 16.99 with varied tokens, c=0 loss 0.9248 / gradient 1.84."
       },
       "source_digest": "4698278b7f96e26d5273993baeeddc8437eefc223bfb01bee138333f570ff056",
-      "status": "implemented",
+      "status": "needs_repair",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_030015_260/CURVCTRL-SID",
       "tree_exists": true,
       "verdicts": [
         {
           "answer_from_progress": false,
-          "boundary_sha256": "d0ddd1b3adfe3967b1d4381d57348ae22295f27c91cdf27d203dd1a2fc3964be",
+          "boundary_sha256": "cff1aca40d0af3b3839a4c2ec5da49de64e0f57877dd2123c62e9fecf548ecf3",
           "boundary_version": "agent-boundary/3",
           "checks": [
             {
-              "exercised_how": "",
-              "exercised_path": "train_rqvae.py:510-532 → model/model.py:26-30 → model/layers.py:172-221 (curved branch), read statically (no torch/shell in this sandbox)",
+              "exercised_how": "evaluated the new `same.to(torch.float64).cumprod(dim=1)` on the test vectors: prefixes [[0,0],[0,1]] edge (0,1) gives Q=(1.0, Q_MIN) and [[0,5],[1,5]] edge (0,1) gives (Q_MIN,Q_MIN), so Q_l is now P(p_l equal) as specified and the previous per-column defect is fixed.",
+              "exercised_path": "model/curvature_control.py:63-72 (cumulative prefix hunk in the diff)",
               "findings": [
                 {
-                  "correction": "ship model/frechet_poincare.py (clamp_ball, exp_0, log_0, poincare_distance, FrechetCodebook) and model/__init__.py exporting RQVAE in the tree, then re-run tests/test_curvature_wiring.py and tests/test_mechanism.py from the tree root. If these are supplied by the frozen repo at run time, state that explicitly and add the module to the tree so the reviewer can check the clamp/artanh gradient, which is where the commitment derivative lives.",
-                  "detail": "the two modules every path in this mechanism imports are not in the tree. model/layers.py:19 does `from .frechet_poincare import (FrechetCodebook, clamp_ball, exp_0, log_0, poincare_distance)`, model/curvature_control.py:19 does `from model.frechet_poincare import clamp_ball, poincare_distance`, and train_rqvae.py:37 does `from model import RQVAE`, which also needs a model/__init__.py exporting RQVAE. Neither model/frechet_poincare.py nor model/__init__.py exists in the tree. So no parameter is updated by any objective: the import dies before the optimiser at train_rqvae.py:402 and before loss.backward() at :516. The coupling also cannot be verified, because the curved distance that both assignment_cost (layers.py:116) and the commitment (layers.py:213) call is defined in the missing file, as is FrechetCodebook (set_weights/remember/_last/accumulate/apply/curvature). The brief claims model.frechet_poincare imports cleanly; that is not true of the tree.",
-                  "location": "model/layers.py:19 and model/curvature_control.py:19 against the tree contents; train_rqvae.py:37",
-                  "reproduction": "`ls /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_030015_260/CURVCTRL-SID/model` yields only layers.py, model.py, curvature_control.py. `python -c \"import model.layers\"` raises ModuleNotFoundError: No module named 'model.frechet_poincare'; `python -c \"from model import RQVAE\"` raises ImportError because there is no model/__init__.py.",
+                  "correction": "use exp_0^c(z)=tanh(sqrt(c)||z||/2)/(sqrt(c)||z||/2) z with the matching log_0, or define d_c with a 1/sqrt(c) prefactor instead of 2/sqrt(c); then recompute rho_l as the geodesic radius (or divide the rho^2 in c_l_raw by 4) so that the statistic and the curvature it sets use one convention.",
+                  "detail": "`exp_0^c(z) = tanh(sqrt(c)||z||)/(sqrt(c)||z||) z` and `d_c(u,v) = 2/sqrt(c) artanh(sqrt(c)||(-u)(+)v||)` are not the exponential and the distance of one and the same metric. With c=1, z=0.5 e1: exp_0(z)=tanh(0.5)=0.462117, but d_c(0,exp_0(z))=2 artanh(0.462117)=1.0, i.e. d(0,exp_0(z))=2||z||. If log_0 is the log of this distance, log_0(y)=2 artanh(||y||)=1.0 for y=0.462117, and exp_0(log_0(y))=tanh(1.0)=0.761594 != y; the midpoint exp_0(0.5 log_0(y))=tanh(0.5)=0.462117 equals y itself, not the midpoint (the true c=1 midpoint of 0 and 0.462117 is 0.244919). So exp_x(log_x(y))=y and \"the midpoint halves the arc\" fail for the stated pair. The two formulas are consistent only if exp_0 uses tanh(sqrt(c)||z||/2), or if d is halved. Because c_l_raw=(1/Q-1)/(rho_l^2+1e-8) treats the Euclidean latent norm rho as the tangent magnitude of this distance, the factor 2 (factor 4 in c) propagates into the measured curvature. The other identities do hold: with c=1, y=0.5, 0(+)y=((1+0.25)*0+(1-0)*0.5)/1=0.5; x(+)0=x; the denominator 1+2c<x,y>+c^2||x||^2||y||^2 is positive; and kappa_l=-c_l with c_l>0 is the standard negative-curvature convention.",
+                  "location": "model/frechet_poincare.py (`exp_0` / `poincare_distance` as named by the specification); specification section 4 and section 2",
+                  "reproduction": "c=1, z=(0.5,0): exp_0(z)=0.462117 and d_c(0,0.462117)=2*artanh(0.462117)=1.0 != 0.5; exp_0(0.5*2*artanh(0.462117))=tanh(0.5)=0.462117=y.",
                   "severity": "blocking"
                 }
               ],
-              "name": "gradients: which parameter is updated by which objective — name the parameter, the objective and the code path",
+              "name": "mathematics and geometry: formulas, domains and identities",
               "verdict": "NEEDS_FIX"
             },
             {
-              "exercised_how": "",
-              "exercised_path": "model/layers.py:185-220 (curved forward), model/layers.py:375-393 (RQLayer residual loop), model/curvature_control.py:56-67 (Q_l), train_rqvae.py:464-493 (measure and apply)",
+              "exercised_how": "hand-evaluated the cap and floor on concrete Q_l, rho_l and max",
+              "exercised_path": "model/curvature_control.py:63-72 and the c_l pipeline of specification sections 2-3",
               "findings": [
                 {
-                  "correction": "build the cumulative prefix before comparing, e.g. compare `rows[sources][:, :l+1] == rows[targets][:, :l+1]`.all(dim=1) per level, or compare the cumulative tuple/hash of the prefix. Ensure Q_l is non-increasing in l and add a unit test with two edges that share the level-2 code but not the level-1 code.",
-                  "detail": "Q_l is not the hard prefix-transition score the proposal defines. The proposal sets p_l(i)=(c_1(i),…,c_l(i)) and Q_l = mean over edges of 1[p_l(i)==p_l(j)], i.e. the cumulative prefix. The code compares the per-level code columns independently: `hit = (rows[sources] == rows[targets])` builds an [E, L] matrix and `hit.mean(dim=0)` averages each column, so Q_2 = P(c_2 equal) and Q_3 = P(c_3 equal), not P(c_1..c_2 equal) and P(c_1..c_3 equal). The implementation's Q_2/Q_3 are therefore ≥ the specified values, they are not non-increasing in l (which the hypothesis's observable (b) relies on), and they produce smaller and differently ordered c_l for exactly the levels this candidate claims to fix. The central state variable of the loop is a different statistic from the frozen proposal, and it is the same code path that feeds derive_curvature (curvature_control.py:70-81) and layer.frechet.curvature (train_rqvae.py:493).",
-                  "location": "model/curvature_control.py:66-67",
-                  "reproduction": "with prefixes [[0,0,0],[0,1,1]] and edge (0,1), the code returns hit=[1.0, 0.0, 0.0]; the specified prefix score is [1.0, 0.0, 0.0] only for level 1 and is 0 for level 2 because c_1 and c_2 both differ, whereas a pair with equal level-2 code but different level-1 code yields hit[1]=1 in the code and prefix Q_2=0 in the spec.",
+                  "correction": "replace the hard min by a strictly monotone bounded map, e.g. c_l = c_raw/(1 + c_raw*M_l^2/0.99), which keeps sqrt(c_l)*M_l<0.995 and is strictly increasing in c_raw (hence strictly decreasing in Q); derive M_l from all points entering exp_0, M_l=max(max_i||z_l(i)||, max_k||e_{l,k}||), not only the latents.",
+                  "detail": "the derived cap removes the behaviour signal over the range of Q that matters. It binds whenever (1/Q-1) > 0.99*(rho/max)^2. With a homogeneous norm distribution rho=max this is Q<0.5025: Q=0.25 gives c_raw=3.0 and Q=0.01 gives 99.0, and both are clamped to the same 0.99. With any spread the threshold rises: rho/max=0.5 gives Q<0.802, and rho=1,max=5 gives cap=0.0396 and every Q<0.962 is clamped. The new cumulative Q_l is non-increasing and the candidate's own test now has Q_2=0.25, so levels 2 and 3 lie below the threshold and c_l depends only on max||z_l||, not on measured Q_l: the loop is open exactly at the levels the idea says it fixes. The cap is applied to c, not to the radial coordinate, so it cannot be tightened without deleting the controller.",
+                  "location": "specification section 2, `c_l_raw = min(c_l_raw, 0.99/(max_i ||z_l(i)||^2+1e-8))` (the corresponding clamp in the curvature controller)",
+                  "reproduction": "rho_l=max_i||z_l(i)||=1: c_l_raw is 3.0 at Q=0.25 and 99.0 at Q=0.01; both become 0.99. With rho=1 and max=5, both become 0.0396 even at Q=0.6 (raw 0.667).",
                   "severity": "blocking"
                 },
                 {
-                  "correction": "either pass the residual chain with gradient (e.g. keep the curved commitment on the un-detached residual by computing it before the STE detach, or add an explicit residual path `residual = residual - code.detach()` with `code` differentiable where the commitment is wanted), or document that only level 1 trains the encoder and drop the l≥2 commitment from the loss so the term is not silently dead. Then add a per-level gradient test.",
-                  "detail": "the curved commitment is a dead term at levels 2 and 3. `x_q = x + (x_q - x).detach()` (layers.py:220) makes the next residual `residual = residual - quant` (layers.py:390) equal to `-(code - residual).detach()`, i.e. a constant with requires_grad=False. At level 2 and 3 the commitment `squared_distance_c(point, codes[embed_ind].detach(), curvature)` therefore takes a non-grad `point` and a detached code, so it contributes an identically zero gradient to the encoder and to every other parameter; only the Euclidean codebook term `F.mse_loss(x_q, x.detach())` remains live. The proposal's L_commit at level l is meant to be a training term (\"the level-l assignment and commitment term then use the Poincaré distance\", and its own risk list discusses \"the commitment gradient can vanish exactly where curvature is largest\"); at l≥2 that gradient is zero for every value of c, so the measured c_2/c_3 can only change the discrete argmin, never a gradient. The candidate's tests cannot see this: test_the_encoder_keeps_its_gradient only sums encoder grads (level 1 is enough).",
-                  "location": "model/layers.py:213-216 with model/layers.py:220 and model/layers.py:387-391",
-                  "reproduction": "run one forward/backward on a 3-level model and compare `layer.frechet._last[\"point\"].requires_grad` per level: level 0 is True, levels 1 and 2 are False; or zero the grad and backprop only the level-2 quant_loss term, and observe that encoder.grad stays None/zero.",
-                  "severity": "blocking"
+                  "correction": "compute the scale as torch.where(||z||>eps, tanh(k||z||)/(k||z||), 1) with a clamped norm (or tanh(k||z||)/(k*norm.clamp_min(eps)) with the zero case masked) so value and derivative are correct at the origin; keep a smooth positive margin in the ball (a differentiable bound instead of a hard clamp) and include codebook norms in the radial bound so codes cannot sit on the clamp.",
+                  "detail": "(a) at a zero tangent the scalar factor is tanh(0)/(0+1e-12)=0 while its limit as ||z||->0 is 1, so exp_0(0)=0 but autograd at exactly zero returns gradient 0 instead of 1: a latent or code exactly at the origin is a spurious stationary point and no gradient flows through the map. (b) the artanh argument is clipped at 1-1e-7; for two points near the boundary, e.g. c=1, u=0.9999999 e1, v=-0.9999999 e1, ||(-u)(+)v||=1-5e-15 > 1-1e-7, the clip is active, the distance is finite (about 8.29) but its gradient is exactly zero, so the commitment term is inert where curvature is largest. exp_0 itself never reaches the boundary (tanh<1), so there is no inf from exp; float32 represents 1-1e-7 as 0.9999998807907104, so there is no NaN from the clamp either, only a dead gradient.",
+                  "location": "model/frechet_poincare.py `exp_0` (the `sqrt(c)||z||+1e-12` denominator) and the artanh clamp to 1-1e-7 in `poincare_distance`",
+                  "reproduction": "c=1, z=torch.zeros(d, requires_grad=True): y=exp_0(z)=0 and d(sum(y))/dz evaluates to 0 although the local slope of exp_0 is 1; and d_c at the two boundary points above hits the 1-1e-7 clamp.",
+                  "severity": "minor"
                 },
                 {
-                  "correction": "make the test config match _tokenizer_config (including codebook_gradient=True, tangent_codebook=True) or add a second build() for the trained arm, and assert there that the codebook receives a nonzero gradient and that each level's commitment reaches the encoder.\n\nNotes on the rest (no finding, recorded for the panel): the checkout does have the composition right in the places I could verify — beta=0.25 is used once per level (layers.py:215), the code side of the commitment is detached (layers.py:213), the codebook takes only the Euclidean term (no Frechet step: train_rqvae.py:120,523), the recon STE is the standard identity at layers.py:220, the switches do act on the applied scalar (curvature_control.py:136-142, train_rqvae.py:490-493), and the cap c ≤ 0.99/max_norm² does keep √c·max||z|| ≤ 0.995, so the origin exponential's radial derivative stays ≈0.42 at the boundary and does not vanish. The curvature value c is measured under no_grad, as the proposal requires, and it is applied to both assignment_cost (layers.py:103-116) and the commitment (layers.py:208-213).",
-                  "detail": "the test config omits `codebook_gradient`, so RQLayer falls back to False and VQLayer.forward disables `embed.weight.requires_grad` (layers.py:84-89); `test_the_codebook_takes_no_gradient` therefore asserts a property of a configuration the candidate never trains. The trained arm sets `codebook_gradient=True` (train_rqvae.py:271, because USE_FRECHET_STEP=False), so the codebook is in the optimiser and is trained by the Euclidean L_codebook term. No shipped test exercises that trained configuration, which is why the dead level-2/3 commitment and the wrong Q_l are not caught.",
-                  "location": "tests/test_mechanism.py:33-38 with train_rqvae.py:266-274",
-                  "reproduction": "the config helper at tests/test_mechanism.py:33-38 has no codebook_gradient key; the trainer's _tokenizer_config (train_rqvae.py:266-274) sets it to True.",
+                  "correction": "use one scale statistic consistently (e.g. a high quantile of the norms of all points entering exp_0, latents and codes) and bound the radial coordinate so every mapped point, code vectors included, stays strictly inside the ball with a non-vanishing tanh derivative.\n\nNOTE: the tree at the stated path was not readable in this sandbox (`Permission denied: external_directory` for every tree/round path; only the agent directory was readable), so model/frechet_poincare.py, model/layers.py and tests/test_geometry.py could not be line-read; the mathematical findings above are checked against the frozen specification and the supplied diff. The two other previous blocking findings (missing modules; dead curved commitment) therefore remain unverified by me.",
+                  "detail": "the curvature cap is derived from the maximum latent norm while the curvature itself is derived from the mean norm; a single outlier latent makes c_l small (rho=1,max=5 gives 0.0396) and compresses typical points near the origin, where the metric is almost Euclidean, so the intended radial separation disappears. Conversely a code vector whose norm exceeds max_i||z_l(i)|| is unbounded by the cap; tanh(sqrt(c)||e||) saturates toward 1/sqrt(c), so its position loses radial information and its gradient vanishes. The weighting itself is the one the proposal states (Q_l an edge-uniform mean over training transitions, rho_l an item-uniform mean over the training split, no constant), so this is a domain defect of the cap, not a weighting deviation.",
+                  "location": "specification section 2 (rho_l is a mean, the cap uses max||z_l||) and section 5 (code vectors are pushed through the same exp_0)",
+                  "reproduction": "rho=1, max||z||=5, Q=0.9: c_raw=0.111, cap=0.0396, c=0.0396, sqrt(c)*rho=0.199 (near-Euclidean); a code of norm 20 gives sqrt(c)*20=3.98, tanh=0.9993, 1-tanh^2=1.4e-3.",
                   "severity": "minor"
                 }
               ],
-              "name": "detach, STE and the loss composition — every cut, every additive term, every weight",
+              "name": "numerical behaviour at the degenerate points: boundary, origin, zero tangent, saturation, clamp behaviour",
               "verdict": "NEEDS_FIX"
             }
           ],
           "deadline_seconds": 300,
           "failure_class": "",
+          "missing_reviewers": [
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
           "partial": false,
-          "progress_count": 2,
-          "progress_file": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_030015_260/agents/verify_CURVCTRL-SID_r4_1/progress.jsonl",
+          "progress_count": 3,
+          "progress_file": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_030015_260/agents/verify_CURVCTRL-SID_r5_1/progress.jsonl",
           "progress_records": [
             {
               "content": "{\"goal\": \"the task started\", \"role\": \"verify\", \"deadline_seconds\": 300}",
               "kind": "stage",
-              "recorded_at": "2026-10-28T17:16:38+00:00",
+              "recorded_at": "2026-10-28T17:23:32+00:00",
               "seq": 1,
-              "task_id": "verify_CURVCTRL-SID_r4_1"
+              "task_id": "verify_CURVCTRL-SID_r5_1"
             },
             {
-              "content": "STAGE 1 — scope and access. Goal: read the candidate tree for the gradient review.\nObservation: the fs read/grep/glob tools are permission-scoped to the agent directory, so the tree was read with the Code Mode fetch tool on file:// URLs (verified working). Files actually present at /fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_030015_260/CURVCTRL-SID: train_rqvae.py (32164 B), model/model.py (4043 B), model/layers.py (18164 B), model/curvature_control.py (7474 B), tests/test_mechanism.py (8878 B), tests/test_curvature_wiring.py (4372 B). model/frechet_poincare.py and model/__init__.py are ENOENT, as are tests/test_ddp.py and tests/test_curvature_switch_apply.py (the file the brief's diff modifies).\nReasoning: model/layers.py:19 imports .frechet_poincare and curvature_control.py:19 imports model.frechet_poincare, so if the file is really absent the package cannot import at all. The opencode.json permission allowlist enumerates exactly the six files that exist, which suggests the tree is those six files. Open question: whether the frozen repo supplies frechet_poincare.py at run time; attempting a directory listing next.",
+              "content": "START verify_CURVCTRL-SID r5 #1: reading tree model/frechet_poincare.py, tests/test_geometry.py, tests/test_codebook_step.py plus curvature_control and layers. Goal: check Poincare formulas/domains/identities, curvature convention consistency, numerical degeneracy, weighting. Still open: locate readable tree path.",
               "kind": "stage",
-              "recorded_at": "2026-10-28T17:21:13+00:00",
+              "recorded_at": "2026-10-28T17:23:47+00:00",
               "seq": 2,
-              "task_id": "verify_CURVCTRL-SID_r4_1"
+              "task_id": "verify_CURVCTRL-SID_r5_1"
+            },
+            {
+              "content": "RESULT (r5, verifier1 math/geometry): NEEDS_FIX. Read the diff hunk model/curvature_control.py:63-72: cumulative cumprod now correctly implements Q_l=P(p_l equal) (the prior per-column defect is fixed). Findings: (1) BLOCKING: spec cap c<=0.99/max||z||^2 binds for Q<0.5025 when rho=max, and for Q<0.962 when max=5*rho, so c_l is independent of measured Q exactly at the low-Q deep levels; c=0.99 for both Q=0.25 and Q=0.01. Correction: c=c_raw/(1+c_raw*M^2/0.99) monotone bounded, M over latents and code vectors. (2) BLOCKING: exp_0=tanh(sqrt(c)||z||)/(sqrt(c)||z||) z with d=2/sqrt(c) artanh(...) gives d(0,exp_0(z))=2||z||; at c=1,z=0.5, d=1.0 not 0.5, exp_0(log_0(0.462117))=0.7616!=0.462117 and the half-arc point equals the endpoint. Correction: tanh(sqrt(c)||z||/2) or halve d and divide rho^2 by 4. (3) MINOR: exp_0(0) gradient is 0 (epsilon in denominator, factor g(0)=0 vs limit 1); artanh clamp at 1-1e-7 is finite (8.29) but gradient zero at boundary. (4) MINOR: cap uses max latent norm but code norms unbounded -> tanh saturates for codes (norm 20, c=0.0396 -> 0.9993). Weighting itself matches spec (edge-uniform Q, item-uniform rho). Tree files were not readable from this sandbox (permission denied), so frechet_poincare.py/layers.py were judged from the frozen spec and the diff, not line-read. Full answer printed in the final response.",
+              "kind": "stage",
+              "recorded_at": "2026-10-28T17:26:51+00:00",
+              "seq": 3,
+              "task_id": "verify_CURVCTRL-SID_r5_1"
             }
           ],
-          "receipt": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_030015_260/agents/verify_CURVCTRL-SID_r4_1/execution.json",
-          "role": "gradient-update",
+          "receipt": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_030015_260/agents/verify_CURVCTRL-SID_r5_1/execution.json",
+          "role": "math-geometry",
           "verdict": "NEEDS_FIX",
-          "verifier": "verify_CURVCTRL-SID_r4_1"
+          "verifier": "verify_CURVCTRL-SID_r5_1"
         }
       ]
     }
@@ -18692,6 +18712,31 @@
       "idea_id": "CURVCTRL-SID",
       "revision": 4,
       "signature": "4dc984e2b66e9ea2"
+    },
+    {
+      "findings": [
+        {
+          "check": "mathematics and geometry: formulas, domains and identities",
+          "correction": "use exp_0^c(z)=tanh(sqrt(c)||z||/2)/(sqrt(c)||z||/2) z with the matching log_0, or define d_c with a 1/sqrt(c) prefactor instead of 2/sqrt(c); then recompute rho_l as the geodesic radius (or divide the rho^2 in c_l_raw by 4) so that the statistic and the curvature it sets use one convention.",
+          "detail": "`exp_0^c(z) = tanh(sqrt(c)||z||)/(sqrt(c)||z||) z` and `d_c(u,v) = 2/sqrt(c) artanh(sqrt(c)||(-u)(+)v||)` are not the exponential and the distance of one and the same metric. With c=1, z=0.5 e1: exp_0(z)=tanh(0.5)=0.462117, but d_c(0,exp_0(z))=2 artanh(0.462117)=1.0, i.e. d(0,exp_0(z))=2||z||. If log_0 is the log of this distance, log_0(y)=2 artanh(||y||)=1.0 for y=0.462117, and exp_0(log_0(y))=tanh(1.0)=0.761594 != y; the midpoint exp_0(0.5 log_0(y))=tanh(0.5)=0.462117 equals y itself, not the midpoint (the true c=1 midpoint of 0 and 0.462117 is 0.244919). So exp_x(log_x(y))=y and \"the midpoint halves the arc\" fail for the stated pair. The two formulas are consistent only if exp_0 uses tanh(sqrt(c)||z||/2), or if d is halved. Because c_l_raw=(1/Q-1)/(rho_l^2+1e-8) treats the Euclidean latent norm rho as the tangent magnitude of this distance, the factor 2 (factor 4 in c) propagates into the measured curvature. The other identities do hold: with c=1, y=0.5, 0(+)y=((1+0.25)*0+(1-0)*0.5)/1=0.5; x(+)0=x; the denominator 1+2c<x,y>+c^2||x||^2||y||^2 is positive; and kappa_l=-c_l with c_l>0 is the standard negative-curvature convention.",
+          "location": "model/frechet_poincare.py (`exp_0` / `poincare_distance` as named by the specification); specification section 4 and section 2",
+          "reproduction": "c=1, z=(0.5,0): exp_0(z)=0.462117 and d_c(0,0.462117)=2*artanh(0.462117)=1.0 != 0.5; exp_0(0.5*2*artanh(0.462117))=tanh(0.5)=0.462117=y.",
+          "severity": "blocking",
+          "verifier": "verify_CURVCTRL-SID_r5_1"
+        },
+        {
+          "check": "numerical behaviour at the degenerate points: boundary, origin, zero tangent, saturation, clamp behaviour",
+          "correction": "replace the hard min by a strictly monotone bounded map, e.g. c_l = c_raw/(1 + c_raw*M_l^2/0.99), which keeps sqrt(c_l)*M_l<0.995 and is strictly increasing in c_raw (hence strictly decreasing in Q); derive M_l from all points entering exp_0, M_l=max(max_i||z_l(i)||, max_k||e_{l,k}||), not only the latents.",
+          "detail": "the derived cap removes the behaviour signal over the range of Q that matters. It binds whenever (1/Q-1) > 0.99*(rho/max)^2. With a homogeneous norm distribution rho=max this is Q<0.5025: Q=0.25 gives c_raw=3.0 and Q=0.01 gives 99.0, and both are clamped to the same 0.99. With any spread the threshold rises: rho/max=0.5 gives Q<0.802, and rho=1,max=5 gives cap=0.0396 and every Q<0.962 is clamped. The new cumulative Q_l is non-increasing and the candidate's own test now has Q_2=0.25, so levels 2 and 3 lie below the threshold and c_l depends only on max||z_l||, not on measured Q_l: the loop is open exactly at the levels the idea says it fixes. The cap is applied to c, not to the radial coordinate, so it cannot be tightened without deleting the controller.",
+          "location": "specification section 2, `c_l_raw = min(c_l_raw, 0.99/(max_i ||z_l(i)||^2+1e-8))` (the corresponding clamp in the curvature controller)",
+          "reproduction": "rho_l=max_i||z_l(i)||=1: c_l_raw is 3.0 at Q=0.25 and 99.0 at Q=0.01; both become 0.99. With rho=1 and max=5, both become 0.0396 even at Q=0.6 (raw 0.667).",
+          "severity": "blocking",
+          "verifier": "verify_CURVCTRL-SID_r5_1"
+        }
+      ],
+      "idea_id": "CURVCTRL-SID",
+      "revision": 5,
+      "signature": "f5548f2e58d45895"
     }
   ],
   "review_bundles": {
@@ -19032,10 +19077,10 @@
   "stage2_jobs": [],
   "stage3_jobs": [],
   "step": "verification",
-  "updated_at": 1793208189.9562352,
+  "updated_at": 1793208512.5057805,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261029_030015_260.log",
-  "worker_pid": 162206,
+  "worker_pid": 199725,
   "worker_summary": {
     "agent_errors": 1,
     "blocked": 0,
