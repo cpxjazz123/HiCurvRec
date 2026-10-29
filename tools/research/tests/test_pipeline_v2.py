@@ -77,6 +77,15 @@ class ControllerTests(unittest.TestCase):
             self.assertEqual(record["state"], states.VERIFIED)
             self.assertEqual(record["findings"][0]["status"], "noted")
 
+    def test_repeating_a_step_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as work:
+            controller, tree = self._controller(work)
+            controller.register(tree)
+            controller.record_tests({"ran": True, "passed": True})
+            record = controller.record_tests({"ran": True, "passed": True})
+            self.assertEqual(record["state"], states.REVIEW_REQUIRED)
+            self.assertTrue(record["history"][-1].get("repeat"))
+
     def test_a_new_source_is_a_new_version_not_an_overwrite(self):
         with tempfile.TemporaryDirectory() as work:
             controller, tree = self._controller(work)
@@ -169,3 +178,82 @@ class ReviewParseTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ErrorClassificationTests(unittest.TestCase):
+    """NOT_RUN is an infrastructure failure, not a defect of the candidate."""
+
+    def test_a_check_that_could_not_run_moves_to_infra_error(self):
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "cand"
+            tree.mkdir()
+            controller = Controller(Path(work) / "record")
+            controller.register(tree)
+            record = controller.record_tests({
+                "ran": False, "passed": False,
+                "checks": {"ddp": {"status": "NOT_RUN"}}})
+            self.assertEqual(record["state"], states.INFRA_ERROR)
+            self.assertEqual(states.error_class(record["state"]), "infrastructure")
+
+    def test_a_failed_check_moves_to_test_failed(self):
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "cand"
+            tree.mkdir()
+            controller = Controller(Path(work) / "record")
+            controller.register(tree)
+            record = controller.record_tests({
+                "ran": True, "passed": False, "checks": {"suite": {"status": "FAIL"}}})
+            self.assertEqual(record["state"], states.TEST_FAILED)
+
+
+class ReviewVerdictTests(unittest.TestCase):
+    """The reviewer's own verdict decides, not only the findings it lists."""
+
+    def _ready(self, work):
+        tree = Path(work) / "cand"
+        tree.mkdir()
+        controller = Controller(Path(work) / "record")
+        controller.register(tree)
+        controller.record_tests({"ran": True, "passed": True})
+        return controller
+
+    def test_a_needs_fix_without_findings_is_not_a_pass(self):
+        with tempfile.TemporaryDirectory() as work:
+            controller = self._ready(work)
+            record = controller.record_review({"verdict": "NEEDS_FIX", "findings": []})
+            self.assertEqual(record["state"], states.NEEDS_FIX)
+
+    def test_a_pass_with_an_unanswered_question_is_refused(self):
+        with tempfile.TemporaryDirectory() as work:
+            controller = self._ready(work)
+            with self.assertRaises(ValueError):
+                controller.record_review({
+                    "verdict": "PASS",
+                    "checks": [{"name": "coupling", "verdict": "PASS"},
+                               {"name": "mathematics", "verdict": ""},
+                               {"name": "claim", "verdict": "PASS"}],
+                    "findings": []})
+
+    def test_a_complete_pass_is_verified(self):
+        with tempfile.TemporaryDirectory() as work:
+            controller = self._ready(work)
+            record = controller.record_review({
+                "verdict": "PASS",
+                "checks": [{"name": "coupling", "verdict": "PASS"},
+                           {"name": "mathematics", "verdict": "PASS"},
+                           {"name": "claim", "verdict": "PASS"}],
+                "findings": []})
+            self.assertEqual(record["state"], states.VERIFIED)
+
+
+class EntryReuseTests(unittest.TestCase):
+
+    def test_the_entry_check_uses_the_framework_smoke(self):
+        import inspect
+        source = inspect.getsource(deterministic.check_entry_one_epoch)
+        self.assertIn("stage2_checks.check_entry", source)
+        self.assertNotIn("--epochs", source)
+
+    def test_the_default_checks_include_gradient_and_the_entry(self):
+        self.assertIn("gradient", deterministic.DEFAULT_CHECKS)
+        self.assertIn("ddp", deterministic.DEFAULT_CHECKS)

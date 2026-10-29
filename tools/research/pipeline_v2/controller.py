@@ -70,9 +70,19 @@ class Controller:
         return record
 
     def record_tests(self, results: dict) -> dict:
-        """Store the deterministic results and move according to them."""
+        """Store the deterministic results and move according to them.
+
+        A check that could not run is an INFRA_ERROR, never a TEST_FAILED: the
+        candidate has not been judged, the verification failed to happen.
+        """
         record = self.load()
         record["tests"] = results
+        if not results.get("ran"):
+            missing = [name for name, entry in (results.get("checks") or {}).items()
+                       if entry.get("status") == "NOT_RUN"]
+            self._move(record, states.INFRA_ERROR,
+                       reason="a check could not run: " + ", ".join(missing))
+            return record
         target = states.REVIEW_REQUIRED if results.get("passed") else states.TEST_FAILED
         self._move(record, target, reason="deterministic checks: " + (
             "all passed" if results.get("passed") else "a check failed"))
@@ -94,8 +104,21 @@ class Controller:
             })
         record["findings"] = findings
         blocking = [finding for finding in findings if finding["status"] == "open"]
-        target = states.NEEDS_FIX if blocking else states.VERIFIED
-        self._move(record, target, reason="scientific review: " + target)
+        verdict = str(review.get("verdict") or "").upper()
+        # The reviewer's own verdict counts: a NEEDS_FIX with no finding is still a
+        # refusal, and a PASS that did not answer every question is not a pass.
+        unanswered = [check for check in (review.get("checks") or [])
+                      if str(check.get("verdict") or "").upper() not in ("PASS", "NEEDS_FIX")]
+        if verdict not in ("PASS", "NEEDS_FIX"):
+            raise ValueError("the review carries no verdict")
+        if verdict == "NEEDS_FIX" or blocking:
+            target = states.NEEDS_FIX
+        elif unanswered:
+            raise ValueError("the review did not answer " + str(len(unanswered)) +
+                             " of its questions")
+        else:
+            target = states.VERIFIED
+        self._move(record, target, reason="scientific review: " + verdict)
         return record
 
     def fail(self, reason: str) -> dict:
@@ -124,8 +147,16 @@ class Controller:
     # --- internals -------------------------------------------------------
     def _move(self, record: dict, target: str, *, reason: str) -> None:
         current = record.get("state")
-        if current:
+        if current and current != target:
             states.check(current, target)
+        elif current == target:
+            # Repeating a step is idempotent: the history keeps the record, and the
+            # transition table stays strict for real moves.
+            record.setdefault("history", []).append({
+                "at": time.time(), "from": current, "to": target, "repeat": True,
+                "version": record.get("version"), "reason": str(reason)[:500]})
+            self.save(record)
+            return
         record["state"] = target
         record.setdefault("history", []).append({
             "at": time.time(), "from": current, "to": target,

@@ -60,13 +60,38 @@ def check_candidate_suite(tree: Path, interpreter: Path = PY_STAGE2) -> dict:
                 cwd=Path(tree))
 
 
-def check_entry_one_epoch(tree: Path, interpreter: Path = PY_STAGE2, timeout: int = 1800) -> dict:
-    """The real entry point, one epoch, through the framework's own loop."""
-    script = Path(tree) / "train_rqvae.py"
-    if not script.is_file():
-        return {"status": "FAIL", "detail": "the candidate has no trainer"}
-    return _run([str(interpreter), str(script), "--epochs", "1"], cwd=Path(tree),
-                timeout=timeout, env={"GENREC_SMOKE_EPOCHS": "1"})
+def check_entry_one_epoch(tree: Path) -> dict:
+    """The real entry point for one epoch, through the framework's own smoke.
+
+    The candidate's trainer has a frozen EPOCHS constant and takes no command-line
+    argument; a second entry invented here would be a second training path. The
+    framework's ``stage2.checks.check_entry`` already runs the real trainer for one
+    epoch in a scratch directory with the single-card contract, so that is what V2
+    calls.
+    """
+    from ..stage2 import checks as stage2_checks
+    try:
+        result = stage2_checks.check_entry(Path(tree))
+    except Exception as exc:                               # noqa: BLE001
+        return {"status": "NOT_RUN", "detail": type(exc).__name__ + ": " + str(exc)}
+    return {"status": result.get("status"), "detail": result.get("detail"),
+            "name": "entry"}
+
+
+def check_gradient(tree: Path) -> dict:
+    """A real batch moves the parameters the mechanism claims to move.
+
+    The candidate's own gradient test does this; the framework runs it by name so
+    the result is attributable even when the suite is long.
+    """
+    tests = Path(tree) / "tests"
+    names = []
+    for candidate in ("test_radial_wiring", "test_mechanism"):
+        if (tests / (candidate + ".py")).is_file():
+            names.append("tests." + candidate)
+    if not names:
+        return {"status": "FAIL", "detail": "the candidate has no gradient test"}
+    return _run([str(PY_STAGE2), "-m", "unittest"] + names, cwd=Path(tree))
 
 
 def check_ddp_two_ranks(tree: Path, interpreter: Path = PY_STAGE2,
@@ -92,7 +117,7 @@ def check_export_matches_assignment(tree: Path, interpreter: Path = PY_STAGE2) -
                 cwd=Path(tree))
 
 
-DEFAULT_CHECKS = ("contract", "suite", "export", "ddp")
+DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "ddp")
 
 
 def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
@@ -110,6 +135,8 @@ def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
             results[name] = check_contract(interpreter)
         elif name == "suite":
             results[name] = check_candidate_suite(tree, interpreter)
+        elif name == "gradient":
+            results[name] = check_gradient(tree)
         elif name == "export":
             results[name] = check_export_matches_assignment(tree, interpreter)
         elif name == "ddp":
