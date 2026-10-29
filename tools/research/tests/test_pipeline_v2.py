@@ -280,3 +280,20 @@ class RecheckTests(unittest.TestCase):
             self.assertEqual(record["state"], states.IMPLEMENTED)
             record = controller.record_tests({"ran": True, "passed": True})
             self.assertEqual(record["state"], states.VERIFIED)
+
+
+class LayerRecordGateTests(unittest.TestCase):
+    """Section 63: the layer record is a launch condition, not a report."""
+
+    def test_a_missing_or_unreadable_sid_refuses(self):
+        import importlib.util
+        server = Path(__file__).resolve().parents[3] / "tools" / "genrec-mcp" / "server.py"
+        spec = importlib.util.spec_from_file_location("genrec_server_layer", server)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as work:
+            fake = Path(work) / "item_sids.json"
+            fake.write_text('{"0": [1, 2, 3]}', encoding="utf-8")
+            result = module.record_sid_layers(fake)
+            self.assertFalse(result["passed"])
+            self.assertIn("reason", result)

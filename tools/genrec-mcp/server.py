@@ -2002,6 +2002,32 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
     }
 
 
+def record_sid_layers(sid: Path) -> dict:
+    """Record the mandatory layer metrics once per exported SID.
+
+    The report is keyed by the SID's own SHA-256, so a second call re-reads the
+    existing report instead of rewriting it, and a SID that cannot be measured
+    refuses the launch with the reason rather than a fabricated zero.
+    """
+    import hashlib
+    import importlib.util
+
+    digest = hashlib.sha256(sid.read_bytes()).hexdigest()
+    target = sid.parent / "stage2_metrics" / (digest + ".json")
+    if target.is_file():
+        return {"passed": True, "report": str(target), "reused": True}
+    # The module uses package-relative imports, so it is imported as a package
+    # module with the repository on the path rather than by file location.
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    from tools.research.science import sid_layer_analysis as module
+    try:
+        written = module.record_single_sid(sid)
+    except Exception as exc:  # noqa: BLE001 - the reason is the result
+        return {"passed": False, "reason": repr(exc)[:400]}
+    return {"passed": True, "report": str(written), "reused": False}
+
+
 def stage2_validity_admission(sid: Path) -> dict:
     """Check that the exported Stage2 SID is technically usable.
 
@@ -2062,6 +2088,21 @@ def tool_stage3_start(item_sids: str | None = None) -> dict:
         return {"started": False,
                 "refused": "Stage2 SID validity: " + str(validity.get("refused")),
                 "validity": validity}
+    # Issue #121 section 63: the layer record is written BEFORE any Stage 3 result
+    # exists, once per exported SID, and a failure refuses the launch rather than
+    # being skipped. The record is what makes the diagnostics auditable without
+    # borrowing the recall it was meant to predict.
+    try:
+        layer_record = record_sid_layers(sid)
+    except Exception as exc:  # noqa: BLE001 - the reason is returned, never hidden
+        return {"started": False,
+                "refused": "the Stage2 layer record could not be written: " + repr(exc),
+                "item_sids": str(sid)}
+    if not layer_record.get("passed"):
+        return {"started": False,
+                "refused": "the Stage2 layer record is incomplete: " +
+                           str(layer_record.get("reason")),
+                "layer_record": layer_record}
 
     # Canonical logical (/home) form: Path.resolve() would embed the physical
     # /fs04 path, while the repository and Stage3 record /home paths.
