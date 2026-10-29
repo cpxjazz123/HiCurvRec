@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import os
 import shutil
 import signal
@@ -168,12 +169,30 @@ def session_reads(path: Path) -> dict:
         part = entry.get("part") or {}
         tool = str(part.get("tool") or "")
         state = part.get("state") or {}
-        if tool not in ("read", "glob", "grep", "edit", "write"):
-            continue
-        target = str((state.get("input") or {}).get("path")
-                     or (state.get("input") or {}).get("pattern") or "")
+        payload = state.get("input") or {}
+        target = str(payload.get("path") or payload.get("pattern") or "")
         status = str(state.get("status") or "")
         error = str(state.get("error") or "")
+        if tool == "execute":
+            # an agent that runs a snippet reads through it: the paths are in the
+            # code, and the permission outcome is in the error
+            code = str(payload.get("code") or "")
+            if "read(" not in code and "glob(" not in code:
+                continue
+            for match in re.finditer(r"(?:read|glob)\(\{?\s*path:\s*[\"']([^\"']+)",
+                                     code):
+                target = match.group(1)
+                break
+            if not target:
+                continue
+            if status == "error" and "ermission" in error:
+                denied.append({"tool": "execute", "target": target,
+                               "error": error[:120]})
+            else:
+                read.append(target)
+            continue
+        if tool not in ("read", "glob", "grep", "edit", "write"):
+            continue
         if status == "error" and "ermission" in error:
             denied.append({"tool": tool, "target": target, "error": error[:120]})
         elif status == "completed" and target:
