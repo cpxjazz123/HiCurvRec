@@ -130,6 +130,28 @@
       ],
       "eligible": true,
       "note": "HBAA's ancestor contrast at every level, averaged: the deeper levels dilute it"
+    },
+    {
+      "metric": "hyp_cell_expected_rank",
+      "spearman": 0.2997,
+      "p": 0.00286,
+      "ci": [
+        0.088,
+        0.501
+      ],
+      "eligible": true,
+      "note": "round 6: the true cell's tempered mass against the uniform 1/K"
+    },
+    {
+      "metric": "hyp_cell_rank_lift",
+      "spearman": 0.3441,
+      "p": 0.000559,
+      "ci": [
+        0.173,
+        0.491
+      ],
+      "eligible": true,
+      "note": "round 6: the rank the true cell holds under that mass, against chance"
     }
   ],
   "not_scored": [
@@ -176,6 +198,36 @@
       "the Euclidean and flat controls score +0.693 and +0.693 against the hyperbolic +0.701: the ranking of tables is a property of the construction, not of the curvature, even though the behaviour itself is hierarchical in the hyperbolic geometry (mean depth gap +0.089 against the Euclidean +0.018, same 83% share)",
       "observational: the tables come from different families and settings"
     ],
-    "levels_note": "HBAA at every level and averaged gives +0.4644, BELOW the level-1 score +0.7012: the ancestor contrast at the deeper levels is real but weaker, so averaging them in loses information. The level-1 ancestor depth is the signal."
+    "levels_note": "HBAA at every level and averaged gives +0.4644, BELOW the level-1 score +0.7012: the ancestor contrast at the deeper levels is real but weaker, so averaging them in loses information. The level-1 ancestor depth is the signal.",
+    "refinements_tried": {
+      "hbaa_levels": 0.4644,
+      "hyp_cell_expected_rank": 0.2997,
+      "hyp_cell_rank_lift": 0.3441,
+      "reading": "the refinements of the winner's own family are all weaker than the winner: the signal is the level-1 ancestor DEPTH contrast, not a ranking statistic"
+    }
+  },
+  "rounds": {
+    "round_1": [
+      "hyp_voronoi_margin_l1",
+      "hyp_adj_r2_l1",
+      "hsmre (not scorable)"
+    ],
+    "round_2": [
+      "hyp_hsoftmax_path",
+      "hyp_hsoftmax_path_null (not scored)"
+    ],
+    "round_3": [
+      "hyp_bucket_reach_lift_l1"
+    ],
+    "round_4": [
+      "hyp_frechet_cover_radius_l1"
+    ],
+    "round_5": [
+      "four history-barycentre proposals (not implemented: the winner's family was already measured)"
+    ],
+    "round_6": [
+      "hyp_cell_expected_rank",
+      "hyp_cell_rank_lift"
+    ]
   }
 }
