@@ -1,0 +1,73 @@
+{
+  "jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "finished_at": 1793249223.9194813,
+      "idea_id": "BRad-RQ",
+      "job_id": "stage2:BRad-RQ",
+      "kind": "stage2",
+      "previous_attempts": [],
+      "queued_at": 1793249223.9106524,
+      "result": {
+        "metrics": {
+          "adopted": true,
+          "epochs": 3000,
+          "note": "the formal run was executed through stage2_start on the promoted tree; the queue adopts it instead of training a second time (section 19g)"
+        },
+        "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json",
+        "sid_sha256": "266ce95225964002f2b8d8a0d92f18725051bcd73ce3c363ece486a8aeabb14a",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 6069,
+            "negative_hits": 8508,
+            "pairs": 52855,
+            "positive_hits": 1583,
+            "valid_l1_hard_er": 1.8606017865538318,
+            "valid_l1_negative_hit_rate": 0.016096868791978053,
+            "valid_l1_positive_hit_rate": 0.029949862832276984
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
+      "result_dir": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BRad-RQ",
+      "round_id": "round_20261029_093253_576",
+      "stage3_job_id": "stage3:BRad-RQ",
+      "started_at": 1793249223.9151607,
+      "status": "done",
+      "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ"
+    },
+    {
+      "attempts": 1,
+      "error": null,
+      "finished_at": 1793249224.2301538,
+      "idea_id": "BRad-RQ",
+      "job_id": "stage3:BRad-RQ",
+      "kind": "stage3",
+      "previous_attempts": [],
+      "queued_at": 1793249224.2146313,
+      "result": {
+        "adopted": true,
+        "checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_BRad-RQ/ckpt/Amazon_2023_Instruments/Oct-29-2026_15-12-21/HG_Rec_best.pth",
+        "n_eval": 57439,
+        "note": "the formal 150-epoch run was executed through stage3_start; the queue adopts it instead of retraining",
+        "test_ndcg@10": 0.024529501751193103,
+        "test_ndcg@5": 0.019758860727030533,
+        "test_recall@10": 0.04460384059611066,
+        "test_recall@5": 0.029753303504587474
+      },
+      "round_id": "round_20261029_093253_576",
+      "sid_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json",
+      "stage2_job_id": "stage2:BRad-RQ",
+      "started_at": 1793249224.2194858,
+      "status": "done",
+      "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ"
+    }
+  ],
+  "schema": 1
+}
