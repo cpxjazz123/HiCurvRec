@@ -318,9 +318,12 @@ VERIFIER_ROLES = (
     },
     {
         "id": "distributed-state",
-        "reads": ["train_rqvae.py", "model/model.py", "model/layers.py",
-                  "model/curvature_control.py", "model/behaviour_radius.py",
-                  "model/frechet_poincare.py", "tests/test_ddp.py"],
+        # The distributed role owns the collectives, the wrappers and the shared
+        # state, not the mechanism's own mathematics: it reads the trainer, the
+        # model and the DDP test, and the other files belong to the roles that
+        # own them. A scope it cannot read in its budget is a scope that produces
+        # a timeout instead of a review.
+        "reads": ["train_rqvae.py", "model/model.py", "tests/test_ddp.py"],
         "name": "distributed execution and shared state",
         "scope": "train_rqvae.py (DDP construction, the step loop, collectives), "
                  "model/model.py (the codebook step plumbing), tests/test_ddp.py",
