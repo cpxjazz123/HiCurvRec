@@ -1178,15 +1178,33 @@ else:
     item_ids = np.unique(frame["target"].to_numpy(dtype=np.int64))
     rows = torch.from_numpy(embedding)[torch.from_numpy(item_ids)]
     loader = DataLoader(
-        TensorDataset(rows), batch_size=T.BATCH_SIZE_PER_RANK, shuffle=True, num_workers=T.NUM_WORKERS
+        TensorDataset(rows, torch.from_numpy(item_ids)),
+        batch_size=T.BATCH_SIZE_PER_RANK, shuffle=True, num_workers=T.NUM_WORKERS,
     )
-    probe_model = _RQVAE(config, in_dim=embedding.shape[1]).to(device)
     payload = torch.load(checkpoint_arg, map_location=device)
-    probe_model.load_state_dict(payload.get("state_dict", payload), strict=True)
+    state = payload.get("state_dict", payload)
+    # Restore through the candidate's own documented path: a model whose buffers
+    # carry fitted state (a behaviour radius table, a reference point) cannot be
+    # rebuilt by a bare constructor call, and a probe that tries would report a
+    # restore failure that belongs to the probe, not to the tree.
+    if hasattr(_RQVAE, "from_checkpoint"):
+        probe_model = _RQVAE.from_checkpoint(config, state, in_dim=embedding.shape[1]).to(device)
+    else:
+        probe_model = _RQVAE(config, in_dim=embedding.shape[1]).to(device)
+        probe_model.load_state_dict(state, strict=True)
     probe_model.train()
-    batch = next(iter(loader))[0].to(device, non_blocking=True)
-    reconstructed, quant_loss, _unused_codes, _tokens = probe_model(batch)
-    total, recon_only = probe_model.compute_loss(batch, reconstructed, quant_loss)
+    batch, batch_ids = next(iter(loader))
+    batch = batch.to(device, non_blocking=True)
+    batch_ids = batch_ids.to(device, non_blocking=True)
+    # The step is the trainer's step: the per-item radius goes in exactly as the
+    # training loop passes it, or the probe measures a different mechanism.
+    table = getattr(probe_model, "radius_table", None)
+    radius = None
+    if table is not None and int(getattr(table, "numel", lambda: 0)()) > 0:
+        radius = table[batch_ids]
+    reconstructed, quant_loss, _unused_codes, _tokens, reference = probe_model(
+        batch, batch_ids, radius=radius)
+    total, recon_only = probe_model.compute_loss(reference, reconstructed, quant_loss)
     parameters = [p for p in probe_model.parameters() if p.requires_grad]
 
     # The batch carries no gradient, so the terms are differentiated against the

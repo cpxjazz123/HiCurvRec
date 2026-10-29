@@ -372,3 +372,14 @@ class DesignContractCheckTests(unittest.TestCase):
         source = inspect.getsource(deterministic.run_all)
         for name in deterministic.DEFAULT_CHECKS:
             self.assertIn('"%s"' % name, source, "the dispatch never mentions " + name)
+
+
+class CheckpointProbeTests(unittest.TestCase):
+    """The smoke probe must restore and step exactly as the trainer does."""
+
+    def test_the_probe_template_uses_the_candidates_restore_path(self):
+        source = (Path(__file__).resolve().parents[3] / "tools" / "genrec-mcp" /
+                  "server.py").read_text()
+        self.assertIn("from_checkpoint", source)
+        self.assertIn("radius=radius", source)
+        self.assertIn("compute_loss(reference, reconstructed, quant_loss)", source)
