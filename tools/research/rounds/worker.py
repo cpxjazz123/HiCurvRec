@@ -189,6 +189,7 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
                 report["progress_file"])
             report["progress_count"] = len(report["progress_records"])
             report["cached"] = True
+            report.setdefault("role", role_of_task(task_id))
             return report
         # Keep the unverified answer as evidence and let the agent run again.
         stale = workspace / "unverified"
@@ -1137,6 +1138,33 @@ def read_gaps(paths) -> list:
 
 
 
+def scope_file(root: Path) -> Path:
+    """Where the round's scope contract is written for a reviewer to read."""
+    target = Path(root) / "SCOPE_CONTRACT.md"
+    if not target.is_file():
+        target.write_text(agent_contracts.SCOPE_CONTRACT + "\n\n" +
+                          agent_contracts.EXPERIMENT_POLICY + "\n", encoding="utf-8")
+    return target
+
+
+def objective_summary(objective: str) -> str:
+    """The objective in one line: the prompt carries the file, not the text."""
+    for line in str(objective).splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            return line[:240]
+    return str(objective)[:240]
+
+
+def role_of_task(task_id: str) -> str:
+    """The role a task belongs to, from its number in the full role list."""
+    for index in range(1, 32):
+        if str(task_id).endswith("_" + str(index)):
+            if index <= len(VERIFIER_ROLES):
+                return VERIFIER_ROLES[index - 1]["id"]
+    return ""
+
+
 def _format_role_checks(role: dict) -> str:
     """The CHECK blocks one reviewer must report, as prompt lines."""
     lines = []
@@ -1216,6 +1244,8 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
             role_must="\n".join("  - " + item for item in role["must"]),
             role_scope=role["scope"], role_checks=_format_role_checks(role),
             idea=plaintext.render_idea(idea), tree=str(tree),
+            objective_summary=objective_summary(agent_contracts.RESEARCH_OBJECTIVE),
+            scope_file=str(scope_file(root)),
             change_brief=change_brief,
             change_diff=(patch or "  none: this is the first review of this candidate"),
             findings_file=findings_path,
@@ -1224,7 +1254,8 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
             objective=agent_contracts.RESEARCH_OBJECTIVE,
             scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
             agent_contracts.EXPERIMENT_POLICY)
-        reads[index] = role_read_paths(tree, role) + [findings_path, manifest]
+        reads[index] = role_read_paths(tree, role) + [findings_path, manifest,
+                                                     str(scope_file(root))]
         gaps[index] = read_gaps(reads[index])
 
     def verify(index):

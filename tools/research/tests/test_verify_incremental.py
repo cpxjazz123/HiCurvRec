@@ -165,8 +165,9 @@ class ManifestTests(unittest.TestCase):
         block = source[source.index("def run_verification"):]
         block = block[:block.index("def verify(")]
         self.assertIn("manifest", block)
-        self.assertIn("reads[index] = role_read_paths(tree, role) + [findings_path, manifest]",
-                      block)
+        self.assertIn("role_read_paths(tree, role)", block)
+        self.assertIn("findings_path", block)
+        self.assertIn("manifest", block)
 
 
 class FullChangeListTests(unittest.TestCase):
@@ -315,3 +316,30 @@ class ListingTests(unittest.TestCase):
             paths = worker_module.role_read_paths(tree, {"reads": ["model/m.py"]})
             self.assertIn(str(tree), paths)
             self.assertIn(str(tree.resolve()), paths)
+
+
+class CachedReportRoleTests(unittest.TestCase):
+    """A reused report still says which role it belongs to."""
+
+    def test_the_role_is_read_from_the_task_number(self):
+        from tools.research.rounds import agents as agent_contracts
+        roles = agent_contracts.VERIFIER_ROLES
+        for index, role in enumerate(roles, 1):
+            task = "verify_idea_r2_%d" % index
+            self.assertEqual(worker_module.role_of_task(task), role["id"])
+
+
+class PromptSizeTests(unittest.TestCase):
+    """The prompt points at the long documents instead of repeating them."""
+
+    def test_the_objective_is_one_line_in_the_prompt(self):
+        from tools.research.rounds import agents as agent_contracts
+        self.assertIn("{objective_summary}", agent_contracts.VERIFY_PROMPT)
+        self.assertNotIn("THE RESEARCH OBJECTIVE:\\n{objective}",
+                         agent_contracts.VERIFY_PROMPT)
+
+    def test_the_scope_contract_is_a_file(self):
+        with tempfile.TemporaryDirectory() as work:
+            path = worker_module.scope_file(Path(work))
+            self.assertTrue(path.is_file())
+            self.assertIn("scope", path.read_text(encoding="utf-8").lower())
