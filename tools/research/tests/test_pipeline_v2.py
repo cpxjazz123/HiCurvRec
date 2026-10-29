@@ -297,3 +297,23 @@ class LayerRecordGateTests(unittest.TestCase):
             result = module.record_sid_layers(fake)
             self.assertFalse(result["passed"])
             self.assertIn("reason", result)
+
+    def test_the_live_sid_records_its_layers(self):
+        """The real exported SID produces the full report, keyed by its digest."""
+        import json
+        sid = (Path(__file__).resolve().parents[3] / "results" / "stage2_RQ-VAE" /
+               "TIGER_BRad-RQ" / "item_sids.json")
+        if not sid.is_file():
+            self.skipTest("no live SID to measure")
+        import importlib.util
+        server = Path(__file__).resolve().parents[3] / "tools" / "genrec-mcp" / "server.py"
+        spec = importlib.util.spec_from_file_location("genrec_server_layer_live", server)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        result = module.record_sid_layers(sid)
+        self.assertTrue(result["passed"], result.get("reason"))
+        report = json.loads(Path(result["report"]).read_text())
+        self.assertFalse(report["provenance"]["stage3_results_used"])
+        for key in ("valid_l1_hard_er", "l3_collision", "l3_refinement_gain_bits",
+                    "level2_distinct_prefixes", "conditional_l3_gain"):
+            self.assertIn(key, report["metrics"])

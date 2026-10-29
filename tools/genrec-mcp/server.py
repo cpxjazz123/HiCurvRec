@@ -2016,16 +2016,21 @@ def record_sid_layers(sid: Path) -> dict:
     target = sid.parent / "stage2_metrics" / (digest + ".json")
     if target.is_file():
         return {"passed": True, "report": str(target), "reused": True}
-    # The module uses package-relative imports, so it is imported as a package
-    # module with the repository on the path rather than by file location.
-    if str(REPO) not in sys.path:
-        sys.path.insert(0, str(REPO))
-    from tools.research.science import sid_layer_analysis as module
-    try:
-        written = module.record_single_sid(sid)
-    except Exception as exc:  # noqa: BLE001 - the reason is the result
-        return {"passed": False, "reason": repr(exc)[:400]}
-    return {"passed": True, "report": str(written), "reused": False}
+    # The measurement needs numpy and pandas, which the MCP server (stdlib only)
+    # does not have: it runs in the project interpreter, in its own process.
+    interpreter = Path("/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10")
+    # Imported as a package module: the measurement uses package-relative imports.
+    done = subprocess.run(
+        [str(interpreter), "-m", "tools.research.science.sid_layer_analysis", str(sid)],
+        cwd=str(REPO), capture_output=True, text=True, timeout=3600,
+        env={**os.environ, "PYTHONPATH": str(REPO)})
+    if done.returncode != 0:
+        tail = (done.stderr or done.stdout).strip().splitlines()[-6:]
+        return {"passed": False, "reason": "the measurement failed: " + " | ".join(tail)[:600]}
+    if not target.is_file():
+        return {"passed": False,
+                "reason": "the measurement reported success but wrote no report"}
+    return {"passed": True, "report": str(target), "reused": False}
 
 
 def stage2_validity_admission(sid: Path) -> dict:

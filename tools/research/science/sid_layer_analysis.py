@@ -478,3 +478,12 @@ def _paired_bootstrap(rows, oof, base, other, draws=2000, seed=42):
         "share_draws_better": float(np.mean(samples < 0)),
         "draws": draws,
     }
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) != 2:
+        print("usage: sid_layer_analysis.py <path/to/item_sids.json>", file=sys.stderr)
+        raise SystemExit(2)
+    print(record_single_sid(Path(sys.argv[1])))
