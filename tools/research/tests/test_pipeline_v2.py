@@ -623,3 +623,32 @@ class MetricRoundArtefactTests(unittest.TestCase):
                          "tools/research/science/hyperbolic_ancestor_alignment.py",
                          "tools/research/rounds/metric_round.py"):
             self.assertTrue((repo / relative).is_file(), relative)
+
+
+class MetricLedgerTests(unittest.TestCase):
+    """The ledger is what makes the rounds cumulative."""
+
+    def test_the_ledger_lists_the_proposals_and_their_verdicts(self):
+        import json
+        from pathlib import Path
+        repo = Path(__file__).resolve().parents[3]
+        ledger = json.loads(
+            (repo / "results" / "research" / "issue126" / "metric_round" /
+             "ledger.json").read_text())
+        self.assertGreaterEqual(ledger["proposals"], 20)
+        self.assertGreaterEqual(ledger["measured"], 10)
+        families = set(ledger["families"])
+        self.assertIn("behaviour_contrast", families)
+        self.assertIn("partition_geometry", families)
+        for row in ledger["rows"]:
+            self.assertIn(row["family"], families)
+            if row["measured"]:
+                measurement = row["measurement"]
+                self.assertIn("spearman", measurement)
+                self.assertIn("ci95", measurement)
+
+    def test_the_round_prompt_carries_the_refuted_list(self):
+        from tools.research.rounds import metric_round
+        text = metric_round.refuted_ledger()
+        self.assertIn("ALREADY REFUTED", text)
+        self.assertIn("Spearman", text)

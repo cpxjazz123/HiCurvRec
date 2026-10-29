@@ -88,6 +88,37 @@ METRIC_PROMPT = (
 )
 
 
+def refuted_ledger() -> str:
+    """The constructions the earlier rounds already refuted, with their numbers.
+
+    The ledger is what makes the rounds cumulative: a proposal that repeats a
+    refuted construction is measured again for nothing, so the prompt says what
+    has been tried and what it scored.
+    """
+    ledger_path = (Path(__file__).resolve().parents[3] / "results" / "research" /
+                   "issue126" / "metric_round" / "ledger.json")
+    if not ledger_path.is_file():
+        return ""
+    try:
+        ledger = json.loads(ledger_path.read_text())
+    except ValueError:
+        return ""
+    lines = []
+    for row in ledger.get("rows", []):
+        measurement = row.get("measurement") or {}
+        if not measurement or measurement.get("eligible"):
+            continue
+        lines.append("  - %s: Spearman %+0.3f, family %s"
+                     % (row.get("metric_id"), measurement.get("spearman", 0.0),
+                        row.get("family")))
+    if not lines:
+        return ""
+    return ("\nTHE CONSTRUCTIONS ALREADY REFUTED (measured, and not eligible):\n"
+            + "\n".join(lines)
+            + "\nA proposal that repeats one of these must say what its CONSTRUCTION "
+              "does differently, not only that it is new.")
+
+
 def measured_history() -> str:
     """What earlier metric rounds measured, so the next agents do not repeat it.
 
@@ -162,7 +193,7 @@ def run_metric_ideation(root: Path, *, agents: int = None) -> dict:
 
     def propose(index):
         task_id = "metric_ideation_" + str(index)
-        prompt = (prompt_base + measured_history() +
+        prompt = (prompt_base + refuted_ledger() + measured_history() +
                   "\n\nYour answer must be a different metric from the other "
                   + str(count - 1) + " agents, which you cannot see.")
         return (task_id, _run_agent(root, task_id, prompt, "metric.txt",
