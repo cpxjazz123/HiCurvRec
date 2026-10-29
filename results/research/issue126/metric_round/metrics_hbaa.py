@@ -400,9 +400,90 @@ def hbaa_pair_accuracy(table: dict, context: dict) -> float:
     return float((positive_depth > negative_depth).mean())
 
 
+
+
+SIZE_MATCH_FACTOR = 2.0
+
+
+def hbaa_size_matched(table: dict, context: dict) -> float:
+    """HBAA with SIZE-MATCHED negatives.
+
+    HBAA compares the positive's prefix centroid with the negatives' centroids, and
+    a centroid's radius grows with the size of its bucket, so part of the gap it
+    measures is a size effect rather than an alignment. Here only the negatives
+    whose bucket size is within a factor of the positive's are used, and a query
+    with no such negative is dropped and counted: the number of queries that
+    survive is reported with the score, because a metric that keeps only a few
+    queries is a metric about those few.
+    """
+    target = np.asarray(context["target"], dtype=np.float64)[
+        np.asarray(table["item_ids"])]
+    tau = float(context["temperature"])
+    codes = np.asarray(table["rows"], dtype=np.int64)[:, 0]
+    sizes = np.bincount(codes)
+    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
+    queries = _queries(context)
+    pos = np.array([position.get(int(item), -1) for item in queries["positives"]],
+                   dtype=np.int64)
+    neg = np.array([[position.get(int(item), -1) for item in row]
+                    for row in queries["negatives"]], dtype=np.int64)
+    valid = (pos >= 0) & (neg >= 0).all(axis=1)
+    if not valid.any():
+        return 0.0
+    points = _history_points(context, 1.0)[valid]
+    pos = pos[valid]
+    neg = neg[valid]
+    centres = {int(code): _frechet(target[codes == code]) for code in np.unique(codes)}
+
+    def gromov(x, y):
+        def d(a, b):
+            diff = np.sum((a - b) ** 2, axis=-1)
+            den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
+            return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
+        def nrm(x):
+            inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
+            return np.arccosh(1 / np.sqrt(inner))
+        return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
+
+    positive_size = sizes[codes[pos]][:, None]
+    negative_size = sizes[codes[neg]]
+    keep = (negative_size >= positive_size / SIZE_MATCH_FACTOR) & (
+        negative_size <= positive_size * SIZE_MATCH_FACTOR)
+    legal = keep.any(axis=1)
+    if not legal.any():
+        return 0.0
+    rows_index = np.nonzero(legal)[0]
+    kept = keep[rows_index]
+    mu_pos = np.stack([centres[int(codes[index])] for index in pos[rows_index]])
+    mu_neg = np.stack([[centres[int(codes[index])] for index in row]
+                        for row in neg[rows_index]])
+    positive_depth = gromov(points[rows_index], mu_pos)
+    negative_depth = gromov(points[rows_index][:, None, :], mu_neg)
+    delta = np.where(kept, positive_depth[:, None] - negative_depth, 0.0)
+    counts = kept.sum(axis=1)
+    per_query = np.where(counts > 0,
+                         (np.log1p(np.exp(-delta / tau)) * kept).sum(axis=1)
+                         / np.maximum(counts, 1), 1.0)
+    score = 1.0 - float(per_query.mean()) / float(np.log(2.0))
+    context.setdefault("round7_kept", []).append(
+        (float(legal.sum()) / float(len(points)),
+         float(counts[counts > 0].mean()) if bool((counts > 0).any()) else 0.0))
+    return score
+
+
+def hbaa_size_matched_kept(table: dict, context: dict) -> float:
+    """The fraction of queries that kept a size-matched negative (a diagnostic)."""
+    hbaa_size_matched(table, context)
+    kept = context.get("round7_kept") or []
+    return float(kept[-1][0]) if kept else 0.0
+
+
 METRICS = {"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
            "hbaa_euclid": hbaa_euclid, "hbaa_flat": hbaa_flat,
            "hbaa_levels": hbaa_levels, "hbaa_weighted": hbaa_weighted,
-           "hbaa_pair_accuracy": hbaa_pair_accuracy}
+           "hbaa_pair_accuracy": hbaa_pair_accuracy,
+           "hbaa_size_matched": hbaa_size_matched,
+           "hbaa_size_matched_kept": hbaa_size_matched_kept}
 FREE_CONSTANTS = {"hbaa": 0, "hbaa_anchor": 0, "hbaa_euclid": 0, "hbaa_flat": 0,
-                   "hbaa_levels": 0, "hbaa_weighted": 0, "hbaa_pair_accuracy": 0}
+                   "hbaa_levels": 0, "hbaa_weighted": 0, "hbaa_pair_accuracy": 0,
+                   "hbaa_size_matched": 0, "hbaa_size_matched_kept": 0}

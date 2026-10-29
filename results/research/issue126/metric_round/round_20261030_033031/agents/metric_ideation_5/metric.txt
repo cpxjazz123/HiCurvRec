@@ -1,0 +1,40 @@
+METRIC: hyp_succ_nullgain_l1
+TITLE: Null-corrected hyperbolic surprisal of the true successor's level-1 cell.
+
+FORMULA:
+Notation. N = number of rows of the exported SID table; item i carries level-1 code L1(i) in {0..255}. Cells C = {c : n_c > 0}, n_c = #{i : L1(i) = c}, K1 = |C| <= 256. P = the set of DISTINCT ordered pairs (a,b) of the TRAINING split, m = |P|. Frozen Issue #126 reference: source vector s_i and target vector t_i in R^d per item, plus its frozen softmax temperature tau > 0. All logs natural.
+
+Curvature and ball: K = 1/tau^2 (derived from the reference's own temperature, no free parameter); B_K = {x : ||x|| < 1/sqrt(K)}.
+
+Scales, TRAIN only: sigma_s = median{||s_i|| : i occurs in P}, sigma_t = median{||t_i|| : i occurs in P}; if a sigma is 0 set it to 1.
+
+Ball map (exponential map at the origin): phi_s(x) = (1/sqrt(K)) * tanh( (sqrt(K)/2) * ||x||/sigma_s ) * x/||x||, phi_s(0) = 0; phi_t is the same with sigma_t.
+
+Poincare distance: d_H(u,v) = (1/sqrt(K)) * arcosh( 1 + 2K||u-v||^2 / ((1 - K||u||^2)(1 - K||v||^2)) ).
+
+Mobius addition: u (+) v = [ (1 + 2K<u,v> + K||v||^2) u + (1 - K||u||^2) v ] / [ 1 + 2K<u,v> + K^2||u||^2||v||^2 ].
+log_u(y) = (2/sqrt(K)) * artanh( sqrt(K)*||(-u)(+)y|| ) * (-u)(+)y / ||(-u)(+)y||.
+exp_u(v) = u (+) ( (1/sqrt(K)) * tanh( sqrt(K)*||v||/2 ) * v/||v|| ).
+
+Cell representative, target side: mu_c = argmin_{mu in B_K} sum_{i in cell c, i in TRAIN} d_H(mu, phi_t(t_i))^2, computed by Karcher iteration: mu^(0) = medoid of the cell (argmin_{i in c} sum_{j in c} d_H(phi_t(t_i), phi_t(t_j))), then exactly 32 updates mu <- exp_mu( (1/n_c) * sum_{i in c} log_mu(phi_t(t_i)) ).
+
+Train mass: w_c = n_c^tr / sum_{c'} n_{c'}^tr, where n_c^tr = number of TRAIN items in cell c.
+
+Per pair (a,b) in P: q = phi_s(s_a); d_c = d_H(q, mu_c) for every c in C; p(c) = sum_{c' : d_{c'} >= d_c} w_{c'}; p+ = p(L1(b));
+  e(a,b) = [ -log p+ ] - [ sum_c w_c * ( -log p(c) ) ].
+
+SCORE = (1/m) * sum_{(a,b) in P} e(a,b). Convention: SCORE = 0 when K1 = 1 or m = 0. Higher is better. A code-blind table of any size scores exactly 0; the ceiling is about log(1/min_c w_c) nats (about 4.8 for 256 balanced cells).
+
+INPUTS: (1) the exported SID table, item id -> level-1 integer code (only level 1 is read); (2) the frozen Issue #126 behaviour reference: s_i, t_i per item and its temperature tau; (3) the TRAINING pair list. Nothing else: no validation pair, no test pair, no recall value, no Stage 3 artefact.
+
+GEOMETRY: constant negative curvature K = 1/tau^2, taken from the reference's frozen temperature, so no constant is tuned. Curvature enters four times, each load-bearing: (i) the tanh squashing of the ball map, which is the exponential map at the origin and makes radial distance grow hyperbolically; (ii) the ball radius 1/sqrt(K) and the arcosh Poincare distance, which is not a rescaling of the Euclidean one; (iii) the Mobius-add / log / exp Karcher barycentre, so a cell representative is a true hyperbolic Frechet mean of the reference's target points, not a Euclidean average; (iv) the ordering of d_c that defines p(c), evaluated in that distance.
+
+WHY IT SHOULD TRACK RECALL: Stage 3 enumerates SID prefixes and scores candidates with the reference, so Recall@10 is high exactly when the true successor's level-1 bucket is one of the few buckets the beam spends mass on. The quantity that decides this is how much candidate mass the level-1 code removes for a real query, measured in the reference's own geometry, which is p+ and its excess over chance. Over Q_H: Q_H is a statistic of the partition alone, so two tables with identical level-1 occupancy but different placement relative to the reference are indistinguishable to it; here the query is the reference's source point and the representative is the barycentre of the reference's TARGET points, so the number asks whether quantisation preserved the reference's successor field. Over HBAA: HBAA reduces each item's history to one barycentre and its negatives to a mean over ten, which is lossy twice over - the barycentre of a multi-modal history sits between its modes and far from every one of them, and a mean of ten negatives throws away the shape of the negative distribution. This metric keeps every training pair as its own query (the finest, un-coarsened use of the whole training history), uses the full negative CDF rather than a mean, and uses the target side of the reference, which HBAA never touches. Over the measured failures: raw surprisal -log p+ is monotone in K1, which is exactly why hyp_hsoftmax_path tracked bucket count at -0.78 and blew up on the 12-, 3- and 2-code tables; subtracting the size-biased null sum_c w_c(-log p(c)) makes the statistic exactly 0 for every code-blind table of any size, so collapse and shattering are neutralised analytically instead of by a tuned penalty. Two facts I checked by hand make the null exact: for a code-blind assignment E[p] = 0.5(1 - sum_c w_c^2) and E[e] = 0, and for the one-code table p = p(c) = 1 so e = 0.
+
+COMPUTE: dominant cost is the m x K1 hyperbolic distance matrix, m = |P| pairs, K1 <= 256, d = 64 reals: 2e5 x 256 x 64 = 3e9 flops, and the arcosh form needs no log or exp, so about 10-20 s in vectorised float64 numpy on 24587 items. Barycentres cost 32 x 24587 x 64 = 5e7 flops, under 1 s. Ranking 256 distances per query is m x 256 log 256, a few seconds. Memory is one length-K1 mass vector plus the m x K1 score matrix, which can be streamed in row blocks. Total comfortably under one minute.
+
+RISKS: (1) it assumes s_i and t_i live in one shared ball, as HBAA's (u_h | mu_b) reduction also does; if the reference is a two-tower model with non-shared geometry the distances are meaningless and the metric is noise. (2) Median scaling puts the norm tail near the boundary; guard 1 - K||u||^2 >= 1e-12 so arcosh stays finite. (3) Without deduplication of P a few heavy pairs dominate the mean; dedup is part of the definition. (4) If one successor is overwhelmingly popular and its cell's barycentre happens to be central, the score is inflated by popularity - partly real recall signal, partly a confound. (5) The conservative >= tie rule slightly deflates p+ on very coarse tables. (6) It reads only level 1, so it cannot see any improvement made below the root.
+
+FAILURE MODE: worst on the one-code table - all 24587 items in code 0 gives p+ = 1 and p(c) = 1, hence e = 0 and the score sits exactly on the floor 0; the same 0 is reached by any size-preserving random relabel of a good table, so a collapse is never rewarded. Its honest blind spot is the opposite direction: any two tables sharing the level-1 partition score identically, so a good root partition with a randomised level 2+ refinement is scored as if it were good. That blindness is deliberate - from level 2 the prefix is nearly an item identifier (Q_H drops to +0.287 at level 2 and +0.393 at level 3) and the remaining variation is noise.
+
+END METRIC

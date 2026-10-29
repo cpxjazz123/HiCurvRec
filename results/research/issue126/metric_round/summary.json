@@ -174,6 +174,28 @@
       ],
       "eligible": true,
       "note": "HBAA without a temperature: the share of queries whose positive is deeper than the negatives"
+    },
+    {
+      "metric": "hbaa_size_matched",
+      "spearman": 0.661,
+      "p": 1.73e-13,
+      "ci": [
+        0.496,
+        0.788
+      ],
+      "eligible": true,
+      "note": "round 7: only the negatives whose bucket size is within a factor of two of the positive's; the size effect is partly what HBAA measures, and removing it loses 0.04"
+    },
+    {
+      "metric": "hbaa_size_matched_kept",
+      "spearman": 0.0613,
+      "p": 0.551,
+      "ci": [
+        -0.146,
+        0.283
+      ],
+      "eligible": false,
+      "note": "the fraction of queries that keep a size-matched negative: 99.5% on a typical table, and the fraction itself carries no signal about recall"
     }
   ],
   "not_scored": [
@@ -235,7 +257,8 @@
         "hbaa_flat": 0.6925,
         "hbaa_pair_accuracy": 0.6172,
         "hbaa_weighted": 0.5963,
-        "hbaa_levels": 0.4644
+        "hbaa_levels": 0.4644,
+        "hbaa_size_matched": 0.661
       },
       "reading": "every variant of the winner is weaker than the winner: the level-1 Gromov ancestor-DEPTH contrast against the negatives' prefix centroids, with the full history as the query point and the frozen temperature in the reduction, is the signal. Ranking statistics over the same cells, the deeper levels, a temperature-free reduction and the weighted multi-level combination all lose information."
     },
@@ -281,6 +304,14 @@
     "round_6": [
       "hyp_cell_expected_rank",
       "hyp_cell_rank_lift"
+    ],
+    "round_7": [
+      "hyp_erank_gain",
+      "hyp_code_mi_gain",
+      "hyp_geodesic_pmi_l1",
+      "lorentz_pmi_l1",
+      "hyp_succ_nullgain_l1",
+      "-> hbaa_size_matched implemented and measured"
     ]
   }
 }
