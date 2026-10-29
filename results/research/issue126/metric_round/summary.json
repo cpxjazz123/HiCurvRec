@@ -281,7 +281,144 @@
         "eligible": false
       }
     },
-    "family_reading": "Every construction was re-measured on the corrected 107-pair collection. The split is clean: the contrastive, behaviour-referenced metrics score +0.38 to +0.76 and every one of them is eligible; the metrics of the partition's own geometry score -0.28 to +0.15 and none of them is. The path likelihood stays significantly NEGATIVE (-0.282): it rewards a trie with few branches."
+    "family_reading": "Every construction was re-measured on the corrected 107-pair collection. The split is clean: the contrastive, behaviour-referenced metrics score +0.38 to +0.76 and every one of them is eligible; the metrics of the partition's own geometry score -0.28 to +0.15 and none of them is. The path likelihood stays significantly NEGATIVE (-0.282): it rewards a trie with few branches.",
+    "fresh_pairs_table": {
+      "hbaa": {
+        "spearman": 0.6956344569183462,
+        "p": 2.1980867627996196e-12,
+        "ci": [
+          0.5129970127986134,
+          0.8219963458498251
+        ],
+        "eligible": true
+      },
+      "hbaa_anchor": {
+        "spearman": 0.4809064980800994,
+        "p": 9.556534113403218e-06,
+        "ci": [
+          0.25432515278015805,
+          0.6576067562550695
+        ],
+        "eligible": true
+      },
+      "hbaa_recency": {
+        "spearman": 0.4532751439645197,
+        "p": 3.478119007194416e-05,
+        "ci": [
+          0.22440546327352828,
+          0.6348589375693232
+        ],
+        "eligible": true
+      },
+      "hbaa_teacher_curvature": {
+        "spearman": 0.6956344569183462,
+        "p": 2.1980867627996196e-12,
+        "ci": [
+          0.5129970127986134,
+          0.8219963458498251
+        ],
+        "eligible": true
+      },
+      "hbaa_midpoint": {
+        "spearman": 0.5385484998863872,
+        "p": 4.367774025320283e-07,
+        "ci": [
+          0.321727279691193,
+          0.7044726702173684
+        ],
+        "eligible": true
+      },
+      "hbaa_validation": {
+        "spearman": 0.4669725136069717,
+        "p": 1.8589971310415048e-05,
+        "ci": [
+          0.23410500873883222,
+          0.6468485227004007
+        ],
+        "eligible": true
+      },
+      "hbaa_euclid": {
+        "spearman": 0.5952046065648595,
+        "p": 1.136309842704467e-08,
+        "ci": [
+          0.3810711433261323,
+          0.7565340450970186
+        ],
+        "eligible": true
+      },
+      "hbaa_flat": {
+        "spearman": 0.6446965419812047,
+        "p": 2.4928510054218925e-10,
+        "ci": [
+          0.44079542963039997,
+          0.7958592495425083
+        ],
+        "eligible": true
+      },
+      "hbaa_levels": {
+        "spearman": 0.4165209735995525,
+        "p": 0.0001646083198165644,
+        "ci": [
+          0.16418129152508204,
+          0.623158608125685
+        ],
+        "eligible": true
+      },
+      "hbaa_weighted": {
+        "spearman": 0.44005100398341923,
+        "p": 6.211654411800781e-05,
+        "ci": [
+          0.19540739774352833,
+          0.637281221964523
+        ],
+        "eligible": true
+      },
+      "hbaa_pair_accuracy": {
+        "spearman": 0.5700746001961055,
+        "p": 6.240954834993668e-08,
+        "ci": [
+          0.3586872190252907,
+          0.7369095303829325
+        ],
+        "eligible": true
+      },
+      "hbaa_size_matched": {
+        "spearman": 0.3028012569231109,
+        "p": 0.007433706902870356,
+        "ci": [
+          0.01686471628674557,
+          0.5406787569536672
+        ],
+        "eligible": true
+      },
+      "hbaa_size_matched_kept": {
+        "spearman": -0.13052939592384463,
+        "p": 0.2578424892559823,
+        "ci": [
+          -0.3671129010174062,
+          0.14021621876171142
+        ],
+        "eligible": false
+      }
+    },
+    "query_point_sweep": {
+      "uniform_history_barycentre": {
+        "all_107": 0.7623,
+        "fresh_77": 0.6956
+      },
+      "behaviour_midpoint": {
+        "all_107": 0.6899,
+        "fresh_77": 0.5385
+      },
+      "single_anchor": {
+        "all_107": 0.6592,
+        "fresh_77": 0.4809
+      },
+      "recency_weighted_history": {
+        "fresh_77": 0.4533
+      },
+      "reading": "the uniform history barycentre is the best query point: leaning on the recency (2^-i weights) or on the last item alone loses a fifth of the correlation, so the metric wants the whole sequence, not its tail"
+    }
   },
   "rounds": {
     "round_1": [
@@ -518,5 +655,124 @@
       "eligible": false
     }
   },
-  "collection_correction": "67 of the original 97 pairings were wrong (the resolver took the newest commit of a SID path, and that commit often held an EMPTY file, so the run was paired with the earliest surviving table instead of the one it read). The collection is now 107 pairs, all with a readable table whose token range matches the run's own recorded vocabulary."
+  "collection_correction": "67 of the original 97 pairings were wrong (the resolver took the newest commit of a SID path, and that commit often held an EMPTY file, so the run was paired with the earliest surviving table instead of the one it read). The collection is now 107 pairs, all with a readable table whose token range matches the run's own recorded vocabulary.",
+  "fresh_pairs_table": {
+    "hbaa": {
+      "spearman": 0.6956344569183462,
+      "p": 2.1980867627996196e-12,
+      "ci": [
+        0.5129970127986134,
+        0.8219963458498251
+      ],
+      "eligible": true
+    },
+    "hbaa_anchor": {
+      "spearman": 0.4809064980800994,
+      "p": 9.556534113403218e-06,
+      "ci": [
+        0.25432515278015805,
+        0.6576067562550695
+      ],
+      "eligible": true
+    },
+    "hbaa_recency": {
+      "spearman": 0.4532751439645197,
+      "p": 3.478119007194416e-05,
+      "ci": [
+        0.22440546327352828,
+        0.6348589375693232
+      ],
+      "eligible": true
+    },
+    "hbaa_teacher_curvature": {
+      "spearman": 0.6956344569183462,
+      "p": 2.1980867627996196e-12,
+      "ci": [
+        0.5129970127986134,
+        0.8219963458498251
+      ],
+      "eligible": true
+    },
+    "hbaa_midpoint": {
+      "spearman": 0.5385484998863872,
+      "p": 4.367774025320283e-07,
+      "ci": [
+        0.321727279691193,
+        0.7044726702173684
+      ],
+      "eligible": true
+    },
+    "hbaa_validation": {
+      "spearman": 0.4669725136069717,
+      "p": 1.8589971310415048e-05,
+      "ci": [
+        0.23410500873883222,
+        0.6468485227004007
+      ],
+      "eligible": true
+    },
+    "hbaa_euclid": {
+      "spearman": 0.5952046065648595,
+      "p": 1.136309842704467e-08,
+      "ci": [
+        0.3810711433261323,
+        0.7565340450970186
+      ],
+      "eligible": true
+    },
+    "hbaa_flat": {
+      "spearman": 0.6446965419812047,
+      "p": 2.4928510054218925e-10,
+      "ci": [
+        0.44079542963039997,
+        0.7958592495425083
+      ],
+      "eligible": true
+    },
+    "hbaa_levels": {
+      "spearman": 0.4165209735995525,
+      "p": 0.0001646083198165644,
+      "ci": [
+        0.16418129152508204,
+        0.623158608125685
+      ],
+      "eligible": true
+    },
+    "hbaa_weighted": {
+      "spearman": 0.44005100398341923,
+      "p": 6.211654411800781e-05,
+      "ci": [
+        0.19540739774352833,
+        0.637281221964523
+      ],
+      "eligible": true
+    },
+    "hbaa_pair_accuracy": {
+      "spearman": 0.5700746001961055,
+      "p": 6.240954834993668e-08,
+      "ci": [
+        0.3586872190252907,
+        0.7369095303829325
+      ],
+      "eligible": true
+    },
+    "hbaa_size_matched": {
+      "spearman": 0.3028012569231109,
+      "p": 0.007433706902870356,
+      "ci": [
+        0.01686471628674557,
+        0.5406787569536672
+      ],
+      "eligible": true
+    },
+    "hbaa_size_matched_kept": {
+      "spearman": -0.13052939592384463,
+      "p": 0.2578424892559823,
+      "ci": [
+        -0.3671129010174062,
+        0.14021621876171142
+      ],
+      "eligible": false
+    }
+  }
 }

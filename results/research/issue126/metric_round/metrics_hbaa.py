@@ -704,7 +704,70 @@ def hbaa_midpoint(table: dict, context: dict) -> float:
     return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
 
 
+
+
+def hbaa_recency(table: dict, context: dict) -> float:
+    """HBAA with a RECENCY-WEIGHTED history point.
+
+    The history barycentre treats the whole sequence equally; the query a user
+    actually brings to the next purchase is dominated by its last few steps. This
+    weights the history's source representations by 2^{-i} from the most recent
+    step, so the query point leans on the recency the sequence carries. The
+    weighting is the only thing that changes.
+    """
+    reference = _reference(context)
+    source = np.asarray(reference["source"], dtype=np.float64)
+    target = np.asarray(reference["target"], dtype=np.float64)[
+        np.asarray(table["item_ids"])]
+    tau = float(reference.get("temperature",
+                              (reference.get("record") or {})["temperature"]))
+    codes = np.asarray(table["rows"], dtype=np.int64)[:, 0]
+    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
+    queries = _queries(context)
+    pos = np.array([position.get(int(item), -1) for item in queries["positives"]],
+                   dtype=np.int64)
+    neg = np.array([[position.get(int(item), -1) for item in row]
+                    for row in queries["negatives"]], dtype=np.int64)
+    valid = (pos >= 0) & (neg >= 0).all(axis=1)
+    if not valid.any():
+        return 0.0
+
+    weights = np.power(0.5, np.arange(12, dtype=np.float64))
+    weights = weights / weights.sum()
+    points = []
+    for history, keep_it in zip(queries["histories"], valid):
+        if not keep_it:
+            continue
+        ids = np.asarray(history, dtype=np.int64)
+        recent = ids[-len(weights):]
+        w = weights[-len(recent):]
+        w = w / w.sum()
+        points.append(_frechet((source[recent] * w[:, None]).sum(axis=0, keepdims=True)))
+    points = np.stack(points)
+    pos = pos[valid]
+    neg = neg[valid]
+
+    centres = {int(code): _frechet(target[codes == code]) for code in np.unique(codes)}
+    mu_pos = np.stack([centres[int(codes[index])] for index in pos])
+    mu_neg = np.stack([[centres[int(codes[index])] for index in row] for row in neg])
+
+    def gromov(x, y):
+        def d(a, b):
+            diff = np.sum((a - b) ** 2, axis=-1)
+            den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
+            return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
+        def nrm(x):
+            inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
+            return 2 * np.arccosh(1 / np.sqrt(inner))
+        return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
+
+    delta = gromov(points, mu_pos)[:, None] - gromov(points[:, None, :], mu_neg)
+    per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
+    return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
+
+
 METRICS = {"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
+           "hbaa_recency": hbaa_recency,
            "hbaa_teacher_curvature": hbaa_teacher_curvature,
            "hbaa_midpoint": hbaa_midpoint,
            "hbaa_validation": hbaa_validation,
@@ -717,5 +780,6 @@ METRICS = {"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
 FREE_CONSTANTS = {"hbaa": 0, "hbaa_anchor": 0, "hbaa_euclid": 0, "hbaa_flat": 0,
                    "hbaa_levels": 0, "hbaa_weighted": 0, "hbaa_pair_accuracy": 0,
                    "hbaa_size_matched": 0, "hbaa_size_matched_kept": 0,
-                   "hbaa_validation": 0, "hbaa_teacher_curvature": 0,
+                   "hbaa_validation": 0, "hbaa_recency": 0,
+                   "hbaa_teacher_curvature": 0,
                    "hbaa_midpoint": 0}

@@ -90,7 +90,7 @@ relation to the behaviour, read through whatever teacher is frozen.
 
 | choice | options (Spearman) | winner |
 |---|---|---|
-| query point | history barycentre **+0.7014**, behaviour midpoint +0.6941, single anchor +0.6866, held-out probe +0.6689 | history barycentre |
+| query point | history barycentre **+0.7623** (fresh 77: **+0.6956**), behaviour midpoint +0.6899 (+0.5385), single anchor +0.6592 (+0.4809), recency-weighted history (+0.4533), held-out probe +0.6520 (+0.4670) | the uniform history barycentre: leaning on the recency (2^-i weights) or on the last item alone loses a fifth of the correlation, so the metric wants the whole sequence, not its tail |
 | geometry | hyperbolic **+0.7014**, flat c=1e-3 +0.6965, Euclidean +0.6930 | hyperbolic, but by a hair |
 | teacher | frozen c=1 **+0.7014**, variant c=0.25 +0.7014 | neither |
 | negatives | all ten **+0.7014**, size-matched +0.6428 | all ten |
