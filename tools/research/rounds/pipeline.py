@@ -306,6 +306,26 @@ BLOCKING_SEVERITIES = frozenset({
 })
 
 
+def _finding_role(finding: dict) -> str:
+    """The role a finding belongs to.
+
+    New findings carry their role. A finding from before the roles existed carries
+    only the reviewer's task name, whose number is the role's position in the full
+    role list -- the same numbering the dispatch uses.
+    """
+    role = str(finding.get("role") or "")
+    if role:
+        return role
+    verifier = str(finding.get("verifier") or "")
+    for index in range(1, 32):
+        if verifier.endswith("_" + str(index)):
+            from . import agents as agent_contracts
+            roles = agent_contracts.VERIFIER_ROLES
+            if index <= len(roles):
+                return roles[index - 1]["id"]
+    return ""
+
+
 def _is_blocking(severity) -> bool:
     """Whether a finding stops the implementation.
 
@@ -413,7 +433,7 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
     responding = {str(report.get("role") or "") for report in reports}
     carried = [finding for finding in (record.get("blocking_findings") or [])
                if finding.get("verifier") not in FRAMEWORK_FINDING_SOURCES
-               and str(finding.get("role") or "") not in responding]
+               and _finding_role(finding) not in responding]
     record["blocking_findings"] = earlier + carried + findings
     if carried:
         record["carried_findings"] = len(carried)

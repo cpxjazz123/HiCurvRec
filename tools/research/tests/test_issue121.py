@@ -992,3 +992,20 @@ class ProposalCloseTests(unittest.TestCase):
                 reason="proposal defect", evidence={})
             self.assertEqual(pipeline_module.verified_implementations(state), [])
             self.assertEqual(state["step"], "stage2")
+
+
+class FindingOwnershipResolutionTests(unittest.TestCase):
+    """A finding from before the roles existed still belongs to one."""
+
+    def test_the_role_is_read_from_the_reviewer_number(self):
+        from tools.research.rounds import pipeline as pipeline_module
+        from tools.research.rounds import agents as agent_contracts
+        roles = agent_contracts.VERIFIER_ROLES
+        for index, role in enumerate(roles, 1):
+            finding = {"verifier": "verify_idea_r0_%d" % index, "severity": "blocking"}
+            self.assertEqual(pipeline_module._finding_role(finding), role["id"])
+
+    def test_an_explicit_role_wins(self):
+        from tools.research.rounds import pipeline as pipeline_module
+        finding = {"verifier": "verify_idea_r0_3", "role": "behaviour-sid"}
+        self.assertEqual(pipeline_module._finding_role(finding), "behaviour-sid")
