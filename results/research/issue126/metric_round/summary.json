@@ -238,6 +238,25 @@
         "hbaa_levels": 0.4644
       },
       "reading": "every variant of the winner is weaker than the winner: the level-1 Gromov ancestor-DEPTH contrast against the negatives' prefix centroids, with the full history as the query point and the frozen temperature in the reduction, is the signal. Ranking statistics over the same cells, the deeper levels, a temperature-free reduction and the weighted multi-level combination all lose information."
+    },
+    "significance_vs_the_incumbent": {
+      "paired_bootstrap_of_the_rho_difference": {
+        "mean": 0.0673,
+        "ci95": [
+          -0.003,
+          0.1562
+        ],
+        "probability_hbaa_worse": 0.0324
+      },
+      "split_half_stability_of_hbaa": {
+        "mean": 0.6967,
+        "p5_p95": [
+          0.5742,
+          0.8189
+        ],
+        "share_above_zero": 1.0
+      },
+      "reading": "HBAA is better than Q_H by +0.067 of Spearman on average, but the paired bootstrap interval of the difference touches zero (-0.003): the two are not separated by this sample. HBAA itself is stable: over 800 random half-samples its rho never fell below zero and averaged +0.697."
     }
   },
   "rounds": {
