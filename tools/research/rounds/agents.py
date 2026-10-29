@@ -334,7 +334,7 @@ VERIFIER_ROLES = (
         # model and the DDP test, and the other files belong to the roles that
         # own them. A scope it cannot read in its budget is a scope that produces
         # a timeout instead of a review.
-        "reads": ["train_rqvae.py", "model/model.py", "tests/test_ddp.py"],
+        "reads": ["train_rqvae.py", "tests/test_ddp.py"],
         "name": "distributed execution and shared state",
         "scope": "train_rqvae.py (DDP construction, the step loop, collectives), "
                  "model/model.py (the codebook step plumbing), tests/test_ddp.py",
@@ -444,6 +444,10 @@ VERIFY_PROMPT = (
     "trust it):\n{change_brief}\n"
     "THE CODE THAT CHANGED SINCE THE LAST REVIEWED REVISION (a unified diff; read it "
     "together with the files in your scope):\n{change_diff}\n"
+    "THE MANIFEST IS THE LISTING of the tree: it names every source file and its "
+    "size. The tree's own directory is NOT open to you - listing it is a refused "
+    "read that costs you your budget - so read the files you are given and do not "
+    "try to walk the tree.\n"
     "YOUR READ SCOPE IS DELIBERATELY NARROW. The complete list of the tree's source "
     "files is in {manifest_file}; a file that is not in it does not exist, and a "
     "file that is in it but outside your scope is NOT a defect -- say you did not "
