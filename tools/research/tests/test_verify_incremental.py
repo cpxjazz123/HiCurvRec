@@ -277,13 +277,21 @@ class ReadCoverageTests(unittest.TestCase):
             readable.write_text("x = 1\n", encoding="utf-8")
             self.assertEqual(worker_module.read_gaps([str(readable)]), [])
 
-    def test_a_role_without_existing_files_does_not_fall_back_to_the_whole_tree(self):
-        """The fallback widened the scope and hid the gap it should have reported."""
+    def test_a_role_without_existing_files_gets_no_file_at_all(self):
+        """The fallback widened the scope and hid the gap it should have reported.
+
+        The tree's directory is still declared - the agent has to be able to LIST
+        its scope - but no FILE outside the scope is granted, and in particular no
+        file of a scope that does not exist.
+        """
         with tempfile.TemporaryDirectory() as work:
             tree = Path(work) / "tree"
             tree.mkdir()
+            (tree / "model").mkdir()
+            (tree / "model" / "secret.py").write_text("x = 1\n", encoding="utf-8")
             paths = worker_module.role_read_paths(tree, {"reads": ["model/absent.py"]})
-            self.assertEqual(paths, [])
+            self.assertNotIn(str(tree / "model" / "secret.py"), paths)
+            self.assertEqual([path for path in paths if path.endswith(".py")], [])
 
 
 class CoverageGapTests(unittest.TestCase):
@@ -294,3 +302,16 @@ class CoverageGapTests(unittest.TestCase):
                   "worker.py").read_text(encoding="utf-8")
         self.assertIn('report["source_review"] = False', source)
         self.assertIn('"kind": "read_denied"', source)
+
+
+class ListingTests(unittest.TestCase):
+    """An agent must be able to LIST its scope, not only open the files in it."""
+
+    def test_the_tree_directory_is_in_the_scope(self):
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "tree"
+            (tree / "model").mkdir(parents=True)
+            (tree / "model" / "m.py").write_text("x = 1\n", encoding="utf-8")
+            paths = worker_module.role_read_paths(tree, {"reads": ["model/m.py"]})
+            self.assertIn(str(tree), paths)
+            self.assertIn(str(tree.resolve()), paths)

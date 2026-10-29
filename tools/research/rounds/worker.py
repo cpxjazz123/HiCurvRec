@@ -1104,6 +1104,14 @@ def role_read_paths(tree: Path, role: dict) -> list:
             text = str(form)
             if text not in paths:
                 paths.append(text)
+    # The tree's own directory is declared so the agent can LIST it: the files it
+    # may open are still exactly the ones in its scope, but a directory listing is
+    # not one of them, and an agent that cannot list the tree spends its budget
+    # discovering that.
+    for form in (tree, tree.resolve()):
+        text = str(form)
+        if text not in paths:
+            paths.append(text)
     # No fallback to the whole tree: a scope whose files are all missing is a
     # coverage gap that the caller records, not a licence to read everything.
     return paths
