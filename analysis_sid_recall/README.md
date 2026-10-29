@@ -7,12 +7,12 @@ generated from it. Collected read-only by `collect.py` (re-runnable).
 
 | item | count |
 |---|---|
-| SID files in `sids/` (paired only) | 181 |
+| SID files in `sids/` (paired only) | 178 |
 | SID contents seen in the history (598 in total) | 598 |
-| SID + recall pairs (one per SID) | 181 |
+| SID + recall pairs (one per SID) | 178 |
 | Stage 3 runs the pairs were chosen from | 225 |
 | Stage 3 runs whose SID table no longer exists | 127 (in `stage3_runs_without_sid.csv`) |
-| recall source files copied to `recalls/` | 181 |
+| recall source files copied to `recalls/` | 178 |
 
 `sid_recall.csv` / `sid_recall.json` hold one row per (SID content, Stage 3 run) pair with
 `test_recall@5`, `test_recall@10`, `test_ndcg@5`, `test_ndcg@10` and `n_eval`, taken from the
@@ -21,7 +21,7 @@ event. `sid_inventory.csv` holds one row per **paired** SID content with its pre
 the best recall it ever reached.
 
 The directory keeps **only the paired** SIDs and **only recalls that name a paired SID**:
-181 SID files and 181 recall files — **one SID paired with exactly one recall** — and every
+178 SID files and 178 recall files — **one SID paired with exactly one recall** — and every
 recall file carries the `paired_sid` block
 (the SID's sha256, its file name, its paths and the run's own `code_path`), so the pairing
 is verifiable inside the file.
@@ -46,7 +46,7 @@ history, so they cannot be paired at all -- their recalls are listed separately 
 `stage3_runs_without_sid.csv` (the best of them is 0.064068) rather than being attributed
 to a table they did not use.
 
-146 of the 181 pairs resolve through the `earliest_surviving` fallback and 35 through
+144 of the 178 pairs resolve through the `earliest_surviving` fallback and 34 through
 `at_run_date`: the table was committed after the run, so the file is the only surviving copy
 of it but not provably the exact version the run read. Those rows say so in
 `sid_resolution`. The unpaired tables that the history also contains were pruned; they stay
@@ -61,6 +61,26 @@ therefore to a table it never read. The path is now mapped to its repository-rel
 before the history is consulted (`repo_relative`); with that fix the pairs rose from 67 to
 181, and the two BRad-RQ runs now pair with the tables they actually read
 (`266ce952...` -> 0.044604 and `cfc3f291...` -> 0.030606, both `at_run_date`).
+
+## How strong each pair is
+
+Every pair carries a `pair_confidence`:
+
+| value | count | meaning |
+|---|---|---|
+| `verified_vocabulary` | 96 | the run's own configuration recorded the `vocab_size` it built from the SID table, and the paired table reproduces it exactly. Stage 3's vocabulary is a function of the table's highest token, so this is the run's own fingerprint of the table it read. |
+| `date_resolved_only` | 82 | the run left no configuration log, so the link rests on the path's version at the run's date alone. |
+| disputed (in `sid_recall_disputed.csv`) | 10 | the run's recorded `vocab_size` does NOT match the paired table's token range: the run read a different table, and the pair is refused rather than reported. |
+
+The gate is one-sided: a matching fingerprint does not prove the table is the one
+read (a different table with the same highest token would pass), but a *mismatching*
+one disproves it, and those runs are listed separately with both numbers. Ten runs
+were refused this way, including two that the date filter had called `at_run_date`:
+the file had been overwritten by a later Stage 2 run that was never committed.
+
+The recall side is checked for every pair: the paired value is the run's own
+recorded test number, read from the run's own metrics (working tree or history),
+and all 178 match it exactly.
 
 ## The pairing, and its limits
 

@@ -474,3 +474,23 @@ class SidPairingInvariantTests(unittest.TestCase):
                          "the same table is stored under more than one name")
         self.assertEqual(set(digests), set(shas))
         self.assertEqual(len(list((directory / "recalls").glob("*.json"))), len(pairs))
+
+
+class SidPairingConfidenceTests(unittest.TestCase):
+    """The vocabulary gate: a run's own fingerprint must agree with its table."""
+
+    def test_the_collected_tables_state_their_own_confidence(self):
+        import csv
+        from pathlib import Path
+        directory = Path(__file__).resolve().parents[3] / "analysis_sid_recall"
+        pairs = list(csv.DictReader((directory / "sid_recall.csv").open()))
+        disputed = list(csv.DictReader((directory / "sid_recall_disputed.csv").open()))
+        self.assertTrue(pairs)
+        for row in pairs:
+            self.assertIn(row["pair_confidence"],
+                          ("verified_vocabulary", "date_resolved_only"))
+        # a disputed run is not also a pair
+        self.assertFalse({row["run_dir"] for row in pairs} &
+                         {row["run_dir"] for row in disputed})
+        for row in disputed:
+            self.assertNotEqual(row["logged_vocab_size"], row["table_vocab_size"])

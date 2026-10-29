@@ -49,6 +49,41 @@ def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def table_facts(payload: bytes) -> dict:
+    """The numbers Stage 3 derived FROM the SID table it read."""
+    table = json.loads(payload.decode("utf-8"))
+    rows = [table[key] for key in sorted(table, key=int)]
+    tokens = [value + 1 for row in rows for value in row]
+    return {"items": len(rows), "width": len(rows[0]), "max_token": max(tokens),
+            "unique_rows": len({tuple(row) for row in rows})}
+
+
+def expected_vocab_size(payload: bytes, n_user_tokens: int = 1) -> int:
+    """The vocabulary Stage 3 builds from this table: max token + the user tokens."""
+    facts = table_facts(payload)
+    # max_sid_token is the highest token (max(raw) + 1); the vocabulary adds the
+    # user bucket and the eos token: max(raw) + n_user_tokens + 3.
+    return facts["max_token"] + int(n_user_tokens) + 2
+
+
+def logged_vocab_size(run_dir: str) -> int | None:
+    """The ``vocab_size`` the RUN recorded, from its own configuration log."""
+    import re
+    relative = Path(run_dir)
+    text = ""
+    local = REPO / relative / "HG_Rec.log"
+    if local.is_file():
+        text = local.read_text(errors="replace")
+    else:
+        commits = git("log", "--all", "--format=%H", "--",
+                      str(relative / "HG_Rec.log")).splitlines()
+        for commit in commits[:1]:
+            text = git_bytes("show", commit + ":" + str(relative / "HG_Rec.log")).decode(
+                errors="replace")
+    match = re.search(r"'vocab_size':\s*(\d+)", text)
+    return int(match.group(1)) if match else None
+
+
 def structure(payload: bytes) -> dict:
     """The shape of a SID table: items, width and the prefix statistics."""
     table = json.loads(payload.decode("utf-8"))
@@ -368,6 +403,7 @@ def main() -> int:
     by_sha = {entry["sha256"]: digest for digest, entry in blobs.items()}
     pairs = []
     unpaired_runs = []
+    disputed_runs = []
     for run in runs:
         code = repo_relative(run["code_path"])
         when = run_timestamp(run["run_dir"])
@@ -390,10 +426,32 @@ def main() -> int:
             blobs[digest] = {"blob": blob, "paths": [code], "bytes": len(payload),
                               "sha256": digest, "stats": stats}
             by_sha[digest] = digest
+        # The run recorded the vocabulary it built FROM the table it read, and
+        # that vocabulary is a function of the table's highest token. A table
+        # whose token range does not reproduce the run's own number is not the
+        # table that run read: the pairing is disputed and the run is reported
+        # as unpaired rather than credited with a table it never saw.
+        logged = logged_vocab_size(run["run_dir"])
+        if logged is not None:
+            expected = expected_vocab_size(payload)
+            if expected != logged:
+                disputed_runs.append({
+                    "variant": run["variant"], "run_dir": run["run_dir"],
+                    "code_path": code, "sid_sha256": digest,
+                    "sid_resolution": resolution,
+                    "logged_vocab_size": logged, "table_vocab_size": expected,
+                    "reason": "the vocabulary the run recorded does not match the "
+                              "paired table's token range: this run read another table",
+                    **run["metrics"]})
+                continue
         pairs.append({"sid_sha256": digest, "sid_paths": blobs[by_sha[digest]]["paths"],
                       "variant": run["variant"], "run_dir": run["run_dir"],
                       "code_path": code, "sid_commit": blob,
-                      "sid_resolution": resolution, **run["metrics"]})
+                      "sid_resolution": resolution,
+                      "pair_confidence": ("verified_vocabulary"
+                                          if logged is not None else
+                                          "date_resolved_only"),
+                      **run["metrics"]})
 
     # One SID, one recall: when several runs generated from the same table, the
     # highest recall is kept as the pair and the other runs are written aside.
@@ -447,8 +505,8 @@ def main() -> int:
 
     with (OUT / "sid_recall.csv").open("w", newline="", encoding="utf-8") as handle:
         fields = ["sid_sha256", "sid_file", "sid_paths", "variant", "run_dir", "code_path",
-                  "sid_resolution", "sid_runs", "sid_recall_range", "test_recall@5",
-                  "test_recall@10", "test_ndcg@5", "test_ndcg@10", "n_eval"]
+                  "sid_resolution", "pair_confidence", "sid_runs", "sid_recall_range",
+                  "test_recall@5", "test_recall@10", "test_ndcg@5", "test_ndcg@10", "n_eval"]
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         for pair in sorted(pairs, key=lambda item: -(item.get("test_recall@10") or 0)):
@@ -457,6 +515,7 @@ def main() -> int:
                 "sid_paths": " | ".join(pair["sid_paths"]), "variant": pair["variant"],
                 "run_dir": pair["run_dir"], "code_path": pair["code_path"],
                 "sid_resolution": pair.get("sid_resolution", ""),
+                "pair_confidence": pair.get("pair_confidence", ""),
                 "sid_runs": pair.get("sid_runs", 1),
                 "sid_recall_range": json.dumps(pair.get("sid_recall_range", [])),
                 "test_recall@5": pair.get("test_recall@5"),
@@ -519,6 +578,13 @@ def main() -> int:
     # mis-paired collection and named runs that the main table pairs with another
     # table: a SID has one recall, and the other recalls of the same table live
     # here.
+    fields = ["variant", "run_dir", "code_path", "sid_sha256", "sid_resolution",
+              "logged_vocab_size", "table_vocab_size", "test_recall@10", "n_eval", "reason"]
+    with (OUT / "sid_recall_disputed.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        for row in disputed_runs:
+            writer.writerow({key: row.get(key) for key in fields})
     with (OUT / "sid_recall_alternatives.csv").open("w", newline="", encoding="utf-8") as handle:
         fields = ["sid_sha256", "variant", "run_dir", "test_recall@5", "test_recall@10",
                   "test_ndcg@10", "n_eval", "note"]
