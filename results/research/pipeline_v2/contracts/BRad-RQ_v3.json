@@ -1,0 +1,79 @@
+{
+  "mechanism": "BRad-RQ_v3",
+  "hypothesis": "the rank of an item's training context entropy sets its tangent radius and the Poincare kernel turns it into the level code, WHILE the decoder reconstructs the original Stage1 embedding, so the identifier cannot lose the item",
+  "falsified_by": "the radius or the kernel reaches nothing, the reconstruction target becomes a vector the encoder produces, the codebook is built before the radii are bound, training and export disagree on the assignment, or a code nobody chooses is never re-seeded",
+  "tests": [
+    {
+      "template": "SignalSensitivity",
+      "set": {
+        "callable": "tests.probe_radial.radius_for",
+        "arg": "scale"
+      },
+      "observe": {
+        "callable": "tests.probe_radial.observe_cost",
+        "arg": "radius"
+      }
+    },
+    {
+      "template": "IndependentFormula",
+      "candidate": "tests.probe_radial.assignment_path",
+      "reference": "closed_form_kernel_1d",
+      "grid": {
+        "values": [
+          0.05,
+          0.2,
+          0.5
+        ],
+        "curvature": 1.0
+      }
+    },
+    {
+      "template": "RangeAndSaturation",
+      "callable": "tests.probe_radial.radius_for",
+      "range_source": {
+        "mode": "spread",
+        "scale": 1.0
+      }
+    },
+    {
+      "template": "AssignmentConsistency",
+      "compare": {
+        "training": "tests.test_radial_export"
+      }
+    },
+    {
+      "template": "GradientFlow",
+      "module": "tests.test_radial_wiring"
+    },
+    {
+      "template": "CheckpointRestore",
+      "module": "tests.test_restore_consistency"
+    }
+  ],
+  "negative_control": {
+    "edit": "constant radius",
+    "must_fail": "SignalSensitivity"
+  },
+  "training_config": {
+    "radial": "True",
+    "frechet_codebook": "False"
+  },
+  "negative_controls": [
+    {
+      "edit": "constant radius",
+      "must_fail": "SignalSensitivity"
+    },
+    {
+      "edit": "euclidean kernel",
+      "must_fail": "IndependentFormula"
+    },
+    {
+      "edit": "cut gradient path",
+      "must_fail": "GradientFlow"
+    }
+  ],
+  "training_config_tests": [
+    "tests.test_ddp",
+    "tests.test_radial_export"
+  ]
+}

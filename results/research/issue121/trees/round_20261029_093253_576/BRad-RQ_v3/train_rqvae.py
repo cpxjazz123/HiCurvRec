@@ -277,7 +277,8 @@ def main() -> None:
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    train_dataset = TensorDataset(train_embeddings, train_ids)
+    train_dataset = TensorDataset(
+        train_embeddings, torch.from_numpy(np.asarray(train_ids, dtype=np.int64)))
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,

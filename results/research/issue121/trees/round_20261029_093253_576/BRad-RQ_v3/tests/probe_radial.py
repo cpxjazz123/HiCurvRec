@@ -78,14 +78,20 @@ def assignment_path(scale: float = 1.0) -> dict:
 
 
 def observe_cost(radius: torch.Tensor) -> torch.Tensor:
-    """The level-1 assignment costs of one item at the given radii."""
+    """The level-1 assignment costs of one item at the given radii.
+
+    The costs come from the REAL path: the radii are bound before the codebook is
+    built (v3 contract), and the cost is the one ``mapped_cost`` returns for the
+    mapped point, which is the matrix the assignment takes the argmin of.
+    """
     torch.manual_seed(0)
     model = RQVAE(_config(), in_dim=16)
     embeddings = torch.randn(24, 16)
     with torch.no_grad():
-        model.init_codebook(embeddings)
+        model.set_radii(radius.detach().clone())
+        model.init_codebook(embeddings, item_ids=torch.arange(embeddings.shape[0]))
         _fixed_codebook(model.rq.vq_layers[0])
         encoded = model.encoder(embeddings)
         scaled = model.scale_by_radius(encoded, radius)
         layer = model.rq.vq_layers[0]
-        return layer.radial_cost(scaled)
+        return layer.mapped_cost(layer.point_of(scaled))
