@@ -6,21 +6,70 @@
     "reference_sha256": "28e33a37552578d04b581b6577eb5809a2ec2298752f09ab62ccdb76eb01c790",
     "temperature": 1.195016860961914,
     "probe": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
-    "scope": "level-1 prefix only"
-  },
-  "q_h_vs_recall@10": {
-    "spearman": 0.6339798805532751,
-    "spearman_p": 3.1559832918258617e-12,
-    "kendall": 0.47377476433501603,
-    "kendall_p": 6.444741065469469e-12,
-    "pearson": 0.5706816157134709,
-    "pearson_p": 1.042136204673532e-09,
-    "bootstrap_ci95": [
-      0.47118636865456515,
-      0.7645252026663698
+    "levels": [
+      1,
+      2,
+      3
     ],
-    "leave_one_out_min": 0.6224208800803989,
-    "leave_one_out_max": 0.6706864627079666
+    "scope": "the first `levels` SID codes form the prefix; levels=1 is the score Issue #126 froze"
+  },
+  "per_level": {
+    "L1": {
+      "spearman": 0.6339798805532751,
+      "p": 3.1559832918258617e-12,
+      "kendall": 0.47377476433501603,
+      "pearson": 0.5706816157134709,
+      "bootstrap_ci95": [
+        0.47118636865456515,
+        0.7645252026663698
+      ],
+      "range": [
+        -0.01420155623966357,
+        0.20614212993305991
+      ],
+      "mean": 0.1565892486589806,
+      "leave_one_out_min": 0.6224208800803989,
+      "leave_one_out_max": 0.6706864627079666
+    },
+    "L2": {
+      "spearman": 0.2873919194958873,
+      "p": 0.0043136672658462515,
+      "kendall": 0.18236565887041464,
+      "pearson": 0.5088906114646489,
+      "bootstrap_ci95": [
+        0.09066308718180362,
+        0.45092801211273914
+      ],
+      "range": [
+        -0.033950575546572104,
+        0.2561019839178207
+      ],
+      "mean": 0.17615089842458967
+    },
+    "L3": {
+      "spearman": 0.39317047976774233,
+      "p": 6.783356087847711e-05,
+      "kendall": 0.27077699538828043,
+      "pearson": 0.6371370457812113,
+      "bootstrap_ci95": [
+        0.19444098146886687,
+        0.5628604149553169
+      ],
+      "range": [
+        -0.03900587978292602,
+        0.2560904245439888
+      ],
+      "mean": 0.22336968789756076
+    }
+  },
+  "incremental_r2": {
+    "structure_only": 0.11244426094355198,
+    "structure_plus_L1": 0.47226327775996946,
+    "L1_only": 0.3256775065133376,
+    "structure_plus_L2": 0.27245884830479594,
+    "L2_only": 0.25896965443686426,
+    "structure_plus_L3": 0.4784248650073244,
+    "L3_only": 0.40594361510680954
   },
   "q_h_vs_bucket_count": {
     "spearman": 0.31592647170566546,
@@ -38,11 +87,6 @@
     "spearman": -0.11928463413948598,
     "p": 0.2445261686000639
   },
-  "q_h_range": [
-    -0.01420155623966357,
-    0.20614212993305991
-  ],
-  "q_h_mean": 0.1565892486589806,
   "records": [
     {
       "sid_sha256": "8ac310520d5589bc535a333fad33f18ebf5e6457e53ebb61c60cc37355743aad",
@@ -52,12 +96,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06425947526941625,
       "test_recall@5": 0.04239279931753687,
-      "q_h": 0.19508367343560984,
-      "buckets": 204,
-      "same_bucket_ratio": 0.007741935483870968,
-      "delta_mean": 0.6614702840792691,
-      "negatives_ranked_above_positive": 0.29072746192413207,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8ac310520d5589bc535a333fad33f18ebf5e6457e53ebb61c60cc37355743aad.json"
+      "L1": {
+        "q_h": 0.19508367343560984,
+        "buckets": 204,
+        "same_bucket_ratio": 0.007741935483870968,
+        "delta_mean": 0.6614702840792691,
+        "negatives_ranked_above_positive": 0.29072746192413207
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8ac310520d5589bc535a333fad33f18ebf5e6457e53ebb61c60cc37355743aad.L1.json",
+      "L2": {
+        "q_h": 0.17813377779445605,
+        "buckets": 14996,
+        "same_bucket_ratio": 0.00017216914199224293,
+        "delta_mean": 0.8315603446669907,
+        "negatives_ranked_above_positive": 0.30009459842966607
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8ac310520d5589bc535a333fad33f18ebf5e6457e53ebb61c60cc37355743aad.L2.json",
+      "L3": {
+        "q_h": 0.25045040822575415,
+        "buckets": 23581,
+        "same_bucket_ratio": 1.702771733989216e-05,
+        "delta_mean": 0.9125915744011674,
+        "negatives_ranked_above_positive": 0.26176899063475545
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8ac310520d5589bc535a333fad33f18ebf5e6457e53ebb61c60cc37355743aad.L3.json"
     },
     {
       "sid_sha256": "19b4b3564272892b041c417557c453ea80a55d7b45080928f5fcb4ab78a8da8b",
@@ -67,12 +129,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06373718205400512,
       "test_recall@5": 0.04160935949442017,
-      "q_h": 0.19437576696265224,
-      "buckets": 246,
-      "same_bucket_ratio": 0.005982404692082111,
-      "delta_mean": 0.6667998236772448,
-      "negatives_ranked_above_positive": 0.29319080503263645,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/19b4b3564272892b041c417557c453ea80a55d7b45080928f5fcb4ab78a8da8b.json"
+      "L1": {
+        "q_h": 0.19437576696265224,
+        "buckets": 246,
+        "same_bucket_ratio": 0.005982404692082111,
+        "delta_mean": 0.6667998236772448,
+        "negatives_ranked_above_positive": 0.29319080503263645
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/19b4b3564272892b041c417557c453ea80a55d7b45080928f5fcb4ab78a8da8b.L1.json",
+      "L2": {
+        "q_h": 0.18757931652375504,
+        "buckets": 16265,
+        "same_bucket_ratio": 0.00014189764449910132,
+        "delta_mean": 0.8389611690343322,
+        "negatives_ranked_above_positive": 0.2936089300917605
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/19b4b3564272892b041c417557c453ea80a55d7b45080928f5fcb4ab78a8da8b.L2.json",
+      "L3": {
+        "q_h": 0.25192760054916497,
+        "buckets": 23704,
+        "same_bucket_ratio": 1.702771733989216e-05,
+        "delta_mean": 0.9160257335729207,
+        "negatives_ranked_above_positive": 0.2607719231860751
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/19b4b3564272892b041c417557c453ea80a55d7b45080928f5fcb4ab78a8da8b.L3.json"
     },
     {
       "sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
@@ -82,12 +162,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06373718205400512,
       "test_recall@5": 0.0425494872821602,
-      "q_h": 0.19487039346983126,
-      "buckets": 241,
-      "same_bucket_ratio": 0.006334310850439883,
-      "delta_mean": 0.6644189178412743,
-      "negatives_ranked_above_positive": 0.2923583388515751,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10.json"
+      "L1": {
+        "q_h": 0.19487039346983126,
+        "buckets": 241,
+        "same_bucket_ratio": 0.006334310850439883,
+        "delta_mean": 0.6644189178412743,
+        "negatives_ranked_above_positive": 0.2923583388515751
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10.L1.json",
+      "L2": {
+        "q_h": 0.18620337299432022,
+        "buckets": 16145,
+        "same_bucket_ratio": 0.00012486992715920916,
+        "delta_mean": 0.8443384337962744,
+        "negatives_ranked_above_positive": 0.2945132910793681
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10.L2.json",
+      "L3": {
+        "q_h": 0.25191742369713277,
+        "buckets": 23695,
+        "same_bucket_ratio": 1.3243780153249457e-05,
+        "delta_mean": 0.9161793983527651,
+        "negatives_ranked_above_positive": 0.2608684135843345
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10.L3.json"
     },
     {
       "sid_sha256": "eb1237df0acad3482b0aa87273892810bea987561961dc453605ed2128fe7cf6",
@@ -97,12 +195,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06356308431553474,
       "test_recall@5": 0.041104476052856075,
-      "q_h": 0.20091969158035905,
-      "buckets": 242,
-      "same_bucket_ratio": 0.006954876549049286,
-      "delta_mean": 0.6755723176375935,
-      "negatives_ranked_above_positive": 0.2879443761233563,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/eb1237df0acad3482b0aa87273892810bea987561961dc453605ed2128fe7cf6.json"
+      "L1": {
+        "q_h": 0.20091969158035905,
+        "buckets": 242,
+        "same_bucket_ratio": 0.006954876549049286,
+        "delta_mean": 0.6755723176375935,
+        "negatives_ranked_above_positive": 0.2879443761233563
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/eb1237df0acad3482b0aa87273892810bea987561961dc453605ed2128fe7cf6.L1.json",
+      "L2": {
+        "q_h": 0.18596447349715384,
+        "buckets": 16190,
+        "same_bucket_ratio": 0.0001570333932456721,
+        "delta_mean": 0.8454096631933291,
+        "negatives_ranked_above_positive": 0.2946135654148141
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/eb1237df0acad3482b0aa87273892810bea987561961dc453605ed2128fe7cf6.L2.json",
+      "L3": {
+        "q_h": 0.2513354657843401,
+        "buckets": 23666,
+        "same_bucket_ratio": 1.3243780153249457e-05,
+        "delta_mean": 0.9146605280102164,
+        "negatives_ranked_above_positive": 0.2614076246334311
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/eb1237df0acad3482b0aa87273892810bea987561961dc453605ed2128fe7cf6.L3.json"
     },
     {
       "sid_sha256": "95d19ed43a5875ae60915db99457a55f043babe4ad44c7a3f50c58f70c351ca7",
@@ -112,12 +228,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06352826476784067,
       "test_recall@5": 0.04188791587597277,
-      "q_h": 0.19765729153648648,
-      "buckets": 248,
-      "same_bucket_ratio": 0.006058083435814965,
-      "delta_mean": 0.671007786527326,
-      "negatives_ranked_above_positive": 0.29004446126194305,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/95d19ed43a5875ae60915db99457a55f043babe4ad44c7a3f50c58f70c351ca7.json"
+      "L1": {
+        "q_h": 0.19765729153648648,
+        "buckets": 248,
+        "same_bucket_ratio": 0.006058083435814965,
+        "delta_mean": 0.671007786527326,
+        "negatives_ranked_above_positive": 0.29004446126194305
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/95d19ed43a5875ae60915db99457a55f043babe4ad44c7a3f50c58f70c351ca7.L1.json",
+      "L2": {
+        "q_h": 0.18921501920417338,
+        "buckets": 16686,
+        "same_bucket_ratio": 7.946268091949674e-05,
+        "delta_mean": 0.8515679696945578,
+        "negatives_ranked_above_positive": 0.2927102450099328
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/95d19ed43a5875ae60915db99457a55f043babe4ad44c7a3f50c58f70c351ca7.L2.json",
+      "L3": {
+        "q_h": 0.25342120316665306,
+        "buckets": 23842,
+        "same_bucket_ratio": 7.567874373285404e-06,
+        "delta_mean": 0.9168353737428621,
+        "negatives_ranked_above_positive": 0.26013622173871914
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/95d19ed43a5875ae60915db99457a55f043babe4ad44c7a3f50c58f70c351ca7.L3.json"
     },
     {
       "sid_sha256": "94099bec716dbb846ffd0119bcd83f4e910b3b30e14bce94571630482f7fe9fb",
@@ -127,12 +261,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06338898657706436,
       "test_recall@5": 0.04171381813750239,
-      "q_h": 0.19388264800219357,
-      "buckets": 247,
-      "same_bucket_ratio": 0.006294579509980134,
-      "delta_mean": 0.666952513643639,
-      "negatives_ranked_above_positive": 0.2929675527386245,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/94099bec716dbb846ffd0119bcd83f4e910b3b30e14bce94571630482f7fe9fb.json"
+      "L1": {
+        "q_h": 0.19388264800219357,
+        "buckets": 247,
+        "same_bucket_ratio": 0.006294579509980134,
+        "delta_mean": 0.666952513643639,
+        "negatives_ranked_above_positive": 0.2929675527386245
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/94099bec716dbb846ffd0119bcd83f4e910b3b30e14bce94571630482f7fe9fb.L1.json",
+      "L2": {
+        "q_h": 0.18390410217957343,
+        "buckets": 16095,
+        "same_bucket_ratio": 0.0001305458329391732,
+        "delta_mean": 0.8361898697233333,
+        "negatives_ranked_above_positive": 0.29660959228076816
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/94099bec716dbb846ffd0119bcd83f4e910b3b30e14bce94571630482f7fe9fb.L2.json",
+      "L3": {
+        "q_h": 0.2508967785567926,
+        "buckets": 23654,
+        "same_bucket_ratio": 7.567874373285404e-06,
+        "delta_mean": 0.913162998862437,
+        "negatives_ranked_above_positive": 0.2613565414814114
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/94099bec716dbb846ffd0119bcd83f4e910b3b30e14bce94571630482f7fe9fb.L3.json"
     },
     {
       "sid_sha256": "c3d182e120c3fa6c2ea4d4058606fea0a3af19a333c629f078a0ab238c3008ac",
@@ -142,12 +294,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06335416702937029,
       "test_recall@5": 0.04265394592524243,
-      "q_h": 0.19368342208284772,
-      "buckets": 239,
-      "same_bucket_ratio": 0.0064043136883927725,
-      "delta_mean": 0.6612962818703724,
-      "negatives_ranked_above_positive": 0.29388137356919874,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c3d182e120c3fa6c2ea4d4058606fea0a3af19a333c629f078a0ab238c3008ac.json"
+      "L1": {
+        "q_h": 0.19368342208284772,
+        "buckets": 239,
+        "same_bucket_ratio": 0.0064043136883927725,
+        "delta_mean": 0.6612962818703724,
+        "negatives_ranked_above_positive": 0.29388137356919874
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c3d182e120c3fa6c2ea4d4058606fea0a3af19a333c629f078a0ab238c3008ac.L1.json",
+      "L2": {
+        "q_h": 0.1838082760042543,
+        "buckets": 15854,
+        "same_bucket_ratio": 0.00012486992715920916,
+        "delta_mean": 0.8403380803435315,
+        "negatives_ranked_above_positive": 0.2971298836439315
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c3d182e120c3fa6c2ea4d4058606fea0a3af19a333c629f078a0ab238c3008ac.L2.json",
+      "L3": {
+        "q_h": 0.2505611857829215,
+        "buckets": 23612,
+        "same_bucket_ratio": 1.3243780153249457e-05,
+        "delta_mean": 0.9137225017509992,
+        "negatives_ranked_above_positive": 0.26169709582820927
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c3d182e120c3fa6c2ea4d4058606fea0a3af19a333c629f078a0ab238c3008ac.L3.json"
     },
     {
       "sid_sha256": "5ed70aadbe517fac32b6cef0d1565fb4f1daa98db99f8dcd6d6a2a28bdb8b92d",
@@ -157,12 +327,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06302338132627658,
       "test_recall@5": 0.040808509897456435,
-      "q_h": 0.19534935871666714,
-      "buckets": 237,
-      "same_bucket_ratio": 0.0067694636269037935,
-      "delta_mean": 0.6622505938165487,
-      "negatives_ranked_above_positive": 0.2917131775612525,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5ed70aadbe517fac32b6cef0d1565fb4f1daa98db99f8dcd6d6a2a28bdb8b92d.json"
+      "L1": {
+        "q_h": 0.19534935871666714,
+        "buckets": 237,
+        "same_bucket_ratio": 0.0067694636269037935,
+        "delta_mean": 0.6622505938165487,
+        "negatives_ranked_above_positive": 0.2917131775612525
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5ed70aadbe517fac32b6cef0d1565fb4f1daa98db99f8dcd6d6a2a28bdb8b92d.L1.json",
+      "L2": {
+        "q_h": 0.1850806636391158,
+        "buckets": 15851,
+        "same_bucket_ratio": 0.0001343297701258159,
+        "delta_mean": 0.8385067405879686,
+        "negatives_ranked_above_positive": 0.29566360798410746
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5ed70aadbe517fac32b6cef0d1565fb4f1daa98db99f8dcd6d6a2a28bdb8b92d.L2.json",
+      "L3": {
+        "q_h": 0.2507580102219993,
+        "buckets": 23625,
+        "same_bucket_ratio": 2.270362311985621e-05,
+        "delta_mean": 0.9155340004363951,
+        "negatives_ranked_above_positive": 0.2616914199224293
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5ed70aadbe517fac32b6cef0d1565fb4f1daa98db99f8dcd6d6a2a28bdb8b92d.L3.json"
     },
     {
       "sid_sha256": "00829508cfa930ecb66ca9d58158be53e93b687d1218c50ee5cb35679fa9d35d",
@@ -172,12 +360,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06295374223088843,
       "test_recall@5": 0.04173122791134943,
-      "q_h": 0.1957319717104713,
-      "buckets": 239,
-      "same_bucket_ratio": 0.006459180777599092,
-      "delta_mean": 0.6671538927527603,
-      "negatives_ranked_above_positive": 0.292528616024974,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/00829508cfa930ecb66ca9d58158be53e93b687d1218c50ee5cb35679fa9d35d.json"
+      "L1": {
+        "q_h": 0.1957319717104713,
+        "buckets": 239,
+        "same_bucket_ratio": 0.006459180777599092,
+        "delta_mean": 0.6671538927527603,
+        "negatives_ranked_above_positive": 0.292528616024974
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/00829508cfa930ecb66ca9d58158be53e93b687d1218c50ee5cb35679fa9d35d.L1.json",
+      "L2": {
+        "q_h": 0.18381642178506485,
+        "buckets": 15695,
+        "same_bucket_ratio": 0.00013622173871913728,
+        "delta_mean": 0.8369065310908702,
+        "negatives_ranked_above_positive": 0.29664364771544793
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/00829508cfa930ecb66ca9d58158be53e93b687d1218c50ee5cb35679fa9d35d.L2.json",
+      "L3": {
+        "q_h": 0.2514368190283347,
+        "buckets": 23608,
+        "same_bucket_ratio": 2.081165452653486e-05,
+        "delta_mean": 0.9158561700215937,
+        "negatives_ranked_above_positive": 0.26135275754422477
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/00829508cfa930ecb66ca9d58158be53e93b687d1218c50ee5cb35679fa9d35d.L3.json"
     },
     {
       "sid_sha256": "ec1c026d9fd1f169b68c58cc90f9456d04efb6d7d9a4dab640ef4cf03555db91",
@@ -187,12 +393,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06283187381395916,
       "test_recall@5": 0.04187050610212573,
-      "q_h": 0.19493065150902866,
-      "buckets": 196,
-      "same_bucket_ratio": 0.007775990918550752,
-      "delta_mean": 0.6584436292157027,
-      "negatives_ranked_above_positive": 0.29179642417935864,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ec1c026d9fd1f169b68c58cc90f9456d04efb6d7d9a4dab640ef4cf03555db91.json"
+      "L1": {
+        "q_h": 0.19493065150902866,
+        "buckets": 196,
+        "same_bucket_ratio": 0.007775990918550752,
+        "delta_mean": 0.6584436292157027,
+        "negatives_ranked_above_positive": 0.29179642417935864
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ec1c026d9fd1f169b68c58cc90f9456d04efb6d7d9a4dab640ef4cf03555db91.L1.json",
+      "L2": {
+        "q_h": 0.17440948004877144,
+        "buckets": 14832,
+        "same_bucket_ratio": 0.00019108882792545645,
+        "delta_mean": 0.8219080706913129,
+        "negatives_ranked_above_positive": 0.30158925361838995
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ec1c026d9fd1f169b68c58cc90f9456d04efb6d7d9a4dab640ef4cf03555db91.L2.json",
+      "L3": {
+        "q_h": 0.24972166338534274,
+        "buckets": 23471,
+        "same_bucket_ratio": 1.702771733989216e-05,
+        "delta_mean": 0.913269673976184,
+        "negatives_ranked_above_positive": 0.2622779301863589
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ec1c026d9fd1f169b68c58cc90f9456d04efb6d7d9a4dab640ef4cf03555db91.L3.json"
     },
     {
       "sid_sha256": "59298051ee0d7b783d37c7c4a53f01eaeecf0cf89193f320931cce56736f2cf7",
@@ -202,12 +426,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06269259562318286,
       "test_recall@5": 0.04089555876669162,
-      "q_h": 0.1933596065992378,
-      "buckets": 248,
-      "same_bucket_ratio": 0.006243496357960458,
-      "delta_mean": 0.6646780933823518,
-      "negatives_ranked_above_positive": 0.2939400245955917,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/59298051ee0d7b783d37c7c4a53f01eaeecf0cf89193f320931cce56736f2cf7.json"
+      "L1": {
+        "q_h": 0.1933596065992378,
+        "buckets": 248,
+        "same_bucket_ratio": 0.006243496357960458,
+        "delta_mean": 0.6646780933823518,
+        "negatives_ranked_above_positive": 0.2939400245955917
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/59298051ee0d7b783d37c7c4a53f01eaeecf0cf89193f320931cce56736f2cf7.L1.json",
+      "L2": {
+        "q_h": 0.19053914448877196,
+        "buckets": 15992,
+        "same_bucket_ratio": 0.00013622173871913728,
+        "delta_mean": 0.8489580226216102,
+        "negatives_ranked_above_positive": 0.2929789045501845
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/59298051ee0d7b783d37c7c4a53f01eaeecf0cf89193f320931cce56736f2cf7.L2.json",
+      "L3": {
+        "q_h": 0.25101964013782285,
+        "buckets": 23637,
+        "same_bucket_ratio": 1.8919685933213508e-05,
+        "delta_mean": 0.9154402224639945,
+        "negatives_ranked_above_positive": 0.26129221454923846
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/59298051ee0d7b783d37c7c4a53f01eaeecf0cf89193f320931cce56736f2cf7.L3.json"
     },
     {
       "sid_sha256": "8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541",
@@ -217,12 +459,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06250108811086544,
       "test_recall@5": 0.04068664148052717,
-      "q_h": 0.0,
-      "buckets": 1,
-      "same_bucket_ratio": 1.0,
-      "delta_mean": 0.0,
-      "negatives_ranked_above_positive": 0.0,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541.json"
+      "L1": {
+        "q_h": 0.0,
+        "buckets": 1,
+        "same_bucket_ratio": 1.0,
+        "delta_mean": 0.0,
+        "negatives_ranked_above_positive": 0.0
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541.L1.json",
+      "L2": {
+        "q_h": 0.1855765173938918,
+        "buckets": 85,
+        "same_bucket_ratio": 0.026478100463532304,
+        "delta_mean": 0.5908170146174114,
+        "negatives_ranked_above_positive": 0.28328445747800585
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541.L2.json",
+      "L3": {
+        "q_h": 0.16057351432647338,
+        "buckets": 9093,
+        "same_bucket_ratio": 0.0005808343581496547,
+        "delta_mean": 0.7578730947606049,
+        "negatives_ranked_above_positive": 0.3090587456248226
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541.L3.json"
     },
     {
       "sid_sha256": "ad7c9eb130e9c7510e1fe5b9469eb184297764de0c6837a157314ba57c5336eb",
@@ -232,12 +492,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06241403924163025,
       "test_recall@5": 0.04204460384059611,
-      "q_h": 0.1940136515388976,
-      "buckets": 236,
-      "same_bucket_ratio": 0.006546211332891874,
-      "delta_mean": 0.6658306344925657,
-      "negatives_ranked_above_positive": 0.2924945605902942,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ad7c9eb130e9c7510e1fe5b9469eb184297764de0c6837a157314ba57c5336eb.json"
+      "L1": {
+        "q_h": 0.1940136515388976,
+        "buckets": 236,
+        "same_bucket_ratio": 0.006546211332891874,
+        "delta_mean": 0.6658306344925657,
+        "negatives_ranked_above_positive": 0.2924945605902942
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ad7c9eb130e9c7510e1fe5b9469eb184297764de0c6837a157314ba57c5336eb.L1.json",
+      "L2": {
+        "q_h": 0.18058603914018656,
+        "buckets": 15722,
+        "same_bucket_ratio": 0.00014946551887238673,
+        "delta_mean": 0.8330413765366776,
+        "negatives_ranked_above_positive": 0.29835587929240376
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ad7c9eb130e9c7510e1fe5b9469eb184297764de0c6837a157314ba57c5336eb.L2.json",
+      "L3": {
+        "q_h": 0.2515265438385974,
+        "buckets": 23650,
+        "same_bucket_ratio": 1.702771733989216e-05,
+        "delta_mean": 0.9143507443725238,
+        "negatives_ranked_above_positive": 0.2607548954687352
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ad7c9eb130e9c7510e1fe5b9469eb184297764de0c6837a157314ba57c5336eb.L3.json"
     },
     {
       "sid_sha256": "0936671326dd25180295038f87c15e6e90623c14c11959738dd992e339ff1f31",
@@ -247,12 +525,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06237921969393618,
       "test_recall@5": 0.041853096328278695,
-      "q_h": 0.19443035056363522,
-      "buckets": 235,
-      "same_bucket_ratio": 0.006483776369312269,
-      "delta_mean": 0.6643168899939328,
-      "negatives_ranked_above_positive": 0.2925986188629269,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0936671326dd25180295038f87c15e6e90623c14c11959738dd992e339ff1f31.json"
+      "L1": {
+        "q_h": 0.19443035056363522,
+        "buckets": 235,
+        "same_bucket_ratio": 0.006483776369312269,
+        "delta_mean": 0.6643168899939328,
+        "negatives_ranked_above_positive": 0.2925986188629269
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0936671326dd25180295038f87c15e6e90623c14c11959738dd992e339ff1f31.L1.json",
+      "L2": {
+        "q_h": 0.1840426372554662,
+        "buckets": 15734,
+        "same_bucket_ratio": 0.00014189764449910132,
+        "delta_mean": 0.8412572603146116,
+        "negatives_ranked_above_positive": 0.29622173871913726
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0936671326dd25180295038f87c15e6e90623c14c11959738dd992e339ff1f31.L2.json",
+      "L3": {
+        "q_h": 0.25083789642689147,
+        "buckets": 23628,
+        "same_bucket_ratio": 1.702771733989216e-05,
+        "delta_mean": 0.9132886015441349,
+        "negatives_ranked_above_positive": 0.2614624917226374
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0936671326dd25180295038f87c15e6e90623c14c11959738dd992e339ff1f31.L3.json"
     },
     {
       "sid_sha256": "07c3eec59a493149023eae03284d9a4b846d0ef675f5ae4df2c9f7627171f738",
@@ -262,12 +558,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06225735127700691,
       "test_recall@5": 0.04115670537439719,
-      "q_h": 0.1935407079906507,
-      "buckets": 255,
-      "same_bucket_ratio": 0.0062529562009270645,
-      "delta_mean": 0.6679068171299753,
-      "negatives_ranked_above_positive": 0.29334216252010215,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/07c3eec59a493149023eae03284d9a4b846d0ef675f5ae4df2c9f7627171f738.json"
+      "L1": {
+        "q_h": 0.1935407079906507,
+        "buckets": 255,
+        "same_bucket_ratio": 0.0062529562009270645,
+        "delta_mean": 0.6679068171299753,
+        "negatives_ranked_above_positive": 0.29334216252010215
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/07c3eec59a493149023eae03284d9a4b846d0ef675f5ae4df2c9f7627171f738.L1.json",
+      "L2": {
+        "q_h": 0.1868659774944067,
+        "buckets": 16330,
+        "same_bucket_ratio": 0.00012486992715920916,
+        "delta_mean": 0.8428157047188437,
+        "negatives_ranked_above_positive": 0.29529278213981647
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/07c3eec59a493149023eae03284d9a4b846d0ef675f5ae4df2c9f7627171f738.L2.json",
+      "L3": {
+        "q_h": 0.25089965517502455,
+        "buckets": 23648,
+        "same_bucket_ratio": 1.8919685933213508e-05,
+        "delta_mean": 0.9130264873971765,
+        "negatives_ranked_above_positive": 0.2613622173871914
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/07c3eec59a493149023eae03284d9a4b846d0ef675f5ae4df2c9f7627171f738.L3.json"
     },
     {
       "sid_sha256": "f302449845c011a7d080651519353c8891d330e5a2f5fec71ee21bf71f4cc32e",
@@ -277,12 +591,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.061943975347760236,
       "test_recall@5": 0.04077369034976236,
-      "q_h": 0.19920294239882574,
-      "buckets": 251,
-      "same_bucket_ratio": 0.009703906915145208,
-      "delta_mean": 0.6544964330987395,
-      "negatives_ranked_above_positive": 0.28658026676757165,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f302449845c011a7d080651519353c8891d330e5a2f5fec71ee21bf71f4cc32e.json"
+      "L1": {
+        "q_h": 0.19920294239882574,
+        "buckets": 251,
+        "same_bucket_ratio": 0.009703906915145208,
+        "delta_mean": 0.6544964330987395,
+        "negatives_ranked_above_positive": 0.28658026676757165
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f302449845c011a7d080651519353c8891d330e5a2f5fec71ee21bf71f4cc32e.L1.json",
+      "L2": {
+        "q_h": 0.16431911247031517,
+        "buckets": 15041,
+        "same_bucket_ratio": 0.00033677040961120044,
+        "delta_mean": 0.8110436953582876,
+        "negatives_ranked_above_positive": 0.30800491911834266
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f302449845c011a7d080651519353c8891d330e5a2f5fec71ee21bf71f4cc32e.L2.json",
+      "L3": {
+        "q_h": 0.24222597051652306,
+        "buckets": 23791,
+        "same_bucket_ratio": 5.297512061299783e-05,
+        "delta_mean": 0.9030922363572366,
+        "negatives_ranked_above_positive": 0.2660656513101883
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f302449845c011a7d080651519353c8891d330e5a2f5fec71ee21bf71f4cc32e.L3.json"
     },
     {
       "sid_sha256": "2be9aceab751537bcebdceb6a7d1708d18c10adc661db73ddf20d3619a587ad4",
@@ -292,12 +624,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.0619265655739132,
       "test_recall@5": 0.040721461028221245,
-      "q_h": 0.19608949862434344,
-      "buckets": 238,
-      "same_bucket_ratio": 0.006701352757544225,
-      "delta_mean": 0.6697254715745964,
-      "negatives_ranked_above_positive": 0.2923356352284552,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2be9aceab751537bcebdceb6a7d1708d18c10adc661db73ddf20d3619a587ad4.json"
+      "L1": {
+        "q_h": 0.19608949862434344,
+        "buckets": 238,
+        "same_bucket_ratio": 0.006701352757544225,
+        "delta_mean": 0.6697254715745964,
+        "negatives_ranked_above_positive": 0.2923356352284552
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2be9aceab751537bcebdceb6a7d1708d18c10adc661db73ddf20d3619a587ad4.L1.json",
+      "L2": {
+        "q_h": 0.18656698730120402,
+        "buckets": 15748,
+        "same_bucket_ratio": 0.00013622173871913728,
+        "delta_mean": 0.8443328760821601,
+        "negatives_ranked_above_positive": 0.295160344338284
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2be9aceab751537bcebdceb6a7d1708d18c10adc661db73ddf20d3619a587ad4.L2.json",
+      "L3": {
+        "q_h": 0.2519073506962889,
+        "buckets": 23640,
+        "same_bucket_ratio": 1.3243780153249457e-05,
+        "delta_mean": 0.9151685854631245,
+        "negatives_ranked_above_positive": 0.2609497682338473
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2be9aceab751537bcebdceb6a7d1708d18c10adc661db73ddf20d3619a587ad4.L3.json"
     },
     {
       "sid_sha256": "3ceb2d57a7443bc80749b9868a17c1698f6a088c3f77cbb006dbbde4aaaa4e2f",
@@ -307,12 +657,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.061874336252372084,
       "test_recall@5": 0.04094778808823273,
-      "q_h": 0.2006285333265363,
-      "buckets": 248,
-      "same_bucket_ratio": 0.009730394475451707,
-      "delta_mean": 0.6601182135111862,
-      "negatives_ranked_above_positive": 0.28580077570712326,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/3ceb2d57a7443bc80749b9868a17c1698f6a088c3f77cbb006dbbde4aaaa4e2f.json"
+      "L1": {
+        "q_h": 0.2006285333265363,
+        "buckets": 248,
+        "same_bucket_ratio": 0.009730394475451707,
+        "delta_mean": 0.6601182135111862,
+        "negatives_ranked_above_positive": 0.28580077570712326
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/3ceb2d57a7443bc80749b9868a17c1698f6a088c3f77cbb006dbbde4aaaa4e2f.L1.json",
+      "L2": {
+        "q_h": 0.16108176002239094,
+        "buckets": 15037,
+        "same_bucket_ratio": 0.0003159587550846656,
+        "delta_mean": 0.80176433290957,
+        "negatives_ranked_above_positive": 0.31024879387002174
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/3ceb2d57a7443bc80749b9868a17c1698f6a088c3f77cbb006dbbde4aaaa4e2f.L2.json",
+      "L3": {
+        "q_h": 0.2428301985295278,
+        "buckets": 23794,
+        "same_bucket_ratio": 4.919118342635512e-05,
+        "delta_mean": 0.90491106121083,
+        "negatives_ranked_above_positive": 0.26603727178128844
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/3ceb2d57a7443bc80749b9868a17c1698f6a088c3f77cbb006dbbde4aaaa4e2f.L3.json"
     },
     {
       "sid_sha256": "15b540a23491e965e5ecc1b2fef67d1e477408713712ff90cedb2ab709805d5f",
@@ -322,12 +690,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06161318964466651,
       "test_recall@5": 0.040930378314385694,
-      "q_h": 0.12959027628038566,
-      "buckets": 175,
-      "same_bucket_ratio": 0.04301768990634756,
-      "delta_mean": 0.42712107181589853,
-      "negatives_ranked_above_positive": 0.31662094409232805,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/15b540a23491e965e5ecc1b2fef67d1e477408713712ff90cedb2ab709805d5f.json"
+      "L1": {
+        "q_h": 0.12959027628038566,
+        "buckets": 175,
+        "same_bucket_ratio": 0.04301768990634756,
+        "delta_mean": 0.42712107181589853,
+        "negatives_ranked_above_positive": 0.31662094409232805
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/15b540a23491e965e5ecc1b2fef67d1e477408713712ff90cedb2ab709805d5f.L1.json",
+      "L2": {
+        "q_h": 0.18023966919394474,
+        "buckets": 2682,
+        "same_bucket_ratio": 0.003651499385110207,
+        "delta_mean": 0.7059199004399271,
+        "negatives_ranked_above_positive": 0.3016062813357298
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/15b540a23491e965e5ecc1b2fef67d1e477408713712ff90cedb2ab709805d5f.L2.json",
+      "L3": {
+        "q_h": 0.20294390529316964,
+        "buckets": 19000,
+        "same_bucket_ratio": 0.00015892536183899347,
+        "delta_mean": 0.8631470781258833,
+        "negatives_ranked_above_positive": 0.2875584145303188
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/15b540a23491e965e5ecc1b2fef67d1e477408713712ff90cedb2ab709805d5f.L3.json"
     },
     {
       "sid_sha256": "84126c626920322f0600dee1317481780e53e82d7e5161bef1fabaa11b7339e6",
@@ -337,12 +723,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.0615609603231254,
       "test_recall@5": 0.041295983565173486,
-      "q_h": 0.1953682120432425,
-      "buckets": 252,
-      "same_bucket_ratio": 0.009378488317093937,
-      "delta_mean": 0.6643379699271968,
-      "negatives_ranked_above_positive": 0.28857440166493237,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/84126c626920322f0600dee1317481780e53e82d7e5161bef1fabaa11b7339e6.json"
+      "L1": {
+        "q_h": 0.1953682120432425,
+        "buckets": 252,
+        "same_bucket_ratio": 0.009378488317093937,
+        "delta_mean": 0.6643379699271968,
+        "negatives_ranked_above_positive": 0.28857440166493237
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/84126c626920322f0600dee1317481780e53e82d7e5161bef1fabaa11b7339e6.L1.json",
+      "L2": {
+        "q_h": 0.19072609182996536,
+        "buckets": 13903,
+        "same_bucket_ratio": 0.00028379528899820264,
+        "delta_mean": 0.841571792072036,
+        "negatives_ranked_above_positive": 0.29464572888090057
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/84126c626920322f0600dee1317481780e53e82d7e5161bef1fabaa11b7339e6.L2.json",
+      "L3": {
+        "q_h": 0.25184907527309786,
+        "buckets": 23781,
+        "same_bucket_ratio": 3.0271497493141614e-05,
+        "delta_mean": 0.9159765987081578,
+        "negatives_ranked_above_positive": 0.26114085706177276
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/84126c626920322f0600dee1317481780e53e82d7e5161bef1fabaa11b7339e6.L3.json"
     },
     {
       "sid_sha256": "7c3ae0965e2463d937fd1374ec1618d869a5be8d4d5104983f82e4470d206a08",
@@ -352,12 +756,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06150873100158429,
       "test_recall@5": 0.03990320165741047,
-      "q_h": 0.11428612863067455,
-      "buckets": 25,
-      "same_bucket_ratio": 0.4635890644215306,
-      "delta_mean": 0.2920536552614997,
-      "negatives_ranked_above_positive": 0.12490587456248227,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7c3ae0965e2463d937fd1374ec1618d869a5be8d4d5104983f82e4470d206a08.json"
+      "L1": {
+        "q_h": 0.11428612863067455,
+        "buckets": 25,
+        "same_bucket_ratio": 0.4635890644215306,
+        "delta_mean": 0.2920536552614997,
+        "negatives_ranked_above_positive": 0.12490587456248227
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7c3ae0965e2463d937fd1374ec1618d869a5be8d4d5104983f82e4470d206a08.L1.json",
+      "L2": {
+        "q_h": 0.18194479973671496,
+        "buckets": 783,
+        "same_bucket_ratio": 0.011073692176709867,
+        "delta_mean": 0.6493226442278005,
+        "negatives_ranked_above_positive": 0.29693690284741275
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7c3ae0965e2463d937fd1374ec1618d869a5be8d4d5104983f82e4470d206a08.L2.json",
+      "L3": {
+        "q_h": 0.16174700768764372,
+        "buckets": 14172,
+        "same_bucket_ratio": 0.00018541292214549238,
+        "delta_mean": 0.8161219948467515,
+        "negatives_ranked_above_positive": 0.3077986945416706
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7c3ae0965e2463d937fd1374ec1618d869a5be8d4d5104983f82e4470d206a08.L3.json"
     },
     {
       "sid_sha256": "e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7",
@@ -367,12 +789,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.061404272358502064,
       "test_recall@5": 0.040912968540538656,
-      "q_h": 0.0,
-      "buckets": 1,
-      "same_bucket_ratio": 1.0,
-      "delta_mean": 0.0,
-      "negatives_ranked_above_positive": 0.0,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7.json"
+      "L1": {
+        "q_h": 0.0,
+        "buckets": 1,
+        "same_bucket_ratio": 1.0,
+        "delta_mean": 0.0,
+        "negatives_ranked_above_positive": 0.0
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7.L1.json",
+      "L2": {
+        "q_h": 0.18824123061281706,
+        "buckets": 97,
+        "same_bucket_ratio": 0.02669567685176426,
+        "delta_mean": 0.5930520958709826,
+        "negatives_ranked_above_positive": 0.2824368555481979
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7.L2.json",
+      "L3": {
+        "q_h": 0.15905872456118797,
+        "buckets": 9324,
+        "same_bucket_ratio": 0.0005089395516034434,
+        "delta_mean": 0.7554710071112338,
+        "negatives_ranked_above_positive": 0.3102714974931416
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7.L3.json"
     },
     {
       "sid_sha256": "a5a6eb96f9be1c6937ed080204465fad0f79c6926c6ddd2feac8f1368c577a90",
@@ -382,12 +822,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.061386862584655026,
       "test_recall@5": 0.040338446003586416,
-      "q_h": 0.197531754612423,
-      "buckets": 242,
-      "same_bucket_ratio": 0.006695676851764261,
-      "delta_mean": 0.6735127807887085,
-      "negatives_ranked_above_positive": 0.29043231482357396,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a5a6eb96f9be1c6937ed080204465fad0f79c6926c6ddd2feac8f1368c577a90.json"
+      "L1": {
+        "q_h": 0.197531754612423,
+        "buckets": 242,
+        "same_bucket_ratio": 0.006695676851764261,
+        "delta_mean": 0.6735127807887085,
+        "negatives_ranked_above_positive": 0.29043231482357396
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a5a6eb96f9be1c6937ed080204465fad0f79c6926c6ddd2feac8f1368c577a90.L1.json",
+      "L2": {
+        "q_h": 0.19804594625327476,
+        "buckets": 17112,
+        "same_bucket_ratio": 0.00010216630403935295,
+        "delta_mean": 0.8579731847278557,
+        "negatives_ranked_above_positive": 0.2873484060164601
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a5a6eb96f9be1c6937ed080204465fad0f79c6926c6ddd2feac8f1368c577a90.L2.json",
+      "L3": {
+        "q_h": 0.25529121028792656,
+        "buckets": 23866,
+        "same_bucket_ratio": 1.5135748746570807e-05,
+        "delta_mean": 0.9200580085653168,
+        "negatives_ranked_above_positive": 0.2591656418503453
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a5a6eb96f9be1c6937ed080204465fad0f79c6926c6ddd2feac8f1368c577a90.L3.json"
     },
     {
       "sid_sha256": "e3e3b2db9e31ff005af3c23d2ad26c3deee4fc6a1d1391df35e5fd4b35780915",
@@ -397,12 +855,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06136945281080799,
       "test_recall@5": 0.040268806908198264,
-      "q_h": 0.18753577501447805,
-      "buckets": 256,
-      "same_bucket_ratio": 0.008485479141046259,
-      "delta_mean": 0.6293471431481737,
-      "negatives_ranked_above_positive": 0.2939343486898118,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e3e3b2db9e31ff005af3c23d2ad26c3deee4fc6a1d1391df35e5fd4b35780915.json"
+      "L1": {
+        "q_h": 0.18753577501447805,
+        "buckets": 256,
+        "same_bucket_ratio": 0.008485479141046259,
+        "delta_mean": 0.6293471431481737,
+        "negatives_ranked_above_positive": 0.2939343486898118
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e3e3b2db9e31ff005af3c23d2ad26c3deee4fc6a1d1391df35e5fd4b35780915.L1.json",
+      "L2": {
+        "q_h": 0.1587623865908918,
+        "buckets": 9902,
+        "same_bucket_ratio": 0.0005562387664364771,
+        "delta_mean": 0.7557179791619212,
+        "negatives_ranked_above_positive": 0.3107085422381988
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e3e3b2db9e31ff005af3c23d2ad26c3deee4fc6a1d1391df35e5fd4b35780915.L2.json",
+      "L3": {
+        "q_h": 0.24663495983212225,
+        "buckets": 23481,
+        "same_bucket_ratio": 2.8379528899820262e-05,
+        "delta_mean": 0.9168224248094178,
+        "negatives_ranked_above_positive": 0.2643950430422855
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e3e3b2db9e31ff005af3c23d2ad26c3deee4fc6a1d1391df35e5fd4b35780915.L3.json"
     },
     {
       "sid_sha256": "cc6e729ccab9f00dda3fb5c3b923554b05afe780e2602f047e4ab5e5118b1b0a",
@@ -412,12 +888,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.061317223489266874,
       "test_recall@5": 0.04012952871742196,
-      "q_h": 0.19701926245304968,
-      "buckets": 240,
-      "same_bucket_ratio": 0.007136505534008135,
-      "delta_mean": 0.648983521506478,
-      "negatives_ranked_above_positive": 0.28993661905212376,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/cc6e729ccab9f00dda3fb5c3b923554b05afe780e2602f047e4ab5e5118b1b0a.json"
+      "L1": {
+        "q_h": 0.19701926245304968,
+        "buckets": 240,
+        "same_bucket_ratio": 0.007136505534008135,
+        "delta_mean": 0.648983521506478,
+        "negatives_ranked_above_positive": 0.28993661905212376
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/cc6e729ccab9f00dda3fb5c3b923554b05afe780e2602f047e4ab5e5118b1b0a.L1.json",
+      "L2": {
+        "q_h": 0.15459376043478346,
+        "buckets": 13592,
+        "same_bucket_ratio": 0.0003802856872575915,
+        "delta_mean": 0.8004197868449605,
+        "negatives_ranked_above_positive": 0.31374515183047963
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/cc6e729ccab9f00dda3fb5c3b923554b05afe780e2602f047e4ab5e5118b1b0a.L2.json",
+      "L3": {
+        "q_h": 0.2331715701317566,
+        "buckets": 22832,
+        "same_bucket_ratio": 6.243496357960458e-05,
+        "delta_mean": 0.8929847464798484,
+        "negatives_ranked_above_positive": 0.2712080219468357
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/cc6e729ccab9f00dda3fb5c3b923554b05afe780e2602f047e4ab5e5118b1b0a.L3.json"
     },
     {
       "sid_sha256": "511495573338271bb5df2b42683d2a73718afa7bf9ab3a330eca2eb6f94c6508",
@@ -427,12 +921,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06103866710771427,
       "test_recall@5": 0.040825919671303466,
-      "q_h": 0.1955664679967496,
-      "buckets": 247,
-      "same_bucket_ratio": 0.006389177939646202,
-      "delta_mean": 0.6627511866680347,
-      "negatives_ranked_above_positive": 0.2922183331756693,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/511495573338271bb5df2b42683d2a73718afa7bf9ab3a330eca2eb6f94c6508.json"
+      "L1": {
+        "q_h": 0.1955664679967496,
+        "buckets": 247,
+        "same_bucket_ratio": 0.006389177939646202,
+        "delta_mean": 0.6627511866680347,
+        "negatives_ranked_above_positive": 0.2922183331756693
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/511495573338271bb5df2b42683d2a73718afa7bf9ab3a330eca2eb6f94c6508.L1.json",
+      "L2": {
+        "q_h": 0.18014189921243196,
+        "buckets": 15429,
+        "same_bucket_ratio": 0.00012108598997256646,
+        "delta_mean": 0.832714021854333,
+        "negatives_ranked_above_positive": 0.29882887144073406
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/511495573338271bb5df2b42683d2a73718afa7bf9ab3a330eca2eb6f94c6508.L2.json",
+      "L3": {
+        "q_h": 0.25037288611333297,
+        "buckets": 23520,
+        "same_bucket_ratio": 1.8919685933213508e-05,
+        "delta_mean": 0.9123252098248863,
+        "negatives_ranked_above_positive": 0.2616706082679027
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/511495573338271bb5df2b42683d2a73718afa7bf9ab3a330eca2eb6f94c6508.L3.json"
     },
     {
       "sid_sha256": "7a65c284d034f2e1aa00950fc305f3604f26f349b543eddd4b40b2e7f38f1662",
@@ -442,12 +954,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.0610038475600202,
       "test_recall@5": 0.04098260763592681,
-      "q_h": 0.1927813677254614,
-      "buckets": 243,
-      "same_bucket_ratio": 0.006867845993756503,
-      "delta_mean": 0.6579343117768348,
-      "negatives_ranked_above_positive": 0.2934008135464951,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7a65c284d034f2e1aa00950fc305f3604f26f349b543eddd4b40b2e7f38f1662.json"
+      "L1": {
+        "q_h": 0.1927813677254614,
+        "buckets": 243,
+        "same_bucket_ratio": 0.006867845993756503,
+        "delta_mean": 0.6579343117768348,
+        "negatives_ranked_above_positive": 0.2934008135464951
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7a65c284d034f2e1aa00950fc305f3604f26f349b543eddd4b40b2e7f38f1662.L1.json",
+      "L2": {
+        "q_h": 0.18449882529276285,
+        "buckets": 14976,
+        "same_bucket_ratio": 0.00014378961309242266,
+        "delta_mean": 0.8372026816916331,
+        "negatives_ranked_above_positive": 0.29612903225806453
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7a65c284d034f2e1aa00950fc305f3604f26f349b543eddd4b40b2e7f38f1662.L2.json",
+      "L3": {
+        "q_h": 0.2515964561456896,
+        "buckets": 23520,
+        "same_bucket_ratio": 2.081165452653486e-05,
+        "delta_mean": 0.9149189655592316,
+        "negatives_ranked_above_positive": 0.2610897739097531
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7a65c284d034f2e1aa00950fc305f3604f26f349b543eddd4b40b2e7f38f1662.L3.json"
     },
     {
       "sid_sha256": "b3643d04ae2336a105b78edf58d1400926c8497cf10924bbcaae28c6f36a19d3",
@@ -457,12 +987,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06088197914309093,
       "test_recall@5": 0.039624645275857864,
-      "q_h": 0.1974241442558986,
-      "buckets": 256,
-      "same_bucket_ratio": 0.006012676189575253,
-      "delta_mean": 0.6730032225145671,
-      "negatives_ranked_above_positive": 0.2904758301012203,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b3643d04ae2336a105b78edf58d1400926c8497cf10924bbcaae28c6f36a19d3.json"
+      "L1": {
+        "q_h": 0.1974241442558986,
+        "buckets": 256,
+        "same_bucket_ratio": 0.006012676189575253,
+        "delta_mean": 0.6730032225145671,
+        "negatives_ranked_above_positive": 0.2904758301012203
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b3643d04ae2336a105b78edf58d1400926c8497cf10924bbcaae28c6f36a19d3.L1.json",
+      "L2": {
+        "q_h": 0.19002765786685405,
+        "buckets": 16386,
+        "same_bucket_ratio": 0.00014000567590577995,
+        "delta_mean": 0.847925739008683,
+        "negatives_ranked_above_positive": 0.29328918739948917
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b3643d04ae2336a105b78edf58d1400926c8497cf10924bbcaae28c6f36a19d3.L2.json",
+      "L3": {
+        "q_h": 0.25225338673106423,
+        "buckets": 23727,
+        "same_bucket_ratio": 1.1351811559928105e-05,
+        "delta_mean": 0.9160606301794756,
+        "negatives_ranked_above_positive": 0.2606281335729827
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b3643d04ae2336a105b78edf58d1400926c8497cf10924bbcaae28c6f36a19d3.L3.json"
     },
     {
       "sid_sha256": "65819d4075542a755c233958c5655b36870eb119c8fef4f5061332b0f98d6441",
@@ -472,12 +1020,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.060847159595396855,
       "test_recall@5": 0.03918940092968192,
-      "q_h": 0.1994278291524748,
-      "buckets": 252,
-      "same_bucket_ratio": 0.009109828776842304,
-      "delta_mean": 0.6733302726429384,
-      "negatives_ranked_above_positive": 0.28614700595970105,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/65819d4075542a755c233958c5655b36870eb119c8fef4f5061332b0f98d6441.json"
+      "L1": {
+        "q_h": 0.1994278291524748,
+        "buckets": 252,
+        "same_bucket_ratio": 0.009109828776842304,
+        "delta_mean": 0.6733302726429384,
+        "negatives_ranked_above_positive": 0.28614700595970105
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/65819d4075542a755c233958c5655b36870eb119c8fef4f5061332b0f98d6441.L1.json",
+      "L2": {
+        "q_h": 0.19301174338574323,
+        "buckets": 13941,
+        "same_bucket_ratio": 0.0003140667864913442,
+        "delta_mean": 0.8436329688778951,
+        "negatives_ranked_above_positive": 0.293211616687163
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/65819d4075542a755c233958c5655b36870eb119c8fef4f5061332b0f98d6441.L2.json",
+      "L3": {
+        "q_h": 0.2502050737991587,
+        "buckets": 23702,
+        "same_bucket_ratio": 3.7839371866427016e-05,
+        "delta_mean": 0.9129361138322175,
+        "negatives_ranked_above_positive": 0.2618522372528616
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/65819d4075542a755c233958c5655b36870eb119c8fef4f5061332b0f98d6441.L3.json"
     },
     {
       "sid_sha256": "8c28fb6944d2283b8523f5d24fff7292be19a33f6061f0e69e48d81c5faaced3",
@@ -487,12 +1053,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.060760110726161665,
       "test_recall@5": 0.03967687459739898,
-      "q_h": 0.19880001224286337,
-      "buckets": 205,
-      "same_bucket_ratio": 0.007917888563049853,
-      "delta_mean": 0.6386255155324259,
-      "negatives_ranked_above_positive": 0.2878062624160439,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8c28fb6944d2283b8523f5d24fff7292be19a33f6061f0e69e48d81c5faaced3.json"
+      "L1": {
+        "q_h": 0.19880001224286337,
+        "buckets": 205,
+        "same_bucket_ratio": 0.007917888563049853,
+        "delta_mean": 0.6386255155324259,
+        "negatives_ranked_above_positive": 0.2878062624160439
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8c28fb6944d2283b8523f5d24fff7292be19a33f6061f0e69e48d81c5faaced3.L1.json",
+      "L2": {
+        "q_h": 0.15717546739363653,
+        "buckets": 13181,
+        "same_bucket_ratio": 0.000323526629457951,
+        "delta_mean": 0.8072481453724724,
+        "negatives_ranked_above_positive": 0.3120612997824236
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8c28fb6944d2283b8523f5d24fff7292be19a33f6061f0e69e48d81c5faaced3.L2.json",
+      "L3": {
+        "q_h": 0.23921391279382898,
+        "buckets": 22954,
+        "same_bucket_ratio": 5.675905779964052e-06,
+        "delta_mean": 0.903910525970044,
+        "negatives_ranked_above_positive": 0.26793302431179644
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8c28fb6944d2283b8523f5d24fff7292be19a33f6061f0e69e48d81c5faaced3.L3.json"
     },
     {
       "sid_sha256": "e2073a4ea3e1e418ca8696736008161a851f6df9e2b31c66d0fc6344745fc9ba",
@@ -502,12 +1086,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06072529117846759,
       "test_recall@5": 0.04051254374205679,
-      "q_h": 0.19378115222096892,
-      "buckets": 256,
-      "same_bucket_ratio": 0.00588213035663608,
-      "delta_mean": 0.6618177580287224,
-      "negatives_ranked_above_positive": 0.2934500047299215,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e2073a4ea3e1e418ca8696736008161a851f6df9e2b31c66d0fc6344745fc9ba.json"
+      "L1": {
+        "q_h": 0.19378115222096892,
+        "buckets": 256,
+        "same_bucket_ratio": 0.00588213035663608,
+        "delta_mean": 0.6618177580287224,
+        "negatives_ranked_above_positive": 0.2934500047299215
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e2073a4ea3e1e418ca8696736008161a851f6df9e2b31c66d0fc6344745fc9ba.L1.json",
+      "L2": {
+        "q_h": 0.18831325402064059,
+        "buckets": 16407,
+        "same_bucket_ratio": 0.00012486992715920916,
+        "delta_mean": 0.8468726403141177,
+        "negatives_ranked_above_positive": 0.29403840696244443
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e2073a4ea3e1e418ca8696736008161a851f6df9e2b31c66d0fc6344745fc9ba.L2.json",
+      "L3": {
+        "q_h": 0.25193924695211967,
+        "buckets": 23696,
+        "same_bucket_ratio": 1.8919685933213508e-05,
+        "delta_mean": 0.915847668587014,
+        "negatives_ranked_above_positive": 0.260735975782802
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e2073a4ea3e1e418ca8696736008161a851f6df9e2b31c66d0fc6344745fc9ba.L3.json"
     },
     {
       "sid_sha256": "16b024dff4b814e4adb612c4f6309ee2db83e8d43023540efc2f7c47af22c155",
@@ -517,12 +1119,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.0604989641184561,
       "test_recall@5": 0.040268806908198264,
-      "q_h": 0.18769839077546702,
-      "buckets": 256,
-      "same_bucket_ratio": 0.0057269889319837295,
-      "delta_mean": 0.6090522564218688,
-      "negatives_ranked_above_positive": 0.2938851575063854,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/16b024dff4b814e4adb612c4f6309ee2db83e8d43023540efc2f7c47af22c155.json"
+      "L1": {
+        "q_h": 0.18769839077546702,
+        "buckets": 256,
+        "same_bucket_ratio": 0.0057269889319837295,
+        "delta_mean": 0.6090522564218688,
+        "negatives_ranked_above_positive": 0.2938851575063854
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/16b024dff4b814e4adb612c4f6309ee2db83e8d43023540efc2f7c47af22c155.L1.json",
+      "L2": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/16b024dff4b814e4adb612c4f6309ee2db83e8d43023540efc2f7c47af22c155.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/16b024dff4b814e4adb612c4f6309ee2db83e8d43023540efc2f7c47af22c155.L3.json"
     },
     {
       "sid_sha256": "0a72486f6f6bc5d6bc3a71da4f211e84851b176a52593fc7375c21a09f497290",
@@ -532,12 +1152,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.06042932502306795,
       "test_recall@5": 0.04023398736050419,
-      "q_h": 0.19104288533446456,
-      "buckets": 256,
-      "same_bucket_ratio": 0.005626714596537697,
-      "delta_mean": 0.6147241288209149,
-      "negatives_ranked_above_positive": 0.29175858480749217,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0a72486f6f6bc5d6bc3a71da4f211e84851b176a52593fc7375c21a09f497290.json"
+      "L1": {
+        "q_h": 0.19104288533446456,
+        "buckets": 256,
+        "same_bucket_ratio": 0.005626714596537697,
+        "delta_mean": 0.6147241288209149,
+        "negatives_ranked_above_positive": 0.29175858480749217
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0a72486f6f6bc5d6bc3a71da4f211e84851b176a52593fc7375c21a09f497290.L1.json",
+      "L2": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0a72486f6f6bc5d6bc3a71da4f211e84851b176a52593fc7375c21a09f497290.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0a72486f6f6bc5d6bc3a71da4f211e84851b176a52593fc7375c21a09f497290.L3.json"
     },
     {
       "sid_sha256": "46d920cc521733b024f4fa72d04c283540c4e35ba19aabce3afb8c63dbbcf5f6",
@@ -547,12 +1185,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.060168178415362386,
       "test_recall@5": 0.03927644979891711,
-      "q_h": 0.18829843279223357,
-      "buckets": 239,
-      "same_bucket_ratio": 0.007077854507615174,
-      "delta_mean": 0.6621678061475045,
-      "negatives_ranked_above_positive": 0.2964468829817425,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/46d920cc521733b024f4fa72d04c283540c4e35ba19aabce3afb8c63dbbcf5f6.json"
+      "L1": {
+        "q_h": 0.18829843279223357,
+        "buckets": 239,
+        "same_bucket_ratio": 0.007077854507615174,
+        "delta_mean": 0.6621678061475045,
+        "negatives_ranked_above_positive": 0.2964468829817425
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/46d920cc521733b024f4fa72d04c283540c4e35ba19aabce3afb8c63dbbcf5f6.L1.json",
+      "L2": {
+        "q_h": 0.18867623146672363,
+        "buckets": 16653,
+        "same_bucket_ratio": 0.0001191940213792451,
+        "delta_mean": 0.8400847232706667,
+        "negatives_ranked_above_positive": 0.29271402894711945
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/46d920cc521733b024f4fa72d04c283540c4e35ba19aabce3afb8c63dbbcf5f6.L2.json",
+      "L3": {
+        "q_h": 0.25442327780001417,
+        "buckets": 23763,
+        "same_bucket_ratio": 9.459842966606754e-06,
+        "delta_mean": 0.918929679766747,
+        "negatives_ranked_above_positive": 0.25954592753760286
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/46d920cc521733b024f4fa72d04c283540c4e35ba19aabce3afb8c63dbbcf5f6.L3.json"
     },
     {
       "sid_sha256": "0fe39b181871152fe453f72f61af8a45b038b3f3ea2f48b274287b9ad311766b",
@@ -562,12 +1218,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.060081129546127196,
       "test_recall@5": 0.03920681070352896,
-      "q_h": 0.18340876327739974,
-      "buckets": 256,
-      "same_bucket_ratio": 0.004877495033582442,
-      "delta_mean": 0.6546208787043628,
-      "negatives_ranked_above_positive": 0.3000794626809195,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0fe39b181871152fe453f72f61af8a45b038b3f3ea2f48b274287b9ad311766b.json"
+      "L1": {
+        "q_h": 0.18340876327739974,
+        "buckets": 256,
+        "same_bucket_ratio": 0.004877495033582442,
+        "delta_mean": 0.6546208787043628,
+        "negatives_ranked_above_positive": 0.3000794626809195
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0fe39b181871152fe453f72f61af8a45b038b3f3ea2f48b274287b9ad311766b.L1.json",
+      "L2": {
+        "q_h": 0.2560397701855206,
+        "buckets": 24531,
+        "same_bucket_ratio": 1.891968593321351e-06,
+        "delta_mean": 0.9216066301848881,
+        "negatives_ranked_above_positive": 0.2587948160060543
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0fe39b181871152fe453f72f61af8a45b038b3f3ea2f48b274287b9ad311766b.L2.json",
+      "L3": {
+        "q_h": 0.2560904245439888,
+        "buckets": 24539,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614333079304,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0fe39b181871152fe453f72f61af8a45b038b3f3ea2f48b274287b9ad311766b.L3.json"
     },
     {
       "sid_sha256": "858ac30df43405b0f4c377edff8fff0dad2b973bb1d26851bd9531a6b0a8293c",
@@ -577,12 +1251,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05978516339072756,
       "test_recall@5": 0.0396420550497049,
-      "q_h": 0.17725804926680033,
-      "buckets": 236,
-      "same_bucket_ratio": 0.01644309904455586,
-      "delta_mean": 0.595870065298762,
-      "negatives_ranked_above_positive": 0.29521710339608365,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/858ac30df43405b0f4c377edff8fff0dad2b973bb1d26851bd9531a6b0a8293c.json"
+      "L1": {
+        "q_h": 0.17725804926680033,
+        "buckets": 236,
+        "same_bucket_ratio": 0.01644309904455586,
+        "delta_mean": 0.595870065298762,
+        "negatives_ranked_above_positive": 0.29521710339608365
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/858ac30df43405b0f4c377edff8fff0dad2b973bb1d26851bd9531a6b0a8293c.L1.json",
+      "L2": {
+        "q_h": 0.17803374807744898,
+        "buckets": 8014,
+        "same_bucket_ratio": 0.0005013716772301579,
+        "delta_mean": 0.7744032063989915,
+        "negatives_ranked_above_positive": 0.29794721407624636
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/858ac30df43405b0f4c377edff8fff0dad2b973bb1d26851bd9531a6b0a8293c.L2.json",
+      "L3": {
+        "q_h": 0.24803624284098102,
+        "buckets": 23320,
+        "same_bucket_ratio": 3.5947403273105664e-05,
+        "delta_mean": 0.9171553279666497,
+        "negatives_ranked_above_positive": 0.26318796707974645
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/858ac30df43405b0f4c377edff8fff0dad2b973bb1d26851bd9531a6b0a8293c.L3.json"
     },
     {
       "sid_sha256": "8aa2facdb8b2825059392862895b4931682fc785154a5338ddb5512f25ef2e1a",
@@ -592,12 +1284,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05961106565225718,
       "test_recall@5": 0.0404254948728216,
-      "q_h": 0.20592184348287357,
-      "buckets": 256,
-      "same_bucket_ratio": 0.0054375177372055624,
-      "delta_mean": 0.683321317509875,
-      "negatives_ranked_above_positive": 0.2835606848926308,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8aa2facdb8b2825059392862895b4931682fc785154a5338ddb5512f25ef2e1a.json"
+      "L1": {
+        "q_h": 0.20592184348287357,
+        "buckets": 256,
+        "same_bucket_ratio": 0.0054375177372055624,
+        "delta_mean": 0.683321317509875,
+        "negatives_ranked_above_positive": 0.2835606848926308
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8aa2facdb8b2825059392862895b4931682fc785154a5338ddb5512f25ef2e1a.L1.json",
+      "L2": {
+        "q_h": 0.1693485510464504,
+        "buckets": 14353,
+        "same_bucket_ratio": 0.0001154100841926024,
+        "delta_mean": 0.8175830722271035,
+        "negatives_ranked_above_positive": 0.30266199981080316
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8aa2facdb8b2825059392862895b4931682fc785154a5338ddb5512f25ef2e1a.L2.json",
+      "L3": {
+        "q_h": 0.24857773551645113,
+        "buckets": 23188,
+        "same_bucket_ratio": 1.1351811559928105e-05,
+        "delta_mean": 0.9119745148758805,
+        "negatives_ranked_above_positive": 0.2628266010784221
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8aa2facdb8b2825059392862895b4931682fc785154a5338ddb5512f25ef2e1a.L3.json"
     },
     {
       "sid_sha256": "b2a316e5a9a8e1c0e447b5be6c2b9519bff3d3062fef02663145e428a767a682",
@@ -607,12 +1317,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05959365587841014,
       "test_recall@5": 0.03925904002507007,
-      "q_h": 0.17551972646709346,
-      "buckets": 241,
-      "same_bucket_ratio": 0.011136127140289472,
-      "delta_mean": 0.6326240737619295,
-      "negatives_ranked_above_positive": 0.3034566266199981,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b2a316e5a9a8e1c0e447b5be6c2b9519bff3d3062fef02663145e428a767a682.json"
+      "L1": {
+        "q_h": 0.17551972646709346,
+        "buckets": 241,
+        "same_bucket_ratio": 0.011136127140289472,
+        "delta_mean": 0.6326240737619295,
+        "negatives_ranked_above_positive": 0.3034566266199981
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b2a316e5a9a8e1c0e447b5be6c2b9519bff3d3062fef02663145e428a767a682.L1.json",
+      "L2": {
+        "q_h": 0.1580808114086747,
+        "buckets": 13883,
+        "same_bucket_ratio": 0.0005827263267429761,
+        "delta_mean": 0.7945105246931927,
+        "negatives_ranked_above_positive": 0.3099120234604106
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b2a316e5a9a8e1c0e447b5be6c2b9519bff3d3062fef02663145e428a767a682.L2.json",
+      "L3": {
+        "q_h": 0.2480399419245657,
+        "buckets": 23020,
+        "same_bucket_ratio": 9.081449247942484e-05,
+        "delta_mean": 0.910590546630777,
+        "negatives_ranked_above_positive": 0.262996878251821
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b2a316e5a9a8e1c0e447b5be6c2b9519bff3d3062fef02663145e428a767a682.L3.json"
     },
     {
       "sid_sha256": "9590324d1b3377fa3afb9e101ed337b33d137487c92177599615e3aefd409824",
@@ -622,12 +1350,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.059541426556869025,
       "test_recall@5": 0.03967687459739898,
-      "q_h": 0.1876808701987971,
-      "buckets": 256,
-      "same_bucket_ratio": 0.005791315864156655,
-      "delta_mean": 0.6110689693441572,
-      "negatives_ranked_above_positive": 0.29430706650269606,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9590324d1b3377fa3afb9e101ed337b33d137487c92177599615e3aefd409824.json"
+      "L1": {
+        "q_h": 0.1876808701987971,
+        "buckets": 256,
+        "same_bucket_ratio": 0.005791315864156655,
+        "delta_mean": 0.6110689693441572,
+        "negatives_ranked_above_positive": 0.29430706650269606
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9590324d1b3377fa3afb9e101ed337b33d137487c92177599615e3aefd409824.L1.json",
+      "L2": {
+        "q_h": 0.2560880767934254,
+        "buckets": 24586,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217606044301291,
+        "negatives_ranked_above_positive": 0.25875319269700126
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9590324d1b3377fa3afb9e101ed337b33d137487c92177599615e3aefd409824.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9590324d1b3377fa3afb9e101ed337b33d137487c92177599615e3aefd409824.L3.json"
     },
     {
       "sid_sha256": "8abe6860ac8fae591cd2d32d9413fed60be745ff0c8f89d6f951bc4738a96a85",
@@ -637,12 +1383,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05950660700917495,
       "test_recall@5": 0.038858615226588206,
-      "q_h": 0.18241033199875267,
-      "buckets": 256,
-      "same_bucket_ratio": 0.005761044366663514,
-      "delta_mean": 0.6020170114739732,
-      "negatives_ranked_above_positive": 0.29894049758774005,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8abe6860ac8fae591cd2d32d9413fed60be745ff0c8f89d6f951bc4738a96a85.json"
+      "L1": {
+        "q_h": 0.18241033199875267,
+        "buckets": 256,
+        "same_bucket_ratio": 0.005761044366663514,
+        "delta_mean": 0.6020170114739732,
+        "negatives_ranked_above_positive": 0.29894049758774005
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8abe6860ac8fae591cd2d32d9413fed60be745ff0c8f89d6f951bc4738a96a85.L1.json",
+      "L2": {
+        "q_h": 0.25600436332114807,
+        "buckets": 24574,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217477603196513,
+        "negatives_ranked_above_positive": 0.2587758963201211
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8abe6860ac8fae591cd2d32d9413fed60be745ff0c8f89d6f951bc4738a96a85.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/8abe6860ac8fae591cd2d32d9413fed60be745ff0c8f89d6f951bc4738a96a85.L3.json"
     },
     {
       "sid_sha256": "03e174ae1d07a1d811bdc3374f91aed2fc45dbdc46987ac095e082d667263b29",
@@ -652,12 +1416,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05921064085377531,
       "test_recall@5": 0.03943313776354045,
-      "q_h": 0.07723301216386658,
-      "buckets": 12,
-      "same_bucket_ratio": 0.3009592280768139,
-      "delta_mean": 0.21622760115599357,
-      "negatives_ranked_above_positive": 0.2313328918739949,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/03e174ae1d07a1d811bdc3374f91aed2fc45dbdc46987ac095e082d667263b29.json"
+      "L1": {
+        "q_h": 0.07723301216386658,
+        "buckets": 12,
+        "same_bucket_ratio": 0.3009592280768139,
+        "delta_mean": 0.21622760115599357,
+        "negatives_ranked_above_positive": 0.2313328918739949
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/03e174ae1d07a1d811bdc3374f91aed2fc45dbdc46987ac095e082d667263b29.L1.json",
+      "L2": {
+        "q_h": 0.1741979067945223,
+        "buckets": 369,
+        "same_bucket_ratio": 0.02373474600321635,
+        "delta_mean": 0.5794063796116646,
+        "negatives_ranked_above_positive": 0.29476492290227985
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/03e174ae1d07a1d811bdc3374f91aed2fc45dbdc46987ac095e082d667263b29.L2.json",
+      "L3": {
+        "q_h": 0.13660771222406232,
+        "buckets": 5528,
+        "same_bucket_ratio": 0.0013924888846845143,
+        "delta_mean": 0.6958968118080472,
+        "negatives_ranked_above_positive": 0.32565887806262417
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/03e174ae1d07a1d811bdc3374f91aed2fc45dbdc46987ac095e082d667263b29.L3.json"
     },
     {
       "sid_sha256": "9f9067d6d58395216284ce7975a173eba2aba773a36be998be3f45ac0a6a0c2e",
@@ -667,12 +1449,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.059158411532234195,
       "test_recall@5": 0.03957241595431675,
-      "q_h": 0.19249485248286802,
-      "buckets": 256,
-      "same_bucket_ratio": 0.005796991769936619,
-      "delta_mean": 0.6102939243852291,
-      "negatives_ranked_above_positive": 0.2910945038312364,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9f9067d6d58395216284ce7975a173eba2aba773a36be998be3f45ac0a6a0c2e.json"
+      "L1": {
+        "q_h": 0.19249485248286802,
+        "buckets": 256,
+        "same_bucket_ratio": 0.005796991769936619,
+        "delta_mean": 0.6102939243852291,
+        "negatives_ranked_above_positive": 0.2910945038312364
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9f9067d6d58395216284ce7975a173eba2aba773a36be998be3f45ac0a6a0c2e.L1.json",
+      "L2": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9f9067d6d58395216284ce7975a173eba2aba773a36be998be3f45ac0a6a0c2e.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9f9067d6d58395216284ce7975a173eba2aba773a36be998be3f45ac0a6a0c2e.L3.json"
     },
     {
       "sid_sha256": "99b9b657e6ec3ff22e4d4b517e087852628103a2ab5efd3d7786bffc90ab6458",
@@ -682,12 +1482,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05905395288915197,
       "test_recall@5": 0.039607235502010826,
-      "q_h": 0.20614212993305991,
-      "buckets": 256,
-      "same_bucket_ratio": 0.005397786396745814,
-      "delta_mean": 0.6844293046005959,
-      "negatives_ranked_above_positive": 0.2835947403273106,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/99b9b657e6ec3ff22e4d4b517e087852628103a2ab5efd3d7786bffc90ab6458.json"
+      "L1": {
+        "q_h": 0.20614212993305991,
+        "buckets": 256,
+        "same_bucket_ratio": 0.005397786396745814,
+        "delta_mean": 0.6844293046005959,
+        "negatives_ranked_above_positive": 0.2835947403273106
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/99b9b657e6ec3ff22e4d4b517e087852628103a2ab5efd3d7786bffc90ab6458.L1.json",
+      "L2": {
+        "q_h": 0.16897358539238616,
+        "buckets": 14402,
+        "same_bucket_ratio": 0.0001116261470059597,
+        "delta_mean": 0.8145742582125685,
+        "negatives_ranked_above_positive": 0.3032693217292593
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/99b9b657e6ec3ff22e4d4b517e087852628103a2ab5efd3d7786bffc90ab6458.L2.json",
+      "L3": {
+        "q_h": 0.24890868127297094,
+        "buckets": 23227,
+        "same_bucket_ratio": 1.3243780153249457e-05,
+        "delta_mean": 0.9131321354685507,
+        "negatives_ranked_above_positive": 0.2625995648472235
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/99b9b657e6ec3ff22e4d4b517e087852628103a2ab5efd3d7786bffc90ab6458.L3.json"
     },
     {
       "sid_sha256": "4484e382f405d5e0186a1fc3316f5fd1d4f06bb13d31e0df8530b0c37200ff26",
@@ -697,12 +1515,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05901913334145789,
       "test_recall@5": 0.039224220477376,
-      "q_h": 0.17197024394060811,
-      "buckets": 236,
-      "same_bucket_ratio": 0.016740138113707313,
-      "delta_mean": 0.5890640199654104,
-      "negatives_ranked_above_positive": 0.2991202346041056,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4484e382f405d5e0186a1fc3316f5fd1d4f06bb13d31e0df8530b0c37200ff26.json"
+      "L1": {
+        "q_h": 0.17197024394060811,
+        "buckets": 236,
+        "same_bucket_ratio": 0.016740138113707313,
+        "delta_mean": 0.5890640199654104,
+        "negatives_ranked_above_positive": 0.2991202346041056
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4484e382f405d5e0186a1fc3316f5fd1d4f06bb13d31e0df8530b0c37200ff26.L1.json",
+      "L2": {
+        "q_h": 0.17913791279226143,
+        "buckets": 7976,
+        "same_bucket_ratio": 0.000571374515183048,
+        "delta_mean": 0.7788469618970383,
+        "negatives_ranked_above_positive": 0.29802856872575917
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4484e382f405d5e0186a1fc3316f5fd1d4f06bb13d31e0df8530b0c37200ff26.L2.json",
+      "L3": {
+        "q_h": 0.24967562433231816,
+        "buckets": 23339,
+        "same_bucket_ratio": 2.459559171317756e-05,
+        "delta_mean": 0.9184530590643956,
+        "negatives_ranked_above_positive": 0.2623838804275849
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4484e382f405d5e0186a1fc3316f5fd1d4f06bb13d31e0df8530b0c37200ff26.L3.json"
     },
     {
       "sid_sha256": "c48ae84b67b69a0a22559bf1340b7d84e1f578068bc9f2c81dc63f0840906cbd",
@@ -712,12 +1548,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05882762582914048,
       "test_recall@5": 0.03790107766500113,
-      "q_h": 0.19746897690793985,
-      "buckets": 245,
-      "same_bucket_ratio": 0.024309904455586038,
-      "delta_mean": 0.6294237808769648,
-      "negatives_ranked_above_positive": 0.27947592469965,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c48ae84b67b69a0a22559bf1340b7d84e1f578068bc9f2c81dc63f0840906cbd.json"
+      "L1": {
+        "q_h": 0.19746897690793985,
+        "buckets": 245,
+        "same_bucket_ratio": 0.024309904455586038,
+        "delta_mean": 0.6294237808769648,
+        "negatives_ranked_above_positive": 0.27947592469965
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c48ae84b67b69a0a22559bf1340b7d84e1f578068bc9f2c81dc63f0840906cbd.L1.json",
+      "L2": {
+        "q_h": 0.14258023015591192,
+        "buckets": 12238,
+        "same_bucket_ratio": 0.0013187021095449815,
+        "delta_mean": 0.7687961799895339,
+        "negatives_ranked_above_positive": 0.32056191467221645
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c48ae84b67b69a0a22559bf1340b7d84e1f578068bc9f2c81dc63f0840906cbd.L2.json",
+      "L3": {
+        "q_h": 0.21232734671514575,
+        "buckets": 21959,
+        "same_bucket_ratio": 7.946268091949674e-05,
+        "delta_mean": 0.8728379502121025,
+        "negatives_ranked_above_positive": 0.2820868413584334
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c48ae84b67b69a0a22559bf1340b7d84e1f578068bc9f2c81dc63f0840906cbd.L3.json"
     },
     {
       "sid_sha256": "b21f89a613921de0bd8d2e4a2a6829f1671a0bde01b636a0a9902fc89c2a8d14",
@@ -727,12 +1581,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.058688347638364176,
       "test_recall@5": 0.03938090844199934,
-      "q_h": 0.18245347080512164,
-      "buckets": 256,
-      "same_bucket_ratio": 0.005668337905590767,
-      "delta_mean": 0.592514510792686,
-      "negatives_ranked_above_positive": 0.29744016649323624,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b21f89a613921de0bd8d2e4a2a6829f1671a0bde01b636a0a9902fc89c2a8d14.json"
+      "L1": {
+        "q_h": 0.18245347080512164,
+        "buckets": 256,
+        "same_bucket_ratio": 0.005668337905590767,
+        "delta_mean": 0.592514510792686,
+        "negatives_ranked_above_positive": 0.29744016649323624
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b21f89a613921de0bd8d2e4a2a6829f1671a0bde01b636a0a9902fc89c2a8d14.L1.json",
+      "L2": {
+        "q_h": 0.2559715537114359,
+        "buckets": 24574,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9215865153614387,
+        "negatives_ranked_above_positive": 0.25881562766058086
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b21f89a613921de0bd8d2e4a2a6829f1671a0bde01b636a0a9902fc89c2a8d14.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/b21f89a613921de0bd8d2e4a2a6829f1671a0bde01b636a0a9902fc89c2a8d14.L3.json"
     },
     {
       "sid_sha256": "fabb437555769491fdf8d2888d8ac6858793b43f32e693e319613d82636cb747",
@@ -742,12 +1614,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05867093786451714,
       "test_recall@5": 0.03821445359424781,
-      "q_h": 0.1937233517001834,
-      "buckets": 256,
-      "same_bucket_ratio": 0.0058310472046164035,
-      "delta_mean": 0.6167467838218905,
-      "negatives_ranked_above_positive": 0.2897228266010784,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/fabb437555769491fdf8d2888d8ac6858793b43f32e693e319613d82636cb747.json"
+      "L1": {
+        "q_h": 0.1937233517001834,
+        "buckets": 256,
+        "same_bucket_ratio": 0.0058310472046164035,
+        "delta_mean": 0.6167467838218905,
+        "negatives_ranked_above_positive": 0.2897228266010784
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/fabb437555769491fdf8d2888d8ac6858793b43f32e693e319613d82636cb747.L1.json",
+      "L2": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/fabb437555769491fdf8d2888d8ac6858793b43f32e693e319613d82636cb747.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/fabb437555769491fdf8d2888d8ac6858793b43f32e693e319613d82636cb747.L3.json"
     },
     {
       "sid_sha256": "c689e2253b86166b3961dbefedbfe042e52a587c0fc2d64b7156d725da788751",
@@ -757,12 +1647,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05863611831682306,
       "test_recall@5": 0.03993802120510455,
-      "q_h": 0.15969955768465927,
-      "buckets": 241,
-      "same_bucket_ratio": 0.02187683284457478,
-      "delta_mean": 0.6016827376931796,
-      "negatives_ranked_above_positive": 0.30979661337621794,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c689e2253b86166b3961dbefedbfe042e52a587c0fc2d64b7156d725da788751.json"
+      "L1": {
+        "q_h": 0.15969955768465927,
+        "buckets": 241,
+        "same_bucket_ratio": 0.02187683284457478,
+        "delta_mean": 0.6016827376931796,
+        "negatives_ranked_above_positive": 0.30979661337621794
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c689e2253b86166b3961dbefedbfe042e52a587c0fc2d64b7156d725da788751.L1.json",
+      "L2": {
+        "q_h": 0.09907760256332165,
+        "buckets": 9461,
+        "same_bucket_ratio": 0.00219846750543941,
+        "delta_mean": 0.6892921204305392,
+        "negatives_ranked_above_positive": 0.34177655850912875
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c689e2253b86166b3961dbefedbfe042e52a587c0fc2d64b7156d725da788751.L2.json",
+      "L3": {
+        "q_h": 0.21341884058569738,
+        "buckets": 21030,
+        "same_bucket_ratio": 0.000787058934821682,
+        "delta_mean": 0.8695829485725822,
+        "negatives_ranked_above_positive": 0.27927915996594455
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c689e2253b86166b3961dbefedbfe042e52a587c0fc2d64b7156d725da788751.L3.json"
     },
     {
       "sid_sha256": "4fadabd21762a83313d5d175255d9910ec5ac8a0aba3828c91b6669712a2dcb2",
@@ -772,12 +1680,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.058496840126046765,
       "test_recall@5": 0.03889343477428228,
-      "q_h": -0.0018421260689369667,
-      "buckets": 116,
-      "same_bucket_ratio": 0.9837801532494561,
-      "delta_mean": 0.0032378472093718856,
-      "negatives_ranked_above_positive": 0.0074278686973796235,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4fadabd21762a83313d5d175255d9910ec5ac8a0aba3828c91b6669712a2dcb2.json"
+      "L1": {
+        "q_h": -0.0018421260689369667,
+        "buckets": 116,
+        "same_bucket_ratio": 0.9837801532494561,
+        "delta_mean": 0.0032378472093718856,
+        "negatives_ranked_above_positive": 0.0074278686973796235
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4fadabd21762a83313d5d175255d9910ec5ac8a0aba3828c91b6669712a2dcb2.L1.json",
+      "L2": {
+        "q_h": 0.14001978693439965,
+        "buckets": 572,
+        "same_bucket_ratio": 0.037485573739475926,
+        "delta_mean": 0.5087267086500317,
+        "negatives_ranked_above_positive": 0.31158641566549994
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4fadabd21762a83313d5d175255d9910ec5ac8a0aba3828c91b6669712a2dcb2.L2.json",
+      "L3": {
+        "q_h": 0.19087591870443887,
+        "buckets": 6460,
+        "same_bucket_ratio": 0.0013338378582915525,
+        "delta_mean": 0.754768632339095,
+        "negatives_ranked_above_positive": 0.29455869832560777
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4fadabd21762a83313d5d175255d9910ec5ac8a0aba3828c91b6669712a2dcb2.L3.json"
     },
     {
       "sid_sha256": "73bb967663f25f0a18fbe020ce27bfcaf3fc57d64d8236879a89fd24d05ac0e2",
@@ -787,12 +1713,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05828792283988231,
       "test_recall@5": 0.038562649071188566,
-      "q_h": 0.19018903031951062,
-      "buckets": 256,
-      "same_bucket_ratio": 0.005872670513669473,
-      "delta_mean": 0.6170170984429644,
-      "negatives_ranked_above_positive": 0.2929978242361177,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/73bb967663f25f0a18fbe020ce27bfcaf3fc57d64d8236879a89fd24d05ac0e2.json"
+      "L1": {
+        "q_h": 0.19018903031951062,
+        "buckets": 256,
+        "same_bucket_ratio": 0.005872670513669473,
+        "delta_mean": 0.6170170984429644,
+        "negatives_ranked_above_positive": 0.2929978242361177
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/73bb967663f25f0a18fbe020ce27bfcaf3fc57d64d8236879a89fd24d05ac0e2.L1.json",
+      "L2": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/73bb967663f25f0a18fbe020ce27bfcaf3fc57d64d8236879a89fd24d05ac0e2.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/73bb967663f25f0a18fbe020ce27bfcaf3fc57d64d8236879a89fd24d05ac0e2.L3.json"
     },
     {
       "sid_sha256": "5f0e0f128a763cad35e46b30bb129746349e0ea3aa4d94eda12f3f784909a8b0",
@@ -802,12 +1746,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05778303939831821,
       "test_recall@5": 0.03880638590504709,
-      "q_h": 0.20092802058825676,
-      "buckets": 256,
-      "same_bucket_ratio": 0.006230252577807209,
-      "delta_mean": 0.6689996672464968,
-      "negatives_ranked_above_positive": 0.28778545076151735,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5f0e0f128a763cad35e46b30bb129746349e0ea3aa4d94eda12f3f784909a8b0.json"
+      "L1": {
+        "q_h": 0.20092802058825676,
+        "buckets": 256,
+        "same_bucket_ratio": 0.006230252577807209,
+        "delta_mean": 0.6689996672464968,
+        "negatives_ranked_above_positive": 0.28778545076151735
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5f0e0f128a763cad35e46b30bb129746349e0ea3aa4d94eda12f3f784909a8b0.L1.json",
+      "L2": {
+        "q_h": 0.17243833284341348,
+        "buckets": 14473,
+        "same_bucket_ratio": 0.00012108598997256646,
+        "delta_mean": 0.8288520114739949,
+        "negatives_ranked_above_positive": 0.300735975782802
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5f0e0f128a763cad35e46b30bb129746349e0ea3aa4d94eda12f3f784909a8b0.L2.json",
+      "L3": {
+        "q_h": 0.25099584944581044,
+        "buckets": 23496,
+        "same_bucket_ratio": 9.459842966606754e-06,
+        "delta_mean": 0.9179529608660009,
+        "negatives_ranked_above_positive": 0.26149087125153725
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5f0e0f128a763cad35e46b30bb129746349e0ea3aa4d94eda12f3f784909a8b0.L3.json"
     },
     {
       "sid_sha256": "0a8f1c6cd576c021e5ac3dceb49be5b4cd6e5fcd868ed2c98f6e7464fe23987e",
@@ -817,12 +1779,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05760894165984784,
       "test_recall@5": 0.03807517540347151,
-      "q_h": 0.18896495569714644,
-      "buckets": 245,
-      "same_bucket_ratio": 0.010033109450383123,
-      "delta_mean": 0.6445157445647365,
-      "negatives_ranked_above_positive": 0.29157695582253335,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0a8f1c6cd576c021e5ac3dceb49be5b4cd6e5fcd868ed2c98f6e7464fe23987e.json"
+      "L1": {
+        "q_h": 0.18896495569714644,
+        "buckets": 245,
+        "same_bucket_ratio": 0.010033109450383123,
+        "delta_mean": 0.6445157445647365,
+        "negatives_ranked_above_positive": 0.29157695582253335
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0a8f1c6cd576c021e5ac3dceb49be5b4cd6e5fcd868ed2c98f6e7464fe23987e.L1.json",
+      "L2": {
+        "q_h": 0.17778191737445637,
+        "buckets": 9156,
+        "same_bucket_ratio": 0.0004143411219373758,
+        "delta_mean": 0.7850346564388461,
+        "negatives_ranked_above_positive": 0.30292119950808816
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0a8f1c6cd576c021e5ac3dceb49be5b4cd6e5fcd868ed2c98f6e7464fe23987e.L2.json",
+      "L3": {
+        "q_h": 0.23744882494903752,
+        "buckets": 22220,
+        "same_bucket_ratio": 2.6487560306498914e-05,
+        "delta_mean": 0.8979490876639776,
+        "negatives_ranked_above_positive": 0.26971525872670515
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/0a8f1c6cd576c021e5ac3dceb49be5b4cd6e5fcd868ed2c98f6e7464fe23987e.L3.json"
     },
     {
       "sid_sha256": "c468711bf505fccd7f713d7c2b20b52f23498b1c18900540afd7f6520d90f1f0",
@@ -832,12 +1812,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.057173697313671897,
       "test_recall@5": 0.03788366789115409,
-      "q_h": 0.19817009240165728,
-      "buckets": 254,
-      "same_bucket_ratio": 0.008256550941254374,
-      "delta_mean": 0.6574954150545617,
-      "negatives_ranked_above_positive": 0.2861924132059408,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c468711bf505fccd7f713d7c2b20b52f23498b1c18900540afd7f6520d90f1f0.json"
+      "L1": {
+        "q_h": 0.19817009240165728,
+        "buckets": 254,
+        "same_bucket_ratio": 0.008256550941254374,
+        "delta_mean": 0.6574954150545617,
+        "negatives_ranked_above_positive": 0.2861924132059408
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c468711bf505fccd7f713d7c2b20b52f23498b1c18900540afd7f6520d90f1f0.L1.json",
+      "L2": {
+        "q_h": 0.166091156746085,
+        "buckets": 12255,
+        "same_bucket_ratio": 0.00032920253523791503,
+        "delta_mean": 0.7945465973268543,
+        "negatives_ranked_above_positive": 0.3096471478573456
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c468711bf505fccd7f713d7c2b20b52f23498b1c18900540afd7f6520d90f1f0.L2.json",
+      "L3": {
+        "q_h": 0.24224721459324938,
+        "buckets": 22944,
+        "same_bucket_ratio": 2.270362311985621e-05,
+        "delta_mean": 0.904040955993567,
+        "negatives_ranked_above_positive": 0.2667770315012771
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c468711bf505fccd7f713d7c2b20b52f23498b1c18900540afd7f6520d90f1f0.L3.json"
     },
     {
       "sid_sha256": "ff19851add480ac9feb403bb83f46bdc4528d827de7ed6eafb81162c74726071",
@@ -847,12 +1845,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05703441912289559,
       "test_recall@5": 0.03779661902191891,
-      "q_h": 0.0,
-      "buckets": 1,
-      "same_bucket_ratio": 1.0,
-      "delta_mean": 0.0,
-      "negatives_ranked_above_positive": 0.0,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ff19851add480ac9feb403bb83f46bdc4528d827de7ed6eafb81162c74726071.json"
+      "L1": {
+        "q_h": 0.0,
+        "buckets": 1,
+        "same_bucket_ratio": 1.0,
+        "delta_mean": 0.0,
+        "negatives_ranked_above_positive": 0.0
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ff19851add480ac9feb403bb83f46bdc4528d827de7ed6eafb81162c74726071.L1.json",
+      "L2": {
+        "q_h": 0.18463852415362025,
+        "buckets": 27,
+        "same_bucket_ratio": 0.055864156654999525,
+        "delta_mean": 0.5594946358359266,
+        "negatives_ranked_above_positive": 0.2710301768990635
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ff19851add480ac9feb403bb83f46bdc4528d827de7ed6eafb81162c74726071.L2.json",
+      "L3": {
+        "q_h": 0.1659518198142469,
+        "buckets": 4984,
+        "same_bucket_ratio": 0.0010651783180399205,
+        "delta_mean": 0.7159445665007469,
+        "negatives_ranked_above_positive": 0.30858953741367895
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ff19851add480ac9feb403bb83f46bdc4528d827de7ed6eafb81162c74726071.L3.json"
     },
     {
       "sid_sha256": "83b14cc9a623b2dcff6898984279f5d95cf157a4f394d995c175cc69c96b35b0",
@@ -862,12 +1878,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05600724246592037,
       "test_recall@5": 0.037831438569612984,
-      "q_h": 0.15390315598874715,
-      "buckets": 212,
-      "same_bucket_ratio": 0.047079746476208495,
-      "delta_mean": 0.5622252172943558,
-      "negatives_ranked_above_positive": 0.30122031974269226,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/83b14cc9a623b2dcff6898984279f5d95cf157a4f394d995c175cc69c96b35b0.json"
+      "L1": {
+        "q_h": 0.15390315598874715,
+        "buckets": 212,
+        "same_bucket_ratio": 0.047079746476208495,
+        "delta_mean": 0.5622252172943558,
+        "negatives_ranked_above_positive": 0.30122031974269226
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/83b14cc9a623b2dcff6898984279f5d95cf157a4f394d995c175cc69c96b35b0.L1.json",
+      "L2": {
+        "q_h": 0.07186252417280237,
+        "buckets": 4831,
+        "same_bucket_ratio": 0.008721975215211427,
+        "delta_mean": 0.607801472594527,
+        "negatives_ranked_above_positive": 0.3525834831141803
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/83b14cc9a623b2dcff6898984279f5d95cf157a4f394d995c175cc69c96b35b0.L2.json",
+      "L3": {
+        "q_h": 0.10606037659825196,
+        "buckets": 14336,
+        "same_bucket_ratio": 0.004054488695487655,
+        "delta_mean": 0.7311370397500702,
+        "negatives_ranked_above_positive": 0.3325948349257402
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/83b14cc9a623b2dcff6898984279f5d95cf157a4f394d995c175cc69c96b35b0.L3.json"
     },
     {
       "sid_sha256": "d49280fe54987a3325d502c11261199a5543b1db4d9a5f1f402d4313238f7851",
@@ -877,12 +1911,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05593760337053222,
       "test_recall@5": 0.03666498372186145,
-      "q_h": 0.18578133259077023,
-      "buckets": 242,
-      "same_bucket_ratio": 0.014605997540440828,
-      "delta_mean": 0.6364478895777927,
-      "negatives_ranked_above_positive": 0.2922713082962823,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/d49280fe54987a3325d502c11261199a5543b1db4d9a5f1f402d4313238f7851.json"
+      "L1": {
+        "q_h": 0.18578133259077023,
+        "buckets": 242,
+        "same_bucket_ratio": 0.014605997540440828,
+        "delta_mean": 0.6364478895777927,
+        "negatives_ranked_above_positive": 0.2922713082962823
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/d49280fe54987a3325d502c11261199a5543b1db4d9a5f1f402d4313238f7851.L1.json",
+      "L2": {
+        "q_h": 0.2125991615504772,
+        "buckets": 7375,
+        "same_bucket_ratio": 0.0006243496357960458,
+        "delta_mean": 0.8016701959502808,
+        "negatives_ranked_above_positive": 0.2838085327783559
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/d49280fe54987a3325d502c11261199a5543b1db4d9a5f1f402d4313238f7851.L2.json",
+      "L3": {
+        "q_h": 0.25089311843579143,
+        "buckets": 20412,
+        "same_bucket_ratio": 7.567874373285403e-05,
+        "delta_mean": 0.9112194094604638,
+        "negatives_ranked_above_positive": 0.2618541292214549
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/d49280fe54987a3325d502c11261199a5543b1db4d9a5f1f402d4313238f7851.L3.json"
     },
     {
       "sid_sha256": "9e1a7c3fc3e709ac7834219693330525bf41d6564b505661994671ccad10b5ae",
@@ -892,12 +1944,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05557199811974443,
       "test_recall@5": 0.0372395062588137,
-      "q_h": 0.18609089497091125,
-      "buckets": 240,
-      "same_bucket_ratio": 0.018467505439409705,
-      "delta_mean": 0.6215170393954825,
-      "negatives_ranked_above_positive": 0.291310188250875,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9e1a7c3fc3e709ac7834219693330525bf41d6564b505661994671ccad10b5ae.json"
+      "L1": {
+        "q_h": 0.18609089497091125,
+        "buckets": 240,
+        "same_bucket_ratio": 0.018467505439409705,
+        "delta_mean": 0.6215170393954825,
+        "negatives_ranked_above_positive": 0.291310188250875
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9e1a7c3fc3e709ac7834219693330525bf41d6564b505661994671ccad10b5ae.L1.json",
+      "L2": {
+        "q_h": 0.20812325761725503,
+        "buckets": 6233,
+        "same_bucket_ratio": 0.0008021946835682528,
+        "delta_mean": 0.7822559232237616,
+        "negatives_ranked_above_positive": 0.2862321445464005
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9e1a7c3fc3e709ac7834219693330525bf41d6564b505661994671ccad10b5ae.L2.json",
+      "L3": {
+        "q_h": 0.24895847323665288,
+        "buckets": 19515,
+        "same_bucket_ratio": 8.324661810613944e-05,
+        "delta_mean": 0.9065322681176193,
+        "negatives_ranked_above_positive": 0.2626752435909564
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9e1a7c3fc3e709ac7834219693330525bf41d6564b505661994671ccad10b5ae.L3.json"
     },
     {
       "sid_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
@@ -907,12 +1977,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05553717857205035,
       "test_recall@5": 0.037431013771131116,
-      "q_h": 0.18406783014305605,
-      "buckets": 247,
-      "same_bucket_ratio": 0.015323053637309621,
-      "delta_mean": 0.6339592644554074,
-      "negatives_ranked_above_positive": 0.2924907766531076,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85.json"
+      "L1": {
+        "q_h": 0.18406783014305605,
+        "buckets": 247,
+        "same_bucket_ratio": 0.015323053637309621,
+        "delta_mean": 0.6339592644554074,
+        "negatives_ranked_above_positive": 0.2924907766531076
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85.L1.json",
+      "L2": {
+        "q_h": 0.21216650742532905,
+        "buckets": 7414,
+        "same_bucket_ratio": 0.0008154384637215022,
+        "delta_mean": 0.8027113411260194,
+        "negatives_ranked_above_positive": 0.28343392299687825
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85.L2.json",
+      "L3": {
+        "q_h": 0.2501322679088397,
+        "buckets": 20223,
+        "same_bucket_ratio": 7.567874373285403e-05,
+        "delta_mean": 0.9097623014809337,
+        "negatives_ranked_above_positive": 0.2620300823006338
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85.L3.json"
     },
     {
       "sid_sha256": "2d8aee4cf4d4cabc941329d27c4f2219e673a01596d87c735448827a4afe06ef",
@@ -922,12 +2010,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05536308083357997,
       "test_recall@5": 0.03812740472501262,
-      "q_h": 0.18521937818147105,
-      "buckets": 256,
-      "same_bucket_ratio": 0.0077173398921577905,
-      "delta_mean": 0.6442916474288727,
-      "negatives_ranked_above_positive": 0.29724718569671743,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2d8aee4cf4d4cabc941329d27c4f2219e673a01596d87c735448827a4afe06ef.json"
+      "L1": {
+        "q_h": 0.18521937818147105,
+        "buckets": 256,
+        "same_bucket_ratio": 0.0077173398921577905,
+        "delta_mean": 0.6442916474288727,
+        "negatives_ranked_above_positive": 0.29724718569671743
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2d8aee4cf4d4cabc941329d27c4f2219e673a01596d87c735448827a4afe06ef.L1.json",
+      "L2": {
+        "q_h": 0.13383847288463668,
+        "buckets": 12130,
+        "same_bucket_ratio": 0.00019108882792545645,
+        "delta_mean": 0.7770246104800858,
+        "negatives_ranked_above_positive": 0.3179850534481128
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2d8aee4cf4d4cabc941329d27c4f2219e673a01596d87c735448827a4afe06ef.L2.json",
+      "L3": {
+        "q_h": 0.24134871923827017,
+        "buckets": 23011,
+        "same_bucket_ratio": 2.081165452653486e-05,
+        "delta_mean": 0.9099831823796934,
+        "negatives_ranked_above_positive": 0.26549806073219184
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2d8aee4cf4d4cabc941329d27c4f2219e673a01596d87c735448827a4afe06ef.L3.json"
     },
     {
       "sid_sha256": "a19a90139b6d014d18c3393367e579f92fd430bcad156a765ba8cc0bf5d2c084",
@@ -937,12 +2043,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.0551889830951096,
       "test_recall@5": 0.037100228068037394,
-      "q_h": 0.20217722492654855,
-      "buckets": 240,
-      "same_bucket_ratio": 0.010303660959228076,
-      "delta_mean": 0.6376147062016915,
-      "negatives_ranked_above_positive": 0.2840147573550279,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a19a90139b6d014d18c3393367e579f92fd430bcad156a765ba8cc0bf5d2c084.json"
+      "L1": {
+        "q_h": 0.20217722492654855,
+        "buckets": 240,
+        "same_bucket_ratio": 0.010303660959228076,
+        "delta_mean": 0.6376147062016915,
+        "negatives_ranked_above_positive": 0.2840147573550279
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a19a90139b6d014d18c3393367e579f92fd430bcad156a765ba8cc0bf5d2c084.L1.json",
+      "L2": {
+        "q_h": 0.11669275957234926,
+        "buckets": 11392,
+        "same_bucket_ratio": 0.0012392394286254848,
+        "delta_mean": 0.739174157637014,
+        "negatives_ranked_above_positive": 0.3360855169804181
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a19a90139b6d014d18c3393367e579f92fd430bcad156a765ba8cc0bf5d2c084.L2.json",
+      "L3": {
+        "q_h": 0.20656582672918,
+        "buckets": 22032,
+        "same_bucket_ratio": 7.567874373285403e-05,
+        "delta_mean": 0.8626942442981868,
+        "negatives_ranked_above_positive": 0.2864156654999527
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a19a90139b6d014d18c3393367e579f92fd430bcad156a765ba8cc0bf5d2c084.L3.json"
     },
     {
       "sid_sha256": "abefe03213ffe1f547cc33fd10a0428aadb2fb169cf0258b3f33d69ed8d6a086",
@@ -952,12 +2076,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05517157332126256,
       "test_recall@5": 0.035864134124897716,
-      "q_h": 0.17461840927443484,
-      "buckets": 228,
-      "same_bucket_ratio": 0.017686122410367988,
-      "delta_mean": 0.5604726466563237,
-      "negatives_ranked_above_positive": 0.2970050137167723,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/abefe03213ffe1f547cc33fd10a0428aadb2fb169cf0258b3f33d69ed8d6a086.json"
+      "L1": {
+        "q_h": 0.17461840927443484,
+        "buckets": 228,
+        "same_bucket_ratio": 0.017686122410367988,
+        "delta_mean": 0.5604726466563237,
+        "negatives_ranked_above_positive": 0.2970050137167723
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/abefe03213ffe1f547cc33fd10a0428aadb2fb169cf0258b3f33d69ed8d6a086.L1.json",
+      "L2": {
+        "q_h": 0.11898588633306395,
+        "buckets": 11398,
+        "same_bucket_ratio": 0.0002383880427584902,
+        "delta_mean": 0.7662861916716431,
+        "negatives_ranked_above_positive": 0.32473370542049
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/abefe03213ffe1f547cc33fd10a0428aadb2fb169cf0258b3f33d69ed8d6a086.L2.json",
+      "L3": {
+        "q_h": 0.2500231637159873,
+        "buckets": 23853,
+        "same_bucket_ratio": 5.675905779964052e-06,
+        "delta_mean": 0.9182659927128042,
+        "negatives_ranked_above_positive": 0.26192791599659443
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/abefe03213ffe1f547cc33fd10a0428aadb2fb169cf0258b3f33d69ed8d6a086.L3.json"
     },
     {
       "sid_sha256": "fa971e82af1785d0574d96d30e2e68f352c0bddea8611524c05553e7b2f6f415",
@@ -967,12 +2109,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05484078761816884,
       "test_recall@5": 0.037361374675742964,
-      "q_h": 0.12220727285935085,
-      "buckets": 220,
-      "same_bucket_ratio": 0.025528332229684987,
-      "delta_mean": 0.4499759453107722,
-      "negatives_ranked_above_positive": 0.3274467883833128,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/fa971e82af1785d0574d96d30e2e68f352c0bddea8611524c05553e7b2f6f415.json"
+      "L1": {
+        "q_h": 0.12220727285935085,
+        "buckets": 220,
+        "same_bucket_ratio": 0.025528332229684987,
+        "delta_mean": 0.4499759453107722,
+        "negatives_ranked_above_positive": 0.3274467883833128
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/fa971e82af1785d0574d96d30e2e68f352c0bddea8611524c05553e7b2f6f415.L1.json",
+      "L2": {
+        "q_h": 0.15282161104685643,
+        "buckets": 5919,
+        "same_bucket_ratio": 0.0008286822438747516,
+        "delta_mean": 0.6577677211484424,
+        "negatives_ranked_above_positive": 0.3114634377069341
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/fa971e82af1785d0574d96d30e2e68f352c0bddea8611524c05553e7b2f6f415.L2.json",
+      "L3": {
+        "q_h": 0.24278508972764357,
+        "buckets": 22672,
+        "same_bucket_ratio": 1.3243780153249457e-05,
+        "delta_mean": 0.9084586344771663,
+        "negatives_ranked_above_positive": 0.2660845709961215
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/fa971e82af1785d0574d96d30e2e68f352c0bddea8611524c05553e7b2f6f415.L3.json"
     },
     {
       "sid_sha256": "9f7ad2511666b58e79703d66a4a299461fb4cbfc0e5aec2366bfc9f4ef6ec4f7",
@@ -982,12 +2142,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.0548233778443218,
       "test_recall@5": 0.036717213043402565,
-      "q_h": 0.1860738770892254,
-      "buckets": 243,
-      "same_bucket_ratio": 0.019097530980985714,
-      "delta_mean": 0.6233196519120551,
-      "negatives_ranked_above_positive": 0.2898155330621512,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9f7ad2511666b58e79703d66a4a299461fb4cbfc0e5aec2366bfc9f4ef6ec4f7.json"
+      "L1": {
+        "q_h": 0.1860738770892254,
+        "buckets": 243,
+        "same_bucket_ratio": 0.019097530980985714,
+        "delta_mean": 0.6233196519120551,
+        "negatives_ranked_above_positive": 0.2898155330621512
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9f7ad2511666b58e79703d66a4a299461fb4cbfc0e5aec2366bfc9f4ef6ec4f7.L1.json",
+      "L2": {
+        "q_h": 0.21132635795950683,
+        "buckets": 6674,
+        "same_bucket_ratio": 0.0008797653958944282,
+        "delta_mean": 0.793825712399058,
+        "negatives_ranked_above_positive": 0.28383502033866237
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9f7ad2511666b58e79703d66a4a299461fb4cbfc0e5aec2366bfc9f4ef6ec4f7.L2.json",
+      "L3": {
+        "q_h": 0.24888881336452318,
+        "buckets": 19756,
+        "same_bucket_ratio": 0.0001002743354460316,
+        "delta_mean": 0.9071572514906471,
+        "negatives_ranked_above_positive": 0.2625238861034907
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9f7ad2511666b58e79703d66a4a299461fb4cbfc0e5aec2366bfc9f4ef6ec4f7.L3.json"
     },
     {
       "sid_sha256": "ab6e1f5d6915902d4f7b74d06f577344fdc8b1f0ebd031c0947137b8ca6f4b8f",
@@ -997,12 +2175,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.054736328975086616,
       "test_recall@5": 0.03563780706488623,
-      "q_h": 0.1710272170657634,
-      "buckets": 215,
-      "same_bucket_ratio": 0.01404786680541103,
-      "delta_mean": 0.6169306698460882,
-      "negatives_ranked_above_positive": 0.3017992621322486,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ab6e1f5d6915902d4f7b74d06f577344fdc8b1f0ebd031c0947137b8ca6f4b8f.json"
+      "L1": {
+        "q_h": 0.1710272170657634,
+        "buckets": 215,
+        "same_bucket_ratio": 0.01404786680541103,
+        "delta_mean": 0.6169306698460882,
+        "negatives_ranked_above_positive": 0.3017992621322486
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ab6e1f5d6915902d4f7b74d06f577344fdc8b1f0ebd031c0947137b8ca6f4b8f.L1.json",
+      "L2": {
+        "q_h": 0.2073511460375388,
+        "buckets": 7789,
+        "same_bucket_ratio": 0.0006754327878157223,
+        "delta_mean": 0.793318470027384,
+        "negatives_ranked_above_positive": 0.28636647431652634
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ab6e1f5d6915902d4f7b74d06f577344fdc8b1f0ebd031c0947137b8ca6f4b8f.L2.json",
+      "L3": {
+        "q_h": 0.25087020274871796,
+        "buckets": 21453,
+        "same_bucket_ratio": 4.351527764639107e-05,
+        "delta_mean": 0.9123051926266985,
+        "negatives_ranked_above_positive": 0.26205278592375364
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ab6e1f5d6915902d4f7b74d06f577344fdc8b1f0ebd031c0947137b8ca6f4b8f.L3.json"
     },
     {
       "sid_sha256": "12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b",
@@ -1012,12 +2208,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05459705078431031,
       "test_recall@5": 0.03629937847107366,
-      "q_h": 0.18055113055730942,
-      "buckets": 253,
-      "same_bucket_ratio": 0.016620944092328067,
-      "delta_mean": 0.6169555742132988,
-      "negatives_ranked_above_positive": 0.2944735597389083,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b.json"
+      "L1": {
+        "q_h": 0.18055113055730942,
+        "buckets": 253,
+        "same_bucket_ratio": 0.016620944092328067,
+        "delta_mean": 0.6169555742132988,
+        "negatives_ranked_above_positive": 0.2944735597389083
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b.L1.json",
+      "L2": {
+        "q_h": 0.20169761683044973,
+        "buckets": 9047,
+        "same_bucket_ratio": 0.0006300255415760098,
+        "delta_mean": 0.7918632350389412,
+        "negatives_ranked_above_positive": 0.2904569104152871
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b.L2.json",
+      "L3": {
+        "q_h": 0.24974719542404045,
+        "buckets": 22007,
+        "same_bucket_ratio": 4.162330905306972e-05,
+        "delta_mean": 0.9100898344679278,
+        "negatives_ranked_above_positive": 0.26222873900293253
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b.L3.json"
     },
     {
       "sid_sha256": "e52d1603a8b0bd2118dcd9c57bf215081d67abf865fac0e68fe987877788ea38",
@@ -1027,12 +2241,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05452741168892216,
       "test_recall@5": 0.03622973937568551,
-      "q_h": 0.10690490846941614,
-      "buckets": 184,
-      "same_bucket_ratio": 0.019757828020054866,
-      "delta_mean": 0.4122813246777842,
-      "negatives_ranked_above_positive": 0.3422627944376123,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e52d1603a8b0bd2118dcd9c57bf215081d67abf865fac0e68fe987877788ea38.json"
+      "L1": {
+        "q_h": 0.10690490846941614,
+        "buckets": 184,
+        "same_bucket_ratio": 0.019757828020054866,
+        "delta_mean": 0.4122813246777842,
+        "negatives_ranked_above_positive": 0.3422627944376123
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e52d1603a8b0bd2118dcd9c57bf215081d67abf865fac0e68fe987877788ea38.L1.json",
+      "L2": {
+        "q_h": 0.1397225473174335,
+        "buckets": 6376,
+        "same_bucket_ratio": 0.0005940781383029041,
+        "delta_mean": 0.6411119379075308,
+        "negatives_ranked_above_positive": 0.32128843061205187
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e52d1603a8b0bd2118dcd9c57bf215081d67abf865fac0e68fe987877788ea38.L2.json",
+      "L3": {
+        "q_h": 0.24602200676775265,
+        "buckets": 23122,
+        "same_bucket_ratio": 9.459842966606754e-06,
+        "delta_mean": 0.9125374306838961,
+        "negatives_ranked_above_positive": 0.264368555481979
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/e52d1603a8b0bd2118dcd9c57bf215081d67abf865fac0e68fe987877788ea38.L3.json"
     },
     {
       "sid_sha256": "f30066606b4c31d699e50e6ba613ce40b53813bb158045fe04eceeb57bb95a66",
@@ -1042,12 +2274,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05435331395045179,
       "test_recall@5": 0.03661275440032034,
-      "q_h": 0.1661700610728013,
-      "buckets": 187,
-      "same_bucket_ratio": 0.01654526534859521,
-      "delta_mean": 0.6042746349590193,
-      "negatives_ranked_above_positive": 0.3032806735408192,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f30066606b4c31d699e50e6ba613ce40b53813bb158045fe04eceeb57bb95a66.json"
+      "L1": {
+        "q_h": 0.1661700610728013,
+        "buckets": 187,
+        "same_bucket_ratio": 0.01654526534859521,
+        "delta_mean": 0.6042746349590193,
+        "negatives_ranked_above_positive": 0.3032806735408192
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f30066606b4c31d699e50e6ba613ce40b53813bb158045fe04eceeb57bb95a66.L1.json",
+      "L2": {
+        "q_h": 0.18620476606936187,
+        "buckets": 7083,
+        "same_bucket_ratio": 0.0006754327878157223,
+        "delta_mean": 0.7576820404426536,
+        "negatives_ranked_above_positive": 0.29809857156371206
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f30066606b4c31d699e50e6ba613ce40b53813bb158045fe04eceeb57bb95a66.L2.json",
+      "L3": {
+        "q_h": 0.23188693060498267,
+        "buckets": 18005,
+        "same_bucket_ratio": 8.703055529278215e-05,
+        "delta_mean": 0.8815970271341605,
+        "negatives_ranked_above_positive": 0.2721748178980229
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f30066606b4c31d699e50e6ba613ce40b53813bb158045fe04eceeb57bb95a66.L3.json"
     },
     {
       "sid_sha256": "a3ac0ab5d594ae772b5f7e51195a3670e5cf5ef48238540591baf33aef47435a",
@@ -1057,12 +2307,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.054283674855063635,
       "test_recall@5": 0.034732498824840266,
-      "q_h": 0.1760206117386539,
-      "buckets": 256,
-      "same_bucket_ratio": 0.015920915712799168,
-      "delta_mean": 0.5604079129272981,
-      "negatives_ranked_above_positive": 0.29638633998675623,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a3ac0ab5d594ae772b5f7e51195a3670e5cf5ef48238540591baf33aef47435a.json"
+      "L1": {
+        "q_h": 0.1760206117386539,
+        "buckets": 256,
+        "same_bucket_ratio": 0.015920915712799168,
+        "delta_mean": 0.5604079129272981,
+        "negatives_ranked_above_positive": 0.29638633998675623
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a3ac0ab5d594ae772b5f7e51195a3670e5cf5ef48238540591baf33aef47435a.L1.json",
+      "L2": {
+        "q_h": 0.12932154996098721,
+        "buckets": 12596,
+        "same_bucket_ratio": 0.00020244063948538453,
+        "delta_mean": 0.8018313884224932,
+        "negatives_ranked_above_positive": 0.31788856304985336
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a3ac0ab5d594ae772b5f7e51195a3670e5cf5ef48238540591baf33aef47435a.L2.json",
+      "L3": {
+        "q_h": 0.24987202200372116,
+        "buckets": 23853,
+        "same_bucket_ratio": 3.783937186642702e-06,
+        "delta_mean": 0.9165823722935106,
+        "negatives_ranked_above_positive": 0.2620111626147006
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a3ac0ab5d594ae772b5f7e51195a3670e5cf5ef48238540591baf33aef47435a.L3.json"
     },
     {
       "sid_sha256": "7d73b0b626ce651c27798716c590a6820c5ebfddd1478ba686448de50fc3ea21",
@@ -1072,12 +2340,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05424885530736956,
       "test_recall@5": 0.035672626612580305,
-      "q_h": 0.1845624531977621,
-      "buckets": 244,
-      "same_bucket_ratio": 0.014676000378393719,
-      "delta_mean": 0.6324655647124928,
-      "negatives_ranked_above_positive": 0.2926175385488601,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7d73b0b626ce651c27798716c590a6820c5ebfddd1478ba686448de50fc3ea21.json"
+      "L1": {
+        "q_h": 0.1845624531977621,
+        "buckets": 244,
+        "same_bucket_ratio": 0.014676000378393719,
+        "delta_mean": 0.6324655647124928,
+        "negatives_ranked_above_positive": 0.2926175385488601
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7d73b0b626ce651c27798716c590a6820c5ebfddd1478ba686448de50fc3ea21.L1.json",
+      "L2": {
+        "q_h": 0.2122115850330777,
+        "buckets": 7223,
+        "same_bucket_ratio": 0.0008438179926213224,
+        "delta_mean": 0.7960694392587678,
+        "negatives_ranked_above_positive": 0.28322769842020623
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7d73b0b626ce651c27798716c590a6820c5ebfddd1478ba686448de50fc3ea21.L2.json",
+      "L3": {
+        "q_h": 0.2520953822952442,
+        "buckets": 20418,
+        "same_bucket_ratio": 7.567874373285403e-05,
+        "delta_mean": 0.9125622256361461,
+        "negatives_ranked_above_positive": 0.26037460978147764
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7d73b0b626ce651c27798716c590a6820c5ebfddd1478ba686448de50fc3ea21.L3.json"
     },
     {
       "sid_sha256": "13496c26672ebe103a710f594c288cc2e7e1d8867a5ee3e5dbabee47ffe1658b",
@@ -1087,12 +2373,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05424885530736956,
       "test_recall@5": 0.03544629955256881,
-      "q_h": 0.1891652380435016,
-      "buckets": 256,
-      "same_bucket_ratio": 0.019108882792545644,
-      "delta_mean": 0.602780783628458,
-      "negatives_ranked_above_positive": 0.2859029420111626,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/13496c26672ebe103a710f594c288cc2e7e1d8867a5ee3e5dbabee47ffe1658b.json"
+      "L1": {
+        "q_h": 0.1891652380435016,
+        "buckets": 256,
+        "same_bucket_ratio": 0.019108882792545644,
+        "delta_mean": 0.602780783628458,
+        "negatives_ranked_above_positive": 0.2859029420111626
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/13496c26672ebe103a710f594c288cc2e7e1d8867a5ee3e5dbabee47ffe1658b.L1.json",
+      "L2": {
+        "q_h": 0.1383959581114037,
+        "buckets": 9301,
+        "same_bucket_ratio": 0.0008211143695014663,
+        "delta_mean": 0.7977855615705075,
+        "negatives_ranked_above_positive": 0.3131945889698231
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/13496c26672ebe103a710f594c288cc2e7e1d8867a5ee3e5dbabee47ffe1658b.L2.json",
+      "L3": {
+        "q_h": 0.23693072869009657,
+        "buckets": 22880,
+        "same_bucket_ratio": 7.567874373285404e-06,
+        "delta_mean": 0.9169910441186344,
+        "negatives_ranked_above_positive": 0.2676643647715448
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/13496c26672ebe103a710f594c288cc2e7e1d8867a5ee3e5dbabee47ffe1658b.L3.json"
     },
     {
       "sid_sha256": "64539cfe39561ba245d39a1d488d91e1ccb7fd361b83c80ecbb441bb45cf346d",
@@ -1102,12 +2406,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.054022528247358065,
       "test_recall@5": 0.036508295757238116,
-      "q_h": 0.15376537555560033,
-      "buckets": 28,
-      "same_bucket_ratio": 0.09528899820262984,
-      "delta_mean": 0.4939832483390874,
-      "negatives_ranked_above_positive": 0.27271213697852614,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/64539cfe39561ba245d39a1d488d91e1ccb7fd361b83c80ecbb441bb45cf346d.json"
+      "L1": {
+        "q_h": 0.15376537555560033,
+        "buckets": 28,
+        "same_bucket_ratio": 0.09528899820262984,
+        "delta_mean": 0.4939832483390874,
+        "negatives_ranked_above_positive": 0.27271213697852614
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/64539cfe39561ba245d39a1d488d91e1ccb7fd361b83c80ecbb441bb45cf346d.L1.json",
+      "L2": {
+        "q_h": 0.1775115615852133,
+        "buckets": 1044,
+        "same_bucket_ratio": 0.006534859521331946,
+        "delta_mean": 0.6253331304926961,
+        "negatives_ranked_above_positive": 0.3018881846561347
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/64539cfe39561ba245d39a1d488d91e1ccb7fd361b83c80ecbb441bb45cf346d.L2.json",
+      "L3": {
+        "q_h": 0.22097328806747996,
+        "buckets": 11922,
+        "same_bucket_ratio": 0.0005183993945700501,
+        "delta_mean": 0.8428557213029623,
+        "negatives_ranked_above_positive": 0.2780834358149655
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/64539cfe39561ba245d39a1d488d91e1ccb7fd361b83c80ecbb441bb45cf346d.L3.json"
     },
     {
       "sid_sha256": "5cd26e761f1c0b8396d416a6c9cadde8a521d2cf568ff04087c8e5c11cb23195",
@@ -1117,12 +2439,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.053918069604275844,
       "test_recall@5": 0.035672626612580305,
-      "q_h": 0.17483701627534476,
-      "buckets": 256,
-      "same_bucket_ratio": 0.004928578185602119,
-      "delta_mean": 0.6572961635166333,
-      "negatives_ranked_above_positive": 0.3051480465424274,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5cd26e761f1c0b8396d416a6c9cadde8a521d2cf568ff04087c8e5c11cb23195.json"
+      "L1": {
+        "q_h": 0.17483701627534476,
+        "buckets": 256,
+        "same_bucket_ratio": 0.004928578185602119,
+        "delta_mean": 0.6572961635166333,
+        "negatives_ranked_above_positive": 0.3051480465424274
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5cd26e761f1c0b8396d416a6c9cadde8a521d2cf568ff04087c8e5c11cb23195.L1.json",
+      "L2": {
+        "q_h": 0.2068211050357356,
+        "buckets": 16099,
+        "same_bucket_ratio": 4.729921483303377e-05,
+        "delta_mean": 0.8404080166381751,
+        "negatives_ranked_above_positive": 0.28453883265537794
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5cd26e761f1c0b8396d416a6c9cadde8a521d2cf568ff04087c8e5c11cb23195.L2.json",
+      "L3": {
+        "q_h": 0.255060778162422,
+        "buckets": 24085,
+        "same_bucket_ratio": 3.783937186642702e-06,
+        "delta_mean": 0.9196656876470389,
+        "negatives_ranked_above_positive": 0.25936429855264403
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5cd26e761f1c0b8396d416a6c9cadde8a521d2cf568ff04087c8e5c11cb23195.L3.json"
     },
     {
       "sid_sha256": "9064df1523f0ba673bae81165588da7527949a410df754cf7ff0cd2079e2862c",
@@ -1132,12 +2472,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.053813610961193616,
       "test_recall@5": 0.035881543898744754,
-      "q_h": 0.17698796992165144,
-      "buckets": 67,
-      "same_bucket_ratio": 0.10667675716583104,
-      "delta_mean": 0.5305782530921754,
-      "negatives_ranked_above_positive": 0.2524245577523413,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9064df1523f0ba673bae81165588da7527949a410df754cf7ff0cd2079e2862c.json"
+      "L1": {
+        "q_h": 0.17698796992165144,
+        "buckets": 67,
+        "same_bucket_ratio": 0.10667675716583104,
+        "delta_mean": 0.5305782530921754,
+        "negatives_ranked_above_positive": 0.2524245577523413
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9064df1523f0ba673bae81165588da7527949a410df754cf7ff0cd2079e2862c.L1.json",
+      "L2": {
+        "q_h": 0.17596838283987848,
+        "buckets": 846,
+        "same_bucket_ratio": 0.03695393056475262,
+        "delta_mean": 0.6120747008908628,
+        "negatives_ranked_above_positive": 0.28724623971242075
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9064df1523f0ba673bae81165588da7527949a410df754cf7ff0cd2079e2862c.L2.json",
+      "L3": {
+        "q_h": 0.13228663947337582,
+        "buckets": 3537,
+        "same_bucket_ratio": 0.01046258632106707,
+        "delta_mean": 0.6455077659681927,
+        "negatives_ranked_above_positive": 0.32234604105571846
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/9064df1523f0ba673bae81165588da7527949a410df754cf7ff0cd2079e2862c.L3.json"
     },
     {
       "sid_sha256": "94323185a20bcf575989dacf3699c66480db443ad5b331cb4cc3e3f8e01ee9e7",
@@ -1147,12 +2505,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.053273907971935444,
       "test_recall@5": 0.03415797628788802,
-      "q_h": 0.18199179867294923,
-      "buckets": 256,
-      "same_bucket_ratio": 0.004973985431841832,
-      "delta_mean": 0.6415416645439487,
-      "negatives_ranked_above_positive": 0.30118248037082584,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/94323185a20bcf575989dacf3699c66480db443ad5b331cb4cc3e3f8e01ee9e7.json"
+      "L1": {
+        "q_h": 0.18199179867294923,
+        "buckets": 256,
+        "same_bucket_ratio": 0.004973985431841832,
+        "delta_mean": 0.6415416645439487,
+        "negatives_ranked_above_positive": 0.30118248037082584
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/94323185a20bcf575989dacf3699c66480db443ad5b331cb4cc3e3f8e01ee9e7.L1.json",
+      "L2": {
+        "q_h": 0.2560725721533855,
+        "buckets": 24530,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217282641431388,
+        "negatives_ranked_above_positive": 0.2587702204143411
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/94323185a20bcf575989dacf3699c66480db443ad5b331cb4cc3e3f8e01ee9e7.L2.json",
+      "L3": {
+        "q_h": 0.25609041387805986,
+        "buckets": 24538,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614542933109,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/94323185a20bcf575989dacf3699c66480db443ad5b331cb4cc3e3f8e01ee9e7.L3.json"
     },
     {
       "sid_sha256": "67f77d170c7977d0462567d8553ea8c7d5f7b52b290cd585525586723c2a8063",
@@ -1162,12 +2538,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.053169449328853216,
       "test_recall@5": 0.03565521683873327,
-      "q_h": 0.16858818136613696,
-      "buckets": 203,
-      "same_bucket_ratio": 0.03072746192413206,
-      "delta_mean": 0.5675281787808885,
-      "negatives_ranked_above_positive": 0.29601551414246524,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/67f77d170c7977d0462567d8553ea8c7d5f7b52b290cd585525586723c2a8063.json"
+      "L1": {
+        "q_h": 0.16858818136613696,
+        "buckets": 203,
+        "same_bucket_ratio": 0.03072746192413206,
+        "delta_mean": 0.5675281787808885,
+        "negatives_ranked_above_positive": 0.29601551414246524
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/67f77d170c7977d0462567d8553ea8c7d5f7b52b290cd585525586723c2a8063.L1.json",
+      "L2": {
+        "q_h": 0.1886717295169189,
+        "buckets": 1867,
+        "same_bucket_ratio": 0.003153911645066692,
+        "delta_mean": 0.6837551362487785,
+        "negatives_ranked_above_positive": 0.2969709582820925
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/67f77d170c7977d0462567d8553ea8c7d5f7b52b290cd585525586723c2a8063.L2.json",
+      "L3": {
+        "q_h": 0.20717964802259226,
+        "buckets": 8007,
+        "same_bucket_ratio": 0.0006300255415760098,
+        "delta_mean": 0.7880917090969614,
+        "negatives_ranked_above_positive": 0.2862661999810803
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/67f77d170c7977d0462567d8553ea8c7d5f7b52b290cd585525586723c2a8063.L3.json"
     },
     {
       "sid_sha256": "f2655ce037dc49fa76d14ecc18ebd47c0f0fb8896ea75e29fbe7533e43ac990a",
@@ -1177,12 +2571,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05313462978115914,
       "test_recall@5": 0.03501105520639287,
-      "q_h": 0.17724460820148447,
-      "buckets": 256,
-      "same_bucket_ratio": 0.004905874562482263,
-      "delta_mean": 0.6492909087881419,
-      "negatives_ranked_above_positive": 0.30457856399583766,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f2655ce037dc49fa76d14ecc18ebd47c0f0fb8896ea75e29fbe7533e43ac990a.json"
+      "L1": {
+        "q_h": 0.17724460820148447,
+        "buckets": 256,
+        "same_bucket_ratio": 0.004905874562482263,
+        "delta_mean": 0.6492909087881419,
+        "negatives_ranked_above_positive": 0.30457856399583766
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f2655ce037dc49fa76d14ecc18ebd47c0f0fb8896ea75e29fbe7533e43ac990a.L1.json",
+      "L2": {
+        "q_h": 0.2560332986621966,
+        "buckets": 24579,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.921678430830142,
+        "negatives_ranked_above_positive": 0.2587683284457478
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f2655ce037dc49fa76d14ecc18ebd47c0f0fb8896ea75e29fbe7533e43ac990a.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/f2655ce037dc49fa76d14ecc18ebd47c0f0fb8896ea75e29fbe7533e43ac990a.L3.json"
     },
     {
       "sid_sha256": "c9f990c353af78c44117b698ec2cd967ecd127988468cc214f319238d818cf70",
@@ -1192,12 +2604,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05262974633959505,
       "test_recall@5": 0.034732498824840266,
-      "q_h": 0.17855790920167058,
-      "buckets": 256,
-      "same_bucket_ratio": 0.0048831709393624065,
-      "delta_mean": 0.6553723626535054,
-      "negatives_ranked_above_positive": 0.3026355122504966,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c9f990c353af78c44117b698ec2cd967ecd127988468cc214f319238d818cf70.json"
+      "L1": {
+        "q_h": 0.17855790920167058,
+        "buckets": 256,
+        "same_bucket_ratio": 0.0048831709393624065,
+        "delta_mean": 0.6553723626535054,
+        "negatives_ranked_above_positive": 0.3026355122504966
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c9f990c353af78c44117b698ec2cd967ecd127988468cc214f319238d818cf70.L1.json",
+      "L2": {
+        "q_h": 0.21474688966241362,
+        "buckets": 15837,
+        "same_bucket_ratio": 4.919118342635512e-05,
+        "delta_mean": 0.8499568553179306,
+        "negatives_ranked_above_positive": 0.2813224860467316
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c9f990c353af78c44117b698ec2cd967ecd127988468cc214f319238d818cf70.L2.json",
+      "L3": {
+        "q_h": 0.25369349850368506,
+        "buckets": 23812,
+        "same_bucket_ratio": 7.567874373285404e-06,
+        "delta_mean": 0.9186820598083945,
+        "negatives_ranked_above_positive": 0.26011919402137923
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c9f990c353af78c44117b698ec2cd967ecd127988468cc214f319238d818cf70.L3.json"
     },
     {
       "sid_sha256": "7cc7c8e2d9e6503d79286af99e807546a163f5eab387f727a23e4fb6531bc71c",
@@ -1207,12 +2637,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05200299448110169,
       "test_recall@5": 0.03426243493097025,
-      "q_h": 0.19573532073993682,
-      "buckets": 165,
-      "same_bucket_ratio": 0.056004162330905306,
-      "delta_mean": 0.5881602426987961,
-      "negatives_ranked_above_positive": 0.2624122599564847,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7cc7c8e2d9e6503d79286af99e807546a163f5eab387f727a23e4fb6531bc71c.json"
+      "L1": {
+        "q_h": 0.19573532073993682,
+        "buckets": 165,
+        "same_bucket_ratio": 0.056004162330905306,
+        "delta_mean": 0.5881602426987961,
+        "negatives_ranked_above_positive": 0.2624122599564847
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7cc7c8e2d9e6503d79286af99e807546a163f5eab387f727a23e4fb6531bc71c.L1.json",
+      "L2": {
+        "q_h": 0.14075478165282995,
+        "buckets": 5109,
+        "same_bucket_ratio": 0.0043477438274524645,
+        "delta_mean": 0.6661863104675442,
+        "negatives_ranked_above_positive": 0.3246712704569104
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7cc7c8e2d9e6503d79286af99e807546a163f5eab387f727a23e4fb6531bc71c.L2.json",
+      "L3": {
+        "q_h": 0.20682731483871775,
+        "buckets": 18457,
+        "same_bucket_ratio": 0.00014757355027906536,
+        "delta_mean": 0.8566720295222293,
+        "negatives_ranked_above_positive": 0.2877192318607511
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7cc7c8e2d9e6503d79286af99e807546a163f5eab387f727a23e4fb6531bc71c.L3.json"
     },
     {
       "sid_sha256": "1019d2502683a3badd1e8f1484f0415f61c7ae136c9cffbff56c3c5282977f63",
@@ -1222,12 +2670,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.051863716290325386,
       "test_recall@5": 0.03396646877557061,
-      "q_h": 0.17268648838172562,
-      "buckets": 256,
-      "same_bucket_ratio": 0.004890738813735692,
-      "delta_mean": 0.6448023960653555,
-      "negatives_ranked_above_positive": 0.3065916185791316,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/1019d2502683a3badd1e8f1484f0415f61c7ae136c9cffbff56c3c5282977f63.json"
+      "L1": {
+        "q_h": 0.17268648838172562,
+        "buckets": 256,
+        "same_bucket_ratio": 0.004890738813735692,
+        "delta_mean": 0.6448023960653555,
+        "negatives_ranked_above_positive": 0.3065916185791316
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/1019d2502683a3badd1e8f1484f0415f61c7ae136c9cffbff56c3c5282977f63.L1.json",
+      "L2": {
+        "q_h": 0.2561019839178207,
+        "buckets": 24583,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217892861046139,
+        "negatives_ranked_above_positive": 0.25875508466559455
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/1019d2502683a3badd1e8f1484f0415f61c7ae136c9cffbff56c3c5282977f63.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/1019d2502683a3badd1e8f1484f0415f61c7ae136c9cffbff56c3c5282977f63.L3.json"
     },
     {
       "sid_sha256": "4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc",
@@ -1237,12 +2703,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05121955465798499,
       "test_recall@5": 0.035028464980239905,
-      "q_h": 5.271245133919855e-05,
-      "buckets": 16,
-      "same_bucket_ratio": 0.06743354460315959,
-      "delta_mean": 0.0006734693996522368,
-      "negatives_ranked_above_positive": 0.4606054299498628,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc.json"
+      "L1": {
+        "q_h": 5.271245133919855e-05,
+        "buckets": 16,
+        "same_bucket_ratio": 0.06743354460315959,
+        "delta_mean": 0.0006734693996522368,
+        "negatives_ranked_above_positive": 0.4606054299498628
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc.L1.json",
+      "L2": {
+        "q_h": 0.15343105936208945,
+        "buckets": 1684,
+        "same_bucket_ratio": 0.0030668810897739097,
+        "delta_mean": 0.5407962862707429,
+        "negatives_ranked_above_positive": 0.31582820925172644
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc.L2.json",
+      "L3": {
+        "q_h": 0.2197807926694404,
+        "buckets": 16790,
+        "same_bucket_ratio": 7.567874373285403e-05,
+        "delta_mean": 0.8596183613130775,
+        "negatives_ranked_above_positive": 0.2797786396745814
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc.L3.json"
     },
     {
       "sid_sha256": "3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a",
@@ -1252,12 +2736,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05062762234718571,
       "test_recall@5": 0.034279844704817285,
-      "q_h": 0.005515891122341965,
-      "buckets": 256,
-      "same_bucket_ratio": 0.09538927253807587,
-      "delta_mean": 0.0837710917618524,
-      "negatives_ranked_above_positive": 0.4057591523980702,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a.json"
+      "L1": {
+        "q_h": 0.005515891122341965,
+        "buckets": 256,
+        "same_bucket_ratio": 0.09538927253807587,
+        "delta_mean": 0.0837710917618524,
+        "negatives_ranked_above_positive": 0.4057591523980702
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a.L1.json",
+      "L2": {
+        "q_h": 0.1441464167521166,
+        "buckets": 3952,
+        "same_bucket_ratio": 0.006841358433450005,
+        "delta_mean": 0.6150642646678403,
+        "negatives_ranked_above_positive": 0.31821587361649795
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a.L2.json",
+      "L3": {
+        "q_h": 0.21756772570911198,
+        "buckets": 13702,
+        "same_bucket_ratio": 0.00039163749881751964,
+        "delta_mean": 0.8494808470282132,
+        "negatives_ranked_above_positive": 0.2800416233090531
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a.L3.json"
     },
     {
       "sid_sha256": "5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16",
@@ -1267,12 +2769,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.05000087048869235,
       "test_recall@5": 0.033531224429394664,
-      "q_h": 0.06655299403930981,
-      "buckets": 254,
-      "same_bucket_ratio": 0.0160476776085517,
-      "delta_mean": 0.2241383103830092,
-      "negatives_ranked_above_positive": 0.38223252294011917,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16.json"
+      "L1": {
+        "q_h": 0.06655299403930981,
+        "buckets": 254,
+        "same_bucket_ratio": 0.0160476776085517,
+        "delta_mean": 0.2241383103830092,
+        "negatives_ranked_above_positive": 0.38223252294011917
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16.L1.json",
+      "L2": {
+        "q_h": 0.1526402030948507,
+        "buckets": 6810,
+        "same_bucket_ratio": 0.0010216630403935294,
+        "delta_mean": 0.6632640913274559,
+        "negatives_ranked_above_positive": 0.31480465424273957
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16.L2.json",
+      "L3": {
+        "q_h": 0.23683851047223825,
+        "buckets": 20130,
+        "same_bucket_ratio": 9.270646107274619e-05,
+        "delta_mean": 0.892833863475476,
+        "negatives_ranked_above_positive": 0.2700577050420963
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16.L3.json"
     },
     {
       "sid_sha256": "de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a",
@@ -1282,12 +2802,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.04967008478559864,
       "test_recall@5": 0.032887062797054264,
-      "q_h": 0.11568853319789385,
-      "buckets": 27,
-      "same_bucket_ratio": 0.05173398921577902,
-      "delta_mean": 0.35120302420417643,
-      "negatives_ranked_above_positive": 0.3228720083246618,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a.json"
+      "L1": {
+        "q_h": 0.11568853319789385,
+        "buckets": 27,
+        "same_bucket_ratio": 0.05173398921577902,
+        "delta_mean": 0.35120302420417643,
+        "negatives_ranked_above_positive": 0.3228720083246618
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a.L1.json",
+      "L2": {
+        "q_h": 0.08206973361096648,
+        "buckets": 3156,
+        "same_bucket_ratio": 0.0007057042853088639,
+        "delta_mean": 0.4538300826860558,
+        "negatives_ranked_above_positive": 0.36296282281714126
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a.L2.json",
+      "L3": {
+        "q_h": 0.21585599616441076,
+        "buckets": 22858,
+        "same_bucket_ratio": 9.459842966606754e-06,
+        "delta_mean": 0.8878766133828349,
+        "negatives_ranked_above_positive": 0.27520196764733706
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a.L3.json"
     },
     {
       "sid_sha256": "6fd8cc3ed6f5d961fa8b229f2214bde077706be000019dd854a637903b43fd51",
@@ -1297,12 +2835,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.04832953219937673,
       "test_recall@5": 0.03252145754626647,
-      "q_h": 0.13679312696546597,
-      "buckets": 256,
-      "same_bucket_ratio": 0.004801816289849588,
-      "delta_mean": 0.5908824005454,
-      "negatives_ranked_above_positive": 0.3286671081260051,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/6fd8cc3ed6f5d961fa8b229f2214bde077706be000019dd854a637903b43fd51.json"
+      "L1": {
+        "q_h": 0.13679312696546597,
+        "buckets": 256,
+        "same_bucket_ratio": 0.004801816289849588,
+        "delta_mean": 0.5908824005454,
+        "negatives_ranked_above_positive": 0.3286671081260051
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/6fd8cc3ed6f5d961fa8b229f2214bde077706be000019dd854a637903b43fd51.L1.json",
+      "L2": {
+        "q_h": 0.2560908328780538,
+        "buckets": 24586,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217640644252484,
+        "negatives_ranked_above_positive": 0.2587513007284079
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/6fd8cc3ed6f5d961fa8b229f2214bde077706be000019dd854a637903b43fd51.L2.json",
+      "L3": {
+        "q_h": 0.256090413932031,
+        "buckets": 24587,
+        "same_bucket_ratio": 0.0,
+        "delta_mean": 0.9217614545908891,
+        "negatives_ranked_above_positive": 0.2587494087598146
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/6fd8cc3ed6f5d961fa8b229f2214bde077706be000019dd854a637903b43fd51.L3.json"
     },
     {
       "sid_sha256": "7d892b1f5b12ec9a3534cac3bab94bc5ca743118f1a140b4a3e12308c3df4c3f",
@@ -1312,12 +2868,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.04725012622086039,
       "test_recall@5": 0.030884938804644928,
-      "q_h": 0.1421694794315338,
-      "buckets": 256,
-      "same_bucket_ratio": 0.004639106990823952,
-      "delta_mean": 0.5782545086000728,
-      "negatives_ranked_above_positive": 0.32595024122599564,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7d892b1f5b12ec9a3534cac3bab94bc5ca743118f1a140b4a3e12308c3df4c3f.json"
+      "L1": {
+        "q_h": 0.1421694794315338,
+        "buckets": 256,
+        "same_bucket_ratio": 0.004639106990823952,
+        "delta_mean": 0.5782545086000728,
+        "negatives_ranked_above_positive": 0.32595024122599564
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7d892b1f5b12ec9a3534cac3bab94bc5ca743118f1a140b4a3e12308c3df4c3f.L1.json",
+      "L2": {
+        "q_h": 0.18300386588726225,
+        "buckets": 16125,
+        "same_bucket_ratio": 3.5947403273105664e-05,
+        "delta_mean": 0.809067153482441,
+        "negatives_ranked_above_positive": 0.29694636269037933
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7d892b1f5b12ec9a3534cac3bab94bc5ca743118f1a140b4a3e12308c3df4c3f.L2.json",
+      "L3": {
+        "q_h": 0.24028557480435186,
+        "buckets": 22903,
+        "same_bucket_ratio": 9.459842966606754e-06,
+        "delta_mean": 0.9028060900933705,
+        "negatives_ranked_above_positive": 0.2671875886860278
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/7d892b1f5b12ec9a3534cac3bab94bc5ca743118f1a140b4a3e12308c3df4c3f.L3.json"
     },
     {
       "sid_sha256": "970b1933f08b88a6ee6cff54d1d02db8b50828a2aacfafae3912f89b63d00547",
@@ -1327,12 +2901,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.046693013457755186,
       "test_recall@5": 0.030554153101551212,
-      "q_h": 0.1332358678320572,
-      "buckets": 256,
-      "same_bucket_ratio": 0.004459369974458424,
-      "delta_mean": 0.5827681428807744,
-      "negatives_ranked_above_positive": 0.3274430044461262,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/970b1933f08b88a6ee6cff54d1d02db8b50828a2aacfafae3912f89b63d00547.json"
+      "L1": {
+        "q_h": 0.1332358678320572,
+        "buckets": 256,
+        "same_bucket_ratio": 0.004459369974458424,
+        "delta_mean": 0.5827681428807744,
+        "negatives_ranked_above_positive": 0.3274430044461262
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/970b1933f08b88a6ee6cff54d1d02db8b50828a2aacfafae3912f89b63d00547.L1.json",
+      "L2": {
+        "q_h": 0.16192395721928088,
+        "buckets": 5945,
+        "same_bucket_ratio": 0.0005751584523696906,
+        "delta_mean": 0.6996367696138637,
+        "negatives_ranked_above_positive": 0.31091287484627755
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/970b1933f08b88a6ee6cff54d1d02db8b50828a2aacfafae3912f89b63d00547.L2.json",
+      "L3": {
+        "q_h": 0.1926991575954886,
+        "buckets": 11614,
+        "same_bucket_ratio": 0.0002743354460315959,
+        "delta_mean": 0.7944492467960185,
+        "negatives_ranked_above_positive": 0.2937981269510926
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/970b1933f08b88a6ee6cff54d1d02db8b50828a2aacfafae3912f89b63d00547.L3.json"
     },
     {
       "sid_sha256": "25e30c50e172d0584178694eef33569bb90762816efc602a88e293c8d5d144ad",
@@ -1342,12 +2934,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.046536325493131844,
       "test_recall@5": 0.031459461341597175,
-      "q_h": 0.13820535234406295,
-      "buckets": 101,
-      "same_bucket_ratio": 0.03547630309336865,
-      "delta_mean": 0.4694445330480737,
-      "negatives_ranked_above_positive": 0.31690284741273295,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/25e30c50e172d0584178694eef33569bb90762816efc602a88e293c8d5d144ad.json"
+      "L1": {
+        "q_h": 0.13820535234406295,
+        "buckets": 101,
+        "same_bucket_ratio": 0.03547630309336865,
+        "delta_mean": 0.4694445330480737,
+        "negatives_ranked_above_positive": 0.31690284741273295
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/25e30c50e172d0584178694eef33569bb90762816efc602a88e293c8d5d144ad.L1.json",
+      "L2": {
+        "q_h": 0.15972794015329383,
+        "buckets": 1199,
+        "same_bucket_ratio": 0.004699649985810236,
+        "delta_mean": 0.5661399135779419,
+        "negatives_ranked_above_positive": 0.31294106517831805
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/25e30c50e172d0584178694eef33569bb90762816efc602a88e293c8d5d144ad.L2.json",
+      "L3": {
+        "q_h": 0.12154566647275111,
+        "buckets": 9872,
+        "same_bucket_ratio": 0.0002951471005581307,
+        "delta_mean": 0.6903563167213681,
+        "negatives_ranked_above_positive": 0.3326799735124397
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/25e30c50e172d0584178694eef33569bb90762816efc602a88e293c8d5d144ad.L3.json"
     },
     {
       "sid_sha256": "07985387299c6daca5cf61510ee8aa2efefaf8e12f6da95ed33ae534bf5e6f5c",
@@ -1357,12 +2967,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.04594439318233256,
       "test_recall@5": 0.031198314733891605,
-      "q_h": 0.1360138978248222,
-      "buckets": 256,
-      "same_bucket_ratio": 0.004569104152871062,
-      "delta_mean": 0.5839678030826401,
-      "negatives_ranked_above_positive": 0.32600510831520196,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/07985387299c6daca5cf61510ee8aa2efefaf8e12f6da95ed33ae534bf5e6f5c.json"
+      "L1": {
+        "q_h": 0.1360138978248222,
+        "buckets": 256,
+        "same_bucket_ratio": 0.004569104152871062,
+        "delta_mean": 0.5839678030826401,
+        "negatives_ranked_above_positive": 0.32600510831520196
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/07985387299c6daca5cf61510ee8aa2efefaf8e12f6da95ed33ae534bf5e6f5c.L1.json",
+      "L2": {
+        "q_h": 0.16513433413482148,
+        "buckets": 9440,
+        "same_bucket_ratio": 0.0002743354460315959,
+        "delta_mean": 0.7453435570206286,
+        "negatives_ranked_above_positive": 0.3072992148330338
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/07985387299c6daca5cf61510ee8aa2efefaf8e12f6da95ed33ae534bf5e6f5c.L2.json",
+      "L3": {
+        "q_h": 0.21368579368893448,
+        "buckets": 17955,
+        "same_bucket_ratio": 7.378677513953268e-05,
+        "delta_mean": 0.858777555443394,
+        "negatives_ranked_above_positive": 0.28112382934443286
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/07985387299c6daca5cf61510ee8aa2efefaf8e12f6da95ed33ae534bf5e6f5c.L3.json"
     },
     {
       "sid_sha256": "08eb05f4ada000f607f8196ca45c7652e9ad92d5ac092b1a63c3d57233b4061c",
@@ -1372,12 +3000,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.0458225247654033,
       "test_recall@5": 0.030658611744633437,
-      "q_h": 0.13851907056425894,
-      "buckets": 256,
-      "same_bucket_ratio": 0.00452369690663135,
-      "delta_mean": 0.5355190877050915,
-      "negatives_ranked_above_positive": 0.33031879670797465,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/08eb05f4ada000f607f8196ca45c7652e9ad92d5ac092b1a63c3d57233b4061c.json"
+      "L1": {
+        "q_h": 0.13851907056425894,
+        "buckets": 256,
+        "same_bucket_ratio": 0.00452369690663135,
+        "delta_mean": 0.5355190877050915,
+        "negatives_ranked_above_positive": 0.33031879670797465
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/08eb05f4ada000f607f8196ca45c7652e9ad92d5ac092b1a63c3d57233b4061c.L1.json",
+      "L2": {
+        "q_h": 0.1682621488405749,
+        "buckets": 15936,
+        "same_bucket_ratio": 2.6487560306498914e-05,
+        "delta_mean": 0.7851418688843664,
+        "negatives_ranked_above_positive": 0.3040753003500142
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/08eb05f4ada000f607f8196ca45c7652e9ad92d5ac092b1a63c3d57233b4061c.L2.json",
+      "L3": {
+        "q_h": 0.24358739814248187,
+        "buckets": 23519,
+        "same_bucket_ratio": 1.891968593321351e-06,
+        "delta_mean": 0.9072288895647275,
+        "negatives_ranked_above_positive": 0.26521615741178695
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/08eb05f4ada000f607f8196ca45c7652e9ad92d5ac092b1a63c3d57233b4061c.L3.json"
     },
     {
       "sid_sha256": "724428da2ee03bfc06585c88af1afe61a6bdab8a26e438cae974c72cd1010cfc",
@@ -1387,12 +3033,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.04566583680077996,
       "test_recall@5": 0.03024077717230453,
-      "q_h": 0.12375584043868837,
-      "buckets": 256,
-      "same_bucket_ratio": 0.0047223536089300916,
-      "delta_mean": 0.5317353124239595,
-      "negatives_ranked_above_positive": 0.33349162803897453,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/724428da2ee03bfc06585c88af1afe61a6bdab8a26e438cae974c72cd1010cfc.json"
+      "L1": {
+        "q_h": 0.12375584043868837,
+        "buckets": 256,
+        "same_bucket_ratio": 0.0047223536089300916,
+        "delta_mean": 0.5317353124239595,
+        "negatives_ranked_above_positive": 0.33349162803897453
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/724428da2ee03bfc06585c88af1afe61a6bdab8a26e438cae974c72cd1010cfc.L1.json",
+      "L2": {
+        "q_h": 0.14283543721515624,
+        "buckets": 5198,
+        "same_bucket_ratio": 0.0007851669662283606,
+        "delta_mean": 0.6528834765405379,
+        "negatives_ranked_above_positive": 0.3211976161195724
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/724428da2ee03bfc06585c88af1afe61a6bdab8a26e438cae974c72cd1010cfc.L2.json",
+      "L3": {
+        "q_h": 0.16925547466733015,
+        "buckets": 11665,
+        "same_bucket_ratio": 0.00029703906915145206,
+        "delta_mean": 0.7637799957797534,
+        "negatives_ranked_above_positive": 0.3056437423138776
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/724428da2ee03bfc06585c88af1afe61a6bdab8a26e438cae974c72cd1010cfc.L3.json"
     },
     {
       "sid_sha256": "c24f515a853b497d4b243a21130d3ffec0c49c6e262d9e1623d5e126e256dd56",
@@ -1402,12 +3066,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.04556137815769773,
       "test_recall@5": 0.029979630564598965,
-      "q_h": 0.11953712859123933,
-      "buckets": 256,
-      "same_bucket_ratio": 0.0052767004067732475,
-      "delta_mean": 0.5048045978310433,
-      "negatives_ranked_above_positive": 0.34071516412827546,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c24f515a853b497d4b243a21130d3ffec0c49c6e262d9e1623d5e126e256dd56.json"
+      "L1": {
+        "q_h": 0.11953712859123933,
+        "buckets": 256,
+        "same_bucket_ratio": 0.0052767004067732475,
+        "delta_mean": 0.5048045978310433,
+        "negatives_ranked_above_positive": 0.34071516412827546
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c24f515a853b497d4b243a21130d3ffec0c49c6e262d9e1623d5e126e256dd56.L1.json",
+      "L2": {
+        "q_h": 0.16317255090445948,
+        "buckets": 15908,
+        "same_bucket_ratio": 4.162330905306972e-05,
+        "delta_mean": 0.7828474615598773,
+        "negatives_ranked_above_positive": 0.3088884684514237
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c24f515a853b497d4b243a21130d3ffec0c49c6e262d9e1623d5e126e256dd56.L2.json",
+      "L3": {
+        "q_h": 0.2346836154794555,
+        "buckets": 22846,
+        "same_bucket_ratio": 5.675905779964052e-06,
+        "delta_mean": 0.9005466210739053,
+        "negatives_ranked_above_positive": 0.27054015703339324
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/c24f515a853b497d4b243a21130d3ffec0c49c6e262d9e1623d5e126e256dd56.L3.json"
     },
     {
       "sid_sha256": "266ce95225964002f2b8d8a0d92f18725051bcd73ce3c363ece486a8aeabb14a",
@@ -1417,12 +3099,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.04460384059611066,
       "test_recall@5": 0.029753303504587474,
-      "q_h": 0.10390336617392049,
-      "buckets": 236,
-      "same_bucket_ratio": 0.08012108598997257,
-      "delta_mean": 0.38141054864360474,
-      "negatives_ranked_above_positive": 0.33103396083625014,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/266ce95225964002f2b8d8a0d92f18725051bcd73ce3c363ece486a8aeabb14a.json"
+      "L1": {
+        "q_h": 0.10390336617392049,
+        "buckets": 236,
+        "same_bucket_ratio": 0.08012108598997257,
+        "delta_mean": 0.38141054864360474,
+        "negatives_ranked_above_positive": 0.33103396083625014
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/266ce95225964002f2b8d8a0d92f18725051bcd73ce3c363ece486a8aeabb14a.L1.json",
+      "L2": {
+        "q_h": 0.17289615647961942,
+        "buckets": 6069,
+        "same_bucket_ratio": 0.0036250118248037084,
+        "delta_mean": 0.7223734025569526,
+        "negatives_ranked_above_positive": 0.30341689527953836
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/266ce95225964002f2b8d8a0d92f18725051bcd73ce3c363ece486a8aeabb14a.L2.json",
+      "L3": {
+        "q_h": 0.23023072393063015,
+        "buckets": 19184,
+        "same_bucket_ratio": 0.00017973701636552833,
+        "delta_mean": 0.8890698518215238,
+        "negatives_ranked_above_positive": 0.27027338946173496
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/266ce95225964002f2b8d8a0d92f18725051bcd73ce3c363ece486a8aeabb14a.L3.json"
     },
     {
       "sid_sha256": "a4abd655bb5e64017eb8d707e7a0046298ea89f09b399f747e9f9947e87fc52f",
@@ -1432,12 +3132,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.04394226918992322,
       "test_recall@5": 0.02820383363220112,
-      "q_h": 0.14415012060496568,
-      "buckets": 256,
-      "same_bucket_ratio": 0.0049115504682622265,
-      "delta_mean": 0.6062591532081772,
-      "negatives_ranked_above_positive": 0.32131681014095165,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a4abd655bb5e64017eb8d707e7a0046298ea89f09b399f747e9f9947e87fc52f.json"
+      "L1": {
+        "q_h": 0.14415012060496568,
+        "buckets": 256,
+        "same_bucket_ratio": 0.0049115504682622265,
+        "delta_mean": 0.6062591532081772,
+        "negatives_ranked_above_positive": 0.32131681014095165
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a4abd655bb5e64017eb8d707e7a0046298ea89f09b399f747e9f9947e87fc52f.L1.json",
+      "L2": {
+        "q_h": 0.18229285941540763,
+        "buckets": 10736,
+        "same_bucket_ratio": 0.00021568441963863399,
+        "delta_mean": 0.7823297535330678,
+        "negatives_ranked_above_positive": 0.29752908901712233
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a4abd655bb5e64017eb8d707e7a0046298ea89f09b399f747e9f9947e87fc52f.L2.json",
+      "L3": {
+        "q_h": 0.21790722314216082,
+        "buckets": 17110,
+        "same_bucket_ratio": 7.567874373285403e-05,
+        "delta_mean": 0.8667178813920693,
+        "negatives_ranked_above_positive": 0.2796329580928957
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/a4abd655bb5e64017eb8d707e7a0046298ea89f09b399f747e9f9947e87fc52f.L3.json"
     },
     {
       "sid_sha256": "ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969",
@@ -1447,12 +3165,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.04068664148052717,
       "test_recall@5": 0.025644596876686573,
-      "q_h": 0.0,
-      "buckets": 1,
-      "same_bucket_ratio": 1.0,
-      "delta_mean": 0.0,
-      "negatives_ranked_above_positive": 0.0,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969.json"
+      "L1": {
+        "q_h": 0.0,
+        "buckets": 1,
+        "same_bucket_ratio": 1.0,
+        "delta_mean": 0.0,
+        "negatives_ranked_above_positive": 0.0
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969.L1.json",
+      "L2": {
+        "q_h": 0.0,
+        "buckets": 1,
+        "same_bucket_ratio": 1.0,
+        "delta_mean": 0.0,
+        "negatives_ranked_above_positive": 0.0
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969.L2.json",
+      "L3": {
+        "q_h": 0.0,
+        "buckets": 1,
+        "same_bucket_ratio": 1.0,
+        "delta_mean": 0.0,
+        "negatives_ranked_above_positive": 0.0
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969.L3.json"
     },
     {
       "sid_sha256": "322cc48fdfb86ded9f9aa436e650da1cda773bcf8a6e7a5632a5a4bd5e6a0217",
@@ -1462,12 +3198,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.03983356256202232,
       "test_recall@5": 0.026462856247497345,
-      "q_h": -8.956147811378656e-06,
-      "buckets": 2,
-      "same_bucket_ratio": 0.9998694541670609,
-      "delta_mean": -6.715546822202488e-06,
-      "negatives_ranked_above_positive": 8.324661810613944e-05,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/322cc48fdfb86ded9f9aa436e650da1cda773bcf8a6e7a5632a5a4bd5e6a0217.json"
+      "L1": {
+        "q_h": -8.956147811378656e-06,
+        "buckets": 2,
+        "same_bucket_ratio": 0.9998694541670609,
+        "delta_mean": -6.715546822202488e-06,
+        "negatives_ranked_above_positive": 8.324661810613944e-05
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/322cc48fdfb86ded9f9aa436e650da1cda773bcf8a6e7a5632a5a4bd5e6a0217.L1.json",
+      "L2": {
+        "q_h": 0.04827422706900186,
+        "buckets": 16,
+        "same_bucket_ratio": 0.13514142465235077,
+        "delta_mean": 0.18774978461478864,
+        "negatives_ranked_above_positive": 0.33659256456342823
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/322cc48fdfb86ded9f9aa436e650da1cda773bcf8a6e7a5632a5a4bd5e6a0217.L2.json",
+      "L3": {
+        "q_h": 0.04223229836686071,
+        "buckets": 1557,
+        "same_bucket_ratio": 0.0017330432314823575,
+        "delta_mean": 0.2859684602482178,
+        "negatives_ranked_above_positive": 0.3947724907766531
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/322cc48fdfb86ded9f9aa436e650da1cda773bcf8a6e7a5632a5a4bd5e6a0217.L3.json"
     },
     {
       "sid_sha256": "2798778d1034824d4e1d8b5c7383dab8892387f4e7442a8a2abc975ca9b4f7eb",
@@ -1477,12 +3231,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.03219067184317276,
       "test_recall@5": 0.0221974616549731,
-      "q_h": 0.0006411814137046168,
-      "buckets": 39,
-      "same_bucket_ratio": 0.12890738813735692,
-      "delta_mean": 0.018501216870723383,
-      "negatives_ranked_above_positive": 0.41140100274335445,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2798778d1034824d4e1d8b5c7383dab8892387f4e7442a8a2abc975ca9b4f7eb.json"
+      "L1": {
+        "q_h": 0.0006411814137046168,
+        "buckets": 39,
+        "same_bucket_ratio": 0.12890738813735692,
+        "delta_mean": 0.018501216870723383,
+        "negatives_ranked_above_positive": 0.41140100274335445
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2798778d1034824d4e1d8b5c7383dab8892387f4e7442a8a2abc975ca9b4f7eb.L1.json",
+      "L2": {
+        "q_h": 0.0316340442827977,
+        "buckets": 965,
+        "same_bucket_ratio": 0.0027452464289092803,
+        "delta_mean": 0.14310558842479723,
+        "negatives_ranked_above_positive": 0.4118361555198184
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2798778d1034824d4e1d8b5c7383dab8892387f4e7442a8a2abc975ca9b4f7eb.L2.json",
+      "L3": {
+        "q_h": -0.026626996058356722,
+        "buckets": 8964,
+        "same_bucket_ratio": 0.00021000851385866994,
+        "delta_mean": 0.36835363771755725,
+        "negatives_ranked_above_positive": 0.4045085611578848
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/2798778d1034824d4e1d8b5c7383dab8892387f4e7442a8a2abc975ca9b4f7eb.L3.json"
     },
     {
       "sid_sha256": "cfc3f291b84593c6a418143bb7ed4c1c313070785236b9a8c124138db61afd24",
@@ -1492,12 +3264,30 @@
       "pair_confidence": "verified_vocabulary",
       "test_recall@10": 0.030606382423092323,
       "test_recall@5": 0.018489179825554067,
-      "q_h": -0.01420155623966357,
-      "buckets": 12,
-      "same_bucket_ratio": 0.41380001891968593,
-      "delta_mean": -0.020888109087303593,
-      "negatives_ranked_above_positive": 0.34767760855169805,
-      "metric_record": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/cfc3f291b84593c6a418143bb7ed4c1c313070785236b9a8c124138db61afd24.json"
+      "L1": {
+        "q_h": -0.01420155623966357,
+        "buckets": 12,
+        "same_bucket_ratio": 0.41380001891968593,
+        "delta_mean": -0.020888109087303593,
+        "negatives_ranked_above_positive": 0.34767760855169805
+      },
+      "metric_record_L1": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/cfc3f291b84593c6a418143bb7ed4c1c313070785236b9a8c124138db61afd24.L1.json",
+      "L2": {
+        "q_h": -0.033950575546572104,
+        "buckets": 60,
+        "same_bucket_ratio": 0.1016043893671365,
+        "delta_mean": -0.044437058432897324,
+        "negatives_ranked_above_positive": 0.5110282849304701
+      },
+      "metric_record_L2": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/cfc3f291b84593c6a418143bb7ed4c1c313070785236b9a8c124138db61afd24.L2.json",
+      "L3": {
+        "q_h": -0.03900587978292602,
+        "buckets": 170,
+        "same_bucket_ratio": 0.04154384637215022,
+        "delta_mean": -0.04581826367275883,
+        "negatives_ranked_above_positive": 0.533629741746287
+      },
+      "metric_record_L3": "/fs04/ar57/wenyu/GeneRec/results/research/issue126/metrics/cfc3f291b84593c6a418143bb7ed4c1c313070785236b9a8c124138db61afd24.L3.json"
     }
   ]
 }

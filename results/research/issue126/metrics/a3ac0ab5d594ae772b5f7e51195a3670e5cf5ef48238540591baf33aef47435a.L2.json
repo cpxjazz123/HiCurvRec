@@ -1,0 +1,49 @@
+{
+  "buckets": {
+    "count": 12596,
+    "max_size": 35,
+    "mean_size": 1.9519688790092093,
+    "min_size": 1
+  },
+  "delta_mean": 0.8018313884224932,
+  "delta_median": 0.7589708276064844,
+  "negatives_ranked_above_positive": 0.31788856304985336,
+  "popularity_groups": {},
+  "probe": {
+    "negatives_per_query": 10,
+    "path": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+    "queries": 52855
+  },
+  "q_h": 0.12932154996098721,
+  "reference": {
+    "arrays_sha256": "28e33a37552578d04b581b6577eb5809a2ec2298752f09ab62ccdb76eb01c790",
+    "digest": "48a6d359e5ed2c7dd2231468611096e42a9622f7f0a7b8aab772462b9eb0da31",
+    "temperature": 1.195016860961914
+  },
+  "same_bucket_ratio": 0.00020244063948538453,
+  "sid": {
+    "items": 24587,
+    "levels": 4,
+    "path": "/fs04/ar57/wenyu/GeneRec/analysis_sid_recall/sids/analysis_sid_recall__sids__analysis_sid_recall__sids__analysis_sid_recall__sids__results__stage2_RQ-_c10291167fed__c80a90c967f5.json",
+    "sha256": "a3ac0ab5d594ae772b5f7e51195a3670e5cf5ef48238540591baf33aef47435a"
+  },
+  "spec": {
+    "barycentre": {
+      "init": "exp_0(mean_i log_0(v_i))",
+      "iteration": "mu <- exp_mu(mean_i log_mu(v_i))",
+      "step_size": 1.0,
+      "steps": 300,
+      "tol": 1e-10
+    },
+    "curvature": 1.0,
+    "ignores": "tokens after the first level, and the disambiguation token",
+    "levels": 2,
+    "score": {
+      "aggregate": "1 - mean over queries / ln 2",
+      "delta": "d(u_a, mu_b(j-))^2 - d(u_a, mu_b(i+))^2",
+      "per_query": "mean over the fixed negatives of softplus(-delta/tau)",
+      "temperature": "the frozen reference's temperature"
+    },
+    "version": "issue126-hard-v1"
+  }
+}

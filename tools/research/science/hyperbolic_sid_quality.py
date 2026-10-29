@@ -115,29 +115,47 @@ def frechet_barycentre(points: np.ndarray, geometry: BallGeometry = None,
     return centre
 
 
-def first_level_buckets(sid_rows: np.ndarray, item_ids: np.ndarray) -> dict:
-    """The item ids of every non-empty first-level bucket."""
+def prefix_buckets(sid_rows: np.ndarray, item_ids: np.ndarray, levels: int = 1) -> dict:
+    """The item ids of every non-empty bucket of the first ``levels`` codes.
+
+    ``levels=1`` is the score Issue #126 froze (the first-level prefix). The
+    generalisation groups by the first ``levels`` codes, so ``levels=2`` asks
+    whether the two-level prefix orders the next item above the negatives, and
+    so on. Nothing else about the score changes.
+    """
     rows = np.asarray(sid_rows)
+    if levels < 1 or levels > rows.shape[1]:
+        raise ValueError("levels must be between 1 and the SID width")
     buckets: dict = {}
     for position, item in enumerate(np.asarray(item_ids)):
-        key = int(rows[position, 0])
+        key = tuple(int(value) for value in rows[position, :levels])
         buckets.setdefault(key, []).append(int(item))
     return buckets
 
 
+def first_level_buckets(sid_rows: np.ndarray, item_ids: np.ndarray) -> dict:
+    """The item ids of every non-empty first-level bucket (the #126 score)."""
+    return prefix_buckets(sid_rows, item_ids, levels=1)
+
+
 def bucket_centres(targets: np.ndarray, sid_rows: np.ndarray, item_ids: np.ndarray,
-                   geometry: BallGeometry = None) -> dict:
-    """One hyperbolic barycentre per non-empty first-level bucket."""
+                   geometry: BallGeometry = None, levels: int = 1) -> dict:
+    """One hyperbolic barycentre per non-empty bucket of the first ``levels`` codes."""
     geometry = geometry or BallGeometry()
-    buckets = first_level_buckets(sid_rows, item_ids)
+    buckets = prefix_buckets(sid_rows, item_ids, levels=levels)
     return {key: frechet_barycentre(targets[members], geometry)
             for key, members in buckets.items()}, {k: len(v) for k, v in buckets.items()}
 
 
 def score(sid_path: Path, *, reference: dict = None, probe: Path = None,
           temperature: float = None, geometry: BallGeometry = None,
-          popularity: dict = None) -> dict:
-    """Score one exported hard SID on the fixed validation probe."""
+          popularity: dict = None, levels: int = 1) -> dict:
+    """Score one exported hard SID on the fixed validation probe.
+
+    ``levels=1`` is the score Issue #126 froze. The same reference, the same
+    probe, the same temperature and the same reduction are used for any level;
+    only the grouping changes.
+    """
     reference = reference or reference_module.load()
     arrays = np.load(probe or reference_module.VALID_PAIRS)
     anchors = arrays["anchors"].astype(np.int64)
@@ -153,13 +171,17 @@ def score(sid_path: Path, *, reference: dict = None, probe: Path = None,
     item_ids = np.array(items, dtype=np.int64)
     if rows.ndim != 2:
         raise ValueError("the SID rows are not rectangular")
-    centres, sizes = bucket_centres(reference["target"], rows, item_ids, geometry)
+    centres, sizes = bucket_centres(reference["target"], rows, item_ids, geometry,
+                                    levels=levels)
 
-    first = {item: int(rows[position, 0]) for position, item in enumerate(items)}
+    first = {item: tuple(int(value) for value in rows[position, :levels])
+             for position, item in enumerate(items)}
     source = reference["source"][anchors]
 
     def centre_of(item_ids_array):
-        keys = np.array([first[int(item)] for item in item_ids_array.ravel()])
+        # A prefix is a tuple of codes, so the keys are plain tuples and not an
+        # object array (which numpy turns into a 2-D array of unhashables).
+        keys = [first[int(item)] for item in item_ids_array.ravel()]
         unknown = sorted({key for key in keys if key not in centres})
         if unknown:
             raise ValueError("the probe names items outside the SID: " + str(unknown[:5]))
@@ -171,13 +193,15 @@ def score(sid_path: Path, *, reference: dict = None, probe: Path = None,
     d_pos = geometry.distance(source, mu_pos) ** 2
     d_neg = geometry.distance(source[:, None, :], mu_neg) ** 2
     delta = d_neg - d_pos[:, None]
-    positive_bucket = np.array([first[int(item)] for item in positives])[:, None]
-    negative_bucket = np.array([[first[int(item)] for item in row] for row in negatives])
-    same_bucket = positive_bucket == negative_bucket
+    positive_bucket = [first[int(item)] for item in positives]
+    negative_bucket = [[first[int(item)] for item in row] for row in negatives]
+    same_bucket = np.array([[positive_bucket[row] == negative_bucket[row][column]
+                             for column in range(len(negative_bucket[row]))]
+                            for row in range(len(positive_bucket))])
     per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
     q_h = 1.0 - float(per_query.mean()) / float(np.log(2.0))
     return {
-        "spec": SPEC,
+        "spec": {**SPEC, "levels": int(levels)},
         "sid": {"path": str(Path(sid_path)),
                 "sha256": hashlib.sha256(Path(sid_path).read_bytes()).hexdigest(),
                 "items": int(len(items)),
@@ -224,10 +248,14 @@ def _popularity_groups(delta: np.ndarray, anchors: np.ndarray, popularity: dict)
     return groups
 
 
-def record(sid_path: Path, **kwargs) -> Path:
-    """Score one SID and persist the record next to the other Issue #126 files."""
+def record(sid_path: Path, suffix: str = "", **kwargs) -> Path:
+    """Score one SID and persist the record next to the other Issue #126 files.
+
+    ``suffix`` keeps the level-2 and level-3 scores of a table apart from the
+    level-1 record the issue froze: one file per (table, level).
+    """
     report = score(Path(sid_path), **kwargs)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    target = OUTPUT_DIR / (report["sid"]["sha256"] + ".json")
+    target = OUTPUT_DIR / (report["sid"]["sha256"] + suffix + ".json")
     target.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     return target
