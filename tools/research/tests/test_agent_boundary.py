@@ -350,3 +350,15 @@ class ReadTrackingTests(unittest.TestCase):
         self.assertEqual(len(outcome["reads_denied"]), 1)
         self.assertEqual(outcome["reads_denied"][0]["target"], "/tmp/x.py")
         self.assertEqual(outcome["files_read"], ["/tmp/y.py"])
+
+
+class FingerprintAgreementTests(unittest.TestCase):
+    """The caller and the executor must fingerprint the SAME read set."""
+
+    def test_the_shared_contract_is_in_both(self):
+        from tools.research.agents import runner
+        effective = runner.effective_read_paths(["/tmp/tree/train_rqvae.py"])
+        self.assertTrue(any("HYPERBOLIC_GEOMETRY_CONTRACT.md" in path for path in effective))
+        source = (Path(__file__).resolve().parents[1] / "rounds" /
+                  "worker.py").read_text(encoding="utf-8")
+        self.assertIn("runner.effective_read_paths(read_paths)", source)

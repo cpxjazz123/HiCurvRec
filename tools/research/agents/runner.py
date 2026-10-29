@@ -68,6 +68,20 @@ def _read_patterns(path: Path) -> list:
     return list(dict.fromkeys(patterns))
 
 
+def effective_read_paths(read_paths) -> list:
+    """The read set an agent really runs with: the declared one plus the contract.
+
+    The executor and the caller must agree on it: the fingerprint is computed
+    from the allowlist the agent actually gets, so a cached answer is reused only
+    when the same sources and the same contract were in front of the agent.
+    """
+    contract = _geometry_contract()
+    paths = list(read_paths or [])
+    if contract["path"] not in paths:
+        paths.append(contract["path"])
+    return paths
+
+
 def isolation_permissions(workspace: Path, role: str = "verify",
                           read_paths=None, allow_shell: bool = False,
                           allow_write: bool = False) -> dict:
