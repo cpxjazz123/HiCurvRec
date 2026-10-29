@@ -85,15 +85,15 @@
         0.824
       ],
       "eligible": true,
-      "note": "the Gromov common-ancestor alignment with the full training history, curvature 1"
+      "note": "the Gromov common-ancestor alignment with the full training history, curvature 1; re-measured after the radial-term fix: unchanged"
     },
     {
       "metric": "hbaa_anchor",
-      "spearman": 0.6941,
+      "spearman": 0.6866,
       "p": 3.18e-15,
       "ci": [
-        0.529,
-        0.819
+        0.519,
+        0.814
       ],
       "eligible": true,
       "note": "the same contrast with the single anchor as query point (control)"
@@ -122,11 +122,11 @@
     },
     {
       "metric": "hbaa_levels",
-      "spearman": 0.4644,
+      "spearman": 0.3605,
       "p": 1.66e-06,
       "ci": [
-        0.284,
-        0.614
+        0.166,
+        0.537
       ],
       "eligible": true,
       "note": "HBAA's ancestor contrast at every level, averaged: the deeper levels dilute it"
@@ -155,33 +155,33 @@
     },
     {
       "metric": "hbaa_weighted",
-      "spearman": 0.5963,
+      "spearman": 0.5659,
       "p": 1.16e-10,
       "ci": [
-        0.427,
-        0.73
+        0.394,
+        0.702
       ],
       "eligible": true,
       "note": "HBAA at every level, each level weighted by the queries it could speak for (2 <= |bucket| <= N/2); still below the level-1 score"
     },
     {
       "metric": "hbaa_pair_accuracy",
-      "spearman": 0.6172,
-      "p": 1.67e-11,
+      "spearman": 0.6988,
+      "p": 1.74e-15,
       "ci": [
-        0.456,
-        0.741
+        0.539,
+        0.82
       ],
       "eligible": true,
       "note": "HBAA without a temperature: the share of queries whose positive is deeper than the negatives"
     },
     {
       "metric": "hbaa_size_matched",
-      "spearman": 0.661,
+      "spearman": 0.6437,
       "p": 1.73e-13,
       "ci": [
-        0.496,
-        0.788
+        0.475,
+        0.776
       ],
       "eligible": true,
       "note": "round 7: only the negatives whose bucket size is within a factor of two of the positive's; the size effect is partly what HBAA measures, and removing it loses 0.04"
@@ -252,13 +252,13 @@
     "family": {
       "measured": {
         "hbaa": 0.7012,
-        "hbaa_anchor": 0.6941,
+        "hbaa_anchor": 0.6866,
         "hbaa_euclid": 0.693,
         "hbaa_flat": 0.6925,
-        "hbaa_pair_accuracy": 0.6172,
-        "hbaa_weighted": 0.5963,
-        "hbaa_levels": 0.4644,
-        "hbaa_size_matched": 0.661
+        "hbaa_pair_accuracy": 0.6988,
+        "hbaa_weighted": 0.5659,
+        "hbaa_levels": 0.3605,
+        "hbaa_size_matched": 0.6437
       },
       "reading": "every variant of the winner is weaker than the winner: the level-1 Gromov ancestor-DEPTH contrast against the negatives' prefix centroids, with the full history as the query point and the frozen temperature in the reduction, is the signal. Ranking statistics over the same cells, the deeper levels, a temperature-free reduction and the weighted multi-level combination all lose information."
     },
@@ -313,5 +313,10 @@
       "hyp_succ_nullgain_l1",
       "-> hbaa_size_matched implemented and measured"
     ]
-  }
+  },
+  "defects_found_and_fixed": [
+    "the Delta was implemented as negative-minus-positive in the first HBAA run (-0.696): the behaviour-side check with the proposal's order exposed it",
+    "the radial term of the Gromov product was half the geodesic distance (arccosh(1/sqrt(1-r^2)) instead of 2*arccosh(...)); after the fix the champion's correlation is unchanged (+0.7012), the anchor control moves to +0.6866 and the temperature-free variant to +0.6988",
+    "the numpy Karcher mean had to be rewritten with the base-point maps to agree with the frozen torch routine (max difference 3.7e-11)"
+  ]
 }

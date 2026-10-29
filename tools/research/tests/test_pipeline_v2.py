@@ -503,3 +503,76 @@ class SidPairingConfidenceTests(unittest.TestCase):
         # one file per SID, one recall per pair
         self.assertEqual(len(list((directory / "sids").glob("*.json"))), len(pairs))
         self.assertEqual(len(list((directory / "recalls").glob("*.json"))), len(pairs))
+
+
+class HyperbolicAncestorAlignmentTests(unittest.TestCase):
+    """HBAA: the metric the metric rounds produced, kept as framework code."""
+
+    def test_the_gromov_product_is_the_common_ancestor_depth(self):
+        """In a tree the Gromov product at the origin is the LCA depth."""
+        import numpy as np
+        from tools.research.science import hyperbolic_ancestor_alignment as haa
+        # two points on the SAME ray: the nearer one is the ancestor of the
+        # farther one, so the Gromov product is the nearer one's depth
+        a = np.array([[0.2, 0.0]])
+        b = np.array([[0.4, 0.0]])
+        depth = float(haa.gromov(a, b)[0])
+        self.assertGreater(depth, 0.0)
+        self.assertAlmostEqual(depth, float(haa._norm(a)[0]), places=6)
+        # symmetric points have the ORIGIN as their common ancestor, so the
+        # product is exactly zero: the tree reading of "different branches"
+        c = np.array([[-0.2, 0.0]])
+        self.assertAlmostEqual(float(haa.gromov(a, c)[0]), 0.0, places=9)
+
+    @staticmethod
+    def _alignment(table, reference, queries, points):
+        """The metric's core, on a table given as rows."""
+        import numpy as np
+        from tools.research.science import hyperbolic_ancestor_alignment as haa
+        rows = table["rows"]
+        items = table["item_ids"]
+        target = reference["target"][items]
+        position = {int(item): index for index, item in enumerate(items.tolist())}
+        pos = np.array([position.get(int(item), -1) for item in queries["positives"]],
+                       dtype=np.int64)
+        neg = np.array([[position.get(int(item), -1) for item in row]
+                        for row in queries["negatives"]], dtype=np.int64)
+        valid = (pos >= 0) & (neg >= 0).all(axis=1)
+        query_points = points[valid]
+        pos = pos[valid]
+        neg = neg[valid]
+        codes = rows[:, 0]
+        centres = {int(code): haa.frechet_barycentre(target[codes == code])
+                   for code in np.unique(codes)}
+        mu_pos = np.stack([centres[int(codes[index])] for index in pos])
+        mu_neg = np.stack([[centres[int(codes[index])] for index in row] for row in neg])
+        delta = haa.gromov(query_points, mu_pos)[:, None] - haa.gromov(
+            query_points[:, None, :], mu_neg)
+        tau = reference["temperature"]
+        per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
+        return 1.0 - float(per_query.mean()) / float(np.log(2.0))
+
+    def test_a_single_code_scores_zero_and_a_random_one_scores_near_zero(self):
+        import numpy as np
+        from tools.research.science import hyperbolic_ancestor_alignment as haa
+        rows = np.array([[0, 1, 2], [0, 3, 4], [1, 5, 6], [1, 7, 8]])
+        items = np.arange(4)
+        rng = np.random.default_rng(3)
+        reference = {"source": rng.normal(size=(4, 8)) * 0.1,
+                     "target": rng.normal(size=(4, 8)) * 0.1,
+                     "temperature": 1.0}
+        queries = {"histories": [[0], [1], [2], [3]],
+                   "positives": np.arange(4),
+                   "negatives": np.array([[1, 2], [0, 2], [0, 1], [0, 1]])}
+        points = reference["source"].copy()
+        collapsed = {"rows": np.concatenate([np.zeros((4, 1), dtype=np.int64),
+                                            rows[:, 1:]], axis=1),
+                     "item_ids": items}
+        shuffled = rows.copy()
+        shuffled[:, 0] = rng.permutation(shuffled[:, 0])
+        scores = []
+        for table in (collapsed, {"rows": shuffled, "item_ids": items}):
+            scores.append(self._alignment(table, reference, queries, points))
+        # neither the collapse nor the random assignment may score high
+        self.assertLess(abs(scores[0]), 0.2)
+        self.assertLess(abs(scores[1]), 0.2)

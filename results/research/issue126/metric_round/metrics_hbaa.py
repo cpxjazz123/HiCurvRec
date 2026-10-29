@@ -62,12 +62,12 @@ def _norm(x: np.ndarray, curvature: float) -> np.ndarray:
 
 
 def _frechet(points: np.ndarray, curvature: float = 1.0) -> np.ndarray:
+    """The Karcher mean in the ball, in numpy (no torch needed)."""
     import sys
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-    from tools.research.science import hyperbolic_sid_quality as frozen
-    return frozen.frechet_barycentre(np.asarray(points, dtype=np.float64),
-                                     frozen.BallGeometry(curvature))
+    from tools.research.science.hyperbolic_ancestor_alignment import frechet_barycentre
+    return frechet_barycentre(np.asarray(points, dtype=np.float64))
 
 
 def _queries(context: dict) -> dict:
@@ -214,8 +214,11 @@ def _anchor_alignment(table: dict, context: dict) -> float:
             den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
             return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
         def nrm(x):
+            # the radial term of the Poincare metric: 2 * arccosh(1/sqrt(1-|x|^2)).
+            # Without the factor 2 the product mixes a halved radius with a full
+            # distance and is not the common-ancestor depth it claims to be.
             inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
-            return np.arccosh(1 / np.sqrt(inner))
+            return 2 * np.arccosh(1 / np.sqrt(inner))
         return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
 
     delta = gromov(points, mu_pos)[:, None] - gromov(points[:, None, :], mu_neg)
@@ -288,8 +291,11 @@ def _level_alignment(table: dict, context: dict) -> float:
             den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
             return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
         def nrm(x):
+            # the radial term of the Poincare metric: 2 * arccosh(1/sqrt(1-|x|^2)).
+            # Without the factor 2 the product mixes a halved radius with a full
+            # distance and is not the common-ancestor depth it claims to be.
             inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
-            return np.arccosh(1 / np.sqrt(inner))
+            return 2 * np.arccosh(1 / np.sqrt(inner))
         return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
 
     delta = gromov(points, mu_pos)[:, None] - gromov(points[:, None, :], mu_neg)
@@ -333,8 +339,11 @@ def hbaa_weighted(table: dict, context: dict) -> float:
             den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
             return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
         def nrm(x):
+            # the radial term of the Poincare metric: 2 * arccosh(1/sqrt(1-|x|^2)).
+            # Without the factor 2 the product mixes a halved radius with a full
+            # distance and is not the common-ancestor depth it claims to be.
             inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
-            return np.arccosh(1 / np.sqrt(inner))
+            return 2 * np.arccosh(1 / np.sqrt(inner))
         return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
 
     scores, weights = [], []
@@ -389,8 +398,11 @@ def hbaa_pair_accuracy(table: dict, context: dict) -> float:
             den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
             return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
         def nrm(x):
+            # the radial term of the Poincare metric: 2 * arccosh(1/sqrt(1-|x|^2)).
+            # Without the factor 2 the product mixes a halved radius with a full
+            # distance and is not the common-ancestor depth it claims to be.
             inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
-            return np.arccosh(1 / np.sqrt(inner))
+            return 2 * np.arccosh(1 / np.sqrt(inner))
         return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
 
     mu_pos = np.stack([centres[int(codes[index])] for index in pos])
@@ -441,8 +453,11 @@ def hbaa_size_matched(table: dict, context: dict) -> float:
             den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
             return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
         def nrm(x):
+            # the radial term of the Poincare metric: 2 * arccosh(1/sqrt(1-|x|^2)).
+            # Without the factor 2 the product mixes a halved radius with a full
+            # distance and is not the common-ancestor depth it claims to be.
             inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
-            return np.arccosh(1 / np.sqrt(inner))
+            return 2 * np.arccosh(1 / np.sqrt(inner))
         return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
 
     positive_size = sizes[codes[pos]][:, None]
