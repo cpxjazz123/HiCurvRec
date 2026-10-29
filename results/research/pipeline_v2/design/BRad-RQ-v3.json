@@ -1,0 +1,82 @@
+{
+  "contract": "design/BRad-RQ-v3",
+  "version": 1,
+  "supersedes": null,
+  "idea_id": "BRad-RQ_v3",
+  "status": "FROZEN",
+  "frozen_at": "2026-10-29",
+  "parent_result": "design/BRad-RQ.json (v2) and its run: 170 distinct three-token SIDs, 12 / 5 / 3 active codes at levels 1-3, L3 collision 1.0, training loss 1.6e-05",
+  "why_a_new_version": "Version 2 optimised a reconstruction of the model's own latent, and that target has a degenerate minimum: the encoder may compress every item into a few directions, the codebook collapses, and the loss falls anyway. Version 3 keeps the mechanism's core -- the behaviour statistic sets the hyperbolic radius of the item point, the code is the nearest codeword under the Poincare kernel at every level, training and export agree -- and changes only what the collapse exposed: the reconstruction target, the initialisation, and what happens to a code nobody chooses. It is a new candidate tree built from the frozen baseline, not an edit of the v2 result.",
+  "behaviour_statistic": {
+    "source": "consecutive item pairs inside training sessions only",
+    "statistic": "s_i = exp(H_i), the effective number of distinct predecessor contexts",
+    "shrinkage": "1/(n_i+1) towards the mean over items with n_i >= 10",
+    "frozen": "computed once before epoch 1, stored as a model buffer"
+  },
+  "radius": {
+    "formula": "r_i = artanh(0.9 * rank_i / (N_seen + 1))",
+    "rank_set": "the items with at least one training transition; catalogue items outside it are not ranked and take the median radius",
+    "tangent_target": "t_i = r_i * z_i / |z_i| with z_i = Encoder(x_i), differentiable in z_i"
+  },
+  "reconstruction": {
+    "rule": "L = MSE(Decoder(t_hat), x_i) + [MSE(x_q, sg(t)) + beta * MSE(t, sg(x_q))]",
+    "target": "x_i, the ORIGINAL Stage1 embedding -- a target the encoder does not produce",
+    "why": "a reconstruction of the model's own latent can be driven to zero while the identifier loses all information; the external target cannot",
+    "decoder": "trained, not frozen: it receives a real gradient through t_hat",
+    "beta": "the baseline value 0.25; no new weight is introduced"
+  },
+  "assignment": {
+    "rule": "k_l = argmin_k S(a_l, e_{l,k}) at every level, in training, initialisation and export",
+    "geometry_on": "a_l = exp_0(t_l / M_l) and S is the Poincare kernel on the mapped points",
+    "sinkhorn": "never on the radial path; the baseline's balancing is not inherited",
+    "residual": "r_{l+1} = the level's input minus the chosen code, re-scaled by M_{l+1}"
+  },
+  "initialisation": {
+    "rule": "the radii are bound BEFORE the codebooks are built, and KMeans runs on the behaviour-scaled tangent the quantizer scores",
+    "per_level": "levels 2 and 3 receive the residual formed by the real assignment rule, not by a Euclidean argmin",
+    "small_sample": "fewer items than codes: the items seed the centres and the remainder starts at their mean with a fixed tiny offset, deterministically"
+  },
+  "dead_code_recovery": {
+    "rule": "a code unused for DEAD_CODE_PATIENCE consecutive checks is re-seeded from the worst-quantised items, in descending error order",
+    "patience": "20 checks of 10 epochs (a code unused for 200 of 3000 epochs has no realistic chance of being used later)",
+    "budget": "at most one code per available item is re-seeded in one pass; the rest keep their streak",
+    "optimizer": "the AdamW moments of a re-seeded code are cleared",
+    "determinism": "the item order is by descending error with ties broken by index; the policy is fixed before training and is not tuned against any score"
+  },
+  "geometry_off": {
+    "rule": "the exponential map is the identity and S is the squared Euclidean distance on the tangent vectors, with the behaviour radius still applied",
+    "why": "the ablation isolates the curvature; the radius, the assignment rule, the reconstruction target and the loss are unchanged"
+  },
+  "behaviour_off": {
+    "rule": "every item gets the median radius; everything else is unchanged"
+  },
+  "both_on": {
+    "rule": "measured radii, curvature on, nearest-codeword assignment, original-embedding reconstruction, dead-code recovery",
+    "training_policy": "this is the only arm that is trained (section 19g); the two switches exist in the code and are checked by tests"
+  },
+  "diagnostics": {
+    "recorded_every_epoch": [
+      "active codes per level",
+      "codebook perplexity per level",
+      "encoder direction effective rank",
+      "reconstruction MSE against the original embedding",
+      "per-level quantisation error",
+      "dead-code resets",
+      "SID diversity at each level"
+    ],
+    "policy": "recorded, never a Stage 2 admission gate"
+  },
+  "inertness_conditions": [
+    "if the radius table never reaches the quantizer, the mechanism is inert",
+    "if the assignment ignores the mapped point, the radius cannot change a single code",
+    "if the reconstruction target is a vector the encoder produces, the collapse can return",
+    "if the codebook is initialised before the radii are bound, it starts where the training never quantises",
+    "if training and export use different assignment rules, the exported identifier is not the code the trained quantizer assigns",
+    "if a code is never re-seeded, capacity is lost silently"
+  ],
+  "acceptance": {
+    "tests": "each rule above has a test that calls the real functions, including the anti-degeneracy test: two items with one quantised point cannot both be reconstructed",
+    "verification": "the V2 record names this contract's version and sha256",
+    "final": "Stage 3 test_recall@10 from the single frozen run, compared with the baseline 0.055537 and the target 0.065"
+  }
+}
