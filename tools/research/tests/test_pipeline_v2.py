@@ -161,3 +161,74 @@ class EntryReuseTests(unittest.TestCase):
     def test_the_default_checks_include_gradient_and_the_entry(self):
         self.assertIn("gradient", deterministic.DEFAULT_CHECKS)
         self.assertIn("ddp", deterministic.DEFAULT_CHECKS)
+
+
+class ContractTests(unittest.TestCase):
+    """The mechanism contract: data, templates, and a check on the check."""
+
+    def test_an_unknown_template_is_refused(self):
+        from tools.research.pipeline_v2 import contracts
+        with self.assertRaises(ValueError):
+            contracts.validate_contract({"mechanism": "x",
+                                         "tests": [{"template": "MadeUp"}]})
+
+    def test_a_contract_without_tests_is_refused(self):
+        from tools.research.pipeline_v2 import contracts
+        with self.assertRaises(ValueError):
+            contracts.validate_contract({"mechanism": "x", "tests": []})
+
+    def test_a_negative_control_must_name_the_template_it_breaks(self):
+        from tools.research.pipeline_v2 import contracts
+        with self.assertRaises(ValueError):
+            contracts.validate_contract({"mechanism": "x",
+                                         "tests": [{"template": "SignalSensitivity"}],
+                                         "negative_control": {"edit": "constant radius"}})
+
+    def test_the_shipped_contract_validates(self):
+        from tools.research.pipeline_v2 import contracts
+        path = (Path(__file__).resolve().parents[3] / "results" / "research" /
+                "pipeline_v2" / "contracts" / "BRad-RQ.json")
+        contract = contracts.load_contract(path)
+        self.assertEqual(contract["mechanism"], "BRad-RQ")
+        self.assertIn("SignalSensitivity",
+                      [entry["template"] for entry in contract["tests"]])
+
+
+class SaturationTemplateTests(unittest.TestCase):
+    """RangeAndSaturation fails exactly when the quantity is pinned."""
+
+    def test_a_constant_function_is_a_failure(self):
+        from tools.research.pipeline_v2 import contracts
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "cand"
+            (tree / "model").mkdir(parents=True)
+            (tree / "model" / "probe.py").write_text(
+                "def pinned(scale):\n    return 1.5\n", encoding="utf-8")
+            result = contracts.range_and_saturation(
+                tree, callable="model.probe.pinned",
+                range_source={"low": 0.1, "high": 0.9, "steps": 5})
+            self.assertEqual(result["status"], "FAIL")
+
+    def test_a_varying_function_passes(self):
+        from tools.research.pipeline_v2 import contracts
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "cand"
+            (tree / "model").mkdir(parents=True)
+            (tree / "model" / "probe.py").write_text(
+                "def varies(scale):\n    return 1.0 / (1.0 + float(scale))\n",
+                encoding="utf-8")
+            result = contracts.range_and_saturation(
+                tree, callable="model.probe.varying" if False else "model.probe.varies",
+                range_source={"low": 0.1, "high": 0.9, "steps": 5})
+            self.assertEqual(result["status"], "PASS")
+
+
+class NegativeControlTests(unittest.TestCase):
+
+    def test_an_unknown_edit_is_refused(self):
+        from tools.research.pipeline_v2 import negative
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "cand"
+            tree.mkdir()
+            with self.assertRaises(ValueError):
+                negative.apply_edit(tree, "no such edit")

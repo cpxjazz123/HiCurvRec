@@ -117,7 +117,36 @@ def check_export_matches_assignment(tree: Path, interpreter: Path = PY_STAGE2) -
                 cwd=Path(tree))
 
 
-DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "ddp")
+def check_mechanism_contract(tree: Path) -> dict:
+    """Run the mechanism contract's own tests, if the candidate has one.
+
+    The contract is written at ideation, before the code: it names, from a fixed
+    template library, what would make THIS mechanism inert. It is data, so a new
+    mechanism fills parameters instead of writing a new verifier.
+    """
+    from . import contracts as contract_library
+
+    tree = Path(tree)
+    name = tree.name[6:] if tree.name.startswith("TIGER_") else tree.name
+    path = (REPO / "results" / "research" / "pipeline_v2" / "contracts" /
+            (name + ".json"))
+    if not path.is_file():
+        return {"status": "NOT_RUN",
+                "detail": "the candidate has no mechanism contract at " + str(path)}
+    try:
+        contract = contract_library.load_contract(path)
+        outcome = contract_library.run_tests(tree, contract)
+    except Exception as exc:                               # noqa: BLE001
+        return {"status": "NOT_RUN",
+                "detail": "the mechanism contract could not run: " +
+                          type(exc).__name__ + ": " + str(exc)}
+    detail = "; ".join("%s=%s" % (key, entry.get("status"))
+                       for key, entry in outcome["tests"].items())
+    return {"status": "PASS" if outcome["passed"] else "FAIL", "detail": detail,
+            "tests": outcome["tests"], "contract": str(path)}
+
+
+DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "ddp", "mechanism")
 
 
 def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
@@ -141,6 +170,8 @@ def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
             results[name] = check_export_matches_assignment(tree, interpreter)
         elif name == "ddp":
             results[name] = check_ddp_two_ranks(tree, interpreter)
+        elif name == "mechanism":
+            results[name] = check_mechanism_contract(tree)
         else:
             results[name] = {"status": "NOT_RUN", "detail": "unknown check " + name}
     statuses = [entry.get("status") for entry in results.values()]

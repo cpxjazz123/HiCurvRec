@@ -2169,6 +2169,8 @@ def run_agent_verification(tree: Path, verification_id: str) -> dict:
     way the Stage2 worker re-checks the evidence before and after its smoke.
     """
     import importlib.util
+    if str(verification_id).startswith("v2:"):
+        return v2_admission(tree)
     if str(verification_id).startswith("round:"):
         return round_admission(tree, verification_id)
     verifier = REPO / "tools" / "research" / "verification" / "admission.py"
@@ -2236,6 +2238,52 @@ def _conformance_report(tree: Path, digest: str) -> dict:
     except Exception:                                      # noqa: BLE001
         pass
     return report
+
+
+def v2_admission(tree: Path) -> dict:
+    """The Research Pipeline V2 record as the admission.
+
+    V2's deterministic checks are the verification: the geometry contract, the
+    candidate's own suite, a real gradient test, the export/assignment agreement,
+    the two-rank DDP run and the framework's one-epoch smoke. The record is bound
+    to the source digest, so a tree that changed after it was verified is refused
+    instead of being trained on the strength of an older run.
+    """
+    from tools.research.pipeline_v2 import states as v2_states
+
+    record_path = REPO / "results" / "research" / "pipeline_v2" / tree.name / "v2_record.json"
+    if not record_path.is_file():
+        return {"passed": False, "refused": "no Research Pipeline V2 record for " + tree.name}
+    import json as _json
+    record = _json.loads(record_path.read_text(encoding="utf-8"))
+    if record.get("state") != v2_states.VERIFIED:
+        return {"passed": False, "refused": "the V2 record is " + str(record.get("state"))}
+    digest = record.get("source_digest")
+    current = _source_digest_of(tree)
+    if digest != current:
+        return {"passed": False,
+                "refused": "the tree changed after V2 verified it (" +
+                           str(digest)[:12] + " -> " + str(current)[:12] + ")"}
+    checks = {name: entry.get("status")
+              for name, entry in (record.get("tests", {}).get("checks") or {}).items()}
+    if not checks or any(status != "PASS" for status in checks.values()):
+        return {"passed": False, "refused": "the V2 checks are not all PASS: " + str(checks)}
+    return {"passed": True, "engine": "research-pipeline-v2", "checks": checks,
+            "source_digest": digest, "version": record.get("version")}
+
+
+def _source_digest_of(tree: Path) -> str:
+    import hashlib
+    digest = hashlib.sha256()
+    for path in sorted(Path(tree).rglob("*.py")):
+        relative = path.relative_to(tree)
+        if any(part in ("logs", "results", "dataset", "__pycache__", "ckpt")
+               for part in relative.parts):
+            continue
+        digest.update(str(relative).encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(hashlib.sha256(path.read_bytes()).hexdigest().encode("ascii"))
+    return digest.hexdigest()
 
 
 def round_admission(tree: Path, verification_id: str) -> dict:
@@ -2954,6 +3002,13 @@ def tool_research_v2_verify(source_dir: str, objective: str = "") -> dict:
     from tools.research.pipeline_v2 import run as v2_run
 
     tree, problem = resolve_stage2_tree(source_dir)
+    if tree is None:
+        # A round tree lives in its own workspace; verification and Stage 2 both
+        # read the promoted copy, so the promotion is part of the call.
+        candidate = Path(source_dir)
+        if candidate.is_dir() and (candidate / "train_rqvae.py").is_file():
+            promoted = _promote_round_tree(candidate, candidate.name)
+            tree, problem = resolve_stage2_tree(str(promoted))
     if tree is None:
         return {"verified": False, "refused": problem,
                 "available_trees": [item.name for item in stage2_trees()]}

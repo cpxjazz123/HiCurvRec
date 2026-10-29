@@ -25,7 +25,9 @@ ALL = (IMPLEMENTED, TEST_FAILED, VERIFIED, INFRA_ERROR, REJECTED)
 TRANSITIONS = {
     IMPLEMENTED: {IMPLEMENTED, TEST_FAILED, VERIFIED, INFRA_ERROR},
     TEST_FAILED: {IMPLEMENTED, REJECTED, INFRA_ERROR},
-    VERIFIED: {REJECTED},
+    # A verified candidate whose source changes is verified again: the old record
+    # described an older snapshot and must not bless the new one.
+    VERIFIED: {IMPLEMENTED, REJECTED},
     INFRA_ERROR: {IMPLEMENTED, TEST_FAILED, VERIFIED},
     REJECTED: set(),
 }
