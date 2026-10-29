@@ -1,0 +1,45 @@
+{
+  "arrays": {
+    "path": "results/research/issue126/reference/reference.npz",
+    "sha256": "221d0ccdaddaaf6d3e5fd5e506e1923ede0f0c97b5b31b9d301193c0d4dddefc",
+    "source_shape": [
+      24587,
+      32
+    ],
+    "target_shape": [
+      24587,
+      32
+    ]
+  },
+  "cost": {
+    "batch_size": 4096,
+    "device": "cuda:0",
+    "epochs": 20,
+    "pairs": 323633
+  },
+  "heldout": {
+    "all_negatives_ranked_below": 0.3050231635570526,
+    "mean_delta": 0.9028750061988831,
+    "median_delta": 0.7719168663024902,
+    "negatives_per_pair": 10,
+    "pair_accuracy": 0.736891508102417,
+    "pairs": 52855
+  },
+  "items": 24587,
+  "spec": {
+    "ball_eps": 0.0001,
+    "batch_size": 4096,
+    "checkpoint": "last step (no early stopping, no selection)",
+    "curvature": 0.25,
+    "dim": 32,
+    "epochs": 20,
+    "hidden": 256,
+    "learning_rate": 0.001,
+    "note": "the same fit as the frozen reference, at another curvature; the frozen reference itself is untouched",
+    "seed": 42,
+    "temperature_rule": "median |delta| over the first 20000 train pairs at the end of the fit",
+    "version": "issue126-reference-variant-c0.25",
+    "weight_decay": 0.0001
+  },
+  "temperature": 1.1833562850952148
+}

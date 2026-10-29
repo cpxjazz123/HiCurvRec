@@ -196,6 +196,28 @@
       ],
       "eligible": false,
       "note": "the fraction of queries that keep a size-matched negative: 99.5% on a typical table, and the fraction itself carries no signal about recall"
+    },
+    {
+      "metric": "hbaa_validation",
+      "spearman": 0.6689,
+      "p": 7.01e-14,
+      "ci": [
+        0.503,
+        0.795
+      ],
+      "eligible": true,
+      "note": "the same contrast on the HELD-OUT validation probe, which the frozen reference never saw: the metric does not need the teacher's training data"
+    },
+    {
+      "metric": "hbaa (variant reference, curvature 0.25)",
+      "spearman": 0.7014,
+      "p": 1.23e-15,
+      "ci": [
+        0.536,
+        0.825
+      ],
+      "eligible": true,
+      "note": "the same metric with a DIFFERENT frozen teacher (curvature 0.25, sha 221d0ccd, held-out accuracy 0.7369 against the frozen 0.7413): the metric does not depend on the particular reference"
     }
   ],
   "not_scored": [
@@ -280,6 +302,36 @@
         "share_above_zero": 1.0
       },
       "reading": "HBAA is better than Q_H by +0.067 of Spearman on average, but the paired bootstrap interval of the difference touches zero (-0.003): the two are not separated by this sample. HBAA itself is stable: over 800 random half-samples its rho never fell below zero and averaged +0.697."
+    },
+    "robustness": {
+      "a_different_frozen_teacher": {
+        "reference_curvature": 0.25,
+        "rho": 0.7014
+      },
+      "the_held_out_probe": {
+        "rho": 0.6689,
+        "note": "the validation pairs the teacher never saw; still above Q_H's +0.634"
+      },
+      "split_half": {
+        "mean": 0.6967,
+        "range": [
+          0.5742,
+          0.8189
+        ],
+        "never_below_zero": true
+      },
+      "degenerate_cases": {
+        "one_code_table": 0.0,
+        "random_relabelling": 0.000257,
+        "real_table": 0.039772
+      },
+      "paired_bootstrap_vs_q_h": {
+        "mean": 0.0673,
+        "ci95": [
+          -0.003,
+          0.1562
+        ]
+      }
     }
   },
   "rounds": {
@@ -312,6 +364,13 @@
       "lorentz_pmi_l1",
       "hyp_succ_nullgain_l1",
       "-> hbaa_size_matched implemented and measured"
+    ],
+    "round_8": [
+      "horo_cell_rank",
+      "hfsc_rank_l1",
+      "hyp_hist_pmi_l1",
+      "hyp_bmid_erank",
+      "-> the reference itself was tested instead: a variant teacher and the held-out probe"
     ]
   },
   "defects_found_and_fixed": [

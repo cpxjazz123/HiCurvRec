@@ -29,6 +29,7 @@ reward.
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import numpy as np
@@ -110,6 +111,36 @@ def _queries(context: dict) -> dict:
 HISTORY_CACHE = (Path(__file__).resolve().parent / "history_points.npz")
 
 
+def _reference(context: dict) -> dict:
+    """The frozen reference, or the variant named by HBAA_REFERENCE.
+
+    A variant reference is a different frozen teacher (another curvature), fitted
+    on the same training pairs. The incumbent was measured with the Issue #126
+    reference; comparing the two answers the question "does the teacher's own
+    geometry decide the metric's power?".
+    """
+    import json as _json
+    import os
+    from pathlib import Path as _Path
+
+    override = os.environ.get("HBAA_REFERENCE")
+    if not override:
+        return context["reference"]
+    path = _Path(override)
+    if path.is_dir():
+        path = path / "reference.npz"
+    payload = np.load(path)
+    record_path = path.with_name("reference.json")
+    record = _json.loads(record_path.read_text())
+    context["reference"] = {
+        "source": np.asarray(payload["source"], dtype=np.float64),
+        "target": np.asarray(payload["target"], dtype=np.float64),
+        "temperature": float(record["temperature"]),
+        "record": record,
+    }
+    return context["reference"]
+
+
 def _history_points(context: dict, curvature: float) -> np.ndarray:
     """The per-interaction history barycentres, cached on disk.
 
@@ -118,8 +149,15 @@ def _history_points(context: dict, curvature: float) -> np.ndarray:
     """
     key = "hbaa_history_%g" % curvature
     if key not in context:
-        if abs(curvature - 1.0) < 1e-12 and HISTORY_CACHE.is_file():
-            context[key] = np.load(HISTORY_CACHE)["points"].astype(np.float64)
+        # the cache is keyed by the reference's own digest: a variant reference
+        # has different representations and therefore different history points
+        cache = HISTORY_CACHE
+        reference = context.get("reference") or {}
+        digest = str(((reference.get("record") or {}).get("arrays") or {}).get("sha256", ""))
+        if digest:
+            cache = HISTORY_CACHE.with_name("history_points_%s.npz" % digest[:12])
+        if cache.is_file():
+            context[key] = np.load(cache)["points"].astype(np.float64)
         else:
             source = np.asarray(context["source"], dtype=np.float64)
             queries = _queries(context)
@@ -493,12 +531,67 @@ def hbaa_size_matched_kept(table: dict, context: dict) -> float:
     return float(kept[-1][0]) if kept else 0.0
 
 
+
+
+def hbaa_validation(table: dict, context: dict) -> float:
+    """HBAA on the HELD-OUT validation probe: the anchor as the query point.
+
+    The metric above asks its questions of the TRAINING interactions, and the
+    frozen reference was fitted on those pairs, so its answers are in-sample for
+    the teacher. This variant asks the same question of the validation probe --
+    pairs the reference never saw -- so the comparison with the training version
+    says whether the metric needs the teacher's training data to look good.
+    """
+    reference = _reference(context)
+    source = np.asarray(reference["source"], dtype=np.float64)
+    target = np.asarray(reference["target"], dtype=np.float64)[
+        np.asarray(table["item_ids"])]
+    tau = float(reference.get("temperature",
+                              (reference.get("record") or {})["temperature"]))
+    codes = np.asarray(table["rows"], dtype=np.int64)[:, 0]
+    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
+    probe = context["probe"]
+    anchors = np.asarray(probe["anchors"], dtype=np.int64)
+    positives = np.asarray(probe["positives"], dtype=np.int64)
+    negatives = np.asarray(probe["negatives"], dtype=np.int64)
+    keep = np.array([position.get(int(item), -1) for item in anchors], dtype=np.int64)
+    pos = np.array([position.get(int(item), -1) for item in positives], dtype=np.int64)
+    neg = np.array([[position.get(int(item), -1) for item in row] for row in negatives],
+                   dtype=np.int64)
+    valid = (keep >= 0) & (pos >= 0) & (neg >= 0).all(axis=1)
+    if not valid.any():
+        return 0.0
+    points = source[anchors[valid]]
+    pos = pos[valid]
+    neg = neg[valid]
+    centres = {int(code): _frechet(target[codes == code]) for code in np.unique(codes)}
+    mu_pos = np.stack([centres[int(codes[index])] for index in pos])
+    mu_neg = np.stack([[centres[int(codes[index])] for index in row] for row in neg])
+
+    def gromov(x, y):
+        def d(a, b):
+            diff = np.sum((a - b) ** 2, axis=-1)
+            den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
+            return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
+        def nrm(x):
+            inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
+            return 2 * np.arccosh(1 / np.sqrt(inner))
+        return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
+
+    delta = gromov(points, mu_pos)[:, None] - gromov(points[:, None, :], mu_neg)
+    per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
+    return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
+
+
 METRICS = {"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
+           "hbaa_validation": hbaa_validation,
            "hbaa_euclid": hbaa_euclid, "hbaa_flat": hbaa_flat,
            "hbaa_levels": hbaa_levels, "hbaa_weighted": hbaa_weighted,
            "hbaa_pair_accuracy": hbaa_pair_accuracy,
            "hbaa_size_matched": hbaa_size_matched,
+           "hbaa_validation": hbaa_validation,
            "hbaa_size_matched_kept": hbaa_size_matched_kept}
 FREE_CONSTANTS = {"hbaa": 0, "hbaa_anchor": 0, "hbaa_euclid": 0, "hbaa_flat": 0,
                    "hbaa_levels": 0, "hbaa_weighted": 0, "hbaa_pair_accuracy": 0,
-                   "hbaa_size_matched": 0, "hbaa_size_matched_kept": 0}
+                   "hbaa_size_matched": 0, "hbaa_size_matched_kept": 0,
+                   "hbaa_validation": 0}

@@ -44,6 +44,19 @@ as good and probably a little better. Over 800 random half-samples HBAA's
 correlation averaged +0.697 with a 5-95% range of [+0.574, +0.819] and never fell
 below zero.
 
+## It does not depend on the teacher, nor on its training data
+
+| check | result |
+|---|---|
+| a DIFFERENT frozen teacher (curvature 0.25 instead of 1, its own digest, held-out accuracy 0.7369 against the frozen 0.7413) | **+0.7014** |
+| the HELD-OUT validation probe, which the teacher never saw | **+0.6689** |
+| 800 random half-samples of the 97 pairs | mean +0.697, 5-95% [+0.574, +0.819], never below zero |
+| a paired bootstrap against Q_H | +0.067 on average, 95% interval [-0.003, +0.156] |
+
+The metric therefore does not need the reference's training data to look good, and
+it does not need this particular reference: what it measures is the table's own
+relation to the behaviour, read through whatever teacher is frozen.
+
 ## The degenerate cases behave
 
 | table | HBAA |
