@@ -3036,7 +3036,52 @@ def tool_research_round_accept(round_id: str, idea_id: str, note: str = "") -> d
                                     in round_pipeline.verified_implementations(state)]}
 
 
-def tool_research_v2_verify(source_dir: str, objective: str = "") -> dict:
+def _start_v2_verification(tree: Path) -> dict:
+    """Start the V2 verification of one tree in the background.
+
+    The checks take minutes - a two-rank run, three negative controls and the
+    mechanism contract - so they run detached and the caller polls the record.
+    """
+    import subprocess
+    import sys as _sys
+
+    from tools.research.pipeline_v2.controller import Controller
+    from tools.research.pipeline_v2.run import ROOT
+
+    controller = Controller(ROOT / tree.name)
+    controller.directory.mkdir(parents=True, exist_ok=True)
+    log = HARNESS_DIR / ("v2_verify_" + tree.name + ".log")
+    command = [_sys.executable, "-m", "tools.research.pipeline_v2.cli", str(tree)]
+    environment = dict(os.environ)
+    environment["PYTHONPATH"] = str(REPO) + os.pathsep + environment.get("PYTHONPATH", "")
+    with log.open("wb") as sink:
+        process = subprocess.Popen(command, cwd=str(REPO), stdout=sink,
+                                   stderr=subprocess.STDOUT,
+                                   stdin=subprocess.DEVNULL, env=environment,
+                                   start_new_session=True)
+    return {"state": controller.load().get("state"), "worker_pid": process.pid,
+            "worker_log": str(log), "tree": str(tree)}
+
+
+def tool_research_v2_status(source_dir: str) -> dict:
+    """The state of one V2 verification."""
+    from tools.research.pipeline_v2.controller import Controller
+    from tools.research.pipeline_v2.run import ROOT
+
+    tree, problem = resolve_stage2_tree(source_dir)
+    if tree is None:
+        return {"refused": problem}
+    record = Controller(ROOT / Path(tree).name).load()
+    return {"tree": str(tree), "state": record.get("state"),
+            "version": record.get("version"),
+            "source_digest": record.get("source_digest"),
+            "checks": {name: entry.get("status") for name, entry in
+                       (record.get("tests", {}).get("checks") or {}).items()},
+            "history": record.get("history")}
+
+
+def tool_research_v2_verify(source_dir: str, objective: str = "",
+                            wait: bool = False) -> dict:
     """Research Pipeline V2: the programs check the code, and nothing else does.
 
     The deterministic checks -- the geometry contract, the candidate's own suite, a
@@ -3059,7 +3104,12 @@ def tool_research_v2_verify(source_dir: str, objective: str = "") -> dict:
     if tree is None:
         return {"verified": False, "refused": problem,
                 "available_trees": [item.name for item in stage2_trees()]}
-    record = v2_run.verify_candidate(Path(tree))
+    if wait:
+        record = v2_run.verify_candidate(Path(tree))
+    else:
+        # The checks take minutes, so they run in the background and the caller
+        # polls the record: research_v2_status.
+        record = _start_v2_verification(Path(tree))
     return {"tree": str(tree), "state": record.get("state"),
             "version": record.get("version"),
             "source_digest": record.get("source_digest"),
@@ -3637,10 +3687,16 @@ TOOLS.update({
     },
     "research_v2_verify": {
         "fn": tool_research_v2_verify,
-        "args": {"source_dir": "string", "objective": "string, optional"},
+        "args": {"source_dir": "string", "objective": "string, optional",
+                 "wait": "boolean, optional"},
         "description": "Research Pipeline V2: the deterministic checks by the "
-                       "framework, which are the verification; returns the V2 "
-                       "record and its state.",
+                       "framework, which are the verification; the checks run in "
+                       "the background and research_v2_status reports them.",
+    },
+    "research_v2_status": {
+        "fn": tool_research_v2_status,
+        "args": {"source_dir": "string"},
+        "description": "The state of one Research Pipeline V2 verification.",
     },
     "research_round_close_proposal": {
         "fn": tool_research_round_close_proposal,
