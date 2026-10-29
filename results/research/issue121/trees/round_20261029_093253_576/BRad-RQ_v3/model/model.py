@@ -61,6 +61,24 @@ class RQVAE(nn.Module):
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens, embeddings
 
+    def prefix_code_sums(self, tokens: torch.Tensor) -> list:
+        """``sum_{j<=l} e_{j,k_j}`` for every level l: the code sums Stage 3 can read."""
+        totals = []
+        running = None
+        for level, layer in enumerate(self.rq.vq_layers):
+            chosen = torch.nn.functional.embedding(tokens[:, level], layer.get_code_embs())
+            running = chosen if running is None else running + chosen
+            totals.append(running)
+        return totals
+
+    def prefix_reconstruction_loss(self, reference: torch.Tensor) -> torch.Tensor:
+        """Mean over levels of ``MSE(decoder(prefix_l), x)``: equal weights, no knob."""
+        totals = getattr(self, "_prefix_targets", None)
+        if not totals:
+            return torch.zeros((), device=reference.device)
+        losses = [F.mse_loss(self.decoder(total), reference) for total in totals]
+        return torch.stack(losses).mean()
+
     def code_sum(self, tokens: torch.Tensor) -> torch.Tensor:
         """``z_rec = sum_l e_{l,k_l}``: the reconstruction the contract defines."""
         total = None
@@ -127,6 +145,7 @@ class RQVAE(nn.Module):
         reset = []
         for level, (entry, layer) in enumerate(zip(stats, self.rq.vq_layers)):
             used_now = entry["used"] > 0
+            streak[level] = streak[level].to(used_now.device)
             streak[level] = torch.where(used_now,
                                         torch.zeros_like(streak[level]),
                                         streak[level] + 1)

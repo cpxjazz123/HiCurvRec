@@ -57,6 +57,33 @@ def context_entropy_scale(edges, items: int) -> tuple:
     return scale.to(torch.float32), totals.to(torch.float32)
 
 
+def band_radii(radius: torch.Tensor, counts: torch.Tensor, bands: int) -> torch.Tensor:
+    """Give the measured items ONE of ``bands`` radii, by equal item mass.
+
+    A unique radius per item turns the behaviour rank into an item identifier: the
+    quantizer can then encode the item by radius alone and the encoder's direction
+    is free to collapse (measured: effective rank 1.03, level-1 codes 211 -> 15 over
+    nine epochs, reconstruction still falling). The radius is a behaviour BUCKET,
+    not a label, so items share it and the direction has to carry the rest.
+
+    The band count is derived from the frozen codebook size, not chosen: the radius
+    may not carry more resolution than one level-1 code can hold, i.e. one band per
+    ``ceil(N_seen / codebook_size[0])`` items.
+    """
+    radius = torch.as_tensor(radius).clone()
+    totals = torch.as_tensor(counts).flatten()
+    ranked = [index for index in range(int(radius.numel())) if float(totals[index]) > 0.0]
+    if not ranked:
+        raise ValueError("no item has a training transition: the radius has no signal")
+    order = sorted(ranked, key=lambda index: (float(radius[index]), index))
+    band_count = max(1, int(bands))
+    for position, index in enumerate(order):
+        bucket = min(band_count - 1, (position * band_count) // len(order))
+        radius[index] = radius[order[min((bucket + 1) * len(order) // band_count,
+                                        len(order) - 1)]]
+    return radius
+
+
 def rank_radii(scale: torch.Tensor, counts: torch.Tensor = None,
                rho_max: float = RADIUS_MAX) -> torch.Tensor:
     """``r_i = artanh(rho_max * rank_i / (N_seen + 1))``, ties broken by item id.

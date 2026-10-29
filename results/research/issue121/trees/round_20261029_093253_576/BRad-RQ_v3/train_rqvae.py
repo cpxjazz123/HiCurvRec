@@ -58,7 +58,7 @@ def _repository_root() -> Path:
 
 REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
-ARM_NAME = "TIGER_RQ-VAE"
+ARM_NAME = "TIGER_BRad-RQ_v3"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
 
 EMBEDDING_FILE = REPO_ROOT / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
@@ -316,8 +316,8 @@ def main() -> None:
     radii = None
     train_item_ids = None
     if USE_RADIAL:
-        from model.behaviour_radius import (context_entropy_scale, radii_for_switch,
-                                            rank_radii)
+        from model.behaviour_radius import (band_radii, context_entropy_scale,
+                                            radii_for_switch, rank_radii)
         frame = pd.read_parquet(TRAIN_FILE, columns=["user", "history", "target"])
         frame = frame.sort_values("user", kind="stable")
         last = frame.groupby("user", sort=False).tail(1)
@@ -327,7 +327,13 @@ def main() -> None:
             train_edges.extend((a, b) for a, b in zip(sequence[:-1], sequence[1:])
                                if a != b)
         scale, counts = context_entropy_scale(train_edges, len(all_embeddings))
-        radii = rank_radii(scale, counts, rho_max=RADIAL_RHO_MAX).to(device)
+        radii = rank_radii(scale, counts, rho_max=RADIAL_RHO_MAX)
+        # The radius is a behaviour bucket, not an identifier: the number of bands
+        # follows from the frozen level-1 codebook size, so an item cannot be
+        # encoded by its radius alone (see the contract, radius.resolution).
+        measured = int((counts > 0).sum())
+        bands = max(1, -(-measured // int(CODEBOOK_SIZE[0])))
+        radii = band_radii(radii, counts, bands).to(device)
         radii = radii_for_switch(radii, use_behaviour=USE_BEHAVIOUR)
         raw_module.set_radii(radii)
         # one source of truth for the item order: the same ids the loader carries
