@@ -112,6 +112,28 @@ def measured_history() -> str:
                          % (result["metric"], result["spearman"], result["p"],
                             result["bootstrap_ci95"][0], result["bootstrap_ci95"][1],
                             "ELIGIBLE" if result.get("eligible") else "did NOT track recall"))
+    lines.append("  - MEASURED AND ELIGIBLE, AND NOW THE THING TO BEAT: HBAA, the Gromov "
+                 "common-ancestor alignment of the level-1 prefix with the FULL training "
+                 "history (the hyperbolic barycentre of the history's source "
+                 "representations, Delta = (u_h | mu_b(i+)) - (u_h | mu_b(i-)), reduced "
+                 "with the frozen temperature) reaches Spearman +0.701 on the 97 pairs, "
+                 "against +0.634 for Q_H. Its controls: the same construction with the "
+                 "single anchor +0.694, with Euclidean means and distances +0.693, at "
+                 "curvature 1e-3 +0.693. A one-code table scores 0 and a randomly "
+                 "relabelled table 0.0003, so a collapse is never rewarded.")
+    lines.append("  - ALSO MEASURED AND FAILED: the normalised geodesic covering radius "
+                 "of the level-1 cells (-0.146), and Q_H extended to levels 1-4 with an "
+                 "informativeness mask, which is Q_H times a weight because from level 2 "
+                 "the prefix centroids collapse onto the items and the level score is 0.")
+    lines.append("  - WHAT THAT MEANS: every metric of the partition's own geometry "
+                 "fails. The ones that use the frozen reference as a CONTRAST (positive "
+                 "vs negatives) work. To beat +0.634 a proposal must use MORE INFORMATION "
+                 "than a single anchor's source representation and a mean over ten "
+                 "negatives: use the whole training history as the query point (a "
+                 "hyperbolic barycentre of its items), or use the full negative "
+                 "distribution (a temperatured expected rank) instead of its mean, or "
+                 "both. A formula that only rearranges tightness, margin, likelihood or "
+                 "coverage on the same single-anchor inputs is already refuted.")
     if any("hyp_hsoftmax_path" in line for line in lines):
         lines.append("  - WHY the plain path likelihood failed: it correlates with "
                      "recall at -0.49 but with the number of level-2 buckets at "

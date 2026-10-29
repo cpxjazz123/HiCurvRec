@@ -243,6 +243,62 @@ hbaa.note = ("Gromov-product (common-ancestor depth) alignment of the level-1 pr
 hbaa_euclid.note = "the same construction with Euclidean means and distances (control)"
 hbaa_flat.note = "the same hyperbolic construction at curvature 1e-3 (control)"
 
+def hbaa_levels(table: dict, context: dict) -> float:
+    """HBAA at every level, averaged over the levels that can still be informative.
+
+    The Gromov product measures a TREE relation, and the SID is a tree, so the
+    deeper levels are not automatically degenerate the way they were for Q_H: what
+    a level contributes is the ancestor depth of its prefix against the behaviour's
+    ancestor depth, and a level whose buckets are singletons has no centroid to
+    speak for. Each level is therefore scored with the same construction and the
+    levels are averaged, with the level-1 score kept as the anchor.
+    """
+    import numpy as _np
+    scores = []
+    for level in range(np.asarray(table["rows"]).shape[1]):
+        reduced = {"rows": np.asarray(table["rows"])[:, level:level + 1],
+                   "item_ids": table["item_ids"]}
+        scores.append(_level_alignment(reduced, context))
+    return float(np.mean(scores))
+
+
+def _level_alignment(table: dict, context: dict) -> float:
+    """HBAA's contrast for a table whose first column is the level's prefix."""
+    target = np.asarray(context["target"], dtype=np.float64)[
+        np.asarray(table["item_ids"])]
+    tau = float(context["temperature"])
+    codes = np.asarray(table["rows"], dtype=np.int64)[:, 0]
+    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
+    queries = _queries(context)
+    pos = np.array([position.get(int(item), -1) for item in queries["positives"]],
+                    dtype=np.int64)
+    neg = np.array([[position.get(int(item), -1) for item in row]
+                     for row in queries["negatives"]], dtype=np.int64)
+    valid = (pos >= 0) & (neg >= 0).all(axis=1)
+    if not valid.any():
+        return 0.0
+    points = _history_points(context, 1.0)[valid]
+    centres = {int(code): _frechet(target[codes == code]) for code in np.unique(codes)}
+    mu_pos = np.stack([centres[int(codes[index])] for index in pos[valid]])
+    mu_neg = np.stack([[centres[int(codes[index])] for index in row] for row in neg[valid]])
+
+    def gromov(x, y):
+        def d(a, b):
+            diff = np.sum((a - b) ** 2, axis=-1)
+            den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
+            return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
+        def nrm(x):
+            inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
+            return np.arccosh(1 / np.sqrt(inner))
+        return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
+
+    delta = gromov(points, mu_pos)[:, None] - gromov(points[:, None, :], mu_neg)
+    per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
+    return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
+
+
 METRICS = {"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
-           "hbaa_euclid": hbaa_euclid, "hbaa_flat": hbaa_flat}
-FREE_CONSTANTS = {"hbaa": 0, "hbaa_anchor": 0, "hbaa_euclid": 0, "hbaa_flat": 0}
+           "hbaa_euclid": hbaa_euclid, "hbaa_flat": hbaa_flat,
+           "hbaa_levels": hbaa_levels}
+FREE_CONSTANTS = {"hbaa": 0, "hbaa_anchor": 0, "hbaa_euclid": 0, "hbaa_flat": 0,
+                   "hbaa_levels": 0}

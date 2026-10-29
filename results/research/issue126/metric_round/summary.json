@@ -119,6 +119,17 @@
       ],
       "eligible": true,
       "note": "the hyperbolic construction at curvature 1e-3 (flat control)"
+    },
+    {
+      "metric": "hbaa_levels",
+      "spearman": 0.4644,
+      "p": 1.66e-06,
+      "ci": [
+        0.284,
+        0.614
+      ],
+      "eligible": true,
+      "note": "HBAA's ancestor contrast at every level, averaged: the deeper levels dilute it"
     }
   ],
   "not_scored": [
@@ -164,6 +175,7 @@
       "the metric was selected on the same 97 pairs it is measured on, so its +0.701 is optimistic; a fresh SID+recall sample is needed",
       "the Euclidean and flat controls score +0.693 and +0.693 against the hyperbolic +0.701: the ranking of tables is a property of the construction, not of the curvature, even though the behaviour itself is hierarchical in the hyperbolic geometry (mean depth gap +0.089 against the Euclidean +0.018, same 83% share)",
       "observational: the tables come from different families and settings"
-    ]
+    ],
+    "levels_note": "HBAA at every level and averaged gives +0.4644, BELOW the level-1 score +0.7012: the ancestor contrast at the deeper levels is real but weaker, so averaging them in loses information. The level-1 ancestor depth is the signal."
   }
 }

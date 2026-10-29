@@ -1,0 +1,30 @@
+METRIC: hyp_cell_expected_rank (HERC)
+
+TITLE: Hyperbolic temperatured expected rank of the true target's level-1 cell, chance-normalised by an analytic size-matched null.
+
+FORMULA:
+  Poincare ball B_1^d, curvature c = 1 (radius 1). Poincare distance d(x,y) = 2 * artanh( || (-x) (+) y || ), with (+) the Mobius addition.
+  Reference: frozen source point s_i and target point t_i in B_1^d for every item i (N items).
+  1. For each level-1 code k in {1..K}: I_k = the items whose level-1 code is k; nu_k = Karcher (Frechet) barycentre in B_1^d of { t_i : i in I_k }, computed by the fixed iteration nu <- exp_nu( (1/|I_k|) * sum_{i in I_k} log_nu(t_i) ), exactly 10 iterations, initialised at the target point of the smallest-index member of I_k.
+  2. Query point of item i: v_i = (1/|H_i|) * sum_{j in H_i} log_0(s_j) in the tangent space at the origin; q_i = exp_0(v_i), where H_i is the training-split history of item i. If the reference exposes only one source vector per item, H_i = {i} and q_i = s_i.
+  3. D_ik = d(q_i, nu_k).
+  4. tau = median over i of d(q_i, t_i). One scalar computed once from the reference and the training split; identical for all 97 tables, never recomputed per table.
+  5. p_i(k) = exp(-D_ik/tau) / sum_{k'=1..K} exp(-D_ik'/tau).
+  6. r_i(k) = 1 + #{ k' : D_ik' < D_ik } + 0.5 * #{ k' != k : D_ik' = D_ik }.
+  7. Rbar = (1/N) * sum_{i=1..N} sum_{k=1..K} p_i(k) * r_i(k).
+  8. HERC = 1 - (Rbar - 1) / ((K - 1)/2) for K >= 2; HERC = 0 if K = 1.
+  Higher is better. The denominator (K-1)/2 equals ((K+1)/2 - 1), the exact expected rank of a uniformly random code assignment, so a chance table scores 0 at every K.
+
+INPUTS: the exported SID table's level-1 integer code per item; the frozen Issue #126 reference arrays s_i and t_i (learned on training pairs only); the training split (to form H_i). Nothing else.
+
+GEOMETRY: curvature -1, c = 1. It enters three times. The prototypes nu_k are Frechet barycentres inside the ball, produced by an exp/log gradient iteration, not an arithmetic mean. The query is a tangent-space barycentre at the origin pushed back by exp_0, so its magnitude is a hyperbolic radius, not a Euclidean norm. Every D_ik is a Poincare distance whose conformal factor shrinks the metric near the boundary, so moving a prototype from radius 0.5 to 0.95 costs far more than 0.45 Euclidean units. Ranks and the tau-normalised softmax use only these curved distances.
+
+WHY IT SHOULD TRACK RECALL: Recall@10 needs the ground-truth target's level-1 cell to be among the cells a query can reach. HERC scores exactly that cell's expected rank, under a softmax over all K cells rather than over the mean of ten sampled negatives. Three things are new relative to HBAA and Q_H. (a) The positive is a target-side Frechet barycentre, i.e. the whole semantic cell, not one anchor's point, so a cell that is right on average is rewarded even when its anchor happens to be off. (b) The negative side is the full cell distribution through a temperatured expected rank, so a cell that is merely second-best everywhere still loses ground, which a mean margin over ten negatives cannot detect. (c) Dividing by the analytic random-assignment rank (K-1)/2 makes the number immune to the level-1 bucket count: this is the size-matched null whose absence drove the plain path likelihood to -0.49 on collapsed tables. The tau normalisation additionally makes the statistic invariant to radial rescaling of the reference, which destabilised the covering-radius and margin statistics.
+
+COMPUTE: N = 24587 queries x K <= 256 prototypes = 6.3M Poincare distances, vectorisable in numpy (~50 MB, 10-20 s); K Karcher means cost 10 passes over 24587 points each (~2 s); log/exp maps are elementwise. Well under one minute, no fitting, no Stage 2 or Stage 3 run.
+
+RISKS: if tau is much larger than the spread of D_ik the softmax flattens to uniform and every table tends to 0, losing discrimination. Large cells dominate the barycentres, so a table good only for hub items can score moderately. Near-duplicate nu_k create rank ties and the 0.5 tie-break biases toward chance. K = 2 gives a coarse three-level score and a wide confidence interval.
+
+FAILURE MODE: worst on the radially degenerate table whose level-1 codes are random but geometrically centred: every nu_k collapses to the same point near the origin, all D_ik are equal, p is uniform, Rbar = (K+1)/2, so HERC = 0. A one-code table is 0 by definition. A table whose cells are cleanly separated but semantically wrong (high bucket count, tidy Voronoi geometry) also scores at or below 0, which is exactly where bucket count and covering radius were fooled.
+
+END METRIC
