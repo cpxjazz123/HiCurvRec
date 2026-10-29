@@ -2838,6 +2838,10 @@ def tool_research_round_start(objective: str = "", issue: str = "issue121",
     from tools.research.rounds import agents as round_agents
     from tools.research.rounds import pipeline as round_pipeline
 
+    # A caller that sends an explicit null must get the default, not a path join
+    # against None.
+    issue = issue or "issue121"
+    objective = objective or ""
     round_id = "round_" + time.strftime("%Y%m%d_%H%M%S") + "_" + str(int(time.time() * 1000) % 1000)
     full_objective = round_agents.RESEARCH_OBJECTIVE
     if objective:
