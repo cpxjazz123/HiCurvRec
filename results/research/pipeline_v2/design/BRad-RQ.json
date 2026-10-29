@@ -1,0 +1,58 @@
+{
+  "contract": "design/BRad-RQ",
+  "version": 2,
+  "supersedes": 1,
+  "idea_id": "BRad-RQ",
+  "status": "FROZEN",
+  "frozen_at": "2026-10-29",
+  "why_a_new_version": "Version 1 left four definitions open, and the implementation answered them differently from the proposal: the third level kept the baseline Sinkhorn assignment in training while the export used the nearest codeword, the reconstruction target was the raw encoder output while the quantizer scored the behaviour-scaled tangent, the geometry-off switch kept the exponential map and only changed the distance, and the radius rank was taken over every catalogue item instead of the items that actually have a training statistic. Each of those changes what the trained quantizer optimises, so the result of a run cannot be attributed to the proposal until they are fixed. This version fixes them and each rule is checked by a test that calls the real training functions.",
+  "behaviour_statistic": {
+    "source": "consecutive item pairs inside training sessions only",
+    "statistic": "s_i = exp(H_i), the effective number of distinct predecessor contexts",
+    "shrinkage": "1/(n_i+1) towards the mean over items with n_i >= 10",
+    "frozen": "computed once before epoch 1, stored as a model buffer"
+  },
+  "radius": {
+    "formula": "r_i = artanh(0.9 * rank_i / (N_seen + 1))",
+    "rank_set": "the items that have at least one training transition (N_seen); the catalogue items outside it are NOT ranked",
+    "unseen_items": "r = median(r over the ranked items), so an item with no training behaviour sits at the median radius rather than at an undefined or extreme one",
+    "tie_break": "equal statistics are ordered by item id, as the proposal states",
+    "tangent_target": "t_i = r_i * z_i / |z_i| (radius from the table, direction from the encoder; differentiable in z)"
+  },
+  "assignment": {
+    "rule": "k_l = argmin_k S(a_l, e_{l,k}) at EVERY level, in training and at export",
+    "geometry_on": "a_l = exp_0(t_l / M_l) and S is the Poincare kernel on the mapped points; the same rule chooses the code the loss sees and the code the export writes",
+    "sinkhorn": "disabled on the radial path in every phase; the baseline's Sinkhorn stays untouched in the baseline tree, where it is part of the frozen comparison",
+    "residual": "r_{l+1} = residual of the chosen code in the same tangent space, re-scaled by M_{l+1}"
+  },
+  "loss": {
+    "rule": "L = MSE(decoder(x_q), t) + MSE(x_q, sg(t)) + beta * MSE(t, sg(x_q))",
+    "target": "t, the behaviour-scaled tangent the quantizer actually scores -- not the raw encoder output z",
+    "why": "the decoder must reconstruct the point the codes quantise; reconstructing z while quantising t would optimise two different objectives, and the beta terms follow the baseline VQ form",
+    "beta": "the baseline value; not a free parameter"
+  },
+  "geometry_off": {
+    "rule": "the exponential and logarithmic maps are the identity and S is the squared Euclidean distance on the tangent vectors; the behaviour radius is still applied to the tangent",
+    "why": "the ablation isolates the geometry: with the map removed the quantizer is the Euclidean RQ-VAE on the same behaviour-scaled tangents, so a difference between the arms is attributable to the curvature and not to the radius"
+  },
+  "behaviour_off": {
+    "rule": "every item gets the median radius; curvature, map, assignment rule and loss are unchanged",
+    "why": "the ablation isolates the behaviour statistic while keeping the geometry identical"
+  },
+  "both_on": {
+    "rule": "measured radii, curvature on, nearest-codeword assignment, loss on t",
+    "training_policy": "this is the only arm that is trained (section 19g); the two others exist in code and are checked by tests"
+  },
+  "inertness_conditions": [
+    "if the radius table never reaches the quantizer, the mechanism is inert",
+    "if the assignment ignores the mapped point, the radius cannot change a single code",
+    "if the geometry-off path keeps the exponential map, the ablation measures something other than the geometry",
+    "if unseen items are ranked among all items, the radius of every item shifts with the catalogue rather than with behaviour",
+    "if training and export use different assignment rules, the exported identifier is not the code the trained quantizer assigns"
+  ],
+  "acceptance": {
+    "tests": "each rule above has a test that calls the real functions (model, quantizer, radius builder, export), not a re-implementation",
+    "verification": "the V2 record names this contract's version and sha256; a record whose contract digest does not match the file is invalid",
+    "final": "Stage 3 test_recall@10 from the single frozen run"
+  }
+}

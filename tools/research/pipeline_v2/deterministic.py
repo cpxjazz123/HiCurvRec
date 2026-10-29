@@ -62,6 +62,36 @@ def check_candidate_suite(tree: Path, interpreter: Path = PY_STAGE2) -> dict:
                 cwd=Path(tree))
 
 
+def check_design_contract(tree: Path) -> dict:
+    """The candidate's frozen definition exists, is FROZEN, and is versioned.
+
+    The mechanism contract says what would make THIS mechanism inert; the design
+    contract says what the mechanism IS -- the assignment rule, the loss target,
+    the meaning of each ablation and the rank set. A run whose definition is not
+    frozen cannot be attributed to a proposal, so the verification refuses one.
+    """
+    import hashlib
+
+    tree = Path(tree)
+    name = tree.name[6:] if tree.name.startswith("TIGER_") else tree.name
+    path = REPO / "results" / "research" / "pipeline_v2" / "design" / (name + ".json")
+    if not path.is_file():
+        return {"status": "FAIL", "detail": "no frozen design contract at " + str(path)}
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        return {"status": "FAIL", "detail": "the design contract is not JSON: " + repr(exc)}
+    if str(document.get("status", "")).upper() != "FROZEN":
+        return {"status": "FAIL",
+                "detail": "the design contract is not FROZEN: " + str(document.get("status"))}
+    if not document.get("version") or not document.get("acceptance"):
+        return {"status": "FAIL", "detail": "the design contract has no version or acceptance"}
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    return {"status": "PASS",
+            "detail": "design contract version " + str(document["version"]) + " frozen",
+            "version": document["version"], "sha256": digest, "path": str(path)}
+
+
 def check_entry_one_epoch(tree: Path) -> dict:
     """The real entry point for one epoch, through the framework's own smoke.
 
@@ -335,7 +365,7 @@ def check_tests_use_training_config(tree: Path, contract_name: str = None) -> di
             "detail": "the candidate tests build the model with " + str(expected)}
 
 
-DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "entry", "ddp",
+DEFAULT_CHECKS = ("contract", "design", "suite", "gradient", "export", "entry", "ddp",
                   "mechanism", "negative", "training_config", "promotion",
                   "tests_config")
 
@@ -353,6 +383,8 @@ def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
     for name in wanted:
         if name == "contract":
             results[name] = check_contract(interpreter)
+        elif name == "design":
+            results[name] = check_design_contract(tree)
         elif name == "suite":
             results[name] = check_candidate_suite(tree, interpreter)
         elif name == "gradient":
@@ -360,7 +392,7 @@ def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
         elif name == "export":
             results[name] = check_export_matches_assignment(tree, interpreter)
         elif name == "entry":
-            results[name] = check_real_entry(tree)
+            results[name] = check_entry_one_epoch(tree)
         elif name == "ddp":
             results[name] = check_ddp_two_ranks(tree, interpreter)
         elif name == "mechanism":

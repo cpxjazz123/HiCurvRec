@@ -443,7 +443,7 @@ def main() -> None:
             train_edges.extend((a, b) for a, b in zip(sequence[:-1], sequence[1:])
                                if a != b)
         scale, counts = context_entropy_scale(train_edges, len(all_embeddings))
-        radii = rank_radii(scale, rho_max=RADIAL_RHO_MAX).to(device)
+        radii = rank_radii(scale, counts, rho_max=RADIAL_RHO_MAX).to(device)
         radii = radii_for_switch(radii, use_behaviour=USE_BEHAVIOUR)
         if hasattr(raw_module, "set_radii"):
             raw_module.set_radii(radii)
@@ -469,10 +469,12 @@ def main() -> None:
             batch = batch.to(device, non_blocking=True)
             item_ids = item_ids.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(
+            reconstructed, quant_loss, _, _, target = model(
                 batch, item_ids, radius=None if radii is None else radii[item_ids])
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
-            loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
+            # The decoder reconstructs the point the quantizer scored (t on the
+            # radial path), not the raw encoder output.
+            loss, recon_loss = raw_module.compute_loss(target, reconstructed, quant_loss)
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()

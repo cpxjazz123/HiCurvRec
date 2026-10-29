@@ -57,14 +57,35 @@ def context_entropy_scale(edges, items: int) -> tuple:
     return scale.to(torch.float32), totals.to(torch.float32)
 
 
-def rank_radii(scale: torch.Tensor, rho_max: float = RADIUS_MAX) -> torch.Tensor:
-    """``r_i = artanh(rho_max * rank_i / (N + 1))``, ties broken by item id."""
+def rank_radii(scale: torch.Tensor, counts: torch.Tensor = None,
+               rho_max: float = RADIUS_MAX) -> torch.Tensor:
+    """``r_i = artanh(rho_max * rank_i / (N_seen + 1))``, ties broken by item id.
+
+    The rank is taken over the items that actually have a training statistic.
+    An item with no training transition has no rank: ranking it among the ties of
+    the prior would move every other item's radius when the catalogue grows, and
+    would give behaviour to items whose behaviour was never measured. Such items
+    get the median radius of the ranked items instead.
+    """
     values = torch.as_tensor(scale, dtype=torch.float64).flatten()
     count = int(values.numel())
-    order = sorted(range(count), key=lambda index: (float(values[index]), index))
     radius = torch.zeros(count, dtype=torch.float64)
+    if counts is None:
+        ranked = list(range(count))
+    else:
+        totals = torch.as_tensor(counts, dtype=torch.float64).flatten()
+        if int(totals.numel()) != count:
+            raise ValueError("counts and scale disagree on the number of items")
+        ranked = [index for index in range(count) if float(totals[index]) > 0.0]
+    if not ranked:
+        raise ValueError("no item has a training transition: the radius has no signal")
+    order = sorted(ranked, key=lambda index: (float(values[index]), index))
     for position, index in enumerate(order, start=1):
-        radius[index] = math.atanh(min(float(rho_max) * position / (count + 1), 0.999999))
+        radius[index] = math.atanh(
+            min(float(rho_max) * position / (len(order) + 1), 0.999999))
+    if len(ranked) != count:
+        unranked = [index for index in range(count) if index not in set(ranked)]
+        radius[unranked] = radius[torch.tensor(ranked)].median()
     return radius.to(torch.float32)
 
 

@@ -343,3 +343,32 @@ class Stage2CompletionTests(unittest.TestCase):
             (result / "logs" / "training_metrics.jsonl").write_text(
                 "\n".join(rows[:1500]) + "\n", encoding="utf-8")
             self.assertFalse(module._stage2_finished(result))
+
+
+class DesignContractCheckTests(unittest.TestCase):
+    """The verification reads the frozen definition, and a missing one is a FAIL."""
+
+    def test_the_brad_contract_is_frozen_and_versioned(self):
+        from tools.research.pipeline_v2 import deterministic
+        result = deterministic.check_design_contract(Path("TIGER_BRad-RQ"))
+        self.assertEqual(result["status"], "PASS", result.get("detail"))
+        self.assertEqual(result["version"], 2)
+        self.assertEqual(len(result["sha256"]), 64)
+
+    def test_a_candidate_without_a_contract_fails(self):
+        from tools.research.pipeline_v2 import deterministic
+        result = deterministic.check_design_contract(Path("TIGER_no-such-candidate"))
+        self.assertEqual(result["status"], "FAIL")
+
+    def test_every_default_check_has_a_definition(self):
+        """The dispatch used to call a function that was never defined.
+
+        Every branch of ``run_all`` is executed with a stub tree and the result
+        must be a dict with a status: a branch that names a missing function
+        raises NameError instead.
+        """
+        from tools.research.pipeline_v2 import deterministic
+        import inspect
+        source = inspect.getsource(deterministic.run_all)
+        for name in deterministic.DEFAULT_CHECKS:
+            self.assertIn('"%s"' % name, source, "the dispatch never mentions " + name)

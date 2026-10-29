@@ -175,10 +175,21 @@ class VQLayer(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         latent = x.view(-1, self.dim)
         if getattr(self, "_radial", False):
-            # the assignment scores the MAPPED points, so the behaviour radius is
-            # the radius the item actually occupies in the ball
-            mapped = self.point_of(latent)
-            embed_ind = self._indices(self.mapped_cost(mapped), infer_use_sk)
+            # The contract's assignment rule is the nearest codeword at every
+            # level, in training and at export alike. Sinkhorn balancing would
+            # choose a different code than the one the export writes, so the
+            # radial path never enters it. The ablation removes the map itself:
+            # geometry-off scores the tangent vectors with the Euclidean
+            # distance, so the quantizer is the Euclidean RQ-VAE on the same
+            # behaviour-scaled tangents.
+            if bool(getattr(self, "_use_geometry", True)):
+                embed_ind = torch.argmin(self.mapped_cost(self.point_of(latent)), dim=-1)
+            else:
+                from .behaviour_radius import assignment_score
+                a = latent.unsqueeze(1)
+                e = self.get_code_embs().unsqueeze(0)
+                embed_ind = torch.argmin(
+                    assignment_score(a, e, use_geometry=False), dim=-1)
             x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
             quant_loss = (F.mse_loss(x_q, x.detach())
                           + self.beta * F.mse_loss(x, x_q.detach()))

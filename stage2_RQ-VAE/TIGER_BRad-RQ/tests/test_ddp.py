@@ -61,8 +61,11 @@ class DistributedTests(unittest.TestCase):
         ids = torch.arange(24, device=self.device)
         for _ in range(2):
             optimizer.zero_grad(set_to_none=True)
-            recon, quant_loss, _, _ = wrapped(embeddings, ids)
-            loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
+            # The radius is passed exactly as the trainer passes it: a DDP step
+            # without it would run a different mechanism (the radial model refuses
+            # it outright), so a green DDP test would prove nothing about training.
+            recon, quant_loss, _, _, reference = wrapped(embeddings, ids, radius=radius[ids])
+            loss = torch.nn.functional.mse_loss(recon, reference) + quant_loss
             loss.backward()
             optimizer.step()
         self.assertTrue(bool(torch.isfinite(loss)))

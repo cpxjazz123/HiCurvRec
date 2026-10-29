@@ -26,16 +26,49 @@ class RQVAE(nn.Module):
         # persistent so a restored model exports the same SID.
         self.register_buffer("radius_table", torch.zeros(0), persistent=True)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
+        if bool(getattr(config, "radial", False)):
+            # The radial objective is in the code space, so the decoder takes no
+            # part in it: frozen parameters instead of dead ones under DDP.
+            for parameter in self.decoder.parameters():
+                parameter.requires_grad_(False)
 
     def forward(self, embeddings: torch.Tensor,
                 item_ids: torch.Tensor = None,
-                radius: torch.Tensor = None) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+                radius: torch.Tensor = None) -> tuple:
+        """Return the reconstruction, the quantizer's loss, and the target it scored.
+
+        With ``radial=True`` the quantizer scores the behaviour-scaled tangent
+        ``t``, so ``t`` is the reconstruction target as well: reconstructing the
+        raw encoder output while quantising ``t`` would optimise two different
+        objectives. A missing radius is an error, not a silently Euclidean step:
+        a caller that forgets it would train or export a different mechanism.
+        """
         encoded = self.encoder(embeddings)
-        if radius is not None and bool(getattr(self.config, "radial", False)):
-            encoded = self.scale_by_radius(encoded, radius)
-        quantized, quant_loss, unused_codes, tokens = self.rq(encoded, item_ids=item_ids)
-        reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens
+        radial = bool(getattr(self.config, "radial", False))
+        if radial and radius is None:
+            raise ValueError(
+                "radial=True requires the per-item behaviour radius: refusing to "
+                "run the quantizer on a point the mechanism did not build")
+        target = self.scale_by_radius(encoded, radius) if radial else encoded
+        quantized, quant_loss, unused_codes, tokens = self.rq(target, item_ids=item_ids)
+        # The contract's reconstruction is in the code space: z_rec = sum_l e_{l,k_l}
+        # compared with the scored target t. The decoder lives in the input space,
+        # so it cannot reconstruct t, and using it here would optimise a different
+        # objective from the one the codes serve.
+        if radial:
+            reconstructed, reference = self.code_sum(tokens), target
+        else:
+            # the baseline path reconstructs the input embedding through the decoder
+            reconstructed, reference = self.decoder(quantized), embeddings
+        return reconstructed, quant_loss, int(unused_codes), tokens, reference
+
+    def code_sum(self, tokens: torch.Tensor) -> torch.Tensor:
+        """``z_rec = sum_l e_{l,k_l}``: the reconstruction the contract defines."""
+        total = None
+        for level, layer in enumerate(self.rq.vq_layers):
+            chosen = torch.nn.functional.embedding(tokens[:, level], layer.get_code_embs())
+            total = chosen if total is None else total + chosen
+        return total
 
     def scale_by_radius(self, encoded: torch.Tensor, radius: torch.Tensor) -> torch.Tensor:
         """``t_i = r_i * z_i / |z_i|``: the behaviour rank sets the tangent norm.
@@ -137,9 +170,15 @@ class RQVAE(nn.Module):
 
     def compute_loss(
         self,
-        embeddings: torch.Tensor,
+        target: torch.Tensor,
         reconstructed: torch.Tensor,
         quant_loss: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        recon_loss = F.mse_loss(reconstructed, embeddings)
+        """``MSE(decoder(x_q), t)`` plus the quantizer's own commitment terms.
+
+        ``target`` is the point the quantizer scored -- ``t`` on the radial path,
+        the encoder output otherwise. The decoder must reconstruct the same point
+        the codes quantise.
+        """
+        recon_loss = F.mse_loss(reconstructed, target)
         return recon_loss + quant_loss, recon_loss

@@ -52,6 +52,14 @@ def verify_candidate(tree: Path, *, checks=None, controller: Controller = None) 
     # safe: an unchanged tree and an unchanged check set give the same answer.
     results = deterministic.run_all(tree, checks=checks)
     record["fingerprints"] = fingerprints
+    # The run is attributable to a DEFINITION, not only to a source digest: the
+    # design contract's version and hash travel with the record, so a later change
+    # to what the mechanism is cannot be read as the same experiment.
+    design = (results.get("checks") or {}).get("design") or {}
+    if design.get("status") == "PASS":
+        record["design_contract"] = {"version": design.get("version"),
+                                     "sha256": design.get("sha256"),
+                                     "path": design.get("path")}
     controller.directory.mkdir(parents=True, exist_ok=True)
     (controller.directory / "test_results.json").write_text(
         json.dumps(results, indent=2, sort_keys=True), encoding="utf-8")
@@ -61,4 +69,16 @@ def verify_candidate(tree: Path, *, checks=None, controller: Controller = None) 
         # in the candidate or in the check itself (a wrong template is not a defect
         # of the mechanism); either way it is one repair and the history says so.
         record = controller.repair("re-run after a change to the candidate or the checks")
-    return controller.record_tests(results)
+    record = controller.record_tests(results)
+    # record_tests reloads the record from disk, so the definition is attached
+    # after that write and saved through the controller.
+    if design.get("status") == "PASS" and record.get("design_contract") != {
+            "version": design.get("version"), "sha256": design.get("sha256"),
+            "path": design.get("path")}:
+        stored = controller.load()
+        stored["design_contract"] = {"version": design.get("version"),
+                                     "sha256": design.get("sha256"),
+                                     "path": design.get("path")}
+        controller.save(stored)
+        record = stored
+    return record

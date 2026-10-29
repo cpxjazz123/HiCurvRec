@@ -50,8 +50,8 @@ class WiringTests(unittest.TestCase):
         z = model.encoder(embeddings)
         scaled = model.scale_by_radius(z, radius[ids])
         self.assertTrue(scaled.requires_grad)
-        recon, quant_loss, _, _ = model(embeddings, ids, radius=radius)
-        loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
+        recon, quant_loss, _, _, reference = model(embeddings, ids, radius=radius)
+        loss = torch.nn.functional.mse_loss(recon, reference) + quant_loss
         loss.backward()
         total = sum(float(p.grad.abs().sum()) for p in model.encoder.parameters()
                     if p.grad is not None)
