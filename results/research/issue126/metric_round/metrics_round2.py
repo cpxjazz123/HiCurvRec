@@ -132,3 +132,34 @@ hyp_hsoftmax_path.note = ("mean hyperbolic tree-conditional log-probability of t
 
 METRICS = {"hyp_hsoftmax_path": hyp_hsoftmax_path}
 FREE_CONSTANTS = {"hyp_hsoftmax_path": 0}
+
+
+def hyp_hsoftmax_path_null(table: dict, context: dict) -> float:
+    """The path log-likelihood MINUS its own size-matched null.
+
+    Measured on the 97 pairs, the plain likelihood correlates with recall at
+    -0.49, and with the number of level-2 buckets at -0.78: it rewards a trie whose
+    branches are few, i.e. a collapsed table (the three highest values in the
+    collection are the 12-code, 2-code and 3-code tables). The null removes exactly
+    that: the same statistic on tables with the same level sizes but no joint
+    structure, averaged over two fixed relabellings. What is left is how much
+    better the real assignment predicts the true path than a table that is only as
+    granular.
+    """
+    real = hyp_hsoftmax_path(table, context)
+    rows = np.asarray(table["rows"], dtype=np.int64)
+    rng = np.random.default_rng(12345)
+    nulls = []
+    for _ in range(2):
+        shuffled = np.empty_like(rows)
+        for level in range(rows.shape[1]):
+            shuffled[:, level] = rng.permutation(rows[:, level])
+        nulls.append(hyp_hsoftmax_path({"rows": shuffled,
+                                        "item_ids": table["item_ids"]}, context))
+    return float(real - float(np.mean(nulls)))
+
+
+hyp_hsoftmax_path_null.note = ("path log-likelihood over its size-matched relabelling "
+                               "null, two fixed seeds")
+METRICS = {"hyp_hsoftmax_path_null": hyp_hsoftmax_path_null}
+FREE_CONSTANTS = {"hyp_hsoftmax_path_null": 0}

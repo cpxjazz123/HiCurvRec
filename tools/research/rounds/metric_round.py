@@ -98,17 +98,27 @@ def measured_history() -> str:
 
     base = Path(__file__).resolve().parents[3] / "results" / "research" / "issue126"
     lines = []
-    bench = base / "metric_bench.json"
-    if bench.is_file():
+    seen = set()
+    for bench in sorted(base.glob("metric_bench*.json")):
         try:
             report = _json.loads(bench.read_text())
         except ValueError:
-            report = {}
+            continue
         for result in report.get("results", []):
+            if result["metric"] in seen:
+                continue
+            seen.add(result["metric"])
             lines.append("  - %s: Spearman %+0.3f (p=%.2g, CI [%+0.3f, %+0.3f]) %s"
                          % (result["metric"], result["spearman"], result["p"],
                             result["bootstrap_ci95"][0], result["bootstrap_ci95"][1],
                             "ELIGIBLE" if result.get("eligible") else "did NOT track recall"))
+    if any("hyp_hsoftmax_path" in line for line in lines):
+        lines.append("  - WHY the plain path likelihood failed: it correlates with "
+                     "recall at -0.49 but with the number of level-2 buckets at "
+                     "-0.78, and its three highest values in the collection are the "
+                     "12-code, 2-code and 3-code collapsed tables. It rewards a trie "
+                     "with few branches, i.e. collapse. Any likelihood-like metric "
+                     "must be contrasted against a size-matched null.")
     return ("\nWHAT EARLIER METRIC ROUNDS MEASURED on the same 97 pairs:\n"
             "  - Q_H (Issue #126, level 1): Spearman +0.634, ELIGIBLE; level 2 +0.287, "
             "level 3 +0.393;\n"

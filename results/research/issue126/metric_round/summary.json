@@ -1,0 +1,69 @@
+{
+  "reference": {
+    "metric": "Q_H (Issue #126, level 1)",
+    "spearman": 0.634,
+    "p": 3.16e-12,
+    "ci": [
+      0.471,
+      0.765
+    ],
+    "eligible": true
+  },
+  "measured": [
+    {
+      "metric": "hyp_voronoi_margin_l1",
+      "spearman": -0.08096521799105007,
+      "p": 0.43047854631817695,
+      "ci": [
+        -0.28481188519541195,
+        0.14318520329916457
+      ],
+      "eligible": false,
+      "report": "metric_bench.json"
+    },
+    {
+      "metric": "hyp_adj_r2_l1",
+      "spearman": 0.15561838390548752,
+      "p": 0.1279881836227026,
+      "ci": [
+        -0.06476916302604793,
+        0.36408828890148986
+      ],
+      "eligible": false,
+      "report": "metric_bench.json"
+    },
+    {
+      "metric": "hyp_hsoftmax_path",
+      "spearman": -0.48845787173546645,
+      "p": 3.860758280227181e-07,
+      "ci": [
+        -0.6475121662071853,
+        -0.28885828001744795
+      ],
+      "eligible": false,
+      "report": "metric_bench_round2.json"
+    },
+    {
+      "metric": "hyp_bucket_reach_lift_l1",
+      "spearman": 0.04104806366072159,
+      "p": 0.6897429198911995,
+      "ci": [
+        -0.17692918235536903,
+        0.2558051669142533
+      ],
+      "eligible": false,
+      "report": "metric_bench_round3.json"
+    }
+  ],
+  "not_scored": [
+    {
+      "metric": "hsmre",
+      "reason": "at its stated formula one table needs 12-29 GB per worker; the scheduler killed it, and capping its bucket sizes would be a different metric"
+    },
+    {
+      "metric": "hyp_hsoftmax_path_null",
+      "reason": "three evaluations per table (real plus two nulls) exceeded the benchmark deadline on 97 pairs"
+    }
+  ],
+  "conclusion": "Four new hyperbolic metrics were implemented to their proposals' formulas and measured on the same 97 confirmed pairs. None tracks recall: the two partition-tightness metrics sit near zero, the tree-conditional path likelihood is significantly NEGATIVE (-0.49) because it rewards a trie with few branches (its correlation with the number of level-2 buckets is -0.78, and its three highest values are the 12-, 2- and 3-code collapsed tables), and the size-matched reach lift is +0.04. Q_H's +0.634 remains the only metric in the collection that tracks recall. The pattern across all of them is that a metric of the partition's own geometry -- tightness, margin, likelihood, size-matched reach -- does not predict the recall of the table, while the one metric that does is CONTRASTIVE against the behaviour reference with explicit positive and negative items."
+}
