@@ -383,3 +383,52 @@ class CheckpointProbeTests(unittest.TestCase):
         self.assertIn("from_checkpoint", source)
         self.assertIn("radius=radius", source)
         self.assertIn("compute_loss(reference, reconstructed, quant_loss)", source)
+
+
+class Stage3ShardReductionTests(unittest.TestCase):
+    """The shard reducer refuses to mix evaluations or to guess a rank."""
+
+    def _shard(self, directory, rank, n, recall):
+        import json
+        payload = {"rank": rank, "recall_sums": {"10": recall}, "ndcg_sums": {"10": recall},
+                   "n_eval": n, "elapsed_s": 1.0}
+        path = directory / ("rank%d.json" % rank)
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
+
+    def test_four_ranks_reduce_to_the_sum(self):
+        import json, subprocess, sys
+        with tempfile.TemporaryDirectory() as work:
+            work = Path(work)
+            shards = [self._shard(work, rank, 10, float(rank + 1)) for rank in range(4)]
+            out = work / "test_final.json"
+            tool = Path(__file__).resolve().parents[3] / "tools" / "genrec-mcp" / "aggregate_stage3_shards.py"
+            done = subprocess.run([sys.executable, str(tool), "--out", str(out),
+                                   "--expect-n", "40", *[str(p) for p in shards]],
+                                  capture_output=True, text=True)
+            self.assertEqual(done.returncode, 0, done.stderr[-300:])
+            result = json.loads(out.read_text())
+            self.assertAlmostEqual(result["test_recall@10"], 10.0 / 40)
+            self.assertIn("provenance", result)
+
+    def test_a_missing_rank_is_refused(self):
+        import subprocess, sys
+        with tempfile.TemporaryDirectory() as work:
+            work = Path(work)
+            shards = [self._shard(work, rank, 10, 1.0) for rank in (0, 2)]
+            tool = Path(__file__).resolve().parents[3] / "tools" / "genrec-mcp" / "aggregate_stage3_shards.py"
+            done = subprocess.run([sys.executable, str(tool), "--out", str(work / "o.json"),
+                                   "--expect-n", "20", *[str(p) for p in shards]],
+                                  capture_output=True, text=True)
+            self.assertNotEqual(done.returncode, 0)
+
+    def test_a_wrong_n_eval_is_refused(self):
+        import subprocess, sys
+        with tempfile.TemporaryDirectory() as work:
+            work = Path(work)
+            shards = [self._shard(work, rank, 10, 1.0) for rank in range(4)]
+            tool = Path(__file__).resolve().parents[3] / "tools" / "genrec-mcp" / "aggregate_stage3_shards.py"
+            done = subprocess.run([sys.executable, str(tool), "--out", str(work / "o.json"),
+                                   "--expect-n", "999", *[str(p) for p in shards]],
+                                  capture_output=True, text=True)
+            self.assertNotEqual(done.returncode, 0)

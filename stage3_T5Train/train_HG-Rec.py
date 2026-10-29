@@ -803,22 +803,39 @@ def main():
         )
         if config["bf16"]:
             print("[AMP] BF16 autocast enabled for train/eval", flush=True)
-    else:
+    if rank != 0:
         log_path = ckpt_path = None
-        # The run directory name is chosen by rank 0 and published to
-        # _ddp_sync/run_dir.txt, so every rank resolves the same path without a
-        # collective. Wait for it, bounded, in case this rank arrives first.
+    # One startup collective, before training: the run directory name must be the
+    # SAME on every rank. The file hand-off alone is not enough, because the file
+    # survives the previous run: a rank that starts after rank 0 has created the
+    # new directory but before it has rewritten the file reads the OLD name and
+    # writes its test shard into the previous run's directory, where the reduction
+    # never finds it (this happened: ranks 2 and 3 wrote into the run before).
+    if dist.is_available() and dist.is_initialized() and dist.get_world_size() > 1:
+        _payload = [cur_time if rank == 0 else None]
+        dist.broadcast_object_list(_payload, src=0)
+        cur_time = _payload[0]
+        if rank != 0:
+            log_path = os.path.join(config["log_path"], config["dataset_name"], cur_time)
+            ckpt_path = os.path.join(config["save_path"], config["dataset_name"], cur_time)
+    if rank != 0 and log_path is None:
+        # Single-process path or a group that could not be asked: fall back to the
+        # file hand-off, and require it to be FRESH (not older than this process).
         _run_dir_file = os.path.join(config["log_path"], "_ddp_sync", "run_dir.txt")
         _deadline_run = time.time() + 300
+        _started = time.time()
         while True:
             if time.time() > _deadline_run:
                 raise RuntimeError("rank 0 never published the run directory name")
             if os.path.exists(_run_dir_file):
                 try:
-                    cur_time = _read_run_dir(_run_dir_file)
+                    _value = _read_run_dir(_run_dir_file)
                 except RunDirectoryNotPublishedError:
-                    pass
-                else:
+                    _value = None
+                if _value and os.path.getmtime(_run_dir_file) >= _started - 60:
+                    cur_time = _value
+                    log_path = os.path.join(config["log_path"], config["dataset_name"], cur_time)
+                    ckpt_path = os.path.join(config["save_path"], config["dataset_name"], cur_time)
                     break
             time.sleep(0.5)
 
