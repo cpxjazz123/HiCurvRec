@@ -401,6 +401,21 @@
       "error": "verification incomplete: the phase is incomplete: 1 (unknown)",
       "event": "agent_error",
       "idea_id": "BRad-RQ"
+    },
+    {
+      "at": 1793238961.2625093,
+      "changes": [
+        {
+          "role": "behaviour-sid",
+          "verifier": "verify_BRad-RQ_r1_3"
+        },
+        {
+          "role": "behaviour-sid",
+          "verifier": "verify_BRad-RQ_r1_3"
+        }
+      ],
+      "event": "legacy_finding_role_migrated",
+      "idea_id": "BRad-RQ"
     }
   ],
   "evidence_bundles": {
@@ -11749,6 +11764,7 @@
           "detail": "The delivered tree contains exactly four files: train_rqvae.py, model/layers.py, model/behaviour_radius.py, model/frechet_poincare.py. There is no model/model.py and no model/__init__.py, although the brief's diff claims model/model.py was changed. Those two files own the only code that can turn the behaviour radius into the quantizer input: RQVAE.forward(..., radius=...) / scale_by_radius, and set_radii / get_indices. Nothing in the tree multiplies a latent by a radius - a full-text scan of the four files finds \"set_radii\" and \"scale_by_radius\" only at train_rqvae.py:448-449, and that call sits inside \"if hasattr(raw_module, 'set_radii')\", so against any inherited RQVAE the radius binding is silently skipped instead of failing. The behaviour statistic is therefore computed, printed at :450-453, and never reaches assignment_score: layers.py:89-97 only sees whatever latent the missing forward() hands it. This is the same broken link reported in r1 items 1 and 5, now narrowed to model/model.py. Separately, \"from model import RQVAE\" at train_rqvae.py:37 cannot resolve: model/ is a namespace package with no RQVAE attribute and no model.py.",
           "location": "model/model.py (absent); model/__init__.py (absent); train_rqvae.py:37, 448-449, 473",
           "reproduction": "in the tree directory, \"ls model\" prints layers.py, behaviour_radius.py, frechet_poincare.py only; opening model/model.py or model/__init__.py returns ENOENT; \"python -c 'from model import RQVAE'\" raises ImportError: cannot import name 'RQVAE' from 'model'. Even with that import stubbed, \"rg 'scale_by_radius|set_radii|radius_table' .\" matches only train_rqvae.py:448-449, and the training call at :473 passes radius= into a forward() that is not in the tree.",
+          "role": "behaviour-sid",
           "severity": "blocking",
           "verifier": "verify_BRad-RQ_r1_3"
         },
@@ -11758,6 +11774,7 @@
           "detail": "The exported SID is produced by raw_module.get_indices, which is defined in the absent model/model.py. The brief's diff says get_indices now does \"encoded = self.scale_by_radius(encoded, table[ids])\" under a non-persistent radius_table, but neither the method nor the table exists in the tree. With the inherited RQVAE, get_indices encodes without the radius and hands the raw encoder output z to rq(); model/layers.py:92 then does squash(z), and squash/exp_0 maps any vector of norm >= 0.9 to the single norm tanh(0.9) = 0.7163. A 32-dim MLP output has norm well above 0.9 for essentially every item, so at export the whole catalogue lands on one and the same Poincare radius and the level-1 (and every later) code is chosen by angle alone, while every training step at :473 passes radius=radii[item_ids] and therefore scores items at their behaviour radius. The export is the code of a different point than the one the quantizer was trained on, so the SID Stage3 reads is not the code the trained quantizer assigns to the item.",
           "location": "train_rqvae.py:582-585 calling raw_module.get_indices; model/model.py (absent)",
           "reproduction": "build RQVAE with config.radial=True, run one forward with radius=r (r spanning 0.02..1.47) and one get_indices() on the same embeddings: the level-1 token columns differ, and for the export the value (1-|a|^2) is the same constant for every item. Equivalently, in the delivered tree there is no code that ever multiplies a latent by the radius, so :448-449's set_radii is a no-op and table[ids] is never read.",
+          "role": "behaviour-sid",
           "severity": "blocking",
           "verifier": "verify_BRad-RQ_r1_3"
         }
@@ -14056,7 +14073,7 @@
   "stage2_jobs": [],
   "stage3_jobs": [],
   "step": "verification",
-  "updated_at": 1793238595.7260306,
+  "updated_at": 1793238961.2625103,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261029_093253_576.log",
   "worker_pid": 2045947,

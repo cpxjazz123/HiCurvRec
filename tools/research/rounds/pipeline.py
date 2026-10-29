@@ -311,17 +311,41 @@ def _verifier_roles() -> list:
     return list(agent_contracts.VERIFIER_ROLES)
 
 
-def _finding_role(finding: dict) -> str:
+def _role_from_report(verifier: str, root: Path = None) -> str:
+    """The role a reviewer wrote its report as, from the report's CHECK names.
+
+    A task number from an older revision indexes the roles that were DISPATCHED in
+    that revision, not the full role list, so the number alone mis-attributes a
+    finding. The report is the record: every role must report exactly its own
+    check names, and the name that matches identifies the author.
+    """
+    if root is None:
+        return ""
+    report = Path(root) / "agents" / str(verifier) / "verification.txt"
+    if not report.is_file():
+        return ""
+    text = report.read_text(encoding="utf-8", errors="replace")
+    for role in _verifier_roles():
+        names = [str(name) for name, _ in role.get("checks") or ()]
+        if names and all(name in text for name in names):
+            return role["id"]
+    return ""
+
+
+def _finding_role(finding: dict, root: Path = None) -> str:
     """The role a finding belongs to.
 
-    New findings carry their role. A finding from before the roles existed carries
-    only the reviewer's task name, whose number is the role's position in the full
-    role list -- the same numbering the dispatch uses.
+    New findings carry their role. An older one carries only the reviewer's task
+    name: the report that task wrote identifies it, and the task number is the last
+    resort (it indexes that pass's dispatch list, not the full role list).
     """
     role = str(finding.get("role") or "")
     if role:
         return role
     verifier = str(finding.get("verifier") or "")
+    recovered = _role_from_report(verifier, root)
+    if recovered:
+        return recovered
     for index in range(1, 32):
         if verifier.endswith("_" + str(index)):
             roles = _verifier_roles()
@@ -354,7 +378,8 @@ def _is_blocking(severity) -> bool:
     return True
 
 
-def apply_verification(state: dict, implementation_id: str, reports: list) -> dict:
+def apply_verification(state: dict, implementation_id: str, reports: list,
+                      root: Path = None) -> dict:
     """Merge the verdicts of one implementation.
 
     One reviewer that finished is enough: a reviewer that ran out of its budget
@@ -476,7 +501,7 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
     responding = {_report_role(report) for report in reports}
     carried = [finding for finding in (record.get("blocking_findings") or [])
                if finding.get("verifier") not in FRAMEWORK_FINDING_SOURCES
-               and _finding_role(finding) not in responding]
+               and _finding_role(finding, root) not in responding]
     record["blocking_findings"] = earlier + carried + findings
     if carried:
         record["carried_findings"] = len(carried)

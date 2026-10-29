@@ -1034,3 +1034,58 @@ class CachedResponderTests(unittest.TestCase):
                 "missing_reviewers": []}])
             record = state["implementations"][0]
             self.assertEqual(record["blocking_findings"], [])
+
+
+class LegacyRoleAttributionTests(unittest.TestCase):
+    """An old task number is a position in THAT pass's filtered list.
+
+    The number in ``verify_<idea>_r<k>_<n>`` used to index the roles actually
+    dispatched in that revision, so reading it as a position in the full role list
+    attributes a finding to the wrong reviewer and hides the one that must review
+    the fix. The report itself says which role wrote it: its CHECK names are the
+    role's own check names.
+    """
+
+    def test_the_role_is_recovered_from_the_original_report(self):
+        from tools.research.rounds import agents as agent_contracts
+        from tools.research.rounds import pipeline as pipeline_module
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            workspace = root / "agents" / "verify_idea_r1_3"
+            workspace.mkdir(parents=True)
+            role = [item for item in agent_contracts.VERIFIER_ROLES
+                    if item["id"] == "behaviour-sid"][0]
+            body = "VERDICT: NEEDS_FIX\n" + "".join(
+                "CHECK: %s\nCHECK VERDICT: NEEDS_FIX\n" % name
+                for name, _ in role["checks"])
+            (workspace / "verification.txt").write_text(body, encoding="utf-8")
+            finding = {"verifier": "verify_idea_r1_3", "severity": "blocking"}
+            self.assertEqual(pipeline_module._finding_role(finding, root=root),
+                             "behaviour-sid")
+
+    def test_the_full_list_interpretation_is_the_fallback(self):
+        from tools.research.rounds import agents as agent_contracts
+        from tools.research.rounds import pipeline as pipeline_module
+        roles = agent_contracts.VERIFIER_ROLES
+        with tempfile.TemporaryDirectory() as work:
+            finding = {"verifier": "verify_idea_r1_%d" % len(roles),
+                       "severity": "blocking"}
+            self.assertEqual(pipeline_module._finding_role(finding, root=Path(work)),
+                             roles[-1]["id"])
+
+    def test_the_dispatch_targets_the_role_the_report_identifies(self):
+        from tools.research.rounds import agents as agent_contracts
+        from tools.research.rounds import worker as worker_module
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            workspace = root / "agents" / "verify_idea_r1_3"
+            workspace.mkdir(parents=True)
+            role = [item for item in agent_contracts.VERIFIER_ROLES
+                    if item["id"] == "behaviour-sid"][0]
+            body = "VERDICT: NEEDS_FIX\n" + "".join(
+                "CHECK: %s\nCHECK VERDICT: NEEDS_FIX\n" % name
+                for name, _ in role["checks"])
+            (workspace / "verification.txt").write_text(body, encoding="utf-8")
+            findings = [{"verifier": "verify_idea_r1_3", "severity": "blocking"}]
+            roles = worker_module.affected_roles("", findings, root=root)
+            self.assertIn("behaviour-sid", roles)

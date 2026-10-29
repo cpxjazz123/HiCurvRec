@@ -1015,7 +1015,8 @@ def changed_files(patch: str) -> list:
     return seen
 
 
-def affected_roles(patch: str, findings=None, reported=None, files=None) -> list:
+def affected_roles(patch: str, findings=None, reported=None, files=None,
+                   root: Path = None) -> list:
     """The roles whose area the patch touches, plus the ones that complained.
 
     A role that raised a finding keeps its seat until the finding is resolved:
@@ -1038,13 +1039,10 @@ def affected_roles(patch: str, findings=None, reported=None, files=None) -> list
                    for changed in files for read in reads if read != "."):
                 roles.append(role["id"])
     for finding in findings or []:
-        role_id = finding.get("role")
-        if not role_id:
-            verifier = str(finding.get("verifier") or "")
-            for index, role in enumerate(VERIFIER_ROLES, 1):
-                if verifier.endswith("_" + str(index)):
-                    role_id = role["id"]
-                    break
+        # The report the reviewer wrote identifies its role; the task number alone
+        # indexes that pass's dispatch list and can name the wrong reviewer.
+        role_id = finding.get("role") or pipeline_module._finding_role(
+            finding, root)
         if role_id and role_id not in roles:
             roles.append(role_id)
     if not roles:
@@ -1222,7 +1220,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
     # The tree this review reads becomes the baseline of the NEXT review's diff:
     # without this the second revision would be diffed against nothing.
     snapshot_tree(root, str(idea["idea_id"]), int(revision), tree)
-    wanted = affected_roles(patch, findings, files=moved)
+    wanted = affected_roles(patch, findings, files=moved, root=root)
     roles = [role for role in VERIFIER_ROLES if role["id"] in wanted]
     change_brief = _format_change_brief(record)
     previous_findings = _format_findings(findings)
