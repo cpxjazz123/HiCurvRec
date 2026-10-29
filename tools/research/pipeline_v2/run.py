@@ -39,6 +39,11 @@ def verify_candidate(tree: Path, *, checks=None, controller: Controller = None) 
     tree = Path(tree)
     controller = controller or Controller(ROOT / tree.name)
     record = controller.register(tree, note="V2 verification")
+    fingerprints = _fingerprints(tree)
+    if record.get("fingerprints") and record["fingerprints"] != fingerprints:
+        # the checks themselves changed: the earlier rounds measured something
+        # else, so their repair count does not apply to this one
+        record = controller.reset_budget("the verification inputs changed")
     if record.get("state") == states.REJECTED:
         return record
     # The checks run again even for a verified tree: the check SET grows (a new
@@ -46,7 +51,7 @@ def verify_candidate(tree: Path, *, checks=None, controller: Controller = None) 
     # blessing a tree under an older set. The source digest is what makes this
     # safe: an unchanged tree and an unchanged check set give the same answer.
     results = deterministic.run_all(tree, checks=checks)
-    record["fingerprints"] = _fingerprints(tree)
+    record["fingerprints"] = fingerprints
     controller.directory.mkdir(parents=True, exist_ok=True)
     (controller.directory / "test_results.json").write_text(
         json.dumps(results, indent=2, sort_keys=True), encoding="utf-8")

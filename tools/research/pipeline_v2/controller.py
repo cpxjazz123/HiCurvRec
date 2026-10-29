@@ -103,6 +103,22 @@ class Controller:
         self._move(record, states.REJECTED, reason=str(reason)[:500])
         return record
 
+    def reset_budget(self, reason: str = "") -> dict:
+        """Start a new repair budget: the CHECKS changed, not the candidate.
+
+        The budget exists to stop an automatic loop on one mechanism. When the
+        verification itself changed, the earlier rounds measured something else
+        and their count does not apply.
+        """
+        record = self.load()
+        record["repairs"] = 0
+        record["last_repair_digest"] = None
+        record.setdefault("history", []).append({
+            "at": time.time(), "from": record.get("state"), "to": record.get("state"),
+            "budget_reset": True, "reason": str(reason)[:300]})
+        self.save(record)
+        return record
+
     def repair(self, note: str = "") -> dict:
         """Count one repair of the CANDIDATE; the budget is a hard stop.
 
