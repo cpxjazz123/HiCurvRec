@@ -161,5 +161,6 @@ def hyp_hsoftmax_path_null(table: dict, context: dict) -> float:
 
 hyp_hsoftmax_path_null.note = ("path log-likelihood over its size-matched relabelling "
                                "null, two fixed seeds")
-METRICS = {"hyp_hsoftmax_path_null": hyp_hsoftmax_path_null}
-FREE_CONSTANTS = {"hyp_hsoftmax_path_null": 0}
+METRICS = {"hyp_hsoftmax_path": hyp_hsoftmax_path,
+           "hyp_hsoftmax_path_null": hyp_hsoftmax_path_null}
+FREE_CONSTANTS = {"hyp_hsoftmax_path": 0, "hyp_hsoftmax_path_null": 0}

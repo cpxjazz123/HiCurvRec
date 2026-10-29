@@ -127,6 +127,38 @@ controls land within 0.008 of the hyperbolic value (+0.693, +0.693 against
 +0.701). What orders the tables is the *contrast* -- the positive's prefix against
 the negatives' prefixes, measured by ancestor depth -- not the curvature itself.
 
+## Every construction, re-measured on the corrected collection
+
+| construction | Spearman | 95% CI | |
+|---|---|---|---|
+| HBAA | **+0.7623** | [+0.610, +0.878] | eligible |
+| HBAA with the teacher's own curvature | +0.7623 | [+0.610, +0.878] | eligible |
+| HBAA at curvature 1e-3 (flat control) | +0.7407 | [+0.584, +0.865] | eligible |
+| Q_H (Issue #126, level 1) | +0.7382 | [+0.589, +0.850] | eligible |
+| HBAA with Euclidean means and distances | +0.7170 | [+0.559, +0.843] | eligible |
+| HBAA without a temperature | +0.6971 | [+0.535, +0.826] | eligible |
+| HBAA with the behaviour midpoint | +0.6899 | [+0.531, +0.818] | eligible |
+| HBAA with the single anchor | +0.6592 | [+0.498, +0.791] | eligible |
+| HBAA on the held-out probe | +0.6520 | [+0.491, +0.783] | eligible |
+| the true cell's tempered mass | +0.5824 | [+0.396, +0.739] | eligible |
+| HBAA with the levels weighted by their kept queries | +0.5767 | [+0.410, +0.715] | eligible |
+| HBAA with size-matched negatives | +0.5049 | [+0.311, +0.665] | eligible |
+| the true cell's rank | +0.4284 | [+0.241, +0.577] | eligible |
+| HBAA averaged over the levels | +0.3767 | [+0.173, +0.561] | eligible |
+| adjusted hyperbolic dispersion R^2 | +0.1470 | [-0.064, +0.342] | not eligible |
+| size-matched bucket reach lift | +0.1163 | [-0.101, +0.318] | not eligible |
+| the fraction of queries keeping a size-matched negative | +0.0701 | [-0.130, +0.275] | not eligible |
+| the tree-conditional path likelihood, null-corrected | -0.0720 | [-0.234, +0.093] | not eligible |
+| the normalised geodesic covering radius | -0.1224 | [-0.345, +0.103] | not eligible |
+| the level-1 Voronoi geodesic margin | -0.1380 | [-0.334, +0.073] | not eligible |
+| the tree-conditional path log-likelihood | **-0.2823** | [-0.482, -0.072] | not eligible |
+
+The split is clean. Every metric that CONTRASTS the table against the behaviour
+scores +0.38 to +0.76 and every one of them is eligible; every metric of the
+partition's own geometry scores -0.28 to +0.15 and none of them is. The path
+likelihood stays significantly negative, because it rewards a trie with few
+branches.
+
 ## What was tried and did not work
 
 | construction | Spearman | why it failed |
