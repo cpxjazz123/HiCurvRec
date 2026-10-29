@@ -25,7 +25,8 @@ from pathlib import Path
 
 #: The templates, by name. A contract may only use these.
 TEMPLATES = ("SignalSensitivity", "IndependentFormula", "RangeAndSaturation",
-             "AblationEffect", "AssignmentConsistency", "GradientFlow", "DataBoundary")
+             "AblationEffect", "AssignmentConsistency", "GradientFlow", "DataBoundary",
+             "CheckpointRestore")
 
 
 def load_contract(path: Path) -> dict:
@@ -246,7 +247,8 @@ def run_tests(tree: Path, contract: dict) -> dict:
             elif name == "AssignmentConsistency":
                 results[name] = assignment_consistency(tree, **{k: v for k, v in entry.items()
                                                                 if k != "template"})
-            elif name in ("GradientFlow", "AblationEffect", "DataBoundary"):
+            elif name in ("GradientFlow", "AblationEffect", "DataBoundary",
+                          "CheckpointRestore"):
                 results[name] = delegate(tree, template=name,
                                          module=str(entry.get("module") or ""))
             else:

@@ -12,6 +12,7 @@ that into INFRA_ERROR, never into TEST_FAILED.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -159,7 +160,69 @@ def check_mechanism_contract(tree: Path) -> dict:
             "tests": payload["tests"], "contract": str(path)}
 
 
-DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "ddp", "mechanism")
+def check_negative_control(tree: Path) -> dict:
+    """Break the mechanism on purpose; the named template must notice.
+
+    Without this, a template that cannot see the defect it claims to look for
+    would pass every candidate, and the VERIFIED state would mean nothing.
+    """
+    from . import contracts as contract_library
+    from . import negative as negative_control
+
+    tree = Path(tree)
+    name = tree.name[6:] if tree.name.startswith("TIGER_") else tree.name
+    path = (REPO / "results" / "research" / "pipeline_v2" / "contracts" /
+            (name + ".json"))
+    if not path.is_file():
+        return {"status": "NOT_RUN",
+                "detail": "the candidate has no mechanism contract at " + str(path)}
+    try:
+        contract = contract_library.load_contract(path)
+        outcome = negative_control.run(tree, contract)
+    except Exception as exc:                               # noqa: BLE001
+        return {"status": "NOT_RUN",
+                "detail": "the negative control could not run: " +
+                          type(exc).__name__ + ": " + str(exc)}
+    return {"status": outcome.get("status"), "detail": outcome.get("detail"),
+            "controls": outcome.get("controls"), "contract": str(path)}
+
+
+def check_training_config(tree: Path, contract_name: str = None) -> dict:
+    """The trainer must run the FORMAL configuration, not an inherited one.
+
+    The candidate's own DDP test used ``frechet_codebook=True`` while the formal
+    training uses ``radial=True, frechet_codebook=False``: the check then proved
+    something about a configuration nobody trains with.
+    """
+    tree = Path(tree)
+    name = contract_name or (tree.name[6:] if tree.name.startswith("TIGER_") else tree.name)
+    contract_path = (REPO / "results" / "research" / "pipeline_v2" / "contracts" /
+                     (name + ".json"))
+    expected = {}
+    if contract_path.is_file():
+        import json as _json
+        expected = (_json.loads(contract_path.read_text(encoding="utf-8"))
+                    .get("training_config") or {})
+    if not expected:
+        return {"status": "NOT_RUN",
+                "detail": "the contract declares no training_config"}
+    source = (tree / "train_rqvae.py")
+    if not source.is_file():
+        return {"status": "FAIL", "detail": "the candidate has no trainer"}
+    text = source.read_text(encoding="utf-8", errors="replace")
+    mismatches = []
+    for key, value in expected.items():
+        pattern = ("%s\s*=\s*%s" % (re.escape(str(key)), re.escape(str(value))))
+        if not re.search(pattern, text):
+            mismatches.append("%s is not %s in the trainer" % (key, value))
+    if mismatches:
+        return {"status": "FAIL", "detail": "; ".join(mismatches)}
+    return {"status": "PASS",
+            "detail": "the trainer runs the formal configuration: " + str(expected)}
+
+
+DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "ddp", "mechanism",
+                  "negative", "training_config")
 
 
 def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
@@ -185,6 +248,10 @@ def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
             results[name] = check_ddp_two_ranks(tree, interpreter)
         elif name == "mechanism":
             results[name] = check_mechanism_contract(tree)
+        elif name == "negative":
+            results[name] = check_negative_control(tree)
+        elif name == "training_config":
+            results[name] = check_training_config(tree)
         else:
             results[name] = {"status": "NOT_RUN", "detail": "unknown check " + name}
     statuses = [entry.get("status") for entry in results.values()]

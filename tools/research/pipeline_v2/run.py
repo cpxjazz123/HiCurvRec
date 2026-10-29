@@ -18,6 +18,22 @@ REPO = Path(__file__).resolve().parents[3]
 ROOT = REPO / "results" / "research" / "pipeline_v2"
 
 
+def _fingerprints(tree: Path) -> dict:
+    """The digests of the inputs the verification depends on."""
+    import hashlib
+    from . import deterministic
+
+    name = Path(tree).name
+    name = name[6:] if name.startswith("TIGER_") else name
+    contract = (REPO / "results" / "research" / "pipeline_v2" / "contracts" /
+                (name + ".json"))
+    values = {"contract": (hashlib.sha256(contract.read_bytes()).hexdigest()
+                           if contract.is_file() else ""),
+              "checks": hashlib.sha256(
+                  Path(deterministic.__file__).read_bytes()).hexdigest()}
+    return values
+
+
 def verify_candidate(tree: Path, *, checks=None, controller: Controller = None) -> dict:
     """Run the deterministic verification of one candidate."""
     tree = Path(tree)
@@ -30,6 +46,7 @@ def verify_candidate(tree: Path, *, checks=None, controller: Controller = None) 
     # blessing a tree under an older set. The source digest is what makes this
     # safe: an unchanged tree and an unchanged check set give the same answer.
     results = deterministic.run_all(tree, checks=checks)
+    record["fingerprints"] = _fingerprints(tree)
     controller.directory.mkdir(parents=True, exist_ok=True)
     (controller.directory / "test_results.json").write_text(
         json.dumps(results, indent=2, sort_keys=True), encoding="utf-8")

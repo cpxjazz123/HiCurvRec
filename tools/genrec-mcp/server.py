@@ -2249,6 +2249,9 @@ def v2_admission(tree: Path) -> dict:
     to the source digest, so a tree that changed after it was verified is refused
     instead of being trained on the strength of an older run.
     """
+    if str(REPO) not in sys.path:
+        # The Stage 2 worker runs with the candidate tree as its working directory.
+        sys.path.insert(0, str(REPO))
     from tools.research.pipeline_v2 import states as v2_states
 
     record_path = REPO / "results" / "research" / "pipeline_v2" / tree.name / "v2_record.json"
@@ -2266,10 +2269,50 @@ def v2_admission(tree: Path) -> dict:
                            str(digest)[:12] + " -> " + str(current)[:12] + ")"}
     checks = {name: entry.get("status")
               for name, entry in (record.get("tests", {}).get("checks") or {}).items()}
-    if not checks or any(status != "PASS" for status in checks.values()):
-        return {"passed": False, "refused": "the V2 checks are not all PASS: " + str(checks)}
+    required = tuple(_v2_required_checks())
+    missing = [name for name in required if name not in checks]
+    if missing:
+        return {"passed": False,
+                "refused": "the V2 record is missing the required checks: " +
+                           ", ".join(missing)}
+    failing = [name for name in required if checks.get(name) != "PASS"]
+    if failing:
+        return {"passed": False,
+                "refused": "the V2 checks are not all PASS: " + str(failing)}
+    # The contract and the checks are versioned: a record made under an older
+    # contract does not bless a tree under a newer one.
+    fingerprints = _v2_fingerprints(tree)
+    recorded = record.get("fingerprints") or {}
+    changed = [name for name, value in fingerprints.items()
+               if recorded.get(name) and recorded.get(name) != value]
+    if changed:
+        return {"passed": False,
+                "refused": "the verification inputs changed since the record: " +
+                           ", ".join(changed)}
     return {"passed": True, "engine": "research-pipeline-v2", "checks": checks,
+            "fingerprints": fingerprints,
             "source_digest": digest, "version": record.get("version")}
+
+
+def _v2_required_checks():
+    from tools.research.pipeline_v2 import deterministic
+    return tuple(deterministic.DEFAULT_CHECKS)
+
+
+def _v2_fingerprints(tree: Path) -> dict:
+    """The digests of the inputs a verification depends on."""
+    import hashlib
+    from tools.research.pipeline_v2 import deterministic
+    values = {}
+    name = Path(tree).name
+    name = name[6:] if name.startswith("TIGER_") else name
+    contract = (REPO / "results" / "research" / "pipeline_v2" / "contracts" /
+                (name + ".json"))
+    values["contract"] = (hashlib.sha256(contract.read_bytes()).hexdigest()
+                           if contract.is_file() else "")
+    checks = Path(deterministic.__file__)
+    values["checks"] = hashlib.sha256(checks.read_bytes()).hexdigest()
+    return values
 
 
 def _source_digest_of(tree: Path) -> str:
@@ -2401,6 +2444,10 @@ def round_admission(tree: Path, verification_id: str) -> dict:
 def validate_agent_evidence_only(tree: Path, verification_id: str) -> dict:
     """Recheck immutable bytes and independent sessions without re-running GPU tests."""
     import importlib.util
+    if str(verification_id).startswith("v2:"):
+        # Research Pipeline V2: the deterministic record is the evidence, and it is
+        # bound to the source digest, so a tree that drifted is refused here.
+        return v2_admission(tree)
     if str(verification_id).startswith("round:"):
         return round_admission(tree, verification_id)
     path = REPO / "tools" / "research" / "verification" / "admission.py"

@@ -86,11 +86,32 @@ class VQLayer(nn.Module):
     def get_code_embs(self) -> nn.Parameter:
         return self.embed.weight
 
+    def point_of(self, tangent: torch.Tensor) -> torch.Tensor:
+        """The point of the ball this level scores.
+
+        The item's tangent carries the behaviour radius, and the map is the
+        canonical exponential of the contract: a tangent of norm atanh(0.9 q)
+        lands at radius exactly 0.9 q. A bounded squash would instead cap the
+        norm at 0.9 and saturate the radius of every item above the
+        seventy-ninth percentile.
+        """
+        from .poincare_contract import expmap0
+        return expmap0(tangent, 1.0)
+
     def radial_cost(self, latent: torch.Tensor) -> torch.Tensor:
         """The BRad-RQ score at this level: Poincare kernel, or Euclidean."""
         from .behaviour_radius import assignment_score, squash
         a = squash(latent)
         e = squash(self.get_code_embs())
+        return assignment_score(a.unsqueeze(1), e.unsqueeze(0),
+                                use_geometry=bool(getattr(self, "_use_geometry", True)))
+
+    def mapped_cost(self, mapped: torch.Tensor) -> torch.Tensor:
+        """The score of the MAPPED points: the canonical geometry, not a squash."""
+        from .behaviour_radius import assignment_score
+        from .poincare_contract import project
+        a = project(mapped, 1.0)
+        e = project(self.point_of(self.get_code_embs()), 1.0)
         return assignment_score(a.unsqueeze(1), e.unsqueeze(0),
                                 use_geometry=bool(getattr(self, "_use_geometry", True)))
 
@@ -154,7 +175,10 @@ class VQLayer(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         latent = x.view(-1, self.dim)
         if getattr(self, "_radial", False):
-            embed_ind = self._indices(self.radial_cost(latent), infer_use_sk)
+            # the assignment scores the MAPPED points, so the behaviour radius is
+            # the radius the item actually occupies in the ball
+            mapped = self.point_of(latent)
+            embed_ind = self._indices(self.mapped_cost(mapped), infer_use_sk)
             x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
             quant_loss = (F.mse_loss(x_q, x.detach())
                           + self.beta * F.mse_loss(x, x_q.detach()))

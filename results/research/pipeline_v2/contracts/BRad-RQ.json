@@ -1,7 +1,7 @@
 {
   "mechanism": "BRad-RQ",
   "hypothesis": "the rank of an item's training context entropy sets its tangent radius, and the Poincare kernel turns that radius into the level code",
-  "falsified_by": "the radius or the kernel reaches nothing: two behaviour ranks give the same assignment score, or every item sits at the same radius",
+  "falsified_by": "the radius or the kernel reaches nothing: two behaviour ranks give the same assignment score, every item sits at the same radius, the scored point is not at the designed radius 0.9q, the export can forget the radius table, or the gradient from the behaviour to the encoder is cut",
   "tests": [
     {
       "template": "SignalSensitivity",
@@ -44,10 +44,32 @@
     {
       "template": "GradientFlow",
       "module": "tests.test_radial_wiring"
+    },
+    {
+      "template": "CheckpointRestore",
+      "module": "tests.test_restore_consistency"
     }
   ],
   "negative_control": {
-    "edit": "replace the behaviour-derived radius by a constant 0.5",
+    "edit": "constant radius",
     "must_fail": "SignalSensitivity"
-  }
+  },
+  "training_config": {
+    "radial": "True",
+    "frechet_codebook": "False"
+  },
+  "negative_controls": [
+    {
+      "edit": "constant radius",
+      "must_fail": "SignalSensitivity"
+    },
+    {
+      "edit": "euclidean kernel",
+      "must_fail": "IndependentFormula"
+    },
+    {
+      "edit": "cut gradient path",
+      "must_fail": "GradientFlow"
+    }
+  ]
 }
