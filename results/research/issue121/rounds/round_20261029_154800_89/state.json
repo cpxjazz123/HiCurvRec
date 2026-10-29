@@ -1,0 +1,35 @@
+{
+  "blocked": [],
+  "created_at": 1793249280.0902226,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1793249280.0902228,
+      "event": "round_created"
+    },
+    {
+      "at": 1793249280.0977685,
+      "event": "round_worker_started",
+      "pid": 3437225
+    }
+  ],
+  "ideas": [],
+  "ideas_rejected": [],
+  "implementations": [],
+  "issue": "issue121",
+  "matrix": null,
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\nThe three mechanisms this issue has tried since the branch-curvature round - a behaviour-ranked radius in the Poincare score (BRad-RQ), a successor-overlap ranking in the ball, and a per-item branching curvature - all improved the SID diagnostics (hard L1 error 1.86-2.5 against the 16.4 baseline, 6-15k two-level prefixes against 16145) and none of them moved test_recall@10 above the 0.0553 baseline: the best was 0.0446. Proposals in this round must state, in the observables, what makes THIS coupling different in the mechanism that Stage 3 actually learns from, not in the identifier statistics: which quantity the generative model reads from the prefix, and why the measured behaviour statistic makes that quantity carry information the history does not already contain. A proposal whose only claimed benefit is a better L1/L2/L3 diagnostic is out of scope for this round.",
+  "probe_state": "PROBE_PENDING",
+  "repairs": [],
+  "round_id": "round_20261029_154800_89",
+  "schema": 1,
+  "scores": {},
+  "selection": null,
+  "stage2_jobs": [],
+  "stage3_jobs": [],
+  "step": "ideation",
+  "updated_at": 1793249280.0977755,
+  "verification": {},
+  "worker_log": "/tmp/genrec-mcp/round_round_20261029_154800_89.log",
+  "worker_pid": 3437225
+}
