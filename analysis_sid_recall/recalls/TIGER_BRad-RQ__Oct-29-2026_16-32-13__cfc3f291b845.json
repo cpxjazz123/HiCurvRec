@@ -1,0 +1,52 @@
+{
+  "test_recall@5": 0.018489179825554067,
+  "test_recall@10": 0.030606382423092323,
+  "test_ndcg@5": 0.011445285653436561,
+  "test_ndcg@10": 0.015322173870257244,
+  "n_eval": 57439,
+  "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_BRad-RQ/ckpt/Amazon_2023_Instruments/Oct-29-2026_16-32-13/HG_Rec_best.pth",
+  "provenance": {
+    "reduced_by": "/fs04/ar57/wenyu/GeneRec/tools/genrec-mcp/aggregate_stage3_shards.py",
+    "reduction": "stage3_T5Train/train_HG-Rec.py::reduce_metric_sums",
+    "shards": [
+      {
+        "path": "results/stage3_T5Train/TIGER_BRad-RQ/logs/Amazon_2023_Instruments/Oct-29-2026_16-32-13/_test_shards/rank0.json",
+        "sha256": "4c8cf393e861570055624d319d39be82d7fe5564b3c80ad716ce3d1e9edadffd",
+        "mtime": 1793253877.0,
+        "n_eval": 14360
+      },
+      {
+        "path": "results/stage3_T5Train/TIGER_BRad-RQ/logs/Amazon_2023_Instruments/Oct-29-2026_16-32-13/_test_shards/rank1.json",
+        "sha256": "fd8ae7d8a3dbf2065a6661f89a4253eddf1698f7af113297b72dda75b4c60127",
+        "mtime": 1793253885.0,
+        "n_eval": 14360
+      },
+      {
+        "path": "results/stage3_T5Train/TIGER_BRad-RQ/logs/Amazon_2023_Instruments/Oct-29-2026_15-12-21/_test_shards/rank2.json",
+        "sha256": "576f4257c5c3eb382dde40e3fcf82bd7bdf8ac7ab2be0fe80a59572d76631b08",
+        "mtime": 1793253879.0,
+        "n_eval": 14360
+      },
+      {
+        "path": "results/stage3_T5Train/TIGER_BRad-RQ/logs/Amazon_2023_Instruments/Oct-29-2026_15-12-21/_test_shards/rank3.json",
+        "sha256": "e66c6b97d1f67fc8e8e42bc154e411500290eeed2c36d9c64b5f47cf8a8b32a6",
+        "mtime": 1793253879.0,
+        "n_eval": 14359
+      }
+    ],
+    "note": "rank 0 exited before the reduction and ranks 2-3 wrote their shards into the previous run directory (run_dir.txt was stale); all four shards are from the 17:04 evaluation of this checkpoint, reduced with the trainer's own function"
+  },
+  "paired_sid": {
+    "sha256": "cfc3f291b84593c6a418143bb7ed4c1c313070785236b9a8c124138db61afd24",
+    "file": "results__stage2_RQ-VAE__TIGER_BRad-RQ__item_sids__8224a58e54d7.json",
+    "paths": [
+      "results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json"
+    ],
+    "code_path": "results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json",
+    "resolution": "at_run_date"
+  },
+  "stage3_run": {
+    "variant": "TIGER_BRad-RQ",
+    "run_dir": "results/stage3_T5Train/TIGER_BRad-RQ/logs/Amazon_2023_Instruments/Oct-29-2026_16-32-13"
+  }
+}

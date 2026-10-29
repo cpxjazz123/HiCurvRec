@@ -1,0 +1,21 @@
+{
+  "test_recall@5": 0.03501105520639287,
+  "test_recall@10": 0.05313462978115914,
+  "test_ndcg@5": 0.023163645934505046,
+  "test_ndcg@10": 0.028994537719220934,
+  "n_eval": 57439,
+  "best_checkpoint": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage3_T5Train/sidarm_L2AB_bucket_sinkhorn_s42/ckpt/Amazon_2023_Instruments/Oct-10-2026_13-32-56/HG_Rec_best.pth",
+  "paired_sid": {
+    "sha256": "f2655ce037dc49fa76d14ecc18ebd47c0f0fb8896ea75e29fbe7533e43ac990a",
+    "file": "results__stage2_RQ-VAE__curvature_RQ-VAE__category_cone_arms__B_poincare_nocone_s42__item_sids__22282d980058.json",
+    "paths": [
+      "results/stage2_RQ-VAE/curvature_RQ-VAE/category_cone_arms/B_poincare_nocone_s42/item_sids.json"
+    ],
+    "code_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/l2_assignment_arms/A_bucket_sinkhorn_s42/item_sids.json",
+    "resolution": "at_run_date"
+  },
+  "stage3_run": {
+    "variant": "sidarm_L2AB_bucket_sinkhorn_s42",
+    "run_dir": "results/stage3_T5Train/sidarm_L2AB_bucket_sinkhorn_s42/logs/Amazon_2023_Instruments/Oct-10-2026_13-32-56"
+  }
+}

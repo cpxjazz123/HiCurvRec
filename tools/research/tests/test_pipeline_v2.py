@@ -432,3 +432,19 @@ class Stage3ShardReductionTests(unittest.TestCase):
                                    "--expect-n", "999", *[str(p) for p in shards]],
                                   capture_output=True, text=True)
             self.assertNotEqual(done.returncode, 0)
+
+
+class SidPairingPathTests(unittest.TestCase):
+    """A recorded path may name another root; git show needs the relative form."""
+
+    def test_repo_relative_maps_a_logical_root_to_the_repository_form(self):
+        import importlib.util
+        path = Path(__file__).resolve().parents[3] / "analysis_sid_recall" / "collect.py"
+        spec = importlib.util.spec_from_file_location("sid_collect", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        logical = "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_x/item_sids.json"
+        relative = module.repo_relative(logical)
+        self.assertFalse(relative.startswith("/"), relative)
+        self.assertTrue(relative.endswith("results/stage2_RQ-VAE/TIGER_x/item_sids.json"))
+        self.assertEqual(relative, module.repo_relative(relative))

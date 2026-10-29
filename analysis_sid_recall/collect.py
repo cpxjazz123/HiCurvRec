@@ -134,6 +134,29 @@ def run_timestamp(run_dir: str) -> float | None:
     return None
 
 
+def repo_relative(path: str) -> str:
+    """The repository-relative form of a recorded path.
+
+    A run records the path it read, and the trainer resolves its root from the
+    file it lives in, so the recorded path uses the LOGICAL root (/home/...) while
+    the repository may sit at another physical path (/fs04/...). ``git show``
+    needs a repository-relative path, and an absolute one silently fails, which
+    sent every such run to the working tree -- and therefore to a table it never
+    read. The tail after the repository directory name is the same path.
+    """
+    text = str(path)
+    if not text.startswith("/"):
+        return text
+    for root in (str(REPO), str(REPO.resolve())):
+        if text.startswith(root.rstrip("/") + "/"):
+            return text[len(root.rstrip("/")) + 1:]
+    marker = "/" + REPO.name + "/"
+    index = text.find(marker)
+    if index >= 0:
+        return text[index + len(marker):]
+    return text
+
+
 def resolve_path_to_content(path: str, before: float | None = None
                              ) -> tuple[str | None, bytes | None, str | None, str]:
     """The content of a SID path *as it was at that moment*.
@@ -339,9 +362,7 @@ def main() -> int:
     pairs = []
     unpaired_runs = []
     for run in runs:
-        code = run["code_path"]
-        if code.startswith(str(REPO)):
-            code = str(Path(code).relative_to(REPO))
+        code = repo_relative(run["code_path"])
         when = run_timestamp(run["run_dir"])
         digest, payload, blob, resolution = resolve_path_to_content(code, before=when)
         if resolution == "unresolved":

@@ -7,12 +7,12 @@ generated from it. Collected read-only by `collect.py` (re-runnable).
 
 | item | count |
 |---|---|
-| SID files in `sids/` (paired only) | 25 |
-| SID contents seen in the history (577 in total) | 577 |
-| SID + recall pairs (one per SID) | 67 |
-| Stage 3 runs the pairs were chosen from | 88 |
+| SID files in `sids/` (paired only) | 248 |
+| SID contents seen in the history (598 in total) | 598 |
+| SID + recall pairs (one per SID) | 181 |
+| Stage 3 runs the pairs were chosen from | 225 |
 | Stage 3 runs whose SID table no longer exists | 127 (in `stage3_runs_without_sid.csv`) |
-| recall source files copied to `recalls/` | 92 |
+| recall source files copied to `recalls/` | 181 |
 
 `sid_recall.csv` / `sid_recall.json` hold one row per (SID content, Stage 3 run) pair with
 `test_recall@5`, `test_recall@10`, `test_ndcg@5`, `test_ndcg@10` and `n_eval`, taken from the
@@ -21,7 +21,8 @@ event. `sid_inventory.csv` holds one row per **paired** SID content with its pre
 the best recall it ever reached.
 
 The directory keeps **only the paired** SIDs and **only recalls that name a paired SID**:
-67 SID files and 67 recall files — **one SID paired with exactly one recall** — and every
+248 SID files (181 distinct tables) and 181 recall files — **one SID paired with exactly one
+recall** — and every
 recall file carries the `paired_sid` block
 (the SID's sha256, its file name, its paths and the run's own `code_path`), so the pairing
 is verifiable inside the file.
@@ -39,22 +40,32 @@ still exists (`working_tree`) and the earliest surviving version for a path comm
 after the run (`earliest_surviving`).
 
 That correction is why the numbers are much smaller than a naive path-based pairing:
-127 of the 215 Stage 3 runs used a table that exists neither in the working tree nor in the
+127 of the 225 Stage 3 runs used a table that exists neither in the working tree nor in the
 history, so they cannot be paired at all -- their recalls are listed separately in
 `stage3_runs_without_sid.csv` (the best of them is 0.064068) rather than being attributed
 to a table they did not use.
 
-39 of the 67 pairs resolve through the `earliest_surviving` fallback: the table was committed
-after the run, so the file is the only surviving copy of it but not provably the exact
-version the run read. Those rows say so in `sid_resolution`. The 498 unpaired tables
-that the history also contains were pruned; they stay recoverable from the git history, and
-`python analysis_sid_recall/collect.py` (without `--paired-only`) writes them again.
+146 of the 181 pairs resolve through the `earliest_surviving` fallback and 35 through
+`at_run_date`: the table was committed after the run, so the file is the only surviving copy
+of it but not provably the exact version the run read. Those rows say so in
+`sid_resolution`. The unpaired tables that the history also contains were pruned; they stay
+recoverable from the git history, and `python analysis_sid_recall/collect.py` (without
+`--paired-only`) writes them again.
+
+**A recorded path may name another root.** The trainer resolves its root from the file it
+lives in, so a run records `/home/.../results/stage2_RQ-VAE/<arm>/item_sids.json` while the
+repository may sit at `/fs04/...`. `git show` needs a repository-relative path and silently
+fails on an absolute one, so every such run used to fall through to the working tree -- and
+therefore to a table it never read. The path is now mapped to its repository-relative form
+before the history is consulted (`repo_relative`); with that fix the pairs rose from 67 to
+181, and the two BRad-RQ runs now pair with the tables they actually read
+(`266ce952...` -> 0.044604 and `cfc3f291...` -> 0.030606, both `at_run_date`).
 
 ## The pairing, and its limits
 
 - A SID is identified by the **sha256 of its content**, so two paths with the same table
   are one entry with both paths listed.
-- `%d of %d` pairs point at a SID that only exists in the git history (the fork/hyperbolic
+- 146 of the 181 pairs point at a SID that only exists in the git history (the fork/hyperbolic
   families were deleted from the working tree by commit 19d0d69f). For those the recorded
   recall comes from the run and the table comes from the history: the two are only
   guaranteed to belong together if the table did not change between the run and the
