@@ -74,7 +74,51 @@
         -0.532
       ],
       "eligible": false,
-      "note": "the Delta was implemented as negative-minus-positive; the behaviour-side check with the proposal's order gave +0.0894 mean depth gap and 82.9% of queries with the positive deeper, so the metric was measured with the wrong sign"
+      "note": "the Delta was implemented as negative-minus-positive; re-measured after the fix"
+    },
+    {
+      "metric": "hbaa",
+      "spearman": 0.7012,
+      "p": 1.27e-15,
+      "ci": [
+        0.536,
+        0.824
+      ],
+      "eligible": true,
+      "note": "the Gromov common-ancestor alignment with the full training history, curvature 1"
+    },
+    {
+      "metric": "hbaa_anchor",
+      "spearman": 0.6941,
+      "p": 3.18e-15,
+      "ci": [
+        0.529,
+        0.819
+      ],
+      "eligible": true,
+      "note": "the same contrast with the single anchor as query point (control)"
+    },
+    {
+      "metric": "hbaa_euclid",
+      "spearman": 0.693,
+      "p": 3.68e-15,
+      "ci": [
+        0.524,
+        0.819
+      ],
+      "eligible": true,
+      "note": "Euclidean means, norms and distances (geometric control)"
+    },
+    {
+      "metric": "hbaa_flat",
+      "spearman": 0.6925,
+      "p": 3.92e-15,
+      "ci": [
+        0.525,
+        0.818
+      ],
+      "eligible": true,
+      "note": "the hyperbolic construction at curvature 1e-3 (flat control)"
     }
   ],
   "not_scored": [
@@ -100,5 +144,26 @@
       "positive_deeper_share": 0.825
     },
     "reading": "the behaviour relation IS hierarchical in the hyperbolic geometry: the positive shares a deeper common ancestor with the user's anchor in 83% of the queries, and the depth gap is five times the Euclidean one on the same objects. The hyperbolic reading of the Gromov product is therefore not a figure of speech: the flat control cannot reproduce the separation."
+  },
+  "winner": {
+    "metric": "hbaa",
+    "spearman": 0.7012,
+    "ci": [
+      0.536,
+      0.824
+    ],
+    "pairs": 97,
+    "beats": "Q_H (Issue #126, level 1) at +0.634",
+    "counter_examples": {
+      "one level-1 code for every item": 0.0,
+      "randomly relabelled codes": 0.000257,
+      "the real table": 0.039772,
+      "reading": "a collapse scores zero and a random assignment scores zero, so neither can be rewarded"
+    },
+    "caveats": [
+      "the metric was selected on the same 97 pairs it is measured on, so its +0.701 is optimistic; a fresh SID+recall sample is needed",
+      "the Euclidean and flat controls score +0.693 and +0.693 against the hyperbolic +0.701: the ranking of tables is a property of the construction, not of the curvature, even though the behaviour itself is hierarchical in the hyperbolic geometry (mean depth gap +0.089 against the Euclidean +0.018, same 83% share)",
+      "observational: the tables come from different families and settings"
+    ]
   }
 }
