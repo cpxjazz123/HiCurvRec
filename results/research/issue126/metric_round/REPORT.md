@@ -57,6 +57,17 @@ The metric therefore does not need the reference's training data to look good, a
 it does not need this particular reference: what it measures is the table's own
 relation to the behaviour, read through whatever teacher is frozen.
 
+## Every input choice has been swept
+
+| choice | options (Spearman) | winner |
+|---|---|---|
+| query point | history barycentre **+0.7014**, behaviour midpoint +0.6941, single anchor +0.6866, held-out probe +0.6689 | history barycentre |
+| geometry | hyperbolic **+0.7014**, flat c=1e-3 +0.6965, Euclidean +0.6930 | hyperbolic, but by a hair |
+| teacher | frozen c=1 **+0.7014**, variant c=0.25 +0.7014 | neither |
+| negatives | all ten **+0.7014**, size-matched +0.6428 | all ten |
+| levels | level 1 **+0.7014**, informative-weighted +0.5663, averaged +0.3604 | level 1 |
+| reduction | pair accuracy +0.7025, softplus at the frozen tau **+0.7014** | the same, within noise |
+
 ## The degenerate cases behave
 
 | table | HBAA |

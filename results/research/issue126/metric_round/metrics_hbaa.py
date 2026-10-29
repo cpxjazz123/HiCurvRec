@@ -583,7 +583,130 @@ def hbaa_validation(table: dict, context: dict) -> float:
     return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
 
 
+
+
+def hbaa_teacher_curvature(table: dict, context: dict) -> float:
+    """HBAA with the metric's OWN curvature taken from the teacher.
+
+    The frozen reference at curvature c lives in a ball of curvature -c, and a
+    metric that measures geodesic distances in a unit-curvature ball reads a
+    different geometry from the one the teacher was trained in. This version uses
+    the teacher's curvature everywhere: the distances, the radial term and the
+    Karcher mean.
+    """
+    reference = _reference(context)
+    record = reference.get("record") or {}
+    curvature = float(record.get("spec", {}).get("curvature", 1.0))
+    return _alignment(table, context, curvature)
+
+
+def _alignment(table: dict, context: dict, curvature: float) -> float:
+    """HBAA's contrast with an explicit curvature."""
+    reference = _reference(context)
+    source = np.asarray(reference["source"], dtype=np.float64)
+    target = np.asarray(reference["target"], dtype=np.float64)[
+        np.asarray(table["item_ids"])]
+    tau = float(reference.get("temperature",
+                              (reference.get("record") or {})["temperature"]))
+    codes = np.asarray(table["rows"], dtype=np.int64)[:, 0]
+    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
+    queries = _queries(context)
+    pos = np.array([position.get(int(item), -1) for item in queries["positives"]],
+                   dtype=np.int64)
+    neg = np.array([[position.get(int(item), -1) for item in row]
+                    for row in queries["negatives"]], dtype=np.int64)
+    valid = (pos >= 0) & (neg >= 0).all(axis=1)
+    if not valid.any():
+        return 0.0
+    points = _history_points(context, curvature)[valid]
+    pos = pos[valid]
+    neg = neg[valid]
+
+    def distance(a, b):
+        c = float(curvature)
+        difference = np.sum((a - b) ** 2, axis=-1)
+        denominator = ((1 - c * np.sum(a * a, axis=-1))
+                       * (1 - c * np.sum(b * b, axis=-1)))
+        return np.arccosh(np.maximum(1 + 2 * c * difference /
+                                     np.maximum(denominator, 1e-12), 1 + 1e-12)) / np.sqrt(c)
+
+    def norm(x):
+        c = float(curvature)
+        inner = np.clip(1 - c * np.sum(x * x, axis=-1), 1e-12, None)
+        return np.arccosh(1 / np.sqrt(inner)) / np.sqrt(c)
+
+    centres = {int(code): _frechet(target[codes == code], curvature)
+               for code in np.unique(codes)}
+    mu_pos = np.stack([centres[int(codes[index])] for index in pos])
+    mu_neg = np.stack([[centres[int(codes[index])] for index in row] for row in neg])
+    positive = 0.5 * (norm(points) + norm(mu_pos) - distance(points, mu_pos))
+    negative = 0.5 * (norm(points)[:, None] + norm(mu_neg) - distance(points[:, None, :], mu_neg))
+    delta = positive[:, None] - negative
+    per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
+    return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
+
+
+def hbaa_midpoint(table: dict, context: dict) -> float:
+    """HBAA with the query point at the BEHAVIOUR MIDPOINT.
+
+    The history barycentre averages the whole history; the anchor is the last
+    item alone. Their geodesic midpoint keeps the history's context and the
+    anchor's immediacy, and the question is whether the metric's power comes from
+    the context, from the immediacy, or from the contrast itself.
+    """
+    reference = _reference(context)
+    source = np.asarray(reference["source"], dtype=np.float64)
+    queries = _queries(context)
+    anchors = np.array([history[-1] for history in queries["histories"]], dtype=np.int64)
+    history_points = _history_points(context, 1.0)
+    # the geodesic midpoint of the history barycentre and the anchor, in the ball
+    difference = history_points - source[anchors]
+    norm = np.linalg.norm(difference, axis=-1, keepdims=True)
+    direction = difference / np.maximum(norm, 1e-12)
+    half = np.arctanh(np.clip(norm / 2.0, 0.0, 1 - 1e-9))
+    scale = np.tanh(half) / np.maximum(norm, 1e-12)
+    moved = source[anchors] + direction * scale * 0.5
+    norm2 = np.linalg.norm(moved, axis=-1, keepdims=True)
+    moved = np.where(norm2 > 1 - 1e-7, moved / np.maximum(norm2, 1e-12) * (1 - 1e-7), moved)
+
+    target = np.asarray(reference["target"], dtype=np.float64)[
+        np.asarray(table["item_ids"])]
+    tau = float(reference.get("temperature",
+                              (reference.get("record") or {})["temperature"]))
+    codes = np.asarray(table["rows"], dtype=np.int64)[:, 0]
+    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
+    pos = np.array([position.get(int(item), -1) for item in queries["positives"]],
+                   dtype=np.int64)
+    neg = np.array([[position.get(int(item), -1) for item in row]
+                    for row in queries["negatives"]], dtype=np.int64)
+    valid = (pos >= 0) & (neg >= 0).all(axis=1)
+    if not valid.any():
+        return 0.0
+    points = moved[valid]
+    pos = pos[valid]
+    neg = neg[valid]
+    centres = {int(code): _frechet(target[codes == code]) for code in np.unique(codes)}
+    mu_pos = np.stack([centres[int(codes[index])] for index in pos])
+    mu_neg = np.stack([[centres[int(codes[index])] for index in row] for row in neg])
+
+    def gromov(x, y):
+        def d(a, b):
+            diff = np.sum((a - b) ** 2, axis=-1)
+            den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
+            return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
+        def nrm(x):
+            inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
+            return 2 * np.arccosh(1 / np.sqrt(inner))
+        return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
+
+    delta = gromov(points, mu_pos)[:, None] - gromov(points[:, None, :], mu_neg)
+    per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
+    return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
+
+
 METRICS = {"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
+           "hbaa_teacher_curvature": hbaa_teacher_curvature,
+           "hbaa_midpoint": hbaa_midpoint,
            "hbaa_validation": hbaa_validation,
            "hbaa_euclid": hbaa_euclid, "hbaa_flat": hbaa_flat,
            "hbaa_levels": hbaa_levels, "hbaa_weighted": hbaa_weighted,
@@ -594,4 +717,5 @@ METRICS = {"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
 FREE_CONSTANTS = {"hbaa": 0, "hbaa_anchor": 0, "hbaa_euclid": 0, "hbaa_flat": 0,
                    "hbaa_levels": 0, "hbaa_weighted": 0, "hbaa_pair_accuracy": 0,
                    "hbaa_size_matched": 0, "hbaa_size_matched_kept": 0,
-                   "hbaa_validation": 0}
+                   "hbaa_validation": 0, "hbaa_teacher_curvature": 0,
+                   "hbaa_midpoint": 0}

@@ -78,11 +78,11 @@
     },
     {
       "metric": "hbaa",
-      "spearman": 0.7012,
-      "p": 1.27e-15,
+      "spearman": 0.7014,
+      "p": 1.23e-15,
       "ci": [
         0.536,
-        0.824
+        0.825
       ],
       "eligible": true,
       "note": "the Gromov common-ancestor alignment with the full training history, curvature 1; re-measured after the radial-term fix: unchanged"
@@ -218,6 +218,28 @@
       ],
       "eligible": true,
       "note": "the same metric with a DIFFERENT frozen teacher (curvature 0.25, sha 221d0ccd, held-out accuracy 0.7369 against the frozen 0.7413): the metric does not depend on the particular reference"
+    },
+    {
+      "metric": "hbaa_midpoint",
+      "spearman": 0.6941,
+      "p": 3.19e-15,
+      "ci": [
+        0.526,
+        0.82
+      ],
+      "eligible": true,
+      "note": "the query point at the geodesic midpoint of the history barycentre and the anchor: slightly below the pure history barycentre"
+    },
+    {
+      "metric": "hbaa_teacher_curvature",
+      "spearman": 0.7014,
+      "p": 1.23e-15,
+      "ci": [
+        0.536,
+        0.825
+      ],
+      "eligible": true,
+      "note": "the metric with its own curvature taken from the teacher: identical to the incumbent for the frozen reference, whose curvature is 1"
     }
   ],
   "not_scored": [
@@ -332,6 +354,37 @@
           0.1562
         ]
       }
+    },
+    "input_sweep": {
+      "query_point": {
+        "history_barycentre": 0.7014,
+        "behaviour_midpoint": 0.6941,
+        "single_anchor": 0.6866,
+        "held_out_probe": 0.6689
+      },
+      "geometry": {
+        "hyperbolic": 0.7014,
+        "euclidean": 0.693,
+        "flat_c1e-3": 0.6965
+      },
+      "teacher": {
+        "frozen_c1": 0.7014,
+        "variant_c0.25": 0.7014
+      },
+      "negatives": {
+        "all_ten": 0.7014,
+        "size_matched": 0.6428
+      },
+      "levels": {
+        "level_1": 0.7014,
+        "weighted": 0.5663,
+        "averaged": 0.3604
+      },
+      "reduction": {
+        "softplus_at_the_frozen_tau": 0.7014,
+        "pair_accuracy": 0.7025
+      },
+      "reading": "every input choice has been swept and none of them beats the incumbent by more than the interval width: the metric is the level-1 Gromov ancestor-depth contrast with the full history, read through any frozen teacher."
     }
   },
   "rounds": {
