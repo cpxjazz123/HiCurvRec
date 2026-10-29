@@ -256,6 +256,9 @@ IMPLEMENT_PROMPT = (
 VERIFIER_ROLES = (
     {
         "id": "math-geometry",
+        "start_here": ["the exponential, the Mobius sum and the distance in "
+                       "model/frechet_poincare.py and the curvature helpers in "
+                       "model/curvature_control.py"],
         "reads": ["model/frechet_poincare.py", "model/curvature_control.py",
                   "model/behaviour_radius.py", "model/utils.py",
                   "tools/research/geometry/poincare_contract.py",
@@ -288,6 +291,9 @@ VERIFIER_ROLES = (
     },
     {
         "id": "gradient-update",
+        "start_here": ["the loss composition and the detach points in "
+                        "model/layers.py, the forward in model/model.py, and the "
+                        "optimiser step in train_rqvae.py"],
         "reads": ["model/layers.py", "model/model.py", "model/curvature_control.py",
                   "model/behaviour_radius.py", "model/frechet_poincare.py",
                   "model/utils.py", "train_rqvae.py",
@@ -319,6 +325,10 @@ VERIFIER_ROLES = (
     },
     {
         "id": "distributed-state",
+        "start_here": ["init_process_group and the DDP(...) construction in "
+                        "train_rqvae.py, the collective calls (all_reduce, broadcast, "
+                        "barrier) in its training loop, and the two tests in "
+                        "tests/test_ddp.py"],
         # The distributed role owns the collectives, the wrappers and the shared
         # state, not the mechanism's own mathematics: it reads the trainer, the
         # model and the DDP test, and the other files belong to the roles that
@@ -350,6 +360,9 @@ VERIFIER_ROLES = (
     },
     {
         "id": "behaviour-sid",
+        "start_here": ["the successor-attraction or radius table in "
+                        "train_rqvae.py, the assignment branch in model/layers.py, and "
+                        "the export block at the end of train_rqvae.py"],
         "reads": ["train_rqvae.py", "model/model.py", "model/__init__.py",
                   "model/layers.py", "model/curvature_control.py",
                   "model/behaviour_radius.py", "model/frechet_poincare.py",
@@ -381,6 +394,8 @@ VERIFIER_ROLES = (
     },
     {
         "id": "integration-resources",
+        "start_here": ["the entry point and the path constants at the top of "
+                        "train_rqvae.py, and the epoch loop"],
         "reads": ["train_rqvae.py", "model/utils.py", "model/curvature_control.py",
                   "model/behaviour_radius.py", "tests/test_paths.py", "."],
         "name": "integration and resources",
@@ -415,6 +430,7 @@ VERIFY_PROMPT = (
     "spend your effort here and go deep rather than broad. Inspect the code, do not "
     "trust a passing test.\n"
     "YOUR AREA (what you must cover):\n{role_must}\n"
+    "START HERE (the symbols that carry your area): {role_start}.\n"
     "YOUR PRIMARY READ SCOPE: {role_scope}. Read anything else you need, and report a "
     "defect you find outside your area -- the division only guarantees coverage, it "
     "does not forbid a cross-area finding.\n"

@@ -166,6 +166,8 @@ def frechet_mean(points: torch.Tensor, c, *, weights: torch.Tensor = None,
     c = _tensor(c, points)
     points = torch.as_tensor(points)
     if points.shape[0] == 1:
+        if report:
+            return points[0].clone(), True, 0
         return points[0].clone()
     weights = (torch.ones(points.shape[0], dtype=points.dtype, device=points.device)
                if weights is None else torch.as_tensor(weights, dtype=points.dtype,

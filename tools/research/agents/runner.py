@@ -480,6 +480,9 @@ def boundary_fingerprint(workspace: Path, role: str, read_paths,
                                             allow_shell, allow_write),
         "prompt_sha256": digest_bytes(str(prompt).encode()),
         "model": str(model),
+        # The shared mathematics is part of the identity of a run: a review made
+        # under one convention cannot answer a question under another.
+        "geometry_contract": _geometry_contract()["sha256"],
         "source_digest": str(source_digest),
     }
     return digest_bytes(json.dumps(payload, sort_keys=True).encode())
@@ -553,7 +556,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
               role: str = "verify", read_paths=None, allowed_roots=None,
               candidate_tree=None, allow_shell: bool = False,
               allow_write: bool = False,
-              deadline_seconds: int | None = None) -> Path:
+              deadline_seconds: int | None = None,
+              source_digest: str = "") -> Path:
     """Run one agent. This is the only place an opencode process is started.
 
     The boundary is not optional: the agent always runs in a mount namespace
@@ -741,10 +745,12 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
                            if str(entry.resolve()) != str(entry)],
         "geometry_contract": _geometry_contract(),
         "reads": session_reads(workspace / "session.jsonl"),
+        "source_review": not session_reads(workspace / "session.jsonl")["reads_denied"],
         "boundary_version": policy.BOUNDARY_VERSION,
         "boundary_sha256": boundary_fingerprint(workspace, role, allowed,
                                                 allow_shell, allow_write,
-                                                prompt, model),
+                                                prompt, model,
+                                                source_digest=source_digest),
         "elapsed_seconds": round(time.monotonic() - dispatched, 3),
         "deadline_passed": bool(timed_out),
         "progress": {

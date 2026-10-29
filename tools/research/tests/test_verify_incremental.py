@@ -306,16 +306,19 @@ class CoverageGapTests(unittest.TestCase):
 
 
 class ListingTests(unittest.TestCase):
-    """An agent must be able to LIST its scope, not only open the files in it."""
+    """The manifest is the listing; the tree is not opened."""
 
-    def test_the_tree_directory_is_in_the_scope(self):
+    def test_the_manifest_names_every_source_file(self):
         with tempfile.TemporaryDirectory() as work:
-            tree = Path(work) / "tree"
+            root = Path(work)
+            tree = root / "trees" / "idea"
             (tree / "model").mkdir(parents=True)
             (tree / "model" / "m.py").write_text("x = 1\n", encoding="utf-8")
-            paths = worker_module.role_read_paths(tree, {"reads": ["model/m.py"]})
-            self.assertIn(str(tree), paths)
-            self.assertIn(str(tree.resolve()), paths)
+            (tree / "train_rqvae.py").write_text("y = 2\n", encoding="utf-8")
+            path = worker_module.write_manifest(root, "idea", 0, tree)
+            text = Path(path).read_text(encoding="utf-8")
+            self.assertIn("model/m.py", text)
+            self.assertIn("train_rqvae.py", text)
 
 
 class CachedReportRoleTests(unittest.TestCase):
@@ -343,3 +346,35 @@ class PromptSizeTests(unittest.TestCase):
             path = worker_module.scope_file(Path(work))
             self.assertTrue(path.is_file())
             self.assertIn("scope", path.read_text(encoding="utf-8").lower())
+
+
+class ReviewIntegrityTests(unittest.TestCase):
+    """A report whose source reads were refused is not a verdict."""
+
+    def test_a_report_without_reads_is_not_counted_as_a_verdict(self):
+        from tools.research.rounds import pipeline as pipeline_module
+        with tempfile.TemporaryDirectory() as work:
+            directory = pipeline_module.new_round(Path(work), "round_integrity", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [{
+                "implementation_id": "i", "idea_id": "i", "tree": str(directory),
+                "status": "implemented", "revision": 0}]
+            state = pipeline_module.apply_verification(state, "i", [{
+                "verifier": "verify_i_r0_1", "role": "math-geometry",
+                "verdict": "PASS", "checks": [], "source_review": False,
+                "coverage_gaps": [{"kind": "read_denied", "detail": "3 refused reads"}],
+                "boundary_version": "b", "boundary_sha256": "0" * 64,
+                "missing_reviewers": []}])
+            record = state["implementations"][0]
+            self.assertNotEqual(record["status"], "verified")
+            self.assertTrue(record.get("coverage_gaps"))
+
+    def test_the_scope_does_not_expose_the_whole_tree(self):
+        """A directory in the scope must not grant every file under it."""
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "tree"
+            (tree / "model").mkdir(parents=True)
+            (tree / "model" / "m.py").write_text("x = 1\n", encoding="utf-8")
+            paths = worker_module.role_read_paths(tree, {"reads": ["model/m.py"]})
+            self.assertNotIn(str(tree), paths)
+            self.assertIn(str(tree / "model" / "m.py"), paths)

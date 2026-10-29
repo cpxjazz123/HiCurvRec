@@ -362,3 +362,19 @@ class FingerprintAgreementTests(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / "rounds" /
                   "worker.py").read_text(encoding="utf-8")
         self.assertIn("runner.effective_read_paths(read_paths)", source)
+
+
+class FingerprintInputTests(unittest.TestCase):
+    """The fingerprint must cover the same inputs on both sides."""
+
+    def test_the_executor_accepts_the_candidate_digest(self):
+        from tools.research.agents import runner
+        import inspect
+        signature = inspect.signature(runner.run_agent)
+        self.assertIn("source_digest", signature.parameters)
+
+    def test_the_contract_digest_is_part_of_the_fingerprint(self):
+        from tools.research.agents import runner
+        import inspect
+        source = inspect.getsource(runner.boundary_fingerprint)
+        self.assertIn("geometry_contract", source)

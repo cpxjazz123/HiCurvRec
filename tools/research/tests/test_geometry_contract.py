@@ -268,3 +268,15 @@ class ConvergenceTests(unittest.TestCase):
         self.assertTrue(converged)
         self.assertGreater(steps, 0)
         self.assertLessEqual(steps, 100)
+
+
+class FrechetApiTests(unittest.TestCase):
+    """The mean has ONE return shape, whatever the input."""
+
+    @unittest.skipUnless(HAVE_TORCH, "needs the project interpreter")
+    def test_a_single_point_reports_the_same_tuple(self):
+        point = torch.tensor([[0.2, 0.1]])
+        mean, converged, steps = g.frechet_mean(point, 1.0, report=True)
+        self.assertTrue(torch.allclose(mean, point[0], atol=1e-6))
+        self.assertTrue(converged)
+        self.assertGreaterEqual(steps, 0)

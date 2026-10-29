@@ -213,15 +213,28 @@ def check_geometry_contract(tree: Path | str) -> dict:
                 hashlib.sha256(canonical.read_bytes()).hexdigest():
             return {"status": "FAIL", "name": "geometry_contract",
                     "detail": "the candidate's copy of the geometry module was modified"}
-    for path in sorted((tree / "model").glob("*.py")):
-        if path.name == "poincare_contract.py":
+    # The whole tree is scanned, not only model/: a candidate can define the
+    # operator in its trainer or in a sub-package, and a call to a foreign
+    # implementation is the same defect in another shape.
+    for path in sorted(tree.rglob("*.py")):
+        relative = path.relative_to(tree)
+        if any(part in ("logs", "results", "dataset", "__pycache__", "ckpt")
+               for part in relative.parts):
+            continue
+        if str(relative).replace("\\", "/") == "model/poincare_contract.py":
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
         for name in _FORBIDDEN_OPERATORS:
             if re.search(r"^\s*def\s+" + re.escape(name) + r"\s*\(", text, re.M):
                 return {"status": "FAIL", "name": "geometry_contract",
                         "detail": "the candidate defines its own " + name +
-                                  " in " + path.name + "; the geometry is the framework's"}
+                                  " in " + str(relative) + "; the geometry is the framework's"}
+            if re.search(r"^\s*(from|import)\s+.*\b" + re.escape(name) + r"\b",
+                         text, re.M) and "poincare_contract" not in text:
+                return {"status": "FAIL", "name": "geometry_contract",
+                        "detail": "the candidate imports a foreign " + name +
+                                  " in " + str(relative) +
+                                  "; the geometry is the framework's"}
     return {"status": "PASS", "name": "geometry_contract",
             "detail": "the candidate uses the canonical geometry module and defines no other"}
 
@@ -229,7 +242,9 @@ def check_geometry_contract(tree: Path | str) -> dict:
 def run_all(tree: Path | str) -> dict:
     """The conformance report of one candidate tree."""
     tree = Path(tree).resolve()
-    checks = [check_constants(tree), check_entry(tree), check_identifier(tree),
-              check_geometry_contract(tree), check_four_rank(tree)]
+    # The static contract comes FIRST: a candidate that redefines the geometry
+    # must not run an epoch before it is refused.
+    checks = [check_constants(tree), check_geometry_contract(tree), check_entry(tree),
+              check_identifier(tree), check_four_rank(tree)]
     passed = all(check["status"] == "PASS" for check in checks)
     return {"tree": str(tree), "passed": passed, "checks": checks}

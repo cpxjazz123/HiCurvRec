@@ -147,3 +147,29 @@ class CanonicalGeometryTests(unittest.TestCase):
             report = checks.check_geometry_contract(tree)
             self.assertEqual(report["status"], "FAIL")
             self.assertIn("expmap0", report["detail"])
+
+
+class GeometryCheckScopeTests(unittest.TestCase):
+    """The static check sees the whole tree, and it runs before the epoch."""
+
+    def test_a_definition_outside_model_is_refused(self):
+        from tools.research.stage2 import checks
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "TIGER_candidate"
+            (tree / "model").mkdir(parents=True)
+            (tree / "train_rqvae.py").write_text("x = 1\n", encoding="utf-8")
+            (tree / "model" / "poincare_contract.py").write_text(
+                (Path(__file__).resolve().parents[1] / "geometry" /
+                 "poincare_contract.py").read_text(encoding="utf-8"), encoding="utf-8")
+            (tree / "train_rqvae.py").write_text(
+                "def poincare_distance(x, y, c):\n    return 0.0\n", encoding="utf-8")
+            report = checks.check_geometry_contract(tree)
+            self.assertEqual(report["status"], "FAIL")
+            self.assertIn("train_rqvae.py", report["detail"])
+
+    def test_the_static_check_precedes_the_epoch(self):
+        from tools.research.stage2 import checks
+        import inspect
+        source = inspect.getsource(checks.run_all)
+        self.assertLess(source.index("check_geometry_contract"),
+                        source.index("check_entry"))

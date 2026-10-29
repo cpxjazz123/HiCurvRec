@@ -384,6 +384,31 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
                              "location": "verification.json",
                              "detail": "verdict NEEDS_FIX without a stated blocking finding"})
         findings.extend(reported)
+    # A report whose source reads were refused is an inference from the prompt,
+    # not a source review: it does not count as a verdict, it cannot close a
+    # finding, and it never makes a candidate verified.
+    usable = [report for report in reports
+              if report.get("source_review", True)
+              and not any(str(gap.get("kind")) == "read_denied"
+                          for gap in (report.get("coverage_gaps") or []))]
+    incomplete = [report for report in reports if report not in usable]
+    if incomplete:
+        gaps = []
+        for report in incomplete:
+            for gap in (report.get("coverage_gaps") or []):
+                if str(gap.get("kind")) == "read_denied":
+                    gaps.append(gap)
+        record["coverage_gaps"] = gaps
+        record["incomplete_reviews"] = [
+            {"verifier": report.get("verifier"), "role": report.get("role"),
+             "verdict": report.get("verdict"),
+             "gaps": len(report.get("coverage_gaps") or [])} for report in incomplete]
+    reports = usable
+    if not reports:
+        record["status"] = "agent_error"
+        record_event(state, "review_incomplete", idea_id=implementation_id,
+                     reviewers=len(incomplete))
+        return state
     record["verdicts"] = reports
     record["reviewers_reported"] = len(reports)
     record["reviewers_expected"] = VERIFIER_AGENTS

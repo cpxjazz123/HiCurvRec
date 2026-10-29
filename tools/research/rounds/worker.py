@@ -210,7 +210,8 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
                             role=role, read_paths=read_paths,
                             allowed_roots=allowed_roots, candidate_tree=candidate_tree,
                             allow_shell=allow_shell, allow_write=allow_write,
-                            deadline_seconds=deadline_seconds)
+                            deadline_seconds=deadline_seconds,
+                            source_digest=source_digest)
     except runner.AgentFailure as failure:
         # The task did not finish inside its budget. What it saved is what it
         # delivered: the records are handed to the main agent, marked as a
@@ -1105,16 +1106,10 @@ def role_read_paths(tree: Path, role: dict) -> list:
             text = str(form)
             if text not in paths:
                 paths.append(text)
-    # The tree's own directory is declared so the agent can LIST it: the files it
-    # may open are still exactly the ones in its scope, but a directory listing is
-    # not one of them, and an agent that cannot list the tree spends its budget
-    # discovering that.
-    for form in (tree, tree.resolve()):
-        text = str(form)
-        if text not in paths:
-            paths.append(text)
-    # No fallback to the whole tree: a scope whose files are all missing is a
-    # coverage gap that the caller records, not a licence to read everything.
+    # The tree's ROOT is deliberately NOT in the scope: a directory in the
+    # allowlist becomes a "/**" pattern and would hand the agent every file of the
+    # candidate. The manifest is the listing: it names every source file, so the
+    # reviewer knows what exists without the tree being open to it.
     return paths
 
 
@@ -1243,6 +1238,7 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
             role_index=index, role_total=len(roles), role_name=role["name"],
             role_must="\n".join("  - " + item for item in role["must"]),
             role_scope=role["scope"], role_checks=_format_role_checks(role),
+            role_start="; ".join(role.get("start_here") or ()),
             idea=plaintext.render_idea(idea), tree=str(tree),
             objective_summary=objective_summary(agent_contracts.RESEARCH_OBJECTIVE),
             scope_file=str(scope_file(root)),
@@ -1276,6 +1272,17 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
         report.setdefault("verifier", task_id)
         report["role"] = roles[index - 1]["id"]
         report["coverage_gaps"] = gaps.get(index) or []
+        # What the agent actually read comes from the receipt, so the report says
+        # whether it was a source review at all.
+        receipt = workspace / "execution.json"
+        if receipt.is_file():
+            try:
+                record = json.loads(receipt.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                record = {}
+            report["reads"] = record.get("reads") or {}
+            report["source_review"] = bool(record.get("source_review", True)) and not (
+                (record.get("reads") or {}).get("reads_denied"))
         # What the agent could actually open: a report whose reads were refused is
         # an inference from the prompt, and it is marked as such instead of
         # counting as a source review.
