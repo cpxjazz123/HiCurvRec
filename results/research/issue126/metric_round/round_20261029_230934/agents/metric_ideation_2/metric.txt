@@ -1,0 +1,40 @@
+I'll start by recording my progress, then explore the available context.
+METRIC: hyp_frechet_cover_radius_l1
+TITLE: Normalized geodesic covering radius of level-1 SID cells about their Poincare Frechet barycentres
+FORMULA:
+  Let N items, level-1 code c_i in {0..K1-1}, and z_i the frozen reference TARGET representation of item i (in R^d).
+  (1) Curve scale: tau = the Issue #126 reference's own temperature if recorded, else tau = 0.5*sqrt(mean_i ||z_i||^2) taken over the TRAINING split only. No recall is read.
+  (2) Exp map into the unit Poincare ball (curvature K = -1): x_i = tanh(||z_i|| / (2*tau)) * z_i/||z_i||, and x_i = 0 if z_i = 0. Hence ||x_i|| < 1.
+  (3) Hyperbolic distance: dH(x,y) = arcosh( 1 + 2||x-y||^2 / ((1-||x||^2)(1-||y||^2)) ).
+  (4) Mobius ops with lambda_x = 2/(1-||x||^2):
+      x (+) y = [ (1 + 2<x,y> + ||y||^2) x + (1 - ||x||^2) y ] / ( 1 + 2<x,y> + ||x||^2 ||y||^2 )
+      exp_x(v) = x (+) tanh(lambda_x * ||v|| / 2) * v/||v||
+      log_x(y) = (2/lambda_x) * artanh( lambda_x * ||(-x)(+)y|| ) * ((-x)(+)y) / ||(-x)(+)y||
+  (5) For each code b with item set S_b, n_b = |S_b|:
+      mu_b^(0) = Euclidean mean of {x_i : i in S_b}; if its norm >= 0.99, rescale it to norm 0.99.
+      For t = 0..9 (T = 10, fixed, not tuned):
+        mu_b^(t+1) = exp_{mu_b^(t)} ( (1/n_b) * sum_{i in S_b} log_{mu_b^(t)}(x_i) )
+      mu_b = mu_b^(10);  r_b = max_{i in S_b} dH(mu_b, x_i),  with r_b = 0 when n_b = 1.
+  (6) Whole cloud: mu_all by the same recursion over all N items; R = max_i dH(mu_all, x_i).
+  (7) METRIC: M = 1 - sum_{b=1..K1} (n_b / N) * (r_b / R).
+  M lies in [0,1], higher is better, one scalar, deterministic, nothing fitted.
+INPUTS:
+  - the exported Stage-2 SID table, using only the integer level-1 code per item (deeper levels are ignored);
+  - the frozen Issue #126 behaviour reference, using only one target representation z_i per item;
+  - optionally the TRAINING split, solely to compute tau when the reference records no temperature.
+  Nothing else: no validation or test interaction, no recall, no Stage-3 output.
+GEOMETRY:
+  Fixed negative curvature K = -1 on the unit Poincare ball. Curvature enters at three points none of which can be removed: (a) the exp map at the origin with scale tau places z_i at hyperbolic radius 2*artanh(||x_i||), so equal Euclidean steps near the boundary cost far more than near the centre; (b) every radius is a Poincare geodesic length dH, not a chord; (c) each cell centre is a Frechet (Karcher) barycentre obtained by Riemannian gradient descent in the ball through exp/log maps, which has no closed Euclidean form. A Euclidean mean-and-radius substitute is a different number: it would treat a cell hugging the origin and a cell hugging the boundary as equally tight, which dH deliberately does not.
+WHY IT SHOULD TRACK RECALL:
+  Prefix retrieval returns the items sharing the level-1 prefix and re-ranks them, so Recall@10 is governed by whether a cell is uniformly tight about its own centre: a single straggler inside a cell can never be retrieved however strong the re-ranker is, yet a mean or a variance-explained score is dominated by the bulk and blind to exactly that item. The covering radius is the quantity the top-10 cut actually sees. Weighting by n_b/N makes the number an item-level statement, "the typical item's worst-case geodesic distance to its cell centre, relative to the whole cloud", so it cannot be gamed by many near-empty cells and so that the max is not carried by a single tiny code. Dividing by R removes the reference's overall spread and temperature, which is what makes tables from different Stage-2 configurations comparable at all. Over Q_H it adds: Q_H is an averaged prefix-ranking score that is unnormalised and collapses at level 2 because the prefix becomes nearly an item id (+0.634 at level 1, +0.287 at level 2); this metric is a worst-case, scale-free, geometry-only statement that stays at level 1 and never touches the level-2 degeneracy that also destroyed the path likelihood.
+COMPUTE:
+  N = 24587, K1 = 256, d at most 256. Barycentres need T*N exp/log pairs and about 2*T*N*d flops in total, plus one max per cell; with T = 10 that is ~1.3e8 elementary operations, i.e. well under a second in numpy and a few seconds in pure Python. Memory is O(N*d) for the ball points plus O(N) for the codes. No item-item matrix is ever formed, so the 24587^2 trap is avoided.
+RISKS:
+  (1) Degenerate when all level-1 codes coincide: then R = r_b and M = 0, which is the genuinely worst table, so the value stays informative rather than wrong.
+  (2) R is a max, so one far-out reference vector inflates R and pushes every table's M toward 1, compressing the cross-run spread. The remedy is to fix R from the TRAINING split a priori, not to choose it by looking at the 97 recalls.
+  (3) A strongly anisotropic reference makes all cells look tight and saturates M near 1 for every table, giving near-zero variance and no correlation.
+  (4) If level 1 is uninformative and the semantic content lives only in level 2, the metric reads the wrong partition.
+  (5) The construction assumes one frozen reference shared by every run; if runs used different reference feature spaces the ball geometries are not comparable and the metric must not be used across them.
+FAILURE MODE:
+  Worst on the SID table whose level-1 codes are assigned by radius or norm stratification, for example hashing on the reference norm or a coarse k-means run on ||z_i|| alone. Such a table has a perfectly healthy bucket count (about 96 items per code) and a healthy same-bucket ratio, but each cell is a thin radial shell spanning many angular sectors, so its geodesic covering radius is close to R and M is near 0 while recall is poor, because direction rather than norm carries the neighbourhood. The mirror failure is the fully collapsed table, one code for all 24587 items, which also gives M = 0. These are precisely the two tables on which count-based and likelihood-based metrics are fooled, which is the point of the construction.
+END METRIC

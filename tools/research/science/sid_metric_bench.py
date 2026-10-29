@@ -103,6 +103,8 @@ def load_context():
                        "table": table})
     train = np.load(REPO / "results" / "stage3_T5Train" / "monotonicity" /
                     "behavior_pairs_s42.npz")
+    probe = np.load(REPO / "results" / "stage3_T5Train" / "monotonicity" /
+                    "behavior_pairs_valid_s42.npz")
     return {
         "reference": reference,
         "source": reference["source"],
@@ -110,6 +112,10 @@ def load_context():
         "temperature": float(reference["record"]["temperature"]),
         "train_pairs": {"anchors": train["anchors"], "positives": train["positives"],
                         "negatives": train["negatives"]},
+        # the held-out probe Issue #126 froze for Q_H, so a contrastive metric is
+        # comparable with it on the same queries
+        "probe": {"anchors": probe["anchors"], "positives": probe["positives"],
+                  "negatives": probe["negatives"]},
         "items": int(reference["source"].shape[0]),
         "pairs": tables,
     }
