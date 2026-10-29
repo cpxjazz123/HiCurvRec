@@ -46,7 +46,7 @@ class WiringTests(unittest.TestCase):
         gradient while every value check still passed.
         """
         model, embeddings, ids = build()
-        radius = torch.linspace(0.1, 1.4, 24)
+        radius = torch.linspace(0.1, 1.4, 24, requires_grad=True)
         z = model.encoder(embeddings)
         scaled = model.scale_by_radius(z, radius[ids])
         self.assertTrue(scaled.requires_grad)
@@ -56,6 +56,11 @@ class WiringTests(unittest.TestCase):
         total = sum(float(p.grad.abs().sum()) for p in model.encoder.parameters()
                     if p.grad is not None)
         self.assertGreater(total, 0.0)
+        # the RADIUS must receive a gradient: the behaviour input is what the
+        # mechanism turns into a code, and a detached radius would leave the
+        # encoder's non-zero gradient coming from the reconstruction alone.
+        self.assertIsNotNone(radius.grad)
+        self.assertGreater(float(radius.grad.abs().sum()), 0.0)
 
     def test_a_different_radius_can_change_the_code(self):
         model, embeddings, ids = build()

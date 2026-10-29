@@ -21,6 +21,10 @@ class RQVAE(nn.Module):
         self.encoder_sizes = (int(in_dim), *hidden_sizes, int(config.codebook_dim))
         self.encoder = MLP(list(self.encoder_sizes), dropout=float(config.dropout))
         self.rq = RQLayer(config)
+        # The behaviour radius is part of the model: it is declared here so a
+        # checkpoint and a freshly built model have the same keys, and it is
+        # persistent so a restored model exports the same SID.
+        self.register_buffer("radius_table", torch.zeros(0), persistent=True)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
     def forward(self, embeddings: torch.Tensor,
@@ -42,9 +46,29 @@ class RQVAE(nn.Module):
         direction = encoded / encoded.norm(dim=-1, keepdim=True).clamp_min(1e-8)
         return radius.unsqueeze(-1) * direction
 
+    @classmethod
+    def from_checkpoint(cls, config, state, *, in_dim: int):
+        """Rebuild the model from a checkpoint, radii included.
+
+        The radius table is a buffer of the model, so it is restored with the
+        rest of the state; the table's size is set before the load, because the
+        fresh model does not know it yet.
+        """
+        model = cls(config, in_dim=in_dim)
+        table = state.get("radius_table")
+        if table is not None:
+            model.radius_table = torch.zeros(int(table.numel()), dtype=torch.float32)
+        model.load_state_dict(state)
+        return model
+
     def set_radii(self, radius: torch.Tensor) -> None:
-        """Bind the behaviour radius per item, for training and for the export."""
-        self.register_buffer("radius_table", radius.detach().clone().float(), persistent=False)
+        """Bind the behaviour radius per item, for training and for the export.
+
+        The table is PERSISTENT: a model rebuilt from the checkpoint must carry
+        the radii, or the export would compute the SID without the behaviour
+        radius and disagree with the training run.
+        """
+        self.radius_table = radius.detach().clone().float()
 
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False,
                     item_ids: torch.Tensor = None) -> torch.Tensor:
@@ -53,7 +77,11 @@ class RQVAE(nn.Module):
         # encoding without the behaviour radius would export codes for points the
         # quantizer never saw.
         table = getattr(self, "radius_table", None)
-        if table is not None and bool(getattr(self.config, "radial", False)):
+        if bool(getattr(self.config, "radial", False)):
+            if table is None or table.numel() == 0:
+                raise RuntimeError(
+                    "the behaviour radius table is missing: the export would ignore the "
+                    "mechanism and disagree with the training run")
             ids = item_ids if item_ids is not None else torch.arange(
                 encoded.shape[0], device=encoded.device)
             encoded = self.scale_by_radius(encoded, table[ids])

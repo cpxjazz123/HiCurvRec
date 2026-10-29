@@ -37,15 +37,21 @@ class ExportTests(unittest.TestCase):
             exported = model.get_indices(embeddings, infer_use_sk=False, item_ids=ids)
         self.assertTrue(torch.equal(training_tokens, exported))
 
-    def test_an_export_without_stored_radii_is_the_plain_path(self):
+    def test_an_export_without_stored_radii_is_refused(self):
+        """An export that ignores the behaviour radius is a different mechanism.
+
+        The permissive version of this test WAS the defect: a model rebuilt
+        without the radius table exported a SID computed without the behaviour
+        radius, silently and differently from the training run.
+        """
         torch.manual_seed(0)
         model = RQVAE(config(), in_dim=16)
         embeddings = torch.randn(24, 16)      # at least one sample per code for KMeans
         ids = torch.arange(24)
         with torch.no_grad():
             model.init_codebook(embeddings)
-            tokens = model.get_indices(embeddings, infer_use_sk=False, item_ids=ids)
-        self.assertEqual(tokens.shape[0], 24)
+            with self.assertRaises(RuntimeError):
+                model.get_indices(embeddings, infer_use_sk=False, item_ids=ids)
 
 
 class NoInheritedCodebookTests(unittest.TestCase):
