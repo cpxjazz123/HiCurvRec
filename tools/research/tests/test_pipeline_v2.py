@@ -317,3 +317,29 @@ class LayerRecordGateTests(unittest.TestCase):
         for key in ("valid_l1_hard_er", "l3_collision", "l3_refinement_gain_bits",
                     "level2_distinct_prefixes", "conditional_l3_gain"):
             self.assertIn(key, report["metrics"])
+
+
+class Stage2CompletionTests(unittest.TestCase):
+    """A run that reached its last epoch finished, whether or not its worker lived."""
+
+    def test_a_finished_run_without_train_end_is_finished(self):
+        import importlib.util
+        import json
+        server_path = (Path(__file__).resolve().parents[3] / "tools" / "genrec-mcp" /
+                       "server.py")
+        spec = importlib.util.spec_from_file_location("genrec_server_completion", server_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as work:
+            result = Path(work) / "TIGER_x"
+            (result / "logs").mkdir(parents=True)
+            for name in module.STAGE2_REQUIRED_ARTIFACTS:
+                (result / name).write_bytes(b"x")
+            rows = [json.dumps({"event": "train", "epoch": e}) for e in range(1, 3001)]
+            (result / "logs" / "training_metrics.jsonl").write_text(
+                "\n".join(rows) + "\n", encoding="utf-8")
+            self.assertTrue(module._stage2_finished(result))
+            # a run stopped early is not
+            (result / "logs" / "training_metrics.jsonl").write_text(
+                "\n".join(rows[:1500]) + "\n", encoding="utf-8")
+            self.assertFalse(module._stage2_finished(result))

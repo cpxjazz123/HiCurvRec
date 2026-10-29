@@ -1785,9 +1785,19 @@ def tool_stage2_status(source_dir: str) -> dict:
     # A run is complete when this launch recorded its own train_end and the three
     # artifacts every tree writes are on disk. STAGE2_ARTIFACTS also carries
     # sids_raw.npy, which only some trees emit, so it cannot gate completeness.
-    complete = all(name in artifacts for name in STAGE2_REQUIRED_ARTIFACTS) and bool(
+    artifacts_complete = all(name in artifacts for name in STAGE2_REQUIRED_ARTIFACTS)
+    train_end_fresh = bool(
         train_end and (launched_at is None or train_end.get("timestamp", 0) >= launched_at)
     )
+    # Second, worker-independent proof: the trainer writes one row per epoch, so
+    # the frozen last epoch in the metrics plus the exported artifacts is the run
+    # having finished even when the worker that launched it is gone (a reloaded
+    # MCP server kills its workers; the training keeps running and completes).
+    metrics_complete = artifacts_complete and _stage2_finished(result_dir, tree)
+    complete = artifacts_complete and (train_end_fresh or metrics_complete)
+    completion_evidence = (
+        "train_end" if train_end_fresh else
+        "metrics_and_artifacts" if metrics_complete else None)
     status = state.get("status")
     if not status:
         # Older state files carry no status: derive it from the recorded run and
@@ -1814,6 +1824,7 @@ def tool_stage2_status(source_dir: str) -> dict:
         status = "finished" if complete else "exited_incomplete"
     return {
         "status": status,
+        "completion_evidence": completion_evidence,
         "tree": str(tree),
         "arm": tree_arm(tree),
         "result_dir": str(result_dir),
