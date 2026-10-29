@@ -1942,6 +1942,7 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
     # or after this launch's own timestamp counts as this run's.
     live = stage3_variant_processes(variant)
     metrics = stage3_newest("**/training_metrics.jsonl", variant, since=launched_at)
+    test_result_scope = "this launch"
     test_final = stage3_newest("**/test_final.json", variant, since=launched_at)
     stale_test = stage3_newest("**/test_final.json", variant)
     if stale_test is not None and test_final is None:
@@ -1954,7 +1955,8 @@ def tool_stage3_status(item_sids: str | None = None) -> dict:
     latest_train = _last_record(metrics, "train") if metrics else None
     train_start = _last_record(metrics, "train_start") if metrics else None
     test_result = None
-    test_result_scope = "this launch"
+    # The scope was decided above, where the launch-scoped search runs: resetting
+    # it here made a stale result of an earlier launch claim to be this launch's.
     if test_final is not None:
         try:
             test_result = json.loads(test_final.read_text(encoding="utf-8"))
