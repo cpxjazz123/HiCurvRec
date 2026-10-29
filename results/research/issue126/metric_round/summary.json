@@ -152,6 +152,28 @@
       ],
       "eligible": true,
       "note": "round 6: the rank the true cell holds under that mass, against chance"
+    },
+    {
+      "metric": "hbaa_weighted",
+      "spearman": 0.5963,
+      "p": 1.16e-10,
+      "ci": [
+        0.427,
+        0.73
+      ],
+      "eligible": true,
+      "note": "HBAA at every level, each level weighted by the queries it could speak for (2 <= |bucket| <= N/2); still below the level-1 score"
+    },
+    {
+      "metric": "hbaa_pair_accuracy",
+      "spearman": 0.6172,
+      "p": 1.67e-11,
+      "ci": [
+        0.456,
+        0.741
+      ],
+      "eligible": true,
+      "note": "HBAA without a temperature: the share of queries whose positive is deeper than the negatives"
     }
   ],
   "not_scored": [
@@ -204,6 +226,18 @@
       "hyp_cell_expected_rank": 0.2997,
       "hyp_cell_rank_lift": 0.3441,
       "reading": "the refinements of the winner's own family are all weaker than the winner: the signal is the level-1 ancestor DEPTH contrast, not a ranking statistic"
+    },
+    "family": {
+      "measured": {
+        "hbaa": 0.7012,
+        "hbaa_anchor": 0.6941,
+        "hbaa_euclid": 0.693,
+        "hbaa_flat": 0.6925,
+        "hbaa_pair_accuracy": 0.6172,
+        "hbaa_weighted": 0.5963,
+        "hbaa_levels": 0.4644
+      },
+      "reading": "every variant of the winner is weaker than the winner: the level-1 Gromov ancestor-DEPTH contrast against the negatives' prefix centroids, with the full history as the query point and the frozen temperature in the reduction, is the signal. Ranking statistics over the same cells, the deeper levels, a temperature-free reduction and the weighted multi-level combination all lose information."
     }
   },
   "rounds": {

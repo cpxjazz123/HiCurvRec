@@ -297,8 +297,112 @@ def _level_alignment(table: dict, context: dict) -> float:
     return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
 
 
+
+
+def hbaa_weighted(table: dict, context: dict) -> float:
+    """HBAA at every level, each level WEIGHTED by the queries it can speak for.
+
+    The flat average over levels measured +0.464 against the level-1 score's
+    +0.701: the deeper levels are not noise, they are weaker, and an equal
+    average gives them the same say. Here a level is kept only where its buckets
+    can make a claim (2 <= |bucket| <= N/2) and it is weighted by the fraction of
+    the queries it kept, so a level that has degenerated contributes little.
+    """
+    rows = np.asarray(table["rows"], dtype=np.int64)
+    n_items = rows.shape[0]
+    target = np.asarray(context["target"], dtype=np.float64)[
+        np.asarray(table["item_ids"])]
+    tau = float(context["temperature"])
+    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
+    queries = _queries(context)
+    pos = np.array([position.get(int(item), -1) for item in queries["positives"]],
+                   dtype=np.int64)
+    neg = np.array([[position.get(int(item), -1) for item in row]
+                    for row in queries["negatives"]], dtype=np.int64)
+    valid = (pos >= 0) & (neg >= 0).all(axis=1)
+    if not valid.any():
+        return 0.0
+    points = _history_points(context, 1.0)[valid]
+    pos = pos[valid]
+    neg = neg[valid]
+    total_queries = float(len(points))
+
+    def gromov(x, y):
+        def d(a, b):
+            diff = np.sum((a - b) ** 2, axis=-1)
+            den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
+            return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
+        def nrm(x):
+            inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
+            return np.arccosh(1 / np.sqrt(inner))
+        return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
+
+    scores, weights = [], []
+    for level in range(rows.shape[1]):
+        codes = rows[:, level]
+        sizes = np.bincount(codes)
+        informative = (sizes >= 2) & (sizes <= n_items / 2)
+        centres = {int(code): _frechet(target[codes == code]) for code in np.unique(codes)}
+        mu_pos = np.stack([centres[int(codes[index])] for index in pos])
+        mu_neg = np.stack([[centres[int(codes[index])] for index in row] for row in neg])
+        legal = informative[codes[pos]] & informative[codes[neg]].any(axis=1)
+        if not legal.any():
+            continue
+        delta = gromov(points[legal], mu_pos[legal])[:, None] - gromov(
+            points[legal][:, None, :], mu_neg[legal])
+        per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
+        scores.append(1.0 - float(per_query.mean()) / float(np.log(2.0)))
+        weights.append(float(legal.sum()) / total_queries)
+    if not scores:
+        return 0.0
+    scores = np.asarray(scores)
+    weights = np.asarray(weights)
+    return float((scores * weights).sum() / max(weights.sum(), 1e-12))
+
+
+def hbaa_pair_accuracy(table: dict, context: dict) -> float:
+    """HBAA without a temperature: the share of queries whose positive is deeper.
+
+    The softplus reduction needs the frozen temperature; the rank-free version
+    asks the same question with a sign test and no scale at all.
+    """
+    target = np.asarray(context["target"], dtype=np.float64)[
+        np.asarray(table["item_ids"])]
+    codes = np.asarray(table["rows"], dtype=np.int64)[:, 0]
+    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
+    queries = _queries(context)
+    pos = np.array([position.get(int(item), -1) for item in queries["positives"]],
+                   dtype=np.int64)
+    neg = np.array([[position.get(int(item), -1) for item in row]
+                    for row in queries["negatives"]], dtype=np.int64)
+    valid = (pos >= 0) & (neg >= 0).all(axis=1)
+    if not valid.any():
+        return 0.0
+    points = _history_points(context, 1.0)[valid]
+    pos = pos[valid]
+    neg = neg[valid]
+    centres = {int(code): _frechet(target[codes == code]) for code in np.unique(codes)}
+
+    def gromov(x, y):
+        def d(a, b):
+            diff = np.sum((a - b) ** 2, axis=-1)
+            den = ((1 - np.sum(a * a, axis=-1)) * (1 - np.sum(b * b, axis=-1)))
+            return np.arccosh(np.maximum(1 + 2 * diff / np.maximum(den, 1e-12), 1 + 1e-12))
+        def nrm(x):
+            inner = np.clip(1 - np.sum(x * x, axis=-1), 1e-12, None)
+            return np.arccosh(1 / np.sqrt(inner))
+        return 0.5 * (nrm(x) + np.asarray(nrm(y)) - d(x, y))
+
+    mu_pos = np.stack([centres[int(codes[index])] for index in pos])
+    mu_neg = np.stack([[centres[int(codes[index])] for index in row] for row in neg])
+    positive_depth = gromov(points, mu_pos)
+    negative_depth = gromov(points[:, None, :], mu_neg).mean(axis=1)
+    return float((positive_depth > negative_depth).mean())
+
+
 METRICS = {"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
            "hbaa_euclid": hbaa_euclid, "hbaa_flat": hbaa_flat,
-           "hbaa_levels": hbaa_levels}
+           "hbaa_levels": hbaa_levels, "hbaa_weighted": hbaa_weighted,
+           "hbaa_pair_accuracy": hbaa_pair_accuracy}
 FREE_CONSTANTS = {"hbaa": 0, "hbaa_anchor": 0, "hbaa_euclid": 0, "hbaa_flat": 0,
-                   "hbaa_levels": 0}
+                   "hbaa_levels": 0, "hbaa_weighted": 0, "hbaa_pair_accuracy": 0}
