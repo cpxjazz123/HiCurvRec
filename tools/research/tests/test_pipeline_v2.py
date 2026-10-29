@@ -262,3 +262,21 @@ class RepairBudgetTests(unittest.TestCase):
             # the second and the third call saw no source change: only the first
             # was a repair of the candidate
             self.assertEqual(record["repairs"], 1)
+
+
+class RecheckTests(unittest.TestCase):
+    """A recheck puts the candidate back in the queue for the checks."""
+
+    def test_a_recheck_moves_to_implemented(self):
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "cand"
+            tree.mkdir()
+            controller = Controller(Path(work) / "record")
+            controller.register(tree)
+            controller.record_tests({"ran": True, "passed": False})
+            controller.repair("first")
+            controller.record_tests({"ran": True, "passed": False})
+            record = controller.repair("recheck")
+            self.assertEqual(record["state"], states.IMPLEMENTED)
+            record = controller.record_tests({"ran": True, "passed": True})
+            self.assertEqual(record["state"], states.VERIFIED)

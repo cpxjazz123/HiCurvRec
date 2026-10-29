@@ -131,11 +131,10 @@ class Controller:
         digest = record.get("source_digest")
         last = record.get("last_repair_digest")
         if digest and last and digest == last:
-            record.setdefault("history", []).append({
-                "at": time.time(), "from": record.get("state"), "to": record.get("state"),
-                "repeat": True, "reason": "recheck after a change to the checks: " +
-                                        str(note)[:200]})
-            self.save(record)
+            # A recheck of an unchanged candidate: the candidate goes back to
+            # IMPLEMENTED, because the checks are about to run again on it.
+            self._move(record, states.IMPLEMENTED,
+                       reason="recheck after a change to the checks: " + str(note)[:200])
             return record
         record["last_repair_digest"] = digest
         record["repairs"] = int(record.get("repairs", 0)) + 1
