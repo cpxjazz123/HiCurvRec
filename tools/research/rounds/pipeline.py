@@ -306,6 +306,11 @@ BLOCKING_SEVERITIES = frozenset({
 })
 
 
+def _verifier_roles() -> list:
+    from . import agents as agent_contracts
+    return list(agent_contracts.VERIFIER_ROLES)
+
+
 def _finding_role(finding: dict) -> str:
     """The role a finding belongs to.
 
@@ -319,8 +324,7 @@ def _finding_role(finding: dict) -> str:
     verifier = str(finding.get("verifier") or "")
     for index in range(1, 32):
         if verifier.endswith("_" + str(index)):
-            from . import agents as agent_contracts
-            roles = agent_contracts.VERIFIER_ROLES
+            roles = _verifier_roles()
             if index <= len(roles):
                 return roles[index - 1]["id"]
     return ""
@@ -455,7 +459,21 @@ def apply_verification(state: dict, implementation_id: str, reports: list) -> di
     # PASS from another role says nothing about the area that complained, and
     # treating it as a closure is how "verified with no blocking findings" could be
     # reported while an old blocker was never re-checked.
-    responding = {str(report.get("role") or "") for report in reports}
+    # A report that is reused from a receipt may arrive without its role; the
+    # task number is the fallback that makes the finding it raised closable.
+    def _report_role(report: dict) -> str:
+        role = str(report.get("role") or "")
+        if role:
+            return role
+        verifier = str(report.get("verifier") or "")
+        for index in range(1, 32):
+            if verifier.endswith("_" + str(index)):
+                roles = _verifier_roles()
+                if index <= len(roles):
+                    return roles[index - 1]["id"]
+        return ""
+
+    responding = {_report_role(report) for report in reports}
     carried = [finding for finding in (record.get("blocking_findings") or [])
                if finding.get("verifier") not in FRAMEWORK_FINDING_SOURCES
                and _finding_role(finding) not in responding]

@@ -1009,3 +1009,28 @@ class FindingOwnershipResolutionTests(unittest.TestCase):
         from tools.research.rounds import pipeline as pipeline_module
         finding = {"verifier": "verify_idea_r0_3", "role": "behaviour-sid"}
         self.assertEqual(pipeline_module._finding_role(finding), "behaviour-sid")
+
+
+class CachedResponderTests(unittest.TestCase):
+    """A reused report still closes the finding its role raised."""
+
+    def test_an_old_finding_closes_when_its_role_reviews_without_a_role_field(self):
+        from tools.research.rounds import agents as agent_contracts
+        roles = agent_contracts.VERIFIER_ROLES
+        index = [role["id"] for role in roles].index("distributed-state") + 1
+        with tempfile.TemporaryDirectory() as work:
+            directory = pipeline_module.new_round(Path(work), "round_cached", objective="o")
+            state = pipeline_module.load_state(directory)
+            state["implementations"] = [{
+                "implementation_id": "i", "idea_id": "i", "tree": str(directory),
+                "status": "needs_repair", "revision": 1,
+                "blocking_findings": [{
+                    "severity": "blocking", "location": "f.py:1", "detail": "d",
+                    "verifier": "verify_i_r1_%d" % index}]}]
+            pipeline_module.save_state(directory, state)
+            state = pipeline_module.apply_verification(state, "i", [{
+                "verifier": "verify_i_r2_%d" % index, "verdict": "PASS", "checks": [],
+                "boundary_version": "b", "boundary_sha256": "0" * 64,
+                "missing_reviewers": []}])
+            record = state["implementations"][0]
+            self.assertEqual(record["blocking_findings"], [])
