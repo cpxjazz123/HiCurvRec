@@ -1,0 +1,281 @@
+{
+  "decision_at": 1793227730.1238205,
+  "decision_hash": "cd95c3a64991c6ef0835cbdcf3ec360c8e48e36bb1bf39056a05354409745718",
+  "evidence": {
+    "BRANCHCURV-MOEB-RQ": {
+      "bundle_sha256": "b528ff7b5e6bf6c303050a175450754698a53a206a543e3a7f2658fdf92ae45c",
+      "literature_sha256": "54d89a04f80abccabd469ea707eccc632d0fcf8117c8b70754e4f7497109a1da",
+      "math_sha256": "14814dc5b173de61e24d9b57ba0ffadff633fd86ffcc5acbd32ba843d5988200",
+      "probe_sha256": "6158124525c85666834e2d7edf4c40c1120a5e9b3c1573941073c9dea964770c"
+    },
+    "BRad-RQ": {
+      "bundle_sha256": "4655c2de358ffdc868b9b19800de197adf21c0bbe30f5218032a7f50999fe358",
+      "literature_sha256": "6c29cd42535e2e35f23fcb86d8e6422e7ad93400b0bc67f185302ad53c15d13e",
+      "math_sha256": "79eb16380cda25065dd461eebdfac0638d187e854ba2ae56caa119b434832359",
+      "probe_sha256": "cbcca7bbe1c054cd4c40e12a2eb5a2117cbaf9fb52415ffa397ccea6a3bc2540"
+    },
+    "TSG-SID": {
+      "bundle_sha256": "f36cdf069f009a9b443dbdd25a5a2240249c8933ecc9d761bd5576549b7e2c9a",
+      "literature_sha256": "0f9a270d4d938201605ab12f5687c4a51c23ba8fe70032a4b81b03dff7b1f5f4",
+      "math_sha256": "82b5b4eaecb1b76887e410e0040943d9a8d0245197699ebb52a73a71ce0b57f4",
+      "probe_sha256": "4ac4aa728a91c97cb9ad36a4bc1c72947b36efcc509f34c1c010206ce004e16c"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "BRANCHCURV-MOEB-RQ",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "It is the composite of the two worst precedents in E6/E7: successor_entropy (the exact signal it uses, 0.05122) and l1_br (per-level curvature, 0.04671 with a degenerate T4 NLL of 9.03 and gold prefix 1.000/1.000/1.000/0.068), and its per-item curvature makes the shared codebook sit at different ball positions per item, i.e. it generalises the observed level-1 domination/collapse rather than avoiding it; its claim that removing the cap fixes l1_br does not address that collapse mode, and E5's clean entropy stratification (Spearman -0.973) confirms the signal is real, not that routing it into the residual chain helps.",
+          "scoring_2": "E5 supplies the per-item entropy spread that makes a per-item curvature meaningful, but it re-curves the whole L-level residual chain, the family E6 places at 0.055 (successor_geodesic_coarse 0.05500, v2 0.05463) and whose E7 analogue l1_br dies at depth 4 (T1/T2/T3 = 0.00, T4 = 9.03), and a per-item ball places the shared codebook at a different position per item, a code-semantics hazard for a single no-ablation run.",
+          "scoring_3": "E5 gives the strongest measured behaviour range (top-1 successor mass 0.4375 vs 0.0543, Spearman -0.973, distinct successors 2.72 to 41.41) and the cap-free c_i in [1e-3,c_max] spans exactly that range, but the nearest evidence is successor_geodesic_coarse/_v2 at 0.05500/0.05463 against 0.06207 Euclidean, E8/E11 show level-1 behavioural structure is already thin (0.0822 vs 0.0129 co-location; 0.0907 vs 0.067 first-prefix), and per-item curvature makes shared-codeword meaning item-dependent while M_l is left undefined."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 2,
+        "idea_id": "BRad-RQ",
+        "mean_rank": 1.6667,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 1,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "It is the only proposal whose behaviour enters the item coordinate rather than the curvature/cost, and E6 shows the vanilla-family assignments are the ones that work (l1_br_euclid 0.06207, l1_only 0.06233, resample 0.06363) while every behaviour-in-geometry arm lost 0.007-0.016 (successor_entropy 0.05122, successor_geodesic_coarse 0.05500, tangent_successor_residual 0.05500); its fixed c=1 removes the saturation mode that E7 shows killed l1_br (T1/T2/T3/T4 NLL 0.00/0.00/0.00/9.03 with gold prefix alive 1.000/1.000/1.000/0.068), its reconstruction stays Euclidean on the tangent target, and its predecessor-side statistic is supported by E9 (0.9291 vs 0.8871 overlap, 0.5898 pairwise win, 1.65 nats over 7.5 cohorts, non-degenerate) plus the level-1 headroom in E11 (same_first_prefix_rate 0.0907 vs permuted null 0.067).",
+          "scoring_2": "E6/E7 show the near-target family keeps reconstruction Euclidean and touches only the coarse level (l1_only 0.06233, l1_br_euclid 0.06207) while curved-assignment variants sit at 0.055, and BRad-RQ is the only candidate of that shape: behaviour sets only the radial coordinate, c=1 is derived from unit direction normalisation, and the curved score is a monotone transform of a Euclidean difference, so E8's low-K ceiling (K=16 0.3106 vs negative 0.1352) is exploited on the non-degenerate E9/E10 predecessor statistic at the least reconstruction risk.",
+          "scoring_3": "the bundle carries the clearest negative for exactly this design: the level-1 behaviour-ranked prefix with its geometry off scores l1_br_euclid 0.06207 / l1_only 0.06233 but with geometry on l1_br falls to 0.04671 with gold prefix alive 1.000/1.000/1.000 and NLL 0/0/0/9.03, i.e. a trivially predictable, uninformative prefix, and the proposal additionally discards encoder magnitude and E8 caps level-1 co-location at 0.0822 for K=256 while naming no behaviour-off/geometry-off switches."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 5
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "TSG-SID",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 3,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "E6's tangent_successor_residual arm (0.05500, gold prefix alive 0.643/0.180/0.090/0.073) is the closest existing test of transported successor tangents and it lost 0.007 against the 0.06207 Euclidean reference, so the mechanism is plausible-but-precedent-negative; it edges out BRANCHCURV only because it perturbs the STE gradient behind measured gates (kappa = d/(d+delta), soft bound r_l tanh) and leaves E8's first-level capacity untouched, whereas its cost claim (3-8%) is the more credible of the two heavy variants.",
+          "scoring_2": "the closest frozen evidence is tangent_successor_residual at 0.05500 recall@10 with T1 NLL 4.00 and gold prefix survival already degraded to 0.643/0.180, and TSG-SID extends that to assignment and commitment while its curvature c_l=1/(4 s_l^2) is refreshed every 100 epochs and its successor-codeword map is stale within an epoch, leaving the one run with the most moving parts and the least favourable prior.",
+          "scoring_3": "E7's tangent_successor_residual is its closest analogue and keeps the healthiest prefix profile (T1..T4 NLL 4.00/3.17/1.67/0.29, gold prefix alive 0.643/0.180/0.090/0.073) with no l1_br-style collapse, and it is the only candidate naming both switches (USE_BEHAV/USE_HYPER) with every constant measured from s_l, delta_l, mean"
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "b528ff7b5e6bf6c303050a175450754698a53a206a543e3a7f2658fdf92ae45c",
+      "idea_id": "BRANCHCURV-MOEB-RQ",
+      "proposal_sha256": "dbaf72808bbf3f303b3cf6741b2b3c8e6edc688006ecb0bf0db7c919a23bd42a"
+    },
+    {
+      "evidence_sha256": "4655c2de358ffdc868b9b19800de197adf21c0bbe30f5218032a7f50999fe358",
+      "idea_id": "BRad-RQ",
+      "proposal_sha256": "c46c7ad7dcee9656174b495d6d2e0359a6d078ef9705b72d1607245e04611cd9"
+    },
+    {
+      "evidence_sha256": "f36cdf069f009a9b443dbdd25a5a2240249c8933ecc9d761bd5576549b7e2c9a",
+      "idea_id": "TSG-SID",
+      "proposal_sha256": "0a6364ce080e22ba1174f56dc69bd7c8bbaf7dc14d78515b5f9e818c6f8f03de"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "BRad-RQ",
+          "position": 1,
+          "reason": "It is the only proposal whose behaviour enters the item coordinate rather than the curvature/cost, and E6 shows the vanilla-family assignments are the ones that work (l1_br_euclid 0.06207, l1_only 0.06233, resample 0.06363) while every behaviour-in-geometry arm lost 0.007-0.016 (successor_entropy 0.05122, successor_geodesic_coarse 0.05500, tangent_successor_residual 0.05500); its fixed c=1 removes the saturation mode that E7 shows killed l1_br (T1/T2/T3/T4 NLL 0.00/0.00/0.00/9.03 with gold prefix alive 1.000/1.000/1.000/0.068), its reconstruction stays Euclidean on the tangent target, and its predecessor-side statistic is supported by E9 (0.9291 vs 0.8871 overlap, 0.5898 pairwise win, 1.65 nats over 7.5 cohorts, non-degenerate) plus the level-1 headroom in E11 (same_first_prefix_rate 0.0907 vs permuted null 0.067)."
+        },
+        {
+          "idea_id": "TSG-SID",
+          "position": 2,
+          "reason": "E6's tangent_successor_residual arm (0.05500, gold prefix alive 0.643/0.180/0.090/0.073) is the closest existing test of transported successor tangents and it lost 0.007 against the 0.06207 Euclidean reference, so the mechanism is plausible-but-precedent-negative; it edges out BRANCHCURV only because it perturbs the STE gradient behind measured gates (kappa = d/(d+delta), soft bound r_l tanh) and leaves E8's first-level capacity untouched, whereas its cost claim (3-8%) is the more credible of the two heavy variants."
+        },
+        {
+          "idea_id": "BRANCHCURV-MOEB-RQ",
+          "position": 3,
+          "reason": "It is the composite of the two worst precedents in E6/E7: successor_entropy (the exact signal it uses, 0.05122) and l1_br (per-level curvature, 0.04671 with a degenerate T4 NLL of 9.03 and gold prefix 1.000/1.000/1.000/0.068), and its per-item curvature makes the shared codebook sit at different ball positions per item, i.e. it generalises the observed level-1 domination/collapse rather than avoiding it; its claim that removing the cap fixes l1_br does not address that collapse mode, and E5's clean entropy stratification (Spearman -0.973) confirms the signal is real, not that routing it into the residual chain helps."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "BRad-RQ",
+          "position": 1,
+          "reason": "E6/E7 show the near-target family keeps reconstruction Euclidean and touches only the coarse level (l1_only 0.06233, l1_br_euclid 0.06207) while curved-assignment variants sit at 0.055, and BRad-RQ is the only candidate of that shape: behaviour sets only the radial coordinate, c=1 is derived from unit direction normalisation, and the curved score is a monotone transform of a Euclidean difference, so E8's low-K ceiling (K=16 0.3106 vs negative 0.1352) is exploited on the non-degenerate E9/E10 predecessor statistic at the least reconstruction risk."
+        },
+        {
+          "idea_id": "BRANCHCURV-MOEB-RQ",
+          "position": 2,
+          "reason": "E5 supplies the per-item entropy spread that makes a per-item curvature meaningful, but it re-curves the whole L-level residual chain, the family E6 places at 0.055 (successor_geodesic_coarse 0.05500, v2 0.05463) and whose E7 analogue l1_br dies at depth 4 (T1/T2/T3 = 0.00, T4 = 9.03), and a per-item ball places the shared codebook at a different position per item, a code-semantics hazard for a single no-ablation run."
+        },
+        {
+          "idea_id": "TSG-SID",
+          "position": 3,
+          "reason": "the closest frozen evidence is tangent_successor_residual at 0.05500 recall@10 with T1 NLL 4.00 and gold prefix survival already degraded to 0.643/0.180, and TSG-SID extends that to assignment and commitment while its curvature c_l=1/(4 s_l^2) is refreshed every 100 epochs and its successor-codeword map is stale within an epoch, leaving the one run with the most moving parts and the least favourable prior."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "TSG-SID",
+          "position": 1,
+          "reason": "E7's tangent_successor_residual is its closest analogue and keeps the healthiest prefix profile (T1..T4 NLL 4.00/3.17/1.67/0.29, gold prefix alive 0.643/0.180/0.090/0.073) with no l1_br-style collapse, and it is the only candidate naming both switches (USE_BEHAV/USE_HYPER) with every constant measured from s_l, delta_l, mean"
+        },
+        {
+          "idea_id": "BRANCHCURV-MOEB-RQ",
+          "position": 2,
+          "reason": "E5 gives the strongest measured behaviour range (top-1 successor mass 0.4375 vs 0.0543, Spearman -0.973, distinct successors 2.72 to 41.41) and the cap-free c_i in [1e-3,c_max] spans exactly that range, but the nearest evidence is successor_geodesic_coarse/_v2 at 0.05500/0.05463 against 0.06207 Euclidean, E8/E11 show level-1 behavioural structure is already thin (0.0822 vs 0.0129 co-location; 0.0907 vs 0.067 first-prefix), and per-item curvature makes shared-codeword meaning item-dependent while M_l is left undefined."
+        },
+        {
+          "idea_id": "BRad-RQ",
+          "position": 3,
+          "reason": "the bundle carries the clearest negative for exactly this design: the level-1 behaviour-ranked prefix with its geometry off scores l1_br_euclid 0.06207 / l1_only 0.06233 but with geometry on l1_br falls to 0.04671 with gold prefix alive 1.000/1.000/1.000 and NLL 0/0/0/9.03, i.e. a trivially predictable, uninformative prefix, and the proposal additionally discards encoder magnitude and E8 caps level-1 co-location at 0.0822 for K=256 while naming no behaviour-off/geometry-off switches."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261029_093253_576",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "BRANCHCURV-MOEB-RQ": {
+        "first_places": 0,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      },
+      "BRad-RQ": {
+        "first_places": 2,
+        "mean_rank": 1.6667,
+        "total_rank": 5
+      },
+      "TSG-SID": {
+        "first_places": 1,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      }
+    },
+    "backups": [
+      {
+        "first_places": 1,
+        "idea_id": "TSG-SID",
+        "mean_rank": 2.0,
+        "status": "BACKUP",
+        "total_rank": 6
+      },
+      {
+        "first_places": 0,
+        "idea_id": "BRANCHCURV-MOEB-RQ",
+        "mean_rank": 2.3333,
+        "status": "BACKUP",
+        "total_rank": 7
+      }
+    ],
+    "disagreement": {
+      "BRANCHCURV-MOEB-RQ": 1,
+      "BRad-RQ": 2,
+      "TSG-SID": 2
+    },
+    "rejected": [
+      {
+        "idea_id": "TSG-SID",
+        "mean_rank": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 6
+      },
+      {
+        "idea_id": "BRANCHCURV-MOEB-RQ",
+        "mean_rank": 2.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 7
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 2,
+        "idea_id": "BRad-RQ",
+        "mean_rank": 1.6667,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 5
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "bash": "deny",
+    "edit": "deny",
+    "write": "deny",
+    "webfetch": "deny",
+    "websearch": "deny",
+    "task": "deny",
+    "lsp": "deny",
+    "read": {
+      "*": "deny",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/agents/verify_BRad-RQ_r8_3/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/agents/verify_BRad-RQ_r8_3/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/train_rqvae.py": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/train_rqvae.py": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/model/model.py": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/model/model.py": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/tests/test_ddp.py": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/tests/test_ddp.py": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/findings/BRad-RQ_r8.json": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/findings/BRad-RQ_r8.json": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/manifests/BRad-RQ_r8.txt": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/manifests/BRad-RQ_r8.txt": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/SCOPE_CONTRACT.md": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/SCOPE_CONTRACT.md": "allow",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md": "allow"
+    },
+    "external_directory": {
+      "*": "deny",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/train_rqvae.py": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/train_rqvae.py": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/model/model.py": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/model/model.py": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/model/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/model/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/tests/test_ddp.py": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/tests/test_ddp.py": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/tests/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ/tests/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/findings/BRad-RQ_r8.json": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/findings/BRad-RQ_r8.json": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/findings/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/findings/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/manifests/BRad-RQ_r8.txt": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/manifests/BRad-RQ_r8.txt": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/manifests/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/manifests/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/SCOPE_CONTRACT.md": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/SCOPE_CONTRACT.md": "allow",
+      "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md": "allow",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/**": "allow"
+    }
+  },
+  "mcp": {
+    "servers": {
+      "progress": {
+        "type": "local",
+        "enabled": true,
+        "command": [
+          "/usr/bin/python3",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/agents/progress_server.py",
+          "--file",
+          "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261029_093253_576/agents/verify_BRad-RQ_r8_3/progress.jsonl",
+          "--task-id",
+          "verify_BRad-RQ_r8_3",
+          "--deadline-epoch",
+          "1793236042.718185",
+          "--wrapup-margin",
+          "60"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "findings": [
+    {
+      "check": "behaviour signal: boundary, statistics and the connected pathway",
+      "correction": "commit model/__init__.py and model/model.py with RQVAE, containing forward(embeddings, item_ids=None, radius=None) that calls scale_by_radius(encoded, radius) before self.rq(...), set_radii that binds the per-item radius table, and get_indices that applies the same scale_by_radius(table[item_ids]) before self.rq(...). Drop the hasattr guard at :448 so a missing binding is an error rather than a no-op, and add the two test files the brief claims so the pathway is exercised.",
+      "detail": "The delivered tree contains exactly four files: train_rqvae.py, model/layers.py, model/behaviour_radius.py, model/frechet_poincare.py. There is no model/model.py and no model/__init__.py, although the brief's diff claims model/model.py was changed. Those two files own the only code that can turn the behaviour radius into the quantizer input: RQVAE.forward(..., radius=...) / scale_by_radius, and set_radii / get_indices. Nothing in the tree multiplies a latent by a radius - a full-text scan of the four files finds \"set_radii\" and \"scale_by_radius\" only at train_rqvae.py:448-449, and that call sits inside \"if hasattr(raw_module, 'set_radii')\", so against any inherited RQVAE the radius binding is silently skipped instead of failing. The behaviour statistic is therefore computed, printed at :450-453, and never reaches assignment_score: layers.py:89-97 only sees whatever latent the missing forward() hands it. This is the same broken link reported in r1 items 1 and 5, now narrowed to model/model.py. Separately, \"from model import RQVAE\" at train_rqvae.py:37 cannot resolve: model/ is a namespace package with no RQVAE attribute and no model.py.",
+      "location": "model/model.py (absent); model/__init__.py (absent); train_rqvae.py:37, 448-449, 473",
+      "reproduction": "in the tree directory, \"ls model\" prints layers.py, behaviour_radius.py, frechet_poincare.py only; opening model/model.py or model/__init__.py returns ENOENT; \"python -c 'from model import RQVAE'\" raises ImportError: cannot import name 'RQVAE' from 'model'. Even with that import stubbed, \"rg 'scale_by_radius|set_radii|radius_table' .\" matches only train_rqvae.py:448-449, and the training call at :473 passes radius= into a forward() that is not in the tree.",
+      "severity": "blocking",
+      "verifier": "verify_BRad-RQ_r1_3"
+    },
+    {
+      "check": "SID consistency: training, export and global uniqueness",
+      "correction": "commit model/model.py with set_radii and get_indices as described in the brief's own diff, and make the binding unconditional (remove the hasattr guard). Persist the radius table in the checkpoint (persistent=True or a side file next to rqvae_best.pth) and have get_indices raise when config.radial is true and no table is bound, so a re-export from the checkpoint cannot silently fall back to the radius-free path; delete the test that blesses the radius-free export.",
+      "detail": "The exported SID is produced by raw_module.get_indices, which is defined in the absent model/model.py. The brief's diff says get_indices now does \"encoded = self.scale_by_radius(encoded, table[ids])\" under a non-persistent radius_table, but neither the method nor the table exists in the tree. With the inherited RQVAE, get_indices encodes without the radius and hands the raw encoder output z to rq(); model/layers.py:92 then does squash(z), and squash/exp_0 maps any vector of norm >= 0.9 to the single norm tanh(0.9) = 0.7163. A 32-dim MLP output has norm well above 0.9 for essentially every item, so at export the whole catalogue lands on one and the same Poincare radius and the level-1 (and every later) code is chosen by angle alone, while every training step at :473 passes radius=radii[item_ids] and therefore scores items at their behaviour radius. The export is the code of a different point than the one the quantizer was trained on, so the SID Stage3 reads is not the code the trained quantizer assigns to the item.",
+      "location": "train_rqvae.py:582-585 calling raw_module.get_indices; model/model.py (absent)",
+      "reproduction": "build RQVAE with config.radial=True, run one forward with radius=r (r spanning 0.02..1.47) and one get_indices() on the same embeddings: the level-1 token columns differ, and for the export the value (1-|a|^2) is the same constant for every item. Equivalently, in the delivered tree there is no code that ever multiplies a latent by the radius, so :448-449's set_radii is a no-op and table[ids] is never read.",
+      "severity": "blocking",
+      "verifier": "verify_BRad-RQ_r1_3"
+    }
+  ],
+  "idea_id": "BRad-RQ",
+  "reviewed_revision": 7
+}

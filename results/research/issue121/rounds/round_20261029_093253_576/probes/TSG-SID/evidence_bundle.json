@@ -1,0 +1,3729 @@
+{
+  "behavioral_evidence": [
+    {
+      "claim": "the proposed training-only signal",
+      "id": "E1",
+      "source": "idea:TSG-SID",
+      "source_type": "proposal",
+      "status": "PROPOSED",
+      "value": "Directed item-to-item transitions from training sequences, aggregated into a sparse row-stochastic successor distribution p(j|i) per item, top-M truncated and renormalized."
+    },
+    {
+      "claim": "how it is computed",
+      "id": "E2",
+      "source": "idea:TSG-SID",
+      "source_type": "proposal",
+      "status": "PROPOSED",
+      "value": "One pass over the training split only, counting consecutive (i_t, i_{t+1}) pairs, keeping the top-M=16 successors per item and dividing by the row count; the table is frozen at epoch 0 and rebuilt only from training data. No popularity correction is applied (documented default), so nothing is tuned."
+    },
+    {
+      "claim": "why it cannot leak",
+      "id": "E3",
+      "source": "idea:TSG-SID",
+      "source_type": "proposal",
+      "status": "PROPOSED",
+      "value": "Counts, s_l, delta_l and the successor-to-codeword map are computed exclusively from the training split and from the current training codebook; validation and test sequences are never read, and no evaluation statistic enters any constant."
+    },
+    {
+      "claim": "the frozen training data contract",
+      "id": "E4",
+      "source": "results/stage0_build_parquet/train.parquet",
+      "source_type": "repo",
+      "status": "OBSERVED",
+      "value": null
+    },
+    {
+      "claim": "measured successor-entropy stratification on the train split: top-1 successor mass 0.4375 in the lowest entropy quintile against 0.0543 in the highest, Spearman(entropy, top-1 mass) = -0.9732738648557935; bin 1 H=0.931 support 2.8 distinct 2.72 top1 0.438; bin 2 H=1.505 support 4.6 distinct 4.54 top1 0.227; bin 3 H=1.875 support 6.7 distinct 6.60 top1 0.162; bin 4 H=2.362 support 11.0 distinct 10.84 top1 0.106; bin 5 H=3.405 support 44.3 distinct 41.41 top1 0.054",
+      "id": "E5",
+      "source": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261025_181918_856/evidence_successor_entropy_stratification.json",
+      "source_type": "repo",
+      "status": "OBSERVED",
+      "value": {
+        "bins": [
+          {
+            "bin": 1,
+            "entropy_range": [
+              -0.0,
+              1.3863
+            ],
+            "items": 4895,
+            "mean_distinct_successors": 2.723,
+            "mean_entropy": 0.931,
+            "mean_support": 2.77,
+            "mean_top1_mass": 0.4375,
+            "mean_unique_ratio": 0.9899
+          },
+          {
+            "bin": 2,
+            "entropy_range": [
+              1.3863,
+              1.6094
+            ],
+            "items": 4895,
+            "mean_distinct_successors": 4.539,
+            "mean_entropy": 1.505,
+            "mean_support": 4.57,
+            "mean_top1_mass": 0.2268,
+            "mean_unique_ratio": 0.9951
+          },
+          {
+            "bin": 3,
+            "entropy_range": [
+              1.6094,
+              2.0794
+            ],
+            "items": 4894,
+            "mean_distinct_successors": 6.602,
+            "mean_entropy": 1.8755,
+            "mean_support": 6.69,
+            "mean_top1_mass": 0.1622,
+            "mean_unique_ratio": 0.9896
+          },
+          {
+            "bin": 4,
+            "entropy_range": [
+              2.0794,
+              2.7081
+            ],
+            "items": 4895,
+            "mean_distinct_successors": 10.84,
+            "mean_entropy": 2.3616,
+            "mean_support": 11.03,
+            "mean_top1_mass": 0.1062,
+            "mean_unique_ratio": 0.9863
+          },
+          {
+            "bin": 5,
+            "entropy_range": [
+              2.7081,
+              7.0115
+            ],
+            "items": 4895,
+            "mean_distinct_successors": 41.413,
+            "mean_entropy": 3.4055,
+            "mean_support": 44.3,
+            "mean_top1_mass": 0.0543,
+            "mean_unique_ratio": 0.9708
+          }
+        ],
+        "items_with_successors": 24474,
+        "kind": "successor_entropy_stratification",
+        "low_entropy_vs_high_entropy": {
+          "distinct_successors": [
+            2.723,
+            41.413
+          ],
+          "support": [
+            2.77,
+            44.3
+          ],
+          "top1_mass": [
+            0.4375,
+            0.0543
+          ]
+        },
+        "spearman_entropy_vs_top1_mass": -0.9732738648557935,
+        "train_file": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+        "train_file_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+        "transitions": 339519
+      }
+    },
+    {
+      "claim": "measured width-20 beam survival on the 57,439-row test split: l1_br: recall@10 0.04671, target SID inside the 20 beams 0.0678, gold prefix alive at depth 1/2/3/4 1.000/1.000/1.000/0.068; l1_br_euclid: recall@10 0.06207, target SID inside the 20 beams 0.0847, gold prefix alive at depth 1/2/3/4 1.000/0.829/0.161/0.085; l1_only: recall@10 0.06233, target SID inside the 20 beams 0.0855, gold prefix alive at depth 1/2/3/4 1.000/0.829/0.156/0.086; resample: recall@10 0.06363, target SID inside the 20 beams 0.0884, gold prefix alive at depth 1/2/3/4 0.497/0.122/0.091/0.088; successor_entropy: recall@10 0.05122, target SID inside the 20 beams 0.0688, gold prefix alive at depth 1/2/3/4 0.735/0.400/0.133/0.069; successor_geodesic_coarse: recall@10 0.05500, target SID inside the 20 beams 0.0740, gold prefix alive at depth 1/2/3/4 0.989/0.341/0.122/0.074; successor_geodesic_coarse_v2: recall@10 0.05463, target SID inside the 20 beams 0.0736, gold prefix alive at depth 1/2/3/4 0.995/0.388/0.135/0.074; tangent_successor_residual: recall@10 0.05500, target SID inside the 20 beams 0.0731, gold prefix alive at depth 1/2/3/4 0.643/0.180/0.090/0.073",
+      "id": "E6",
+      "source": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/per_model_beam_metrics.json",
+      "source_type": "repo",
+      "status": "OBSERVED",
+      "value": {
+        "l1_br": {
+          "beam": {
+            "beam_width": 20,
+            "categories": {
+              "hit_from_beams": 2683,
+              "sid_absent_from_beams": 53546,
+              "sid_generated_dropped_before_top10": 1210
+            },
+            "category_share": {
+              "hit_from_beams": 0.046710423231602224,
+              "sid_absent_from_beams": 0.9322237504134822,
+              "sid_generated_dropped_before_top10": 0.021065826354915648
+            },
+            "first_drop_depth_histogram": {
+              "0_never_dropped": 3893,
+              "1": 0,
+              "2": 0,
+              "3": 0,
+              "4": 53546
+            },
+            "gold_prefix_alive_rate": {
+              "depth_1": 1.0,
+              "depth_2": 1.0,
+              "depth_3": 1.0,
+              "depth_4": 0.06777624958651787
+            },
+            "ndcg@10": 0.025124111105543846,
+            "raw_beam_coverage": 0.06777624958651784,
+            "recall@10": 0.046710423231602224,
+            "recall@5": 0.030449694458468984,
+            "rows": 57439
+          },
+          "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_s42/ckpt/Amazon_2023_Instruments/Oct-12-2026_08-36-27/HG_Rec_best.pth",
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.006023781731602222,
+            "ndcg_absolute_difference": 0.0034505417660031304,
+            "reported_ndcg@10": 0.021673569339540715,
+            "reported_test_recall@10": 0.0406866415,
+            "reproduced_ndcg@10": 0.025124111105543846,
+            "reproduced_test_recall@10": 0.046710423231602224
+          },
+          "sid_sha256": "ba2ecdd628c92d1316796d07732ce84ab732aee2d9912bb8bf5dd2a86955b969"
+        },
+        "l1_br_euclid": {
+          "beam": {
+            "beam_width": 20,
+            "categories": {
+              "hit_from_beams": 3565,
+              "sid_absent_from_beams": 52572,
+              "sid_generated_dropped_before_top10": 1302
+            },
+            "category_share": {
+              "hit_from_beams": 0.062065843764689495,
+              "sid_absent_from_beams": 0.9152666306864674,
+              "sid_generated_dropped_before_top10": 0.02266752554884312
+            },
+            "first_drop_depth_histogram": {
+              "0_never_dropped": 4867,
+              "1": 0,
+              "2": 9835,
+              "3": 38331,
+              "4": 4406
+            },
+            "gold_prefix_alive_rate": {
+              "depth_1": 1.0,
+              "depth_2": 0.828774874214384,
+              "depth_3": 0.16144083288358085,
+              "depth_4": 0.08473336931353262
+            },
+            "ndcg@10": 0.034032744611630306,
+            "raw_beam_coverage": 0.08473336931353259,
+            "recall@10": 0.062065843764689495,
+            "recall@5": 0.041295983565173486,
+            "rows": 57439
+          },
+          "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_br_euclid_s42/ckpt/Amazon_2023_Instruments/Oct-12-2026_09-33-58/HG_Rec_best.pth",
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0004352443461759434,
+            "ndcg_absolute_difference": 0.00015102237365094417,
+            "reported_ndcg@10": 0.03388172223797936,
+            "reported_test_recall@10": 0.06250108811086544,
+            "reproduced_ndcg@10": 0.034032744611630306,
+            "reproduced_test_recall@10": 0.062065843764689495
+          },
+          "sid_sha256": "8edc157df07fc45835391bf26935ac279335efd2c3bdcf6c5001cbcf5f6a3541"
+        },
+        "l1_only": {
+          "beam": {
+            "beam_width": 20,
+            "categories": {
+              "hit_from_beams": 3580,
+              "sid_absent_from_beams": 52526,
+              "sid_generated_dropped_before_top10": 1333
+            },
+            "category_share": {
+              "hit_from_beams": 0.062326990372395065,
+              "sid_absent_from_beams": 0.9144657810895036,
+              "sid_generated_dropped_before_top10": 0.02320722853810129
+            },
+            "first_drop_depth_histogram": {
+              "0_never_dropped": 4913,
+              "1": 0,
+              "2": 9810,
+              "3": 38652,
+              "4": 4064
+            },
+            "gold_prefix_alive_rate": {
+              "depth_1": 1.0,
+              "depth_2": 0.8292101185605599,
+              "depth_3": 0.15628753982485769,
+              "depth_4": 0.08553421891049635
+            },
+            "ndcg@10": 0.034109386583941935,
+            "raw_beam_coverage": 0.0855342189104964,
+            "recall@10": 0.062326990372395065,
+            "recall@5": 0.0413482128867146,
+            "rows": 57439
+          },
+          "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/tiger_fork_hyper_l1_s42/ckpt/Amazon_2023_Instruments/Oct-12-2026_07-31-01/HG_Rec_best.pth",
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0009227179723950638,
+            "ndcg_absolute_difference": 0.0006523806924473366,
+            "reported_ndcg@10": 0.0334570058914946,
+            "reported_test_recall@10": 0.0614042724,
+            "reproduced_ndcg@10": 0.034109386583941935,
+            "reproduced_test_recall@10": 0.062326990372395065
+          },
+          "sid_sha256": "e410a7079ef5ad97db5c8f94d3b2f8ac9bdb50e6cc21d6068cd5fea9c37c98f7"
+        },
+        "resample": {
+          "beam": {
+            "beam_width": 20,
+            "categories": {
+              "hit_from_beams": 3655,
+              "sid_absent_from_beams": 52363,
+              "sid_generated_dropped_before_top10": 1421
+            },
+            "category_share": {
+              "hit_from_beams": 0.0636327234109229,
+              "sid_absent_from_beams": 0.9116279879524365,
+              "sid_generated_dropped_before_top10": 0.02473928863664061
+            },
+            "first_drop_depth_histogram": {
+              "0_never_dropped": 5076,
+              "1": 28876,
+              "2": 21573,
+              "3": 1742,
+              "4": 172
+            },
+            "gold_prefix_alive_rate": {
+              "depth_1": 0.4972753703929386,
+              "depth_2": 0.12169431919079371,
+              "depth_3": 0.09136649314925399,
+              "depth_4": 0.08837201204756351
+            },
+            "ndcg@10": 0.03502501239941307,
+            "raw_beam_coverage": 0.08837201204756351,
+            "recall@10": 0.0636327234109229,
+            "recall@5": 0.04204460384059611,
+            "rows": 57439
+          },
+          "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_BEHAVIOR_SAMPLE_RQ-VAE__resample/ckpt/Amazon_2023_Instruments/Oct-15-2026_01-33-53/HG_Rec_best.pth",
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 1.0922901472198987e-11,
+            "ndcg_absolute_difference": null,
+            "reported_ndcg@10": null,
+            "reported_test_recall@10": 0.0636327234,
+            "reproduced_ndcg@10": 0.03502501239941307,
+            "reproduced_test_recall@10": 0.0636327234109229
+          },
+          "sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10"
+        },
+        "successor_entropy": {
+          "beam": {
+            "beam_width": 20,
+            "categories": {
+              "hit_from_beams": 2942,
+              "sid_absent_from_beams": 53489,
+              "sid_generated_dropped_before_top10": 1008
+            },
+            "category_share": {
+              "hit_from_beams": 0.05121955465798499,
+              "sid_absent_from_beams": 0.931231393304201,
+              "sid_generated_dropped_before_top10": 0.01754905203781403
+            },
+            "first_drop_depth_histogram": {
+              "0_never_dropped": 3950,
+              "1": 15197,
+              "2": 19294,
+              "3": 15294,
+              "4": 3704
+            },
+            "gold_prefix_alive_rate": {
+              "depth_1": 0.7354236668465677,
+              "depth_2": 0.39951949024182176,
+              "depth_3": 0.13325440902522676,
+              "depth_4": 0.06876860669579903
+            },
+            "ndcg@10": 0.028319735944137003,
+            "raw_beam_coverage": 0.06876860669579898,
+            "recall@10": 0.05121955465798499,
+            "recall@5": 0.034749908598687304,
+            "rows": 57439
+          },
+          "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor_entropy_curvature/ckpt/Amazon_2023_Instruments/Oct-25-2026_19-35-32/HG_Rec_best.pth",
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0005919323107992855,
+            "ndcg_absolute_difference": 0.0002978095615350264,
+            "reported_ndcg@10": 0.028021926382601977,
+            "reported_test_recall@10": 0.05062762234718571,
+            "reproduced_ndcg@10": 0.028319735944137003,
+            "reproduced_test_recall@10": 0.05121955465798499
+          },
+          "sid_sha256": "3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a"
+        },
+        "successor_geodesic_coarse": {
+          "beam": {
+            "beam_width": 20,
+            "categories": {
+              "hit_from_beams": 3159,
+              "sid_absent_from_beams": 53186,
+              "sid_generated_dropped_before_top10": 1094
+            },
+            "category_share": {
+              "hit_from_beams": 0.05499747558279218,
+              "sid_absent_from_beams": 0.9259562318285486,
+              "sid_generated_dropped_before_top10": 0.019046292588659273
+            },
+            "first_drop_depth_histogram": {
+              "0_never_dropped": 4253,
+              "1": 621,
+              "2": 37245,
+              "3": 12543,
+              "4": 2777
+            },
+            "gold_prefix_alive_rate": {
+              "depth_1": 0.9891885304409895,
+              "depth_2": 0.34076150350806944,
+              "depth_3": 0.12239071014467522,
+              "depth_4": 0.07404376817145145
+            },
+            "ndcg@10": 0.030307640392664384,
+            "raw_beam_coverage": 0.07404376817145142,
+            "recall@10": 0.05499747558279218,
+            "recall@5": 0.0367346228172496,
+            "rows": 57439
+          },
+          "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor-geodesic-coarse/ckpt/Amazon_2023_Instruments/Oct-26-2026_04-21-10/HG_Rec_best.pth",
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0001392781907763041,
+            "ndcg_absolute_difference": 0.00031167830220188084,
+            "reported_ndcg@10": 0.030619318694866265,
+            "reported_test_recall@10": 0.054858197392015876,
+            "reproduced_ndcg@10": 0.030307640392664384,
+            "reproduced_test_recall@10": 0.05499747558279218
+          },
+          "sid_sha256": "0172825ae6ec53538761377e83ea3e41fa199de500f36719c832846f19a639ae"
+        },
+        "successor_geodesic_coarse_v2": {
+          "beam": {
+            "beam_width": 20,
+            "categories": {
+              "hit_from_beams": 3138,
+              "sid_absent_from_beams": 53209,
+              "sid_generated_dropped_before_top10": 1092
+            },
+            "category_share": {
+              "hit_from_beams": 0.05463187033200439,
+              "sid_absent_from_beams": 0.9263566566270304,
+              "sid_generated_dropped_before_top10": 0.019011473040965197
+            },
+            "first_drop_depth_histogram": {
+              "0_never_dropped": 4230,
+              "1": 261,
+              "2": 34865,
+              "3": 14552,
+              "4": 3531
+            },
+            "gold_prefix_alive_rate": {
+              "depth_1": 0.9954560490259231,
+              "depth_2": 0.3884642838489528,
+              "depth_3": 0.1351172548268598,
+              "depth_4": 0.07364334337296959
+            },
+            "ndcg@10": 0.03017278169628209,
+            "raw_beam_coverage": 0.07364334337296963,
+            "recall@10": 0.05463187033200439,
+            "recall@5": 0.03621232960183847,
+            "rows": 57439
+          },
+          "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_successor-geodesic-coarse/ckpt/Amazon_2023_Instruments/Oct-26-2026_04-21-10/HG_Rec_best.pth",
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0006615714061874306,
+            "ndcg_absolute_difference": 0.00044653699858417453,
+            "reported_ndcg@10": 0.030619318694866265,
+            "reported_test_recall@10": 0.05529344173819182,
+            "reproduced_ndcg@10": 0.03017278169628209,
+            "reproduced_test_recall@10": 0.05463187033200439
+          },
+          "sid_sha256": "0172825ae6ec53538761377e83ea3e41fa199de500f36719c832846f19a639ae"
+        },
+        "tangent_successor_residual": {
+          "beam": {
+            "beam_width": 20,
+            "categories": {
+              "hit_from_beams": 3159,
+              "sid_absent_from_beams": 53242,
+              "sid_generated_dropped_before_top10": 1038
+            },
+            "category_share": {
+              "hit_from_beams": 0.05499747558279218,
+              "sid_absent_from_beams": 0.9269311791639827,
+              "sid_generated_dropped_before_top10": 0.018071345253225162
+            },
+            "first_drop_depth_histogram": {
+              "0_never_dropped": 4197,
+              "1": 20508,
+              "2": 26600,
+              "3": 5188,
+              "4": 946
+            },
+            "gold_prefix_alive_rate": {
+              "depth_1": 0.6429603579449503,
+              "depth_2": 0.17986037361374677,
+              "depth_3": 0.08953846689531503,
+              "depth_4": 0.07306882083601735
+            },
+            "ndcg@10": 0.02991870500655946,
+            "raw_beam_coverage": 0.07306882083601729,
+            "recall@10": 0.05499747558279218,
+            "recall@5": 0.03657793485262627,
+            "rows": 57439
+          },
+          "checkpoint": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/TIGER_tangent_successor_residual/ckpt/Amazon_2023_Instruments/Oct-25-2026_23-49-10/HG_Rec_best.pth",
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0007486202754226207,
+            "ndcg_absolute_difference": 0.0004165177522603633,
+            "reported_ndcg@10": 0.0295021872542991,
+            "reported_test_recall@10": 0.05424885530736956,
+            "reproduced_ndcg@10": 0.02991870500655946,
+            "reproduced_test_recall@10": 0.05499747558279218
+          },
+          "sid_sha256": "7d73b0b626ce651c27798716c590a6820c5ebfddd1478ba686448de50fc3ea21"
+        }
+      }
+    },
+    {
+      "claim": "measured teacher-forced per-position NLL: l1_br: T1/T2/T3/T4 NLL 0.00/0.00/0.00/9.03; l1_br_euclid: T1/T2/T3/T4 NLL 0.00/3.22/4.36/1.23; l1_only: T1/T2/T3/T4 NLL 0.00/3.23/4.38/1.19; resample: T1/T2/T3/T4 NLL 4.55/3.82/0.73/0.05; successor_entropy: T1/T2/T3/T4 NLL 3.45/2.33/2.29/0.98; successor_geodesic_coarse: T1/T2/T3/T4 NLL 2.53/3.11/2.58/0.77; successor_geodesic_coarse_v2: T1/T2/T3/T4 NLL 2.35/3.10/2.65/0.92; tangent_successor_residual: T1/T2/T3/T4 NLL 4.00/3.17/1.67/0.29",
+      "id": "E7",
+      "source": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/per_model_token_metrics.json",
+      "source_type": "repo",
+      "status": "OBSERVED",
+      "value": {
+        "l1_br": {
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.006023781731602222,
+            "ndcg_absolute_difference": 0.0034505417660031304,
+            "reported_ndcg@10": 0.021673569339540715,
+            "reported_test_recall@10": 0.0406866415,
+            "reproduced_ndcg@10": 0.025124111105543846,
+            "reproduced_test_recall@10": 0.046710423231602224
+          },
+          "token": {
+            "positions": {
+              "EOS": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.004758913069963455,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 0.000251465622568503,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.00024971229140646756,
+                "n": 57439
+              },
+              "T1": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.00933779776096344,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 0.0005098965484648943,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.0005055579822510481,
+                "n": 57439
+              },
+              "T2": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.012354384176433086,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 0.0006865285104140639,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.0006808108882978559,
+                "n": 57439
+              },
+              "T3": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.006962177809327841,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 0.00037405447801575065,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.00037079135654494166,
+                "n": 57439
+              },
+              "T4": {
+                "accuracy_at_1": 0.008443740315813297,
+                "accuracy_at_20": 0.06779365936036491,
+                "accuracy_at_5": 0.02895245390762374,
+                "gold_token_constant": false,
+                "gold_token_distinct": 16462,
+                "mean_entropy_nats": 8.5475435256958,
+                "mean_gold_rank": 4225.4831734535765,
+                "mean_nll": 9.03074836730957,
+                "median_gold_rank": 1584.0,
+                "median_nll": 9.061931610107422,
+                "n": 57439
+              }
+            },
+            "prefix_mean_nll": {
+              "T1": 0.0005098965484648943,
+              "T2": 0.00119642517529428,
+              "T3": 0.001570479478687048,
+              "T4": 9.032318115234375,
+              "T5": 9.032570838928223
+            },
+            "rows": 57439
+          }
+        },
+        "l1_br_euclid": {
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0004352443461759434,
+            "ndcg_absolute_difference": 0.00015102237365094417,
+            "reported_ndcg@10": 0.03388172223797936,
+            "reported_test_recall@10": 0.06250108811086544,
+            "reproduced_ndcg@10": 0.034032744611630306,
+            "reproduced_test_recall@10": 0.062065843764689495
+          },
+          "token": {
+            "positions": {
+              "EOS": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.0010284294839948416,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 6.101440158090554e-05,
+                "median_gold_rank": 1.0,
+                "median_nll": 6.01988795096986e-05,
+                "n": 57439
+              },
+              "T1": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.0014345775125548244,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 8.896260987967253e-05,
+                "median_gold_rank": 1.0,
+                "median_nll": 8.868777513271198e-05,
+                "n": 57439
+              },
+              "T2": {
+                "accuracy_at_1": 0.1782586744198193,
+                "accuracy_at_20": 0.8287400546666899,
+                "accuracy_at_5": 0.4807534950120998,
+                "gold_token_constant": false,
+                "gold_token_distinct": 80,
+                "mean_entropy_nats": 2.8454806804656982,
+                "mean_gold_rank": 10.550009575375617,
+                "mean_nll": 3.2201523780822754,
+                "median_gold_rank": 6.0,
+                "median_nll": 3.0682413578033447,
+                "n": 57439
+              },
+              "T3": {
+                "accuracy_at_1": 0.11523529309354272,
+                "accuracy_at_20": 0.5534567105973294,
+                "accuracy_at_5": 0.29817719667821513,
+                "gold_token_constant": false,
+                "gold_token_distinct": 256,
+                "mean_entropy_nats": 4.275603771209717,
+                "mean_gold_rank": 36.02797750657219,
+                "mean_nll": 4.357712745666504,
+                "median_gold_rank": 16.0,
+                "median_nll": 4.374411582946777,
+                "n": 57439
+              },
+              "T4": {
+                "accuracy_at_1": 0.5499747558279218,
+                "accuracy_at_20": 0.9962568986228869,
+                "accuracy_at_5": 0.9166420028203833,
+                "gold_token_constant": false,
+                "gold_token_distinct": 44,
+                "mean_entropy_nats": 1.1540220975875854,
+                "mean_gold_rank": 2.3933390205261236,
+                "mean_nll": 1.2257503271102905,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.9311560392379761,
+                "n": 57439
+              }
+            },
+            "prefix_mean_nll": {
+              "T1": 8.896260987967253e-05,
+              "T2": 3.220240592956543,
+              "T3": 7.577954292297363,
+              "T4": 8.803705215454102,
+              "T5": 8.803765296936035
+            },
+            "rows": 57439
+          }
+        },
+        "l1_only": {
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0009227179723950638,
+            "ndcg_absolute_difference": 0.0006523806924473366,
+            "reported_ndcg@10": 0.0334570058914946,
+            "reported_test_recall@10": 0.0614042724,
+            "reproduced_ndcg@10": 0.034109386583941935,
+            "reproduced_test_recall@10": 0.062326990372395065
+          },
+          "token": {
+            "positions": {
+              "EOS": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.0011815609177574515,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 7.037007162580267e-05,
+                "median_gold_rank": 1.0,
+                "median_nll": 6.97350042173639e-05,
+                "n": 57439
+              },
+              "T1": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.0018547432264313102,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 0.0001180630933959037,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.00011753345461329445,
+                "n": 57439
+              },
+              "T2": {
+                "accuracy_at_1": 0.17500304671042324,
+                "accuracy_at_20": 0.8292275283344069,
+                "accuracy_at_5": 0.4813976566444402,
+                "gold_token_constant": false,
+                "gold_token_distinct": 94,
+                "mean_entropy_nats": 2.8883862495422363,
+                "mean_gold_rank": 10.679764619857588,
+                "mean_nll": 3.2296833992004395,
+                "median_gold_rank": 6.0,
+                "median_nll": 3.0773394107818604,
+                "n": 57439
+              },
+              "T3": {
+                "accuracy_at_1": 0.1059036543115305,
+                "accuracy_at_20": 0.5487560716586292,
+                "accuracy_at_5": 0.2912655164609412,
+                "gold_token_constant": false,
+                "gold_token_distinct": 256,
+                "mean_entropy_nats": 4.325475692749023,
+                "mean_gold_rank": 36.09340343668936,
+                "mean_nll": 4.377813339233398,
+                "median_gold_rank": 17.0,
+                "median_nll": 4.393474578857422,
+                "n": 57439
+              },
+              "T4": {
+                "accuracy_at_1": 0.5570779435575132,
+                "accuracy_at_20": 0.9960828008844165,
+                "accuracy_at_5": 0.9250161040408085,
+                "gold_token_constant": false,
+                "gold_token_distinct": 37,
+                "mean_entropy_nats": 1.0949162244796753,
+                "mean_gold_rank": 2.3157436584898763,
+                "mean_nll": 1.192253828048706,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.8897133469581604,
+                "n": 57439
+              }
+            },
+            "prefix_mean_nll": {
+              "T1": 0.0001180630933959037,
+              "T2": 3.2298009395599365,
+              "T3": 7.607614040374756,
+              "T4": 8.799867630004883,
+              "T5": 8.799939155578613
+            },
+            "rows": 57439
+          }
+        },
+        "resample": {
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 1.0922901472198987e-11,
+            "ndcg_absolute_difference": null,
+            "reported_ndcg@10": null,
+            "reported_test_recall@10": 0.0636327234,
+            "reproduced_ndcg@10": 0.03502501239941307,
+            "reproduced_test_recall@10": 0.0636327234109229
+          },
+          "token": {
+            "positions": {
+              "EOS": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.00020774875883944333,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 1.1576774340937845e-05,
+                "median_gold_rank": 1.0,
+                "median_nll": 1.1444026313256472e-05,
+                "n": 57439
+              },
+              "T1": {
+                "accuracy_at_1": 0.09752955309110535,
+                "accuracy_at_20": 0.49739723880986786,
+                "accuracy_at_5": 0.2638277128780097,
+                "gold_token_constant": false,
+                "gold_token_distinct": 241,
+                "mean_entropy_nats": 4.159048080444336,
+                "mean_gold_rank": 44.08461150089661,
+                "mean_nll": 4.54999303817749,
+                "median_gold_rank": 21.0,
+                "median_nll": 4.597604751586914,
+                "n": 57439
+              },
+              "T2": {
+                "accuracy_at_1": 0.15181322794616897,
+                "accuracy_at_20": 0.7071501941189784,
+                "accuracy_at_5": 0.40247915179581817,
+                "gold_token_constant": false,
+                "gold_token_distinct": 256,
+                "mean_entropy_nats": 3.820100784301758,
+                "mean_gold_rank": 22.992496387471927,
+                "mean_nll": 3.817187786102295,
+                "median_gold_rank": 8.0,
+                "median_nll": 3.6818161010742188,
+                "n": 57439
+              },
+              "T3": {
+                "accuracy_at_1": 0.7943209317710963,
+                "accuracy_at_20": 0.988474729713261,
+                "accuracy_at_5": 0.9679660161214506,
+                "gold_token_constant": false,
+                "gold_token_distinct": 256,
+                "mean_entropy_nats": 0.5004528760910034,
+                "mean_gold_rank": 2.352965754974843,
+                "mean_nll": 0.7318625450134277,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.016407685354351997,
+                "n": 57439
+              },
+              "T4": {
+                "accuracy_at_1": 0.9771583767126865,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 0.9997388533922944,
+                "gold_token_constant": false,
+                "gold_token_distinct": 10,
+                "mean_entropy_nats": 0.04849811643362045,
+                "mean_gold_rank": 1.0289524539076238,
+                "mean_nll": 0.049400899559259415,
+                "median_gold_rank": 1.0,
+                "median_nll": 3.6954195820726454e-05,
+                "n": 57439
+              }
+            },
+            "prefix_mean_nll": {
+              "T1": 4.54999303817749,
+              "T2": 8.367180824279785,
+              "T3": 9.099042892456055,
+              "T4": 9.148444175720215,
+              "T5": 9.148456573486328
+            },
+            "rows": 57439
+          }
+        },
+        "successor_entropy": {
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0005919323107992855,
+            "ndcg_absolute_difference": 0.0002978095615350264,
+            "reported_ndcg@10": 0.028021926382601977,
+            "reported_test_recall@10": 0.05062762234718571,
+            "reproduced_ndcg@10": 0.028319735944137003,
+            "reproduced_test_recall@10": 0.05121955465798499
+          },
+          "token": {
+            "positions": {
+              "EOS": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.0004029508854728192,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 2.272596066177357e-05,
+                "median_gold_rank": 1.0,
+                "median_nll": 2.13382354559144e-05,
+                "n": 57439
+              },
+              "T1": {
+                "accuracy_at_1": 0.26246975051794075,
+                "accuracy_at_20": 0.7356848134542733,
+                "accuracy_at_5": 0.5610821915423319,
+                "gold_token_constant": false,
+                "gold_token_distinct": 250,
+                "mean_entropy_nats": 3.306103467941284,
+                "mean_gold_rank": 21.115235293093544,
+                "mean_nll": 3.4467148780822754,
+                "median_gold_rank": 4.0,
+                "median_nll": 2.9738101959228516,
+                "n": 57439
+              },
+              "T2": {
+                "accuracy_at_1": 0.33804557878793157,
+                "accuracy_at_20": 0.9651108132105364,
+                "accuracy_at_5": 0.7122164383084664,
+                "gold_token_constant": false,
+                "gold_token_distinct": 211,
+                "mean_entropy_nats": 2.2205734252929688,
+                "mean_gold_rank": 5.221574191751249,
+                "mean_nll": 2.3252856731414795,
+                "median_gold_rank": 3.0,
+                "median_nll": 2.1207845211029053,
+                "n": 57439
+              },
+              "T3": {
+                "accuracy_at_1": 0.4123156740193945,
+                "accuracy_at_20": 0.9109838263200961,
+                "accuracy_at_5": 0.721722174828949,
+                "gold_token_constant": false,
+                "gold_token_distinct": 256,
+                "mean_entropy_nats": 2.1351921558380127,
+                "mean_gold_rank": 7.767179094343565,
+                "mean_nll": 2.2880187034606934,
+                "median_gold_rank": 2.0,
+                "median_nll": 1.948164701461792,
+                "n": 57439
+              },
+              "T4": {
+                "accuracy_at_1": 0.680182454429917,
+                "accuracy_at_20": 0.9835651734883963,
+                "accuracy_at_5": 0.906735841501419,
+                "gold_token_constant": false,
+                "gold_token_distinct": 91,
+                "mean_entropy_nats": 0.8862213492393494,
+                "mean_gold_rank": 2.6618847821166804,
+                "mean_nll": 0.9830343127250671,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.2671249210834503,
+                "n": 57439
+              }
+            },
+            "prefix_mean_nll": {
+              "T1": 3.4467148780822754,
+              "T2": 5.772000312805176,
+              "T3": 8.060019493103027,
+              "T4": 9.043052673339844,
+              "T5": 9.043075561523438
+            },
+            "rows": 57439
+          }
+        },
+        "successor_geodesic_coarse": {
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0001392781907763041,
+            "ndcg_absolute_difference": 0.00031167830220188084,
+            "reported_ndcg@10": 0.030619318694866265,
+            "reported_test_recall@10": 0.054858197392015876,
+            "reproduced_ndcg@10": 0.030307640392664384,
+            "reproduced_test_recall@10": 0.05499747558279218
+          },
+          "token": {
+            "positions": {
+              "EOS": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.0008752654539421201,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 5.318427429301664e-05,
+                "median_gold_rank": 1.0,
+                "median_nll": 5.209310256759636e-05,
+                "n": 57439
+              },
+              "T1": {
+                "accuracy_at_1": 0.24782813071258206,
+                "accuracy_at_20": 0.9891014815717544,
+                "accuracy_at_5": 0.6193352948345201,
+                "gold_token_constant": false,
+                "gold_token_distinct": 26,
+                "mean_entropy_nats": 2.408453941345215,
+                "mean_gold_rank": 5.585299186963561,
+                "mean_nll": 2.5342705249786377,
+                "median_gold_rank": 4.0,
+                "median_nll": 2.4871487617492676,
+                "n": 57439
+              },
+              "T2": {
+                "accuracy_at_1": 0.17998224203067603,
+                "accuracy_at_20": 0.8731697975243301,
+                "accuracy_at_5": 0.4996779191838298,
+                "gold_token_constant": false,
+                "gold_token_distinct": 223,
+                "mean_entropy_nats": 3.0699946880340576,
+                "mean_gold_rank": 9.869357057051829,
+                "mean_nll": 3.1070051193237305,
+                "median_gold_rank": 6.0,
+                "median_nll": 2.9421849250793457,
+                "n": 57439
+              },
+              "T3": {
+                "accuracy_at_1": 0.3382022667525549,
+                "accuracy_at_20": 0.9102352060446735,
+                "accuracy_at_5": 0.6800779957868347,
+                "gold_token_constant": false,
+                "gold_token_distinct": 256,
+                "mean_entropy_nats": 2.469414472579956,
+                "mean_gold_rank": 8.309476139904943,
+                "mean_nll": 2.5808231830596924,
+                "median_gold_rank": 3.0,
+                "median_nll": 2.2801244258880615,
+                "n": 57439
+              },
+              "T4": {
+                "accuracy_at_1": 0.7367990389804836,
+                "accuracy_at_20": 0.9883006319747907,
+                "accuracy_at_5": 0.93446961123975,
+                "gold_token_constant": false,
+                "gold_token_distinct": 68,
+                "mean_entropy_nats": 0.6972900032997131,
+                "mean_gold_rank": 2.1713121746548514,
+                "mean_nll": 0.7749475240707397,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.08093751221895218,
+                "n": 57439
+              }
+            },
+            "prefix_mean_nll": {
+              "T1": 2.5342705249786377,
+              "T2": 5.641275405883789,
+              "T3": 8.222099304199219,
+              "T4": 8.99704647064209,
+              "T5": 8.997099876403809
+            },
+            "rows": 57439
+          }
+        },
+        "successor_geodesic_coarse_v2": {
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0006615714061874306,
+            "ndcg_absolute_difference": 0.00044653699858417453,
+            "reported_ndcg@10": 0.030619318694866265,
+            "reported_test_recall@10": 0.05529344173819182,
+            "reproduced_ndcg@10": 0.03017278169628209,
+            "reproduced_test_recall@10": 0.05463187033200439
+          },
+          "token": {
+            "positions": {
+              "EOS": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.0008731971611268818,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 5.2943683840567246e-05,
+                "median_gold_rank": 1.0,
+                "median_nll": 5.209310256759636e-05,
+                "n": 57439
+              },
+              "T1": {
+                "accuracy_at_1": 0.32147147408555166,
+                "accuracy_at_20": 0.9955256881213113,
+                "accuracy_at_5": 0.6835947701039363,
+                "gold_token_constant": false,
+                "gold_token_distinct": 28,
+                "mean_entropy_nats": 2.201241970062256,
+                "mean_gold_rank": 4.82403941572799,
+                "mean_nll": 2.349882125854492,
+                "median_gold_rank": 3.0,
+                "median_nll": 2.2578048706054688,
+                "n": 57439
+              },
+              "T2": {
+                "accuracy_at_1": 0.18948797855115862,
+                "accuracy_at_20": 0.8696704329810756,
+                "accuracy_at_5": 0.5073034001288323,
+                "gold_token_constant": false,
+                "gold_token_distinct": 227,
+                "mean_entropy_nats": 3.077094793319702,
+                "mean_gold_rank": 9.835042392799318,
+                "mean_nll": 3.09552001953125,
+                "median_gold_rank": 5.0,
+                "median_nll": 2.9530794620513916,
+                "n": 57439
+              },
+              "T3": {
+                "accuracy_at_1": 0.33734918783405005,
+                "accuracy_at_20": 0.8924424171730009,
+                "accuracy_at_5": 0.661275440032034,
+                "gold_token_constant": false,
+                "gold_token_distinct": 256,
+                "mean_entropy_nats": 2.5372869968414307,
+                "mean_gold_rank": 9.382057487073244,
+                "mean_nll": 2.648069143295288,
+                "median_gold_rank": 3.0,
+                "median_nll": 2.3613457679748535,
+                "n": 57439
+              },
+              "T4": {
+                "accuracy_at_1": 0.6959557095353331,
+                "accuracy_at_20": 0.9812844931144344,
+                "accuracy_at_5": 0.9130555894078936,
+                "gold_token_constant": false,
+                "gold_token_distinct": 67,
+                "mean_entropy_nats": 0.8442004919052124,
+                "mean_gold_rank": 2.5896516304253208,
+                "mean_nll": 0.9168547987937927,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.22149309515953064,
+                "n": 57439
+              }
+            },
+            "prefix_mean_nll": {
+              "T1": 2.349882125854492,
+              "T2": 5.445401668548584,
+              "T3": 8.093470573425293,
+              "T4": 9.01032543182373,
+              "T5": 9.01037883758545
+            },
+            "rows": 57439
+          }
+        },
+        "tangent_successor_residual": {
+          "n_eval": 57439,
+          "reproduction": {
+            "absolute_difference": 0.0007486202754226207,
+            "ndcg_absolute_difference": 0.0004165177522603633,
+            "reported_ndcg@10": 0.0295021872542991,
+            "reported_test_recall@10": 0.05424885530736956,
+            "reproduced_ndcg@10": 0.02991870500655946,
+            "reproduced_test_recall@10": 0.05499747558279218
+          },
+          "token": {
+            "positions": {
+              "EOS": {
+                "accuracy_at_1": 1.0,
+                "accuracy_at_20": 1.0,
+                "accuracy_at_5": 1.0,
+                "gold_token_constant": true,
+                "gold_token_distinct": 1,
+                "mean_entropy_nats": 0.0005226969951763749,
+                "mean_gold_rank": 1.0,
+                "mean_nll": 3.06536749121733e-05,
+                "median_gold_rank": 1.0,
+                "median_nll": 3.0040289857424796e-05,
+                "n": 57439
+              },
+              "T1": {
+                "accuracy_at_1": 0.12146799213078222,
+                "accuracy_at_20": 0.6429429481711033,
+                "accuracy_at_5": 0.33174324065530386,
+                "gold_token_constant": false,
+                "gold_token_distinct": 238,
+                "mean_entropy_nats": 3.8533945083618164,
+                "mean_gold_rank": 23.933825449607408,
+                "mean_nll": 3.998505115509033,
+                "median_gold_rank": 12.0,
+                "median_nll": 3.874946117401123,
+                "n": 57439
+              },
+              "T2": {
+                "accuracy_at_1": 0.18748585455874928,
+                "accuracy_at_20": 0.8517731854663207,
+                "accuracy_at_5": 0.4966137989867512,
+                "gold_token_constant": false,
+                "gold_token_distinct": 251,
+                "mean_entropy_nats": 3.1414334774017334,
+                "mean_gold_rank": 10.44624732324727,
+                "mean_nll": 3.166776418685913,
+                "median_gold_rank": 6.0,
+                "median_nll": 3.0339648723602295,
+                "n": 57439
+              },
+              "T3": {
+                "accuracy_at_1": 0.5268197566113616,
+                "accuracy_at_20": 0.975121433172583,
+                "accuracy_at_5": 0.8626542941207194,
+                "gold_token_constant": false,
+                "gold_token_distinct": 256,
+                "mean_entropy_nats": 1.4074242115020752,
+                "mean_gold_rank": 4.0231027698950195,
+                "mean_nll": 1.671723484992981,
+                "median_gold_rank": 1.0,
+                "median_nll": 1.0259463787078857,
+                "n": 57439
+              },
+              "T4": {
+                "accuracy_at_1": 0.8846776580372221,
+                "accuracy_at_20": 0.9996866240707534,
+                "accuracy_at_5": 0.9874823726039799,
+                "gold_token_constant": false,
+                "gold_token_distinct": 27,
+                "mean_entropy_nats": 0.2675305902957916,
+                "mean_gold_rank": 1.2586918295931335,
+                "mean_nll": 0.2902733385562897,
+                "median_gold_rank": 1.0,
+                "median_nll": 0.00037329382030293345,
+                "n": 57439
+              }
+            },
+            "prefix_mean_nll": {
+              "T1": 3.998505115509033,
+              "T2": 7.165281772613525,
+              "T3": 8.837004661560059,
+              "T4": 9.127278327941895,
+              "T5": 9.12730884552002
+            },
+            "rows": 57439
+          }
+        }
+      }
+    },
+    {
+      "claim": "measured first-level capacity ceiling on the frozen Stage1 vectors: share of canonical pairs whose anchor and target share one of K clusters is K=16 0.3106 (negative 0.1352), K=32 0.2164 (negative 0.0715), K=64 0.1547 (negative 0.0376), K=256 0.0822 (negative 0.0129); a small K keeps behavioural neighbours together far more often in absolute terms, which is what width-20 prefix survival depends on",
+      "id": "E8",
+      "source": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/next_round_premises.json",
+      "source_type": "repo",
+      "status": "OBSERVED",
+      "value": {
+        "cohort_profile_signal": {
+          "cohorts": 64,
+          "definition": "the profile of an item is the distribution of its train-only predecessors over successor-cohorts; the positive/negative rates use the same 52,855 held-out valid pairs and ten fixed negatives as the canonical ER",
+          "items": 24556,
+          "kind": "cohort_profile_signal",
+          "pairs_used": 52793,
+          "profile_entropy": {
+            "mean": 1.6468733549118042,
+            "p10": 0.6931471824645996,
+            "p90": 2.5520853996276855,
+            "share_zero": 0.02687734158657762
+          },
+          "profile_overlap": {
+            "negative_hit_rate": 0.8871460231470081,
+            "positive_hit_rate": 0.9290815070179759,
+            "positive_minus_negative": 0.019729450345039368,
+            "share_of_pairs_with_ties": 0.003769439130187714,
+            "share_positive_above_its_negatives": 0.5897884189191749
+          },
+          "profile_support": {
+            "mean_nonzero_cohorts": 7.496986479882717,
+            "share_single_cohort": 0.025574197752076887
+          },
+          "transitions": 339519
+        },
+        "first_level_capacity_ceiling": {
+          "capacity": {
+            "16": {
+              "expected_rank_ratio": 2.29729351507179,
+              "gap": 0.17538927253807585,
+              "negative_hit_rate": 0.13519629174155712,
+              "positive_hit_rate": 0.31058556427963296
+            },
+            "256": {
+              "expected_rank_ratio": 6.3528723870779125,
+              "gap": 0.06928199791883455,
+              "negative_hit_rate": 0.012942957146911361,
+              "positive_hit_rate": 0.08222495506574591
+            },
+            "32": {
+              "expected_rank_ratio": 3.02427672290686,
+              "gap": 0.14482262794437611,
+              "negative_hit_rate": 0.07154290038785356,
+              "positive_hit_rate": 0.2163655283322297
+            },
+            "64": {
+              "expected_rank_ratio": 4.114449645175902,
+              "gap": 0.11707690852331851,
+              "negative_hit_rate": 0.037591523980701924,
+              "positive_hit_rate": 0.15466843250402043
+            }
+          },
+          "definition": "k-means over the frozen Stage1 vectors; a pair is a hit when the anchor and the target share a cluster; the same 52,855 valid pairs and ten fixed negatives as the canonical ER",
+          "kind": "first_level_capacity_ceiling",
+          "pairs": 52855
+        },
+        "issue": "125 -> 121",
+        "kind": "next_round_premises"
+      }
+    },
+    {
+      "claim": "measured train-only cohort-profile signal: a positive shares a successor cohort with its anchor 0.9291 of the time against 0.8871 for the fixed negatives, and the positive's profile overlap exceeds every one of its ten negatives for 0.5898 of pairs; profile entropy averages 1.65 nats over 7.5 cohorts per item, so the profile is not degenerate",
+      "id": "E9",
+      "source": "/home/wlia0047/ar57/wenyu/GeneRec/results/research/sid_generation_forensics/next_round_premises.json",
+      "source_type": "repo",
+      "status": "OBSERVED",
+      "value": {
+        "cohort_profile_signal": {
+          "cohorts": 64,
+          "definition": "the profile of an item is the distribution of its train-only predecessors over successor-cohorts; the positive/negative rates use the same 52,855 held-out valid pairs and ten fixed negatives as the canonical ER",
+          "items": 24556,
+          "kind": "cohort_profile_signal",
+          "pairs_used": 52793,
+          "profile_entropy": {
+            "mean": 1.6468733549118042,
+            "p10": 0.6931471824645996,
+            "p90": 2.5520853996276855,
+            "share_zero": 0.02687734158657762
+          },
+          "profile_overlap": {
+            "negative_hit_rate": 0.8871460231470081,
+            "positive_hit_rate": 0.9290815070179759,
+            "positive_minus_negative": 0.019729450345039368,
+            "share_of_pairs_with_ties": 0.003769439130187714,
+            "share_positive_above_its_negatives": 0.5897884189191749
+          },
+          "profile_support": {
+            "mean_nonzero_cohorts": 7.496986479882717,
+            "share_single_cohort": 0.025574197752076887
+          },
+          "transitions": 339519
+        },
+        "first_level_capacity_ceiling": {
+          "capacity": {
+            "16": {
+              "expected_rank_ratio": 2.29729351507179,
+              "gap": 0.17538927253807585,
+              "negative_hit_rate": 0.13519629174155712,
+              "positive_hit_rate": 0.31058556427963296
+            },
+            "256": {
+              "expected_rank_ratio": 6.3528723870779125,
+              "gap": 0.06928199791883455,
+              "negative_hit_rate": 0.012942957146911361,
+              "positive_hit_rate": 0.08222495506574591
+            },
+            "32": {
+              "expected_rank_ratio": 3.02427672290686,
+              "gap": 0.14482262794437611,
+              "negative_hit_rate": 0.07154290038785356,
+              "positive_hit_rate": 0.2163655283322297
+            },
+            "64": {
+              "expected_rank_ratio": 4.114449645175902,
+              "gap": 0.11707690852331851,
+              "negative_hit_rate": 0.037591523980701924,
+              "positive_hit_rate": 0.15466843250402043
+            }
+          },
+          "definition": "k-means over the frozen Stage1 vectors; a pair is a hit when the anchor and the target share a cluster; the same 52,855 valid pairs and ten fixed negatives as the canonical ER",
+          "kind": "first_level_capacity_ceiling",
+          "pairs": 52855
+        },
+        "issue": "125 -> 121",
+        "kind": "next_round_premises"
+      }
+    },
+    {
+      "claim": "measured train-only statistic for this hypothesis",
+      "id": "E10",
+      "source": "probe:TSG-SID",
+      "source_type": "probe",
+      "status": "OK",
+      "value": {
+        "coverage_note": "counts are over the sampled users only; the coverage is the number of users and items the probe read",
+        "distinct_edges": 115582,
+        "edge_density": 5.3266,
+        "edges": 118315,
+        "mean_outgoing_degree": 5.4526,
+        "mean_transition_entropy_nats": 1.1063,
+        "outgoing_degree_quantiles": {
+          "median": 3,
+          "p10": 1,
+          "p90": 10
+        },
+        "permuted_null_edges": 118315,
+        "popular_successor_hit_rate": 0.0044,
+        "popularity_only_edge_mass": 0.0044,
+        "source_items": 21699,
+        "target_items": 21790
+      }
+    },
+    {
+      "claim": "measured train-only statistic for this hypothesis",
+      "id": "E11",
+      "source": "probe:TSG-SID",
+      "source_type": "probe",
+      "status": "OK",
+      "value": {
+        "note": "a diagnostic about the existing baseline SIDs; never an admission gate",
+        "permuted_null_same_first_prefix_rate": 0.067,
+        "same_first_prefix_rate": 0.0907,
+        "source": "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json",
+        "source_sha256": "53273cb605dc3210c20ad2ae5da778ce6fe7fd26bd8b3d6e356c2c7e0e7eed85",
+        "train_transitions_with_both_endpoints": 118315
+      }
+    }
+  ],
+  "built_at": 1793227542.0963967,
+  "data_contract": {
+    "baseline_tree": "stage2_RQ-VAE/TIGER_RQ-VAE",
+    "stage1_embeddings": "stage1_GeneEmbedding/output/sentence_t5.npy",
+    "stage2_epochs": 3000,
+    "stage2_recipe": "4 GPU DDP, total batch 4096, 0.12-0.16 s/epoch",
+    "stage2_train": "results/stage0_build_parquet/train.parquet",
+    "stage3_recipe": "NUM_EPOCHS=150, EVAL_INTERVAL=5, EVAL_START_EPOCH=75, SEED=42, BEAM_SIZE=20",
+    "valid_pairs": "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz"
+  },
+  "evidence_ids": {
+    "E1": "behavioral_evidence",
+    "E10": "behavioral_evidence",
+    "E100": "experiment_ledger",
+    "E101": "experiment_ledger",
+    "E102": "experiment_ledger",
+    "E103": "experiment_ledger",
+    "E104": "experiment_ledger",
+    "E105": "experiment_ledger",
+    "E106": "experiment_ledger",
+    "E107": "experiment_ledger",
+    "E108": "experiment_ledger",
+    "E109": "experiment_ledger",
+    "E11": "behavioral_evidence",
+    "E110": "experiment_ledger",
+    "E111": "experiment_ledger",
+    "E112": "experiment_ledger",
+    "E113": "experiment_ledger",
+    "E114": "experiment_ledger",
+    "E115": "experiment_ledger",
+    "E116": "experiment_ledger",
+    "E117": "experiment_ledger",
+    "E118": "experiment_ledger",
+    "E119": "experiment_ledger",
+    "E12": "geometric_necessity",
+    "E120": "experiment_ledger",
+    "E121": "experiment_ledger",
+    "E122": "experiment_ledger",
+    "E123": "experiment_ledger",
+    "E124": "experiment_ledger",
+    "E125": "experiment_ledger",
+    "E126": "experiment_ledger",
+    "E127": "experiment_ledger",
+    "E128": "experiment_ledger",
+    "E129": "experiment_ledger",
+    "E13": "geometric_necessity",
+    "E130": "experiment_ledger",
+    "E131": "experiment_ledger",
+    "E132": "experiment_ledger",
+    "E133": "experiment_ledger",
+    "E134": "experiment_ledger",
+    "E135": "experiment_ledger",
+    "E136": "experiment_ledger",
+    "E137": "experiment_ledger",
+    "E138": "experiment_ledger",
+    "E139": "implementation_cost",
+    "E14": "geometric_necessity",
+    "E140": "implementation_cost",
+    "E15": "geometric_necessity",
+    "E16": "prior_work",
+    "E17": "prior_work",
+    "E18": "prior_work",
+    "E19": "prior_work",
+    "E2": "behavioral_evidence",
+    "E20": "prior_work",
+    "E21": "prior_work",
+    "E22": "prior_work",
+    "E23": "prior_work",
+    "E24": "prior_work",
+    "E25": "prior_work",
+    "E26": "prior_work",
+    "E27": "prior_work",
+    "E28": "prior_work",
+    "E29": "prior_work",
+    "E3": "behavioral_evidence",
+    "E30": "prior_work",
+    "E31": "prior_work",
+    "E32": "prior_work",
+    "E33": "experiment_ledger",
+    "E34": "experiment_ledger",
+    "E35": "experiment_ledger",
+    "E36": "experiment_ledger",
+    "E37": "experiment_ledger",
+    "E38": "experiment_ledger",
+    "E39": "experiment_ledger",
+    "E4": "behavioral_evidence",
+    "E40": "experiment_ledger",
+    "E41": "experiment_ledger",
+    "E42": "experiment_ledger",
+    "E43": "experiment_ledger",
+    "E44": "experiment_ledger",
+    "E45": "experiment_ledger",
+    "E46": "experiment_ledger",
+    "E47": "experiment_ledger",
+    "E48": "experiment_ledger",
+    "E49": "experiment_ledger",
+    "E5": "behavioral_evidence",
+    "E50": "experiment_ledger",
+    "E51": "experiment_ledger",
+    "E52": "experiment_ledger",
+    "E53": "experiment_ledger",
+    "E54": "experiment_ledger",
+    "E55": "experiment_ledger",
+    "E56": "experiment_ledger",
+    "E57": "experiment_ledger",
+    "E58": "experiment_ledger",
+    "E59": "experiment_ledger",
+    "E6": "behavioral_evidence",
+    "E60": "experiment_ledger",
+    "E61": "experiment_ledger",
+    "E62": "experiment_ledger",
+    "E63": "experiment_ledger",
+    "E64": "experiment_ledger",
+    "E65": "experiment_ledger",
+    "E66": "experiment_ledger",
+    "E67": "experiment_ledger",
+    "E68": "experiment_ledger",
+    "E69": "experiment_ledger",
+    "E7": "behavioral_evidence",
+    "E70": "experiment_ledger",
+    "E71": "experiment_ledger",
+    "E72": "experiment_ledger",
+    "E73": "experiment_ledger",
+    "E74": "experiment_ledger",
+    "E75": "experiment_ledger",
+    "E76": "experiment_ledger",
+    "E77": "experiment_ledger",
+    "E78": "experiment_ledger",
+    "E79": "experiment_ledger",
+    "E8": "behavioral_evidence",
+    "E80": "experiment_ledger",
+    "E81": "experiment_ledger",
+    "E82": "experiment_ledger",
+    "E83": "experiment_ledger",
+    "E84": "experiment_ledger",
+    "E85": "experiment_ledger",
+    "E86": "experiment_ledger",
+    "E87": "experiment_ledger",
+    "E88": "experiment_ledger",
+    "E89": "experiment_ledger",
+    "E9": "behavioral_evidence",
+    "E90": "experiment_ledger",
+    "E91": "experiment_ledger",
+    "E92": "experiment_ledger",
+    "E93": "experiment_ledger",
+    "E94": "experiment_ledger",
+    "E95": "experiment_ledger",
+    "E96": "experiment_ledger",
+    "E97": "experiment_ledger",
+    "E98": "experiment_ledger",
+    "E99": "experiment_ledger"
+  },
+  "experiment_ledger": [
+    {
+      "claim": "Stage 3 test_R@10 0.05459705078431031 for TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL",
+      "id": "E33",
+      "source": "results/stage3_T5Train/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/logs/Amazon_2023_Instruments/Oct-28-2026_06-16-35/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/logs/Amazon_2023_Instruments/Oct-28-2026_06-16-35/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029830042735162276,
+        "test_recall_at_10": 0.05459705078431031
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05000087048869235 for TIGER_COOC_RANK_FRECHET",
+      "id": "E34",
+      "source": "results/stage3_T5Train/TIGER_COOC_RANK_FRECHET/logs/Amazon_2023_Instruments/Oct-27-2026_22-43-30/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_COOC_RANK_FRECHET",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_COOC_RANK_FRECHET/logs/Amazon_2023_Instruments/Oct-27-2026_22-43-30/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.027597108428946793,
+        "test_recall_at_10": 0.05000087048869235
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05553717857205035 for TIGER_RQ-VAE",
+      "id": "E35",
+      "source": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Oct-26-2026_06-26-20/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_RQ-VAE",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_RQ-VAE/logs/Amazon_2023_Instruments/Oct-26-2026_06-26-20/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03070078263209068,
+        "test_recall_at_10": 0.05553717857205035
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06338898657706436 for TIGER_behavior_residual_geometry_transport__r8_control",
+      "id": "E36",
+      "source": "results/stage3_T5Train/TIGER_behavior_residual_geometry_transport__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-01-57/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_behavior_residual_geometry_transport__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_behavior_residual_geometry_transport__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-01-57/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03454331085500618,
+        "test_recall_at_10": 0.06338898657706436
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.054562231236616236 for TIGER_behaviour_code_cohesion",
+      "id": "E37",
+      "source": "results/stage3_T5Train/TIGER_behaviour_code_cohesion/logs/Amazon_2023_Instruments/Oct-26-2026_15-53-35/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_behaviour_code_cohesion",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_behaviour_code_cohesion/logs/Amazon_2023_Instruments/Oct-26-2026_15-53-35/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.030372693416861364,
+        "test_recall_at_10": 0.054562231236616236
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06335416702937029 for TIGER_bootstrap_code_stability__resample",
+      "id": "E38",
+      "source": "results/stage3_T5Train/TIGER_bootstrap_code_stability__resample/logs/Amazon_2023_Instruments/Oct-25-2026_04-19-04/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_bootstrap_code_stability__resample",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_bootstrap_code_stability__resample/logs/Amazon_2023_Instruments/Oct-25-2026_04-19-04/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03516551922018455,
+        "test_recall_at_10": 0.06335416702937029
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.04967008478559864 for TIGER_branch-geodesic-rank",
+      "id": "E39",
+      "source": "results/stage3_T5Train/TIGER_branch-geodesic-rank/logs/Amazon_2023_Instruments/Oct-28-2026_12-21-45/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_branch-geodesic-rank",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_branch-geodesic-rank/logs/Amazon_2023_Instruments/Oct-28-2026_12-21-45/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.027248654225454434,
+        "test_recall_at_10": 0.04967008478559864
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05585055450129703 for TIGER_branch_shell",
+      "id": "E40",
+      "source": "results/stage3_T5Train/TIGER_branch_shell/logs/Amazon_2023_Instruments/Oct-25-2026_13-51-11/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_branch_shell",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_branch_shell/logs/Amazon_2023_Instruments/Oct-25-2026_13-51-11/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03135972497952313,
+        "test_recall_at_10": 0.05585055450129703
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06241403924163025 for TIGER_c106_directed_assignment_usage_balance__r8_control",
+      "id": "E41",
+      "source": "results/stage3_T5Train/TIGER_c106_directed_assignment_usage_balance__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-56-45/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c106_directed_assignment_usage_balance__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c106_directed_assignment_usage_balance__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-56-45/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.034312283480564885,
+        "test_recall_at_10": 0.06241403924163025
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06373718205400512 for TIGER_c106_directed_codeword_margin_geometry__r8_control",
+      "id": "E42",
+      "source": "results/stage3_T5Train/TIGER_c106_directed_codeword_margin_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-00-42/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c106_directed_codeword_margin_geometry__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c106_directed_codeword_margin_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-00-42/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03466763666330205,
+        "test_recall_at_10": 0.06373718205400512
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06375459182785216 for TIGER_c107_directed_assignment_prefix_information__r8_control",
+      "id": "E43",
+      "source": "results/stage3_T5Train/TIGER_c107_directed_assignment_prefix_information__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_05-01-06/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c107_directed_assignment_prefix_information__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c107_directed_assignment_prefix_information__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_05-01-06/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03467522673433716,
+        "test_recall_at_10": 0.06375459182785216
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06088197914309093 for TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control",
+      "id": "E44",
+      "source": "results/stage3_T5Train/TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_12-26-39/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_12-26-39/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03310210683018558,
+        "test_recall_at_10": 0.06088197914309093
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06072529117846759 for TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control",
+      "id": "E45",
+      "source": "results/stage3_T5Train/TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_07-26-58/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_07-26-58/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03337873989029098,
+        "test_recall_at_10": 0.06072529117846759
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.061682828740054665 for TIGER_c107_directed_codebook_tangent_repartition__r8_control",
+      "id": "E46",
+      "source": "results/stage3_T5Train/TIGER_c107_directed_codebook_tangent_repartition__r8_control/logs/Amazon_2023_Instruments/Oct-23-2026_00-41-33/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c107_directed_codebook_tangent_repartition__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c107_directed_codebook_tangent_repartition__r8_control/logs/Amazon_2023_Instruments/Oct-23-2026_00-41-33/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.033926403735998444,
+        "test_recall_at_10": 0.061682828740054665
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06269259562318286 for TIGER_c107_directed_codeword_tangent_repulsion__r8_control",
+      "id": "E47",
+      "source": "results/stage3_T5Train/TIGER_c107_directed_codeword_tangent_repulsion__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_09-56-09/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c107_directed_codeword_tangent_repulsion__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c107_directed_codeword_tangent_repulsion__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_09-56-09/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03394123485236039,
+        "test_recall_at_10": 0.06269259562318286
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06103866710771427 for TIGER_c107_directed_separated_codeword_geometry__r8_control",
+      "id": "E48",
+      "source": "results/stage3_T5Train/TIGER_c107_directed_separated_codeword_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_03-37-07/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c107_directed_separated_codeword_geometry__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c107_directed_separated_codeword_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_03-37-07/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.033942537933861414,
+        "test_recall_at_10": 0.06103866710771427
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05557199811974443 for TIGER_c117_hyperbolic_item_semantic_id",
+      "id": "E49",
+      "source": "results/stage3_T5Train/TIGER_c117_hyperbolic_item_semantic_id/logs/Amazon_2023_Instruments/Oct-24-2026_16-10-20/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c117_hyperbolic_item_semantic_id",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c117_hyperbolic_item_semantic_id/logs/Amazon_2023_Instruments/Oct-24-2026_16-10-20/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.030364774529014066,
+        "test_recall_at_10": 0.05557199811974443
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0610038475600202 for TIGER_c1_behaviour_conditioned_residual_target__r8_control",
+      "id": "E50",
+      "source": "results/stage3_T5Train/TIGER_c1_behaviour_conditioned_residual_target__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_12-07-27/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c1_behaviour_conditioned_residual_target__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c1_behaviour_conditioned_residual_target__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_12-07-27/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03381020016512428,
+        "test_recall_at_10": 0.0610038475600202
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06225735127700691 for TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control",
+      "id": "E51",
+      "source": "results/stage3_T5Train/TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_20-54-52/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_20-54-52/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03384902483338121,
+        "test_recall_at_10": 0.06225735127700691
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.03983356256202232 for TIGER_cogeo_region_argmax",
+      "id": "E52",
+      "source": "results/stage3_T5Train/TIGER_cogeo_region_argmax/logs/Amazon_2023_Instruments/Oct-27-2026_18-48-24/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_cogeo_region_argmax",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_cogeo_region_argmax/logs/Amazon_2023_Instruments/Oct-27-2026_18-48-24/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.02169466665477982,
+        "test_recall_at_10": 0.03983356256202232
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05593760337053222 for TIGER_cooccur_coherent_sid",
+      "id": "E53",
+      "source": "results/stage3_T5Train/TIGER_cooccur_coherent_sid/logs/Amazon_2023_Instruments/Oct-26-2026_22-00-51/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_cooccur_coherent_sid",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_cooccur_coherent_sid/logs/Amazon_2023_Instruments/Oct-26-2026_22-00-51/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.030766723265997328,
+        "test_recall_at_10": 0.05593760337053222
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.058496840126046765 for TIGER_incoming_context_barycenter",
+      "id": "E54",
+      "source": "results/stage3_T5Train/TIGER_incoming_context_barycenter/logs/Amazon_2023_Instruments/Oct-27-2026_05-45-40/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_incoming_context_barycenter",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_incoming_context_barycenter/logs/Amazon_2023_Instruments/Oct-27-2026_05-45-40/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03205664072791379,
+        "test_recall_at_10": 0.058496840126046765
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05121955465798499 for TIGER_interest_signature_hypball",
+      "id": "E55",
+      "source": "results/stage3_T5Train/TIGER_interest_signature_hypball/logs/Amazon_2023_Instruments/Oct-28-2026_08-50-40/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_interest_signature_hypball",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_interest_signature_hypball/logs/Amazon_2023_Instruments/Oct-28-2026_08-50-40/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.028456964417855054,
+        "test_recall_at_10": 0.05121955465798499
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.053169449328853216 for TIGER_poincare-frechet-successor-codebook",
+      "id": "E56",
+      "source": "results/stage3_T5Train/TIGER_poincare-frechet-successor-codebook/logs/Amazon_2023_Instruments/Oct-29-2026_02-06-58/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_poincare-frechet-successor-codebook",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_poincare-frechet-successor-codebook/logs/Amazon_2023_Instruments/Oct-29-2026_02-06-58/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029094302825308862,
+        "test_recall_at_10": 0.053169449328853216
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0635456745416877 for TIGER_seed43_geometry__r8_control",
+      "id": "E57",
+      "source": "results/stage3_T5Train/TIGER_seed43_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-23-2026_05-04-58/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_seed43_geometry__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_seed43_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-23-2026_05-04-58/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03484717366679001,
+        "test_recall_at_10": 0.0635456745416877
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0631800692908999 for TIGER_seed43_geometry__r8_control",
+      "id": "E58",
+      "source": "results/stage3_T5Train/TIGER_seed43_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-23-2026_08-08-07/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_seed43_geometry__r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_seed43_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-23-2026_08-08-07/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03467516022494957,
+        "test_recall_at_10": 0.0631800692908999
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.054022528247358065 for TIGER_successor-geodesic-coarse",
+      "id": "E59",
+      "source": "results/stage3_T5Train/TIGER_successor-geodesic-coarse/logs/Amazon_2023_Instruments/Oct-26-2026_11-41-33/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_successor-geodesic-coarse",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_successor-geodesic-coarse/logs/Amazon_2023_Instruments/Oct-26-2026_11-41-33/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029981413033305662,
+        "test_recall_at_10": 0.054022528247358065
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.054858197392015876 for TIGER_successor-geodesic-coarse__v1_coarse_only",
+      "id": "E60",
+      "source": "results/stage3_T5Train/TIGER_successor-geodesic-coarse__v1_coarse_only/logs/Amazon_2023_Instruments/Oct-26-2026_01-00-54/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_successor-geodesic-coarse__v1_coarse_only",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_successor-geodesic-coarse__v1_coarse_only/logs/Amazon_2023_Instruments/Oct-26-2026_01-00-54/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.030173576832768327,
+        "test_recall_at_10": 0.054858197392015876
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05529344173819182 for TIGER_successor-geodesic-coarse__v2_tail_ordered",
+      "id": "E61",
+      "source": "results/stage3_T5Train/TIGER_successor-geodesic-coarse__v2_tail_ordered/logs/Amazon_2023_Instruments/Oct-26-2026_04-21-10/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_successor-geodesic-coarse__v2_tail_ordered",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_successor-geodesic-coarse__v2_tail_ordered/logs/Amazon_2023_Instruments/Oct-26-2026_04-21-10/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.030619318694866265,
+        "test_recall_at_10": 0.05529344173819182
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05062762234718571 for TIGER_successor_entropy_curvature",
+      "id": "E62",
+      "source": "results/stage3_T5Train/TIGER_successor_entropy_curvature/logs/Amazon_2023_Instruments/Oct-25-2026_19-35-32/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_successor_entropy_curvature",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_successor_entropy_curvature/logs/Amazon_2023_Instruments/Oct-25-2026_19-35-32/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.028021926382601977,
+        "test_recall_at_10": 0.05062762234718571
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05435331395045179 for TIGER_successor_residual_barycenter",
+      "id": "E63",
+      "source": "results/stage3_T5Train/TIGER_successor_residual_barycenter/logs/Amazon_2023_Instruments/Oct-26-2026_05-47-51/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_successor_residual_barycenter",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_successor_residual_barycenter/logs/Amazon_2023_Instruments/Oct-26-2026_05-47-51/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029748898869614567,
+        "test_recall_at_10": 0.05435331395045179
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05424885530736956 for TIGER_tangent_successor_residual",
+      "id": "E64",
+      "source": "results/stage3_T5Train/TIGER_tangent_successor_residual/logs/Amazon_2023_Instruments/Oct-25-2026_23-49-10/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_tangent_successor_residual",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_tangent_successor_residual/logs/Amazon_2023_Instruments/Oct-25-2026_23-49-10/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.0295021872542991,
+        "test_recall_at_10": 0.05424885530736956
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0548233778443218 for TIGER_transition_busemann_gate",
+      "id": "E65",
+      "source": "results/stage3_T5Train/TIGER_transition_busemann_gate/logs/Amazon_2023_Instruments/Oct-25-2026_16-24-07/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "TIGER_transition_busemann_gate",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/TIGER_transition_busemann_gate/logs/Amazon_2023_Instruments/Oct-25-2026_16-24-07/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03047498281369757,
+        "test_recall_at_10": 0.0548233778443218
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.04806838559167116 for curvature_RQ-VAE",
+      "id": "E66",
+      "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-01-2026_15-23-32/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "curvature_RQ-VAE",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-01-2026_15-23-32/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.02634937592483783,
+        "test_recall_at_10": 0.04806838559167116
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.050906178728738316 for curvature_RQ-VAE",
+      "id": "E67",
+      "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-01-2026_22-42-48/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "curvature_RQ-VAE",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-01-2026_22-42-48/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.027338368038475554,
+        "test_recall_at_10": 0.050906178728738316
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.052507877922665785 for curvature_RQ-VAE",
+      "id": "E68",
+      "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_04-52-03/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "curvature_RQ-VAE",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_04-52-03/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.028258494120062528,
+        "test_recall_at_10": 0.052507877922665785
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.053273907971935444 for curvature_RQ-VAE",
+      "id": "E69",
+      "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_14-16-47/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "curvature_RQ-VAE",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_14-16-47/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.02883056731185628,
+        "test_recall_at_10": 0.053273907971935444
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.060081129546127196 for curvature_RQ-VAE",
+      "id": "E70",
+      "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_20-34-59/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "curvature_RQ-VAE",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_20-34-59/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03227867048107636,
+        "test_recall_at_10": 0.060081129546127196
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.04657114504082592 for curvature_RQ-VAE",
+      "id": "E71",
+      "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-08-2026_14-50-16/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "curvature_RQ-VAE",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-08-2026_14-50-16/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.02564950380232177,
+        "test_recall_at_10": 0.04657114504082592
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.04394226918992322 for curvature_RQ-VAE",
+      "id": "E72",
+      "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Sep-29-2026_03-42-07/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "curvature_RQ-VAE",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Sep-29-2026_03-42-07/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.02329048991025455,
+        "test_recall_at_10": 0.04394226918992322
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0537613816396525 for curvature_RQ-VAE_repaired",
+      "id": "E73",
+      "source": "results/stage3_T5Train/curvature_RQ-VAE_repaired/logs/Amazon_2023_Instruments/Sep-24-2026_13-51-46/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "curvature_RQ-VAE_repaired",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/curvature_RQ-VAE_repaired/logs/Amazon_2023_Instruments/Sep-24-2026_13-51-46/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029689399252308544,
+        "test_recall_at_10": 0.0537613816396525
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06295374223088843 for r4_08",
+      "id": "E74",
+      "source": "results/stage3_T5Train/r4_08/logs/Amazon_2023_Instruments/Oct-18-2026_19-46-59/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "r4_08",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/r4_08/logs/Amazon_2023_Instruments/Oct-18-2026_19-46-59/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03454767796170093,
+        "test_recall_at_10": 0.06295374223088843
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06406796775709883 for r8_control",
+      "id": "E75",
+      "source": "results/stage3_T5Train/r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-55-22/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "r8_control",
+        "comparable_to_frozen": false,
+        "global_batch": 16384,
+        "launch_mode": "ddp4",
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-55-22/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03530651701940677,
+        "test_recall_at_10": 0.06406796775709883
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.053918069604275844 for sidarm_A4_euclid_l2_64_nocone",
+      "id": "E76",
+      "source": "results/stage3_T5Train/sidarm_A4_euclid_l2_64_nocone/logs/Amazon_2023_Instruments/Oct-10-2026_00-41-15/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_A4_euclid_l2_64_nocone",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_A4_euclid_l2_64_nocone/logs/Amazon_2023_Instruments/Oct-10-2026_00-41-15/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029524254857286953,
+        "test_recall_at_10": 0.053918069604275844
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05828792283988231 for sidarm_A_l2_256_nocone",
+      "id": "E77",
+      "source": "results/stage3_T5Train/sidarm_A_l2_256_nocone/logs/Amazon_2023_Instruments/Oct-09-2026_22-18-19/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_A_l2_256_nocone",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_A_l2_256_nocone/logs/Amazon_2023_Instruments/Oct-09-2026_22-18-19/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03188666115998626,
+        "test_recall_at_10": 0.05828792283988231
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05262974633959505 for sidarm_B_l2_64_nocone",
+      "id": "E78",
+      "source": "results/stage3_T5Train/sidarm_B_l2_64_nocone/logs/Amazon_2023_Instruments/Oct-09-2026_22-57-36/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_B_l2_64_nocone",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_B_l2_64_nocone/logs/Amazon_2023_Instruments/Oct-09-2026_22-57-36/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.028887437838582296,
+        "test_recall_at_10": 0.05262974633959505
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.04832953219937673 for sidarm_CLP_poincare_coarse_l1",
+      "id": "E79",
+      "source": "results/stage3_T5Train/sidarm_CLP_poincare_coarse_l1/logs/Amazon_2023_Instruments/Oct-10-2026_07-22-04/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_CLP_poincare_coarse_l1",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_CLP_poincare_coarse_l1/logs/Amazon_2023_Instruments/Oct-10-2026_07-22-04/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.02661758010980225,
+        "test_recall_at_10": 0.04832953219937673
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0458225247654033 for sidarm_D_l2_64_cone",
+      "id": "E80",
+      "source": "results/stage3_T5Train/sidarm_D_l2_64_cone/logs/Amazon_2023_Instruments/Oct-09-2026_23-44-56/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_D_l2_64_cone",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_D_l2_64_cone/logs/Amazon_2023_Instruments/Oct-09-2026_23-44-56/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.024861682355637193,
+        "test_recall_at_10": 0.0458225247654033
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06042932502306795 for sidarm_E43_euclid_l2_256_72k_s43",
+      "id": "E81",
+      "source": "results/stage3_T5Train/sidarm_E43_euclid_l2_256_72k_s43/logs/Amazon_2023_Instruments/Oct-10-2026_10-51-54/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_E43_euclid_l2_256_72k_s43",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_E43_euclid_l2_256_72k_s43/logs/Amazon_2023_Instruments/Oct-10-2026_10-51-54/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03305685935419115,
+        "test_recall_at_10": 0.06042932502306795
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05867093786451714 for sidarm_E44_euclid_l2_256_72k_s44",
+      "id": "E82",
+      "source": "results/stage3_T5Train/sidarm_E44_euclid_l2_256_72k_s44/logs/Amazon_2023_Instruments/Oct-10-2026_12-34-44/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_E44_euclid_l2_256_72k_s44",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_E44_euclid_l2_256_72k_s44/logs/Amazon_2023_Instruments/Oct-10-2026_12-34-44/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.032159901835191664,
+        "test_recall_at_10": 0.05867093786451714
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.059158411532234195 for sidarm_E72_euclid_l2_256_72k",
+      "id": "E83",
+      "source": "results/stage3_T5Train/sidarm_E72_euclid_l2_256_72k/logs/Amazon_2023_Instruments/Oct-10-2026_01-55-10/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_E72_euclid_l2_256_72k",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_E72_euclid_l2_256_72k/logs/Amazon_2023_Instruments/Oct-10-2026_01-55-10/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03270374329614224,
+        "test_recall_at_10": 0.059158411532234195
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05313462978115914 for sidarm_L2AB_bucket_sinkhorn_s42",
+      "id": "E84",
+      "source": "results/stage3_T5Train/sidarm_L2AB_bucket_sinkhorn_s42/logs/Amazon_2023_Instruments/Oct-10-2026_13-32-56/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_L2AB_bucket_sinkhorn_s42",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_L2AB_bucket_sinkhorn_s42/logs/Amazon_2023_Instruments/Oct-10-2026_13-32-56/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.028994537719220934,
+        "test_recall_at_10": 0.05313462978115914
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.051863716290325386 for sidarm_L2AG_global_sinkhorn_s42",
+      "id": "E85",
+      "source": "results/stage3_T5Train/sidarm_L2AG_global_sinkhorn_s42/logs/Amazon_2023_Instruments/Oct-10-2026_14-09-20/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_L2AG_global_sinkhorn_s42",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_L2AG_global_sinkhorn_s42/logs/Amazon_2023_Instruments/Oct-10-2026_14-09-20/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.02832119215030391,
+        "test_recall_at_10": 0.051863716290325386
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.03219067184317276 for sidarm_ME_euclid_metriccone",
+      "id": "E86",
+      "source": "results/stage3_T5Train/sidarm_ME_euclid_metriccone/logs/Amazon_2023_Instruments/Oct-10-2026_04-41-54/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_ME_euclid_metriccone",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_ME_euclid_metriccone/logs/Amazon_2023_Instruments/Oct-10-2026_04-41-54/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.017654854187119418,
+        "test_recall_at_10": 0.03219067184317276
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.04556137815769773 for sidarm_MP_poincare_metriccone",
+      "id": "E87",
+      "source": "results/stage3_T5Train/sidarm_MP_poincare_metriccone/logs/Amazon_2023_Instruments/Oct-10-2026_05-16-30/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_MP_poincare_metriccone",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_MP_poincare_metriccone/logs/Amazon_2023_Instruments/Oct-10-2026_05-16-30/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.024414688445720846,
+        "test_recall_at_10": 0.04556137815769773
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.04725012622086039 for sidarm_R5D_poincare_cone_rejection_fixed",
+      "id": "E88",
+      "source": "results/stage3_T5Train/sidarm_R5D_poincare_cone_rejection_fixed/logs/Amazon_2023_Instruments/Oct-10-2026_04-07-33/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_R5D_poincare_cone_rejection_fixed",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_R5D_poincare_cone_rejection_fixed/logs/Amazon_2023_Instruments/Oct-10-2026_04-07-33/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.02533764415348952,
+        "test_recall_at_10": 0.04725012622086039
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0604989641184561 for sidarm_SE_euclid_smooth",
+      "id": "E89",
+      "source": "results/stage3_T5Train/sidarm_SE_euclid_smooth/logs/Amazon_2023_Instruments/Oct-10-2026_09-14-14/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_SE_euclid_smooth",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_SE_euclid_smooth/logs/Amazon_2023_Instruments/Oct-10-2026_09-14-14/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03295148832490338,
+        "test_recall_at_10": 0.0604989641184561
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.059541426556869025 for sidarm_SFE_euclid_smoothfair",
+      "id": "E90",
+      "source": "results/stage3_T5Train/sidarm_SFE_euclid_smoothfair/logs/Amazon_2023_Instruments/Oct-11-2026_18-31-28/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_SFE_euclid_smoothfair",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_SFE_euclid_smoothfair/logs/Amazon_2023_Instruments/Oct-11-2026_18-31-28/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03280680602967149,
+        "test_recall_at_10": 0.059541426556869025
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.058688347638364176 for sidarm_SFP_poincare_smoothfair",
+      "id": "E91",
+      "source": "results/stage3_T5Train/sidarm_SFP_poincare_smoothfair/logs/Amazon_2023_Instruments/Oct-11-2026_19-07-42/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_SFP_poincare_smoothfair",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_SFP_poincare_smoothfair/logs/Amazon_2023_Instruments/Oct-11-2026_19-07-42/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03250005026794084,
+        "test_recall_at_10": 0.058688347638364176
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05950660700917495 for sidarm_SH_poincare_smooth",
+      "id": "E92",
+      "source": "results/stage3_T5Train/sidarm_SH_poincare_smooth/logs/Amazon_2023_Instruments/Oct-10-2026_09-48-53/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "sidarm_SH_poincare_smooth",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/sidarm_SH_poincare_smooth/logs/Amazon_2023_Instruments/Oct-10-2026_09-48-53/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.032857600145857924,
+        "test_recall_at_10": 0.05950660700917495
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.054736328975086616 for tiger",
+      "id": "E93",
+      "source": "results/stage3_T5Train/tiger/logs/Amazon_2023_Instruments/Oct-01-2026_13-41-50/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger/logs/Amazon_2023_Instruments/Oct-01-2026_13-41-50/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029630307667233867,
+        "test_recall_at_10": 0.054736328975086616
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05367433277041731 for tiger",
+      "id": "E94",
+      "source": "results/stage3_T5Train/tiger/logs/Amazon_2023_Instruments/Oct-01-2026_18-07-15/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger/logs/Amazon_2023_Instruments/Oct-01-2026_18-07-15/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029444663223495537,
+        "test_recall_at_10": 0.05367433277041731
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0619265655739132 for tiger_behavior",
+      "id": "E95",
+      "source": "results/stage3_T5Train/tiger_behavior/logs/Amazon_2023_Instruments/Oct-10-2026_16-25-18/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_behavior",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_behavior/logs/Amazon_2023_Instruments/Oct-10-2026_16-25-18/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.033820355166338016,
+        "test_recall_at_10": 0.0619265655739132
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.060847159595396855 for tiger_fork_fork_ang_only",
+      "id": "E96",
+      "source": "results/stage3_T5Train/tiger_fork_fork_ang_only/logs/Amazon_2023_Instruments/Oct-11-2026_08-28-09/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_fork_ang_only",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_fork_ang_only/logs/Amazon_2023_Instruments/Oct-11-2026_08-28-09/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.032880030184471346,
+        "test_recall_at_10": 0.060847159595396855
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0615609603231254 for tiger_fork_fork_euclid_group",
+      "id": "E97",
+      "source": "results/stage3_T5Train/tiger_fork_fork_euclid_group/logs/Amazon_2023_Instruments/Oct-11-2026_07-33-38/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_fork_euclid_group",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_fork_euclid_group/logs/Amazon_2023_Instruments/Oct-11-2026_07-33-38/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03394764101228238,
+        "test_recall_at_10": 0.0615609603231254
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.057173697313671897 for tiger_fork_fork_hyp_group",
+      "id": "E98",
+      "source": "results/stage3_T5Train/tiger_fork_fork_hyp_group/logs/Amazon_2023_Instruments/Oct-11-2026_06-42-27/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_fork_hyp_group",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_fork_hyp_group/logs/Amazon_2023_Instruments/Oct-11-2026_06-42-27/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.031261827118429064,
+        "test_recall_at_10": 0.057173697313671897
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.061874336252372084 for tiger_fork_fork_more_sib",
+      "id": "E99",
+      "source": "results/stage3_T5Train/tiger_fork_fork_more_sib/logs/Amazon_2023_Instruments/Oct-11-2026_10-14-41/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_fork_more_sib",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_fork_more_sib/logs/Amazon_2023_Instruments/Oct-11-2026_10-14-41/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.033466234417934844,
+        "test_recall_at_10": 0.061874336252372084
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.061943975347760236 for tiger_fork_fork_radial_corr",
+      "id": "E100",
+      "source": "results/stage3_T5Train/tiger_fork_fork_radial_corr/logs/Amazon_2023_Instruments/Oct-11-2026_09-18-51/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_fork_radial_corr",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_fork_radial_corr/logs/Amazon_2023_Instruments/Oct-11-2026_09-18-51/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.033636915859782686,
+        "test_recall_at_10": 0.061943975347760236
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05703441912289559 for tiger_fork_hyper_l1_ang_s42",
+      "id": "E101",
+      "source": "results/stage3_T5Train/tiger_fork_hyper_l1_ang_s42/logs/Amazon_2023_Instruments/Oct-12-2026_10-34-22/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_hyper_l1_ang_s42",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_hyper_l1_ang_s42/logs/Amazon_2023_Instruments/Oct-12-2026_10-34-22/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03099086953107501,
+        "test_recall_at_10": 0.05703441912289559
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06136945281080799 for tiger_fork_hyper_l1_angsel_s42",
+      "id": "E102",
+      "source": "results/stage3_T5Train/tiger_fork_hyper_l1_angsel_s42/logs/Amazon_2023_Instruments/Oct-12-2026_12-38-45/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_hyper_l1_angsel_s42",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_hyper_l1_angsel_s42/logs/Amazon_2023_Instruments/Oct-12-2026_12-38-45/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03320981163891486,
+        "test_recall_at_10": 0.06136945281080799
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06250108811086544 for tiger_fork_hyper_l1_br_euclid_s42",
+      "id": "E103",
+      "source": "results/stage3_T5Train/tiger_fork_hyper_l1_br_euclid_s42/logs/Amazon_2023_Instruments/Oct-12-2026_09-33-58/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_hyper_l1_br_euclid_s42",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_hyper_l1_br_euclid_s42/logs/Amazon_2023_Instruments/Oct-12-2026_09-33-58/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03388172223797936,
+        "test_recall_at_10": 0.06250108811086544
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.04068664148052717 for tiger_fork_hyper_l1_br_s42",
+      "id": "E104",
+      "source": "results/stage3_T5Train/tiger_fork_hyper_l1_br_s42/logs/Amazon_2023_Instruments/Oct-12-2026_08-36-27/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_hyper_l1_br_s42",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_hyper_l1_br_s42/logs/Amazon_2023_Instruments/Oct-12-2026_08-36-27/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.021673569339540715,
+        "test_recall_at_10": 0.04068664148052717
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.061404272358502064 for tiger_fork_hyper_l1_s42",
+      "id": "E105",
+      "source": "results/stage3_T5Train/tiger_fork_hyper_l1_s42/logs/Amazon_2023_Instruments/Oct-12-2026_07-31-01/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_hyper_l1_s42",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_hyper_l1_s42/logs/Amazon_2023_Instruments/Oct-12-2026_07-31-01/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.0334570058914946,
+        "test_recall_at_10": 0.061404272358502064
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05901913334145789 for tiger_fork_nce_euclid_group",
+      "id": "E106",
+      "source": "results/stage3_T5Train/tiger_fork_nce_euclid_group/logs/Amazon_2023_Instruments/Oct-11-2026_12-04-59/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_nce_euclid_group",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_nce_euclid_group/logs/Amazon_2023_Instruments/Oct-11-2026_12-04-59/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03240469165803009,
+        "test_recall_at_10": 0.05901913334145789
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05978516339072756 for tiger_fork_nce_euclid_radius_control",
+      "id": "E107",
+      "source": "results/stage3_T5Train/tiger_fork_nce_euclid_radius_control/logs/Amazon_2023_Instruments/Oct-11-2026_14-41-31/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_nce_euclid_radius_control",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_nce_euclid_radius_control/logs/Amazon_2023_Instruments/Oct-11-2026_14-41-31/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03290562241118571,
+        "test_recall_at_10": 0.05978516339072756
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05882762582914048 for tiger_fork_nce_hyp_group",
+      "id": "E108",
+      "source": "results/stage3_T5Train/tiger_fork_nce_hyp_group/logs/Amazon_2023_Instruments/Oct-11-2026_12-55-55/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_nce_hyp_group",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_nce_hyp_group/logs/Amazon_2023_Instruments/Oct-11-2026_12-55-55/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03181798945550038,
+        "test_recall_at_10": 0.05882762582914048
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06161318964466651 for tiger_fork_prefix_sib",
+      "id": "E109",
+      "source": "results/stage3_T5Train/tiger_fork_prefix_sib/logs/Amazon_2023_Instruments/Oct-11-2026_11-08-38/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_fork_prefix_sib",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_fork_prefix_sib/logs/Amazon_2023_Instruments/Oct-11-2026_11-08-38/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03392435119245935,
+        "test_recall_at_10": 0.06161318964466651
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.061317223489266874 for tiger_hyp_exp2_euclid_matched",
+      "id": "E110",
+      "source": "results/stage3_T5Train/tiger_hyp_exp2_euclid_matched/logs/Amazon_2023_Instruments/Oct-10-2026_20-48-17/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_hyp_exp2_euclid_matched",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_hyp_exp2_euclid_matched/logs/Amazon_2023_Instruments/Oct-10-2026_20-48-17/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.033332163188099236,
+        "test_recall_at_10": 0.061317223489266874
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0551889830951096 for tiger_hyp_exp2_poincare_c1",
+      "id": "E111",
+      "source": "results/stage3_T5Train/tiger_hyp_exp2_poincare_c1/logs/Amazon_2023_Instruments/Oct-10-2026_19-58-02/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_hyp_exp2_poincare_c1",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_hyp_exp2_poincare_c1/logs/Amazon_2023_Instruments/Oct-10-2026_19-58-02/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03057611661010281,
+        "test_recall_at_10": 0.0551889830951096
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.060760110726161665 for tiger_hyp_exp4_euclid_delta",
+      "id": "E112",
+      "source": "results/stage3_T5Train/tiger_hyp_exp4_euclid_delta/logs/Amazon_2023_Instruments/Oct-10-2026_21-52-08/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_hyp_exp4_euclid_delta",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_hyp_exp4_euclid_delta/logs/Amazon_2023_Instruments/Oct-10-2026_21-52-08/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03288927783916417,
+        "test_recall_at_10": 0.060760110726161665
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.053813610961193616 for tiger_hyp_fix_carry_euclid_raw",
+      "id": "E113",
+      "source": "results/stage3_T5Train/tiger_hyp_fix_carry_euclid_raw/logs/Amazon_2023_Instruments/Oct-11-2026_05-13-32/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_hyp_fix_carry_euclid_raw",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_hyp_fix_carry_euclid_raw/logs/Amazon_2023_Instruments/Oct-11-2026_05-13-32/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029685096021230116,
+        "test_recall_at_10": 0.053813610961193616
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05760894165984784 for tiger_hyp_fix_det_euclid_ball",
+      "id": "E114",
+      "source": "results/stage3_T5Train/tiger_hyp_fix_det_euclid_ball/logs/Amazon_2023_Instruments/Oct-11-2026_02-41-20/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_hyp_fix_det_euclid_ball",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_hyp_fix_det_euclid_ball/logs/Amazon_2023_Instruments/Oct-11-2026_02-41-20/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.031614301679687325,
+        "test_recall_at_10": 0.05760894165984784
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05200299448110169 for tiger_hyp_fix_det_euclid_raw",
+      "id": "E115",
+      "source": "results/stage3_T5Train/tiger_hyp_fix_det_euclid_raw/logs/Amazon_2023_Instruments/Oct-11-2026_01-54-17/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_hyp_fix_det_euclid_raw",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_hyp_fix_det_euclid_raw/logs/Amazon_2023_Instruments/Oct-11-2026_01-54-17/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.028365394652759737,
+        "test_recall_at_10": 0.05200299448110169
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.046536325493131844 for tiger_hyp_fix_det_poincare",
+      "id": "E116",
+      "source": "results/stage3_T5Train/tiger_hyp_fix_det_poincare/logs/Amazon_2023_Instruments/Oct-11-2026_03-46-46/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_hyp_fix_det_poincare",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_hyp_fix_det_poincare/logs/Amazon_2023_Instruments/Oct-11-2026_03-46-46/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.026006974089175707,
+        "test_recall_at_10": 0.046536325493131844
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05517157332126256 for tiger_sample_CF_ALIGN",
+      "id": "E117",
+      "source": "results/stage3_T5Train/tiger_sample_CF_ALIGN/logs/Amazon_2023_Instruments/Oct-14-2026_04-21-04/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_CF_ALIGN",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_CF_ALIGN/logs/Amazon_2023_Instruments/Oct-14-2026_04-21-04/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.02959383255004054,
+        "test_recall_at_10": 0.05517157332126256
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.054283674855063635 for tiger_sample_CF_ALIGN_DIV",
+      "id": "E118",
+      "source": "results/stage3_T5Train/tiger_sample_CF_ALIGN_DIV/logs/Amazon_2023_Instruments/Oct-14-2026_05-56-10/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_CF_ALIGN_DIV",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_CF_ALIGN_DIV/logs/Amazon_2023_Instruments/Oct-14-2026_05-56-10/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029022876748555887,
+        "test_recall_at_10": 0.054283674855063635
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05424885530736956 for tiger_sample_CF_ALIGN_DIV_RANK",
+      "id": "E119",
+      "source": "results/stage3_T5Train/tiger_sample_CF_ALIGN_DIV_RANK/logs/Amazon_2023_Instruments/Oct-14-2026_06-39-06/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_CF_ALIGN_DIV_RANK",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_CF_ALIGN_DIV_RANK/logs/Amazon_2023_Instruments/Oct-14-2026_06-39-06/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029155200541353957,
+        "test_recall_at_10": 0.05424885530736956
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06150873100158429 for tiger_sample_DIGER_FIX",
+      "id": "E120",
+      "source": "results/stage3_T5Train/tiger_sample_DIGER_FIX/logs/Amazon_2023_Instruments/Oct-14-2026_02-49-27/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_DIGER_FIX",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_DIGER_FIX/logs/Amazon_2023_Instruments/Oct-14-2026_02-49-27/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03338131783425908,
+        "test_recall_at_10": 0.06150873100158429
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05600724246592037 for tiger_sample_MARGIN",
+      "id": "E121",
+      "source": "results/stage3_T5Train/tiger_sample_MARGIN/logs/Amazon_2023_Instruments/Oct-14-2026_00-27-55/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_MARGIN",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_MARGIN/logs/Amazon_2023_Instruments/Oct-14-2026_00-27-55/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.0311513630750779,
+        "test_recall_at_10": 0.05600724246592037
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.061386862584655026 for tiger_sample_MARGIN_RW001",
+      "id": "E122",
+      "source": "results/stage3_T5Train/tiger_sample_MARGIN_RW001/logs/Amazon_2023_Instruments/Oct-14-2026_08-07-03/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_MARGIN_RW001",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_MARGIN_RW001/logs/Amazon_2023_Instruments/Oct-14-2026_08-07-03/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03348834442528238,
+        "test_recall_at_10": 0.061386862584655026
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.060168178415362386 for tiger_sample_MARGIN_RW005",
+      "id": "E123",
+      "source": "results/stage3_T5Train/tiger_sample_MARGIN_RW005/logs/Amazon_2023_Instruments/Oct-14-2026_08-48-54/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_MARGIN_RW005",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_MARGIN_RW005/logs/Amazon_2023_Instruments/Oct-14-2026_08-48-54/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03251520593874706,
+        "test_recall_at_10": 0.060168178415362386
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05959365587841014 for tiger_sample_MARGIN_RW02",
+      "id": "E124",
+      "source": "results/stage3_T5Train/tiger_sample_MARGIN_RW02/logs/Amazon_2023_Instruments/Oct-14-2026_09-26-26/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_MARGIN_RW02",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_MARGIN_RW02/logs/Amazon_2023_Instruments/Oct-14-2026_09-26-26/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03270410048106713,
+        "test_recall_at_10": 0.05959365587841014
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05863611831682306 for tiger_sample_MARGIN_RW05",
+      "id": "E125",
+      "source": "results/stage3_T5Train/tiger_sample_MARGIN_RW05/logs/Amazon_2023_Instruments/Oct-14-2026_10-04-24/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_MARGIN_RW05",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_MARGIN_RW05/logs/Amazon_2023_Instruments/Oct-14-2026_10-04-24/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03244741519338031,
+        "test_recall_at_10": 0.05863611831682306
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05921064085377531 for tiger_sample_STE_FIX",
+      "id": "E126",
+      "source": "results/stage3_T5Train/tiger_sample_STE_FIX/logs/Amazon_2023_Instruments/Oct-14-2026_12-28-56/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_STE_FIX",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_STE_FIX/logs/Amazon_2023_Instruments/Oct-14-2026_12-28-56/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.032371279679902186,
+        "test_recall_at_10": 0.05921064085377531
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06352826476784067 for tiger_sample_crowd_couser_w3",
+      "id": "E127",
+      "source": "results/stage3_T5Train/tiger_sample_crowd_couser_w3/logs/Amazon_2023_Instruments/Oct-13-2026_08-26-08/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_crowd_couser_w3",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_crowd_couser_w3/logs/Amazon_2023_Instruments/Oct-13-2026_08-26-08/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03466663920637858,
+        "test_recall_at_10": 0.06352826476784067
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06425947526941625 for tiger_sample_crowd_posattract_w3",
+      "id": "E128",
+      "source": "results/stage3_T5Train/tiger_sample_crowd_posattract_w3/logs/Amazon_2023_Instruments/Oct-13-2026_09-10-29/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_crowd_posattract_w3",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_crowd_posattract_w3/logs/Amazon_2023_Instruments/Oct-13-2026_09-10-29/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03498068134712925,
+        "test_recall_at_10": 0.06425947526941625
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06351085499399363 for tiger_sample_crowd_posattract_w3",
+      "id": "E129",
+      "source": "results/stage3_T5Train/tiger_sample_crowd_posattract_w3/logs/Amazon_2023_Instruments/Oct-14-2026_22-57-10/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_crowd_posattract_w3",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_crowd_posattract_w3/logs/Amazon_2023_Instruments/Oct-14-2026_22-57-10/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03468583532606373,
+        "test_recall_at_10": 0.06351085499399363
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.0636327234109229 for tiger_sample_resample",
+      "id": "E130",
+      "source": "results/stage3_T5Train/tiger_sample_resample/logs/Amazon_2023_Instruments/Oct-10-2026_18-16-53/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_resample",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_resample/logs/Amazon_2023_Instruments/Oct-10-2026_18-16-53/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03478122381932672,
+        "test_recall_at_10": 0.0636327234109229
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06373718205400512 for tiger_sample_resample",
+      "id": "E131",
+      "source": "results/stage3_T5Train/tiger_sample_resample/logs/Amazon_2023_Instruments/Oct-12-2026_17-28-43/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_resample",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_resample/logs/Amazon_2023_Instruments/Oct-12-2026_17-28-43/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03511031834988592,
+        "test_recall_at_10": 0.06373718205400512
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06356308431553474 for tiger_sample_resample_fn_mask",
+      "id": "E132",
+      "source": "results/stage3_T5Train/tiger_sample_resample_fn_mask/logs/Amazon_2023_Instruments/Oct-10-2026_19-03-20/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_resample_fn_mask",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_resample_fn_mask/logs/Amazon_2023_Instruments/Oct-10-2026_19-03-20/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03424071764008098,
+        "test_recall_at_10": 0.06356308431553474
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06283187381395916 for tiger_sample_resample_l1only",
+      "id": "E133",
+      "source": "results/stage3_T5Train/tiger_sample_resample_l1only/logs/Amazon_2023_Instruments/Oct-12-2026_23-59-44/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_resample_l1only",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_resample_l1only/logs/Amazon_2023_Instruments/Oct-12-2026_23-59-44/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.034596862151184946,
+        "test_recall_at_10": 0.06283187381395916
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05484078761816884 for tiger_sample_resample_proj_dir",
+      "id": "E134",
+      "source": "results/stage3_T5Train/tiger_sample_resample_proj_dir/logs/Amazon_2023_Instruments/Oct-12-2026_19-06-45/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_resample_proj_dir",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_resample_proj_dir/logs/Amazon_2023_Instruments/Oct-12-2026_19-06-45/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.030203035467447917,
+        "test_recall_at_10": 0.05484078761816884
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05452741168892216 for tiger_sample_resample_proj_sym",
+      "id": "E135",
+      "source": "results/stage3_T5Train/tiger_sample_resample_proj_sym/logs/Amazon_2023_Instruments/Oct-12-2026_18-25-23/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_resample_proj_sym",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_resample_proj_sym/logs/Amazon_2023_Instruments/Oct-12-2026_18-25-23/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029891576223030854,
+        "test_recall_at_10": 0.05452741168892216
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06302338132627658 for tiger_sample_resample_s43",
+      "id": "E136",
+      "source": "results/stage3_T5Train/tiger_sample_resample_s43/logs/Amazon_2023_Instruments/Oct-10-2026_22-55-05/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_resample_s43",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_resample_s43/logs/Amazon_2023_Instruments/Oct-10-2026_22-55-05/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03409746536067439,
+        "test_recall_at_10": 0.06302338132627658
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.06237921969393618 for tiger_sample_resample_s44",
+      "id": "E137",
+      "source": "results/stage3_T5Train/tiger_sample_resample_s44/logs/Amazon_2023_Instruments/Oct-10-2026_23-43-17/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "tiger_sample_resample_s44",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/tiger_sample_resample_s44/logs/Amazon_2023_Instruments/Oct-10-2026_23-43-17/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.03425979668081985,
+        "test_recall_at_10": 0.06237921969393618
+      }
+    },
+    {
+      "claim": "Stage 3 test_R@10 0.05522380264280367 for unknown_variant",
+      "id": "E138",
+      "source": "results/stage3_T5Train/unknown_variant/logs/Amazon_2023_Instruments/Sep-24-2026_16-17-58/test_final.json",
+      "source_type": "measured",
+      "status": "OBSERVED",
+      "value": {
+        "arm": "unknown_variant",
+        "comparable_to_frozen": false,
+        "global_batch": null,
+        "launch_mode": null,
+        "n_eval": 57439,
+        "source": "results/stage3_T5Train/unknown_variant/logs/Amazon_2023_Instruments/Sep-24-2026_16-17-58/test_final.json",
+        "source_type": "measured",
+        "test_ndcg_at_10": 0.029818537549432242,
+        "test_recall_at_10": 0.05522380264280367
+      }
+    }
+  ],
+  "geometric_necessity": [
+    {
+      "claim": "the curved operation",
+      "id": "E12",
+      "source": "idea:TSG-SID",
+      "source_type": "proposal",
+      "status": "PROPOSED",
+      "value": "Poincare ball of trainable-free curvature -c_l with c_l = 1/(4 s_l^2) (so the ball radius is 2 s_l, twice the measured latent scale), exponential map exp_0, logarithmic map log_x, geodesic distance d_c, and parallel transport PT_{x->y}; all in closed form."
+    },
+    {
+      "claim": "where it acts",
+      "id": "E13",
+      "source": "idea:TSG-SID",
+      "source_type": "proposal",
+      "status": "PROPOSED",
+      "value": "At quantization time (latent injection, assignment, commitment) and in the backward pass, where the transported tangent is added to the straight-through gradient. It is not a side loss."
+    },
+    {
+      "claim": "the coupling equation",
+      "id": "E14",
+      "source": "idea:TSG-SID",
+      "source_type": "proposal",
+      "status": "PROPOSED",
+      "value": "g_i,l = sg[x - e_{l,k}] + [ d_{c_l}(x,e_{l,k}) / (d_{c_l}(x,e_{l,k}) + delta_l) ] * PT_{e_{l,k}->x}^{c_l}( sum_{j in Succ(i)} p(j|i) * log_{e_{l,k}}^{c_l}( e_{l,k'(j)} ) ), with x = exp_0^{c_l}(z_{i,l}/s_l) and c_l = 1/(4 s_l^2)."
+    },
+    {
+      "claim": "a matched Euclidean control is specified",
+      "id": "E15",
+      "source": "idea:TSG-SID",
+      "source_type": "proposal",
+      "status": "PROPOSED",
+      "value": null
+    }
+  ],
+  "idea_id": "TSG-SID",
+  "implementation_cost": [
+    {
+      "claim": "declared cost of the frozen run",
+      "id": "E139",
+      "source": "idea:TSG-SID",
+      "source_type": "proposal",
+      "status": "PROPOSED",
+      "value": "Transition table is built once from the training split (24556 x 16 ints, ~0.4M entries). Per step at the frozen scale (batch ~1023, L=4 levels, M=16 successors) there are about 65k log-map + transport evaluations of dimension d (d=32-64), roughly 4-8 MFLOP, plus one Mobius add per item per level; expected overhead 3-8% of step time over 72,000 steps (24 x 3000), no extra forward passes and no extra epochs. The s_l and delta_l measurements are one pass over 24556 latents."
+    },
+    {
+      "claim": "a timed real-data probe",
+      "id": "E140",
+      "source": "no probe recorded",
+      "source_type": "repo",
+      "status": "UNKNOWN",
+      "value": null
+    }
+  ],
+  "literature_sha256": "0f9a270d4d938201605ab12f5687c4a51c23ba8fe70032a4b81b03dff7b1f5f4",
+  "math_sha256": "82b5b4eaecb1b76887e410e0040943d9a8d0245197699ebb52a73a71ce0b57f4",
+  "prior_work": [
+    {
+      "claim": "literature search for this proposal",
+      "id": "E16",
+      "source": "no literature pass was run in this round",
+      "source_type": "agent",
+      "status": "NOT_CHECKED",
+      "value": null
+    },
+    {
+      "claim": "proposal novelty statement",
+      "id": "E17",
+      "source": "idea:TSG-SID",
+      "source_type": "proposal",
+      "status": "PROPOSED",
+      "value": "Unlike the per-level curvature controllers, Poincare Sinkhorn/mass transport, curved Frechet codebook updates and prefix-cone proposals, this changes neither the assignment rule nor a loss value: it changes the vector that backpropagates through the quantizer. The successor distribution is log-mapped at the assigned codeword and parallel-transported to the latent, in the same Poincare ball that de"
+    },
+    {
+      "claim": "related work: HVQ-VAE: Variational auto-encoder with hyperbolic vector quantization",
+      "id": "E18",
+      "source": "literature:https://doi.org/10.1016/j.cviu.2025.104392",
+      "source_type": "literature",
+      "status": "same_operator_or_path",
+      "value": {
+        "doi": "https://doi.org/10.1016/j.cviu.2025.104392",
+        "match": "same_operator_or_path",
+        "title": "HVQ-VAE: Variational auto-encoder with hyperbolic vector quantization",
+        "url": "https://doi.org/10.1016/j.cviu.2025.104392",
+        "year": 2025
+      }
+    },
+    {
+      "claim": "related work: HyperVQ: MLR-based Vector Quantization in Hyperbolic Space",
+      "id": "E19",
+      "source": "literature:https://doi.org/10.48550/arxiv.2403.13015",
+      "source_type": "literature",
+      "status": "same_operator_or_path",
+      "value": {
+        "doi": "https://doi.org/10.48550/arxiv.2403.13015",
+        "match": "same_operator_or_path",
+        "title": "HyperVQ: MLR-based Vector Quantization in Hyperbolic Space",
+        "url": "https://doi.org/10.48550/arxiv.2403.13015",
+        "year": 2024
+      }
+    },
+    {
+      "claim": "related work: Quantized kernel least inverse hyperbolic sine adaptive filtering algorithm",
+      "id": "E20",
+      "source": "literature:https://doi.org/10.7498/aps.71.20221065",
+      "source_type": "literature",
+      "status": "related_but_different",
+      "value": {
+        "doi": "https://doi.org/10.7498/aps.71.20221065",
+        "match": "related_but_different",
+        "title": "Quantized kernel least inverse hyperbolic sine adaptive filtering algorithm",
+        "url": "https://doi.org/10.7498/aps.71.20221065",
+        "year": 2022
+      }
+    },
+    {
+      "claim": "related work: Quantized Exponential Hyperbolic Sine Robust Adaptive Filtering Algorithm",
+      "id": "E21",
+      "source": "literature:https://doi.org/10.1007/s00034-025-03228-0",
+      "source_type": "literature",
+      "status": "not_established",
+      "value": {
+        "doi": "https://doi.org/10.1007/s00034-025-03228-0",
+        "match": "not_established",
+        "title": "Quantized Exponential Hyperbolic Sine Robust Adaptive Filtering Algorithm",
+        "url": "https://doi.org/10.1007/s00034-025-03228-0",
+        "year": 2025
+      }
+    },
+    {
+      "claim": "related work: A quantized minimum kernel risk hyperbolic secant adaptive filtering algorithm",
+      "id": "E22",
+      "source": "literature:https://doi.org/10.1007/s11760-024-03072-w",
+      "source_type": "literature",
+      "status": "not_established",
+      "value": {
+        "doi": "https://doi.org/10.1007/s11760-024-03072-w",
+        "match": "not_established",
+        "title": "A quantized minimum kernel risk hyperbolic secant adaptive filtering algorithm",
+        "url": "https://doi.org/10.1007/s11760-024-03072-w",
+        "year": 2024
+      }
+    },
+    {
+      "claim": "related work: Resizing codebook of vector quantization without retraining",
+      "id": "E23",
+      "source": "literature:https://doi.org/10.1007/s00530-023-01065-2",
+      "source_type": "literature",
+      "status": "related_but_different",
+      "value": {
+        "doi": "https://doi.org/10.1007/s00530-023-01065-2",
+        "match": "related_but_different",
+        "title": "Resizing codebook of vector quantization without retraining",
+        "url": "https://doi.org/10.1007/s00530-023-01065-2",
+        "year": 2023
+      }
+    },
+    {
+      "claim": "related work: Semisupervised Vector Quantization in Visual SLAM Using HGCN",
+      "id": "E24",
+      "source": "literature:https://doi.org/10.1155/2024/9992159",
+      "source_type": "literature",
+      "status": "same_operator_or_path",
+      "value": {
+        "doi": "https://doi.org/10.1155/2024/9992159",
+        "match": "same_operator_or_path",
+        "title": "Semisupervised Vector Quantization in Visual SLAM Using HGCN",
+        "url": "https://doi.org/10.1155/2024/9992159",
+        "year": 2024
+      }
+    },
+    {
+      "claim": "related work: The Deformation Quantizations of the Hyperbolic Plane",
+      "id": "E25",
+      "source": "literature:https://doi.org/10.1007/s00220-008-0697-9",
+      "source_type": "literature",
+      "status": "not_established",
+      "value": {
+        "doi": "https://doi.org/10.1007/s00220-008-0697-9",
+        "match": "not_established",
+        "title": "The Deformation Quantizations of the Hyperbolic Plane",
+        "url": "https://doi.org/10.1007/s00220-008-0697-9",
+        "year": 2009
+      }
+    },
+    {
+      "claim": "related work: Geometry-Aware Hyperbolic Residual-Quantized Variational Autoencoders",
+      "id": "E26",
+      "source": "literature:https://doi.org/10.48550/arxiv.2609.26342",
+      "source_type": "literature",
+      "status": "related_but_different",
+      "value": {
+        "doi": "https://doi.org/10.48550/arxiv.2609.26342",
+        "match": "related_but_different",
+        "title": "Geometry-Aware Hyperbolic Residual-Quantized Variational Autoencoders",
+        "url": "https://doi.org/10.48550/arxiv.2609.26342",
+        "year": 2026
+      }
+    },
+    {
+      "claim": "related work: Quantization of massive vector fields in curved space–time",
+      "id": "E27",
+      "source": "literature:https://doi.org/10.1063/1.532718",
+      "source_type": "literature",
+      "status": "not_established",
+      "value": {
+        "doi": "https://doi.org/10.1063/1.532718",
+        "match": "not_established",
+        "title": "Quantization of massive vector fields in curved space–time",
+        "url": "https://doi.org/10.1063/1.532718",
+        "year": 1999
+      }
+    },
+    {
+      "claim": "related work: Sensitivity analysis of low-complexity vector quantizers for focal-plane image compression",
+      "id": "E28",
+      "source": "literature:https://doi.org/10.1109/iscas.2004.1329913",
+      "source_type": "literature",
+      "status": "not_established",
+      "value": {
+        "doi": "https://doi.org/10.1109/iscas.2004.1329913",
+        "match": "not_established",
+        "title": "Sensitivity analysis of low-complexity vector quantizers for focal-plane image compression",
+        "url": "https://doi.org/10.1109/iscas.2004.1329913",
+        "year": 2004
+      }
+    },
+    {
+      "claim": "related work: Representation Collapsing Problems in Vector Quantization",
+      "id": "E29",
+      "source": "literature:https://doi.org/10.48550/arxiv.2411.16550",
+      "source_type": "literature",
+      "status": "related_but_different",
+      "value": {
+        "doi": "https://doi.org/10.48550/arxiv.2411.16550",
+        "match": "related_but_different",
+        "title": "Representation Collapsing Problems in Vector Quantization",
+        "url": "https://doi.org/10.48550/arxiv.2411.16550",
+        "year": 2024
+      }
+    },
+    {
+      "claim": "related work: NSVQ: Noise Substitution in Vector Quantization for Machine Learning",
+      "id": "E30",
+      "source": "literature:https://doi.org/10.1109/access.2022.3147670",
+      "source_type": "literature",
+      "status": "related_but_different",
+      "value": {
+        "doi": "https://doi.org/10.1109/access.2022.3147670",
+        "match": "related_but_different",
+        "title": "NSVQ: Noise Substitution in Vector Quantization for Machine Learning",
+        "url": "https://doi.org/10.1109/access.2022.3147670",
+        "year": 2022
+      }
+    },
+    {
+      "claim": "related work: Mixed quantization and partial hyperbolicity",
+      "id": "E31",
+      "source": "literature:https://doi.org/10.48550/arxiv.2409.13660",
+      "source_type": "literature",
+      "status": "not_established",
+      "value": {
+        "doi": "https://doi.org/10.48550/arxiv.2409.13660",
+        "match": "not_established",
+        "title": "Mixed quantization and partial hyperbolicity",
+        "url": "https://doi.org/10.48550/arxiv.2409.13660",
+        "year": 2024
+      }
+    },
+    {
+      "claim": "related work: HQA-Rec: Hyperbolic Quantization Alignment for Citation Recommendation",
+      "id": "E32",
+      "source": "literature:https://doi.org/10.1007/978-3-032-38410-2_40",
+      "source_type": "literature",
+      "status": "same_operator_or_path",
+      "value": {
+        "doi": "https://doi.org/10.1007/978-3-032-38410-2_40",
+        "match": "same_operator_or_path",
+        "title": "HQA-Rec: Hyperbolic Quantization Alignment for Citation Recommendation",
+        "url": "https://doi.org/10.1007/978-3-032-38410-2_40",
+        "year": 2026
+      }
+    }
+  ],
+  "probe_sha256": "4ac4aa728a91c97cb9ad36a4bc1c72947b36efcc509f34c1c010206ce004e16c",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 1,
+  "sha256": "f36cdf069f009a9b443dbdd25a5a2240249c8933ecc9d761bd5576549b7e2c9a"
+}

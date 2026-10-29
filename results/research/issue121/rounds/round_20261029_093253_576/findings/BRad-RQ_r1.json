@@ -1,0 +1,51 @@
+{
+  "findings": [
+    {
+      "check": "behaviour signal: boundary, statistics and the connected pathway",
+      "correction": "commit the real model/behaviour_radius.py (context_entropy_scale, rank_radii, radii_for_switch, squash, assignment_score), model/model.py and model/__init__.py (plus the two radial test files) and confirm train_rqvae.py reaches epoch 1 with USE_RADIAL=True.",
+      "detail": "The module that computes the behaviour statistic does not exist in the delivered tree, so the connected pathway cannot be formed. model/layers.py:98 does `from .behaviour_radius import assignment_score, squash` inside VQLayer.radial_cost, and train_rqvae.py:433-434 does `from model.behaviour_radius import context_entropy_scale, radii_for_switch, rank_radii`. With USE_RADIAL = True (train_rqvae.py:116) the radius block at line 433 executes unconditionally before epoch 1 and raises ModuleNotFoundError; if it were deferred, the first radial forward would raise it at layers.py:98 instead. The same is true of model/model.py, which the idea says scales the encoder output by the item's radius and which owns RQVAE/get_indices (train_rqvae.py:26 `from model import RQVAE`): neither model/model.py nor model/__init__.py exists. Also absent: model/trainer.py and the two files the brief says were added, tests/test_radial_assignment.py and tests/test_radial_wiring.py. The s_i / rank / artanh computation that this check must inspect is therefore not present in the submitted code at all.",
+      "location": "model/behaviour_radius.py (absent); model/layers.py:98; train_rqvae.py:433-434",
+      "reproduction": "in /home/wlia0047/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ, model/ contains only layers.py and frechet_poincare.py; fetch/open of model/behaviour_radius.py, model/model.py, model/__init__.py, tests/test_radial_assignment.py, tests/test_radial_wiring.py all return ENOENT, and running train_rqvae.py dies at line 433 with ModuleNotFoundError.",
+      "severity": "blocking",
+      "verifier": "verify_BRad-RQ_r0_4"
+    },
+    {
+      "check": "behaviour signal: boundary, statistics and the connected pathway",
+      "correction": "build train_edges over every training row (or deduplicated full per-user sequences), e.g. iterate `frame[[\"history\",\"target\"]]` without tail(1), so C[j,i] sums all consecutive training transitions as specified.",
+      "detail": "Even with the missing module restored, the statistic is not the one the frozen specification prescribes. The transition counts are built from `frame.groupby(\"user\", sort=False).tail(1)` \u2014 one row per user \u2014 and only that last (history, target) pair contributes edges. Specification (1) defines C[j,i] as the directed counts of consecutive items over the training sequences, so the delivered code measures n_i and H_i on a small, systematically biased subsample (each user's final session) instead of the training transition stream. Because s_i = (n_i*exp(H_i) + sbar)/(n_i+1) depends on both n_i and H_i, the ranks \u2014 and therefore every radius, every level-1 assignment and the claimed prefix/radius monotonicity \u2014 come from a different statistic than the one the proposal claims to implement.",
+      "location": "train_rqvae.py:435-442",
+      "reproduction": "for a user with rows (h1,t1),(h2,t2) the loop over `last` appends only the transitions of (h2,t2); all transitions from (h1,t1) are dropped. Compare sum(len(history)) over `last` against the number of consecutive transitions in the full training frame; they differ by roughly the number of users times (rows per user \u2212 1).",
+      "severity": "blocking",
+      "verifier": "verify_BRad-RQ_r0_4"
+    },
+    {
+      "check": "SID consistency: training, export and global uniqueness",
+      "correction": "add model/model.py (with model/__init__.py) containing RQVAE, the radius scaling and get_indices, then show that the rank-0 export pass over arange(len(embeddings)) reproduces the same tokens on all ranks before promoting the tree.",
+      "detail": "The export block is written correctly in shape \u2014 it runs only on rank 0 (line 551), under torch.no_grad with infer_use_sk=False, enumerates item_id = arange(len(embeddings)) in a fixed order (line 580), so it is one global pass with no per-rank or per-user variation; the disambiguation token is appended by the deterministic _extend_collisions at line 585 with the frozen codebook_sizes, followed by a uniqueness assertion at 586-587; the radii are computed once at line 444, never updated, and reused for the eval path (523-526) and the export path (578-581), and the codebook step is all_reduced across ranks (481-489), so in principle the exported code cannot differ per rank or per user. That reasoning, however, depends on raw_module.get_indices, RQVAE.forward and the radius scaling inside model/model.py, none of which exist in the delivered tree. As delivered the export cannot run, so the equality between \"the code the trained quantizer assigns\" and \"the exported SID\" cannot be established, and the assignment code that must be reproduced is unavailable for inspection.",
+      "location": "train_rqvae.py:578-581 (raw_module.get_indices is defined in the absent model/model.py)",
+      "reproduction": "run train_rqvae.py with USE_RADIAL=True: it fails at line 433 (missing model.behaviour_radius) and, if that import is stubbed, at line 26 / line 578 (missing model.RQVAE / get_indices), so no item_sids.json is written.",
+      "severity": "blocking",
+      "verifier": "verify_BRad-RQ_r0_4"
+    },
+    {
+      "check": "integration: codebook gradient and the per-step curve/behaviour path",
+      "correction": "Construct the quantizer with frechet_codebook=False for BRad-RQ (the proposal explicitly states \"no Frechet update\"), or keep the class but drop the requires_grad_(False) so the Euclidean straight-through codebook term at model/layers.py:161-163 actually trains the codes; either way the Frechet step call in the epoch loop should be removed rather than left as a no-op.",
+      "detail": "_tokenizer_config passes frechet_codebook=True (train_rqvae.py:262), so VQLayer constructs a FrechetCodebook and then disables the codebook's gradient at model/layers.py:84. The only remaining estimator of the codebook would be the Frechet step, but that step is fed by self.frechet.remember(...) inside the \"curved\" branch, which the radial branch's early return at model/layers.py:156 makes unreachable. Therefore frechet._last is never set, frechet_step_sums() returns an empty list, and the trainer's \"if sums:\" guard at train_rqvae.py:531 never fires. The codebook stays exactly at its KMeans initialisation for all 3000 epochs: no gradient (it is also excluded from the optimizer at train_rqvae.py:414) and no reduced step. The third term of the stated objective, |sg(t) - t_hat|^2, is computed and then discarded, and the level score compares a frozen code set for the whole run.",
+      "location": "model/layers.py:82-84",
+      "reproduction": "Build the model, run one optimizer step, then compare layer.get_code_embs() before and after: the tensor is bitwise unchanged and get_code_embs().grad is None while the encoder gradients are non-zero. Equivalently, len(model.frechet_step_sums()) == 0 after a real forward/backward, while every level has frechet is not None.",
+      "severity": "blocking",
+      "verifier": "verify_BRad-RQ_r0_5"
+    },
+    {
+      "check": "paths, cost and interfaces -- the exported SID",
+      "correction": "Thread the radius through get_indices (encoder -> scale_by_radius -> rq) and pass radii[torch.arange(len(embeddings))] at both the periodic eval and the final item_sids.json export, so training, eval and export quantize the same tangent target.",
+      "detail": "get_indices() calls self.encoder(embeddings) and then self.rq(encoded) with no scale_by_radius, so the quantizer receives the raw encoder output z rather than the tangent target t_i = r_i * z / |z| that every training step uses (train_rqvae.py:517-518 passes radius=radii[item_ids]). squash() (model/behaviour_radius.py:71) clamps any vector with norm above 0.9 to 0.9 and then applies tanh, so every item with |z| >= 0.9 lands on the identical norm tanh(0.9) = 0.7163. A 32-dim MLP output has |z| far above 0.9 for essentially all items, so at export the (1 - |a|^2) factor is constant and the level-1 code is chosen by angle alone: the behaviour statistic does not reach the SID that Stage3 reads, and the exported code is not the code the model was trained to emit. The eval at train_rqvae.py:523 (raw_unique, collision) uses the same radius-free path.",
+      "location": "model/model.py:46-49",
+      "reproduction": "Build RQVAE with config.radial=True; for the same embeddings compute forward(x, radius=r) and get_indices(x); the level-1 tokens differ, because get_indices discards r. With r spanning (0.02, 1.47) the trained path produces radial strata while the export path produces a single stratum.",
+      "severity": "blocking",
+      "verifier": "verify_BRad-RQ_r0_5"
+    }
+  ],
+  "idea_id": "BRad-RQ",
+  "reviewed_revision": 1
+}

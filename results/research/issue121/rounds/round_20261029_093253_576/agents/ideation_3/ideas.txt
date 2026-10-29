@@ -1,0 +1,45 @@
+IDEA: BRANCHCURV-MOEB-RQ
+TITLE: Per-item successor-branching curvature applied as a Möbius residual chain in the RQ-VAE quantizer
+MOTIVATION: The RQ-VAE residual chain treats every item with the same Euclidean geometry, so a broad, many-way-branching item and a sharply predictable item get their prefixes shaped by the same metric. But an item's successor branching is exactly what decides whether a deep hierarchical prefix helps (peaked successors, tree-like neighbourhood) or hurts (flat, broad branching). A global geometry, or the earlier per-level prefix-hit curvature, cannot express that — and that earlier curvature saturated because a protective cap replaced the signal over the whole operating range.
+NOVELTY: The curvature is PER ITEM, derived from the normalised entropy of that item's training-only successor distribution, and it acts as a Möbius (gyrovector) residual subtraction inside the residual-quantization chain — not as a distance weight, an OT cost, a codebook update, or a codebook-move rule. No cap is needed: the exponential map of any positive curvature lands strictly inside its own ball, so the measured branching spans the whole curvature range with no protective clip. This is not per-level prefix-hit control, not successor-diffused Sinkhorn, not Fréchet codebook updates, not a Lorentz/boost shift.
+CHANGE: Replace the Euclidean residual r_next = r_l - e_{l,k} with a curved residual r_next = log_0^{c_i}( q_l ⊕_{c_i} (−p_{l,k}) ) where q_l = exp_0^{c_i}(r_l/M_l); the curvature c_i is set by the item's measured successor-branching entropy, and the code is chosen by the Poincaré distance at the same c_i.
+SPECIFICATION: See SPEC EQUATIONS. Signal: H_i = normalised Shannon entropy of item i's empirical next-item distribution from consecutive training pairs; curvature c_i = c_max·(1−H_i) + c_floor with c_max = 1/median(‖ẑ^(1)‖²) measured from training encoder outputs during epoch 1, c_floor = 1e-3. Range: H_i ∈ [0,1] by construction, hence c_i ∈ [1e-3, c_max] exactly, with no clip anywhere; the realised deciles of H_i and c_i are logged.
+COST: One offline pre-pass over the training transition table (O(number of training transitions)) and, per step, B·L·K exp-map evaluations for code points plus B·L log/Möbius evaluations for the item residual. At B=256, L=4, K=256, d=64 this is ~2.6e5 vector exp maps and ~0.2 GFLOP per step, under 2% of a baseline step; temporaries are O(B·K·L·d) floats (~67 MB at those sizes) and are chunked over K if memory is tight. Over 3000 epochs × 24 steps = 72k steps the added wall clock stays under about 5%.
+HYPOTHESIS: If successor branching tracks how hierarchical an item's neighbourhood really is, then flattening the metric for broad-branch items (small c_i) and sharpening it for peaked ones (large c_i) makes RQ prefixes split along actual successor clusters, so the Stage-3 model sees more predictable prefixes and test Recall@10 rises above 0.065. Observable as SID reassignment concentrated on items far from the median H_i, a fall in the training prefix conditional entropy of the next item given the current item, and a Recall gain over both switch-off settings even though only the both-on arm is trained.
+RISKS: Per-item curvature places the shared codebook at different ball positions for different items, which can blur code semantics or trigger code collapse; H_i is noisy for rare items and for items with fewer than two distinct successors; the curved residual may hurt reconstruction if the tangent-space remainder is not contractive; the gain may be smaller than seed noise, since only one run is made.
+BEHAVIOR SIGNAL: Directed next-item transition branching of each item — the normalised entropy of its empirical successor distribution (a user-interest branching signal).
+BEHAVIOR COMPUTATION: From the Stage-2 TRAINING sequences only. For every consecutive pair (u_t=i, u_{t+1}=j) inside a training session, increment n_ij. Then p_i(j)=n_ij/Σ_j' n_ij', n_i = number of distinct j with n_ij>0, and H_i = −Σ_j p_i(j) ln p_i(j) / ln(n_i) for n_i≥2; items with n_i<2 or no outgoing training pair get H_i = H̄, the mean of H over items with n_i≥2. The table is built once, frozen before Stage-2 epoch 1, and stored as a 24556-entry vector.
+LEAKAGE BOUNDARY: H_i uses only within-session transitions of the Stage-2 training split. No validation or test interaction, no Stage-3 input, and no cross-split co-occurrence enters H_i or c_i. The curvature table and c_max are frozen before any validation/test scoring; items that appear only in validation/test receive H̄ and never contribute successor counts.
+HYPERBOLIC OPERATOR: Poincaré ball of fixed-form, item-specific negative curvature −c_i, c_i ∈ [c_floor, c_max], with closed-form origin exponential/logarithmic maps, Möbius addition/subtraction, and Poincaré distance d_P^{c_i}.
+HYPERBOLIC LOCATION: Inside the RQ-VAE quantizer, on the assignment step and on the residual chain between levels, during Stage-2 training and at SID construction for every item; the decoder and the Stage-3 model stay Euclidean and unchanged.
+COUPLING PATH: The item's branching entropy sets c_i; c_i sets the ball; the ball defines both the code points p_{l,k}=exp_0^{c_i}(e_{l,k}/M_l) and the item point q_l=exp_0^{c_i}(r_l/M_l); the Poincaré distance at c_i picks k_l; k_l enters the Möbius residual r_{l+1}=log_0^{c_i}(q_l ⊕_{c_i} (−p_{l,k_l})) feeding level l+1. Behaviour-off freezes c_i at c_max for all items (still curved, no longer item-adaptive); geometry-off sends c_i→0, where exp/log are the identity and Möbius addition is vector addition, i.e. exactly the Euclidean RQ-VAE. Either switch changes the chosen codes and hence the SID tuple.
+COUPLING EQUATION: c_i = c_max·(1 − H_i) + c_floor;  k_l = argmin_k d_P^{c_i}( exp_0^{c_i}(r_l/M_l), exp_0^{c_i}(e_{l,k}/M_l) );  r_{l+1} = log_0^{c_i}( exp_0^{c_i}(r_l/M_l) ⊕_{c_i} (−exp_0^{c_i}(e_{l,k_l}/M_l)) ).
+OBSERVABLES: (1) fraction of the 24556 items whose level-1 and full SID tuple change versus behaviour-off and versus Euclidean, expected to concentrate on items with extreme H_i; (2) realised deciles of H_i and c_i showing the curvature actually applied, with no clip; (3) training-set conditional entropy of the next item's SID prefix given the current item, which should fall when coupling is on; (4) Stage-3 test_recall@10 against 0.065.
+ABLATION BEHAVIOR OFF: c_i = c_max for every item (curvature on, branching signal disconnected), so the Möbius residual chain runs at one constant curvature and the SID is behaviour-blind.
+ABLATION GEOMETRY OFF: c_i = 0 for every item, so exp_0 and log_0 are the identity and Möbius addition is vector addition; the quantizer is exactly the baseline Euclidean RQ-VAE while H_i is still computed and logged.
+ABLATION BOTH ON: c_i = c_max·(1−H_i) + c_floor, so each item's residual chain and assignment use its own measured branching curvature.
+SPEC EQUATIONS: Closed forms in the unit ball with curvature −c (c>0):
+  exp_0^c(v) = ( tanh(√c·‖v‖/2) / (√c·‖v‖) ) · v
+  log_0^c(x) = (2/√c) · artanh(√c·‖x‖) · x/‖x‖
+  a ⊕_c b = (1/√c) · [ ((1 + 2⟨ã,b̃⟩ + ‖b̃‖²) ã + (1−‖ã‖²) b̃) / (1 + 2⟨ã,b̃⟩ + ‖ã‖²‖b̃‖²) ], with ã=√c·a, b̃=√c·b
+  a ⊖_c b = a ⊕_c (−b)
+  d_P^c(x,y) = (2/√c) · artanh( √c · ‖(−x) ⊕_c y‖ )
+  All five have the Euclidean limit (v, x, a+b, a−b, ‖x−y‖) as c→0, implemented with a c<1e-6 branch.
+Pseudocode per batch:
+  for each item i in batch:
+    H_i from frozen table; c_i = c_max·(1−H_i)+c_floor
+    r = encoder(i)
+    for l in 1..L:
+      M_l = max(M_l, max_batch‖r‖) with EMA decay 0.99 (M_l initialised to 1.0)
+      v = r / max(M_l, ‖r‖, 1e-8)                     # ‖v‖ ≤ 1 always
+      q = exp_0^{c_i}(v)
+      P = exp_0^{c_i}( e_{l,:} / max(M_l,1e-8) )        # shape K×d
+      k_l = argmin_k d_P^{c_i}(q, P[k])
+      q_rem = q ⊖_{c_i} P[k_l]
+      r = log_0^{c_i}(q_rem)
+    z_rec = Σ_l e_{l,k_l}
+    loss = ‖z − z_rec‖² + β·commitment (unchanged, β as in baseline)
+  SID(i) = (k_1,…,k_L)
+SPEC INPUTS OUTPUTS: Inputs are each training item's encoder vector z, the L codebooks C_l={e_{l,k}}⊂R^d, the frozen per-item entropies H_i, the measured c_max, and the running level scales M_l. Output is the discrete tuple (k_1,…,k_L) and the reconstruction sum of chosen embeddings; the curved intermediates q_l, P, q_rem, r_l are differentiable and used only to choose the code and form the next residual.
+SAFEGUARDS: artanh argument clamped to 1−1e-7; Möbius denominator clamped to ≥1e-8; c<1e-6 uses the Euclidean branch; if q_rem=0 return r_{l+1}=0; M_l floored at 1e-8 and the per-item denominator max(M_l,‖r‖) guarantees ‖v‖≤1 so the exp map is always defined; items with n_i<2 use H̄ and are never dropped; if c_max is non-finite or ≤0 it is reset to 1.0 and the event is logged; the curvature table is read-only; NaN/Inf guards abort the step rather than silently clipping curvature.
+END IDEA

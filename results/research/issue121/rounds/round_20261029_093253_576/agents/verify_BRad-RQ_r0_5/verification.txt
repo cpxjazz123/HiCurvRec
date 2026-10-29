@@ -1,0 +1,57 @@
+I'll start by inspecting the tree and my primary read scope.
+VERDICT: NEEDS_FIX
+CHECK: integration: entry point, frozen configuration and launch contract
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:82 (EPOCHS = 3000), :83 (BATCH_SIZE_PER_RANK = 1024), :84 (LR = 1e-3), :100 (SEED = 42), :79 (SINGLE_GPU_ENV = "GENREC_SINGLE_GPU"), :623 (stage2_launcher.launch) | read the module head, _tokenizer_config and main(); traced __main__ -> _launch_via_torchrun -> stage2_launcher.launch(entry, result_dir, port=stage2_contract.STAGE2_PORT, world_size=4)
+FINDING SEVERITY: none
+FINDING LOCATION: n/a
+FINDING DETAIL: The four frozen quantities live on the lines named as module constants; set_seed(SEED + rank) is called in main(); there is no argparse and no CLI flag; the file does not fork torchrun itself but hands entry, result_dir, port, world_size and python to the framework launcher at train_rqvae.py:623, returning early when RANK >= 0 or SINGLE_GPU_ENV == "1". The leftover _LAUNCHER["master_port"] = 50202 entry is unused metadata and forks nothing.
+FINDING REPRODUCTION: n/a
+FINDING CORRECTION: n/a
+
+CHECK: integration: codebook gradient and the per-step curve/behaviour path
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/layers.py:84 (self.embed.weight.requires_grad_(False)) together with model/layers.py:156 (radial early return) and train_rqvae.py:262 (frechet_codebook=True) | followed _tokenizer_config into VQLayer.__init__, then followed the per-step loop at train_rqvae.py:528-540 into frechet_step_sums()/apply_frechet_codebook_step()
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/layers.py:82-84
+FINDING DETAIL: _tokenizer_config passes frechet_codebook=True (train_rqvae.py:262), so VQLayer constructs a FrechetCodebook and then disables the codebook's gradient at model/layers.py:84. The only remaining estimator of the codebook would be the Frechet step, but that step is fed by self.frechet.remember(...) inside the "curved" branch, which the radial branch's early return at model/layers.py:156 makes unreachable. Therefore frechet._last is never set, frechet_step_sums() returns an empty list, and the trainer's "if sums:" guard at train_rqvae.py:531 never fires. The codebook stays exactly at its KMeans initialisation for all 3000 epochs: no gradient (it is also excluded from the optimizer at train_rqvae.py:414) and no reduced step. The third term of the stated objective, |sg(t) - t_hat|^2, is computed and then discarded, and the level score compares a frozen code set for the whole run.
+FINDING REPRODUCTION: Build the model, run one optimizer step, then compare layer.get_code_embs() before and after: the tensor is bitwise unchanged and get_code_embs().grad is None while the encoder gradients are non-zero. Equivalently, len(model.frechet_step_sums()) == 0 after a real forward/backward, while every level has frechet is not None.
+FINDING CORRECTION: Construct the quantizer with frechet_codebook=False for BRad-RQ (the proposal explicitly states "no Frechet update"), or keep the class but drop the requires_grad_(False) so the Euclidean straight-through codebook term at model/layers.py:161-163 actually trains the codes; either way the Frechet step call in the epoch loop should be removed rather than left as a no-op.
+
+CHECK: paths
+CHECK VERDICT: PASS
+EXERCISED PATH: train_rqvae.py:42-63 (_repository_root, REPO_ROOT, ARM_NAME, RESULT_DIR) and tests/test_paths.py:20-52 | read the resolver and re-ran its marker test by hand against the four locations listed in test_the_root_resolves_from_every_location_the_framework_uses
+FINDING SEVERITY: none
+FINDING LOCATION: n/a
+FINDING DETAIL: The root candidate must contain all three of stage2_RQ-VAE, results and stage1_GeneEmbedding as directories, which excludes results/ itself (results/ does not contain a nested stage2_RQ-VAE-and-results pair), so a run launched from results/research/... still resolves to the repository root and never to results/results. There is no parents[N] indexing and no absolute path anywhere in the tree (the test greps for /home/, /fs04/, /tmp/). RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME is the promoted arm directory the admission and Stage3 read, and no constant points at the baseline TIGER_RQ-VAE or at another candidate.
+FINDING REPRODUCTION: n/a
+FINDING CORRECTION: n/a
+
+CHECK: cost at the frozen scale
+CHECK VERDICT: PASS
+EXERCISED PATH: model/layers.py:89-96 (radial_cost) and :156-170 (radial forward), model/behaviour_radius.py:60-88 (rank_radii, squash), train_rqvae.py:455-470 (one-time radius construction) | counted the per-step tensor work and the once-only Python work
+FINDING SEVERITY: none
+FINDING LOCATION: n/a
+FINDING DETAIL: Each step builds one [1024, 256] kernel per level with batched elementwise ops (3 x 4096 x 256 entries, a single pass, no Python loop over slots and no per-slot device synchronisation), the same order as one extra similarity pass on top of the baseline; the only .item() calls are the pre-existing unused-code counter. The behaviour statistic is built once before the epoch loop (a Python dict over the transition stream and a Python sort over N = 24556 ranks) and is never re-entered inside the step, so 3000 epochs on four cards is not endangered.
+FINDING REPRODUCTION: n/a
+FINDING CORRECTION: n/a
+
+CHECK: paths, cost and interfaces -- the exported SID
+CHECK VERDICT: NEEDS_FIX
+EXERCISED PATH: model/model.py:45-50 (get_indices) and train_rqvae.py:517-523 (call sites) | read the export/eval call site and followed it through model.get_indices into RQLayer/VQLayer.forward
+FINDING SEVERITY: blocking
+FINDING LOCATION: model/model.py:46-49
+FINDING DETAIL: get_indices() calls self.encoder(embeddings) and then self.rq(encoded) with no scale_by_radius, so the quantizer receives the raw encoder output z rather than the tangent target t_i = r_i * z / |z| that every training step uses (train_rqvae.py:517-518 passes radius=radii[item_ids]). squash() (model/behaviour_radius.py:71) clamps any vector with norm above 0.9 to 0.9 and then applies tanh, so every item with |z| >= 0.9 lands on the identical norm tanh(0.9) = 0.7163. A 32-dim MLP output has |z| far above 0.9 for essentially all items, so at export the (1 - |a|^2) factor is constant and the level-1 code is chosen by angle alone: the behaviour statistic does not reach the SID that Stage3 reads, and the exported code is not the code the model was trained to emit. The eval at train_rqvae.py:523 (raw_unique, collision) uses the same radius-free path.
+FINDING REPRODUCTION: Build RQVAE with config.radial=True; for the same embeddings compute forward(x, radius=r) and get_indices(x); the level-1 tokens differ, because get_indices discards r. With r spanning (0.02, 1.47) the trained path produces radial strata while the export path produces a single stratum.
+FINDING CORRECTION: Thread the radius through get_indices (encoder -> scale_by_radius -> rq) and pass radii[torch.arange(len(embeddings))] at both the periodic eval and the final item_sids.json export, so training, eval and export quantize the same tangent target.
+
+CHECK: interfaces
+CHECK VERDICT: PASS
+EXERCISED PATH: model/model.py:20-35 (RQVAE.forward), model/layers.py:150-170 (VQLayer.forward), model/__init__.py, train_rqvae.py:517-528 | matched every definition against its call sites
+FINDING SEVERITY: none
+FINDING LOCATION: n/a
+FINDING DETAIL: RQVAE.forward(embeddings, item_ids=None, radius=None), RQLayer.forward(x, infer_use_sk, item_ids) and VQLayer.forward(x, infer_use_sk, item_ids) each have exactly one caller shape: model(batch, item_ids, radius=...) in the loop and get_indices(all_embeddings, infer_use_sk=False, item_ids=...) in eval/export. model/__init__.py still exports RQVAE, RQLayer, VQLayer, MLP, EMAVQLayer and SimVQLayer, so the trainer's "from model import RQVAE" and the per-layer attribute access both resolve.
+FINDING REPRODUCTION: n/a
+FINDING CORRECTION: n/a
+
+Cross-area note (minor, not a separate verdict): the inherited FrechetCodebook and the last-level Sinkhorn (model/layers.py:341 gives level 3 sk_epsilon=0.003, sk_iters=50) contradict the proposal's "no Sinkhorn, no Frechet update" -- level 3 assigns by argmax of a Sinkhorn over the radial cost instead of the specified argmin of the Poincare distance, and the dead Frechet objects remain bound and count as parameters on every level.
