@@ -993,7 +993,17 @@ def main():
                     os.fsync(_fh.fileno())
                 except OSError:
                     pass
-    _record("train_start", num_epochs=config["num_epochs"], no_eval=config["no_eval"], batch_size=config["batch_size"], infer_size=config["infer_size"], global_train_batch=config["batch_size"] * world_size, launch_mode=launch_mode, code_path=config["code_path"], variant=config.get("variant", "unknown_variant"), log_path=log_path, ckpt_path=ckpt_path, rank=rank, world_size=world_size, cuda_visible_devices=os.environ.get("CUDA_VISIBLE_DEVICES"))
+    # The digest of the SID file this run reads: the pairing of a run with a
+    # table is otherwise only arguable, because the path holds a different table
+    # after every Stage 2 run of that arm. With the digest in the run's own
+    # record, the pair is a fact and not a reconstruction.
+    _code_sha256 = ""
+    try:
+        import hashlib as _hashlib
+        _code_sha256 = _hashlib.sha256(open(config["code_path"], "rb").read()).hexdigest()
+    except OSError:
+        _code_sha256 = ""
+    _record("train_start", num_epochs=config["num_epochs"], no_eval=config["no_eval"], batch_size=config["batch_size"], infer_size=config["infer_size"], global_train_batch=config["batch_size"] * world_size, launch_mode=launch_mode, code_path=config["code_path"], code_path_sha256=_code_sha256, variant=config.get("variant", "unknown_variant"), log_path=log_path, ckpt_path=ckpt_path, rank=rank, world_size=world_size, cuda_visible_devices=os.environ.get("CUDA_VISIBLE_DEVICES"))
     # === R7-fix v6: 共享信号目录 (所有 rank 都知道, 与 ckpt_path 无关) ===
     _ddp_sync_dir = os.path.join(config["log_path"], "_ddp_sync")
     if rank == 0:

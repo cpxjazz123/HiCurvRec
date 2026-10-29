@@ -242,6 +242,7 @@ def collect_stage3_runs() -> list:
     files = sorted(REPO.glob("results/stage3_T5Train/*/logs/*/*/training_metrics.jsonl"))
     for path in files:
         code_path = None
+        code_digest = None
         test = None
         relative = path.relative_to(REPO)
         # results/stage3_T5Train/<variant>/logs/<dataset>/<run>/training_metrics.jsonl
@@ -250,7 +251,9 @@ def collect_stage3_runs() -> list:
         for line in path.read_text(errors="replace").splitlines():
             if '"train_start"' in line and code_path is None:
                 try:
-                    code_path = json.loads(line).get("code_path")
+                    event = json.loads(line)
+                    code_path = event.get("code_path")
+                    code_digest = event.get("code_path_sha256")
                 except ValueError:
                     pass
             if '"test"' in line and test is None:
@@ -274,6 +277,7 @@ def collect_stage3_runs() -> list:
                             test[key] = recorded[key]
                 except ValueError:
                     pass
+            test["code_path_sha256"] = code_digest
             runs.append({"variant": variant, "run_dir": str(run_dir.relative_to(REPO)),
                           "code_path": code_path, "metrics": test})
     return runs
@@ -306,12 +310,15 @@ def history_stage3_runs() -> list:
     runs = []
     for run_dir, blobs in entries.items():
         code_path = None
+        code_digest = None
         metrics = {}
         if blobs.get("metrics"):
             for line in git("cat-file", "blob", blobs["metrics"]).splitlines():
                 if '"train_start"' in line and code_path is None:
                     try:
-                        code_path = json.loads(line).get("code_path")
+                        event = json.loads(line)
+                        code_path = event.get("code_path")
+                        code_digest = event.get("code_path_sha256")
                     except ValueError:
                         pass
                 elif '"test"' in line and not metrics:
@@ -338,6 +345,7 @@ def history_stage3_runs() -> list:
             continue
         relative = run_dir.split("results/", 1)[-1]
         variant = relative.split("/")[1] if "/" in relative else ""
+        metrics["code_path_sha256"] = code_digest
         runs.append({"variant": variant, "run_dir": "results/" + relative,
                      "code_path": code_path, "metrics": metrics})
     return runs
@@ -349,6 +357,11 @@ def write_sid_files(blobs: dict) -> dict:
     for digest, entry in blobs.items():
         path = entry["paths"][0]
         slug = path.replace("/", "__").replace(".json", "")
+        # The name is bounded: a SID that lives inside this directory would
+        # otherwise produce a name that grows with every collection and finally
+        # exceeds what the filesystem accepts.
+        if len(slug) > 120:
+            slug = slug[:100] + "_" + hashlib.sha256(path.encode("utf-8")).hexdigest()[:12]
         name = f"{slug}__{digest[:12]}.json"
         target = SID_DIR / name
         if not target.is_file():
@@ -404,6 +417,7 @@ def main() -> int:
     pairs = []
     unpaired_runs = []
     disputed_runs = []
+    unverified_runs = []
     for run in runs:
         code = repo_relative(run["code_path"])
         when = run_timestamp(run["run_dir"])
@@ -431,6 +445,7 @@ def main() -> int:
         # whose token range does not reproduce the run's own number is not the
         # table that run read: the pairing is disputed and the run is reported
         # as unpaired rather than credited with a table it never saw.
+        recorded_digest = (run.get("metrics") or {}).get("code_path_sha256") or ""
         logged = logged_vocab_size(run["run_dir"])
         if logged is not None:
             expected = expected_vocab_size(payload)
@@ -444,14 +459,50 @@ def main() -> int:
                               "paired table's token range: this run read another table",
                     **run["metrics"]})
                 continue
+        if recorded_digest:
+            # The run recorded the digest of the table it read: the pair is a
+            # fact, and a mismatch means the run read another table.
+            if recorded_digest != digest:
+                disputed_runs.append({
+                    "variant": run["variant"], "run_dir": run["run_dir"],
+                    "code_path": code, "sid_sha256": digest,
+                    "sid_resolution": resolution,
+                    "logged_vocab_size": "", "table_vocab_size": "",
+                    "reason": "the digest the run recorded does not match the "
+                              "paired table",
+                    **run["metrics"]})
+                continue
+            confidence = "verified_digest"
+        elif logged is not None:
+            confidence = "verified_vocabulary"
+        else:
+            confidence = "date_resolved_only"
         pairs.append({"sid_sha256": digest, "sid_paths": blobs[by_sha[digest]]["paths"],
                       "variant": run["variant"], "run_dir": run["run_dir"],
                       "code_path": code, "sid_commit": blob,
                       "sid_resolution": resolution,
-                      "pair_confidence": ("verified_vocabulary"
-                                          if logged is not None else
-                                          "date_resolved_only"),
+                      "pair_confidence": confidence,
                       **run["metrics"]})
+        if logged is None and not recorded_digest:
+            # No fingerprint: the link rests on the path's version at the run's
+            # date, and that argument has been seen to fail (ten runs were
+            # refuted by their own vocabulary). Such a pair is kept in the
+            # record, but it is NOT counted as confirmed.
+            unverified_runs.append({
+                "variant": run["variant"], "run_dir": run["run_dir"],
+                "code_path": code, "sid_sha256": digest,
+                "sid_resolution": resolution,
+                "reason": "the run left no vocabulary, so only the path's version "
+                          "at the run's date supports the link, and that argument "
+                          "has been refuted for other runs",
+                **run["metrics"]})
+
+    # Only a pair whose SID the run itself vouched for is a pair. The rest are
+    # written to sid_recall_unverified.csv: they are evidence, not conclusions.
+    confirmed_pairs = [pair for pair in pairs
+                       if pair.get("pair_confidence") in ("verified_digest",
+                                                         "verified_vocabulary")]
+    pairs = confirmed_pairs
 
     # One SID, one recall: when several runs generated from the same table, the
     # highest recall is kept as the pair and the other runs are written aside.
@@ -578,14 +629,32 @@ def main() -> int:
     # mis-paired collection and named runs that the main table pairs with another
     # table: a SID has one recall, and the other recalls of the same table live
     # here.
+    excluded = OUT / "excluded"
+    excluded.mkdir(exist_ok=True)
+    # The runs whose table exists neither in the working tree nor in the history
+    # cannot be paired at all; they are parked with the reason.
+    with (excluded / "stage3_runs_without_sid.csv").open("w", newline="",
+                                                         encoding="utf-8") as handle:
+        fields = ["variant", "run_dir", "code_path", "test_recall@10", "n_eval", "reason"]
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        for row in unpaired_runs:
+            writer.writerow({key: row.get(key) for key in fields})
+    with (excluded / "sid_recall_unverified.csv").open("w", newline="", encoding="utf-8") as handle:
+        fields = ["variant", "run_dir", "code_path", "sid_sha256", "sid_resolution",
+                  "test_recall@10", "n_eval", "reason"]
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        for row in unverified_runs:
+            writer.writerow({key: row.get(key) for key in fields})
     fields = ["variant", "run_dir", "code_path", "sid_sha256", "sid_resolution",
               "logged_vocab_size", "table_vocab_size", "test_recall@10", "n_eval", "reason"]
-    with (OUT / "sid_recall_disputed.csv").open("w", newline="", encoding="utf-8") as handle:
+    with (excluded / "sid_recall_disputed.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         for row in disputed_runs:
             writer.writerow({key: row.get(key) for key in fields})
-    with (OUT / "sid_recall_alternatives.csv").open("w", newline="", encoding="utf-8") as handle:
+    with (excluded / "sid_recall_alternatives.csv").open("w", newline="", encoding="utf-8") as handle:
         fields = ["sid_sha256", "variant", "run_dir", "test_recall@5", "test_recall@10",
                   "test_ndcg@10", "n_eval", "note"]
         writer = csv.DictWriter(handle, fieldnames=fields)

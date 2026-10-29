@@ -459,7 +459,8 @@ class SidPairingInvariantTests(unittest.TestCase):
         from pathlib import Path
         directory = Path(__file__).resolve().parents[3] / "analysis_sid_recall"
         pairs = list(csv.DictReader((directory / "sid_recall.csv").open()))
-        alternatives = list(csv.DictReader((directory / "sid_recall_alternatives.csv").open()))
+        alternatives = list(csv.DictReader((directory / "excluded" /
+                                             "sid_recall_alternatives.csv").open()))
         self.assertTrue(pairs)
         shas = [row["sid_sha256"] for row in pairs]
         runs = [row["run_dir"] for row in pairs]
@@ -484,13 +485,21 @@ class SidPairingConfidenceTests(unittest.TestCase):
         from pathlib import Path
         directory = Path(__file__).resolve().parents[3] / "analysis_sid_recall"
         pairs = list(csv.DictReader((directory / "sid_recall.csv").open()))
-        disputed = list(csv.DictReader((directory / "sid_recall_disputed.csv").open()))
+        disputed = list(csv.DictReader((directory / "excluded" /
+                                        "sid_recall_disputed.csv").open()))
+        unverified = list(csv.DictReader((directory / "excluded" /
+                                          "sid_recall_unverified.csv").open()))
         self.assertTrue(pairs)
+        # the collection holds the confirmed pairs and nothing else
         for row in pairs:
             self.assertIn(row["pair_confidence"],
-                          ("verified_vocabulary", "date_resolved_only"))
-        # a disputed run is not also a pair
+                          ("verified_digest", "verified_vocabulary"))
         self.assertFalse({row["run_dir"] for row in pairs} &
                          {row["run_dir"] for row in disputed})
+        self.assertFalse({row["run_dir"] for row in pairs} &
+                         {row["run_dir"] for row in unverified})
         for row in disputed:
             self.assertNotEqual(row["logged_vocab_size"], row["table_vocab_size"])
+        # one file per SID, one recall per pair
+        self.assertEqual(len(list((directory / "sids").glob("*.json"))), len(pairs))
+        self.assertEqual(len(list((directory / "recalls").glob("*.json"))), len(pairs))

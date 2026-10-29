@@ -7,12 +7,21 @@ generated from it. Collected read-only by `collect.py` (re-runnable).
 
 | item | count |
 |---|---|
-| SID files in `sids/` (paired only) | 178 |
-| SID contents seen in the history (598 in total) | 598 |
-| SID + recall pairs (one per SID) | 178 |
-| Stage 3 runs the pairs were chosen from | 225 |
-| Stage 3 runs whose SID table no longer exists | 127 (in `stage3_runs_without_sid.csv`) |
-| recall source files copied to `recalls/` | 178 |
+| **SID + recall pairs (the collection)** | **97** |
+| SID files in `sids/` | 97 |
+| recall source files copied to `recalls/` | 97 |
+| Stage 3 runs considered | 225 |
+| runs of a confirmed table that are not the pair | 2 (`excluded/sid_recall_alternatives.csv`) |
+| runs with no fingerprint for their table | 101 (`excluded/sid_recall_unverified.csv`) |
+| runs whose own fingerprint refutes the table | 10 (`excluded/sid_recall_disputed.csv`) |
+| runs whose table exists nowhere | 15 (`excluded/stage3_runs_without_sid.csv`) |
+| SID contents seen in the history | 598 |
+
+**The collection is the 97 confirmed pairs and nothing else.** Every pair in
+`sid_recall.csv` has the run's own `vocab_size` matching the paired table's token
+range, so the table is the one that run read. The runs that cannot be confirmed
+are parked in `excluded/`: they are evidence, not conclusions, and they are not
+part of the collection.
 
 `sid_recall.csv` / `sid_recall.json` hold one row per (SID content, Stage 3 run) pair with
 `test_recall@5`, `test_recall@10`, `test_ndcg@5`, `test_ndcg@10` and `n_eval`, taken from the
@@ -68,9 +77,10 @@ Every pair carries a `pair_confidence`:
 
 | value | count | meaning |
 |---|---|---|
-| `verified_vocabulary` | 96 | the run's own configuration recorded the `vocab_size` it built from the SID table, and the paired table reproduces it exactly. Stage 3's vocabulary is a function of the table's highest token, so this is the run's own fingerprint of the table it read. |
-| `date_resolved_only` | 82 | the run left no configuration log, so the link rests on the path's version at the run's date alone. |
-| disputed (in `sid_recall_disputed.csv`) | 10 | the run's recorded `vocab_size` does NOT match the paired table's token range: the run read a different table, and the pair is refused rather than reported. |
+| `verified_digest` | 0 | the run recorded the sha256 of the SID file it read; the pair is a fact |
+| `verified_vocabulary` | 97 | the run's own configuration recorded the `vocab_size` it built from the SID table, and the paired table reproduces it exactly. Stage 3's vocabulary is a function of the table's highest token, so this is the run's own fingerprint of the table it read. |
+| `date_resolved_only` | 0 in the collection | the run left no configuration log; such pairs are parked in `excluded/` and are not counted |
+| disputed (in `excluded/sid_recall_disputed.csv`) | 10 | the run's recorded `vocab_size` does NOT match the paired table's token range: the run read a different table, and the pair is refused rather than reported. |
 
 The gate is one-sided: a matching fingerprint does not prove the table is the one
 read (a different table with the same highest token would pass), but a *mismatching*
@@ -80,7 +90,7 @@ the file had been overwritten by a later Stage 2 run that was never committed.
 
 The recall side is checked for every pair: the paired value is the run's own
 recorded test number, read from the run's own metrics (working tree or history),
-and all 178 match it exactly.
+and all of them match it exactly.
 
 ## The pairing, and its limits
 
