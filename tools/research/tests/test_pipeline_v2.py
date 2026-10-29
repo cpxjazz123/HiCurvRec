@@ -576,3 +576,50 @@ class HyperbolicAncestorAlignmentTests(unittest.TestCase):
         # neither the collapse nor the random assignment may score high
         self.assertLess(abs(scores[0]), 0.2)
         self.assertLess(abs(scores[1]), 0.2)
+
+
+class MetricRoundArtefactTests(unittest.TestCase):
+    """The committed artefacts must agree with each other."""
+
+    def test_the_collection_and_the_reports_are_consistent(self):
+        import csv
+        from pathlib import Path
+        repo = Path(__file__).resolve().parents[3]
+        collection = repo / "analysis_sid_recall"
+        rows = list(csv.DictReader((collection / "sid_recall.csv").open()))
+        self.assertTrue(rows)
+        files = {path.name for path in (collection / "sids").glob("*.json")}
+        for row in rows:
+            self.assertIn(row["sid_file"], files,
+                          "a pair points at a table that is not on disk")
+        # every pair is confirmed by the fingerprint the run itself recorded
+        for row in rows:
+            self.assertIn(row["pair_confidence"],
+                          ("verified_digest", "verified_vocabulary"))
+        # one SID, one recall
+        self.assertEqual(len({row["sid_sha256"] for row in rows}), len(rows))
+        self.assertEqual(len({row["run_dir"] for row in rows}), len(rows))
+
+    def test_the_reports_agree_with_the_summary(self):
+        import json
+        from pathlib import Path
+        repo = Path(__file__).resolve().parents[3]
+        summary = json.loads(
+            (repo / "results" / "research" / "issue126" / "metric_round" /
+             "summary.json").read_text())
+        table = summary.get("measured_on_the_corrected_collection") or {}
+        self.assertTrue(table)
+        for name, entry in table.items():
+            self.assertIn("spearman", entry)
+            self.assertTrue(-1.0 <= entry["spearman"] <= 1.0)
+        eligible = [name for name, entry in table.items() if entry["eligible"]]
+        self.assertTrue(eligible)
+
+    def test_the_pipeline_entry_point_exists(self):
+        from pathlib import Path
+        repo = Path(__file__).resolve().parents[3]
+        for relative in ("tools/research/science/metric_round_pipeline.py",
+                         "tools/research/science/sid_metric_bench.py",
+                         "tools/research/science/hyperbolic_ancestor_alignment.py",
+                         "tools/research/rounds/metric_round.py"):
+            self.assertTrue((repo / relative).is_file(), relative)

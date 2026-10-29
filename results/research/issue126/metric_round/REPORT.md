@@ -185,6 +185,24 @@ table's recall; the one that contrasts the table against the behaviour does.**
   SID tracks recall. It does not show that hyperbolic *quantisation* is needed to
   produce such a SID: the Euclidean control tracks recall just as well.
 
+## How to reproduce it in one command
+
+```
+python3 tools/research/science/metric_round_pipeline.py --all
+```
+
+collects the confirmed pairs (every one checked against the vocabulary its own run
+recorded), scores the metrics on all of them and prints the correlations with
+their bootstrap intervals and the choice made by the rule fixed in advance. No
+Stage 2, no Stage 3, no GPU, no training: the reference is Issue #126's frozen
+behaviour model and the tables are the ones already exported.
+
+The eight rounds of proposals live in `metric_round/round_*/`, the machinery that
+produced them is `tools/research/rounds/metric_round.py` (exposed as the MCP tools
+`research_metric_start`, `research_metric_status`, `research_metric_bench`), and
+the consistency of the committed artefacts is checked by
+`tools/research/tests/test_pipeline_v2.py`.
+
 ## Where the artefacts live
 
 * the metric: `tools/research/science/hyperbolic_ancestor_alignment.py` (with tests
