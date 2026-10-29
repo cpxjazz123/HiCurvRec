@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
@@ -334,8 +335,9 @@ def check_tests_use_training_config(tree: Path, contract_name: str = None) -> di
             "detail": "the candidate tests build the model with " + str(expected)}
 
 
-DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "ddp", "mechanism",
-                  "negative", "training_config", "promotion", "tests_config")
+DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "entry", "ddp",
+                  "mechanism", "negative", "training_config", "promotion",
+                  "tests_config")
 
 
 def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
@@ -357,6 +359,8 @@ def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
             results[name] = check_gradient(tree)
         elif name == "export":
             results[name] = check_export_matches_assignment(tree, interpreter)
+        elif name == "entry":
+            results[name] = check_real_entry(tree)
         elif name == "ddp":
             results[name] = check_ddp_two_ranks(tree, interpreter)
         elif name == "mechanism":
