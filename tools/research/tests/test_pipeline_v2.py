@@ -448,3 +448,29 @@ class SidPairingPathTests(unittest.TestCase):
         self.assertFalse(relative.startswith("/"), relative)
         self.assertTrue(relative.endswith("results/stage2_RQ-VAE/TIGER_x/item_sids.json"))
         self.assertEqual(relative, module.repo_relative(relative))
+
+
+class SidPairingInvariantTests(unittest.TestCase):
+    """One SID, one recall: the collected tables must obey it."""
+
+    def test_the_collection_pairs_one_sid_with_one_recall(self):
+        import csv
+        import hashlib
+        from pathlib import Path
+        directory = Path(__file__).resolve().parents[3] / "analysis_sid_recall"
+        pairs = list(csv.DictReader((directory / "sid_recall.csv").open()))
+        alternatives = list(csv.DictReader((directory / "sid_recall_alternatives.csv").open()))
+        self.assertTrue(pairs)
+        shas = [row["sid_sha256"] for row in pairs]
+        runs = [row["run_dir"] for row in pairs]
+        self.assertEqual(len(shas), len(set(shas)), "a SID appears twice in the pair table")
+        self.assertEqual(len(runs), len(set(runs)), "a run appears twice in the pair table")
+        self.assertFalse({row["run_dir"] for row in alternatives} & set(runs),
+                         "a run is listed both as a pair and as an alternative")
+        # one file per SID, and every file is a paired table
+        files = sorted((directory / "sids").glob("*.json"))
+        digests = [hashlib.sha256(path.read_bytes()).hexdigest() for path in files]
+        self.assertEqual(len(digests), len(set(digests)),
+                         "the same table is stored under more than one name")
+        self.assertEqual(set(digests), set(shas))
+        self.assertEqual(len(list((directory / "recalls").glob("*.json"))), len(pairs))

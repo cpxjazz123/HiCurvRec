@@ -328,20 +328,27 @@ def write_sid_files(blobs: dict) -> dict:
 
 
 def prune_unpaired(names: dict, pairs: list) -> int:
-    """Drop the SID files that no Stage 3 run generated from.
+    """Drop the SID files that no Stage 3 run generated from, and the duplicates.
+
+    A SID is a table, identified by its content: the same table reached under two
+    path names is ONE SID, so it must be ONE file. The canonical name (the first
+    path the table was seen at) is kept and the other copies go.
 
     The unpaired tables stay recoverable: they are in the git history, and
     ``collect.py`` writes them again on the next run without this step.
     """
     keep = {pair["sid_sha256"] for pair in pairs}
     removed = 0
-    for digest, name in names.items():
-        if digest in keep:
+    canonical = {digest: name for digest, name in names.items()}
+    for path in sorted(SID_DIR.glob("*.json")):
+        try:
+            digest = sha256_bytes(path.read_bytes())
+        except OSError:
             continue
-        target = SID_DIR / name
-        if target.is_file():
-            target.unlink()
-            removed += 1
+        if digest in keep and canonical.get(digest) == path.name:
+            continue
+        path.unlink()
+        removed += 1
     return removed
 
 
@@ -507,6 +514,18 @@ def main() -> int:
     (OUT / "sid_recall.json").write_text(json.dumps(
         {"pairs": pairs, "inventory": inventory}, indent=2, ensure_ascii=False),
         encoding="utf-8")
+    # The runs that shared a table with the pair are written aside. The file used
+    # to be left untouched by this script, so it kept the rows of an older,
+    # mis-paired collection and named runs that the main table pairs with another
+    # table: a SID has one recall, and the other recalls of the same table live
+    # here.
+    with (OUT / "sid_recall_alternatives.csv").open("w", newline="", encoding="utf-8") as handle:
+        fields = ["sid_sha256", "variant", "run_dir", "test_recall@5", "test_recall@10",
+                  "test_ndcg@10", "n_eval", "note"]
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        for row in alternatives:
+            writer.writerow(row)
 
     if "--paired-only" in sys.argv:
         removed = prune_unpaired(names, pairs)
