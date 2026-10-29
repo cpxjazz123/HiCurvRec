@@ -1,0 +1,25 @@
+{
+  "arrays": {
+    "path": "results/research/issue126/reference_next_item/predictions.npz",
+    "sha256": "3499c707f57737ee6bc638159f8ad3dd20a16950231e3b3334c7103bb3bae498"
+  },
+  "fitted_at": 1793313762.5398324,
+  "interactions": 57439,
+  "spec": {
+    "batch_size": 4096,
+    "dim": 32,
+    "epochs": 30,
+    "fitting_data": "the training interactions only",
+    "geometry": "the prediction is mapped into the unit ball with exp_0",
+    "hidden": 256,
+    "history_length": 8,
+    "input": "the mean of the last HISTORY_LENGTH Stage1 embeddings of the history",
+    "learning_rate": 0.001,
+    "loss": "the squared Euclidean distance to the frozen target representation",
+    "seed": 42,
+    "target": "the frozen Issue #126 target representation of the item to be bought",
+    "version": "issue126-next-item-reference-v1",
+    "weight_decay": 0.0001
+  },
+  "target_reference_sha256": "28e33a37552578d04b581b6577eb5809a2ec2298752f09ab62ccdb76eb01c790"
+}

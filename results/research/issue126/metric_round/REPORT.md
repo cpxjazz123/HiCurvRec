@@ -92,7 +92,7 @@ relation to the behaviour, read through whatever teacher is frozen.
 |---|---|---|
 | query point | history barycentre **+0.7623** (fresh 77: **+0.6956**), behaviour midpoint +0.6899 (+0.5385), single anchor +0.6592 (+0.4809), recency-weighted history (+0.4533), held-out probe +0.6520 (+0.4670) | the uniform history barycentre: leaning on the recency (2^-i weights) or on the last item alone loses a fifth of the correlation, so the metric wants the whole sequence, not its tail |
 | geometry | hyperbolic **+0.7014**, flat c=1e-3 +0.6965, Euclidean +0.6930 | hyperbolic, but by a hair |
-| teacher | frozen c=1 **+0.7014**, variant c=0.25 +0.7014 | neither |
+| teacher | frozen c=1 **+0.7623**, variant c=0.25 +0.7014, a NEXT-ITEM reference trained to predict the target from the history +0.3052 | the pairwise teacher |
 | negatives | all ten **+0.7014**, size-matched +0.6428 | all ten |
 | levels | level 1 **+0.7014**, informative-weighted +0.5663, averaged +0.3604 | level 1 |
 | reduction | pair accuracy +0.7025, softplus at the frozen tau **+0.7014** | the same, within noise |
@@ -114,6 +114,21 @@ say the same thing: **a good SID is a COARSE prefix with diverse candidates, not
 a tight one that answers on its own.** The metrics that track recall are the ones
 that measure the behaviour ALIGNMENT of the partition; the ones that measure how
 easily the answer is already inside the cell point the wrong way.
+
+## The teacher matters more than the formula
+
+Two teachers were fitted on the training interactions only, and both are frozen:
+
+| teacher | what it says | HBAA with it as the query point |
+|---|---|---|
+| the Issue #126 pairwise reference | which item resembles which | **+0.7623** |
+| a next-item reference (30 epochs, dim 32) | what the user is about to buy | +0.3052 |
+
+A purpose-built INTENT model is a weaker query point than the pairwise teacher's
+source tower: it is trained on the mean-pooled history, which throws away the
+order and the recency of the sequence, and with them the part of the user's
+direction the metric reads. The teacher's geometry, not the metric's formula, is
+where the information lives.
 
 ## The degenerate cases behave
 

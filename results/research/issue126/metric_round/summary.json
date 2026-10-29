@@ -419,7 +419,14 @@
       },
       "reading": "the uniform history barycentre is the best query point: leaning on the recency (2^-i weights) or on the last item alone loses a fifth of the correlation, so the metric wants the whole sequence, not its tail"
     },
-    "round_9_finding": "The generator-side view is negatively correlated (-0.3669): a level-1 cell that answers the query by itself leaves Stage 3's re-ranking nothing to choose from, and the top ten fills with near-duplicates. Its complement -- the room the re-ranking has inside the cell -- is positively correlated (+0.3669). Together with the path likelihood (-0.2823) this says the same thing twice: a good SID is a COARSE prefix with diverse candidates, not a tight one that answers on its own."
+    "round_9_finding": "The generator-side view is negatively correlated (-0.3669): a level-1 cell that answers the query by itself leaves Stage 3's re-ranking nothing to choose from, and the top ten fills with near-duplicates. Its complement -- the room the re-ranking has inside the cell -- is positively correlated (+0.3669). Together with the path likelihood (-0.2823) this says the same thing twice: a good SID is a COARSE prefix with diverse candidates, not a tight one that answers on its own.",
+    "teacher_sweep": {
+      "pairwise_reference_history_barycentre": 0.7623,
+      "pairwise_reference_single_anchor": 0.6592,
+      "pairwise_reference_recency_weighted": 0.4533,
+      "next_item_reference_prediction": 0.3052,
+      "reading": "the pairwise teacher's source tower carries more of the user's direction than a next-item predictor trained on the mean-pooled history: the intent model loses the order and the recency of the sequence and with them the signal the metric reads"
+    }
   },
   "rounds": {
     "round_1": [
@@ -674,6 +681,16 @@
       ],
       "eligible": true,
       "note": "the complement of the above: how much room the re-ranking has inside the cell"
+    },
+    "hbaa_nextitem": {
+      "spearman": 0.3052,
+      "p": 0.00139,
+      "ci": [
+        0.092,
+        0.494
+      ],
+      "eligible": true,
+      "note": "HBAA with the NEXT-ITEM reference as the query point: a teacher trained on the training interactions to predict the target's representation from the history (30 epochs, dim 32, sha 3499c707). Eligible, but far below the pairwise teacher's history barycentre (+0.7623): a purpose-built intent model is a WEAKER query point than the pairwise reference's source tower"
     }
   },
   "collection_correction": "67 of the original 97 pairings were wrong (the resolver took the newest commit of a SID path, and that commit often held an EMPTY file, so the run was paired with the earliest surviving table instead of the one it read). The collection is now 107 pairs, all with a readable table whose token range matches the run's own recorded vocabulary.",
