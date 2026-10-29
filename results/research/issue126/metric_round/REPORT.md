@@ -24,7 +24,36 @@ Nothing is fitted: the reference is Issue #126's frozen behaviour model, the
 temperature is its own, and the queries and their ten negatives are drawn from the
 training split with a fixed seed.
 
-## The result
+## The result, on the corrected collection
+
+The collection itself was wrong until the fingerprint was fixed: the resolver took
+the NEWEST commit of a SID path, and that commit often held an EMPTY file, so 67 of
+the original 97 runs were paired with the earliest surviving table instead of the
+one they read. Taking the newest NON-EMPTY version and letting the vocabulary
+fingerprint arbitrate refuted those 67 and confirmed 77 more. The collection is now
+**107 pairs**, every one of them with a readable table and a matching fingerprint.
+
+| metric | Spearman | 95% CI |
+|---|---|---|
+| **HBAA** | **+0.7623** | [+0.610, +0.878] |
+| Q_H (Issue #126, level 1) | +0.7382 | [+0.589, +0.850] |
+
+And on the **77 pairs that never took part in choosing a metric**:
+
+| metric | Spearman | 95% CI |
+|---|---|---|
+| Q_H | **+0.7671** | [+0.608, +0.867] |
+| HBAA | +0.6956 | [+0.513, +0.822] |
+
+**The claim that HBAA beats Q_H is withdrawn.** The paired difference is +0.024 on
+the full collection (95% interval [-0.047, +0.095]) and -0.072 on the pairs that
+never took part in the selection (interval [-0.217, +0.053]): the sign flips, and
+both intervals straddle zero. The two metrics are statistically
+indistinguishable. What the rounds established is the FAMILY -- a contrastive,
+behaviour-referenced, prefix-centroid metric -- and not a particular statistic
+inside it.
+
+## The result on the original (later corrected) collection
 
 | metric | Spearman | 95% CI | |
 |---|---|---|---|

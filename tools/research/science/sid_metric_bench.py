@@ -169,6 +169,8 @@ def main() -> int:
     parser.add_argument("--module", required=True,
                         help="a python file that defines METRICS = {name: fn}")
     parser.add_argument("--out", default=str(OUTPUT))
+    parser.add_argument("--only-runs", default="",
+                        help="a file with one run_dir per line; only those pairs are scored")
     parser.add_argument("--workers", default=0, type=int,
                         help="parallel workers; each one is pinned to one BLAS thread")
     parser.add_argument("--free-constants", default="",
@@ -184,6 +186,11 @@ def main() -> int:
         raise SystemExit("the module defines no METRICS dictionary")
 
     context = load_context()
+    if args.only_runs:
+        wanted = {line.strip() for line in
+                  Path(args.only_runs).read_text().splitlines() if line.strip()}
+        context["pairs"] = [entry for entry in context["pairs"]
+                            if entry["row"]["run_dir"] in wanted]
     print(f"pairs: {len(context['pairs'])}")
     workers = int(args.workers or 0)
     global _METRICS, _CONTEXT

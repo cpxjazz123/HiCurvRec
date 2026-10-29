@@ -75,11 +75,21 @@ def logged_vocab_size(run_dir: str) -> int | None:
     if local.is_file():
         text = local.read_text(errors="replace")
     else:
+        # Every commit that touched the log is tried: a later commit may hold an
+        # EMPTY copy (the file was committed after the run without its content),
+        # and taking the newest one alone lost the vocabulary that an older
+        # commit still had.
         commits = git("log", "--all", "--format=%H", "--",
                       str(relative / "HG_Rec.log")).splitlines()
-        for commit in commits[:1]:
-            text = git_bytes("show", commit + ":" + str(relative / "HG_Rec.log")).decode(
+        best = ""
+        for commit in commits:
+            blob = git_bytes("show", commit + ":" + str(relative / "HG_Rec.log")).decode(
                 errors="replace")
+            if len(blob) > len(best):
+                best = blob
+            if "'vocab_size'" in blob:
+                break
+        text = best
     match = re.search(r"'vocab_size':\s*(\d+)", text)
     return int(match.group(1)) if match else None
 
@@ -220,16 +230,22 @@ def resolve_path_to_content(path: str, before: float | None = None
         best = commit
         break
     if best:
-        payload = git_bytes("show", best + ":" + path)
-        if payload:
-            return sha256_bytes(payload), payload, best, "at_run_date"
+        # The newest commit may hold an EMPTY copy (the file was committed after
+        # the run without its content), so every commit is tried until one has
+        # the table in it.
+        for commit in [best] + [c for c in history if c != best]:
+            payload = git_bytes("show", commit + ":" + path)
+            if payload:
+                resolution = "at_run_date" if commit == best else "at_run_date_nonempty"
+                return sha256_bytes(payload), payload, commit, resolution
     if history:
         # The file was committed after the run: the earliest surviving version is the
         # only copy of the table the run could have used.
-        commit = history[-1].split("|", 1)[0]
-        payload = git_bytes("show", commit + ":" + path)
-        if payload:
-            return sha256_bytes(payload), payload, commit, "earliest_surviving"
+        for commit in [history[-1].split("|", 1)[0]] + [c.split("|", 1)[0]
+                                                        for c in reversed(history[:-1])]:
+            payload = git_bytes("show", commit + ":" + path)
+            if payload:
+                return sha256_bytes(payload), payload, commit, "earliest_surviving"
     if candidate.is_file():
         payload = candidate.read_bytes()
         return sha256_bytes(payload), payload, None, "working_tree"
@@ -365,11 +381,20 @@ def write_sid_files(blobs: dict) -> dict:
         name = f"{slug}__{digest[:12]}.json"
         target = SID_DIR / name
         if not target.is_file():
+            payload = None
             if entry["blob"]:
-                target.write_bytes(git_bytes("cat-file", "blob", entry["blob"]))
+                payload = git_bytes("cat-file", "blob", entry["blob"])
             else:
                 source = REPO / path
-                target.write_bytes(source.read_bytes() if source.is_file() else b"")
+                if source.is_file():
+                    payload = source.read_bytes()
+            if not payload:
+                # The table is neither in the working tree nor in the history under
+                # a blob we can read: writing an EMPTY file would create a file
+                # whose content is not the table, and the pruner would then delete
+                # the row's file while the row still points at it.
+                continue
+            target.write_bytes(payload)
         # keyed by the content sha256: that is what the pairing uses
         names[entry["sha256"]] = name
     return names
@@ -393,7 +418,10 @@ def prune_unpaired(names: dict, pairs: list) -> int:
             digest = sha256_bytes(path.read_bytes())
         except OSError:
             continue
-        if digest in keep and canonical.get(digest) == path.name:
+        if digest in keep:
+            # The table of a paired SID stays, whatever it is called: a row of the
+            # pair table points at a file by name, and a table that is not on disk
+            # would make the row unreadable.
             continue
         path.unlink()
         removed += 1
@@ -530,12 +558,29 @@ def main() -> int:
     pairs = kept
 
     names = write_sid_files(blobs)
+    # A pair whose table cannot be materialised is not a measurable pair: it is
+    # parked with the reason instead of appearing in the collection with a file
+    # that does not exist.
+    unmaterialised = [pair for pair in pairs if not names.get(pair["sid_sha256"])]
+    pairs = [pair for pair in pairs if names.get(pair["sid_sha256"])]
+    for pair in unmaterialised:
+        unverified_runs.append({
+            "variant": pair["variant"], "run_dir": pair["run_dir"],
+            "code_path": pair["code_path"], "sid_sha256": pair["sid_sha256"],
+            "sid_resolution": pair.get("sid_resolution"),
+            "reason": "the SID table of this run exists neither in the working tree "
+                      "nor in a readable blob of the history",
+            **pair})
 
     inventory = []
     for digest, entry in blobs.items():
         # the pairing is keyed by the content hash, not by the git blob id
         paired = [pair for pair in pairs if pair["sid_sha256"] == entry["sha256"]]
         best = max((pair["test_recall@10"] for pair in paired), default=None)
+        if entry["sha256"] not in names:
+            # the table could not be materialised (an empty blob everywhere): it
+            # is not a pair and has no file to point at
+            continue
         inventory.append({
             "sid_sha256": entry["sha256"], "file": names[entry["sha256"]], "bytes": entry["bytes"],
             "paths": entry["paths"], "git_blob": entry["blob"],
@@ -562,7 +607,8 @@ def main() -> int:
         writer.writeheader()
         for pair in sorted(pairs, key=lambda item: -(item.get("test_recall@10") or 0)):
             writer.writerow({
-                "sid_sha256": pair["sid_sha256"], "sid_file": names[pair["sid_sha256"]],
+                "sid_sha256": pair["sid_sha256"],
+                "sid_file": names.get(pair["sid_sha256"], ""),
                 "sid_paths": " | ".join(pair["sid_paths"]), "variant": pair["variant"],
                 "run_dir": pair["run_dir"], "code_path": pair["code_path"],
                 "sid_resolution": pair.get("sid_resolution", ""),
@@ -580,6 +626,10 @@ def main() -> int:
     for path in recalls.iterdir():
         path.unlink()
     for pair in pairs:
+        if not names.get(pair["sid_sha256"]):
+            # the table of this pair could not be materialised: it is not a
+            # measurable pair and must not appear in the collection
+            continue
         run = REPO / pair["run_dir"]
         # The metrics live in the pair already (they came from the run's own record).
         # The raw file is merged in when the run still exists locally, so the

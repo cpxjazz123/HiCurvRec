@@ -267,124 +267,60 @@
     "reading": "the behaviour relation IS hierarchical in the hyperbolic geometry: the positive shares a deeper common ancestor with the user's anchor in 83% of the queries, and the depth gap is five times the Euclidean one on the same objects. The hyperbolic reading of the Gromov product is therefore not a figure of speech: the flat control cannot reproduce the separation."
   },
   "winner": {
-    "metric": "hbaa",
-    "spearman": 0.7012,
-    "ci": [
-      0.536,
-      0.824
+    "metrics": [
+      "HBAA",
+      "Q_H (Issue #126, level 1)"
     ],
-    "pairs": 97,
-    "beats": "Q_H (Issue #126, level 1) at +0.634",
-    "counter_examples": {
-      "one level-1 code for every item": 0.0,
-      "randomly relabelled codes": 0.000257,
-      "the real table": 0.039772,
-      "reading": "a collapse scores zero and a random assignment scores zero, so neither can be rewarded"
-    },
-    "caveats": [
-      "the metric was selected on the same 97 pairs it is measured on, so its +0.701 is optimistic; a fresh SID+recall sample is needed",
-      "the Euclidean and flat controls score +0.693 and +0.693 against the hyperbolic +0.701: the ranking of tables is a property of the construction, not of the curvature, even though the behaviour itself is hierarchical in the hyperbolic geometry (mean depth gap +0.089 against the Euclidean +0.018, same 83% share)",
-      "observational: the tables come from different families and settings"
-    ],
-    "levels_note": "HBAA at every level and averaged gives +0.4644, BELOW the level-1 score +0.7012: the ancestor contrast at the deeper levels is real but weaker, so averaging them in loses information. The level-1 ancestor depth is the signal.",
-    "refinements_tried": {
-      "hbaa_levels": 0.4644,
-      "hyp_cell_expected_rank": 0.2997,
-      "hyp_cell_rank_lift": 0.3441,
-      "reading": "the refinements of the winner's own family are all weaker than the winner: the signal is the level-1 ancestor DEPTH contrast, not a ranking statistic"
-    },
-    "family": {
-      "measured": {
-        "hbaa": 0.7012,
-        "hbaa_anchor": 0.6866,
-        "hbaa_euclid": 0.693,
-        "hbaa_flat": 0.6925,
-        "hbaa_pair_accuracy": 0.6988,
-        "hbaa_weighted": 0.5659,
-        "hbaa_levels": 0.3605,
-        "hbaa_size_matched": 0.6437
-      },
-      "reading": "every variant of the winner is weaker than the winner: the level-1 Gromov ancestor-DEPTH contrast against the negatives' prefix centroids, with the full history as the query point and the frozen temperature in the reduction, is the signal. Ranking statistics over the same cells, the deeper levels, a temperature-free reduction and the weighted multi-level combination all lose information."
-    },
-    "significance_vs_the_incumbent": {
-      "paired_bootstrap_of_the_rho_difference": {
-        "mean": 0.0673,
+    "claim": "both are hyperbolic SID metrics that track Stage-3 recall, and both generalise to pairs that were never used to choose them. The claim that HBAA BEATS Q_H is withdrawn: on the corrected collection the difference is +0.024 with a 95% interval of [-0.047, +0.095], and on the pairs that never took part in the selection the sign flips (-0.072, interval [-0.217, +0.053]). The two are statistically indistinguishable.",
+    "corrected_collection": {
+      "pairs": 107,
+      "HBAA": 0.7623,
+      "ci": [
+        0.589,
+        0.85
+      ],
+      "Q_H": 0.7382,
+      "paired_difference": {
+        "mean": 0.0242,
         "ci95": [
-          -0.003,
-          0.1562
-        ],
-        "probability_hbaa_worse": 0.0324
-      },
-      "split_half_stability_of_hbaa": {
-        "mean": 0.6967,
-        "p5_p95": [
-          0.5742,
-          0.8189
-        ],
-        "share_above_zero": 1.0
-      },
-      "reading": "HBAA is better than Q_H by +0.067 of Spearman on average, but the paired bootstrap interval of the difference touches zero (-0.003): the two are not separated by this sample. HBAA itself is stable: over 800 random half-samples its rho never fell below zero and averaged +0.697."
+          -0.0474,
+          0.0948
+        ]
+      }
+    },
+    "fresh_pairs": {
+      "pairs": 77,
+      "note": "never used to choose a metric",
+      "HBAA": 0.6956,
+      "ci": [
+        0.608,
+        0.867
+      ],
+      "Q_H": 0.7671,
+      "paired_difference": {
+        "mean": -0.0723,
+        "ci95": [
+          -0.2174,
+          0.053
+        ]
+      }
+    },
+    "collection_correction": "67 of the original 97 pairings were WRONG: the resolver took the newest commit of a SID path, and that commit often held an EMPTY file, so the run was paired with the earliest surviving table instead of the one it read. Taking the newest NON-EMPTY version and letting the vocabulary fingerprint arbitrate refuted those 67 and confirmed 77 more. The collection is now 107 pairs, all with a readable table.",
+    "degenerate_cases": {
+      "one_code_table": 0.0,
+      "random_relabelling": 0.000257,
+      "real_table": 0.039772
     },
     "robustness": {
-      "a_different_frozen_teacher": {
-        "reference_curvature": 0.25,
-        "rho": 0.7014
-      },
-      "the_held_out_probe": {
-        "rho": 0.6689,
-        "note": "the validation pairs the teacher never saw; still above Q_H's +0.634"
-      },
+      "a_different_frozen_teacher_c0.25": 0.7014,
+      "the_held_out_probe": 0.6689,
       "split_half": {
         "mean": 0.6967,
         "range": [
           0.5742,
           0.8189
-        ],
-        "never_below_zero": true
-      },
-      "degenerate_cases": {
-        "one_code_table": 0.0,
-        "random_relabelling": 0.000257,
-        "real_table": 0.039772
-      },
-      "paired_bootstrap_vs_q_h": {
-        "mean": 0.0673,
-        "ci95": [
-          -0.003,
-          0.1562
         ]
       }
-    },
-    "input_sweep": {
-      "query_point": {
-        "history_barycentre": 0.7014,
-        "behaviour_midpoint": 0.6941,
-        "single_anchor": 0.6866,
-        "held_out_probe": 0.6689
-      },
-      "geometry": {
-        "hyperbolic": 0.7014,
-        "euclidean": 0.693,
-        "flat_c1e-3": 0.6965
-      },
-      "teacher": {
-        "frozen_c1": 0.7014,
-        "variant_c0.25": 0.7014
-      },
-      "negatives": {
-        "all_ten": 0.7014,
-        "size_matched": 0.6428
-      },
-      "levels": {
-        "level_1": 0.7014,
-        "weighted": 0.5663,
-        "averaged": 0.3604
-      },
-      "reduction": {
-        "softplus_at_the_frozen_tau": 0.7014,
-        "pair_accuracy": 0.7025
-      },
-      "reading": "every input choice has been swept and none of them beats the incumbent by more than the interval width: the metric is the level-1 Gromov ancestor-depth contrast with the full history, read through any frozen teacher."
     }
   },
   "rounds": {
