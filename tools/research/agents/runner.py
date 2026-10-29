@@ -145,6 +145,22 @@ def isolation_permissions(workspace: Path, role: str = "verify",
     return permissions
 
 
+def _looks_like_directory(target: str) -> bool:
+    """Whether a refused read was a directory listing rather than a source file.
+
+    A refused listing costs budget but says nothing about the review: the agent
+    can still read every file in its scope. A refused FILE read is the coverage
+    gap that matters.
+    """
+    text = str(target or "")
+    if not text or text.endswith("/"):
+        return True
+    try:
+        return Path(text).is_dir()
+    except OSError:
+        return False
+
+
 def session_reads(path: Path) -> dict:
     """What the agent actually read, and what it was refused.
 
@@ -186,15 +202,17 @@ def session_reads(path: Path) -> dict:
             if not target:
                 continue
             if status == "error" and "ermission" in error:
-                denied.append({"tool": "execute", "target": target,
-                               "error": error[:120]})
+                denied.append({"tool": "execute", "target": target, "error": error[:120],
+                               "kind": "directory" if _looks_like_directory(target)
+                               else "file"})
             else:
                 read.append(target)
             continue
         if tool not in ("read", "glob", "grep", "edit", "write"):
             continue
         if status == "error" and "ermission" in error:
-            denied.append({"tool": tool, "target": target, "error": error[:120]})
+            denied.append({"tool": tool, "target": target, "error": error[:120],
+                           "kind": "directory" if _looks_like_directory(target) else "file"})
         elif status == "completed" and target:
             read.append(target)
     return {"files_read": read, "reads_denied": denied}
@@ -745,7 +763,10 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
                            if str(entry.resolve()) != str(entry)],
         "geometry_contract": _geometry_contract(),
         "reads": session_reads(workspace / "session.jsonl"),
-        "source_review": not session_reads(workspace / "session.jsonl")["reads_denied"],
+        # A refused listing is not a refused source: only a refused FILE read is.
+        "source_review": not [entry for entry in
+                              session_reads(workspace / "session.jsonl")["reads_denied"]
+                              if entry.get("kind") != "directory"],
         "boundary_version": policy.BOUNDARY_VERSION,
         "boundary_sha256": boundary_fingerprint(workspace, role, allowed,
                                                 allow_shell, allow_write,

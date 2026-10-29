@@ -1281,8 +1281,10 @@ def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
             except (OSError, ValueError):
                 record = {}
             report["reads"] = record.get("reads") or {}
-            report["source_review"] = bool(record.get("source_review", True)) and not (
-                (record.get("reads") or {}).get("reads_denied"))
+            refused_files = [entry for entry in
+                             (record.get("reads") or {}).get("reads_denied") or []
+                             if entry.get("kind") != "directory"]
+            report["source_review"] = bool(record.get("source_review", True)) and not refused_files
         # What the agent could actually open: a report whose reads were refused is
         # an inference from the prompt, and it is marked as such instead of
         # counting as a source review.

@@ -378,3 +378,20 @@ class FingerprintInputTests(unittest.TestCase):
         import inspect
         source = inspect.getsource(runner.boundary_fingerprint)
         self.assertIn("geometry_contract", source)
+
+
+class DeniedDirectoryTests(unittest.TestCase):
+    """A refused listing is not a refused source."""
+
+    def test_a_directory_denial_is_not_a_coverage_gap(self):
+        import json
+        from tools.research.agents import runner
+        with tempfile.TemporaryDirectory() as work:
+            session = Path(work) / "session.jsonl"
+            lines = [{"type": "tool_use", "part": {"tool": "read", "state": {
+                "status": "error", "input": {"path": "/tmp/tree/"},
+                "error": "Permission denied: read"}}}]
+            session.write_text("\n".join(json.dumps(line) for line in lines),
+                               encoding="utf-8")
+            outcome = runner.session_reads(session)
+        self.assertEqual(outcome["reads_denied"][0]["kind"], "directory")
