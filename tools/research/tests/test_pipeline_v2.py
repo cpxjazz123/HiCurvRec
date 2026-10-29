@@ -74,15 +74,23 @@ class ControllerTests(unittest.TestCase):
             self.assertNotEqual(second["source_digest"], first["source_digest"])
 
     def test_the_repair_budget_stops_the_automatic_loop(self):
+        """Two repairs of the CANDIDATE that still fail, and the loop stops."""
         with tempfile.TemporaryDirectory() as work:
             controller, tree = self._controller(work)
             controller.register(tree)
-            for _ in range(states.REPAIR_BUDGET):
+            for round_index in range(states.REPAIR_BUDGET):
                 controller.record_tests({"ran": True, "passed": False,
                                          "checks": {"suite": {"status": "FAIL"}}})
+                # the candidate really changed between the rounds
+                (tree / "train_rqvae.py").write_text(
+                    "x = %d\n" % (round_index + 2), encoding="utf-8")
+                controller.register(tree)
                 controller.repair("fix")
             controller.record_tests({"ran": True, "passed": False,
                                      "checks": {"suite": {"status": "FAIL"}}})
+            # a third repair of the candidate: the budget is spent
+            (tree / "train_rqvae.py").write_text("x = 9\n", encoding="utf-8")
+            controller.register(tree)
             with self.assertRaises(states.TransitionError):
                 controller.repair("one too many")
 
@@ -233,3 +241,24 @@ class NegativeControlTests(unittest.TestCase):
             tree.mkdir()
             with self.assertRaises(ValueError):
                 negative.apply_edit(tree, "no such edit")
+
+
+class RepairBudgetTests(unittest.TestCase):
+    """The budget stops a loop on the CANDIDATE, not on the checks."""
+
+    def test_a_recheck_after_a_check_change_does_not_spend_the_budget(self):
+        with tempfile.TemporaryDirectory() as work:
+            tree = Path(work) / "cand"
+            tree.mkdir()
+            controller = Controller(Path(work) / "record")
+            controller.register(tree)
+            controller.record_tests({"ran": True, "passed": False})
+            controller.repair("first")
+            controller.record_tests({"ran": True, "passed": False})
+            controller.repair("second")
+            controller.record_tests({"ran": True, "passed": False})
+            # the source did not change: this is a recheck, not a third repair
+            record = controller.repair("recheck")
+            # the second and the third call saw no source change: only the first
+            # was a repair of the candidate
+            self.assertEqual(record["repairs"], 1)

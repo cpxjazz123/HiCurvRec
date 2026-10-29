@@ -104,8 +104,24 @@ class Controller:
         return record
 
     def repair(self, note: str = "") -> dict:
-        """Count one repair; the budget is a hard stop for the automatic loop."""
+        """Count one repair of the CANDIDATE; the budget is a hard stop.
+
+        A re-run after a change to the CHECKS is not a repair of the candidate and
+        does not consume the budget: the budget exists to stop an automatic loop
+        from trying to fix the same mechanism forever, not to punish a framework
+        that corrected its own check.
+        """
         record = self.load()
+        digest = record.get("source_digest")
+        last = record.get("last_repair_digest")
+        if digest and last and digest == last:
+            record.setdefault("history", []).append({
+                "at": time.time(), "from": record.get("state"), "to": record.get("state"),
+                "repeat": True, "reason": "recheck after a change to the checks: " +
+                                        str(note)[:200]})
+            self.save(record)
+            return record
+        record["last_repair_digest"] = digest
         record["repairs"] = int(record.get("repairs", 0)) + 1
         if record["repairs"] > states.REPAIR_BUDGET:
             self.save(record)

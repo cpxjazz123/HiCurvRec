@@ -195,13 +195,14 @@ def _assignment_is(text: str, key: str, value: str) -> bool:
     demanding a literal, because a check that only accepts one spelling would
     fail a correct trainer.
     """
-    direct = re.search(r"^\s*" + re.escape(key) + r"\s*=\s*" + re.escape(value) + r"\b",
-                       text, re.M)
+    # the assignment may share a line with others, so it is not anchored
+    direct = re.search(r"\b" + re.escape(key) + r"\s*=\s*" + re.escape(value) + r"\b",
+                       text)
     if direct:
         return True
-    for name in re.findall(r"^\s*(\w+)\s*=\s*" + re.escape(value) + r"\b", text, re.M):
-        used = re.search(r"^\s*" + re.escape(key) + r"\s*=\s*" + re.escape(name) + r"\b",
-                         text, re.M)
+    for name in re.findall(r"\b(\w+)\s*=\s*" + re.escape(value) + r"\b", text):
+        used = re.search(r"\b" + re.escape(key) + r"\s*=\s*" + re.escape(name) + r"\b",
+                         text)
         if used:
             return True
     return False
