@@ -1,0 +1,70 @@
+{
+  "checks": {
+    "contract": {
+      "command": [
+        "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+        "-m",
+        "unittest",
+        "tools.research.tests.test_geometry_contract"
+      ],
+      "exit_code": 0,
+      "output": "..........................\n----------------------------------------------------------------------\nRan 26 tests in 0.393s\n\nOK",
+      "status": "PASS"
+    },
+    "ddp": {
+      "command": [
+        "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun",
+        "--standalone",
+        "--nproc_per_node=2",
+        "--master_port=50293",
+        "-m",
+        "unittest",
+        "tests.test_ddp"
+      ],
+      "exit_code": 0,
+      "output": "W1029 13:14:23.396923 2290702 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] \nW1029 13:14:23.396923 2290702 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************\nW1029 13:14:23.396923 2290702 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. \nW1029 13:14:23.396923 2290702 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/run.py:774] *****************************************\n....\n----------------------------------------------------------------------\nRan 2 tests in 3.850s\n\nOK\n\n----------------------------------------------------------------------\nRan 2 tests in 3.852s\n\nOK",
+      "status": "PASS"
+    },
+    "export": {
+      "command": [
+        "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+        "-m",
+        "unittest",
+        "tests.test_radial_export"
+      ],
+      "exit_code": 0,
+      "output": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (5) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (6) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n..\n----------------------------------------------------------------------\nRan 3 tests in 0.424s\n\nOK",
+      "status": "PASS"
+    },
+    "gradient": {
+      "command": [
+        "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+        "-m",
+        "unittest",
+        "tests.test_radial_wiring",
+        "tests.test_mechanism"
+      ],
+      "exit_code": 0,
+      "output": "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (5) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (8) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (6) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (6) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (6) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n.............\n----------------------------------------------------------------------\nRan 17 tests in 0.839s\n\nOK",
+      "status": "PASS"
+    },
+    "suite": {
+      "command": [
+        "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python3.9",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-t",
+        "."
+      ],
+      "exit_code": 0,
+      "output": "..........ss.............................................../home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (6) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (7) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n../home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (5) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (8) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (6) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (7) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n./home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/sklearn/base.py:1389: ConvergenceWarning: Number of distinct clusters (6) found smaller than n_clusters (16). Possibly due to duplicate points in X.\n  return fit_method(estimator, *args, **kwargs)\n.\n----------------------------------------------------------------------\nRan 67 tests in 1.143s\n\nOK (skipped=2)",
+      "status": "PASS"
+    }
+  },
+  "passed": true,
+  "ran": true,
+  "tree": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/trees/round_20261029_093253_576/BRad-RQ"
+}

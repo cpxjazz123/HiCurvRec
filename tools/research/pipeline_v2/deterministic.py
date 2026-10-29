@@ -133,17 +133,30 @@ def check_mechanism_contract(tree: Path) -> dict:
     if not path.is_file():
         return {"status": "NOT_RUN",
                 "detail": "the candidate has no mechanism contract at " + str(path)}
+    # The templates import the candidate, which needs torch: they run in the
+    # project interpreter, in their own process, exactly like the other checks.
+    script = (
+        "import json, sys;"
+        "sys.path.insert(0, " + repr(str(REPO)) + ");"
+        "from tools.research.pipeline_v2 import contracts as c;"
+        "contract = c.load_contract(" + repr(str(path)) + ");"
+        "print('RESULT:' + json.dumps(c.run_tests(" + repr(str(tree)) + ", contract)))")
+    done = _run([str(PY_STAGE2), "-c", script], cwd=REPO, timeout=900)
+    if done.get("status") == "NOT_RUN":
+        return done
     try:
-        contract = contract_library.load_contract(path)
-        outcome = contract_library.run_tests(tree, contract)
+        import json as _json
+        marked = [line for line in str(done.get("output") or "").splitlines()
+                  if line.startswith("RESULT:")]
+        payload = _json.loads(marked[-1][len("RESULT:"):])
     except Exception as exc:                               # noqa: BLE001
         return {"status": "NOT_RUN",
-                "detail": "the mechanism contract could not run: " +
-                          type(exc).__name__ + ": " + str(exc)}
+                "detail": "the mechanism contract produced no result: " +
+                          type(exc).__name__ + ": " + str(exc)[:200]}
     detail = "; ".join("%s=%s" % (key, entry.get("status"))
-                       for key, entry in outcome["tests"].items())
-    return {"status": "PASS" if outcome["passed"] else "FAIL", "detail": detail,
-            "tests": outcome["tests"], "contract": str(path)}
+                       for key, entry in payload["tests"].items())
+    return {"status": "PASS" if payload["passed"] else "FAIL", "detail": detail,
+            "tests": payload["tests"], "contract": str(path)}
 
 
 DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "ddp", "mechanism")

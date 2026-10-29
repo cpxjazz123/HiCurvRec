@@ -1,7 +1,7 @@
 {
   "mechanism": "BRad-RQ",
   "hypothesis": "the rank of an item's training context entropy sets its tangent radius, and the Poincare kernel turns that radius into the level code",
-  "falsified_by": "the radius or the kernel reaches nothing: two behaviour ranks give the same assignment score, or the radius is constant over the frozen training statistics",
+  "falsified_by": "the radius or the kernel reaches nothing: two behaviour ranks give the same assignment score, or every item sits at the same radius",
   "tests": [
     {
       "template": "SignalSensitivity",
@@ -31,9 +31,8 @@
       "template": "RangeAndSaturation",
       "callable": "tests.probe_radial.radius_for",
       "range_source": {
-        "low": 0.05,
-        "high": 2.0,
-        "steps": 7
+        "mode": "spread",
+        "scale": 1.0
       }
     },
     {

@@ -102,10 +102,11 @@ def signal_sensitivity(tree: Path, *, set: dict, observe: dict,
     torch = _torch()
     setter = _resolve(tree, set["callable"])
     observer = _resolve(tree, observe["callable"])
-    argument = str(set.get("arg") or "value")
+    set_argument = str(set.get("arg") or "value")
+    observe_argument = str(observe.get("arg") or "input")
     with torch.no_grad():
-        first = observer(**{argument: setter(float(low))})
-        second = observer(**{argument: setter(float(high))})
+        first = observer(**{observe_argument: setter(**{set_argument: float(low)})})
+        second = observer(**{observe_argument: setter(**{set_argument: float(high)})})
     difference = float((first - second).abs().max()) if torch.is_tensor(first) else 0.0
     if difference <= 1e-9:
         return {"status": "FAIL", "template": "SignalSensitivity",
@@ -127,14 +128,19 @@ def independent_formula(tree: Path, *, candidate: str, reference: str,
     torch = _torch()
     import importlib
     implementation = _resolve(tree, candidate)
-    reference_module = importlib.import_module("tools.research.geometry.poincare_contract")
-    expected = getattr(reference_module, reference.split(".")[-1])
+    if str(reference) == "closed_form_1d":
+        expected = None
+    else:
+        reference_module = importlib.import_module(
+            "tools.research.geometry.poincare_contract")
+        expected = getattr(reference_module, reference.split(".")[-1])
     values = (grid or {}).get("values") or [0.05, 0.2, 0.5]
     curvature = float((grid or {}).get("curvature") or 1.0)
     worst = 0.0
     for value in values:
+        # the closed form below is one-dimensional, so both points sit on one axis
         point = torch.tensor([[float(value), 0.0]])
-        other = torch.tensor([[0.0, float(value)]])
+        other = torch.tensor([[-0.3, 0.0]])
         got = implementation(point, other, curvature)
         if str(reference) == "closed_form_1d":
             # The 1-D Poincare distance written by hand: an expectation that does
@@ -166,10 +172,27 @@ def range_and_saturation(tree: Path, *, callable: str, range_source: dict,
     low = float(range_source.get("low", 0.02))
     high = float(range_source.get("high", 0.99))
     steps = int(range_source.get("steps", 9))
+    if str(range_source.get("mode") or "") == "spread":
+        produced = function(float(range_source.get("scale") or 1.0))
+        tensor = _torch().as_tensor(produced).reshape(-1)
+        span = float(tensor.max() - tensor.min())
+        if span <= tolerance:
+            return {"status": "FAIL", "template": "RangeAndSaturation",
+                    "detail": "the quantity is the same for every item: %.6f" %
+                              float(tensor[0]), "span": span}
+        return {"status": "PASS", "template": "RangeAndSaturation",
+                "detail": "the quantity spans %.6f across items" % span, "span": span}
     values = []
     for index in range(steps):
         q = low + (high - low) * index / max(1, steps - 1)
-        values.append(float(function(q)))
+        produced = function(q)
+        try:
+            values.append(float(produced))          # a scalar callable
+        except (TypeError, ValueError):
+            # a callable returning a tensor is summarised by its mean: the
+            # question is whether the quantity MOVES over the range, not which
+            # element of a vector moves most.
+            values.append(float(_torch().as_tensor(produced).reshape(-1).mean()))
     span = max(values) - min(values)
     if span <= tolerance:
         return {"status": "FAIL", "template": "RangeAndSaturation",

@@ -27,7 +27,8 @@ TRANSITIONS = {
     TEST_FAILED: {IMPLEMENTED, REJECTED, INFRA_ERROR},
     # A verified candidate whose source changes is verified again: the old record
     # described an older snapshot and must not bless the new one.
-    VERIFIED: {IMPLEMENTED, REJECTED},
+    # A stricter check set can find a defect in a tree that an older set blessed.
+    VERIFIED: {IMPLEMENTED, TEST_FAILED, REJECTED},
     INFRA_ERROR: {IMPLEMENTED, TEST_FAILED, VERIFIED},
     REJECTED: set(),
 }

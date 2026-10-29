@@ -26,10 +26,11 @@ class StateMachineTests(unittest.TestCase):
         self.assertNotIn(states.INFRA_ERROR, states.ERROR_CLASSES["source_defect"])
 
     def test_a_forbidden_transition_is_refused(self):
-        with self.assertRaises(states.TransitionError):
-            states.check(states.VERIFIED, states.TEST_FAILED)
+        # a rejected candidate is terminal: nothing moves out of it
         with self.assertRaises(states.TransitionError):
             states.check(states.REJECTED, states.IMPLEMENTED)
+        with self.assertRaises(states.TransitionError):
+            states.check(states.REJECTED, states.VERIFIED)
 
     def test_a_failed_check_cannot_be_verified_without_a_repair(self):
         with self.assertRaises(states.TransitionError):
