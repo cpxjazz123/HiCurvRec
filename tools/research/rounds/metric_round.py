@@ -88,6 +88,38 @@ METRIC_PROMPT = (
 )
 
 
+def measured_history() -> str:
+    """What earlier metric rounds measured, so the next agents do not repeat it.
+
+    The numbers come from the bench, not from a language model: a metric that was
+    measured and did not track recall is a fact the next round should have.
+    """
+    import json as _json
+
+    base = Path(__file__).resolve().parents[3] / "results" / "research" / "issue126"
+    lines = []
+    bench = base / "metric_bench.json"
+    if bench.is_file():
+        try:
+            report = _json.loads(bench.read_text())
+        except ValueError:
+            report = {}
+        for result in report.get("results", []):
+            lines.append("  - %s: Spearman %+0.3f (p=%.2g, CI [%+0.3f, %+0.3f]) %s"
+                         % (result["metric"], result["spearman"], result["p"],
+                            result["bootstrap_ci95"][0], result["bootstrap_ci95"][1],
+                            "ELIGIBLE" if result.get("eligible") else "did NOT track recall"))
+    return ("\nWHAT EARLIER METRIC ROUNDS MEASURED on the same 97 pairs:\n"
+            "  - Q_H (Issue #126, level 1): Spearman +0.634, ELIGIBLE; level 2 +0.287, "
+            "level 3 +0.393;\n"
+            "  - bucket count: -0.065; same-bucket ratio: weak.\n"
+            + ("\nThe metrics below were implemented to their stated formulas and "
+               "measured:\n" + "\n".join(lines) + "\n"
+               if lines else "") +
+            "Do not restate any of those; propose something whose construction differs "
+            "from all of them, and say what it adds.")
+
+
 def run_metric_ideation(root: Path, *, agents: int = None) -> dict:
     """Five (or ``agents``) independent agents, one metric each, persisted as they land."""
     root = Path(root)
@@ -98,15 +130,21 @@ def run_metric_ideation(root: Path, *, agents: int = None) -> dict:
 
     def propose(index):
         task_id = "metric_ideation_" + str(index)
-        prompt = (prompt_base + "\n\nYour answer must be a different metric from the "
-                  "other " + str(count - 1) + " agents, which you cannot see.")
+        prompt = (prompt_base + measured_history() +
+                  "\n\nYour answer must be a different metric from the other "
+                  + str(count - 1) + " agents, which you cannot see.")
         return (task_id, _run_agent(root, task_id, prompt, "metric.txt",
                                     plaintext.parse_metric_ideas,
                                     role="ideate", read_paths=[],
                                     allowed_roots=[root]))
 
-    results = _run_agents_concurrently([(index,) for index in range(1, count + 1)],
-                                       propose)
+    try:
+        results = _run_agents_concurrently([(index,) for index in range(1, count + 1)],
+                                           propose)
+    except Exception as exc:  # noqa: BLE001 - AgentPhaseIncomplete carries the answers
+        results = list(getattr(exc, "results", []) or [])
+        if not results:
+            raise
     metrics = []
     for task_id, answer in results:
         for metric in (answer or {}).get("metrics", []):

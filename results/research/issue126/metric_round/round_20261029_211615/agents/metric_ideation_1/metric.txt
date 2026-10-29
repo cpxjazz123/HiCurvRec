@@ -1,0 +1,32 @@
+METRIC: hyp_ref_cone_cov
+TITLE: Hyperbolic reference-affinity cone coverage of the SID prefix tree
+FORMULA:
+Let each item i have SID (c1,c2,c3), c_l in {0,...,255}, L=3. Build the prefix tree T (root at depth 0; node = prefix (c1..cd)).
+EMBEDDING (deterministic, no fitted values). For a node v at depth d(v), set radius r(v)=ln(1+d(v)), and angular coordinate theta(v) by recursive equal-sector subdivision: the root's 256 children take theta = 2*pi*k/256 (k=c1); each child's 256 children split the parent's sector of width 2*pi/256 into 256 equal sub-sectors (k=c2); and so on. Item i sits at
+  x_i = exp_0( r(v_i) * (cos theta_i, sin theta_i) ) = tanh(r(v_i)/2) * (cos theta_i, sin theta_i)
+in the open unit disk (Poincare ball, curvature K=-1).
+HYPERBOLIC DISTANCE: d_H(u,v) = arcosh( 1 + 2|u-v|^2 / ((1-|u|^2)(1-|v|^2)) ).
+REFERENCE AFFINITY: from the frozen Issue #126 reference take, for every TRAIN item q, its source representation s_q, and for every item j its target representation t_j. Define A(q) = the m=10 items j != q with largest cosine(s_q, t_j) (m=10 is derived: it is the Recall@10 budget; ties broken by ascending item index).
+HYPERBOLIC FRECHET MEAN: b_q = Karcher mean in the ball of {x_j : j in A(q)}, by the fixed-point iteration b <- exp_b( (1/m) * sum_j log_b(x_j) ), 10 iterations from b = x_q, using the closed-form Poincare exp/log maps.
+COVERAGE RADIUS: R_q = max_{j in A(q)} d_H(b_q, x_j).
+PER-SOURCE SCORE: g_q = d_H(b_q, 0) / ( d_H(b_q, 0) + R_q )   (in (0,1]; equals 1 iff the cone is a single point).
+METRIC: hyp_ref_cone_cov = mean over all TRAIN items q of g_q. One scalar, higher = better.
+INPUTS:
+ - the exported SID table (integer code per item per level, 256 codes, 24587 items);
+ - the frozen Issue #126 behaviour reference: per-item source representation s_i and target representation t_i (learned on training pairs only), used only through the cosine ranking;
+ - the TRAIN split item list (defines which q are averaged). Nothing else: no validation pair, no test pair, no recall, no Stage-3 output.
+GEOMETRY:
+Fixed curvature K=-1, unit Poincare disk. Curvature enters in three inseparable places: (1) the table-to-point map is the exponential map exp_0 of a tangent vector, so the integer code tree is laid out with radii ln(1+d) and equal angular sectors — a layout that only makes sense because hyperbolic area grows like exp(2r), which is what lets a 256-ary tree be embedded with low distortion; (2) all comparisons use the Poincare metric d_H above, whose denominator (1-|x|^2) explodes near the boundary; (3) the cluster centre is a geodesic (Karcher/Frechet) barycentre computed with hyperbolic log/exp maps, not an arithmetic mean. In the ambient Euclidean coordinates the barycentre, the argmax radius and the ratio all change rank order, so this is not a Euclidean distance in disguise.
+WHY IT SHOULD TRACK RECALL:
+Stage 3 retrieves by emitting/expanding SID prefixes, so a source is well served exactly when the items the reference regards as its likely targets occupy a small, deep, mutually-close region of the code tree that beam search can cover. g_q states that: deep (large d_H(b_q,0), i.e. the cone sits at a fine scale where hyperbolic capacity is exponential) and tight (small R_q, i.e. no stray affinity neighbour in a distant branch). Q_H only scores how the level-1 prefix ranks on its own and is blind to whether a specific source's semantically plausible set is contiguous; it also degrades at level 2/3 precisely because deeper prefixes are near-identifiers. Here depth is not rewarded by itself (it sits in the denominator through R_q and the ratio is scale-free), and the max-radius makes one misplaced neighbour cost the whole source, which is the actual failure mode of prefix retrieval. The 10-item affinity cone comes from the reference's transition geometry, not from prefix frequencies, so this number can move while Q_H is flat.
+COMPUTE:
+Embedding: O(N*L) = 74k tanh/cos. Affinity: one chunked cosine GEMM, 24587x24587 with representation dimension d (chunk rows at 512): ~6e8 dot products, ~30 s single-core with BLAS, memory bounded by the 512x24587 chunk; restricting q to TRAIN sources shrinks it further. Karcher means: |TRAIN| * 10 points * 10 iterations of 2-D exp/log = ~2e6 closed-form evaluations, <1 s. Total well under a minute on 24587 items and 256 codes.
+RISKS:
+ - If the frozen reference representations are weak or near-isotropic, A(q) is close to a random 10-set, every g_q collapses to a table-level constant, and the metric becomes a depth/occupancy statistic with little variance across the 97 tables.
+ - Cosine top-10 ignores the reference's temperature; if the reference is very sharp, A(q) is dominated by one duplicate-like neighbour and R_q is trivially small (ceiling effect).
+ - Equal-sector angles make angular separation at level 1 tiny (2*pi/256), so most of d_H is radial; if depth is nearly constant across items the metric loses dynamic range.
+ - 10-iteration Karcher means can be unstable for cones straddling antipodal sectors; a Mobius-gyrovector closed form or a cap on R_q is the fallback.
+ - Cost grows quadratically in N; a table far larger than 24587 items would breach the minute budget.
+FAILURE MODE:
+Worst on a SID table whose codes are assigned independently of item semantics (a random permutation of (c1,c2,c3) across items, or a hash-like assignment). Then each source's 10 reference-affinity items are scattered over unrelated level-1 sectors, so b_q sits near the origin and R_q is large; g_q goes to its floor for every q. It is also worst on the degenerate single-bucket table where every item shares c1 but suffixes are arbitrary: the cone is deep in radius but maximally wide, so R_q again dominates. It is best on a table where each source's affinity cone falls inside one fine branch, which is exactly the regime where prefix retrieval can reach the target within a 10-slot budget.
+END METRIC

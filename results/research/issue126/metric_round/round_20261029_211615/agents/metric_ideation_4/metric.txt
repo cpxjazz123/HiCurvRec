@@ -1,0 +1,43 @@
+METRIC: hyp_hsoftmax_path
+TITLE: Hyperbolic tree-conditional softmax log-likelihood of the SID path under the frozen behaviour reference
+FORMULA:
+Let the table have N items, L levels and alphabet size V (V=256). Item i owns the code path c_i=(c_i1,...,c_iL), c_il in {1..V}. A prefix q is a tuple (q_1..q_k); q=() is the root. Children(q)={c : q^(c) is a prefix of at least one item}, where ^ is concatenation. Let T be the training interaction set. Let tau>0 be the reference's own softmax temperature and let K>0 be the reference's own curvature magnitude. Rescale every reference vector by sqrt(K) so the working ball has unit curvature (-1); after this no curvature constant remains in the computation.
+
+Poincare distance on the unit ball:
+  d(x,y) = arcosh( 1 + 2*||x-y||^2 / ((1-||x||^2)*(1-||y||^2)) ).
+Lorentz barycentre of a finite set S of ball points (closed form, no iteration):
+  z(x) = ( (1+||x||^2)/(1-||x||^2) , 2x/(1-||x||^2) ) in R^{1+d},
+  Z = sum_{x in S} z(x),
+  zbar = Z / sqrt(-<Z,Z>_L),  <u,v>_L = -u_0 v_0 + sum_j u_j v_j,
+  m(S) = ( zbar_1..zbar_d ) / ( 1 + zbar_0 ).
+For every non-root node q^(c) with item set S(q,c)={i : c_i starts with q^(c)}, define its prototype
+  mu(q,c) = m( { x_i : i in S(q,c) } ),
+where x_i is the reference's frozen target representation of item i (learned on training pairs only).
+For a training pair (u,i) in T, let s_u be the frozen source representation of source u and let q_l=(c_i1..c_i,l-1). The per-level conditional log-probability of the true child is
+  g_l(u,i) = logit(q_l, c_il) - logsumexp_{c in Children(q_l)} logit(q_l, c),
+  logit(q,c) = - d(s_u, mu(q,c)) / tau.
+If |Children(q_l)|=1 the term is exactly 0. The metric is
+  M = (1/|T|) * sum_{(u,i) in T} sum_{l=1..L} g_l(u,i).
+M is one scalar; larger (less negative) is better.
+INPUTS:
+(1) the exported SID table: item_id -> (c_1..c_L);
+(2) the frozen Issue #126 reference, target side: item_id -> x_i in its Poincare ball;
+(3) the frozen Issue #126 reference, source side: source_id -> s_u in the same ball;
+(4) the reference's reported temperature tau and curvature magnitude K;
+(5) the TRAINING split only: pairs (source_id, item_id).
+No validation interaction, no test interaction, no recall value and no Stage-3 output is read.
+GEOMETRY:
+The space is the Poincare ball of fixed negative curvature (curvature -1 after rescaling the reference's K); all quantities are intrinsic hyperbolic quantities. Curvature enters twice: (a) the logits are negative Poincare geodesic distances d(s_u, mu(q,c))/tau, and (b) each prototype is a Lorentz/hyperboloid barycentre, i.e. an average in the Lorentz model projected back to the ball, not a Euclidean mean. The tree-conditional softmax is defined on distances measured with the curved metric; the same formula with Euclidean ||s_u - mu|| would be a different number. No tangent-space Euclidean shortcut is used.
+WHY IT SHOULD TRACK RECALL:
+Stage-3 recall@10 is the probability that beam search over the SID trie keeps the target's token path. This metric is exactly the log-likelihood that a source assigns to that path under a tree-conditional hyperbolic classifier: at every prefix the model must put mass on the true next code among the codes that actually exist under that prefix. It therefore measures, level by level and conditional on the parent, whether items that share the parent prefix are behaviourally close enough for the reference to prefer the true child. Q_H scores the level-1 prefix globally and degrades at levels 2-3 because those prefixes become nearly item identifiers; here a parent with one child contributes 0, so near-unique deeper codes cannot inflate or collapse the score, while genuinely branching deeper levels contribute their true conditional log-loss. Compared with Q_H it adds (i) per-parent conditioning, i.e. refinement quality rather than global coarse separation, (ii) a proper normalisation by the number of competing siblings, so tables with different branching are comparable, and (iii) curvature-aware bucket prototypes, so the score is not a prefix count or a same-bucket ratio. It is not a margin (hyp_voronoi_margin_l1) and not an R^2 of distances (hyp_adj_r2_l1).
+COMPUTE:
+With N=24587 items, L levels and V=256 codes: one pass over items builds the trie and accumulates the hyperboloid lifts, O(N*L*d). Each node prototype is one O(|S|*d) sum plus one renormalisation, total O(N*L*d) over all nodes per level. Each training pair needs, at each level, distances to the siblings of its own path, so the cost is O(|T|*L*B) with B the mean branching factor of the nodes visited (B<=V=256; typically a few tens at the root and much less below). There is no matrix of all item pairs. On 24587 items and 256 codes this is seconds to well under a minute with a single vectorised numpy pass, and O(N*L) memory plus the reference arrays.
+RISKS:
+- The formula assumes source and target representations live in one shared Poincare ball, which is what a two-tower Issue #126 reference normally provides; if they live in two different balls the metric is undefined and needs the reference's fixed alignment.
+- Training pairs are in-sample for the reference, so absolute values are optimistic; this is harmless for ranking 97 tables because the same frozen reference is used for all, but it can compress between-table variance.
+- If the reference's tau or K is misreported, or if item representations are dominated by a few hub items, prototypes and logits shift.
+- Very shallow tables (L=1) reduce M to a level-1 term; very unbalanced tables can have almost all deeper terms equal to 0, leaving only the root term.
+- Numerical guards are needed (clamp ||x|| <= 1-1e-7; logsumexp in the log domain), and if the reference ball is very close to the boundary the barycentre sum can be ill-conditioned.
+FAILURE MODE:
+It must be worst on the table obtained by assigning level-1 codes uniformly at random, independently of behaviour, and then making every deeper level deterministic (each parent has exactly one child, e.g. c_i2..c_iL encode the item index). Such a table has maximal apparent "fine structure" but no behavioural information: every deeper g_l is 0 by construction, the level-1 prototypes are random mixtures of unrelated items, and the true child prototype is far from s_u relative to random siblings, so M is strongly negative even though prefix counts and branching look fine. A second worst case is an anti-clustered table that deliberately puts the behaviourally most distant items under the same level-1 code while keeping high branching at every level.
+END METRIC

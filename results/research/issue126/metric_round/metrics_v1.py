@@ -199,24 +199,65 @@ def hsmre(table: dict, context: dict) -> float:
     for level, groups in enumerate(buckets):
         numerators = 0.0
         denominators = 0.0
-        codes = rows[:, level]
         for code, members in groups.items():
             size = len(members)
             if size < 2 or size > n_items / 2:
                 continue
+            members = np.asarray(members, dtype=np.int64)
             centre = _einstein_centre(points[members])
             radius = _distance(points[members], centre)
-            for offset, position in enumerate(members):
-                null_members = np.concatenate(([position],
-                                               neighbours[position, :size - 1]))
-                null_centre = _barycentre(points[null_members])
-                null_radius = float(_distance(points[position], null_centre))
-                ratio = float(radius[offset]) / max(null_radius, 1e-12)
-                weight = float(size - 1)
-                numerators += weight * 2.0 * ratio / (1.0 + ratio ** 2)
-                denominators += weight
+            # The null set of every item in this size class, batched: one row per
+            # item, its own position first and then its nearest neighbours. The
+            # Karcher flow is the same flow, evaluated for all of them at once,
+            # because a Python loop per item is what made the metric cost 156 s.
+            # Chunked: the largest level-1 buckets hold a thousand items, and one
+            # un-chunked null-set tensor per worker took 12 GB (the run was killed
+            # by the scheduler's memory limit).
+            chunk = 256
+            null_radius = np.empty(members.shape[0], dtype=np.float64)
+            for start in range(0, members.shape[0], chunk):
+                stop = min(start + chunk, members.shape[0])
+                block = members[start:stop]
+                null_sets = np.concatenate(
+                    (block[:, None], neighbours[block, :size - 1]), axis=1)
+                null_centres = _barycentre_batch(points[null_sets])
+                null_radius[start:stop] = _distance(points[block], null_centres)
+            ratio = radius / np.maximum(null_radius, 1e-12)
+            transformed = 2.0 * ratio / (1.0 + ratio ** 2)
+            weight = float(size - 1)
+            numerators += weight * float(transformed.sum())
+            denominators += weight * len(members)
         scores.append(numerators / denominators if denominators > 0 else 0.0)
     return float(np.mean(scores))
+
+
+def _barycentre_batch(sets: np.ndarray, steps: int = 20) -> np.ndarray:
+    """The Karcher flow for many point sets at once (same rule as ``_barycentre``)."""
+    sets = np.asarray(sets, dtype=np.float64)
+    if sets.shape[1] == 1:
+        return sets[:, 0, :].copy()
+    centre = _poincare_from_tangent(sets.mean(axis=1), 1.0)
+    for _ in range(int(steps)):
+        dots = np.sum(centre[:, None, :] * sets, axis=-1, keepdims=True)
+        centre_norm2 = np.sum(centre * centre, axis=-1, keepdims=True)[:, None, :]
+        numerator = (sets - centre[:, None, :]) * (1.0 - centre_norm2)
+        denominator = 1.0 - 2.0 * dots + centre_norm2
+        tangent = 2.0 * numerator / np.maximum(denominator, 1e-12)
+        step = tangent.mean(axis=1)
+        norm = np.linalg.norm(step, axis=-1, keepdims=True)
+        if float(np.max(norm)) < 1e-10:
+            break
+        moved = _poincare_from_tangent(step * 0.5, 1.0)
+        c2 = centre_norm2[:, 0, :]
+        d2 = np.sum(moved * moved, axis=-1, keepdims=True)
+        cd = np.sum(centre * moved, axis=-1, keepdims=True)
+        add = ((1.0 + 2.0 * cd + d2) * centre + (1.0 - c2) * moved) / np.maximum(
+            1e-12, 1.0 + 2.0 * cd + c2 * d2)
+        shift = _distance(centre, add)
+        centre = add
+        if float(np.max(shift)) < 1e-9:
+            break
+    return centre
 
 
 hyp_voronoi_margin_l1.note = "mean geodesic margin of the level-1 Voronoi cells"
