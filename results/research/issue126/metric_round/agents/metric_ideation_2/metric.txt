@@ -1,0 +1,67 @@
+I'll start by exploring the workspace to understand the available data files and the reference implementation.
+METRIC: HTGO-hyperbolic-tree-geodesic-ordering
+TITLE: Spearman agreement between Poincare-geodesic SID-tree distances and Lorentz distances of the frozen reference
+FORMULA:
+  Let N = number of items (24587), L = number of SID levels, B = 256 (codebook size), K = -1 (fixed curvature).
+  The table gives item i its code path c_i = (c_i1,...,c_iL), c_il in {0,...,B-1}.
+  The reference gives a source-side representation x_i in R^d for every item i (frozen, training-only).
+  LIFT (exp map at the origin of the hyperboloid of curvature K=-1):
+    xt_i = ( sqrt(1+||x_i||^2), x_i ) in R^{1+d}, Lorentz product <u,v>_L = -u_0v_0 + sum_{k>=1} u_k v_k.
+    LORENTZ GEODESIC DISTANCE: dL(i,j) = arccosh( sqrt(1+||x_i||^2) * sqrt(1+||x_j||^2) - <x_i,x_j> ).
+  SID-TREE GEODESIC DISTANCE (Poincare ball of curvature -1, edge length tau = ln B):
+    h(i,j) = number of leading positions where c_i and c_j agree (0 <= h <= L).
+    dT(i,j) = tau * ( (L - h(i,j)) + (L - h(i,j)) ) = 2 * tau * (L - h(i,j)).
+    (dT is the exact geodesic length in the ball for a b-ary tree embedded with edge length tau; the two
+     branches meet at the LCA, so the geodesic is the sum of the two branch lengths.)
+  PAIR SET (deterministic, no randomness): sort items by item id ascending; take the index set
+    I = {0, s, 2s, ...} with s = max(1, floor(N/2000)); let n = |I| (<= 2000). Use all pairs {i<j} in I.
+  METRIC:
+    rho = Spearman rank correlation (average ranks for ties) between the multiset { dT(i,j) } and the
+    multiset { dL(i,j) } over the C(n,2) pairs.
+    HTGO = rho, in [-1, +1]; higher is better.
+INPUTS: (a) the exported Stage-2 SID table: columns [item_id, c_1, ..., c_L], nothing else;
+        (b) the frozen Issue #126 behaviour reference, source-side representation vector x_i per item id.
+        No training split, no validation interaction, no test interaction, no recall value is read.
+GEOMETRY: Two curved objects and one comparison that exists only because of the maps.
+  (1) The reference side is the hyperboloid model of H^d with constant curvature K = -1. Each item is the
+      image of its representation under exp_0, xt_i = (cosh||x_i||, sinh||x_i|| * x_i/||x_i||); dL is the
+      Lorentz/hyperboloid geodesic distance, arccosh of the Minkowski inner product. Curvature enters as the
+      fixed K = -1 and nowhere else; no scale, no temperature and no length is fitted.
+  (2) The SID side is the Poincare ball of the same curvature -1. The code tree (root = empty prefix, B
+      children per node, depth L) is embedded with edge length tau = ln B = ln 256 = 5.545177..., so a node
+      at depth k sits at ball radius tanh(k*tau/2); dT is the Poincare geodesic length between the two item
+      nodes, computed in closed form as the sum of the two branch lengths through their LCA.
+  (3) The metric compares the two *orderings of distances*. Because both sides are geodesic distances in
+      hyperbolic space, the comparison is between two measures of the same kind; the curvature is what makes
+      far pairs additive (dL grows like ||x_i|| + ||x_j||) rather than quadratic, which is exactly the regime
+      in which a tree distance can agree with it at all.
+WHY IT SHOULD TRACK RECALL: Stage-3 expands a beam down the prefix tree, so recall@10 is high exactly when
+  the code tree's *branching order* agrees with the reference's similarity order at the depths the beam
+  actually traverses - not only at level 1. dT encodes the whole path at once: it is large for pairs that
+  split early and small for pairs that split late, with every level contributing equally. If the tree's
+  ordering of pair distances matches the Lorentz ordering of the reference, then for any query the
+  candidates the beam keeps (late-splitting, small dT) are the semantically near ones (small dL), which is
+  the condition for the true target to survive into the top 10.
+  Over Q_H: Q_H scores the prefix ranking only at level 1 and is known to collapse at levels 2-3 (+0.287,
+  +0.393) because the prefix becomes nearly an item id. HTGO never tests a prefix value against a score; it
+  tests only the *relative* split depth of item pairs against the reference's curved distance, so the
+  degradation of deeper levels shows up as a genuine loss of rank signal instead of being hidden. It also
+  reads a different quantity from bucket count and same-bucket ratio, which are functions of the partition
+  sizes alone; HTGO is invariant to bucket sizes and depends only on which pairs split where.
+COMPUTE: n <= 2000 sampled items, C(n,2) ~ 2.0e6 pairs. Per pair: one d-dimensional dot product for dL plus
+  an integer LCA comparison over L <= 3-8 levels, so ~1.3e8-5e8 flops for d = 64-256; two argsorts of 2e6
+  float64 values for the Spearman ranks. Single pass, no iteration, no matrix factorisation: well under a
+  minute on 24587 items and 256 codes. Memory: the 2000 x d sample plus two 2e6 arrays.
+RISKS: (i) If the reference vectors are near-identical in norm and direction, dL is nearly constant and the
+  rank correlation is dominated by ties - the tie fraction must be reported alongside. (ii) Spearman is a
+  global rank statistic over a strided sample; a locally correct tree with a few badly placed hubs is only
+  weakly penalised. (iii) Very large ||x_i|| makes the hyperboloid lift norm-dominated; that is a property
+  of the reference and is reported, not corrected, because correcting it would be a fitted quantity.
+  (iv) The stride sample is clustered if item-id order correlates with code order.
+FAILURE MODE: Worst on a SID table where the deeper levels are item identifiers: if for almost every pair
+  h(i,j) = 0 or h(i,j) = L, then dT takes only two values, its variance collapses, Spearman is near zero or
+  undefined, and HTGO correctly reports that the tree carries no ordering information beyond "same item /
+  different item". This is exactly the regime the known level-2/level-3 drop describes, and the metric
+  registers it as a failure rather than hiding it behind a same-bucket ratio that stays high while recall
+  falls.
+END METRIC

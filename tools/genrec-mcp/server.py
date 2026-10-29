@@ -2846,6 +2846,108 @@ def write_round_worker() -> Path:
     return worker
 
 
+def tool_research_metric_start(agents: int = 5) -> dict:
+    """Start a METRIC round: hyperbolic SID metrics judged on the 97 confirmed pairs.
+
+    No Stage 2 and no Stage 3 are involved. Five independent agents propose one
+    hyperbolic metric each, computable from an exported SID table plus the frozen
+    Issue #126 reference, and the operator implements and measures them.
+    """
+    import json as _json
+    import subprocess as _sub
+    import time as _time
+    from pathlib import Path as _Path
+
+    root = REPO / "results" / "research" / "issue126" / "metric_round" / (
+        "round_" + _time.strftime("%Y%m%d_%H%M%S"))
+    root.mkdir(parents=True, exist_ok=True)
+    script = (
+        "import sys, json;"
+        "sys.path.insert(0, " + repr(str(REPO)) + ");"
+        "from pathlib import Path;"
+        "from tools.research.rounds import metric_round;"
+        "record = metric_round.run_metric_ideation(Path(" + repr(str(root)) + ")"
+    )
+    script += ", agents=%d)" % int(agents)
+    script += (
+        ";print(json.dumps({'metrics': len(record['metrics'])}))"
+    )
+    log = HARNESS_DIR / ("metric_round_" + root.name + ".log")
+    with log.open("wb") as sink:
+        child = _sub.Popen([PY3, "-c", script], cwd=str(REPO), stdout=sink,
+                           stderr=_sub.STDOUT, stdin=_sub.DEVNULL,
+                           start_new_session=True)
+    return {"started": True, "round": str(root), "pid": child.pid,
+            "log": str(log), "agents": int(agents),
+            "next": "research_metric_status"}
+
+
+def tool_research_metric_status(round_name: str = "") -> dict:
+    """Where a metric round stands: how many agents finished, and their metrics."""
+    import json as _json
+    import os as _os
+
+    base = REPO / "results" / "research" / "issue126" / "metric_round"
+    if not base.is_dir():
+        return {"rounds": [], "metrics": []}
+    rounds = sorted(path for path in base.iterdir() if path.is_dir())
+    if round_name:
+        rounds = [path for path in rounds if path.name == round_name] or rounds
+    if not rounds:
+        return {"rounds": [], "metrics": []}
+    root = rounds[-1]
+    ideas = root / "metric_ideas.json"
+    agents_dir = root / "agents"
+    finished = len(list(agents_dir.glob("*/execution.json"))) if agents_dir.is_dir() else 0
+    record = None
+    if ideas.is_file():
+        try:
+            record = _json.loads(ideas.read_text())
+        except ValueError:
+            record = None
+    alive = False
+    for name in _os.listdir("/proc"):
+        if not name.isdigit():
+            continue
+        try:
+            cmdline = open("/proc/%s/cmdline" % name, "rb").read().decode(errors="replace")
+        except OSError:
+            continue
+        if "metric_round" in cmdline:
+            alive = True
+            break
+    return {"round": str(root), "agents_finished": finished,
+            "running": alive,
+            "metrics": (record or {}).get("metrics", []),
+            "at": (record or {}).get("at")}
+
+
+def tool_research_metric_bench(module: str, workers: int = 16) -> dict:
+    """Score the metrics of one module file against the 97 confirmed pairs."""
+    import json as _json
+    import subprocess as _sub
+
+    path = Path(module)
+    if not path.is_absolute():
+        path = REPO / path
+    if not path.is_file():
+        return {"ran": False, "refused": "no such module: " + str(path)}
+    out = REPO / "results" / "research" / "issue126" / "metric_bench.json"
+    done = _sub.run([PY3, str(REPO / "tools/research/science/sid_metric_bench.py"),
+                     "--module", str(path), "--out", str(out),
+                     "--workers", str(int(workers or 16))],
+                    cwd=str(REPO), capture_output=True, text=True, timeout=1800)
+    if done.returncode != 0:
+        return {"ran": False, "refused": (done.stderr or done.stdout)[-600:]}
+    report = _json.loads(out.read_text())
+    return {"ran": True, "python": PY3,
+            "pairs": report["pairs"], "chosen": report["chosen"],
+            "results": [{"metric": r["metric"], "spearman": round(r["spearman"], 4),
+                         "p": r["p"], "ci": [round(v, 4) for v in r["bootstrap_ci95"]],
+                         "eligible": r["eligible"]} for r in report["results"]],
+            "written": str(out)}
+
+
 def tool_research_round_start(objective: str = "", issue: str = "issue121",
                               run: bool = False) -> dict:
     """Start one multi-agent round: five ideation agents, then three scorers.
@@ -3773,6 +3875,27 @@ TOOLS.update({
         "description": "Research Pipeline V2: the deterministic checks by the "
                        "framework, which are the verification; the checks run in "
                        "the background and research_v2_status reports them.",
+    },
+    "research_metric_start": {
+        "fn": tool_research_metric_start,
+        "description": "Start a metric round: five agents propose one hyperbolic SID "
+                       "quality metric each, judged on the 97 confirmed SID+recall "
+                       "pairs. No Stage 2 and no Stage 3 are started.",
+        "args": {"agents": "how many ideation agents, default 5"},
+    },
+    "research_metric_status": {
+        "fn": tool_research_metric_status,
+        "description": "Read-only: how many agents of the metric round finished, the "
+                       "metrics they proposed, and whether the worker is alive.",
+        "args": {"round_name": "optional round directory name"},
+    },
+    "research_metric_bench": {
+        "fn": tool_research_metric_bench,
+        "description": "Score the metrics defined in a python module against the 97 "
+                       "confirmed SID+recall pairs and report Spearman with its "
+                       "bootstrap interval; applies the fixed selection rule.",
+        "args": {"module": "path to a python file defining METRICS = {name: fn}",
+                 "workers": "parallel workers, default 16, each single-threaded"},
     },
     "research_v2_status": {
         "fn": tool_research_v2_status,

@@ -1,0 +1,59 @@
+METRIC: HSPM_L1
+TITLE: Hyperbolic source-to-prefix margin of the level-1 SID code, temperature-calibrated in the Poincare ball.
+
+FORMULA:
+Symbols. N = 24587 items; C = 256 codes per level; item i has level-1 code c_i = s_i[1] in {1,...,C}. The frozen Issue #126 reference supplies, for every item i, a target vector t_i in R^d, a source vector u_i in R^d, and one scalar temperature tau > 0. Fix curvature kappa = -1 and the Poincare ball B = {x in R^d : ||x|| < 1}.
+
+Map (exponential map at the origin, kappa = -1):
+  phi(z) = tanh(tau*||z||/2) * z/||z||   for z != 0,   phi(0) = 0.
+Write x_i = phi(t_i) and q_a = phi(u_a).
+
+Poincare distance:
+  d(x,y) = arcosh( 1 + 2*||x-y||^2 / ((1-||x||^2)*(1-||y||^2)) ).
+
+Hyperbolic Frechet (Karcher) centroid of a code cell. For each c with B_c = { i : c_i = c } nonempty,
+  m_c = argmin_{m in B} sum_{i in B_c} d(m, x_i)^2,
+computed by the fixed-point iteration
+  m  <-  exp_m( (1/|B_c|) * sum_{i in B_c} log_m(x_i) ),
+started at phi( (1/|B_c|) * sum_{i in B_c} t_i ), using the standard closed-form Poincare exp/log maps, 50 iterations. If |B_c| = 1 then m_c = x_i.
+
+Training pairs. Let P be the list of ordered (source item a, target item b) pairs in the TRAINING split only.
+
+Per-pair margin:
+  d_own(a,b) = d( q_a, m_{c_b} )
+  d_alt(a,b) = min over c != c_b with B_c nonempty of d( q_a, m_c )
+  rho(a,b)   = ( d_alt - d_own ) / ( d_alt + d_own ),    rho = 0 if d_alt + d_own = 0.
+
+Metric:
+  HSPM_L1 = ( 1 / |P| ) * sum_{(a,b) in P} rho(a,b).
+
+Deterministic convention: HSPM_L1 = -1 if |P| = 0 or if fewer than two level-1 cells are nonempty (-1 is the infimum of rho's range, not a tuned value). Range [-1, 1]; higher is better; 0 means the true level-1 code is geometrically indistinguishable from its hardest competitor.
+
+INPUTS:
+  (i) the exported SID table, level-1 column only: c_i for i = 1..N;
+  (ii) the frozen Issue #126 reference arrays {t_i} (target) and {u_i} (source) and its temperature tau;
+  (iii) the training-split pair list P.
+Nothing else. No recall, no Stage-3 output, no validation or test interaction, no fitted quantity beyond the per-cell centroids.
+
+GEOMETRY:
+Curvature is kappa = -1, stated explicitly. It enters in three places. (1) The exponential map phi = exp_0(tau z) is what turns the reference's own temperature-scaled inner-product kernel into geodesic proximity; without the map the inner product is not a distance. (2) Every comparison uses the Poincare distance d, whose denominator (1-||x||^2)(1-||y||^2) is the conformal factor of the kappa = -1 metric; distances grow without bound as points approach the boundary, so angular separation near the boundary costs far more than near the origin. (3) Each m_c is a Karcher/Frechet barycentre in the ball, which minimises the sum of squared geodesic distances and is pulled toward the boundary relative to the Euclidean mean; at kappa = 0 it would reduce to the arithmetic mean and the number would change. The decision boundary between two codes is the hyperbolic bisector, on which d(q,m_c) = d(q,m_c'); rho is the signed normalised distance from q to that bisector. No Euclidean distance appears anywhere in the computation.
+
+WHY IT SHOULD TRACK RECALL:
+Stage 3 emits the SID autoregressively from the source side, and recall loss is dominated by the level-1 token: the reported level-1 score is +0.634 while level 2 falls to +0.287, and with C = 256 the level-2 bucket holds 0.375 items on average, so level 2 is already an item identifier and cannot explain cross-table recall differences. HSPM_L1 measures the quantity that decides the level-1 token: for each real training source, how much farther the source sits from the hardest competing level-1 cell than from the cell of the target it actually led to. A table whose level-1 cells are well separated hyperbolic Voronoi regions around the source distribution yields large positive rho; a table whose cells cut across the source manifold yields rho near 0, which is exactly the regime where the coarse token is a coin flip and Recall@10 collapses. What it adds over Q_H: Q_H is a prefix-ranking score, i.e. an order statistic, so it saturates and discards the size of the gap; two tables with identical prefix ordering can have one true code barely ahead of a rival and another far ahead, and only the second survives top-10 sampling noise. HSPM_L1 keeps the continuous signed gap, measures it against the single hardest competitor rather than an average, and averages over the empirical source distribution, so frequently queried sources dominate as they do in recall. It is also cross-side: it asks whether the target-side partition is predictable from the source side, which a purely target-side coherence or prefix-rank statistic cannot see.
+
+COMPUTE:
+At most U = 24587 unique source items: U*C = 6.29e6 Poincare distances, each about 3d flops, roughly 0.4 GFLOP, about 1 s in NumPy, 25 MB for the U-by-C distance table. Centroids: at most 256 Karcher means over 24587 points in total, 50 iterations of exp/log, about 2.5e6 map evaluations, under 2 s. The pair pass is O(|P|) table lookups. Total well under one minute on 24587 items and 256 codes; memory under 100 MB.
+
+RISKS:
+  (1) The map assumes the reference's source and target towers share a dot-product metric space, as two-tower references do; if they do not, source-to-target-centroid distances are meaningless.
+  (2) If the reference vectors are unnormalised with large norm, tanh saturates and all points sit near the boundary, where distances are dominated by angle and the margin loses resolution; tau must be used exactly as supplied, with no renormalisation.
+  (3) The min over competitors can inherit a weak bucket-count dependence: a table with fewer nonempty level-1 cells has fewer competitors and can score higher. This is mitigated because C = 256 is fixed for all 97 tables and 24587 items almost always fill all 256 cells, but it is the main residual confound.
+  (4) The opposite confound is a single dominant level-1 cell plus many tiny cells: the dominant cell's centroid sits near the global mean, so most sources get a positive margin while their targets all share one coarse code, i.e. high HSPM_L1 with poor recall.
+  (5) Karcher means of very small or nearly degenerate cells can be unstable; singleton cells are set to their own point.
+  (6) If the reference is weak or the training pairs are dominated by a few popular sources, the margin is noisy or reflects only those sources.
+  (7) Level-1 only: genuine level-2/3 collisions are invisible, which is deliberate given the 0.375-items-per-level-2-bucket arithmetic.
+
+FAILURE MODE:
+Worst value: the radial-shell SID table, in which level-1 codes are assigned by quantiles of ||t_i|| (or by popularity) instead of by semantic direction. Each cell is an approximately symmetric spherical shell; the Karcher mean of a symmetric shell is the origin, so all 256 centroids m_c collapse near 0, every d(q_a,m_c) is nearly equal, every rho is approximately 0, and HSPM_L1 sits at 0 no matter how good the recall is. A generator can still exploit the radial/popularity signal, so recall can be non-trivial while the metric reads zero; that is the table where this metric is worst and most misleading. The complementary blind spot is the single-giant-cell table described in Risks (4): high HSPM_L1 with poor recall.
+
+END METRIC

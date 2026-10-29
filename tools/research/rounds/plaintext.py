@@ -378,3 +378,73 @@ def parse_evidence_revision(text: str) -> dict:
     return {"revision": revision.strip(), "answers": gap.strip(),
             "withdrawn": _first(fields, "WITHDRAWN").strip(),
             "evidence_note": _first(fields, "EVIDENCE NOTE").strip()}
+
+
+#: The fields of a METRIC proposal: a number computed from an exported SID table,
+#: not a mechanism and not a training change.
+METRIC_KEYS = ("METRIC", "TITLE", "FORMULA", "INPUTS", "GEOMETRY",
+               "WHY IT SHOULD TRACK RECALL", "COMPUTE", "RISKS",
+               "FAILURE MODE")
+
+_METRIC_FIELDS = {
+    "METRIC": "metric_id",
+    "TITLE": "title",
+    "FORMULA": "formula",
+    "INPUTS": "inputs",
+    "GEOMETRY": "geometry",
+    "WHY IT SHOULD TRACK RECALL": "why",
+    "COMPUTE": "compute",
+    "RISKS": "risks",
+    "FAILURE MODE": "failure_mode",
+}
+
+
+def parse_metric_ideas(text: str) -> dict:
+    """Read the metric proposals of one ideation agent.
+
+    One metric per ``METRIC:`` block, ended by ``END METRIC``. A block that
+    cannot state its formula is not a metric: the evaluator must be able to
+    compute it without guessing, so the formula is required.
+    """
+    metrics: list[dict] = []
+    for block in _metric_blocks(text):
+        fields = parse_fields(block, METRIC_KEYS)
+        identifier = _first(fields, "METRIC").strip()
+        if not identifier:
+            continue
+        metric = {"metric_id": identifier}
+        for name, value in fields:
+            target = _METRIC_FIELDS.get(name)
+            if target and target not in metric:
+                metric[target] = value
+        if not metric.get("formula"):
+            continue
+        metrics.append(metric)
+    metrics = [metric for metric in metrics if metric.get("metric_id")]
+    if not metrics:
+        raise PlainTextError("the answer holds no metric block with a formula")
+    return {"metrics": metrics}
+
+
+def _metric_blocks(text: str) -> list[str]:
+    """Split an answer into its ``METRIC:`` blocks, ended by ``END METRIC``."""
+    blocks: list[str] = []
+    current: list[str] = []
+    for raw in str(text or "").splitlines():
+        stripped = raw.strip()
+        if stripped.upper() == "END METRIC":
+            if current:
+                blocks.append("\n".join(current))
+            current = []
+            continue
+        if _KEY_LINE.match(raw) and _canonical(
+                _KEY_LINE.match(raw).group(1), METRIC_KEYS) == "METRIC":
+            if current:
+                blocks.append("\n".join(current))
+            current = [raw]
+            continue
+        if current:
+            current.append(raw)
+    if current:
+        blocks.append("\n".join(current))
+    return blocks
