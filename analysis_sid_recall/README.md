@@ -92,6 +92,23 @@ The recall side is checked for every pair: the paired value is the run's own
 recorded test number, read from the run's own metrics (working tree or history),
 and all of them match it exactly.
 
+## Q_H of these pairs
+
+`results/research/issue126/correlation_report_confirmed.json` scores every one of
+the 97 pairs with the Issue #126 hyperbolic prefix ranking score (frozen
+reference, held-out validation probe) and reports the association with its own
+sample size. On these 97 pairs: Spearman **+0.634** (p = 3.2e-12), bootstrap 95%
+CI [+0.471, +0.765], leave-one-out [+0.622, +0.671]; bucket count and same-bucket
+ratio alone reach R^2 0.112 against recall, and adding Q_H reaches 0.472.
+`tools/research/science/q_h_correlation.py` recomputes it; each table's record is
+in `results/research/issue126/metrics/<sha256>.json`.
+
+The association is observational: the tables come from different families and
+settings, Q_H scores the LEVEL-1 prefix only, and it is measured against a frozen
+external behaviour reference rather than the candidate's own codebook geometry. It
+says the grouping agrees with the behaviour reference, not that the hyperbolic
+quantiser is necessary, and not that optimising Q_H would raise recall.
+
 ## The pairing, and its limits
 
 - A SID is identified by the **sha256 of its content**, so two paths with the same table
