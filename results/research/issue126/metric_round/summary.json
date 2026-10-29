@@ -418,7 +418,8 @@
         "fresh_77": 0.4533
       },
       "reading": "the uniform history barycentre is the best query point: leaning on the recency (2^-i weights) or on the last item alone loses a fifth of the correlation, so the metric wants the whole sequence, not its tail"
-    }
+    },
+    "round_9_finding": "The generator-side view is negatively correlated (-0.3669): a level-1 cell that answers the query by itself leaves Stage 3's re-ranking nothing to choose from, and the top ten fills with near-duplicates. Its complement -- the room the re-ranking has inside the cell -- is positively correlated (+0.3669). Together with the path likelihood (-0.2823) this says the same thing twice: a good SID is a COARSE prefix with diverse candidates, not a tight one that answers on its own."
   },
   "rounds": {
     "round_1": [
@@ -653,6 +654,26 @@
         0.09315530563164141
       ],
       "eligible": false
+    },
+    "hbaa_emission_hit10": {
+      "spearman": -0.3669,
+      "p": 0.000101,
+      "ci": [
+        -0.566,
+        -0.138
+      ],
+      "eligible": false,
+      "note": "round 9: the generator-side view -- the share of interactions whose true item is already in its own level-1 cell's hyperbolic top ten, over chance. It is significantly NEGATIVE"
+    },
+    "hbaa_cell_retrieval_difficulty": {
+      "spearman": 0.3669,
+      "p": 0.000101,
+      "ci": [
+        0.138,
+        0.566
+      ],
+      "eligible": true,
+      "note": "the complement of the above: how much room the re-ranking has inside the cell"
     }
   },
   "collection_correction": "67 of the original 97 pairings were wrong (the resolver took the newest commit of a SID path, and that commit often held an EMPTY file, so the run was paired with the earliest surviving table instead of the one it read). The collection is now 107 pairs, all with a readable table whose token range matches the run's own recorded vocabulary.",

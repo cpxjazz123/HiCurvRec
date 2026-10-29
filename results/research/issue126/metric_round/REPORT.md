@@ -97,6 +97,24 @@ relation to the behaviour, read through whatever teacher is frozen.
 | levels | level 1 **+0.7014**, informative-weighted +0.5663, averaged +0.3604 | level 1 |
 | reduction | pair accuracy +0.7025, softplus at the frozen tau **+0.7014** | the same, within noise |
 
+## What the generator-side view says
+
+Round 9 asked the question the generator actually faces: once the level-1 code is
+emitted, is the true item among the ten best items of that cell? Scored over
+chance, it is **negatively** correlated with the recall: **-0.3669** (p = 1e-4).
+
+The reason is worth stating, because it is a property of the target and not of the
+metric: a cell that answers the query by itself leaves Stage 3's re-ranking nothing
+to choose from, and the top ten fills with near-duplicates. The complement -- how
+much room the re-ranking has inside the cell -- is positively correlated
+(+0.3669).
+
+Together with the path log-likelihood (-0.2823), two independent measurements
+say the same thing: **a good SID is a COARSE prefix with diverse candidates, not
+a tight one that answers on its own.** The metrics that track recall are the ones
+that measure the behaviour ALIGNMENT of the partition; the ones that measure how
+easily the answer is already inside the cell point the wrong way.
+
 ## The degenerate cases behave
 
 | table | HBAA |
