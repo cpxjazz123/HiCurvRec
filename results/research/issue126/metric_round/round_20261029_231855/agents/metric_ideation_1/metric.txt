@@ -1,0 +1,30 @@
+METRIC: hyp_history_bary_prefix_enrichment_l1
+
+TITLE: Hyperbolic history-barycentre enrichment of the true level-1 SID prefix over a size-matched null.
+
+FORMULA:
+Symbols: N = number of items; c = c_ref = fixed negative curvature of the frozen reference (c = 1 if the reference reports unit curvature); d_c(x,y) = geodesic distance in the Poincare ball B^d_c; t_j = target-side reference representation of item j in B^d_c; s_u = source-side representation of u; c1(j) = level-1 integer SID code of item j; n_k = #{j : c1(j) = k}; tau = tau_ref (the reference's training temperature).
+For each source u in the TRAINING split let H(u) = {j : (u,j) is a training pair}. For each i in H(u) with |H(u)| >= 2 put H(u,i) = H(u) \ {i} and
+  b(u,i) = argmin_{b in B^d_c} sum_{j in H(u,i)} d_c(b, t_j)^2,
+computed by the Karcher iteration b <- exp_b( (1/|H(u,i)|) sum_{j in H(u,i)} log_b(t_j) ), started from the Euclidean mean of {t_j} projected into the ball, stopped at ||log_b(new)|| < 1e-6 or 50 iterations.
+For every item j define
+  q_j(u,i) = exp(-d_c(b(u,i), t_j)/tau) / sum_{l=1}^{N} exp(-d_c(b(u,i), t_l)/tau).
+Let k+(u,i) = c1(i) and Q_{k+}(u,i) = sum_{j : c1(j) = k+(u,i)} q_j(u,i). Then
+  lift(u,i) = log( Q_{k+}(u,i) * N / n_{k+(u,i)} )
+and
+  METRIC = (1/|U|) sum_{u in U} (1/|H(u)|) sum_{i in H(u)} lift(u,i),
+where U = {u : |H(u)| >= 2}. Higher is better. If tau_ref is not exposed, tau = median_{(u,i)} d_c(b(u,i), t_i) / log N (derived, not tuned). If H(u,i) is empty the example is skipped.
+
+INPUTS: (i) the exported SID table, only the level-1 integer code c1(j) for each of the N items; (ii) the frozen Issue #126 reference, only its target-side representations t_j for all items, its fixed curvature c_ref and its training temperature tau_ref; (iii) the TRAINING split, only the pairs (u,j). No validation interaction, no test interaction, no recall, no Stage-3 output.
+
+GEOMETRY: The construction lives in the Poincare ball B^d_c of fixed negative curvature -c. The query point b(u,i) is a Frechet/Karcher barycentre computed with the ball's exp and log maps, and every distance is the geodesic distance d_c(x,y) = (1/sqrt(c)) arcosh(1 + 2c||x-y||^2 / ((1-c||x||^2)(1-c||y||^2))). Curvature enters twice: in the barycentre, which is the hyperbolic least-squares centre of the history and not a Euclidean mean, and in every distance inside the temperatured softmax. A Euclidean distance in the same coordinates is not isometric to the ball and would change both the barycentre and the softmax ranking, so the curvature is not a cosmetic rescaling.
+
+WHY IT SHOULD TRACK RECALL: Stage-3 retrieves with the level-1 prefix as the coarse address. If the prefix partition is aligned with the reference geometry, the true target's prefix is the region of the ball where the user's history mass actually sits. The metric is the log-density of that region: the positive cell's total temperatured softmax mass Q_{k+} divided by the mass n_{k+}/N it would carry if the codes were independent of geometry. It adds over Q_H: (1) the query point is the Frechet barycentre of the whole training history, not one source anchor, so it uses the full context and is robust to a noisy last item; (2) the positive is scored against the full item-level negative distribution (all N items, temperatured), not the mean of ten negatives, so the shape of the negative cloud matters; (3) the size-matched null n_{k+}/N removes the collapse reward that made plain path likelihood anti-correlate with recall; (4) unlike a hard bucket-reach count there is no radius and no hard reachability, the full softmax mass is used and the query is a barycentre. Q_H sees a small-sample ranking from a single anchor; this sees whether the coarse prefix is the geometrically enriched region for the entire history against the entire item population.
+
+COMPUTE: The reference part is table-independent and is computed once for all 97 tables: each Karcher barycentre costs O(|H(u,i)|*d) per iteration (<= 50 iterations) and each softmax row costs O(N*d); with N = 24587, d <= 64 and P = O(N) examples this is a few 10^10 flops, chunked over examples in float32, seconds to tens of seconds. For each SID table only c1 changes: n_k is one O(N) pass and Q_{k+}(u,i) is the sum of the precomputed q over the items of cell k+, which is O(|cell k+|) per example, or a single scatter-add O(N) per table plus O(1) per example; K <= 256. Total per table is far below a minute; precompute q once and never recompute it per table.
+
+RISKS: (1) If tau_ref is very small the softmax saturates on the nearest item, Q_{k+} approaches q_{i+}, and the metric degenerates to a single-anchor nearest-neighbour score; if tau_ref is very large the softmax is uniform and lift is near 0 for every table. tau is fixed by the reference, not tuned. (2) Leave-one-out histories of length 1 are skipped, so if most sources have one interaction P shrinks and the estimate is noisy. (3) Sources whose history is geometrically spread have an unstable Karcher mean near the boundary; cap the Karcher step at 0.5 and project into the ball (numerical safeguard, not a tuned parameter). (4) Random tables sit slightly below 0 by Jensen; compare only tables with the same N and comparable K, which the 97 pairs satisfy. (5) If the training split is unrepresentative of validation/test sources the lift may not transfer. (6) The metric reads only level 1 and cannot see recall gained from a good level-2+ code while level 1 is meaningless.
+
+FAILURE MODE: Worst on a table whose level-1 codes are assigned by a random hash of the item id, or by clustering on the source side or on a modality unrelated to the target geometry: the true target's cell then carries no enrichment over its size, so lift is near 0 and can go negative if the hash is anti-aligned. A fully collapsed one-cell table is also at 0 (Q = 1, n/N = 1), so collapse is not rewarded. The metric is also worst, by construction, on a table that gets its Stage-3 recall entirely from level-2+ codes while its level-1 prefix is geometrically meaningless, because the formula deliberately reads only level 1.
+
+END METRIC

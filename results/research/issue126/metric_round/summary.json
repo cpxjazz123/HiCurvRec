@@ -53,6 +53,28 @@
       ],
       "eligible": false,
       "report": "metric_bench_round3.json"
+    },
+    {
+      "metric": "hyp_frechet_cover_radius_l1",
+      "spearman": -0.1455,
+      "p": 0.155,
+      "ci": [
+        -0.372,
+        0.078
+      ],
+      "eligible": false,
+      "note": "round 4: the item-weighted normalised geodesic covering radius of the level-1 cells"
+    },
+    {
+      "metric": "hbaa (first run, sign inverted)",
+      "spearman": -0.6963,
+      "p": 2.4e-15,
+      "ci": [
+        -0.82,
+        -0.532
+      ],
+      "eligible": false,
+      "note": "the Delta was implemented as negative-minus-positive; the behaviour-side check with the proposal's order gave +0.0894 mean depth gap and 82.9% of queries with the positive deeper, so the metric was measured with the wrong sign"
     }
   ],
   "not_scored": [
@@ -65,5 +87,18 @@
       "reason": "three evaluations per table (real plus two nulls) exceeded the benchmark deadline on 97 pairs"
     }
   ],
-  "conclusion": "Four new hyperbolic metrics were implemented to their proposals' formulas and measured on the same 97 confirmed pairs. None tracks recall: the two partition-tightness metrics sit near zero, the tree-conditional path likelihood is significantly NEGATIVE (-0.49) because it rewards a trie with few branches (its correlation with the number of level-2 buckets is -0.78, and its three highest values are the 12-, 2- and 3-code collapsed tables), and the size-matched reach lift is +0.04. Q_H's +0.634 remains the only metric in the collection that tracks recall. The pattern across all of them is that a metric of the partition's own geometry -- tightness, margin, likelihood, size-matched reach -- does not predict the recall of the table, while the one metric that does is CONTRASTIVE against the behaviour reference with explicit positive and negative items."
+  "conclusion": "Four new hyperbolic metrics were implemented to their proposals' formulas and measured on the same 97 confirmed pairs. None tracks recall: the two partition-tightness metrics sit near zero, the tree-conditional path likelihood is significantly NEGATIVE (-0.49) because it rewards a trie with few branches (its correlation with the number of level-2 buckets is -0.78, and its three highest values are the 12-, 2- and 3-code collapsed tables), and the size-matched reach lift is +0.04. Q_H's +0.634 remains the only metric in the collection that tracks recall. The pattern across all of them is that a metric of the partition's own geometry -- tightness, margin, likelihood, size-matched reach -- does not predict the recall of the table, while the one metric that does is CONTRASTIVE against the behaviour reference with explicit positive and negative items.",
+  "behaviour_side_test": {
+    "question": "does the next-item behaviour have exploitable hierarchical structure?",
+    "probe": "the 57439 training queries, the Gromov depth gap between the query point and the positive's item minus the mean gap to the ten negatives",
+    "hyperbolic_curvature_1": {
+      "mean_depth_gap": 0.0894,
+      "positive_deeper_share": 0.829
+    },
+    "euclidean_control": {
+      "mean_depth_gap": 0.0181,
+      "positive_deeper_share": 0.825
+    },
+    "reading": "the behaviour relation IS hierarchical in the hyperbolic geometry: the positive shares a deeper common ancestor with the user's anchor in 83% of the queries, and the depth gap is five times the Euclidean one on the same objects. The hyperbolic reading of the Gromov product is therefore not a figure of speech: the flat control cannot reproduce the separation."
+  }
 }

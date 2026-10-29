@@ -1,0 +1,188 @@
+"""HBAA: the hyperbolic behavioural ancestor alignment, with its Euclidean and flat controls.
+
+The Gromov product at the origin is the tree-shaped quantity of hyperbolic space:
+
+    (x | y)_0 = ( d(0, x) + d(0, y) - d(x, y) ) / 2
+
+In a tree it is exactly the depth of the two nodes' nearest common ancestor; in a
+space with negative curvature it is the same quantity up to the thin-triangle defect.
+The metric asks whether the true next item's level-1 prefix shares a DEEPER common
+ancestor with the user's history than a negative's prefix does:
+
+    Delta = (u_h | mu_{b(i+)})_0 - (u_h | mu_{b(i-)})_0
+
+with u_h the hyperbolic barycentre of the SOURCE representations of the whole
+training history, and mu_b the barycentre of the TARGET representations of the
+items in bucket b. It is reduced with the frozen temperature exactly as Q_H is,
+1 - E[softplus(-Delta/tau)] / ln 2, so the two numbers sit on the same scale.
+
+Two controls are computed on the same queries and the same tables:
+
+* ``hbaa_euclid``  -- the same construction with Euclidean means and norms, no exp
+  map and no Poincare distance. If hyperbolic space adds nothing, this matches.
+* ``hbaa_flat``    -- the hyperbolic form at curvature c = 1e-3, i.e. almost flat:
+  it isolates what the finite curvature itself contributes.
+
+A collapsed table (one code) gives Delta = 0 for every pair and scores 0; a random
+assignment scores 0 on average. Those are the degenerate cases the metric must not
+reward.
+"""
+from __future__ import annotations
+
+import numpy as np
+
+NEGATIVES = 10
+SEED = 42
+FLAT_CURVATURE = 1e-3
+
+
+def _scale(points: np.ndarray, curvature: float) -> np.ndarray:
+    """``exp_0(v / s)`` for curvature ``curvature``, centred and scaled by its spread."""
+    spread = float(np.sqrt(np.mean(np.sum(points ** 2, axis=1))))
+    v = np.asarray(points, dtype=np.float64) / max(spread, 1e-12)
+    sqrt_c = np.sqrt(curvature)
+    norm = np.linalg.norm(v, axis=-1, keepdims=True) * sqrt_c
+    return np.tanh(norm) * v / np.maximum(norm / max(sqrt_c, 1e-12), 1e-12)
+
+
+def _distance(a: np.ndarray, b: np.ndarray, curvature: float) -> np.ndarray:
+    c = float(curvature)
+    difference = np.sum((a - b) ** 2, axis=-1)
+    denominator = (1.0 - c * np.sum(a * a, axis=-1)) * (1.0 - c * np.sum(b * b, axis=-1))
+    argument = 1.0 + 2.0 * c * difference / np.maximum(denominator, 1e-12)
+    return np.arccosh(np.maximum(argument, 1.0 + 1e-12)) / np.sqrt(c)
+
+
+def _norm(x: np.ndarray, curvature: float) -> np.ndarray:
+    c = float(curvature)
+    inner = np.clip(1.0 - c * np.sum(x * x, axis=-1), 1e-12, None)
+    return np.arccosh(1.0 / np.sqrt(inner)) / np.sqrt(c)
+
+
+def _frechet(points: np.ndarray, curvature: float = 1.0) -> np.ndarray:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+    from tools.research.science import hyperbolic_sid_quality as frozen
+    return frozen.frechet_barycentre(np.asarray(points, dtype=np.float64),
+                                     frozen.BallGeometry(curvature))
+
+
+def _queries(context: dict) -> dict:
+    if "hbaa_queries" in context:
+        return context["hbaa_queries"]
+    import pandas as pd
+    from pathlib import Path
+
+    repo = Path(__file__).resolve().parents[4]
+    frame = pd.read_parquet(repo / "results" / "stage0_build_parquet" / "train.parquet",
+                            columns=["user", "history", "target"])
+    frame = frame.sort_values("user", kind="stable")
+    last = frame.groupby("user", sort=False).tail(1)
+    items = np.unique(frame["target"].to_numpy(dtype=np.int64))
+    rng = np.random.default_rng(SEED)
+    histories, positives, negatives = [], [], []
+    for history, target in zip(last["history"].to_numpy(), last["target"].to_numpy()):
+        sequence = [int(item) for item in list(history)]
+        if not sequence:
+            continue
+        seen = set(sequence) | {int(target)}
+        chosen, attempts = [], 0
+        while len(chosen) < NEGATIVES and attempts < NEGATIVES * 20:
+            candidate = int(items[rng.integers(0, items.size)])
+            attempts += 1
+            if candidate not in seen and candidate not in chosen:
+                chosen.append(candidate)
+        if len(chosen) < NEGATIVES:
+            continue
+        histories.append(sequence)
+        positives.append(int(target))
+        negatives.append(np.asarray(chosen, dtype=np.int64))
+    payload = {"histories": histories,
+               "positives": np.array(positives, dtype=np.int64),
+               "negatives": np.stack(negatives).astype(np.int64)}
+    context["hbaa_queries"] = payload
+    return payload
+
+
+def _history_points(context: dict, curvature: float) -> np.ndarray:
+    key = "hbaa_history_%g" % curvature
+    if key not in context:
+        source = np.asarray(context["source"], dtype=np.float64)
+        queries = _queries(context)
+        points = np.stack([_frechet(source[np.asarray(history, dtype=np.int64)], curvature)
+                           for history in queries["histories"]])
+        context[key] = points
+    return context[key]
+
+
+def _gromov_alignment(table: dict, context: dict, *, curvature: float,
+                      euclidean: bool = False) -> float:
+    target = np.asarray(context["target"], dtype=np.float64)[
+        np.asarray(table["item_ids"])]
+    tau = float(context["temperature"])
+    codes = np.asarray(table["rows"], dtype=np.int64)[:, 0]
+    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
+    queries = _queries(context)
+
+    pos = np.array([position.get(int(item), -1) for item in queries["positives"]],
+                   dtype=np.int64)
+    neg = np.array([[position.get(int(item), -1) for item in row]
+                    for row in queries["negatives"]], dtype=np.int64)
+    valid = (pos >= 0) & (neg >= 0).all(axis=1)
+    if not valid.any():
+        return 0.0
+
+    if euclidean:
+        source = np.asarray(context["source"], dtype=np.float64)
+        history = np.stack([source[np.asarray(h, dtype=np.int64)].mean(axis=0)
+                            for h, keep in zip(queries["histories"], valid) if keep])
+        centres = {int(code): target[codes == code].mean(axis=0)
+                   for code in np.unique(codes)}
+        origin = np.zeros(target.shape[1])
+        distance = lambda a, b: np.linalg.norm(a - b, axis=-1)
+        norm = lambda x: np.linalg.norm(x, axis=-1)
+    else:
+        history = _history_points(context, curvature)[valid]
+        points = _scale(target, curvature)
+        centres = {int(code): _frechet(target[codes == code], curvature)
+                   for code in np.unique(codes)}
+        origin = np.zeros(points.shape[1])
+        distance = lambda a, b: _distance(a, b, curvature)
+        norm = lambda x: _norm(x, curvature)
+
+    def gromov(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        return 0.5 * (norm(x) + np.asarray(norm(y)) - distance(x, y))
+
+    mu_pos = np.stack([centres[int(codes[index])] for index in pos[valid]])
+    mu_neg = np.stack([[centres[int(codes[index])] for index in row] for row in neg[valid]])
+    # Delta as the proposal states it: the POSITIVE's prefix shares the deeper
+    # common ancestor with the history. The order was reversed in the first
+    # implementation, which inverted the whole metric.
+    delta = gromov(history, mu_pos)[:, None] - gromov(history[:, None, :], mu_neg)
+    per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
+    return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
+
+
+def hbaa(table: dict, context: dict) -> float:
+    """The Gromov-product alignment at curvature 1 (the hypothesis)."""
+    return _gromov_alignment(table, context, curvature=1.0)
+
+
+def hbaa_euclid(table: dict, context: dict) -> float:
+    """The same construction with Euclidean means and distances: the geometric control."""
+    return _gromov_alignment(table, context, curvature=1.0, euclidean=True)
+
+
+def hbaa_flat(table: dict, context: dict) -> float:
+    """The hyperbolic form at curvature 1e-3: what finite curvature itself adds."""
+    return _gromov_alignment(table, context, curvature=FLAT_CURVATURE)
+
+
+hbaa.note = ("Gromov-product (common-ancestor depth) alignment of the level-1 prefix "
+             "with the full training history, curvature 1")
+hbaa_euclid.note = "the same construction with Euclidean means and distances (control)"
+hbaa_flat.note = "the same hyperbolic construction at curvature 1e-3 (control)"
+
+METRICS = {"hbaa": hbaa, "hbaa_euclid": hbaa_euclid, "hbaa_flat": hbaa_flat}
+FREE_CONSTANTS = {"hbaa": 0, "hbaa_euclid": 0, "hbaa_flat": 0}
