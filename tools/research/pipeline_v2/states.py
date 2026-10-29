@@ -1,47 +1,45 @@
 """The states of one candidate, and the transitions between them.
 
-Seven states, mutually exclusive, with one rule that the old loop broke: an
-infrastructure failure (a timeout, a refused read, a crashed service) says nothing
-about the mechanism and is never filed as a defect of the candidate.
+Five states, mutually exclusive. The scientific case for a mechanism is argued
+during ideation and scoring, by independent research agents, before it is
+implemented; verification here answers only whether the CODE is correct, and a
+program answers that. There is no review agent after the implementation.
+
+The rule the old loop broke stays: an infrastructure failure (a timeout, a missing
+GPU, a crashed service) says nothing about the mechanism and is never filed as a
+defect of the candidate.
 """
 from __future__ import annotations
 
 IMPLEMENTED = "IMPLEMENTED"            # the source snapshot is frozen
 TEST_FAILED = "TEST_FAILED"            # a deterministic check failed
-REVIEW_REQUIRED = "REVIEW_REQUIRED"    # tests passed, the science review is next
-NEEDS_FIX = "NEEDS_FIX"                # a reviewer named a defect with evidence
-VERIFIED = "VERIFIED"                  # tests and the review agree
-INFRA_ERROR = "INFRA_ERROR"            # a timeout, a refused read, a crash
+VERIFIED = "VERIFIED"                  # every deterministic check passed
+INFRA_ERROR = "INFRA_ERROR"            # a timeout, a missing device, a crash
 REJECTED = "REJECTED"                  # the mechanism is wrong, or the budget ran out
 
-ALL = (IMPLEMENTED, TEST_FAILED, REVIEW_REQUIRED, NEEDS_FIX, VERIFIED,
-       INFRA_ERROR, REJECTED)
+ALL = (IMPLEMENTED, TEST_FAILED, VERIFIED, INFRA_ERROR, REJECTED)
 
 #: Which state may follow which. A transition that is not here is a bug, not a
-#: judgement call.
+#: judgement call. IMPLEMENTED -> IMPLEMENTED is a new source version of the same
+#: candidate, which is not a violation.
 TRANSITIONS = {
-    # A new source snapshot while a candidate is already IMPLEMENTED is a new
-    # version of the same candidate, not a violation.
-    IMPLEMENTED: {IMPLEMENTED, TEST_FAILED, REVIEW_REQUIRED, INFRA_ERROR},
+    IMPLEMENTED: {IMPLEMENTED, TEST_FAILED, VERIFIED, INFRA_ERROR},
     TEST_FAILED: {IMPLEMENTED, REJECTED, INFRA_ERROR},
-    REVIEW_REQUIRED: {VERIFIED, NEEDS_FIX, INFRA_ERROR},
-    NEEDS_FIX: {IMPLEMENTED, REJECTED, INFRA_ERROR},
     VERIFIED: {REJECTED},
-    INFRA_ERROR: {IMPLEMENTED, REVIEW_REQUIRED, TEST_FAILED, NEEDS_FIX},
+    INFRA_ERROR: {IMPLEMENTED, TEST_FAILED, VERIFIED},
     REJECTED: set(),
 }
 
-#: The error classes are exclusive: a source defect, a scientific objection, an
-#: infrastructure fault and a budget stop are different facts.
+#: The error classes are exclusive: a source defect, an infrastructure fault and a
+#: rejection are different facts and never convert into one another.
 ERROR_CLASSES = {
     "source_defect": {TEST_FAILED},
-    "scientific_objection": {NEEDS_FIX, REJECTED},
     "infrastructure": {INFRA_ERROR},
-    "budget": {REJECTED},
+    "rejection": {REJECTED},
 }
 
 #: How many times the automatic loop may repair one candidate before a human
-#: decision. The old loop had no bound that a slow reviewer could not extend.
+#: decision.
 REPAIR_BUDGET = 2
 
 

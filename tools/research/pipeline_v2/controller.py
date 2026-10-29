@@ -83,42 +83,13 @@ class Controller:
             self._move(record, states.INFRA_ERROR,
                        reason="a check could not run: " + ", ".join(missing))
             return record
-        target = states.REVIEW_REQUIRED if results.get("passed") else states.TEST_FAILED
+        # The deterministic checks ARE the verification: the scientific case was
+        # argued at ideation and scoring, before the code existed, and a second
+        # agent approving the code is the loop that produced mis-attribution,
+        # timeouts and unbounded re-reviews.
+        target = states.VERIFIED if results.get("passed") else states.TEST_FAILED
         self._move(record, target, reason="deterministic checks: " + (
             "all passed" if results.get("passed") else "a check failed"))
-        return record
-
-    def record_review(self, review: dict) -> dict:
-        """Store one scientific review; a blocking finding moves to NEEDS_FIX."""
-        record = self.load()
-        record["review"] = review
-        findings = []
-        for index, finding in enumerate(review.get("findings") or [], 1):
-            findings.append({
-                "id": "F%d" % (len(record.get("findings") or []) + index),
-                "severity": str(finding.get("severity") or "blocking"),
-                "check": str(finding.get("check") or ""),
-                "location": str(finding.get("location") or ""),
-                "detail": str(finding.get("detail") or "")[:2000],
-                "status": "open" if str(finding.get("severity")) == "blocking" else "noted",
-            })
-        record["findings"] = findings
-        blocking = [finding for finding in findings if finding["status"] == "open"]
-        verdict = str(review.get("verdict") or "").upper()
-        # The reviewer's own verdict counts: a NEEDS_FIX with no finding is still a
-        # refusal, and a PASS that did not answer every question is not a pass.
-        unanswered = [check for check in (review.get("checks") or [])
-                      if str(check.get("verdict") or "").upper() not in ("PASS", "NEEDS_FIX")]
-        if verdict not in ("PASS", "NEEDS_FIX"):
-            raise ValueError("the review carries no verdict")
-        if verdict == "NEEDS_FIX" or blocking:
-            target = states.NEEDS_FIX
-        elif unanswered:
-            raise ValueError("the review did not answer " + str(len(unanswered)) +
-                             " of its questions")
-        else:
-            target = states.VERIFIED
-        self._move(record, target, reason="scientific review: " + verdict)
         return record
 
     def fail(self, reason: str) -> dict:

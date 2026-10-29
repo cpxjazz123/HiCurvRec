@@ -2941,6 +2941,33 @@ def tool_research_round_accept(round_id: str, idea_id: str, note: str = "") -> d
                                     in round_pipeline.verified_implementations(state)]}
 
 
+def tool_research_v2_verify(source_dir: str, objective: str = "") -> dict:
+    """Research Pipeline V2: the programs check the code, and nothing else does.
+
+    The deterministic checks -- the geometry contract, the candidate's own suite, a
+    real gradient test, the export/assignment agreement, a two-rank DDP run and the
+    framework's own one-epoch smoke -- are run by the framework. There is no review
+    agent after the implementation: the mechanism was judged during ideation and
+    scoring, before the code existed. The record has one writer and five explicit
+    states; a check that could not run is INFRA_ERROR and is never a verdict.
+    """
+    from tools.research.pipeline_v2 import run as v2_run
+
+    tree, problem = resolve_stage2_tree(source_dir)
+    if tree is None:
+        return {"verified": False, "refused": problem,
+                "available_trees": [item.name for item in stage2_trees()]}
+    record = v2_run.verify_candidate(Path(tree))
+    return {"tree": str(tree), "state": record.get("state"),
+            "version": record.get("version"),
+            "source_digest": record.get("source_digest"),
+            "findings": record.get("findings"),
+            "tests": {name: entry.get("status")
+                      for name, entry in (record.get("tests", {}).get("checks") or {}).items()},
+            "ran": record.get("tests", {}).get("ran"),
+            "history": record.get("history")}
+
+
 def tool_research_round_close_proposal(round_id: str, idea_id: str, reason: str,
                                        evidence: str = "") -> dict:
     """End a candidate because its PROPOSAL is defective, with the evidence on disk.
@@ -3505,6 +3532,13 @@ TOOLS.update({
                        "The verifiers report; this is the decision. A candidate whose "
                        "last review carries a blocking finding is refused: it has to be "
                        "fixed and reviewed again before Stage 2. No GPU work.",
+    },
+    "research_v2_verify": {
+        "fn": tool_research_v2_verify,
+        "args": {"source_dir": "string", "objective": "string, optional"},
+        "description": "Research Pipeline V2: the deterministic checks by the "
+                       "framework, which are the verification; returns the V2 "
+                       "record and its state.",
     },
     "research_round_close_proposal": {
         "fn": tool_research_round_close_proposal,

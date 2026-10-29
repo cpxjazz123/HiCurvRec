@@ -8,16 +8,17 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.research.pipeline_v2 import deterministic, review, states
+from tools.research.pipeline_v2 import deterministic, states
 from tools.research.pipeline_v2.controller import Controller
 
 
 class StateMachineTests(unittest.TestCase):
 
-    def test_the_seven_states_are_the_only_states(self):
-        self.assertEqual(len(states.ALL), 7)
+    def test_the_five_states_are_the_only_states(self):
+        self.assertEqual(len(states.ALL), 5)
         self.assertIn(states.TEST_FAILED, states.ALL)
         self.assertIn(states.INFRA_ERROR, states.ALL)
+        self.assertNotIn("REVIEW_REQUIRED", states.ALL)
 
     def test_an_infrastructure_failure_is_never_a_verdict(self):
         self.assertEqual(states.error_class(states.INFRA_ERROR), "infrastructure")
@@ -30,7 +31,7 @@ class StateMachineTests(unittest.TestCase):
         with self.assertRaises(states.TransitionError):
             states.check(states.REJECTED, states.IMPLEMENTED)
 
-    def test_failed_tests_do_not_reach_the_reviewer(self):
+    def test_a_failed_check_cannot_be_verified_without_a_repair(self):
         with self.assertRaises(states.TransitionError):
             states.check(states.TEST_FAILED, states.VERIFIED)
 
@@ -43,48 +44,24 @@ class ControllerTests(unittest.TestCase):
         (tree / "train_rqvae.py").write_text("x = 1\n", encoding="utf-8")
         return Controller(Path(work) / "record"), tree
 
-    def test_the_lifecycle_is_implemented_tests_review_verified(self):
+    def test_the_lifecycle_is_implemented_then_verified(self):
         with tempfile.TemporaryDirectory() as work:
             controller, tree = self._controller(work)
             record = controller.register(tree)
             self.assertEqual(record["state"], states.IMPLEMENTED)
             record = controller.record_tests({"ran": True, "passed": True})
-            self.assertEqual(record["state"], states.REVIEW_REQUIRED)
-            record = controller.record_review({"verdict": "PASS", "findings": []})
             self.assertEqual(record["state"], states.VERIFIED)
 
-    def test_a_blocking_finding_moves_to_needs_fix_with_an_id(self):
+    def test_a_failed_check_starts_a_repair_cycle(self):
         with tempfile.TemporaryDirectory() as work:
             controller, tree = self._controller(work)
             controller.register(tree)
-            controller.record_tests({"ran": True, "passed": True})
-            record = controller.record_review({
-                "verdict": "NEEDS_FIX",
-                "findings": [{"severity": "blocking", "location": "f.py:1",
-                              "detail": "d"}]})
-            self.assertEqual(record["state"], states.NEEDS_FIX)
-            self.assertEqual(record["findings"][0]["id"], "F1")
-            self.assertEqual(record["findings"][0]["status"], "open")
-
-    def test_a_minor_finding_does_not_block(self):
-        with tempfile.TemporaryDirectory() as work:
-            controller, tree = self._controller(work)
-            controller.register(tree)
-            controller.record_tests({"ran": True, "passed": True})
-            record = controller.record_review({
-                "verdict": "PASS",
-                "findings": [{"severity": "minor", "location": "f.py:1"}]})
-            self.assertEqual(record["state"], states.VERIFIED)
-            self.assertEqual(record["findings"][0]["status"], "noted")
-
-    def test_repeating_a_step_is_idempotent(self):
-        with tempfile.TemporaryDirectory() as work:
-            controller, tree = self._controller(work)
-            controller.register(tree)
-            controller.record_tests({"ran": True, "passed": True})
-            record = controller.record_tests({"ran": True, "passed": True})
-            self.assertEqual(record["state"], states.REVIEW_REQUIRED)
-            self.assertTrue(record["history"][-1].get("repeat"))
+            record = controller.record_tests({"ran": True, "passed": False,
+                                              "checks": {"suite": {"status": "FAIL"}}})
+            self.assertEqual(record["state"], states.TEST_FAILED)
+            record = controller.repair("fix the suite")
+            self.assertEqual(record["state"], states.IMPLEMENTED)
+            self.assertEqual(record["repairs"], 1)
 
     def test_a_new_source_is_a_new_version_not_an_overwrite(self):
         with tempfile.TemporaryDirectory() as work:
@@ -99,14 +76,12 @@ class ControllerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as work:
             controller, tree = self._controller(work)
             controller.register(tree)
-            controller.record_tests({"ran": True, "passed": True})
-            controller.record_review({"verdict": "NEEDS_FIX", "findings": [
-                {"severity": "blocking", "location": "f.py:1", "detail": "d"}]})
             for _ in range(states.REPAIR_BUDGET):
+                controller.record_tests({"ran": True, "passed": False,
+                                         "checks": {"suite": {"status": "FAIL"}}})
                 controller.repair("fix")
-                controller.record_tests({"ran": True, "passed": True})
-                controller.record_review({"verdict": "NEEDS_FIX", "findings": [
-                    {"severity": "blocking", "location": "f.py:1", "detail": "d"}]})
+            controller.record_tests({"ran": True, "passed": False,
+                                     "checks": {"suite": {"status": "FAIL"}}})
             with self.assertRaises(states.TransitionError):
                 controller.repair("one too many")
 
@@ -149,37 +124,6 @@ class DeterministicTests(unittest.TestCase):
             self.assertEqual(result["status"], "FAIL")
 
 
-class ReviewParseTests(unittest.TestCase):
-
-    def test_a_blocking_finding_is_parsed_with_its_location(self):
-        text = "\n".join([
-            "VERDICT: NEEDS_FIX",
-            "CHECK: coupling",
-            "CHECK VERDICT: NEEDS_FIX",
-            "FINDING SEVERITY: blocking",
-            "FINDING LOCATION: model/layers.py:88",
-            "FINDING DETAIL: the radius never reaches the cost",
-            "FINDING REPRODUCTION: set the radius and compare",
-            "FINDING CORRECTION: multiply before the assignment",
-            "CHECK: mathematics",
-            "CHECK VERDICT: PASS",
-            "FINDING SEVERITY: none",
-            "FINDING LOCATION: n/a",
-        ])
-        parsed = review.parse(text)
-        self.assertEqual(parsed["verdict"], "NEEDS_FIX")
-        self.assertEqual(len(parsed["findings"]), 1)
-        self.assertEqual(parsed["findings"][0]["location"], "model/layers.py:88")
-
-    def test_a_review_without_a_verdict_is_an_error(self):
-        with self.assertRaises(ValueError):
-            review.parse("I could not read the tree.")
-
-
-if __name__ == "__main__":
-    unittest.main()
-
-
 class ErrorClassificationTests(unittest.TestCase):
     """NOT_RUN is an infrastructure failure, not a defect of the candidate."""
 
@@ -204,46 +148,6 @@ class ErrorClassificationTests(unittest.TestCase):
             record = controller.record_tests({
                 "ran": True, "passed": False, "checks": {"suite": {"status": "FAIL"}}})
             self.assertEqual(record["state"], states.TEST_FAILED)
-
-
-class ReviewVerdictTests(unittest.TestCase):
-    """The reviewer's own verdict decides, not only the findings it lists."""
-
-    def _ready(self, work):
-        tree = Path(work) / "cand"
-        tree.mkdir()
-        controller = Controller(Path(work) / "record")
-        controller.register(tree)
-        controller.record_tests({"ran": True, "passed": True})
-        return controller
-
-    def test_a_needs_fix_without_findings_is_not_a_pass(self):
-        with tempfile.TemporaryDirectory() as work:
-            controller = self._ready(work)
-            record = controller.record_review({"verdict": "NEEDS_FIX", "findings": []})
-            self.assertEqual(record["state"], states.NEEDS_FIX)
-
-    def test_a_pass_with_an_unanswered_question_is_refused(self):
-        with tempfile.TemporaryDirectory() as work:
-            controller = self._ready(work)
-            with self.assertRaises(ValueError):
-                controller.record_review({
-                    "verdict": "PASS",
-                    "checks": [{"name": "coupling", "verdict": "PASS"},
-                               {"name": "mathematics", "verdict": ""},
-                               {"name": "claim", "verdict": "PASS"}],
-                    "findings": []})
-
-    def test_a_complete_pass_is_verified(self):
-        with tempfile.TemporaryDirectory() as work:
-            controller = self._ready(work)
-            record = controller.record_review({
-                "verdict": "PASS",
-                "checks": [{"name": "coupling", "verdict": "PASS"},
-                           {"name": "mathematics", "verdict": "PASS"},
-                           {"name": "claim", "verdict": "PASS"}],
-                "findings": []})
-            self.assertEqual(record["state"], states.VERIFIED)
 
 
 class EntryReuseTests(unittest.TestCase):
