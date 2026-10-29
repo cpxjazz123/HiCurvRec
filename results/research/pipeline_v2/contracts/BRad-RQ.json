@@ -16,8 +16,8 @@
     },
     {
       "template": "IndependentFormula",
-      "candidate": "model.poincare_contract.distance",
-      "reference": "closed_form_1d",
+      "candidate": "tests.probe_radial.assignment_path",
+      "reference": "closed_form_kernel_1d",
       "grid": {
         "values": [
           0.05,
@@ -71,5 +71,9 @@
       "edit": "cut gradient path",
       "must_fail": "GradientFlow"
     }
+  ],
+  "training_config_tests": [
+    "tests.test_ddp",
+    "tests.test_radial_export"
   ]
 }

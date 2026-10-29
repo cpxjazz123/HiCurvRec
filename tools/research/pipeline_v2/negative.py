@@ -20,10 +20,11 @@ EDITS = {
                         "    values = torch.as_tensor(scale, dtype=torch.float64).flatten()",
                         "    return torch.full((24,), 0.5)\n"
                         "    values = torch.as_tensor(scale, dtype=torch.float64).flatten()"),
-    # 2 the curved score becomes the Euclidean one
-    "euclidean kernel": ("model/behaviour_radius.py",
-                         "    if not use_geometry:\n        return (a - e).pow(2).sum(dim=-1)",
-                         "    return (a - e).pow(2).sum(dim=-1)"),
+    # 2 the curved score becomes the Euclidean one, in the path the assignment
+    # actually uses (the layer's own cost), not in a helper nobody calls
+    "euclidean kernel": ("model/layers.py",
+                         "        e = project(self.point_of(self.get_code_embs()), 1.0)",
+                         "        e = self.get_code_embs()"),
     # 3 the gradient path from the behaviour to the encoder is cut
     "cut gradient path": ("model/model.py",
                           "        return radius.unsqueeze(-1) * direction",
@@ -72,10 +73,40 @@ def run(tree: Path, contract: dict) -> dict:
             "controls": outcomes}
 
 
+def _run_in_process(tree: Path, contract: dict) -> dict:
+    """Run the contract's templates on a tree, in a fresh interpreter."""
+    import json
+    import subprocess
+    import sys
+
+    from . import deterministic
+
+    script = (
+        "import json, sys;"
+        "sys.path.insert(0, " + repr(str(deterministic.REPO)) + ");"
+        "from tools.research.pipeline_v2 import contracts as c;"
+        "contract = c.load_contract(" + repr(str(contract.get('__path__') or '')) + ");"
+        "print('RESULT:' + json.dumps(c.run_tests(" + repr(str(tree)) + ", contract)))")
+    if not contract.get("__path__"):
+        return contracts.run_tests(tree, contract)
+    done = subprocess.run([str(deterministic.PY_STAGE2), "-c", script],
+                          cwd=str(deterministic.REPO), capture_output=True, text=True,
+                          timeout=900)
+    marked = [line for line in (done.stdout or "").splitlines()
+              if line.startswith("RESULT:")]
+    if not marked:
+        return {"tests": {}, "ran": False,
+                "error": (done.stdout + done.stderr)[-600:]}
+    return json.loads(marked[-1][len("RESULT:"):])
+
+
 def _run_one(tree: Path, contract: dict, control: dict) -> dict:
     applied = apply_edit(tree, control["edit"])
     try:
-        outcome = contracts.run_tests(applied["tree"], contract)
+        # The templates import the candidate, and Python caches the import: a run in
+        # this process would test the ORIGINAL modules and not the broken copy.
+        # The copy is therefore checked in its own interpreter.
+        outcome = _run_in_process(applied["tree"], contract)
         name = str(control["must_fail"])
         entry = (outcome.get("tests") or {}).get(name) or {}
         if entry.get("status") == "FAIL":

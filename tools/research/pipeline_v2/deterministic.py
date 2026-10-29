@@ -187,6 +187,26 @@ def check_negative_control(tree: Path) -> dict:
             "controls": outcome.get("controls"), "contract": str(path)}
 
 
+def _assignment_is(text: str, key: str, value: str) -> bool:
+    """Whether the trainer sets ``key`` to ``value``, directly or through a constant.
+
+    A trainer rarely writes ``radial=True``: it writes ``USE_RADIAL = True`` and
+    then ``radial=USE_RADIAL``. The check resolves the constant instead of
+    demanding a literal, because a check that only accepts one spelling would
+    fail a correct trainer.
+    """
+    direct = re.search(r"^\s*" + re.escape(key) + r"\s*=\s*" + re.escape(value) + r"\b",
+                       text, re.M)
+    if direct:
+        return True
+    for name in re.findall(r"^\s*(\w+)\s*=\s*" + re.escape(value) + r"\b", text, re.M):
+        used = re.search(r"^\s*" + re.escape(key) + r"\s*=\s*" + re.escape(name) + r"\b",
+                         text, re.M)
+        if used:
+            return True
+    return False
+
+
 def check_training_config(tree: Path, contract_name: str = None) -> dict:
     """The trainer must run the FORMAL configuration, not an inherited one.
 
@@ -212,17 +232,109 @@ def check_training_config(tree: Path, contract_name: str = None) -> dict:
     text = source.read_text(encoding="utf-8", errors="replace")
     mismatches = []
     for key, value in expected.items():
-        pattern = ("%s\s*=\s*%s" % (re.escape(str(key)), re.escape(str(value))))
-        if not re.search(pattern, text):
-            mismatches.append("%s is not %s in the trainer" % (key, value))
+        if _assignment_is(text, str(key), str(value)):
+            continue
+        mismatches.append("%s is not %s in the trainer" % (key, value))
     if mismatches:
         return {"status": "FAIL", "detail": "; ".join(mismatches)}
     return {"status": "PASS",
             "detail": "the trainer runs the formal configuration: " + str(expected)}
 
 
+def check_promotion(tree: Path) -> dict:
+    """The tree that will train must be the tree that was reviewed.
+
+    The research candidate and the promoted tree are two copies; a verification of
+    one says nothing about the other. This compares the digests of the promoted
+    tree and of the round tree it was copied from, so a stale promotion is
+    refused instead of trained.
+    """
+    tree = Path(tree).resolve()
+    name = tree.name
+    mechanism = name[6:] if name.startswith("TIGER_") else name
+    # the round trees live beside the rounds, under the issue
+    trees = REPO / "results" / "research" / "issue121" / "trees"
+    if not trees.is_dir():
+        return {"status": "NOT_RUN", "detail": "there is no tree directory to compare with"}
+    best = None
+    for directory in sorted(trees.iterdir(), reverse=True):
+        candidate = directory / mechanism
+        if candidate.is_dir():
+            best = candidate
+            break
+    if best is None:
+        return {"status": "NOT_RUN",
+                "detail": "no round tree named " + mechanism + " to compare with"}
+    if _digest_of(best) != _digest_of(tree):
+        return {"status": "FAIL",
+                "detail": "the promoted tree differs from the reviewed round tree (" +
+                           str(_digest_of(best))[:12] + " vs " + str(_digest_of(tree))[:12] +
+                           "): the training tree is not the reviewed one"}
+    return {"status": "PASS",
+            "detail": "the promoted tree is the reviewed tree (" +
+                       str(_digest_of(tree))[:12] + ")"}
+
+
+def _digest_of(tree: Path) -> str:
+    import hashlib
+    digest = hashlib.sha256()
+    for path in sorted(Path(tree).rglob("*.py")):
+        relative = path.relative_to(tree)
+        if any(part in ("logs", "results", "dataset", "__pycache__", "ckpt")
+               for part in relative.parts):
+            continue
+        digest.update(str(relative).encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(hashlib.sha256(path.read_bytes()).hexdigest().encode("ascii"))
+    return digest.hexdigest()
+
+
+def check_tests_use_training_config(tree: Path, contract_name: str = None) -> dict:
+    """The candidate's own tests must declare the configuration that trains.
+
+    A DDP test that builds the model with a different configuration proves
+    something about a model nobody trains with.
+    """
+    tree = Path(tree)
+    name = contract_name or (tree.name[6:] if tree.name.startswith("TIGER_") else tree.name)
+    contract_path = (REPO / "results" / "research" / "pipeline_v2" / "contracts" /
+                     (name + ".json"))
+    if not contract_path.is_file():
+        return {"status": "NOT_RUN", "detail": "the contract declares no training_config"}
+    import json as _json
+    expected = (_json.loads(contract_path.read_text(encoding="utf-8"))
+                .get("training_config") or {})
+    if not expected:
+        return {"status": "NOT_RUN", "detail": "the contract declares no training_config"}
+    tests = tree / "tests"
+    if not tests.is_dir():
+        return {"status": "FAIL", "detail": "the candidate ships no tests"}
+    required = (_json.loads(contract_path.read_text(encoding="utf-8"))
+                .get("training_config_tests") or [])
+    if not required:
+        required = [entry.get("module") for entry in
+                    (_json.loads(contract_path.read_text(encoding="utf-8")).get("tests") or [])
+                    if entry.get("module")]
+    offenders = []
+    for module in required:
+        name = str(module).split(".")[-1] + ".py"
+        path = tests / name
+        if not path.is_file():
+            offenders.append("%s is missing" % name)
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for key, value in expected.items():
+            if not _assignment_is(text, str(key), str(value)):
+                offenders.append("%s does not build the model with %s=%s" %
+                                (name, key, value))
+    if offenders:
+        return {"status": "FAIL", "detail": "; ".join(offenders)}
+    return {"status": "PASS",
+            "detail": "the candidate tests build the model with " + str(expected)}
+
+
 DEFAULT_CHECKS = ("contract", "suite", "gradient", "export", "ddp", "mechanism",
-                  "negative", "training_config")
+                  "negative", "training_config", "promotion", "tests_config")
 
 
 def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
@@ -252,6 +364,10 @@ def run_all(tree: Path, *, checks=None, interpreter: Path = PY_STAGE2) -> dict:
             results[name] = check_negative_control(tree)
         elif name == "training_config":
             results[name] = check_training_config(tree)
+        elif name == "promotion":
+            results[name] = check_promotion(tree)
+        elif name == "tests_config":
+            results[name] = check_tests_use_training_config(tree)
         else:
             results[name] = {"status": "NOT_RUN", "detail": "unknown check " + name}
     statuses = [entry.get("status") for entry in results.values()]

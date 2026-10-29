@@ -31,8 +31,11 @@ TEMPLATES = ("SignalSensitivity", "IndependentFormula", "RangeAndSaturation",
 
 def load_contract(path: Path) -> dict:
     """Read and validate one mechanism contract."""
-    payload = json.loads(Path(path).read_text(encoding="utf-8"))
-    return validate_contract(payload)
+    path = Path(path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = validate_contract(payload)
+    payload["__path__"] = str(path)
+    return payload
 
 
 def validate_contract(payload: dict) -> dict:
@@ -121,44 +124,71 @@ def signal_sensitivity(tree: Path, *, set: dict, observe: dict,
 
 def independent_formula(tree: Path, *, candidate: str, reference: str,
                         grid: dict = None) -> dict:
-    """Compare the candidate's operation with the canonical one on a grid.
+    """Compare the candidate's operation with an expectation from outside it.
 
-    The expectation comes from the framework's own module, never from the code under
-    test: that is what makes it independent.
+    Two expectations are available and neither comes from the code under test: the
+    closed form of the one-dimensional Poincare distance, and the closed form of
+    the Poincare kernel, which is what the candidate's own assignment path must
+    compute.
     """
     torch = _torch()
     import importlib
     implementation = _resolve(tree, candidate)
-    if str(reference) == "closed_form_1d":
-        expected = None
+    values = (grid or {}).get("values") or [0.05, 0.2, 0.5]
+    curvature = float((grid or {}).get("curvature") or 1.0)
+    if str(reference) == "closed_form_kernel_1d":
+        observed = implementation(float(values[0]) if values else 1.0)
+        points = observed["points"]
+        codes = observed["codes"]
+        cost = observed["cost"]
+        a2 = points.pow(2).sum(-1, keepdim=True)
+        e2 = codes.pow(2).sum(-1).unsqueeze(0)
+        want = ((points.unsqueeze(1) - codes.unsqueeze(0)).pow(2).sum(-1) /
+                ((1 - a2) * (1 - e2)).clamp_min(1e-12))
+        got = cost
+    elif str(reference) == "closed_form_1d":
+        reference_module = importlib.import_module(
+            "tools.research.geometry.poincare_contract")
+        expected = getattr(reference_module, reference.split(".")[-1])
+        worst = 0.0
+        for value in values:
+            point = torch.tensor([[float(value), 0.0]])
+            other = torch.tensor([[-0.3, 0.0]])
+            got = implementation(point, other, curvature)
+            want = expected(point, other, curvature)
+            worst = max(worst, float((got.reshape(-1) - want.reshape(-1)).abs().max()))
+        if worst > 1e-5:
+            return {"status": "FAIL", "template": "IndependentFormula",
+                    "detail": "the candidate differs from the canonical " + reference +
+                              " by up to %.3e" % worst, "difference": worst}
+        return {"status": "PASS", "template": "IndependentFormula",
+                "detail": "the candidate matches the canonical " + reference,
+                "difference": worst}
     else:
         reference_module = importlib.import_module(
             "tools.research.geometry.poincare_contract")
         expected = getattr(reference_module, reference.split(".")[-1])
-    values = (grid or {}).get("values") or [0.05, 0.2, 0.5]
-    curvature = float((grid or {}).get("curvature") or 1.0)
-    worst = 0.0
-    for value in values:
-        # the closed form below is one-dimensional, so both points sit on one axis
-        point = torch.tensor([[float(value), 0.0]])
-        other = torch.tensor([[-0.3, 0.0]])
-        got = implementation(point, other, curvature)
-        if str(reference) == "closed_form_1d":
-            # The 1-D Poincare distance written by hand: an expectation that does
-            # not come from any module under test.
-            root = math.sqrt(curvature)
-            a, b = float(point[0, 0]), float(other[0, 0])
-            ratio = root * abs(b - a) / abs(1 - curvature * a * b)
-            want = torch.tensor([(2.0 / root) * math.atanh(min(ratio, 1 - 1e-9))])
-        else:
+        worst = 0.0
+        for value in values:
+            point = torch.tensor([[float(value), 0.0]])
+            other = torch.tensor([[0.0, float(value)]])
+            got = implementation(point, other, curvature)
             want = expected(point, other, curvature)
-        worst = max(worst, float((got.reshape(-1) - want.reshape(-1)).abs().max()))
-    if worst > 1e-5:
+            worst = max(worst, float((got.reshape(-1) - want.reshape(-1)).abs().max()))
+        if worst > 1e-5:
+            return {"status": "FAIL", "template": "IndependentFormula",
+                    "detail": "the candidate differs from the canonical " + reference +
+                              " by up to %.3e" % worst, "difference": worst}
+        return {"status": "PASS", "template": "IndependentFormula",
+                "detail": "the candidate matches the canonical " + reference,
+                "difference": worst}
+    worst = float((got.reshape(-1) - want.reshape(-1)).abs().max())
+    if worst > 1e-4:
         return {"status": "FAIL", "template": "IndependentFormula",
-                "detail": "the candidate differs from the canonical " + reference +
-                          " by up to %.3e" % worst, "difference": worst}
+                "detail": "the assignment path does not compute the Poincare kernel: "
+                          "up to %.3e apart" % worst, "difference": worst}
     return {"status": "PASS", "template": "IndependentFormula",
-            "detail": "the candidate matches the canonical " + reference,
+            "detail": "the assignment path computes the canonical kernel",
             "difference": worst}
 
 
