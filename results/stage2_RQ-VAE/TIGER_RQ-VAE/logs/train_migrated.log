@@ -1,0 +1,114 @@
+[RecBole RQ-VAE] device=cuda:0 all_items=24587 train_items=24556 world_size=4
+[RecBole RQ-VAE] config: epochs=3000 batch_size_per_rank=1024 total_batch=4096 lr=0.001
+[radial] items 24587, measured 24524, radius range [0.0000, 1.4720]
+[RecBole RQ-VAE] initializing codebooks with KMeans on the scored tangent
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user. 
+  warnings.warn(  # warn only once
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[RQ-VAE] epoch=1 loss=0.00182908 recon=0.00072613 lr=2.333e-05 time=0.322s
+[RQ-VAE] epoch=2 loss=0.00189830 recon=0.00066185 lr=4.333e-05 time=0.123s
+[RQ-VAE] epoch=3 loss=0.00202603 recon=0.00058095 lr=6.333e-05 time=0.118s
+[RQ-VAE] epoch=4 loss=0.00170624 recon=0.00051207 lr=8.333e-05 time=0.118s
+[RQ-VAE] epoch=5 loss=0.00123404 recon=0.00045172 lr=1.033e-04 time=0.125s
+[RQ-VAE] epoch=6 loss=0.00093402 recon=0.00039755 lr=1.233e-04 time=0.13s
+[RQ-VAE] epoch=7 loss=0.00079973 recon=0.00035271 lr=1.433e-04 time=0.142s
+[RQ-VAE] epoch=8 loss=0.00071847 recon=0.00031692 lr=1.633e-04 time=0.133s
+[RQ-VAE] epoch=9 loss=0.00066259 recon=0.00028773 lr=1.833e-04 time=0.123s
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/train_rqvae.py", line 560, in <module>
+[rank3]:     main()
+[rank3]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/train_rqvae.py", line 403, in main
+[rank3]:     resets = raw_module.recover_dead_codes(stats, dead_streak)
+[rank3]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+[rank3]:     return func(*args, **kwargs)
+[rank3]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/model/model.py", line 130, in recover_dead_codes
+[rank3]:     streak[level] = torch.where(used_now,
+[rank3]: RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:3 and cpu!
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/train_rqvae.py", line 560, in <module>
+[rank0]:     main()
+[rank0]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/train_rqvae.py", line 403, in main
+[rank0]:     resets = raw_module.recover_dead_codes(stats, dead_streak)
+[rank0]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+[rank0]:     return func(*args, **kwargs)
+[rank0]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/model/model.py", line 130, in recover_dead_codes
+[rank0]:     streak[level] = torch.where(used_now,
+[rank0]: RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/train_rqvae.py", line 560, in <module>
+[rank2]:     main()
+[rank2]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/train_rqvae.py", line 403, in main
+[rank2]:     resets = raw_module.recover_dead_codes(stats, dead_streak)
+[rank2]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+[rank2]:     return func(*args, **kwargs)
+[rank2]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/model/model.py", line 130, in recover_dead_codes
+[rank2]:     streak[level] = torch.where(used_now,
+[rank2]: RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:2 and cpu!
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/train_rqvae.py", line 560, in <module>
+[rank1]:     main()
+[rank1]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/train_rqvae.py", line 403, in main
+[rank1]:     resets = raw_module.recover_dead_codes(stats, dead_streak)
+[rank1]:   File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+[rank1]:     return func(*args, **kwargs)
+[rank1]:   File "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/model/model.py", line 130, in recover_dead_codes
+[rank1]:     streak[level] = torch.where(used_now,
+[rank1]: RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:1 and cpu!
+[rank0]:[W1029 17:40:16.894009188 ProcessGroupNCCL.cpp:1538] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+W1029 17:40:17.794479 4152358 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 4153023 closing signal SIGTERM
+E1029 17:40:17.909094 4152358 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:874] failed (exitcode: 1) local_rank: 0 (pid: 4152967) of binary: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python
+Traceback (most recent call last):
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py", line 901, in main
+    run(args)
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py", line 892, in run
+    elastic_launch(
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py", line 143, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py", line 277, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_BRad-RQ_v3/train_rqvae.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-10-29_17:40:17
+  host      : m3g110.massive.org.au
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 4153006)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[2]:
+  time      : 2026-10-29_17:40:17
+  host      : m3g110.massive.org.au
+  rank      : 3 (local_rank: 3)
+  exitcode  : 1 (pid: 4153038)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-10-29_17:40:17
+  host      : m3g110.massive.org.au
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 4152967)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
