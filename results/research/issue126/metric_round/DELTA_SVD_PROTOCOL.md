@@ -734,3 +734,86 @@ Even if all three experiments had supported the hierarchical reading, the
 correct claim would have been "empirical evidence for the radial-depth reading",
 not "hierarchical information causes better recommendations": that needs an
 intervention under matched training conditions, which this project has not run.
+
+## v15 -- the radial term is group tightness, and v13's peak was a dimension
+
+Two corrections and one decisive experiment.
+
+### The decisive experiment: replace the radial term with the tightness
+
+The radius is 91% the group's dispersion (v14), so the question the brief poses
+is whether the radius carries HBAA's extra predictive power or whether the
+tightness it stands for does. The two were put in the same scoring rule and
+measured on the same 107 pairs:
+
+    Delta = ( d(h,n) - d(h,p) ) / 2 + (coef/2) * ( z(term_p) - z(term_n) )
+
+with ``term`` either the radius or the tightness ``D = mean d(x_i, mu)^2``, each
+standardised over the table's own groups so that one coefficient scale serves
+both families, and with both signs of the tightness term tried. Artifact
+`../hbaa_tightness_swap_107.json`, script `hbaa_tightness_swap.py`.
+
+| coef | -1.00 | -0.75 | -0.50 | -0.25 | **0.00** | +0.25 | +0.50 | +0.75 | +1.00 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| radial | +0.1305 | +0.2233 | +0.3969 | +0.5243 | **+0.7104** | +0.1881 | -0.0112 | -0.1386 | -0.2584 |
+| tightness | -0.1043 | -0.0054 | +0.0904 | +0.2935 | **+0.7104** | +0.4755 | +0.3257 | +0.1428 | +0.0685 |
+
+Zero is the peak of BOTH families, and the fall is on both sides, so this is not
+a sign error. The split-half protocol agrees: the coefficient chosen on the even
+half is 0.0 for both families, the coefficient chosen on the odd half is 0.0 for
+both, and the held-out values are exactly the zero-coefficient values (+0.6897
+on the odd half, +0.7369 on the even half). Neither the radius nor the
+tightness adds anything; the plain distance contrast is the best version, at
+**+0.7104**.
+
+### Correction 1: v13's peak was a dimension, not a weight
+
+v13 swept the coefficient on the RAW radius, whose scale is set by the ball
+(radius median 2.785) and not by anything comparable to the distance
+difference. The effective coefficient in each table was therefore
+``alpha_raw / std_r(table)``, which varies from table to table without limit.
+Under a scale-free coefficient the optimum is exactly zero on both independent
+halves. So "+0.7623 at alpha = 0.5" is not evidence that half-weighting the
+radial term helps; it is what a coefficient whose magnitude is set by the
+dimensional accident of the radius does. v13's conclusion is withdrawn.
+
+### Correction 2: v14's residual was an artefact of the reference
+
+The hierarchy of v14 was built over at most 4,000 items and left the rest at a
+default depth. The reference now covers every item (12,000 in the tree, the
+remaining 18,000 inheriting the depth and the height of their nearest tree item
+in the co-occurrence profile) and the analysis uses TEN random reference points
+instead of one. Artifact `../radius_statistics_107.json`, script
+`radius_statistics.py`.
+
+| relation | v14 (broken reference, one random point) | v15 (full reference, ten points) |
+| --- | --- | --- |
+| radius vs the group's dispersion | -0.9106 | **-0.9019** |
+| radius vs the distance to a random point | +0.9798 | **+0.9806** (mean of ten) |
+| radius vs the tree depth (partial) | +0.2115 | **+0.0097** |
+| the same from a random centre | +0.1921 | +0.0089 (mean of ten) |
+| the origin's excess over a random centre | -- | **+0.0009** |
+| radius vs the join height (partial) | -0.0877 | **-0.0001** |
+
+The residual that v14 reported is gone: with a reference that covers every item
+the radius has NO relation to the hierarchy depth (+0.0097) or to the join height
+(-0.0001), and the true origin exceeds a random centre by 0.0009, which is
+nothing. The tree is unbalanced (depth median 46, maximum 175, because average
+linkage chains near-duplicate items), so the depth reading remains a weak
+reference; but the verdict does not depend on it, since the height reading, the
+random-centre control and the tightness control all agree.
+
+### Where this leaves the construction
+
+The admissible HBAA is the plain distance contrast: the Gromov product's radial
+term is not only uninformative about hierarchy, it is harmful in every
+scale-free setting tried, and the compactness it secretly measures is harmful in
+the same way. The best numbers in this project are therefore
+
+| construction | rho |
+| --- | --- |
+| HBAA without the radial term (alpha = 0) | **+0.7104** |
+| HBAA, Euclidean control | +0.7170 |
+| four-point agreement rate, unweighted | +0.6593 |
+
+all of them Euclidean in content, and none of them rewarded by a curvature.
