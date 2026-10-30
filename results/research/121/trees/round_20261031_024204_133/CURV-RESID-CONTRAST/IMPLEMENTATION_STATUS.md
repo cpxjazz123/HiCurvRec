@@ -170,3 +170,45 @@ a patch.
 The candidate is `IMPLEMENTATION_NEEDS_FIX`: the assignment objective has its
 minimum at one codeword for every item, and no admissible (derivable, untuned)
 term currently prevents that.
+
+## The fix that worked: quantize the FROZEN text geometry
+
+Three attempts to stop the collapse, in order:
+
+1. **Anchoring the reconstruction to the input embedding through the decoder.**
+   Failed: an MLP decoder can ignore its input, so the encoder still went to the
+   origin. The export degenerated to ONE prefix per level.
+2. **A parameter-free dead-code restart** (re-seed unused codewords with batch
+   points, broadcast from rank 0 so the DDP reduction cannot deadlock). Necessary
+   but not sufficient: the encoder still produced one point.
+3. **Quantizing the frozen Stage-1 embedding, as the proposal literally says**
+   (`x_i = exp_0(s z_i)` with `z_i` frozen, only the codebooks trained). With the
+   ball configuration fixed, nothing can collapse: the chain has a spread point
+   set to quantize.
+
+Two shape defects on the way: the frozen points had to live in the SAME
+32-dimensional subspace as the behaviour direction (a TruncatedSVD of the
+direction matrix, 64.9% of its variance), so `prepare_behaviour.py` now saves
+`points` next to `direction` and `gain`.
+
+## Stage 2 result (four GPUs, 3000 epochs, 571 s)
+
+| level | distinct prefixes | largest group |
+| --- | --- | --- |
+| L1 | **251** (of 256 codewords) | 494 |
+| L2 | 1,769 | 491 |
+| L3 | 2,201 | 491 |
+
+Full SID unique for all 24,587 items. `final_collision = 0.9105` is the share of
+items whose RAW three-token SID repeats another item's -- expected at 2,201
+distinct L3 prefixes over 24,587 items -- and the exported SID is unique through
+the deterministic disambiguation token.
+
+Technical validity (admission is technical only): L1 Hard ER 6.09, L1 positive
+hit rate 0.050, negative 0.0082, L2 distinct prefixes 1,769, all items covered.
+
+## Stage 3
+
+Launched with the frozen protocol (150 epochs, eval interval 5, eval start 75,
+early evals 25/50/75/100/125, seed 42, beam 20, no eval off, test on), four GPUs,
+pid 577846. The recall reading is pending.

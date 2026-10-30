@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import torch
+import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -43,6 +44,10 @@ class RQVAE(nn.Module):
         # checkpoint and a freshly built model have the same keys, and it is
         # persistent so a restored model exports the same SID.
         self.register_buffer("radius_table", torch.zeros(0), persistent=True)
+        #: The frozen ball points of the mechanism, one per item, set by the
+        #: trainer from the behaviour constants: the chain quantizes these and
+        #: never a trainable encoder output (that is what collapsed).
+        self.register_buffer("frozen_points", torch.zeros(0), persistent=True)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
         if bool(getattr(config, "radial", False)):
             # The radial objective is in the code space, so the decoder takes no
@@ -87,39 +92,71 @@ class RQVAE(nn.Module):
     def curved_forward(self, encoded: torch.Tensor, item_ids: torch.Tensor,
                        direction: torch.Tensor, gain: torch.Tensor,
                        embeddings: torch.Tensor) -> tuple:
-        """The curved residual chain on the ball point of every item.
+        """The curved chain on the FROZEN ball point of every item.
 
-        ``x_i = exp_0(s * z_i)`` with the radial gauge ``s`` declared in the
-        config; the chain quantizes ``x_i`` and the reconstruction target is the
-        SAME point, compared in the tangent space at the origin, so the encoder
-        and the codebooks receive the gradient of the curved objective.
+        The proposal quantizes ``x_i = exp_0(s z_i)`` where ``z_i`` is the frozen
+        Stage-1 text embedding, not a trainable encoder output. Routing it through
+        the encoder is what allowed the collapse: the curved objective's minimum is
+        the origin (a zero residual), so a trainable encoder is rewarded for
+        sending every item there, and the export degenerated to ONE prefix per
+        level in two independent 3000-epoch runs. With the point frozen, the ball
+        configuration is fixed and spread, and only the codebooks are trained, by
+        the gradient of the curved assignment objective itself.
         """
-        scale = self.radial_scale
-        point = exp_map(encoded * scale, self.chain.curvature)
+        if self.frozen_points.numel() == 0:
+            raise RuntimeError(
+                "the frozen ball points are not bound: the curved chain quantizes "
+                "the frozen text geometry, not a trainable encoder output")
+        ids = item_ids if item_ids is not None else torch.arange(
+            embeddings.shape[0], device=embeddings.device)
+        point = self.frozen_points[ids].to(embeddings.dtype)
         if direction is None or gain is None:
-            direction = torch.zeros_like(encoded)
-            gain = torch.ones(encoded.shape[0], device=encoded.device,
-                              dtype=encoded.dtype)
+            direction = torch.zeros_like(embeddings)
+            gain = torch.ones(embeddings.shape[0], device=embeddings.device,
+                              dtype=embeddings.dtype)
         elif not self.behaviour_on:
-            # behaviour off: the objective becomes isotropic, the curve stays
             direction = torch.zeros_like(direction)
             gain = torch.ones_like(gain)
         tokens, prefix = self.chain(point, direction, gain)
-        tangent = log_map(prefix, self.chain.curvature) / scale
-        # The reconstruction goes through the decoder to the INPUT embedding, as in
-        # the baseline. Reconstructing the tangent itself collapses: both the
-        # reconstruction and the commitment are then minimised by driving the
-        # encoder output to the origin, where every codeword is equidistant, and
-        # the quantizer degenerates to one code per level (measured: two prefixes
-        # per level and 99.992% raw collision).
-        reconstructed = self.decoder(tangent)
-        # The commitment pulls the CODE side toward the encoder, never the encoder
-        # toward the codes, so the encoder keeps the scale the decoder needs.
-        commitment = F.mse_loss(encoded, tangent.detach())
-        quant_loss = commitment * float(getattr(self.config, "beta", 0.25))
-        # the reference of the reconstruction loss is the INPUT embedding, so the
-        # encoder cannot collapse to the origin to make the loss small
-        return reconstructed, quant_loss, 0, tokens, embeddings
+        self._restart_dead_codes(tokens, point)
+        # the reconstruction target is the frozen ball point itself: the chain's
+        # own reconstruction is the prefix, compared in the tangent space at the
+        # origin, and the decoder is not part of this mechanism
+        reconstructed = log_map(prefix, self.chain.curvature)
+        reference = point
+        quant_loss = F.mse_loss(reconstructed, reference.detach()) * float(
+            getattr(self.config, "beta", 0.25))
+        return reconstructed, quant_loss, 0, tokens, reference
+
+    @torch.no_grad()
+    def _restart_dead_codes(self, tokens: torch.Tensor, point: torch.Tensor) -> None:
+        """Re-seed every codeword the batch did not use, with a batch point.
+
+        The assignment objective has its minimum at a single codeword reached by
+        every item, and nothing in the specification prevents that minimum: two
+        runs collapsed to one or two prefixes per level. A dead-code restart is
+        the standard, PARAMETER-FREE answer -- the codes that took no item are
+        replaced by points the batch actually contains -- so no coefficient has to
+        be chosen and CLAUDE.md 19g stays satisfied. It is applied only while the
+        mechanism is training; the export path is untouched.
+        """
+        if not self.training or point.shape[0] == 0:
+            return
+        for level in range(self.chain.codebooks.shape[0]):
+            used = torch.unique(tokens[:, level])
+            total = self.chain.codebooks.shape[1]
+            dead = torch.ones(total, dtype=torch.bool, device=point.device)
+            dead[used] = False
+            count = int(dead.sum())
+            if count == 0:
+                continue
+            picks = torch.randint(0, point.shape[0], (count,), device=point.device)
+            self.chain.codebooks.data[level][dead] = point[picks].detach()
+        # every rank must end the restart with the SAME codebooks: the random
+        # picks differ per rank, and divergent parameters deadlock the DDP
+        # reduction on the next forward
+        if dist.is_available() and dist.is_initialized():
+            dist.broadcast(self.chain.codebooks.data, src=0)
 
     def code_sum(self, tokens: torch.Tensor) -> torch.Tensor:
         """``z_rec = sum_l e_{l,k_l}``: the reconstruction the contract defines."""
@@ -153,6 +190,10 @@ class RQVAE(nn.Module):
         model.load_state_dict(state)
         return model
 
+    def set_frozen_points(self, points: torch.Tensor) -> None:
+        """Bind the frozen ball points (one per item), for training and export."""
+        self.frozen_points = points.detach().clone().float()
+
     def set_radii(self, radius: torch.Tensor) -> None:
         """Bind the behaviour radius per item, for training and for the export.
 
@@ -168,8 +209,9 @@ class RQVAE(nn.Module):
                     gain: torch.Tensor = None) -> torch.Tensor:
         encoded = self.encoder(embeddings)
         if self.curved:
-            scale = self.radial_scale
-            point = exp_map(encoded * scale, self.chain.curvature)
+            ids = item_ids if item_ids is not None else torch.arange(
+                encoded.shape[0], device=encoded.device)
+            point = self.frozen_points[ids].to(encoded.dtype)
             if direction is None or gain is None:
                 direction = torch.zeros_like(encoded)
                 gain = torch.ones(encoded.shape[0], device=encoded.device,

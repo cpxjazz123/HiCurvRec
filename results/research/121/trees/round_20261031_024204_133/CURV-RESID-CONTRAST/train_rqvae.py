@@ -457,6 +457,8 @@ def main() -> None:
                 "before the training entry point")
         constants = np.load(constants_path)
         direction = torch.from_numpy(constants["direction"].astype(np.float32)).to(device)
+        frozen_points = torch.from_numpy(constants["points"].astype(np.float32)).to(device)
+        raw_module.set_frozen_points(frozen_points)
         gain = torch.from_numpy(constants["gain"].astype(np.float32)).to(device)
         if rank == 0:
             print("[curved] directions %d, gain range [%.3f, %.3f], radial scale %.4f" % (

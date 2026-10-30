@@ -122,6 +122,10 @@ def main() -> int:
     projection = TruncatedSVD(n_components=components, random_state=SEED)
     projected = projection.fit_transform(direction)
     direction = np.asarray(projected, dtype=np.float64)
+    # the frozen BALL POINTS live in the same 32-dimensional subspace, so the
+    # direction and the geometry the chain quantizes share one basis
+    points_projected = embeddings @ projection.components_.T
+    points_frozen = exp_map(torch.from_numpy(points_projected * scale)).numpy()
 
     valid = norm > 1e-6
     median = float(np.median(norm[valid])) if valid.any() else 1.0
@@ -137,7 +141,7 @@ def main() -> int:
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(OUTPUT, direction=unit.astype(np.float32),
                         gain=gain.astype(np.float32), norm=norm.astype(np.float32),
-                        valid=valid)
+                        valid=valid, points=points_frozen.astype(np.float32))
     MANIFEST.write_text(json.dumps({
         "text_embeddings": str(TEXT.relative_to(REPO)),
         "train_parquet": str((PARQUET / "train.parquet").relative_to(REPO)),
