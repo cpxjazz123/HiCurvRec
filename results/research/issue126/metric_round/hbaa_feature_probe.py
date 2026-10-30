@@ -62,10 +62,23 @@ def _load(name: str, path: Path):
 
 
 def family_of(run_dir: str) -> str:
+    """The mechanism family: the variant name with its iteration suffix removed.
+
+    Every run has its own variant name (``curvature_RQ-VAE_iter53``,
+    ``tiger_sample_resample_s43``), so grouping by the full name leaves one or two
+    members per family and the held-out split is impossible. The prefix is what
+    identifies the mechanism.
+    """
+    import re
+
     parts = run_dir.split("/")
-    if "stage3_T5Train" in parts:
-        return parts[parts.index("stage3_T5Train") + 1].lower()
-    return parts[-3].lower()
+    name = (parts[parts.index("stage3_T5Train") + 1].lower()
+            if "stage3_T5Train" in parts else parts[-3].lower())
+    for marker in ("curvature", "resample", "fork_hyper", "crowd", "bootstrap",
+                   "baseline", "behavior", "ablation"):
+        if marker in name:
+            return marker
+    return "other"
 
 
 def work(index: int):
@@ -95,14 +108,23 @@ def work(index: int):
     sizes = np.asarray([len(members_of[int(code)]) for code in unique_codes], dtype=float)
 
     # H2: the separation of each group from the others, in the ball
+    # the mean distance to the OTHER groups: the group itself is excluded from the
+    # sum and the mean is over n-1. The previous version set the self-distance to
+    # infinity, took the mean (which is then infinite) and replaced the infinity
+    # with zero, so the feature was identically zero and the experiment measured
+    # nothing.
     separation = np.zeros(len(unique_codes))
     block = 512
-    for start in range(0, len(unique_codes), block):
-        stop = min(start + block, len(unique_codes))
+    n_groups = len(unique_codes)
+    for start in range(0, n_groups, block):
+        stop = min(start + block, n_groups)
         distances = module._distance(centroids_matrix[start:stop, None, :],
                                      centroids_matrix[None, :, :], 1.0)
-        distances[np.arange(stop - start), np.arange(start, stop)] = np.inf
-        separation[start:stop] = np.mean(distances, axis=1)
+        total = distances.sum(axis=1)
+        if n_groups > 1:
+            separation[start:stop] = total / (n_groups - 1)
+        else:
+            separation[start:stop] = 0.0
     separation = np.nan_to_num(separation, nan=0.0, posinf=0.0)
 
     # H4: the shape of each group, as the leading eigenvalue share of its scatter
@@ -127,8 +149,10 @@ def work(index: int):
         "H2_separation": fit(separation),
         "H3_size": fit(np.log(sizes)),
         "H4_shape": fit(shape),
-        "H5_moments_only": np.full(len(radius_values), float(radius_values.mean())),
     }
+    # H5 is a TABLE-LEVEL offset, and a constant per group cancels in the positive
+    # minus negative difference. The offset has to be added to the query difference
+    # itself, so the two moments are measured outside this function.
     rng = np.random.default_rng(1700 + index)
     full_permutations = [radius_values[rng.permutation(len(radius_values))]
                          for _ in range(FULL_PERMUTATIONS)]
@@ -166,8 +190,21 @@ def work(index: int):
         per_query = np.log1p(np.exp(-delta / tau)).mean(axis=1)
         return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
 
+    # the table-level calibration: an offset on the query difference, standardised
+    # against the pooled groups so that its size is comparable to the contrast
+    try:
+        pooled = np.load(HERE.parents[0] / "group_records_107.npz")["radius"]
+        pooled_mean, pooled_std = float(pooled.mean()), float(max(pooled.std(), 1e-12))
+    except Exception:
+        pooled_mean, pooled_std = float(radius_values.mean()), max(float(radius_values.std()), 1e-12)
+    offset_mean = (float(radius_values.mean()) - pooled_mean) / pooled_std
+    offset_spread = (float(radius_values.std()) - pooled_std) / pooled_std
+
     series = {}
     radial_raw = term(radius_values)
+    for alpha in ALPHAS:
+        series["H5_table_offset_mean_%g" % alpha] = score(relative + alpha * offset_mean)
+        series["H5_table_offset_spread_%g" % alpha] = score(relative + alpha * offset_spread)
     for alpha in ALPHAS:
         series["radial_raw_%g" % alpha] = score(relative + alpha * radial_raw)
         for name, values in predictions.items():
@@ -214,7 +251,7 @@ def main() -> int:
     # the leave-one-family-out protocol, for every candidate
     report["leave_one_family_out"] = {}
     for prefix in ("radial_raw", "H1_compactness", "H2_separation", "H3_size",
-                   "H4_shape", "H5_moments_only", "noise"):
+                   "H4_shape", "H5_table_offset_mean", "H5_table_offset_spread", "noise"):
         for family in sorted(set(families.tolist())):
             held = families == family
             others = ~held

@@ -880,3 +880,68 @@ the two-copy radial bug (v11), the chart comparison (v8, v9), the weight
 analysis (v12), the hierarchy question (v14, v15), and this ablation, which
 closes it: **the Gromov product's radial term is a table-level correction that
 was tuned on the same 107 pairs.**
+
+## v17 -- which feature of the SID table carries the gain, and the three fixes
+
+The six ablations (v16) left one question: the gain is reproduced by an
+arbitrary origin and by a shuffled radius, so it is not group-specific radial
+information -- but WHICH group-level feature is it? Artifact
+`../hbaa_feature_probe_107.json`, script `hbaa_feature_probe.py`.
+
+Three defects in the first version of this probe were found and fixed first:
+
+1. **The separation feature was identically zero.** The self-distance was set to
+   infinity, the mean was taken (infinite) and the infinity was then replaced by
+   zero, so the feature carried no information at all and the experiment measured
+   nothing. It is now the sum over the OTHER groups divided by n-1.
+2. **The table-level calibration could not cancel out.** A constant per group
+   cancels in the positive-minus-negative difference, so the "radial mean"
+   substitution could never test a calibration effect. It is now an offset added
+   to the query difference itself, standardised against the pooled groups so that
+   its size is comparable to the contrast, in two versions: the table's mean
+   radius and the table's radius spread.
+3. **The families were one member each.** Every run has its own variant name
+   (``curvature_RQ-VAE_iter53``), so the held-out split was skipped everywhere.
+   The families are now the mechanism prefixes: curvature 77, other 16, resample
+   8, fork_hyper 3, crowd 2, behavior 1.
+
+| candidate | best rho on the 107 | held-out: curvature | other | resample |
+| --- | --- | --- | --- | --- |
+| H1 group compactness | **+0.7636** | +0.6984 | +0.5971 | +0.7143 |
+| the raw radius | +0.7623 | +0.6956 | +0.5941 | +0.7143 |
+| H2 group separation | +0.7389 | +0.6319 | +0.6000 | +0.5952 |
+| H4 group shape | +0.7210 | +0.6272 | +0.6059 | +0.6905 |
+| H3 group size | +0.7123 | +0.6414 | +0.6176 | +0.8571 |
+| H5 table offset (radius mean) | +0.7104 | alpha = 0 | alpha = 0 | alpha = 0 |
+| H5 table offset (radius spread) | +0.7104 | alpha = 0 | alpha = 0 | alpha = 0 |
+| a random term of the same scale | +0.7125 | worse | equal | worse |
+| plain | +0.7104 | -- | -- | -- |
+
+**The full permutation of the radius values** (every group's radius replaced by
+another group's radius in the same table, 100 draws, the distribution preserved
+exactly and the correspondence destroyed): mean **+0.7078**, p5 +0.6910, p95
++0.7215, and **no draw reaches 0.74**.
+
+**What follows.**
+
+1. **The table-level calibration is excluded.** Both offset variants choose alpha
+   = 0 on every family and return the baseline exactly. The gain is not "adding a
+   term of this size changes how the score spreads over the SIDs".
+2. **The group separation does carry something** (+0.7389 once the bug is fixed,
+   against the +0.7104 the broken version reported), but it is weaker than the
+   compactness and it does not survive the held-out split: better on curvature,
+   clearly worse on resample.
+3. **The compactness and the raw radius behave identically under the held-out
+   protocol** (+0.6984/+0.5971/+0.7143 against +0.6956/+0.5941/+0.7143). They are
+   two writings of the same signal, which is what the brief's hypothesis says:
+   the radial gain IS the compactness of the groups.
+4. **The correspondence is required.** A full permutation of the radius values
+   collapses to +0.7078 with no draw above 0.74, so the gain is not a pure
+   distribution effect.
+5. **The gain still does not generalise across families.** Both the radius and the
+   compactness are better on curvature and resample and WORSE on the "other"
+   family (16 members, 16 mechanism candidates), and the held-out numbers on the
+   small families are unstable: the group size reaches +0.8571 on the eight
+   resample members, which is what a sample of eight can do. The pooled +0.05 on
+   the 107 pairs therefore still carries a selection component, and the only way
+   to settle it is a fresh set of SID-recall pairs.

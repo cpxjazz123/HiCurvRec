@@ -1901,6 +1901,63 @@
             "plain": 0.7104
           },
           "verdict": "the gain IS the group compactness: substituting the compactness alone recovers it completely (+0.7636 against +0.7623), while the group separation, the size, the shape and a table-level rescaling all stay at the baseline; and a FULL permutation of the radius values (100 draws) collapses to +0.7078, with no draw reaching 0.74, so the group-to-radius correspondence is required. The leave-one-family-out check could not be run: every run has its own variant name, so the families have one or two members each."
+        },
+        "feature_probe_v17": {
+          "artifact": "results/research/issue126/hbaa_feature_probe_107.json",
+          "fixes": [
+            "the separation feature was identically zero (inf mean replaced by zero)",
+            "the table-level calibration cancelled in the difference",
+            "the families had one member each"
+          ],
+          "best_rho": {
+            "H1_compactness": 0.7636,
+            "radial_raw": 0.7623,
+            "H2_separation": 0.7389,
+            "H4_shape": 0.721,
+            "H3_size": 0.7123,
+            "H5_table_offset_mean": 0.7104,
+            "H5_table_offset_spread": 0.7104,
+            "noise": 0.7125,
+            "plain": 0.7104
+          },
+          "full_permutation": {
+            "mean": 0.7078,
+            "p5": 0.691,
+            "p95": 0.7215,
+            "share_above_0.74": 0.0,
+            "draws": 100
+          },
+          "leave_one_family_out": {
+            "H1_compactness": {
+              "curvature": 0.6984,
+              "other": 0.5971,
+              "resample": 0.7143
+            },
+            "radial_raw": {
+              "curvature": 0.6956,
+              "other": 0.5941,
+              "resample": 0.7143
+            },
+            "H2_separation": {
+              "curvature": 0.6319,
+              "other": 0.6,
+              "resample": 0.5952
+            },
+            "plain": {
+              "curvature": 0.625,
+              "other": 0.6029,
+              "resample": 0.6667
+            }
+          },
+          "families": {
+            "curvature": 77,
+            "other": 16,
+            "resample": 8,
+            "fork_hyper": 3,
+            "crowd": 2,
+            "behavior": 1
+          },
+          "verdict": "the table-level calibration is excluded (both offsets choose alpha=0 on every family); the separation does carry something once its bug is fixed (+0.7389) but is weaker and does not survive the held-out split; the compactness and the raw radius behave identically under the held-out protocol, so they are one signal; the correspondence is required (a full permutation collapses to +0.7078, no draw above 0.74); and the gain does not generalise across families, so only a fresh set of SID-recall pairs can settle it."
         }
       }
     }
