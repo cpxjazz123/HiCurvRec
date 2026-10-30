@@ -651,6 +651,43 @@ So the +0.7623 headline is withdrawn for a third reason: it is a table-level
 correction that was tuned on the same 107 pairs. The admissible constructions
 are the plain distance contrast (+0.7104) and the Euclidean control (+0.7170).
 
+
+## Which group feature carries the gain
+
+Five candidate features, each fitted inside the table as a prediction of the
+radius and substituted into the same scoring rule at the same units and weight,
+plus two permutations that separate "the numbers" from "the correspondence":
+
+| candidate | best rho on the 107 | held out: curvature | other | resample |
+| --- | --- | --- | --- | --- |
+| group compactness | **+0.7636** | +0.6984 | +0.5971 | +0.7143 |
+| the raw radius | +0.7623 | +0.6956 | +0.5941 | +0.7143 |
+| group separation | +0.7389 | +0.6319 | +0.6000 | +0.5952 |
+| group shape | +0.7210 | +0.6272 | +0.6059 | +0.6905 |
+| group size | +0.7123 | +0.6414 | +0.6176 | +0.8571 |
+| table offset (radius mean / radius spread) | +0.7104 | alpha = 0 | alpha = 0 | alpha = 0 |
+| a random term of the same scale | +0.7125 | worse | equal | worse |
+| plain | +0.7104 | -- | -- | -- |
+
+A full permutation of the radius values -- every group's radius replaced by
+another group's radius in the same table, 100 draws, the distribution preserved
+exactly -- gives mean +0.7078 with no draw above 0.74.
+
+So: the compactness and the raw radius behave identically under the held-out
+protocol, which says they are one signal and that the radial gain IS the
+compactness of the groups; the table-level calibration is excluded; and the
+correspondence between a group and its radius is required. The gain still does
+not generalise across families -- better on curvature and resample, worse on the
+sixteen mechanism candidates -- and the held-out numbers on the small families
+are unstable (the group size reaches +0.8571 on eight resample members). The
+pooled +0.05 therefore still carries a selection component, and only a fresh set
+of SID-recall pairs can settle it.
+
+Three defects in the first version of this probe were fixed first: the
+separation feature was identically zero (an infinite mean replaced by zero), the
+table-level calibration cancelled in the positive-minus-negative difference, and
+the families had one member each.
+
 ## Where the artefacts live
 
 * the metric: `tools/research/science/hyperbolic_ancestor_alignment.py` (with tests
