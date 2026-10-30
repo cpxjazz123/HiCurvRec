@@ -556,6 +556,36 @@ fails is the part that reads the hyperbolic construction as a TREE, and the part
 that works is the plain geometric contrast. Nothing in either family rewards a
 curvature.
 
+
+## What the radial term actually measures
+
+HBAA reads the radius of a prefix centroid as depth. The frozen reference puts
+every item on a thin shell (radius p10 0.9050, median 0.9115, p90 0.9176), so the
+radius could be measuring how tight the group is. For every level-1 group of every
+table, with an independent hierarchy built from the training interactions:
+
+| relation | value |
+| --- | --- |
+| radius vs the group's dispersion | **-0.9106** |
+| radius vs the distance to a RANDOM point of the ball | **+0.9798** |
+| radius vs the behaviour tree depth (partial: dispersion, size, popularity) | +0.2115 [+0.1885, +0.2320] |
+| the same from a random centre | +0.1921 |
+| radius vs the height at which an item joins the tree (partial) | **-0.0877** [-0.0966, -0.0774] |
+
+The radius is 91% the dispersion, and it is the same number whether the reference
+is the origin or an arbitrary point, so it is not a depth from a root. A residual
+relation with the tree depth survives the controls, but a random centre
+reproduces 91% of it and the join height has the opposite sign -- so the two
+readings of the same hierarchy disagree. The Amazon taxonomy could not be used:
+the parquet's `categories` column is null and the raw metadata has been cleaned
+up.
+
+The predictive value is nonetheless stable: the alpha curve of v13 reproduces on
+two disjoint halves of the 107 pairs, with the best alpha one grid step apart
+(0.5 and 0.75) inside the same plateau. So the radial term is worth something --
+it is group tightness and the group's position relative to an arbitrary point, not
+hierarchy.
+
 ## Where the artefacts live
 
 * the metric: `tools/research/science/hyperbolic_ancestor_alignment.py` (with tests
