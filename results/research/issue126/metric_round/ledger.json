@@ -9,8 +9,8 @@
     "hyperbolic_properties_of_the_sid_table": "the other hyperbolic properties as SID-quality metrics: the Gromov product, radial depth, radial purity, geodesic slack, the entailment cone, angular branch separation, Busemann consistency, volume growth -- and the behaviour-aware versions of the geodesic and the Busemann. Each is measured with a Euclidean control and a PERMUTED control (the SID rows shuffled across the items). Measured on the 107 confirmed pairs: no family beats its permuted control, three are degenerate on the frozen reference (a thin shell at radius 0.9115 +- 0.0139, so radial depth, cones and volume growth are constant), and the behaviour-aware geodesic, once the ancestor depth is held fixed, is at chance. REFUTED as predictors: see HYPERBOLIC_FAMILIES.md."
   },
   "proposals": 64,
-  "measured": 40,
-  "eligible": 18,
+  "measured": 49,
+  "eligible": 21,
   "rows": [
     {
       "metric_id": "hbaa",
@@ -193,6 +193,26 @@
       "family": "behaviour_contrast"
     },
     {
+      "metric_id": "hyp_cell_expected_rank",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.5823636457169562,
+        "p": 4.710037276636933e-11,
+        "ci95": [
+          0.3962032789201168,
+          0.7385673950717835
+        ],
+        "eligible": true,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_all_fast_107.json"
+      },
+      "family": "behaviour_contrast"
+    },
+    {
       "metric_id": "hbaa_weighted",
       "title": null,
       "round": "(measured only)",
@@ -273,6 +293,26 @@
       "family": "behaviour_contrast"
     },
     {
+      "metric_id": "hyp_cell_rank_lift",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.4284090825917175,
+        "p": 4.15611310100238e-06,
+        "ci95": [
+          0.24141902964078696,
+          0.5774419041764997
+        ],
+        "eligible": true,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_all_fast_107.json"
+      },
+      "family": "behaviour_contrast"
+    },
+    {
       "metric_id": "hbaa_levels",
       "title": null,
       "round": "(measured only)",
@@ -333,6 +373,26 @@
       "family": "behaviour_contrast"
     },
     {
+      "metric_id": "hyp_adj_r2_l1",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.14700962299177317,
+        "p": 0.13077807593289795,
+        "ci95": [
+          -0.0640972644899462,
+          0.34221612463652074
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_all_fast_107.json"
+      },
+      "family": "partition_geometry"
+    },
+    {
       "metric_id": "hyperbolic_cone_consistency",
       "title": null,
       "round": "(measured only)",
@@ -371,6 +431,26 @@
         "report": "results/research/issue126/metric_bench_offcell_107.json"
       },
       "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_bucket_reach_lift_l1",
+      "title": "Level-1 SID bucket reach lift under the reference Poincare metric.",
+      "round": "round_20261029_220505",
+      "proposed_by": "metric_ideation_1",
+      "formula": "N items; b(i)=level-1 code; n_b=|{j:b(j)=b(i)}|; z_i=frozen reference target representation, isometrically rescaled to the unit Poincare ball (curvature -1), ||z||^2 clipped to 1-1e-6. d_H(i,j)=arcosh(1+2||z_i-z_j||^2/((1-||z_i||^2)(1-||z_j||^2))). D_i=min_{j!=i,b(j)=b(i)} d_H(i,j). r_i=1+#{j!=i:(d_H(i,j),j)<(D_i,j_i*)}, j_i* the smallest index attaining D_i (tie-break by index); r_i is the 1-based rank of the nearest same-bucket item, r_i=1 when a bucket mate is the geodesic nearest neighbour. If n_b=1, r_i=N. Null rank e_i=N/n_b (expected rank of the first of n_b-1 mates placed uniformly amo",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.11625229920704584,
+        "p": 0.2330860922636118,
+        "ci95": [
+          -0.1009508208457553,
+          0.31786020224851524
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_hyp_bucket_reach_lift_107.json"
+      },
+      "family": "partition_geometry"
     },
     {
       "metric_id": "gromov_prefix_alignment",
@@ -533,6 +613,26 @@
       "family": "behaviour_contrast"
     },
     {
+      "metric_id": "hyp_hsoftmax_path_null",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": -0.07197106072485111,
+        "p": 0.4613131388146444,
+        "ci95": [
+          -0.23386321602338583,
+          0.09315530563164141
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_all_107.json"
+      },
+      "family": "rewarding_an_answer_in_hand"
+    },
+    {
       "metric_id": "hbaa_fullneg_rank_excess",
       "title": null,
       "round": "(measured only)",
@@ -551,6 +651,46 @@
         "report": "results/research/issue126/metric_bench_round10_107.json"
       },
       "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_frechet_cover_radius_l1",
+      "title": "Normalized geodesic covering radius of level-1 SID cells about their Poincare Frechet barycentres",
+      "round": "round_20261029_230934",
+      "proposed_by": "metric_ideation_2",
+      "formula": "Let N items, level-1 code c_i in {0..K1-1}, and z_i the frozen reference TARGET representation of item i (in R^d).\n  (1) Curve scale: tau = the Issue #126 reference's own temperature if recorded, else tau = 0.5*sqrt(mean_i ||z_i||^2) taken over the TRAINING split only. No recall is read.\n  (2) Exp map into the unit Poincare ball (curvature K = -1): x_i = tanh(||z_i|| / (2*tau)) * z_i/||z_i||, and x_i = 0 if z_i = 0. Hence ||x_i|| < 1.\n  (3) Hyperbolic distance: dH(x,y) = arcosh( 1 + 2||x-y||^2 / ((1-||x||^2)(1-||y||^2)) ).\n  (4) Mobius ops with lambda_x = 2/(1-||x||^2):\n      x (+) y = [ (1 + ",
+      "measured": true,
+      "measurement": {
+        "spearman": -0.12241943898168697,
+        "p": 0.2090529791324673,
+        "ci95": [
+          -0.34467097454085566,
+          0.10340360910693512
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_all_fast_107.json"
+      },
+      "family": "partition_geometry"
+    },
+    {
+      "metric_id": "hyp_voronoi_margin_l1",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": -0.13801118314585117,
+        "p": 0.15630044434614518,
+        "ci95": [
+          -0.3340225186711024,
+          0.07324222028186259
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_all_fast_107.json"
+      },
+      "family": "partition_geometry"
     },
     {
       "metric_id": "behaviour_hierarchy_agreement",
@@ -573,6 +713,26 @@
       "family": "behaviour_contrast"
     },
     {
+      "metric_id": "hyp_hsoftmax_path",
+      "title": "Hyperbolic tree-conditional softmax log-likelihood of the SID path under the frozen behaviour reference",
+      "round": "round_20261029_211615",
+      "proposed_by": "metric_ideation_4",
+      "formula": "Let the table have N items, L levels and alphabet size V (V=256). Item i owns the code path c_i=(c_i1,...,c_iL), c_il in {1..V}. A prefix q is a tuple (q_1..q_k); q=() is the root. Children(q)={c : q^(c) is a prefix of at least one item}, where ^ is concatenation. Let T be the training interaction set. Let tau>0 be the reference's own softmax temperature and let K>0 be the reference's own curvature magnitude. Rescale every reference vector by sqrt(K) so the working ball has unit curvature (-1); after this no curvature constant remains in the computation.\n\nPoincare distance on the unit ball:\n  ",
+      "measured": true,
+      "measurement": {
+        "spearman": -0.2822756629953716,
+        "p": 0.003221852282335513,
+        "ci95": [
+          -0.48196603114293135,
+          -0.07205057293085784
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_hyp_hsoftmax_path_107.json"
+      },
+      "family": "rewarding_an_answer_in_hand"
+    },
+    {
       "metric_id": "hbaa_emission_hit10",
       "title": null,
       "round": "(measured only)",
@@ -593,11 +753,161 @@
       "family": "rewarding_an_answer_in_hand"
     },
     {
+      "metric_id": "hyp_ref_cone_cov",
+      "title": "Hyperbolic reference-affinity cone coverage of the SID prefix tree",
+      "round": "round_20261029_211615",
+      "proposed_by": "metric_ideation_1",
+      "formula": "Let each item i have SID (c1,c2,c3), c_l in {0,...,255}, L=3. Build the prefix tree T (root at depth 0; node = prefix (c1..cd)).\nEMBEDDING (deterministic, no fitted values). For a node v at depth d(v), set radius r(v)=ln(1+d(v)), and angular coordinate theta(v) by recursive equal-sector subdivision: the root's 256 children take theta = 2*pi*k/256 (k=c1); each child's 256 children split the parent's sector of width 2*pi/256 into 256 equal sub-sectors (k=c2); and so on. Item i sits at\n  x_i = exp_0( r(v_i) * (cos theta_i, sin theta_i) ) = tanh(r(v_i)/2) * (cos theta_i, sin theta_i)\nin the open u",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_beam10_geo_hit",
+      "title": "Training-pair hit rate of a curvature \u22121 beam-10 shortest-geodesic-path reader over the SID trie.",
+      "round": "round_20261029_211615",
+      "proposed_by": "metric_ideation_3",
+      "formula": "Let N items, L levels, K = 256, and sid_i = (q_{i,1},\u2026,q_{i,L}) be the exported integer code tuple of item i. Let p = (q_1,\u2026,q_\u2113) denote a prefix and P(p) = { i : sid_i[1..\u2113] = p }. Prefix set S_\u2113 = { p : |P(p)| > 0 }. Write x^s_i, x^t_i in the unit Poincar\u00e9 ball B = {x in R^d : \u2016x\u2016<1} for the frozen reference source and target representations z^s_i, z^t_i (temperature tau stored with the reference; tau := 1 if absent), with one scalar scale\n  sigma = 1 / Quantile_0.99( \u2016tau*z^t_i\u2016_2 , i = 1..N ),  and  x_i = tanh( sigma*tau*\u2016z_i\u2016 ) * z_i/\u2016z_i\u2016   (x_i = 0 if z_i = 0).\nBoth source and target ma",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_loo_sid_logprob",
+      "title": "Hyperbolic leave-one-out conditional SID code log-probability (per token).",
+      "round": "round_20261029_211615",
+      "proposed_by": "metric_ideation_5",
+      "formula": "Notation. N items; L SID levels; C = 256 codes per level. For item i the integer code at level l is c_l(i) in {0..255}; the level-l prefix is pi_l(i) = (c_1(i),...,c_l(i)); the parent prefix is par_l(i) = pi_{l-1}(i) for l>=2. The frozen reference gives, per item, a source vector u_i and a target vector v_i in the open ball B_R^d = {x in R^d : ||x|| < R}. Curvature magnitude c = 1/R^2 (sectional curvature K = -c); R is the reference's stored ball radius (R=1 if absent). Everything is deterministic.\n\n(1) Poincare distance (curvature -c):\n    d_c(x,y) = (2/sqrt(c)) * arcosh( 1 + 2c*||x-y||^2 / (",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_history_bary_prefix_enrichment_l1",
+      "title": "Hyperbolic history-barycentre enrichment of the true level-1 SID prefix over a size-matched null.",
+      "round": "round_20261029_231855",
+      "proposed_by": "metric_ideation_1",
+      "formula": "Symbols: N = number of items; c = c_ref = fixed negative curvature of the frozen reference (c = 1 if the reference reports unit curvature); d_c(x,y) = geodesic distance in the Poincare ball B^d_c; t_j = target-side reference representation of item j in B^d_c; s_u = source-side representation of u; c1(j) = level-1 integer SID code of item j; n_k = #{j : c1(j) = k}; tau = tau_ref (the reference's training temperature).\nFor each source u in the TRAINING split let H(u) = {j : (u,j) is a training pair}. For each i in H(u) with |H(u)| >= 2 put H(u,i) = H(u) \\ {i} and\n  b(u,i) = argmin_{b in B^d_c} s",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_hist_bary_rank_lift_l1",
+      "title": "Hyperbolic history-barycentre expected-rank lift of the true level-1 SID cell over a size-matched random relabelling.",
+      "round": "round_20261029_231855",
+      "proposed_by": "metric_ideation_3",
+      "formula": "Items a = 1..N (N = 24587). SID table gives a level-1 digit pi(a) in {0..255}; deeper levels are not read. TRAIN is a set E of ordered pairs (i,j) (query item i, target item j). For each query i let H_i = { j' : (i,j') in E } and let E' = { (i,j) in E : |H_i| >= 2 }. The frozen reference supplies, for every item a, a source vector s_a in R^d, a target vector t_a in R^d, and a temperature tau > 0. Curvature is c = 1. Define exp_0(u) = tanh(||u||/2) * u/||u|| (exp_0(0)=0), r(v) = min( tanh(||v||/(2*tau)), 1 - 1/N ), emb(v) = r(v) * v/||v||, p_a = emb(s_a), q_a = emb(t_a). Mobius addition at c=1:",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_massrank_l1",
+      "title": "Hyperbolic leave-one-out mass-rank percentile of the true level-1 SID cell.",
+      "round": "round_20261029_231855",
+      "proposed_by": "metric_ideation_4",
+      "formula": "Let N be the number of items that have both a level-1 integer code and a target representation, K the number of distinct level-1 codes, c_i in {1,...,K} the code of item i, n_p = #{i : c_i = p}, and P_train the set of training interaction pairs. Work in the unit Poincare ball B^d = {x in R^d : ||x|| < 1} with constant curvature -1 and d_H(x,y) = arcosh(1 + 2||x-y||^2 / ((1-||x||^2)(1-||y||^2))). For a finite set Z = {z_1,...,z_m} in B^d, let Bary(Z) be the Frechet/Karcher barycentre argmin_{z in B^d} sum_i d_H(z,z_i)^2, computed in the Lorentz model by 20 iterations of z <- exp_z(mean_i log_z(",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_prefix_gibbs_enrichment_k10",
+      "title": "Resolution-matched hyperbolic Gibbs-mass enrichment of each item's own SID cell, with the item excluded from its own neighbourhood.",
+      "round": "round_20261029_231855",
+      "proposed_by": "metric_ideation_5",
+      "formula": "Let N be the number of exported items, L the number of levels, c_l(j) the integer code of item j at level l, and B_l(j) = {j' : c_1..l(j') = c_1..l(j)} its level-l prefix cell. Let K_l = the number of distinct level-l prefixes. Fix K = 10 (the Recall@10 cut) and set l* = max{ l in 1..L : K_l <= N/K }; if no level satisfies this, l* = 1. The frozen reference supplies source vectors s_u and target vectors t_j in the open Poincare ball D^d of curvature -1, plus its own softmax temperature tau > 0. For every item i with at least one training positive, let P_i be the set of training users who inter",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_cell_expected_rank (HERC)",
+      "title": "Hyperbolic temperatured expected rank of the true target's level-1 cell, chance-normalised by an analytic size-matched null.",
+      "round": "round_20261030_030610",
+      "proposed_by": "metric_ideation_1",
+      "formula": "Poincare ball B_1^d, curvature c = 1 (radius 1). Poincare distance d(x,y) = 2 * artanh( || (-x) (+) y || ), with (+) the Mobius addition.\n  Reference: frozen source point s_i and target point t_i in B_1^d for every item i (N items).\n  1. For each level-1 code k in {1..K}: I_k = the items whose level-1 code is k; nu_k = Karcher (Frechet) barycentre in B_1^d of { t_i : i in I_k }, computed by the fixed iteration nu <- exp_nu( (1/|I_k|) * sum_{i in I_k} log_nu(t_i) ), exactly 10 iterations, initialised at the target point of the smallest-index member of I_k.\n  2. Query point of item i: v_i = (1/|",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_horosphere_bucket_lift",
+      "title": "Horospherical lift of level-1 bucket barycentres against the history's boundary direction, standardised over all buckets.",
+      "round": "round_20261030_030610",
+      "proposed_by": "metric_ideation_3",
+      "formula": "Fix curvature c=1 (K=-1). Work in the Poincare ball B^d={x in R^d: ||x||<1} with d_B(x,y)=arcosh(1+2||x-y||^2/((1-||x||^2)(1-||y||^2))). Let b(i) in {1..K} be the level-1 integer code of item i, N=24587. Let x_i in B^d be the frozen reference SOURCE representation of item i. For a finite set S, let bar(S)=argmin_{m in B^d} sum_{j in S} d_B(m,x_j)^2, computed by Karcher iteration m <- exp_m((1/|S|) sum_j log_m(x_j)), 10 steps, initialised at the Euclidean mean rescaled to norm 0.9; log/exp are the Poincare ball maps. For each training history h (an item sequence) with next item i+(h): u_h = bar",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_xtower_bucket_softrank",
+      "title": "Cross-tower hyperbolic soft rank of the true level-1 bucket among all codebook buckets",
+      "round": "round_20261030_030610",
+      "proposed_by": "metric_ideation_4",
+      "formula": "Let N=24587 items, V=256 level-1 codes, c(i) the level-1 code of item i, n_b=#{i: c(i)=b}, V_eff=#{b: n_b>0}. Let x_i (source rep) and y_i (target rep) be the frozen reference arrays. Set s = 0.9 / Q99_i max(||x_i||,||y_i||) and curvature c = 1. For the Poincare ball B_c^d write exp_0^c(v) = tanh(sqrt(c)||v||) v / (sqrt(c)||v||) (exp_0^c(0)=0), log_0^c(z) = (1/sqrt(c)) artanh(sqrt(c)||z||) z/||z|| (log_0^c(0)=0), d_B(z,z') = (2/sqrt(c)) artanh(sqrt(c)||(-z) (+) z'||), with (+) the Mobius sum. Write E(v)=exp_0^c(s v). For a finite set Z in the ball let F(Z)=argmin_m sum_{z in Z} d_B(m,z)^2 be t",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_midpoint_rank_gain_l1",
+      "title": "Level-1 SID cells scored by their tempered hyperbolic expected-rank gained over the exact cell-size prior, with every training query of the history voting and cell centroids at source-target geodesic midpoints.",
+      "round": "round_20261030_030610",
+      "proposed_by": "metric_ideation_5",
+      "formula": "Poincare ball B = {x in R^d : ||x|| < 1} with constant sectional curvature -1. Distance d(x,y) = arcosh(1 + 2||x-y||^2 / ((1-||x||^2)(1-||y||^2))); exp_x and log_x are the Riemannian exponential and logarithm of B. Item i has frozen source and target representations u_i, v_i in B. Define the item's canonical point a_i = exp_{u_i}( (1/2) * log_{u_i}(v_i) ), the geodesic midpoint of u_i and v_i (fraction 1/2 is the canonical midpoint, not a fitted weight). The table assigns code_1(i) in {1..K}; n_k = #{j : code_1(j) = k}; N = 24587. Cell centroid c_k = argmin_{c in B} sum_{j: code_1(j)=k} d(c, a",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_erank_gain",
+      "title": "Full-history hyperbolic Frechet query against the whole level-1 cell set, scored by a temperatured Plackett-Luce expected rank and normalised by the size-matched prior.",
+      "round": "round_20261030_033031",
+      "proposed_by": "metric_ideation_1",
+      "formula": "Let K = 256 level-1 codes. Let I be the items of the TRAINING split, N = |I|. For i in I, b(i) in {1,...,K} is its level-1 code from the exported SID table; x_i (source) and y_i (target) are the frozen reference's representations in the Poincare ball B^d_c of curvature -c, with c = c_ref and tau = tau_ref read from the frozen reference (never fitted). Put Bs = {b : n_b > 0}, n_b = |{i in I : b(i) = b}|, w_b = n_b / N.\nFrechet barycentre of a finite set S: m(S) = argmin_z sum_{u in S} d_c(z,u)^2, computed as the Lorentzian centroid by fixed-point iteration (not a Euclidean mean).\nQuery: q_h = m",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_code_mi_gain",
+      "title": "Size-matched hyperbolic information gain of the full SID partition about the frozen reference's target distribution",
+      "round": "round_20261030_033031",
+      "proposed_by": "metric_ideation_2",
+      "formula": "Let V be the N=24587 items. Work in the Poincare ball B^3={x in R^3 : ||x||<1} with fixed curvature K=-1 and distance dP(x,y)=arcosh(1+2||x-y||^2/((1-||x||^2)(1-||y||^2))). The frozen Issue #126 reference gives, per item v, a source vector s_v in B^3, a target vector r_v in B^3, and its temperature tau. For each item i let H(i) be its training-split history (set of training items) and h_i the Karcher (Frechet) barycentre of {s_j : j in H(i)} in (B^3,dP), computed by the standard iteration h <- exp_h( mean_{j in H(i)} log_h(s_j) ). Define the reference predictive distribution\n  p_i(v) = exp(-dP",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_geodesic_pmi_l1",
+      "title": "Entropy-normalised pointwise mutual information between the level-1 SID code and the history, measured with Poincare geodesics at the history's Frechet barycentre.",
+      "round": "round_20261030_033031",
+      "proposed_by": "metric_ideation_3",
+      "formula": "Ball B^d = {x in R^d : ||x||_2 < 1}, constant sectional curvature -1, c_curv = 1.\n Item map: p_i = s_i / (1 + ||s_i||_2) in B^d (radii differ, so the Poincare distance is not a monotone function of any Euclidean chord).\n Poincare distance: d(x,y) = arcosh( 1 + 2||x-y||_2^2 / ((1-||x||_2^2)(1-||y||_2^2)) ).\n Mobius addition: x (+) y = ((1 + 2<x,y> + ||y||^2) x + (1 - ||x||^2) y) / (1 + 2<x,y> + ||x||^2 ||y||^2).\n exp_x(v) = x (+) tanh(||v||_2/2) v/||v||_2 ;  log_x(y) = 2 artanh(||(-x)(+)y||_2) ((-x)(+)y)/||(-x)(+)y||_2.\n T = 1/sqrt(c_curv) = 1 (curvature length scale, fixed).\n Codes: c(i) in {1",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
       "metric_id": "lorentz_pmi_l1",
       "title": "Lorentz-hyperboloid posterior-mass lift of the level-1 cell above its training prior (a curvature-exact PMI between the frozen reference and the code).",
       "round": "round_20261030_033031",
       "proposed_by": "metric_ideation_4",
       "formula": "Setup. Items i = 1..N (N = 24587). The table gives level-1 code c1(i) in {1..K}, K <= 256. The frozen Issue #126 reference gives one Euclidean per-item representation x_i in R^d (its source side) and one frozen scalar temperature tau > 0. Fix curvature kappa = 1; nothing is fitted.\n  (1) Map.  y_i = tanh(tau*||x_i||) * x_i/||x_i||  (the exp map exp_0(tau x_i) of the unit Poincare ball; y_i = 0 if ||x_i|| = 0).  Lift to the Lorentz hyperboloid:  p_i = ( (1+||y_i||^2)/(1-||y_i||^2) , 2*y_i/(1-||y_i||^2) )  in R^{d+1}.\n  (2) Metric.  <a,b>_L = -a_0*b_0 + sum_{k=1..d} a_k*b_k  (Minkowski form, sig",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_succ_nullgain_l1",
+      "title": "Null-corrected hyperbolic surprisal of the true successor's level-1 cell.",
+      "round": "round_20261030_033031",
+      "proposed_by": "metric_ideation_5",
+      "formula": "Notation. N = number of rows of the exported SID table; item i carries level-1 code L1(i) in {0..255}. Cells C = {c : n_c > 0}, n_c = #{i : L1(i) = c}, K1 = |C| <= 256. P = the set of DISTINCT ordered pairs (a,b) of the TRAINING split, m = |P|. Frozen Issue #126 reference: source vector s_i and target vector t_i in R^d per item, plus its frozen softmax temperature tau > 0. All logs natural.\n\nCurvature and ball: K = 1/tau^2 (derived from the reference's own temperature, no free parameter); B_K = {x : ||x|| < 1/sqrt(K)}.\n\nScales, TRAIN only: sigma_s = median{||s_i|| : i occurs in P}, sigma_t = m",
       "measured": false,
       "measurement": null,
       "family": "behaviour_contrast"
@@ -623,6 +933,46 @@
       "family": "behaviour_contrast"
     },
     {
+      "metric_id": "hyp_hist_pmi_l1",
+      "title": "Curvature-corrected hyperbolic history-to-cell pointwise mutual information of level-1 SIDs",
+      "round": "round_20261030_040711",
+      "proposed_by": "metric_ideation_4",
+      "formula": "Work at curvature c = 1 (if the frozen reference stores c_ref, replace 1 by c_ref everywhere below; the formula is stated at c = 1 WLOG). For a nonzero vector v in R^d set E(v) = tanh(||v||/2) v/||v|| and E(0) = 0 (the exponential map at the origin of the unit Poincare ball); for x in the open unit ball set L(x) = 2 artanh(||x||) x/||x|| and L(0) = 0 (the inverse, log map). For a finite set X of ball points set B(X) = E( (1/|X|) * sum_{x in X} L(x) ) (the one-step tangent/Karcher barycentre; a curved barycentre). For p,q in the ball set p (+) q = ((1 + 2<p,q> + ||q||^2) p + (1 - ||p||^2) q) / ",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_bmid_erank",
+      "title": "Hyperbolic behaviour-midpoint common-ancestor expected-rank alignment of level-1 SID cells",
+      "round": "round_20261030_040711",
+      "proposed_by": "metric_ideation_5",
+      "formula": "Work in the unit Poincare ball B^d={x in R^d:||x||<1}, curvature -1, with Mobius addition (+), d_H(x,y)=2*artanh(||(-x)(+)y||), log_x(y)=2*artanh(||(-x)(+)y||)*((-x)(+)y)/||(-x)(+)y||, exp_x(v)=x(+)(tanh(||v||/2)*v/||v||). If the frozen reference uses curvature -k, first map every point x -> sqrt(k)*x and divide every distance by sqrt(k); M is invariant because Gamma and tau scale together, while the curvature still sets the geodesics and barycentres, so the construction stays non-Euclidean. For each training item j let s_j, t_j be its source and target ball points. Define the behaviour midpoi",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_recall10_emission_sim",
+      "title": "Curvature-ranked, occupancy-weighted top-10 emission hit rate of the level-1 cell partition, measured over chance.",
+      "round": "round_20261030_092444",
+      "proposed_by": "metric_ideation_1",
+      "formula": "N = 24587 items, K = 256 codes, L levels. c1(i) in {1..K} is the level-1 code of item i. G_c = {i : c1(i) = c}, n_c = |G_c|, m = #{c : n_c > 0}. kappa < 0 is the frozen reference's curvature (kappa = -1 if the reference does not state one); beta = sqrt(|kappa|). p_i = exp_0^kappa(s_i) = tanh(beta |s_i| / 2) * s_i / (beta |s_i|), with s_i the frozen reference source representation of item i and exp_0^kappa(0) = 0. d_kappa(x,y) = (1/beta) * arcosh(1 + 2|kappa| |x-y|^2 / ((1-|kappa||x|^2)(1-|kappa||y|^2))). bar(S) is the Klein-Einstein hyperbolic midpoint of the set S: k_i = 2 p_i / (1 + |kappa||",
+      "measured": false,
+      "measurement": null,
+      "family": "rewarding_an_answer_in_hand"
+    },
+    {
+      "metric_id": "hyp_xview_gromov_auc",
+      "title": "Cross-view Gromov common-ancestor AUC of the level-1 SID cells against the full training history, lifted to zero by size-weighted negatives.",
+      "round": "round_20261030_092444",
+      "proposed_by": "metric_ideation_2",
+      "formula": "Let V be the N=24587 items. Fix curvature K=-1 and the Poincare ball B^d of radius 1 implied by the reference. For x,y in B^d:\n  d(x,y) = arcosh( 1 + 2*||x-y||^2 / ((1-||x||^2)(1-||y||^2)) )\n  (x|y)_o = 0.5*( d(o,x) + d(o,y) - d(x,y) )   [Gromov product at the origin o]\nLorentz lift of x: X = ( (1+||x||^2)/(1-||x||^2), 2x/(1-||x||^2) ) in R^{d+1}, with <U,V>_L = -U_0V_0 + sum_i U_iV_i and <X,X>_L = -1. The hyperbolic (Frechet) barycentre of a finite set {x_j} is its Lorentz centroid c = Xbar / sqrt(-<Xbar,Xbar>), Xbar = sum_j X_j, renormalised to <c,c>_L=-1 and projected back by x = c_{1:d}/(c",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
       "metric_id": "hgca_l1",
       "title": "Hyperbolic Gromov-ancestry AUC of the level-1 cell (two-tree agreement between the trie's branch and the reference's common-ancestor depth)",
       "round": "round_20261030_092444",
@@ -631,6 +981,112 @@
       "measured": false,
       "measurement": null,
       "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_cell_mass_lift_l1",
+      "title": "Size-matched, decoder-temperatured hyperbolic predictive-mass lift of each item's level-1 SID cell, queried by its full training-history Frechet barycentre.",
+      "round": "round_20261030_092444",
+      "proposed_by": "metric_ideation_4",
+      "formula": "Let B = {x in R^d : c||x||^2 < 1} be the Poincare ball of curvature -c, c > 0, with c the frozen Issue #126 reference's curvature (if it is not exported, c = 1). Mobius addition: x (+) y = ((1 + 2c<x,y> + c||y||^2)x + (1 - c||x||^2)y) / (1 + 2c<x,y> + c^2||x||^2||y||^2). exp_x(v) = x (+) (tanh(sqrt(c)||v||/2) v / (sqrt(c)||v||)); log_x(y) = (2/sqrt(c)) artanh(sqrt(c)||(-x)(+)y||) ((-x)(+)y) / ||(-x)(+)y||; d_B(x,y) = (2/sqrt(c)) arcosh(1 + 2c||x-y||^2 / ((1-c||x||^2)(1-c||y||^2))). For a finite set S in B, mu(S) = argmin_{x in B} sum_{s in S} d_B(x,s)^2, computed from x_0 = the radius-clipped ",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_prefixtree_isometry",
+      "title": "Rank fidelity of the SID prefix tree, realised as a geodesic tree of hyperbolic Frechet barycentres in the frozen reference Poincare ball, to the reference distances over all training pairs.",
+      "round": "round_20261030_094519",
+      "proposed_by": "metric_ideation_1",
+      "formula": "Fix curvature c = 1 (the curvature of the frozen reference ball, as stated by the reference; not fitted). Let x_i be the reference SOURCE representation of item i, already in the unit Poincare ball B_c = {x : sqrt(c)||x|| < 1}.\nMobius addition: u (+) v = ((1 + 2c<u,v> + c||v||^2) u + (1 - c||u||^2) v) / (1 + 2c<u,v> + c^2||u||^2||v||^2).\nPoincare distance: d(u,v) = (2/sqrt(c)) * artanh( sqrt(c) * ||(-u)(+)v|| ).\nOrigin maps: log_0(x) = artanh(sqrt(c)||x||) x / (sqrt(c)||x||); exp_0(w) = tanh(sqrt(c)||w||) w / (sqrt(c)||w||), with exp_0(0)=0.\nFRE(S) = hyperbolic Frechet (Karcher) mean of a set ",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_gromov_offcell_expected_rank_l1",
+      "title": "Curvature-normalised Gromov common-ancestor expected rank of the target over the items its own level-1 cell fails to absorb.",
+      "round": "round_20261030_094519",
+      "proposed_by": "metric_ideation_2",
+      "formula": "Let N be the item count, K the number of distinct level-1 codes in the exported table, c = c_ref > 0 the frozen reference curvature, tau = tau_ref > 0 its frozen temperature, o = 0 the ball origin. For every item h let s_h be the reference source vector and t_h its target vector; map to the Poincare ball B_c = {x : c||x||^2 < 1} by x_h = exp_0^c(s_h), y_h = exp_0^c(t_h) (identity if the reference already emits ball points). Poincare distance: d_c(x,y) = c^{-1/2} arcosh( 1 + 2c||x-y||^2 / ((1-c||x||^2)(1-c||y||^2)) ). Gromov product (common-ancestor similarity) about o: G_c(x,y) = (x|y)_o = 1/2",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_history_fullneg_rank_excess",
+      "title": "Cross-fitted full-negative expected-rank of the level-1 bucket, queried by the geodesic barycentre of the user's whole training history.",
+      "round": "round_20261030_094519",
+      "proposed_by": "metric_ideation_3",
+      "formula": "Work in the frozen reference's ball rescaled to unit curvature (c=1) by x -> sqrt(c_ref)*x; this is a fixed isometry, not a parameter. Let d(.,.) be that Poincare geodesic distance, and let Bary(S) be the Karcher/Frechet barycentre of a finite set S in the ball (the point minimising the sum of squared d). Let b(i) be the level-1 SID code of item i, and let the frozen reference give a source point s_i and a target point t_i per item (same ball).\nSplit the TRAINING users deterministically by hash(u) mod 2 into folds A and B. For direction A->B let T_A be all training items of fold-A users and le",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "svd_delta_four_point",
+      "title": "the four-point obligation of the behaviour graph, measured on the SVD space",
+      "round": "(measured only)",
+      "proposed_by": "operator, on the user's direction",
+      "formula": "delta = |d1+d4-(d2+d3)| of the six pairwise distances, ordered; c_delta = argmin |median delta_model(c) - median delta_behaviour_graph|; metric = -(normalised delta at c_delta)",
+      "measured": true,
+      "family": "behaviour_reference_obligation",
+      "measurement": {
+        "pairs": 107,
+        "spearman": 0.6605,
+        "ci95": [
+          0.519,
+          0.774
+        ],
+        "p_value": 9.99e-15,
+        "eligible": true,
+        "curvature": 8.0,
+        "curvature_grid": [
+          0.05,
+          0.1,
+          0.25,
+          0.5,
+          1.0,
+          2.0,
+          4.0,
+          8.0,
+          16.0,
+          32.0,
+          64.0
+        ],
+        "quadruples_used": 4000,
+        "controls": {
+          "half_c4": 0.6605,
+          "double_c16": 0.6605,
+          "shape_selected_c2": 0.6383,
+          "nearly_flat_c0.001": 0.5318,
+          "euclidean": 0.5037,
+          "permuted": 0.0011
+        },
+        "paired_bootstrap": {
+          "c_delta_minus_flat": [
+            0.1284,
+            0.0717,
+            0.1898
+          ],
+          "c_delta_minus_euclidean": [
+            0.1565,
+            0.0833,
+            0.2383
+          ],
+          "c_delta_minus_half": [
+            -0.0016,
+            -0.0182,
+            0.0162
+          ],
+          "c_delta_minus_shape": [
+            0.0218,
+            0.0021,
+            0.0447
+          ]
+        },
+        "artefact": "results/research/issue126/metric_bench_svdfourpoint_107.json",
+        "protocol": "results/research/issue126/metric_round/DELTA_SVD_PROTOCOL.md"
+      }
     },
     {
       "metric_id": "gromov",
