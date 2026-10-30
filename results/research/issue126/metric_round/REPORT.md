@@ -405,9 +405,10 @@ branches.
 
 ## The four-point obligation of the behaviour graph, on a hop-bounded path
 
-The strongest single family this project has measured on the 107 confirmed
-SID+recall pairs is the four-point obligation of the **behaviour** graph,
-computed on the SVD space of the training matrix:
+The four-point obligation of the **behaviour** graph, computed on the SVD space
+of the training matrix, is the second strongest construction measured on the 107
+confirmed SID+recall pairs -- behind the behaviour contrast at +0.7623, ahead of
+`HBA@7623` (+0.4709) and the `Gromov 6` curvature (+0.3656):
 
 | variant | rho | 95% CI |
 | --- | --- | --- |
