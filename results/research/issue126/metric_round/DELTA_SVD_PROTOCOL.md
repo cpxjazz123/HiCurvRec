@@ -817,3 +817,66 @@ the same way. The best numbers in this project are therefore
 | four-point agreement rate, unweighted | +0.6593 |
 
 all of them Euclidean in content, and none of them rewarded by a curvature.
+
+## v16 -- the six ablations: what the +0.0522 actually is
+
+The brief's question, answered on the same 107 pairs with everything but the
+scoring term held fixed (same items, SID trees, prefix centroids, history
+barycentres, queries, temperature, recalls; no Stage 2 or Stage 3 touched).
+Artifact `../hbaa_ablation_AF_107.json`, script `hbaa_ablation_AF.py`.
+
+| variant | rho | paired vs plain | P(not better) |
+| --- | --- | --- | --- |
+| A plain (no radial term) | +0.7104 | -- | -- |
+| B raw radial, alpha = 0.5 | **+0.7623** | +0.0522 [+0.0186, +0.0952] | 0.0005 |
+| B' the standardised radius with the per-table weight | **+0.7623** | -- | -- |
+| E the radius from TEN random origins | +0.7612 | -- | -- |
+| F the radius shuffled among compactness-matched groups | +0.7506 | +0.0407 [+0.0086, +0.0801] | 0.0057 |
+| C the radius PREDICTED from compactness, size and popularity | +0.7465 | +0.0361 [+0.0054, +0.0755] | 0.0106 |
+| D2 the residual r - rhat, at the radius' own influence | +0.7458 | +0.0357 [+0.0137, +0.0646] | 0.0006 |
+| D1 the residual at the same units and weight | +0.7337 | +0.0234 [+0.0093, +0.0442] | 0.0000 |
+| G a term of the same scale with NO information (random) | +0.6954 | -0.0151 [-0.0373, +0.0047] | 0.9309 |
+
+**The reproduction is exact.** B' replaces the raw radius with the standardised
+one and uses the per-table equivalent weight ``alpha_std,t = 0.5 sigma_r(t)``;
+the maximum difference over every per-query score of every table is
+**2.2e-16**, i.e. machine precision, and the correlation is +0.7623 as before.
+(The two formulations are the same rule; the earlier failure to reproduce was an
+implementation error in the standardisation, not a difference of definitions.)
+
+**What the excess is.** It is reproduced, almost to the digit, by a radius
+measured from ten ARBITRARY points of the ball (+0.7612) and by a radius
+SHUFFLED among compactness-matched groups (+0.7506). Neither carries any
+group-specific radial information, so the excess is not about which prefix sits
+where in the ball. It is also reproduced by the radius PREDICTED from the
+compactness (+0.7465), which is a table-level aggregate: what matters is how
+tight the groups are in aggregate, not which group has which radius.
+
+**What the excess is not.** It is not a conditioning artefact: a random term of
+the same scale makes things WORSE (+0.6954, paired -0.0151). So the gain is a
+real effect of a table-level property -- but see the next section.
+
+**The gain does not survive the honest protocol.** With the coefficient chosen
+on the other families and evaluated on the held-out family (the families come
+from the run names: curvature 77, mechanisms 18, resample 8, fork_hyper 3,
+baseline 1):
+
+| family | B raw radial | C compactness | D2 residual | F shuffled | G noise |
+| --- | --- | --- | --- | --- | --- |
+| curvature | +0.0706 | +0.0374 | +0.0500 | +0.0159 | -0.0077 |
+| resample | +0.0476 | +0.2143 | -0.2143 | -0.1429 | 0.0000 |
+| mechanisms | -0.0062 | -0.0041 | +0.0640 | -0.0145 | 0.0000 |
+
+The radial term is better on two families and worse on one; the residual and the
+shuffled radius change sign from family to family; the noise control is never
+better. The pooled +0.0522 measured on all 107 pairs is therefore a SELECTION
+EFFECT of the coefficient and of the sample, not a signal that transfers.
+
+**Consequence.** The admissible HBAA is the plain distance contrast (+0.7104),
+or its Euclidean control (+0.7170), and the +0.7623 headline is withdrawn for a
+third reason -- it is not radial information, it is not compactness
+information, and it does not generalise. The history of this family now reads:
+the two-copy radial bug (v11), the chart comparison (v8, v9), the weight
+analysis (v12), the hierarchy question (v14, v15), and this ablation, which
+closes it: **the Gromov product's radial term is a table-level correction that
+was tuned on the same 107 pairs.**
