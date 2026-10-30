@@ -293,3 +293,38 @@ A genuine hyperbolic claim would need a property the weighted Euclidean cannot
 reproduce -- the tree-likeness of a genuinely hierarchical embedding, or a
 radial-angular coupling that no diagonal weight can mimic. This construction has
 neither: its ingredient is a diagonal weight.
+
+## v7 -- the leader passes the control, and its curvature does not
+
+HBAA (+0.7623) had never been run against the permutation control that caught
+every hyperbolic family in `HYPERBOLIC_FAMILIES.md`. It has now
+(`metrics_hbaa.py::hbaa_permuted`, artifact
+`../metric_bench_hbaa_107.json`):
+
+| comparison | paired bootstrap | P(not better) |
+| --- | --- | --- |
+| hbaa - hbaa_permuted | **+0.7655 [+0.5702, +0.9705]** | 0.0000 |
+| hbaa - hbaa_anchor | +0.1031 [+0.0342, +0.1840] | 0.0024 |
+| hbaa - hbaa_flat (c = 1e-3) | +0.0214 [-0.0305, +0.0761] | 0.2036 |
+| hbaa - hbaa_euclid | +0.0451 [-0.0089, +0.1062] | 0.0508 |
+| hbaa - hbaa_size_matched | +0.2573 [+0.1421, +0.3935] | 0.0000 |
+
+HBAA permuted is -0.0065, so the leader is not an artefact of the SID
+composition: the item-SID correspondence is what makes it work, and the history
+barycentre adds a significant +0.10 over using the anchor alone.
+
+But the hyperbolic increment does not survive: against a nearly flat curvature
+the leader gains +0.021 with a confidence interval that straddles zero
+(P = 0.20), and against the Euclidean control +0.045 with P = 0.051. The
+curvature is a gauge (v5) and the family is insensitive to it, exactly as the
+seven-property round found. `hbaa_teacher_curvature` returning the identical
++0.7623 is the same statement from another direction.
+
+**So the strongest construction in this project is a behaviour contrast, not a
+hyperbolic one.** Its power is the behaviour pairs and the history barycentre;
+the curvature contributes a statistically indistinguishable +0.02 to +0.05.
+
+`hbaa_size_matched` (the prefixes shrunk to a common size) drops to +0.5049 and
+`hbaa_size_matched_kept` to +0.0701, so part of the leader's value rides on the
+prefix-size structure -- a caveat worth keeping in view, but the permutation
+control shows that the correspondence is not merely that structure.

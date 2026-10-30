@@ -3,13 +3,13 @@
   "families": {
     "partition_geometry": "the table's own geometry: tightness, margin, dispersion, coverage, reach, ranking of cells -- measured, and none of it tracks the recall",
     "rewarding_an_answer_in_hand": "metrics that grow when the answer is already inside the cell: the path likelihood, the generator-side hit rate -- they are NEGATIVELY correlated",
-    "behaviour_contrast": "the family that works: the table is contrasted against the behaviour reference with explicit positives and negatives, on the level-1 prefix centroid",
+    "behaviour_contrast": "the family that works: the table is contrasted against the behaviour reference with explicit positives and negatives, on the level-1 prefix centroid AMENDED (protocol v7): the permutation control is -0.0065 against +0.7623, so the correspondence is real; but the hyperbolic increment over a nearly flat curvature is +0.021 [-0.031, +0.076] (P=0.20) and over Euclidean +0.045 [-0.009, +0.106] (P=0.051), i.e. the power is the behaviour contrast and the history barycentre (+0.103, P=0.002), not the curvature.",
     "structural_alignment": "label-free structure comparisons: does the hyperbolic shared depth of a pair agree with the length of their shared SID prefix, does the prefix tree preserve the reference's distances, is a cell's angular cone tighter than a different set of the same size -- measured with the corrected definitions, and none of them is eligible",
     "behaviour_reference_obligation": "the table is scored against a CURVATURE, not against positives and negatives: the training behaviour fixes a reference graph, the four-point tree-likeness of that graph fixes the curvature, and the SID's own four-point deviation at that curvature is the metric. Measured on the 107 confirmed pairs it is the second strongest construction (rho +0.6605) and the curvature it estimates beats both a near-flat and a Euclidean control by +0.128 / +0.157 in a paired bootstrap. NOT refuted: the earlier rejection of the delta family was an artefact of six implementation defects, recorded in DELTA_SVD_PROTOCOL.md (v1 to v4). AMENDED (protocol v6): the ingredient is the radial weight, not the curvature -- the arccosh never beats the radially weighted Euclidean control.",
     "hyperbolic_properties_of_the_sid_table": "the other hyperbolic properties as SID-quality metrics: the Gromov product, radial depth, radial purity, geodesic slack, the entailment cone, angular branch separation, Busemann consistency, volume growth -- and the behaviour-aware versions of the geodesic and the Busemann. Each is measured with a Euclidean control and a PERMUTED control (the SID rows shuffled across the items). Measured on the 107 confirmed pairs: no family beats its permuted control, three are degenerate on the frozen reference (a thin shell at radius 0.9115 +- 0.0139, so radial depth, cones and volume growth are constant), and the behaviour-aware geodesic, once the ancestor depth is held fixed, is at chance. REFUTED as predictors: see HYPERBOLIC_FAMILIES.md."
   },
   "proposals": 64,
-  "measured": 49,
+  "measured": 50,
   "eligible": 21,
   "rows": [
     {
@@ -1579,6 +1579,48 @@
         "pairs": 107,
         "variants": {},
         "verdict": "chance (0.5245)"
+      }
+    },
+    {
+      "metric_id": "hbaa_controls",
+      "title": "HBAA against its own controls",
+      "round": "(measured only)",
+      "proposed_by": "operator",
+      "formula": "results/research/issue126/metric_round/metrics_hbaa.py",
+      "measured": true,
+      "family": "behaviour_contrast",
+      "measurement": {
+        "pairs": 107,
+        "hbaa": 0.7623,
+        "hbaa_permuted": -0.0065,
+        "hbaa_flat": 0.7407,
+        "hbaa_euclid": 0.717,
+        "hbaa_anchor": 0.6592,
+        "hbaa_size_matched": 0.5049,
+        "hbaa_size_matched_kept": 0.0701,
+        "paired": {
+          "minus_permuted": [
+            0.7655,
+            0.5702,
+            0.9705
+          ],
+          "minus_anchor": [
+            0.1031,
+            0.0342,
+            0.184
+          ],
+          "minus_flat": [
+            0.0214,
+            -0.0305,
+            0.0761
+          ],
+          "minus_euclid": [
+            0.0451,
+            -0.0089,
+            0.1062
+          ]
+        },
+        "eligible": true
       }
     }
   ]

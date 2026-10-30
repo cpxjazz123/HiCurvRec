@@ -215,6 +215,24 @@ def _gromov_alignment(table: dict, context: dict, *, curvature: float,
     return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
 
 
+def hbaa_permuted(table: dict, context: dict) -> float:
+    """The same construction with the item-SID correspondence permuted.
+
+    HBAA contrasts a behaviour positive's prefix centroid against its negatives',
+    so if the number it reports is a property of the SID tree it has to collapse
+    when the tree is dealt at random to the items. The other families in this
+    round were caught by exactly this control, and the leader had never been run
+    against it.
+    """
+    import zlib
+
+    rows = np.asarray(table["rows"], dtype=np.int64)
+    rng = np.random.default_rng(zlib.crc32(rows.tobytes()) & 0x7FFFFFFF)
+    permuted = {"rows": rows[rng.permutation(rows.shape[0])],
+                "item_ids": table["item_ids"]}
+    return _gromov_alignment(permuted, context, curvature=1.0)
+
+
 def hbaa_anchor(table: dict, context: dict) -> float:
     """The same Gromov contrast with the ANCHOR as the query point (a control).
 
@@ -766,7 +784,8 @@ def hbaa_recency(table: dict, context: dict) -> float:
     return float(1.0 - float(per_query.mean()) / float(np.log(2.0)))
 
 
-METRICS = {"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
+METRICS = {
+    "hbaa_permuted": hbaa_permuted,"hbaa": hbaa, "hbaa_anchor": hbaa_anchor,
            "hbaa_recency": hbaa_recency,
            "hbaa_teacher_curvature": hbaa_teacher_curvature,
            "hbaa_midpoint": hbaa_midpoint,
