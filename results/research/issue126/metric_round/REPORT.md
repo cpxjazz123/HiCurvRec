@@ -612,6 +612,45 @@ two disjoint halves of the 107 pairs, with the best alpha one grid step apart
 it is group tightness and the group's position relative to an arbitrary point, not
 hierarchy.
 
+
+## The six ablations: what the historical +0.7623 is
+
+Everything held fixed except the scoring term (same items, SID trees, prefix
+centroids, history barycentres, queries, temperature, recalls; no Stage 2 or
+Stage 3 touched):
+
+| variant | rho | paired vs plain |
+| --- | --- | --- |
+| A plain, no radial term | +0.7104 | -- |
+| B raw radial, alpha = 0.5 | **+0.7623** | +0.0522 [+0.0186, +0.0952], P = 0.0005 |
+| B' the standardised radius with the per-table weight | +0.7623 | per-query difference 2.2e-16 |
+| E the radius from TEN random origins | +0.7612 | -- |
+| F the radius shuffled among compactness-matched groups | +0.7506 | +0.0407 [+0.0086, +0.0801] |
+| C the radius PREDICTED from compactness, size and popularity | +0.7465 | +0.0361 [+0.0054, +0.0755] |
+| D2 the residual r - rhat at the radius' own influence | +0.7458 | +0.0357 [+0.0137, +0.0646] |
+| D1 the residual at the same units and weight | +0.7337 | +0.0234 [+0.0093, +0.0442] |
+| G a term of the same scale with NO information | +0.6954 | -0.0151 [-0.0373, +0.0047] |
+
+The reproduction is exact: the standardised radius with the per-table weight
+`alpha_std,t = 0.5 sigma_r(t)` returns the same scores to machine precision.
+
+The excess is reproduced almost to the digit by a radius measured from ten
+ARBITRARY points of the ball and by a radius SHUFFLED among compactness-matched
+groups, so it is not group-specific radial information; the compactness
+PREDICTION reproduces it too, so it is a table-level aggregate of tightness. It
+is not a conditioning artefact either -- a random term of the same scale makes
+things worse.
+
+And it does not survive the honest protocol: with the coefficient chosen on the
+other families and evaluated on the held-out one, the radial term is better on
+the curvature family (+0.0706) and the resample family (+0.0476) but WORSE on
+the mechanisms family (-0.0062), while the residual and the shuffled radius
+change sign from family to family and the noise control is never better.
+
+So the +0.7623 headline is withdrawn for a third reason: it is a table-level
+correction that was tuned on the same 107 pairs. The admissible constructions
+are the plain distance contrast (+0.7104) and the Euclidean control (+0.7170).
+
 ## Where the artefacts live
 
 * the metric: `tools/research/science/hyperbolic_ancestor_alignment.py` (with tests
