@@ -247,3 +247,49 @@ under the fixed score:
 
 Paired bootstrap: c_delta - flat = **+0.0591 [+0.0215, +0.1016]**, P(not better)
 = 0.001; c_delta - Euclidean = +0.1565 [+0.0833, +0.2383].
+
+## v6 -- the ingredient is the radial weight, not the curvature
+
+v5 left two explanations standing: the hyperbolic geometry helps, or the radial
+compression toward the boundary does. The compression sweep separates them with
+three distance laws on the same quadruples, the same items and the same scale,
+with the curvature held at 8 and the tangent scale sweeping the compression
+(artifact `../compression_sweep_107.json`, script `compression_sweep.py`):
+
+| tangent scale | median radius | hyperbolic | Euclidean | radially weighted Euclidean |
+| --- | --- | --- | --- | --- |
+| 0.01 | 0.033 | +0.5912 | +0.5860 | **+0.6423** |
+| 0.02 | 0.066 | +0.5373 | +0.5850 | **+0.6504** |
+| 0.05 | 0.155 | +0.5442 | +0.5831 | **+0.6922** |
+| 0.1 | 0.260 | +0.5509 | +0.5792 | **+0.6849** |
+| 0.2 | 0.338 | +0.5773 | +0.5631 | **+0.6751** |
+| 0.35 | 0.353 | +0.5980 | +0.5416 | +0.6459 |
+| 0.5 | 0.354 | +0.6409 | +0.5213 | +0.5829 |
+| 1.0 | 0.354 (saturated) | +0.6609 | +0.4992 | +0.5419 |
+
+The radially weighted Euclidean is the linear distance divided by the very factor
+the hyperbolic distance carries, `sqrt((1-c||x||^2)(1-c||y||^2))`, with the
+`arccosh` removed. Three readings:
+
+1. **The `arccosh` never wins.** At every compression the weighted Euclidean is
+   equal to or better than the hyperbolic distance; in the middle of the range it
+   is better by 0.10 to 0.15 (+0.69 against +0.55). Whatever the four-point
+   agreement measures here, the curvature contributes none of it.
+2. **At low compression the two coincide** (+0.5912 against +0.5860 at radius
+   0.033), as they must: at one radius the hyperbolic distance is a strictly
+   increasing transform of the Euclidean one and the score depends on an argmin.
+3. **The operating point is not even the best of its own family.** The saturated
+   point (radius 0.354) gives +0.6609, while the weighted Euclidean at radius
+   0.155 gives +0.6922. That value is NOT reported as a metric: the radius was
+   picked by looking at the recall, which is the tuning the plan forbids. It is
+   evidence about the ingredient, not a result.
+
+**Verdict.** The +0.6605 is produced by the radial compression and the per-point
+radial weight, not by the hyperbolic curvature. The admissible statement is:
+*a metric that weights the linear item geometry by how deep each item sits in the
+ball predicts the 107 recalls at about +0.66; the arccosh adds nothing.*
+
+A genuine hyperbolic claim would need a property the weighted Euclidean cannot
+reproduce -- the tree-likeness of a genuinely hierarchical embedding, or a
+radial-angular coupling that no diagonal weight can mimic. This construction has
+neither: its ingredient is a diagonal weight.

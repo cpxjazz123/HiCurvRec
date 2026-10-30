@@ -313,21 +313,41 @@ def estimate_curvature(context: dict, table: dict) -> dict:
 
 
 def _score(table: dict, context: dict, curvature: float, euclidean: bool,
-           tangent_scale: float = 1.0) -> float:
+           tangent_scale: float = 1.0, weighted: bool = False) -> float:
+    """The four-point agreement, with the distance law as a parameter.
+
+    ``weighted`` builds the RADIALLY WEIGHTED EUCLIDEAN control: the same
+    per-point factor ``1 / sqrt((1-c||x||^2)(1-c||y||^2))`` that the hyperbolic
+    distance carries, applied to a linear distance. When the points sit at
+    nearly one radius, the hyperbolic distance is a strictly increasing function
+    of the Euclidean one and the pairing choice (an argmin) cannot change; any
+    difference between the two therefore comes from the per-point radial weight,
+    and this control says whether that weight is enough to reproduce it.
+    """
     embeddings = _svd_embeddings(context, table)
     if tangent_scale != 1.0:
         embeddings = embeddings * float(tangent_scale)
     picks = _graph_local_quadruples(context, table, SCORING_QUADRUPLES, SEED)
     a, b, c, d = picks[:, 0], picks[:, 1], picks[:, 2], picks[:, 3]
-    if euclidean:
+    if euclidean and not weighted:
         points = embeddings
-        distance = lambda x, y: euclidean_distance(x, y)
+
+        def distance(left, right):
+            return euclidean_distance(points[left], points[right])
+    elif weighted:
+        points = ball_of(embeddings, curvature)
+        factor = np.maximum(1.0 - curvature * np.sum(points * points, axis=1), 1e-12)
+
+        def distance(left, right):
+            return (euclidean_distance(points[left], points[right])
+                    / np.sqrt(factor[left] * factor[right]))
     else:
         points = ball_of(embeddings, curvature)
-        distance = lambda x, y: hyperbolic_distance(x, y, curvature)
-    sums = pairing_sums(distance(points[a], points[b]), distance(points[c], points[d]),
-                        distance(points[a], points[c]), distance(points[b], points[d]),
-                        distance(points[a], points[d]), distance(points[b], points[c]))
+
+        def distance(left, right):
+            return hyperbolic_distance(points[left], points[right], curvature)
+    sums = pairing_sums(distance(a, b), distance(c, d), distance(a, c),
+                        distance(b, d), distance(a, d), distance(b, c))
     delta = np.abs(normalised_delta(sums))
     # the median is a property of THIS curvature: sharing one cache across
     # curvatures made the value of a variant depend on which variant ran first
