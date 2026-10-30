@@ -991,3 +991,69 @@ four-point sense (0.0428 against 0.0242): tree-likeness and behavioural fidelity
 are different things. Answering Q3 properly needs a matched training
 comparison -- the same inputs, the same capacity and the same budget, with only
 the geometry changed -- and that is the next experiment, not this probe.
+
+## v19 -- the interaction graph is not a tree metric, and the 95.6% was an artefact
+
+Protocol v18 reported that 95.6% of the quadruples satisfy the four-point
+condition in the behaviour geometry, and concluded that the interaction graph has
+a tree-like distance structure. Two objections were raised and both were right:
+
+1. the distance was the COSINE between the items' co-occurrence profiles, and
+   **33.4% of random item pairs share no co-occurrence neighbour**, so their
+   distance is exactly 1 and a quadruple built from such pairs satisfies the
+   condition for a reason that has nothing to do with a hierarchy;
+2. the null for the text space permuted the item ids of the embedding, which
+   leaves the geometry of the embedding untouched and therefore cannot test
+   whether that geometry is tree-like.
+
+This probe replaces both. Artifact `../behaviour_tree_metric.json`, script
+`behaviour_tree_metric.py`. The metric is the WEIGHTED SHORTEST-PATH metric of
+the item-item co-occurrence graph (the edge weights are the co-occurrence
+counts; the hop-count metric would be a BFS tree metric by construction and the
+test would be vacuous). Quadruples are drawn over the whole catalogue and kept
+only when all six pairs are connected, so no quadruple is confined to one
+neighbourhood. The controls are a DEGREE-PRESERVING REWIRING of the same graph
+and, for the text, a MATCHED RANDOM POINT CLOUD.
+
+| geometry | median relative delta | share below 0.01 | connected quadruples |
+| --- | --- | --- | --- |
+| the interaction graph, weighted shortest paths | **0.0606** | **0.116** | 3983 / 4000 |
+| the same graph, degree-preserving rewiring | **0.0000** | **0.512** | 3983 / 4000 |
+| behaviourally related quadruples (a positive pair) | 0.0789 | 0.106 | 3995 / 4000 |
+| the text embedding | 0.0243 | 0.224 | -- |
+| a matched random point cloud | **0.0088** | **0.549** | -- |
+
+**The 95.6% was an artefact.** In the proper metric only 11.6% of the
+quadruples satisfy the four-point condition, so the interaction graph is NOT a
+tree metric.
+
+**The rewiring control is what makes that readable.** A random graph with the
+same degrees is MORE tree-like than the interaction graph (median 0.0000 against
+0.0606, and 51.2% against 11.6% below 0.01): the structure of the real
+interactions does not make the metric tree-like, and the tree-likeness of the
+randomised graph is the signature of a shortest-path metric on a graph without
+shortcuts. The motivation for a hyperbolic RQ-VAE is therefore not supported by
+the interaction graph's own metric: there is no tree in the behaviour geometry
+for a hyperbolic space to reproduce.
+
+**The relative four-point deviation is not comparable across geometries.** The
+matched random point cloud is more tree-like than the text embedding (0.0088
+against 0.0243) although it has no structure at all: the measure depends on the
+shape of the distance distribution, not only on the structure. Any reading of a
+four-point number across geometries needs a control of this kind, and the
+seven-property round (HYPERBOLIC_FAMILIES.md) and v18 must be read with that in
+mind.
+
+**Behaviourally related quadruples are no different from random ones** (0.0789
+against 0.0606, 10.6% against 11.6% below 0.01): the hierarchy, if there is
+one, is not in the quadruples that the interactions make.
+
+**What this leaves.** The positive results of this metric round are
+behaviour-CONTRAST results: HBAA's plain distance contrast (+0.7104), its
+Euclidean control (+0.7170) and the unweighted four-point agreement rate
+(+0.6593) all predict Recall, and none of them needs a curvature, a radial
+term or a tree reading (v11 to v17). The hyperbolic hypothesis itself has now
+been tested twice -- the metrics say no curvature helps, and the data says the
+behaviour geometry is not tree-like. A hyperbolic RQ-VAE on this dataset is a
+choice that has to be justified on other grounds than the behaviour geometry's
+tree structure.
