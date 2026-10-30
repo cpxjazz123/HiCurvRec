@@ -130,7 +130,45 @@ order and the recency of the sequence, and with them the part of the user's
 direction the metric reads. The teacher's geometry, not the metric's formula, is
 where the information lives.
 
-## A fourth family that works: Gromov-Prefix Alignment
+## The fourth family, measured correctly and withdrawn
+
+An earlier version of this report claimed a fourth family -- the Gromov-Prefix
+Alignment -- at Spearman +0.4990. That number was an artefact of four defects,
+and the claim is WITHDRAWN. The defects:
+
+* the pairs were built from the probe's POSITIVES and NEGATIVES, so a family
+  meant to be label-free was not;
+* the shared prefix was counted as the number of POSITIONS that match, not the
+  length of the common prefix ([1,2,3] against [4,2,3] was scored 2, it is 0);
+* the cone metric's null cell was a REARRANGEMENT of the real cell, so the two
+  held the same items and the metric was zero to numerical noise;
+* the tree distortion was the alignment with the sign flipped, not a distortion,
+  and it compared against the Gromov product rather than the geodesic distance.
+
+With the definitions corrected -- label-free pairs stratified over the prefix
+length, a consecutive prefix, a null cell drawn as a DIFFERENT set of the same
+size, and a genuine tree-distance against geodesic-distance comparison -- the
+measurements are:
+
+| construction | Spearman (107) | 95% CI | (77 never selected) | |
+|---|---|---|---|---|
+| Gromov-Prefix Alignment | +0.1088 | [-0.102, +0.310] | +0.0285 | not eligible |
+| the same at curvature 1e-3 | +0.1083 | [-0.103, +0.311] | +0.0287 | not eligible |
+| the same with a Euclidean depth | +0.1083 | [-0.103, +0.311] | +0.0287 | not eligible |
+| Hyperbolic Tree Distortion | +0.1025 | [-0.107, +0.303] | +0.0085 | not eligible |
+| Hyperbolic Cone Consistency | +0.1422 | [-0.069, +0.339] | +0.0128 | not eligible |
+
+None of them is eligible, and the controls settle what little there is: the
+hyperbolic, the nearly flat and the Euclidean versions are indistinguishable, so
+the residual signal is plain embedding similarity and NOT the hyperbolic
+geometry.
+
+**What survives is the local behaviour contrast**: HBAA +0.7623 and Q_H +0.7382,
+with their own controls (Euclidean +0.7170, flat +0.7407) showing that what
+orders the tables is the CONTRAST against the behaviour reference, not the
+curvature.
+
+## The fourth family, as first measured
 
 The three structural families were implemented and measured on the corrected
 collection:

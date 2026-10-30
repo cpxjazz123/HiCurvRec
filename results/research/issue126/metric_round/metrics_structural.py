@@ -1,78 +1,137 @@
-"""The three families of the request, implemented to their definitions.
+"""The structural families, corrected.
 
-1. **Gromov-Prefix Alignment** -- the Gromov product at the origin measures how
-   deep two items share a path from the origin; the SID prefix says how many codes
-   they share. The metric is the rank agreement between the two over the training
-   pairs: do items that share a deeper hyperbolic ancestor also share a longer
-   prefix?
+An earlier version of this file had four defects, all of which changed what the
+metrics measured:
 
-2. **Hyperbolic Tree Distortion** -- the SID is a tree, and a tree has a distance
-   (the path through the longest common prefix). The metric asks whether that
-   distance agrees with the reference's hyperbolic distance: the rank correlation
-   between them over the same pairs.
+* the pairs were built from the probe's POSITIVES and NEGATIVES, so the
+  "label-free" family was not label-free;
+* the shared prefix was counted as "the number of positions that match", which
+  is not a prefix: [1,2,3] against [4,2,3] shares no prefix, but that count
+  said two;
+* the cone metric's null cell was a PERMUTATION of the real cell, so it held the
+  same items and the metric was zero to numerical noise;
+* the tree distortion was the alignment with the sign flipped, not a distortion.
 
-3. **Hyperbolic Cone Consistency** -- in the Poincare ball a cell should be a
-   branch, not a smear: the items under one prefix should lie in a narrow cone
-   around the cell's direction. The metric compares each cell's angular aperture
-   with the aperture of a size-matched random cell.
+Everything below is written to the corrected definitions, and the pairs are drawn
+from the catalogue without any label.
 
-All three read only the exported SID table, the frozen reference and the training
-split: no validation or test interaction, no recall, no Stage 2 or Stage 3.
+1. **Gromov-Prefix Alignment** -- over item pairs drawn from the catalogue, how
+   well does the hyperbolic shared depth agree with the length of the shared SID
+   prefix? The pairs are sampled stratified over the prefix length, so every
+   length is represented and the answer does not depend on how rare a long prefix
+   is. It names no positive and no negative.
+
+2. **Hyperbolic Tree Distortion** -- the prefix tree's own distance between two
+   items (the codes from the first mismatch to the last) against the reference's
+   GEODESIC distance: the rank agreement between them says whether the tree
+   preserves the geometry.
+
+3. **Hyperbolic Cone Consistency** -- is a cell's angular aperture in the ball
+   tighter than that of a DIFFERENT set of the same size drawn from the whole
+   catalogue? The null is a different set, not a rearrangement of the same one.
+
+Controls for the alignment: the same construction with the reference's
+geodesic distance in Euclidean space, and the same construction at a nearly flat
+curvature. If the alignment's power survives neither, it is not the hyperbolic
+geometry that carries it.
 """
 from __future__ import annotations
 
 import numpy as np
 
-PAIRS = 200000        # the training pairs are sampled deterministically
+PAIRS_PER_STRATUM = 20000
 SEED = 42
+FLAT_CURVATURE = 1e-3
 
 
-def _gromov(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """The Gromov product at the origin: the shared depth of two points."""
-    def norm(x):
-        inner = np.clip(1.0 - np.sum(x * x, axis=-1), 1e-12, None)
-        return 2.0 * np.arccosh(1.0 / np.sqrt(inner))
-
-    def distance(x, y):
-        difference = np.sum((x - y) ** 2, axis=-1)
-        denominator = ((1.0 - np.sum(x * x, axis=-1))
-                       * (1.0 - np.sum(y * y, axis=-1)))
-        return np.arccosh(np.maximum(1.0 + 2.0 * difference /
-                                      np.maximum(denominator, 1e-12), 1.0 + 1e-12))
-
-    return 0.5 * (norm(a) + np.asarray(norm(b)) - distance(a, b))
+# ------------------------------------------------------------------ geometry
+def _poincare_distance(a: np.ndarray, b: np.ndarray, curvature: float = 1.0) -> np.ndarray:
+    c = float(curvature)
+    difference = np.sum((a - b) ** 2, axis=-1)
+    denominator = ((1.0 - c * np.sum(a * a, axis=-1))
+                   * (1.0 - c * np.sum(b * b, axis=-1)))
+    return np.arccosh(np.maximum(1.0 + 2.0 * c * difference /
+                                 np.maximum(denominator, 1e-12), 1.0 + 1e-12)) / np.sqrt(c)
 
 
-def _pairs(context: dict, table: dict) -> tuple:
-    """The item pairs the three metrics are computed over (training pairs only)."""
-    if "structural_pairs" in context:
-        return context["structural_pairs"]
-    import sys
-    from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-    from results.research.issue126.metric_round import metrics_hbaa as hbaa
+def _poincare_norm(x: np.ndarray, curvature: float = 1.0) -> np.ndarray:
+    c = float(curvature)
+    inner = np.clip(1.0 - c * np.sum(x * x, axis=-1), 1e-12, None)
+    return 2.0 * np.arccosh(1.0 / np.sqrt(inner)) / np.sqrt(c)
 
-    queries = hbaa._queries(context)
-    position = {int(item): index for index, item in enumerate(table["item_ids"].tolist())}
-    rng = np.random.default_rng(SEED)
-    left, right = [], []
-    for index in range(len(queries["positives"])):
-        anchor = int(queries["histories"][index][-1])
-        positive = int(queries["positives"][index])
-        negative = int(queries["negatives"][index][0])
-        for other in (positive, negative):
-            a = position.get(anchor, -1)
-            b = position.get(other, -1)
-            if a >= 0 and b >= 0:
-                left.append(a)
-                right.append(b)
-    left = np.asarray(left, dtype=np.int64)
-    right = np.asarray(right, dtype=np.int64)
-    if left.size > PAIRS:
-        pick = rng.choice(left.size, size=PAIRS, replace=False)
-        left, right = left[pick], right[pick]
-    context["structural_pairs"] = (left, right)
-    return left, right
+
+def gromov_depth(a: np.ndarray, b: np.ndarray, curvature: float = 1.0) -> np.ndarray:
+    """The Gromov product at the origin: how deep two points share a path."""
+    return 0.5 * (_poincare_norm(a, curvature) + _poincare_norm(b, curvature)
+                  - _poincare_distance(a, b, curvature))
+
+
+def euclidean_depth(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """The Euclidean analogue of the Gromov product at the origin."""
+    return 0.5 * (np.linalg.norm(a, axis=-1) + np.linalg.norm(b, axis=-1)
+                  - np.linalg.norm(a - b, axis=-1))
+
+
+# ------------------------------------------------------------------ prefixes
+def shared_prefix_length(rows: np.ndarray, left: np.ndarray,
+                         right: np.ndarray) -> np.ndarray:
+    """The length of the COMMON PREFIX of two code rows.
+
+    The prefix ends at the FIRST position where the codes differ, so [1,2,3] and
+    [4,2,3] share none of it. Counting the positions that happen to match is a
+    different quantity and is not a prefix.
+    """
+    equal = rows[left] == rows[right]
+    # the first mismatch, as the position after the last leading match
+    mismatch = np.where(equal.all(axis=1), equal.shape[1],
+                        equal.argmin(axis=1) if equal.shape[1] else 0)
+    return mismatch.astype(np.float64)
+
+
+def tree_distance(rows: np.ndarray, left: np.ndarray, right: np.ndarray) -> np.ndarray:
+    """The prefix tree's own distance: the codes from the first mismatch to the end."""
+    return (rows.shape[1] - shared_prefix_length(rows, left, right)).astype(np.float64)
+
+
+# ------------------------------------------------------------------ sampling
+def _stratified_pairs(rows: np.ndarray, rng: np.random.Generator) -> tuple:
+    """Item pairs drawn from the catalogue, stratified over the shared prefix length.
+
+    No positive and no negative is read: the pairs are drawn from the items
+    themselves, and the stratification only makes sure that every prefix length
+    is represented, so the answer does not depend on how rare a long prefix is.
+    """
+    n_items, width = rows.shape
+    levels = width
+    left_all, right_all, strata_all = [], [], []
+    # strata 1..levels-1: items that share exactly that many codes
+    for level in range(1, levels):
+        groups = {}
+        for item in range(n_items):
+            key = tuple(rows[item, :level].tolist())
+            groups.setdefault(key, []).append(item)
+        usable = [members for members in groups.values() if len(members) > 1]
+        if not usable:
+            continue
+        per_group = max(1, PAIRS_PER_STRATUM // max(1, len(usable)))
+        for members in usable:
+            picks = rng.choice(len(members), size=(max(2, per_group * 2), 2), replace=True)
+            for a, b in picks:
+                if a != b:
+                    left_all.append(members[a])
+                    right_all.append(members[b])
+                    strata_all.append(level)
+    # stratum 0: items with different first codes
+    first = rows[:, 0]
+    for _ in range(PAIRS_PER_STRATUM):
+        a = int(rng.integers(0, n_items))
+        b = int(rng.integers(0, n_items))
+        if first[a] != first[b]:
+            left_all.append(a)
+            right_all.append(b)
+            strata_all.append(0)
+    return (np.asarray(left_all, dtype=np.int64), np.asarray(right_all, dtype=np.int64),
+            np.asarray(strata_all, dtype=np.float64))
 
 
 def _reference_points(context: dict, table: dict) -> np.ndarray:
@@ -83,50 +142,72 @@ def _reference_points(context: dict, table: dict) -> np.ndarray:
     return np.where(norm > 1 - 1e-7, target / np.maximum(norm, 1e-12) * (1 - 1e-7), target)
 
 
-def gromov_prefix_alignment(table: dict, context: dict) -> float:
-    """The rank agreement between the hyperbolic shared depth and the shared prefix."""
+# ------------------------------------------------------------------ metrics
+def _alignment(table: dict, context: dict, *, curvature: float = 1.0,
+               euclidean: bool = False) -> float:
     from scipy import stats
     points = _reference_points(context, table)
-    left, right = _pairs(context, table)
     rows = np.asarray(table["rows"], dtype=np.int64)
-    depth = _gromov(points[left], points[right])
-    shared = (rows[left] == rows[right]).sum(axis=1).astype(np.float64)
-    if np.unique(shared).size < 2 or np.unique(depth).size < 2:
+    rng = np.random.default_rng(SEED)
+    left, right, strata = _stratified_pairs(rows, rng)
+    if left.size < 8:
         return 0.0
-    rho = float(stats.spearmanr(depth, shared)[0])
-    return rho
+    if euclidean:
+        depth = euclidean_depth(points[left], points[right])
+    else:
+        depth = gromov_depth(points[left], points[right], curvature)
+    prefix = shared_prefix_length(rows, left, right)
+    if np.unique(prefix).size < 2 or np.unique(depth).size < 2:
+        return 0.0
+    return float(stats.spearmanr(depth, prefix)[0])
+
+
+def gromov_prefix_alignment(table: dict, context: dict) -> float:
+    """Does a deeper hyperbolic shared ancestor come with a longer shared prefix?"""
+    return _alignment(table, context, curvature=1.0)
+
+
+def gromov_prefix_alignment_flat(table: dict, context: dict) -> float:
+    """The same construction at a nearly flat curvature (the control)."""
+    return _alignment(table, context, curvature=FLAT_CURVATURE)
+
+
+def gromov_prefix_alignment_euclidean(table: dict, context: dict) -> float:
+    """The same construction with a Euclidean shared depth (the control)."""
+    return _alignment(table, context, euclidean=True)
 
 
 def hyperbolic_tree_distortion(table: dict, context: dict) -> float:
-    """The rank agreement between the SID tree distance and the hyperbolic distance."""
+    """Does the SID prefix tree preserve the reference's geodesic distances?"""
     from scipy import stats
     points = _reference_points(context, table)
-    left, right = _pairs(context, table)
     rows = np.asarray(table["rows"], dtype=np.int64)
-    depth = _gromov(points[left], points[right])
-    shared = (rows[left] == rows[right]).sum(axis=1).astype(np.float64)
-    # the tree distance of the prefix tree: the codes differ from the first
-    # mismatch onwards, so the path length is the width minus the shared prefix
-    tree = rows.shape[1] - shared
-    if np.unique(tree).size < 2 or np.unique(depth).size < 2:
+    rng = np.random.default_rng(SEED)
+    left, right, _ = _stratified_pairs(rows, rng)
+    if left.size < 8:
         return 0.0
-    return float(stats.spearmanr(tree, depth)[0])
+    tree = tree_distance(rows, left, right)
+    geodesic = _poincare_distance(points[left], points[right], 1.0)
+    if np.unique(tree).size < 2 or np.unique(geodesic).size < 2:
+        return 0.0
+    return float(stats.spearmanr(tree, geodesic)[0])
 
 
 def hyperbolic_cone_consistency(table: dict, context: dict) -> float:
-    """How much tighter each cell's angular cone is than a size-matched random cell."""
+    """Is a cell's angular cone tighter than a DIFFERENT cell of the same size?"""
     points = _reference_points(context, table)
     rows = np.asarray(table["rows"], dtype=np.int64)
     codes = rows[:, 0]
+    n_items = rows.shape[0]
     cells = {}
     for position, code in enumerate(codes.tolist()):
         cells.setdefault(int(code), []).append(position)
+    rng = np.random.default_rng(SEED)
 
-    def aperture(members) -> float:
-        """The angular aperture of a set of points seen from its own centre."""
+    def aperture(members: np.ndarray) -> float:
         block = points[members]
         centre = block.mean(axis=0)
-        norm = np.linalg.norm(centre)
+        norm = float(np.linalg.norm(centre))
         if norm < 1e-12:
             return 0.0
         direction = centre / norm
@@ -137,15 +218,15 @@ def hyperbolic_cone_consistency(table: dict, context: dict) -> float:
             sin_angle = np.where(lengths > 1e-12, radial_norm / lengths, 0.0)
         return float(np.mean(np.arcsin(np.clip(sin_angle, 0.0, 1.0))))
 
-    rng = np.random.default_rng(SEED)
-    ratios = []
-    weights = []
+    ratios, weights = [], []
     for members in cells.values():
         if len(members) < 2:
             continue
         real = aperture(np.asarray(members, dtype=np.int64))
-        shuffled = rng.permutation(members)
-        null = aperture(np.asarray(shuffled, dtype=np.int64))
+        # the null is a DIFFERENT set of the same size, drawn from the whole
+        # catalogue: a rearrangement of the same items would make the two the same
+        null_members = rng.choice(n_items, size=len(members), replace=False)
+        null = aperture(np.asarray(null_members, dtype=np.int64))
         if null <= 1e-12:
             continue
         ratios.append(1.0 - real / null)
@@ -158,14 +239,19 @@ def hyperbolic_cone_consistency(table: dict, context: dict) -> float:
 
 
 gromov_prefix_alignment.note = ("the rank agreement between the hyperbolic shared depth "
-                                "of a pair and the length of their shared SID prefix")
+                                "of a catalogue pair and the length of their shared SID "
+                                "prefix, over label-free pairs")
+gromov_prefix_alignment_flat.note = "the same at curvature 1e-3 (control)"
+gromov_prefix_alignment_euclidean.note = "the same with a Euclidean shared depth (control)"
 hyperbolic_tree_distortion.note = ("the rank agreement between the SID prefix tree's "
-                                   "distance and the reference's hyperbolic distance")
+                                   "distance and the reference's geodesic distance")
 hyperbolic_cone_consistency.note = ("how much tighter each level-1 cell's angular cone "
-                                    "is than a size-matched random cell")
+                                    "is than a DIFFERENT set of the same size")
 
 METRICS = {
     "gromov_prefix_alignment": gromov_prefix_alignment,
+    "gromov_prefix_alignment_flat": gromov_prefix_alignment_flat,
+    "gromov_prefix_alignment_euclidean": gromov_prefix_alignment_euclidean,
     "hyperbolic_tree_distortion": hyperbolic_tree_distortion,
     "hyperbolic_cone_consistency": hyperbolic_cone_consistency,
 }

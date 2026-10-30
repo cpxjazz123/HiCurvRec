@@ -36,6 +36,12 @@ FAMILIES = {
     "behaviour_contrast": ("the family that works: the table is contrasted against "
                             "the behaviour reference with explicit positives and "
                             "negatives, on the level-1 prefix centroid"),
+    "structural_alignment": ("label-free structure comparisons: does the hyperbolic "
+                              "shared depth of a pair agree with the length of their "
+                              "shared SID prefix, does the prefix tree preserve the "
+                              "reference's distances, is a cell's angular cone tighter "
+                              "than a different set of the same size -- measured with "
+                              "the corrected definitions, and none of them is eligible"),
 }
 
 
@@ -92,6 +98,9 @@ def family_of(metric_id: str) -> str:
     if any(word in name for word in ("hbaa", "q_h", "hyp_cell", "hyp_hist", "hgca",
                                      "hyp_erank", "horo", "hfsc", "hyp_xview")):
         return "behaviour_contrast"
+    if any(word in name for word in ("prefix_alignment", "tree_distortion",
+                                     "cone_consistency")):
+        return "structural_alignment"
     if any(word in name for word in ("voronoi", "adj_r2", "cover_radius", "reach_lift",
                                      "mass_rank", "rank_lift", "levels", "weighted")):
         return "partition_geometry"

@@ -652,3 +652,59 @@ class MetricLedgerTests(unittest.TestCase):
         text = metric_round.refuted_ledger()
         self.assertIn("ALREADY REFUTED", text)
         self.assertIn("Spearman", text)
+
+
+class StructuralMetricDefinitionTests(unittest.TestCase):
+    """The four defects the audit found, each pinned by a test."""
+
+    def _module(self):
+        import importlib.util
+        from pathlib import Path
+        path = (Path(__file__).resolve().parents[3] / "results" / "research" /
+                "issue126" / "metric_round" / "metrics_structural.py")
+        spec = importlib.util.spec_from_file_location("metrics_structural_test", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_the_shared_prefix_stops_at_the_first_mismatch(self):
+        import numpy as np
+        module = self._module()
+        rows = np.array([[1, 2, 3], [4, 2, 3], [1, 2, 3], [1, 9, 3]])
+        left = np.array([0, 0])
+        right = np.array([1, 3])
+        # [1,2,3] vs [4,2,3] share no prefix; [1,2,3] vs [1,9,3] share one
+        self.assertEqual(list(module.shared_prefix_length(rows, left, right)), [0.0, 1.0])
+
+    def test_the_tree_distance_is_the_codes_after_the_mismatch(self):
+        import numpy as np
+        module = self._module()
+        rows = np.array([[1, 2, 3], [4, 2, 3], [1, 2, 3]])
+        left = np.array([0, 0])
+        right = np.array([1, 2])
+        self.assertEqual(list(module.tree_distance(rows, left, right)), [3.0, 0.0])
+
+    def test_the_pairs_are_label_free(self):
+        """No positive and no negative may enter the pair construction."""
+        import inspect
+        module = self._module()
+        source = inspect.getsource(module)
+        self.assertNotIn('queries["positives"]', source)
+        self.assertNotIn('queries["negatives"]', source)
+        self.assertNotIn('"negatives"', source)
+
+    def test_the_cone_null_is_a_different_set(self):
+        """The null cell must not be a rearrangement of the real one."""
+        import inspect
+        module = self._module()
+        source = inspect.getsource(module.hyperbolic_cone_consistency)
+        self.assertIn("rng.choice(n_items", source)
+        self.assertNotIn("permutation(members)", source)
+
+    def test_the_tree_distortion_is_not_the_alignment_with_a_flipped_sign(self):
+        """It must compare the tree distance with the GEODESIC distance."""
+        import inspect
+        module = self._module()
+        source = inspect.getsource(module.hyperbolic_tree_distortion)
+        self.assertIn("_poincare_distance", source)
+        self.assertNotIn("gromov_depth", source)

@@ -436,6 +436,30 @@
       },
       "tree_distortion": "the mirror of the alignment; its negation is the eligible form",
       "cone_consistency": 0.0866
+    },
+    "withdrawn": {
+      "claim": "a fourth family -- the Gromov-Prefix Alignment -- that is label-free",
+      "reason": "the +0.4990 measured for it was an artefact of four defects: the pairs came from the probe's positives and negatives, the shared prefix was counted as the number of matching POSITIONS instead of the length of the common prefix, the cone metric's null cell was a rearrangement of the real cell, and the tree distortion was the alignment with the sign flipped. Corrected, the alignment scores +0.1088 on the 107 pairs and +0.0285 on the pairs that never took part in choosing a metric, and its near-flat and Euclidean controls are indistinguishable from it, so what little there is comes from plain embedding similarity.",
+      "status": "withdrawn"
+    },
+    "corrected_families": {
+      "behaviour_contrast": {
+        "hbaa": 0.7623,
+        "q_h": 0.7382,
+        "verdict": "the only family that works"
+      },
+      "structural_alignment": {
+        "gromov_prefix_alignment": 0.1088,
+        "tree_distortion": 0.1025,
+        "cone_consistency": 0.1422,
+        "verdict": "not eligible, and the controls show the geometry is not what carries them"
+      },
+      "partition_geometry": {
+        "verdict": "not eligible"
+      },
+      "rewarding_an_answer_in_hand": {
+        "verdict": "significantly negative"
+      }
     }
   },
   "rounds": {
@@ -723,34 +747,59 @@
       "note": "round 10: the target's expected rank over the items its OWN level-1 cell hides -- a removal construction rather than a contrast. Not eligible"
     },
     "gromov_prefix_alignment": {
-      "spearman": 0.499,
-      "p": 4.47e-08,
+      "spearman": 0.1088,
+      "p": 0.265,
       "ci": [
-        0.304,
-        0.672
+        -0.102,
+        0.31
       ],
-      "eligible": true,
-      "note": "the rank agreement between the hyperbolic shared depth of an item pair and the length of their shared SID prefix, over the training pairs. On the 77 pairs that never took part in choosing a metric: +0.4375"
+      "eligible": false,
+      "pairs": 107,
+      "note": "CORRECTED definition: label-free pairs drawn from the catalogue, stratified over the shared-prefix length, with a correct prefix (consecutive from the first token). On the 77 pairs that never took part in choosing a metric it scores +0.0285. The earlier +0.4990 was an artefact of four defects and is WITHDRAWN"
+    },
+    "gromov_prefix_alignment_flat": {
+      "spearman": 0.1083,
+      "p": 0.267,
+      "ci": [
+        -0.103,
+        0.311
+      ],
+      "eligible": false,
+      "pairs": 107,
+      "note": "the same at curvature 1e-3: indistinguishable from the hyperbolic and the Euclidean versions, so whatever correlation exists is plain embedding similarity and not the hyperbolic geometry"
+    },
+    "gromov_prefix_alignment_euclidean": {
+      "spearman": 0.1083,
+      "p": 0.267,
+      "ci": [
+        -0.103,
+        0.311
+      ],
+      "eligible": false,
+      "pairs": 107,
+      "note": "the same with a Euclidean shared depth: indistinguishable from the hyperbolic version"
     },
     "hyperbolic_tree_distortion": {
-      "spearman": -0.499,
-      "p": 4.47e-08,
+      "spearman": 0.1025,
+      "p": 0.293,
       "ci": [
-        -0.672,
-        -0.304
+        -0.107,
+        0.303
       ],
       "eligible": false,
-      "note": "the rank agreement between the SID prefix tree's distance and the reference's hyperbolic distance: the mirror of the alignment above (the tree distance is the width minus the shared prefix), so its NEGATION is the eligible metric"
+      "pairs": 107,
+      "note": "CORRECTED definition: the prefix tree's own distance against the reference's GEODESIC distance, not the alignment with a flipped sign. Not eligible; on the 77 never-selected pairs +0.0085"
     },
     "hyperbolic_cone_consistency": {
-      "spearman": 0.0866,
-      "p": 0.375,
+      "spearman": 0.1422,
+      "p": 0.144,
       "ci": [
-        -0.125,
-        0.289
+        -0.069,
+        0.339
       ],
       "eligible": false,
-      "note": "how much tighter each level-1 cell's angular cone is than a size-matched random cell: not eligible (+0.2122 on the never-selected pairs)"
+      "pairs": 107,
+      "note": "CORRECTED definition: the null is a DIFFERENT set of the same size drawn from the catalogue, not a rearrangement of the cell's own members. The earlier +0.0866 was numerical noise from the broken null and is WITHDRAWN; on the 77 never-selected pairs the corrected metric scores +0.0128"
     }
   },
   "collection_correction": "67 of the original 97 pairings were wrong (the resolver took the newest commit of a SID path, and that commit often held an EMPTY file, so the run was paired with the earliest surviving table instead of the one it read). The collection is now 107 pairs, all with a readable table whose token range matches the run's own recorded vocabulary.",
