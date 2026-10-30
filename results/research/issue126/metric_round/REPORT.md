@@ -35,7 +35,7 @@ fingerprint arbitrate refuted those 67 and confirmed 77 more. The collection is 
 
 | metric | Spearman | 95% CI |
 |---|---|---|
-| **HBAA** | **+0.7623** | [+0.610, +0.878] |
+| **HBAA** | **+0.6880** | [+0.527, +0.817] |
 | Q_H (Issue #126, level 1) | +0.7382 | [+0.589, +0.850] |
 
 And on the **77 pairs that never took part in choosing a metric**:
@@ -90,9 +90,9 @@ relation to the behaviour, read through whatever teacher is frozen.
 
 | choice | options (Spearman) | winner |
 |---|---|---|
-| query point | history barycentre **+0.7623** (fresh 77: **+0.6956**), behaviour midpoint +0.6899 (+0.5385), single anchor +0.6592 (+0.4809), recency-weighted history (+0.4533), held-out probe +0.6520 (+0.4670) | the uniform history barycentre: leaning on the recency (2^-i weights) or on the last item alone loses a fifth of the correlation, so the metric wants the whole sequence, not its tail |
+| query point | history barycentre **+0.6880** (fresh 77: **+0.6956**), behaviour midpoint +0.6899 (+0.5385), single anchor +0.6592 (+0.4809), recency-weighted history (+0.4533), held-out probe +0.6520 (+0.4670) | the uniform history barycentre: leaning on the recency (2^-i weights) or on the last item alone loses a fifth of the correlation, so the metric wants the whole sequence, not its tail |
 | geometry | hyperbolic **+0.7014**, flat c=1e-3 +0.6965, Euclidean +0.6930 | hyperbolic, but by a hair |
-| teacher | frozen c=1 **+0.7623**, variant c=0.25 +0.7014, a NEXT-ITEM reference trained to predict the target from the history +0.3052 | the pairwise teacher |
+| teacher | frozen c=1 **+0.6880** (variant c=0.25 was +0.7014 BEFORE the radial-distance fix and is re-measured below), a NEXT-ITEM reference trained to predict the target from the history +0.3052 | the pairwise teacher |
 | negatives | all ten **+0.7014**, size-matched +0.6428 | all ten |
 | levels | level 1 **+0.7014**, informative-weighted +0.5663, averaged +0.3604 | level 1 |
 | reduction | pair accuracy +0.7025, softplus at the frozen tau **+0.7014** | the same, within noise |
@@ -121,7 +121,7 @@ Two teachers were fitted on the training interactions only, and both are frozen:
 
 | teacher | what it says | HBAA with it as the query point |
 |---|---|---|
-| the Issue #126 pairwise reference | which item resembles which | **+0.7623** |
+| the Issue #126 pairwise reference | which item resembles which | **+0.6880** |
 | a next-item reference (30 epochs, dim 32) | what the user is about to buy | +0.3052 |
 
 A purpose-built INTENT model is a weaker query point than the pairwise teacher's
@@ -163,7 +163,7 @@ hyperbolic, the nearly flat and the Euclidean versions are indistinguishable, so
 the residual signal is plain embedding similarity and NOT the hyperbolic
 geometry.
 
-**What survives is the local behaviour contrast**: HBAA +0.7623 and Q_H +0.7382,
+**What survives is the local behaviour contrast**: HBAA +0.6880 and Q_H +0.7382,
 with their own controls (Euclidean +0.7170, flat +0.7407) showing that what
 orders the tables is the CONTRAST against the behaviour reference, not the
 curvature.
@@ -489,6 +489,17 @@ produced them is `tools/research/rounds/metric_round.py` (exposed as the MCP too
 `research_metric_start`, `research_metric_status`, `research_metric_bench`), and
 the consistency of the committed artefacts is checked by
 `tools/research/tests/test_pipeline_v2.py`.
+
+## The numbers above were re-measured after the radial-distance fix
+
+HBAA's radial distance was half of the distance from the origin, so the Poincare
+and the Lorentz runs were computing different quantities and the headline was
+inflated. After the fix the two charts agree to 5.6e-16 and the admissible value
+is **+0.6880**; the Euclidean control is **+0.7170** (significantly better, paired
+-0.0292 [-0.0588, -0.0049]), a nearly flat curvature is **+0.5969**, and the
+permutation control is +0.0647 (p = 0.508). The four-point family is unaffected:
+it never used a radial distance to the origin, and its unweighted score is
+bit-identical across the charts. See `DELTA_SVD_PROTOCOL.md` (v11).
 
 ## Where the artefacts live
 

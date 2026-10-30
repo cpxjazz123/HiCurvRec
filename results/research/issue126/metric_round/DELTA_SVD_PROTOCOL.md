@@ -460,3 +460,63 @@ chart or the Euclidean law:
 The two independent constructions converge on +0.66 to +0.69, and neither needs a
 curvature to get there: the Euclidean forms are +0.7170 (HBAA) and +0.6618
 (four-point), i.e. at least as high as the hyperbolic forms in both families.
+
+## v11 -- the leader's gap was a missing factor of two, not the chart
+
+v10 attributed the gap between the two charts to the Poincare chart's
+saturation. **That attribution was wrong**, and the operator found the cause: the
+radial distance in `metrics_hbaa.py` was half of what it must be.
+
+```python
+def _norm(x, curvature):                       # before
+    return np.arccosh(1.0 / np.sqrt(1.0 - c * np.sum(x * x, axis=-1))) / np.sqrt(c)
+```
+
+That is ``arctanh(sqrt(c)||x||) / sqrt(c)``. The distance from the origin to a
+point of the Poincare ball of curvature ``-c`` is
+``arccosh((1+u)/(1-u)) / sqrt(c) = 2 arctanh(sqrt(u)) / sqrt(c)`` with
+``u = c||x||^2``, so the function returned exactly half of it -- and the same
+file's ``_distance(0, x)`` returned the full value. The module contradicted
+itself, and the Gromov product, which is half of
+``d(0,x) + d(0,y) - d(x,y)``, was built on the halved radial term. The Lorentz
+implementation used the full radius ``2 arctanh(sqrt(c)||x||)``, so the two
+"charts" were computing different quantities.
+
+The fix removes the second definition instead of correcting it: ``_norm`` now
+delegates to ``_distance(0, x)``, so the radial distance and the pairwise
+distance cannot drift apart again.
+
+**After the fix the two charts are the same number to machine precision:**
+
+| | rho | per-SID difference |
+| --- | --- | --- |
+| Poincare | +0.6880 | -- |
+| Lorentz | +0.6880 | median **0.000e+00**, max **5.6e-16** |
+
+So the +0.0743 gap of v10 was a definition bug, and the claim "the leader is
+chart-fragile" is withdrawn: the metric is in fact chart-invariant to the last
+bit, like the four-point family's unweighted score.
+
+The corrected numbers, on the same 107 pairs:
+
+| variant | rho | note |
+| --- | --- | --- |
+| hbaa (Poincare or Lorentz, they agree) | +0.6880 | the admissible value |
+| hbaa_euclid | **+0.7170** | paired -0.0292 [-0.0588, -0.0049], P(not better) 0.992 |
+| hbaa_flat (c = 1e-3) | +0.5969 | was reported as +0.7407 before the fix |
+| hbaa_permuted | +0.0647 | p = 0.508, not significant |
+
+Paired bootstrap: hbaa - euclid = **-0.0292 [-0.0588, -0.0049]**; hbaa - flat =
++0.0903 [+0.0358, +0.1582], P = 0.0003; hbaa - permuted = +0.6194 [+0.4191,
++0.8212].
+
+Two things survive the correction, and they point the same way:
+
+* the **Euclidean control is significantly better than the hyperbolic form**
+  (-0.0292, interval clear of zero): the chart is not what makes the metric work;
+* a **finite curvature is significantly better than a nearly flat one** (+0.0903):
+  the metric does want curvature, but not more than the Euclidean limit gives.
+
+The four-point family's retraction is unaffected: that one rested on the
+weighted/unweighted contrast, which never used a radial distance to the origin,
+and the unweighted score is bit-identical across the charts.
