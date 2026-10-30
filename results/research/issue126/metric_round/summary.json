@@ -460,6 +460,52 @@
       "rewarding_an_answer_in_hand": {
         "verdict": "significantly negative"
       }
+    },
+    "three_directions": {
+      "direction_1_gromov_delta_tree": {
+        "metric": "gromov_delta_tree_agreement",
+        "rho": 0.0611,
+        "fresh": 0.1806,
+        "verdict": "not eligible"
+      },
+      "direction_2_behaviour_hierarchy": {
+        "metric": "behaviour_hierarchy_agreement",
+        "rho": -0.2302,
+        "fresh": -0.2722,
+        "verdict": "significantly NEGATIVE: the behaviourally central items sit shallower in the ball, so the agreement between the two hierarchies runs the wrong way"
+      },
+      "direction_3_geometry_vs_behaviour": {
+        "geometry_half": {
+          "metric": "geometry_reconstruction_fidelity",
+          "rho": 0.0982,
+          "fresh": -0.0126,
+          "verdict": "not eligible"
+        },
+        "behaviour_half": {
+          "metric": "behaviour_prefix_preservation",
+          "rho": 0.458,
+          "fresh": 0.563,
+          "verdict": "ELIGIBLE and it generalises to the pairs that never took part in choosing a metric"
+        },
+        "the_distinction_the_notes_asked_for": "HELD: the behaviour relation is what tracks the recall, and the geometric reconstruction of the item's representation is not",
+        "relation_to_the_incumbent": {
+          "rho_of_the_values_with_HBAA": 0.302,
+          "rho_of_the_values_with_Q_H": 0.483,
+          "paired_difference_vs_HBAA": {
+            "mean": -0.304,
+            "ci95": [
+              -0.507,
+              -0.12
+            ]
+          },
+          "R2": {
+            "HBAA_alone": 0.414,
+            "behaviour_alone": 0.212,
+            "both": 0.5
+          },
+          "reading": "the behaviour-preservation metric is a weaker and partly different signal than HBAA (its values correlate with HBAA's at only +0.30), and the two together explain more of the recall than either alone (R^2 0.50 against 0.41 and 0.21): it adds information without beating the incumbent"
+        }
+      }
     }
   },
   "rounds": {
@@ -800,6 +846,61 @@
       "eligible": false,
       "pairs": 107,
       "note": "CORRECTED definition: the null is a DIFFERENT set of the same size drawn from the catalogue, not a rearrangement of the cell's own members. The earlier +0.0866 was numerical noise from the broken null and is WITHDRAWN; on the 77 never-selected pairs the corrected metric scores +0.0128"
+    },
+    "gromov_delta_tree_agreement": {
+      "spearman": 0.0611,
+      "p": 0.532,
+      "ci": [
+        -0.173,
+        0.283
+      ],
+      "eligible": false,
+      "pairs": 107,
+      "note": "DIRECTION 1, the Gromov delta as a tree test on triples: the share of catalogue triples where the reference's hyperbolic geometry and the SID prefix tree put the same point between the other two. On the 77 pairs that never took part in choosing a metric: +0.1806"
+    },
+    "behaviour_hierarchy_agreement": {
+      "spearman": -0.2302,
+      "p": 0.0171,
+      "ci": [
+        -0.443,
+        -0.016
+      ],
+      "eligible": false,
+      "pairs": 107,
+      "note": "DIRECTION 2: the rank agreement between a cell's centrality in the training interaction graph and its place in the ball. NEGATIVE, and it stays negative on the never-selected pairs (-0.2722): the behaviourally central items sit SHALLOWER in the ball"
+    },
+    "geometry_reconstruction_fidelity": {
+      "spearman": 0.0982,
+      "p": 0.314,
+      "ci": [
+        -0.119,
+        0.302
+      ],
+      "eligible": false,
+      "pairs": 107,
+      "note": "DIRECTION 3, the geometry half: how well the SID reconstructs the item's hyperbolic representation (the within-cell dispersion against the global one). On the never-selected pairs: -0.0126"
+    },
+    "behaviour_prefix_preservation": {
+      "spearman": 0.458,
+      "p": 7.04e-07,
+      "ci": [
+        0.244,
+        0.642
+      ],
+      "eligible": true,
+      "pairs": 107,
+      "note": "DIRECTION 3, the behaviour half: do the items a user buys next share my level-1 prefix, beyond the chance a partition of the same sizes would give. On the never-selected pairs: +0.5630 (+0.329, +0.752)"
+    },
+    "joint_behaviour_over_geometry": {
+      "spearman": 0.0658,
+      "p": 0.501,
+      "ci": [
+        -0.161,
+        0.298
+      ],
+      "eligible": false,
+      "pairs": 107,
+      "note": "the difference of the two halves: not eligible (+0.2157 on the never-selected pairs)"
     }
   },
   "collection_correction": "67 of the original 97 pairings were wrong (the resolver took the newest commit of a SID path, and that commit often held an EMPTY file, so the run was paired with the earliest surviving table instead of the one it read). The collection is now 107 pairs, all with a readable table whose token range matches the run's own recorded vocabulary.",

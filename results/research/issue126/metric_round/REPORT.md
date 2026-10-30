@@ -191,6 +191,31 @@ distance is the width minus the shared prefix -- so its NEGATION is the eligible
 form, and the cone consistency (how much tighter a cell's angular cone is than a
 size-matched random cell) does not track the recall.
 
+## The three research directions, measured
+
+| direction | metric | 107 pairs | 95% CI | 77 never selected | |
+|---|---|---|---|---|---|
+| 1. hyperbolic structural preservation (Gromov delta as a tree test on triples) | `gromov_delta_tree_agreement` | +0.0611 | [-0.173, +0.283] | +0.1806 | not eligible |
+| 2. hyperbolic behavioural hierarchy consistency (cell centrality vs its depth in the ball) | `behaviour_hierarchy_agreement` | **-0.2302** | [-0.443, -0.016] | -0.2722 | significantly negative |
+| 3a. the geometry half (does the SID reconstruct the item's representation?) | `geometry_reconstruction_fidelity` | +0.0982 | [-0.119, +0.302] | -0.0126 | not eligible |
+| **3b. the behaviour half** (do the items a user buys next share my prefix, beyond chance?) | **`behaviour_prefix_preservation`** | **+0.4580** | [+0.244, +0.642] | **+0.5630** | **eligible** |
+| 3c. the difference of the two halves | `joint_behaviour_over_geometry` | +0.0658 | [-0.161, +0.298] | +0.2157 | not eligible |
+
+**The distinction the notes asked for holds.** The BEHAVIOUR relation is what
+tracks the recall -- the items a user buys next share my level-1 prefix more than a
+partition of the same sizes would give -- while the geometric reconstruction of the
+item's representation does not track it at all.
+
+Direction 1 does not work: the SID prefix tree does not preserve the reference's
+hyperbolic hierarchy in a way that tracks the recall. Direction 2 runs the WRONG
+WAY: the behaviourally central items sit SHALLOWER in the ball, so the agreement
+between the two hierarchies is negative.
+
+The behaviour metric is a weaker and partly different signal than the incumbent
+(its values correlate with HBAA's at only +0.30), and the two together explain
+more of the recall than either alone (R^2 0.50 against 0.41 and 0.21): it adds
+information without beating HBAA (+0.7623).
+
 ## What the tenth round added, and what it refuted
 
 With the ledger in the prompt, the tenth round proposed three constructions whose
