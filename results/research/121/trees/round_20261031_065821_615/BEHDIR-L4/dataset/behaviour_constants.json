@@ -1,0 +1,19 @@
+{
+  "behaviour_profile": "symmetrised transition PPMI, truncated SVD rank 32, row-normalised",
+  "mechanism": "CONCMID-GEO-SID",
+  "behav_smooth": true,
+  "curv_c": 1.0,
+  "text_embeddings": "stage1_GeneEmbedding/output/sentence_t5.npy",
+  "train_parquet": "results/stage0_build_parquet/train.parquet",
+  "codebook_dim": 32,
+  "radial_scale": 0.28777457506735155,
+  "projection_explained_variance": 0.5713713220795397,
+  "items_with_transitions": 24474,
+  "items_without_transitions": 113,
+  "eta_median": 0.1793797415666145,
+  "eta_p90": 0.3962208377683313,
+  "displacement_median": 0.02073134380457875,
+  "displacement_p90": 0.06633182797212865,
+  "share_moved_above_1e-3": 0.9910928539472079,
+  "rule": "lag-1 (weight 1) and lag-2 (weight 0.5) training transitions, row-normalised, popularity-adjusted by p_j^(-1/2), geodesic step scaled by the Herfindahl concentration; training split only"
+}

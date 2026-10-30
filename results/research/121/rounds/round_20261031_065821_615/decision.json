@@ -1,0 +1,557 @@
+{
+  "decision_at": 1793391401.4932418,
+  "decision_hash": "c40a86b4a92e6f95e4e645c00d9889093a95b898364c65e67dcde69fb9f533c6",
+  "evidence": {
+    "BCMID-L3-RQ": {
+      "bundle_sha256": "28b5638c2c1b41156cf67b0f195b675febe5380514c16a2d588cb6b84f739389",
+      "literature_sha256": "1b64c64d8bfd74e72e0d930e80e92771265f9dade615ec7f7b18591180be85a4",
+      "math_sha256": "5293767fa0f8b8aeeb41a342120af5596f0d7b6213d8e14b8286907d791f67fd",
+      "probe_sha256": "9a620980f0c6b0f142ccd4f56cbb156364e8fa33c7a4d241d902e1d507047080"
+    },
+    "BEHDIR-L4": {
+      "bundle_sha256": "6320f35ec38ee04eabb76af7dd008daedb8cd940d1421115bc6baa7a11238d9e",
+      "literature_sha256": "ffa9593c88a5a3f78ac2ada76d1ef1d300a523b190c7c774dcec84bc21b17525",
+      "math_sha256": "b70d0f97fc7a652d5c480fbbc740311b4e878858d4220eca0bd3a80edaadb355",
+      "probe_sha256": "12647a3d9110a681548c77f7a34864c71658dc7715a9621b7cde42270b21c239"
+    },
+    "BISECT-L4-ASYM": {
+      "bundle_sha256": "8381a1faae8643c0d7a08e620933d09de1793f8fd7b7623615f53b72435f3c68",
+      "literature_sha256": "52b114624b90e83237a10eb7f001f9813608f6c4206e4840e6a51ea9d100a2d1",
+      "math_sha256": "69b18c7345edddb0733ee31a3c44f0a5f1e6ced265364eeea8274daa026a4d56",
+      "probe_sha256": "48bd2b5aa565cdfb908b24195bd15fe42464583be4de4358fa4e1bda7c7b9af7"
+    },
+    "CGREP-4L-RQ": {
+      "bundle_sha256": "7e2173f07d3603e3dd401469207a222ed71f6798773ef03090a82dd934763b51",
+      "literature_sha256": "ec8f39bad997838f459fa03708b1a88135087019837d20cc14b81041bce9af67",
+      "math_sha256": "19f9397ff512ec3c71edc0d561e33ba8f9faef2206ad8d68260959e16eb7c623",
+      "probe_sha256": "35ba87293b9e6a2158258515829a631b68bc958423ba22ffd15721267607e972"
+    },
+    "GYRO-BEHAFF-SID": {
+      "bundle_sha256": "68dcd879bd52066f5a12c9480584b5668cb11f68f12437fa4cc325a13d9162b3",
+      "literature_sha256": "b2aa6acccd65516041b8c2e1ca56b5dbab803b35e9576327e807dc7d55683b9e",
+      "math_sha256": "d324e8ecf1d6c8293364168878267432e324c27924a75850af76b966ff608b48",
+      "probe_sha256": "027e7d0fedd0c8f6945f70fdd75fc70907251a25c9b0d7a7925c068d485641e6"
+    },
+    "HOLO-TILT-L3": {
+      "bundle_sha256": "3e67caf8ffdb8045d4b0e30e78feb088fdb570fbf3a05d535c7c64585de471b8",
+      "literature_sha256": "836ac7ee77c4ccd0ab6a0fe055df0c2b0e7fc4bece24b8979fd7ea83c17bacd8",
+      "math_sha256": "c26cedd11d49afcbc5689af07b5fc1e4a61c181b911c91a06cbf466210a96863",
+      "probe_sha256": "9a6b0775f0823f412d1266abdffbb9a985d009bb1898e8ac8edb7ae546a01941"
+    },
+    "HYSPLIT-BEHV-RQ": {
+      "bundle_sha256": "caf10ee0bc541fb611347d6c41f556086426a2997901465ee79ab56203e8fa56",
+      "literature_sha256": "bb0d55b8e384b5d05e94235c884c73ef12a10d9c9a38f703ff43f4fd14da312a",
+      "math_sha256": "d103e4a242009a342fd2adeee572c29620a53bac363b0209d06bf353ed4943b1",
+      "probe_sha256": "262e6c0dbe222997306e42e714c176ce4cdcc44b45920a509f2474c76c1a0924"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "GYRO-BEHAFF-SID",
+        "mean_rank": 6.0,
+        "per_reviewer_position": {
+          "scoring_1": 6,
+          "scoring_2": 5,
+          "scoring_3": 7
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "in scope but the geometry is near-gauge: with x⊖c the residual norm is tanh(d_P(x,c)/2), a monotone transform that cannot lift r^3 off zero when a codeword fits, so the claimed cure for the 19.6-items-per-L2-cell / 1.04-L3-codes collapse does not follow, and with c=1 fixed by its own admission the curved argmin is a per-codeword 1/(1-‖c_k‖^2) reweight; the only new content is 512 codes at L2/L3, which E8's measured ceiling says scatters behavioural neighbours.",
+          "scoring_2": "Its coupled recursion is genuine in E12/E13, but gyro-subtraction equals tangent subtraction at small radii, exactly the collapse it claims to fix, the (1-a) factor can zero a codeword cost, and two 512-way positions plus a changed reconstruction algebra carry the largest regression risk while E6 shows euclid beat hyperbolic 0.06207 to 0.04671.",
+          "scoring_3": "It changes the residual algebra globally, and Mobius gyro-addition is not associative, so the claimed exact gyro-cancellation reconstruction is not correct; worse, the (1-a) multiplier is an attraction toward behaviourally matched codewords, the same hub-merge operation, and it raises K2 to 512 against E8 (0.0822 at K=256 vs 0.1547 at K=64), while the nearest probe in E6/E7 (l1_br, fully curved deep assignment) degenerated to recall@10 0.04671 with T3 NLL 0.00 - the exact failure mode this design would amplify."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 18
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "BCMID-L3-RQ",
+        "mean_rank": 3.3333,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 4,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "best coupling of the L3-rewrite family (Lorentz midpoint address changes the argmin point and the Klein cell, so neither switch is a reparametrisation) and its centred contrast deletes the hub that E6 shows cost round two; below the deep-capacity ideas because it must repair the hardest level (E6 depth-3 prefix survival 0.161, E7 T3 NLL 4.36) and its own Lorentz midpoint contracts toward the weak-curvature centre it admits as a risk.",
+          "scoring_2": "Correctly refines only the level-3 address with 512 codes and a centred contrast that E9/E11 support, but behaviour reaches the encoder only through the straight-through path with commitment pulling back, and its Klein score is not an exact hyperbolic Voronoi score, so E12/E13 are only half-realised.",
+          "scoring_3": "It is the only proposal whose curved assignment is exactly correct (the Klein argmax gamma_k(<K(a),K(q_k)>-1) is the exact nearest-codeword rule, and the Lorentz midpoint is exact), it leaves r_i and hence the E8-validated coarse partition untouched, touches only L3 with 512 codes, keeps the 3-token SID that E6/E7 favour, and SVD-aggregates the successor contrast so E10 sparsity is averaged out; its cost is the acknowledged midpoint radius contraction that can make the curvature weak."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 10
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "CGREP-4L-RQ",
+        "mean_rank": 5.6667,
+        "per_reviewer_position": {
+          "scoring_1": 5,
+          "scoring_2": 6,
+          "scoring_3": 6
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "reads the sign of the evidence correctly (E6: 2201->1298 L3 prefixes and 0.0544->0.0517 came from attractive displacement) and bounds the damage with a hinge margin equal to the measured median initial d_P and lambda normalised at step 0; placed below BCMID because curvature enters only as d_P inside a hinge (a Euclidean hinge would behave almost identically) and the impostor contrast rests on items with mean out-degree 5.45 (E10).",
+          "scoring_2": "Repulsion on quantised code vectors with STE into four codebooks fights the commitment objective, the bundle's contrast evidence (E9, 0.5898 pairwise) is associative not repulsive, the quoted rho=+0.7104 is absent from the bundle, and 4x256 touches every position where E6 shows depth-4 survival is already 0.068.",
+          "scoring_3": "The repulsive sign is the right inversion of the round-two hub attraction, but it pushes apart the text-nearest pairs on which the strongest probes in E6/E7 (l1_only 0.06233, l1_br_euclid 0.06207) depend, it uses a per-item successor cosine that E10 sparsity makes noisy, and its entire gain must appear at a 4th position with only 0.088 survival; the hinge can also starve the deep codebooks."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 17
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "HOLO-TILT-L3",
+        "mean_rank": 6.3333,
+        "per_reviewer_position": {
+          "scoring_1": 7,
+          "scoring_2": 7,
+          "scoring_3": 5
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "its rotation acts on the query while the codebook stays in one canonical frame with no inverse rotation in the loss, so the quantised residual approximates Rot_i r_i and the error becomes ‖r_i-Rot_i r_i‖; and the defect theta=pi/2-alpha-beta goes to ~90 deg for large a_i,b, i.e. at depth, so the deepest token is a near-arbitrary rotation; its grounding also misreads E6, where 0.0678 is l1_br's beam-oracle \"target SID inside the 20 beams\", not the frozen baseline, and l1_br is the prefix-degenerate variant (gold prefix alive 1.000/1.000/1.000/0.068).",
+          "scoring_2": "The geometry reduces to a detached SO(2) rotation of the level-3 query, an isometry a shared codebook can absorb, pi/2-alpha-beta is not the hyperbolic area pi-(alpha+beta+gamma), and E6 shows the Euclidean beam beat the hyperbolic one, so the smallest observable change is expected here.\nSCORE: BEHDIR-L4",
+          "scoring_3": "The holonomy rotation is an isometry, so unlike the round-two displacement it cannot merge prefixes by construction; however, an item-specific rotation against a single shared codebook is close to assignment noise, the curvature reduces to a 2D triangle angle (near-gauge), it raises K2 to 512 against the E8 finding that K=256 holds behavioural neighbours better than larger coarse partitions, and the tilt is likely inert once the deep residual shrinks."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 19
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "BISECT-L4-ASYM",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 2,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "E6/E7 put the headroom at a fourth position (T3 NLL 4.36 vs T4 1.19-1.23) and E8/E11 warn that widening or re-forcing the text prefixes scatters behaviour (K=256 share 0.0822 vs K=16 0.3106; SID-behaviour alignment 0.0907 vs null 0.067), so a per-cell 4-symbol digit born on equal-mass asymmetry quantiles adds deep capacity with no item displacement, structural child balance, curvature derived as (1/(1.2R))^2 from the measured radius, and a two-anchor score where c is not a pure gauge.",
+          "scoring_2": "E6/E7 resample (T3/T4 NLL 0.73/0.05, recall 0.06363) says a balanced deep digit is cheap to generate, and this is the only design forcing an equal-mass four-way split per level-3 cell with curvature derived from the measured radius R; penalised because E5/E9 never measure the p_out-p_in asymmetry it rides on.",
+          "scoring_3": "Its per-cell equal-mass 4-quantile split guarantees non-empty children, keeps levels 1-3 bit-identical and has the lowest measured cost, and its two-anchor score makes b_i a genuine non-gauge coupling; but the forward/backward JSD is the sparsest statistic under E10 (mean degree 5.45, edge density 5.33), the birth prototypes are frozen at epoch 1 then made trainable so the asymmetry label can wash out, and it again relies on the E6-weak 4th position (depth-4 survival 0.088)."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "HYSPLIT-BEHV-RQ",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 3,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "the only mechanism that buys deep capacity with the 3-token Stage-3 protocol and the loss unchanged, children being exp-map offsets capped at half the measured codebook spacing, so it is a bounded no-op when the E9 contrast is uninformative and it can only split, never merge (the failure that took round two to 0.0517); below the 4-token ideas because the doubling is one binary behaviour bit per anchor and a fixed random projection of a 24556-dim contrast can wash the signal out.",
+          "scoring_2": "Deepest-level doubling in place keeps the 3-token SID with zero free parameters and derived safeguards (beta=1/24, rho capped at half the measured anchor spacing), but it makes the E7-hardest position (l1_br_euclid T3 NLL 4.36) a 512-way choice and moves children off-anchor at the level the reconstruction loss weights.",
+          "scoring_3": "E6/E7 show the 4th SID position is the least recoverable (gold depth-4 survival 0.068-0.088 in every probe) and that a fully curved deep map can degenerate (l1_br: T3 NLL 0.00, depth-3 survival 1.000, recall@10 0.04671), while E8 shows the coarse-level K=256 co-location of 0.0822 is worth keeping; this mechanism keeps the 3-token SID, leaves L1/L2 and item points untouched, refines only the deepest cell into two spacing-capped children, and averages the contrast over anchor populations so it survives the E10 sparsity (mean outgoing degree 5.45)."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "BEHDIR-L4",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 1,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "keeps the L1-L3 recipe and rides the same evidenced position-4 headroom, and its behaviour enters as the canonical successor profile (E9: profile overlap beats all ten negatives in 0.5898 of pairs, cohort share 0.9291 vs 0.8871) inside a genuine log/exp-at-prefix walk with s0 measured and s clamped; below BISECT because its PPMI row is symmetrised, discarding the directed signal E5 shows is concentrated (top-1 mass 0.4375 in the low-entropy bin), and its 64 global codes can collapse into a prefix-independent behaviour id.",
+          "scoring_2": "It is the only candidate whose levels 1-3 stay bit-identical, so the deep-prefix capacity that E6/E7 show is the binding quantity cannot be merged, and its geodesic walk gives behaviour a direction rather than an assignment rewrite, matching E8 (co-location 0.3106 at K=16 falling to 0.0822 at K=256) and E10 (mean out-degree 5.45).",
+          "scoring_3": "It is monotone-additive (levels 1-3 bit-identical, so the 2201-prefix structure is preserved), uses a successor-profile PPMI direction that E5 (top-1 mass 0.4375 vs 0.0543) and E9 (0.9291 vs 0.8871, ordering 0.5898) show carries real signal, and adds no loss weight (K4=64 and s0 are derived); it is placed below the two 3-token designs because it spends the 4th position that E6 shows is only ~0.085 recoverable and depends on a fixed random projection P."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "68dcd879bd52066f5a12c9480584b5668cb11f68f12437fa4cc325a13d9162b3",
+      "idea_id": "GYRO-BEHAFF-SID",
+      "proposal_sha256": "089ea4b8c077e88e701ade80c952fe1ebe9a5103d01ba8ef15393df3d3966d12"
+    },
+    {
+      "evidence_sha256": "28b5638c2c1b41156cf67b0f195b675febe5380514c16a2d588cb6b84f739389",
+      "idea_id": "BCMID-L3-RQ",
+      "proposal_sha256": "2e0366d19c76e2c9d9450ed6705cba024b8da9c31212aa0fc5aa452acde05293"
+    },
+    {
+      "evidence_sha256": "7e2173f07d3603e3dd401469207a222ed71f6798773ef03090a82dd934763b51",
+      "idea_id": "CGREP-4L-RQ",
+      "proposal_sha256": "2e342757ee4fb7f072018ede01a2a53106c3f34660279b13c685021baf64677d"
+    },
+    {
+      "evidence_sha256": "3e67caf8ffdb8045d4b0e30e78feb088fdb570fbf3a05d535c7c64585de471b8",
+      "idea_id": "HOLO-TILT-L3",
+      "proposal_sha256": "c01e304f7be1240181eddccfc9e7eed5c85b19cb5b37221e0b570f4e350f0bc1"
+    },
+    {
+      "evidence_sha256": "8381a1faae8643c0d7a08e620933d09de1793f8fd7b7623615f53b72435f3c68",
+      "idea_id": "BISECT-L4-ASYM",
+      "proposal_sha256": "d5f4c289ffbf3c4e539aeeb64308680cf740b52d7a580821bd04648a13a96cc5"
+    },
+    {
+      "evidence_sha256": "caf10ee0bc541fb611347d6c41f556086426a2997901465ee79ab56203e8fa56",
+      "idea_id": "HYSPLIT-BEHV-RQ",
+      "proposal_sha256": "8d862e3b8d52295e1868439e69f5d97dacab3ccd9a8338fd725e09f6af4d18e2"
+    },
+    {
+      "evidence_sha256": "6320f35ec38ee04eabb76af7dd008daedb8cd940d1421115bc6baa7a11238d9e",
+      "idea_id": "BEHDIR-L4",
+      "proposal_sha256": "9fb6a0842a3637a93e078c8e3d17145b7ddd49b2fb75598f6e946318f5059ce9"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "BISECT-L4-ASYM",
+          "position": 1,
+          "reason": "E6/E7 put the headroom at a fourth position (T3 NLL 4.36 vs T4 1.19-1.23) and E8/E11 warn that widening or re-forcing the text prefixes scatters behaviour (K=256 share 0.0822 vs K=16 0.3106; SID-behaviour alignment 0.0907 vs null 0.067), so a per-cell 4-symbol digit born on equal-mass asymmetry quantiles adds deep capacity with no item displacement, structural child balance, curvature derived as (1/(1.2R))^2 from the measured radius, and a two-anchor score where c is not a pure gauge."
+        },
+        {
+          "idea_id": "BEHDIR-L4",
+          "position": 2,
+          "reason": "keeps the L1-L3 recipe and rides the same evidenced position-4 headroom, and its behaviour enters as the canonical successor profile (E9: profile overlap beats all ten negatives in 0.5898 of pairs, cohort share 0.9291 vs 0.8871) inside a genuine log/exp-at-prefix walk with s0 measured and s clamped; below BISECT because its PPMI row is symmetrised, discarding the directed signal E5 shows is concentrated (top-1 mass 0.4375 in the low-entropy bin), and its 64 global codes can collapse into a prefix-independent behaviour id."
+        },
+        {
+          "idea_id": "HYSPLIT-BEHV-RQ",
+          "position": 3,
+          "reason": "the only mechanism that buys deep capacity with the 3-token Stage-3 protocol and the loss unchanged, children being exp-map offsets capped at half the measured codebook spacing, so it is a bounded no-op when the E9 contrast is uninformative and it can only split, never merge (the failure that took round two to 0.0517); below the 4-token ideas because the doubling is one binary behaviour bit per anchor and a fixed random projection of a 24556-dim contrast can wash the signal out."
+        },
+        {
+          "idea_id": "BCMID-L3-RQ",
+          "position": 4,
+          "reason": "best coupling of the L3-rewrite family (Lorentz midpoint address changes the argmin point and the Klein cell, so neither switch is a reparametrisation) and its centred contrast deletes the hub that E6 shows cost round two; below the deep-capacity ideas because it must repair the hardest level (E6 depth-3 prefix survival 0.161, E7 T3 NLL 4.36) and its own Lorentz midpoint contracts toward the weak-curvature centre it admits as a risk."
+        },
+        {
+          "idea_id": "CGREP-4L-RQ",
+          "position": 5,
+          "reason": "reads the sign of the evidence correctly (E6: 2201->1298 L3 prefixes and 0.0544->0.0517 came from attractive displacement) and bounds the damage with a hinge margin equal to the measured median initial d_P and lambda normalised at step 0; placed below BCMID because curvature enters only as d_P inside a hinge (a Euclidean hinge would behave almost identically) and the impostor contrast rests on items with mean out-degree 5.45 (E10)."
+        },
+        {
+          "idea_id": "GYRO-BEHAFF-SID",
+          "position": 6,
+          "reason": "in scope but the geometry is near-gauge: with x⊖c the residual norm is tanh(d_P(x,c)/2), a monotone transform that cannot lift r^3 off zero when a codeword fits, so the claimed cure for the 19.6-items-per-L2-cell / 1.04-L3-codes collapse does not follow, and with c=1 fixed by its own admission the curved argmin is a per-codeword 1/(1-‖c_k‖^2) reweight; the only new content is 512 codes at L2/L3, which E8's measured ceiling says scatters behavioural neighbours."
+        },
+        {
+          "idea_id": "HOLO-TILT-L3",
+          "position": 7,
+          "reason": "its rotation acts on the query while the codebook stays in one canonical frame with no inverse rotation in the loss, so the quantised residual approximates Rot_i r_i and the error becomes ‖r_i-Rot_i r_i‖; and the defect theta=pi/2-alpha-beta goes to ~90 deg for large a_i,b, i.e. at depth, so the deepest token is a near-arbitrary rotation; its grounding also misreads E6, where 0.0678 is l1_br's beam-oracle \"target SID inside the 20 beams\", not the frozen baseline, and l1_br is the prefix-degenerate variant (gold prefix alive 1.000/1.000/1.000/0.068)."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "BEHDIR-L4",
+          "position": 1,
+          "reason": "It is the only candidate whose levels 1-3 stay bit-identical, so the deep-prefix capacity that E6/E7 show is the binding quantity cannot be merged, and its geodesic walk gives behaviour a direction rather than an assignment rewrite, matching E8 (co-location 0.3106 at K=16 falling to 0.0822 at K=256) and E10 (mean out-degree 5.45)."
+        },
+        {
+          "idea_id": "BISECT-L4-ASYM",
+          "position": 2,
+          "reason": "E6/E7 resample (T3/T4 NLL 0.73/0.05, recall 0.06363) says a balanced deep digit is cheap to generate, and this is the only design forcing an equal-mass four-way split per level-3 cell with curvature derived from the measured radius R; penalised because E5/E9 never measure the p_out-p_in asymmetry it rides on."
+        },
+        {
+          "idea_id": "HYSPLIT-BEHV-RQ",
+          "position": 3,
+          "reason": "Deepest-level doubling in place keeps the 3-token SID with zero free parameters and derived safeguards (beta=1/24, rho capped at half the measured anchor spacing), but it makes the E7-hardest position (l1_br_euclid T3 NLL 4.36) a 512-way choice and moves children off-anchor at the level the reconstruction loss weights."
+        },
+        {
+          "idea_id": "BCMID-L3-RQ",
+          "position": 4,
+          "reason": "Correctly refines only the level-3 address with 512 codes and a centred contrast that E9/E11 support, but behaviour reaches the encoder only through the straight-through path with commitment pulling back, and its Klein score is not an exact hyperbolic Voronoi score, so E12/E13 are only half-realised."
+        },
+        {
+          "idea_id": "GYRO-BEHAFF-SID",
+          "position": 5,
+          "reason": "Its coupled recursion is genuine in E12/E13, but gyro-subtraction equals tangent subtraction at small radii, exactly the collapse it claims to fix, the (1-a) factor can zero a codeword cost, and two 512-way positions plus a changed reconstruction algebra carry the largest regression risk while E6 shows euclid beat hyperbolic 0.06207 to 0.04671."
+        },
+        {
+          "idea_id": "CGREP-4L-RQ",
+          "position": 6,
+          "reason": "Repulsion on quantised code vectors with STE into four codebooks fights the commitment objective, the bundle's contrast evidence (E9, 0.5898 pairwise) is associative not repulsive, the quoted rho=+0.7104 is absent from the bundle, and 4x256 touches every position where E6 shows depth-4 survival is already 0.068."
+        },
+        {
+          "idea_id": "HOLO-TILT-L3",
+          "position": 7,
+          "reason": "The geometry reduces to a detached SO(2) rotation of the level-3 query, an isometry a shared codebook can absorb, pi/2-alpha-beta is not the hyperbolic area pi-(alpha+beta+gamma), and E6 shows the Euclidean beam beat the hyperbolic one, so the smallest observable change is expected here.\nSCORE: BEHDIR-L4"
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "HYSPLIT-BEHV-RQ",
+          "position": 1,
+          "reason": "E6/E7 show the 4th SID position is the least recoverable (gold depth-4 survival 0.068-0.088 in every probe) and that a fully curved deep map can degenerate (l1_br: T3 NLL 0.00, depth-3 survival 1.000, recall@10 0.04671), while E8 shows the coarse-level K=256 co-location of 0.0822 is worth keeping; this mechanism keeps the 3-token SID, leaves L1/L2 and item points untouched, refines only the deepest cell into two spacing-capped children, and averages the contrast over anchor populations so it survives the E10 sparsity (mean outgoing degree 5.45)."
+        },
+        {
+          "idea_id": "BCMID-L3-RQ",
+          "position": 2,
+          "reason": "It is the only proposal whose curved assignment is exactly correct (the Klein argmax gamma_k(<K(a),K(q_k)>-1) is the exact nearest-codeword rule, and the Lorentz midpoint is exact), it leaves r_i and hence the E8-validated coarse partition untouched, touches only L3 with 512 codes, keeps the 3-token SID that E6/E7 favour, and SVD-aggregates the successor contrast so E10 sparsity is averaged out; its cost is the acknowledged midpoint radius contraction that can make the curvature weak."
+        },
+        {
+          "idea_id": "BEHDIR-L4",
+          "position": 3,
+          "reason": "It is monotone-additive (levels 1-3 bit-identical, so the 2201-prefix structure is preserved), uses a successor-profile PPMI direction that E5 (top-1 mass 0.4375 vs 0.0543) and E9 (0.9291 vs 0.8871, ordering 0.5898) show carries real signal, and adds no loss weight (K4=64 and s0 are derived); it is placed below the two 3-token designs because it spends the 4th position that E6 shows is only ~0.085 recoverable and depends on a fixed random projection P."
+        },
+        {
+          "idea_id": "BISECT-L4-ASYM",
+          "position": 4,
+          "reason": "Its per-cell equal-mass 4-quantile split guarantees non-empty children, keeps levels 1-3 bit-identical and has the lowest measured cost, and its two-anchor score makes b_i a genuine non-gauge coupling; but the forward/backward JSD is the sparsest statistic under E10 (mean degree 5.45, edge density 5.33), the birth prototypes are frozen at epoch 1 then made trainable so the asymmetry label can wash out, and it again relies on the E6-weak 4th position (depth-4 survival 0.088)."
+        },
+        {
+          "idea_id": "HOLO-TILT-L3",
+          "position": 5,
+          "reason": "The holonomy rotation is an isometry, so unlike the round-two displacement it cannot merge prefixes by construction; however, an item-specific rotation against a single shared codebook is close to assignment noise, the curvature reduces to a 2D triangle angle (near-gauge), it raises K2 to 512 against the E8 finding that K=256 holds behavioural neighbours better than larger coarse partitions, and the tilt is likely inert once the deep residual shrinks."
+        },
+        {
+          "idea_id": "CGREP-4L-RQ",
+          "position": 6,
+          "reason": "The repulsive sign is the right inversion of the round-two hub attraction, but it pushes apart the text-nearest pairs on which the strongest probes in E6/E7 (l1_only 0.06233, l1_br_euclid 0.06207) depend, it uses a per-item successor cosine that E10 sparsity makes noisy, and its entire gain must appear at a 4th position with only 0.088 survival; the hinge can also starve the deep codebooks."
+        },
+        {
+          "idea_id": "GYRO-BEHAFF-SID",
+          "position": 7,
+          "reason": "It changes the residual algebra globally, and Mobius gyro-addition is not associative, so the claimed exact gyro-cancellation reconstruction is not correct; worse, the (1-a) multiplier is an attraction toward behaviourally matched codewords, the same hub-merge operation, and it raises K2 to 512 against E8 (0.0822 at K=256 vs 0.1547 at K=64), while the nearest probe in E6/E7 (l1_br, fully curved deep assignment) degenerated to recall@10 0.04671 with T3 NLL 0.00 - the exact failure mode this design would amplify."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261031_065821_615",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "BCMID-L3-RQ": {
+        "first_places": 0,
+        "mean_rank": 3.3333,
+        "total_rank": 10
+      },
+      "BEHDIR-L4": {
+        "first_places": 1,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      },
+      "BISECT-L4-ASYM": {
+        "first_places": 1,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      },
+      "CGREP-4L-RQ": {
+        "first_places": 0,
+        "mean_rank": 5.6667,
+        "total_rank": 17
+      },
+      "GYRO-BEHAFF-SID": {
+        "first_places": 0,
+        "mean_rank": 6.0,
+        "total_rank": 18
+      },
+      "HOLO-TILT-L3": {
+        "first_places": 0,
+        "mean_rank": 6.3333,
+        "total_rank": 19
+      },
+      "HYSPLIT-BEHV-RQ": {
+        "first_places": 1,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      }
+    },
+    "backups": [
+      {
+        "first_places": 1,
+        "idea_id": "BISECT-L4-ASYM",
+        "mean_rank": 2.3333,
+        "status": "BACKUP",
+        "total_rank": 7
+      },
+      {
+        "first_places": 1,
+        "idea_id": "HYSPLIT-BEHV-RQ",
+        "mean_rank": 2.3333,
+        "status": "BACKUP",
+        "total_rank": 7
+      },
+      {
+        "first_places": 0,
+        "idea_id": "BCMID-L3-RQ",
+        "mean_rank": 3.3333,
+        "status": "BACKUP",
+        "total_rank": 10
+      },
+      {
+        "first_places": 0,
+        "idea_id": "CGREP-4L-RQ",
+        "mean_rank": 5.6667,
+        "status": "BACKUP",
+        "total_rank": 17
+      },
+      {
+        "first_places": 0,
+        "idea_id": "GYRO-BEHAFF-SID",
+        "mean_rank": 6.0,
+        "status": "BACKUP",
+        "total_rank": 18
+      },
+      {
+        "first_places": 0,
+        "idea_id": "HOLO-TILT-L3",
+        "mean_rank": 6.3333,
+        "status": "BACKUP",
+        "total_rank": 19
+      }
+    ],
+    "disagreement": {
+      "BCMID-L3-RQ": 2,
+      "BEHDIR-L4": 2,
+      "BISECT-L4-ASYM": 3,
+      "CGREP-4L-RQ": 1,
+      "GYRO-BEHAFF-SID": 2,
+      "HOLO-TILT-L3": 2,
+      "HYSPLIT-BEHV-RQ": 2
+    },
+    "rejected": [
+      {
+        "idea_id": "BISECT-L4-ASYM",
+        "mean_rank": 2.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 7
+      },
+      {
+        "idea_id": "HYSPLIT-BEHV-RQ",
+        "mean_rank": 2.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 7
+      },
+      {
+        "idea_id": "BCMID-L3-RQ",
+        "mean_rank": 3.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 10
+      },
+      {
+        "idea_id": "CGREP-4L-RQ",
+        "mean_rank": 5.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 17
+      },
+      {
+        "idea_id": "GYRO-BEHAFF-SID",
+        "mean_rank": 6.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 18
+      },
+      {
+        "idea_id": "HOLO-TILT-L3",
+        "mean_rank": 6.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 19
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 1,
+        "idea_id": "BEHDIR-L4",
+        "mean_rank": 2.0,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 6
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}
