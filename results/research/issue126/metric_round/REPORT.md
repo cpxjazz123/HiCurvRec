@@ -403,6 +403,43 @@ partition's own geometry scores -0.28 to +0.15 and none of them is. The path
 likelihood stays significantly negative, because it rewards a trie with few
 branches.
 
+## The four-point obligation of the behaviour graph, on a hop-bounded path
+
+The strongest single family this project has measured on the 107 confirmed
+SID+recall pairs is the four-point obligation of the **behaviour** graph,
+computed on the SVD space of the training matrix:
+
+| variant | rho | 95% CI |
+| --- | --- | --- |
+| `svd_delta_four_point` (c_delta = 0.05) | +0.5777 | [+0.419, +0.710] |
+| half (c = 0.025) | +0.5478 | [+0.382, +0.688] |
+| double (c = 0.1) | +0.5653 | [+0.406, +0.699] |
+| nearly flat (c = 0.001) | +0.5955 | [+0.437, +0.727] |
+| Euclidean control | +0.5869 | [+0.424, +0.723] |
+| permuted control | +0.0150 | [-0.173, +0.211] |
+
+The permuted control is at zero, and the family beats `HBA@7623` (+0.4709) and
+the `Gromov 6` curvature (+0.3656, measured on the earlier, length-bounded
+implementation).
+
+Two limits must be read with it:
+
+1. **The curvature selection is degenerate.** The behaviour graph's median
+   normalised delta is 0.5387, while a hyperbolic embedding of the same points
+   reaches at most 0.0597 at any curvature on the grid: the graph is far LESS
+   tree-like than any hyperbolic model of it. "Match the median delta" can only
+   be satisfied at the flattest end of the grid, so the estimate sits at
+   c = 0.05 with an unattainable gap, and the flat and Euclidean controls are
+   equal or better in a paired bootstrap (c_delta - flat = -0.0175
+   [-0.064, +0.025], P(not better) = 0.78). The obligation is a real, strong
+   predictor; the curvature it picks is not the curvature that ranks SIDs.
+2. **The graph is fragmented.** At k = 10 a random partner is reachable within
+   four hops in only about 4% of the pairs, and the fraction falls with a denser
+   graph. The quadruples therefore have to be drawn where the structure exists
+   (a source and three of its direct neighbours), which is recorded in
+   `DELTA_SVD_PROTOCOL.md` (v3) together with the four implementation defects
+   that the first execution concealed.
+
 ## What was tried and did not work
 
 | construction | Spearman | why it failed |
