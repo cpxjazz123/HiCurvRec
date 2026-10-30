@@ -35,6 +35,7 @@ from model.curved_chain import (  # noqa: E402
     log_at,
     log_map,
     parallel_transport,
+    transport_to_prefix,
 )
 
 
@@ -181,6 +182,30 @@ def test_gradients_reach_the_codewords_and_the_input():
     loss.backward()
     assert chain.codebooks.grad is not None and float(chain.codebooks.grad.abs().sum()) > 0
     assert raw.grad is not None and float(raw.grad.abs().sum()) > 0
+
+
+def test_the_algebraic_objective_matches_the_direct_form():
+    """The (batch, codes) algebraic form must equal the materialised difference."""
+    torch.manual_seed(3)
+    codebooks = torch.randn(1, 24, 8, dtype=torch.float64) * 0.3
+    chain = CurvedChain(codebooks=codebooks, curvature=1.0)
+    points = exp_map(torch.randn(16, 8, dtype=torch.float64) * 1.0)
+    prefix = points * 0.5
+    residual = log_at(prefix, points, 1.0)
+    direction = torch.nn.functional.normalize(
+        torch.randn(16, 8, dtype=torch.float64), dim=-1)
+    gain = torch.rand(16, dtype=torch.float64) + 0.5
+    algebraic, distance = chain.level_objective(prefix, residual, direction, gain, 0)
+    # the direct form
+    transported = transport_to_prefix(codebooks[0], prefix, 1.0)
+    difference = residual[:, None, :] - transported
+    flat = (difference * difference).sum(dim=-1)
+    transported_direction = parallel_transport(direction, prefix, 1.0)
+    along = (difference * transported_direction[:, None, :]).sum(dim=-1)
+    direct = (1.0 / (conformal(prefix, 1.0) ** 2)) * (
+        gain[:, None] * along * along + (flat - along * along).clamp_min(0.0))
+    assert torch.allclose(algebraic, direct, atol=1e-8)
+    assert torch.allclose(distance, flat, atol=1e-8)
 
 
 def test_the_chain_is_deterministic():

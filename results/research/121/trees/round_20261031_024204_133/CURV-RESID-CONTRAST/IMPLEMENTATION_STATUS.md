@@ -70,3 +70,26 @@ optimisation route (the algebraic reformulation above, which removes the
 same one-epoch smoke before any formal run.
 
 No training has been completed, and no recall value exists.
+
+## Second smoke (after the algebraic objective)
+
+The objective was rewritten in its algebraic form — every entry is a function of
+`<r,e>`, `<p,e>`, `<e,e>`, `<r,p>`, `<r,u>`, `<p,u>`, `<e,u>`, `|r|^2`, `|p|^2` —
+so the `(batch, codes, dim)` tensor is gone. A new test compares it with the
+materialised form: **max |algebraic - direct| = 3.6e-15**. The suite is 13/13.
+
+Two defects were found on the way and fixed: the conformal weight was `lambda^2`
+where the specification says `lambda^-2`, and `a_k` was taken against the raw
+direction instead of the transported one.
+
+The second smoke still does not reach a first epoch: after four minutes the log
+holds only `[RecBole RQ-VAE] successor attraction: 24587 items` (the PREVIOUS
+round's code path), no `[curved]` line, and the four GPUs sit at 0% utilisation
+with 525 MiB each. `logs/training_metrics.jsonl` is not written at all, so the
+hang is between the successor-attraction build and the training loop — i.e. the
+new `USE_CURVED` block that loads the behaviour constants and the codebook
+initialisation have not been exercised successfully yet.
+
+Status: the mechanism's mathematics is complete and tested, the wiring is
+incomplete and the entry point does not run. **No training has been completed
+and no recall value exists.**

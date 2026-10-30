@@ -164,15 +164,55 @@ class CurvedChain(nn.Module):
     def level_objective(self, prefix: torch.Tensor, residual: torch.Tensor,
                         direction: torch.Tensor, gain: torch.Tensor,
                         level: int = 0) -> torch.Tensor:
-        """``J[batch, code]`` for ONE level, following the specification."""
+        """``J[batch, code]`` for ONE level, in the algebraic form.
+
+        The direct form materialises the ``(batch, codes, dim)`` difference of
+        every codeword to every residual. Every quantity the objective needs is a
+        function of inner products, so the same numbers follow from
+        ``(batch, codes)`` tensors:
+
+            g_k  = s (e_k - c t_k p),   s = 1 - c|p|^2,   t_k = <p,e_k> / (1 + sqrt(1 - c|p|^2))
+            ||r - g_k||^2 = |r|^2 - 2<r,g_k> + |g_k|^2
+            a_k  = <r - g_k, u'> ,      u' = s (u - c t_u p)
+            J_k  = lambda(p)^-2 (alpha a_k^2 + ||r - g_k||^2 - a_k^2)
+
+        ``tests/test_curved_chain.py`` checks this against the direct form.
+        """
         c = self.curvature
-        transported = transport_to_prefix(self.codebooks[level], prefix, c)  # (B, K, d)
-        difference = residual[:, None, :] - transported                  # (B, K, d)
-        length = (difference * difference).sum(dim=-1)                   # (B, K)
-        along = (difference * direction[:, None, :]).sum(dim=-1)         # (B, K)
-        orthogonal = (length - along * along).clamp_min(0.0)
-        weight = conformal(prefix, c) ** 2                               # (B, 1)
-        return weight * (gain[:, None] * along * along + orthogonal), length
+        codewords = self.codebooks[level]                              # (K, d)
+        residual_sq = (residual * residual).sum(dim=-1, keepdim=True)  # (B, 1)
+        r_dot_e = residual @ codewords.t()                             # (B, K)
+        e_sq = (codewords * codewords).sum(dim=-1).unsqueeze(0)        # (1, K)
+        if c <= 0.0:
+            distance = residual_sq - 2.0 * r_dot_e + e_sq              # (B, K)
+            g_dot_u = (codewords @ direction.t()).t()                  # (B, K)
+            r_dot_u = (residual * direction).sum(dim=-1, keepdim=True)  # (B, 1)
+            along = r_dot_u - g_dot_u                                  # (B, K)
+            weight = torch.ones_like(residual_sq)                      # (B, 1)
+        else:
+            prefix_sq = (prefix * prefix).sum(dim=-1, keepdim=True)     # (B, 1)
+            scale = 1.0 - c * prefix_sq                                # (B, 1)
+            root = 1.0 + torch.sqrt((1.0 - c * prefix_sq).clamp_min(1e-12))
+            p_dot_e = prefix @ codewords.t()                           # (B, K)
+            t_k = p_dot_e / root                                       # (B, K)
+            r_dot_p = (residual * prefix).sum(dim=-1, keepdim=True)     # (B, 1)
+            r_dot_g = scale * (r_dot_e - c * t_k * r_dot_p)            # (B, K)
+            g_sq = (scale * scale) * (e_sq - 2.0 * c * t_k * p_dot_e
+                                      + (c * c) * t_k * t_k * prefix_sq)  # (B, K)
+            distance = residual_sq - 2.0 * r_dot_g + g_sq              # (B, K)
+            p_dot_u = (prefix * direction).sum(dim=-1, keepdim=True)   # (B, 1)
+            t_u = p_dot_u / root                                       # (B, 1)
+            r_dot_u = scale * ((residual * direction).sum(dim=-1, keepdim=True)
+                               - c * t_u * r_dot_p)                     # (B, 1)
+            e_dot_u = (codewords @ direction.t()).t()                  # (B, K)
+            g_dot_u = (scale * scale) * (
+                e_dot_u - c * t_u * p_dot_e
+                - c * t_k * (p_dot_u - c * t_u * prefix_sq))           # (B, K)
+            along = r_dot_u - g_dot_u                                  # (B, K)
+            # the specification's lambda(p)^-2, not lambda^2
+            weight = conformal(prefix, c) ** -2                        # (B, 1)
+        orthogonal = (distance - along * along).clamp_min(0.0)
+        return weight * (gain[:, None] * along * along + orthogonal), distance
 
     def forward(self, points: torch.Tensor, direction: torch.Tensor,
                 gain: torch.Tensor, soft: bool = False,
