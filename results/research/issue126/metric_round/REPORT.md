@@ -493,6 +493,11 @@ the consistency of the committed artefacts is checked by
   in `tools/research/tests/test_pipeline_v2.py`);
 * the measured implementation and the controls: `results/research/issue126/metric_round/metrics_hbaa.py`;
 * every measurement: `results/research/issue126/metric_bench*.json`;
+* the seven hyperbolic properties (Gromov product, radial depth, radial purity,
+  geodesic slack, entailment cone, angular separation, Busemann, volume growth)
+  with their Euclidean and permuted controls: `metrics_hyperbolic_families.py`
+  and `HYPERBOLIC_FAMILIES.md`; the four-point protocol and its four revisions:
+  `DELTA_SVD_PROTOCOL.md`;
 * the machine-readable summary: `results/research/issue126/metric_round/summary.json`;
 * the seven rounds of proposals: `results/research/issue126/metric_round/round_*/`;
 * the round machinery: `tools/research/rounds/metric_round.py` and the MCP tools
