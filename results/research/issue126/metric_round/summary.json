@@ -426,7 +426,8 @@
       "pairwise_reference_recency_weighted": 0.4533,
       "next_item_reference_prediction": 0.3052,
       "reading": "the pairwise teacher's source tower carries more of the user's direction than a next-item predictor trained on the mean-pooled history: the intent model loses the order and the recency of the sequence and with them the signal the metric reads"
-    }
+    },
+    "round_10": "Two constructions new in construction were measured and neither is eligible: the cross-fitted FULL-NEGATIVE expected rank over all 256 cells scores -0.0787, where the LOCAL contrast over ten negatives scores +0.5824, and the cell-REMOVAL construction scores +0.1225. The signal is local: the table has to contrast the true item against a few negatives, and a global ranking or a removal is a property of the reference's geometry instead."
   },
   "rounds": {
     "round_1": [
@@ -691,6 +692,26 @@
       ],
       "eligible": true,
       "note": "HBAA with the NEXT-ITEM reference as the query point: a teacher trained on the training interactions to predict the target's representation from the history (30 epochs, dim 32, sha 3499c707). Eligible, but far below the pairwise teacher's history barycentre (+0.7623): a purpose-built intent model is a WEAKER query point than the pairwise reference's source tower"
+    },
+    "hbaa_fullneg_rank_excess": {
+      "spearman": -0.0787,
+      "p": 0.42,
+      "ci": [
+        -0.313,
+        0.149
+      ],
+      "eligible": false,
+      "note": "round 10: the true cell's expected rank among ALL cells, cross-fitted by user fold. The LOCAL contrast (ten negatives) reaches +0.58, the GLOBAL ranking over all 256 cells is ~0: the global rank is a property of the reference's geometry, not of the table"
+    },
+    "hbaa_offcell_expected_rank": {
+      "spearman": 0.1225,
+      "p": 0.209,
+      "ci": [
+        -0.112,
+        0.353
+      ],
+      "eligible": false,
+      "note": "round 10: the target's expected rank over the items its OWN level-1 cell hides -- a removal construction rather than a contrast. Not eligible"
     }
   },
   "collection_correction": "67 of the original 97 pairings were wrong (the resolver took the newest commit of a SID path, and that commit often held an EMPTY file, so the run was paired with the earliest surviving table instead of the one it read). The collection is now 107 pairs, all with a readable table whose token range matches the run's own recorded vocabulary.",

@@ -5,8 +5,8 @@
     "rewarding_an_answer_in_hand": "metrics that grow when the answer is already inside the cell: the path likelihood, the generator-side hit rate -- they are NEGATIVELY correlated",
     "behaviour_contrast": "the family that works: the table is contrasted against the behaviour reference with explicit positives and negatives, on the level-1 prefix centroid"
   },
-  "proposals": 49,
-  "measured": 25,
+  "proposals": 54,
+  "measured": 27,
   "eligible": 17,
   "rows": [
     {
@@ -370,6 +370,26 @@
       "family": "partition_geometry"
     },
     {
+      "metric_id": "hbaa_offcell_expected_rank",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.12246842341198595,
+        "p": 0.20886945441803104,
+        "ci95": [
+          -0.11175248264490521,
+          0.35291492447206374
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_offcell_107.json"
+      },
+      "family": "behaviour_contrast"
+    },
+    {
       "metric_id": "hyp_bucket_reach_lift_l1",
       "title": "Level-1 SID bucket reach lift under the reference Poincare metric.",
       "round": "round_20261029_220505",
@@ -428,6 +448,26 @@
         "report": "results/research/issue126/metric_bench_all_107.json"
       },
       "family": "rewarding_an_answer_in_hand"
+    },
+    {
+      "metric_id": "hbaa_fullneg_rank_excess",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": -0.07874002248408968,
+        "p": 0.42013951332609123,
+        "ci95": [
+          -0.31338653516492065,
+          0.14910925312311984
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_round10_107.json"
+      },
+      "family": "behaviour_contrast"
     },
     {
       "metric_id": "hyp_frechet_cover_radius_l1",
@@ -745,6 +785,36 @@
       "round": "round_20261030_092444",
       "proposed_by": "metric_ideation_4",
       "formula": "Let B = {x in R^d : c||x||^2 < 1} be the Poincare ball of curvature -c, c > 0, with c the frozen Issue #126 reference's curvature (if it is not exported, c = 1). Mobius addition: x (+) y = ((1 + 2c<x,y> + c||y||^2)x + (1 - c||x||^2)y) / (1 + 2c<x,y> + c^2||x||^2||y||^2). exp_x(v) = x (+) (tanh(sqrt(c)||v||/2) v / (sqrt(c)||v||)); log_x(y) = (2/sqrt(c)) artanh(sqrt(c)||(-x)(+)y||) ((-x)(+)y) / ||(-x)(+)y||; d_B(x,y) = (2/sqrt(c)) arcosh(1 + 2c||x-y||^2 / ((1-c||x||^2)(1-c||y||^2))). For a finite set S in B, mu(S) = argmin_{x in B} sum_{s in S} d_B(x,s)^2, computed from x_0 = the radius-clipped ",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_prefixtree_isometry",
+      "title": "Rank fidelity of the SID prefix tree, realised as a geodesic tree of hyperbolic Frechet barycentres in the frozen reference Poincare ball, to the reference distances over all training pairs.",
+      "round": "round_20261030_094519",
+      "proposed_by": "metric_ideation_1",
+      "formula": "Fix curvature c = 1 (the curvature of the frozen reference ball, as stated by the reference; not fitted). Let x_i be the reference SOURCE representation of item i, already in the unit Poincare ball B_c = {x : sqrt(c)||x|| < 1}.\nMobius addition: u (+) v = ((1 + 2c<u,v> + c||v||^2) u + (1 - c||u||^2) v) / (1 + 2c<u,v> + c^2||u||^2||v||^2).\nPoincare distance: d(u,v) = (2/sqrt(c)) * artanh( sqrt(c) * ||(-u)(+)v|| ).\nOrigin maps: log_0(x) = artanh(sqrt(c)||x||) x / (sqrt(c)||x||); exp_0(w) = tanh(sqrt(c)||w||) w / (sqrt(c)||w||), with exp_0(0)=0.\nFRE(S) = hyperbolic Frechet (Karcher) mean of a set ",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_gromov_offcell_expected_rank_l1",
+      "title": "Curvature-normalised Gromov common-ancestor expected rank of the target over the items its own level-1 cell fails to absorb.",
+      "round": "round_20261030_094519",
+      "proposed_by": "metric_ideation_2",
+      "formula": "Let N be the item count, K the number of distinct level-1 codes in the exported table, c = c_ref > 0 the frozen reference curvature, tau = tau_ref > 0 its frozen temperature, o = 0 the ball origin. For every item h let s_h be the reference source vector and t_h its target vector; map to the Poincare ball B_c = {x : c||x||^2 < 1} by x_h = exp_0^c(s_h), y_h = exp_0^c(t_h) (identity if the reference already emits ball points). Poincare distance: d_c(x,y) = c^{-1/2} arcosh( 1 + 2c||x-y||^2 / ((1-c||x||^2)(1-c||y||^2)) ). Gromov product (common-ancestor similarity) about o: G_c(x,y) = (x|y)_o = 1/2",
+      "measured": false,
+      "measurement": null,
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "hyp_history_fullneg_rank_excess",
+      "title": "Cross-fitted full-negative expected-rank of the level-1 bucket, queried by the geodesic barycentre of the user's whole training history.",
+      "round": "round_20261030_094519",
+      "proposed_by": "metric_ideation_3",
+      "formula": "Work in the frozen reference's ball rescaled to unit curvature (c=1) by x -> sqrt(c_ref)*x; this is a fixed isometry, not a parameter. Let d(.,.) be that Poincare geodesic distance, and let Bary(S) be the Karcher/Frechet barycentre of a finite set S in the ball (the point minimising the sum of squared d). Let b(i) be the level-1 SID code of item i, and let the frozen reference give a source point s_i and a target point t_i per item (same ball).\nSplit the TRAINING users deterministically by hash(u) mod 2 into folds A and B. For direction A->B let T_A be all training items of fold-A users and le",
       "measured": false,
       "measurement": null,
       "family": "behaviour_contrast"

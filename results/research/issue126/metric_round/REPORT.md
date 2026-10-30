@@ -130,6 +130,22 @@ order and the recency of the sequence, and with them the part of the user's
 direction the metric reads. The teacher's geometry, not the metric's formula, is
 where the information lives.
 
+## What the tenth round added, and what it refuted
+
+With the ledger in the prompt, the tenth round proposed three constructions whose
+CONSTRUCTION differs from the refuted ones, and two of them were implemented:
+
+| construction | Spearman | 95% CI | |
+|---|---|---|---|
+| the true cell's expected rank among ALL cells, cross-fitted by user fold | **-0.0787** | [-0.313, +0.149] | not eligible |
+| the target's expected rank over the items its OWN cell hides (a removal, not a contrast) | +0.1225 | [-0.112, +0.353] | not eligible |
+| the local contrast over ten negatives, for comparison | **+0.5824** | [+0.396, +0.739] | eligible |
+
+The reading is about locality: **the signal is the table's ability to contrast the
+true item against a few negatives**. Ranking the cell among all 256 of them, or
+removing the cell and ranking what is left, measures the reference's geometry
+rather than the table's quality, and neither moves.
+
 ## The degenerate cases behave
 
 | table | HBAA |
