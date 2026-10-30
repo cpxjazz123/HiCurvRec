@@ -1880,6 +1880,27 @@
             }
           },
           "verdict": "the excess is reproduced by ten arbitrary origins (+0.7612) and by a SHUFFLED radius (+0.7506), so it is not group-specific radial information; it is a table-level aggregate of compactness (the compactness prediction recovers it, +0.7465). It is not a conditioning artefact (random noise of the same scale gives +0.6954) and it does not survive the leave-one-family-out protocol. The +0.7623 headline is withdrawn: a table-level correction tuned on the same 107 pairs."
+        },
+        "feature_probe": {
+          "artifact": "results/research/issue126/hbaa_feature_probe_107.json",
+          "full_permutation": {
+            "mean": 0.7078,
+            "p5": 0.691,
+            "p95": 0.7215,
+            "share_above_0.74": 0.0,
+            "draws": 100
+          },
+          "substitutions": {
+            "H1_compactness": 0.7636,
+            "H2_separation": 0.7104,
+            "H3_size": 0.7123,
+            "H4_shape": 0.721,
+            "H5_moments_only": 0.7104,
+            "noise": 0.7065,
+            "radial_raw": 0.7623,
+            "plain": 0.7104
+          },
+          "verdict": "the gain IS the group compactness: substituting the compactness alone recovers it completely (+0.7636 against +0.7623), while the group separation, the size, the shape and a table-level rescaling all stay at the baseline; and a FULL permutation of the radius values (100 draws) collapses to +0.7078, with no draw reaching 0.74, so the group-to-radius correspondence is required. The leave-one-family-out check could not be run: every run has its own variant name, so the families have one or two members each."
         }
       }
     }
