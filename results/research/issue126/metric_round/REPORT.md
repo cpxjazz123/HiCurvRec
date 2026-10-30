@@ -688,6 +688,41 @@ separation feature was identically zero (an infinite mean replaced by zero), the
 table-level calibration cancelled in the positive-minus-negative difference, and
 the families had one member each.
 
+
+## The premise: is there a tree in the behaviour data at all?
+
+Three questions that come before any metric. All on the training interactions and
+the same 20,000 item quadruples; the four-point deviation is the scale-free
+`(S_max - S_mid) / S_max`, zero exactly when the condition holds.
+
+| geometry | median relative delta | share below 0.01 | spearman with the behaviour distance |
+| --- | --- | --- | --- |
+| behaviour, PPMI co-occurrence | **0.0023** | **0.956** | -- |
+| behaviour, raw co-occurrence | 0.0041 | 0.771 | -- |
+| text (sentence-T5) | 0.0242 | 0.222 | **+0.0822** |
+| text with the items permuted (null) | 0.0246 | 0.219 | +0.0106 |
+| hyperbolic (the frozen Stage 2 reference) | 0.0428 | 0.130 | **+0.1749** |
+
+**The interaction graph is strongly tree-like**: the PPMI-weighted co-occurrence
+satisfies the four-point condition within 1% for 95.6% of the quadruples. The
+hierarchical structure a hyperbolic space is supposed to represent really is in
+the behaviour data.
+
+**The text embedding reflects it only weakly and is not itself a tree.** Its
+rank correlation with the behaviour distance is +0.0822 (the permuted null gives
++0.0106), the leading canonical correlations between the text space and the
+behaviour space reach 0.697 -- so much of the behaviour structure is linearly
+decodable from the text -- but the text's own four-point deviation (0.0242) is
+indistinguishable from its permuted copy (0.0246). The text space is a
+similarity space, not a tree metric.
+
+**The hyperbolic reference keeps the behaviour geometry about twice as well as
+the text does** (+0.1749 against +0.0822), even though it is less tree-like in
+the abstract four-point sense (0.0428 against 0.0242): tree-likeness and
+behavioural fidelity are different properties. Whether a hyperbolic MODEL beats
+a Euclidean one at the same capacity and budget still needs the matched
+training comparison.
+
 ## Where the artefacts live
 
 * the metric: `tools/research/science/hyperbolic_ancestor_alignment.py` (with tests
