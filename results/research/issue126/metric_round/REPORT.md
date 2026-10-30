@@ -92,7 +92,7 @@ relation to the behaviour, read through whatever teacher is frozen.
 |---|---|---|
 | query point | history barycentre **+0.6880** (fresh 77: **+0.6956**), behaviour midpoint +0.6899 (+0.5385), single anchor +0.6592 (+0.4809), recency-weighted history (+0.4533), held-out probe +0.6520 (+0.4670) | the uniform history barycentre: leaning on the recency (2^-i weights) or on the last item alone loses a fifth of the correlation, so the metric wants the whole sequence, not its tail |
 | geometry | hyperbolic **+0.7014**, flat c=1e-3 +0.6965, Euclidean +0.6930 | hyperbolic, but by a hair |
-| teacher | frozen c=1 **+0.6880** (variant c=0.25 was +0.7014 BEFORE the radial-distance fix and is re-measured below), a NEXT-ITEM reference trained to predict the target from the history +0.3052 | the pairwise teacher |
+| teacher | frozen c=1 **+0.6880**, identical to the metric's own curvature (the two implementations agree to the last bit after the radial-distance fix), a NEXT-ITEM reference trained to predict the target from the history +0.3052 | the pairwise teacher |
 | negatives | all ten **+0.7014**, size-matched +0.6428 | all ten |
 | levels | level 1 **+0.7014**, informative-weighted +0.5663, averaged +0.3604 | level 1 |
 | reduction | pair accuracy +0.7025, softplus at the frozen tau **+0.7014** | the same, within noise |
@@ -500,6 +500,34 @@ is **+0.6880**; the Euclidean control is **+0.7170** (significantly better, pair
 permutation control is +0.0647 (p = 0.508). The four-point family is unaffected:
 it never used a radial distance to the origin, and its unweighted score is
 bit-identical across the charts. See `DELTA_SVD_PROTOCOL.md` (v11).
+
+
+## The delta weighting was the problem, and it is now measured
+
+The four-point metric was a delta-weighted mean of the pairing agreement. Holding
+the agreement fixed and swapping only the weights reproduces the whole gap, and
+shows what the weighting did:
+
+| weights | rho (106 tables) |
+| --- | --- |
+| the saturated (Poincare) weights | +0.6513 |
+| the correct (Lorentz) weights | +0.5312 |
+| uniform weights | +0.6497 |
+
+Paired: uniform - correct = **+0.1181 [+0.0693, +0.1755]** (P < 1e-4), and
+saturated - uniform = **+0.0013 [-0.0345, +0.0347]** (P = 0.46) -- the saturated
+weights are indistinguishable from uniform ones. The saturated chart did not
+change WHICH quadruples agree with the SID tree (the pairing agreement between the
+charts is 1.0000); it only broke the weighting, and the broken weighting is the
+uniform one. The delta weighting `1/(1+delta/median)` gives the decisive
+influence to the quadruples whose delta sits at the median -- the ones that are
+NOT distinctive in tree-likeness -- and the true delta falls as the pairing scale
+grows (-0.398), so that weighting systematically favours the geometrically
+distant quadruples, whose agreement with the SID tree is the least reliable.
+
+So the admissible metric of this family is the **unweighted agreement rate**
+(+0.6593), and the delta weighting -- the part that was supposed to make it
+principled -- has to go. Nothing in this family rewards a curvature.
 
 ## Where the artefacts live
 
