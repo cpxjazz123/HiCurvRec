@@ -1,0 +1,14 @@
+{
+  "text_embeddings": "stage1_GeneEmbedding/output/sentence_t5.npy",
+  "train_parquet": "results/stage0_build_parquet/train.parquet",
+  "radial_scale": 0.24839878697627993,
+  "successors_cap": 32,
+  "nulls": 32,
+  "seed": 42,
+  "items_with_direction": 23944,
+  "items_fallback_isotropic": 643,
+  "norm_median": 0.16655627267427808,
+  "gain_min": 0.5,
+  "gain_max": 2.0,
+  "rule": "successor mean log map minus popularity-decile-matched null mean log map, in the curvature-1 ball; training split only"
+}

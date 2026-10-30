@@ -246,6 +246,19 @@ def session_answer(path: Path) -> str:
     return "\n".join(chunks).strip()
 
 
+#: The provider every agent runs on, with the credential as an ENV PLACEHOLDER:
+#: the sandbox environment carries the key, the config file never does.
+AGENT_PROVIDER = {
+    "commandcode": {
+        "npm": "@ai-sdk/openai-compatible",
+        "name": "CommandCode",
+        "options": {"baseURL": "https://api.commandcode.ai/provider/v1",
+                    "apiKey": "{env:COMMANDCODE_API_KEY}"},
+        "models": {"deepseek/deepseek-v4.1-flash": {"name": "DeepSeek V4.1 Flash"}},
+    }
+}
+
+
 def write_isolation_config(workspace: Path, role: str = "verify",
                            read_paths=None, allow_shell: bool = False,
                            allow_write: bool = False,
@@ -259,6 +272,9 @@ def write_isolation_config(workspace: Path, role: str = "verify",
                                                  allow_shell, allow_write)}
     if mcp_servers:
         config["mcp"] = {"servers": mcp_servers}
+    if os.environ.get("COMMANDCODE_API_KEY") or \
+            (Path.home() / ".config" / "opencode" / "commandcode.key").is_file():
+        config["provider"] = AGENT_PROVIDER
     path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -467,9 +483,17 @@ def _agent_environment(workspace: Path) -> dict:
     that inherits the server's directory reads the REPOSITORY's config and
     silently ignores the workspace boundary.
     """
-    keep = {"HOME", "PATH", "USER", "LOGNAME", "SHELL", "TERM", "TMPDIR"}
+    keep = {"HOME", "PATH", "USER", "LOGNAME", "SHELL", "TERM", "TMPDIR",
+            "COMMANDCODE_API_KEY"}
     env = {key: value for key, value in os.environ.items()
            if key in keep or key.startswith(("OPENCODE_", "XDG_", "LC_"))}
+    # the provider credential for the research agents lives OUTSIDE the
+    # repository (a file the user owns, mode 600) and is injected into the
+    # sandbox environment only; it never enters a config file that is committed
+    if "COMMANDCODE_API_KEY" not in env:
+        secret = Path.home() / ".config" / "opencode" / "commandcode.key"
+        if secret.is_file():
+            env["COMMANDCODE_API_KEY"] = secret.read_text(encoding="utf-8").strip()
     env.setdefault("HOME", str(Path.home()))
     env["PWD"] = str(Path(workspace))
     return env

@@ -31,7 +31,7 @@ ACTION = "inspect"  # inspect | behavior | worker
 LIVE_AGENTS_ALLOWED = True
 RESEARCH_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
 AGENT_BINARY = "opencode"
-AGENT_MODEL = "opencode-go/deepseek-v4.1-flash"
+AGENT_MODEL = "commandcode/deepseek/deepseek-v4.1-flash"
 AGENT_TIMEOUT_SECONDS = 1800
 #: The deadline of one sub-agent of a round, counted from the moment the task is
 #: dispatched: the initialisation, the model calls, the retries and the

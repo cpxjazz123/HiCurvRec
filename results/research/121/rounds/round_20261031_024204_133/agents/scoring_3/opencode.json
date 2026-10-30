@@ -1,0 +1,58 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "bash": "deny",
+    "edit": "deny",
+    "write": "deny",
+    "webfetch": "deny",
+    "websearch": "deny",
+    "task": "deny",
+    "lsp": "deny",
+    "read": {
+      "*": "deny",
+      "/fs04/ar57/wenyu/GeneRec/results/research/121/rounds/round_20261031_024204_133/agents/scoring_3/**": "allow",
+      "/home/wlia0047/ar57/wenyu/GeneRec/results/research/121/rounds/round_20261031_024204_133/agents/scoring_3/**": "allow",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md": "allow"
+    },
+    "external_directory": {
+      "*": "deny",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md": "allow",
+      "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/**": "allow"
+    }
+  },
+  "mcp": {
+    "servers": {
+      "progress": {
+        "type": "local",
+        "enabled": true,
+        "command": [
+          "/usr/bin/python3",
+          "/fs04/ar57/wenyu/GeneRec/tools/research/agents/progress_server.py",
+          "--file",
+          "/home/wlia0047/ar57/wenyu/GeneRec/results/research/121/rounds/round_20261031_024204_133/agents/scoring_3/progress.jsonl",
+          "--task-id",
+          "scoring_3",
+          "--deadline-epoch",
+          "1793375625.5519862",
+          "--wrapup-margin",
+          "60"
+        ]
+      }
+    }
+  },
+  "provider": {
+    "commandcode": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "CommandCode",
+      "options": {
+        "baseURL": "https://api.commandcode.ai/provider/v1",
+        "apiKey": "{env:COMMANDCODE_API_KEY}"
+      },
+      "models": {
+        "deepseek/deepseek-v4.1-flash": {
+          "name": "DeepSeek V4.1 Flash"
+        }
+      }
+    }
+  }
+}
