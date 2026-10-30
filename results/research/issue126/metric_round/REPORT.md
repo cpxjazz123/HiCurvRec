@@ -191,6 +191,54 @@ distance is the width minus the shared prefix -- so its NEGATION is the eligible
 form, and the cone consistency (how much tighter a cell's angular cone is than a
 size-matched random cell) does not track the recall.
 
+## The analysis rule, and the four-point experiment
+
+**The rule from here on:** ONE analysis set -- the whole 107-pair confirmed
+collection. No split, no subset, no extra pass condition. Every metric is computed
+independently on those 107 pairs and reported with its Spearman, its bootstrap
+interval and its p-value. The caveat that follows from trying many metrics on one
+collection stands and is stated: this is exploratory evidence of an association,
+not a validated generalisation.
+
+`metric_round/metric_comparison_107.csv` holds the whole table: 43 metrics, their
+families, their Spearman, their intervals and their p-values. 18 are eligible.
+
+### The delta-guided four-point experiment
+
+The protocol was fixed BEFORE the numbers (`DELTA_FOUR_POINT_PROTOCOL.md`): the
+curvature grid {0.05 … 8}, the criterion (match the median |delta| of the data's
+quadruples), the sampling (20000 catalogue quadruples, the same for every table),
+the weight (1/(1 + |delta|/m) with m the median at c_delta, shared by every
+table) and the score (the weighted agreement of the geometry's and the tree's
+preferred pairing).
+
+| variant | Spearman (107) | 95% CI | p |
+|---|---|---|---|
+| A: c_delta = 0.05 | +0.1316 | [-0.082, +0.328] | 0.177 |
+| B: 0.5 c_delta | +0.1327 | [-0.080, +0.329] | 0.173 |
+| C: 2 c_delta | +0.1340 | [-0.079, +0.331] | 0.169 |
+| D: nearly flat (0.001) | +0.1328 | [-0.080, +0.328] | 0.173 |
+| E: Euclidean on the tangents | +0.1380 | [-0.075, +0.333] | 0.156 |
+| F: permuted item-SID control | -0.0157 | [-0.199, +0.169] | 0.873 |
+
+**The hypothesis is not supported.** Three findings:
+
+1. **The curvature is not identified by this data.** The data's quadruples have a
+   median |delta| of 0.0639, which is SMALLER than every curvature on the grid
+   produces (0.1378 at c=0.05 up to 0.3377 at c=2): the data is more tree-like than
+   any hyperbolic model of it, so the criterion saturates at the grid's lower edge
+   and the variants B, C and D are the same measurement.
+2. **The Euclidean control is equal or slightly better** (+0.1380 against +0.1316),
+   so the hyperbolic geometry adds nothing here.
+3. **The permuted control lands at -0.016**, i.e. at zero: the measurement itself
+   is sound, it simply does not separate the tables.
+
+Two defects were found while running it and fixed (both are in the report): the tree
+spoke in shared-prefix counts while the geometry spoke in distances -- the two
+conventions were opposite, and a permuted table scored HIGHER than a real one; and
+the quadruples whose three tree sums are equal were decided by floating point
+noise, which inflated the baseline to 0.42 instead of the chance level of 1/3.
+
 ## The three research directions, measured
 
 | direction | metric | 107 pairs | 95% CI | 77 never selected | |
