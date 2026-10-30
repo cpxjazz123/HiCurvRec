@@ -130,6 +130,29 @@ order and the recency of the sequence, and with them the part of the user's
 direction the metric reads. The teacher's geometry, not the metric's formula, is
 where the information lives.
 
+## A fourth family that works: Gromov-Prefix Alignment
+
+The three structural families were implemented and measured on the corrected
+collection:
+
+| construction | Spearman (107) | 95% CI | (77 never selected) | |
+|---|---|---|---|---|
+| **Gromov-Prefix Alignment** | **+0.4990** | [+0.304, +0.672] | **+0.4375** | eligible |
+| Hyperbolic Tree Distortion | -0.4990 | [-0.672, -0.304] | -0.4375 | the mirror of the alignment |
+| Hyperbolic Cone Consistency | +0.0866 | [-0.125, +0.289] | +0.2122 | not eligible |
+
+**Gromov-Prefix Alignment** asks whether the hyperbolic shared depth of an item
+pair and the length of their shared SID prefix agree, over the training pairs: do
+items that share a deeper hyperbolic ancestor also share a longer prefix? It is
+eligible and it generalises (+0.4375 on the pairs that never took part in choosing
+a metric), and it is a different CONSTRUCTION from the local contrast: it never
+names a negative item and never compares a prefix centroid with a query point.
+
+The tree distortion is the same quantity with the sign flipped -- the tree
+distance is the width minus the shared prefix -- so its NEGATION is the eligible
+form, and the cone consistency (how much tighter a cell's angular cone is than a
+size-matched random cell) does not track the recall.
+
 ## What the tenth round added, and what it refuted
 
 With the ledger in the prompt, the tenth round proposed three constructions whose

@@ -5,9 +5,9 @@
     "rewarding_an_answer_in_hand": "metrics that grow when the answer is already inside the cell: the path likelihood, the generator-side hit rate -- they are NEGATIVELY correlated",
     "behaviour_contrast": "the family that works: the table is contrasted against the behaviour reference with explicit positives and negatives, on the level-1 prefix centroid"
   },
-  "proposals": 54,
-  "measured": 27,
-  "eligible": 17,
+  "proposals": 57,
+  "measured": 30,
+  "eligible": 18,
   "rows": [
     {
       "metric_id": "hbaa",
@@ -250,6 +250,26 @@
       "family": "behaviour_contrast"
     },
     {
+      "metric_id": "gromov_prefix_alignment",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.4990460517054759,
+        "p": 4.4704484410328194e-08,
+        "ci95": [
+          0.3042666825517887,
+          0.6718798938735911
+        ],
+        "eligible": true,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_structural_107.json"
+      },
+      "family": "behaviour_contrast"
+    },
+    {
       "metric_id": "hbaa_recency",
       "title": null,
       "round": "(measured only)",
@@ -410,6 +430,26 @@
       "family": "partition_geometry"
     },
     {
+      "metric_id": "hyperbolic_cone_consistency",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.08655760835701276,
+        "p": 0.375343978126193,
+        "ci95": [
+          -0.12463340014255905,
+          0.2890409826921002
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_structural_107.json"
+      },
+      "family": "behaviour_contrast"
+    },
+    {
       "metric_id": "hbaa_size_matched_kept",
       "title": null,
       "round": "(measured only)",
@@ -548,6 +588,26 @@
         "report": "results/research/issue126/metric_bench_round9_107.json"
       },
       "family": "rewarding_an_answer_in_hand"
+    },
+    {
+      "metric_id": "hyperbolic_tree_distortion",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": -0.4990460517054759,
+        "p": 4.4704484410328194e-08,
+        "ci95": [
+          -0.6718798938735911,
+          -0.30426668255178857
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_structural_107.json"
+      },
+      "family": "behaviour_contrast"
     },
     {
       "metric_id": "hyp_ref_cone_cov",
