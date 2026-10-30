@@ -57,9 +57,19 @@ def _distance(a: np.ndarray, b: np.ndarray, curvature: float) -> np.ndarray:
 
 
 def _norm(x: np.ndarray, curvature: float) -> np.ndarray:
+    """``d(0, x)``: the radial hyperbolic distance, defined the SAME way as the
+    pairwise one.
+
+    The previous form returned ``arctanh(sqrt(c) ||x||) / sqrt(c)``, which is
+    exactly HALF of the distance ``_distance`` returns for the pair ``(0, x)`` --
+    ``arccosh((1+u)/(1-u)) / sqrt(c) = 2 arctanh(sqrt(u)) / sqrt(c)``. The Gromov
+    product is half of ``d(0,x) + d(0,y) - d(x,y)``, so a halved radial term
+    distorts it, and it disagreed with the Lorentz implementation, which uses the
+    full radius. Delegating to ``_distance`` makes the two definitions one.
+    """
     c = float(curvature)
-    inner = np.clip(1.0 - c * np.sum(x * x, axis=-1), 1e-12, None)
-    return np.arccosh(1.0 / np.sqrt(inner)) / np.sqrt(c)
+    origin = np.zeros(x.shape[-1], dtype=np.float64)
+    return _distance(origin, x, c)
 
 
 def _frechet(points: np.ndarray, curvature: float = 1.0) -> np.ndarray:
