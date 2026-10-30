@@ -703,12 +703,35 @@ the same 20,000 item quadruples; the four-point deviation is the scale-free
 | text with the items permuted (null) | 0.0246 | 0.219 | +0.0106 |
 | hyperbolic (the frozen Stage 2 reference) | 0.0428 | 0.130 | **+0.1749** |
 
-**The interaction graph is strongly tree-like**: the PPMI-weighted co-occurrence
-satisfies the four-point condition within 1% for 95.6% of the quadruples. The
-hierarchical structure a hyperbolic space is supposed to represent really is in
-the behaviour data.
+**The 95.6% above was an artefact of a degenerate distance**, and the corrected
+test reverses the conclusion. The cosine distance between the co-occurrence
+profiles puts **33.4% of random item pairs at distance exactly one** (no shared
+neighbour), so those quadruples satisfy the four-point condition trivially. In
+the proper metric -- the WEIGHTED SHORTEST-PATH metric of the item-item
+co-occurrence graph, with the quadruples drawn over the whole catalogue and kept
+only when all six pairs are connected -- the numbers are:
 
-**The text embedding reflects it only weakly and is not itself a tree.** Its
+| geometry | median relative delta | share below 0.01 |
+| --- | --- | --- |
+| the interaction graph, weighted shortest paths | **0.0606** | **0.116** |
+| the same graph, degree-preserving rewiring | **0.0000** | **0.512** |
+| behaviourally related quadruples (a positive pair) | 0.0789 | 0.106 |
+| the text embedding | 0.0243 | 0.224 |
+| a matched random point cloud | **0.0088** | **0.549** |
+
+Only 11.6% of the quadruples satisfy the four-point condition, so the
+interaction graph is **not** a tree metric -- and a random graph with the same
+degrees is *more* tree-like than the interaction graph, so the structure of the
+real interactions is not what makes a metric tree-like. Behaviourally related
+quadruples are no different from random ones. The relative four-point deviation
+is also not comparable across geometries: a matched random point cloud beats the
+text embedding.
+
+So the hierarchical structure a hyperbolic space is supposed to represent is
+**not** in this behaviour geometry, and the hyperbolic motivation is not
+supported by it.
+
+**The text embedding reflects the behaviour geometry only weakly.** Its
 rank correlation with the behaviour distance is +0.0822 (the permuted null gives
 +0.0106), the leading canonical correlations between the text space and the
 behaviour space reach 0.697 -- so much of the behaviour structure is linearly
