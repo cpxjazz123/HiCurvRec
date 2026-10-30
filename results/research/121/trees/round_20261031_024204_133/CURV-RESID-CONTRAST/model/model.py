@@ -65,7 +65,7 @@ class RQVAE(nn.Module):
         """
         encoded = self.encoder(embeddings)
         if self.curved:
-            return self.curved_forward(encoded, item_ids, direction, gain)
+            return self.curved_forward(encoded, item_ids, direction, gain, embeddings)
         radial = bool(getattr(self.config, "radial", False))
         if radial and radius is None:
             raise ValueError(
@@ -85,7 +85,8 @@ class RQVAE(nn.Module):
         return reconstructed, quant_loss, int(unused_codes), tokens, reference
 
     def curved_forward(self, encoded: torch.Tensor, item_ids: torch.Tensor,
-                       direction: torch.Tensor, gain: torch.Tensor) -> tuple:
+                       direction: torch.Tensor, gain: torch.Tensor,
+                       embeddings: torch.Tensor) -> tuple:
         """The curved residual chain on the ball point of every item.
 
         ``x_i = exp_0(s * z_i)`` with the radial gauge ``s`` declared in the
@@ -104,12 +105,21 @@ class RQVAE(nn.Module):
             direction = torch.zeros_like(direction)
             gain = torch.ones_like(gain)
         tokens, prefix = self.chain(point, direction, gain)
-        reconstructed = log_map(prefix, self.chain.curvature) / scale
-        # the commitment term of the curved chain: the encoder output must not
-        # drift away from the prefix the codes define (beta is the frozen one)
-        commitment = F.mse_loss(encoded, reconstructed.detach())
+        tangent = log_map(prefix, self.chain.curvature) / scale
+        # The reconstruction goes through the decoder to the INPUT embedding, as in
+        # the baseline. Reconstructing the tangent itself collapses: both the
+        # reconstruction and the commitment are then minimised by driving the
+        # encoder output to the origin, where every codeword is equidistant, and
+        # the quantizer degenerates to one code per level (measured: two prefixes
+        # per level and 99.992% raw collision).
+        reconstructed = self.decoder(tangent)
+        # The commitment pulls the CODE side toward the encoder, never the encoder
+        # toward the codes, so the encoder keeps the scale the decoder needs.
+        commitment = F.mse_loss(encoded, tangent.detach())
         quant_loss = commitment * float(getattr(self.config, "beta", 0.25))
-        return reconstructed, quant_loss, 0, tokens, encoded
+        # the reference of the reconstruction loss is the INPUT embedding, so the
+        # encoder cannot collapse to the origin to make the loss small
+        return reconstructed, quant_loss, 0, tokens, embeddings
 
     def code_sum(self, tokens: torch.Tensor) -> torch.Tensor:
         """``z_rec = sum_l e_{l,k_l}``: the reconstruction the contract defines."""

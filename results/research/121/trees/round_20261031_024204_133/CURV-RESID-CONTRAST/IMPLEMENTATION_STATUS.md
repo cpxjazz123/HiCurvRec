@@ -131,3 +131,42 @@ commitment measured between the prefix and the transported encoder tangent.
 That is a change of the reconstruction target and of one loss term, testable by
 the same suite plus a check that the L1 prefix count stays above, say, half the
 number of codewords.
+
+## Second Stage 2 run with the anchored reconstruction: worse, not better
+
+The reconstruction was anchored to the input embedding through the decoder (as in
+the baseline) and the commitment was left pulling only the code side. The run
+finished all 3000 epochs in 603 s, and the export is **more** degenerate:
+
+| level | distinct prefixes | largest group |
+| --- | --- | --- |
+| L1 | **1** | 24,587 |
+| L2 | **1** | 24,587 |
+| L3 | **1** | 24,587 |
+
+`final_collision = 0.99996`. Every item ends in the same code at every level, and
+the exported SID is unique only through the appended disambiguation token.
+
+**What this rules out.** The collapse is not caused by the reconstruction target
+alone: with a decoder strong enough to ignore its input, the encoder can still
+send every point to one place, and the curved assignment does not resist it --
+the objective has its minimum at a single codeword reached by every item. A
+mechanism that resists this needs a term that makes using more codewords the
+cheaper option (a usage or entropy term), and every such term is a constant that
+must be derived rather than tuned (CLAUDE.md 19g), so this is mechanism work, not
+a patch.
+
+## Where the round stands
+
+* The multi-agent chain works: the provider is unblocked, five ideation agents
+  and three scorers ran, and one mechanism was selected.
+* The mechanism's mathematics is implemented and tested (13/13, including the
+  algebraic form against the materialised one to 3.6e-15).
+* Stage 2 runs at the frozen budget and the baseline's speed (0.145 to 0.16 s per
+  epoch, 3000 epochs, four GPUs), and it exports a technically valid SID.
+* **The exported SID is degenerate in both variants (1 to 2 prefixes per level),
+  so Stage 3 was not started and no recall value exists.**
+
+The candidate is `IMPLEMENTATION_NEEDS_FIX`: the assignment objective has its
+minimum at one codeword for every item, and no admissible (derivable, untuned)
+term currently prevents that.
