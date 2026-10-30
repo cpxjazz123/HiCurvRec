@@ -1,0 +1,350 @@
+{
+  "decision_at": 1793399161.76464,
+  "decision_hash": "9f317abd694acd88ab02245ebb83edb6d28f5ed77e17ac66e00558f0ab471936",
+  "evidence": {
+    "BEHTIE-SNAP": {
+      "bundle_sha256": "01b6cc76bd242e2aca002b5b9116de77f4d6f41cf498484e73c10bc38150c6d2",
+      "literature_sha256": "1fe6c319abff8653e597786350ae97ebf9bf769b420d0032b609f118a9282266",
+      "math_sha256": "8ca7c2df1c2288471c5a914528501ca3542896d142eb1ef3a21656138c3e98df",
+      "probe_sha256": "d58b7f850c28f21808ad47e8aebe0ed2610178dc56fc3c8e533f69b7f7c185a7"
+    },
+    "HCAUDIT-SID": {
+      "bundle_sha256": "74c5b8ade98d61c022fb53b0d0f157aee75a57adb85e9ef1898af009281e9b28",
+      "literature_sha256": "0b0d1cf393816f1f4557ac13d5562bb27e691d7403d29589bda78e7bd3913ec9",
+      "math_sha256": "b77c91d4d6e5f7d5b65d0fff142cd9aca05b9d15401026f7e9c3e1f4a3772680",
+      "probe_sha256": "dea973f49a57493ff346decfc315c44344dbf8f061ae2d7a7d036627b33f4bd0"
+    },
+    "SHELL-CURV-RQ": {
+      "bundle_sha256": "c874d36a065c5ff69f245cb0db3bda1924207827288a0b89893106a9d40877d6",
+      "literature_sha256": "73129df30167eebafff7c80e48dc97e0619bd6abdbf99721a78104d8e2418058",
+      "math_sha256": "edaf59438295a9ad48e0df462643291f932153d8075fcde5aef9e1b6e5db452d",
+      "probe_sha256": "a57a3948de997b169aa48ddb7ce8366076eff0806f6997e217b7be2e736256dc"
+    },
+    "TOLLCAP-SID": {
+      "bundle_sha256": "161fcdb9b7feae106f7efd5a77c8e43d9d4b10564ec9c2d91ff7c12aed9cf47c",
+      "literature_sha256": "2c3e58a8b8943014971fa345f7bc79485b044d62fefb305fda6e86114e05928f",
+      "math_sha256": "61c93edc00692e50c723481c0311ef69b06222543bb36ece092d013dd678cb32",
+      "probe_sha256": "3b659d22e9263794d189898ce94e6b3f11c6f2b3587cfe6ed0f4e3ce37b2118f"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 3,
+        "idea_id": "TOLLCAP-SID",
+        "mean_rank": 1.0,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 1,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "the only arm whose capacity-frozen transport keeps codebooks, vocabulary and every cell size equal to baseline while the Poincare chord factor 1/(1-",
+          "scoring_2": "E6 shows every recorded assignment-moving arm sits at or below 0.06363 (resample), under the 0.065 gate, while TOLLCAP is the only candidate that provably freezes codebooks, token vocabulary and every cell size and still lets behaviour change membership for a <=5% bounded set, so it cannot repeat the documented loss; its cell-level PPMI pooling is the right support scale given E10's mean outgoing degree 5.45, and lambda=eps_rec/sigma_A is derived rather than tuned, with a complete equation set (1)-(10).",
+          "scoring_3": "E6/E7 show the shallow prefixes are already saturated (depth-1 survival 1.000, T1 NLL 0) while the behaviour-tilted l1_br collapses to 0.04671 recall versus 0.06207 for l1_br_euclid, and TOLLCAP is the only candidate that edits only levels 2-3, caps every relabel at the quantizer's own eps_rec, and keeps every cell size and prefix count bit-identical (so it cannot repeat either the deviation penalty or the l1_br prefix collapse), with lambda=eps_rec/sigma_A derived and float64/eps safeguards."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 3
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "HCAUDIT-SID",
+        "mean_rank": 2.6667,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 3,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "the degree-stratified permutation null (grounded in 0.0907 same-prefix vs 0.067 permuted null), emergent 5% budget, Lorentzian score and measured +/-5% guard keep a contrast-driven repair inside the measured geometry, but it changes the cell occupancy and prefix counts e6/e8 show are not the lever and its 20-permutation 99.5th-percentile rule may reject almost every item.",
+          "scoring_2": "it is the only proposal built directly on behaviour contrast, the one diagnostic the bundle reports as positively signed, and its Lorentz score genuinely co-mingles behaviour affinity and curved distance, but its own gates are mis-scaled to the measured graph: E10 gives mean outgoing degree 5.4526 against its hard d_i>=20 eligibility, so combined with the 5% budget and a 99.5th percentile estimated from only 20 permutations (resolution 0.05) the repaired set is likely to be empty or arbitrary, and its per-item argmax over all codes has no per-item distance shell, the freedom that ordered the earlier losses in E6.",
+          "scoring_3": "Its degree-stratified permutation null is the best response to the weak behaviour signal in E9/E11 (0.5898 overlap; 0.0907 vs 0.067 same-prefix), but tau at the 99.5th null percentile plus the degree>=20 filter leaves only ~0.5-2% of 24,556 items eligible and its greedy repair starts at level 1, which E6/E7 show is already trivially survived with zero NLL, so it is likely inert against the best observed 0.06363 recall and the 0.065 gate."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 8
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "SHELL-CURV-RQ",
+        "mean_rank": 4.0,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 4,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "the 5% margin budget is a hard derived bound, but the curved distance acts only on PPMI behaviour points while shell membership and candidates are Euclidean, so its geometry-off control would likely return the same ranking (its own risk), it perturbs the training assignment every epoch rather than a frozen post-hoc pass, and c=1 is a bare gauge carrying none of the measured radius effect.",
+          "scoring_2": "its SPECIFICATION is not self-contained (\"See SPEC EQUATIONS\" with no equations, no centroid equation, no safeguards; the >=5-member rule and origin fallback appear only in RISKS), it uses a tangent-space Frechet mean q_k directly inside d_c(b_i,q_k) without stating an exp map, and its own E13 places the change inside the per-level assignment step of Stage-2 training, so it perturbs the codebook updates that E6 shows cost recall when moved, while E10's mean degree 5.45 also makes its 5% margin shell most likely to contain thin-statistics rare items.",
+          "scoring_3": "It edits all three levels including level 1 during Stage-2 with up to 5% flips per level, the broad behaviour tilt that E6 shows degrades recall (l1_br 0.04671 vs l1_br_euclid 0.06207), and its specification is the thinnest (\"See SPEC EQUATIONS\") with no map ensuring"
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 12
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "BEHTIE-SNAP",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "curvature c=(artanh(0.9)/q95",
+          "scoring_2": "its specification is complete and its constants are data-derived (c=(artanh(0.9)/q95(",
+          "scoring_3": "E5/E9 support its hyperbolic compression of popularity/radial differences (top-1 mass 0.4375 vs 0.0543; profile overlap 0.5898) and E6/E7 support editing one level >=2 instead of the saturated level 1, and its one-median-quant-error band respects the measured deviation-recall monotonicity, but the arbitrary 0.5/0.5 weights and unguarded sigma_k=0 for singleton codes make it less controlled than TOLLCAP."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "161fcdb9b7feae106f7efd5a77c8e43d9d4b10564ec9c2d91ff7c12aed9cf47c",
+      "idea_id": "TOLLCAP-SID",
+      "proposal_sha256": "cfd311d78a09a9bbe28cbe04434f3442832c91a57eb4515c3e79e862eecb19df"
+    },
+    {
+      "evidence_sha256": "74c5b8ade98d61c022fb53b0d0f157aee75a57adb85e9ef1898af009281e9b28",
+      "idea_id": "HCAUDIT-SID",
+      "proposal_sha256": "e4ffefcf0a5151dbe81cb478372c6b74dfea20e3b15753c451ef046ddec42f20"
+    },
+    {
+      "evidence_sha256": "c874d36a065c5ff69f245cb0db3bda1924207827288a0b89893106a9d40877d6",
+      "idea_id": "SHELL-CURV-RQ",
+      "proposal_sha256": "6db159163029a5c20714c0b19056199ac81c409252020dacbc108cd3f6be7e5f"
+    },
+    {
+      "evidence_sha256": "01b6cc76bd242e2aca002b5b9116de77f4d6f41cf498484e73c10bc38150c6d2",
+      "idea_id": "BEHTIE-SNAP",
+      "proposal_sha256": "cb06b55ece4d7f529896dac1b5fe65099806fd532bdb05738c5677ec2ba1fee2"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "TOLLCAP-SID",
+          "position": 1,
+          "reason": "the only arm whose capacity-frozen transport keeps codebooks, vocabulary and every cell size equal to baseline while the Poincare chord factor 1/(1-"
+        },
+        {
+          "idea_id": "HCAUDIT-SID",
+          "position": 2,
+          "reason": "the degree-stratified permutation null (grounded in 0.0907 same-prefix vs 0.067 permuted null), emergent 5% budget, Lorentzian score and measured +/-5% guard keep a contrast-driven repair inside the measured geometry, but it changes the cell occupancy and prefix counts e6/e8 show are not the lever and its 20-permutation 99.5th-percentile rule may reject almost every item."
+        },
+        {
+          "idea_id": "BEHTIE-SNAP",
+          "position": 3,
+          "reason": "curvature c=(artanh(0.9)/q95"
+        },
+        {
+          "idea_id": "SHELL-CURV-RQ",
+          "position": 4,
+          "reason": "the 5% margin budget is a hard derived bound, but the curved distance acts only on PPMI behaviour points while shell membership and candidates are Euclidean, so its geometry-off control would likely return the same ranking (its own risk), it perturbs the training assignment every epoch rather than a frozen post-hoc pass, and c=1 is a bare gauge carrying none of the measured radius effect."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "TOLLCAP-SID",
+          "position": 1,
+          "reason": "E6 shows every recorded assignment-moving arm sits at or below 0.06363 (resample), under the 0.065 gate, while TOLLCAP is the only candidate that provably freezes codebooks, token vocabulary and every cell size and still lets behaviour change membership for a <=5% bounded set, so it cannot repeat the documented loss; its cell-level PPMI pooling is the right support scale given E10's mean outgoing degree 5.45, and lambda=eps_rec/sigma_A is derived rather than tuned, with a complete equation set (1)-(10)."
+        },
+        {
+          "idea_id": "BEHTIE-SNAP",
+          "position": 2,
+          "reason": "its specification is complete and its constants are data-derived (c=(artanh(0.9)/q95("
+        },
+        {
+          "idea_id": "HCAUDIT-SID",
+          "position": 3,
+          "reason": "it is the only proposal built directly on behaviour contrast, the one diagnostic the bundle reports as positively signed, and its Lorentz score genuinely co-mingles behaviour affinity and curved distance, but its own gates are mis-scaled to the measured graph: E10 gives mean outgoing degree 5.4526 against its hard d_i>=20 eligibility, so combined with the 5% budget and a 99.5th percentile estimated from only 20 permutations (resolution 0.05) the repaired set is likely to be empty or arbitrary, and its per-item argmax over all codes has no per-item distance shell, the freedom that ordered the earlier losses in E6."
+        },
+        {
+          "idea_id": "SHELL-CURV-RQ",
+          "position": 4,
+          "reason": "its SPECIFICATION is not self-contained (\"See SPEC EQUATIONS\" with no equations, no centroid equation, no safeguards; the >=5-member rule and origin fallback appear only in RISKS), it uses a tangent-space Frechet mean q_k directly inside d_c(b_i,q_k) without stating an exp map, and its own E13 places the change inside the per-level assignment step of Stage-2 training, so it perturbs the codebook updates that E6 shows cost recall when moved, while E10's mean degree 5.45 also makes its 5% margin shell most likely to contain thin-statistics rare items."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "TOLLCAP-SID",
+          "position": 1,
+          "reason": "E6/E7 show the shallow prefixes are already saturated (depth-1 survival 1.000, T1 NLL 0) while the behaviour-tilted l1_br collapses to 0.04671 recall versus 0.06207 for l1_br_euclid, and TOLLCAP is the only candidate that edits only levels 2-3, caps every relabel at the quantizer's own eps_rec, and keeps every cell size and prefix count bit-identical (so it cannot repeat either the deviation penalty or the l1_br prefix collapse), with lambda=eps_rec/sigma_A derived and float64/eps safeguards."
+        },
+        {
+          "idea_id": "BEHTIE-SNAP",
+          "position": 2,
+          "reason": "E5/E9 support its hyperbolic compression of popularity/radial differences (top-1 mass 0.4375 vs 0.0543; profile overlap 0.5898) and E6/E7 support editing one level >=2 instead of the saturated level 1, and its one-median-quant-error band respects the measured deviation-recall monotonicity, but the arbitrary 0.5/0.5 weights and unguarded sigma_k=0 for singleton codes make it less controlled than TOLLCAP."
+        },
+        {
+          "idea_id": "HCAUDIT-SID",
+          "position": 3,
+          "reason": "Its degree-stratified permutation null is the best response to the weak behaviour signal in E9/E11 (0.5898 overlap; 0.0907 vs 0.067 same-prefix), but tau at the 99.5th null percentile plus the degree>=20 filter leaves only ~0.5-2% of 24,556 items eligible and its greedy repair starts at level 1, which E6/E7 show is already trivially survived with zero NLL, so it is likely inert against the best observed 0.06363 recall and the 0.065 gate."
+        },
+        {
+          "idea_id": "SHELL-CURV-RQ",
+          "position": 4,
+          "reason": "It edits all three levels including level 1 during Stage-2 with up to 5% flips per level, the broad behaviour tilt that E6 shows degrades recall (l1_br 0.04671 vs l1_br_euclid 0.06207), and its specification is the thinnest (\"See SPEC EQUATIONS\") with no map ensuring"
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261031_091611_264",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "BEHTIE-SNAP": {
+        "first_places": 0,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      },
+      "HCAUDIT-SID": {
+        "first_places": 0,
+        "mean_rank": 2.6667,
+        "total_rank": 8
+      },
+      "SHELL-CURV-RQ": {
+        "first_places": 0,
+        "mean_rank": 4.0,
+        "total_rank": 12
+      },
+      "TOLLCAP-SID": {
+        "first_places": 3,
+        "mean_rank": 1.0,
+        "total_rank": 3
+      }
+    },
+    "backups": [
+      {
+        "first_places": 0,
+        "idea_id": "BEHTIE-SNAP",
+        "mean_rank": 2.3333,
+        "status": "BACKUP",
+        "total_rank": 7
+      },
+      {
+        "first_places": 0,
+        "idea_id": "HCAUDIT-SID",
+        "mean_rank": 2.6667,
+        "status": "BACKUP",
+        "total_rank": 8
+      },
+      {
+        "first_places": 0,
+        "idea_id": "SHELL-CURV-RQ",
+        "mean_rank": 4.0,
+        "status": "BACKUP",
+        "total_rank": 12
+      }
+    ],
+    "disagreement": {
+      "BEHTIE-SNAP": 1,
+      "HCAUDIT-SID": 1,
+      "SHELL-CURV-RQ": 0,
+      "TOLLCAP-SID": 0
+    },
+    "rejected": [
+      {
+        "idea_id": "BEHTIE-SNAP",
+        "mean_rank": 2.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 7
+      },
+      {
+        "idea_id": "HCAUDIT-SID",
+        "mean_rank": 2.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 8
+      },
+      {
+        "idea_id": "SHELL-CURV-RQ",
+        "mean_rank": 4.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 12
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 3,
+        "idea_id": "TOLLCAP-SID",
+        "mean_rank": 1.0,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 3
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}

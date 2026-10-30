@@ -1,0 +1,21 @@
+{
+  "baseline": "results/stage2_RQ-VAE/TIGER_RQ-VAE",
+  "items": 24587,
+  "moved": 1229,
+  "lambda": 0.07420993067918569,
+  "eps_rec": 0.1754040598516721,
+  "sigma_A": 2.363619777654222,
+  "toll_median": -0.49444993433221307,
+  "prefix_counts": {
+    "L1": 247,
+    "L2": 7314,
+    "L3": 19412
+  },
+  "baseline_prefix_counts": {
+    "L1": 247,
+    "L2": 7414,
+    "L3": 20223
+  },
+  "SID_changed": 1229,
+  "rule": "capacity-frozen optimal transport inside each level-1 group, cost = curved toll - lambda * PPMI advantage; training split only"
+}
