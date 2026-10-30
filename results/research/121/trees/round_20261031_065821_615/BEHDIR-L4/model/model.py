@@ -130,6 +130,9 @@ class RQVAE(nn.Module):
         reference = point
         quant_loss = F.mse_loss(reconstructed, reference.detach()) * float(
             getattr(self.config, "beta", 0.25))
+        extra = getattr(self.chain, "last_level4_loss", None)
+        if extra is not None:
+            quant_loss = quant_loss + float(getattr(self.config, "beta", 0.25)) * extra
         return reconstructed, quant_loss, 0, tokens, reference
 
     @torch.no_grad()
@@ -155,7 +158,7 @@ class RQVAE(nn.Module):
             if count == 0:
                 continue
             picks = torch.randint(0, point.shape[0], (count,), device=point.device)
-            self.chain.codebooks.data[level][dead] = point[picks].detach()
+            self.chain.codebooks[level].data[dead] = point[picks].detach()
         # every rank must end the restart with the SAME codebooks: the random
         # picks differ per rank, and divergent parameters deadlock the DDP
         # reduction on the next forward

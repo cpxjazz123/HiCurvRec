@@ -1,40 +1,41 @@
-# BEHDIR-L4 -- round three, implementation state
+# BEHDIR-L4 -- round three
 
 Selected by `round_20261031_065821_615` (one first place, mean rank 2.0,
 IN_SCOPE). The mechanism adds a FOURTH SID level (64 codewords) whose direction is
 the item's train-only successor profile: a rank-32 PPMI embedding of its row of
 the symmetrised transition matrix, gated into the tangent direction
-(`u_i = normalise(g_i * vhat_i + h_i)` with `g = 1 + tanh(W b)`, `h = P b`,
-`P` and `W` starting at zero) and followed by a curvature-step arrival point
-`q = exp_{p_i}(s u_i)` whose nearest codeword, measured in the Poincare metric,
-becomes the fourth token. The behaviour profile is built from the training
-transitions only (PPMI + truncated SVD rank 32, row-normalised).
+(`u_i = normalise(g_i * vhat_i + h_i)`, `g = 1 + tanh(W b)`, `h = P b`, `P` and
+`W` zero-initialised) and followed by a curvature step whose arrival point
+`q = exp_{p_i}(s u_i)` is quantised in the Poincare metric. The level has its own
+quantisation term, because an argmin carries no gradient.
 
-## What is done
+## Defects found and fixed while wiring it
 
-* The round-two mechanism (curved chain, model wiring, tests, trainer,
-  precompute) was merged into this tree as the baseline, per §19b.
-* `CODEBOOK_NUM = 4`, `CODEBOOK_SIZE = (256, 256, 256, 64)`; the chain's codebooks
-  became a per-level `ParameterList` (the levels do not share a size).
-* The successor profile was added to the precompute (`behaviour` in
-  `behaviour_constants.npz`) and bound on the model
-  (`set_behaviour_profile`).
-* The fourth level is implemented and the tree parses; the constructor and the
-  chain were smoke-tested on tensors of two different codebook sizes.
+1. the codebooks could not be one stacked tensor (levels 256/256/256/64) -- they
+   are a per-level `ParameterList` now;
+2. `_restart_dead_codes` still wrote through `codebooks.data`, which does not
+   exist on a `ParameterList`;
+3. the fourth codeword received no gradient at all (argmin), so the level was
+   pinned at its random initialisation; it now carries the standard vector
+   quantisation pair. Verified: `P` gradient 1868.9, `W` 172.9, level-4 codebook
+   0.0399 on a batch of 32.
 
-## What does not work yet
+## Stage 2 (four GPUs, 3000 epochs, 584.4 s)
 
-The four-level entry point writes `train_start` (84 s) and then produces **no
-`train` event**: the first epoch does not complete, the process has to be killed.
-The two-level constructor is fine, so the failure is inside the four-level step --
-the most likely candidates are the `(batch, 64, 32)` log-map expansion or the
-per-step codeword broadcast interacting with DDP. This is a debugging state, not a
-result: **round three has no Stage 2 SID, no Stage 3 run and no recall value.**
+| level | distinct prefixes | largest group |
+| --- | --- | --- |
+| L1 | 208 | 727 |
+| L2 | 2,766 | 268 |
+| L3 | 6,235 | 229 |
+| L4 | 6,302 | 229 |
 
-## Where the two completed rounds stand (for context)
+Width 5 (four tokens plus the disambiguation token), `final_collision = 0.744`,
+every item covered. The partition is **much deeper** than either earlier round
+(round one 2,201 L3 prefixes, round two 1,298), which is exactly the capacity
+direction the evidence pointed at. Technical validity passed with the best L1
+Hard ER of the three rounds: 4.92 (round two 5.20, round one 6.09).
 
-| round | mechanism | L1/L2/L3 prefixes | test_recall@10 |
-| --- | --- | --- | --- |
-| one | curved chain on the frozen text geometry | 251/1769/2201 | 0.05439 |
-| two | concentration-scaled geodesic step to the successor barycentre | 230/1251/1298 | 0.05165 |
-| gate | -- | -- | **> 0.065** |
+## Stage 3
+
+Launched under the frozen protocol (150 epochs, seed 42, beam 20, no mid-run
+eval, test on), four GPUs, pid 954286. The recall reading is pending.

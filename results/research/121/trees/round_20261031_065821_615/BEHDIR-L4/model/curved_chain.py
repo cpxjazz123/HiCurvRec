@@ -172,6 +172,9 @@ class CurvedChain(nn.Module):
         dim = int(self.codebooks[-1].shape[-1])
         self.P = nn.Parameter(torch.zeros(dim, behaviour_dim))
         self.W = nn.Parameter(torch.zeros(dim, behaviour_dim))
+        self.last_level4_loss = torch.zeros((), dtype=codebooks[-1].dtype
+                                            if not isinstance(codebooks, (list, tuple))
+                                            else codebooks[-1].dtype)
 
     def level_objective(self, prefix: torch.Tensor, residual: torch.Tensor,
                         direction: torch.Tensor, gain: torch.Tensor,
@@ -258,6 +261,12 @@ class CurvedChain(nn.Module):
                 distance = logs.norm(dim=-1)
                 chosen = distance.argmin(dim=-1)
                 tokens[:, level] = chosen
+                # the fourth codeword is chosen by an argmin, which carries no
+                # gradient: the standard vector-quantisation pair gives the
+                # codebook and the arrival point their own signal
+                self.last_level4_loss = (
+                    torch.nn.functional.mse_loss(arrival.detach(), codes[chosen])
+                    + torch.nn.functional.mse_loss(arrival, codes[chosen].detach()))
                 prefix = arrival
                 continue
             residual = log_at(prefix, points, c)
