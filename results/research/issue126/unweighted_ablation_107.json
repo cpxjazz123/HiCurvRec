@@ -1,0 +1,65 @@
+{
+  "pairs": 107,
+  "grid": [
+    {
+      "curvature": 16.0,
+      "variants": {
+        "poincare_weighted": {
+          "spearman": 0.660916,
+          "p_value": 9.428917092446709e-15
+        },
+        "lorentz_weighted": {
+          "spearman": 0.54412,
+          "p_value": 1.3830429605609105e-09
+        },
+        "poincare_unweighted": {
+          "spearman": 0.659344,
+          "p_value": 1.14641695715573e-14
+        },
+        "lorentz_unweighted": {
+          "spearman": 0.659344,
+          "p_value": 1.14641695715573e-14
+        },
+        "euclidean_unweighted": {
+          "spearman": 0.661832,
+          "p_value": 8.409690451518273e-15
+        },
+        "lorentz_unweighted_permuted": {
+          "spearman": 0.134101,
+          "p_value": 0.16848551881836138
+        }
+      },
+      "poincare_lorentz_unweighted_max_diff": 0.0
+    },
+    {
+      "curvature": 1.0,
+      "variants": {
+        "poincare_weighted": {
+          "spearman": 0.598315,
+          "p_value": 1.0060706529519865e-11
+        },
+        "lorentz_weighted": {
+          "spearman": 0.526609,
+          "p_value": 5.669910227611221e-09
+        },
+        "poincare_unweighted": {
+          "spearman": 0.638952,
+          "p_value": 1.3062691563722566e-13
+        },
+        "lorentz_unweighted": {
+          "spearman": 0.650267,
+          "p_value": 3.4642332807708314e-14
+        },
+        "euclidean_unweighted": {
+          "spearman": 0.661832,
+          "p_value": 8.409690451518273e-15
+        },
+        "lorentz_unweighted_permuted": {
+          "spearman": 0.135221,
+          "p_value": 0.16492447750206443
+        }
+      },
+      "poincare_lorentz_unweighted_max_diff": 0.0031558185404338968
+    }
+  ]
+}

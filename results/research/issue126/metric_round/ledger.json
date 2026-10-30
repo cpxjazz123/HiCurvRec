@@ -5,7 +5,7 @@
     "rewarding_an_answer_in_hand": "metrics that grow when the answer is already inside the cell: the path likelihood, the generator-side hit rate -- they are NEGATIVELY correlated",
     "behaviour_contrast": "the family that works: the table is contrasted against the behaviour reference with explicit positives and negatives, on the level-1 prefix centroid AMENDED (protocol v7): the permutation control is -0.0065 against +0.7623, so the correspondence is real; but the hyperbolic increment over a nearly flat curvature is +0.021 [-0.031, +0.076] (P=0.20) and over Euclidean +0.045 [-0.009, +0.106] (P=0.051), i.e. the power is the behaviour contrast and the history barycentre (+0.103, P=0.002), not the curvature.",
     "structural_alignment": "label-free structure comparisons: does the hyperbolic shared depth of a pair agree with the length of their shared SID prefix, does the prefix tree preserve the reference's distances, is a cell's angular cone tighter than a different set of the same size -- measured with the corrected definitions, and none of them is eligible",
-    "behaviour_reference_obligation": "the table is scored against a CURVATURE, not against positives and negatives: the training behaviour fixes a reference graph, the four-point tree-likeness of that graph fixes the curvature, and the SID's own four-point deviation at that curvature is the metric. Measured on the 107 confirmed pairs it is the second strongest construction (rho +0.6605) and the curvature it estimates beats both a near-flat and a Euclidean control by +0.128 / +0.157 in a paired bootstrap. NOT refuted: the earlier rejection of the delta family was an artefact of six implementation defects, recorded in DELTA_SVD_PROTOCOL.md (v1 to v4). AMENDED (protocol v6): the ingredient is the radial weight, not the curvature -- the arccosh never beats the radially weighted Euclidean control. RETRACTED (protocol v8): the headline +0.6605 is Poincare saturation. The Lorentz chart gives +0.545, and the two charts agree only at the nearly flat end where both return about +0.60. The curvature does not matter.",
+    "behaviour_reference_obligation": "the table is scored against a CURVATURE, not against positives and negatives: the training behaviour fixes a reference graph, the four-point tree-likeness of that graph fixes the curvature, and the SID's own four-point deviation at that curvature is the metric. Measured on the 107 confirmed pairs it is the second strongest construction (rho +0.6605) and the curvature it estimates beats both a near-flat and a Euclidean control by +0.128 / +0.157 in a paired bootstrap. NOT refuted: the earlier rejection of the delta family was an artefact of six implementation defects, recorded in DELTA_SVD_PROTOCOL.md (v1 to v4). AMENDED (protocol v6): the ingredient is the radial weight, not the curvature -- the arccosh never beats the radially weighted Euclidean control. RETRACTED (protocol v8): the headline +0.6605 is Poincare saturation. The Lorentz chart gives +0.545, and the two charts agree only at the nearly flat end where both return about +0.60. The curvature does not matter. AMENDED (protocol v9): unweighted, both charts give the identical +0.6593 and the Euclidean law gives +0.6618, so the effect is Euclidean; the delta weight was a liability (+0.115 lost in the Lorentz chart).",
     "hyperbolic_properties_of_the_sid_table": "the other hyperbolic properties as SID-quality metrics: the Gromov product, radial depth, radial purity, geodesic slack, the entailment cone, angular branch separation, Busemann consistency, volume growth -- and the behaviour-aware versions of the geodesic and the Busemann. Each is measured with a Euclidean control and a PERMUTED control (the SID rows shuffled across the items). Measured on the 107 confirmed pairs: no family beats its permuted control, three are degenerate on the frozen reference (a thin shell at radius 0.9115 +- 0.0139, so radial depth, cones and volume growth are constant), and the behaviour-aware geodesic, once the ancestor depth is held fixed, is at chance. REFUTED as predictors: see HYPERBOLIC_FAMILIES.md."
   },
   "proposals": 64,
@@ -1060,7 +1060,8 @@
           "shape_selected_c2": 0.6401,
           "nearly_flat_c0.001": 0.6011,
           "euclidean": 0.5037,
-          "permuted": 0.0011
+          "permuted": 0.0011,
+          "unweighted_best": 0.6618
         },
         "paired_bootstrap": {
           "c_delta_minus_flat": [
@@ -1200,6 +1201,21 @@
             "16": 0.99,
             "65536": 1.0
           }
+        },
+        "unweighted_ablation": {
+          "artifact": "results/research/issue126/unweighted_ablation_107.json",
+          "curvature": 16.0,
+          "variants": {
+            "poincare_weighted": 0.6609,
+            "lorentz_weighted": 0.5441,
+            "poincare_unweighted": 0.6593,
+            "lorentz_unweighted": 0.6593,
+            "euclidean_unweighted": 0.6618,
+            "lorentz_unweighted_permuted": 0.1341
+          },
+          "permuted_p_value": 0.168,
+          "chart_max_difference_unweighted": 0.0,
+          "verdict": "the delta weight is a liability (-0.115 in the Lorentz chart); the unweighted score is identical in both charts because the pairing choice is an argmin; the Euclidean law matches or beats both, so the family is a Euclidean four-point pairing test, not a hyperbolic one. Admissible value +0.66, non-hyperbolic."
         }
       }
     },

@@ -374,3 +374,49 @@ Three conclusions, in order of importance.
 The lesson generalises: a curvature sweep on a Poincare chart measures the chart's
 saturation past c of order 2. Any curvature claim in this project has to be
 re-checked in the Lorentz chart before it is reported.
+
+## v9 -- the weight was a liability, and the effect is Euclidean
+
+The ablation the weighted mean needed: same quadruples, same informative filter,
+same pairing rule, with and without the Gromov-delta weight, in both charts, plus
+the Euclidean law and the permuted control. Artifact
+`../unweighted_ablation_107.json`, script `unweighted_ablation.py`.
+
+At c = 16:
+
+| variant | rho | p |
+| --- | --- | --- |
+| Poincare, weighted | +0.6609 | 9.4e-15 |
+| Lorentz, weighted | +0.5441 | 1.4e-09 |
+| Poincare, unweighted | +0.6593 | 1.2e-14 |
+| **Lorentz, unweighted** | **+0.6593** | 1.2e-14 |
+| **Euclidean, unweighted** | **+0.6618** | 8.4e-15 |
+| Lorentz, unweighted, SID permuted | +0.1341 | 0.168 (not significant) |
+
+The unweighted Poincare and Lorentz scores are bit-identical: the maximum per-SID
+difference is **0.000e+00**. That is the expected result -- the pairing choice is
+an argmin over sums of distances, and the two charts agree on it completely
+(pairing agreement 1.000) -- and it validates both implementations from the other
+side. At c = 1 the two differ by 3.2e-03, i.e. only as far as the charts disagree.
+
+Three conclusions.
+
+1. **The delta weight was a liability.** Removing it lifts the Lorentz number from
+   +0.5441 to +0.6593 (+0.115) and leaves the Poincare number where the
+   saturation had already put it (+0.6609 to +0.6593). The weight `1/(1+delta/median)`
+   concentrates the average on the quadruples whose delta is near the median, and
+   under a saturated chart that is precisely the distorted part of the
+   distribution.
+2. **The effect is Euclidean.** The Euclidean unweighted score is +0.6618, at
+   least as high as either hyperbolic one. This is not a coincidence and not a
+   failure of the implementation: when the points sit at similar radii the
+   hyperbolic distance is a strictly increasing function of the Euclidean one, so
+   the argmin of the pairing sums -- which is all the unweighted score uses -- is
+   invariant. The four-point family is a Euclidean four-point pairing test
+   wearing a hyperbolic chart.
+3. **It passes its control**: the permuted SID gives +0.1341 with p = 0.168.
+
+**The admissible number for this family is +0.66, and it is not a hyperbolic
+number.** The honest description is: *the agreement between the four-point pairing
+of the SVD item geometry and the SID prefix tree predicts the 107 recalls at
+about +0.66; the curvature, the chart and the delta weight contribute nothing.*
