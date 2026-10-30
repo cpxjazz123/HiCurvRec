@@ -39,3 +39,37 @@ Hard ER of the three rounds: 4.92 (round two 5.20, round one 6.09).
 
 Launched under the frozen protocol (150 epochs, seed 42, beam 20, no mid-run
 eval, test on), four GPUs, pid 954286. The recall reading is pending.
+
+## The result
+
+Stage 3 finished all 150 epochs (2518 s) and wrote the test record at epoch 150:
+
+| metric | value |
+| --- | --- |
+| test_recall@5 | 0.03236 |
+| **test_recall@10** | **0.04823** |
+| test_ndcg@5 | 0.02155 |
+| test_ndcg@10 | 0.02668 |
+
+**The target 0.065 was NOT reached, and this is the worst of the three rounds.**
+
+## The three rounds together
+
+| round | mechanism | L1 / L2 / L3 / L4 prefixes | test_recall@10 |
+| --- | --- | --- | --- |
+| one | curved chain on the frozen text geometry | 251 / 1,769 / 2,201 / -- | 0.05439 |
+| two | concentration-scaled geodesic step to the successor barycentre | 230 / 1,251 / 1,298 / -- | 0.05165 |
+| three | fourth level driven by the PPMI successor profile | 208 / 2,766 / 6,235 / 6,302 | 0.04823 |
+| gate | -- | -- | **> 0.065** |
+| frozen baseline | plain three-level RQ-VAE on the text geometry | -- | about 0.0679 |
+
+**The capacity hypothesis is refuted.** Round three produced the deepest partition
+of the three (6,302 distinct fourth-level prefixes against round two's 1,298
+third-level ones) and scored the LOWEST. Deeper prefixes did not buy recall; the
+three monotonically decreasing scores track how much each mechanism moved the
+quantizer away from the plain text geometry, not how many prefixes it created.
+
+Consistent with issue 126, where every behaviour-aware SID-quality metric that
+worked in the offline study failed to transfer into a training gain: what predicts
+SID quality from the outside is behaviour contrast, but rewriting the SID
+construction with that signal has now cost recall three times in a row.
