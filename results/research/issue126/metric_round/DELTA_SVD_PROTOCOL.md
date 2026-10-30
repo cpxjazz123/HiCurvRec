@@ -659,3 +659,78 @@ agreement rate won. Here the ancestor-depth weighting of the Gromov product
 hurts as well, and a damped version of it wins. In both families the part that
 fails is the part that reads the hyperbolic construction as a TREE, and the part
 that works is the plain geometric contrast.
+
+## v14 -- is the radial information hierarchy, or is it group compactness?
+
+HBAA reads the radius of a prefix centroid as depth. The frozen reference puts
+almost every item on a thin shell (radius p10 0.9050, median 0.9115, p90 0.9176),
+so the radius of a group's centroid could be measuring how TIGHT the group is.
+Artifact `../radius_vs_hierarchy_107.json`, script `radius_vs_hierarchy.py`.
+
+For every level-1 prefix group of every table: the radius ``r = d(0, mu)`` of the
+Frechet mean, the dispersion ``D = mean d(x_i, mu)^2``, the group size, the
+members' popularity in the training interactions, the members' depth in an
+INDEPENDENT hierarchy, and the same radius measured from a RANDOM point of the
+ball. All statistics are computed within table and then pooled, and the
+significance comes from a bootstrap over the 107 tables (the groups inside a table
+are dependent).
+
+**The product taxonomy is unavailable in this environment.** The parquet's
+``categories`` column is entirely null and the raw ``dataset/Instruments.item.json``
+the builder reads has been cleaned up, so the Amazon category tree could not be
+used as a reference. The reference used instead is a behaviour hierarchy built
+from the TRAINING interactions (an average-linkage clustering of the item
+co-occurrence profiles), which the brief allows explicitly. Two readings of it
+are used: the depth of a leaf in the tree and the height at which it joins.
+
+| relation | value |
+| --- | --- |
+| radius vs dispersion | **-0.9106** |
+| radius vs log group size | +0.2778 |
+| radius vs log popularity | +0.1360 |
+| radius vs the radius from a RANDOM centre | **+0.9798** |
+| radius vs behaviour tree depth (raw) | +0.0729 |
+| radius vs behaviour tree depth (partial, dispersion+size+popularity controlled) | **+0.2115**, 95% CI [+0.1885, +0.2320] |
+| the same with a RANDOM centre | **+0.1921** |
+| radius vs behaviour join height (partial) | **-0.0877**, 95% CI [-0.0966, -0.0774] |
+
+**Verdict: the compactness explanation wins, and the hierarchy explanation fails
+the brief's own criteria.**
+
+1. The radius is 91% the dispersion. A group whose members are spread out has a
+   centroid pulled toward the origin, so its radius shrinks; nothing about depth
+   is needed to produce the number.
+2. The radius from the true origin and the radius from a RANDOM point of the ball
+   correlate at **0.980**. Whatever the quantity is, it is not "distance from a
+   root": it is the same number whether the reference is the origin or an
+   arbitrary point.
+3. After controlling for compactness, size and popularity, a residual relation
+   with the behavioural tree depth survives (+0.2115, CI clear of zero) -- **but a
+   random centre reproduces 91% of it** (+0.1921). The residual does not need a
+   meaningful root.
+4. The second reading of the same hierarchy, the height at which an item joins,
+   has the OPPOSITE sign (-0.0877, CI clear of zero). A quantity that means
+   "depth" cannot correlate one way with the depth and the other way with the
+   height.
+
+So the radial term's contribution to HBAA is best read as group tightness and
+the group's position relative to an arbitrary point -- and the Gromov product's
+ancestor-depth semantics, which is what the alpha sweep showed to be
+over-weighted, is not what the radius measures.
+
+**The prediction value is nevertheless stable (the brief's experiment C).**
+Splitting the 107 pairs into two halves and repeating the alpha sweep on each:
+
+| alpha | 0 | 0.25 | 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2 | 3 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| even half | +0.7369 | +0.7568 | **+0.7779** | +0.7728 | +0.7098 | +0.5977 | +0.5605 | +0.4100 | +0.2015 |
+| odd half | +0.6897 | +0.7148 | +0.7488 | **+0.7527** | +0.6639 | +0.5363 | +0.4957 | +0.3917 | +0.2677 |
+
+Both halves show the same shape, and the best alpha is one grid step apart (0.5
+and 0.75) inside the same plateau. The radial term's value therefore does not
+depend on the sample; what it measures, on the evidence above, is not hierarchy.
+
+Even if all three experiments had supported the hierarchical reading, the
+correct claim would have been "empirical evidence for the radial-depth reading",
+not "hierarchical information causes better recommendations": that needs an
+intervention under matched training conditions, which this project has not run.
