@@ -529,6 +529,33 @@ So the admissible metric of this family is the **unweighted agreement rate**
 (+0.6593), and the delta weighting -- the part that was supposed to make it
 principled -- has to go. Nothing in this family rewards a curvature.
 
+
+## The radial term, and the theme across both families
+
+HBAA's radial distance was half of what it should be, which is the same as
+scoring with a radial coefficient of 0.5 instead of 1 in the Gromov product.
+Sweeping that coefficient over the same 107 pairs, with everything else held
+fixed:
+
+| alpha | 0 | 0.25 | 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2 | 3 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| rho | +0.7104 | +0.7367 | **+0.7623** | **+0.7615** | +0.6880 | +0.5660 | +0.5276 | +0.3916 | +0.2301 |
+
+alpha = 1 reproduces the corrected HBAA and alpha = 0.5 reproduces the historical
+number exactly, so the historical headline was this scoring rule rather than the
+Gromov product. The peak is a plateau over [0.5, 0.75]; the radial term carries
+real signal (the peak beats alpha = 0 by +0.0522, P = 0.023) and the Gromov
+weight over-credits it (alpha = 1 loses 0.075, P = 0.001 to 0.009). The curve is
+asymmetric: robust to under-weighting the radial term, fragile to over-weighting
+it. Alpha is chosen on the recall, so it is a diagnostic and not a metric.
+
+**The theme.** In the four-point family the tree-likeness weighting (the delta)
+hurt and the unweighted agreement won; here the ancestor-depth weighting of the
+Gromov product hurts and a damped version wins. In both families the part that
+fails is the part that reads the hyperbolic construction as a TREE, and the part
+that works is the plain geometric contrast. Nothing in either family rewards a
+curvature.
+
 ## Where the artefacts live
 
 * the metric: `tools/research/science/hyperbolic_ancestor_alignment.py` (with tests
