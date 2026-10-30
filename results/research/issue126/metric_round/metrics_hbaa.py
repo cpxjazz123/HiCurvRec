@@ -659,9 +659,9 @@ def _alignment(table: dict, context: dict, curvature: float) -> float:
                                      np.maximum(denominator, 1e-12), 1 + 1e-12)) / np.sqrt(c)
 
     def norm(x):
-        c = float(curvature)
-        inner = np.clip(1 - c * np.sum(x * x, axis=-1), 1e-12, None)
-        return np.arccosh(1 / np.sqrt(inner)) / np.sqrt(c)
+        # the SAME radial distance as the module-level helper: this inline copy
+        # was the second place where the factor two was missing
+        return _norm(x, curvature)
 
     centres = {int(code): _frechet(target[codes == code], curvature)
                for code in np.unique(codes)}

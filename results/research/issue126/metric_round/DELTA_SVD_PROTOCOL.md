@@ -520,3 +520,83 @@ Two things survive the correction, and they point the same way:
 The four-point family's retraction is unaffected: that one rested on the
 weighted/unweighted contrast, which never used a radial distance to the origin,
 and the unweighted score is bit-identical across the charts.
+
+## v12 -- why the saturated chart ranks the SIDs better, and what it really says
+
+The question was not "why does saturation raise the correlation" but "why do the
+WRONG weights predict Recall better than the right ones". Three experiments on the
+same 107 pairs, the same quadruples and the same items, at c = 16. Artifact
+`../weight_experiment_107.json`, script `weight_experiment.py`. One table has no
+informative quadruple at all and is excluded from the paired comparisons, so the
+series below are over 106 tables.
+
+### 1. The pairing judgement is untouched; only the weights move
+
+The two charts choose the SAME pairing for every quadruple: the agreement between
+their pairing choices is **1.0000**. The weights, however, correlate at only
+0.6866, and the saturated chart's delta median is 3.6 times the true one
+(0.00389 against 0.00107).
+
+| correlation of the weight with | Poincare weight | Lorentz weight |
+| --- | --- | --- |
+| the TRUE delta | -0.666 | **-0.845** |
+| the pairing scale | +0.111 | +0.626 |
+
+and the true delta is itself anti-correlated with the pairing scale (-0.398).
+
+### 2. The whole gap is the weights
+
+Holding the shared agreement A_k fixed and swapping only the weights:
+
+| weights | rho |
+| --- | --- |
+| Poincare | +0.6513 |
+| Lorentz | +0.5312 |
+| uniform | +0.6497 |
+
+Paired bootstrap: uniform - Lorentz = **+0.1181 [+0.0693, +0.1755]**,
+P(not better) < 1e-4; Poincare - Lorentz = +0.1195 [+0.0700, +0.1781],
+P < 1e-4; **Poincare - uniform = +0.0013 [-0.0345, +0.0347]**, P = 0.46.
+
+The saturated weights are statistically indistinguishable from uniform weights,
+and both beat the correct delta weighting by about 0.12.
+
+### 3. The clipping threshold is a numerical parameter, and it moves the delta
+
+| clip | rho | median delta |
+| --- | --- | --- |
+| 1e-6 | +0.6472 | 0.00867 |
+| 1e-9 | +0.6508 | 0.00506 |
+| 1e-12 | +0.6513 | 0.00358 |
+| 1e-15 | +0.6477 | 0.00276 |
+| 1e-18 | +0.6477 | 0.00225 |
+
+The delta moves by a factor 3.9 across a parameter that is pure numerics, while
+the ranking moves by 0.004. The weights are an artefact; the agreement rate is
+not.
+
+### The answer to the question that was asked
+
+**The Gromov delta weighting is harmful for this prediction task, and the
+saturated chart accidentally removed it.** The weight `1/(1+delta/median)` is
+largest for the quadruples whose delta sits at the median, i.e. for the quadruples
+that are NOT distinctive in tree-likeness; and because the true delta falls as the
+pairing scale grows (-0.398), that weighting hands the decisive influence to the
+geometrically distant quadruples, whose agreement with the SID tree is the least
+reliable signal. Saturation inflates the delta in proportion to the scale (the
+log weight ratio correlates -0.642 with the scale, and -0.038 with the tree
+spread and -0.037 with the shared prefixes: it has nothing to do with the SID
+structure), which cancels part of that scale effect and lands the weighting near
+uniform.
+
+So the honest metric of this family is the **unweighted agreement rate**
+(+0.6593 on the 107 tables), and the delta weighting -- the part of the
+construction that was supposed to make it principled -- is what has to be
+dropped. That is a statement about the metric, not about the geometry: it says
+that what predicts Recall is *how often the geometry's four-point pairing agrees
+with the SID tree at all*, not *how tree-like the geometry is on the quadruples
+that disagree most*.
+
+It also closes the loop on the curvature: the weights were the only thing the
+curvature touched, and the correct ones make things worse, so nothing in this
+family rewards a curvature.
