@@ -212,3 +212,38 @@ hit rate 0.050, negative 0.0082, L2 distinct prefixes 1,769, all items covered.
 Launched with the frozen protocol (150 epochs, eval interval 5, eval start 75,
 early evals 25/50/75/100/125, seed 42, beam 20, no eval off, test on), four GPUs,
 pid 577846. The recall reading is pending.
+
+## The closed loop ran, and the result
+
+Stage 3 finished all 150 epochs (1966 s, four GPUs, frozen protocol: eval interval
+5, eval start 75, seed 42, beam 20, no mid-run eval, test on) and wrote the test
+record at epoch 150:
+
+| metric | value |
+| --- | --- |
+| **test_recall@5** | 0.03600 |
+| **test_recall@10** | **0.05439** |
+| test_ndcg@5 | 0.02364 |
+| test_ndcg@10 | 0.02957 |
+| queries | 57,439 |
+
+**The target of test_recall@10 > 0.065 was NOT reached.** The candidate's
+0.05439 is below the frozen baseline's own 0.0679 and below the 0.065 gate, so the
+mechanism is a negative result on the recommendation metric.
+
+What the chain did establish:
+
+* the multi-agent round works end to end (five ideation agents, three scorers,
+  one selected mechanism, the implementation by the main agent);
+* the mechanism's mathematics is implemented and tested (13 tests, including the
+  algebraic objective against the materialised one to 3.6e-15);
+* the collapsed-SID defect was found, diagnosed and fixed (quantize the FROZEN
+  text geometry as the proposal specifies; a dead-code restart with a rank-0
+  broadcast), after two degenerate 3000-epoch runs;
+* Stage 2 runs inside the frozen budget at the baseline's speed and exports a
+  healthy SID (251 / 1769 / 2201 prefixes, all items covered);
+* Stage 3 ran under the frozen protocol and produced a real `test_recall@10`.
+
+This is a NEGATIVE result for CURV-RESID-CONTRAST on this dataset, recorded with
+its full evidence: two failed Stage 2 variants, one successful one, and the final
+recall.
