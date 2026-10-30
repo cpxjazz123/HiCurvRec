@@ -1,0 +1,350 @@
+{
+  "decision_at": 1793386708.2304153,
+  "decision_hash": "3c46253159653c1f18b1c291b60f8cd28df9d7fe1f85eb5202b4698a1ded46e7",
+  "evidence": {
+    "CONCMID-GEO-SID": {
+      "bundle_sha256": "17b7d28f01d49aafbce86c747143d8c47b047181395cc395861d44b4ecab1384",
+      "literature_sha256": "aed1cbe28b8acfd8916e3835229694d43f3f2b78e1146bac833d9564e16bf329",
+      "math_sha256": "b4e379fbe856b74ddcb3b5bc4512760a018d188692d8a5f507e5c8d26e85fc6a",
+      "probe_sha256": "acf99910e3f0bfde58498f0fcf0fb43bba5483fbecea988cb93b947dc6792ec0"
+    },
+    "HSPT-RQ": {
+      "bundle_sha256": "0f70d209bc72f36a76b5a93b4b86dc1ea4e41922d9523246fd01bb943d2bc88f",
+      "literature_sha256": "d5ee4f896e1547c9b4e237fdb65aba5328d77dbbb91c95b8f45f2c5e9e0e9a37",
+      "math_sha256": "a448a67c1da9d159c2f2152215dbc70eb442eb0ff65e8fce94085cac0f273b8f",
+      "probe_sha256": "1d9041f37fbeeb4dff5f2b302a0d2f6c04cf33ba105e07bdb7863fb1aa40799b"
+    },
+    "behtree-geocut-sid": {
+      "bundle_sha256": "9e74a0a93da886b0acb177fcfdd803a60c58f8541fad7bf57ca8d1c1f6686470",
+      "literature_sha256": "641285e40cee2c25376fd8aed0d13161f384e070279fa3fcf992df76089d6b45",
+      "math_sha256": "576cf5c964168329ab95f26d958e7c135a1ddeebe8d2c395c6866d8c79fcfc71",
+      "probe_sha256": "81917410ef0b1961b7608224d3a5d49f31f003e2e6f671777799cd257f5218a5"
+    },
+    "holonomy-frame-sid": {
+      "bundle_sha256": "b1d8703d4d2a2764294fb963e17a743bcd597451faa81aa82d3bffef8224b801",
+      "literature_sha256": "abf79f8ff6de559f8c4b9b8ad4799cbf4e42bc8478462a1f9ae0726c77e6f013",
+      "math_sha256": "7bece47d5a47df526883186e2f8e8fff3e0d3ddbe16456ae21effee0969ec919",
+      "probe_sha256": "7a0916f94d77c89b178ce16d2006ae5aadfc4dfb16a9b782bc5e97c8478c7bea"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 2,
+        "idea_id": "CONCMID-GEO-SID",
+        "mean_rank": 1.6667,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 3,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "It is the only candidate that moves the level-1 quantiser input, i.e. exactly the quantity E8 measures (\"anchor and target share one of K clusters\": 0.3106 at K=16 vs 0.0822 at K=256, negatives 0.1352/0.0129), and E11's 0.0907 first-prefix agreement against a 0.067 null shows that level-1 behaviour alignment is the baseline's weakest measurable link; its inertness is bounded by E5's heterogeneous concentration (top-1 successor mass 0.4375 in the low-entropy bin over 4,895 items vs 0.0543 in the high-entropy bin), its step size eta is measured rather than tuned, and with codebooks/loss/encoder untouched at <1% added wall clock it has no collapse path, so it is the best one-run bet on 0.065.",
+          "scoring_2": "It only moves the level-1 quantizer input toward a successor barycentre, which is the family E6 already scores at 0.05500 (successor_geodesic_coarse/_v2, tangent_successor_residual) versus 0.06207-0.06363 for prefix-level arms, and E6 shows L1 is already fully used (251/256) with the failure at depth 2-3, so its lever misses the binding constraint; it does have the cleanest distinct Euclidean switch (flat blend, same w and eta) and near-zero cost.",
+          "scoring_3": "E7 makes the last-token term the discriminator (l1_br T4 NLL 9.03 -> recall 0.0467 vs resample T4 0.05 -> 0.0636) and only this proposal targets token predictability with a concentration-damped, curvature-limited step (E5: 4,895 items at H=0.931/top-1 0.4375 give eta a non-degenerate subset) instead of more capacity, whose aggressive variants E6/E7 measure at 0.051-0.055; it is also the only candidate naming both BEHAV_SMOOTH and CURV_C switches, a derived step and <1% cost."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 5
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "behtree-geocut-sid",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 1,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Its behaviour-cut top levels with fanout<=32 match E8's coarse-cluster advantage, but \"depth 5 per SID level, 3 SID levels\" allows up to 32^3 leaves for 24,556 items, i.e. near-unique leaves, reversing the K=16 > K=256 ordering in E8 and re-creating the E6 collapse it was meant to fix (11 items per deepest triple, depth-4 survival 0.068); it also swaps in hierarchical CE plus straight-through reconstruction, and it overloads one 256-token vocabulary with prefix-local meanings, which its own risk list concedes can make Stage 3 harder to learn - the largest implementation surface and the highest one-run blow-up risk.",
+          "scoring_2": "E8 is the decisive item: small-fanout behaviour clusters co-locate behavioural neighbours 0.2164 (K=32) and 0.3106 (K=16) against 0.0715/0.1352 for fixed negatives, and E6 shows the loss is depth-2/3 prefix survival (0.829->0.161) not level-1 (already 251/256) - this is the only proposal that reallocates fanout and token-sharing by a behaviour significance test with exact Poincare-distance assignment to gyrobarycentric anchors, so it attacks the failure the evidence locates.",
+          "scoring_3": "its small-fanout behaviour cuts are the one structural design E8 supports (K=32 same-cluster 0.2164 vs 0.0715 negative; K=256 0.0822 vs 0.0129), but the extra-depth premise is contradicted by E6 where the 100%-prefix-surviving l1_br is worst (0.04671) and resample with depth-3 survival 0.091 is best (0.06363); the spec is internally inconsistent (depth 5 per SID level while emitting three tokens), it re-enters the encoder/hierarchical-CE path that killed round one, and it names no switches."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "holonomy-frame-sid",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "E6/E7 localise the failure at the deepest token (gold prefix alive at depth 4 = 0.068, T4 NLL 9.03 with T1-T3 at 0.00) and this is the only candidate that de-aliases that token through a curvature-specific object (Gauss-Bonnet area of (o, a_p, b_p) -> frame rotation, inert in the Euclidean limit) while leaving cell granularity unchanged, so it does not fight E8's small-K result; it ranks below position 1 because it leaves L1/L2 untouched, E6's better structured arms still only reach 0.06207-0.06363 against the 0.065 gate, and its own risk (b) - theta_p clustered by popularity so most prefixes keep theta_p = 0 - would reproduce the 0.04671 l1_br baseline.",
+          "scoring_2": "E6/E7 confirm the L2/L3 triple collapse (1769/2201 prefixes for 24556 items) and E5 confirms successor drift is strongly heterogeneous (top-1 mass 0.4375 vs 0.0543), so a per-prefix area-driven frame is non-degenerate; it correctly leaves the already-saturated L1 untouched, but its flat limit forces theta=0 so the geometry-off arm coincides with the behaviour-off arm, and its own risk (a)/(b) admits the rotation can reduce to a relabeling.",
+          "scoring_3": "it keeps the frozen-text, no-encoder variant round one showed does not collapse, is a bounded per-prefix intervention leaving level 1 intact, and is the only proposal with an exact Euclidean off-switch (Gauss-Bonnet angle deficit -> theta_p=0, baseline assignment); second not first because its relabelling risk (a) plus E6/E7 (l1_br gold prefix alive 1.000/1.000/1.000 yet recall 0.04671) show prefix de-aliasing is not the binding constraint, E6 curved arms sit at 0.055, and no explicit switch variables are named."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "HSPT-RQ",
+        "mean_rank": 4.0,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 4,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "At level 1 rho = 0, so E8's measured first-level capacity ceiling is untouched, and at levels 2-3 a per-item transported codebook is the maximal departure from E8's finding that small, shared K keeps behavioural neighbours together, with its own stated failure mode of arbitrary assignment and recall below 0.054; it is also the dearest arm (571 s -> 780-1050 s, 1.4-1.8x) and its risk list requires an rho clamp whose bound is not derived, a constant the no-sweep policy does not permit, so on E6/E7/E8 it makes the worst predicted trade of the four.",
+          "scoring_2": "Rho=",
+          "scoring_3": "it is the most expensive arm (0.20-0.25 s/epoch, 780-1050 s vs 571 s) and sits in the exact family the frozen evidence measures worst (successor_geodesic_coarse 0.05500, tangent_successor_residual 0.05500 vs 0.0620-0.0636 for the mild arms), while per-item transported codebooks make deep tokens item-specific precisely where E6/E7 locate the prediction bottleneck; it names no behaviour-off/Euclidean switch pair and leaves the rho clamp unspecified, which the no-tuning policy forbids."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 12
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "17b7d28f01d49aafbce86c747143d8c47b047181395cc395861d44b4ecab1384",
+      "idea_id": "CONCMID-GEO-SID",
+      "proposal_sha256": "caad3d2992113a5acb4c723710029bcc6b52231748a54d502d1fb924ccb93b58"
+    },
+    {
+      "evidence_sha256": "9e74a0a93da886b0acb177fcfdd803a60c58f8541fad7bf57ca8d1c1f6686470",
+      "idea_id": "behtree-geocut-sid",
+      "proposal_sha256": "aa5568e0bcce9f6f1c5fd9a0241a5ba29d9cbfc3ed8489945903a0bad19709fe"
+    },
+    {
+      "evidence_sha256": "b1d8703d4d2a2764294fb963e17a743bcd597451faa81aa82d3bffef8224b801",
+      "idea_id": "holonomy-frame-sid",
+      "proposal_sha256": "ebd283894c99be5d608bb6ac90a0ab58e642678e1525f55f2fb789007d2fc708"
+    },
+    {
+      "evidence_sha256": "0f70d209bc72f36a76b5a93b4b86dc1ea4e41922d9523246fd01bb943d2bc88f",
+      "idea_id": "HSPT-RQ",
+      "proposal_sha256": "a111226675cdd8035d145f088cea26e10e3fc8391a4be4fd54cba9de0a292c8c"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "CONCMID-GEO-SID",
+          "position": 1,
+          "reason": "It is the only candidate that moves the level-1 quantiser input, i.e. exactly the quantity E8 measures (\"anchor and target share one of K clusters\": 0.3106 at K=16 vs 0.0822 at K=256, negatives 0.1352/0.0129), and E11's 0.0907 first-prefix agreement against a 0.067 null shows that level-1 behaviour alignment is the baseline's weakest measurable link; its inertness is bounded by E5's heterogeneous concentration (top-1 successor mass 0.4375 in the low-entropy bin over 4,895 items vs 0.0543 in the high-entropy bin), its step size eta is measured rather than tuned, and with codebooks/loss/encoder untouched at <1% added wall clock it has no collapse path, so it is the best one-run bet on 0.065."
+        },
+        {
+          "idea_id": "holonomy-frame-sid",
+          "position": 2,
+          "reason": "E6/E7 localise the failure at the deepest token (gold prefix alive at depth 4 = 0.068, T4 NLL 9.03 with T1-T3 at 0.00) and this is the only candidate that de-aliases that token through a curvature-specific object (Gauss-Bonnet area of (o, a_p, b_p) -> frame rotation, inert in the Euclidean limit) while leaving cell granularity unchanged, so it does not fight E8's small-K result; it ranks below position 1 because it leaves L1/L2 untouched, E6's better structured arms still only reach 0.06207-0.06363 against the 0.065 gate, and its own risk (b) - theta_p clustered by popularity so most prefixes keep theta_p = 0 - would reproduce the 0.04671 l1_br baseline."
+        },
+        {
+          "idea_id": "behtree-geocut-sid",
+          "position": 3,
+          "reason": "Its behaviour-cut top levels with fanout<=32 match E8's coarse-cluster advantage, but \"depth 5 per SID level, 3 SID levels\" allows up to 32^3 leaves for 24,556 items, i.e. near-unique leaves, reversing the K=16 > K=256 ordering in E8 and re-creating the E6 collapse it was meant to fix (11 items per deepest triple, depth-4 survival 0.068); it also swaps in hierarchical CE plus straight-through reconstruction, and it overloads one 256-token vocabulary with prefix-local meanings, which its own risk list concedes can make Stage 3 harder to learn - the largest implementation surface and the highest one-run blow-up risk."
+        },
+        {
+          "idea_id": "HSPT-RQ",
+          "position": 4,
+          "reason": "At level 1 rho = 0, so E8's measured first-level capacity ceiling is untouched, and at levels 2-3 a per-item transported codebook is the maximal departure from E8's finding that small, shared K keeps behavioural neighbours together, with its own stated failure mode of arbitrary assignment and recall below 0.054; it is also the dearest arm (571 s -> 780-1050 s, 1.4-1.8x) and its risk list requires an rho clamp whose bound is not derived, a constant the no-sweep policy does not permit, so on E6/E7/E8 it makes the worst predicted trade of the four."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "behtree-geocut-sid",
+          "position": 1,
+          "reason": "E8 is the decisive item: small-fanout behaviour clusters co-locate behavioural neighbours 0.2164 (K=32) and 0.3106 (K=16) against 0.0715/0.1352 for fixed negatives, and E6 shows the loss is depth-2/3 prefix survival (0.829->0.161) not level-1 (already 251/256) - this is the only proposal that reallocates fanout and token-sharing by a behaviour significance test with exact Poincare-distance assignment to gyrobarycentric anchors, so it attacks the failure the evidence locates."
+        },
+        {
+          "idea_id": "holonomy-frame-sid",
+          "position": 2,
+          "reason": "E6/E7 confirm the L2/L3 triple collapse (1769/2201 prefixes for 24556 items) and E5 confirms successor drift is strongly heterogeneous (top-1 mass 0.4375 vs 0.0543), so a per-prefix area-driven frame is non-degenerate; it correctly leaves the already-saturated L1 untouched, but its flat limit forces theta=0 so the geometry-off arm coincides with the behaviour-off arm, and its own risk (a)/(b) admits the rotation can reduce to a relabeling."
+        },
+        {
+          "idea_id": "CONCMID-GEO-SID",
+          "position": 3,
+          "reason": "It only moves the level-1 quantizer input toward a successor barycentre, which is the family E6 already scores at 0.05500 (successor_geodesic_coarse/_v2, tangent_successor_residual) versus 0.06207-0.06363 for prefix-level arms, and E6 shows L1 is already fully used (251/256) with the failure at depth 2-3, so its lever misses the binding constraint; it does have the cleanest distinct Euclidean switch (flat blend, same w and eta) and near-zero cost."
+        },
+        {
+          "idea_id": "HSPT-RQ",
+          "position": 4,
+          "reason": "Rho="
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "CONCMID-GEO-SID",
+          "position": 1,
+          "reason": "E7 makes the last-token term the discriminator (l1_br T4 NLL 9.03 -> recall 0.0467 vs resample T4 0.05 -> 0.0636) and only this proposal targets token predictability with a concentration-damped, curvature-limited step (E5: 4,895 items at H=0.931/top-1 0.4375 give eta a non-degenerate subset) instead of more capacity, whose aggressive variants E6/E7 measure at 0.051-0.055; it is also the only candidate naming both BEHAV_SMOOTH and CURV_C switches, a derived step and <1% cost."
+        },
+        {
+          "idea_id": "holonomy-frame-sid",
+          "position": 2,
+          "reason": "it keeps the frozen-text, no-encoder variant round one showed does not collapse, is a bounded per-prefix intervention leaving level 1 intact, and is the only proposal with an exact Euclidean off-switch (Gauss-Bonnet angle deficit -> theta_p=0, baseline assignment); second not first because its relabelling risk (a) plus E6/E7 (l1_br gold prefix alive 1.000/1.000/1.000 yet recall 0.04671) show prefix de-aliasing is not the binding constraint, E6 curved arms sit at 0.055, and no explicit switch variables are named."
+        },
+        {
+          "idea_id": "behtree-geocut-sid",
+          "position": 3,
+          "reason": "its small-fanout behaviour cuts are the one structural design E8 supports (K=32 same-cluster 0.2164 vs 0.0715 negative; K=256 0.0822 vs 0.0129), but the extra-depth premise is contradicted by E6 where the 100%-prefix-surviving l1_br is worst (0.04671) and resample with depth-3 survival 0.091 is best (0.06363); the spec is internally inconsistent (depth 5 per SID level while emitting three tokens), it re-enters the encoder/hierarchical-CE path that killed round one, and it names no switches."
+        },
+        {
+          "idea_id": "HSPT-RQ",
+          "position": 4,
+          "reason": "it is the most expensive arm (0.20-0.25 s/epoch, 780-1050 s vs 571 s) and sits in the exact family the frozen evidence measures worst (successor_geodesic_coarse 0.05500, tangent_successor_residual 0.05500 vs 0.0620-0.0636 for the mild arms), while per-item transported codebooks make deep tokens item-specific precisely where E6/E7 locate the prediction bottleneck; it names no behaviour-off/Euclidean switch pair and leaves the rho clamp unspecified, which the no-tuning policy forbids."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261031_054914_600",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "CONCMID-GEO-SID": {
+        "first_places": 2,
+        "mean_rank": 1.6667,
+        "total_rank": 5
+      },
+      "HSPT-RQ": {
+        "first_places": 0,
+        "mean_rank": 4.0,
+        "total_rank": 12
+      },
+      "behtree-geocut-sid": {
+        "first_places": 1,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      },
+      "holonomy-frame-sid": {
+        "first_places": 0,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      }
+    },
+    "backups": [
+      {
+        "first_places": 0,
+        "idea_id": "holonomy-frame-sid",
+        "mean_rank": 2.0,
+        "status": "BACKUP",
+        "total_rank": 6
+      },
+      {
+        "first_places": 1,
+        "idea_id": "behtree-geocut-sid",
+        "mean_rank": 2.3333,
+        "status": "BACKUP",
+        "total_rank": 7
+      },
+      {
+        "first_places": 0,
+        "idea_id": "HSPT-RQ",
+        "mean_rank": 4.0,
+        "status": "BACKUP",
+        "total_rank": 12
+      }
+    ],
+    "disagreement": {
+      "CONCMID-GEO-SID": 2,
+      "HSPT-RQ": 0,
+      "behtree-geocut-sid": 2,
+      "holonomy-frame-sid": 0
+    },
+    "rejected": [
+      {
+        "idea_id": "holonomy-frame-sid",
+        "mean_rank": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 6
+      },
+      {
+        "idea_id": "behtree-geocut-sid",
+        "mean_rank": 2.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 7
+      },
+      {
+        "idea_id": "HSPT-RQ",
+        "mean_rank": 4.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 12
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 2,
+        "idea_id": "CONCMID-GEO-SID",
+        "mean_rank": 1.6667,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 5
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}
