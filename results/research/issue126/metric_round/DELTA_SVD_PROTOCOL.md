@@ -328,3 +328,49 @@ the curvature contributes a statistically indistinguishable +0.02 to +0.05.
 `hbaa_size_matched_kept` to +0.0701, so part of the leader's value rides on the
 prefix-size structure -- a caveat worth keeping in view, but the permutation
 control shows that the correspondence is not merely that structure.
+
+## v8 -- the Lorentz chart retracts the headline number
+
+The Poincare ball and the Lorentz hyperboloid are two charts of one space, so for
+a sound implementation they must return the same distance and the same metric.
+They do not above c = 4, and the Lorentz chart is the one that is right. Artifact
+`../lorentz_check_107.json`, script `lorentz_check.py`.
+
+The Lorentz distance is computed from the tangent directly,
+``cosh(sqrt(c) d) = cosh(r1-r2) + sinh(r1) sinh(r2) (1-cos)`` with
+``r = 2 sqrt(c) ||t||`` (the ball point is ``tanh(sqrt(c)||t||)/sqrt(c)``, so the
+hyperbolic radius carries the factor two), ``1-cos = 0.5||u1-u2||^2``, and the
+whole expression in the log domain so that nothing overflows up to c = 65536.
+
+| c | Poincare | **Lorentz** | pairing agreement | chart disagreement |
+| --- | --- | --- | --- | --- |
+| 0.001 | +0.6000 | **+0.6016** | 0.999 | 1.8e-10 |
+| 0.05 | +0.5716 | +0.5333 | 0.991 | 0.79 |
+| 1 | +0.5983 | +0.5266 | 0.995 | 0.95 |
+| 4 | +0.6641 | +0.5402 | 0.993 | 0.98 |
+| 16 | +0.6609 | +0.5441 | 1.000 | 0.99 |
+| 256 | +0.6609 | +0.5449 | 1.000 | 1.00 |
+| 4096 | +0.6609 | +0.5462 | 1.000 | 1.00 |
+| 65536 | +0.6609 | +0.5461 | 1.000 | 1.00 |
+
+Three conclusions, in order of importance.
+
+1. **The headline +0.6605 is retracted.** It is what the saturated Poincare chart
+   returns. The equivalent, numerically sound Lorentz chart gives **+0.545** for
+   the same construction on the same points. The difference of 0.12 is not
+   geometry; it is ``tanh`` hitting 1 and the denominator clip taking over.
+2. **The curvature genuinely does not matter.** The Lorentz number moves from
+   +0.533 to +0.546 across four orders of magnitude of curvature. The plateau the
+   Poincare chart showed above c = 16 was an artefact, but there IS a real
+   plateau, at +0.545, and it starts at c of order 0.05.
+3. **Where both charts agree, and only there, the number is admissible**: at
+   c = 0.001 the two differ by 1.8e-10 and return +0.6000 and +0.6016. So the
+   four-point family's honest value is **about +0.60 at the nearly flat end, and
+   it DECLINES as the points are compressed toward the boundary** -- the opposite
+   of what the saturated sweep suggested. Against the Euclidean control (+0.5037)
+   the hyperbolic form adds about 0.04 to 0.09, the same order as the leader's
+   own hyperbolicity increment (+0.045, P = 0.051, protocol v7).
+
+The lesson generalises: a curvature sweep on a Poincare chart measures the chart's
+saturation past c of order 2. Any curvature claim in this project has to be
+re-checked in the Lorentz chart before it is reported.
