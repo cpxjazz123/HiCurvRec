@@ -1,0 +1,72 @@
+{
+  "quadruples": 20000,
+  "four_point": {
+    "behaviour_ppmi": {
+      "median_relative_delta": 0.0023036510683596134,
+      "p10": 1.1195584647794037e-05,
+      "p90": 0.007519346429035071,
+      "share_below_0.01": 0.9563,
+      "share_below_0.05": 0.99985
+    },
+    "behaviour_raw": {
+      "median_relative_delta": 0.004129649605602026,
+      "p10": 8.364915847778324e-05,
+      "p90": 0.015873514860868455,
+      "share_below_0.01": 0.77085,
+      "share_below_0.05": 0.99935
+    },
+    "hyperbolic": {
+      "median_relative_delta": 0.04283656209134227,
+      "p10": 0.0076913266423976525,
+      "p90": 0.1031494136417987,
+      "share_below_0.01": 0.1297,
+      "share_below_0.05": 0.56725
+    },
+    "text": {
+      "median_relative_delta": 0.024152682088881956,
+      "p10": 0.004449908995803323,
+      "p90": 0.05996370044272212,
+      "share_below_0.01": 0.22245,
+      "share_below_0.05": 0.8291
+    },
+    "null_permuted_text": {
+      "median_relative_delta": 0.024554023175234127,
+      "p10": 0.004424542934922864,
+      "p90": 0.060594997994128964,
+      "share_below_0.01": 0.2187,
+      "share_below_0.05": 0.82395
+    }
+  },
+  "pairwise": {
+    "text": {
+      "spearman_vs_behaviour_ppmi": 0.08222,
+      "p_value": 5.817206517024938e-297
+    },
+    "hyperbolic": {
+      "spearman_vs_behaviour_ppmi": 0.174906,
+      "p_value": 0.0
+    },
+    "null_permuted_text": {
+      "spearman_vs_behaviour_ppmi": 0.010564,
+      "p_value": 2.3095750857279812e-06
+    },
+    "behaviour_raw": {
+      "spearman_vs_behaviour_ppmi": 0.903686,
+      "p_value": 0.0
+    }
+  },
+  "canonical_correlations": {
+    "top": [
+      0.69707,
+      0.662041,
+      0.649793,
+      0.594285,
+      0.55502,
+      0.531603,
+      0.501002,
+      0.461815
+    ],
+    "mean": 0.264735,
+    "total_explained_fraction": 0.089064
+  }
+}

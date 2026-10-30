@@ -945,3 +945,49 @@ exactly and the correspondence destroyed): mean **+0.7078**, p5 +0.6910, p95
    resample members, which is what a sample of eight can do. The pooled +0.05 on
    the 107 pairs therefore still carries a selection component, and the only way
    to settle it is a fresh set of SID-recall pairs.
+
+## v18 -- the three questions that were put first
+
+Everything before this section asked whether a metric predicts Recall. These
+three questions ask whether the premise holds at all. Artifact
+`../behaviour_structure_probe.json`, script `behaviour_structure_probe.py`. All on
+the training interactions and the same 20,000 item quadruples, so the geometries
+are comparable; the four-point deviation is the scale-free
+``(S_max - S_mid) / S_max``, zero exactly when the four-point condition holds.
+
+| geometry | median relative delta | share below 0.01 | spearman with the behaviour distance |
+| --- | --- | --- | --- |
+| behaviour, PPMI co-occurrence | **0.0023** | **0.956** | -- |
+| behaviour, raw co-occurrence | 0.0041 | 0.771 | -- |
+| text (sentence-T5) | 0.0242 | 0.222 | **+0.0822** |
+| text with the items permuted (null) | 0.0246 | 0.219 | +0.0106 |
+| hyperbolic (the frozen Stage 2 reference) | 0.0428 | 0.130 | **+0.1749** |
+
+**Q1: does the interaction graph have a tree-like distance structure? Yes, and
+strongly.** The PPMI-weighted co-occurrence distance satisfies the four-point
+condition within 1% for **95.6%** of the quadruples, with a median relative
+deviation of 0.0023; the raw co-occurrence gives 77.1% and 0.0041. The
+behaviour data really does have the hierarchical structure a hyperbolic space is
+supposed to represent. This is the first premise-level confirmation in the
+project.
+
+**Q2: can the text embedding reflect that structure? Only weakly, and it is not
+itself a tree.** The text distance's rank correlation with the behaviour distance
+is +0.0822 (the permuted null gives +0.0106), so some of the behaviour geometry
+is there; the leading canonical correlations between the text space and the
+behaviour space reach 0.697, 0.662, 0.650, so a great deal of the behaviour
+structure is linearly decodable from the text. But the text embedding has **no
+tree-like structure of its own**: its four-point deviation (0.0242) is
+indistinguishable from its own permuted copy (0.0246), and the share below 0.01
+is 0.222 against the null's 0.219. The text space is a similarity space, not a
+tree metric.
+
+**Q3: is the hyperbolic geometry better than the Euclidean one at keeping that
+relation? The probe gives the yardstick, not the answer.** The frozen hyperbolic
+reference correlates with the behaviour distance at **+0.1749**, more than twice
+the text's +0.0822, so it preserves the behavioural geometry better than the
+text space does -- even though it is *less* tree-like in the abstract
+four-point sense (0.0428 against 0.0242): tree-likeness and behavioural fidelity
+are different things. Answering Q3 properly needs a matched training
+comparison -- the same inputs, the same capacity and the same budget, with only
+the geometry changed -- and that is the next experiment, not this probe.
