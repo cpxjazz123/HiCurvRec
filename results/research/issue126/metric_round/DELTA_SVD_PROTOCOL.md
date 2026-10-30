@@ -420,3 +420,43 @@ Three conclusions.
 number.** The honest description is: *the agreement between the four-point pairing
 of the SVD item geometry and the SID prefix tree predicts the 107 recalls at
 about +0.66; the curvature, the chart and the delta weight contribute nothing.*
+
+## v10 -- the leader is chart-fragile
+
+The same swap was applied to HBAA: identical points, identical prefix centroids,
+identical history barycentres, identical queries; only the distance law changes
+from the Poincare ``arccosh(1 + ...)`` to the Lorentz log-domain form. Artifact
+`../lorentz_hbaa_107.json`, scripts `lorentz_hbaa.py` and `lorentz_hbaa_run.py`.
+
+| chart | rho | per-SID difference |
+| --- | --- | --- |
+| Poincare | +0.7623 | -- |
+| Lorentz | **+0.6880** | median 6.3e-04, max 5.1e-03 |
+
+Paired bootstrap: Poincare - Lorentz = **+0.0743 [+0.0117, +0.1459]**,
+P(not better) = 0.010. The two value series correlate at 0.9933, so the ranking is
+nearly the same; a sub-percent numerical difference moves the rank correlation by
+0.074. Two consequences:
+
+1. **+0.7623 is chart-inflated.** The admissible HBAA number is **+0.6880**. It
+   still passes the permutation control (-0.0065) and it still beats the
+   four-point family, but the margin is smaller than reported.
+2. **The leader is fragile.** A reformulation that computes the same geometry
+   better moves its headline by 0.074 with p = 0.010. The four-point family is not:
+   its unweighted score is bit-identical between the charts (v9). A number whose
+   ranking moves by that much under a numerically equivalent implementation should
+   not be quoted to four decimals.
+
+Where that leaves the family ranking, all numbers now in the numerically sound
+chart or the Euclidean law:
+
+| construction | rho | control |
+| --- | --- | --- |
+| HBAA, Lorentz | +0.6880 | permuted -0.0065 |
+| four-point, Euclidean, unweighted | +0.6618 | permuted +0.1341 (n.s.) |
+| four-point, Lorentz, unweighted | +0.6593 | -- |
+| four-point, Lorentz, weighted | +0.5441 | -- |
+
+The two independent constructions converge on +0.66 to +0.69, and neither needs a
+curvature to get there: the Euclidean forms are +0.7170 (HBAA) and +0.6618
+(four-point), i.e. at least as high as the hyperbolic forms in both families.
