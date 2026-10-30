@@ -1,0 +1,75 @@
+{
+  "admission_policy": "technical validity only; no quality floor",
+  "baseline_metrics": {
+    "level2_distinct_prefixes": 16145,
+    "negative_hits": 2562,
+    "pairs": 52855,
+    "positive_hits": 4199,
+    "valid_l1_hard_er": 16.38953942232631,
+    "valid_l1_negative_hit_rate": 0.004847223536089301,
+    "valid_l1_positive_hit_rate": 0.07944376123356352
+  },
+  "diagnostics": {
+    "conditional_l3_gain": -0.04883337099629518,
+    "l3_collision": 0.2745353235449628,
+    "l3_refinement_gain_bits": 2.1758630116203834,
+    "level2_distinct_prefixes": 7414,
+    "level3_distinct_triples": 20223,
+    "valid_l1_hard_er": 6.468338291542711,
+    "valid_l1_negative_hit_rate": 0.013355406300255416,
+    "valid_l1_positive_hit_rate": 0.08638728597105289
+  },
+  "diagnostics_only": [
+    "valid_l1_positive_hit_rate",
+    "valid_l1_negative_hit_rate",
+    "level3_distinct_triples",
+    "l3_collision",
+    "l3_refinement_gain_bits",
+    "conditional_l3_gain"
+  ],
+  "methodology": {
+    "L3": "first three semantic codes; fourth collision-extension token ignored",
+    "collision": "item-weighted share of repeated three-token SIDs",
+    "conditional_G3": "mean log2(train-successor likelihood / prefix-only likelihood), conditioned on true target L1+L2",
+    "l3_alpha": 1.0,
+    "prob_floor": 1e-06,
+    "refinement": "item-weighted mean log2(size of L2 bucket / size of L3 bucket)",
+    "validation_pairs": 46462,
+    "validation_pairs_excluded": 6393,
+    "validation_pairs_total": 52855,
+    "validation_pairs_with_train_successors": 46321
+  },
+  "metrics": {
+    "conditional_l3_gain": -0.04883337099629518,
+    "l3_collision": 0.2745353235449628,
+    "l3_refinement_gain_bits": 2.1758630116203834,
+    "level2_distinct_prefixes": 7414,
+    "level3_distinct_triples": 20223,
+    "valid_l1_hard_er": 6.468338291542711,
+    "valid_l1_negative_hit_rate": 0.013355406300255416,
+    "valid_l1_positive_hit_rate": 0.08638728597105289
+  },
+  "provenance": {
+    "analysis_source_sha256": "f1f5d2c722156671a35091dfd63d3b377584f3d708c1a1ba63b1022204a65e3e",
+    "candidate_arm": "TIGER_TOLLCAP-SID",
+    "resample_sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
+    "resample_sid_sha256": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+    "sid": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_TOLLCAP-SID/item_sids.json",
+    "sid_sha256": "7721428084e78dff9989ce53084ebd0c7cb7093bbdef5836c3d98ad5f112adcb",
+    "stage3_results_used": false,
+    "train_parquet": "/fs04/ar57/wenyu/GeneRec/results/stage0_build_parquet/train.parquet",
+    "train_parquet_sha256": "80597e38d081029e57e7434c92ff7be2c872f82aebc2e5f072ef973d73e88815",
+    "validation_npz": "/fs04/ar57/wenyu/GeneRec/results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
+    "validation_npz_sha256": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0"
+  },
+  "quality_source": {
+    "baseline": "b08567c7fbaf06e585be37e4c2ceb379f6435e4d36e220c578ae3e6e10265d10",
+    "sid": "7721428084e78dff9989ce53084ebd0c7cb7093bbdef5836c3d98ad5f112adcb",
+    "validation_meta": "31febc22ca29323693af64c7dfb88e113f448b89c1597a0239786d2febc815d6",
+    "validation_pairs": "04d779208343a9e5cea769ddd5b600a4411c9313416a0fdba11ebaf0081125d0"
+  },
+  "report_path": "/fs04/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_TOLLCAP-SID/stage2_metrics/7721428084e78dff9989ce53084ebd0c7cb7093bbdef5836c3d98ad5f112adcb.json",
+  "schema": "stage2_sid_layer_metrics_v1",
+  "status": "complete",
+  "technically_valid_sid": true
+}

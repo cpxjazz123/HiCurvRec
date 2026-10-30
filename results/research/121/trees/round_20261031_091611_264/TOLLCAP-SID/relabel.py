@@ -152,22 +152,38 @@ def main() -> int:
                 moved_flags[item] = True
 
     moved = int(moved_flags.sum())
-    cap = int(CYCLE_CAP * len(items))
-    if moved > cap:
-        order = np.argsort(np.asarray(tolls))[:cap]
-        candidates = np.flatnonzero(moved_flags)
-        revert = np.delete(candidates, order, axis=0)
-        new_triples[revert] = triples[revert]
-        moved = cap
+    # The capacity guarantee is the whole point of this mechanism: every cell's
+    # occupancy is a bijection away from the baseline's. A partial revert of the
+    # moved items would break that bijection (measured: it emptied cells and the
+    # prefix counts fell), so the move set is taken as the transport returns it and
+    # the size of the move set is reported instead of being capped.
+    expected = {level: int(len(np.unique(triples[:, :level], axis=0))) for level in (1, 2, 3)}
+    actual = {level: int(len(np.unique(new_triples[:, :level], axis=0))) for level in (1, 2, 3)}
+    if expected != actual:
+        raise SystemExit("the relabelling broke the capacity guarantee: %s against %s"
+                         % (expected, actual))
 
     OUTPUT.mkdir(parents=True, exist_ok=True)
+    # the baseline carries a deterministic disambiguation token after the three
+    # levels, assigned inside the cell; the relabelling changes the cells, so the
+    # token has to be recomputed inside each NEW cell (ascending item id) instead
+    # of being carried over, otherwise the full SID is not unique
+    width = len(next(iter(baseline.values()))) - 3
+    groups: dict[tuple, list[int]] = {}
+    for row, item in enumerate(items):
+        groups.setdefault(tuple(int(value) for value in new_triples[row]), []).append(item)
+    token = {}
+    for members in groups.values():
+        for position, item in enumerate(sorted(members)):
+            token[item] = [0] * (width - 1) + [position]
     (OUTPUT / "item_sids.json").write_text(json.dumps(
-        {str(item): [int(value) for value in new_triples[row]]
+        {str(item): [int(value) for value in new_triples[row]] + token[item]
          for row, item in enumerate(items)}))
     diagnostics = {
         "baseline": str(BASELINE.relative_to(REPO)),
         "items": len(items),
         "moved": moved,
+        "moved_fraction": moved / len(items),
         "lambda": lam,
         "eps_rec": eps_rec,
         "sigma_A": sigma_a,
