@@ -93,3 +93,41 @@ initialisation have not been exercised successfully yet.
 Status: the mechanism's mathematics is complete and tested, the wiring is
 incomplete and the entry point does not run. **No training has been completed
 and no recall value exists.**
+
+## Stage 2 ran to completion, and the SID is degenerate
+
+The four-GPU run finished all 3000 epochs in **477.8 s** (0.145 s per epoch, the
+baseline's own speed -- the algebraic objective removed the three-orders-of-
+magnitude overhead), saved the final checkpoint and exported `item_sids.json`
+(24,587 items, width 4):
+
+| level | distinct prefixes | largest group |
+| --- | --- | --- |
+| L1 | **2** | 24,266 |
+| L2 | **2** | 24,266 |
+| L3 | **2** | 24,266 |
+
+`final_collision = 0.99992`: every raw SID is one of two codes, and the exported
+SID is unique only because the disambiguation token is appended. The training
+loss reached 2.3e-9 and the reconstruction 1.9e-9, i.e. the encoder collapsed.
+
+**The defect.** The curved path reconstructs `log_0(prefix)` against the encoder
+output and adds `beta * MSE(encoded, reconstructed.detach())` as the commitment.
+Both terms are minimised by driving `encoded` to zero -- the ball's origin, where
+every codeword is equidistant -- so the quantizer degenerates to one code per
+level instead of spreading the items. Nothing in the path anchors the scale: the
+baseline avoids this by reconstructing the INPUT embedding through the decoder,
+which keeps the encoder output away from the origin.
+
+**Verdict for this candidate.** `IMPLEMENTATION_NEEDS_FIX` (CLAUDE.md 19c): the
+mechanism trains at the frozen budget and exports a technically valid SID, but
+the SID is degenerate, so a Stage 3 run on it would measure nothing. No Stage 3
+was started and **no recall value exists**.
+
+**The fix to apply next.** Anchor the reconstruction: keep the baseline's
+`decoder(prefix) -> input embedding` reconstruction (so the encoder output stays
+away from the origin) and keep the curved assignment as the quantizer, with the
+commitment measured between the prefix and the transported encoder tangent.
+That is a change of the reconstruction target and of one loss term, testable by
+the same suite plus a check that the L1 prefix count stays above, say, half the
+number of codewords.

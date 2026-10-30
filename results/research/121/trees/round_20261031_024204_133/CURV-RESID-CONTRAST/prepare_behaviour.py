@@ -111,6 +111,18 @@ def main() -> int:
         direction[item] = difference.numpy()
         norm[item] = float((conformal(here, 1.0) * difference.norm()).item())
 
+    # The codebook lives in CODEBOOK_DIM dimensions while the text geometry is
+    # 768: the direction is projected onto its own leading 32 components (a
+    # deterministic, training-only projection; no recall, no search), and the
+    # per-item unit direction is renormalised there. The gain stays the one
+    # measured in the text geometry.
+    from sklearn.decomposition import TruncatedSVD
+
+    components = min(32, direction.shape[0] - 1, direction.shape[1])
+    projection = TruncatedSVD(n_components=components, random_state=SEED)
+    projected = projection.fit_transform(direction)
+    direction = np.asarray(projected, dtype=np.float64)
+
     valid = norm > 1e-6
     median = float(np.median(norm[valid])) if valid.any() else 1.0
     gain = np.ones(N_ITEMS, dtype=np.float64)
@@ -137,8 +149,11 @@ def main() -> int:
         "items_fallback_isotropic": int((~valid).sum()),
         "norm_median": median,
         "gain_min": float(gain.min()), "gain_max": float(gain.max()),
+        "codebook_dim": int(direction.shape[1]),
+        "projection_explained_variance": float(projection.explained_variance_ratio_.sum()),
         "rule": "successor mean log map minus popularity-decile-matched null mean "
-                "log map, in the curvature-1 ball; training split only",
+                "log map, in the curvature-1 ball, projected onto its own leading "
+                "components with a TruncatedSVD; training split only",
     }, indent=2) + "\n")
     print(json.dumps({"items_with_direction": int(valid.sum()),
                       "median_norm": median,

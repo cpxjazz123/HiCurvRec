@@ -373,7 +373,9 @@ def main() -> None:
         # every rank, and broadcasting it every step would cost more than the
         # mechanism itself.
         model = DDP(model, device_ids=[local_rank], output_device=local_rank,
-                    find_unused_parameters=False, broadcast_buffers=False)
+                    # the curved chain owns its own codebook stack, so the
+                    # inherited quantizer's parameters take no part in the loss
+                    find_unused_parameters=True, broadcast_buffers=False)
 
     # The weighted Frechet step needs to know which item every embedding
     # belongs to, so the batch carries the global item id next to it.

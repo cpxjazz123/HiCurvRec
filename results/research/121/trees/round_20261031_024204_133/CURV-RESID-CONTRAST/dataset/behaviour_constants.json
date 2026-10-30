@@ -10,5 +10,7 @@
   "norm_median": 0.16655627267427808,
   "gain_min": 0.5,
   "gain_max": 2.0,
-  "rule": "successor mean log map minus popularity-decile-matched null mean log map, in the curvature-1 ball; training split only"
+  "codebook_dim": 32,
+  "projection_explained_variance": 0.6492097374555116,
+  "rule": "successor mean log map minus popularity-decile-matched null mean log map, in the curvature-1 ball, projected onto its own leading components with a TruncatedSVD; training split only"
 }
