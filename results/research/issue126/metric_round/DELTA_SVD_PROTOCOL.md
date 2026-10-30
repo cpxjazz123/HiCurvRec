@@ -600,3 +600,62 @@ that disagree most*.
 It also closes the loop on the curvature: the weights were the only thing the
 curvature touched, and the correct ones make things worse, so nothing in this
 family rewards a curvature.
+
+## v13 -- the radial term helps, but at half its Gromov weight
+
+The bug multiplied the radial term of the Gromov product by a half, which is the
+same as scoring with a radial coefficient of 0.5 instead of 1. Writing the
+contrast with a general coefficient,
+
+    g_alpha(x,y) = ( alpha*d(0,x) + alpha*d(0,y) - d(x,y) ) / 2,
+    Delta_alpha  = ( d(h,n) - d(h,p) ) / 2 + (alpha/2) * ( r_p - r_n ),
+
+makes the bug a point on a one-parameter family. The sweep holds everything else
+fixed -- the items, the SID trees, the prefix centroids, the history barycentres,
+the queries, the distances, the temperature -- and moves only alpha. Artifact
+`../hbaa_radial_sweep_107.json`, script `hbaa_radial_sweep.py`.
+
+| alpha | rho | paired vs alpha=1 | P(not better) |
+| --- | --- | --- | --- |
+| 0 | +0.7104 | +0.0219 | 0.299 |
+| 0.25 | +0.7367 | +0.0491 | 0.086 |
+| **0.5** | **+0.7623** | +0.0747 | **0.0094** |
+| **0.75** | **+0.7615** | +0.0739 | **0.0011** |
+| 1 | +0.6880 | -- | -- |
+| 1.25 | +0.5660 | -0.1210 | 0.9999 |
+| 1.5 | +0.5276 | -0.1600 | 1.0000 |
+| 2 | +0.3916 | -0.2952 | 1.0000 |
+| 3 | +0.2301 | -0.4563 | 1.0000 |
+
+Both end points check the arithmetic: alpha = 1 reproduces the corrected HBAA
+(+0.6880) and **alpha = 0.5 reproduces the historical number (+0.7623) exactly**.
+The historical headline was therefore this scoring rule, not the Gromov product.
+
+The shape answers the question that was posed:
+
+1. **The radial term is not harmful.** alpha = 0 (no radial term at all) gives
+   +0.7104, and the peak beats it by +0.0522 [+0.0009, +0.1112], P = 0.023. How
+   deep the positive's prefix sits relative to the negatives' is real signal.
+2. **The Gromov weight over-credits it.** alpha = 1 loses +0.075 against the peak
+   (P = 0.001 to 0.009), and the curve collapses from there: -0.12 at 1.25 and
+   -0.46 at 3. The metric is robust to UNDER-weighting the radial term (alpha = 0
+   and 0.25 stay within noise of the peak) and fragile to OVER-weighting it.
+3. **The optimum is a plateau**, alpha = 0.5 and alpha = 0.75 differ by -0.0004
+   [-0.0315, +0.0308], P = 0.51.
+
+The Gromov product asserts that the deeper prefix shares a deeper ancestor with
+the history, and it credits that with the full radial difference. The data says
+the ancestor-depth reading is right but the credit is too large: a prefix that
+is somewhat deeper than the negatives' is a better positive, and the full
+Gromov weight over-credits it.
+
+Alpha was chosen by looking at the recall, so the peak is a DIAGNOSTIC, not a
+metric: the admissible choices remain alpha = 0 (+0.7104) and alpha = 1
+(+0.6880), neither of them tuned.
+
+**The theme that now runs through both families.** The four-point metric's
+delta weighting -- a tree-likeness weighting -- hurt, and the unweighted
+agreement rate won. Here the ancestor-depth weighting of the Gromov product
+hurts as well, and a damped version of it wins. In both families the part that
+fails is the part that reads the hyperbolic construction as a TREE, and the part
+that works is the plain geometric contrast.
