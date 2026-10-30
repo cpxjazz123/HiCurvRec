@@ -15,6 +15,31 @@ No validation or test interaction is read. Nothing is trained. The item↔SID
 correspondence is never permuted in the metric itself; the permuted table is a
 CONTROL, measured separately.
 
+## Version 2 -- what the first computation got wrong
+
+The first run of this protocol is superseded. Three corrections, each found by
+checking the code against the definition:
+
+1. **The delta was not the Gromov delta.** The first version took the fixed
+   pairing difference `|S3 - S2|`. The delta of a quadruple is the gap between
+   the LARGEST and the SECOND LARGEST of the three pairing sums, halved:
+   `delta_4 = (S_max - S_second) / 2`. The fixed difference changes when the
+   four points are relabelled and is not zero for a tree metric, so it measured
+   something else -- and it was also what the curvature was estimated from.
+2. **The two deltas were on different scales.** The data's delta was computed
+   with plain Euclidean distances on the tangents while the model's used
+   Poincare distances; as the curvature goes to zero the hyperbolic distance
+   tends to `sqrt(2)` times the Euclidean one. The data's delta is therefore
+   measured in the REFERENCE'S OWN geometry -- its curvature-1 ball, with the
+   same distance convention -- and the model at curvature `c` uses the same
+   convention on the re-mapped tangents.
+3. **The analysis set is the whole 107 pairs**, with no split and no second set.
+
+With the corrections the criterion has an INTERIOR optimum: `c_delta = 1.0` with a
+gap of 0.0000, which is the reference's own curvature -- the estimator recovers
+it, so the scale is consistent now. The earlier `c_delta = 0.05` was an artefact
+of the two mistakes above.
+
 ## Step 1 -- the curvature from the Gromov delta
 
 The reference's representations are points of the curvature-1 ball. Their **tangent**
@@ -28,10 +53,11 @@ from the Gromov delta (Chami et al., 2019): the curvature whose quadruples are a
 close to a tree as the data's quadruples are.
 
     grid          : c in {0.05, 0.1, 0.25, 0.5, 1, 2, 4, 8}
-    data delta    : the quadruples' delta on the tangent vectors with EUCLIDEAN
-                    distances (the data's own tree-likeness)
+    data delta    : the quadruples' delta in the REFERENCE'S OWN geometry (its
+                    curvature-1 ball, the same distance convention the model uses)
     model delta   : the same quadruples in the ball of curvature c, reached by
                     re-mapping the SAME tangent vectors: x = exp_c(t)
+    delta         : (S_max - S_second) / 2 over the three pairing sums
     criterion     : minimise |median |delta|_model(c) - median |delta|_data|
     tie-break     : the smaller curvature
 

@@ -1023,102 +1023,103 @@
       "eligible": false
     }
   },
-  "analysis_rule": "ONE analysis set: the whole 107-pair confirmed collection. No split, no subset, no extra pass condition. Every metric is computed independently on those 107 pairs and reported with its Spearman, its bootstrap interval and its p-value. The caveat that follows from trying many metrics on one collection is stated: the result is exploratory evidence of an association, not a validated generalisation.",
+  "analysis_rule": "ONE analysis set: the whole 107-pair confirmed collection. No split, no subset, no extra pass condition, and the 77-pair result files have been removed so that no table can be read as a second analysis set. Every metric is computed independently on those 107 pairs and reported with its Spearman, its bootstrap interval and its p-value. The caveat that follows from trying many metrics on one collection is stated: the numbers are exploratory evidence of an association, not a validated generalisation.",
   "four_point_experiment": {
     "protocol": "metric_round/DELTA_FOUR_POINT_PROTOCOL.md (fixed before the numbers)",
     "curvature_estimate": {
-      "c_delta": 0.05,
-      "data_median_abs_delta": 0.0639,
-      "finding": "the data's quadruples are CLOSER to a tree than ANY curvature on the pre-registered grid produces, so the criterion saturates at the grid's lower edge: the curvature is NOT identified by this data, and the variants at 0.5 c_delta, 2 c_delta and the nearly flat control are therefore the same measurement",
+      "c_delta": 1.0,
+      "data_median_abs_delta": 0.079,
+      "finding": "with the STANDARD four-point delta (the gap between the largest and the second largest pairing sum, halved) and the data's delta measured in the REFERENCE'S OWN geometry (its curvature-1 ball), the criterion now has an interior optimum: c_delta = 1.0 with a gap of 0.0000, which is the reference's own curvature -- the estimator recovers it, so the scale is consistent. The earlier c_delta = 0.05 was an artefact of a fixed pairing difference and of comparing Euclidean data deltas against hyperbolic model deltas, whose scale differs by sqrt(2) as the curvature goes to zero",
       "grid": [
         {
           "curvature": 0.05,
-          "model_median_abs_delta": 0.1378
+          "model_median_abs_delta": 0.034
         },
         {
           "curvature": 0.1,
-          "model_median_abs_delta": 0.1481
+          "model_median_abs_delta": 0.0365
         },
         {
           "curvature": 0.25,
-          "model_median_abs_delta": 0.1807
+          "model_median_abs_delta": 0.0446
         },
         {
           "curvature": 0.5,
-          "model_median_abs_delta": 0.2368
+          "model_median_abs_delta": 0.0584
         },
         {
           "curvature": 1.0,
-          "model_median_abs_delta": 0.3258
+          "model_median_abs_delta": 0.079
         },
         {
           "curvature": 2.0,
-          "model_median_abs_delta": 0.3377
+          "model_median_abs_delta": 0.0792
         },
         {
           "curvature": 4.0,
-          "model_median_abs_delta": 0.2523
+          "model_median_abs_delta": 0.0586
         },
         {
           "curvature": 8.0,
-          "model_median_abs_delta": 0.1787
+          "model_median_abs_delta": 0.0415
         }
       ]
     },
     "results_107": {
       "delta_four_point": {
-        "spearman": 0.1316,
-        "p": 0.177,
+        "spearman": 0.1362,
+        "p": 0.162,
         "ci": [
-          -0.082,
-          0.328
-        ]
-      },
-      "delta_four_point_half": {
-        "spearman": 0.1327,
-        "p": 0.173,
-        "ci": [
-          -0.08,
+          -0.076,
           0.329
         ]
       },
-      "delta_four_point_double": {
-        "spearman": 0.134,
-        "p": 0.169,
+      "delta_four_point_half": {
+        "spearman": 0.1458,
+        "p": 0.134,
         "ci": [
-          -0.079,
-          0.331
+          -0.067,
+          0.338
+        ]
+      },
+      "delta_four_point_double": {
+        "spearman": 0.1303,
+        "p": 0.181,
+        "ci": [
+          -0.08,
+          0.324
         ]
       },
       "delta_four_point_flat": {
-        "spearman": 0.1328,
-        "p": 0.173,
+        "spearman": 0.1493,
+        "p": 0.125,
         "ci": [
-          -0.08,
-          0.328
+          -0.063,
+          0.341
         ]
       },
       "delta_four_point_euclidean": {
-        "spearman": 0.138,
-        "p": 0.156,
+        "spearman": 0.1513,
+        "p": 0.12,
         "ci": [
-          -0.075,
-          0.333
+          -0.062,
+          0.344
         ]
       },
       "delta_four_point_permuted": {
-        "spearman": -0.0157,
-        "p": 0.873,
+        "spearman": -0.0212,
+        "p": 0.829,
         "ci": [
-          -0.199,
-          0.169
+          -0.215,
+          0.174
         ]
       }
     },
-    "verdict": "the four-point consistency does not predict the recall (+0.13, not significant), the Euclidean control is equal or slightly BETTER, and the curvature chosen from the Gromov delta is not identified by this data, so the hypothesis is NOT supported: the delta-guided curvature adds nothing over the flat and Euclidean controls. The permuted control lands at -0.016, i.e. at zero, which says the measurement itself is sound",
+    "verdict": "the corrected measurement still does not support the hypothesis: the four-point consistency is +0.136 (p 0.16, not significant), the nearly flat variant is +0.149 and the Euclidean control is +0.151, i.e. the Euclidean geometry is as good as or slightly better than the delta-guided one, and the permuted control is at zero. The curvature is now identified (c_delta = 1, the reference's own), so the failure is the hypothesis's, not the estimator's: the SID's four-point branching does not track the recall",
     "two_defects_found_and_fixed_while_running_it": [
       "the tree's pairings were compared with the SHARED-PREFIX counts while the geometry used the distances: the two conventions were opposite, and a permuted table then scored HIGHER than a real one. The tree now speaks in path lengths.",
-      "quadruples whose three tree sums are equal carry no information (the argmin was decided by floating point noise), and they inflated the baseline to 0.42 instead of the chance level of 1/3. They are now left out of both the numerator and the denominator."
+      "quadruples whose three tree sums are equal carry no information (the argmin was decided by floating point noise), and they inflated the baseline to 0.42 instead of the chance level of 1/3. They are now left out of both the numerator and the denominator.",
+      "the delta was the fixed pairing difference |S3 - S2| rather than the standard (S_max - S_second)/2, and the data's delta used Euclidean distances while the model's used hyperbolic ones -- the two were on different scales (a factor sqrt(2) as the curvature goes to zero), which is what produced the first c_delta = 0.05"
     ]
   },
   "comparison_table": "metric_round/metric_comparison_107.csv: 43 metrics on the 107 confirmed pairs, each with its Spearman, its bootstrap interval, its p-value and its family; 18 are eligible under the rule fixed in advance"

@@ -81,6 +81,18 @@ def _pairing_sums(d_ab: np.ndarray, d_cd: np.ndarray, d_ac: np.ndarray,
     return np.stack([d_ab + d_cd, d_ac + d_bd, d_ad + d_bc], axis=0)
 
 
+def four_point_delta(sums: np.ndarray) -> np.ndarray:
+    """The standard Gromov delta of a quadruple: (S_max - S_second) / 2.
+
+    The three pairing sums are sorted first: the delta of a quadruple is the gap
+    between the largest and the second largest, halved. The deviation of the
+    fixed pairing difference |S3 - S2| is not the delta: it changes when the four
+    points are relabelled, and it is not zero for a tree metric.
+    """
+    ordered = np.sort(sums, axis=0)
+    return 0.5 * (ordered[2] - ordered[1])
+
+
 def estimate_curvature(context: dict, table: dict) -> dict:
     """The curvature whose quadruples are as tree-like as the data's are.
 
@@ -92,14 +104,21 @@ def estimate_curvature(context: dict, table: dict) -> dict:
     tangents = _reference_tangents(context, table)
     picks = _quadruples(context, tangents.shape[0])
     a, b, c, d = picks[:, 0], picks[:, 1], picks[:, 2], picks[:, 3]
+    # The DATA's delta is measured in the reference's OWN geometry -- its
+    # curvature-1 ball, with the same distance convention the model uses. Using
+    # plain Euclidean distances on the tangents put the two on different scales
+    # (as c goes to zero the hyperbolic distance tends to sqrt(2) times the
+    # Euclidean one), and the curvature that came out of that mismatch said
+    # nothing about the data.
+    reference_points = ball_of(tangents, 1.0)
     data_sums = _pairing_sums(
-        euclidean_distance(tangents[a], tangents[b]),
-        euclidean_distance(tangents[c], tangents[d]),
-        euclidean_distance(tangents[a], tangents[c]),
-        euclidean_distance(tangents[b], tangents[d]),
-        euclidean_distance(tangents[a], tangents[d]),
-        euclidean_distance(tangents[b], tangents[c]))
-    data_delta = np.abs(data_sums[2] - data_sums[1])
+        hyperbolic_distance(reference_points[a], reference_points[b], 1.0),
+        hyperbolic_distance(reference_points[c], reference_points[d], 1.0),
+        hyperbolic_distance(reference_points[a], reference_points[c], 1.0),
+        hyperbolic_distance(reference_points[b], reference_points[d], 1.0),
+        hyperbolic_distance(reference_points[a], reference_points[d], 1.0),
+        hyperbolic_distance(reference_points[b], reference_points[c], 1.0))
+    data_delta = four_point_delta(data_sums)
     data_median = float(np.median(data_delta))
     scored = []
     for curvature in CURVATURE_GRID:
@@ -111,7 +130,7 @@ def estimate_curvature(context: dict, table: dict) -> dict:
             hyperbolic_distance(points[b], points[d], curvature),
             hyperbolic_distance(points[a], points[d], curvature),
             hyperbolic_distance(points[b], points[c], curvature))
-        delta = np.abs(sums[2] - sums[1])
+        delta = four_point_delta(sums)
         scored.append((abs(float(np.median(delta)) - data_median), curvature,
                        float(np.median(delta))))
     scored.sort(key=lambda entry: (entry[0], entry[1]))
@@ -137,7 +156,7 @@ def _score(table: dict, context: dict, curvature: float, euclidean: bool) -> flo
     sums = _pairing_sums(distance(points[a], points[b]), distance(points[c], points[d]),
                          distance(points[a], points[c]), distance(points[b], points[d]),
                          distance(points[a], points[d]), distance(points[b], points[c]))
-    delta = np.abs(sums[2] - sums[1])
+    delta = four_point_delta(sums)
     # the weight's normalisation is computed once, at c_delta, and shared
     weight_median = context.get("delta_weight_median")
     if weight_median is None:

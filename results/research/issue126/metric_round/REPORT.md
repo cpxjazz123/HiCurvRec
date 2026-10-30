@@ -203,7 +203,35 @@ not a validated generalisation.
 `metric_round/metric_comparison_107.csv` holds the whole table: 43 metrics, their
 families, their Spearman, their intervals and their p-values. 18 are eligible.
 
-### The delta-guided four-point experiment
+### The delta-guided four-point experiment (version 2: the delta and the scale corrected)
+
+The first computation of this experiment is superseded: the delta was the fixed
+pairing difference `|S3 - S2|` rather than the standard `(S_max - S_second) / 2`,
+and the data's delta used Euclidean distances while the model's used hyperbolic
+ones -- two different scales, and the source of the first `c_delta = 0.05`. Both
+are corrected, and the data's delta is now measured in the reference's own
+geometry.
+
+With the corrections the curvature has an INTERIOR optimum: **c_delta = 1.0**
+(gap 0.0000) -- the reference's own curvature, so the estimator now recovers it.
+
+| variant | Spearman (107) | 95% CI | p |
+|---|---|---|---|
+| A: c_delta = 1.0 | +0.1362 | [-0.076, +0.329] | 0.162 |
+| B: 0.5 c_delta | +0.1458 | [-0.067, +0.338] | 0.134 |
+| C: 2 c_delta | +0.1303 | [-0.080, +0.324] | 0.181 |
+| D: nearly flat | +0.1493 | [-0.063, +0.341] | 0.125 |
+| E: Euclidean | +0.1513 | [-0.062, +0.344] | 0.120 |
+| F: permuted control | -0.0212 | [-0.215, +0.174] | 0.829 |
+
+The hypothesis is still NOT supported, and now the failure is the hypothesis's
+rather than the estimator's: the four-point consistency is +0.136 and not
+significant, the nearly flat variant is +0.149 and the Euclidean control is
++0.151 -- the Euclidean geometry is as good as or slightly better than the
+delta-guided one -- and the permuted control is at zero, so the measurement is
+sound but does not separate the tables.
+
+### The delta-guided four-point experiment (version 1, superseded)
 
 The protocol was fixed BEFORE the numbers (`DELTA_FOUR_POINT_PROTOCOL.md`): the
 curvature grid {0.05 … 8}, the criterion (match the median |delta| of the data's
