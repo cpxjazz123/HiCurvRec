@@ -1057,35 +1057,75 @@
         "controls": {
           "half_c4": 0.6605,
           "double_c16": 0.6605,
-          "shape_selected_c2": 0.6383,
-          "nearly_flat_c0.001": 0.5318,
+          "shape_selected_c2": 0.6401,
+          "nearly_flat_c0.001": 0.6011,
           "euclidean": 0.5037,
           "permuted": 0.0011
         },
         "paired_bootstrap": {
           "c_delta_minus_flat": [
-            0.1284,
-            0.0717,
-            0.1898
+            0.0591,
+            0.0215,
+            0.1016
           ],
           "c_delta_minus_euclidean": [
             0.1565,
             0.0833,
             0.2383
           ],
-          "c_delta_minus_half": [
-            -0.0016,
-            -0.0182,
-            0.0162
-          ],
           "c_delta_minus_shape": [
-            0.0218,
-            0.0021,
-            0.0447
+            0.0201,
+            0.0029,
+            0.0417
           ]
         },
         "artefact": "results/research/issue126/metric_bench_svdfourpoint_107.json",
-        "protocol": "results/research/issue126/metric_round/DELTA_SVD_PROTOCOL.md"
+        "protocol": "results/research/issue126/metric_round/DELTA_SVD_PROTOCOL.md",
+        "sweep": {
+          "artifact": "results/research/issue126/curve_sweep_107.json",
+          "grid": [
+            0.001,
+            0.01,
+            0.05,
+            0.1,
+            0.25,
+            0.5,
+            1,
+            2,
+            4,
+            8,
+            16,
+            32,
+            64,
+            128,
+            256
+          ],
+          "spearman": {
+            "0.001": 0.6,
+            "1": 0.5983,
+            "2": 0.6409,
+            "4": 0.6641,
+            "8": 0.6609,
+            "16": 0.6609,
+            "32": 0.6609,
+            "64": 0.6609,
+            "128": 0.6609,
+            "256": 0.6609
+          },
+          "per_sid_change": {
+            "up_to_c8": "4e-3 to 1.6e-2 per step",
+            "c16": 7.8e-12,
+            "c32_and_above": "1e-14"
+          },
+          "boundary_share": {
+            "c0.001": 0.04,
+            "c1": 0.31,
+            "c2_and_above": 1.0
+          },
+          "gauge_test_max_abs_difference": 0.0,
+          "finding": "the plateau above c=8 is exp_c saturation; curvature and radial scale are one degree of freedom, so a fixed point set cannot identify a curvature. The sweep supports \"compression toward the boundary beats near-flat\" (+0.059, P=0.001) and nothing stronger."
+        },
+        "score_fix": "the normalising median was cached per process and made the value depend on the evaluation order; cached per curvature now, which moved the nearly-flat control from +0.5318 to +0.6011"
       }
     },
     {
