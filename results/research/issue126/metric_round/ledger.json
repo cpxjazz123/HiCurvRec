@@ -6,9 +6,9 @@
     "behaviour_contrast": "the family that works: the table is contrasted against the behaviour reference with explicit positives and negatives, on the level-1 prefix centroid",
     "structural_alignment": "label-free structure comparisons: does the hyperbolic shared depth of a pair agree with the length of their shared SID prefix, does the prefix tree preserve the reference's distances, is a cell's angular cone tighter than a different set of the same size -- measured with the corrected definitions, and none of them is eligible"
   },
-  "proposals": 59,
-  "measured": 32,
-  "eligible": 17,
+  "proposals": 64,
+  "measured": 37,
+  "eligible": 18,
   "rows": [
     {
       "metric_id": "hbaa",
@@ -247,6 +247,26 @@
         "eligible": true,
         "pairs": 107,
         "report": "results/research/issue126/metric_bench_hbaa_174.json"
+      },
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "behaviour_prefix_preservation",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.4580019740739148,
+        "p": 7.038354186073859e-07,
+        "ci95": [
+          0.2442944850041479,
+          0.641937471832994
+        ],
+        "eligible": true,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_directions_107.json"
       },
       "family": "behaviour_contrast"
     },
@@ -511,6 +531,26 @@
       "family": "structural_alignment"
     },
     {
+      "metric_id": "geometry_reconstruction_fidelity",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.09818194286975344,
+        "p": 0.31436436332956075,
+        "ci95": [
+          -0.11895476114295694,
+          0.30162566893675435
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_directions_107.json"
+      },
+      "family": "behaviour_contrast"
+    },
+    {
       "metric_id": "hbaa_size_matched_kept",
       "title": null,
       "round": "(measured only)",
@@ -527,6 +567,46 @@
         "eligible": false,
         "pairs": 107,
         "report": "results/research/issue126/metric_bench_hbaa_174.json"
+      },
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "joint_behaviour_over_geometry",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.06579833599910011,
+        "p": 0.5007187691034231,
+        "ci95": [
+          -0.16053239704861585,
+          0.29844085466892506
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_directions_107.json"
+      },
+      "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "gromov_delta_tree_agreement",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": 0.061060401073057026,
+        "p": 0.5321164776756278,
+        "ci95": [
+          -0.1734359417597781,
+          0.2827685270331602
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_directions_107.json"
       },
       "family": "behaviour_contrast"
     },
@@ -609,6 +689,26 @@
         "report": "results/research/issue126/metric_bench_all_fast_107.json"
       },
       "family": "partition_geometry"
+    },
+    {
+      "metric_id": "behaviour_hierarchy_agreement",
+      "title": null,
+      "round": "(measured only)",
+      "proposed_by": null,
+      "formula": "",
+      "measured": true,
+      "measurement": {
+        "spearman": -0.23018837432396078,
+        "p": 0.017067776407490867,
+        "ci95": [
+          -0.44278189233630444,
+          -0.015608459261540761
+        ],
+        "eligible": false,
+        "pairs": 107,
+        "report": "results/research/issue126/metric_bench_directions_107.json"
+      },
+      "family": "behaviour_contrast"
     },
     {
       "metric_id": "hyp_hsoftmax_path",
