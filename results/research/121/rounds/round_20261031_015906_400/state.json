@@ -1,0 +1,40 @@
+{
+  "blocked": [],
+  "created_at": 1793372346.4028819,
+  "duplicates": [],
+  "events": [
+    {
+      "at": 1793372346.4028823,
+      "event": "round_created"
+    },
+    {
+      "at": 1793372346.413684,
+      "event": "round_worker_started",
+      "pid": 105099
+    },
+    {
+      "at": 1793372356.2073863,
+      "error": "the phase is incomplete: 1 (unknown); 2 (unknown); 3 (unknown); 4 (unknown); 5 (unknown)",
+      "event": "round_failed"
+    }
+  ],
+  "ideas": [],
+  "ideas_rejected": [],
+  "implementations": [],
+  "issue": "121",
+  "matrix": null,
+  "objective": "Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.065.\n\nOne mechanism for this round, along the chain: user behaviour data -> behaviour graph -> verify the tree structure -> behaviour item embedding -> Gromov delta -> hyperbolic curvature -> text embedding into a hyperbolic RQ-VAE -> behaviour supervision -> SID -> Stage3 -> test_recall@10. The target is a real test_recall@10 above 0.065 from one frozen four-GPU Stage2 run and one frozen Stage3 run.\n\nEVIDENCE THE PROPOSALS MUST RESPECT (measured in this repository, results/research/issue126):\n1. The interaction graph built from the sequential training interactions (unit edges, no truncation) has a tree-like shortest-path metric, but a degree-preserving rewiring of the same graph is EXACTLY as tree-like (median delta 0.0 both, mean delta 0.25257 against 0.25211 +- 0.00183, ten seeds). The four-point condition therefore does not distinguish the behaviour structure from a degree-matched random graph, so 'the behaviour data is a tree' is NOT available as a premise.\n2. The curvature parameter is a GAUGE: with tangent vectors from a fixed point set, exp_c, scaling the tangents by 1/sqrt(c) reproduces curvature 1 to machine precision. Any curvature estimate is a choice of radial scale, not an identified property of the data. The hyperbolic chart saturates above c of order 2 (the Poincare distances become chart artefacts), and the Lorentz chart agrees with the Poincare chart only below that.\n3. The SID-quality metrics measured on the 107 confirmed SID/recall pairs that actually predict Recall are BEHAVIOUR CONTRAST metrics, and the Euclidean controls match or beat their hyperbolic forms: HBAA plain distance contrast +0.7104, its Euclidean control +0.7170, the unweighted four-point agreement +0.6593, the delta-weighted four-point +0.5441 in the numerically sound chart. Gromov-delta weighting and ancestor-depth weighting both HURT (+0.12 and +0.075 losses). The radial term is group compactness, not hierarchy (91% correlated with the within-group dispersion, 0.98 with the distance to a random point).\n4. So the mechanism cannot lean on 'the data is hierarchical' or on 'curvature helps'. It has to couple a train-only behaviour signal with an explicit curve operation in ONE connected computational path, and it has to be defensible on grounds other than the tree premise: e.g. capacity/geometry of the code space, the behaviour contrast itself, or the interaction between the quantization residual and a curved distance.\n\nHARD CONSTRAINTS: a single formal training run (3000 epochs, four-GPU DDP, global batch 4096, frozen recipe), no ablation arms, no hyperparameter tuning, no seed sweeps; every constant must be derivable a priori (relative bounds, measured quantities, documented defaults). The behaviour-off / geometry-off / both-on switches must exist in the code and be wired correctly, but only the both-on arm is trained. Stage3 keeps its frozen protocol (150 epochs, eval interval 5, eval start 75, early evals 25/50/75/100/125, seed 42, beam 20, no eval, test on). The Stage2->Stage3 admission is technical validity only; test_recall@10 > 0.065 is the final judgement.",
+  "probe_state": "PROBE_PENDING",
+  "repairs": [],
+  "round_id": "round_20261031_015906_400",
+  "schema": 1,
+  "scores": {},
+  "selection": null,
+  "stage2_jobs": [],
+  "stage3_jobs": [],
+  "step": "ideation",
+  "updated_at": 1793372356.207393,
+  "verification": {},
+  "worker_log": "/tmp/genrec-mcp/round_round_20261031_015906_400.log",
+  "worker_pid": 105099
+}
