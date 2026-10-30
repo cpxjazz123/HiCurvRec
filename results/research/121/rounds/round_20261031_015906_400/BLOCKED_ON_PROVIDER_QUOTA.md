@@ -92,3 +92,24 @@ the objective text (the full chain, the measured evidence it must respect, the
 0.065 target and the §19g single-run constraints), the intact baseline tree
 `stage2_RQ-VAE/TIGER_RQ-VAE`, the frozen four-GPU recipe and the standing GPU
 authorisation (§59).
+
+### Two further probes, both on the stored OpenAI OAuth credential
+
+`opencode models` does list `openai/*` entries (gpt-5.5, 5.6, 6 and codex
+variants), but the credential behind them is a ChatGPT/Codex account and it
+refuses them:
+
+```
+$ opencode run --standalone --model openai/gpt-5.5 "reply with exactly: ok"
+Error: model_not_found: The 'gpt-5.5' model is not supported when using Codex
+with a ChatGPT account.
+
+$ opencode run --standalone --model openai/gpt-5.3-codex-spark "reply with exactly: ok"
+Error: model_not_found: The 'gpt-5.3-codex-spark' model is not supported when
+using Codex with a ChatGPT account.
+```
+
+So the six probes across four providers all fail, and they fail for four
+different reasons (usage limit, payment required, invalid key, model not
+available to this account). Guessing further model names is not a fix: what is
+missing is a working credential.
