@@ -4,11 +4,12 @@
     "partition_geometry": "the table's own geometry: tightness, margin, dispersion, coverage, reach, ranking of cells -- measured, and none of it tracks the recall",
     "rewarding_an_answer_in_hand": "metrics that grow when the answer is already inside the cell: the path likelihood, the generator-side hit rate -- they are NEGATIVELY correlated",
     "behaviour_contrast": "the family that works: the table is contrasted against the behaviour reference with explicit positives and negatives, on the level-1 prefix centroid",
-    "structural_alignment": "label-free structure comparisons: does the hyperbolic shared depth of a pair agree with the length of their shared SID prefix, does the prefix tree preserve the reference's distances, is a cell's angular cone tighter than a different set of the same size -- measured with the corrected definitions, and none of them is eligible"
+    "structural_alignment": "label-free structure comparisons: does the hyperbolic shared depth of a pair agree with the length of their shared SID prefix, does the prefix tree preserve the reference's distances, is a cell's angular cone tighter than a different set of the same size -- measured with the corrected definitions, and none of them is eligible",
+    "behaviour_reference_obligation": "the table is scored against a CURVATURE, not against positives and negatives: the training behaviour fixes a reference graph, the four-point tree-likeness of that graph fixes the curvature, and the SID's own four-point deviation at that curvature is the metric. Measured on the 107 confirmed pairs it is the second strongest construction (rho +0.6605) and the curvature it estimates beats both a near-flat and a Euclidean control by +0.128 / +0.157 in a paired bootstrap. NOT refuted: the earlier rejection of the delta family was an artefact of six implementation defects, recorded in DELTA_SVD_PROTOCOL.md (v1 to v4)."
   },
   "proposals": 64,
-  "measured": 37,
-  "eligible": 18,
+  "measured": 38,
+  "eligible": 19,
   "rows": [
     {
       "metric_id": "hbaa",
@@ -1019,6 +1020,72 @@
       "measured": false,
       "measurement": null,
       "family": "behaviour_contrast"
+    },
+    {
+      "metric_id": "svd_delta_four_point",
+      "title": "the four-point obligation of the behaviour graph, measured on the SVD space",
+      "round": "(measured only)",
+      "proposed_by": "operator, on the user's direction",
+      "formula": "delta = |d1+d4-(d2+d3)| of the six pairwise distances, ordered; c_delta = argmin |median delta_model(c) - median delta_behaviour_graph|; metric = -(normalised delta at c_delta)",
+      "measured": true,
+      "family": "behaviour_reference_obligation",
+      "measurement": {
+        "pairs": 107,
+        "spearman": 0.6605,
+        "ci95": [
+          0.519,
+          0.774
+        ],
+        "p_value": 9.99e-15,
+        "eligible": true,
+        "curvature": 8.0,
+        "curvature_grid": [
+          0.05,
+          0.1,
+          0.25,
+          0.5,
+          1.0,
+          2.0,
+          4.0,
+          8.0,
+          16.0,
+          32.0,
+          64.0
+        ],
+        "quadruples_used": 4000,
+        "controls": {
+          "half_c4": 0.6605,
+          "double_c16": 0.6605,
+          "shape_selected_c2": 0.6383,
+          "nearly_flat_c0.001": 0.5318,
+          "euclidean": 0.5037,
+          "permuted": 0.0011
+        },
+        "paired_bootstrap": {
+          "c_delta_minus_flat": [
+            0.1284,
+            0.0717,
+            0.1898
+          ],
+          "c_delta_minus_euclidean": [
+            0.1565,
+            0.0833,
+            0.2383
+          ],
+          "c_delta_minus_half": [
+            -0.0016,
+            -0.0182,
+            0.0162
+          ],
+          "c_delta_minus_shape": [
+            0.0218,
+            0.0021,
+            0.0447
+          ]
+        },
+        "artefact": "results/research/issue126/metric_bench_svdfourpoint_107.json",
+        "protocol": "results/research/issue126/metric_round/DELTA_SVD_PROTOCOL.md"
+      }
     }
   ]
 }
