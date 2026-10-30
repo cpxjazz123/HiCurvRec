@@ -19,7 +19,7 @@ KNN = 10
 HOP_LIMIT = 4
 ESTIMATION_QUADRUPLES = 4000
 SCORING_QUADRUPLES = 20000
-CURVATURE_GRID = (0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0)
+CURVATURE_GRID = (0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0)
 NEARLY_FLAT = 0.001
 SEED = 42
 
@@ -180,6 +180,68 @@ def _graph_local_quadruples(context: dict, table: dict, count: int, seed: int) -
     return context[key]
 
 
+def hop_limited_shortest_paths(graph, sources, max_hops: int):
+    """The weighted shortest paths inside each source's ``max_hops``-hop ball.
+
+    Two exact steps, both from scipy: the HOP counts come from an unweighted
+    Dijkstra (whose weights are all one, so the limit is a hop limit), and the
+    weighted distances inside each ball come from a Dijkstra on the induced
+    subgraph. A hand-written relaxation is what this replaced: a sparse matrix
+    product sums the incoming contributions instead of taking the minimum, and a
+    fancy-indexed write-back goes to a copy.
+    """
+    from scipy.sparse.csgraph import dijkstra
+
+    sources = np.asarray(sources, dtype=np.int64)
+    hops = dijkstra(graph, directed=False, indices=sources, unweighted=True)
+    n_items = graph.shape[0]
+    distance = np.full((len(sources), n_items), np.inf)
+    for row, source in enumerate(sources):
+        ball = np.flatnonzero(np.isfinite(hops[row]) & (hops[row] <= max_hops))
+        if ball.size < 2:
+            distance[row, source] = 0.0
+            continue
+        inside = np.searchsorted(ball, source)
+        subgraph = graph[ball][:, ball].tocsr()
+        local = dijkstra(subgraph, directed=False, indices=[int(inside)])
+        distance[row, ball] = local[0]
+    return distance
+
+
+def _graph_local_quadruples(context: dict, table: dict, count: int, seed: int) -> np.ndarray:
+    """Quadruples drawn WHERE the behaviour graph has structure.
+
+    Random quadruples from the whole catalogue are almost never mutually
+    reachable within four hops: the k-NN graph of the SVD space is clustered, and
+    a random partner is reachable in about 4% of the pairs at k=10 (and the
+    fraction FALLS with a denser graph, because the extra edges stay inside the
+    cluster). The tree-likeness of the purchase behaviour can therefore only be
+    measured on quadruples that live inside a cluster: a source node and three of
+    its neighbours within the hop limit.
+    """
+    key = "svd_local_quadruples_%d" % count
+    if key not in context:
+        rng = np.random.default_rng(seed)
+        graph = _knn_graph(context, table)
+        n_items = graph.shape[0]
+        sources = rng.choice(n_items, min(count, n_items), replace=False)
+        picks = []
+        per_source = max(1, count // max(1, len(sources)))
+        for source in sources:
+            # the DIRECT neighbours: any two of them are then at most two hops
+            # apart, so every pair of the quadruple has a finite distance
+            reachable = graph.indices[graph.indptr[source]:graph.indptr[source + 1]]
+            reachable = np.asarray(reachable, dtype=np.int64)
+            reachable = reachable[reachable != source]
+            if reachable.size < 3:
+                continue
+            for _ in range(per_source):
+                chosen = rng.choice(reachable, size=3, replace=False)
+                picks.append([int(source)] + [int(item) for item in chosen])
+        context[key] = np.asarray(picks[:count], dtype=np.int64)
+    return context[key]
+
+
 def hop_limited_shortest_paths(graph, sources: np.ndarray, max_hops: int):
     """The shortest paths in the weighted graph that use at most ``max_hops`` EDGES.
 
@@ -241,6 +303,38 @@ def _graph_distances(context: dict, table: dict, sources: np.ndarray):
     return context[key]
 
 
+def quadruple_distances(graph, picks: np.ndarray) -> list:
+    """The six pairwise distances of every quadruple, on its own local subgraph.
+
+    The quadruples are a source and three of its direct neighbours, so every pair
+    is at most two hops apart, and a two-hop path has its middle node in the
+    neighbour set of one of the four items. The induced subgraph of the four items
+    plus their neighbours therefore contains an exact shortest path, and a small
+    Dijkstra on it returns the graph's true distance. A single global relaxation
+    over all the sources does not scale to the fifteen thousand of a four-thousand
+    quadruple sample and silently drops most of them.
+    """
+    from scipy.sparse.csgraph import dijkstra
+
+    local = graph.tocsr()
+    pairs = [(0, 1), (2, 3), (0, 2), (1, 3), (0, 3), (1, 2)]
+    out = [np.full(len(picks), np.inf) for _ in pairs]
+    for index, quadruple in enumerate(picks):
+        nodes = set(int(item) for item in quadruple)
+        for item in quadruple:
+            nodes.update(int(node) for node in local.indices[local.indptr[item]:local.indptr[item + 1]])
+        ordered = np.array(sorted(nodes), dtype=np.int64)
+        position = {int(node): place for place, node in enumerate(ordered)}
+        subgraph = local[ordered][:, ordered].tocsr()
+        index_rows = [position[int(item)] for item in quadruple]
+        block = dijkstra(subgraph, directed=False, indices=index_rows)
+        for slot, (left, right) in enumerate(pairs):
+            # the rows of ``block`` follow the order of ``indices``, not the
+            # subgraph positions, so a distance is read as block[i, column_of_j]
+            out[slot][index] = block[left, index_rows[right]]
+    return out
+
+
 def estimate_curvature(context: dict, table: dict) -> dict:
     """The curvature whose quadruples are as tree-like as the BEHAVIOUR's are."""
     if "svd_curvature" in context:
@@ -252,19 +346,7 @@ def estimate_curvature(context: dict, table: dict) -> dict:
     picks = _graph_local_quadruples(context, table, ESTIMATION_QUADRUPLES, SEED)
     a, b, c, d = picks[:, 0], picks[:, 1], picks[:, 2], picks[:, 3]
     graph = _knn_graph(context, table)
-    sources = np.unique(np.concatenate([a, b, c, d]))
-    distances = hop_limited_shortest_paths(graph, sources, HOP_LIMIT)
-    position = {int(source): index for index, source in enumerate(sources)}
-
-    def graph_distance(left, right):
-        rows = np.array([position[int(item)] for item in left])
-        columns = np.array([position[int(item)] for item in right])
-        return distances[rows, columns]
-
-
-    graph_sums = pairing_sums(graph_distance(a, b), graph_distance(c, d),
-                               graph_distance(a, c), graph_distance(b, d),
-                               graph_distance(a, d), graph_distance(b, c))
+    graph_sums = pairing_sums(*quadruple_distances(graph, picks))
     reachable = np.isfinite(graph_sums).all(axis=0)
     graph_delta = normalised_delta(graph_sums)[reachable]
     graph_median = float(np.median(graph_delta)) if graph_delta.size else 0.0
@@ -390,3 +472,96 @@ METRICS = {
     "svd_delta_four_point_permuted": svd_delta_four_point_permuted,
 }
 FREE_CONSTANTS = {name: 0 for name in METRICS}
+
+SCALE_BUCKETS = 8
+
+
+def estimate_curvature_by_shape(context: dict, table: dict) -> dict:
+    """The curvature whose delta-versus-scale CURVE matches the behaviour's.
+
+    Comparing the median delta matches a LEVEL, and that level cannot be matched:
+    the behaviour graph's normalised delta (0.54) is an order of magnitude above
+    what a hyperbolic embedding of the same points reaches at any curvature
+    (0.06), so the level criterion can only be satisfied at the flattest end of
+    the grid. The four-point deviation is scale dependent, so the comparable
+    quantity is its SHAPE: bucket the quadruples by their own distance quantiles
+    on each side (which makes the comparison scale free) and select the curvature
+    whose bucket profile is closest to the graph's.
+    """
+    if "svd_curvature_by_shape" in context:
+        return context["svd_curvature_by_shape"]
+    embeddings = _svd_embeddings(context, table)
+    picks = _graph_local_quadruples(context, table, ESTIMATION_QUADRUPLES, SEED)
+    a, b, c, d = picks[:, 0], picks[:, 1], picks[:, 2], picks[:, 3]
+    graph = _knn_graph(context, table)
+    pairs_graph = quadruple_distances(graph, picks)
+    sums_graph = pairing_sums(*pairs_graph)
+    reachable = np.isfinite(sums_graph).all(axis=0)
+    if reachable.sum() < SCALE_BUCKETS * 4:
+        return {"curvature": CURVATURE_GRID[0], "profile": [], "used": int(reachable.sum()),
+                "correlation": 0.0}
+
+    def profile(delta_values, scale_values):
+        quantiles = np.linspace(0.0, 1.0, SCALE_BUCKETS + 1)[1:-1]
+        cut = np.quantile(scale_values, quantiles)
+        bucket = np.searchsorted(cut, scale_values)
+        profile = []
+        for index in range(SCALE_BUCKETS):
+            members = bucket == index
+            profile.append(float(np.median(delta_values[members])) if members.any() else np.nan)
+        return np.asarray(profile)
+
+    graph_delta = normalised_delta(sums_graph)[reachable]
+    graph_scale = np.mean(np.vstack(pairs_graph), axis=0)[reachable]
+    graph_profile = profile(graph_delta, graph_scale)
+
+    scored = []
+    for curvature in CURVATURE_GRID:
+        points = ball_of(embeddings, curvature)
+        pairs_model = [hyperbolic_distance(points[a], points[b], curvature),
+                       hyperbolic_distance(points[c], points[d], curvature),
+                       hyperbolic_distance(points[a], points[c], curvature),
+                       hyperbolic_distance(points[b], points[d], curvature),
+                       hyperbolic_distance(points[a], points[d], curvature),
+                       hyperbolic_distance(points[b], points[c], curvature)]
+        sums_model = pairing_sums(*pairs_model)
+        delta = normalised_delta(sums_model)[reachable]
+        scale = np.mean(np.vstack(pairs_model), axis=0)[reachable]
+        model_profile = profile(delta, scale)
+        finite = np.isfinite(model_profile) & np.isfinite(graph_profile)
+        if finite.sum() < SCALE_BUCKETS - 1:
+            continue
+        correlation = float(np.corrcoef(model_profile[finite], graph_profile[finite])[0, 1])
+        distance = float(np.nansum((model_profile - graph_profile) ** 2))
+        scored.append((distance, -correlation, curvature, model_profile))
+    if not scored:
+        return {"curvature": CURVATURE_GRID[0], "profile": [], "used": int(reachable.sum()),
+                "correlation": 0.0}
+    scored.sort(key=lambda entry: (entry[0], entry[1], entry[2]))
+    best = scored[0]
+    result = {"curvature": best[2], "used": int(reachable.sum()),
+              "correlation": -best[1],
+              "graph_profile": graph_profile,
+              "profile": [{"curvature": entry[2], "correlation": -entry[1],
+                           "distance": entry[0], "model_profile": entry[3]} for entry in scored]}
+    context["svd_curvature_by_shape"] = result
+    return result
+
+
+def _shape_score(table: dict, context: dict) -> float:
+    """The signed agreement between the model's and the graph's delta profiles."""
+    estimation = estimate_curvature_by_shape(context, table)
+    return float(estimation["correlation"])
+
+def _shape_curvature_score(table: dict, context: dict) -> float:
+    """The four-point obligation evaluated at the shape-selected curvature.
+
+    The selection is a property of the training data, not of the SID, so it must
+    not be the metric itself; what a SID can be scored on is its own delta at the
+    curvature the shape comparison picked.
+    """
+    curvature = float(estimate_curvature_by_shape(context, table)["curvature"])
+    return float(_score(table, context, curvature, False))
+
+
+METRICS["svd_delta_four_point_shape_c"] = _shape_curvature_score

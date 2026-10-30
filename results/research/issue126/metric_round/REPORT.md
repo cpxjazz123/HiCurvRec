@@ -411,34 +411,36 @@ computed on the SVD space of the training matrix:
 
 | variant | rho | 95% CI |
 | --- | --- | --- |
-| `svd_delta_four_point` (c_delta = 0.05) | +0.5777 | [+0.419, +0.710] |
-| half (c = 0.025) | +0.5478 | [+0.382, +0.688] |
-| double (c = 0.1) | +0.5653 | [+0.406, +0.699] |
-| nearly flat (c = 0.001) | +0.5955 | [+0.437, +0.727] |
-| Euclidean control | +0.5869 | [+0.424, +0.723] |
-| permuted control | +0.0150 | [-0.173, +0.211] |
+| `svd_delta_four_point` (c_delta = 8.0) | +0.6605 | [+0.519, +0.774] |
+| half (c = 4.0) | +0.6605 | [+0.519, +0.774] |
+| double (c = 16.0) | +0.6605 | [+0.519, +0.774] |
+| shape-selected c = 2.0 | +0.6383 | [+0.495, +0.758] |
+| nearly flat (c = 0.001) | +0.5318 | [+0.366, +0.670] |
+| Euclidean control | +0.5037 | [+0.334, +0.646] |
+| permuted control | +0.0011 | [-0.182, +0.194] |
 
-The permuted control is at zero, and the family beats `HBA@7623` (+0.4709) and
-the `Gromov 6` curvature (+0.3656, measured on the earlier, length-bounded
-implementation).
+The permuted control is at zero. The family beats `HBA@7623` (+0.4709) and the
+`Gromov 6` curvature (+0.3656, measured on the earlier, length-bounded
+implementation), and the curvature that the criterion estimates carries real
+information: paired bootstrap gives c_delta - flat = +0.1284
+[+0.0717, +0.1898] and c_delta - Euclidean = +0.1565 [+0.0833, +0.2383], both
+with P(not better) below 1e-4.
 
-Two limits must be read with it:
+Three properties make the estimate admissible rather than tuned:
 
-1. **The curvature selection is degenerate.** The behaviour graph's median
-   normalised delta is 0.5387, while a hyperbolic embedding of the same points
-   reaches at most 0.0597 at any curvature on the grid: the graph is far LESS
-   tree-like than any hyperbolic model of it. "Match the median delta" can only
-   be satisfied at the flattest end of the grid, so the estimate sits at
-   c = 0.05 with an unattainable gap, and the flat and Euclidean controls are
-   equal or better in a paired bootstrap (c_delta - flat = -0.0175
-   [-0.064, +0.025], P(not better) = 0.78). The obligation is a real, strong
-   predictor; the curvature it picks is not the curvature that ranks SIDs.
-2. **The graph is fragmented.** At k = 10 a random partner is reachable within
-   four hops in only about 4% of the pairs, and the fraction falls with a denser
-   graph. The quadruples therefore have to be drawn where the structure exists
-   (a source and three of its direct neighbours), which is recorded in
-   `DELTA_SVD_PROTOCOL.md` (v3) together with the four implementation defects
-   that the first execution concealed.
+1. It is a **data-side constant**: it is computed from the training behaviour
+   alone, without ever seeing a SID or a recall, so the same c is used for every
+   candidate and it cannot be selected per candidate.
+2. The optimum is **interior and broad**: with the grid running to c = 64 the
+   criterion picks c = 8, and c = 4 and c = 16 tie with it. There is no boundary
+   artefact and no need to scan.
+3. The reference must be **local**. The quadruples are a source and three of its
+   direct neighbours, and the graph distance is taken on the induced subgraph of
+   those four items plus their neighbours. A global shortest-path pass over the
+   whole catalogue silently drops almost every quadruple (the k-NN graph is
+   heavily clustered: a random partner is reachable within four hops in about 4%
+   of the pairs), and a sparse matrix product is not a shortest path at all. Both
+   mistakes are recorded in `DELTA_SVD_PROTOCOL.md` (v1 to v4).
 
 ## What was tried and did not work
 

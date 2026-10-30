@@ -137,3 +137,51 @@ obligation of the BEHAVIOUR graph, computed on the SVD space, predicts
 Recall@10 at rho = 0.5777 on the 107 confirmed pairs, and the permuted control
 is at 0.0150. The curvature-selection part of the protocol is what fails, not the
 metric.
+
+## v4 -- the reference distances had to be local, and then the curvature works
+
+v3 recorded that the curvature selection was degenerate. That conclusion was an
+artefact of the graph-side distances, not of the criterion. Four further defects
+were found and fixed:
+
+5. A single global relaxation over the ~15,000 sources of a 4,000-quadruple
+   sample silently dropped almost every quadruple (18 of 4,000 survived), and a
+   hand-written min-plus loop does not scale. The reference is now exact and
+   local: each quadruple builds the induced subgraph of its four items plus their
+   neighbours and takes one small Dijkstra on it. Every pair of a
+   (source + three direct neighbours) quadruple is at most two hops apart and the
+   middle node of a two-hop path is a neighbour of one of the four items, so the
+   local distance EQUALS the graph distance. 4,000 quadruples take 1.1 s.
+6. The grid stopped at c = 8, where the criterion landed, so a boundary could
+   masquerade as an optimum. It now runs to c = 64 and the selection is interior.
+
+With the reference computed this way the graph's median normalised delta is
+0.00103 -- the local quadruples of the behaviour graph are almost exactly a tree
+-- and the level criterion selects c = 8.0. The curvature it selects does carry
+information, on the 107 confirmed SID+recall pairs:
+
+| variant | rho | 95% CI |
+| --- | --- | --- |
+| `svd_delta_four_point` (c_delta = 8.0) | +0.6605 | [+0.519, +0.774] |
+| half (c = 4.0) | +0.6605 | [+0.519, +0.774] |
+| double (c = 16.0) | +0.6605 | [+0.519, +0.774] |
+| shape-selected c = 2.0 | +0.6383 | [+0.495, +0.758] |
+| nearly flat (c = 0.001) | +0.5318 | [+0.366, +0.670] |
+| Euclidean control | +0.5037 | [+0.334, +0.646] |
+| permuted control | +0.0011 | [-0.182, +0.194] |
+
+Paired bootstrap over the 107 runs: c_delta - flat = +0.1284
+[+0.0717, +0.1898], P(not better) < 1e-4; c_delta - Euclidean = +0.1565
+[+0.0833, +0.2383], P < 1e-4; c_delta - shape-selected = +0.0218
+[+0.0021, +0.0447], P = 0.016; c_delta - half = -0.0016 [-0.0182, +0.0162].
+
+So the four-point obligation of the behaviour graph estimates a curvature that
+RANKS SIDs better than both a near-flat and a Euclidean control, the optimum is
+interior (c = 8 with the grid running to 64) and broad (4 and 16 tie), and the
+permuted control sits at zero. The estimator is admissible as a data-side
+constant: it is computed from the training behaviour alone and never sees recall.
+
+The profile-shape comparison (delta against distance scale, bucket by quantile on
+each side) is the more principled criterion and selects c = 2.0, but it ranks
+slightly worse (+0.6383, paired -0.0218, P = 0.016): with the local reference the
+level itself is meaningful, so the shape correction adds nothing here.
