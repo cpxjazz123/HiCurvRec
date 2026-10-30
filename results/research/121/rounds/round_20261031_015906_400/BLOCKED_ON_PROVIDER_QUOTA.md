@@ -51,3 +51,44 @@ standing GPU authorisation (§59) is in place. The work that remains after the
 quota returns is the same round: ideation, the evidence probe, scoring, one
 selected mechanism, the implementation by the main agent, five verifiers, then
 Stage2 (port 50202) and Stage3 (port 50201).
+
+## Provider survey (2026-10-31, after the failure)
+
+Four authenticated providers were probed directly. All four are unusable, so no
+agent phase of the framework can run and, because the four independently
+authored test suites that gate Stage2 are written by agents, no formal training
+can be admitted either.
+
+| provider | model probed | result |
+| --- | --- | --- |
+| OpenCode Go | `opencode-go/deepseek-v4.1-flash` (the current `AGENT_MODEL`) | `Error: Go usage limit exceeded` |
+| Hugging Face (`HF_TOKEN` in the environment) | `huggingface/deepseek-ai/DeepSeek-V4.1-Flash` | `Provider request failed with HTTP 402` (payment required) |
+| MiniMax (`MINIMAX_API_KEY` in the environment) | `minimax-cn/MiniMax-M3` | `Error: invalid api key` |
+| OpenAI (OAuth credential stored) | `openai/gpt-4o` | `Error: Model unavailable`; the model list contains no `openai/*` entry at all |
+
+`opencode models` lists 149 models across the providers, but a listing is not a
+credential.
+
+## The single change that unblocks it
+
+`tools/research/settings.py` line 34 sets the model every agent phase uses:
+
+```python
+AGENT_MODEL = "opencode-go/deepseek-v4.1-flash"
+```
+
+Point it at a model whose provider has working credentials, then reload the MCP
+server (a change under `tools/` is not picked up by the running server, §52 to
+§57):
+
+```bash
+OLD=$(pgrep -f 'genrec-mcp/server.py' | head -1); kill -TERM "$OLD"
+for i in $(seq 10); do sleep 3; NEW=$(pgrep -f 'genrec-mcp/server.py' | head -1); \
+  [ -n "$NEW" ] && [ "$NEW" != "$OLD" ] && break; done
+```
+
+and start a fresh round with the same objective. Everything else is in place:
+the objective text (the full chain, the measured evidence it must respect, the
+0.065 target and the §19g single-run constraints), the intact baseline tree
+`stage2_RQ-VAE/TIGER_RQ-VAE`, the frozen four-GPU recipe and the standing GPU
+authorisation (§59).
