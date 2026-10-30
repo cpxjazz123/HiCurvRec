@@ -1057,3 +1057,63 @@ been tested twice -- the metrics say no curvature helps, and the data says the
 behaviour geometry is not tree-like. A hyperbolic RQ-VAE on this dataset is a
 choice that has to be justified on other grounds than the behaviour geometry's
 tree structure.
+
+## v20 -- stage one, done properly: the behaviour graph is not distinguishable from a random graph
+
+The v19 numbers were wrong: the shortest-path result was read with the POSITION
+of an item inside the sampled array instead of its ITEM ID, so the distances
+were between other items entirely. The tree-metric question was therefore redone
+from scratch, in the form the brief asks for, and the implementation is in
+`../behaviour_tree/` with its own tests.
+
+The rules, exactly as specified: the graph comes from the SEQUENTIAL
+interactions of the training split (a sequence A, B, C, D contributes A-B, B-C
+and C-D and never A-C), the edges have unit length, the graph is symmetric,
+nothing is truncated, and no text, teacher or RQ-VAE output enters it. The
+quadruples come from the largest connected component, and the control is a
+DEGREE-PRESERVING REWIRING with the double-edge swap, the weights travelling
+with the edges, ten seeds, the same quadruples scored in both.
+
+The tests are the hard requirement, and they are written before the code: a path
+and a star must give delta = 0, a four-cycle must give delta = 1, the
+shortest-path reads must use the item IDs (the defect of v19), the rewiring must
+keep the degrees and the weights, and a seed must reproduce its graph.
+
+| | the real graph | the ten rewirings (mean +- sd) | difference |
+| --- | --- | --- | --- |
+| median delta | 0.0 | 0.0 +- 0.0 | 0.0 |
+| mean delta | 0.25257 | 0.25211 +- 0.00183 | +0.00046 |
+| share delta = 0 | 0.53285 | 0.53216 +- 0.00367 | +0.00069 |
+| share delta <= 1 | 0.99915 | 0.99945 +- 0.00010 | -0.00030 |
+
+All three sampling schemes agree (global random 50,000, locally associated
+25,000, popularity stratified 25,000: the median delta is 0.0 and about 53% of
+the quadruples satisfy the condition exactly).
+
+**The verdict is "insufficient evidence", not "the graph is a tree".** The metric
+IS tree-like, and a degree-matched random graph is exactly as tree-like: the
+effect size is an order of magnitude below the spread between the random graphs.
+The graph is a union of user paths and therefore close to a forest, and the
+shortest-path metric of a sparse graph is close to a tree metric whether or not
+the interactions carry a hierarchy.
+
+**This withdraws v19's conclusion.** v19 said the real graph was LESS tree-like
+than its rewiring; that was the index defect, and the corrected comparison on
+the co-occurrence graph (where the weights are the inverse association strength
+and the counts) gives the real graph and the rewirings the same numbers to
+within the seed spread as well. What remains true from v19 is the methodological
+point: the relative four-point deviation is not comparable across geometries
+without a control of this kind, because a matched random point cloud scores
+better (0.0088) than the text embedding (0.0243).
+
+**What this leaves for the project.** The metrics that predict Recall are all
+behaviour-CONTRAST results (+0.7104 plain, +0.7170 Euclidean, +0.6593
+unweighted four-point), and the first layer of the hyperbolic evidence chain --
+that the behaviour geometry is a tree -- is missing. RQ2 and the matched
+Euclidean/hyperbolic training comparison remain worth running, but the
+motivation cannot be stated as "the behaviour data is a tree".
+
+Deliverables: `../behaviour_tree/graph_manifest.json`,
+`../behaviour_tree/four_point_results.csv`, `../behaviour_tree/rewiring_controls.csv`,
+`../behaviour_tree/report.md` and the tests in
+`../behaviour_tree/tests/test_behaviour_tree.py`.

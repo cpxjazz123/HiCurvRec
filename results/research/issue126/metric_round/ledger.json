@@ -7,10 +7,10 @@
     "structural_alignment": "label-free structure comparisons: does the hyperbolic shared depth of a pair agree with the length of their shared SID prefix, does the prefix tree preserve the reference's distances, is a cell's angular cone tighter than a different set of the same size -- measured with the corrected definitions, and none of them is eligible",
     "behaviour_reference_obligation": "the table is scored against a CURVATURE, not against positives and negatives: the training behaviour fixes a reference graph, the four-point tree-likeness of that graph fixes the curvature, and the SID's own four-point deviation at that curvature is the metric. Measured on the 107 confirmed pairs it is the second strongest construction (rho +0.6605) and the curvature it estimates beats both a near-flat and a Euclidean control by +0.128 / +0.157 in a paired bootstrap. NOT refuted: the earlier rejection of the delta family was an artefact of six implementation defects, recorded in DELTA_SVD_PROTOCOL.md (v1 to v4). AMENDED (protocol v6): the ingredient is the radial weight, not the curvature -- the arccosh never beats the radially weighted Euclidean control. RETRACTED (protocol v8): the headline +0.6605 is Poincare saturation. The Lorentz chart gives +0.545, and the two charts agree only at the nearly flat end where both return about +0.60. The curvature does not matter. AMENDED (protocol v9): unweighted, both charts give the identical +0.6593 and the Euclidean law gives +0.6618, so the effect is Euclidean; the delta weight was a liability (+0.115 lost in the Lorentz chart). CLOSED (protocol v12): the delta weighting is harmful, not the curvature. The unweighted agreement rate (+0.6593) is the admissible metric.",
     "hyperbolic_properties_of_the_sid_table": "the other hyperbolic properties as SID-quality metrics: the Gromov product, radial depth, radial purity, geodesic slack, the entailment cone, angular branch separation, Busemann consistency, volume growth -- and the behaviour-aware versions of the geodesic and the Busemann. Each is measured with a Euclidean control and a PERMUTED control (the SID rows shuffled across the items). Measured on the 107 confirmed pairs: no family beats its permuted control, three are degenerate on the frozen reference (a thin shell at radius 0.9115 +- 0.0139, so radial depth, cones and volume growth are constant), and the behaviour-aware geodesic, once the ancestor depth is held fixed, is at chance. REFUTED as predictors: see HYPERBOLIC_FAMILIES.md.",
-    "premise_check": "the three questions that come before any metric: the interaction graph is strongly tree-like (the PPMI co-occurrence satisfies the four-point condition within 1% for 95.6% of the quadruples, median relative deviation 0.0023); the text embedding carries the behaviour structure only weakly (spearman +0.0822 against a permuted null of +0.0106, leading canonical correlations 0.697) and is not itself a tree (its four-point deviation 0.0242 is indistinguishable from its permuted copy 0.0246); the frozen hyperbolic reference keeps the behaviour geometry better than the text does (+0.1749 against +0.0822). CORRECTED (protocol v19): the 95.6% was an artefact of a degenerate distance. The interaction graph is NOT a tree metric (11.6% below 0.01 against a degree-preserving rewiring's 51.2%), the relative four-point deviation is not comparable across geometries (a matched random point cloud beats the text), and behaviourally related quadruples are no different from random ones."
+    "premise_check": "the three questions that come before any metric: the interaction graph is strongly tree-like (the PPMI co-occurrence satisfies the four-point condition within 1% for 95.6% of the quadruples, median relative deviation 0.0023); the text embedding carries the behaviour structure only weakly (spearman +0.0822 against a permuted null of +0.0106, leading canonical correlations 0.697) and is not itself a tree (its four-point deviation 0.0242 is indistinguishable from its permuted copy 0.0246); the frozen hyperbolic reference keeps the behaviour geometry better than the text does (+0.1749 against +0.0822). CORRECTED (protocol v19): the 95.6% was an artefact of a degenerate distance. The interaction graph is NOT a tree metric (11.6% below 0.01 against a degree-preserving rewiring's 51.2%), the relative four-point deviation is not comparable across geometries (a matched random point cloud beats the text), and behaviourally related quadruples are no different from random ones. CORRECTED (protocol v20): the stage-one experiment, rebuilt to the brief's rules (sequential edges, unit weights, no truncation, a degree-preserving rewiring control with ten seeds) gives INSUFFICIENT EVIDENCE: the behaviour graph's shortest-path metric is tree-like and a degree-matched random graph is equally tree-like. v19's conclusion is withdrawn (an index defect)."
   },
   "proposals": 64,
-  "measured": 52,
+  "measured": 53,
   "eligible": 21,
   "rows": [
     {
@@ -2054,6 +2054,43 @@
             "matched_random_cloud": 0.549
           },
           "verdict": "the 95.6% of v18 was an artefact of the degenerate cosine distance (33.4% of the pairs sit at distance one). In the weighted shortest-path metric only 11.6% of the quadruples satisfy the four-point condition, and a degree-preserving rewiring of the same graph is MORE tree-like (0.512 against 0.116), so the interaction structure is not what makes the metric tree-like. The relative four-point deviation is also not comparable across geometries: a matched random point cloud beats the text embedding. Behaviourally related quadruples are no different from random ones. The hyperbolic motivation is not supported by the behaviour geometry."
+        },
+        "stage1_sequential_graph": {
+          "artifact": "results/research/issue126/behaviour_tree/report.md",
+          "rules": "sequential training interactions only, unit edges, symmetric, no top-k, no text or teacher input",
+          "graph": {
+            "sequences": 339519,
+            "edges": 630782,
+            "largest_component_items": 24556,
+            "components": 32,
+            "sampled_diameter": 42
+          },
+          "sampling": {
+            "global_random": {
+              "n": 50000,
+              "median_delta": 0.0,
+              "share_zero": 0.5327
+            },
+            "local_association": {
+              "n": 25000,
+              "median_delta": 0.0,
+              "share_zero": 0.5204
+            },
+            "popularity_stratified": {
+              "n": 25000,
+              "median_delta": 0.0,
+              "share_zero": 0.5298
+            }
+          },
+          "control": {
+            "kind": "degree-preserving double-edge swap, ten seeds, the weights travel with the edges",
+            "successful_swaps": 37665,
+            "mean_delta": 0.25211,
+            "mean_delta_sd": 0.00183,
+            "share_zero": 0.53216,
+            "share_zero_sd": 0.00367
+          },
+          "verdict": "INSUFFICIENT EVIDENCE: the metric is tree-like (the median delta is 0 and about 53% of the quadruples satisfy the condition exactly) and a degree-matched random graph is exactly as tree-like (the effect size is +0.00046 against a seed spread of 0.0018). The tree-likeness is a property of shortest paths on a sparse graph, not evidence that the interactions carry a hierarchy. v19's conclusion is withdrawn: its index defect made the distances be between other items."
         }
       }
     },
@@ -2082,6 +2119,52 @@
           "matched_random_cloud": 0.549
         },
         "verdict": "the 95.6% of v18 was an artefact of the degenerate cosine distance (33.4% of the pairs sit at distance one). In the weighted shortest-path metric only 11.6% of the quadruples satisfy the four-point condition, and a degree-preserving rewiring of the same graph is MORE tree-like (0.512 against 0.116), so the interaction structure is not what makes the metric tree-like. The relative four-point deviation is also not comparable across geometries: a matched random point cloud beats the text embedding. Behaviourally related quadruples are no different from random ones. The hyperbolic motivation is not supported by the behaviour geometry."
+      }
+    },
+    {
+      "metric_id": "stage1_sequential_graph",
+      "title": "the behaviour graph as a tree metric, with a degree-preserving rewiring control",
+      "round": "(measured only)",
+      "proposed_by": "operator, on the user's brief",
+      "formula": "results/research/issue126/behaviour_tree/behaviour_tree.py",
+      "measured": true,
+      "family": "premise_check",
+      "measurement": {
+        "artifact": "results/research/issue126/behaviour_tree/report.md",
+        "rules": "sequential training interactions only, unit edges, symmetric, no top-k, no text or teacher input",
+        "graph": {
+          "sequences": 339519,
+          "edges": 630782,
+          "largest_component_items": 24556,
+          "components": 32,
+          "sampled_diameter": 42
+        },
+        "sampling": {
+          "global_random": {
+            "n": 50000,
+            "median_delta": 0.0,
+            "share_zero": 0.5327
+          },
+          "local_association": {
+            "n": 25000,
+            "median_delta": 0.0,
+            "share_zero": 0.5204
+          },
+          "popularity_stratified": {
+            "n": 25000,
+            "median_delta": 0.0,
+            "share_zero": 0.5298
+          }
+        },
+        "control": {
+          "kind": "degree-preserving double-edge swap, ten seeds, the weights travel with the edges",
+          "successful_swaps": 37665,
+          "mean_delta": 0.25211,
+          "mean_delta_sd": 0.00183,
+          "share_zero": 0.53216,
+          "share_zero_sd": 0.00367
+        },
+        "verdict": "INSUFFICIENT EVIDENCE: the metric is tree-like (the median delta is 0 and about 53% of the quadruples satisfy the condition exactly) and a degree-matched random graph is exactly as tree-like (the effect size is +0.00046 against a seed spread of 0.0018). The tree-likeness is a property of shortest paths on a sparse graph, not evidence that the interactions carry a hierarchy. v19's conclusion is withdrawn: its index defect made the distances be between other items."
       }
     }
   ]

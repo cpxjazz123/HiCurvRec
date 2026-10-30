@@ -60,8 +60,15 @@ def pairing_sums(d_ab, d_cd, d_ac, d_bd, d_ad, d_bc) -> np.ndarray:
     return np.stack([d_ab + d_cd, d_ac + d_bd, d_ad + d_bc], axis=0)
 
 
-def build_graph(k: int = 10) -> csr_matrix:
-    """The k strongest co-occurrence neighbours of every item."""
+def build_graph(k: int = 10, weight_mode: str = "inverse") -> csr_matrix:
+    """The k strongest co-occurrence neighbours of every item.
+
+    The edge weight must be a DISTANCE-like quantity: with the co-occurrence
+    COUNT as the weight, two items that occur together often would be far apart
+    along a path, which is the opposite of what the association means. The
+    default is therefore the inverse association strength ``1 / count``, and the
+    count-weighted version is kept as a sensitivity check.
+    """
     train = pd.read_parquet(PARQUET / "train.parquet", columns=["history", "target"])
     rows: list[int] = []
     columns: list[int] = []
@@ -90,7 +97,10 @@ def build_graph(k: int = 10) -> csr_matrix:
         order = np.argsort(-values)[:k]
         keep_rows.append(np.full(order.size, row, dtype=np.int64))
         keep_cols.append(columns[order])
-        keep_data.append(values[order])
+        if weight_mode == "count":
+            keep_data.append(values[order])
+        else:
+            keep_data.append(1.0 / np.maximum(values[order], 1.0))
     graph = csr_matrix((np.concatenate(keep_data),
                          (np.concatenate(keep_rows), np.concatenate(keep_cols))),
                         shape=full.shape)
@@ -98,36 +108,47 @@ def build_graph(k: int = 10) -> csr_matrix:
 
 
 def rewire(matrix: csr_matrix, seed: int) -> csr_matrix:
-    """A degree-preserving rewiring: the double-edge swap."""
+    """A degree-preserving rewiring that KEEPS THE WEIGHTS.
+
+    The double-edge swap exchanges the endpoints of two edges and the weights
+    travel with the edges, so the rewired graph has the same edges, the same
+    degrees and the same weight distribution as the original. Giving the
+    rewired graph unit weights instead would compare two different distance
+    definitions.
+    """
     rng = np.random.default_rng(seed)
     coo = matrix.tocoo()
-    unique = set()
-    for u, v in zip(coo.row.tolist(), coo.col.tolist()):
-        unique.add((u, v) if u < v else (v, u))
-    edges = list(unique)
-    present = set(edges)
+    unique = {}
+    for u, v, w in zip(coo.row.tolist(), coo.col.tolist(), coo.data.tolist()):
+        key = (u, v) if u < v else (v, u)
+        unique[key] = max(unique.get(key, 0.0), w)
+    edges = [[key[0], key[1], weight] for key, weight in unique.items()]
+    present = set((edge[0], edge[1]) for edge in edges)
     for _ in range(SWAPS):
         first, second = rng.integers(0, len(edges), 2)
-        (a, b), (c, d) = edges[first], edges[second]
+        a, b, weight_a = edges[first]
+        c, d, weight_c = edges[second]
         if len({a, b, c, d}) < 4:
             continue
-        new_first = (a, c) if a < c else (c, a)
-        new_second = (b, d) if b < d else (d, b)
-        if any(edge in present for edge in (new_first, new_first[::-1],
-                                           new_second, new_second[::-1])):
+        new_first = (a, c, weight_a) if a < c else (c, a, weight_a)
+        new_second = (b, d, weight_c) if b < d else (d, b, weight_c)
+        if any(edge in present for edge in ((new_first[0], new_first[1]),
+                                           (new_first[1], new_first[0]),
+                                           (new_second[0], new_second[1]),
+                                           (new_second[1], new_second[0]))):
             continue
         for old in ((a, b), (c, d)):
             present.discard(old)
             present.discard((old[1], old[0]))
-        present.add(new_first)
-        present.add(new_first[::-1])
-        present.add(new_second)
-        present.add(new_second[::-1])
-        edges[first] = new_first
-        edges[second] = new_second
+        present.add((new_first[0], new_first[1]))
+        present.add((new_first[1], new_first[0]))
+        present.add((new_second[0], new_second[1]))
+        present.add((new_second[1], new_second[0]))
+        edges[first] = list(new_first)
+        edges[second] = list(new_second)
     rows = np.asarray([edge[0] for edge in edges], dtype=np.int64)
     columns = np.asarray([edge[1] for edge in edges], dtype=np.int64)
-    data = np.ones(len(edges), dtype=np.float32)
+    data = np.asarray([edge[2] for edge in edges], dtype=np.float64)
     return csr_matrix((data, (rows, columns)), shape=matrix.shape)
 
 
@@ -149,7 +170,10 @@ def pairwise_distances(graph: csr_matrix, quadruples: np.ndarray) -> np.ndarray:
             entries = queries.get(start + offset)
             if not entries:
                 continue
-            targets = np.asarray([entry[1] for entry in entries])
+            # the columns of the Dijkstra result are indexed by NODE ID, not by
+            # the position of the item inside `items`: using the position reads
+            # the wrong columns and measures the distance between other items
+            targets = np.asarray([items[entry[1]] for entry in entries])
             values = block[offset][targets]
             for (index, _, slot), value in zip(entries, values):
                 result[index, slot] = value
@@ -171,22 +195,25 @@ def four_point(graph: csr_matrix, quadruples: np.ndarray) -> dict:
 
 
 def main() -> int:
-    print("building the co-occurrence graph", flush=True)
-    graph = build_graph(10)
-    print("edges", graph.nnz, flush=True)
     rng = np.random.default_rng(SEED)
-    report = {"edges": int(graph.nnz)}
-
+    report = {"quadruples": QUADRUPLES}
     quadruples = rng.integers(0, N_ITEMS, (QUADRUPLES, 4))
-    print("the weighted shortest-path metric of the interaction graph", flush=True)
-    report["interaction_shortest_path"] = four_point(graph, quadruples)
-    print("   ", report["interaction_shortest_path"], flush=True)
+    for weight_mode in ("inverse", "count"):
+        print("building the co-occurrence graph, weight =", weight_mode, flush=True)
+        graph = build_graph(10, weight_mode)
+        print("edges", graph.nnz, flush=True)
+        report.setdefault("graphs", {})[weight_mode] = {"edges": int(graph.nnz)}
+        print("  the weighted shortest-path metric of the interaction graph", flush=True)
+        report["graphs"][weight_mode]["interaction"] = four_point(graph, quadruples)
+        print("   ", report["graphs"][weight_mode]["interaction"], flush=True)
+        print("  rewiring the graph, keeping the degrees AND the weights", flush=True)
+        rewired = rewire(graph, SEED + 1)
+        report["graphs"][weight_mode]["rewired"] = four_point(rewired, quadruples)
+        print("   ", report["graphs"][weight_mode]["rewired"], flush=True)
+        if weight_mode == "inverse":
+            behaviour_graph = graph
 
-    print("rewiring the graph with the degree sequence preserved", flush=True)
-    rewired = rewire(graph, SEED + 1)
-    report["rewired_shortest_path"] = four_point(rewired, quadruples)
-    print("   ", report["rewired_shortest_path"], flush=True)
-
+    graph = behaviour_graph
     print("behaviourally related quadruples", flush=True)
     train = pd.read_parquet(PARQUET / "train.parquet", columns=["history", "target"])
     positives = []
