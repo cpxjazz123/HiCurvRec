@@ -60,6 +60,9 @@ def _repository_root() -> Path:
 
 
 REPO_ROOT = _repository_root()
+#: The candidate tree this file lives in: the behaviour constants are part of the
+#: mechanism and travel with it, not with the repository.
+TREE_ROOT = Path(__file__).resolve().parent
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
 ARM_NAME = "TIGER_CURV-RESID-CONTRAST"
 RESULT_DIR = REPO_ROOT / "results" / "stage2_RQ-VAE" / ARM_NAME
@@ -113,7 +116,13 @@ FRECHET_ETA = 1.0
 # The statistic is the context entropy of an item over the training transitions;
 # its rank becomes the tangent norm the item is placed at, and the level score is
 # the Poincare kernel. The radii are built once from the training split.
-USE_RADIAL = True
+# The candidate's mechanism: the CURVED residual chain replaces the previous
+# round's radial assignment, so the radial path is off and the curved one is on.
+USE_RADIAL = False
+USE_CURVED = True
+#: ``0.9 / max_i ||z_i||`` over the frozen Stage-1 text embeddings: a declared
+#: radial gauge, computed once, never fitted (the manifest records the value).
+CURVED_RADIAL_SCALE = 0.24839878697627993
 RADIAL_RHO_MAX = 0.9
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
@@ -266,6 +275,12 @@ def _tokenizer_config() -> SimpleNamespace:
         use_curvature=USE_GEOMETRY,
         frechet_eta=FRECHET_ETA,
         radial=USE_RADIAL,
+        # CURV-RESID-CONTRAST: the curved chain and its two switches. Every
+        # combination is reachable in code; only the both-on arm is trained.
+        curved=USE_CURVED,
+        behaviour_on=USE_BEHAVIOUR,
+        geometry_on=USE_GEOMETRY,
+        curved_radial_scale=CURVED_RADIAL_SCALE,
     )
 
 
@@ -429,6 +444,23 @@ def main() -> None:
             dist.broadcast(layer.get_code_embs().data, 0)
         dist.barrier()
 
+    # === CURV-RESID-CONTRAST: the frozen behaviour direction and gain ===
+    direction = None
+    gain = None
+    if USE_CURVED:
+        constants_path = TREE_ROOT / "dataset" / "behaviour_constants.npz"
+        if not constants_path.is_file():
+            raise FileNotFoundError(
+                "the behaviour constants are missing: run prepare_behaviour.py "
+                "before the training entry point")
+        constants = np.load(constants_path)
+        direction = torch.from_numpy(constants["direction"].astype(np.float32)).to(device)
+        gain = torch.from_numpy(constants["gain"].astype(np.float32)).to(device)
+        if rank == 0:
+            print("[curved] directions %d, gain range [%.3f, %.3f], radial scale %.4f" % (
+                int(direction.shape[0]), float(gain.min()), float(gain.max()),
+                CURVED_RADIAL_SCALE))
+
     # === BRad-RQ: the frozen behaviour radii ===
     radii = None
     if USE_RADIAL:
@@ -470,7 +502,10 @@ def main() -> None:
             item_ids = item_ids.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
             reconstructed, quant_loss, _, _, target = model(
-                batch, item_ids, radius=None if radii is None else radii[item_ids])
+                batch, item_ids,
+                radius=None if radii is None else radii[item_ids],
+                direction=None if direction is None else direction[item_ids],
+                gain=None if gain is None else gain[item_ids])
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             # The decoder reconstructs the point the quantizer scored (t on the
             # radial path), not the raw encoder output.
@@ -526,9 +561,12 @@ def main() -> None:
         try:
             if rank == 0:
                 with torch.no_grad():
+                    export_ids = torch.arange(len(embeddings), device=device)
                     raw_tokens = raw_module.get_indices(
                         all_embeddings.to(device), infer_use_sk=False,
-                        item_ids=torch.arange(len(embeddings), device=device),
+                        item_ids=export_ids,
+                        direction=None if direction is None else direction[export_ids],
+                        gain=None if gain is None else gain[export_ids],
                     ).cpu().numpy().astype(np.int64)
                 raw_unique = int(len(np.unique(raw_tokens, axis=0)))
                 collision_v = 1.0 - raw_unique / len(raw_tokens)
@@ -581,9 +619,12 @@ def main() -> None:
             layer._skip_ddp_reduce = True
         try:
             with torch.no_grad():
+                export_ids = torch.arange(len(embeddings), device=device)
                 raw_tokens = raw_module.get_indices(
                     all_embeddings.to(device), infer_use_sk=False,
-                    item_ids=torch.arange(len(embeddings), device=device),
+                    item_ids=export_ids,
+                    direction=None if direction is None else direction[export_ids],
+                    gain=None if gain is None else gain[export_ids],
                 ).cpu().numpy().astype(np.int64)
         finally:
             for layer in raw_module.rq.vq_layers:

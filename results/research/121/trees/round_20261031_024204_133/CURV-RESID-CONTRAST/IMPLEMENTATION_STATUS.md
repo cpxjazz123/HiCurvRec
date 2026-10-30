@@ -43,3 +43,30 @@ places, mean rank 1.33, IN_SCOPE).
    (frozen protocol, port 50201), then the `test_recall@10` reading.
 
 Nothing in this tree has been trained yet, and no recall value exists.
+
+## Smoke measurement (2026-10-31 03:05-03:12)
+
+The real entry point started (four ranks, torchrun, port 50202, `train_start`
+written at wall time 80 s) and **did not finish a single epoch in seven
+minutes**: `logs/training_metrics.jsonl` holds the `train_start` event and no
+`train` event. The frozen baseline runs 0.16 s per epoch.
+
+The cause is in the objective: `CurvedChain.level_objective` materialises the
+`(batch, codes, dim)` difference to compare every codeword with every residual
+(`1024 x 256 x 128` floats per level per step, with autograd), where the same
+quantity is an algebraic function of a handful of inner products:
+
+    a_k   = <r, u'> - <g_k, u'>,        ||r - g_k||^2 = ||r||^2 - 2<r,g_k> + ||g_k||^2
+    g_k   = (1 - |p|^2) (e_k - t_k p),  t_k = <p, e_k> / (1 + sqrt(1 - |p|^2))
+
+so every objective entry is a `(batch, codes)` scalar that needs `<r,e>`,
+`<r,p>`, `<e,e>`, `<p,e>`, `<r,u>`, `<p,u>`, `<e,u>` and `|r|^2`, `|p|^2`.
+
+Per CLAUDE.md 19c this candidate is **RESOURCE_BLOCKED**: the mechanism is
+implementable and its mathematics is tested (12/12), but this implementation is
+about three orders of magnitude over the frozen training budget. The
+optimisation route (the algebraic reformulation above, which removes the
+`(B, K, d)` tensor entirely) is the next step, and it must be followed by the
+same one-epoch smoke before any formal run.
+
+No training has been completed, and no recall value exists.
