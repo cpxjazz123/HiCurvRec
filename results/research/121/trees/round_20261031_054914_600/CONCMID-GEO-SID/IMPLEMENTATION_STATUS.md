@@ -44,3 +44,36 @@ ER 5.20, better than round one's 6.09; L1 positive hit rate 0.0537, negative
 
 Launched under the frozen protocol (150 epochs, seed 42, beam 20, no mid-run
 eval, test on), four GPUs, pid 710068. The recall reading is pending.
+
+## The result
+
+Stage 3 finished all 150 epochs (1975 s) and wrote the test record at epoch 150:
+
+| metric | value |
+| --- | --- |
+| test_recall@5 | 0.03500 |
+| **test_recall@10** | **0.05165** |
+| test_ndcg@5 | 0.02294 |
+| test_ndcg@10 | 0.02830 |
+| queries | 57,439 |
+
+**The target of test_recall@10 > 0.065 was NOT reached, and the mechanism is
+worse than round one** (0.05165 against 0.05439). The partition it produced is
+coarser at every level (230 / 1,251 / 1,298 against 251 / 1,769 / 2,201), which is
+the second risk the proposal itself named: pulling items toward a common
+successor hub merges prefixes, and the merged prefixes cost more than the
+behaviour alignment gains.
+
+## Two rounds, two negative results
+
+| round | mechanism | L1 / L2 / L3 prefixes | test_recall@10 |
+| --- | --- | --- | --- |
+| one | curved chain on the frozen text geometry | 251 / 1,769 / 2,201 | 0.05439 |
+| two | concentration-scaled geodesic step toward the successor barycentre | 230 / 1,251 / 1,298 | 0.05165 |
+| gate | -- | -- | **> 0.065** |
+| frozen baseline | -- | -- | ~0.0679 |
+
+Both mechanisms run the full frozen chain (Stage 2 3000 epochs at 0.145 to 0.16 s
+per epoch, Stage 3 150 epochs) and both fall short. The consistent signal across
+them is that coarsening the deeper prefixes hurts: round one kept 2,201 L3
+prefixes and scored 0.0544, round two kept 1,298 and scored 0.0517.
