@@ -180,68 +180,6 @@ def _graph_local_quadruples(context: dict, table: dict, count: int, seed: int) -
     return context[key]
 
 
-def hop_limited_shortest_paths(graph, sources, max_hops: int):
-    """The weighted shortest paths inside each source's ``max_hops``-hop ball.
-
-    Two exact steps, both from scipy: the HOP counts come from an unweighted
-    Dijkstra (whose weights are all one, so the limit is a hop limit), and the
-    weighted distances inside each ball come from a Dijkstra on the induced
-    subgraph. A hand-written relaxation is what this replaced: a sparse matrix
-    product sums the incoming contributions instead of taking the minimum, and a
-    fancy-indexed write-back goes to a copy.
-    """
-    from scipy.sparse.csgraph import dijkstra
-
-    sources = np.asarray(sources, dtype=np.int64)
-    hops = dijkstra(graph, directed=False, indices=sources, unweighted=True)
-    n_items = graph.shape[0]
-    distance = np.full((len(sources), n_items), np.inf)
-    for row, source in enumerate(sources):
-        ball = np.flatnonzero(np.isfinite(hops[row]) & (hops[row] <= max_hops))
-        if ball.size < 2:
-            distance[row, source] = 0.0
-            continue
-        inside = np.searchsorted(ball, source)
-        subgraph = graph[ball][:, ball].tocsr()
-        local = dijkstra(subgraph, directed=False, indices=[int(inside)])
-        distance[row, ball] = local[0]
-    return distance
-
-
-def _graph_local_quadruples(context: dict, table: dict, count: int, seed: int) -> np.ndarray:
-    """Quadruples drawn WHERE the behaviour graph has structure.
-
-    Random quadruples from the whole catalogue are almost never mutually
-    reachable within four hops: the k-NN graph of the SVD space is clustered, and
-    a random partner is reachable in about 4% of the pairs at k=10 (and the
-    fraction FALLS with a denser graph, because the extra edges stay inside the
-    cluster). The tree-likeness of the purchase behaviour can therefore only be
-    measured on quadruples that live inside a cluster: a source node and three of
-    its neighbours within the hop limit.
-    """
-    key = "svd_local_quadruples_%d" % count
-    if key not in context:
-        rng = np.random.default_rng(seed)
-        graph = _knn_graph(context, table)
-        n_items = graph.shape[0]
-        sources = rng.choice(n_items, min(count, n_items), replace=False)
-        picks = []
-        per_source = max(1, count // max(1, len(sources)))
-        for source in sources:
-            # the DIRECT neighbours: any two of them are then at most two hops
-            # apart, so every pair of the quadruple has a finite distance
-            reachable = graph.indices[graph.indptr[source]:graph.indptr[source + 1]]
-            reachable = np.asarray(reachable, dtype=np.int64)
-            reachable = reachable[reachable != source]
-            if reachable.size < 3:
-                continue
-            for _ in range(per_source):
-                chosen = rng.choice(reachable, size=3, replace=False)
-                picks.append([int(source)] + [int(item) for item in chosen])
-        context[key] = np.asarray(picks[:count], dtype=np.int64)
-    return context[key]
-
-
 def hop_limited_shortest_paths(graph, sources: np.ndarray, max_hops: int):
     """The shortest paths in the weighted graph that use at most ``max_hops`` EDGES.
 
@@ -374,8 +312,11 @@ def estimate_curvature(context: dict, table: dict) -> dict:
     return result
 
 
-def _score(table: dict, context: dict, curvature: float, euclidean: bool) -> float:
+def _score(table: dict, context: dict, curvature: float, euclidean: bool,
+           tangent_scale: float = 1.0) -> float:
     embeddings = _svd_embeddings(context, table)
+    if tangent_scale != 1.0:
+        embeddings = embeddings * float(tangent_scale)
     picks = _graph_local_quadruples(context, table, SCORING_QUADRUPLES, SEED)
     a, b, c, d = picks[:, 0], picks[:, 1], picks[:, 2], picks[:, 3]
     if euclidean:
@@ -388,10 +329,13 @@ def _score(table: dict, context: dict, curvature: float, euclidean: bool) -> flo
                         distance(points[a], points[c]), distance(points[b], points[d]),
                         distance(points[a], points[d]), distance(points[b], points[c]))
     delta = np.abs(normalised_delta(sums))
-    median = context.get("svd_weight_median")
+    # the median is a property of THIS curvature: sharing one cache across
+    # curvatures made the value of a variant depend on which variant ran first
+    median_key = "svd_weight_median_%.6g_%.6g" % (float(curvature), float(tangent_scale))
+    median = context.get(median_key)
     if median is None:
         median = float(np.median(delta))
-        context["svd_weight_median"] = median
+        context[median_key] = median
     weight = 1.0 / (1.0 + delta / max(median, 1e-12))
 
     rows = np.asarray(table["rows"], dtype=np.int64)
@@ -416,6 +360,18 @@ def _score(table: dict, context: dict, curvature: float, euclidean: bool) -> flo
     if weight.sum() <= 0:
         return 0.0
     return float((weight * agreement).sum() / weight.sum())
+
+
+def _score_scaled(table: dict, context: dict, curvature: float, tangent_scale: float) -> float:
+    """The same score with the TANGENTS multiplied by ``tangent_scale``.
+
+    ``exp_c`` saturates once ``sqrt(c) * ||t||`` exceeds about 5, so a curvature
+    sweep on fixed tangents stops changing anything at c of order 2, and the
+    numbers then differ only in the last floating-point bits. Scaling the tangents
+    with the curvature probes the same ball configuration from the other side,
+    which is how the gauge test shows the two are one degree of freedom.
+    """
+    return _score(table, context, curvature, False, tangent_scale=tangent_scale)
 
 
 def _variant(table: dict, context: dict, factor: float, euclidean: bool) -> float:

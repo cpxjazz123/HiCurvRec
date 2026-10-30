@@ -415,17 +415,20 @@ confirmed SID+recall pairs -- behind the behaviour contrast at +0.7623, ahead of
 | `svd_delta_four_point` (c_delta = 8.0) | +0.6605 | [+0.519, +0.774] |
 | half (c = 4.0) | +0.6605 | [+0.519, +0.774] |
 | double (c = 16.0) | +0.6605 | [+0.519, +0.774] |
-| shape-selected c = 2.0 | +0.6383 | [+0.495, +0.758] |
-| nearly flat (c = 0.001) | +0.5318 | [+0.366, +0.670] |
+| shape-selected c = 2.0 | +0.6401 | [+0.495, +0.759] |
+| nearly flat (c = 0.001) | +0.6011 | [+0.445, +0.731] |
 | Euclidean control | +0.5037 | [+0.334, +0.646] |
 | permuted control | +0.0011 | [-0.182, +0.194] |
 
 The permuted control is at zero. The family beats `HBA@7623` (+0.4709) and the
 `Gromov 6` curvature (+0.3656, measured on the earlier, length-bounded
 implementation), and the curvature that the criterion estimates carries real
-information: paired bootstrap gives c_delta - flat = +0.1284
-[+0.0717, +0.1898] and c_delta - Euclidean = +0.1565 [+0.0833, +0.2383], both
-with P(not better) below 1e-4.
+information: paired bootstrap gives c_delta - flat = +0.0591
+[+0.0215, +0.1016] and c_delta - Euclidean = +0.1565 [+0.0833, +0.2383], both
+with P(not better) at or below 0.001. The plateau above c = 8 is numerical
+saturation, not an optimum, and the curvature itself is a gauge: see
+`DELTA_SVD_PROTOCOL.md` (v5), whose sweep also shows that scaling the tangents
+by 1/sqrt(c) reproduces the c = 1 configuration to the last bit.
 
 Three properties make the estimate admissible rather than tuned:
 

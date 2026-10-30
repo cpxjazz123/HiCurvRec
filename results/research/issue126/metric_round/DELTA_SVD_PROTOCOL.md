@@ -185,3 +185,65 @@ The profile-shape comparison (delta against distance scale, bucket by quantile o
 each side) is the more principled criterion and selects c = 2.0, but it ranks
 slightly worse (+0.6383, paired -0.0218, P = 0.016): with the local reference the
 level itself is meaningful, so the shape correction adds nothing here.
+
+## v5 -- the plateau above c = 8 is saturation, and the curvature is a gauge
+
+The sweep was extended to c = 256 and each step was measured on two additional
+quantities: the largest per-SID change of the metric against the previous grid
+point, and the share of items that ``exp_c`` has pushed onto the ball's
+boundary. Artifact: ``../curve_sweep_107.json``, script ``curve_sweep.py``.
+
+| c | spearman | max per-SID change | items at the boundary |
+| --- | --- | --- | --- |
+| 0.001 | +0.6000 | -- | 0.04 |
+| 0.01 | +0.5471 | 1.3e-02 | 0.15 |
+| 0.05 | +0.5716 | 1.6e-02 | 0.18 |
+| 0.1 | +0.5583 | 7.2e-03 | 0.20 |
+| 0.25 | +0.5658 | 7.1e-03 | 0.22 |
+| 0.5 | +0.5586 | 7.3e-03 | 0.25 |
+| 1 | +0.5983 | 7.5e-03 | 0.31 |
+| 2 | +0.6409 | 7.5e-03 | 1.00 |
+| 4 | +0.6641 | 4.8e-03 | 1.00 |
+| 8 | +0.6609 | 4.1e-03 | 1.00 |
+| 16 | +0.6609 | **7.8e-12** | 1.00 |
+| 32 | +0.6609 | **1.8e-14** | 1.00 |
+| 64 | +0.6609 | **2.9e-14** | 1.00 |
+| 128 | +0.6609 | **6.0e-14** | 1.00 |
+| 256 | +0.6609 | **6.0e-14** | 1.00 |
+
+Two facts settle what the plateau means.
+
+1. **The values stop moving at c = 16**, by twelve orders of magnitude (4e-3 per
+   step up to c = 8, then 8e-12, then 1e-14). Every item is already on the
+   boundary from c = 2 on, and ``tanh(sqrt(c)||t||)`` has saturated: the reported
+   identity of c = 4, 8 and 16 to 1e-15 is pure floating point.
+2. **The curvature is a gauge, not a parameter of the data.** Scaling the
+   tangents by ``1/sqrt(c)`` and using curvature ``c`` reproduces the c = 1
+   configuration exactly: the metric returns bit-identical values
+   (max |difference| = 0.000e+00 for c = 4, 16 and 64). Curvature and radial scale
+   are one degree of freedom, so a fixed point set cannot identify a curvature;
+   what it can identify is one scalar -- how far toward the boundary the points
+   are compressed.
+
+Read honestly, the sweep supports exactly two statements: **compression toward
+the boundary ranks better than the near-flat limit** (c = 0.001 to c = 4 gains
+0.06 in Spearman) and **the useful region is a plateau** (c = 4 and c = 8 differ
+by 0.003, which is noise). It does not show that the correlation keeps rising,
+and it cannot show that c = 8 is optimal: beyond c = 8 there is nothing left to
+measure.
+
+The score also carried an order dependence that this sweep exposed. Its
+normalising median was cached once per process, so the value of a variant
+depended on which variant ran first. It is now cached per curvature, which moves
+the nearly-flat control from +0.5318 to **+0.6011**; the family is re-measured
+under the fixed score:
+
+| variant | rho | 95% CI |
+| --- | --- | --- |
+| c_delta = 8.0 | +0.6605 | [+0.519, +0.774] |
+| nearly flat (c = 0.001) | +0.6011 | [+0.445, +0.731] |
+| Euclidean | +0.5037 | [+0.334, +0.646] |
+| permuted | -0.0055 | [-0.204, +0.181] |
+
+Paired bootstrap: c_delta - flat = **+0.0591 [+0.0215, +0.1016]**, P(not better)
+= 0.001; c_delta - Euclidean = +0.1565 [+0.0833, +0.2383].
