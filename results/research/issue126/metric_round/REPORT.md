@@ -541,6 +541,32 @@ fixed:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | rho | +0.7104 | +0.7367 | **+0.7623** | **+0.7615** | +0.6880 | +0.5660 | +0.5276 | +0.3916 | +0.2301 |
 
+**That sweep was on the RAW radius, and its peak was a dimension.** The radius
+has a scale of its own (median 2.785) that nothing else shares, so the effective
+coefficient in each table was `alpha_raw / std_r(table)` and varied from table to
+table without limit. Re-run with the term standardised over each table's groups
+-- one scale for both families, both signs -- the picture is different:
+
+| coefficient | -1.00 | -0.75 | -0.50 | -0.25 | **0.00** | +0.25 | +0.50 | +0.75 | +1.00 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| radial | +0.1305 | +0.2233 | +0.3969 | +0.5243 | **+0.7104** | +0.1881 | -0.0112 | -0.1386 | -0.2584 |
+| tightness | -0.1043 | -0.0054 | +0.0904 | +0.2935 | **+0.7104** | +0.4755 | +0.3257 | +0.1428 | +0.0685 |
+
+Zero is the peak of BOTH families and the fall is on both sides, and the
+split-half protocol picks 0.0 on the even half and 0.0 on the odd half, for both
+families, with held-out values equal to the zero-coefficient values. The
+tightness term -- the thing the radius secretly measures -- is harmful in every
+setting too. The plain distance contrast (+0.7104) is the admissible HBAA, and
+the historical +0.7623 is withdrawn as a dimensional artefact.
+
+The hierarchy reference was also rebuilt to cover every item (12,000 in the tree,
+the rest inheriting from their nearest tree item) and the analysis now uses ten
+random reference points: the radius's partial correlation with the tree depth is
++0.0097 (was +0.2115 with the broken reference), with the join height -0.0001
+(was -0.0877), and the true origin exceeds an arbitrary point by 0.0009. The
+radius is 90% the group's dispersion and 0.98 the distance to any random point.
+There is no hierarchy in it.
+
 alpha = 1 reproduces the corrected HBAA and alpha = 0.5 reproduces the historical
 number exactly, so the historical headline was this scoring rule rather than the
 Gromov product. The peak is a plateau over [0.5, 0.75]; the radial term carries
