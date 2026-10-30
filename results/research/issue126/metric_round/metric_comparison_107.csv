@@ -14,7 +14,12 @@ hbaa_size_matched,"behaviour contrast, control of the negatives",0.5049,2.937931
 behaviour_prefix_preservation,behaviour relation (the behaviour half of direction 3),0.458,7.038354186073859e-07,0.2443,0.6419,True,107
 hyp_cell_rank_lift,the true cell's rank,0.4284,4.15611310100238e-06,0.2414,0.5774,True,107
 hbaa_levels,"behaviour contrast, control of the query point",0.3767,6.353892000443316e-05,0.1725,0.5607,True,107
+svd_delta_four_point_double,the same at twice that curvature,0.3685,9.394245416486783e-05,0.1781,0.5353,True,107
 hbaa_cell_retrieval_difficulty,"rewarding an answer already in hand, negated",0.3669,0.00010126821422903132,0.1381,0.5662,True,107
+svd_delta_four_point,the SVD-guided four-point consistency at the curvature the behaviour graph's tree-likeness selects,0.3656,0.000107971609421532,0.18,0.5321,True,107
+svd_delta_four_point_half,the same at half that curvature,0.3631,0.00012095612028782777,0.1769,0.5276,True,107
+svd_delta_four_point_euclidean,the same in the Euclidean SVD space,0.3256,0.0006202038428587104,0.1335,0.5013,True,107
+svd_delta_four_point_flat,the same at a nearly flat curvature,0.3196,0.0007911281119518047,0.1314,0.4955,True,107
 hbaa_nextitem,"behaviour contrast, a next-item teacher",0.3052,0.0013881738909819101,0.0915,0.4935,True,107
 delta_four_point_euclidean,"the four-point consistency, Euclidean control",0.1513,0.119866305821411,-0.0618,0.3437,False,107
 delta_four_point_flat,the same at a nearly flat curvature,0.1493,0.12494411310281622,-0.0632,0.3413,False,107
@@ -33,6 +38,7 @@ geometry_reconstruction_fidelity,geometry half of direction 3,0.0982,0.314364363
 hbaa_size_matched_kept,"a diagnostic, not a metric",0.0701,0.47307703588741257,-0.1296,0.2754,False,107
 joint_behaviour_over_geometry,"direction 3, the two halves together",0.0658,0.5007187691034231,-0.1605,0.2984,False,107
 gromov_delta_tree_agreement,the Gromov delta as a three-point tree test,0.0611,0.5321164776756278,-0.1734,0.2828,False,107
+svd_delta_four_point_permuted,the same with the item-SID correspondence permuted,-0.0014,0.9886827779834906,-0.1851,0.1826,False,107
 delta_four_point_permuted,"the four-point consistency, permuted control",-0.0212,0.828781475768849,-0.2146,0.1741,False,107
 hyp_hsoftmax_path_null,rewarding an answer already in hand,-0.072,0.4613131388146444,-0.2339,0.0932,False,107
 hbaa_fullneg_rank_excess,"behaviour contrast, the global ranking variant",-0.0787,0.42013951332609123,-0.3134,0.1491,False,107

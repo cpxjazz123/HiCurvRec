@@ -203,6 +203,39 @@ not a validated generalisation.
 `metric_round/metric_comparison_107.csv` holds the whole table: 43 metrics, their
 families, their Spearman, their intervals and their p-values. 18 are eligible.
 
+### The SVD-guided hyperbolic SID consistency (the behaviour route)
+
+The protocol was fixed before the numbers (`DELTA_SVD_PROTOCOL.md`): an SVD of
+rank 64 of the training user-item matrix, a 10-NN graph of those embeddings with
+the cosine distance as weight, the graph's shortest-path distances as the
+reference, the standard four-point delta normalised by the quadruple's own
+distance scale, the curvature grid {0.05 … 8}, and the same four-point agreement
+score with its controls.
+
+**The premise holds: the real purchase behaviour IS tree-like.** The median
+normalised |delta| of the behaviour graph's quadruples is **0.0115** -- the actual
+purchase relations nearly satisfy the four-point condition.
+
+| variant | Spearman (107) | 95% CI | p |
+|---|---|---|---|
+| **A: c_delta = 0.25** | **+0.3656** | [+0.180, +0.532] | 1.1e-4 |
+| B: 0.5 c_delta | +0.3631 | [+0.177, +0.528] | 1.2e-4 |
+| C: 2 c_delta | +0.3685 | [+0.178, +0.535] | 9.4e-5 |
+| D: nearly flat | +0.3196 | [+0.131, +0.495] | 7.9e-4 |
+| E: Euclidean | +0.3256 | [+0.133, +0.501] | 6.2e-4 |
+| F: permuted control | -0.0014 | [-0.185, +0.183] | 0.989 |
+
+Unlike the reference-guided experiment, this one is ELIGIBLE, and the criterion
+the notes set is met: the curvature the behaviour's own tree-likeness selects
+beats the nearly flat variant by +0.045 (P(not better) = 0.042) and the
+Euclidean control by +0.040 (P(not better) = 0.058). The permuted control sits at
+zero, so the measurement is sound.
+
+It is still weaker than HBAA (+0.762) and adds almost nothing to it: their
+values correlate at +0.52, and the R^2 of HBAA alone is 0.414, of the SVD metric
+alone 0.018, of both 0.416. The behaviour-graph route finds a real, weaker signal
+of its own.
+
 ### The delta-guided four-point experiment (version 2: the delta and the scale corrected)
 
 The first computation of this experiment is superseded: the delta was the fixed

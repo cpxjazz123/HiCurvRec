@@ -38,6 +38,13 @@ FAMILY = {
     "behaviour_prefix_preservation": "behaviour relation (the behaviour half of direction 3)",
     "geometry_reconstruction_fidelity": "geometry half of direction 3",
     "joint_behaviour_over_geometry": "direction 3, the two halves together",
+    "svd_delta_four_point": "the SVD-guided four-point consistency at the curvature "
+                            "the behaviour graph's tree-likeness selects",
+    "svd_delta_four_point_half": "the same at half that curvature",
+    "svd_delta_four_point_double": "the same at twice that curvature",
+    "svd_delta_four_point_flat": "the same at a nearly flat curvature",
+    "svd_delta_four_point_euclidean": "the same in the Euclidean SVD space",
+    "svd_delta_four_point_permuted": "the same with the item-SID correspondence permuted",
     "delta_four_point": "the delta-guided four-point consistency at c_delta",
     "delta_four_point_half": "the same at 0.5 c_delta",
     "delta_four_point_double": "the same at 2 c_delta",
