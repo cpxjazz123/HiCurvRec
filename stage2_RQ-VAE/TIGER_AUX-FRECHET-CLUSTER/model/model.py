@@ -47,7 +47,10 @@ class RQVAE(nn.Module):
         return reconstructed, quant_loss, int(unused_codes), tokens
 
     @torch.no_grad()
-    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
+    def get_indices(self, embeddings: torch.Tensor, *,
+                    infer_use_sk: bool = False,
+                    item_ids: torch.Tensor = None) -> torch.Tensor:
+        """``item_ids`` is part of the framework's contract signature."""
         encoded = self.encoder(embeddings)
         _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
         return tokens
