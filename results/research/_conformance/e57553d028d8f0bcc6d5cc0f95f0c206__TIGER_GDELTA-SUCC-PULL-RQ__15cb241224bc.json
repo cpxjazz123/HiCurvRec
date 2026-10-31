@@ -1,0 +1,33 @@
+{
+  "checks": [
+    {
+      "detail": "the frozen constants match and the launcher is the framework's",
+      "name": "constants",
+      "status": "PASS"
+    },
+    {
+      "detail": "the candidate uses the canonical geometry module and defines no other",
+      "name": "geometry_contract",
+      "status": "PASS"
+    },
+    {
+      "detail": "one epoch runs and exports the identifier",
+      "name": "entry",
+      "status": "PASS"
+    },
+    {
+      "detail": "24587 unique identifiers of 4 tokens",
+      "name": "identifier",
+      "status": "PASS"
+    },
+    {
+      "detail": "exit 1:     sys.exit(main()) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py\", line 357, in wrapper |     return f(*args, **kwargs) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 901, in main |     run(args) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 892, in run |     elastic_launch( |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 143, in __call__ |     return launch_agent(self._config, self._entrypoint, list(args)) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 277, in launch_agent |     raise ChildFailedError( | torch.distributed.elastic.multiprocessing.errors.ChildFailedError:  | ============================================================ | /fs04/ar57/wenyu/GeneRec/tools/research/stage2/ddp_probe.py FAILED | ------------------------------------------------------------ | Failures: | [1]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 2 (local_rank: 2) |   exitcode  : 1 (pid: 2089827) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | [2]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 3 (local_rank: 3) |   exitcode  : 1 (pid: 2089828) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | ------------------------------------------------------------ | Root Cause (first observed failure): | [0]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 1 (local_rank: 1) |   exitcode  : 1 (pid: 2089826) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | ============================================================",
+      "name": "four_rank",
+      "status": "FAIL"
+    }
+  ],
+  "checks_fingerprint": "15cb241224bc",
+  "digest": "e57553d028d8f0bcc6d5cc0f95f0c206929bbbc1560a4034a3765666eb13a4ff",
+  "passed": false,
+  "tree": "/fs04/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_GDELTA-SUCC-PULL-RQ"
+}

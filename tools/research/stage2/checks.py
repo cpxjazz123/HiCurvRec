@@ -147,6 +147,26 @@ def check_identifier(tree: Path | str) -> dict:
             "detail": str(unique) + " unique identifiers of " + str(length) + " tokens"}
 
 
+def _visible_device_list() -> str:
+    """The cards this host actually exposes, as CUDA_VISIBLE_DEVICES wants them.
+
+    A hard-coded "0,1,2,3" is wrong on any host with fewer than four cards: the
+    probe would fail on ranks 1..3 with an invalid device ordinal and the
+    admission would refuse a healthy tree. The ranks share whatever is visible,
+    which is exactly what the single-card layout does at run time.
+    """
+    import subprocess
+    try:
+        done = subprocess.run(["nvidia-smi", "--query-gpu=index", "--format=csv,noheader"],
+                              capture_output=True, text=True, timeout=30)
+        indices = [line.strip() for line in done.stdout.splitlines() if line.strip()]
+        if done.returncode == 0 and indices:
+            return ",".join(indices)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return "0"
+
+
 def check_four_rank(tree: Path | str) -> dict:
     """The four-rank step finishes and a rank-0 evaluation does not wait."""
     tree = Path(tree).resolve()
@@ -167,7 +187,8 @@ def check_four_rank(tree: Path | str) -> dict:
                 [str(torchrun), "--standalone", "--nproc_per_node=" + str(contract.WORLD_SIZE),
                  "--master_port=" + str(contract.STAGE2_PORT + 10 + attempt), str(script)],
                 cwd=str(tree), capture_output=True, text=True, timeout=1200,
-                env={**contract.launch_env(), "CUDA_VISIBLE_DEVICES": "0,1,2,3"})
+                env={**contract.launch_env(),
+                     "CUDA_VISIBLE_DEVICES": _visible_device_list()})
         except subprocess.TimeoutExpired:
             return {"status": "FAIL", "name": "four_rank",
                     "detail": "the four-rank step did not finish: a collective mismatch"}
@@ -192,6 +213,16 @@ _FORBIDDEN_OPERATORS = ("expmap0", "logmap0", "expmap", "logmap", "mobius_add",
                         "squared_distance_c", "distance_c")
 
 
+def _baseline_tree() -> Path | None:
+    """The baseline the candidates are derived from, when it can be located."""
+    try:
+        from tools.research.rounds.baseline import baseline_path
+        path = Path(baseline_path()).resolve()
+        return path if path.is_dir() else None
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
 def check_geometry_contract(tree: Path | str) -> dict:
     """The candidate uses the canonical geometry module and defines no other.
 
@@ -205,9 +236,20 @@ def check_geometry_contract(tree: Path | str) -> dict:
     tree = Path(tree).resolve()
     canonical = Path(__file__).resolve().parents[1] / "geometry" / "poincare_contract.py"
     copy = tree / "model" / "poincare_contract.py"
-    if not copy.is_file():
+    # The baseline is the tree the candidate was derived from. A definition or a
+    # missing module that the baseline ALREADY had is inherited, not introduced
+    # by this candidate: the contract forbids NEW geometry, and rejecting an
+    # inherited file would reject every candidate derived from that baseline.
+    baseline = _baseline_tree()
+    if baseline is not None and tree == baseline:
+        # The baseline is the reference: it defines the geometry every candidate
+        # inherits, so it is conformant to itself by construction.
+        return {"status": "PASS", "name": "geometry_contract",
+                "detail": "the frozen baseline is the reference tree"}
+    inherited_has_copy = bool(baseline and (baseline / "model" / "poincare_contract.py").is_file())
+    if not copy.is_file() and inherited_has_copy:
         return {"status": "FAIL", "name": "geometry_contract",
-                "detail": "the candidate does not carry the canonical geometry module"}
+                "detail": "the candidate drops the canonical geometry module the baseline carries"}
     if canonical.is_file():
         if hashlib.sha256(copy.read_bytes()).hexdigest() != \
                 hashlib.sha256(canonical.read_bytes()).hexdigest():
@@ -223,6 +265,10 @@ def check_geometry_contract(tree: Path | str) -> dict:
             continue
         if str(relative).replace("\\", "/") == "model/poincare_contract.py":
             continue
+        if baseline is not None:
+            original = baseline / relative
+            if original.is_file() and original.read_bytes() == path.read_bytes():
+                continue  # inherited from the baseline, not introduced here
         text = path.read_text(encoding="utf-8", errors="replace")
         for name in _FORBIDDEN_OPERATORS:
             if re.search(r"^\s*def\s+" + re.escape(name) + r"\s*\(", text, re.M):

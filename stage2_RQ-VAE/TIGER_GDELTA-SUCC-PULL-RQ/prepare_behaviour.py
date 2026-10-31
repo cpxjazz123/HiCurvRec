@@ -29,7 +29,22 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[5]
+
+
+def _repository_root(start: Path) -> Path:
+    """The repository root: the nearest ancestor that holds both trees.
+
+    The candidate is copied to ``results/stage2_RQ-VAE/<ARM>/`` before it runs,
+    so a fixed parents[N] would resolve to the filesystem root there. The root is
+    the directory that contains the two markers, found by walking upwards.
+    """
+    for candidate in (start, *start.parents):
+        if (candidate / "stage2_RQ-VAE").is_dir() and (candidate / "results").is_dir():
+            return candidate
+    raise RuntimeError("cannot locate the repository root above " + str(start))
+
+
+REPO = _repository_root(HERE)
 PARQUET = REPO / "results" / "stage0_build_parquet"
 BASELINE = REPO / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE"
 OUTPUT = HERE / "behaviour_constants.npz"

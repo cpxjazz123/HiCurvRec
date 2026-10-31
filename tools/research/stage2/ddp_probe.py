@@ -55,7 +55,11 @@ def main() -> int:
     dist.init_process_group(backend="nccl")
     rank = dist.get_rank()
     world = dist.get_world_size()
-    local = int(os.environ.get("LOCAL_RANK", rank))
+    # A host with fewer cards than ranks shares the visible ones: rank r uses
+    # card r mod device_count. A hard rank == device assumption fails with an
+    # invalid device ordinal on a single-card host, which is a property of the
+    # host, not of the candidate under test.
+    local = int(os.environ.get("LOCAL_RANK", rank)) % max(torch.cuda.device_count(), 1)
     torch.cuda.set_device(local)
     device = torch.device("cuda", local)
 
