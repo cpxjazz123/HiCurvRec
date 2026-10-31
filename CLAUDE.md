@@ -80,7 +80,7 @@
 43. 每次迭代必须提交并成功推送到 GitHub 后才可声明完成。
 44. 禁止未经明确授权执行 `git push --force` 或 `git push --force-with-lease`。
 45. 每次推送前必须核对远端地址，推送后必须确认本地 `main` 与远端 `main` 的 Commit SHA 一致。
-46. `.pth` 与 `.npy` 文件必须按仓库 `.gitattributes` 使用 Git LFS。
+46. **二进制产物不入库**:Stage2/Stage3 的 `.pth`/`.pt`/`.npy` 不再提交到 git(2026-11-01 起,原因是 LFS 对象不可变、每次重跑永久占用配额,2.9 GB 已超出免费 1 GiB)。它们由入库的 `item_sids.json` 与一次约 22 分钟的 Stage2 重跑重建;`.gitattributes` 的 LFS 规则保留,以免将来若确需入库时误把二进制写进普通对象。历史已重写一次以释放配额,不得再引入新的二进制提交。
 
 ## 8. MCP 科研调度
 
