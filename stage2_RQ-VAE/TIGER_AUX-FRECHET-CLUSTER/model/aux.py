@@ -60,6 +60,19 @@ def soft_assignment(distances: torch.Tensor) -> torch.Tensor:
     return torch.softmax(-distances / scale, dim=-1)
 
 
+def _correlation(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    """Pearson correlation of two pair sets; 0 when either side is constant.
+
+    A constant side means the term carries no information, and the correlation
+    form reports that as the worst value instead of the best one, which is what
+    removes the collapse optimum.
+    """
+    a_c = a - a.detach().mean()
+    b_c = b - b.detach().mean()
+    denominator = (a_c.detach().norm() * b_c.detach().norm()).clamp_min(1e-8)
+    return (a_c * b_c).sum() / denominator
+
+
 def _standardize(x: torch.Tensor) -> torch.Tensor:
     """Zero mean, unit variance over the pair set, with detached statistics."""
     mean = x.detach().mean()
@@ -104,7 +117,11 @@ def gp_sid_alignment(probs: list[torch.Tensor], code_points: list[torch.Tensor])
         agreement = running_a if agreement is None else agreement + running_a
         curved = running_h if curved is None else curved + running_h
     mask = _pair_mask(rows, probs[0].device)
-    return _standardize(agreement[mask]).sub(_standardize(curved[mask])).pow(2).mean()
+    # A squared difference of standardized values has a trivial minimum: make both
+    # sides constant and the loss is zero, which collapsed the SID to one prefix in
+    # the first attempt. The correlation form turns a constant side into the WORST
+    # value (zero correlation -> loss 1) and keeps the alignment the term is for.
+    return 1.0 - _correlation(agreement[mask], curved[mask])
 
 
 def tree_distortion(probs: list[torch.Tensor], latents: list[torch.Tensor]) -> torch.Tensor:
@@ -123,7 +140,10 @@ def tree_distortion(probs: list[torch.Tensor], latents: list[torch.Tensor]) -> t
     points = project(latents[0])
     reference = distance(points, points) / BALL_DIAMETER
     mask = _pair_mask(rows, probs[0].device)
-    return _standardize(tree[mask]).sub(_standardize(reference[mask])).pow(2).mean()
+    # Same reason as the Gromov term: a stress on standardized values is minimized
+    # by collapsing both sides to constants, so the term is the (negative)
+    # correlation between the tree distances and the reference distances.
+    return 1.0 - _correlation(tree[mask], reference[mask])
 
 
 def frechet_cluster(probs: list[torch.Tensor], latents: list[torch.Tensor]) -> torch.Tensor:
@@ -173,7 +193,10 @@ def frechet_cluster(probs: list[torch.Tensor], latents: list[torch.Tensor]) -> t
     centre_distance = distance(centres, centres) / BALL_DIAMETER
     center_pair = ~torch.eye(len(centres), dtype=torch.bool, device=centres.device)
     inter = centre_distance[center_pair].mean()
-    return intra - inter
+    # `intra - inter` is minimized by putting every item on one point (intra = inter
+    # = 0), which is a collapse. The normalized ratio is 1 at collapse and 0 when
+    # the prefixes are compact and mutually separated.
+    return 1.0 - (inter - intra) / (inter + intra).clamp_min(1e-8)
 
 
 LOSSES = {"gp": gp_sid_alignment, "tree": tree_distortion, "cluster": frechet_cluster}

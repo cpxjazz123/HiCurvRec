@@ -32,7 +32,7 @@ The ratio is measured, not tuned, and `AUX_WEIGHT` stays 1.0.
     A_ij = sum_l  prod_{l' <= l} <p_l'(i), p_l'(j)>                  shared prefix depth
     c_l(i) = sum_k p_l(i,k) phi(e_lk)                                 expected ancestor
     H_ij = sum_l  prod_{l' <= l} (1 - d_H(c_l'(i), c_l'(j)) / D)      shared curved depth
-    L_GP = mean_{i != j} ( z(A_ij) - z(H_ij) )^2
+    L_GP = 1 - corr( A_ij , H_ij )        over i != j
 
 The left side is what the SID tree says (how many levels two items share); the
 right side is what the hyperbolic codebook says (how deep their expected code
@@ -42,7 +42,7 @@ points agree). The term pulls them together.
 
     T_ij = sum_l (1 - <p_l(i), p_l(j)>)                expected SID tree distance
     R_ij = d_H(phi(z_i), phi(z_j)) / D                reference hyperbolic distance
-    L_tree = mean_{i != j} ( z(T_ij) - z(R_ij) )^2
+    L_tree = 1 - corr( T_ij , R_ij )      over i != j
 
 A stress term: the tree distance between two items has to reproduce the distance
 between their pre-quantization representations in the ball.
@@ -54,7 +54,7 @@ fallback: at initialization one level can put the whole batch on one code, and a
 single group gives no contrast). A centre is the soft-mass-weighted mean of the
 members' ball points; the term is
 
-    L_cluster = mean_c mean_{i in c} d_H(phi(z_i), m_c) / D  -  mean_{c != c'} d_H(m_c, m_{c'}) / D
+    L_cluster = 1 - ( inter - intra ) / ( inter + intra )
 
 compact inside a prefix, separated across prefixes.
 
@@ -72,3 +72,17 @@ too. `AUX_MODE="none"` is asserted to reproduce `recon + quant` exactly.
 * the standardization uses the batch's own mean and standard deviation, detached;
 * the only free number is the weight, and the standardization makes 1.0 the
   unit-scale choice.
+
+## Why the terms are correlations and not squared differences
+
+The first implementation used a squared difference of standardized pair statistics.
+That objective has a trivial minimum: make both sides constant (all items on one
+code, or all latents on one point) and the loss is exactly zero. It collapsed the
+SID to one or two level-2 prefixes in the first run, twice, with and without the
+reconstruction-relative rescaling.
+
+The correlation form keeps the same alignment meaning and removes the degenerate
+optimum: a constant side has zero correlation, which is the WORST value of the
+loss, not the best. The cluster term uses the normalized ratio for the same
+reason: it is 1 at collapse and 0 when prefixes are compact and mutually
+separated.
