@@ -1,0 +1,86 @@
+IDEA: BEHDIST-POINCARE-RQ — behaviour-conditioned hyperbolic distribution matching on quantized RQ codes
+
+TITLE: Train the Stage-2 RQ-VAE so that the Poincaré distance between an item's quantized code and its training-transition neighbours matches the behaviour distance, inside a genuinely curved RQ quantizer.
+
+MOTIVATION: The existing Stage-2 objective never sees co-occurrence, so the code space it produces is a text/CF-reconstruction space: the probe gets Spearman 0.0402 and top-10 behaviour-neighbour overlap 0.0124 against d_beh, i.e. behaviourally adjacent items are essentially as far apart as random ones. Downstream, a generative recommender that emits SIDs has no reason to make an item's prefix a good predictor of the next item, so Stage-3 Recall@10 stalls. What is missing is not a better *metric on frozen codes* (measured and dead) and not a better *codebook update rule* (three earlier rounds tried curved Fréchet/successor centroid moves and radial rank assignment), but an objective that makes the *quantized code positions themselves* a low-distortion embedding of the training behaviour metric.
+
+NOVELTY: The coupling sits at the Stage-2 **objective**, not at the codebook update, not at the curvature schedule, not at the assignment radius. Behaviour enters as a full target *distribution* over candidate neighbours (not a scalar weight, not a rank, not an entropy), and curvature enters as the metric of the quantized codes in the same KL term, with the curvature scale derived from a measured quantile of the behaviour metric itself. Earlier rounds used curvature control from prefix-transition scores (CURVCTRL-SID), entropy-driven radial ranking (BRad-RQ), successor-weighted Fréchet centroids (poincare-frechet-successor-codebook), prefix smoothing (LORENTZ-SUCCPROFILE-SMOOTH-RQ), cone constraints (behcone-prefix-rq), graph shifts (succboost-geoshift), token-space geometry (TSG-SID) and fixed-vector metric swaps (dead). None of them is a behaviour-target distribution matched against a curved code distance during Stage-2. This is also not a relabelling: the discrete token strings may change, but the mechanism is a change of what the encoder and codebook are optimised to do.
+
+CHANGE: The RQ-VAE is made hyperbolic — encoder output and codebook are materialised in a Poincaré ball of curvature κ<0 by exp_0, level assignment uses the geodesic distance, and the residual chain is carried in the tangent chart at the origin. On top of the untouched reconstruction loss, one extra term matches a behaviour-derived distribution p_a(d_beh) to a code-distance distribution q_a(d_κ) over a sampled candidate set, so behaviour supplies the weights and curvature supplies the direction of the same gradient.
+
+SPECIFICATION:
+Notation: d = latent dim, L levels, K codes/level (unchanged), B≈1023 items per step.
+(1) Behaviour table (training split only, once, frozen before Stage 2):
+    count directed consecutive/co-consumed pairs (i,j) inside training sessions -> n_ij; sym. N_ij = n_ij + n_ji;
+    pop_i = number of training interactions of item i;
+    d_beh(i,j) = -log((N_ij + 1)/(sqrt(pop_i*pop_j) + 1)).
+    D = 90th percentile of d_beh over 2e6 sampled training pairs (D = max(D,1)).
+    κ = -1/D^2  (measured, not tuned). δ̄ = mean 4-point Gromov δ of d_beh on 4096 quadruples, reported as a diagnostic only.
+(2) Curved quantizer (fixed κ, c = sqrt(|κ|), R = (1-1e-5)/c):
+    e = Enc(x);  u_0 = e;  z_0 = exp_0(e),  exp_0(v) = tanh(c||v||) v /(c||v||), clamp ||v|| <= R.
+    level l: c_l = argmin_{c in C_l} d_κ(z_{l-1}, exp_0(c));  ζ_l = log_0(exp_0(c_l)),  log_0(x) = artanh(c||x||) x/(c||x||);
+             u_l = u_{l-1} - ζ_l;  z_l = exp_0(u_l).
+    quantized code point ỹ = exp_0(Σ_l ζ_l). Decoder and token strings unchanged (tokens = (c_1..c_L)).
+(3) Behaviour-term (the coupling), per step:
+    sample A = 256 anchors a from the batch; for each anchor sample 8 positives j with prob ∝ N_aj and 32 negatives j with prob ∝ pop_j among items with N_aj = 0 -> candidate set C(a), |C(a)| = 40.
+    τ_b = median_{j in C(a)} d_beh(a,j) (detached);
+    p_aj = softmax_j( -d_beh(a,j)/τ_b ).
+    Code memory M[j] = detached ỹ_j, warmed at step 0 by one no-grad encoder pass over all training items and refreshed whenever j appears in a batch.
+    τ_g = median_{j in C(a)} d_κ(ỹ_a, M[j]) (detached);
+    q_aj = softmax_j( -d_κ(ỹ_a, M[j]) / τ_g ).
+    L_geo = (1/A) Σ_a Σ_j p_aj ( log p_aj - log q_aj ).
+(4) Total: L = L_recon(existing, unchanged: recon MSE + commitment) + λ L_geo, with λ fixed ONCE at step 1 as λ = ||∇ L_recon||_2 / ||∇ L_geo||_2 on that batch (measured, then frozen; no sweep).
+(5) Switches in code: use_behaviour (False => L_geo = 0), use_hyperbolic (False => κ = 0, exp_0/log_0 = identity, assignment by L2). Only the both-on arm is trained this round.
+
+COST: precompute of the sparse behaviour table: one pass over training sequences, O(#training transitions), seconds to a few minutes. Code-memory warm-up: one forward-only pass over 24556 items ≈ 0.3 epoch-equivalent, once. Per step: 256×40 = 10240 Poincaré distances plus two medians plus a KL over 40-way distributions ≈ 0.2-0.4 ms on one GPU, versus an encoder forward/backward on B = 1023 items (the dominant cost); exp_0/log_0 add O(B·d·L). Measured expectation: +1-3% wall clock, so 3000 epochs × 24 steps = 72000 steps stays inside the frozen four-card budget. One extra backward at step 1 only (for λ). No extra forward per step: anchors are batch items, candidates come from the detached code memory.
+
+HYPOTHESIS: If the behaviour metric is well represented by a negatively curved space (δ̄ small relative to D), then a curvature-aware code geometry has enough room to place 40-way behaviour neighbourhoods without collapsing the reconstruction, and the KL above will move the quantized codes so that behaviour neighbours are the nearest code neighbours. Observable: probe Spearman between code-space distance and d_beh rises well above 0.0402 (target > 0.15), top-10 behaviour-neighbour overlap rises above 0.0124 (target > 0.05), and consequently Stage-3 test_recall@10 exceeds 0.065; note a single run carries ≈0.013 of noise, so the probe movement (which is deterministic given the trained weights) is the primary read and recall is the judgement with that caveat.
+
+RISKS: (a) The 40-way KL is easy to satisfy locally while leaving the global 24556-item ordering unchanged, so Spearman could move less than the overlap; (b) detached code memory makes the negative side lag by up to one epoch, which can let the encoder oscillate; (c) if D is small, κ = -1/D^2 becomes very negative and tanh saturation destroys the radial resolution of codes, hurting reconstruction and prefix counts; (d) λ from a single step-1 gradient ratio can be badly scaled if L_geo is near zero at initialisation; (e) the discrete bottleneck may re-collapse behaviourally distinct items onto shared codewords, capping the attainable overlap; (f) Stage-3 recall gain may be within the 0.013 seed noise.
+
+BEHAVIOR SIGNAL: Popularity-adjusted, symmetric training-transition affinity d_beh(i,j) = -log((N_ij+1)/(sqrt(pop_i pop_j)+1)), i.e. a normalised co-consumption/next-item graph, used as a full target distribution rather than as a scalar weight.
+
+BEHAVIOR COMPUTATION: Built once from the training split only: within each training session, every consecutive (and same-session co-consumed) ordered item pair increments n_ij; symmetrise N_ij = n_ij + n_ji; pop_i counts training interactions. The graph, d_beh, D and the sampled candidate sets are frozen before Stage-2 training starts and are read-only during training.
+
+LEAKAGE BOUNDARY: No validation or test sequence is ever read: the table, D, δ̄, the positive/negative samplers and the probes are computed from training interactions only, and the graph is frozen at epoch 0. No SID token, code assignment or curvature depends on any validation/test interaction, and the Stage-3 protocol sees only the frozen SIDs produced by Stage 2.
+
+HYPERBOLIC OPERATOR: Fixed negative curvature κ = -1/D^2 with D the measured 90th percentile of d_beh, c = sqrt(|κ|); operations are the Poincaré ball exp_0/log_0 maps (radius cap R = (1-1e-5)/c), the geodesic distance d_κ(u,v) = (1/c) arcosh(1 + 2c^2||u-v||^2/((1-c^2||u||^2)(1-c^2||v||^2))), used both for codebook assignment and for the code-to-code matching term.
+
+HYPERBOLIC LOCATION: Inside Stage-2 training: at the quantizer (exp_0 materialisation, geodesic level assignment, tangent-chart residual chain) and in the behaviour-matching loss that reads d_κ between quantized code points. It is therefore inside the core computation, not a post-hoc evaluation metric and not inherited unused code.
+
+COUPLING PATH: behaviour table -> p_a(d_beh) target distribution -> KL against q_a(d_κ) over the same quantized code points -> gradient into encoder and codebook -> SIDs. Removing behaviour removes both p_a and the weights (L_geo vanishes, Stage 2 reverts to reconstruction and the probe stays at 0.04). Removing curvature makes the assignment, the residual chain and the matching distance Euclidean, changing which codewords are chosen and how the anchor is pulled.
+
+COUPLING EQUATION: L_geo = Σ_a KL( p_a(d_beh) ‖ q_a(d_κ) ), with q_aj ∝ exp(-d_κ(ỹ_a, ỹ_j)/τ_g); its anchor gradient is (1/τ_g) Σ_j (p_aj(d_beh) - q_aj(d_κ)) · ∇_{u_a} d_κ(ỹ_a, ỹ_j), i.e. w_behaviour(a,j) * ∇ d_Poincaré.
+
+OBSERVABLES: (i) probe Spearman(code distance, d_beh) should exceed the Euclidean baseline 0.0402 substantially; (ii) top-10 behaviour-neighbour overlap should exceed 0.0124 substantially; (iii) quantized code points of high-N_ij pairs should be geodesically closer than popularity-matched non-neighbours; (iv) reconstruction MSE should rise only slightly and codebook usage should stay spread (no code collapse); (v) Stage-3 test_recall@10 > 0.065 with the single-run caveat. Also log D, κ, δ̄ and the median τ_g per epoch to show the geometry is not saturating.
+
+ABLATION BEHAVIOR OFF: same code with use_behaviour=False: L_geo = 0, no behaviour table, no samplers, Stage 2 is the plain curved RQ-VAE; the arm exists and is correct but is not trained this round.
+
+ABLATION GEOMETRY OFF: same code with use_hyperbolic=False: κ = 0, exp_0/log_0 = identity, L2 assignment, Euclidean residual chain, L_geo still computed with Euclidean distance between code points on the identical candidate sets; exists, not trained this round.
+
+ABLATION BOTH ON: the single trained run: curved quantizer + behaviour KL with λ from the step-1 gradient ratio; this is the only arm executed, 3000 epochs, four cards, frozen Stage-3 protocol, no early stopping.
+
+SPEC EQUATIONS:
+  d_beh(i,j) = -log((N_ij + 1)/(sqrt(pop_i*pop_j) + 1))
+  D = p90(d_beh); κ = -1/D^2; c = sqrt(|κ|); R = (1-1e-5)/c
+  exp_0(v) = tanh(c*min(||v||,R)) * v / (c*min(||v||,R) + 1e-12)
+  log_0(x) = artanh(c*min(||x||,R)) * x / (c*min(||x||,R) + 1e-12)
+  d_κ(u,v) = (1/c)*arcosh(1 + 2c^2||u-v||^2 / ((1-c^2||u||^2)(1-c^2||v||^2)))
+  u_0 = e; z_0 = exp_0(u_0)
+  c_l = argmin_{c in C_l} d_κ(z_{l-1}, exp_0(c));  ζ_l = log_0(exp_0(c_l))
+  u_l = u_{l-1} - ζ_l;  z_l = exp_0(u_l);  ỹ = exp_0(Σ_l ζ_l)
+  p_aj = softmax_j(-d_beh(a,j)/τ_b), τ_b = median_j d_beh(a,j)
+  q_aj = softmax_j(-d_κ(ỹ_a, M[j])/τ_g), τ_g = median_j d_κ(ỹ_a, M[j])
+  L_geo = (1/A) Σ_a Σ_j p_aj (log p_aj - log q_aj)
+  L = L_recon + λ*L_geo, λ = ||∇L_recon||/||∇L_geo|| at step 1, frozen
+  pseudocode per step:
+    x = next_batch(1023); e = Enc(x); run curved RQ -> ỹ, tokens, L_recon
+    refresh M[i] = detach(ỹ_i) for i in batch
+    A = sample(anchors, 256); C = sample(8 pos by N_aj + 32 neg by pop, N_aj=0)
+    compute τ_b, p, τ_g (detach), q, L_geo
+    backward L; step optimiser
+
+SPEC INPUTS OUTPUTS: Inputs: item content features x_i (unchanged encoder input), the frozen training behaviour table (sparse N_ij, pop_i), measured D, hyperparameters L, K, d (unchanged), A = 256, 8 positives, 32 negatives, λ from the step-1 ratio. Outputs: trained encoder, curved codebooks C_1..C_L, quantized code points ỹ_i for every item, and discrete SID token strings (c_1..c_L) handed unchanged to Stage 3; plus per-epoch diagnostics (L_recon, L_geo, τ_g, codebook usage).
+
+SAFEGUARDS: clamp all ball points to radius (1-1e-5)/c so the conformal factors 1-c^2||.||^2 never reach 0; add 1e-12 to every norm before dividing in exp_0/log_0; clamp the arcosh argument to >= 1+1e-7; skip an anchor if the candidate set has fewer than 2 items or if all d_beh are equal (p undefined) or if the anchor or candidate code memory is uninitialised; detach τ_b and τ_g so the temperature cannot drift to trivialise the loss; detach the code memory and cap staleness at 2 epochs by skipping anchors whose candidate entry is older; clamp λ to [0.1, 10] from its measured value and log the raw value; if D < 1 (degenerate behaviour metric) set D = 1 and log a warning; fall back to κ = 0 for a step if any non-finite distance appears, and count such steps in the diagnostics. No hyperparameter is chosen by trying values: D and λ are measured, A/8/32/1e-5 are documented defaults, L/K/d are inherited from the frozen baseline.
+END IDEA

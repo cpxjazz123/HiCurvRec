@@ -1,0 +1,488 @@
+{
+  "decision_at": 1793425866.543416,
+  "decision_hash": "894fc3cfb8d9bc0afc31cfb07835b8d5c7d6a4dc5f928ff5b985fd4b3c4e8bc6",
+  "evidence": {
+    "DELTA-PERI-CURV-RQ": {
+      "bundle_sha256": "fab5ef5625b6579130f879b91f278d92c07310cf212518225dba13c8b0195f34",
+      "literature_sha256": "ce67f592b41c3a971fdcb42584bbdf89f8321fc36ccaca800974ba50913707e3",
+      "math_sha256": "db31852bcc677a2d9c4cca260f489135c57aa212319f7b291c6c614023205884",
+      "probe_sha256": "c9c282fc7e9a7ef666f2cb5757624a37c17b537a808ed7a7432a4ad2d270b0b4"
+    },
+    "DELTA-TREE-STRESS-RQ": {
+      "bundle_sha256": "4bf56163b70e0975995bf8bf743420a13069c9381b94ffe3d97725f1000474f5",
+      "literature_sha256": "504208eb6df868c80124ec06721928a71404644061e7f50daed4c5d13b86f985",
+      "math_sha256": "06a65dbb5b5b639476fb7504a1226c0b8105e426a62e686883d5d365964047e5",
+      "probe_sha256": "d87fbfd25a2695e87cb0f13f44babd454b7a8116cc540d764f066ee7f34b6015"
+    },
+    "GDELTA-SUCC-PULL-RQ": {
+      "bundle_sha256": "a417488dd3f577d2c96a997049ad57171937337b7f3dfe23c31a5a50df484cc2",
+      "literature_sha256": "0d55a359eee1426469df39c90e505193d2a74eac44198296646b0fa3a43a7ab8",
+      "math_sha256": "1c5f50843e7fdbc9abf8f86c3e642ebeacb9ec36d920cd1f37f1a93ed5c26e99",
+      "probe_sha256": "12f67d75e181d3bd00b3b318a390f28031d41fb7b96d057f166fc755d508a7a8"
+    },
+    "GROMOV-LCA-MOBIUS-RQ": {
+      "bundle_sha256": "40ac3b24c042bf3751008f31e9d0b6cf4f5ca58e188cd952ced59fc5d4d5316f",
+      "literature_sha256": "dfa40d014de8e98d63580edfc602a030b4a2c62ed57f44273e548f6f18977bd5",
+      "math_sha256": "ddf587a340af622d0e198f13a502b36aade2f7379f68619249fb99c63b69ce65",
+      "probe_sha256": "16d8b67413607d7ea051272c5c632f0168d9ba76d0e4aafd959b6b10a1810191"
+    },
+    "LCB-RQ": {
+      "bundle_sha256": "e06573d4519f3d922bac1557db792e91516410d2e36b49093e11b4b961d1d87e",
+      "literature_sha256": "3ec5b58383274a3e1748cdbc4e6827c0b1d3106a94c83948320abef84114ef71",
+      "math_sha256": "f9e1b869e7859c7024531715582f947232d1f237f8ca775a45626a4f2084b27e",
+      "probe_sha256": "a500e7f8224f2c811f76f724496e205e3c3207b59932a112215bda0f13db3d50"
+    },
+    "SID-GW-DELTA": {
+      "bundle_sha256": "b2e460e970104c8cd9b56bf70dc990ef3f0252e8cd0a377f5065951d2e3dced3",
+      "literature_sha256": "3f1c881dd059e3e772750e064effa69ba2419d998195c80ed164041e2147f0ad",
+      "math_sha256": "aca20543d0921ef887cdaf2098865f5b27a660afe44dbecf5e96999f5fb652dc",
+      "probe_sha256": "f21115a5cdad2c325e41d59c4f696547b031cef1e2a1fb80ee817ac3d2e68e29"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "DELTA-PERI-CURV-RQ",
+        "mean_rank": 4.0,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 3,
+          "scoring_3": 6
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Measured per-item Gromov-delta curvature is reused in distance, temperature, weight and commitment so the coupling is real, but the main lever is a latent-side contrastive and its own risk 4 concedes the probe reads committed code vectors in Euclidean space, while E11 (first-prefix 0.0907 vs null 0.067) locates the gap in the committed prefix; it also carries the largest compute (+35-50 min Stage-2).",
+          "scoring_2": "E5 supports per-item heterogeneity and the single-c_i pathway is the tightest coupling, but the contrastive acts mainly on the continuous latent (reaching SIDs only via the commitment term), per-pair sqrt(c_i c_j) curvature is not a metric by its own risk 3, and it carries the largest +35-50% Stage-2 cost with init-only lambda, the configuration most exposed to the E6/E7 fact that behaviour-tilted arms underperformed Euclidean.",
+          "scoring_3": "spends curvature on a latent-side batch contrastive plus curved commitment while E11 shows committed-code prefix sharing is near chance (0.0907 vs 0.067) and E6/E7 show the gain lives in assignment/balance; non-metric per-pair curvature, four simultaneous c_i uses and +25-40% step time add risk with no supporting evidence."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 12
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "DELTA-TREE-STRESS-RQ",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Acts on the quantized code embedding at every residual depth against an MST ultrametric, matching E6's bottleneck (gold prefix alive 0.161/0.085 at depths 3/4 versus 1.000/0.829 at 1/2) and the coarse-level finding of E8, with a genuinely hyperbolic tree target, but alpha/lambda are measured-once heuristics and the one-near/one-far sampling weakens it versus position 1.",
+          "scoring_2": "E6 caps recall by gold-prefix survival of only 0.156-0.161 at depth 3 and 0.068-0.085 at depth 4, and this is the only proposal that puts the curved stress on the quantized code embedding at every prefix depth, at a few-% cost with alpha and lambda measured, though the MST path-max target distorts d_beh and c=1/delta^2 can saturate the ball.",
+          "scoring_3": "curved stress on the quantized code embedding against the behaviour-MST ultrametric at every prefix depth, weighted by residual energy so coarse levels respect the tree; E8 (small-K level-1 sharing 0.3106 vs 0.0822) and E11 (same first prefix 0.0907 vs null 0.067) support it, and a single measured global delta keeps the curvature a metric at low cost."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 3,
+        "idea_id": "GDELTA-SUCC-PULL-RQ",
+        "mean_rank": 1.0,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 1,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Only proposal whose behaviour successor term and per-item Gromov-delta Poincare metric sit in the same per-level argmin that emits each SID digit, which is the lever E8 names (K=16 keeps behaviour neighbours together 0.3106 vs K=256 0.0822, and small K is \"what width-20 prefix survival depends on\"), with detached-median unit scaling so the coupling weight is derived and step cost is 1-3%.",
+          "scoring_2": "E8 measures the prefix-sharing headroom (0.3106 at K=16 down to 0.0822 at K=256) and E5 grounds the directed successor signal (top-1 mass 0.4375), while this is the only candidate that changes just the per-level argmin and keeps the baseline recon+commit losses, so it avoids the E6/E7 pattern where behaviour-tilted arms (0.0512-0.0550) lost to Euclidean 0.0621-0.0636, with the weight derived as 1 by detached unit medians at 1-3% cost.",
+          "scoring_3": "only proposal that puts the behaviour term inside the same per-level argmin that emits each SID digit, with unit-scaled detached medians (weight derived = 1) and local Gromov-delta curvature at 1-3% cost; E6/E7 locate the bottleneck at assignment/prefix balance (resample 0.06363 with balanced depth survival vs l1_br collapse 0.04671) and E8 shows behavioural neighbours share coarse clusters (K=16 0.3106 vs K=256 0.0822)."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 3
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "GROMOV-LCA-MOBIUS-RQ",
+        "mean_rank": 4.3333,
+        "per_reviewer_position": {
+          "scoring_1": 6,
+          "scoring_2": 4,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "The Mobius/geodesic quantiser is the most thoroughly curved, but its 64-leaf depth-6 binary-ish behaviour tree is far coarser than the 3x256 SID it must organise, and E8 already caps level-1 K=64 at 0.1547; Gromov-product matching constrains only relative order and c=1 is the least data-derived curvature, so it is the least grounded in the observed prefix evidence.",
+          "scoring_2": "the curved Mobius quantiser and Gromov-product/LCA target are genuinely coupled and well specified, but curvature is fixed at c=1 rather than measured, the 6-level/64-leaf tree makes the target near-binary by its own risk 1, and E8 shows 64-way cluster sharing reaches only 0.1547, so the LCA target can only coarsely carry the top-1 successor mass E5 measures at 0.4375.",
+          "scoring_3": "a behaviour hierarchy matched by Gromov products inside a genuinely curved quantizer, which is the region E6/E7 identify as decisive and the coarseness E8 rewards; but a 64-leaf depth-6 target is near-binary and ball saturation/reconstruction damage are unrewarded risks in a one-run protocol."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 13
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "SID-GW-DELTA",
+        "mean_rank": 4.6667,
+        "per_reviewer_position": {
+          "scoring_1": 5,
+          "scoring_2": 5,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "A global pairwise distance stress is clean and cheap, but E6 shows the distance/geometry variants already lost to plain l1 variants (successor_geodesic_coarse 0.05500 vs l1_br_euclid 0.06207 and l1_only 0.06233) and the failure is prefix survival at depths 3-4, not global distance order; uniform-item median normalisation and the underived 1.0 weight add risk.",
+          "scoring_2": "kappa=-1/delta^2 applied to an unnormalised d_beh whose delta is clipped to [0.01*diam, diam] can make the ball near-Euclidean (its own risk 1), the median normalisation is dominated by the 128 uniform random items, and it fits a pairwise distance matrix on decoded code vectors rather than forcing prefix sharing, which E8/E6 identify as the actual lever.",
+          "scoring_3": "safe additive pairwise alignment with curvature measured from delta, but it matches distances rather than making prefixes predictive (its own stated risk); E6/E7 show resample's gain came from prefix balance and per-position NLL, and uniform random items dominate its median normalisation."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 14
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "LCB-RQ",
+        "mean_rank": 5.0,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 6,
+          "scoring_3": 5
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Moving the quantization target along a Lorentz geodesic to a co-consumption barycentre is a genuine coupled pathway and E9 supports the signal (positive cohort overlap 0.9291 vs negative 0.8871), but the undirected +/-5 window discards the directionality E5 measures (top-1 mass 0.4375 vs 0.0543 across entropy bins), K init = 1 is not derived from measured hyperbolicity, and collapse/no-op risks are the largest of the six.",
+          "scoring_2": "it is grounded in undirected window co-consumption whereas the measured support is successor concentration (E5 top-1 mass 0.4375), its a_i=m_i/(m_i+median m) sends high-mass items to approximately the neighbour Frechet mean and discards the text identity E7 shows T2/T3 NLL depends on, and K->0 plus the 5.45-mean-degree anchor-less tail in E10 make it partly a no-op.",
+          "scoring_3": "moving the quantisation target is direct, but a_i=m_i/(m_i+median m) drives high-co-consumption popular items almost onto the neighbour barycentre and shifts reconstruction away from text; that reproduces the l1_br collapse pattern in E6 (recall 0.04671, prefixes alive 1.0/1.0/1.0/0.068) at the items Stage-3 queries most."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 15
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "fab5ef5625b6579130f879b91f278d92c07310cf212518225dba13c8b0195f34",
+      "idea_id": "DELTA-PERI-CURV-RQ",
+      "proposal_sha256": "19bbef0ed452c33e4a0b8fc465e69c768a3ed599cdb945cf1f0975a1e3cc8b1a"
+    },
+    {
+      "evidence_sha256": "4bf56163b70e0975995bf8bf743420a13069c9381b94ffe3d97725f1000474f5",
+      "idea_id": "DELTA-TREE-STRESS-RQ",
+      "proposal_sha256": "515526d90de3fb7264969355bebfe6c8c2e064449dfb32877bcf7a1139a1a00b"
+    },
+    {
+      "evidence_sha256": "a417488dd3f577d2c96a997049ad57171937337b7f3dfe23c31a5a50df484cc2",
+      "idea_id": "GDELTA-SUCC-PULL-RQ",
+      "proposal_sha256": "f3f3bdb11bc9b72e5364d539893f66c985aa9c20a05457549758c9192d05542b"
+    },
+    {
+      "evidence_sha256": "40ac3b24c042bf3751008f31e9d0b6cf4f5ca58e188cd952ced59fc5d4d5316f",
+      "idea_id": "GROMOV-LCA-MOBIUS-RQ",
+      "proposal_sha256": "4c05e0bb800aec36100e8289efceeab2f955f3913c8f354e4e65b7afcfb5561e"
+    },
+    {
+      "evidence_sha256": "b2e460e970104c8cd9b56bf70dc990ef3f0252e8cd0a377f5065951d2e3dced3",
+      "idea_id": "SID-GW-DELTA",
+      "proposal_sha256": "0d131313ea36d2fafda980db5aee5b08b035b20f26d70f4cf828ab115142dbb3"
+    },
+    {
+      "evidence_sha256": "e06573d4519f3d922bac1557db792e91516410d2e36b49093e11b4b961d1d87e",
+      "idea_id": "LCB-RQ",
+      "proposal_sha256": "c4c53ec5f6d3260e68b1fd4f91434d4496ca102bd5f25c8777c56fa241bb44b7"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "GDELTA-SUCC-PULL-RQ",
+          "position": 1,
+          "reason": "Only proposal whose behaviour successor term and per-item Gromov-delta Poincare metric sit in the same per-level argmin that emits each SID digit, which is the lever E8 names (K=16 keeps behaviour neighbours together 0.3106 vs K=256 0.0822, and small K is \"what width-20 prefix survival depends on\"), with detached-median unit scaling so the coupling weight is derived and step cost is 1-3%."
+        },
+        {
+          "idea_id": "DELTA-TREE-STRESS-RQ",
+          "position": 2,
+          "reason": "Acts on the quantized code embedding at every residual depth against an MST ultrametric, matching E6's bottleneck (gold prefix alive 0.161/0.085 at depths 3/4 versus 1.000/0.829 at 1/2) and the coarse-level finding of E8, with a genuinely hyperbolic tree target, but alpha/lambda are measured-once heuristics and the one-near/one-far sampling weakens it versus position 1."
+        },
+        {
+          "idea_id": "DELTA-PERI-CURV-RQ",
+          "position": 3,
+          "reason": "Measured per-item Gromov-delta curvature is reused in distance, temperature, weight and commitment so the coupling is real, but the main lever is a latent-side contrastive and its own risk 4 concedes the probe reads committed code vectors in Euclidean space, while E11 (first-prefix 0.0907 vs null 0.067) locates the gap in the committed prefix; it also carries the largest compute (+35-50 min Stage-2)."
+        },
+        {
+          "idea_id": "LCB-RQ",
+          "position": 4,
+          "reason": "Moving the quantization target along a Lorentz geodesic to a co-consumption barycentre is a genuine coupled pathway and E9 supports the signal (positive cohort overlap 0.9291 vs negative 0.8871), but the undirected +/-5 window discards the directionality E5 measures (top-1 mass 0.4375 vs 0.0543 across entropy bins), K init = 1 is not derived from measured hyperbolicity, and collapse/no-op risks are the largest of the six."
+        },
+        {
+          "idea_id": "SID-GW-DELTA",
+          "position": 5,
+          "reason": "A global pairwise distance stress is clean and cheap, but E6 shows the distance/geometry variants already lost to plain l1 variants (successor_geodesic_coarse 0.05500 vs l1_br_euclid 0.06207 and l1_only 0.06233) and the failure is prefix survival at depths 3-4, not global distance order; uniform-item median normalisation and the underived 1.0 weight add risk."
+        },
+        {
+          "idea_id": "GROMOV-LCA-MOBIUS-RQ",
+          "position": 6,
+          "reason": "The Mobius/geodesic quantiser is the most thoroughly curved, but its 64-leaf depth-6 binary-ish behaviour tree is far coarser than the 3x256 SID it must organise, and E8 already caps level-1 K=64 at 0.1547; Gromov-product matching constrains only relative order and c=1 is the least data-derived curvature, so it is the least grounded in the observed prefix evidence."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "GDELTA-SUCC-PULL-RQ",
+          "position": 1,
+          "reason": "E8 measures the prefix-sharing headroom (0.3106 at K=16 down to 0.0822 at K=256) and E5 grounds the directed successor signal (top-1 mass 0.4375), while this is the only candidate that changes just the per-level argmin and keeps the baseline recon+commit losses, so it avoids the E6/E7 pattern where behaviour-tilted arms (0.0512-0.0550) lost to Euclidean 0.0621-0.0636, with the weight derived as 1 by detached unit medians at 1-3% cost."
+        },
+        {
+          "idea_id": "DELTA-TREE-STRESS-RQ",
+          "position": 2,
+          "reason": "E6 caps recall by gold-prefix survival of only 0.156-0.161 at depth 3 and 0.068-0.085 at depth 4, and this is the only proposal that puts the curved stress on the quantized code embedding at every prefix depth, at a few-% cost with alpha and lambda measured, though the MST path-max target distorts d_beh and c=1/delta^2 can saturate the ball."
+        },
+        {
+          "idea_id": "DELTA-PERI-CURV-RQ",
+          "position": 3,
+          "reason": "E5 supports per-item heterogeneity and the single-c_i pathway is the tightest coupling, but the contrastive acts mainly on the continuous latent (reaching SIDs only via the commitment term), per-pair sqrt(c_i c_j) curvature is not a metric by its own risk 3, and it carries the largest +35-50% Stage-2 cost with init-only lambda, the configuration most exposed to the E6/E7 fact that behaviour-tilted arms underperformed Euclidean."
+        },
+        {
+          "idea_id": "GROMOV-LCA-MOBIUS-RQ",
+          "position": 4,
+          "reason": "the curved Mobius quantiser and Gromov-product/LCA target are genuinely coupled and well specified, but curvature is fixed at c=1 rather than measured, the 6-level/64-leaf tree makes the target near-binary by its own risk 1, and E8 shows 64-way cluster sharing reaches only 0.1547, so the LCA target can only coarsely carry the top-1 successor mass E5 measures at 0.4375."
+        },
+        {
+          "idea_id": "SID-GW-DELTA",
+          "position": 5,
+          "reason": "kappa=-1/delta^2 applied to an unnormalised d_beh whose delta is clipped to [0.01*diam, diam] can make the ball near-Euclidean (its own risk 1), the median normalisation is dominated by the 128 uniform random items, and it fits a pairwise distance matrix on decoded code vectors rather than forcing prefix sharing, which E8/E6 identify as the actual lever."
+        },
+        {
+          "idea_id": "LCB-RQ",
+          "position": 6,
+          "reason": "it is grounded in undirected window co-consumption whereas the measured support is successor concentration (E5 top-1 mass 0.4375), its a_i=m_i/(m_i+median m) sends high-mass items to approximately the neighbour Frechet mean and discards the text identity E7 shows T2/T3 NLL depends on, and K->0 plus the 5.45-mean-degree anchor-less tail in E10 make it partly a no-op."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "GDELTA-SUCC-PULL-RQ",
+          "position": 1,
+          "reason": "only proposal that puts the behaviour term inside the same per-level argmin that emits each SID digit, with unit-scaled detached medians (weight derived = 1) and local Gromov-delta curvature at 1-3% cost; E6/E7 locate the bottleneck at assignment/prefix balance (resample 0.06363 with balanced depth survival vs l1_br collapse 0.04671) and E8 shows behavioural neighbours share coarse clusters (K=16 0.3106 vs K=256 0.0822)."
+        },
+        {
+          "idea_id": "DELTA-TREE-STRESS-RQ",
+          "position": 2,
+          "reason": "curved stress on the quantized code embedding against the behaviour-MST ultrametric at every prefix depth, weighted by residual energy so coarse levels respect the tree; E8 (small-K level-1 sharing 0.3106 vs 0.0822) and E11 (same first prefix 0.0907 vs null 0.067) support it, and a single measured global delta keeps the curvature a metric at low cost."
+        },
+        {
+          "idea_id": "GROMOV-LCA-MOBIUS-RQ",
+          "position": 3,
+          "reason": "a behaviour hierarchy matched by Gromov products inside a genuinely curved quantizer, which is the region E6/E7 identify as decisive and the coarseness E8 rewards; but a 64-leaf depth-6 target is near-binary and ball saturation/reconstruction damage are unrewarded risks in a one-run protocol."
+        },
+        {
+          "idea_id": "SID-GW-DELTA",
+          "position": 4,
+          "reason": "safe additive pairwise alignment with curvature measured from delta, but it matches distances rather than making prefixes predictive (its own stated risk); E6/E7 show resample's gain came from prefix balance and per-position NLL, and uniform random items dominate its median normalisation."
+        },
+        {
+          "idea_id": "LCB-RQ",
+          "position": 5,
+          "reason": "moving the quantisation target is direct, but a_i=m_i/(m_i+median m) drives high-co-consumption popular items almost onto the neighbour barycentre and shifts reconstruction away from text; that reproduces the l1_br collapse pattern in E6 (recall 0.04671, prefixes alive 1.0/1.0/1.0/0.068) at the items Stage-3 queries most."
+        },
+        {
+          "idea_id": "DELTA-PERI-CURV-RQ",
+          "position": 6,
+          "reason": "spends curvature on a latent-side batch contrastive plus curved commitment while E11 shows committed-code prefix sharing is near chance (0.0907 vs 0.067) and E6/E7 show the gain lives in assignment/balance; non-metric per-pair curvature, four simultaneous c_i uses and +25-40% step time add risk with no supporting evidence."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261031_163630_776",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "DELTA-PERI-CURV-RQ": {
+        "first_places": 0,
+        "mean_rank": 4.0,
+        "total_rank": 12
+      },
+      "DELTA-TREE-STRESS-RQ": {
+        "first_places": 0,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      },
+      "GDELTA-SUCC-PULL-RQ": {
+        "first_places": 3,
+        "mean_rank": 1.0,
+        "total_rank": 3
+      },
+      "GROMOV-LCA-MOBIUS-RQ": {
+        "first_places": 0,
+        "mean_rank": 4.3333,
+        "total_rank": 13
+      },
+      "LCB-RQ": {
+        "first_places": 0,
+        "mean_rank": 5.0,
+        "total_rank": 15
+      },
+      "SID-GW-DELTA": {
+        "first_places": 0,
+        "mean_rank": 4.6667,
+        "total_rank": 14
+      }
+    },
+    "backups": [
+      {
+        "first_places": 0,
+        "idea_id": "DELTA-TREE-STRESS-RQ",
+        "mean_rank": 2.0,
+        "status": "BACKUP",
+        "total_rank": 6
+      },
+      {
+        "first_places": 0,
+        "idea_id": "DELTA-PERI-CURV-RQ",
+        "mean_rank": 4.0,
+        "status": "BACKUP",
+        "total_rank": 12
+      },
+      {
+        "first_places": 0,
+        "idea_id": "GROMOV-LCA-MOBIUS-RQ",
+        "mean_rank": 4.3333,
+        "status": "BACKUP",
+        "total_rank": 13
+      },
+      {
+        "first_places": 0,
+        "idea_id": "SID-GW-DELTA",
+        "mean_rank": 4.6667,
+        "status": "BACKUP",
+        "total_rank": 14
+      },
+      {
+        "first_places": 0,
+        "idea_id": "LCB-RQ",
+        "mean_rank": 5.0,
+        "status": "BACKUP",
+        "total_rank": 15
+      }
+    ],
+    "disagreement": {
+      "DELTA-PERI-CURV-RQ": 3,
+      "DELTA-TREE-STRESS-RQ": 0,
+      "GDELTA-SUCC-PULL-RQ": 0,
+      "GROMOV-LCA-MOBIUS-RQ": 3,
+      "LCB-RQ": 2,
+      "SID-GW-DELTA": 1
+    },
+    "rejected": [
+      {
+        "idea_id": "DELTA-TREE-STRESS-RQ",
+        "mean_rank": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 6
+      },
+      {
+        "idea_id": "DELTA-PERI-CURV-RQ",
+        "mean_rank": 4.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 12
+      },
+      {
+        "idea_id": "GROMOV-LCA-MOBIUS-RQ",
+        "mean_rank": 4.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 13
+      },
+      {
+        "idea_id": "SID-GW-DELTA",
+        "mean_rank": 4.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 14
+      },
+      {
+        "idea_id": "LCB-RQ",
+        "mean_rank": 5.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 15
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 3,
+        "idea_id": "GDELTA-SUCC-PULL-RQ",
+        "mean_rank": 1.0,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 3
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+# source manifest of the candidate tree
+# path | lines | bytes
+# a file absent from this list does not exist; a file in this list may
+# still be outside your read scope, and that is not a defect.
+model/__init__.py | 7 lines | 236 bytes
+model/behaviour_radius.py | 127 lines | 5868 bytes
+model/frechet_poincare.py | 206 lines | 9359 bytes
+model/layers.py | 468 lines | 21818 bytes
+model/model.py | 185 lines | 8935 bytes
+model/poincare_contract.py | 197 lines | 7717 bytes
+model/utils.py | 381 lines | 13535 bytes
+prepare_behaviour.py | 159 lines | 6959 bytes
+tests/__init__.py | 7 lines | 290 bytes
+tests/probe_radial.py | 91 lines | 3545 bytes
+tests/test_codebook_step.py | 122 lines | 5817 bytes
+tests/test_ddp.py | 94 lines | 4029 bytes
+tests/test_design_contract.py | 164 lines | 7417 bytes
+tests/test_geometry.py | 115 lines | 4866 bytes
+tests/test_mechanism.py | 190 lines | 8639 bytes
+tests/test_paths.py | 93 lines | 3993 bytes
+tests/test_radial_assignment.py | 115 lines | 5167 bytes
+tests/test_radial_export.py | 68 lines | 2671 bytes
+tests/test_radial_wiring.py | 99 lines | 4207 bytes
+tests/test_radius_design.py | 94 lines | 4166 bytes
+tests/test_restore_consistency.py | 69 lines | 2678 bytes
+train_rqvae.py | 666 lines | 32039 bytes
