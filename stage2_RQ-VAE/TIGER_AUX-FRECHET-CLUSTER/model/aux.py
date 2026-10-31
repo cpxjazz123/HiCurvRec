@@ -48,8 +48,9 @@ def distance(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     difference = (a.unsqueeze(-2) - b.unsqueeze(-3)).pow(2).sum(-1)
     a_sq = a.pow(2).sum(-1).unsqueeze(-1)
     b_sq = b.pow(2).sum(-1).unsqueeze(-2)
-    argument = 1.0 + 2.0 * difference / (
+    argument = 1.0 + (2.0 * difference / (
         (1.0 - a_sq).clamp_min(BALL_EPS) * (1.0 - b_sq).clamp_min(BALL_EPS))
+    ).clamp_min(1e-3)
     return torch.acosh(argument.clamp_min(1.0 + BALL_EPS))
 
 

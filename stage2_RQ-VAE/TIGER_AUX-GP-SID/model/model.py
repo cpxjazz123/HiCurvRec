@@ -70,5 +70,13 @@ class RQVAE(nn.Module):
         extra = getattr(self, "last_aux", None)
         total = recon_loss + quant_loss
         if extra is not None:
-            total = total + AUX_WEIGHT * extra
+            # The auxiliary term is standardized to O(1), while the reconstruction
+            # term decays to ~2e-4: adding them at equal nominal weight lets the
+            # auxiliary objective own the codebooks and collapses the SID (measured:
+            # one level-2 prefix). The term is therefore scaled to the CURRENT
+            # reconstruction loss, detached, so it competes at the same magnitude at
+            # every step. The ratio is measured, not tuned; a zero term contributes
+            # nothing.
+            scale = recon_loss.detach() / extra.detach().abs().clamp_min(1e-8)
+            total = total + AUX_WEIGHT * scale * extra
         return total, recon_loss

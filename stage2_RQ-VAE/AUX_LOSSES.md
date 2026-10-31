@@ -16,8 +16,16 @@ Ball map with a batch scale (detached): `phi(x) = tanh(||x||/s) x/||x||`,
 unit ball, so a distance divided by `D` lives in `[0,1]`.
 
 Every term is standardized (zero mean, unit variance, detached statistics) over
-its pair set, so its magnitude is O(1) and `AUX_WEIGHT = 1.0` is the natural
-weight rather than a tuned one.
+its pair set, so its shape is scale-free. Its MAGNITUDE still has to compete with
+the reconstruction term, which decays to ~2e-4: an equal nominal weight lets the
+auxiliary objective own the codebooks and collapses the SID (measured on the first
+attempt: one distinct level-2 prefix, total loss 4.9e4 against recon 2e-4). The
+term is therefore rescaled at every step by
+
+    scale = recon_loss.detach() / |aux.detach()|
+
+so it enters the objective at the magnitude of the reconstruction loss itself.
+The ratio is measured, not tuned, and `AUX_WEIGHT` stays 1.0.
 
 ## 1. Gromov product / SID alignment (`AUX_MODE="gp"`)
 
