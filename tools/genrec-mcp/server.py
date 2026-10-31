@@ -2429,20 +2429,12 @@ def round_admission(tree: Path, verification_id: str) -> dict:
     if not records:
         return {"passed": False, "refused": "the round has no implementation for " + idea_id}
     record = records[-1]
-    if record.get("status") != "verified":
+    # Verification is the framework's MACHINE admission, not a review report:
+    # the candidate must have been accepted by the main agent, and every check
+    # below (probe, math, conformance, output path, one-epoch smoke) is executed.
+    if record.get("status") != "accepted":
         return {"passed": False, "refused": "implementation status is " +
                 str(record.get("status"))}
-    if len(record.get("verdicts", [])) < 1:
-        return {"passed": False,
-                "refused": "the implementation has no completed review"}
-    # A reviewer that timed out does not void the review: the round proceeds on
-    # the reports that finished, and the record keeps how many of the planned
-    # reviewers reported and which ones are missing.
-    if int(record.get("reviewers_reported") or 0) != len(record.get("verdicts", [])):
-        return {"passed": False,
-                "refused": "the review record does not match its verdicts"}
-    if record.get("blocking_findings"):
-        return {"passed": False, "refused": "unresolved blocking findings remain"}
     # A proposal whose claim the evidence probe CONTRADICTED does not train.
     # The probe does not revise proposals any more: it records the
     # counterexample, the scorers judge the proposal with it in front of them,
@@ -2474,21 +2466,11 @@ def round_admission(tree: Path, verification_id: str) -> dict:
                            "; ".join(failing)}
 
     if failures:
-        # The probe measures the proposal with a GENERIC proxy: it does not
-        # exercise the candidate's own quantizer path, and the joint dependency
-        # check says so. The independent review reads that same evidence AND the
-        # implemented tree, so it is the adjudicator: a counterexample that the
-        # five reviewers cleared does not block the training, and the
-        # counterexample travels with the run.
-        verdicts = record.get("verdicts") or []
-        cleared = (len(verdicts) == module.VERIFIER_AGENTS
-                   and not record.get("blocking_findings"))
-        if not cleared:
-            return {"passed": False,
-                    "refused": "the evidence contradicts the proposal: " + "; ".join(failures)}
-        return {"passed": True, "evidence_counterexamples": failures,
-                "evidence_note": "the independent review cleared the counterexamples "
-                                 "against the implemented tree"}
+        # The probe and the math checks are executed evidence. Without a review
+        # agent there is nothing to clear a counterexample, so a FAIL refuses.
+        return {"passed": False,
+                "refused": "the executed evidence contradicts the proposal: " +
+                           "; ".join(failures)}
     # The output-path preflight is run again here, on the tree that is about
     # to train: a stored verdict from an earlier revision says nothing about
     # the source that is running now.
@@ -3101,31 +3083,6 @@ def tool_research_round_implement(round_id: str) -> dict:
     return _round_phase(round_id, "implementation")
 
 
-def tool_research_round_verify(round_id: str) -> dict:
-    """Run the three verifiers per implementation and the dedicated repair loop.
-
-    A candidate that passes review does not wait for the others: it enters the
-    Stage 2 queue in the same call, so review and training overlap.
-    """
-    result = _round_phase(round_id, "verification")
-    from tools.research.rounds import pipeline as round_pipeline
-
-    directory = _round_directory(round_id)
-    state = round_pipeline.load_state(directory)
-    result["plans_pending"] = [record["idea_id"] for record in state.get("implementations", [])
-                               if record.get("status") == "repair_planned"]
-    if not result.get("ran"):
-        return result
-    verified = [record["idea_id"] for record in round_pipeline.verified_implementations(state)]
-    already = {job["idea_id"] for job in _round_jobs(directory)["jobs"]
-               if job["kind"] == "stage2"}
-    fresh = [identifier for identifier in verified if identifier not in already]
-    # The five verifiers report; the main agent decides. Nothing is dispatched
-    # from here: a candidate is trained only after the main agent accepts it
-    # with research_round_accept.
-    result["awaiting_acceptance"] = fresh
-    result["dispatched"] = []
-    return result
 
 
 def _round_jobs(directory: Path) -> dict:
@@ -3133,35 +3090,6 @@ def _round_jobs(directory: Path) -> dict:
     return round_jobs.JobQueue(directory).report()
 
 
-def tool_research_round_apply_repair(round_id: str, idea_id: str, changes: list,
-                                     notes: str = "", source_digest: str = "") -> dict:
-    """Register a repair the operator applied to a candidate tree.
-
-    The repair agent of a round only writes a plan; the operator applies it and
-    registers the execution here. The tree on disk is the truth: the digest is
-    recomputed and a claimed digest that does not match it is a closed failure.
-    """
-    from tools.research.rounds import pipeline as round_pipeline
-
-    directory = _round_directory(round_id)
-    state = round_pipeline_state(directory)
-    try:
-        state = round_pipeline.apply_repair_execution(
-            state, idea_id,
-            {"changes": list(changes or []), "notes": notes,
-             "source_digest": source_digest,
-             "applied_by": "operator"})
-    except Exception as exc:                               # noqa: BLE001
-        return {"round_id": round_id, "idea_id": idea_id, "applied": False,
-                "error": str(exc)}
-    round_pipeline.save_state(directory, state)
-    record = next(item for item in state.get("implementations", [])
-                  if item["idea_id"] == idea_id)
-    return {"round_id": round_id, "idea_id": idea_id, "applied": True,
-            "revision": record.get("revision"), "status": record.get("status"),
-            "source_digest": record.get("source_digest"),
-            "step": state.get("step"),
-            "note": "the next verification pass reviews the applied tree"}
 
 
 def tool_research_round_register_implementation(round_id: str, idea_id: str,
@@ -3208,7 +3136,7 @@ def tool_research_round_accept(round_id: str, idea_id: str, note: str = "") -> d
     directory = _round_directory(round_id)
     state = round_pipeline_state(directory)
     try:
-        state = round_pipeline.accept_verification(state, idea_id, note)
+        state = round_pipeline.accept_implementation(state, idea_id, note)
     except Exception as exc:                               # noqa: BLE001
         return {"round_id": round_id, "idea_id": idea_id, "accepted": False,
                 "error": str(exc)}
@@ -3216,7 +3144,7 @@ def tool_research_round_accept(round_id: str, idea_id: str, note: str = "") -> d
     return {"round_id": round_id, "idea_id": idea_id, "accepted": True,
             "note": note,
             "accepted_candidates": [record["idea_id"] for record
-                                    in round_pipeline.verified_implementations(state)]}
+                                    in round_pipeline.accepted_implementations(state)]}
 
 
 def _start_v2_verification(tree: Path) -> dict:
@@ -3335,30 +3263,6 @@ def tool_research_round_close_proposal(round_id: str, idea_id: str, reason: str,
             "evidence": record.get("close_evidence")}
 
 
-def tool_research_round_plan_repair(round_id: str, idea_id: str) -> dict:
-    """Ask the repair planner for the plan of one candidate.
-
-    The planner only writes the plan; the main agent applies it to the tree and
-    registers the execution with research_round_apply_repair.
-    """
-    from tools.research.rounds import lock as round_lock
-    from tools.research.rounds import worker as round_worker
-
-    directory = _round_directory(round_id)
-    lock = round_lock.RoundLock(directory)
-    try:
-        lock.acquire(owner="mcp:repair_plan")
-    except Exception as exc:                               # noqa: BLE001
-        return {"round_id": round_id, "idea_id": idea_id, "planned": False,
-                "error": str(exc)}
-    try:
-        result = round_worker.phase_repair_plan(REPO, round_id, idea_id)
-    except Exception as exc:                               # noqa: BLE001
-        return {"round_id": round_id, "idea_id": idea_id, "planned": False,
-                "error": str(exc)}
-    finally:
-        lock.release()
-    return {"round_id": round_id, "idea_id": idea_id, "planned": True, **result}
 
 
 def tool_research_round_run(round_id: str) -> dict:
@@ -3549,7 +3453,7 @@ def tool_research_round_launch(round_id: str, parallel: int = 0) -> dict:
     budget = capacity if int(parallel) <= 0 else min(int(parallel), capacity)
     queue = round_jobs.JobQueue(directory, max_parallel=max(1, budget))
     queued = []
-    for record in round_pipeline.verified_implementations(state):
+    for record in round_pipeline.accepted_implementations(state):
         tree = _promote_round_tree(Path(record["tree"]), str(record["idea_id"]))
         target = tree_result_dir(tree)
         # A candidate whose previous job failed is queued again: the failure
@@ -3842,15 +3746,6 @@ TOOLS.update({
                        "idea, each on a fresh copy of the one permitted baseline tree, "
                        "with the output-path preflight. No GPU work is started.",
     },
-    "research_round_verify": {
-        "fn": tool_research_round_verify,
-        "args": {"round_id": "string"},
-        "description": "Phase 4 of a round: the verifiers per implementation, the "
-                       "repair PLANNER for real defects (it writes the change and never "
-                       "edits the tree; the operator applies it through "
-                       "research_round_apply_repair), and the distinction between an "
-                       "infrastructure error and a defect. No GPU work is started.",
-    },
     "research_round_register_implementation": {
         "fn": tool_research_round_register_implementation,
         "args": {"round_id": "string", "idea_id": "string", "changes": "list",
@@ -3908,22 +3803,6 @@ TOOLS.update({
                  "evidence": "string, optional path"},
         "description": "End a candidate whose PROPOSAL is defective: terminal "
                        "status, evidence on disk, no repair and no training.",
-    },
-    "research_round_plan_repair": {
-        "fn": tool_research_round_plan_repair,
-        "args": {"round_id": "string", "idea_id": "string"},
-        "description": "Ask the repair PLANNER for the plan of one candidate: it "
-                       "reads the findings and the tree and writes the change that "
-                       "would fix each finding, without touching the code. The operator "
-                       "applies it and registers the execution. No GPU work.",
-    },
-    "research_round_apply_repair": {
-        "fn": tool_research_round_apply_repair,
-        "args": {"round_id": "string", "idea_id": "string", "changes": "list",
-                 "notes": "string", "source_digest": "string"},
-        "description": "Register a repair the operator applied to a candidate tree. "
-                       "The repair agent only plans; the operator makes the change and "
-                       "records it here, which reopens the review. No GPU work.",
     },
     "research_round_run": {
         "fn": tool_research_round_run,

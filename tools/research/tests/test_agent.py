@@ -30,30 +30,6 @@ def plain_process():
 
 
 class AgentTests(unittest.TestCase):
-    def test_the_boundary_is_written_in_the_schema_opencode_reads(self):
-        """opencode v2 reads a ``permission`` object, not a rules array.
-
-        The earlier array shape was silently ignored, so every agent kept a full
-        shell; the test now pins the shape the binary actually honours.
-        """
-        with tempfile.TemporaryDirectory() as work:
-            workspace = Path(work) / "agents" / "task"
-            verifier = isolation_permissions(workspace, "verify")
-            self.assertEqual(verifier["bash"], "deny")
-            self.assertEqual(verifier["webfetch"], "deny")
-            self.assertEqual(verifier["external_directory"], "deny")
-            # The verifier and the repair planner may not write anything: they
-            # review and plan, and the operator applies.
-            for role in ("verify", "repair"):
-                reader = isolation_permissions(workspace, role)
-                self.assertEqual(reader["edit"], "deny")
-                self.assertEqual(reader["write"], "deny")
-                self.assertEqual(reader["bash"], "deny")
-            worker = isolation_permissions(workspace, "implementation")
-            self.assertEqual(worker["bash"], "allow")
-            self.assertEqual(worker["edit"], "allow")
-            self.assertEqual(worker["webfetch"], "deny")
-            self.assertEqual(worker["external_directory"], "deny")
 
     @unittest.skipUnless(shutil.which("bwrap"), "bubblewrap is not installed")
     def test_pwd_is_the_workspace_so_the_project_config_applies(self):
@@ -125,30 +101,6 @@ class AgentTests(unittest.TestCase):
             self.assertIn("DENIED", completed.stdout)
             self.assertNotIn("SECRET", completed.stdout)
 
-    def test_a_read_only_role_answers_through_the_session_stream(self):
-        """A role that may not write still delivers its answer."""
-        with tempfile.TemporaryDirectory() as work:
-            binary = Path(work) / "fake-opencode"
-            binary.write_text(
-                "#!/usr/bin/env python3\n"
-                "import json, sys\n"
-                "from pathlib import Path\n"
-                "assert sys.argv[1:4] == ['run','--standalone','--format']\n"
-                "print(json.dumps({'type': 'text', 'part': "
-                "{'text': 'VERDICT: PASS'}}))\n",
-                encoding="utf-8",
-            )
-            binary.chmod(0o700)
-            with plain_process():
-                receipt = run_agent("test_readonly", "answer", "verification.txt",
-                                    Path(work) / "out", binary=str(binary), timeout=10,
-                                    role="verify", read_paths=[],
-                                    allowed_roots=[Path(work)])
-            evidence = read_json(receipt)
-            self.assertTrue(evidence["verified"])
-            answer = receipt.parent / "verification.txt"
-            self.assertTrue(answer.is_file())
-            self.assertIn("VERDICT: PASS", answer.read_text(encoding="utf-8"))
 
     def test_fake_opencode_is_real_subprocess_not_a_marker(self):
         with tempfile.TemporaryDirectory() as work:

@@ -198,69 +198,6 @@ VERIFY_KEYS = ("VERDICT", "CHECK", "CHECK VERDICT", "EXERCISED PATH",
                "FINDING REPRODUCTION", "FINDING CORRECTION")
 
 
-def parse_verification(text: str) -> dict:
-    """Read one verifier's report.
-
-    ``CHECK:`` opens a check, the finding lines belong to the check that is
-    open, and ``VERDICT:`` at the top is the reviewer's overall verdict.
-    """
-    fields = parse_fields(text, VERIFY_KEYS)
-    verdict = _first(fields, "VERDICT").strip().upper()
-    checks: list[dict] = []
-    current: dict | None = None
-    finding: dict | None = None
-    for name, value in fields:
-        if name == "VERDICT":
-            continue
-        if name == "EXERCISED PATH":
-            if current is None:
-                continue
-            parts = [part.strip() for part in value.split("|")]
-            current["exercised_path"] = parts[0]
-            current["exercised_how"] = parts[1] if len(parts) > 1 else ""
-            continue
-        if name == "CHECK":
-            if current is not None:
-                checks.append(current)
-            current = {"name": value.strip(), "verdict": "", "findings": [],
-                       "exercised_path": "", "exercised_how": ""}
-            finding = None
-            continue
-        if current is None:
-            continue
-        if name == "CHECK VERDICT":
-            current["verdict"] = value.strip().upper()
-            continue
-        if name == "FINDING SEVERITY":
-            # Every severity line opens a finding: a check may report a blocking
-            # one and a minor one, and folding the second into the first would
-            # keep the minor severity and silently drop the blocker.
-            finding = {"severity": value.strip()}
-            current["findings"].append(finding)
-            continue
-        if finding is None:
-            finding = {}
-            current["findings"].append(finding)
-        if name == "FINDING LOCATION":
-            finding["location"] = value.strip()
-        elif name == "FINDING DETAIL":
-            finding["detail"] = value.strip()
-        elif name == "FINDING REPRODUCTION":
-            finding["reproduction"] = value.strip()
-        elif name == "FINDING CORRECTION":
-            finding["correction"] = value.strip()
-    if current is not None:
-        checks.append(current)
-    if verdict not in ("PASS", "NEEDS_FIX"):
-        raise PlainTextError("the answer has no PASS or NEEDS_FIX verdict")
-    for check in checks:
-        for entry in check["findings"]:
-            entry.setdefault("severity", "blocking")
-            entry.setdefault("location", "")
-            entry.setdefault("detail", "")
-            entry.setdefault("reproduction", "")
-            entry.setdefault("correction", "")
-    return {"verdict": verdict, "checks": checks}
 
 
 IMPLEMENT_KEYS = ("TREE", "CHANGED FILE", "DEVIATION", "ASSUMPTION",
@@ -291,35 +228,6 @@ def parse_implementation(text: str) -> dict:
 REPAIR_PLAN_KEYS = ("PLAN", "REMAINING ISSUE", "NOTES")
 
 
-def parse_repair_plan(text: str) -> dict:
-    """Read a repair agent's PLAN.
-
-    The planner does not touch the code, so the answer carries the change and
-    the check that proves it, not a smoke result: the operator applies the plan
-    and then runs the check.
-
-    A plan without a single PLAN line is refused rather than accepted as an
-    empty plan: an empty plan would send the candidate back to the verifiers
-    unchanged and burn another round on the same finding.
-    """
-    fields = parse_fields(text, REPAIR_PLAN_KEYS)
-    plans = []
-    for value in _values(fields, "PLAN"):
-        parts = [part.strip() for part in value.split("|")]
-        while len(parts) < 4:
-            parts.append("")
-        plans.append({"finding": parts[0], "location": parts[1],
-                      "change": parts[2], "check": parts[3]})
-    if not plans:
-        raise PlainTextError(
-            "the repair planner wrote no PLAN line: the answer must plan one change "
-            "per finding as 'PLAN: <finding> | <file:line> | <change> | <check>'")
-    return {
-        "plans": plans,
-        "remaining_issues": [value.strip() for value in _values(fields, "REMAINING ISSUE")
-                             if value.strip()],
-        "notes": _first(fields, "NOTES"),
-    }
 
 
 def render_idea(idea: dict) -> str:
@@ -342,18 +250,6 @@ def render_ideas(ideas: list) -> str:
     return "\n\n".join(render_idea(idea) for idea in ideas)
 
 
-def render_findings(findings: list) -> str:
-    """Show the blocking findings to a repair engineer."""
-    blocks = []
-    for finding in findings:
-        blocks.append("\n".join([
-            "FINDING SEVERITY: " + str(finding.get("severity", "")),
-            "FINDING LOCATION: " + str(finding.get("location", "")),
-            "FINDING DETAIL: " + str(finding.get("detail", "")),
-            "FINDING REPRODUCTION: " + str(finding.get("reproduction", "")),
-            "FINDING CORRECTION: " + str(finding.get("correction", "")),
-        ]))
-    return "\n\n".join(blocks)
 
 
 PAIRWISE_KEYS = ("WINNER", "FIRST LISTED", "ARGUMENT", "FAILURE RISK")

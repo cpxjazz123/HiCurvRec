@@ -102,9 +102,10 @@ bubblewrap mount namespace. Four rules hold that line:
    workspace because opencode resolves its project from `PWD`.
 4. **A changed boundary invalidates old evidence.** Every receipt carries the
    boundary version and its fingerprint. A cached answer is reused only when
-   its fingerprint matches the boundary the task would run under now, and a
-   candidate whose review was produced under another boundary cannot be
-   accepted: it has to be reviewed again.
+   its fingerprint matches the boundary the task would run under now, so an
+   answer is never carried across a boundary change. Candidate verification is
+   not an agent role: it is the framework's machine admission in
+   `stage2/checks.py`, executed at launch.
 
 `tools/research/tests/test_agent_boundary.py` is the acceptance suite: the
 allowed file is readable, and another round, another agent's answer, a parent

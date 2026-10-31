@@ -18,7 +18,7 @@ from . import policy, progress_server
 
 #: The roles that may not write anything. Their answer arrives through the
 #: session stream instead of a file they wrote.
-READ_ONLY_ROLES = ("verify", "repair", "ideate", "score")
+READ_ONLY_ROLES = ("ideate", "score", "probe")
 
 #: The only filesystem boundary that is a guarantee rather than a request: a
 #: user mount namespace in which the paths outside the allowlist do not exist.

@@ -256,53 +256,8 @@ class StaleEvidenceTests(unittest.TestCase):
             {"idea_id": "a"}, {"changed_files": ["model.py"]}, tree)]
         return state
 
-    def test_a_review_under_another_boundary_cannot_be_accepted(self):
-        from tools.research.rounds import pipeline as pipeline_module
-        with tempfile.TemporaryDirectory() as work:
-            state = self._state(Path(work))
-            reports = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": [],
-                        "boundary_version": "agent-boundary/older",
-                        "boundary_sha256": "old"} for index in range(1, 6)]
-            state = pipeline_module.apply_verification(state, "a", reports)
-            with self.assertRaises(pipeline_module.RoundError) as caught:
-                pipeline_module.accept_verification(state, "a", "looks fine")
-            self.assertIn("boundary", str(caught.exception))
 
-    def test_the_verifiers_must_have_run_under_one_boundary(self):
-        from tools.research.rounds import pipeline as pipeline_module
-        with tempfile.TemporaryDirectory() as work:
-            state = self._state(Path(work))
-            reports = [{"verifier": "v" + str(index), "verdict": "PASS", "checks": [],
-                        "boundary_version": policy.BOUNDARY_VERSION,
-                        "boundary_sha256": "b"} for index in range(1, 5)]
-            reports.append({"verifier": "v5", "verdict": "PASS", "checks": [],
-                            "boundary_version": "agent-boundary/older",
-                            "boundary_sha256": "b"})
-            with self.assertRaises(pipeline_module.RoundError) as caught:
-                pipeline_module.apply_verification(state, "a", reports)
-            self.assertIn("boundary", str(caught.exception))
 
-    def test_a_cached_answer_from_another_boundary_is_not_reused(self):
-        from tools.research.rounds import plaintext, worker
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            workspace = root / "agents" / "task"
-            workspace.mkdir(parents=True)
-            (workspace / "verification.txt").write_text("VERDICT: PASS\n", encoding="utf-8")
-            (workspace / "execution.json").write_text(
-                json.dumps({"verified": True, "boundary_sha256": "old"}), encoding="utf-8")
-            calls = []
-
-            def fake_run(*args, **kwargs):
-                calls.append(kwargs)
-                raise AssertionError("the cached answer was reused")
-
-            with mock.patch.object(worker, "run_agent", side_effect=fake_run):
-                with self.assertRaises(AssertionError):
-                    worker._run_agent(root, "task", "prompt", "verification.txt",
-                                      plaintext.parse_verification, role="verify")
-            # The stale answer was moved aside, and the agent runs again.
-            self.assertTrue((workspace / "unverified" / "verification.txt.unverified").is_file())
 
 
 if __name__ == "__main__":

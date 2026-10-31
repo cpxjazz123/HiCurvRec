@@ -1,10 +1,11 @@
 """The round worker: the agent half of an Issue #120 round.
 
-It runs the five ideation agents, the three scoring agents, and then, for every
-selected idea, one implementation agent followed by three verification agents
-and, when they reject, a dedicated repair agent. It never trains anything: the
-Stage 2 and Stage 3 jobs are prepared here and executed by the MCP, which owns
-the GPU boundary.
+It runs the five ideation agents, the probe and the three scoring agents. There
+is no implementation agent and no review agent: the main agent writes each
+selected mechanism and registers it, and verification is the framework's MACHINE
+admission (``tools/research/stage2/checks.py``) that runs at launch. The worker
+never trains anything: the Stage 2 and Stage 3 jobs are executed by the MCP,
+which owns the GPU boundary.
 """
 from __future__ import annotations
 
@@ -39,8 +40,6 @@ from . import pipeline as pipeline_module
 IDEA_MIN = 1
 IDEA_MAX = 1
 SCORERS = 3
-#: How many independent verifiers read one implementation revision.
-VERIFIERS = pipeline_module.VERIFIER_AGENTS
 
 
 def _workspace(root: Path, task_id: str) -> Path:
@@ -909,7 +908,6 @@ def run_implementation(root: Path, idea: dict, tree: Path) -> dict:
     return report
 
 
-VERIFIER_ROLES = agent_contracts.VERIFIER_ROLES
 
 #: The cap on the diff a reviewer is shown. A revision that rewrites half the
 #: tree is reviewed from the whole file list anyway; the patch names what moved.
@@ -931,203 +929,22 @@ def _source_files(root: Path) -> list:
     return files
 
 
-def snapshot_tree(root: Path, idea_id: str, revision: int, tree: Path) -> str:
-    """Keep the source of one reviewed revision, so the next one has a baseline.
-
-    The snapshot is what the NEXT review diffs against: a reviewer of revision r
-    sees exactly what changed since revision r-1 was reviewed, not a diff against
-    the original baseline that grows with every fix.
-    """
-    root, tree = Path(root), Path(tree)
-    target = root / "snapshots" / (idea_id + "_r" + str(int(revision)))
-    if target.exists():
-        shutil.rmtree(target)
-    for relative in _source_files(tree):
-        destination = target / relative
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(tree / relative, destination)
-    return str(target)
 
 
-def tree_diff(root: Path, idea_id: str, previous_revision: int, tree: Path) -> str:
-    """The unified diff between the last reviewed snapshot and the tree now."""
-    import difflib
-
-    root, tree = Path(root), Path(tree)
-    snapshot = root / "snapshots" / (idea_id + "_r" + str(int(previous_revision)))
-    if not snapshot.is_dir():
-        return ""
-    chunks = []
-    for relative in _source_files(tree):
-        old_path = snapshot / relative
-        new_path = tree / relative
-        old = old_path.read_text(encoding="utf-8", errors="replace").splitlines(True) \
-            if old_path.is_file() else []
-        new = new_path.read_text(encoding="utf-8", errors="replace").splitlines(True)
-        chunks.extend(difflib.unified_diff(old, new, fromfile="a/" + str(relative),
-                                           tofile="b/" + str(relative), n=3))
-    removed = []
-    for relative in _source_files(snapshot):
-        if not (tree / relative).is_file():
-            removed.extend(difflib.unified_diff(
-                (snapshot / relative).read_text(encoding="utf-8",
-                                                errors="replace").splitlines(True),
-                [], fromfile="a/" + str(relative), tofile="/dev/null", n=3))
-    text = "".join(chunks + removed)
-    if len(text) > DIFF_LIMIT:
-        text = text[:DIFF_LIMIT] + "\n... truncated: the patch is longer than " + \
-            str(DIFF_LIMIT) + " characters, read the files for the rest\n"
-    return text
 
 
-def full_change_list(root: Path, idea_id: str, previous_revision: int, tree: Path) -> list:
-    """Every path that was added, modified or deleted since the last snapshot."""
-    root, tree = Path(root), Path(tree)
-    snapshot = root / "snapshots" / (idea_id + "_r" + str(int(previous_revision)))
-    if not snapshot.is_dir():
-        return []
-    changed = []
-    for relative in _source_files(tree):
-        old_path = snapshot / relative
-        if not old_path.is_file():
-            changed.append(str(relative))
-            continue
-        if old_path.read_bytes() != (tree / relative).read_bytes():
-            changed.append(str(relative))
-    for relative in _source_files(snapshot):
-        if not (tree / relative).is_file():
-            changed.append(str(relative))          # a deletion changes the area too
-    return changed
 
 
-def changed_files(patch: str) -> list:
-    """The files a unified diff touches, from its headers."""
-    import re
-    seen = []
-    # unified_diff writes "--- a/path" / "+++ b/path" pairs; a git-style
-    # "diff --git a/path b/path" header is accepted too, so the parser does not
-    # depend on which tool produced the patch.
-    for match in re.finditer(r"^(?:diff --git a/(\S+) b/\S+|\+\+\+ b/(\S+))$",
-                             patch or "", re.M):
-        path = match.group(1) or match.group(2)
-        if path and path != "/dev/null" and path not in seen:
-            seen.append(path)
-    return seen
 
 
-def affected_roles(patch: str, findings=None, reported=None, files=None,
-                   root: Path = None) -> list:
-    """The roles whose area the patch touches, plus the ones that complained.
-
-    A role that raised a finding keeps its seat until the finding is resolved:
-    the fix is exactly what it has to check. When nothing can be attributed, all
-    roles are dispatched, because a review with no reviewer is not a review.
-
-    ``files`` is the complete changed-file list when the caller has it: the role
-    selection must not depend on the TRUNCATED patch that goes into the prompt,
-    or a change past the cutoff is silently left unreviewed.
-    """
-    files = list(files) if files is not None else changed_files(patch)
-    roles = []
-    if files:
-        for role in VERIFIER_ROLES:
-            reads = [str(item) for item in role.get("reads") or ()]
-            # "." means "may list the tree", not "owns every file": a role whose
-            # scope is the whole tree would otherwise be dispatched for every
-            # change and the targeting would be pointless.
-            if any(changed == read or changed.startswith(read.rstrip("/") + "/")
-                   for changed in files for read in reads if read != "."):
-                roles.append(role["id"])
-    for finding in findings or []:
-        # The report the reviewer wrote identifies its role; the task number alone
-        # indexes that pass's dispatch list and can name the wrong reviewer.
-        role_id = finding.get("role") or pipeline_module._finding_role(
-            finding, root)
-        if role_id and role_id not in roles:
-            roles.append(role_id)
-    if not roles:
-        roles = [role["id"] for role in VERIFIER_ROLES]
-    ordered = [role["id"] for role in VERIFIER_ROLES if role["id"] in roles]
-    return ordered or [role["id"] for role in VERIFIER_ROLES]
 
 
-def write_findings_file(root: Path, idea_id: str, revision: int, findings) -> str:
-    """The full previous findings, so the prompt never has to truncate them."""
-    root = Path(root)
-    target = root / "findings" / (idea_id + "_r" + str(int(revision)) + ".json")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"idea_id": idea_id, "reviewed_revision": int(revision),
-               "findings": list(findings or [])}
-    target.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
-    return str(target)
 
 
-def write_manifest(root: Path, idea_id: str, revision: int, tree: Path) -> str:
-    """The list of source files a reviewer must know exists.
-
-    A read scope hides files on purpose, but a reviewer that cannot see a file must
-    not conclude it is absent: the manifest names every source file and its size,
-    so "there is no model/model.py" is a statement about the tree rather than about
-    the allowlist. It is written for every revision and given to every reviewer.
-    """
-    root, tree = Path(root), Path(tree)
-    target = root / "manifests" / (idea_id + "_r" + str(int(revision)) + ".txt")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    lines = ["# source manifest of the candidate tree",
-             "# path | lines | bytes",
-             "# a file absent from this list does not exist; a file in this list may",
-             "# still be outside your read scope, and that is not a defect."]
-    for relative in _source_files(tree):
-        path = tree / relative
-        text = path.read_text(encoding="utf-8", errors="replace")
-        lines.append("%s | %d lines | %d bytes" % (relative, text.count("\n") + 1,
-                                                   path.stat().st_size))
-    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return str(target)
 
 
-def role_read_paths(tree: Path, role: dict) -> list:
-    """The paths one role may read: its declared scope, under both of its names.
-
-    The framework hands the agent a ``/home/...`` path while ``Path.resolve()``
-    answers ``/fs04/...`` on this host, and a permission entry written with one
-    name does not match a read made with the other. Both forms are emitted, so the
-    allowlist matches whichever alias the agent uses.
-    """
-    tree = Path(tree)
-    paths = []
-    for relative in role.get("reads") or ():
-        candidate = tree / relative
-        if not candidate.exists():
-            continue
-        for form in (candidate, candidate.resolve()):
-            text = str(form)
-            if text not in paths:
-                paths.append(text)
-    # The tree's ROOT is deliberately NOT in the scope: a directory in the
-    # allowlist becomes a "/**" pattern and would hand the agent every file of the
-    # candidate. The manifest is the listing: it names every source file, so the
-    # reviewer knows what exists without the tree being open to it.
-    return paths
 
 
-def read_gaps(paths) -> list:
-    """The allowlist entries this process cannot actually open.
-
-    A path that is mounted but unreadable turns a review into an inference from the
-    prompt; the gap is recorded so the report says what was not read.
-    """
-    gaps = []
-    for path in paths:
-        entry = Path(path)
-        try:
-            if entry.is_dir():
-                next(iter(entry.iterdir()), None)
-            else:
-                entry.open("rb").close()
-        except OSError as exc:
-            gaps.append({"path": str(entry), "error": type(exc).__name__})
-    return gaps
 
 
 
@@ -1149,245 +966,20 @@ def objective_summary(objective: str) -> str:
     return str(objective)[:240]
 
 
-def role_of_task(task_id: str) -> str:
-    """The role a task belongs to, from its number in the full role list."""
-    for index in range(1, 32):
-        if str(task_id).endswith("_" + str(index)):
-            if index <= len(VERIFIER_ROLES):
-                return VERIFIER_ROLES[index - 1]["id"]
-    return ""
 
 
-def _format_role_checks(role: dict) -> str:
-    """The CHECK blocks one reviewer must report, as prompt lines."""
-    lines = []
-    for index, (name, guidance) in enumerate(role.get("checks") or (), 1):
-        lines.append("  %d) CHECK: %s -- %s" % (index, name, guidance))
-    return "\n".join(lines)
 
 
-def _format_findings(findings) -> str:
-    """The previous review's blocking findings, with where each one was."""
-    entries = list(findings or [])
-    if not entries:
-        return "  none: this is the first review of this revision"
-    lines = []
-    for finding in entries[:12]:
-        lines.append("  - [%s] %s: %s" % (
-            str(finding.get("severity") or "blocking"),
-            str(finding.get("location") or "?"),
-            str(finding.get("detail") or "")[:400]))
-    if len(entries) > 12:
-        lines.append("  ... and %d more, see the round state" % (len(entries) - 12))
-    return "\n".join(lines)
 
 
-def _format_change_brief(record: dict) -> str:
-    """What the main agent changed, in its own words, plus its own evidence."""
-    parts = []
-    changed = list(record.get("changed_files") or [])
-    parts.append("  files: " + (", ".join(changed) if changed else "not stated"))
-    for key, label in (("changes", "changes"), ("notes", "mechanism"),
-                       ("smoke", "the author's own smoke"), ("deviations", "deviations"),
-                       ("assumptions", "assumptions")):
-        value = record.get(key)
-        if not value:
-            continue
-        if isinstance(value, (list, tuple)):
-            value = "; ".join(str(item) for item in value)
-        parts.append("  %s: %s" % (label, str(value)[:1200]))
-    return "\n".join(parts)
 
 
-def run_verification(root: Path, idea: dict, tree: Path, revision: int = 0,
-                     record: dict = None) -> list:
-    """Five independent verifiers of one implementation revision.
-
-    The five are not five copies of the same review: each has a fixed primary
-    area (VERIFIER_ROLES) with its own must-cover items, and all five receive the
-    same mechanism brief and the previous review's findings, so a repair is
-    checked against what it claimed to fix instead of being re-discovered from
-    scratch.
-    """
-    record = record or {}
-    previous_revision = max(0, int(revision) - 1)
-    patch = tree_diff(root, str(idea["idea_id"]), previous_revision, tree) \
-        if int(revision) > 0 else ""
-    moved = full_change_list(root, str(idea["idea_id"]), previous_revision, tree)
-    findings = list(record.get("blocking_findings") or [])
-    findings_path = write_findings_file(root, str(idea["idea_id"]), int(revision), findings)
-    manifest = write_manifest(root, str(idea["idea_id"]), int(revision), tree)
-    # The tree this review reads becomes the baseline of the NEXT review's diff:
-    # without this the second revision would be diffed against nothing.
-    snapshot_tree(root, str(idea["idea_id"]), int(revision), tree)
-    wanted = affected_roles(patch, findings, files=moved, root=root)
-    roles = [role for role in VERIFIER_ROLES if role["id"] in wanted]
-    change_brief = _format_change_brief(record)
-    previous_findings = _format_findings(findings)
-    if not patch:
-        change_brief = ("  the tree was renamed or first submitted: there is no previous "
-                        "reviewed revision to diff against\n" + change_brief)
-    prompts = {}
-    reads = {}
-    gaps = {}
-    role_index = {role["id"]: position for position, role in enumerate(VERIFIER_ROLES, 1)}
-    for index, role in enumerate(roles, 1):
-        prompts[index] = agent_contracts.VERIFY_PROMPT.format(
-            role_index=index, role_total=len(roles), role_name=role["name"],
-            role_must="\n".join("  - " + item for item in role["must"]),
-            role_scope=role["scope"], role_checks=_format_role_checks(role),
-            role_start="; ".join(role.get("start_here") or ()),
-            idea=plaintext.render_idea(idea), tree=str(tree),
-            objective_summary=objective_summary(agent_contracts.RESEARCH_OBJECTIVE),
-            scope_file=str(scope_file(root)),
-            change_brief=change_brief,
-            change_diff=(patch or "  none: this is the first review of this candidate"),
-            findings_file=findings_path,
-            manifest_file=manifest,
-            previous_findings=previous_findings,
-            objective=agent_contracts.RESEARCH_OBJECTIVE,
-            scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
-            agent_contracts.EXPERIMENT_POLICY)
-        reads[index] = role_read_paths(tree, role) + [findings_path, manifest,
-                                                     str(scope_file(root))]
-        gaps[index] = read_gaps(reads[index])
-
-    def verify(index):
-        # The revision is part of the workspace name: a fresh review after a
-        # repair must be a fresh agent, never a replay of the previous answer.
-        # The number is the role's position in the FULL role list, not in the
-        # filtered dispatch: a stable id is what lets a later review attribute an
-        # old finding to the reviewer that raised it.
-        task_id = ("verify_" + idea["idea_id"] + "_r" + str(revision) + "_" +
-                   str(role_index[roles[index - 1]["id"]]))
-        prompt = prompts[index]
-        report = _run_agent(root, task_id, prompt, "verification.txt",
-                            plaintext.parse_verification,
-                            role="verify", read_paths=reads[index],
-                            allowed_roots=_round_roots(root),
-                            candidate_tree=tree,
-                            source_digest=pipeline_module._source_digest(Path(tree)))
-        report.setdefault("verifier", task_id)
-        report["role"] = roles[index - 1]["id"]
-        report["coverage_gaps"] = gaps.get(index) or []
-        # What the agent actually read comes from the receipt, so the report says
-        # whether it was a source review at all.
-        receipt = workspace / "execution.json"
-        if receipt.is_file():
-            try:
-                record = json.loads(receipt.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                record = {}
-            report["reads"] = record.get("reads") or {}
-            refused_files = [entry for entry in
-                             (record.get("reads") or {}).get("reads_denied") or []
-                             if entry.get("kind") != "directory"]
-            report["source_review"] = bool(record.get("source_review", True)) and not refused_files
-        # What the agent could actually open: a report whose reads were refused is
-        # an inference from the prompt, and it is marked as such instead of
-        # counting as a source review.
-        denied = list((report.get("reads") or {}).get("reads_denied") or [])
-        if denied:
-            report["coverage_gaps"] = list(report["coverage_gaps"]) + [
-                {"kind": "read_denied", "detail": "%d refused reads, first: %s" % (
-                    len(denied), str(denied[0].get("target"))[:120])}]
-            report["source_review"] = False
-        return report
-
-    try:
-        reports = _run_agents_concurrently(
-            [tuple([index]) for index in range(1, len(roles) + 1)], verify)
-    except AgentPhaseIncomplete as exc:
-        # A reviewer that ran out of its budget does not void the review: the
-        # verdicts that exist are kept, the missing ones are recorded, and the
-        # candidate is judged on the opinions the round actually has. Only a
-        # round where no reviewer finished waits.
-        reports = [report for report in exc.results
-                   if not (report.get("partial") or report.get("timed_out"))]
-        if not reports:
-            raise RoundIncomplete(str(exc), results=exc.results, failures=exc.failures,
-                                  classes=exc.classes) from exc
-        missing = sorted(str(entry.get("task", "")) for entry in exc.failures)
-        for report in reports:
-            report["missing_reviewers"] = missing
-        return reports
-    # A reviewer that ran out of its budget delivered records, not a verdict: it
-    # is not a verdict and it does not block the ones that are.
-    finished = [report for report in reports
-                if not (report.get("partial") or report.get("timed_out"))]
-    unfinished = [report.get("verifier", "?") for report in reports
-                  if report.get("partial") or report.get("timed_out")]
-    if unfinished:
-        missing = sorted(str(name) for name in unfinished)
-        for report in finished:
-            report["missing_reviewers"] = missing
-    return finished
 
 
-def run_repair_plan(root: Path, idea: dict, tree: Path, findings: list,
-                    revision: int = 0) -> dict:
-    """The repair PLANNER for one implementation revision.
-
-    The planner may read the tree but must not change it. The rule is enforced,
-    not merely requested: the tree's sources are copied aside before the agent
-    runs and the digest is compared afterwards, so an agent that edits anyway
-    has its edit rolled back and its plan rejected.
-    """
-    prompt = (agent_contracts.REPAIR_PLAN_PROMPT.format(
-        findings=plaintext.render_findings(findings), tree=str(tree),
-        objective=agent_contracts.RESEARCH_OBJECTIVE,
-        scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
-        agent_contracts.EXPERIMENT_POLICY))
-    backup = _tree_backup(tree)
-    before = pipeline_module._source_digest(tree)
-    plan = _run_agent(root, "repair_" + idea["idea_id"] + "_r" + str(revision),
-                      prompt, "repair.txt", plaintext.parse_repair_plan,
-                      role="repair", read_paths=[tree],
-                      allowed_roots=_round_roots(root),
-                      candidate_tree=tree)
-    after = pipeline_module._source_digest(tree)
-    if after != before:
-        _tree_restore(tree, backup)
-        raise pipeline_module.RoundError(
-            "the repair planner modified the candidate tree, which it may not do; "
-            "the tree was restored and the plan was discarded")
-    plan["tree_digest"] = before
-    return plan
 
 
-def _tree_backup(tree: Path) -> dict:
-    """A copy of every source file in the tree, for a rollback."""
-    import shutil
-    import tempfile
-
-    directory = Path(tempfile.mkdtemp(prefix="repair_backup_"))
-    files = {}
-    for path in sorted(Path(tree).rglob("*.py")):
-        if "__pycache__" in path.relative_to(tree).parts:
-            continue
-        target = directory / path.relative_to(tree)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(path, target)
-        files[str(path.relative_to(tree))] = target
-    return {"directory": directory, "files": files}
 
 
-def _tree_restore(tree: Path, backup: dict) -> None:
-    """Put the backed-up sources back and delete what the planner added."""
-    import shutil
-
-    tree = Path(tree)
-    for path in sorted(tree.rglob("*.py")):
-        if "__pycache__" in path.relative_to(tree).parts:
-            continue
-        relative = str(path.relative_to(tree))
-        if relative not in backup["files"]:
-            path.unlink()
-    for relative, source in backup["files"].items():
-        target = tree / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, target)
-    shutil.rmtree(backup["directory"], ignore_errors=True)
 
 
 def phase_ideation(root: Path, round_id: str, *, log=print) -> dict:
@@ -1511,18 +1103,12 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
             record["output_paths"] = baseline_module.guard_output_paths(
                 tree, other_candidates=siblings)
         except baseline_module.BaselineError as exc:
-            record["blocking_findings"] = [{
-                "verifier": "preflight", "check": "output isolation",
-                "severity": "blocking", "location": "train_rqvae.py",
-                "detail": str(exc),
-                "reproduction": "read the trainer's output constants",
-                "correction": "write only into the candidate's own result directory"}]
-            record["status"] = "needs_repair"
-            record["failure_signature"] = pipeline_module._failure_signature(
-                record["blocking_findings"])
+            raise pipeline_module.RoundError(
+                idea["idea_id"] + " writes outside its own result directory: " +
+                str(exc)) from exc
         pipeline_module.save_state(directory, state)
         log("implemented %s" % idea["idea_id"])
-    state["step"] = "verification"
+    state["step"] = "stage2"
     pipeline_module.save_state(directory, state)
     return {"phase": "implementation", "ran": True, "step": state["step"],
             "implementations": [{"idea_id": record["idea_id"], "status": record["status"],
@@ -1530,175 +1116,13 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
                                 for record in state.get("implementations", [])]}
 
 
-def phase_repair_plan(root: Path, round_id: str, idea_id: str, *, log=print) -> dict:
-    """Ask the repair PLANNER for the plan of one candidate, on the main agent's call.
-
-    The planner reads the findings and the tree and writes the change that would
-    fix each finding; it never edits the tree. The main agent applies the plan
-    and registers the execution.
-    """
-    directory = pipeline_module.find_round_directory(root, round_id)
-    state = pipeline_module.load_state(directory)
-    record = next((item for item in state.get("implementations", [])
-                   if item["idea_id"] == idea_id), None)
-    if record is None:
-        raise pipeline_module.RoundError("no implementation " + idea_id)
-    findings = record.get("blocking_findings") or []
-    if not findings:
-        raise pipeline_module.RoundError(idea_id + " has no blocking finding to plan for")
-    idea = ideas_module.idea_index(state["ideas"])[idea_id]
-    plan = run_repair_plan(directory, idea, Path(record["tree"]), findings,
-                           int(record.get("revision", 0)))
-    state = pipeline_module.apply_repair_plan(state, idea_id, plan)
-    pipeline_module.save_state(directory, state)
-    log("%s: repair plan ready (%d changes)" % (idea_id, len(plan.get("plans", []))))
-    return {"phase": "repair_plan", "ran": True, "idea_id": idea_id,
-            "revision": record.get("revision"),
-            "plans": plan.get("plans", []),
-            "remaining_issues": plan.get("remaining_issues", []),
-            "notes": plan.get("notes", "")}
 
 
-def phase_verification(root: Path, round_id: str, *, log=print) -> dict:
-    """Run the verifier of each implementation and the repair loop."""
-    directory = pipeline_module.find_round_directory(root, round_id)
-    state = pipeline_module.load_state(directory)
-    agent_root = directory
-    if state["step"] != "verification":
-        return {"phase": "verification", "ran": False, "step": state["step"],
-                "verified": len(pipeline_module.verified_implementations(state)),
-                "reason": "the round is no longer in the verification phase"}
-    for record in list(state.get("implementations", [])):
-        # A tree whose source changed since the last review must be reviewed
-        # again by a fresh agent: the revision is bumped, so the reviewer works
-        # in a new workspace and no earlier answer is reused. This holds for a
-        # verified record too: a source change invalidates the approval.
-        if record.get("source_digest") and record["source_digest"] != \
-                pipeline_module._source_digest(Path(record["tree"])):
-            record["revision"] = int(record.get("revision", 0)) + 1
-            record["status"] = "implemented"
-            record["blocking_findings"] = []
-            record["source_digest"] = pipeline_module._source_digest(Path(record["tree"]))
-            pipeline_module.record_event(state, "source_changed_before_review",
-                                         idea_id=record["idea_id"],
-                                         revision=record["revision"])
-            pipeline_module.save_state(directory, state)
-        # A review produced under another boundary is not an approval under this
-        # one: the candidate goes back to the queue and is reviewed again.
-        if record.get("boundary_version") and \
-                record["boundary_version"] != policy.BOUNDARY_VERSION:
-            record["revision"] = int(record.get("revision", 0)) + 1
-            record["status"] = "implemented"
-            record["blocking_findings"] = []
-            pipeline_module.record_event(state, "boundary_changed_before_review",
-                                         idea_id=record["idea_id"],
-                                         revision=record["revision"],
-                                         boundary_version=record["boundary_version"],
-                                         current_boundary=policy.BOUNDARY_VERSION)
-            pipeline_module.save_state(directory, state)
-        if record.get("status") not in ("implemented", "repaired", "agent_error",
-                                        "needs_repair"):
-            # "repair_planned" waits for the operator: the tree is unchanged, so
-            # there is nothing new to review and nothing new to plan.
-            continue
-        # The output isolation is checked again before the reviewers read the
-        # tree: a finding of an earlier pass described an older tree, and the
-        # reviewers must not carry it into this one.
-        pipeline_module._refresh_output_isolation(state, record)
-        if record.get("status") == "needs_repair":
-            pipeline_module.save_state(directory, state)
-            continue
-        idea = ideas_module.idea_index(state["ideas"])[record["idea_id"]]
-        try:
-            reports = run_verification(agent_root, idea, Path(record["tree"]),
-                                       int(record.get("revision", 0)), record=record)
-        except RoundIncomplete as exc:
-            # Some reviewers answered and some did not. The answers that exist
-            # are kept and the candidate WAITS: a missing reviewer is not a
-            # verdict on the mechanism. An authentication or quota fault pauses
-            # the service instead of spending the retry budget on a call that
-            # cannot succeed.
-            report = {"idea_id": record["idea_id"], "partial_verdicts": [
-                str(item.get("verdict", "")).upper() for item in exc.results],
-                "failures": exc.failures, "classes": sorted(exc.classes),
-                "waiting": exc.waiting}
-            state = pipeline_module.mark_agent_error(
-                state, record["idea_id"],
-                "verification incomplete: " + str(exc), details=report)
-            pipeline_module.save_state(directory, state)
-            log("%s: waiting for %d reviewer(s) (%s)" % (
-                record["idea_id"], len(exc.failures), ",".join(sorted(exc.classes))))
-            if exc.waiting:
-                break
-            continue
-        except Exception as exc:                           # noqa: BLE001
-            # A reviewer that crashed says nothing about the mechanism: the
-            # branch is retried, and only an exhausted retry is recorded as
-            # an infrastructure failure.
-            state = pipeline_module.mark_agent_error(
-                state, record["idea_id"], "verification failed: " + str(exc))
-            pipeline_module.save_state(directory, state)
-            continue
-        state = pipeline_module.apply_verification(state, record["idea_id"], reports)
-        pipeline_module.save_state(directory, state)
-        if record.get("blocking_findings"):
-            if int(record.get("review_rounds", 0)) >= pipeline_module.MAX_REVIEW_ROUNDS:
-                # The candidate used up its repair rounds: it is recorded with
-                # its findings instead of asking for another agent. The counter
-                # is the number of times the verifiers rejected it, not the
-                # number of source changes: a performance fix must not cost the
-                # candidate the same budget as a mechanism that was rejected
-                # again and again.
-                state = pipeline_module.mark_revision_capped(
-                    state, record["idea_id"],
-                    "the verifiers still reject the implementation after " +
-                    str(record.get("review_rounds", 0)) + " review rounds, which is the cap")
-                pipeline_module.save_state(directory, state)
-                log("%s: revision capped" % record["idea_id"])
-                continue
-            # The findings are reported and the round waits. Whether they need a
-            # repair, and which of them do, is the main agent's decision: it can
-            # ask for a plan (research_round_plan_repair) or accept the candidate
-            # as it stands.
-            pipeline_module.save_state(directory, state)
-            log("%s: %s (%d blocking findings)" % (
-                record["idea_id"], record.get("status"),
-                len(record.get("blocking_findings") or [])))
-    # Stay in verification until every implementation is resolved: a repair
-    # reopens the review, and the round must not move on with work in flight.
-    pending = [record for record in state.get("implementations", [])
-               if record.get("status") in ("implemented", "repaired", "needs_repair",
-                                           "repair_planned", "verified",
-                                           "awaiting_implementation")
-               or (record.get("status") == "agent_error"
-                   and int(record.get("agent_error_attempts", 0))
-                   <= pipeline_module.MAX_AGENT_RETRIES)]
-    state["step"] = "verification" if pending else "stage2"
-    pipeline_module.save_state(directory, state)
-    return {"phase": "verification", "ran": True, "step": state["step"],
-            "verified": len([record for record in state.get("implementations", [])
-                             if record.get("status") == "verified"]),
-            "accepted": [record["idea_id"] for record
-                         in pipeline_module.verified_implementations(state)],
-            "verdicts": [{"idea_id": record["idea_id"],
-                          "status": record.get("status"),
-                          "verdicts": [str(report.get("verdict", "")).upper()
-                                       for report in (record.get("verdicts") or [])],
-                          "findings": [{"verifier": finding.get("verifier", ""),
-                                        "location": finding.get("location", ""),
-                                        "detail": str(finding.get("detail", ""))[:400]}
-                                       for finding in (record.get("blocking_findings") or [])],
-                          "agreement": record.get("finding_agreement", {})}
-                         for record in state.get("implementations", [])],
-            "pending": [record["idea_id"] for record in pending],
-            "plans_pending": [record["idea_id"] for record in pending
-                              if record.get("status") == "repair_planned"],
-            "blocked": [entry["idea_id"] for entry in state.get("blocked", [])],
-            "agent_errors": [entry["idea_id"] for entry in state.get("agent_errors", [])]}
 
 
-#: The phases of a round, in the order they run.
-PHASES = ("ideation", "probe", "scoring", "implementation", "verification")
+#: The phases of a round, in the order they run. Verification is not a phase:
+#: it is the framework's machine admission at launch.
+PHASES = ("ideation", "probe", "scoring", "implementation")
 
 
 def advance(root: Path, round_id: str, *, log=print) -> dict:
@@ -1712,8 +1136,7 @@ def advance(root: Path, round_id: str, *, log=print) -> dict:
     # phase call from paying for the same agents twice.
     lock.acquire(owner="worker:" + str(round_id))
     try:
-        for phase in (phase_ideation, phase_probe, phase_scoring, phase_implementation,
-                      phase_verification):
+        for phase in (phase_ideation, phase_probe, phase_scoring, phase_implementation):
             phase(root, round_id, log=log)
     finally:
         lock.release()

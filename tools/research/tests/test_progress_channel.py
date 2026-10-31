@@ -150,29 +150,6 @@ class ServerTests(unittest.TestCase):
         self.assertNotIn("theirs", self.path.read_text(encoding="utf-8"))
 
 
-class WiringTests(unittest.TestCase):
-    """The agent's only write is the append tool."""
-
-    def test_the_read_only_roles_keep_the_generic_writes_denied(self):
-        with tempfile.TemporaryDirectory() as work:
-            workspace = Path(work) / "agents" / "task"
-            policy = runner.isolation_permissions(workspace, "verify", [])
-            self.assertEqual(policy["edit"], "deny")
-            self.assertEqual(policy["write"], "deny")
-            self.assertEqual(policy["bash"], "deny")
-
-    def test_the_agent_configuration_declares_only_the_progress_server(self):
-        with tempfile.TemporaryDirectory() as work:
-            workspace = Path(work) / "agents" / "task"
-            workspace.mkdir(parents=True)
-            servers = {"progress": {"type": "local", "enabled": True,
-                                    "command": ["/usr/bin/python3", "server.py",
-                                                "--file", str(workspace / "progress.jsonl")]}}
-            path = runner.write_isolation_config(workspace, "verify", [], mcp_servers=servers)
-            written = json.loads(path.read_text(encoding="utf-8"))
-            self.assertEqual(list(written["mcp"]["servers"]), ["progress"])
-            self.assertEqual(written["permission"]["edit"], "deny")
-            self.assertEqual(written["permission"]["write"], "deny")
 
 
 if __name__ == "__main__":

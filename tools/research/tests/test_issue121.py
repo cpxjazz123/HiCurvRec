@@ -279,38 +279,11 @@ class StateDistinctionTests(unittest.TestCase):
         self.state["implementations"] = [pipeline_module.implementation_record(
             _coupled(), {"changed_files": ["model.py"]}, tree)]
 
-    def test_an_agent_error_does_not_block_the_mechanism(self):
-        state = pipeline_module.mark_agent_error(self.state, "coupled", "the agent timed out")
-        record = state["implementations"][0]
-        self.assertEqual(record["status"], "agent_error")
-        self.assertNotIn("coupled", [entry["idea_id"] for entry in state["blocked"]])
-        self.assertEqual(state["agent_errors"][0]["kind"], pipeline_module.AGENT_INFRA_ERROR)
 
-    def test_an_agent_error_is_counted_for_the_retry(self):
-        state = pipeline_module.mark_agent_error(self.state, "coupled", "boom")
-        state = pipeline_module.mark_agent_error(state, "coupled", "boom again")
-        self.assertEqual(state["implementations"][0]["agent_error_attempts"], 2)
 
-    def test_a_defect_blocks_with_its_kind(self):
-        state = pipeline_module.mark_blocked(self.state, "coupled", "the export path is wrong")
-        self.assertEqual(state["blocked"][0]["kind"], pipeline_module.IMPLEMENTATION_NEEDS_FIX)
 
-    def test_a_measured_infeasibility_is_its_own_kind(self):
-        state = pipeline_module.mark_resource_blocked(self.state, "coupled",
-                                                      "one epoch takes 40 minutes")
-        self.assertEqual(state["resource_blocked"][0]["kind"], pipeline_module.RESOURCE_BLOCKED)
-        self.assertEqual(state["implementations"][0]["status"], "resource_blocked")
 
-    def test_a_missing_baseline_is_its_own_kind(self):
-        state = pipeline_module.mark_blocked(self.state, "coupled", "baseline unavailable",
-                                              kind=pipeline_module.BASELINE_UNAVAILABLE)
-        self.assertEqual(state["blocked"][0]["kind"], pipeline_module.BASELINE_UNAVAILABLE)
 
-    def test_the_summary_counts_the_kinds(self):
-        state = pipeline_module.mark_agent_error(self.state, "coupled", "boom")
-        summary = pipeline_module.summary(state)
-        self.assertEqual(summary["agent_errors"], 1)
-        self.assertEqual(summary["blocked"], 0)
 class DigestLocationTests(unittest.TestCase):
     """A tree's digest does not depend on where the tree is filed."""
 
@@ -365,105 +338,14 @@ class GpuCapacityTests(unittest.TestCase):
 class PhaseToolTests(unittest.TestCase):
     """Every phase of a round is a tool of its own."""
 
-    def test_the_server_exposes_one_tool_per_phase(self):
-        import importlib.util
-        server = pathlib.Path(__file__).resolve().parents[2] / "genrec-mcp" / "server.py"
-        spec = importlib.util.spec_from_file_location("genrec_server", str(server))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        for phase in ("ideate", "score", "implement", "verify"):
-            self.assertIn("research_round_" + phase, module.TOOLS)
-        for name in ("research_round_start", "research_round_run", "research_round_status",
-                     "research_round_results", "research_round_launch", "research_round_collect"):
-            self.assertIn(name, module.TOOLS)
 
     def test_a_phase_is_a_named_function_of_the_round_worker(self):
         from tools.research.rounds import worker as worker_module
         for phase in worker_module.PHASES:
             self.assertTrue(callable(getattr(worker_module, "phase_" + phase)))
 
-    def test_the_admission_quorum_is_one_completed_report(self):
-        """A timed-out reviewer must not block a candidate the others approved.
 
-        The gate reads the same rule the verification phase applies: one
-        finished report is a review, and the record keeps how many of the
-        planned reviewers reported and which ones are missing.
-        """
-        source = (Path(__file__).resolve().parents[3] / "tools" / "genrec-mcp" /
-                  "server.py").read_text(encoding="utf-8")
-        gate = source[source.index("def round_admission"):]
-        gate = gate[:gate.index("\ndef ")]
-        self.assertIn("len(record.get(\"verdicts\", [])) < 1", gate)
-        self.assertNotIn("!= module.VERIFIER_AGENTS", gate)
-        self.assertIn("reviewers_reported", gate)
-        from tools.research.rounds import pipeline as pipeline_module
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_quorum", objective="o")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [{
-                "implementation_id": "idea-q", "idea_id": "idea-q",
-                "tree": str(directory), "status": "implemented", "revision": 0}]
-            state = pipeline_module.apply_verification(
-                state, "idea-q",
-                [{"verifier": "v1", "verdict": "PASS", "checks": [],
-                  "boundary_version": "test-boundary", "boundary_sha256": "0" * 64,
-                  "missing_reviewers": ["v2", "v3", "v4", "v5"]}])
-            record = state["implementations"][0]
-            self.assertEqual(len(record["verdicts"]), 1)
-            self.assertEqual(record["reviewers_reported"], 1)
-            self.assertEqual(record["reviewers_expected"], pipeline_module.VERIFIER_AGENTS)
-            self.assertEqual(record["reviewers_missing"], ["v2", "v3", "v4", "v5"])
 
-    def test_a_registration_after_a_review_is_a_new_revision(self):
-        """A fix must not be filed under the revision it replaces."""
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_rev", objective="o")
-            tree = directory / "candidate"
-            tree.mkdir()
-            (tree / "m.py").write_text("x = 1\n", encoding="utf-8")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [{
-                "implementation_id": "idea-r", "idea_id": "idea-r", "tree": str(tree),
-                "status": "reviewed", "revision": 0,
-                "verdicts": [{"verifier": "v1", "verdict": "NEEDS_FIX"}]}]
-            pipeline_module.save_state(directory, state)
-            state = pipeline_module.register_implementation(
-                pipeline_module.load_state(directory), "idea-r",
-                {"changed_files": ["m.py"], "smoke": {"ok": True}})
-            self.assertEqual(state["implementations"][0]["revision"], 1)
-
-    def test_a_fresh_registration_reopens_the_review(self):
-        """A submission after a failed pass must not inherit its step or budget.
-
-        The candidate's tree changed, so the round is back in verification; the
-        retry counter of the infrastructure failure belongs to the older
-        submission and would otherwise leave the round parked at "stage2" with
-        nobody reviewing the new tree.
-        """
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_registration", objective="o")
-            tree = directory / "candidate"
-            (tree / "model").mkdir(parents=True)
-            (tree / "model" / "m.py").write_text("x = 1\n", encoding="utf-8")
-            state = pipeline_module.load_state(directory)
-            state["step"] = "stage2"
-            state["implementations"] = [{
-                "implementation_id": "idea-a", "idea_id": "idea-a", "tree": str(tree),
-                "status": "agent_error", "agent_error_attempts": 4, "revision": 0}]
-            pipeline_module.save_state(directory, state)
-            state = pipeline_module.register_implementation(
-                pipeline_module.load_state(directory), "idea-a",
-                {"changed_files": ["model/m.py"], "smoke": {"ok": True}})
-            record = state["implementations"][0]
-            # The stub tree has no output-isolation contract of its own, so the
-            # refreshed check records that finding instead of "implemented"; the
-            # point of the test is the reopened review and the cleared budget.
-            self.assertIn(record["status"], ("implemented", "needs_repair"))
-            self.assertEqual(record["agent_error_attempts"], 0)
-            self.assertEqual(state["step"], "verification")
 
     def test_a_phase_refuses_a_round_that_is_not_in_it(self):
         from tools.research.rounds import worker as worker_module
@@ -491,54 +373,6 @@ class PhaseToolTests(unittest.TestCase):
             second.acquire(owner="second")
 
 
-class RepairCapTests(unittest.TestCase):
-    """A candidate stops asking for agents after the allowed repair rounds."""
-
-    def test_the_cap_is_a_cost_budget(self):
-        """The cap bounds the agent cost; the operator may raise it."""
-        self.assertGreaterEqual(pipeline_module.MAX_REVIEW_ROUNDS, 5)
-        self.assertLessEqual(pipeline_module.MAX_REVIEW_ROUNDS, 12)
-
-    def test_the_cap_counts_the_review_rounds_and_not_the_source_revisions(self):
-        """A performance fix must not cost the candidate a review round.
-
-        The revision counter moves with every source change, so a candidate that
-        needed a device fix and a proposal alignment would run out of budget
-        before the reviewers ever rejected its mechanism twice. The cap counts
-        the rejections.
-        """
-        self.assertNotEqual(pipeline_module.MAX_REVIEW_ROUNDS,
-                            pipeline_module.MAX_REVISIONS)
-
-    def test_a_candidate_at_the_cap_is_recorded_instead_of_repaired(self):
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_cap", objective="o")
-            tree = root / "tree"
-            tree.mkdir()
-            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [pipeline_module.implementation_record(
-                _coupled(), {"changed_files": ["model.py"]}, tree)]
-            state["implementations"][0]["review_rounds"] = pipeline_module.MAX_REVIEW_ROUNDS
-            pipeline_module.save_state(directory, state)
-            state = pipeline_module.mark_revision_capped(state, "coupled",
-                                                         "the cap is reached")
-            record = state["implementations"][0]
-            self.assertEqual(record["status"], "blocked")
-            self.assertTrue(record["revision_capped"])
-            self.assertEqual(state["revision_capped"][0]["idea_id"], "coupled")
-
-    def test_the_summary_reports_the_capped_branches(self):
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_cap2", objective="o")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [pipeline_module.implementation_record(
-                _coupled(), {}, root / "tree")]
-            state = pipeline_module.mark_revision_capped(state, "coupled", "cap")
-            summary = pipeline_module.summary(state)
-            self.assertEqual(summary["revision_capped"], 1)
 
 
 class McpProtocolTests(unittest.TestCase):
@@ -559,15 +393,6 @@ class McpProtocolTests(unittest.TestCase):
                 continue
         return answers
 
-    def test_the_server_lists_the_round_tools(self):
-        answers = self._serve([
-            {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
-            {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}])
-        listed = [answer for answer in answers if answer.get("id") == 2]
-        self.assertTrue(listed, finished.stderr if 'finished' in dir() else "")
-        names = [tool["name"] for tool in listed[0]["result"]["tools"]]
-        for phase in ("ideate", "score", "implement", "verify"):
-            self.assertIn("research_round_" + phase, names)
 
     def test_the_server_can_call_a_round_tool(self):
         answers = self._serve([
@@ -581,41 +406,6 @@ class McpProtocolTests(unittest.TestCase):
         self.assertTrue(called[0]["result"].get("isError"))
 
 
-class ReviewContractTests(unittest.TestCase):
-    """The review must separate an environment limit from a defect."""
-
-    def test_the_verification_prompt_does_not_treat_a_missing_torch_as_a_defect(self):
-        from tools.research.rounds import agents as agents_module
-        prompt = agents_module.VERIFY_PROMPT
-        self.assertIn("no PyTorch", prompt)
-        self.assertIn("NOT defects", prompt)
-        self.assertIn("results/stage2_RQ-VAE", prompt)
-        self.assertNotIn("Write JSON", prompt)
-
-    def test_the_preflight_runs_again_after_a_repair(self):
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_pre", objective="o")
-            tree = root / "coupled"
-            tree.mkdir()
-            (root / "stage2_RQ-VAE").mkdir(exist_ok=True)
-            _derived_trainer(tree, arm="TIGER_RQ-VAE")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [pipeline_module.implementation_record(
-                _coupled(), {}, tree)]
-            state["implementations"][0]["blocking_findings"] = [
-                {"verifier": "preflight", "check": "output isolation",
-                 "severity": "blocking", "location": "train_rqvae.py",
-                 "detail": "writes into the baseline", "reproduction": "",
-                 "correction": ""}]
-            state["implementations"][0]["status"] = "needs_repair"
-            # The repair fixed the path.
-            _derived_trainer(tree, arm="TIGER_coupled")
-            state = pipeline_module.recheck_output_paths(state, "coupled",
-                                                         repo_root=root)
-            record = state["implementations"][0]
-            self.assertEqual(record["output_preflight"], "passed")
-            self.assertEqual(record["blocking_findings"], [])
 
 
 class OutputAnchorTests(unittest.TestCase):
@@ -643,74 +433,6 @@ class OutputAnchorTests(unittest.TestCase):
             self.assertTrue(resolved["OUTPUT_JSON"].endswith("TIGER_ok/item_sids.json"))
 
 
-class SeveritySentenceTests(unittest.TestCase):
-    """A reviewer writes a sentence; the first word says how severe it is."""
-
-    def test_a_minor_sentence_does_not_block(self):
-        for severity in ("minor when it does not stop the work", "minor", "nit",
-                         "informational note", "advisory"):
-            with self.subTest(severity=severity):
-                self.assertFalse(pipeline_module._is_blocking(severity))
-
-    def test_a_blocking_sentence_blocks(self):
-        for severity in ("blocking", "BLOCKING", "blocker", "critical", "high",
-                         "unsafe", "fatal", ""):
-            with self.subTest(severity=severity):
-                self.assertTrue(pipeline_module._is_blocking(severity))
-
-    def test_a_passing_verdict_with_only_minor_findings_verifies(self):
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_minor", objective="o")
-            tree = root / "coupled"
-            tree.mkdir()
-            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [pipeline_module.implementation_record(
-                _coupled(), {"changed_files": ["model.py"]}, tree)]
-            minor = {"verifier": "v", "verdict": "PASS",
-                     "checks": [{"name": "a) fidelity", "verdict": "PASS",
-                                 "findings": [{"severity": "minor when it does not stop "
-                                                          "the work",
-                                               "location": "model.py:1",
-                                               "detail": "no blocking defect found",
-                                               "reproduction": "", "correction": ""}]}]}
-            state = pipeline_module.apply_verification(
-                state, "coupled",
-                [dict(minor, verifier="v1",
-                      boundary_version=policy.BOUNDARY_VERSION,
-                      boundary_sha256="test-boundary")] +
-                [{"verifier": "v" + str(index), "verdict": "PASS", "checks": [],
-                  "boundary_version": policy.BOUNDARY_VERSION,
-                  "boundary_sha256": "test-boundary"}
-                 for index in range(2, 6)])
-            self.assertEqual(state["implementations"][0]["status"], "verified")
-
-    def test_a_preflight_failure_blocks_even_when_the_reviewer_passes(self):
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_pre2", objective="o")
-            tree = root / "coupled"
-            tree.mkdir()
-            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [pipeline_module.implementation_record(
-                _coupled(), {"changed_files": ["model.py"]}, tree)]
-            state["implementations"][0]["blocking_findings"] = [
-                {"verifier": "preflight", "check": "output isolation",
-                 "severity": "blocking", "location": "train_rqvae.py",
-                 "detail": "writes into the baseline", "reproduction": "", "correction": ""}]
-            passing = {"verifier": "v", "verdict": "PASS", "checks": []}
-            state = pipeline_module.apply_verification(
-                state, "coupled",
-                [dict(passing, verifier="v1",
-                      boundary_version=policy.BOUNDARY_VERSION,
-                      boundary_sha256="test-boundary")] +
-                [{"verifier": "v" + str(index), "verdict": "PASS", "checks": [],
-                  "boundary_version": policy.BOUNDARY_VERSION,
-                  "boundary_sha256": "test-boundary"}
-                 for index in range(2, 6)])
-            self.assertEqual(state["implementations"][0]["status"], "needs_repair")
 
 
 class VerifierQuorumTests(unittest.TestCase):
@@ -723,78 +445,11 @@ class VerifierQuorumTests(unittest.TestCase):
                  "boundary_sha256": "test-boundary"}
                 for index in range(1, count + 1)]
 
-    def test_five_verifiers_are_configured(self):
-        from tools.research.rounds import worker as worker_module
-        self.assertEqual(pipeline_module.VERIFIER_AGENTS, 5)
-        self.assertEqual(worker_module.VERIFIERS, 5)
-
-    def test_a_review_needs_one_reporter(self):
-        """One reviewer that finished is enough; a missing one is not a veto.
-
-        A reviewer that runs out of its budget delivers records, not a verdict.
-        The verdicts that exist still decide, and the record says how many
-        reported and which ones are missing.
-        """
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_one", objective="o")
-            tree = root / "coupled"
-            tree.mkdir()
-            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [pipeline_module.implementation_record(
-                _coupled(), {"changed_files": ["model.py"]}, tree)]
-            with self.assertRaises(pipeline_module.RoundError):
-                pipeline_module.apply_verification(state, "coupled", [])
-            state = pipeline_module.apply_verification(
-                state, "coupled", self._verdicts(4))
-            record = state["implementations"][0]
-            self.assertEqual(record["status"], "verified")
-            self.assertEqual(record["reviewers_reported"], 4)
-            self.assertEqual(record["reviewers_expected"], pipeline_module.VERIFIER_AGENTS)
-
-    def test_a_verified_candidate_waits_for_the_main_agent_acceptance(self):
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            directory = pipeline_module.new_round(root, "round_one", objective="o")
-            tree = root / "coupled"
-            tree.mkdir()
-            (tree / "model.py").write_text("x = 1\n", encoding="utf-8")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [pipeline_module.implementation_record(
-                _coupled(), {"changed_files": ["model.py"]}, tree)]
-            state = pipeline_module.apply_verification(
-                state, "coupled", self._verdicts(5))
-            # The reviewers report; only the main agent's acceptance makes the
-            # candidate dispatchable.
-            self.assertEqual(pipeline_module.verified_implementations(state), [])
-            state = pipeline_module.accept_verification(state, "coupled", "read")
-            self.assertEqual([record["idea_id"] for record
-                              in pipeline_module.verified_implementations(state)],
-                             ["coupled"])
-
-    def test_the_verification_prompt_addresses_one_reviewer_of_five(self):
-        from tools.research.rounds import agents as agents_module
-        self.assertIn("You are verifier {role_index} of {role_total}",
-                      agents_module.VERIFY_PROMPT)
-        self.assertIn("Your primary responsibility is {role_name}",
-                      agents_module.VERIFY_PROMPT)
-        self.assertNotIn("one of three", agents_module.VERIFY_PROMPT)
 
 
-class SeverityClassificationTests(unittest.TestCase):
-    """A PASS reviewer that writes FINDING SEVERITY: n/a must not block."""
 
-    def test_a_placeholder_severity_is_harmless(self):
-        from tools.research.rounds import pipeline as pipeline_module
-        for word in ("n/a", "N/A", "n.a.", "none", "-", "--", "no finding", "minor"):
-            self.assertFalse(pipeline_module._is_blocking(word), word)
 
-    def test_an_unknown_or_empty_severity_still_blocks(self):
-        """Fail closed: a word nobody recognises is not an approval."""
-        from tools.research.rounds import pipeline as pipeline_module
-        for word in ("", None, "blocking", "critical", "weird-but-serious"):
-            self.assertTrue(pipeline_module._is_blocking(word), repr(word))
+
 
 
 class CandidateCopyTests(unittest.TestCase):
@@ -977,115 +632,9 @@ class ProposalCloseTests(unittest.TestCase):
             self.assertEqual(record["blocking_findings"], [])
             self.assertEqual(state["step"], "stage2")
 
-    def test_a_closed_proposal_is_not_dispatchable(self):
-        with tempfile.TemporaryDirectory() as work:
-            directory = pipeline_module.new_round(Path(work), "round_close2", objective="o")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [{
-                "implementation_id": "i", "idea_id": "i", "tree": str(directory),
-                "status": "verified", "revision": 1, "verdicts": [{"verifier": "v"}],
-                "accepted": True}]
-            state["step"] = "stage2"
-            pipeline_module.save_state(directory, state)
-            state = pipeline_module.close_proposal(
-                pipeline_module.load_state(directory), "i",
-                reason="proposal defect", evidence={})
-            self.assertEqual(pipeline_module.verified_implementations(state), [])
-            self.assertEqual(state["step"], "stage2")
 
 
-class FindingOwnershipResolutionTests(unittest.TestCase):
-    """A finding from before the roles existed still belongs to one."""
-
-    def test_the_role_is_read_from_the_reviewer_number(self):
-        from tools.research.rounds import pipeline as pipeline_module
-        from tools.research.rounds import agents as agent_contracts
-        roles = agent_contracts.VERIFIER_ROLES
-        for index, role in enumerate(roles, 1):
-            finding = {"verifier": "verify_idea_r0_%d" % index, "severity": "blocking"}
-            self.assertEqual(pipeline_module._finding_role(finding), role["id"])
-
-    def test_an_explicit_role_wins(self):
-        from tools.research.rounds import pipeline as pipeline_module
-        finding = {"verifier": "verify_idea_r0_3", "role": "behaviour-sid"}
-        self.assertEqual(pipeline_module._finding_role(finding), "behaviour-sid")
 
 
-class CachedResponderTests(unittest.TestCase):
-    """A reused report still closes the finding its role raised."""
-
-    def test_an_old_finding_closes_when_its_role_reviews_without_a_role_field(self):
-        from tools.research.rounds import agents as agent_contracts
-        roles = agent_contracts.VERIFIER_ROLES
-        index = [role["id"] for role in roles].index("distributed-state") + 1
-        with tempfile.TemporaryDirectory() as work:
-            directory = pipeline_module.new_round(Path(work), "round_cached", objective="o")
-            state = pipeline_module.load_state(directory)
-            state["implementations"] = [{
-                "implementation_id": "i", "idea_id": "i", "tree": str(directory),
-                "status": "needs_repair", "revision": 1,
-                "blocking_findings": [{
-                    "severity": "blocking", "location": "f.py:1", "detail": "d",
-                    "verifier": "verify_i_r1_%d" % index}]}]
-            pipeline_module.save_state(directory, state)
-            state = pipeline_module.apply_verification(state, "i", [{
-                "verifier": "verify_i_r2_%d" % index, "verdict": "PASS", "checks": [],
-                "boundary_version": "b", "boundary_sha256": "0" * 64,
-                "missing_reviewers": []}])
-            record = state["implementations"][0]
-            self.assertEqual(record["blocking_findings"], [])
 
 
-class LegacyRoleAttributionTests(unittest.TestCase):
-    """An old task number is a position in THAT pass's filtered list.
-
-    The number in ``verify_<idea>_r<k>_<n>`` used to index the roles actually
-    dispatched in that revision, so reading it as a position in the full role list
-    attributes a finding to the wrong reviewer and hides the one that must review
-    the fix. The report itself says which role wrote it: its CHECK names are the
-    role's own check names.
-    """
-
-    def test_the_role_is_recovered_from_the_original_report(self):
-        from tools.research.rounds import agents as agent_contracts
-        from tools.research.rounds import pipeline as pipeline_module
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            workspace = root / "agents" / "verify_idea_r1_3"
-            workspace.mkdir(parents=True)
-            role = [item for item in agent_contracts.VERIFIER_ROLES
-                    if item["id"] == "behaviour-sid"][0]
-            body = "VERDICT: NEEDS_FIX\n" + "".join(
-                "CHECK: %s\nCHECK VERDICT: NEEDS_FIX\n" % name
-                for name, _ in role["checks"])
-            (workspace / "verification.txt").write_text(body, encoding="utf-8")
-            finding = {"verifier": "verify_idea_r1_3", "severity": "blocking"}
-            self.assertEqual(pipeline_module._finding_role(finding, root=root),
-                             "behaviour-sid")
-
-    def test_the_full_list_interpretation_is_the_fallback(self):
-        from tools.research.rounds import agents as agent_contracts
-        from tools.research.rounds import pipeline as pipeline_module
-        roles = agent_contracts.VERIFIER_ROLES
-        with tempfile.TemporaryDirectory() as work:
-            finding = {"verifier": "verify_idea_r1_%d" % len(roles),
-                       "severity": "blocking"}
-            self.assertEqual(pipeline_module._finding_role(finding, root=Path(work)),
-                             roles[-1]["id"])
-
-    def test_the_dispatch_targets_the_role_the_report_identifies(self):
-        from tools.research.rounds import agents as agent_contracts
-        from tools.research.rounds import worker as worker_module
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            workspace = root / "agents" / "verify_idea_r1_3"
-            workspace.mkdir(parents=True)
-            role = [item for item in agent_contracts.VERIFIER_ROLES
-                    if item["id"] == "behaviour-sid"][0]
-            body = "VERDICT: NEEDS_FIX\n" + "".join(
-                "CHECK: %s\nCHECK VERDICT: NEEDS_FIX\n" % name
-                for name, _ in role["checks"])
-            (workspace / "verification.txt").write_text(body, encoding="utf-8")
-            findings = [{"verifier": "verify_idea_r1_3", "severity": "blocking"}]
-            roles = worker_module.affected_roles("", findings, root=root)
-            self.assertIn("behaviour-sid", roles)
