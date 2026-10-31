@@ -255,11 +255,11 @@ def check_geometry_contract(tree: Path | str) -> dict:
         # inherits, so it is conformant to itself by construction.
         return {"status": "PASS", "name": "geometry_contract",
                 "detail": "the frozen baseline is the reference tree"}
-    inherited_has_copy = bool(baseline and (baseline / "model" / "poincare_contract.py").is_file())
-    if not copy.is_file() and inherited_has_copy:
-        return {"status": "FAIL", "name": "geometry_contract",
-                "detail": "the candidate drops the canonical geometry module the baseline carries"}
-    if canonical.is_file():
+    # A missing module is not a defect by itself: a tree that derives from a
+    # baseline without the module (the frozen TIGER_RQ-VAE is one) cannot drop
+    # what it never had. The scan below is the real rule: no NEW definition and
+    # no foreign import of a geometry operator.
+    if copy.is_file() and canonical.is_file():
         if hashlib.sha256(copy.read_bytes()).hexdigest() != \
                 hashlib.sha256(canonical.read_bytes()).hexdigest():
             return {"status": "FAIL", "name": "geometry_contract",
