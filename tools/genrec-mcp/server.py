@@ -3496,8 +3496,9 @@ def tool_research_round_launch(round_id: str, parallel: int = 0) -> dict:
         # One card each: a tree that can only fork four ranks cannot start here,
         # so the trees that honour the single-card contract go first.
         batch.sort(key=lambda job: 0 if tree_supports_single_gpu(Path(job["tree"])) else 1)
+    four_card_layout = len(usable) >= 4
     for job in batch:
-        if STAGE2_LAUNCH_STRATEGY == "ddp4":
+        if STAGE2_LAUNCH_STRATEGY == "ddp4" and four_card_layout:
             # The whole allocation for this candidate: the trainer forks four
             # ranks itself, so the global batch is the frozen one.
             if len(usable) < 4:
@@ -3583,7 +3584,9 @@ def tool_research_round_launch(round_id: str, parallel: int = 0) -> dict:
         else:
             launched.append({"idea_id": job["idea_id"], "tree": job["tree"],
                              "gpu": gpu, "worker_pid": outcome.get("worker_pid"),
-                             "status": outcome.get("status")})
+                             "status": outcome.get("status"),
+                             "launch_mode": "ddp4" if four_card_layout else "single-card",
+                             "comparable": four_card_layout})
     state["stage2_jobs"] = queue.report()["jobs"]
     round_pipeline.save_state(directory, state)
     return {"round_id": round_id, "queued": queued, "launched": launched,

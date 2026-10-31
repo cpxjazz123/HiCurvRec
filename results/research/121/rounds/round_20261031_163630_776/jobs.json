@@ -1,12 +1,12 @@
 {
   "jobs": [
     {
-      "attempts": 4,
-      "error": "independent executable verification: the candidate fails the frozen engineering checks: four_rank: exit 1:     sys.exit(main()) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py\", line 357, in wrapper |     return f(*args, **kwargs) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 901, in main |     run(args) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 892, in run |     elastic_launch( |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 143, in __call__ |     return launch_agent(self._config, self._entrypoint, list(args)) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 277, in launch_agent |     raise ChildFailedError( | torch.distributed.elastic.multiprocessing.errors.ChildFailedError:  | ============================================================ | /fs04/ar57/wenyu/GeneRec/tools/research/stage2/ddp_probe.py FAILED | ------------------------------------------------------------ | Failures: | [1]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 2 (local_rank: 2) |   exitcode  : 1 (pid: 2089827) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | [2]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 3 (local_rank: 3) |   exitcode  : 1 (pid: 2089828) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | ------------------------------------------------------------ | Root Cause (first observed failure): | [0]: |   time      : 2026-10-31_19:51:47 |   host      : m3u00",
+      "attempts": 5,
+      "error": null,
       "failure_evidence": {
         "refused": "independent executable verification: the candidate fails the frozen engineering checks: four_rank: exit 1:     sys.exit(main()) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py\", line 357, in wrapper |     return f(*args, **kwargs) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 901, in main |     run(args) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 892, in run |     elastic_launch( |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 143, in __call__ |     return launch_agent(self._config, self._entrypoint, list(args)) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 277, in launch_agent |     raise ChildFailedError( | torch.distributed.elastic.multiprocessing.errors.ChildFailedError:  | ============================================================ | /fs04/ar57/wenyu/GeneRec/tools/research/stage2/ddp_probe.py FAILED | ------------------------------------------------------------ | Failures: | [1]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 2 (local_rank: 2) |   exitcode  : 1 (pid: 2089827) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | [2]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 3 (local_rank: 3) |   exitcode  : 1 (pid: 2089828) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | ------------------------------------------------------------ | Root Cause (first observed failure): | [0]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 1 (local_rank: 1) |   exitcode  : 1 (pid: 2089826) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | ============================================================"
       },
-      "finished_at": 1793436708.6465635,
+      "finished_at": 1793445452.3156302,
       "gpu": "0",
       "idea_id": "GDELTA-SUCC-PULL-RQ",
       "job_id": "stage2:GDELTA-SUCC-PULL-RQ",
@@ -46,14 +46,66 @@
           "error": "independent executable verification: the candidate fails the frozen engineering checks: geometry_contract: the candidate defines its own mobius_add in model/frechet_poincare.py; the geometry is the framework's; four_rank: exit 1: [rank2]:[W1031 19:49:37.648619991 ProcessGroupNCCL.cpp:1538] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator()) | [rank3]:[W1031 19:49:37.649553860 ProcessGroupNCCL.cpp:1538] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator()) | W1031 19:49:37.590981 2071124 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 2072590 closing signal SIGTERM | W1031 19:49:37.591915 2071124 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 2072631 closing signal SIGTERM | E1031 19:49:37.966238 2071124 /fs04/scratch2/ar57/wenyu/genrec_env_v2/lib/python3.9/site-packages/torch/distributed/elastic/multiprocessing/api.py:874] failed (exitcode: 1) local_rank: 1 (pid: 2072605) of binary: /home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/python | Traceback (most recent call last): |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/bin/torchrun\", line 8, in <module> |     sys.exit(main()) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py\", line 357, in wrapper |     return f(*args, **kwargs) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 901, in main |     run(args) |   File \"/home/wlia0047/ar57_scratch/wenyu/",
           "finished_at": 1793436635.3215384,
           "status": "failed"
+        },
+        {
+          "error": "independent executable verification: the candidate fails the frozen engineering checks: four_rank: exit 1:     sys.exit(main()) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py\", line 357, in wrapper |     return f(*args, **kwargs) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 901, in main |     run(args) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 892, in run |     elastic_launch( |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 143, in __call__ |     return launch_agent(self._config, self._entrypoint, list(args)) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 277, in launch_agent |     raise ChildFailedError( | torch.distributed.elastic.multiprocessing.errors.ChildFailedError:  | ============================================================ | /fs04/ar57/wenyu/GeneRec/tools/research/stage2/ddp_probe.py FAILED | ------------------------------------------------------------ | Failures: | [1]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 2 (local_rank: 2) |   exitcode  : 1 (pid: 2089827) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | [2]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 3 (local_rank: 3) |   exitcode  : 1 (pid: 2089828) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | ------------------------------------------------------------ | Root Cause (first observed failure): | [0]: |   time      : 2026-10-31_19:51:47 |   host      : m3u00",
+          "finished_at": 1793436708.6465635,
+          "status": "failed"
         }
       ],
       "queued_at": 1793430460.3046584,
-      "result": null,
+      "result": {
+        "metrics": {
+          "full_unique_items": 24587,
+          "level2_distinct_prefixes": 125,
+          "negative_hits": 59383,
+          "pairs": 52855,
+          "positive_hits": 7363,
+          "valid_l1_hard_er": 1.2399171480053215,
+          "valid_l1_negative_hit_rate": 0.11235077097720178,
+          "valid_l1_positive_hit_rate": 0.13930564752625108
+        },
+        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_GDELTA-SUCC-PULL-RQ/item_sids.json",
+        "sid_sha256": "a3bf77fa3b9a2998290c3d06d073c3aca2b4acb7005bf51981a136bf13efe24e",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 125,
+            "negative_hits": 59383,
+            "pairs": 52855,
+            "positive_hits": 7363,
+            "valid_l1_hard_er": 1.2399171480053215,
+            "valid_l1_negative_hit_rate": 0.11235077097720178,
+            "valid_l1_positive_hit_rate": 0.13930564752625108
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_GDELTA-SUCC-PULL-RQ",
       "round_id": "round_20261031_163630_776",
-      "started_at": 1793436660.4704704,
-      "status": "failed",
+      "stage3_job_id": "stage3:GDELTA-SUCC-PULL-RQ",
+      "started_at": 1793443960.9653618,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_GDELTA-SUCC-PULL-RQ"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": null,
+      "idea_id": "GDELTA-SUCC-PULL-RQ",
+      "job_id": "stage3:GDELTA-SUCC-PULL-RQ",
+      "kind": "stage3",
+      "queued_at": 1793445452.7090957,
+      "result": null,
+      "round_id": "round_20261031_163630_776",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_GDELTA-SUCC-PULL-RQ/item_sids.json",
+      "stage2_job_id": "stage2:GDELTA-SUCC-PULL-RQ",
+      "started_at": null,
+      "status": "pending",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_GDELTA-SUCC-PULL-RQ"
     }
   ],

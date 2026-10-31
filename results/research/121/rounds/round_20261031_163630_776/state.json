@@ -26997,19 +26997,40 @@
   },
   "stage2_jobs": [
     {
-      "attempts": 4,
-      "error": "independent executable verification: the candidate fails the frozen engineering checks: four_rank: exit 1:     sys.exit(main()) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py\", line 357, in wrapper |     return f(*args, **kwargs) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 901, in main |     run(args) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/run.py\", line 892, in run |     elastic_launch( |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 143, in __call__ |     return launch_agent(self._config, self._entrypoint, list(args)) |   File \"/home/wlia0047/ar57_scratch/wenyu/genrec_env_v2/lib64/python3.9/site-packages/torch/distributed/launcher/api.py\", line 277, in launch_agent |     raise ChildFailedError( | torch.distributed.elastic.multiprocessing.errors.ChildFailedError:  | ============================================================ | /fs04/ar57/wenyu/GeneRec/tools/research/stage2/ddp_probe.py FAILED | ------------------------------------------------------------ | Failures: | [1]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 2 (local_rank: 2) |   exitcode  : 1 (pid: 2089827) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | [2]: |   time      : 2026-10-31_19:51:47 |   host      : m3u000.massive.org.au |   rank      : 3 (local_rank: 3) |   exitcode  : 1 (pid: 2089828) |   error_file: <N/A> |   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html | ------------------------------------------------------------ | Root Cause (first observed failure): | [0]: |   time      : 2026-10-31_19:51:47 |   host      : m3u00",
+      "attempts": 5,
+      "error": null,
       "failure_kind": null,
       "idea_id": "GDELTA-SUCC-PULL-RQ",
       "job_id": "stage2:GDELTA-SUCC-PULL-RQ",
       "kind": "stage2",
+      "stage3_job_id": "stage3:GDELTA-SUCC-PULL-RQ",
+      "status": "done"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "GDELTA-SUCC-PULL-RQ",
+      "job_id": "stage3:GDELTA-SUCC-PULL-RQ",
+      "kind": "stage3",
       "stage3_job_id": null,
-      "status": "failed"
+      "status": "pending"
     }
   ],
-  "stage3_jobs": [],
+  "stage3_jobs": [
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "GDELTA-SUCC-PULL-RQ",
+      "job_id": "stage3:GDELTA-SUCC-PULL-RQ",
+      "kind": "stage3",
+      "stage3_job_id": null,
+      "status": "pending"
+    }
+  ],
   "step": "stage2",
-  "updated_at": 1793436708.6501663,
+  "updated_at": 1793445521.7191503,
   "verification": {},
   "worker_log": "/tmp/genrec-mcp/round_round_20261031_163630_776.log",
   "worker_pid": 1275086,

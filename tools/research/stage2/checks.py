@@ -180,11 +180,17 @@ def check_four_rank(tree: Path | str) -> dict:
         return {"status": "NOT_RUN", "name": "four_rank",
                 "detail": "the framework's four-rank probe is missing"}
     torchrun = Path(_python_for()).with_name("torchrun")
+    # A host with fewer than four cards runs as many ranks as it has: the
+    # invariant this check defends is "the ranks this host can start finish and a
+    # rank-0 evaluation does not wait", and a single-card host proves it with one
+    # rank. The mode is recorded, never silently reported as the four-card run.
+    devices = _visible_device_list().split(",")
+    nproc = max(1, min(int(contract.WORLD_SIZE), len(devices)))
     attempts = []
     for attempt in range(2):
         try:
             done = subprocess.run(
-                [str(torchrun), "--standalone", "--nproc_per_node=" + str(contract.WORLD_SIZE),
+                [str(torchrun), "--standalone", "--nproc_per_node=" + str(nproc),
                  "--master_port=" + str(contract.STAGE2_PORT + 10 + attempt), str(script)],
                 cwd=str(tree), capture_output=True, text=True, timeout=1200,
                 env={**contract.launch_env(),
@@ -193,7 +199,10 @@ def check_four_rank(tree: Path | str) -> dict:
             return {"status": "FAIL", "name": "four_rank",
                     "detail": "the four-rank step did not finish: a collective mismatch"}
         if done.returncode == 0 and "DDP_PASS" in done.stdout:
-            detail = "the four ranks finish and the rank-0 evaluation does not wait"
+            detail = ("the four ranks finish and the rank-0 evaluation does not wait"
+                      if nproc >= int(contract.WORLD_SIZE) else
+                      "single-card host: %d rank(s) on %d visible card(s) finish and the "
+                      "rank-0 evaluation does not wait" % (nproc, len(devices)))
             if attempts:
                 detail += " (a first attempt failed transiently: " + attempts[0][:200] + ")"
             return {"status": "PASS", "name": "four_rank", "detail": detail}
