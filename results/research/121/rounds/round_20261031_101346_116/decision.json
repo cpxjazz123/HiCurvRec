@@ -1,0 +1,419 @@
+{
+  "decision_at": 1793404926.7813501,
+  "decision_hash": "10651f54cb69675fbe43b52db606371675a7954265edef4a98c4b7ff3b067a43",
+  "evidence": {
+    "ADM-GEO-RQ": {
+      "bundle_sha256": "d3e91cc5ec811ad5f9397fb28f4e24ed8375a909796ce252265e3e740500390f",
+      "literature_sha256": "b43cd83cfb39bbd14bbe78c12ec325182a63ca00d9e73d00899c0f369dc086be",
+      "math_sha256": "0756a49eff772fba67d69ca6ac4d39e91ce8e9bae381ada6c6e9d60943c4c447",
+      "probe_sha256": "00201b8c408b05ae665fc5034d5863cb648896bfbbc880d4a2b0e03003170b09"
+    },
+    "GROMOVSWAP-L1-RQ": {
+      "bundle_sha256": "422ac3c786e03b4d749ef07b157e1b5162687b967cb7f04aa1da5277820e1a67",
+      "literature_sha256": "7a84155860ee034770958546f627d0d71ddc4ab40985344ca7dccb52bcef1fcb",
+      "math_sha256": "0b1587c3c45f5b789ebced0169d76569939d1ef26cffc67ebb35ad8a14e847ed",
+      "probe_sha256": "1c5b61e187a2ef5ea86920f6630cd6961920eab778205a578fda33fee9c8715c"
+    },
+    "HEXSWAP-SID": {
+      "bundle_sha256": "7a105a8cfb813a034da7faf327c400156fbdcebc66d9a28ee9de0ee9598957af",
+      "literature_sha256": "c1b99b1e78713d153f7d47636586c04cb9ba768809504cb31ec3a544f6a43f73",
+      "math_sha256": "a380e79be7bbe59aabb00a7e8477d42c3067a7b513e61d9c4037f50d96fc1ef8",
+      "probe_sha256": "ac9a814a8fb175b4ded007ce7f8611c9516d4d553cdb3d861b2c9deb89762af0"
+    },
+    "HYP-CERT-LEAFREPAIR": {
+      "bundle_sha256": "1a570bc7d79b1cb847851931015c3e5cf8e7810e974f53de984b286594076e47",
+      "literature_sha256": "db973d276a307969feee756f66bffa16d61c25b1ebbdb779cf0eba733375627b",
+      "math_sha256": "72519ec8f0d7cc41bbbe316f5e04f729758748e0a9413fcdc4118f395d5b0e43",
+      "probe_sha256": "9470969aae3b66135a300ca4919d19e36f55494668ce518281ca3a5ee7b97399"
+    },
+    "TAUSWAP-POINCARE-EXCHANGE": {
+      "bundle_sha256": "b97d402a9a5e49d416f43a54bf49be61cc446f90ac43b09b7914961562f92f97",
+      "literature_sha256": "9a3dc14af5d298c8bd9cc56bf359a544f0002e140a1902dc2adaf91c28b95e76",
+      "math_sha256": "fe43f322f105a961520b6a466ab2da3f86a4964f3583e011022e3bcd88504101",
+      "probe_sha256": "3c3c911a2e57a844fa77f0efbd6e1cd214c08afd9b67318f58daf71fcea0535f"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "GROMOVSWAP-L1-RQ",
+        "mean_rank": 4.6667,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 5,
+          "scoring_3": 5
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Level-1-only against a 1.000 depth-1 survival, and its per-epoch guard is self-defeating: swapped items are released after one epoch so the unchanged Euclidean residual argmin re-claims them, leaving roughly one epoch of net swaps after 3000 epochs while paying 3-8% wall clock and risking the level-1 codebook via the reconstruction damage listed as its own risk (b); the measured delta_hat certificate only gates, it does not steer.",
+          "scoring_2": "of the five it has the weakest coupling under condition 3: candidates, theta and the monotone split/disjoint objective are behaviour-derived and the Gromov delta_hat certificate can only veto an already-chosen swap, so it neither generates nor scores the move, and it is level-1 only against E6/E7 while perturbing the partition every epoch for 2700 epochs, a reconstruction-damage risk the proposal admits.",
+          "scoring_3": "level-1 only in a regime where E6 shows depth 1 is never the bottleneck, with per-epoch perturbation of the partition and the weakest coupling: delta_hat acts only as a certificate while the accept rule dS<0/dD<=0 is pure behaviour counting, so removing the curved gate leaves the same swaps, and E8's K=256 positive-pair share of 0.0822 bounds what level-1 reshuffling can buy."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 14
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "HEXSWAP-SID",
+        "mean_rank": 3.6667,
+        "per_reviewer_position": {
+          "scoring_1": 5,
+          "scoring_2": 3,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Placed last on the evidence because both of its gating quantities are the least grounded: the move set exists only where the Lorentz nearest codeword disagrees with the frozen Euclidean assignment (its own kill rule anticipates fewer than 100 such items, i.e. a no-op), and K=1/(4 delta_hat^2) is extrapolated from a sampled four-point delta with no bound, so saturating Lorentz distances can make its (1-h1) quantile bound tau unreachable; it shares the level-1 misdirection of position 3-4 with the weakest admissibility.",
+          "scoring_2": "level-1 only, which E6's 100%-alive depth-1 prefix and E7's zero T1 NLL make the wrong target, but among the L1 repairs its coupling is the most load-bearing: the move set is defined by Lorentz-nearest-codeword vs Euclidean-assignment disagreement, so geometry-off empties the candidate set rather than decorating it, and K=1/(4 delta_hat^2) is measured rather than tuned.",
+          "scoring_3": "geometry is genuinely load-bearing (the Lorentz-vs-Euclidean disagreement set defines the candidate pool) with K=1/(4 delta_hat^2) measured from the train transition graph and cardinality preserved, but it preserves a level-1 partition whose depth-1 survival is already 1.000 in E6 and whose same-prefix rate is 0.0907 against a 0.067 permutation null in E11, and it names its own empty-disagreement geometry no-op risk."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 11
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 3,
+        "idea_id": "HYP-CERT-LEAFREPAIR",
+        "mean_rank": 1.0,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 1,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "E6/E7 put the failure at the deepest token (gold prefix alive depth 1/2/3 = 1.000/1.000/1.000 but depth 4 = 0.068; NLL 0.00/0.00/0.00/9.03), and this is the only proposal that moves the last code with prefixes bit-identical (so the already-perfect depth-1/2 survival cannot regress) while curvature does real work as the Poincare distance from a behaviour-displaced gyromidpoint with a measured bound B=ln((1-r0)/r0) and derived scale 7.6.",
+          "scoring_2": "E6/E7 show the prefix is already fully alive (gold prefix depth 1/2/3 = 1.000/1.000/1.000, T1-T3 NLL 0.00) and all loss is the deepest token (T4 NLL 9.03, depth-4 survival 0.068); this is the only proposal that leaves levels 1..L-1 bit-identical and repairs exactly that token through a behaviour-agreement x Poincare-distance score, so the curved term and the behaviour term sit in one scoring product.",
+          "scoring_3": "E6/E7 localise the loss at the deepest token (gold prefix alive at depth 1/2/3/4 = 1.000/1.000/1.000/0.068 in l1_br, T4 NLL 9.03 vs 0.00 at T1-T3) and this is the only proposal that repairs the last code while keeping levels 1..L-1 bit-identical, with behaviour and Poincare distance multiplied in one score q_behaviour*exp(-d_kappa(v_i,c_k)) at zero added Stage-2 cost."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 3
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "ADM-GEO-RQ",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "It is the only in-loop candidate whose admission operates at every level including the level that carries the whole 9.03 T4 NLL, and E6 shows assignment-level interference is consequential (l1_br_euclid 0.06207 vs baseline l1_br 0.04671), but it is placed second because fixed K=1 with a measured rho_l exp-map scale is conceded to be near-linear on small residuals (geometry-off ~ both-on) and its dX<=0 veto is satisfied trivially by not moving.",
+          "scoring_2": "E12/E13 put curved dP inside the RQ argmin at every level and every Stage-2 step with the exact behaviour veto created-removed and the travel budget in the same inequality, so it is the only in-training proposal that also reaches the deepest level where E7 localises the loss; held below first place because E6 shows the Euclidean/curved assignment variants l1_br_euclid/l1_only/resample already cluster at 0.06207/0.06233/0.06363, and the dX<=0 veto is trivially met by not moving.",
+          "scoring_3": "the only other mechanism whose action reaches the depth-4 collapse, because it alters the assignment at every level every step, but E6 already shows a curved assignment step losing to its Euclidean twin (successor_geodesic_coarse 0.05500, successor_geodesic_coarse_v2 0.05463, tangent_successor_residual 0.05500 vs l1_br_euclid 0.06207), so it cannot be placed above the leaf repair."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "TAUSWAP-POINCARE-EXCHANGE",
+        "mean_rank": 3.6667,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 4,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Best of the three level-1 repairs: one post-hoc pass with zero Stage-2 cost, exact integer Delta-D/Delta-R admissibility and a one-for-one exchange that conserves the cell-size multiset, so its 0.0907-vs-0.067 same-first-prefix diagnostic (E11) is attributable; still demoted because E6 shows depth-1 survival is already 1.000, so the lever it can move is not the measured bottleneck, and it risks near-origin Euclidean-equivalence.",
+          "scoring_2": "also level-1 only and thus aimed away from the E7 T4 bottleneck; Poincare distance to the Frechet cell means enters only as the swap gain while the exact integer Delta-D/Delta-R behaviour counts drive the accept decision, and the proposal itself concedes the curved and Euclidean gains may rank swaps almost identically near the ball origin, so the geometry is the least likely of the moderate-coupling proposals to be demonstrably necessary.",
+          "scoring_3": "same level-1 ceiling as HEXSWAP (E6 depth-1 alive 1.000; E11 first-prefix signal barely above null) plus kappa=1 as a documented default rather than a measured quantity and its own concession that near-origin gains may rank almost identically to Euclidean; only its internal-holdout h0 and explicit Delta-D/Delta-R ledgers are stronger than the alternatives."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 11
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "422ac3c786e03b4d749ef07b157e1b5162687b967cb7f04aa1da5277820e1a67",
+      "idea_id": "GROMOVSWAP-L1-RQ",
+      "proposal_sha256": "1358c40213d93e7d99d6d45515f42f98cedc90df09440b6bc12df6514b84a4fb"
+    },
+    {
+      "evidence_sha256": "7a105a8cfb813a034da7faf327c400156fbdcebc66d9a28ee9de0ee9598957af",
+      "idea_id": "HEXSWAP-SID",
+      "proposal_sha256": "e3093cc84455ea63db5eba1b5a62cf89a7b86d5af657b8bef7e352669bc6214d"
+    },
+    {
+      "evidence_sha256": "1a570bc7d79b1cb847851931015c3e5cf8e7810e974f53de984b286594076e47",
+      "idea_id": "HYP-CERT-LEAFREPAIR",
+      "proposal_sha256": "ce482d37b21fa5e8232c8beb64b31e707e86b428e8e8fd146ae855b4b37aa889"
+    },
+    {
+      "evidence_sha256": "d3e91cc5ec811ad5f9397fb28f4e24ed8375a909796ce252265e3e740500390f",
+      "idea_id": "ADM-GEO-RQ",
+      "proposal_sha256": "f849e1af9bc98d71fe801fcc17f080916d720ff4164dc509aa4845d356a14e08"
+    },
+    {
+      "evidence_sha256": "b97d402a9a5e49d416f43a54bf49be61cc446f90ac43b09b7914961562f92f97",
+      "idea_id": "TAUSWAP-POINCARE-EXCHANGE",
+      "proposal_sha256": "d25fe695412345d5f68313062217b708d4a039c40bddcbae04042c4240731def"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "HYP-CERT-LEAFREPAIR",
+          "position": 1,
+          "reason": "E6/E7 put the failure at the deepest token (gold prefix alive depth 1/2/3 = 1.000/1.000/1.000 but depth 4 = 0.068; NLL 0.00/0.00/0.00/9.03), and this is the only proposal that moves the last code with prefixes bit-identical (so the already-perfect depth-1/2 survival cannot regress) while curvature does real work as the Poincare distance from a behaviour-displaced gyromidpoint with a measured bound B=ln((1-r0)/r0) and derived scale 7.6."
+        },
+        {
+          "idea_id": "ADM-GEO-RQ",
+          "position": 2,
+          "reason": "It is the only in-loop candidate whose admission operates at every level including the level that carries the whole 9.03 T4 NLL, and E6 shows assignment-level interference is consequential (l1_br_euclid 0.06207 vs baseline l1_br 0.04671), but it is placed second because fixed K=1 with a measured rho_l exp-map scale is conceded to be near-linear on small residuals (geometry-off ~ both-on) and its dX<=0 veto is satisfied trivially by not moving."
+        },
+        {
+          "idea_id": "TAUSWAP-POINCARE-EXCHANGE",
+          "position": 3,
+          "reason": "Best of the three level-1 repairs: one post-hoc pass with zero Stage-2 cost, exact integer Delta-D/Delta-R admissibility and a one-for-one exchange that conserves the cell-size multiset, so its 0.0907-vs-0.067 same-first-prefix diagnostic (E11) is attributable; still demoted because E6 shows depth-1 survival is already 1.000, so the lever it can move is not the measured bottleneck, and it risks near-origin Euclidean-equivalence."
+        },
+        {
+          "idea_id": "GROMOVSWAP-L1-RQ",
+          "position": 4,
+          "reason": "Level-1-only against a 1.000 depth-1 survival, and its per-epoch guard is self-defeating: swapped items are released after one epoch so the unchanged Euclidean residual argmin re-claims them, leaving roughly one epoch of net swaps after 3000 epochs while paying 3-8% wall clock and risking the level-1 codebook via the reconstruction damage listed as its own risk (b); the measured delta_hat certificate only gates, it does not steer."
+        },
+        {
+          "idea_id": "HEXSWAP-SID",
+          "position": 5,
+          "reason": "Placed last on the evidence because both of its gating quantities are the least grounded: the move set exists only where the Lorentz nearest codeword disagrees with the frozen Euclidean assignment (its own kill rule anticipates fewer than 100 such items, i.e. a no-op), and K=1/(4 delta_hat^2) is extrapolated from a sampled four-point delta with no bound, so saturating Lorentz distances can make its (1-h1) quantile bound tau unreachable; it shares the level-1 misdirection of position 3-4 with the weakest admissibility."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "HYP-CERT-LEAFREPAIR",
+          "position": 1,
+          "reason": "E6/E7 show the prefix is already fully alive (gold prefix depth 1/2/3 = 1.000/1.000/1.000, T1-T3 NLL 0.00) and all loss is the deepest token (T4 NLL 9.03, depth-4 survival 0.068); this is the only proposal that leaves levels 1..L-1 bit-identical and repairs exactly that token through a behaviour-agreement x Poincare-distance score, so the curved term and the behaviour term sit in one scoring product."
+        },
+        {
+          "idea_id": "ADM-GEO-RQ",
+          "position": 2,
+          "reason": "E12/E13 put curved dP inside the RQ argmin at every level and every Stage-2 step with the exact behaviour veto created-removed and the travel budget in the same inequality, so it is the only in-training proposal that also reaches the deepest level where E7 localises the loss; held below first place because E6 shows the Euclidean/curved assignment variants l1_br_euclid/l1_only/resample already cluster at 0.06207/0.06233/0.06363, and the dX<=0 veto is trivially met by not moving."
+        },
+        {
+          "idea_id": "HEXSWAP-SID",
+          "position": 3,
+          "reason": "level-1 only, which E6's 100%-alive depth-1 prefix and E7's zero T1 NLL make the wrong target, but among the L1 repairs its coupling is the most load-bearing: the move set is defined by Lorentz-nearest-codeword vs Euclidean-assignment disagreement, so geometry-off empties the candidate set rather than decorating it, and K=1/(4 delta_hat^2) is measured rather than tuned."
+        },
+        {
+          "idea_id": "TAUSWAP-POINCARE-EXCHANGE",
+          "position": 4,
+          "reason": "also level-1 only and thus aimed away from the E7 T4 bottleneck; Poincare distance to the Frechet cell means enters only as the swap gain while the exact integer Delta-D/Delta-R behaviour counts drive the accept decision, and the proposal itself concedes the curved and Euclidean gains may rank swaps almost identically near the ball origin, so the geometry is the least likely of the moderate-coupling proposals to be demonstrably necessary."
+        },
+        {
+          "idea_id": "GROMOVSWAP-L1-RQ",
+          "position": 5,
+          "reason": "of the five it has the weakest coupling under condition 3: candidates, theta and the monotone split/disjoint objective are behaviour-derived and the Gromov delta_hat certificate can only veto an already-chosen swap, so it neither generates nor scores the move, and it is level-1 only against E6/E7 while perturbing the partition every epoch for 2700 epochs, a reconstruction-damage risk the proposal admits."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "HYP-CERT-LEAFREPAIR",
+          "position": 1,
+          "reason": "E6/E7 localise the loss at the deepest token (gold prefix alive at depth 1/2/3/4 = 1.000/1.000/1.000/0.068 in l1_br, T4 NLL 9.03 vs 0.00 at T1-T3) and this is the only proposal that repairs the last code while keeping levels 1..L-1 bit-identical, with behaviour and Poincare distance multiplied in one score q_behaviour*exp(-d_kappa(v_i,c_k)) at zero added Stage-2 cost."
+        },
+        {
+          "idea_id": "ADM-GEO-RQ",
+          "position": 2,
+          "reason": "the only other mechanism whose action reaches the depth-4 collapse, because it alters the assignment at every level every step, but E6 already shows a curved assignment step losing to its Euclidean twin (successor_geodesic_coarse 0.05500, successor_geodesic_coarse_v2 0.05463, tangent_successor_residual 0.05500 vs l1_br_euclid 0.06207), so it cannot be placed above the leaf repair."
+        },
+        {
+          "idea_id": "HEXSWAP-SID",
+          "position": 3,
+          "reason": "geometry is genuinely load-bearing (the Lorentz-vs-Euclidean disagreement set defines the candidate pool) with K=1/(4 delta_hat^2) measured from the train transition graph and cardinality preserved, but it preserves a level-1 partition whose depth-1 survival is already 1.000 in E6 and whose same-prefix rate is 0.0907 against a 0.067 permutation null in E11, and it names its own empty-disagreement geometry no-op risk."
+        },
+        {
+          "idea_id": "TAUSWAP-POINCARE-EXCHANGE",
+          "position": 4,
+          "reason": "same level-1 ceiling as HEXSWAP (E6 depth-1 alive 1.000; E11 first-prefix signal barely above null) plus kappa=1 as a documented default rather than a measured quantity and its own concession that near-origin gains may rank almost identically to Euclidean; only its internal-holdout h0 and explicit Delta-D/Delta-R ledgers are stronger than the alternatives."
+        },
+        {
+          "idea_id": "GROMOVSWAP-L1-RQ",
+          "position": 5,
+          "reason": "level-1 only in a regime where E6 shows depth 1 is never the bottleneck, with per-epoch perturbation of the partition and the weakest coupling: delta_hat acts only as a certificate while the accept rule dS<0/dD<=0 is pure behaviour counting, so removing the curved gate leaves the same swaps, and E8's K=256 positive-pair share of 0.0822 bounds what level-1 reshuffling can buy."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261031_101346_116",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "ADM-GEO-RQ": {
+        "first_places": 0,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      },
+      "GROMOVSWAP-L1-RQ": {
+        "first_places": 0,
+        "mean_rank": 4.6667,
+        "total_rank": 14
+      },
+      "HEXSWAP-SID": {
+        "first_places": 0,
+        "mean_rank": 3.6667,
+        "total_rank": 11
+      },
+      "HYP-CERT-LEAFREPAIR": {
+        "first_places": 3,
+        "mean_rank": 1.0,
+        "total_rank": 3
+      },
+      "TAUSWAP-POINCARE-EXCHANGE": {
+        "first_places": 0,
+        "mean_rank": 3.6667,
+        "total_rank": 11
+      }
+    },
+    "backups": [
+      {
+        "first_places": 0,
+        "idea_id": "ADM-GEO-RQ",
+        "mean_rank": 2.0,
+        "status": "BACKUP",
+        "total_rank": 6
+      },
+      {
+        "first_places": 0,
+        "idea_id": "HEXSWAP-SID",
+        "mean_rank": 3.6667,
+        "status": "BACKUP",
+        "total_rank": 11
+      },
+      {
+        "first_places": 0,
+        "idea_id": "TAUSWAP-POINCARE-EXCHANGE",
+        "mean_rank": 3.6667,
+        "status": "BACKUP",
+        "total_rank": 11
+      },
+      {
+        "first_places": 0,
+        "idea_id": "GROMOVSWAP-L1-RQ",
+        "mean_rank": 4.6667,
+        "status": "BACKUP",
+        "total_rank": 14
+      }
+    ],
+    "disagreement": {
+      "ADM-GEO-RQ": 0,
+      "GROMOVSWAP-L1-RQ": 1,
+      "HEXSWAP-SID": 2,
+      "HYP-CERT-LEAFREPAIR": 0,
+      "TAUSWAP-POINCARE-EXCHANGE": 1
+    },
+    "rejected": [
+      {
+        "idea_id": "ADM-GEO-RQ",
+        "mean_rank": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 6
+      },
+      {
+        "idea_id": "HEXSWAP-SID",
+        "mean_rank": 3.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 11
+      },
+      {
+        "idea_id": "TAUSWAP-POINCARE-EXCHANGE",
+        "mean_rank": 3.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 11
+      },
+      {
+        "idea_id": "GROMOVSWAP-L1-RQ",
+        "mean_rank": 4.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 14
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 3,
+        "idea_id": "HYP-CERT-LEAFREPAIR",
+        "mean_rank": 1.0,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 3
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}
