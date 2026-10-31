@@ -649,3 +649,14 @@ results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
 
 # Archived issue #116 runs stay untracked and remain isolated
 /results/research/issue116/
+
+# === 2026-11-01: LFS 配额已尽 (2.9 GB 被跟踪, 免费额度 1 GiB) ===
+# Stage2/Stage3 的 checkpoint 与数组产物不再入库: 它们可由 item_sids.json
+# (仍入库) 与一次 22 分钟的 Stage2 重跑重建, 而 LFS 对象不可变, 每次重跑
+# 都会永久新增一份配额。段末规则优先级最高, 覆盖上面的 ! 重新包含。
+results/**/*.pth
+results/**/*.pt
+results/**/*.npy
+stage2_RQ-VAE/**/*.pth
+stage2_RQ-VAE/**/*.npy
+results/research/**/*.npz
