@@ -1,0 +1,281 @@
+{
+  "decision_at": 1793409026.4849865,
+  "decision_hash": "174ef0008e1fa42e5ec3d6cc756d120bd051c7dd4b525ca614a15b7ab8c3c563",
+  "evidence": {
+    "GROMOV4-MARGIN-GATE-SID": {
+      "bundle_sha256": "7b70423833611ccaa03db99436c6002756517122912d27fc5d1e19f755394cbb",
+      "literature_sha256": "16607e0746ec0f0479dfb34283d4d2731a9a644e614ac67db66f17c31e4f73c1",
+      "math_sha256": "3649cb19e7de35cbf5a8d49691f91e4ce2f2a7ca855dd9e760b253acf23ff330",
+      "probe_sha256": "f7f479f34d7de4add8a7581f29c706beb05aed4d2255357e676b995628ebdefe"
+    },
+    "HORO-TRANSPLANT-L": {
+      "bundle_sha256": "735c028526119499371eccfdba67fa9c24682bc34eea8a5a67896faf6b702a3d",
+      "literature_sha256": "ac399852ce09fa8d17e9e0d17eebc51f6c7bf076456cba92b6e4e152fc003622",
+      "math_sha256": "d242a4c322584f3fbd52822227dbca709c7c05972f193c8a972a18f1db5f9f44",
+      "probe_sha256": "1ecb858345222352b503cc2182d02edeab66af08d8da068e5d5a66d916a15949"
+    },
+    "gromovcrit-deepest-split": {
+      "bundle_sha256": "cf0a8c8be17804d3146caf0831b196fbfe320ccd3c2030843fbaba947f6a2d1a",
+      "literature_sha256": "10b8383d265b430c528fee96293c2f5c4f6765ec4888e07b1702277fa1820255",
+      "math_sha256": "a99b3d272697bf895de2ae61e1201c01bea9b1010f2045dc778a65ee27c2d6d2",
+      "probe_sha256": "04d7e26405eb2830dd9e32318e31480f65795e08079ad5b38a088e32a947103a"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "gromovcrit-deepest-split",
+        "mean_rank": 1.6667,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 2,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Its equations are complete and the coupling is real (successor barycentres and the prefix confusion table propose the move, Poincare margin M1>M0 and the Gromov-delta certificate admit it, zero added per-step cost) and it targets the same depth-4 bottleneck in E6/E7, but C1 N(p,k1)-N(p,k2)<=sqrt(N(p,k1)) is not mass-restricted, so with E5's heavy tail (top-1 0.0543, support 44.3) and E10's mean out-degree 5.4526 it flags many low-count prefixes, and its split raises the deepest-code count just where E6 depth-4 survival is already ~20/256=0.078 and E8 shows smaller K keeps behavioural neighbours together better (0.3106 at K=16 vs 0.0822 at K=256), so the claimed precision-first small move set is not enforced by its own predicate.",
+          "scoring_2": "E5's successor-entropy spread (top1 mass 0.4375 low-entropy vs 0.0543 high-entropy quintile) makes a per-prefix top-two confusion table a grounded precision condition, and E6/E7 justify editing level L only, but its C1/C2/S-a/S-b/S-c/M1 stack plus code splitting carries the proposal's own empty-critical-set risk, so it is placed below the simpler transplant; still ranked above GROMOV4 because kappa=-1 keeps the geometry genuinely curved.",
+          "scoring_3": "E6 shows target survival collapsing at the deepest level (gold prefix alive 0.161→0.085 for l1_br_euclid and 0.156→0.086 for l1_only) and E7 puts the loss sink at T4 (NLL 9.03 for l1_br, 1.23 for l1_br_euclid), so its prefix-conditional top-two confusion table plus one-Poisson-sigma critical set and split/margin certificate attack exactly the observed failure, with a self-contained behaviour→curved-geometry pathway and derived constants; the risk is an empty critical set, but no other proposal targets the observed depth-4 confusion as directly."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 5
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 2,
+        "idea_id": "HORO-TRANSPLANT-L",
+        "mean_rank": 1.3333,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 1,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Only this mechanism lets behaviour merely nominate the sibling while the curved test against that child's frozen anchor (D_i>=0 horoball, Delta_i<=0 geodesic no-harm) decides, so a move cannot fight the quantiser, and E6/E7 show the baseline failure is exactly depth-4 (prefix alive 1.000/1.000/1.000/0.068, recall 0.04671, T4 NLL 9.03) while keeping levels 1..L-1 and the vocabulary bit-identical preserves the depth-1-3 survival that all better variants (0.06207-0.06363) rely on; the behaviour input is measured in E5 (top-1 mass 0.4375 vs 0.0543) and E10 (median branch degree 3, 21,699 items with successors), and both gates are derived quantiles/signs so one run needs no sweep.",
+          "scoring_2": "E6/E7 pin the loss at the deepest position (l1_br T4 NLL 9.03, depth-4 prefix survival 0.068, recall 0.04671 vs l1_only 0.06233) and this proposal changes only k_L with no new codes and a constant-free Delta_i<=0 gate against the frozen Stage-2 child anchors, so it is the least invasive and most directly coupled to the token Stage 3 must emit; E6 also shows heavy hyperbolic successor machinery underperforming (successor_geodesic_coarse 0.05500), favouring its minimal one-pass form.",
+          "scoring_3": "It also targets the E6/E7 deepest-level bottleneck and its Busemann/horoball construction is genuinely hyperbolic, but its Step-7 no-harm gate treats the Fréchet means m_{p,k} as if they were the frozen Stage-2 codebook anchors (they are item-latent means and ignore the RQ residual), and the joint D_i>=0 plus Delta_i<=0 conditions are likely to admit very few items, so despite constant-free gating it is a less reliable route to the E6 depth-4 headroom than a split that directly separates the confusable pair."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 4
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "GROMOV4-MARGIN-GATE-SID",
+        "mean_rank": 3.0,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 3,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Its SPEC step (6) defers the move predicate and greedy acceptance to \"SPEC EQUATIONS\" that are absent, so the deciding computation has no equations and misses criterion 5; its geometry is the weakest, since delta_G measured by the four-point defect of a hop metric on the E10 graph (mean out-degree 5.4526, 115,582 edges) will be large, making c=1/max(delta_G,1) small, kappa=-c^2 near zero and the margin test close to Euclidean (a risk it lists itself); the entropy-eligible and frozen-cell-size capacity gates are the only part well grounded in E5 and E8, which is not enough to rescue the missing predicate.",
+          "scoring_2": "E10/E11 show a cyclic transition graph (115582 edges, density 5.3266, mean out-degree 5.4526), so the measured delta_G in c=1/max(delta_G,1) is likely large and the curvature near zero, making the geometry effectively Euclidean and weakening the coupling; E6/E7 also show the deepest token is the right locus, but the five simultaneous gates and the frozen Stage-2 cell-size cap make an inert move set likely, so it is placed last.",
+          "scoring_3": "Its curvature is derived from a max-over-sampled-quadruples Gromov defect on the sparse hop graph that E10 shows to have edge density 5.33 and median branch 3, which will tend to inflate δ_G and drive c→0, making the geometry nearly Euclidean and the coupling weak; its five move inequalities and δ_loc(i) are not stated in the bundle (only referenced as SPEC EQUATIONS), and its entropy gate selects the high-entropy regime that E5 measures at 44 successors and top1 mass 0.054, where a deterministic deepest-token relabel can least reduce Stage-3 uncertainty."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 9
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "cf0a8c8be17804d3146caf0831b196fbfe320ccd3c2030843fbaba947f6a2d1a",
+      "idea_id": "gromovcrit-deepest-split",
+      "proposal_sha256": "0180b61ece27ceaec6e15be722879de4d1cd5bb81c09c553ec72cdbdeee6ed60"
+    },
+    {
+      "evidence_sha256": "735c028526119499371eccfdba67fa9c24682bc34eea8a5a67896faf6b702a3d",
+      "idea_id": "HORO-TRANSPLANT-L",
+      "proposal_sha256": "8869280fd659b2979717e4fe54aa71cd5fb77774649b05b922ca1a649ac86b2d"
+    },
+    {
+      "evidence_sha256": "7b70423833611ccaa03db99436c6002756517122912d27fc5d1e19f755394cbb",
+      "idea_id": "GROMOV4-MARGIN-GATE-SID",
+      "proposal_sha256": "61bd633dadad9d19db53bcfb87f15134fbc04c81419dc54b065f8ff01f5e0405"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "HORO-TRANSPLANT-L",
+          "position": 1,
+          "reason": "Only this mechanism lets behaviour merely nominate the sibling while the curved test against that child's frozen anchor (D_i>=0 horoball, Delta_i<=0 geodesic no-harm) decides, so a move cannot fight the quantiser, and E6/E7 show the baseline failure is exactly depth-4 (prefix alive 1.000/1.000/1.000/0.068, recall 0.04671, T4 NLL 9.03) while keeping levels 1..L-1 and the vocabulary bit-identical preserves the depth-1-3 survival that all better variants (0.06207-0.06363) rely on; the behaviour input is measured in E5 (top-1 mass 0.4375 vs 0.0543) and E10 (median branch degree 3, 21,699 items with successors), and both gates are derived quantiles/signs so one run needs no sweep."
+        },
+        {
+          "idea_id": "gromovcrit-deepest-split",
+          "position": 2,
+          "reason": "Its equations are complete and the coupling is real (successor barycentres and the prefix confusion table propose the move, Poincare margin M1>M0 and the Gromov-delta certificate admit it, zero added per-step cost) and it targets the same depth-4 bottleneck in E6/E7, but C1 N(p,k1)-N(p,k2)<=sqrt(N(p,k1)) is not mass-restricted, so with E5's heavy tail (top-1 0.0543, support 44.3) and E10's mean out-degree 5.4526 it flags many low-count prefixes, and its split raises the deepest-code count just where E6 depth-4 survival is already ~20/256=0.078 and E8 shows smaller K keeps behavioural neighbours together better (0.3106 at K=16 vs 0.0822 at K=256), so the claimed precision-first small move set is not enforced by its own predicate."
+        },
+        {
+          "idea_id": "GROMOV4-MARGIN-GATE-SID",
+          "position": 3,
+          "reason": "Its SPEC step (6) defers the move predicate and greedy acceptance to \"SPEC EQUATIONS\" that are absent, so the deciding computation has no equations and misses criterion 5; its geometry is the weakest, since delta_G measured by the four-point defect of a hop metric on the E10 graph (mean out-degree 5.4526, 115,582 edges) will be large, making c=1/max(delta_G,1) small, kappa=-c^2 near zero and the margin test close to Euclidean (a risk it lists itself); the entropy-eligible and frozen-cell-size capacity gates are the only part well grounded in E5 and E8, which is not enough to rescue the missing predicate."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "HORO-TRANSPLANT-L",
+          "position": 1,
+          "reason": "E6/E7 pin the loss at the deepest position (l1_br T4 NLL 9.03, depth-4 prefix survival 0.068, recall 0.04671 vs l1_only 0.06233) and this proposal changes only k_L with no new codes and a constant-free Delta_i<=0 gate against the frozen Stage-2 child anchors, so it is the least invasive and most directly coupled to the token Stage 3 must emit; E6 also shows heavy hyperbolic successor machinery underperforming (successor_geodesic_coarse 0.05500), favouring its minimal one-pass form."
+        },
+        {
+          "idea_id": "gromovcrit-deepest-split",
+          "position": 2,
+          "reason": "E5's successor-entropy spread (top1 mass 0.4375 low-entropy vs 0.0543 high-entropy quintile) makes a per-prefix top-two confusion table a grounded precision condition, and E6/E7 justify editing level L only, but its C1/C2/S-a/S-b/S-c/M1 stack plus code splitting carries the proposal's own empty-critical-set risk, so it is placed below the simpler transplant; still ranked above GROMOV4 because kappa=-1 keeps the geometry genuinely curved."
+        },
+        {
+          "idea_id": "GROMOV4-MARGIN-GATE-SID",
+          "position": 3,
+          "reason": "E10/E11 show a cyclic transition graph (115582 edges, density 5.3266, mean out-degree 5.4526), so the measured delta_G in c=1/max(delta_G,1) is likely large and the curvature near zero, making the geometry effectively Euclidean and weakening the coupling; E6/E7 also show the deepest token is the right locus, but the five simultaneous gates and the frozen Stage-2 cell-size cap make an inert move set likely, so it is placed last."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "gromovcrit-deepest-split",
+          "position": 1,
+          "reason": "E6 shows target survival collapsing at the deepest level (gold prefix alive 0.161→0.085 for l1_br_euclid and 0.156→0.086 for l1_only) and E7 puts the loss sink at T4 (NLL 9.03 for l1_br, 1.23 for l1_br_euclid), so its prefix-conditional top-two confusion table plus one-Poisson-sigma critical set and split/margin certificate attack exactly the observed failure, with a self-contained behaviour→curved-geometry pathway and derived constants; the risk is an empty critical set, but no other proposal targets the observed depth-4 confusion as directly."
+        },
+        {
+          "idea_id": "HORO-TRANSPLANT-L",
+          "position": 2,
+          "reason": "It also targets the E6/E7 deepest-level bottleneck and its Busemann/horoball construction is genuinely hyperbolic, but its Step-7 no-harm gate treats the Fréchet means m_{p,k} as if they were the frozen Stage-2 codebook anchors (they are item-latent means and ignore the RQ residual), and the joint D_i>=0 plus Delta_i<=0 conditions are likely to admit very few items, so despite constant-free gating it is a less reliable route to the E6 depth-4 headroom than a split that directly separates the confusable pair."
+        },
+        {
+          "idea_id": "GROMOV4-MARGIN-GATE-SID",
+          "position": 3,
+          "reason": "Its curvature is derived from a max-over-sampled-quadruples Gromov defect on the sparse hop graph that E10 shows to have edge density 5.33 and median branch 3, which will tend to inflate δ_G and drive c→0, making the geometry nearly Euclidean and the coupling weak; its five move inequalities and δ_loc(i) are not stated in the bundle (only referenced as SPEC EQUATIONS), and its entropy gate selects the high-entropy regime that E5 measures at 44 successors and top1 mass 0.054, where a deterministic deepest-token relabel can least reduce Stage-3 uncertainty."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261031_115851_915",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "GROMOV4-MARGIN-GATE-SID": {
+        "first_places": 0,
+        "mean_rank": 3.0,
+        "total_rank": 9
+      },
+      "HORO-TRANSPLANT-L": {
+        "first_places": 2,
+        "mean_rank": 1.3333,
+        "total_rank": 4
+      },
+      "gromovcrit-deepest-split": {
+        "first_places": 1,
+        "mean_rank": 1.6667,
+        "total_rank": 5
+      }
+    },
+    "backups": [
+      {
+        "first_places": 1,
+        "idea_id": "gromovcrit-deepest-split",
+        "mean_rank": 1.6667,
+        "status": "BACKUP",
+        "total_rank": 5
+      },
+      {
+        "first_places": 0,
+        "idea_id": "GROMOV4-MARGIN-GATE-SID",
+        "mean_rank": 3.0,
+        "status": "BACKUP",
+        "total_rank": 9
+      }
+    ],
+    "disagreement": {
+      "GROMOV4-MARGIN-GATE-SID": 0,
+      "HORO-TRANSPLANT-L": 1,
+      "gromovcrit-deepest-split": 1
+    },
+    "rejected": [
+      {
+        "idea_id": "gromovcrit-deepest-split",
+        "mean_rank": 1.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 5
+      },
+      {
+        "idea_id": "GROMOV4-MARGIN-GATE-SID",
+        "mean_rank": 3.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 9
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 2,
+        "idea_id": "HORO-TRANSPLANT-L",
+        "mean_rank": 1.3333,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 4
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}
