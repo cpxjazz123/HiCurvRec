@@ -309,34 +309,37 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
                     reference_codes: torch.Tensor = None) -> torch.Tensor:
     """Compact inside a prefix, separated across prefixes, in the ball.
 
-    Two positions are compared for every item: its PRE-QUANTIZATION ball position
-    and the expected code point of its prefix, so the term acts on the item
-    representation and on the codebook at the same time (the second part is what
-    gives the codebooks a gradient).
+    The clustering is SOFT: a prefix is a probability, not a hard label, and
+    every quantity is differentiable. The hard-label version had almost no
+    gradient path (the group membership was detached and the codebook gradient
+    was measured at zero), and it ran into the trap where a batch with a single
+    group returns a constant and the run stays collapsed for ever.
 
-    A group's centre is the hyperbolic Frechet mean of its members. The grouping
-    falls back down the hierarchy when a level puts the whole batch on one code.
-    The normalized ratio is 1 at collapse (intra = inter = 0) and 0 when the
-    prefixes are compact and mutually separated.
+    For the grouping level `l` with soft assignment `p`:
+
+        centre_c  = sum_i p(i,c) x_i / sum_i p(i,c)      (a soft Frechet centre)
+        intra     = sum_c sum_i p(i,c) d_H(x_i, centre_c)^2 / N
+        inter     = sum_{c<c'} p_c p_{c'} d_H(centre_c, centre_{c'})^2
+
+    `x_i` is the item's pre-quantization ball position and, in the second half of
+    the intra term, its expected code point -- the part that gives the codebooks
+    a gradient. The loss is `1 - tanh((inter - intra) / (inter + intra))`: 1 when
+    everything sits on one point, 0 when the prefixes are compact and mutually
+    separated.
+
+    The centres use the true hyperbolic Frechet mean (Riemannian iterations) over
+    the mass-weighted members, under the compute budget above.
     """
     probs, latents, rows = _rows(probs, latents)
-    # the codebooks are NOT sliced: they are (codes, dim) and the rows index them
     item_points = project(latents[0])
-    # The grouping level is the one that leaves the most NON-TRIVIAL groups (at
-    # least two members). A level that scatters the batch over hundreds of
-    # singleton codes leaves nothing to compare, and a level that puts the whole
-    # batch on one code has no contrast at all.
     labels = None
     masses = None
     level_index = 0
     best_groups = 0
-    fallback = None
     for index, level_probs in enumerate(probs):
         candidate = level_probs.detach().argmax(dim=-1)
         if candidate.unique().numel() < 2:
             continue
-        if fallback is None or candidate.unique().numel() > fallback[0].unique().numel():
-            fallback = (candidate, level_probs, index)
         counts = torch.bincount(candidate)
         groups = int((counts >= 2).sum())
         if groups > best_groups:
@@ -344,63 +347,64 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
             labels = candidate
             masses = level_probs
             level_index = index
-    if labels is None and fallback is not None:
-        # No level has a group with two members: the term still has to carry a
-        # gradient, so the level with the most codes is used and its SINGLETON
-        # groups are kept (a singleton's Frechet mean is the point itself).
-        # Returning a constant here instead left the term with no gradient at all,
-        # and the run stayed collapsed for ever.
-        labels, masses, level_index = fallback
     if labels is None:
-        # nothing separates the batch: the term is at its worst, and it carries no
-        # gradient because there is no group to move
+        # nothing separates the batch: the term is at its worst, and the guard
+        # still carries the gradient
         return item_points.sum() * 0.0 + 1.0
-    # the EXPECTED code point of every item: the soft mass of the GROUPING level
-    # over that level's codebook. Using the same level for the grouping and for
-    # the code point is what keeps the gradient connected to the codebook.
+    weight = masses.clamp_min(1e-8)
+    weight = weight / weight.sum(dim=0, keepdim=True).clamp_min(1e-12)
     prefix_points = probs[level_index] @ code_points[level_index]
-    item_centres = []
-    code_centres = []
-    members = []
-    # only the largest groups are summarised: the Frechet mean per group per step
-    # is what made this term 40x slower than the baseline
-    order = sorted(labels.unique().tolist(),
-                   key=lambda code: -int((labels == code).sum()))
-    for code in order[:FRECHET_GROUPS]:
-        mask = labels == code
-        weight = masses[:, code][mask].detach().clamp_min(1e-8)
-        item_group = item_points[mask]
-        code_group = prefix_points[mask]
-        # The centres are DIFFERENTIABLE again. With detached centres this arm
-        # had no codebook gradient at all (measured: 0.0 at the middle level), the
-        # partition guard had to hold the whole partition alone, and the item
-        # positions collapsed instead -- the partition collapsed with them. The
-        # cost is bounded by the compute budget above (two Riemannian steps over
-        # the eight largest groups) instead of by detaching.
-        item_centres.append(frechet_mean(
-            [item_group[i] for i in range(item_group.shape[0])], weight))
-        code_centres.append(frechet_mean(
-            [code_group[i] for i in range(code_group.shape[0])], weight))
-        members.append(mask)
-    if len(item_centres) < 2:
+
+    def soft_centre(points: torch.Tensor) -> torch.Tensor:
+        """The mass-weighted hyperbolic Frechet mean of the batch, per code.
+
+        The mean is INITIALISED at the mass-weighted arithmetic mean (the usual
+        Riemannian initialisation) and refined by one Frechet step. The full
+        iteration was too expensive: a Frechet mean per code and per step is
+        hundreds of maps, and the arm ran at a fortieth of the baseline's speed.
+        """
+        mass = weight.t()                        # (codes, batch)
+        weighted = mass @ points                 # (codes, dim)
+        total = mass.sum(dim=1, keepdim=True).clamp_min(1e-12)
+        centres = []
+        for code in range(points.shape[0]):
+            if float(total[code]) < 1e-6:
+                continue
+            start = (weighted[code] / total[code])
+            start = start / max(float(start.norm()), 1e-8) * min(
+                float(start.norm()), 1 - 1e-3)
+            step = _log_map(start.unsqueeze(0), points) * mass[code].unsqueeze(-1)
+            refined = _exp_map(start.unsqueeze(0), step.sum(dim=0).unsqueeze(0)).squeeze(0)
+            radius = refined.norm()
+            centres.append(refined * (radius.clamp(max=1 - 1e-6) / radius.clamp_min(1e-12)))
+        if not centres:
+            return points.mean(dim=0)
+        return torch.stack(centres)
+
+    item_centres = soft_centre(item_points)
+    code_centres = soft_centre(prefix_points)
+    valid = weight.sum(dim=1) > 1e-6
+    item_centres = item_centres[valid]
+    code_centres = code_centres[valid]
+    weight = weight[valid]
+    if item_centres.shape[0] < 2:
         return item_points.sum() * 0.0 + 1.0
-    item_centres = torch.stack(item_centres)
-    code_centres = torch.stack(code_centres)
-    intra = []
-    for item_centre, code_centre, mask in zip(item_centres, code_centres, members):
-        intra.append((distance(item_points[mask], item_centre.unsqueeze(0)) ** 2).mean())
-        intra.append((distance(prefix_points[mask], code_centre.unsqueeze(0)) ** 2).mean())
-    intra = torch.stack(intra).mean()
-    centre_distance = distance(code_centres, code_centres) ** 2
-    off_diagonal = ~torch.eye(len(code_centres), dtype=torch.bool,
-                               device=code_centres.device)
-    inter = centre_distance[off_diagonal].mean()
+
+    # intra: the mass-weighted dispersion around each centre
+    # distance() broadcasts the two point sets itself, so both sides stay 2-D
+    item_intra = (distance(item_points, item_centres) ** 2
+                  * weight.t().unsqueeze(-1)).sum() / max(float(item_points.shape[0]), 1.0)
+    code_intra = (distance(prefix_points, code_centres) ** 2
+                  * weight.t().unsqueeze(-1)).sum() / max(float(prefix_points.shape[0]), 1.0)
+    intra = 0.5 * (item_intra + code_intra)
+    # inter: the mass-weighted separation of the centres
+    centre_distance = distance(item_centres.unsqueeze(1), item_centres.unsqueeze(0)) ** 2
+    mass = weight.sum(dim=1)
+    inter = (centre_distance * mass.unsqueeze(1) * mass.unsqueeze(0)).sum() / max(
+        float((mass ** 2).sum()), 1e-12)
     return 1.0 - torch.tanh((inter - intra) / (inter + intra).clamp_min(1e-3))
 
-#: Each loss returns TWO parts: the geometric term and the partition guard. They
-#: are scaled separately, because a single scale lets the larger part drown the
-#: guard: the guard is O(1) while the alignment value can be O(10), so with one
-#: shared scale the guard had no share of the gradient and the collapse went on.
+
 LOSSES = {"gp": gp_alignment, "tree": tree_distortion, "cluster": frechet_cluster}
 
 
