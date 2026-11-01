@@ -57,6 +57,25 @@ class PreviousImplementationTests(unittest.TestCase):
             picked = baseline_module.previous_implementation(root)
             self.assertEqual(picked, (root / "stage2_RQ-VAE" / "TIGER_done-idea").resolve())
 
+    def test_a_mechanism_that_lost_to_the_frozen_baseline_is_not_the_next_baseline(self):
+        """A chain of regressions is not evidence: the next round must not start
+        from a mechanism that lost to the frozen baseline, or every successor
+        loses by construction."""
+        from tools.research.rounds.baseline import _frozen_recall
+
+        root = baseline_module._repo_root()
+        frozen = _frozen_recall(root)
+        self.assertIsNotNone(frozen, "the frozen baseline's recall is unknown")
+        resolved = baseline_module.previous_implementation(baseline_module._repo_root())
+        if resolved is None:
+            return  # the chain falls back to the frozen baseline: nothing to check
+        arm = resolved.name
+        recall = baseline_module._arm_recall(root, arm)
+        if recall is None:
+            return
+        self.assertGreaterEqual(recall, frozen,
+                                "the chain handed out an arm that lost to the frozen baseline")
+
     def test_a_round_without_jobs_is_skipped(self):
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
