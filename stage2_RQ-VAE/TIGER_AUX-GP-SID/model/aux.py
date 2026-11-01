@@ -181,41 +181,48 @@ def _standardize(x: torch.Tensor, reference: torch.Tensor = None) -> torch.Tenso
 
 
 def partition_agreement(probs: list, reference_codes: torch.Tensor) -> torch.Tensor:
-    """The candidate must USE as many cells per level as the reference does.
+    """The candidate's partition must agree with the reference's, level by level.
 
-    This is the constraint the three terms are missing. They are all about
-    PAIRWISE structure, and a pairwise objective does not see the marginal of the
-    assignment: the cluster term is in fact minimised by FEWER and FARTHER
-    clusters, and it traded the vocabulary away (the first level fell to 21 cells
-    and the duplicate rate to 0.91).
+    The alignment terms only see PAIRWISE distances, and a distance
+    distribution can be reproduced by a tree that merges its coarse cells: the
+    first level fell from 247 codes to 19 while every distance statistic still
+    matched. A partition-level term closes that door.
 
-    The guard compares the ENTROPY of the assignment's marginal with the entropy
-    of the reference's label distribution, level by level:
-
-        H_cand_l = - sum_k pbar(k) log pbar(k)          (pbar = the mean assignment)
-        H_ref_l  = - sum_c r(c) log r(c)                (the reference's labels)
-        loss     = sum_l | log(H_cand_l / H_ref_l) |
-
-    The marginal is a distribution over cells, so the comparison needs no
-    correspondence between the two codebooks (a partition alignment by code id
-    does not exist and a mutual information over partitions proved unreliable:
-    it did not pin the granularity and it inflated the objective). Matching the
-    entropy pins the NUMBER of cells, which is exactly what the three terms
-    destroy, and it is label-free, stable and cheap.
+    The agreement is measured by the soft mutual information between the
+    candidate's assignment and the reference's cell labels, which needs no
+    correspondence between the two codebooks (the labels are compared as
+    partitions, not as code ids) and no constant.
     """
     if reference_codes is None:
         return probs[0].sum() * 0.0
+    # the pair terms work on the first PAIR_ROWS rows of the batch; the labels
+    # have to be cut to the same rows
     reference_codes = reference_codes[:probs[0].shape[0]]
     total = None
     for level, p in enumerate(probs):
-        marginal = p.detach().mean(dim=0).clamp_min(1e-9)          # (codes,)
-        candidate_entropy = -(marginal * marginal.log()).sum()
         labels = reference_codes[:, level]
-        counts = torch.bincount(labels).float()
-        reference = (counts / counts.sum().clamp_min(1e-9)).clamp_min(1e-9)
-        reference_entropy = -(reference * reference.log()).sum()
-        level_loss = (torch.log(candidate_entropy.clamp_min(1e-9))
-                      - torch.log(reference_entropy.clamp_min(1e-9))).abs()
+        one_hot = torch.zeros(p.shape[0], int(labels.max().item()) + 1,
+                              device=p.device, dtype=p.dtype)
+        one_hot[torch.arange(p.shape[0], device=p.device), labels] = 1.0
+        # the joint is normalised by the batch: the mutual information grows with
+        # the batch size, and an unnormalised one makes the gradient of log(joint)
+        # unbounded when a cell empties (the run diverged to 2.3e15)
+        # every marginal is divided by the batch size, so the joint, the two
+        # marginals and the entropies all live on the same scale (with one of them
+        # unnormalised the "mutual information" was 2949 and the guard was
+        # meaningless)
+        batch = max(float(p.shape[0]), 1.0)
+        joint = (p.t() @ one_hot) / batch
+        p_mass = (p.sum(dim=0) / batch).unsqueeze(1).clamp_min(1e-8)
+        r_mass = (one_hot.sum(dim=0) / batch).unsqueeze(0).clamp_min(1e-8)
+        total_joint = joint.clamp_min(1e-6)
+        mutual = (total_joint * (total_joint.log()
+                                 - p_mass.log() - r_mass.log())).sum()
+        entropy_p = -(p_mass * p_mass.clamp_min(1e-8).log()).sum()
+        entropy_r = -(r_mass * r_mass.clamp_min(1e-8).log()).sum()
+        nmi = mutual / torch.sqrt(entropy_p.clamp_min(1e-8)
+                                  * entropy_r.clamp_min(1e-8))
+        level_loss = 1.0 - nmi
         total = level_loss if total is None else total + level_loss
     return total / len(probs)
 
