@@ -105,15 +105,19 @@ class StructureTests(unittest.TestCase):
     def test_the_cluster_term_is_at_its_worst_on_a_collapsed_batch(self):
         collapsed, _ = _collapsed_batch()
         latents = [aux.project(torch.randn(64, 3)) for _ in range(2)]
-        code_points = [aux.project(torch.randn(64, 3)) for _ in range(2)]
+        # the first-level CODEBOOK: the soft mass over it gives every item its
+        # expected code point. Its width follows the assignment's code count.
+        code_points = [aux.project(torch.randn(level.shape[1], 3)) for level in collapsed]
         collapsed_loss = float(aux.frechet_cluster(collapsed, code_points, latents))
         # a genuinely compact structure: two groups, tight inside, far apart
         healthy, _ = _structured_batch()
         centres = torch.tensor([[0.8, 0.0, 0.0], [-0.8, 0.0, 0.0]])
         membership = torch.tensor([row // 32 for row in range(64)])
-        tight_code = aux.project(centres[membership] + 0.01 * torch.randn(64, 3))
+        tight_code = aux.project(centres + 0.01 * torch.randn(2, 3))  # 2 codes
         tight_items = aux.project(centres[membership] + 0.01 * torch.randn(64, 3))
-        separated = float(aux.frechet_cluster(healthy, [tight_code], [tight_items]))
+        separated_codebooks = [tight_code] + [aux.project(torch.randn(level.shape[1], 3))
+                                             for level in healthy[1:]]
+        separated = float(aux.frechet_cluster(healthy, separated_codebooks, [tight_items]))
         self.assertGreaterEqual(collapsed_loss, 0.999)
         self.assertLess(separated, collapsed_loss)
 

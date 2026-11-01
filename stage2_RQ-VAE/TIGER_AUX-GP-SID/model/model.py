@@ -92,7 +92,13 @@ class RQVAE(nn.Module):
             # ratio of the two codebook gradients, so the auxiliary pull is at most
             # as strong as the baseline's own pull on the codebooks. Both gradients
             # are read from the same forward pass; nothing here is a constant.
+            # The parameters both terms reach: the codebooks AND the encoder.
+            # Matching only the codebook gradient left the encoder free, and the
+            # encoder is where the collapse came from (the first level ended up on
+            # a single code while the codebook gradient was already balanced).
             params = [layer.get_code_embs() for layer in self.rq.vq_layers]
+            params += [parameter for parameter in self.encoder.parameters()
+                       if parameter.requires_grad]
             base_grads = torch.autograd.grad(total, params, retain_graph=True,
                                              allow_unused=True)
             aux_grads = torch.autograd.grad(extra, params, retain_graph=True,

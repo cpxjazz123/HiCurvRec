@@ -225,21 +225,35 @@ def frechet_cluster(probs: list, code_points: list, latents: list) -> torch.Tens
     prefixes are compact and mutually separated.
     """
     probs, latents, rows = _rows(probs, latents)
-    code_points, _, _ = _rows(code_points, code_points)
+    # the codebooks are NOT sliced: they are (codes, dim) and the rows index them
     item_points = project(latents[0])
-    prefix_points = code_points[0]
+    # The grouping level is the one that leaves the most NON-TRIVIAL groups (at
+    # least two members). A level that scatters the batch over hundreds of
+    # singleton codes leaves nothing to compare, and a level that puts the whole
+    # batch on one code has no contrast at all.
     labels = None
     masses = None
-    for level_probs in probs:
+    level_index = 0
+    best_groups = 0
+    for index, level_probs in enumerate(probs):
         candidate = level_probs.detach().argmax(dim=-1)
-        if candidate.unique().numel() >= 2:
+        if candidate.unique().numel() < 2:
+            continue
+        counts = torch.bincount(candidate)
+        groups = int((counts >= 2).sum())
+        if groups > best_groups:
+            best_groups = groups
             labels = candidate
             masses = level_probs
-            break
+            level_index = index
     if labels is None:
         # nothing separates the batch: the term is at its worst, and it carries no
         # gradient because there is no group to move
         return item_points.sum() * 0.0 + 1.0
+    # the EXPECTED code point of every item: the soft mass of the GROUPING level
+    # over that level's codebook. Using the same level for the grouping and for
+    # the code point is what keeps the gradient connected to the codebook.
+    prefix_points = probs[level_index] @ code_points[level_index]
     item_centres = []
     code_centres = []
     members = []
