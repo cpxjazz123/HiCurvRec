@@ -124,6 +124,15 @@ def verify_science_output(task, root, manifest):
         # MATERIAL revision and FATAL/PARKED rejection separately.
 
 
+def settled_scientific_verdict(candidate_id: str) -> str | None:
+    """The verdict a reviewer already gave this candidate, if there is one.
+
+    A candidate that was rejected as FATAL or PARKED is scientifically settled;
+    sending it to a reviewer again is the repeat the policy forbids.
+    """
+    return failure_registry.prior_scientific_rejection(settings.STATE_ROOT, candidate_id)
+
+
 def process_next(run_id):
     """Claim one eligible task; callers may run separate workers concurrently."""
     root = run_dir(run_id)
@@ -153,6 +162,13 @@ def process_next(run_id):
                           "requirement you already met, and write the output file again:\n"
                           + json.dumps(manifest["revision_feedback"], ensure_ascii=False))
             if role == "REVIEW":
+                settled = settled_scientific_verdict(manifest.get("candidate_id"))
+                if settled is not None:
+                    # the candidate was already rejected as FATAL/PARKED: asking
+                    # the same reviewer again is the repeat the policy forbids
+                    dag.fail(task_id, owner, "scientific rejection already recorded: " + settled)
+                    return {"task": task, "role": role, "blocked": True,
+                            "review_verdict": settled, "evidence": False}
                 check_review_identity(
                     root / "agents" / "geometry" / "candidate.json", manifest, prompt)
             atomic_json(root / "manifests" / (task + ".json"), manifest)

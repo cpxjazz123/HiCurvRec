@@ -118,6 +118,23 @@ def load(root: Path) -> dict:
     return _load(Path(root) / REGISTRY)
 
 
+def prior_scientific_rejection(root: Path, candidate_id: str) -> str | None:
+    """The verdict a reviewer already gave this candidate, if there is one.
+
+    A candidate that a reviewer rejected as FATAL or PARKED is scientifically
+    settled: the same reviewer must not be asked about it again (CLAUDE.md 12
+    and 70). The registry holds the verdict, so the check costs one read.
+    """
+    if not candidate_id:
+        return None
+    for entry in load(root)["entries"].values():
+        if entry.get("candidate_id") != candidate_id:
+            continue
+        if entry.get("error_class") in ("SCIENTIFIC_FATAL", "SCIENTIFIC_PARKED"):
+            return str(entry.get("rule") or entry.get("actual") or "SCIENTIFIC_FATAL")
+    return None
+
+
 def summary(root: Path) -> dict:
     """Counts that make a run's avoidable work visible.
 

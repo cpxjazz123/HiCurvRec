@@ -97,10 +97,21 @@ def _injections():
          mutate(lambda c: c["falsifier"]["stage2_diagnostics"][0].update(name="test_R@10"))),
         ("COLLAPSE_UNGUARDED", "math", "COLLAPSE_UNGUARDED",
          mutate(lambda c: c["math_definition"].pop("objective"))),
-        ("DUPLICATED_THRESHOLD", "falsifier", "THRESHOLD_DUPLICATED",
-         mutate(lambda c: c.update(real_trigger_measurement=(
-             "require ER above %s" % contract.THRESHOLDS["valid_l1_hard_er_strict_gt"])))),
     ]
+
+
+#: Defect classes that a later decision removed together with the rule they
+#: exercised. They are reported, not silently dropped: issue #120 removed every
+#: promotion threshold, so a candidate can no longer DUPLICATE one, and the
+#: preflight no longer owns a threshold table to compare against.
+RETIRED = [
+    {"defect": "DUPLICATED_THRESHOLD", "layer": "falsifier", "code": "THRESHOLD_DUPLICATED",
+     "retired_by": "issue #120",
+     "reason": ("the admission has no quality floor any more, so there is no threshold "
+                "for a candidate to duplicate and no second declaration to compare; the "
+                "frozen Resample numbers survive as reference values only"),
+     "replaced_by": "the diagnostics are reported, never promoted (issue #19, #120)"},
+]
 
 
 def _false_positive_controls():
@@ -205,7 +216,17 @@ def dod_metrics() -> dict:
     if manifest.is_file() and created:
         verified = manifest.stat().st_mtime - float(created)
     registry = failures.summary(STATE)
+    # A candidate that a reviewer already rejected as FATAL/PARKED must not be
+    # sent to a reviewer again (CLAUDE.md 12 and 70): the registry knows the
+    # candidate, so every further review of it is avoidable work.
+    # the registry knows every run in which the candidate was seen, so the
+    # repeats are counted from it: the first review is the work, the others are
+    # avoidable
+    repeated_scientific = sum(max(0, int(entry.get("occurrences", 1)) - 1)
+                              for entry in failures.load(STATE)["entries"].values()
+                              if entry.get("error_class") in ("SCIENTIFIC_FATAL", "SCIENTIFIC_PARKED"))
     return {
+        "repeated_scientific_reviews": repeated_scientific,
         "runs": len(runs),
         "review_verdicts": verdicts,
         "known_failure_recurrence": registry["known_failure_recurrence"],
@@ -225,9 +246,14 @@ def build() -> dict:
         "issue": 118,
         "generated_at_epoch": time.time(),
         "published_thresholds": dict(contract.THRESHOLDS),
+        "reference_values": dict(contract.REFERENCE_VALUES),
+        "retired_defect_classes": list(RETIRED),
         "schema_version": contract.SCHEMA_VERSION,
         "defect_classes": rows,
         "all_defects_detected": all(row["passed"] for row in rows),
+        "active_defect_classes": len([row for row in rows if row["defect"] != "LEGAL_CANDIDATE"
+                                      and not row["defect"].startswith("FALSE_POSITIVE")]),
+        "retired_defect_classes_count": len(RETIRED),
         "dod": dod_metrics(),
     }
     return payload

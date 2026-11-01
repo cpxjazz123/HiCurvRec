@@ -126,17 +126,27 @@ def tree_ordering(points: torch.Tensor, triples, cells: torch.Tensor) -> torch.T
 
 
 def radius_term(points_by_level: list, margin: float = 0.0) -> torch.Tensor:
-    """Deeper prefixes must sit farther from the origin than shallower ones."""
-    if len(points_by_level) < 2:
+    """Deeper prefixes must sit farther from the origin than shallower ones.
+
+    The FIRST prefix is not part of the inequality, and the reason is measured:
+    "radius(prefix l+1) > radius(prefix l)" is cheapest to satisfy by sending
+    the coarse prefix towards the origin, and a coarse prefix at the origin
+    merges every item into one first-level code. The first run of these three
+    losses did exactly that -- the level-0 radius collapsed to 0.004 while the
+    finer levels sat on the ball boundary, and the first-level codes collapsed
+    with it. The term therefore constrains the REFINEMENT steps between the
+    later prefixes, which is where the depth is supposed to show.
+    """
+    if len(points_by_level) < 3:
         return points_by_level[0].sum() * 0.0
     radii = [radius_of(points) for points in points_by_level]
     scale = torch.stack(radii).detach().max().clamp_min(1e-8)
     total = None
-    for level in range(len(radii) - 1):
+    for level in range(1, len(radii) - 1):
         step = (radii[level + 1] - radii[level]) / scale
         term = F.softplus(margin - step).mean()
         total = term if total is None else total + term
-    return total / (len(radii) - 1)
+    return total / max(len(radii) - 2, 1)
 
 
 def direction_term(points_by_level: list, pairs: dict, margin: float = 0.0) -> torch.Tensor:

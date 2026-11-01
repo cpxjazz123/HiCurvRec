@@ -146,6 +146,21 @@ class StructureTests(unittest.TestCase):
         self.assertLess(float(increasing), float(flat))
         self.assertLess(float(flat), float(reversed_))
 
+    def test_the_radius_term_does_not_reward_a_collapsed_coarse_prefix(self):
+        """Shrinking the first prefix must not lower the radius term.
+
+        The first HGS run of the three losses collapsed the first codebook level
+        this way: the inequality "radius(prefix l+1) > radius(prefix l)" is
+        cheapest to satisfy by sending the coarse prefix to the origin, which
+        merges every item into one first-level code.
+        """
+        big = torch.tensor([[0.30, 0.0, 0.0]] * 8)
+        bigger = torch.tensor([[0.60, 0.0, 0.0]] * 8)
+        collapsed = torch.tensor([[0.001, 0.0, 0.0]] * 8)
+        with_coarse = float(hgs.radius_term([collapsed, big, bigger]))
+        without_coarse = float(hgs.radius_term([big, big, bigger]))
+        self.assertAlmostEqual(with_coarse, without_coarse, places=6)
+
     def test_radius_is_finite_at_the_origin_and_the_boundary(self):
         at_origin = torch.zeros(4, 3, requires_grad=True)
         near_boundary = (torch.randn(4, 3, requires_grad=True))
