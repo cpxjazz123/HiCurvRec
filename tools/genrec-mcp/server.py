@@ -2250,6 +2250,8 @@ def run_agent_verification(tree: Path, verification_id: str) -> dict:
         return v2_admission(tree)
     if str(verification_id).startswith("round:"):
         return round_admission(tree, verification_id)
+    if str(verification_id).startswith("machine:"):
+        return machine_admission(tree)
     verifier = REPO / "tools" / "research" / "verification" / "admission.py"
     if not verifier.is_file():
         return {"passed": False, "refused": "new native verifier is missing"}
@@ -2406,6 +2408,26 @@ def _source_digest_of(tree: Path) -> str:
     return digest.hexdigest()
 
 
+def machine_admission(tree: Path) -> dict:
+    """Admission for a tree whose verification is the MACHINE checks.
+
+    The agent review stage was removed: the five verifier roles, their prompts,
+    the repair planner and their tools are gone. What remains as admission is the
+    framework's own executable checks, which is what the policy asks for now:
+    the frozen constants and the launcher, a real one-epoch entry run, a
+    technically valid identifier and the four-rank probe. A tree that passes them
+    may be trained without any agent verdict.
+    """
+    from tools.research.stage2 import checks
+    report = checks.run_all(tree)
+    failing = [check["name"] + ": " + str(check["detail"])[:200]
+               for check in report.get("checks", []) if check.get("status") != "PASS"]
+    return {"passed": bool(report.get("passed")),
+            "refused": "; ".join(failing) if failing else None,
+            "checks": report.get("checks", []),
+            "tree": str(tree)}
+
+
 def round_admission(tree: Path, verification_id: str) -> dict:
     """Admission for a round candidate (Issues #120/#121).
 
@@ -2509,6 +2531,11 @@ def validate_agent_evidence_only(tree: Path, verification_id: str) -> dict:
         return v2_admission(tree)
     if str(verification_id).startswith("round:"):
         return round_admission(tree, verification_id)
+    if str(verification_id).startswith("machine:"):
+        # The machine admission: the framework's own executable checks. The
+        # worker calls this before and after the smoke, so the tree that trains
+        # is the tree that passed.
+        return machine_admission(tree)
     path = REPO / "tools" / "research" / "verification" / "admission.py"
     try:
         spec = importlib.util.spec_from_file_location("genrec_native_evidence", path)
