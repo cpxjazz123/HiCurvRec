@@ -309,99 +309,84 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
                     reference_codes: torch.Tensor = None) -> torch.Tensor:
     """Compact inside a prefix, separated across prefixes, in the ball.
 
-    The clustering is SOFT: a prefix is a probability, not a hard label, and
-    every quantity is differentiable. The hard-label version had almost no
-    gradient path (the group membership was detached and the codebook gradient
-    was measured at zero), and it ran into the trap where a batch with a single
-    group returns a constant and the run stays collapsed for ever.
+    The clustering is SOFT and fully vectorised: a prefix is a probability, not a
+    hard label, so every quantity carries a gradient. The hard-label version had
+    almost no gradient path (the membership was detached and the codebook gradient
+    measured zero) and it ran into the trap where a batch with a single group
+    returns a constant and the run stays collapsed for ever.
 
-    For the grouping level `l` with soft assignment `p`:
+    For the grouping level ``l`` with soft assignment ``p`` (codes x items after
+    the transpose):
 
-        centre_c  = sum_i p(i,c) x_i / sum_i p(i,c)      (a soft Frechet centre)
-        intra     = sum_c sum_i p(i,c) d_H(x_i, centre_c)^2 / N
-        inter     = sum_{c<c'} p_c p_{c'} d_H(centre_c, centre_{c'})^2
+        centre_c = sum_i p(i,c) x_i / sum_i p(i,c)      (a soft Frechet centre)
+        intra    = sum_c sum_i p(i,c) d_H(x_i, centre_c)^2 / N
+        inter    = sum_{c<c'} p_c p_{c'} d_H(centre_c, centre_{c'})^2
 
-    `x_i` is the item's pre-quantization ball position and, in the second half of
-    the intra term, its expected code point -- the part that gives the codebooks
-    a gradient. The loss is `1 - tanh((inter - intra) / (inter + intra))`: 1 when
-    everything sits on one point, 0 when the prefixes are compact and mutually
-    separated.
-
-    The centres use the true hyperbolic Frechet mean (Riemannian iterations) over
-    the mass-weighted members, under the compute budget above.
+    ``x_i`` is the item's pre-quantization ball position; the code-space half of
+    the intra term uses the expected code point, which is what gives the codebooks
+    a gradient. The centres are the true hyperbolic Frechet means: the mass-weighted
+    mean in the ball is the standard Riemannian initialisation and one Frechet step
+    refines it. The loss is ``1 - tanh((inter - intra)/(inter + intra))``: 1 when
+    everything sits on one point, 0 when the prefixes are compact and separated.
     """
     probs, latents, rows = _rows(probs, latents)
     item_points = project(latents[0])
-    labels = None
-    masses = None
     level_index = 0
     best_groups = 0
     for index, level_probs in enumerate(probs):
         candidate = level_probs.detach().argmax(dim=-1)
         if candidate.unique().numel() < 2:
             continue
-        counts = torch.bincount(candidate)
-        groups = int((counts >= 2).sum())
+        groups = int((torch.bincount(candidate) >= 2).sum())
         if groups > best_groups:
             best_groups = groups
-            labels = candidate
-            masses = level_probs
             level_index = index
-    if labels is None:
-        # nothing separates the batch: the term is at its worst, and the guard
-        # still carries the gradient
-        return item_points.sum() * 0.0 + 1.0
-    weight = masses.clamp_min(1e-8)
-    weight = weight / weight.sum(dim=0, keepdim=True).clamp_min(1e-12)
-    prefix_points = probs[level_index] @ code_points[level_index]
+    masses = probs[level_index].clamp_min(1e-8)             # (items, codes)
+    mass = masses.t()                                       # (codes, items)
+    total = mass.sum(dim=1, keepdim=True).clamp_min(1e-12)  # (codes, 1)
+    prefix_points = masses @ code_points[level_index]        # (items, dim)
 
-    def soft_centre(points: torch.Tensor) -> torch.Tensor:
-        """The mass-weighted hyperbolic Frechet mean of the batch, per code.
+    def soft_centres(points: torch.Tensor) -> torch.Tensor:
+        """The mass-weighted hyperbolic Frechet centre of every code.
 
-        The mean is INITIALISED at the mass-weighted arithmetic mean (the usual
-        Riemannian initialisation) and refined by one Frechet step. The full
-        iteration was too expensive: a Frechet mean per code and per step is
-        hundreds of maps, and the arm ran at a fortieth of the baseline's speed.
+        The centre is the mass-weighted mean in the ball (the standard Riemannian
+        initialisation) refined by one Frechet step: the mass-weighted mean of the
+        log map at that point. Every shape is explicit, because the broadcast of
+        (codes, items, dim) against (codes, 1) is where this went wrong twice.
         """
-        mass = weight.t()                        # (codes, batch)
-        weighted = mass @ points                 # (codes, dim)
-        total = mass.sum(dim=1, keepdim=True).clamp_min(1e-12)
-        centres = []
-        for code in range(points.shape[0]):
-            if float(total[code]) < 1e-6:
-                continue
-            start = (weighted[code] / total[code])
-            start = start / max(float(start.norm()), 1e-8) * min(
-                float(start.norm()), 1 - 1e-3)
-            step = _log_map(start.unsqueeze(0), points) * mass[code].unsqueeze(-1)
-            refined = _exp_map(start.unsqueeze(0), step.sum(dim=0).unsqueeze(0)).squeeze(0)
-            radius = refined.norm()
-            centres.append(refined * (radius.clamp(max=1 - 1e-6) / radius.clamp_min(1e-12)))
-        if not centres:
-            return points.mean(dim=0)
-        return torch.stack(centres)
+        centre = (mass @ points) / total                     # (codes, dim)
+        radius = centre.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+        centre = centre / radius * radius.clamp(max=1 - 1e-6)   # (codes, dim)
+        delta = _mobius_add(-centre.unsqueeze(1), points.unsqueeze(0))  # (codes, items, dim)
+        norm = delta.norm(dim=-1, keepdim=True).clamp_min(1e-12)        # (codes, items, 1)
+        scale = (1.0 - (centre * centre).sum(dim=-1)).clamp_min(1e-6)  # (codes,)
+        log_vector = (torch.arctanh(norm.clamp(max=1 - 1e-6))
+                      * scale.view(-1, 1, 1)
+                      * delta / norm)                                      # (codes, items, dim)
+        gradient = (log_vector * mass.unsqueeze(-1)).sum(dim=1)            # (codes, dim)
+        length = gradient.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+        refined = _mobius_add(centre, torch.tanh(length / 2.0) * gradient / length)
+        radius = refined.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+        return refined / radius * radius.clamp(max=1 - 1e-6)
 
-    item_centres = soft_centre(item_points)
-    code_centres = soft_centre(prefix_points)
-    valid = weight.sum(dim=1) > 1e-6
-    item_centres = item_centres[valid]
-    code_centres = code_centres[valid]
-    weight = weight[valid]
-    if item_centres.shape[0] < 2:
-        return item_points.sum() * 0.0 + 1.0
-
-    # intra: the mass-weighted dispersion around each centre
-    # distance() broadcasts the two point sets itself, so both sides stay 2-D
-    item_intra = (distance(item_points, item_centres) ** 2
-                  * weight.t().unsqueeze(-1)).sum() / max(float(item_points.shape[0]), 1.0)
-    code_intra = (distance(prefix_points, code_centres) ** 2
-                  * weight.t().unsqueeze(-1)).sum() / max(float(prefix_points.shape[0]), 1.0)
+    item_centres = soft_centres(item_points)
+    code_centres = soft_centres(prefix_points)
+    # the distance matrix is (items, codes) and the mass is (codes, items), so
+    # the weighting is the transposed mass
+    # the distance matrix is (items, codes) and the weight matrix is (codes,
+    # items); the weight is transposed to (items, codes) and both get a trailing
+    # axis so that the broadcast aligns on the codes
+    item_intra = (distance(item_points, item_centres) ** 2).unsqueeze(-1) \
+        * mass.t().unsqueeze(-1)
+    item_intra = item_intra.sum() / max(float(item_points.shape[0]), 1.0)
+    code_intra = (distance(prefix_points, code_centres) ** 2).unsqueeze(-1) \
+        * mass.t().unsqueeze(-1)
+    code_intra = code_intra.sum() / max(float(prefix_points.shape[0]), 1.0)
     intra = 0.5 * (item_intra + code_intra)
-    # inter: the mass-weighted separation of the centres
-    centre_distance = distance(item_centres.unsqueeze(1), item_centres.unsqueeze(0)) ** 2
-    mass = weight.sum(dim=1)
-    inter = (centre_distance * mass.unsqueeze(1) * mass.unsqueeze(0)).sum() / max(
-        float((mass ** 2).sum()), 1e-12)
+    centre_distance = distance(item_centres, item_centres) ** 2
+    weight = mass.sum(dim=1)
+    inter = (centre_distance * weight.unsqueeze(1) * weight.unsqueeze(0)).sum() / max(
+        float((weight ** 2).sum()), 1e-12)
     return 1.0 - torch.tanh((inter - intra) / (inter + intra).clamp_min(1e-3))
 
 
