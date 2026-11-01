@@ -51,12 +51,43 @@ The audit's **four-point statistic was removed**: a nested partition induces an 
 ## What is not done, and why
 
 - **The ablations of the issue's table were not trained** (tree-only, tree+radius, tree+direction). The repository's experiment policy (§19g) forbids training ablation arms; the three switches exist in the code and are unit-tested, and the previous tree-only run is preserved as the Stage-2 reference.
+- **The matched Euclidean arm was not trained.** The code, the switch and the matched-arm test are in place (`TIGER_HGS-TREE-EUCLID` differs in exactly two lines), but running it was dropped by decision in this round, so the issue's "all-three hyperbolic vs all-three Euclidean" comparison is reported as **not run** rather than as a null result. The geometry-dependent quantities that were measured are the radius and the tree distance; the direction term is the same cosine in both arms and cannot separate them.
 - The legacy `prefix_alignment` term is **on** in both trained arms, as the issue's objective formula states, and its applied gradient scale is logged with every epoch. Its weight is disclosed there rather than being a silent constant.
 - The curvature is **fixed at −1** for the hyperbolic arm. This is fixed-curvature hyperbolic supervision; it is not the separate future idea of a learnable per-level or per-region curvature, and the report says so.
 
 ## The numbers
 
 Per-arm evidence: `results/stage2_RQ-VAE/<ARM>/hgs_report.json` (final-epoch terms and applied scales, the usage trajectory, the radius and saturation diagnostics, the angular gap, the sampling coverage, and the SID's agreement with the frozen hierarchy).
+
+### The all-three arm, Stage 2
+
+Frozen recipe: 4 GPUs, world size 4, global batch 4096, 3000 epochs, no early stop. Final epoch:
+
+```text
+loss 0.21541   recon 1.15307e-04   raw_unique 1,203 / 24,587   collision 0.9511
+terms   tree 0.6720   radius 0.6811   direction 0.6791   prefix 0.9954
+scales  tree 0.00138  radius 0.02003  direction 3.71e-05  prefix 0.16318
+coverage  tree 32   direction {1: 24, 2: 24, 3: 15}   prefix {1: 24, 2: 24, 3: 15}   333 rows
+radii    level 0 mean 0.178 (max 0.375)   level 1 mean 1.659   level 2 mean 1.708
+saturated 0.0 / 0.0 / 0.0        angular gap  level 1: 0.151   level 2: 0.0002   level 3: 0.0003
+```
+
+The terms are alive and the diagnostics are clean: no radius saturation, the radius order holds (0.178 < 1.659 < 1.708), the coarse level separates branches by 0.151 of cosine, and the finest level is supervised (15 pairs per step, against 0.62 expected in the first run's batch slice).
+
+The exported SID:
+
+```text
+L1 codes 4 (baseline 247)      largest L1 cell 12,675 items = 52% of the catalogue
+L2 prefixes 123 (baseline 7,414)
+L3 triples 1,203 (baseline 20,223)
+collision 0.951 (baseline 0.177)
+fourth-token vocabulary 689    constant share 4.9% (baseline 82.3%)
+items in a shared 3-prefix 98.3% (baseline 27.5%)
+residual identity bits per item 6.87 (baseline 0.48)
+valid L1 positive / negative hit rate 0.754 / 0.513, hard ER 1.47
+```
+
+The "hard ER" of 1.47 is not an improvement on the baseline's 16.39: with four first-level codes almost every pair shares one, positive and negative alike (0.754 against 0.513). The discrimination the metric is meant to measure is gone.
 
 ### What the frozen hierarchy is worth
 
