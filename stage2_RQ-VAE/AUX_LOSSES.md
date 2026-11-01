@@ -164,3 +164,45 @@ The missing ingredient, for any of them, is a constraint that acts on the
 marginal of the assignment (how many cells are used) rather than on pairwise
 structure. The partition guard was an attempt at that and it does not work as
 written.
+
+## The Gromov arm in flight (four cards, through the MCP)
+
+The arm is launched through the MCP with the machine admission
+(`stage2_start` with a `machine:` verification id): the framework's own checks
+are the admission, the one-epoch gradient smoke runs before the training, and
+the smoke reports the applied gradient norms of every step (all positive, no dead
+term, the checkpoint probe finds a non-zero parameter gradient).
+
+During the run the level-1 code usage sits far above the baseline's 247: it moves
+between 660 and 1090 distinct codes over the epochs, where the baseline uses 247.
+The Gromov term therefore does not merely avoid the collapse, it produces a
+RICHER first level than the baseline -- the tree distance distribution it asks
+for needs a finer first level than the baseline's own partition has.
+
+## The Gromov arm, run through the MCP, end to end
+
+`stage2_start` with a `machine:` verification id: the framework's own checks are
+the admission, the one-epoch gradient smoke passes (24 steps, every applied
+gradient norm positive, no dead term, the checkpoint probe finds a non-zero
+parameter gradient), and the four-rank run then trains 3000 epochs.
+
+The vocabulary is RICH in the middle of the run and collapses at the end:
+
+| when | level-1 codes in use |
+| --- | --- |
+| epoch ~800 | 947 |
+| epoch ~1300 | 1092 |
+| epoch ~2200 | 505 |
+| epoch ~2700 | 1611 |
+| epoch 3000 (exported) | **733 distinct triples, 10 level-1 cells** |
+
+The final SID is L1 10 / L2 89 / L3 733 with a duplicate rate of 0.970, against
+the baseline's 247 / 7,414 / 20,223 and 0.177. The collapse is therefore a
+LATE-training collapse: the Gromov term is minimised by a tree with few cells,
+and as the reconstruction term decays (recon 1.7e-4) the objective it prefers
+wins. The gradient cap keeps the auxiliary pull no stronger than the baseline's
+own, but both shrink together, so the ratio does not protect the vocabulary.
+
+This is the same conclusion the three arms reached from three directions: a term
+about pairwise geometry does not defend the codebook, and the three of them all
+spend it in the end.

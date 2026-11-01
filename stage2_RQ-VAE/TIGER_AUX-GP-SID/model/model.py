@@ -40,7 +40,7 @@ class RQVAE(nn.Module):
 
     def forward(self, embeddings: torch.Tensor,
                 item_ids: torch.Tensor = None,
-                radius: torch.Tensor = None) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+                radius: torch.Tensor = None) -> tuple:
         """The framework's forward contract.
 
         ``item_ids`` lets the mechanism look up the frozen reference rows of the
@@ -73,7 +73,11 @@ class RQVAE(nn.Module):
                                                latents, code_points, reference_codes)
             self.last_guard = aux_module.partition_agreement(probs, reference_codes)
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens
+        # The framework's five-value contract: the reconstruction, the quantizer
+        # loss, the unused-code count, the tokens and the reference the
+        # reconstruction is scored against. Here the decoder reconstructs the
+        # input embeddings, so the reference is the input.
+        return reconstructed, quant_loss, int(unused_codes), tokens, embeddings
 
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *,

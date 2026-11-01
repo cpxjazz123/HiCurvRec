@@ -366,7 +366,7 @@ def main() -> None:
             batch = batch.to(device, non_blocking=True)
             item_ids = item_ids.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch, item_ids)
+            reconstructed, quant_loss, _, _, _ = model(batch, item_ids)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if not torch.isfinite(loss):
