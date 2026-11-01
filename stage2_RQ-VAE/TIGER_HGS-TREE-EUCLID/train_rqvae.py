@@ -258,7 +258,7 @@ def main() -> None:
     if hasattr(model, "set_hierarchy"):
         from model import hierarchy as hierarchy_module
         bound = hierarchy_module.load()
-        model.set_hierarchy(bound["cells"])
+        model.set_hierarchy(bound["cells"].to(device))
         if rank == 0:
             print("[hgs] hierarchy bound: %d items x %d levels"
                   % (bound["items"], bound["levels"]), flush=True)

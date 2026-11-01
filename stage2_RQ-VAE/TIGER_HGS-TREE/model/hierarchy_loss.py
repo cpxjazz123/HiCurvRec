@@ -53,7 +53,9 @@ def distance(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     """Pairwise distance: Poincare in the ball, or the Euclidean chord."""
     difference = (a.unsqueeze(1) - b.unsqueeze(0)).pow(2).sum(-1)
     if GEOMETRY == "euclidean":
-        return difference.clamp_min(0).sqrt()
+        # the interior floor keeps the derivative finite at coincident points:
+        # sqrt'(0) is infinite and turns the codebook gradient into NaN
+        return (difference + 1e-12).sqrt()
     a_sq = (a * a).sum(-1).unsqueeze(1)
     b_sq = (b * b).sum(-1).unsqueeze(0)
     argument = 1.0 + (2.0 * difference / (
@@ -64,8 +66,9 @@ def distance(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 def hierarchy_distance(cells: torch.Tensor) -> torch.Tensor:
     """``T(i,j) = levels - shared``, with the shared levels counted as a product."""
-    running = torch.ones(cells.shape[0], cells.shape[0], dtype=torch.bool)
-    shared = torch.zeros(cells.shape[0], cells.shape[0])
+    device = cells.device
+    running = torch.ones(cells.shape[0], cells.shape[0], dtype=torch.bool, device=device)
+    shared = torch.zeros(cells.shape[0], cells.shape[0], device=device)
     for level in range(cells.shape[1]):
         same = (cells[:, None, level] == cells[None, :, level]) & (cells[:, None, level] >= 0)
         running = running & same

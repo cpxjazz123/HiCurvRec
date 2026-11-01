@@ -25,7 +25,10 @@ class RQVAE(nn.Module):
 
     def set_hierarchy(self, cells: torch.Tensor) -> None:
         """Bind the FROZEN behaviour hierarchy: one cell per level and per item."""
-        self.register_buffer("hierarchy_cells", cells.detach().clone().long(),
+        # the buffer follows the model's device: the batch's item ids are on the
+        # GPU, and a CPU table cannot be indexed by them
+        device = next(self.parameters()).device
+        self.register_buffer("hierarchy_cells", cells.detach().clone().long().to(device),
                               persistent=False)
 
     def forward(self, embeddings: torch.Tensor,
@@ -58,7 +61,9 @@ class RQVAE(nn.Module):
         return reconstructed, quant_loss, int(unused_codes), tokens, embeddings
 
     @torch.no_grad()
-    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
+    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False,
+                    item_ids: torch.Tensor = None) -> torch.Tensor:
+        """``item_ids`` is part of the framework's contract signature."""
         encoded = self.encoder(embeddings)
         _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
         return tokens
