@@ -161,8 +161,29 @@ def direction_term(points_by_level: list, pairs: dict, margin: float = 0.0) -> t
     return total / used if used else zero
 
 
-def prefix_alignment(probs: list, cells: torch.Tensor, rows: int = 128) -> torch.Tensor:
-    """A pair that shares a hierarchy cell must share the SID code of that level."""
+def prefix_alignment(probs: list, cells: torch.Tensor, rows: int = 128, pairs=None) -> torch.Tensor:
+    """A pair that shares a hierarchy cell must share the SID code of that level.
+
+    ``pairs`` gives explicit, LEVEL-BALANCED index pairs per level. Without it
+    the term is computed over every same-cell pair of the given rows, and with
+    17 coarse cells against 13,416 fine ones that is 3,270 coarse pairs against
+    4 fine ones -- the term then pulls the whole codebook towards the coarse
+    partition, which is how the first HGS run collapsed its first level.
+    """
+    if pairs:
+        total = probs[0].sum() * 0.0
+        used = 0
+        for level in sorted(pairs):
+            index = level - 1
+            if index < 0 or index >= len(probs):
+                continue
+            first, second = pairs[level]
+            if first is None or second is None or first.numel() == 0:
+                continue
+            agreement = (probs[index][first] * probs[index][second]).sum(-1)
+            total = total + (1.0 - agreement).mean()
+            used += 1
+        return total / max(used, 1)
     keep = min(rows, cells.shape[0])
     label = cells[:keep]
     total = probs[0].sum() * 0.0

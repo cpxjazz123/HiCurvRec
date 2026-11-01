@@ -132,15 +132,22 @@ class Sampler:
         return int(members[self._rng.integers(0, len(members))])
 
     def prefix_partner(self, row: int, level: int) -> int | None:
-        """Shares this cell but not the next one: what the prefix term asks for."""
-        if level + 1 >= self.columns:
-            return None
+        """Shares this cell but not the next one: what the prefix term asks for.
+
+        At the deepest level there is no next one, so any other member of the
+        cell qualifies -- otherwise that level would never be supervised.
+        """
         cell = int(self.cells[row, level])
         members = self.members[level].get(cell)
         if members is None or len(members) < 2:
             return None
-        deeper = self.cells[members, level + 1] != self.cells[row, level + 1]
-        wanted = members[deeper]
+        if level + 1 >= self.columns:
+            wanted = members[members != row]
+        else:
+            deeper = self.cells[members, level + 1] != self.cells[row, level + 1]
+            wanted = members[deeper]
+        if len(wanted) == 0:
+            wanted = members[members != row]
         if len(wanted) == 0:
             return None
         return int(wanted[self._rng.integers(0, len(wanted))])

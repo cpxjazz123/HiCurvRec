@@ -105,9 +105,11 @@ class RQVAE(nn.Module):
             pairs = {level: move(index) for level, index in sample["direction"].items()}
             self.last_direction = hgs.direction_term(prefixes, pairs)
         if hgs.PREFIX_ON and sampled_probs is not None:
-            # the legacy term reads the SAMPLED rows: they carry the same-cell
-            # pairs at every level, which a random batch slice never does
-            self.last_prefix = hgs.prefix_alignment(sampled_probs, cells)
+            # the legacy term reads the LEVEL-BALANCED pairs the sampler built:
+            # every level contributes the same number of same-cell pairs, so the
+            # 17-cell coarse level cannot drown out the 13,416-cell fine one
+            pairs = {level: move(index) for level, index in sample["prefix"].items()}
+            self.last_prefix = hgs.prefix_alignment(sampled_probs, cells, pairs=pairs)
 
     def _diagnostics(self, prefixes: list, sample: dict) -> dict:
         """Radius per level, boundary saturation, and the angular gap."""
