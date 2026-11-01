@@ -73,21 +73,30 @@ def build_behaviour_graph() -> tuple:
         cols.append(index[second])
         data.append(weight)
     adjacency = sp.coo_matrix((data, (rows, cols)), shape=(len(nodes), len(nodes))).tocsr()
-    return nodes, index, adjacency
+    edge_rows, edge_cols = adjacency.nonzero()
+    return nodes, index, adjacency, (edge_rows, edge_cols)
 
 
 # ------------------------------------------------------------------- quotient
-def quotient(adjacency: sp.csr_matrix, assignment: np.ndarray, n_groups: int) -> sp.csr_matrix:
-    """The quotient graph: the super-nodes are the prefix groups."""
-    incidence = sp.csr_matrix(
-        (np.ones(assignment.shape[0]), (assignment, np.arange(assignment.shape[0]))),
-        shape=(n_groups, assignment.shape[0]))
-    merged = incidence @ adjacency @ incidence.T
-    merged = merged.tocsr()
-    merged.data = np.ones_like(merged.data)
-    merged.setdiag(0)
-    merged.eliminate_zeros()
-    return merged
+def quotient(edges: tuple, assignment: np.ndarray, n_groups: int) -> sp.csr_matrix:
+    """The quotient graph: the super-nodes are the prefix groups.
+
+    The behaviour graph's edge list is aggregated directly, which is an order
+    of magnitude cheaper than contracting it through an incidence matrix.
+    """
+    rows, cols = edges
+    first = assignment[rows]
+    second = assignment[cols]
+    keep = first != second
+    first, second = first[keep], second[keep]
+    low = np.minimum(first, second)
+    high = np.maximum(first, second)
+    key = low.astype(np.int64) * np.int64(n_groups) + high.astype(np.int64)
+    unique = np.unique(key)
+    left = (unique // n_groups).astype(np.int32)
+    right = (unique % n_groups).astype(np.int32)
+    data = np.ones(left.shape[0], dtype=np.float32)
+    return sp.coo_matrix((data, (left, right)), shape=(n_groups, n_groups)).tocsr()
 
 
 # ------------------------------------------------------------------ curvature
@@ -210,8 +219,8 @@ def _exact_support_distances(graph: sp.csr_matrix, support: np.ndarray,
 
 
 # ------------------------------------------------------------------- features
-def sid_features(table: dict, adjacency: sp.csr_matrix, index: dict, nodes: list,
-                 nulls: int, curvature_edges: int, seed: int) -> dict:
+def sid_features(table: dict, adjacency: sp.csr_matrix, edges: tuple, index: dict,
+                 nodes: list, nulls: int, curvature_edges: int, seed: int) -> dict:
     """The curvature and the control features of one SID table."""
     width = len(next(iter(table.values())))
     levels = min(3, width)
@@ -238,14 +247,14 @@ def sid_features(table: dict, adjacency: sp.csr_matrix, index: dict, nodes: list
         entry = {"prefix_groups": n_groups,
                  "group_size_max": int(sizes.max()) if sizes.size else 0,
                  "group_size_min": int(sizes.min()) if sizes.size else 0}
-        graph = quotient(adjacency, assignment, n_groups)
+        graph = quotient(edges, assignment, n_groups)
         entry["quotient_edges"] = int(graph.nnz // 2)
         entry["curvature"] = ollivier_curvature(graph, curvature_edges, seed + level)
-        if level == 1 and graph.shape[0] <= 1000:
+        if level == 1 and graph.shape[0] <= 300:
             # the exact shortest-path variant is affordable only for the small
             # quotients; it is the cross-check of the 1/2-hop bound
             entry["curvature_exact_distance"] = ollivier_curvature(
-                graph, min(curvature_edges, 200), seed + level, exact_distance=True)
+                graph, min(curvature_edges, 30), seed + level, exact_distance=True)
 
         nulls_values: dict[str, list] = {"curvature": []}
         rng = np.random.default_rng(seed + 1000 * level)
@@ -257,7 +266,7 @@ def sid_features(table: dict, adjacency: sp.csr_matrix, index: dict, nodes: list
                 size = int(sizes[number])
                 shuffled[order[cursor:cursor + size]] = number
                 cursor += size
-            null_graph = quotient(adjacency, shuffled, n_groups)
+            null_graph = quotient(edges, shuffled, n_groups)
             nulls_values["curvature"].append(
                 ollivier_curvature(null_graph, curvature_edges, seed + 31 * level))
         for key in ("curvature",):
@@ -364,7 +373,7 @@ def partial_spearman(x: list, y: list, controls: list) -> float:
     rx, ry = rank(x), rank(y)
     if not controls:
         return spearman(rx, ry)
-    rc = [rank([control[i] for control in controls]) for control in controls]
+    rc = [rank(list(control)) for control in controls]
     return spearman(residual(rx, rc), residual(ry, rc))
 
 
@@ -404,6 +413,8 @@ def main() -> int:
                         help="edges sampled per quotient graph")
     parser.add_argument("--limit", type=int, default=0, help="0 = every pair")
     parser.add_argument("--seed", type=int, default=20261102)
+    parser.add_argument("--from-features", action="store_true",
+                        help="recompute the statistics from the saved features")
     args = parser.parse_args()
 
     pairs_path = Path(args.pairs)
@@ -413,20 +424,39 @@ def main() -> int:
     if args.limit:
         rows = rows[:args.limit]
 
-    nodes, index, adjacency = build_behaviour_graph()
+    saved = OUT / "per_arm_features.json"
+    if args.from_features and saved.is_file():
+        records = json.loads(saved.read_text())
+        print(f"statistics only: {len(records)} arms from {saved.name}", flush=True)
+        return summarise(records, args)
+    nodes, index, adjacency, edges = build_behaviour_graph()
     print(f"pairs: {len(rows)} | behaviour graph: {len(nodes)} items, "
           f"{int(adjacency.nnz // 2)} edges", flush=True)
 
-    records = []
-    for number, row in enumerate(rows):
+    # the SID tables live on the network mount: reading them one after another
+    # is the run's real cost, so they are read in parallel up front
+    from concurrent.futures import ThreadPoolExecutor
+
+    def read_bytes(row):
         sid_path = REPO / row["sid_paths"].split(" | ")[0]
         if not sid_path.is_file():
             sid_path = REPO / "analysis_sid_recall" / "sids" / row["sid_file"].split("/")[-1]
         if not sid_path.is_file():
+            return None
+        return sid_path, sid_path.read_bytes()
+
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        loaded = list(pool.map(read_bytes, rows))
+    print(f"tables read: {sum(1 for item in loaded if item)}", flush=True)
+
+    records = []
+    for number, row in enumerate(rows):
+        if loaded[number] is None:
             print(f"  missing {row['variant']}", flush=True)
             continue
-        table = json.loads(sid_path.read_text())
-        features = sid_features(table, adjacency, index, nodes, nulls=args.nulls,
+        sid_path, raw = loaded[number]
+        table = json.loads(raw)
+        features = sid_features(table, adjacency, edges, index, nodes, nulls=args.nulls,
                                 curvature_edges=args.curvature_edges,
                                 seed=args.seed + 97 * number)
         family = family_of(row)
@@ -436,12 +466,18 @@ def main() -> int:
                         "sid_path": str(sid_path.relative_to(REPO)),
                         "sid_sha256": row["sid_sha256"], **features})
         if (number + 1) % 5 == 0:
+            progress = OUT / "progress.txt"
+            OUT.mkdir(parents=True, exist_ok=True)
+            progress.write_text(f"{number + 1}/{len(rows)}\n", encoding="utf-8")
             print(f"  {number + 1}/{len(rows)}", flush=True)
 
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "per_arm_features.json").write_text(json.dumps(records, indent=2) + "\n",
                                                 encoding="utf-8")
+    return summarise(records, args)
 
+
+def summarise(records: list, args) -> int:
     recalls = [record["recall"] for record in records]
 
     def column(getter):
@@ -502,7 +538,7 @@ def main() -> int:
                 "n": len(usable),
                 "partial_spearman": partial_spearman([u[0] for u in usable],
                                                     [u[2] for u in usable],
-                                                    [[u[1]] for u in usable])}
+                                                    [[u[1] for u in usable]])}
 
     # the 182 tables are not 182 independent observations: they come from 115
     # mechanism families, and the biggest family alone contributes 20 tables.
