@@ -193,6 +193,35 @@ class StructureTests(unittest.TestCase):
             self.assertIsInstance(getattr(hgs, name), bool, "%s is not a switch" % name)
 
 
+class MatchedArmTests(unittest.TestCase):
+    """The two arms must differ in the declared constants and nowhere else."""
+
+    def test_the_sibling_arm_differs_only_in_geometry_and_arm_name(self):
+        other = Path(__file__).resolve().parents[2] / "TIGER_HGS-TREE-EUCLID"
+        if not other.exists():
+            other = Path(__file__).resolve().parents[2] / "TIGER_HGS-TREE"
+        if not other.exists():
+            self.skipTest("the sibling arm is not in the tree")
+        differences = []
+        for relative in ("model/hierarchy_loss.py", "model/hierarchy.py",
+                         "model/model.py", "train_rqvae.py", "tests/test_hgs.py"):
+            mine = (TREE / relative).read_text().splitlines()
+            theirs = (other / relative).read_text().splitlines()
+            if len(mine) != len(theirs):
+                differences.append(relative + " (length)")
+                continue
+            for number, (left, right) in enumerate(zip(mine, theirs), start=1):
+                if left == right:
+                    continue
+                if relative == "model/hierarchy_loss.py" and left.startswith("GEOMETRY ="):
+                    continue
+                if relative == "train_rqvae.py" and left.startswith("ARM_NAME ="):
+                    continue
+                differences.append("%s:%d" % (relative, number))
+        self.assertEqual(differences, [],
+                         "the arms differ outside the declared constants: %s" % differences)
+
+
 class IntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
