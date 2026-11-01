@@ -206,3 +206,29 @@ own, but both shrink together, so the ratio does not protect the vocabulary.
 This is the same conclusion the three arms reached from three directions: a term
 about pairwise geometry does not defend the codebook, and the three of them all
 spend it in the end.
+
+## Where the study stands (all jobs stopped)
+
+| arm | Stage 2 | L1 | L2 | L3 | dup | note |
+| --- | --- | --- | --- | --- | --- | --- |
+| `TIGER_RQ-VAE` (baseline) | done (frozen) | 247 | 7,414 | 20,223 | 0.177 | reference |
+| `TIGER_AUX-GP-SID` | done, four cards, via the MCP | 10 | 89 | 733 | 0.970 | rich in mid-training (800-1600 level-1 codes), collapses in the last epochs |
+| `TIGER_AUX-TREE-DISTORT` | done, four cards, via the MCP | 52 | 148 | 2,934 | 0.881 | the deepest level is rich (2,934 triples, 12x the baseline's), the coarse levels are thin |
+| `TIGER_AUX-FRECHET-CLUSTER` | stopped at epoch ~1500 of 3000 | -- | -- | -- | -- | trains stably, the code usage trends down |
+
+No Stage 3 has been run for these three arms, so there is no Recall@10 for
+them; the comparison against the 0.065 target is still open.
+
+What the three arms established about the LOSSES (not about the geometry):
+
+* each of them was rewritten to the stated mathematics (the Gromov product, the
+  LCP tree distance, the hyperbolic Frechet mean), and each rewrite is checked by
+  the three test layers (definition, structure, gradient);
+* each of them trains stably and each of them spends the codebook in the end,
+  because a term about pairwise geometry does not constrain the marginal of the
+  assignment, and the cluster term is minimised outright by fewer and farther
+  clusters;
+* the machine admission is now the only admission: `stage2_start` with a
+  `machine:` verification id runs the framework's own checks and the one-epoch
+  gradient smoke (every applied gradient norm positive, no dead term) before the
+  training starts.
