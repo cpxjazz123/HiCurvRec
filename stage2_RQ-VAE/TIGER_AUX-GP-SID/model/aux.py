@@ -196,11 +196,14 @@ def partition_agreement(probs: list, reference_codes: torch.Tensor) -> torch.Ten
         one_hot = torch.zeros(p.shape[0], int(labels.max().item()) + 1,
                               device=p.device, dtype=p.dtype)
         one_hot[torch.arange(p.shape[0], device=p.device), labels] = 1.0
-        joint = p.t() @ one_hot                      # (codes, reference cells)
+        # the joint is normalised by the batch: the mutual information grows with
+        # the batch size, and an unnormalised one makes the gradient of log(joint)
+        # unbounded when a cell empties (the run diverged to 2.3e15)
+        joint = (p.t() @ one_hot) / max(float(p.shape[0]), 1.0)
         p_mass = p.sum(dim=0).unsqueeze(1).clamp_min(1e-8)
         r_mass = one_hot.sum(dim=0).unsqueeze(0).clamp_min(1e-8)
-        total_joint = joint.clamp_min(1e-8)
-        mutual = (total_joint * (joint.clamp_min(1e-8).log()
+        total_joint = joint.clamp_min(1e-6)
+        mutual = (total_joint * (total_joint.log()
                                  - p_mass.log() - r_mass.log())).sum()
         entropy_p = -(p * p.clamp_min(1e-8).log()).sum()
         entropy_r = -(one_hot * one_hot.clamp_min(1e-8).log()).sum()

@@ -116,7 +116,11 @@ class RQVAE(nn.Module):
                                        if g is not None)).clamp_min(1e-12)
             aux_norm = torch.sqrt(sum((g.detach() ** 2).sum() for g in aux_grads
                                       if g is not None)).clamp_min(1e-12)
-            scale = base_norm / aux_norm
+            # The auxiliary part is scaled to the baseline's pull and then
+            # CAPPED at it: a term whose gradient explodes (an unbounded mutual
+            # information near a degenerate partition) must not be able to run the
+            # trainer away.
+            scale = (base_norm / aux_norm).clamp(max=1.0)
             total = total + AUX_WEIGHT * scale * extra
             # The partition guard gets its OWN scale: with one shared scale the
             # guard (O(1)) had no share of the gradient against the alignment term
@@ -127,5 +131,6 @@ class RQVAE(nn.Module):
                                                  allow_unused=True)
                 guard_norm = torch.sqrt(sum((g.detach() ** 2).sum()
                                             for g in guard_grads if g is not None)).clamp_min(1e-12)
-                total = total + AUX_WEIGHT * (base_norm / guard_norm) * guard
+                guard_scale = (base_norm / guard_norm).clamp(max=1.0)
+                total = total + AUX_WEIGHT * guard_scale * guard
         return total, recon_loss
