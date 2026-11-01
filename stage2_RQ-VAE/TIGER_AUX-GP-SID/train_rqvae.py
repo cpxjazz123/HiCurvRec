@@ -231,24 +231,34 @@ def _tokenizer_config() -> SimpleNamespace:
 
 
 def _frozen_reference(embeddings: torch.Tensor, device: torch.device) -> torch.Tensor:
-    """The FROZEN reference geometry: the baseline encoder's latents in the ball.
+    """The FROZEN reference geometry: the baseline's QUANTIZED item points.
 
-    One point per item, computed once from the frozen baseline checkpoint. It does
-    not move while this tree trains, so a term that compares the SID against it
-    cannot be minimised by collapsing the tree.
+    One point per item: the sum of the frozen baseline's codebook vectors for the
+    item's baseline SID, mapped into the unit ball. It is frozen and it carries the
+    baseline's GRANULARITY (247 / 7414 / 20223 cells), which is the point: a
+    reference built from the baseline's LATENTS is continuous, and a continuous
+    reference says nothing about how many codes a tree may use -- so the alignment
+    was satisfied by a degenerate tree (the first level fell from 247 codes to 19).
+    A reference built from the baseline's quantized points has the baseline's
+    granularity, and a collapsed tree now disagrees with it.
     """
+    import json as _json
     from model.model import RQVAE
-    checkpoint = REPO_ROOT / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "rqvae_best.pth"
-    state = torch.load(checkpoint, map_location="cpu")["state_dict"]
-    reference_model = RQVAE(_tokenizer_config(), in_dim=embeddings.shape[1])
-    reference_model.load_state_dict(state, strict=False)
-    reference_model.eval()
-    with torch.no_grad():
-        latents = reference_model.encoder(embeddings).double()
-    norm = latents.norm(dim=-1, keepdim=True)
+    baseline_dir = REPO_ROOT / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE"
+    state = torch.load(baseline_dir / "rqvae_best.pth", map_location="cpu")["state_dict"]
+    books = [state["rq.vq_layers.%d.embed.weight" % level].double()
+             for level in range(3)]
+    sids = _json.loads((baseline_dir / "item_sids.json").read_text())
+    points = torch.zeros(len(embeddings), books[0].shape[1], dtype=torch.float64)
+    for item, codes in sids.items():
+        row = int(item)
+        if row >= points.shape[0]:
+            continue
+        for level in range(3):
+            points[row] += books[level][int(codes[level])]
+    norm = points.norm(dim=-1, keepdim=True)
     scale = norm.max().clamp_min(1e-8)
-    points = torch.tanh(norm / scale) * latents / norm.clamp_min(1e-8)
-    return points.float().to(device)
+    return (torch.tanh(norm / scale) * points / norm.clamp_min(1e-8)).float().to(device)
 
 
 def main() -> None:
