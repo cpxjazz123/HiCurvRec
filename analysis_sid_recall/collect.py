@@ -371,7 +371,12 @@ def write_sid_files(blobs: dict) -> dict:
     SID_DIR.mkdir(parents=True, exist_ok=True)
     names = {}
     for digest, entry in blobs.items():
-        path = entry["paths"][0]
+        # the canonical path of the table: the collector's own copies under
+        # ``analysis_sid_recall/sids/`` are not the table's address, and using
+        # them made the file name grow with every collection
+        path = next((candidate for candidate in entry["paths"]
+                     if not candidate.startswith("analysis_sid_recall/sids/")),
+                    entry["paths"][0])
         slug = path.replace("/", "__").replace(".json", "")
         # The name is bounded: a SID that lives inside this directory would
         # otherwise produce a name that grows with every collection and finally
@@ -381,10 +386,10 @@ def write_sid_files(blobs: dict) -> dict:
         name = f"{slug}__{digest[:12]}.json"
         target = SID_DIR / name
         if not target.is_file():
-            payload = None
-            if entry["blob"]:
+            payload = entry.get("payload")
+            if payload is None and entry["blob"]:
                 payload = git_bytes("cat-file", "blob", entry["blob"])
-            else:
+            if payload is None:
                 source = REPO / path
                 if source.is_file():
                     payload = source.read_bytes()
@@ -397,6 +402,9 @@ def write_sid_files(blobs: dict) -> dict:
             target.write_bytes(payload)
         # keyed by the content sha256: that is what the pairing uses
         names[entry["sha256"]] = name
+        # the payload was only needed to write the file; it must not travel on
+        # into anything that is serialised
+        entry.pop("payload", None)
     return names
 
 
@@ -466,7 +474,7 @@ def main() -> int:
             except Exception:
                 continue
             blobs[digest] = {"blob": blob, "paths": [code], "bytes": len(payload),
-                              "sha256": digest, "stats": stats}
+                              "sha256": digest, "stats": stats, "payload": payload}
             by_sha[digest] = digest
         # The run recorded the vocabulary it built FROM the table it read, and
         # that vocabulary is a function of the table's highest token. A table

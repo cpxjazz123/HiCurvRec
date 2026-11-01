@@ -3,21 +3,41 @@
 Every SID table reachable in the git history, with the Stage 3 recall of the run that
 generated from it. Collected read-only by `collect.py` (re-runnable).
 
+## A collection bug that was found and fixed (2026-11-02)
+
+Re-running `collect.py` on the previous collection produced **38** pairs instead of
+the 107 the CSV held. Two defects, both in the collector:
+
+* a table that survives only as a commit's file (its blob is no longer reachable
+  from a ref) is *resolved* by `git show <commit>:<path>`, but the file was then
+  written with `cat-file blob <commit>`, which finds nothing. The pair was
+  correct and the table was real, yet the pair could not be materialised, so it
+  was parked as "the table exists neither in the working tree nor in a readable
+  blob of the history" — **77 pairs** were dropped that way;
+* the file name was derived from the blob's first path, and the collector's own
+  copies under `sids/` were themselves collected as new tables, so every
+  collection added a nesting level to the names.
+
+Both are fixed: the resolved payload is written as it is, and the name comes from
+the table's canonical path. The collection is now **182** pairs (174 verified by
+the run's own vocabulary, 8 by the digest the run recorded), and the runs that
+cannot be verified fell from 101 to 0.
+
 ## What is here
 
 | item | count |
 |---|---|
-| **SID + recall pairs (the collection)** | **97** |
-| SID files in `sids/` | 97 |
-| recall source files copied to `recalls/` | 97 |
-| Stage 3 runs considered | 225 |
-| runs of a confirmed table that are not the pair | 2 (`excluded/sid_recall_alternatives.csv`) |
-| runs with no fingerprint for their table | 101 (`excluded/sid_recall_unverified.csv`) |
-| runs whose own fingerprint refutes the table | 10 (`excluded/sid_recall_disputed.csv`) |
+| **SID + recall pairs (the collection)** | **182** |
+| SID files in `sids/` | 761 (624 distinct contents; the extra files are the unpaired tables, kept for recovery) |
+| recall source files copied to `recalls/` | 182 |
+| Stage 3 runs considered | 236 |
+| runs of a confirmed table that are not the pair | 20 (`excluded/sid_recall_alternatives.csv`) |
+| runs with no fingerprint for their table | 0 (`excluded/sid_recall_unverified.csv`) |
+| runs whose own fingerprint refutes the table | 19 (`excluded/sid_recall_disputed.csv`) |
 | runs whose table exists nowhere | 15 (`excluded/stage3_runs_without_sid.csv`) |
-| SID contents seen in the history | 598 |
+| SID contents seen in the history | 624 |
 
-**The collection is the 97 confirmed pairs and nothing else.** Every pair in
+**The collection is the 182 confirmed pairs and nothing else.** Every pair in
 `sid_recall.csv` has the run's own `vocab_size` matching the paired table's token
 range, so the table is the one that run read. The runs that cannot be confirmed
 are parked in `excluded/`: they are evidence, not conclusions, and they are not
@@ -30,7 +50,7 @@ event. `sid_inventory.csv` holds one row per **paired** SID content with its pre
 the best recall it ever reached.
 
 The directory keeps **only the paired** SIDs and **only recalls that name a paired SID**:
-178 SID files and 178 recall files — **one SID paired with exactly one recall** — and every
+182 recall files — **one SID paired with exactly one recall** — and every
 recall file carries the `paired_sid` block
 (the SID's sha256, its file name, its paths and the run's own `code_path`), so the pairing
 is verifiable inside the file.
@@ -50,12 +70,12 @@ still exists (`working_tree`) and the earliest surviving version for a path comm
 after the run (`earliest_surviving`).
 
 That correction is why the numbers are much smaller than a naive path-based pairing:
-127 of the 225 Stage 3 runs used a table that exists neither in the working tree nor in the
+150 of the 236 Stage 3 runs used a table that exists neither in the working tree nor in the
 history, so they cannot be paired at all -- their recalls are listed separately in
 `stage3_runs_without_sid.csv` (the best of them is 0.064068) rather than being attributed
 to a table they did not use.
 
-144 of the 178 pairs resolve through the `earliest_surviving` fallback and 34 through
+147 of the 182 pairs resolve through the `earliest_surviving` fallback and 35 through
 `at_run_date`: the table was committed after the run, so the file is the only surviving copy
 of it but not provably the exact version the run read. Those rows say so in
 `sid_resolution`. The unpaired tables that the history also contains were pruned; they stay
@@ -78,7 +98,7 @@ Every pair carries a `pair_confidence`:
 | value | count | meaning |
 |---|---|---|
 | `verified_digest` | 0 | the run recorded the sha256 of the SID file it read; the pair is a fact |
-| `verified_vocabulary` | 97 | the run's own configuration recorded the `vocab_size` it built from the SID table, and the paired table reproduces it exactly. Stage 3's vocabulary is a function of the table's highest token, so this is the run's own fingerprint of the table it read. |
+| `verified_vocabulary` | 174 | the run's own configuration recorded the `vocab_size` it built from the SID table, and the paired table reproduces it exactly. Stage 3's vocabulary is a function of the table's highest token, so this is the run's own fingerprint of the table it read. |
 | `date_resolved_only` | 0 in the collection | the run left no configuration log; such pairs are parked in `excluded/` and are not counted |
 | disputed (in `excluded/sid_recall_disputed.csv`) | 10 | the run's recorded `vocab_size` does NOT match the paired table's token range: the run read a different table, and the pair is refused rather than reported. |
 
@@ -95,11 +115,14 @@ and all of them match it exactly.
 ## Q_H of these pairs
 
 `results/research/issue126/correlation_report_confirmed.json` scores every one of
-the 97 pairs with the Issue #126 hyperbolic prefix ranking score (frozen
+the 182 pairs with the Issue #126 hyperbolic prefix ranking score (frozen
 reference, held-out validation probe) and reports the association with its own
-sample size. On these 97 pairs: Spearman **+0.634** (p = 3.2e-12), bootstrap 95%
-CI [+0.471, +0.765], leave-one-out [+0.622, +0.671]; bucket count and same-bucket
-ratio alone reach R^2 0.112 against recall, and adding Q_H reaches 0.472.
+sample size. On these 182 pairs: Spearman **+0.7051** (p = 1.13e-28), Kendall
++0.5355, Pearson +0.6534, bootstrap 95% CI [+0.602, +0.794], Q_H range
+[-0.0191, +0.2068]; the bucket count and same-bucket ratio alone reach
+R^2 0.093 against recall, and adding the level-1 prefix structure reaches 0.558
+(the level-1 structure alone 0.427). On the previous 97-pair collection the same
+measure gave Spearman +0.634 (p = 3.2e-12), CI [+0.471, +0.765].
 `tools/research/science/q_h_correlation.py` recomputes it; each table's record is
 in `results/research/issue126/metrics/<sha256>.json`.
 
