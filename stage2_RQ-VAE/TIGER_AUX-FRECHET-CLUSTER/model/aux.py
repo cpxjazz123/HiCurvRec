@@ -187,6 +187,9 @@ def partition_agreement(probs: list, reference_codes: torch.Tensor) -> torch.Ten
     """
     if reference_codes is None:
         return probs[0].sum() * 0.0
+    # the pair terms work on the first PAIR_ROWS rows of the batch; the labels
+    # have to be cut to the same rows
+    reference_codes = reference_codes[:probs[0].shape[0]]
     total = None
     for level, p in enumerate(probs):
         labels = reference_codes[:, level]
@@ -268,8 +271,7 @@ def gp_alignment(probs: list, reference: torch.Tensor,
     g_tree = gromov_product(tree, base)
     g_ref = gromov_product(curved, base)
     mask = _pair_mask(rows, probs[0].device)
-    return _alignment_loss(g_tree[mask], g_ref[mask]) + partition_agreement(
-        probs, reference_codes)
+    return _alignment_loss(g_tree[mask], g_ref[mask])
 
 
 def tree_distortion(probs: list, reference: torch.Tensor,
@@ -284,8 +286,7 @@ def tree_distortion(probs: list, reference: torch.Tensor,
     tree = tree_distance(probs)
     curved = distance(points, points)
     mask = _pair_mask(rows, probs[0].device)
-    return _alignment_loss(tree[mask], curved[mask]) + partition_agreement(
-        probs, reference_codes)
+    return _alignment_loss(tree[mask], curved[mask])
 
 
 def frechet_cluster(probs: list, code_points: list, latents: list,
@@ -360,9 +361,12 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
     off_diagonal = ~torch.eye(len(code_centres), dtype=torch.bool,
                                device=code_centres.device)
     inter = centre_distance[off_diagonal].mean()
-    return (1.0 - torch.tanh((inter - intra) / (inter + intra).clamp_min(1e-3))
-            + partition_agreement(probs, reference_codes))
+    return 1.0 - torch.tanh((inter - intra) / (inter + intra).clamp_min(1e-3))
 
+#: Each loss returns TWO parts: the geometric term and the partition guard. They
+#: are scaled separately, because a single scale lets the larger part drown the
+#: guard: the guard is O(1) while the alignment value can be O(10), so with one
+#: shared scale the guard had no share of the gradient and the collapse went on.
 LOSSES = {"gp": gp_alignment, "tree": tree_distortion, "cluster": frechet_cluster}
 
 

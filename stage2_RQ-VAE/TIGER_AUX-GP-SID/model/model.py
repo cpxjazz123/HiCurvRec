@@ -51,6 +51,7 @@ class RQVAE(nn.Module):
         from . import aux as aux_module
         if aux_module.AUX_MODE == "none":
             self.last_aux = quant_loss * 0.0
+            self.last_guard = None
         else:
             probs = [item[1] for item in self.rq.last_soft]
             latents = [item[0] for item in self.rq.last_soft]
@@ -65,6 +66,7 @@ class RQVAE(nn.Module):
                 reference_codes = self.reference_codes[item_ids]
             self.last_aux = aux_module.compute(aux_module.AUX_MODE, probs, reference,
                                                latents, code_points, reference_codes)
+            self.last_guard = aux_module.partition_agreement(probs, reference_codes)
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
@@ -116,4 +118,14 @@ class RQVAE(nn.Module):
                                       if g is not None)).clamp_min(1e-12)
             scale = base_norm / aux_norm
             total = total + AUX_WEIGHT * scale * extra
+            # The partition guard gets its OWN scale: with one shared scale the
+            # guard (O(1)) had no share of the gradient against the alignment term
+            # (O(10)), and the first level kept collapsing.
+            guard = getattr(self, "last_guard", None)
+            if guard is not None and guard.requires_grad:
+                guard_grads = torch.autograd.grad(guard, params, retain_graph=True,
+                                                 allow_unused=True)
+                guard_norm = torch.sqrt(sum((g.detach() ** 2).sum()
+                                            for g in guard_grads if g is not None)).clamp_min(1e-12)
+                total = total + AUX_WEIGHT * (base_norm / guard_norm) * guard
         return total, recon_loss

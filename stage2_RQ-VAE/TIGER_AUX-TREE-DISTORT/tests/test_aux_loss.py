@@ -38,6 +38,13 @@ def _one_hot(rows: int, codes: list, size: int) -> torch.Tensor:
     return out
 
 
+def _reference_codes(rows: int = 64, groups: int = 2, codes: int = 16):
+    """The reference partition: the labels the candidate's cells must agree with."""
+    per_group = rows // groups
+    return torch.tensor([[row // per_group % groups, (row * 7 + 3) % codes, 0]
+                          for row in range(rows)], dtype=torch.long)
+
+
 def _structured_batch(rows: int = 64, groups: int = 2, codes: int = 16):
     """A healthy SID: items share prefixes inside a group, and the reference
     geometry follows the same grouping."""
@@ -119,9 +126,15 @@ class StructureTests(unittest.TestCase):
         healthy, reference = _structured_batch()
         collapsed, _ = _collapsed_batch()
         for name in ("gp", "tree"):
-            good = float(aux.LOSSES[name](healthy, reference))
-            bad = float(aux.LOSSES[name](collapsed, reference))
-            self.assertLess(good, bad, "%s prefers the collapsed tree" % name)
+            labels = _reference_codes()
+            good_geometry = float(aux.LOSSES[name](healthy, reference))
+            bad_geometry = float(aux.LOSSES[name](collapsed, reference))
+            good_guard = float(aux.partition_agreement(healthy, labels))
+            bad_guard = float(aux.partition_agreement(collapsed, labels))
+            self.assertLess(float(good_geometry), float(bad_geometry),
+                            "%s prefers the collapsed tree" % name)
+            self.assertLess(float(good_guard), float(bad_guard),
+                            "the %s partition guard prefers the collapsed tree" % name)
 
     def test_the_cluster_term_is_at_its_worst_on_a_collapsed_batch(self):
         torch.manual_seed(0)
