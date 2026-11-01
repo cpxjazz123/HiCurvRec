@@ -1,0 +1,350 @@
+{
+  "decision_at": 1793550597.016776,
+  "decision_hash": "1e7857605e7a485bd23ae6342a313452ee83591026188c0c10a0dcfb2a5041f2",
+  "evidence": {
+    "CURVALLOC-LORENTZ-RQ": {
+      "bundle_sha256": "69fae840a943a6a904669b556a06bf871e5ca680118efd1192a25c3ebf478274",
+      "literature_sha256": "a3e263181df06e1577e59442a633911b2104a0fb4ae3cc22c8ab094890359fea",
+      "math_sha256": "44dda0929f533f35a55419c1ebac74d13ee6442900d3939f3a4c77a587b2b781",
+      "probe_sha256": "3280bd359346abb2fa675776c5fe0a075b7736564dd27f809bd4762ee21b62f0"
+    },
+    "CURVPROF-TRANSPORT-RQ": {
+      "bundle_sha256": "e07e5e8696f932e41b0684420e434be49a260855c396c9bc060a927574b0441d",
+      "literature_sha256": "d20b0d1c0c2b1e68d81683b6e61af927bd6fdc789c0f8f91366531bb44d98b8f",
+      "math_sha256": "952802fc584e2de098995b04fe5a6d705318eb8253825438fcc2628310b63882",
+      "probe_sha256": "a8ffa27261e72ca19f4d9e4fb42a66d5d3acb1582d5a49a2331cbb215464c579"
+    },
+    "ORC-CELLCHART": {
+      "bundle_sha256": "7d383ca4ae78e04454981469344dc12cc4aaba10dd4d8e4560aab9f824d2c9d8",
+      "literature_sha256": "9f5b0eb2484fb4f67dd5d7b07650943ee45c555bd587d0f2e94f5d925793b741",
+      "math_sha256": "65b6f2be496d81a83cfca20d9d13daf4396806a39c02fdeb9ab0564d6ea678e8",
+      "probe_sha256": "79d1957810ac8325030b650b921c74312b886dda9b6cc8933c077beb3f6432c3"
+    },
+    "nullcurv-hinge-rq": {
+      "bundle_sha256": "2ec8dfb2e08a42829a7a2d0b7289fab3cb0f336a2b8f2b7ea6ef8bdf500b3256",
+      "literature_sha256": "5cf0b64c13040b2fc1292b827de02592eb950ee730d45c8fd054af38922e758a",
+      "math_sha256": "fbad78fae7e53ec5f015c7192564183e2910792cd43ad8958924f2365a46f33e",
+      "probe_sha256": "6223a6c594ac1186bfa44e58c0653c894f43650fa1bee4b7a733d12ad2777182"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "nullcurv-hinge-rq",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 3,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "its per-level Lorentz d_{L,c} inside the nearest-code rule is the tightest behaviour-geometry pathway and every constant is derived (lambda from the step-0 loss ratio, eps = 0.05 * measured mean distance, margin 0), but it carries no usage guard against the E6/E7 collapse signature and E10's very sparse graph (mean out-degree 5.4526) leaves the differentiable curvature surrogate with little partition-level gradient, so its channel is second-order.",
+          "scoring_2": "Genuine closed loop with derived margin 0 and lambda = L_RQ(0)/L_curv(0) and the best guard set (r_max squash, tau = 1/sqrt(c_l), sigma floor, level-3 usage >= 0.9x epoch-0), but its own risk 2 admits the hinge is measured on the K-node code-marginal quotient rather than the prefix-tuple quotient that E6/E7 implicate, so it optimises a different object; the lever is three scalars, level-3 sigma near zero and arccosh gradients at coincident codes are precisely the E6/E7 collapse mode, and a 0.06363-best baseline needs more than a 3-scalar nudge to clear 0.065.",
+          "scoring_3": "Only proposal whose curvature is both trained by the behavioural statistic and used as the assignment metric on one path (hinge gradient into c_l, c_l in the Lorentz nearest-code rule), with a complete equation set, a derived lambda (L_RQ(0)/L_curv(0)) and an epoch-0 usage guard; it perturbs the partition with only 3 scalars and keeps the Euclidean decoder, the least exposure to the E6/E7 evidence that geometric transport chains score 0.0546-0.0550 against 0.06207-0.06233 for the Euclidean level-1 quantizer, and to the E8 ceiling of 0.0822 pair-sharing at K=256."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "CURVALLOC-LORENTZ-RQ",
+        "mean_rank": 1.6667,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "E6 shows no arm clears 0.06363 and the survivors are those that keep level-1 and deep prefixes alive (resample 0.06363 with depth-1 0.497, l1_br_euclid 0.06207 with depth-2 0.829) while E7 shows the collapsed arm at T4 NLL 9.03 and E8 puts the K=256 level-1 ceiling at 0.0822, so the only proposal with explicit mean-zero, clip-bounded level-1/level-3 usage guards and a data-derived per-level radius channel (rho_l) that changes relative code distances is the best single-run bet.",
+          "scoring_2": "Measured on the prefix quotient with a legitimate global hyperboloid per level and aimed at the E6/E7 failure mode (keep level-3 used codes up, do not collapse level 1), but the behaviour->curvature/radius allocation is stop-gradient over only 15 refreshes and it concedes the sign of the map may be wrong, which a single run cannot repair; clip +-1 and EMA 0.5 are documented defaults rather than derived, and there is no usage floor, only a stated falsification threshold near 8 level-1 codes.",
+          "scoring_3": "Also a 3-scalar per-level perturbation, so it avoids the per-code variance that E8 (0.0822 at K=256 vs 0.3106 at K=16) shows is fatal, and its +-1 clip/EMA bounds the damage; but it is a stop-gradient schedule rather than a gradient pathway, the c_l=c0*exp(-delta_l) sign and the rho_l exponent are asserted (its own RISKS admit the sign may be wrong), it reports cost at B=256 rather than the frozen batch 1023, and the mean-zero delta forces one level's geometry in the opposite direction with no evidence for that direction."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 5
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "ORC-CELLCHART",
+        "mean_rank": 3.6667,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 4,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "per-code charts are genuinely new and address E8's one-geometry-for-all-codes problem, but E10's 5.4526 mean out-degree leaves each of 256 cells with almost no quotient mass and its own risk list concedes the early level-1 usage shrink that E6 (l1_br 0.04671) and E7 (T1 NLL 2.53-4.00) mark as the failure mode.",
+          "scoring_2": "Directly targets collisions and level-3 usage, but a per-codeword curvature magnitude makes the nearest-code rule a family of incomparable metrics so the assignment softmax mixes scales, it carries the heaviest refresh budget (600 refreshes x 20 nulls x 3 levels) of any arm, winsorising at +-3 inside a +-4x clip can binarise the field, and although its risk list names the Issue #127 level-1 shrink it specifies no usage guard -- the exact silent failure E6/E7 document (depth survival 1.000 while recall falls to 0.04671) -- making it the least defensible single run.",
+          "scoring_3": "It compares d_k under a different per-code k inside one argmin, which is not a well-defined nearest-code rule - smaller k yields systematically smaller distances (k spans [k0/4,4k0]), so assignment is dragged toward one clip end and reproduces the usage-collapse pattern that E6 (l1_br 0.04671, depth-2 prefix survival 0.161 vs 0.829) and E8 (0.0822 pair-sharing at K=256) identify as the binding failure; it also needs 600 refreshes on a 4096-item subsample plus a one-off rank-128 SVD and k-means reference partition, all estimated from the same sparse transition graph E10 reports at only 5.33 mean out-degree."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 11
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "CURVPROF-TRANSPORT-RQ",
+        "mean_rank": 2.6667,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 1,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "the closest measured precedents are the weakest arms in the bundle - successor_geodesic_coarse 0.05500, successor_geodesic_coarse_v2 0.05463, tangent_successor_residual 0.05500 with near-uniform T1 NLL 4.00 in E6/E7 - and the proposal itself concedes the Mobius transport is near-identity in the flat regime, so it sits below the 0.062-0.0636 Euclidean band it has to beat; m, the z*_l target formation and the K/2 occupancy floor are also the least specified constants.",
+          "scoring_2": "Only proposal that couples behaviour to geometry through a per-level statement of code choice on the prefix quotient the evidence actually stresses: E6 shows the arms that keep depth-2 prefix survival finite (0.829 with recall 0.062) beat the degenerate l1_br (1.000/1.000/1.000 survival, 0.04671), and this is the only one whose curvature enters the residual transport at levels 2-3 so that behaviour-off or flat-limit changes the assignment, with derived constants (measured spread, L1<L3 sign, two-standardised-unit clip, K/2 occupancy floor, 61-computation cadence), a K/2 guard against the E6/E7 collapse signature, and the smallest added cost (+5-10% step, 2-4 min).",
+          "scoring_3": "Its specification never gives the map from the standardised profile to c_l (\"quotient and curvature are computed as below\", \"m comes from the measured spread\" is undefined), so the single quantity that drives the mechanism is not reproducible, and it rewrites the Mobius log/geodesic step of the prefix chain at levels 2-3, which is the closest form to successor_geodesic_coarse 0.05500, v2 0.05463 and tangent_successor_residual 0.05500 that E6/E7 show losing to l1_br_euclid 0.06207 with T1 NLL 2.3-2.5 against 0.00."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 8
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "2ec8dfb2e08a42829a7a2d0b7289fab3cb0f336a2b8f2b7ea6ef8bdf500b3256",
+      "idea_id": "nullcurv-hinge-rq",
+      "proposal_sha256": "6d2c7c36049e2cac4fac619558671d21cff107440045c093e9d6a67ed4d3e4cd"
+    },
+    {
+      "evidence_sha256": "69fae840a943a6a904669b556a06bf871e5ca680118efd1192a25c3ebf478274",
+      "idea_id": "CURVALLOC-LORENTZ-RQ",
+      "proposal_sha256": "09d7d0491e00056e09b4d75e4262649e1b55fdac1353ddc333505bf307194717"
+    },
+    {
+      "evidence_sha256": "7d383ca4ae78e04454981469344dc12cc4aaba10dd4d8e4560aab9f824d2c9d8",
+      "idea_id": "ORC-CELLCHART",
+      "proposal_sha256": "a373cc0875e41f70891e1488375bc211159e6c9d410752b0b7df7c824cb0bffd"
+    },
+    {
+      "evidence_sha256": "e07e5e8696f932e41b0684420e434be49a260855c396c9bc060a927574b0441d",
+      "idea_id": "CURVPROF-TRANSPORT-RQ",
+      "proposal_sha256": "7d362801e10cd50dd592557505a8e25a9b01bd4011dffadfcd675da9cd4937ab"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "CURVALLOC-LORENTZ-RQ",
+          "position": 1,
+          "reason": "E6 shows no arm clears 0.06363 and the survivors are those that keep level-1 and deep prefixes alive (resample 0.06363 with depth-1 0.497, l1_br_euclid 0.06207 with depth-2 0.829) while E7 shows the collapsed arm at T4 NLL 9.03 and E8 puts the K=256 level-1 ceiling at 0.0822, so the only proposal with explicit mean-zero, clip-bounded level-1/level-3 usage guards and a data-derived per-level radius channel (rho_l) that changes relative code distances is the best single-run bet."
+        },
+        {
+          "idea_id": "nullcurv-hinge-rq",
+          "position": 2,
+          "reason": "its per-level Lorentz d_{L,c} inside the nearest-code rule is the tightest behaviour-geometry pathway and every constant is derived (lambda from the step-0 loss ratio, eps = 0.05 * measured mean distance, margin 0), but it carries no usage guard against the E6/E7 collapse signature and E10's very sparse graph (mean out-degree 5.4526) leaves the differentiable curvature surrogate with little partition-level gradient, so its channel is second-order."
+        },
+        {
+          "idea_id": "ORC-CELLCHART",
+          "position": 3,
+          "reason": "per-code charts are genuinely new and address E8's one-geometry-for-all-codes problem, but E10's 5.4526 mean out-degree leaves each of 256 cells with almost no quotient mass and its own risk list concedes the early level-1 usage shrink that E6 (l1_br 0.04671) and E7 (T1 NLL 2.53-4.00) mark as the failure mode."
+        },
+        {
+          "idea_id": "CURVPROF-TRANSPORT-RQ",
+          "position": 4,
+          "reason": "the closest measured precedents are the weakest arms in the bundle - successor_geodesic_coarse 0.05500, successor_geodesic_coarse_v2 0.05463, tangent_successor_residual 0.05500 with near-uniform T1 NLL 4.00 in E6/E7 - and the proposal itself concedes the Mobius transport is near-identity in the flat regime, so it sits below the 0.062-0.0636 Euclidean band it has to beat; m, the z*_l target formation and the K/2 occupancy floor are also the least specified constants."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "CURVPROF-TRANSPORT-RQ",
+          "position": 1,
+          "reason": "Only proposal that couples behaviour to geometry through a per-level statement of code choice on the prefix quotient the evidence actually stresses: E6 shows the arms that keep depth-2 prefix survival finite (0.829 with recall 0.062) beat the degenerate l1_br (1.000/1.000/1.000 survival, 0.04671), and this is the only one whose curvature enters the residual transport at levels 2-3 so that behaviour-off or flat-limit changes the assignment, with derived constants (measured spread, L1<L3 sign, two-standardised-unit clip, K/2 occupancy floor, 61-computation cadence), a K/2 guard against the E6/E7 collapse signature, and the smallest added cost (+5-10% step, 2-4 min)."
+        },
+        {
+          "idea_id": "CURVALLOC-LORENTZ-RQ",
+          "position": 2,
+          "reason": "Measured on the prefix quotient with a legitimate global hyperboloid per level and aimed at the E6/E7 failure mode (keep level-3 used codes up, do not collapse level 1), but the behaviour->curvature/radius allocation is stop-gradient over only 15 refreshes and it concedes the sign of the map may be wrong, which a single run cannot repair; clip +-1 and EMA 0.5 are documented defaults rather than derived, and there is no usage floor, only a stated falsification threshold near 8 level-1 codes."
+        },
+        {
+          "idea_id": "nullcurv-hinge-rq",
+          "position": 3,
+          "reason": "Genuine closed loop with derived margin 0 and lambda = L_RQ(0)/L_curv(0) and the best guard set (r_max squash, tau = 1/sqrt(c_l), sigma floor, level-3 usage >= 0.9x epoch-0), but its own risk 2 admits the hinge is measured on the K-node code-marginal quotient rather than the prefix-tuple quotient that E6/E7 implicate, so it optimises a different object; the lever is three scalars, level-3 sigma near zero and arccosh gradients at coincident codes are precisely the E6/E7 collapse mode, and a 0.06363-best baseline needs more than a 3-scalar nudge to clear 0.065."
+        },
+        {
+          "idea_id": "ORC-CELLCHART",
+          "position": 4,
+          "reason": "Directly targets collisions and level-3 usage, but a per-codeword curvature magnitude makes the nearest-code rule a family of incomparable metrics so the assignment softmax mixes scales, it carries the heaviest refresh budget (600 refreshes x 20 nulls x 3 levels) of any arm, winsorising at +-3 inside a +-4x clip can binarise the field, and although its risk list names the Issue #127 level-1 shrink it specifies no usage guard -- the exact silent failure E6/E7 document (depth survival 1.000 while recall falls to 0.04671) -- making it the least defensible single run."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "nullcurv-hinge-rq",
+          "position": 1,
+          "reason": "Only proposal whose curvature is both trained by the behavioural statistic and used as the assignment metric on one path (hinge gradient into c_l, c_l in the Lorentz nearest-code rule), with a complete equation set, a derived lambda (L_RQ(0)/L_curv(0)) and an epoch-0 usage guard; it perturbs the partition with only 3 scalars and keeps the Euclidean decoder, the least exposure to the E6/E7 evidence that geometric transport chains score 0.0546-0.0550 against 0.06207-0.06233 for the Euclidean level-1 quantizer, and to the E8 ceiling of 0.0822 pair-sharing at K=256."
+        },
+        {
+          "idea_id": "CURVALLOC-LORENTZ-RQ",
+          "position": 2,
+          "reason": "Also a 3-scalar per-level perturbation, so it avoids the per-code variance that E8 (0.0822 at K=256 vs 0.3106 at K=16) shows is fatal, and its +-1 clip/EMA bounds the damage; but it is a stop-gradient schedule rather than a gradient pathway, the c_l=c0*exp(-delta_l) sign and the rho_l exponent are asserted (its own RISKS admit the sign may be wrong), it reports cost at B=256 rather than the frozen batch 1023, and the mean-zero delta forces one level's geometry in the opposite direction with no evidence for that direction."
+        },
+        {
+          "idea_id": "CURVPROF-TRANSPORT-RQ",
+          "position": 3,
+          "reason": "Its specification never gives the map from the standardised profile to c_l (\"quotient and curvature are computed as below\", \"m comes from the measured spread\" is undefined), so the single quantity that drives the mechanism is not reproducible, and it rewrites the Mobius log/geodesic step of the prefix chain at levels 2-3, which is the closest form to successor_geodesic_coarse 0.05500, v2 0.05463 and tangent_successor_residual 0.05500 that E6/E7 show losing to l1_br_euclid 0.06207 with T1 NLL 2.3-2.5 against 0.00."
+        },
+        {
+          "idea_id": "ORC-CELLCHART",
+          "position": 4,
+          "reason": "It compares d_k under a different per-code k inside one argmin, which is not a well-defined nearest-code rule - smaller k yields systematically smaller distances (k spans [k0/4,4k0]), so assignment is dragged toward one clip end and reproduces the usage-collapse pattern that E6 (l1_br 0.04671, depth-2 prefix survival 0.161 vs 0.829) and E8 (0.0822 pair-sharing at K=256) identify as the binding failure; it also needs 600 refreshes on a 4096-item subsample plus a one-off rank-128 SVD and k-means reference partition, all estimated from the same sparse transition graph E10 reports at only 5.33 mean out-degree."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261102_031529_470",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "CURVALLOC-LORENTZ-RQ": {
+        "first_places": 1,
+        "mean_rank": 1.6667,
+        "total_rank": 5
+      },
+      "CURVPROF-TRANSPORT-RQ": {
+        "first_places": 1,
+        "mean_rank": 2.6667,
+        "total_rank": 8
+      },
+      "ORC-CELLCHART": {
+        "first_places": 0,
+        "mean_rank": 3.6667,
+        "total_rank": 11
+      },
+      "nullcurv-hinge-rq": {
+        "first_places": 1,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      }
+    },
+    "backups": [
+      {
+        "first_places": 1,
+        "idea_id": "nullcurv-hinge-rq",
+        "mean_rank": 2.0,
+        "status": "BACKUP",
+        "total_rank": 6
+      },
+      {
+        "first_places": 1,
+        "idea_id": "CURVPROF-TRANSPORT-RQ",
+        "mean_rank": 2.6667,
+        "status": "BACKUP",
+        "total_rank": 8
+      },
+      {
+        "first_places": 0,
+        "idea_id": "ORC-CELLCHART",
+        "mean_rank": 3.6667,
+        "status": "BACKUP",
+        "total_rank": 11
+      }
+    ],
+    "disagreement": {
+      "CURVALLOC-LORENTZ-RQ": 1,
+      "CURVPROF-TRANSPORT-RQ": 3,
+      "ORC-CELLCHART": 1,
+      "nullcurv-hinge-rq": 2
+    },
+    "rejected": [
+      {
+        "idea_id": "nullcurv-hinge-rq",
+        "mean_rank": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 6
+      },
+      {
+        "idea_id": "CURVPROF-TRANSPORT-RQ",
+        "mean_rank": 2.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 8
+      },
+      {
+        "idea_id": "ORC-CELLCHART",
+        "mean_rank": 3.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 11
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 1,
+        "idea_id": "CURVALLOC-LORENTZ-RQ",
+        "mean_rank": 1.6667,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 5
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}
