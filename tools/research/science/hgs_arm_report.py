@@ -22,6 +22,8 @@ import ast
 import json
 import math
 import re
+
+import numpy as np
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
@@ -125,6 +127,124 @@ def read_sid(path: Path) -> dict:
     return out
 
 
+HIERARCHY = REPO / "results" / "research" / "hierarchy_audit" / "hierarchy.npz"
+
+
+def hierarchy_agreement(sid_path: Path) -> dict:
+    """How much of the frozen behaviour hierarchy the exported SID reproduces.
+
+    The frozen baseline RQ-VAE reproduces the finest level with NMI 0.944
+    without any hierarchy supervision, so a supervised arm that scores lower
+    has been pulled AWAY from the tree.
+    """
+    import collections
+
+    payload = np.load(HIERARCHY)
+    items = payload["items"]
+    cells = payload["cells"]
+    row_of = {int(item): row for row, item in enumerate(items)}
+    sequences = {int(key): tuple(value) for key, value in json.loads(sid_path.read_text()).items()}
+    keys = [key for key in sequences if key in row_of and cells[row_of[key], -1] >= 0]
+    if not keys:
+        return {"status": "DATA_UNAVAILABLE"}
+    sid = [sequences[key] for key in keys]
+    hierarchy = [[int(cells[row_of[key], level]) for level in range(cells.shape[1])] for key in keys]
+
+    def nmi(left, right) -> float:
+        total = len(left)
+        ca = collections.Counter(left)
+        cb = collections.Counter(right)
+        joint = collections.Counter(zip(left, right))
+
+        def entropy(counter):
+            return -sum((value / total) * math.log2(value / total) for value in counter.values())
+
+        ha, hb = entropy(ca), entropy(cb)
+        if ha <= 0 or hb <= 0:
+            return 0.0
+        information = sum((value / total) * math.log2((value / total) / ((ca[a] / total) * (cb[b] / total)))
+                          for (a, b), value in joint.items())
+        return information / math.sqrt(ha * hb)
+
+    out = {"items_compared": len(keys),
+           "nmi_l1": nmi([sequence[0] for sequence in sid], [row[1] for row in hierarchy]),
+           "nmi_l3": nmi([sequence[:3] for sequence in sid], [tuple(row[3:]) for row in hierarchy])}
+
+    # tree-triplet satisfaction: does the SID's own prefix order agree with the
+    # hierarchy's order for a sampled set of hierarchy-consistent triples?
+    def shared(a, b) -> int:
+        count = 0
+        for left, right in zip(a[:3], b[:3]):
+            if left != right:
+                break
+            count += 1
+        return count
+
+    by_cell = {level: collections.defaultdict(list) for level in (1, 2, 3)}
+    for index, row in enumerate(hierarchy):
+        for level in (1, 2, 3):
+            by_cell[level][row[level]].append(index)
+    rng = np.random.default_rng(0)
+    satisfied = total = 0
+    for _ in range(4000):
+        anchor = int(rng.integers(0, len(keys)))
+        level = int(rng.integers(1, 4))
+        cell = hierarchy[anchor][level]
+        members = by_cell[level].get(cell) or []
+        if len(members) < 2:
+            continue
+        near = members[int(rng.integers(0, len(members)))]
+        if near == anchor:
+            continue
+        # the far item comes from a DIFFERENT cell of the same level, which is
+        # the comparison the tree term makes
+        far = -1
+        for _ in range(20):
+            candidate = int(rng.integers(0, len(keys)))
+            if hierarchy[candidate][level] != cell and candidate not in (anchor, near):
+                far = candidate
+                break
+        if far < 0:
+            continue
+        total += 1
+        if shared(sid[anchor], sid[near]) > shared(sid[anchor], sid[far]):
+            satisfied += 1
+    out["tree_triplet_satisfaction"] = (satisfied / total) if total else None
+    out["tree_triplets_tested"] = total
+
+    # the prefix contrast: do items of one hierarchy cell share their first SID
+    # token more often than items of different cells?
+    same_share = same_total = diff_share = diff_total = 0
+    rng = np.random.default_rng(1)
+    for _ in range(6000):
+        anchor = int(rng.integers(0, len(keys)))
+        level = int(rng.integers(1, 4))
+        cell = hierarchy[anchor][level]
+        members = by_cell[level].get(cell) or []
+        if len(members) < 2:
+            continue
+        near = members[int(rng.integers(0, len(members)))]
+        if near == anchor:
+            continue
+        same_total += 1
+        same_share += int(sid[anchor][0] == sid[near][0])
+        far = -1
+        for _ in range(20):
+            candidate = int(rng.integers(0, len(keys)))
+            if hierarchy[candidate][level] != cell and candidate not in (anchor, near):
+                far = candidate
+                break
+        if far < 0:
+            continue
+        diff_total += 1
+        diff_share += int(sid[anchor][0] == sid[far][0])
+    out["same_cell_l1_share"] = (same_share / same_total) if same_total else None
+    out["different_cell_l1_share"] = (diff_share / diff_total) if diff_total else None
+    out["prefix_contrast"] = (out["same_cell_l1_share"] - out["different_cell_l1_share"]
+                               if same_total and diff_total else None)
+    return out
+
+
 def build(arm: str) -> dict:
     tree_log = REPO / "stage2_RQ-VAE" / arm / "logs" / "train_migrated.log"
     result_log = REPO / "results" / "stage2_RQ-VAE" / arm / "logs" / "train_migrated.log"
@@ -147,6 +267,8 @@ def build(arm: str) -> dict:
     }
     if sid_path.exists():
         report["sid"] = read_sid(sid_path)
+        if HIERARCHY.exists():
+            report["hierarchy_agreement"] = hierarchy_agreement(sid_path)
         report["sid"]["sha256"] = __import__("hashlib").sha256(sid_path.read_bytes()).hexdigest()
     return report
 
