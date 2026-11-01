@@ -167,9 +167,33 @@ def _standardize(x: torch.Tensor, reference: torch.Tensor = None) -> torch.Tenso
         mean = x.detach().mean()
         std = x.detach().std().clamp_min(1e-8)
         return (x - mean) / std
-    mean = reference.detach().mean()
-    std = reference.detach().std().clamp_min(1e-8)
+    mean = x.detach().mean()
+    std = x.detach().std().clamp_min(1e-8)
     return (x - mean) / std
+
+
+def _alignment_loss(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
+    """How well two distance structures agree, with a flat structure priced.
+
+    Two unitless parts:
+
+    * ``1 - corr``: the shape of the two distance sets must agree. A constant
+      side has no correlation, which is the WORST value, so a collapsed tree is
+      not a cheap way out.
+    * ``|log(std_left / std_right)|``: the SPREAD of the two sides must agree.
+      Standardizing each side by itself hides a collapse (a constant side maps to
+      zero and looks perfect), and that is what let the first level fall from 247
+      codes to 9.
+
+    Neither part has a constant in it.
+    """
+    left_c = left - left.detach().mean()
+    right_c = right - right.detach().mean()
+    denominator = (left_c.detach().norm() * right_c.detach().norm()).clamp_min(1e-8)
+    correlation = (left_c * right_c).sum() / denominator
+    spread = torch.log((left.detach().std().clamp_min(1e-8))
+                       / (right.detach().std().clamp_min(1e-8))).abs()
+    return (1.0 - correlation) + spread
 
 
 def _rows(probs: list, others: list):
@@ -207,8 +231,7 @@ def gp_alignment(probs: list, reference: torch.Tensor) -> torch.Tensor:
     g_tree = gromov_product(tree, base)
     g_ref = gromov_product(curved, base)
     mask = _pair_mask(rows, probs[0].device)
-    return _standardize(g_tree[mask], g_ref[mask]).sub(
-        _standardize(g_ref[mask], g_ref[mask])).pow(2).mean()
+    return _alignment_loss(g_tree[mask], g_ref[mask])
 
 
 def tree_distortion(probs: list, reference: torch.Tensor) -> torch.Tensor:
@@ -222,8 +245,7 @@ def tree_distortion(probs: list, reference: torch.Tensor) -> torch.Tensor:
     tree = tree_distance(probs)
     curved = distance(points, points)
     mask = _pair_mask(rows, probs[0].device)
-    return _standardize(tree[mask], curved[mask]).sub(
-        _standardize(curved[mask], curved[mask])).pow(2).mean()
+    return _alignment_loss(tree[mask], curved[mask])
 
 
 def frechet_cluster(probs: list, code_points: list, latents: list) -> torch.Tensor:
@@ -297,7 +319,7 @@ def frechet_cluster(probs: list, code_points: list, latents: list) -> torch.Tens
     off_diagonal = ~torch.eye(len(code_centres), dtype=torch.bool,
                                device=code_centres.device)
     inter = centre_distance[off_diagonal].mean()
-    return 1.0 - (inter - intra) / (inter + intra).clamp_min(1e-8)
+    return 1.0 - torch.tanh((inter - intra) / (inter + intra).clamp_min(1e-3))
 
 LOSSES = {"gp": gp_alignment, "tree": tree_distortion, "cluster": frechet_cluster}
 
