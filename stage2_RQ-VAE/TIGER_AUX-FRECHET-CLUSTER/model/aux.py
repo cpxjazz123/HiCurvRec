@@ -153,9 +153,22 @@ def gromov_product(matrix: torch.Tensor, base: int) -> torch.Tensor:
     return (to_base + to_base.t() - matrix) / 2.0
 
 
-def _standardize(x: torch.Tensor) -> torch.Tensor:
-    mean = x.detach().mean()
-    std = x.detach().std().clamp_min(1e-8)
+def _standardize(x: torch.Tensor, reference: torch.Tensor = None) -> torch.Tensor:
+    """Put a set of distances on the reference's scale.
+
+    The statistics are the REFERENCE's, not the set's own: with each side
+    standardized by itself, a collapsed side (a constant) maps to zero and its
+    loss is 1, while a healthy but unaligned side has a loss of 2 -- the collapse
+    becomes the better optimum, which is what happened (the first level fell from
+    247 codes to 9). Sharing the reference's mean and standard deviation makes a
+    collapsed side land far from zero and therefore expensive.
+    """
+    if reference is None:
+        mean = x.detach().mean()
+        std = x.detach().std().clamp_min(1e-8)
+        return (x - mean) / std
+    mean = reference.detach().mean()
+    std = reference.detach().std().clamp_min(1e-8)
     return (x - mean) / std
 
 
@@ -194,7 +207,8 @@ def gp_alignment(probs: list, reference: torch.Tensor) -> torch.Tensor:
     g_tree = gromov_product(tree, base)
     g_ref = gromov_product(curved, base)
     mask = _pair_mask(rows, probs[0].device)
-    return _standardize(g_tree[mask]).sub(_standardize(g_ref[mask])).pow(2).mean()
+    return _standardize(g_tree[mask], g_ref[mask]).sub(
+        _standardize(g_ref[mask], g_ref[mask])).pow(2).mean()
 
 
 def tree_distortion(probs: list, reference: torch.Tensor) -> torch.Tensor:
@@ -208,7 +222,8 @@ def tree_distortion(probs: list, reference: torch.Tensor) -> torch.Tensor:
     tree = tree_distance(probs)
     curved = distance(points, points)
     mask = _pair_mask(rows, probs[0].device)
-    return _standardize(tree[mask]).sub(_standardize(curved[mask])).pow(2).mean()
+    return _standardize(tree[mask], curved[mask]).sub(
+        _standardize(curved[mask], curved[mask])).pow(2).mean()
 
 
 def frechet_cluster(probs: list, code_points: list, latents: list) -> torch.Tensor:

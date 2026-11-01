@@ -24,6 +24,8 @@ TREE = Path(__file__).resolve().parents[1]
 if str(TREE) not in sys.path:
     sys.path.insert(0, str(TREE))
 
+torch.manual_seed(0)   # the synthetic structures must be reproducible
+
 import train_rqvae as trainer                      # noqa: E402
 from model import aux                                # noqa: E402
 from model.model import RQVAE                        # noqa: E402
@@ -95,6 +97,7 @@ class DefinitionTests(unittest.TestCase):
 
 class StructureTests(unittest.TestCase):
     def test_the_alignment_terms_prefer_a_healthy_tree_to_a_collapsed_one(self):
+        torch.manual_seed(0)
         healthy, reference = _structured_batch()
         collapsed, _ = _collapsed_batch()
         for name in ("gp", "tree"):
@@ -103,6 +106,7 @@ class StructureTests(unittest.TestCase):
             self.assertLess(good, bad, "%s prefers the collapsed tree" % name)
 
     def test_the_cluster_term_is_at_its_worst_on_a_collapsed_batch(self):
+        torch.manual_seed(0)
         collapsed, _ = _collapsed_batch()
         latents = [aux.project(torch.randn(64, 3)) for _ in range(2)]
         # the first-level CODEBOOK: the soft mass over it gives every item its
