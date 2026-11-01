@@ -96,6 +96,9 @@ Measured on the exported SIDs, with the same definitions:
 | arm | L1 codes | L2 prefixes | L3 triples | 4th-token vocabulary | residual identity bits/item | NMI(SID_L3, hierarchy_L3) | tree-triplet satisfaction | prefix contrast |
 |---|---|---|---|---|---|---|---|---|
 | baseline `TIGER_RQ-VAE` | 247 | 7,414 | 20,223 | 42 | 0.48 | **0.944** | 0.051 | 0.040 |
-| tree-only HGS (first run, broken sampler) | 53 | 740 | 3,069 | 1,197 | 6.95 | 0.652 | **0.288** | **0.130** |
+| tree-only HGS (first run, broken sampler) | 53 | 740 | 3,069 | 1,197 | 6.95 | 0.652 | 0.288 | 0.130 |
+| all-three HGS (this round) | 4 | 123 | 1,203 | 689 | 6.87 | 0.658 | **0.379** | **0.178** |
 
-The baseline reproduces the frozen hierarchy's finest level with NMI 0.944 **without any hierarchy supervision**: the tree is already encoded. The supervised arm follows the hierarchy *better* on the tree's own terms (triplet satisfaction 0.288 vs 0.051, prefix contrast 0.130 vs 0.040) and ends up with a worse SID (NMI 0.652, 6.95 residual identity bits per item instead of 0.48) and a worse recall (0.045683 vs 0.0553). Following the hierarchy more closely is worth less than the resolution it costs.
+The baseline reproduces the frozen hierarchy's finest level with NMI 0.944 **without any hierarchy supervision**: the tree is already encoded, and it is encoded *finer* than the tree itself. The supervised arms follow the hierarchy better on the tree's own terms (triplet satisfaction 0.379 vs 0.051, prefix contrast 0.178 vs 0.040) and end up with a worse SID (NMI 0.658, 6.87 residual identity bits per item instead of 0.48) and a worse recall (0.045683 vs 0.0553 in the two-term run).
+
+**The supervision works exactly as specified and that is the problem.** The hierarchy's granularity is coarser than the SID's own information content — 17 cells at the first level against 247 codes, 948 against 7,414 prefixes — so aligning the codebook to it can only coarsen the codebook. The first level ends with four codes, one of them holding 12,675 items.
