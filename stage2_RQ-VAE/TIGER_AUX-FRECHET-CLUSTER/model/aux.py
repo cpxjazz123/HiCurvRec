@@ -44,6 +44,13 @@ AUX_WEIGHT = 1.0
 #: tuned parameter.
 PAIR_ROWS = 128
 
+#: The cluster term is the expensive one: a hyperbolic Frechet mean per group and
+#: per step. These are its COMPUTE budget, not its mathematics: the means are
+#: taken with FRECHET_STEPS Riemannian steps and only the FRECHET_GROUPS largest
+#: groups of the batch are summarised (the rest are carried by the guard).
+FRECHET_STEPS = 4
+FRECHET_GROUPS = 16
+
 #: The unit ball of the contract, with the usual epsilon away from the boundary.
 BALL_EPS = 1e-6
 
@@ -95,7 +102,8 @@ def _exp_map(base: torch.Tensor, tangent: torch.Tensor) -> torch.Tensor:
     return _mobius_add(base, torch.tanh(norm * scale / 2.0) * tangent / norm.clamp_min(1e-12))
 
 
-def frechet_mean(points: list, weights: torch.Tensor = None, steps: int = 8) -> torch.Tensor:
+def frechet_mean(points: list, weights: torch.Tensor = None,
+                 steps: int = FRECHET_STEPS) -> torch.Tensor:
     """The hyperbolic Frechet mean: the minimiser of ``sum_i w_i d_H(x_i, m)^2``.
 
     Riemannian gradient descent in the ball, which is a different point from the
@@ -199,14 +207,19 @@ def partition_agreement(probs: list, reference_codes: torch.Tensor) -> torch.Ten
         # the joint is normalised by the batch: the mutual information grows with
         # the batch size, and an unnormalised one makes the gradient of log(joint)
         # unbounded when a cell empties (the run diverged to 2.3e15)
-        joint = (p.t() @ one_hot) / max(float(p.shape[0]), 1.0)
-        p_mass = p.sum(dim=0).unsqueeze(1).clamp_min(1e-8)
-        r_mass = one_hot.sum(dim=0).unsqueeze(0).clamp_min(1e-8)
+        # every marginal is divided by the batch size, so the joint, the two
+        # marginals and the entropies all live on the same scale (with one of them
+        # unnormalised the "mutual information" was 2949 and the guard was
+        # meaningless)
+        batch = max(float(p.shape[0]), 1.0)
+        joint = (p.t() @ one_hot) / batch
+        p_mass = (p.sum(dim=0) / batch).unsqueeze(1).clamp_min(1e-8)
+        r_mass = (one_hot.sum(dim=0) / batch).unsqueeze(0).clamp_min(1e-8)
         total_joint = joint.clamp_min(1e-6)
         mutual = (total_joint * (total_joint.log()
                                  - p_mass.log() - r_mass.log())).sum()
-        entropy_p = -(p * p.clamp_min(1e-8).log()).sum()
-        entropy_r = -(one_hot * one_hot.clamp_min(1e-8).log()).sum()
+        entropy_p = -(p_mass * p_mass.clamp_min(1e-8).log()).sum()
+        entropy_r = -(r_mass * r_mass.clamp_min(1e-8).log()).sum()
         nmi = mutual / torch.sqrt(entropy_p.clamp_min(1e-8)
                                   * entropy_r.clamp_min(1e-8))
         level_loss = 1.0 - nmi
@@ -339,7 +352,11 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
     item_centres = []
     code_centres = []
     members = []
-    for code in labels.unique():
+    # only the largest groups are summarised: the Frechet mean per group per step
+    # is what made this term 40x slower than the baseline
+    order = sorted(labels.unique().tolist(),
+                   key=lambda code: -int((labels == code).sum()))
+    for code in order[:FRECHET_GROUPS]:
         mask = labels == code
         if int(mask.sum()) < 2:
             continue

@@ -202,7 +202,13 @@ class GradientTests(unittest.TestCase):
         model = self.model
         out = model(self.batch, self.ids)
         params = [layer.get_code_embs() for layer in model.rq.vq_layers]
-        grads = torch.autograd.grad(model.last_aux, params, allow_unused=True)
+        # the auxiliary objective is the geometric term AND the partition guard:
+        # for the cluster term the codebook gradient comes from the guard, because
+        # the geometric part only moves the item positions
+        objective = model.last_aux
+        if getattr(model, "last_guard", None) is not None:
+            objective = objective + model.last_guard
+        grads = torch.autograd.grad(objective, params, allow_unused=True)
         slope = sum(float((g.detach() ** 2).sum()) for g in grads if g is not None)
         self.assertGreater(slope, 0.0, "the auxiliary term has no gradient")
         # the directional derivative along -grad is -||grad||^2 < 0
