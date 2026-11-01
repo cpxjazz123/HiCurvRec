@@ -48,8 +48,8 @@ PAIR_ROWS = 128
 #: per step. These are its COMPUTE budget, not its mathematics: the means are
 #: taken with FRECHET_STEPS Riemannian steps and only the FRECHET_GROUPS largest
 #: groups of the batch are summarised (the rest are carried by the guard).
-FRECHET_STEPS = 4
-FRECHET_GROUPS = 16
+FRECHET_STEPS = 2
+FRECHET_GROUPS = 8
 
 #: The unit ball of the contract, with the usual epsilon away from the boundary.
 BALL_EPS = 1e-6
@@ -363,16 +363,16 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
         weight = masses[:, code][mask].detach().clamp_min(1e-8)
         item_group = item_points[mask]
         code_group = prefix_points[mask]
-        # The centres are STATISTICS, not parameters: they are computed without
-        # a gradient. The item positions still carry the gradient to the encoder,
-        # and the codebook gradient of this arm comes from the partition guard.
-        # Back-propagating through the Frechet iterations made the term three
-        # times slower than the whole baseline.
-        with torch.no_grad():
-            item_centres.append(frechet_mean(
-                [item_group[i] for i in range(item_group.shape[0])], weight).detach())
-            code_centres.append(frechet_mean(
-                [code_group[i] for i in range(code_group.shape[0])], weight).detach())
+        # The centres are DIFFERENTIABLE again. With detached centres this arm
+        # had no codebook gradient at all (measured: 0.0 at the middle level), the
+        # partition guard had to hold the whole partition alone, and the item
+        # positions collapsed instead -- the partition collapsed with them. The
+        # cost is bounded by the compute budget above (two Riemannian steps over
+        # the eight largest groups) instead of by detaching.
+        item_centres.append(frechet_mean(
+            [item_group[i] for i in range(item_group.shape[0])], weight))
+        code_centres.append(frechet_mean(
+            [code_group[i] for i in range(code_group.shape[0])], weight))
         members.append(mask)
     if len(item_centres) < 2:
         return item_points.sum() * 0.0 + 1.0

@@ -178,7 +178,8 @@ class GradientTests(unittest.TestCase):
             encoded = cls.model.encoder(seed)
         cls.model.rq.init_codebook(encoded, encoded.device)
         # the FROZEN reference geometry, exactly as the trainer binds it
-        cls.model.set_reference(trainer._frozen_reference(seed, torch.device("cpu")))
+        cls.model.set_reference(trainer._frozen_reference(seed, torch.device("cpu")),
+                                trainer._frozen_reference_codes(torch.device("cpu")))
         cls.batch = seed[:256]
         cls.ids = torch.arange(256)
 
