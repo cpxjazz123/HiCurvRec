@@ -132,3 +132,35 @@ protection, which none of the three terms provides on its own.
 
 The three mechanisms therefore stand at different states, and the Stage 3 runs
 are deliberately not started yet.
+
+## A negative result about the guard's strength
+
+The guard was tried at two strengths, and the stronger one is worse:
+
+| guard strength | GP | TREE | CLUSTER |
+| --- | --- | --- | --- |
+| capped at the baseline's pull | **157 / 5,517 / 17,719** (dup 0.279) | **208 / 2,578 / 6,877** (dup 0.720) | 21 / 192 / 2,103 (dup 0.914) |
+| at least as strong as the geometric term | 23 / 86 / 562 (dup 0.977) | 21 / 70 / 1,135 (dup 0.954) | 1 / 125 / 1,537 (dup 0.937) |
+
+The second row is a failure of the MECHANISM, not of the tuning: the guard
+compares the candidate's partition with the reference's partition, and the two
+live in different codebooks. Soft mutual information is label-invariant, so it
+cannot align the two by code id, and its gradient does not pin the granularity
+either -- the first level still fell to 21 cells with the guard at full strength,
+while the objective's value grew (the total loss went from 2.6e-3 to 1.8 and
+6.5). The tree is therefore reverted to the first row, where the guard is capped
+at the baseline's pull.
+
+What the three arms demonstrate, in one line each:
+
+* the Gromov alignment is compatible with a rich SID (it keeps 96% of the
+  baseline's level-1 cells and 88% of its triples);
+* the tree term keeps the coarse level (208 of 247) and trades the deep ones;
+* the Frechet cluster term is minimised by FEWER and FARTHER clusters, so it
+  trades the vocabulary away by construction -- it is the only one of the three
+  whose objective prefers a coarse vocabulary.
+
+The missing ingredient, for any of them, is a constraint that acts on the
+marginal of the assignment (how many cells are used) rather than on pairwise
+structure. The partition guard was an attempt at that and it does not work as
+written.

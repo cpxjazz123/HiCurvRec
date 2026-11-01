@@ -131,15 +131,6 @@ class RQVAE(nn.Module):
                                                  allow_unused=True)
                 guard_norm = torch.sqrt(sum((g.detach() ** 2).sum()
                                             for g in guard_grads if g is not None)).clamp_min(1e-12)
-                # The partition guard is a CONSTRAINT and the geometric term is
-                # the OBJECTIVE: the constraint may not be weaker than the
-                # objective, or the objective can trade the vocabulary away. The
-                # cluster term does exactly that -- it is minimised by fewer,
-                # farther clusters -- and with the guard scaled to the baseline's
-                # pull it won (the first level fell to 21 cells). The guard is
-                # therefore scaled against the STRONGER of the baseline and the
-                # geometric term.
-                reference_norm = torch.maximum(base_norm, aux_norm)
-                guard_scale = (reference_norm / guard_norm).clamp(max=1.0)
+                guard_scale = (base_norm / guard_norm).clamp(max=1.0)
                 total = total + AUX_WEIGHT * guard_scale * guard
         return total, recon_loss
