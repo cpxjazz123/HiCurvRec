@@ -258,10 +258,15 @@ def main() -> None:
     if hasattr(model, "set_hierarchy"):
         from model import hierarchy as hierarchy_module
         bound = hierarchy_module.load()
-        model.set_hierarchy(bound["cells"].to(device))
+        # the catalogue travels with the hierarchy: the supervision sampler draws
+        # same-cell pairs the batch cannot supply at the finest level
+        model.set_hierarchy(bound["cells"].to(device), all_embeddings.to(device))
         if rank == 0:
-            print("[hgs] hierarchy bound: %d items x %d levels"
-                  % (bound["items"], bound["levels"]), flush=True)
+            cells = bound["cells"]
+            sizes = [int(len(set(cells[:, level].tolist())) - (1 if bool((cells[:, level] < 0).any()) else 0))
+                     for level in range(cells.shape[1])]
+            print("[hgs] hierarchy bound: %d items x %d levels, cells per level %s"
+                  % (bound["items"], bound["levels"], sizes), flush=True)
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
@@ -379,11 +384,27 @@ def main() -> None:
                     f"collision={collision_v:.6f} time={epoch_time_s}s",
                     flush=True,
                 )
+                terms = {name: (None if getattr(raw_module, name) is None
+                                else float(getattr(raw_module, name))) for name in
+                         ("last_tree", "last_radius", "last_direction", "last_prefix")}
+                coverage = getattr(raw_module, "last_coverage", {}) or {}
+                diagnostics = getattr(raw_module, "last_diagnostics", {}) or {}
+                print("[hgs] epoch=%d tree=%s radius=%s direction=%s prefix=%s scale=%s coverage=%s"
+                      % (epoch, terms["last_tree"], terms["last_radius"],
+                         terms["last_direction"], terms["last_prefix"],
+                         getattr(raw_module, "last_scale", {}),
+                         coverage.get("used")), flush=True)
+                print("[hgs] epoch=%d radii=%s saturated=%s angular_gap=%s"
+                      % (epoch, diagnostics.get("radius"), diagnostics.get("saturated"),
+                         diagnostics.get("angular_gap")), flush=True)
                 _record(
                     rank, "train", epoch=epoch, loss=avg_loss, recon=avg_recon, lr=cur_lr,
                     epoch_time_s=epoch_time_s,
                     cumulative_time_s=round(time.time() - _T0, 3),
                     raw_unique=raw_unique, raw_total=len(raw_tokens), collision=collision_v,
+                    hgs_terms=terms, hgs_scale=getattr(raw_module, "last_scale", {}),
+                    hgs_coverage=coverage.get("used"), hgs_skipped=coverage.get("skipped"),
+                    hgs_diagnostics=getattr(raw_module, "last_diagnostics", {}),
                 )
         finally:
             for layer in raw_module.rq.vq_layers:

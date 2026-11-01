@@ -29,6 +29,7 @@ The verdict is written to ``results/research/hierarchy_audit/report.json``.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -107,32 +108,24 @@ def co_membership(levels: list[dict[int, int]], anchors, positives) -> list[floa
     return out
 
 
-def tree_ness(levels: list[dict[int, int]], nodes, rng) -> float:
-    """The four-point statistic of the hierarchy-induced tree distance."""
-    import itertools
-    depth = len(levels) - 1
-    index = {node: position for position, node in enumerate(nodes)}
+def nesting_breaks(levels: list[dict[int, int]]) -> int:
+    """Pairs of levels where a finer cell is split across two coarser parents.
 
-    def tree_distance(first: int, second: int) -> int:
-        # the number of levels at which the two items still share a cell
-        shared = 0
-        for level in reversed(levels):
-            if level.get(first) == level.get(second):
-                shared += 1
-            else:
-                break
-        return depth - shared
-
-    values = []
-    sampled = rng.choice(len(nodes), size=(QUADS, 4), replace=True)
-    for row in sampled:
-        a, b, c, p = (nodes[int(value)] for value in row)
-        sums = sorted([tree_distance(a, b) + tree_distance(c, p),
-                       tree_distance(a, c) + tree_distance(b, p),
-                       tree_distance(a, p) + tree_distance(b, c)])
-        values.append(0.5 * (sums[2] - sums[1]))
-    del index
-    return float(np.mean(values))
+    The trainer treats the table as a tree (top-down longest common prefix), so a
+    cell at level l+1 that appears under two different cells at level l would
+    silently make ``T`` disagree with the behaviour graph. Counted, not assumed.
+    """
+    breaks = 0
+    for coarse, fine in zip(levels, levels[1:]):
+        seen: dict[int, int] = {}
+        for item, cell in fine.items():
+            parent = coarse.get(item)
+            if parent is None:
+                continue
+            previous = seen.setdefault(cell, parent)
+            if previous != parent:
+                breaks += 1
+    return breaks
 
 
 def main() -> int:
@@ -145,14 +138,10 @@ def main() -> int:
     real_levels = nested_levels(graph)
     real_cells = [len(set(level.values())) for level in real_levels]
     real_co = co_membership(real_levels, anchors, pairs["positives"].tolist())
-    nodes = sorted(graph.nodes())
-    sample_nodes = [nodes[int(i)] for i in rng.choice(len(nodes), size=min(4000, len(nodes)),
-                                                      replace=False)]
-    real_tree = tree_ness(real_levels, sample_nodes, np.random.default_rng(SEED))
+    del rng
 
     control_co = []
     control_cells = []
-    control_tree = []
     for trial in range(CONTROLS):
         shuffled = graph.copy()
         swaps = min(3 * shuffled.number_of_edges(), 300_000)
@@ -161,7 +150,6 @@ def main() -> int:
         levels = nested_levels(shuffled)
         control_cells.append([len(set(level.values())) for level in levels])
         control_co.append(co_membership(levels, anchors, pairs["positives"].tolist()))
-        control_tree.append(tree_ness(levels, sample_nodes, np.random.default_rng(SEED)))
 
     control_co = np.asarray(control_co)
     report = {
@@ -175,9 +163,11 @@ def main() -> int:
                                / max(control_co[:, i + 1].std(), 1e-9))}
                    for i in range(len(LEVELS))],
         "root": {"cells": real_cells[0], "co_membership": real_co[0]},
-        "tree_ness": {"real": real_tree,
-                      "control_mean": float(np.mean(control_tree)),
-                      "control_std": float(np.std(control_tree))},
+        "nesting_breaks": nesting_breaks(real_levels),
+        "note": ("the four-point statistic of a nested partition is identically zero, "
+                 "so it cannot separate a real hierarchy from a rewire; the "
+                 "co-membership z-scores against degree-preserving controls are the "
+                 "evidence, and a table-level nesting check is reported instead"),
         "validation_pairs": len(anchors),
         "controls": CONTROLS,
     }
@@ -193,6 +183,33 @@ def main() -> int:
     np.savez_compressed(OUT / "hierarchy.npz", items=np.asarray(items, dtype=np.int64),
                         cells=table,
                         levels=np.asarray([len(set(level.values())) for level in real_levels]))
+    manifest = {
+        "artifact": "results/research/hierarchy_audit/hierarchy.npz",
+        "sha256": hashlib.sha256((OUT / "hierarchy.npz").read_bytes()).hexdigest(),
+        "report_sha256": hashlib.sha256((OUT / "report.json").read_bytes()).hexdigest(),
+        "builder": "tools/research/science/hierarchy_audit.py",
+        "builder_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "regenerate": "python3 tools/research/science/hierarchy_audit.py",
+        "inputs": {
+            "train_parquet": str(TRAIN.relative_to(REPO)),
+            "train_parquet_sha256": (hashlib.sha256(TRAIN.read_bytes()).hexdigest()
+                                     if TRAIN.exists() else None),
+            "validation_pairs": str(VALID_PAIRS.relative_to(REPO)),
+            "validation_pairs_sha256": (hashlib.sha256(VALID_PAIRS.read_bytes()).hexdigest()
+                                        if VALID_PAIRS.exists() else None),
+        },
+        "table": {
+            "rows": int(table.shape[0]),
+            "levels": int(table.shape[1]),
+            "cells_per_level": [int(len(set(level.values()))) for level in real_levels],
+            "unknown_items_per_level": [int((table[:, level] < 0).sum())
+                                        for level in range(table.shape[1])],
+            "nesting_breaks": nesting_breaks(real_levels),
+            "row_order": "ascending item id of the frozen baseline item_sids.json",
+        },
+        "train_only": True,
+    }
+    (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(json.dumps(report, indent=1))
     return 0
 

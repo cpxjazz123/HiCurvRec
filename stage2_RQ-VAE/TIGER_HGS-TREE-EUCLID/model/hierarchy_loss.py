@@ -1,52 +1,81 @@
-"""HGS: the tree supervision, and the geometry switch that decides its space.
+"""HGS: three behaviour-hierarchy terms and the geometry switch.
 
-Two terms, exactly as the design asks for the first round (radius and direction
-come later, after this one is shown to carry information):
+The terms act on the **cumulative soft prefix embedding** of each RQ level,
+``s[i,l] = sum_{t<=l} sum_k p[i,t,k] e[t,k]``, projected into one bounded ball
+with a single detached scale shared by all levels, so a radius comparison across
+levels is meaningful. Neither the soft assignment nor the code vectors are
+detached: every term reaches the encoder and every codebook.
 
 ``tree_ordering``
-    for a triple (anchor, near, far) taken from the hierarchy, the distance to the
-    near item must be smaller than to the far one by a margin proportional to the
-    hierarchy distance gap:
+    the hierarchy's ordering must be the geometry's ordering:
 
-        softplus( d(i,j) - d(i,k) + delta * ( T(i,k) - T(i,j) ) )
+        softplus( d(u[i,L], u[j,L]) - d(u[i,L], u[k,L]) + delta * (T(i,k) - T(i,j)) )
 
-    ``delta`` is the batch's median pairwise distance divided by the hierarchy
-    depth, so the margin is in the same units as the distances and no constant is
-    tuned by hand.
+    ``delta`` is the batch's median pairwise distance divided by the number of
+    levels, so the margin is in the units of the distances instead of a tuned
+    constant.
+
+``radius_term``
+    three cumulative prefixes of one item are three refinements of the same
+    point, so they must sit at increasing radii:
+
+        softplus(margin_R - (r(u[i,l+1]) - r(u[i,l])) / scale)
+
+    ``r`` is ``2 atanh(||u||)`` in the ball and ``||u||`` in the control, and
+    ``scale`` is one detached maximum over every level. ``margin_R`` is 0: the
+    inequality itself is the requirement, and a positive margin would be a tuned
+    constant.
+
+``direction_term``
+    a branch is a direction: an item must point more like a member of its own
+    cell at a level than like a member of another cell of the same parent,
+
+        softplus( cos(v[i,l], v[k,l]) - cos(v[i,l], v[j,l]) + margin_A )
+
+    with ``margin_A = 0`` for the same reason. The cosine of radial geodesics is
+    the same function in both geometries, so a difference between the two arms
+    is **not** evidence for direction while the tree and radius terms are
+    geometry-dependent; the arms differ only by the declared distance and radius.
 
 ``prefix_alignment``
-    a pair that shares the hierarchy cell at level l but NOT at level l+1 must
-    share the SID code at level l: ``1 - <p_l(i), p_l(j)>``. This is the term that
-    reaches the CODEBOOK, because the soft assignment depends on the quantizer's
-    distances.
-
-``GEOMETRY``
-    one constant, ``"hyperbolic"`` or ``"euclidean"``, so the two arms of the
-    controlled experiment are the same code with one switch flipped.
+    the legacy term of the first HGS run: items sharing a hierarchy cell at
+    level l but not at l+1 must share the SID code of level l. Kept, switchable,
+    and logged separately -- it is not the direction term.
 """
 from __future__ import annotations
 
 import torch
 import torch.nn.functional as F
 
-#: The geometry the distances are measured in. The only difference between the
-#: two arms of the experiment.
+#: The geometry the distances and radii are measured in. The only difference
+#: between the two arms of the experiment.
 GEOMETRY = "euclidean"
 
-#: How many triples one step sees, and how many rows the prefix term uses: a
-#: compute bound, not a tuned parameter.
+#: One switch per term, so a term can be removed without editing the loss.
+TREE_ON = True
+RADIUS_ON = True
+DIRECTION_ON = True
+PREFIX_ON = True
+
+#: How many triples and pairs one step supervises: a compute bound, not a tuned
+#: parameter. The sampler turns them into at most SUPERSPRISION_ROWS rows.
 TRIPLES = 32
-PAIR_ROWS = 128
+PAIRS = 24
 
 #: The unit ball of the contract.
 BALL_EPS = 1e-6
 
 
-def project(x: torch.Tensor) -> torch.Tensor:
-    """Map the quantized representation into the unit ball, scale from the batch."""
-    norm = x.norm(dim=-1, keepdim=True)
-    scale = norm.detach().max().clamp_min(1e-8)
-    return torch.tanh(norm / scale) * x / norm.clamp_min(1e-8)
+def project_prefixes(prefixes: list) -> list:
+    """Map every level's cumulative prefix into the ball, one shared scale."""
+    norms = torch.stack([prefix.norm(dim=-1) for prefix in prefixes])
+    scale = norms.detach().max().clamp_min(1e-8)
+    inside = 1.0 - BALL_EPS
+    projected = []
+    for prefix in prefixes:
+        norm = prefix.norm(dim=-1, keepdim=True)
+        projected.append(torch.tanh(norm / scale).clamp_max(inside) * prefix / norm.clamp_min(1e-8))
+    return projected
 
 
 def distance(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -64,11 +93,19 @@ def distance(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     return torch.acosh(argument.clamp_min(1.0 + BALL_EPS))
 
 
+def radius_of(points: torch.Tensor) -> torch.Tensor:
+    """Distance from the origin of the contract, in the declared geometry."""
+    norm = points.norm(dim=-1)
+    if GEOMETRY == "euclidean":
+        return norm
+    return 2.0 * torch.atanh(norm.clamp(max=1.0 - BALL_EPS))
+
+
 def hierarchy_distance(cells: torch.Tensor) -> torch.Tensor:
-    """``T(i,j) = levels - shared``, with the shared levels counted as a product."""
-    device = cells.device
-    running = torch.ones(cells.shape[0], cells.shape[0], dtype=torch.bool, device=device)
-    shared = torch.zeros(cells.shape[0], cells.shape[0], device=device)
+    """``T(i,j) = levels - LCP``, with the shared levels counted as a product."""
+    rows = cells.shape[0]
+    running = torch.ones(rows, rows, dtype=torch.bool, device=cells.device)
+    shared = torch.zeros(rows, rows, device=cells.device)
     for level in range(cells.shape[1]):
         same = (cells[:, None, level] == cells[None, :, level]) & (cells[:, None, level] >= 0)
         running = running & same
@@ -76,12 +113,11 @@ def hierarchy_distance(cells: torch.Tensor) -> torch.Tensor:
     return float(cells.shape[1]) - shared
 
 
-def tree_ordering(quantized: torch.Tensor, triples, cells: torch.Tensor) -> torch.Tensor:
+def tree_ordering(points: torch.Tensor, triples, cells: torch.Tensor) -> torch.Tensor:
     """The hierarchy's ordering must be the geometry's ordering."""
     anchor, near, far = triples
     if anchor.numel() < 2:
-        return quantized.sum() * 0.0
-    points = project(quantized)
+        return points.sum() * 0.0
     pairwise = distance(points, points)
     delta = pairwise.detach().median().clamp_min(1e-6) / max(float(cells.shape[1]), 1.0)
     tree = hierarchy_distance(cells)
@@ -89,7 +125,43 @@ def tree_ordering(quantized: torch.Tensor, triples, cells: torch.Tensor) -> torc
     return F.softplus(pairwise[anchor, near] - pairwise[anchor, far] + delta * margin).mean()
 
 
-def prefix_alignment(probs: list, cells: torch.Tensor, rows: int = PAIR_ROWS) -> torch.Tensor:
+def radius_term(points_by_level: list, margin: float = 0.0) -> torch.Tensor:
+    """Deeper prefixes must sit farther from the origin than shallower ones."""
+    if len(points_by_level) < 2:
+        return points_by_level[0].sum() * 0.0
+    radii = [radius_of(points) for points in points_by_level]
+    scale = torch.stack(radii).detach().max().clamp_min(1e-8)
+    total = None
+    for level in range(len(radii) - 1):
+        step = (radii[level + 1] - radii[level]) / scale
+        term = F.softplus(margin - step).mean()
+        total = term if total is None else total + term
+    return total / (len(radii) - 1)
+
+
+def direction_term(points_by_level: list, pairs: dict, margin: float = 0.0) -> torch.Tensor:
+    """Same branch points one way, a sibling branch another."""
+    zero = points_by_level[0].sum() * 0.0
+    total = zero
+    used = 0
+    for level in sorted(pairs):
+        index = level - 1
+        if index < 0 or index >= len(points_by_level):
+            continue
+        first, positive, negative = (torch.as_tensor(part, device=points_by_level[index].device)
+                                     for part in pairs[level])
+        if first.numel() == 0:
+            continue
+        points = points_by_level[index]
+        unit = points / points.norm(dim=-1, keepdim=True).clamp_min(1e-8)
+        cos_positive = (unit[first] * unit[positive]).sum(-1)
+        cos_negative = (unit[first] * unit[negative]).sum(-1)
+        total = total + F.softplus(cos_negative - cos_positive + margin).mean()
+        used += 1
+    return total / used if used else zero
+
+
+def prefix_alignment(probs: list, cells: torch.Tensor, rows: int = 128) -> torch.Tensor:
     """A pair that shares a hierarchy cell must share the SID code of that level."""
     keep = min(rows, cells.shape[0])
     label = cells[:keep]
@@ -110,8 +182,3 @@ def prefix_alignment(probs: list, cells: torch.Tensor, rows: int = PAIR_ROWS) ->
         total = total + (1.0 - agreement[mask]).mean()
         used += 1
     return total / max(used, 1)
-
-
-def compute(probs: list, quantized: torch.Tensor, triples, cells: torch.Tensor) -> tuple:
-    """The two HGS terms of this round."""
-    return tree_ordering(quantized, triples, cells), prefix_alignment(probs, cells)
