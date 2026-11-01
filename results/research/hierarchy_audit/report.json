@@ -1,0 +1,47 @@
+{
+  "graph": {
+    "nodes": 24556,
+    "edges": 315391,
+    "source": "train.parquet transitions, symmetrised"
+  },
+  "levels": [
+    {
+      "resolution": 1.0,
+      "cells": 17,
+      "co_membership": 0.28033298647242455,
+      "control_co_membership": {
+        "mean": 0.025749692555103582,
+        "std": 0.0014032064970298478
+      },
+      "z": 181.4296715816202
+    },
+    {
+      "resolution": 4.0,
+      "cells": 953,
+      "co_membership": 0.00906252956200927,
+      "control_co_membership": {
+        "mean": 0.0014505092548797024,
+        "std": 9.438797683660174e-05
+      },
+      "z": 80.64607974707411
+    },
+    {
+      "resolution": 8.0,
+      "cells": 13430,
+      "co_membership": 0.0004919118342635512,
+      "control_co_membership": {
+        "mean": 0.00013243780153249454,
+        "std": 2.675647644259001e-05
+      },
+      "z": 13.435028842544401
+    }
+  ],
+  "root": {
+    "cells": 1,
+    "co_membership": 0.9988269794721407
+  },
+  "nesting_breaks": 0,
+  "note": "the four-point statistic of a nested partition is identically zero, so it cannot separate a real hierarchy from a rewire; the co-membership z-scores against degree-preserving controls are the evidence, and a table-level nesting check is reported instead",
+  "validation_pairs": 52855,
+  "controls": 3
+}
