@@ -1,4 +1,5 @@
 {
+  "active_defect_classes": 10,
   "all_defects_detected": true,
   "defect_classes": [
     {
@@ -123,18 +124,6 @@
       "verdict": "MACHINE_INVALID"
     },
     {
-      "defect": "DUPLICATED_THRESHOLD",
-      "detected_at_expected_layer": true,
-      "expected_code": "THRESHOLD_DUPLICATED",
-      "expected_layer": "falsifier",
-      "observed_codes": [
-        "THRESHOLD_DUPLICATED"
-      ],
-      "observed_layer": "falsifier",
-      "passed": true,
-      "verdict": "MACHINE_INVALID"
-    },
-    {
       "defect": "LEGAL_CANDIDATE",
       "detected_at_expected_layer": true,
       "expected_code": null,
@@ -178,26 +167,39 @@
     }
   ],
   "dod": {
-    "avoidable_review_calls": 16,
+    "avoidable_review_calls": 25,
     "known_failure_recurrence": 1,
-    "machine_repair_attempts": 41,
+    "machine_repair_attempts": 104,
     "registry_entries": 14,
+    "repeated_scientific_reviews": 9,
     "review_verdicts": {
-      "CPU_ELIGIBLE": 2,
-      "FATAL": 8,
+      "CPU_ELIGIBLE": 4,
+      "FATAL": 16,
       "MATERIAL": 8,
       "none": 6
     },
-    "runs": 24,
-    "science_rejections": 16,
-    "stage2_runs": 3,
+    "runs": 34,
+    "science_rejections": 24,
+    "stage2_runs": 41,
     "time_to_verified_candidate_seconds": 23364.98502588272
   },
-  "generated_at_epoch": 1792836936.2563045,
+  "generated_at_epoch": 1793536281.1481035,
   "issue": 118,
-  "published_thresholds": {
-    "level2_prefixes_strict_gt": 16145,
-    "valid_l1_hard_er_strict_gt": 16.38953942232631
+  "published_thresholds": {},
+  "reference_values": {
+    "level2_distinct_prefixes": 16145,
+    "valid_l1_hard_er": 16.38953942232631
   },
+  "retired_defect_classes": [
+    {
+      "code": "THRESHOLD_DUPLICATED",
+      "defect": "DUPLICATED_THRESHOLD",
+      "layer": "falsifier",
+      "reason": "the admission has no quality floor any more, so there is no threshold for a candidate to duplicate and no second declaration to compare; the frozen Resample numbers survive as reference values only",
+      "replaced_by": "the diagnostics are reported, never promoted (issue #19, #120)",
+      "retired_by": "issue #120"
+    }
+  ],
+  "retired_defect_classes_count": 1,
   "schema_version": 1
 }
