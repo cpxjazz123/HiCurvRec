@@ -1,0 +1,350 @@
+{
+  "decision_at": 1793573796.4634097,
+  "decision_hash": "70a10655f8dc7b336f33ad6fcfebd01ee4916b1ed91bb7a26cbe7018b07147b4",
+  "evidence": {
+    "CURVCAP-SUCCPLAN": {
+      "bundle_sha256": "9637a2495b60c669e49d05f180d3ac0238731e451fb8ee9137b55725447114da",
+      "literature_sha256": "49f4c9a0e393f1927da97e3e9054ace58bb6731b37dbcc9858150074c4ac666f",
+      "math_sha256": "1ef398207559743d391b68868702f228c557c75c6e454a55bca92420a31b283e",
+      "probe_sha256": "d6cd1546760d508dc446240a1c6d26cca10271133f4a154f0d74168af9f07e7e"
+    },
+    "CURVCHART-EQUIMARGIN-RQ": {
+      "bundle_sha256": "634a0d7731a5d022cb6377c4e907402c4dfd91bee5443bd4ff0d7ea6407e5a5d",
+      "literature_sha256": "47560a95679b08ffae1883f536b7af6750285427971481af72b62bff3008010b",
+      "math_sha256": "c34085372ea99693cd603293f65cd12c1d201fa3c47c59fb42a04c52b4b2797d",
+      "probe_sha256": "b66203aa6a954a0b423128930df1b680e7c88a7c6cd54afda08a689468bcce60"
+    },
+    "CURVCHART-RESGUARD": {
+      "bundle_sha256": "dfec9cb5b35ea44415d09bbd05933284a6949f3117512625487f1ef4e1339265",
+      "literature_sha256": "3b6e208af1ca82aae45da45c854aa2ff61761fd16904d398c7bd9965e20fde3c",
+      "math_sha256": "c4ad5f7ab55f26fb5ab18d98570af6e308bf7626110eb8156f85cd256f170e54",
+      "probe_sha256": "22096319330463524284da487504b8f5d606185374c80814fe8e814e2cff73bc"
+    },
+    "CURVEBEND-NORM-RESIDUAL": {
+      "bundle_sha256": "6476469bc16f659040f1ccbe14aad8bdfce88dc927fd1a74075decc593463176",
+      "literature_sha256": "7ef73684ff64d68e2932224a0e36baeca5785fc88b98f9512a12ca75cdc2fea1",
+      "math_sha256": "4ef0fcab238ed9be46c4b4fc6c4e7b846c9806bf5b65c632246c893ef74b8fde",
+      "probe_sha256": "c5dbf7470528dd3b4a6a9a5a88df4113c4a2d9a30148e5606e3ac8897d981d9e"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "CURVCAP-SUCCPLAN",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 2,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Freezing column marginals to the Euclidean nearest-code counts means it can only permute items inside the same K=256 partition, which E8 identifies as the binding capacity limit, so it cannot coarsen or otherwise lift prefix sharing; the claimed resolution guarantee is also unsound because the per-row argmax of a doubly-marginal Sinkhorn coupling need not reproduce the target column counts; and it is the most expensive option (up to 1.8x step, 10 iterations), in the successor-geodesic family that E6 already measured at baseline (0.05500).",
+          "scoring_2": "behaviour (successor fraction a_ik across E9's 0.9291-vs-0.8871 cohort signal) genuinely enters the cost and the capacity anchor is aimed at E6's in-beam/SID-cardinality gate, but the claimed exact-Euclidean usage multiset is not implied by row-wise argmax of a column-constrained Sinkhorn plan, \"code community\" is undefined, and anchoring to Euclidean counts risks the <1% no-op its own risk list names.",
+          "scoring_3": "E5 successor-entropy stratification (top1 mass 0.4375 vs 0.0543) and E11's real-but-weak transition alignment (same_first_prefix 0.0907 vs permuted 0.067) support per-pair c_ik=c_l*exp(-a_ik) successor-community curvature, while frozen Euclidean column marginals preserve the baseline 247/7414/20223 support and block the prior 2/13/56 collapse; the strongest single connected behaviour+geometry pathway."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "CURVCHART-EQUIMARGIN-RQ",
+        "mean_rank": 2.6667,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 3,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Hard uniform marginals are the one lever that could mirror the best observed width-20 probe (resample recall 0.06363, target SID in beams 0.0884), but E8 says the surviving structure needs small K (0.3106 at K=16 vs 0.0822 at K=256), so forcing all 256 codes to equal usage pushes against the very capacity ceiling that governs prefix survival; it also misdiagnoses the inherited baseline as collapsed (2/256 was the failed arm, not the 247/256 baseline), leaving no real resolution headroom, and adds the heaviest machinery (8 Sinkhorn sweeps, 150 quotient-graph syncs, 20-epoch feedback lag).",
+          "scoring_2": "uniform B/K columns maximise used codes but E8 measures a strongly imbalanced corpus (K=16 0.3106 vs K=256 0.0822; negatives 0.1352 vs 0.0129) and states that small-K behavioural co-location is what width-20 prefix survival needs, so mandatory equipartition plausibly costs the prefix sharing that E6 ties to recall; same argmax/marginal inconsistency plus lagged-feedback oscillation.",
+          "scoring_3": "Hard uniform column marginals make U_l>=0.9K_l a constraint, directly targeting the E6 l1_br collapse (0.04671, T4 NLL 9.03), with a complete spec and derived kappa_0 plus alpha decay; but forcing equal spreading at fixed K=256 contradicts E8's small-K cohesion (K=256 share 0.0822 vs 0.0129) and its own risk notes a near-uniform field degenerating to plain uniform-Euclidean assignment."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 8
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "CURVCHART-RESGUARD",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 1,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Its curvature is estimated on the 24556-node training item-transition graph and averaged per codeword, which is statistically far better supported than the sparse prefix-quotient estimates the alternatives rely on, and the codebook is kept byte-identical so the 247/7414/20223 resolution cannot regress toward the 2/13/56 collapse; however the [0.5,2] guard band makes it a bounded perturbation, and E6 shows the equivalent family (successor_geodesic_coarse 0.05500, v2 0.05463) already sat at the frozen baseline, so upside looks baseline-limited.",
+          "scoring_2": "only proposal whose code table, norm, count and radius are provably unchanged, while the assignment spends a per-codeword chart built from the item-level standardised curvature that E1/E2/E5 measure and E5/E9 show carries successor signal; it targets the documented failure (radius spend -> 2/13/56, 0.041888) without changing resolution and states a one-run disconfirmer (<0.5% assignment change).",
+          "scoring_3": "Most rigorous and safest (byte-identical codebook, derived c0_l, [0.5,2] guard band, <2% step cost), but the bounded per-codeword reweighting can only perturb the baseline Voronoi diagram and the proposal self-disconfirms at <0.5% assignment change; against E11's small 0.0907-vs-0.067 margin it is the least likely to move test_recall@10 from 0.055537 toward 0.065."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "CURVEBEND-NORM-RESIDUAL",
+        "mean_rank": 2.6667,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 4,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "E7 puts the hard positions at T3/T4 (NLL 4.36/1.23 in the healthy l1_br_euclid config) and this is the only proposal that acts on exactly levels 2-3 while leaving level 1 Euclidean, so it cannot worsen the E8 K=256 first-level capacity ceiling (0.0822); it preserves residual norm and the whole codebook, guaranteeing the safe 247/7414/20223 export instead of the failed 2/13/56 collapse, and at 0.2-0.5% step cost it is the cheapest clean coupling; the E6 warning is that tangent_successor_residual already scored 0.05500.",
+          "scoring_2": "norm-preserving direction-only bend on levels 2-3 leaves the level-1 usage pathology of E6 untouched (l1_br 0.932 SID-absent-from-beams) and is the most likely to be negligible at d=64; its only evidence hook is the Spearman -0.20 profile that the failed radius arm already tried to spend, and E6/E7 locate the recall gate in SID survival, not residual direction.",
+          "scoring_3": "Uses exactly the level-1-minus-level-l curvature deviation found predictive (Spearman -0.20) and targets levels 2/3 where E7 shows the informative arms live (l1_br_euclid T3/T4 NLL 4.36/1.23; E6 depth-3/4 survival 0.161/0.085), with codebook and L1 untouched; but it rotates the residual rather than the metric, so the next level reconstructs a non-actual residual and the bend may be high-dim noise."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 8
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "9637a2495b60c669e49d05f180d3ac0238731e451fb8ee9137b55725447114da",
+      "idea_id": "CURVCAP-SUCCPLAN",
+      "proposal_sha256": "f79af17f3f22b0c58a3d8c3d5c184583d5571f6d353f9a2616d8ceb00c21d763"
+    },
+    {
+      "evidence_sha256": "634a0d7731a5d022cb6377c4e907402c4dfd91bee5443bd4ff0d7ea6407e5a5d",
+      "idea_id": "CURVCHART-EQUIMARGIN-RQ",
+      "proposal_sha256": "08b3796ccaa38835bb598e54d22d440f26246a22e59dfc7dc9ff5a7bcfc2101a"
+    },
+    {
+      "evidence_sha256": "dfec9cb5b35ea44415d09bbd05933284a6949f3117512625487f1ef4e1339265",
+      "idea_id": "CURVCHART-RESGUARD",
+      "proposal_sha256": "2bdc650bc8ced58e46fa9e83fb0d566fef27940b3cbf912cc13d2655ad196552"
+    },
+    {
+      "evidence_sha256": "6476469bc16f659040f1ccbe14aad8bdfce88dc927fd1a74075decc593463176",
+      "idea_id": "CURVEBEND-NORM-RESIDUAL",
+      "proposal_sha256": "b5aeb9242237c4fef9d39b3da4fc540e04df4102e0d5a29f964a5b9ea4b1e171"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "CURVEBEND-NORM-RESIDUAL",
+          "position": 1,
+          "reason": "E7 puts the hard positions at T3/T4 (NLL 4.36/1.23 in the healthy l1_br_euclid config) and this is the only proposal that acts on exactly levels 2-3 while leaving level 1 Euclidean, so it cannot worsen the E8 K=256 first-level capacity ceiling (0.0822); it preserves residual norm and the whole codebook, guaranteeing the safe 247/7414/20223 export instead of the failed 2/13/56 collapse, and at 0.2-0.5% step cost it is the cheapest clean coupling; the E6 warning is that tangent_successor_residual already scored 0.05500."
+        },
+        {
+          "idea_id": "CURVCHART-RESGUARD",
+          "position": 2,
+          "reason": "Its curvature is estimated on the 24556-node training item-transition graph and averaged per codeword, which is statistically far better supported than the sparse prefix-quotient estimates the alternatives rely on, and the codebook is kept byte-identical so the 247/7414/20223 resolution cannot regress toward the 2/13/56 collapse; however the [0.5,2] guard band makes it a bounded perturbation, and E6 shows the equivalent family (successor_geodesic_coarse 0.05500, v2 0.05463) already sat at the frozen baseline, so upside looks baseline-limited."
+        },
+        {
+          "idea_id": "CURVCHART-EQUIMARGIN-RQ",
+          "position": 3,
+          "reason": "Hard uniform marginals are the one lever that could mirror the best observed width-20 probe (resample recall 0.06363, target SID in beams 0.0884), but E8 says the surviving structure needs small K (0.3106 at K=16 vs 0.0822 at K=256), so forcing all 256 codes to equal usage pushes against the very capacity ceiling that governs prefix survival; it also misdiagnoses the inherited baseline as collapsed (2/256 was the failed arm, not the 247/256 baseline), leaving no real resolution headroom, and adds the heaviest machinery (8 Sinkhorn sweeps, 150 quotient-graph syncs, 20-epoch feedback lag)."
+        },
+        {
+          "idea_id": "CURVCAP-SUCCPLAN",
+          "position": 4,
+          "reason": "Freezing column marginals to the Euclidean nearest-code counts means it can only permute items inside the same K=256 partition, which E8 identifies as the binding capacity limit, so it cannot coarsen or otherwise lift prefix sharing; the claimed resolution guarantee is also unsound because the per-row argmax of a doubly-marginal Sinkhorn coupling need not reproduce the target column counts; and it is the most expensive option (up to 1.8x step, 10 iterations), in the successor-geodesic family that E6 already measured at baseline (0.05500)."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "CURVCHART-RESGUARD",
+          "position": 1,
+          "reason": "only proposal whose code table, norm, count and radius are provably unchanged, while the assignment spends a per-codeword chart built from the item-level standardised curvature that E1/E2/E5 measure and E5/E9 show carries successor signal; it targets the documented failure (radius spend -> 2/13/56, 0.041888) without changing resolution and states a one-run disconfirmer (<0.5% assignment change)."
+        },
+        {
+          "idea_id": "CURVCAP-SUCCPLAN",
+          "position": 2,
+          "reason": "behaviour (successor fraction a_ik across E9's 0.9291-vs-0.8871 cohort signal) genuinely enters the cost and the capacity anchor is aimed at E6's in-beam/SID-cardinality gate, but the claimed exact-Euclidean usage multiset is not implied by row-wise argmax of a column-constrained Sinkhorn plan, \"code community\" is undefined, and anchoring to Euclidean counts risks the <1% no-op its own risk list names."
+        },
+        {
+          "idea_id": "CURVCHART-EQUIMARGIN-RQ",
+          "position": 3,
+          "reason": "uniform B/K columns maximise used codes but E8 measures a strongly imbalanced corpus (K=16 0.3106 vs K=256 0.0822; negatives 0.1352 vs 0.0129) and states that small-K behavioural co-location is what width-20 prefix survival needs, so mandatory equipartition plausibly costs the prefix sharing that E6 ties to recall; same argmax/marginal inconsistency plus lagged-feedback oscillation."
+        },
+        {
+          "idea_id": "CURVEBEND-NORM-RESIDUAL",
+          "position": 4,
+          "reason": "norm-preserving direction-only bend on levels 2-3 leaves the level-1 usage pathology of E6 untouched (l1_br 0.932 SID-absent-from-beams) and is the most likely to be negligible at d=64; its only evidence hook is the Spearman -0.20 profile that the failed radius arm already tried to spend, and E6/E7 locate the recall gate in SID survival, not residual direction."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "CURVCAP-SUCCPLAN",
+          "position": 1,
+          "reason": "E5 successor-entropy stratification (top1 mass 0.4375 vs 0.0543) and E11's real-but-weak transition alignment (same_first_prefix 0.0907 vs permuted 0.067) support per-pair c_ik=c_l*exp(-a_ik) successor-community curvature, while frozen Euclidean column marginals preserve the baseline 247/7414/20223 support and block the prior 2/13/56 collapse; the strongest single connected behaviour+geometry pathway."
+        },
+        {
+          "idea_id": "CURVCHART-EQUIMARGIN-RQ",
+          "position": 2,
+          "reason": "Hard uniform column marginals make U_l>=0.9K_l a constraint, directly targeting the E6 l1_br collapse (0.04671, T4 NLL 9.03), with a complete spec and derived kappa_0 plus alpha decay; but forcing equal spreading at fixed K=256 contradicts E8's small-K cohesion (K=256 share 0.0822 vs 0.0129) and its own risk notes a near-uniform field degenerating to plain uniform-Euclidean assignment."
+        },
+        {
+          "idea_id": "CURVEBEND-NORM-RESIDUAL",
+          "position": 3,
+          "reason": "Uses exactly the level-1-minus-level-l curvature deviation found predictive (Spearman -0.20) and targets levels 2/3 where E7 shows the informative arms live (l1_br_euclid T3/T4 NLL 4.36/1.23; E6 depth-3/4 survival 0.161/0.085), with codebook and L1 untouched; but it rotates the residual rather than the metric, so the next level reconstructs a non-actual residual and the bend may be high-dim noise."
+        },
+        {
+          "idea_id": "CURVCHART-RESGUARD",
+          "position": 4,
+          "reason": "Most rigorous and safest (byte-identical codebook, derived c0_l, [0.5,2] guard band, <2% step cost), but the bounded per-codeword reweighting can only perturb the baseline Voronoi diagram and the proposal self-disconfirms at <0.5% assignment change; against E11's small 0.0907-vs-0.067 margin it is the least likely to move test_recall@10 from 0.055537 toward 0.065."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261102_071156_961",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "CURVCAP-SUCCPLAN": {
+        "first_places": 1,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      },
+      "CURVCHART-EQUIMARGIN-RQ": {
+        "first_places": 0,
+        "mean_rank": 2.6667,
+        "total_rank": 8
+      },
+      "CURVCHART-RESGUARD": {
+        "first_places": 1,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      },
+      "CURVEBEND-NORM-RESIDUAL": {
+        "first_places": 1,
+        "mean_rank": 2.6667,
+        "total_rank": 8
+      }
+    },
+    "backups": [
+      {
+        "first_places": 1,
+        "idea_id": "CURVCHART-RESGUARD",
+        "mean_rank": 2.3333,
+        "status": "BACKUP",
+        "total_rank": 7
+      },
+      {
+        "first_places": 1,
+        "idea_id": "CURVEBEND-NORM-RESIDUAL",
+        "mean_rank": 2.6667,
+        "status": "BACKUP",
+        "total_rank": 8
+      },
+      {
+        "first_places": 0,
+        "idea_id": "CURVCHART-EQUIMARGIN-RQ",
+        "mean_rank": 2.6667,
+        "status": "BACKUP",
+        "total_rank": 8
+      }
+    ],
+    "disagreement": {
+      "CURVCAP-SUCCPLAN": 3,
+      "CURVCHART-EQUIMARGIN-RQ": 1,
+      "CURVCHART-RESGUARD": 3,
+      "CURVEBEND-NORM-RESIDUAL": 3
+    },
+    "rejected": [
+      {
+        "idea_id": "CURVCHART-RESGUARD",
+        "mean_rank": 2.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 7
+      },
+      {
+        "idea_id": "CURVEBEND-NORM-RESIDUAL",
+        "mean_rank": 2.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 8
+      },
+      {
+        "idea_id": "CURVCHART-EQUIMARGIN-RQ",
+        "mean_rank": 2.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 8
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 1,
+        "idea_id": "CURVCAP-SUCCPLAN",
+        "mean_rank": 2.3333,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 7
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}
