@@ -193,6 +193,29 @@ class StructureTests(unittest.TestCase):
             self.assertIsInstance(getattr(hgs, name), bool, "%s is not a switch" % name)
 
 
+class HierarchyBindingTests(unittest.TestCase):
+    """The frozen table must land on the rows the trainer indexes."""
+
+    def test_the_table_is_in_the_baseline_row_order(self):
+        import json
+
+        bound = hierarchy_module.load()
+        order = list(json.loads((hierarchy_module.SIDS).read_text()))
+        cells = bound["cells"]
+        self.assertEqual(cells.shape[0], len(order))
+        self.assertEqual(cells.shape[1], bound["levels"])
+
+    def test_unknown_items_are_masked_and_never_sampled(self):
+        bound = hierarchy_module.load()
+        cells = bound["cells"]
+        unknown = (cells < 0).all(dim=1)
+        self.assertGreater(int(unknown.sum()), 0, "the table has no unknown items at all")
+        sampler = hierarchy_module.Sampler(cells.numpy())
+        pool = sampler.pool
+        self.assertTrue(bool((cells[pool] >= 0).any(dim=1).all()),
+                        "the sampling pool contains an unknown item")
+
+
 class MatchedArmTests(unittest.TestCase):
     """The two arms must differ in the declared constants and nowhere else."""
 

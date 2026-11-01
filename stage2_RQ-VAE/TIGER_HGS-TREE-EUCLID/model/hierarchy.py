@@ -95,6 +95,9 @@ class Sampler:
                 parents.setdefault(parent, []).append(int(cell))
             self.siblings[level] = {parent: np.asarray(value, dtype=np.int64)
                                     for parent, value in parents.items()}
+        # the rows the supervision may draw from: every item the training graph
+        # mentions at least once
+        self.pool = np.nonzero((cells >= 0).any(axis=1))[0]
         self._rng = np.random.default_rng(seed * 1000 + rank)
         self.coverage: dict[str, dict[int, int]] = {}
 

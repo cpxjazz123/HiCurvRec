@@ -53,7 +53,7 @@ class RQVAE(nn.Module):
         self.sampler = hierarchy_module.Sampler(table, seed=0, rank=rank)
         if embeddings is not None:
             self._catalogue = embeddings.detach().clone().to(device)
-        self.pool = (table >= 0).any(axis=1).nonzero()[0]
+        self.pool = self.sampler.pool
 
     def _supervision_prefixes(self, rows: torch.Tensor) -> tuple:
         """Cumulative soft prefixes of the sampled rows, through encoder + codebooks.
