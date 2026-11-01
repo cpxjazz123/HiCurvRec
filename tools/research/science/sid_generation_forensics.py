@@ -1102,13 +1102,13 @@ def write_report() -> Path:
     lines.append("")
     lines.append("```")
     lines.append("python -c \"import sys; sys.path.insert(0,'.'); "
-                 "from tools.research.diagnostics import sid_generation_forensics as F; "
+                 "from tools.research.science import sid_generation_forensics as F; "
                  "F.run_sid_layer()\"")
     lines.append("python -c \"import sys; sys.path.insert(0,'.'); "
-                 "from tools.research.diagnostics import sid_generation_forensics as F; "
+                 "from tools.research.science import sid_generation_forensics as F; "
                  "F.run_arm('<arm>', device='cuda:0')\"   # one process per card")
     lines.append("python -c \"import sys; sys.path.insert(0,'.'); "
-                 "from tools.research.diagnostics import sid_generation_forensics as F; "
+                 "from tools.research.science import sid_generation_forensics as F; "
                  "F.paired_comparison(); F.strata_table(); F.write_report()\"")
     lines.append("```")
     path = OUT / "report.md"
