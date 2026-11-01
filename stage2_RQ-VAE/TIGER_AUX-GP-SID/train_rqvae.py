@@ -230,6 +230,20 @@ def _tokenizer_config() -> SimpleNamespace:
 
 
 
+def _frozen_reference_codes(device: torch.device) -> torch.Tensor:
+    """The frozen baseline's SID codes: the reference partition, level by level."""
+    import json as _json
+    baseline_dir = REPO_ROOT / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE"
+    sids = _json.loads((baseline_dir / "item_sids.json").read_text())
+    codes = torch.zeros(len(sids), 3, dtype=torch.long)
+    for item, values in sids.items():
+        row = int(item)
+        if row < codes.shape[0]:
+            for level in range(3):
+                codes[row, level] = int(values[level])
+    return codes.to(device)
+
+
 def _frozen_reference(embeddings: torch.Tensor, device: torch.device) -> torch.Tensor:
     """The FROZEN reference geometry: the baseline's QUANTIZED item points.
 
@@ -288,7 +302,8 @@ def main() -> None:
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if hasattr(model, "set_reference"):
-        model.set_reference(_frozen_reference(all_embeddings, device))
+        model.set_reference(_frozen_reference(all_embeddings, device),
+                            _frozen_reference_codes(device))
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 

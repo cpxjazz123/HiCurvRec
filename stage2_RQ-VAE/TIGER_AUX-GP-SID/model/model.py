@@ -25,7 +25,8 @@ class RQVAE(nn.Module):
         self.rq = RQLayer(config)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
-    def set_reference(self, points: torch.Tensor) -> None:
+    def set_reference(self, points: torch.Tensor,
+                      codes: torch.Tensor = None) -> None:
         """Bind the FROZEN reference geometry: one ball point per item.
 
         The reference does not move while this tree trains, so a term that
@@ -33,6 +34,9 @@ class RQVAE(nn.Module):
         """
         self.register_buffer("reference_points", points.detach().clone(),
                               persistent=False)
+        if codes is not None:
+            self.register_buffer("reference_codes", codes.detach().clone().long(),
+                                  persistent=False)
 
     def forward(self, embeddings: torch.Tensor,
                 item_ids: torch.Tensor = None) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
@@ -56,8 +60,11 @@ class RQVAE(nn.Module):
                 # without the frozen table the batch's own latents are the reference
                 reference = aux_module.project(latents[0])
             code_points = [aux_module.project(item[2]) for item in self.rq.last_soft]
+            reference_codes = None
+            if getattr(self, "reference_codes", None) is not None and item_ids is not None:
+                reference_codes = self.reference_codes[item_ids]
             self.last_aux = aux_module.compute(aux_module.AUX_MODE, probs, reference,
-                                               latents, code_points)
+                                               latents, code_points, reference_codes)
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 

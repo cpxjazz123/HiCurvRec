@@ -95,6 +95,24 @@ class DefinitionTests(unittest.TestCase):
         self.assertLessEqual(cost(mean), cost(arithmetic) + 1e-6)
 
 
+class ReferenceTests(unittest.TestCase):
+    def test_the_frozen_reference_carries_the_baseline_granularity(self):
+        """The reference must be discrete, like the tree it is compared with.
+
+        A reference built from the baseline's LATENTS is continuous: it says
+        nothing about how many codes a tree may use, and the alignment was then
+        satisfied by a degenerate tree (the first level fell from 247 codes to 19).
+        The reference is the baseline's quantized points, so it has the baseline's
+        cells and a collapsed tree disagrees with it.
+        """
+        seed = torch.from_numpy(trainer.load_embeddings(trainer.EMBEDDING_FILE)[:4096]).float()
+        reference = trainer._frozen_reference(seed, torch.device("cpu"))
+        self.assertEqual(tuple(reference.shape), (4096, 32))
+        distinct = len({tuple(row.tolist()) for row in reference[:512]})
+        self.assertGreater(distinct, 100,
+                           "the reference looks continuous: it lost the baseline's cells")
+
+
 class StructureTests(unittest.TestCase):
     def test_the_alignment_terms_prefer_a_healthy_tree_to_a_collapsed_one(self):
         torch.manual_seed(0)

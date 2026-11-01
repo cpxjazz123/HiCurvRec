@@ -172,6 +172,42 @@ def _standardize(x: torch.Tensor, reference: torch.Tensor = None) -> torch.Tenso
     return (x - mean) / std
 
 
+def partition_agreement(probs: list, reference_codes: torch.Tensor) -> torch.Tensor:
+    """The candidate's partition must agree with the reference's, level by level.
+
+    The alignment terms only see PAIRWISE distances, and a distance
+    distribution can be reproduced by a tree that merges its coarse cells: the
+    first level fell from 247 codes to 19 while every distance statistic still
+    matched. A partition-level term closes that door.
+
+    The agreement is measured by the soft mutual information between the
+    candidate's assignment and the reference's cell labels, which needs no
+    correspondence between the two codebooks (the labels are compared as
+    partitions, not as code ids) and no constant.
+    """
+    if reference_codes is None:
+        return probs[0].sum() * 0.0
+    total = None
+    for level, p in enumerate(probs):
+        labels = reference_codes[:, level]
+        one_hot = torch.zeros(p.shape[0], int(labels.max().item()) + 1,
+                              device=p.device, dtype=p.dtype)
+        one_hot[torch.arange(p.shape[0], device=p.device), labels] = 1.0
+        joint = p.t() @ one_hot                      # (codes, reference cells)
+        p_mass = p.sum(dim=0).unsqueeze(1).clamp_min(1e-8)
+        r_mass = one_hot.sum(dim=0).unsqueeze(0).clamp_min(1e-8)
+        total_joint = joint.clamp_min(1e-8)
+        mutual = (total_joint * (joint.clamp_min(1e-8).log()
+                                 - p_mass.log() - r_mass.log())).sum()
+        entropy_p = -(p * p.clamp_min(1e-8).log()).sum()
+        entropy_r = -(one_hot * one_hot.clamp_min(1e-8).log()).sum()
+        nmi = mutual / torch.sqrt(entropy_p.clamp_min(1e-8)
+                                  * entropy_r.clamp_min(1e-8))
+        level_loss = 1.0 - nmi
+        total = level_loss if total is None else total + level_loss
+    return total / len(probs)
+
+
 def _alignment_loss(left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
     """How well two distance structures agree, with a flat structure priced.
 
@@ -215,7 +251,8 @@ def _base_index(reference: torch.Tensor) -> int:
 # the three terms
 # --------------------------------------------------------------------------
 
-def gp_alignment(probs: list, reference: torch.Tensor) -> torch.Tensor:
+def gp_alignment(probs: list, reference: torch.Tensor,
+                  reference_codes: torch.Tensor = None) -> torch.Tensor:
     """The Gromov products of the SID tree and of the reference geometry must agree.
 
     ``L_GP = mean_{i != j} ( z(G_tree(i,j)) - z(G_ref(i,j)) )^2``
@@ -231,10 +268,12 @@ def gp_alignment(probs: list, reference: torch.Tensor) -> torch.Tensor:
     g_tree = gromov_product(tree, base)
     g_ref = gromov_product(curved, base)
     mask = _pair_mask(rows, probs[0].device)
-    return _alignment_loss(g_tree[mask], g_ref[mask])
+    return _alignment_loss(g_tree[mask], g_ref[mask]) + partition_agreement(
+        probs, reference_codes)
 
 
-def tree_distortion(probs: list, reference: torch.Tensor) -> torch.Tensor:
+def tree_distortion(probs: list, reference: torch.Tensor,
+                     reference_codes: torch.Tensor = None) -> torch.Tensor:
     """The SID tree distance must reproduce the frozen hyperbolic distances.
 
     ``L_tree = mean_{i != j} ( z(T(i,j)) - z(R(i,j)) )^2`` with ``T`` the LCP tree
@@ -245,10 +284,12 @@ def tree_distortion(probs: list, reference: torch.Tensor) -> torch.Tensor:
     tree = tree_distance(probs)
     curved = distance(points, points)
     mask = _pair_mask(rows, probs[0].device)
-    return _alignment_loss(tree[mask], curved[mask])
+    return _alignment_loss(tree[mask], curved[mask]) + partition_agreement(
+        probs, reference_codes)
 
 
-def frechet_cluster(probs: list, code_points: list, latents: list) -> torch.Tensor:
+def frechet_cluster(probs: list, code_points: list, latents: list,
+                    reference_codes: torch.Tensor = None) -> torch.Tensor:
     """Compact inside a prefix, separated across prefixes, in the ball.
 
     Two positions are compared for every item: its PRE-QUANTIZATION ball position
@@ -319,20 +360,22 @@ def frechet_cluster(probs: list, code_points: list, latents: list) -> torch.Tens
     off_diagonal = ~torch.eye(len(code_centres), dtype=torch.bool,
                                device=code_centres.device)
     inter = centre_distance[off_diagonal].mean()
-    return 1.0 - torch.tanh((inter - intra) / (inter + intra).clamp_min(1e-3))
+    return (1.0 - torch.tanh((inter - intra) / (inter + intra).clamp_min(1e-3))
+            + partition_agreement(probs, reference_codes))
 
 LOSSES = {"gp": gp_alignment, "tree": tree_distortion, "cluster": frechet_cluster}
 
 
 def compute(mode: str, probs: list, reference: torch.Tensor,
-            latents: list, code_points: list = None) -> torch.Tensor:
+            latents: list, code_points: list = None,
+            reference_codes: torch.Tensor = None) -> torch.Tensor:
     """The single active term of this tree, or a differentiable zero."""
     if mode == "none":
         return latents[0].sum() * 0.0
     if mode == "gp":
-        return LOSSES["gp"](probs, reference)
+        return LOSSES["gp"](probs, reference, reference_codes)
     if mode == "tree":
-        return LOSSES["tree"](probs, reference)
+        return LOSSES["tree"](probs, reference, reference_codes)
     if mode == "cluster":
-        return LOSSES["cluster"](probs, code_points, latents)
+        return LOSSES["cluster"](probs, code_points, latents, reference_codes)
     raise ValueError("unknown auxiliary mode: " + str(mode))
