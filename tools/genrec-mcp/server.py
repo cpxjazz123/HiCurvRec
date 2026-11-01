@@ -2418,7 +2418,11 @@ def machine_admission(tree: Path) -> dict:
     technically valid identifier and the four-rank probe. A tree that passes them
     may be trained without any agent verdict.
     """
-    from tools.research.stage2 import checks
+    import importlib.util
+    path = REPO / "tools" / "research" / "stage2" / "checks.py"
+    spec = importlib.util.spec_from_file_location("genrec_stage2_checks", path)
+    checks = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(checks)
     report = checks.run_all(tree)
     failing = [check["name"] + ": " + str(check["detail"])[:200]
                for check in report.get("checks", []) if check.get("status") != "PASS"]
