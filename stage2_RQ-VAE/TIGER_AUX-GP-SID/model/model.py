@@ -39,10 +39,15 @@ class RQVAE(nn.Module):
                                   persistent=False)
 
     def forward(self, embeddings: torch.Tensor,
-                item_ids: torch.Tensor = None) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
-        """``item_ids`` is part of the framework's forward contract; this
-        mechanism does not key anything on it, but the probe and the trainer
-        pass it, so the signature has to accept it."""
+                item_ids: torch.Tensor = None,
+                radius: torch.Tensor = None) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+        """The framework's forward contract.
+
+        ``item_ids`` lets the mechanism look up the frozen reference rows of the
+        batch, and ``radius`` is part of the contract the MCP's gradient smoke
+        uses; this mechanism keys on neither of them beyond the reference, but the
+        signature has to accept both.
+        """
         encoded = self.encoder(embeddings)
         quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
         # Exactly one auxiliary term, named by this tree's AUX_MODE. It reads the
