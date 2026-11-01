@@ -104,7 +104,7 @@ terms were not the objects they were named after.
 | `TIGER_RQ-VAE` (baseline) | 247 | 7,414 | 20,223 | 0.177 | -- | -- |
 | `TIGER_AUX-GP-SID` | **157** | **5,517** | **17,719** | **0.279** | 0.00264 | 8.4e-5 |
 | `TIGER_AUX-TREE-DISTORT` | **208** | 2,578 | 6,877 | 0.720 | 0.0347 | 1.1e-4 |
-| `TIGER_AUX-FRECHET-CLUSTER` | 1 | 1 | 3 | 1.000 | 1.321 | 2.1e-4 |
+| `TIGER_AUX-FRECHET-CLUSTER` | 21 | 192 | 2,103 | 0.914 | 0.00825 | 1.4e-4 |
 
 **GP is healthy**: it keeps 96% of the baseline's level-1 cells, 74% of the
 level-2 prefixes and 88% of the triples, with the duplicate rate close to the
@@ -114,10 +114,21 @@ term is the same order as the baseline's.
 **TREE keeps its coarse level** (208 of 247 cells) but compresses the deep ones:
 the tree distance term is satisfied by a tree with few deep cells.
 
-**CLUSTER collapses.** Its geometric part moves only the item positions (the
-group centres are statistics), so its codebook gradient is nearly zero and the
-partition guard has to hold the whole partition alone; the item positions
-collapse instead, and the partition collapses with them.
+**CLUSTER trains now but is still compressed.** Three implementations were tried:
+a hard grouping with detached centres (the arm collapsed to 1/1/3 and the term
+had no gradient at all), a hard grouping with differentiable centres (the item
+positions collapsed and took the partition with them), and the current one: a SOFT,
+fully vectorised clustering whose centres are the mass-weighted hyperbolic Frechet
+means with one Riemannian step. It trains stably and keeps 21/192/2103 against
+the baseline's 247/7414/20223 -- no longer a collapse, but the vocabulary is
+still traded away for the objective's own geometry.
+
+The general lesson, which the three arms share: a term that is about PAIRWISE
+structure leaves the vocabulary unconstrained, and the quantizer will trade
+vocabulary for whatever the term asks. The partition guard (soft mutual
+information against the frozen reference) is what keeps the coarse level alive
+(L1 208 of 247 for TREE, 157 for GP); the deeper levels need the same kind of
+protection, which none of the three terms provides on its own.
 
 The three mechanisms therefore stand at different states, and the Stage 3 runs
 are deliberately not started yet.
