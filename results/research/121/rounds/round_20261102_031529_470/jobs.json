@@ -83,17 +83,43 @@
     {
       "attempts": 0,
       "error": null,
-      "finished_at": null,
+      "finished_at": 1793563728.7028954,
       "idea_id": "CURVALLOC-LORENTZ-RQ",
       "job_id": "stage3:CURVALLOC-LORENTZ-RQ",
       "kind": "stage3",
       "queued_at": 1793560974.1302845,
-      "result": null,
+      "result": {
+        "inherited_baseline": {
+          "arm": "TIGER_BRad-RQ",
+          "l1_codes": 12,
+          "l2_prefixes": 60,
+          "l3_triples": 170,
+          "test_recall@10": 0.0446
+        },
+        "n_eval": 57439,
+        "passed": false,
+        "sid_sha256": "8e9164b8f70b0e6432d7be1313805a99bea0228c63dcda2e3e4bc15c37b8346f",
+        "stage2": {
+          "collision": 0.997722,
+          "l1_codes": 2,
+          "l2_prefixes": 13,
+          "l3_triples": 56,
+          "raw_unique": 56
+        },
+        "target": {
+          "test_recall@10": 0.065
+        },
+        "test_ndcg@10": 0.022224502019030364,
+        "test_ndcg@5": 0.017360120900288874,
+        "test_recall@10": 0.04188791587597277,
+        "test_recall@5": 0.02679364195059106,
+        "variant": "TIGER_CURVALLOC-LORENTZ-RQ"
+      },
       "round_id": "round_20261102_031529_470",
       "sid_path": "results/stage2_RQ-VAE/TIGER_CURVALLOC-LORENTZ-RQ/item_sids.json",
       "stage2_job_id": "stage2:CURVALLOC-LORENTZ-RQ",
       "started_at": null,
-      "status": "pending",
+      "status": "done",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_CURVALLOC-LORENTZ-RQ"
     }
   ],
