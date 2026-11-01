@@ -56,4 +56,15 @@ The audit's **four-point statistic was removed**: a nested partition induces an 
 
 ## The numbers
 
-Filled in from the runs: see `results/stage2_RQ-VAE/<ARM>/hgs_report.json` for the per-arm evidence (final-epoch terms and scales, the usage trajectory, the radius and saturation diagnostics, the angular gap and the sampling coverage) and the Stage 3 results below.
+Per-arm evidence: `results/stage2_RQ-VAE/<ARM>/hgs_report.json` (final-epoch terms and applied scales, the usage trajectory, the radius and saturation diagnostics, the angular gap, the sampling coverage, and the SID's agreement with the frozen hierarchy).
+
+### What the frozen hierarchy is worth
+
+Measured on the exported SIDs, with the same definitions:
+
+| arm | L1 codes | L2 prefixes | L3 triples | 4th-token vocabulary | residual identity bits/item | NMI(SID_L3, hierarchy_L3) | tree-triplet satisfaction | prefix contrast |
+|---|---|---|---|---|---|---|---|---|
+| baseline `TIGER_RQ-VAE` | 247 | 7,414 | 20,223 | 42 | 0.48 | **0.944** | 0.051 | 0.040 |
+| tree-only HGS (first run, broken sampler) | 53 | 740 | 3,069 | 1,197 | 6.95 | 0.652 | **0.288** | **0.130** |
+
+The baseline reproduces the frozen hierarchy's finest level with NMI 0.944 **without any hierarchy supervision**: the tree is already encoded. The supervised arm follows the hierarchy *better* on the tree's own terms (triplet satisfaction 0.288 vs 0.051, prefix contrast 0.130 vs 0.040) and ends up with a worse SID (NMI 0.652, 6.95 residual identity bits per item instead of 0.48) and a worse recall (0.045683 vs 0.0553). Following the hierarchy more closely is worth less than the resolution it costs.
