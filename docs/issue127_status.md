@@ -55,6 +55,28 @@ The audit's **four-point statistic was removed**: a nested partition induces an 
 - The legacy `prefix_alignment` term is **on** in both trained arms, as the issue's objective formula states, and its applied gradient scale is logged with every epoch. Its weight is disclosed there rather than being a silent constant.
 - The curvature is **fixed at −1** for the hyperbolic arm. This is fixed-curvature hyperbolic supervision; it is not the separate future idea of a learnable per-level or per-region curvature, and the report says so.
 
+## Stage 3
+
+Frozen recipe, verified by the launcher before the run: `NUM_EPOCHS=150`, `SEED=42`, `BEAM_SIZE=20`, `NO_EVAL=True`, `SKIP_TEST=False`, no early stop, four GPUs, `n_eval = 57439`.
+
+```text
+test_recall@5   0.033723
+test_recall@10  0.051254
+test_ndcg@5     0.022389
+test_ndcg@10    0.028026
+```
+
+| arm | SID (L1 / L2 / L3) | test_recall@10 |
+|---|---|---|
+| frozen baseline `TIGER_RQ-VAE` | 247 / 7,414 / 20,223 | 0.0553 |
+| tree-only HGS (first run) | 53 / 740 / 3,069 | 0.045683 |
+| **all-three HGS (this round)** | 4 / 123 / 1,203 | **0.051254** |
+| target | — | > 0.065 |
+
+The target is not reached (−21.2%), and the arm stays below the frozen baseline (−7.3%). It is however **above** the two-term HGS run (+12.2% relative), which is the first improvement inside this family — but it is an improvement on a negative result, not a result.
+
+The checkpoint, the SID and the log are at `results/stage3_T5Train/TIGER_HGS-TREE/`; the SID's sha256 is `f873884f7c451ce4b107924f9cb65e931d98e7257073e40a5626e9446ca11df8` and the layered metrics were written **before** this score was read.
+
 ## The numbers
 
 Per-arm evidence: `results/stage2_RQ-VAE/<ARM>/hgs_report.json` (final-epoch terms and applied scales, the usage trajectory, the radius and saturation diagnostics, the angular gap, the sampling coverage, and the SID's agreement with the frozen hierarchy).
