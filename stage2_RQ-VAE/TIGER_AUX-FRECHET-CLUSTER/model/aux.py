@@ -363,10 +363,16 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
         weight = masses[:, code][mask].detach().clamp_min(1e-8)
         item_group = item_points[mask]
         code_group = prefix_points[mask]
-        item_centres.append(frechet_mean([item_group[i] for i in range(item_group.shape[0])],
-                                          weight))
-        code_centres.append(frechet_mean([code_group[i] for i in range(code_group.shape[0])],
-                                          weight))
+        # The centres are STATISTICS, not parameters: they are computed without
+        # a gradient. The item positions still carry the gradient to the encoder,
+        # and the codebook gradient of this arm comes from the partition guard.
+        # Back-propagating through the Frechet iterations made the term three
+        # times slower than the whole baseline.
+        with torch.no_grad():
+            item_centres.append(frechet_mean(
+                [item_group[i] for i in range(item_group.shape[0])], weight).detach())
+            code_centres.append(frechet_mean(
+                [code_group[i] for i in range(code_group.shape[0])], weight).detach())
         members.append(mask)
     if len(item_centres) < 2:
         return item_points.sum() * 0.0 + 1.0

@@ -96,3 +96,28 @@ term; that is the gradient the auxiliary term competes with.
 The Stage 2 / Stage 3 numbers these arms produced before the correction
 (0.0476, 0.0391, 0.0484) came from the **old** definitions and are void: the
 terms were not the objects they were named after.
+
+## The Stage 2 results (four cards, frozen recipe)
+
+| arm | L1 codes | L2 prefixes | L3 triples | duplicate triples | final loss | recon |
+| --- | --- | --- | --- | --- | --- | --- |
+| `TIGER_RQ-VAE` (baseline) | 247 | 7,414 | 20,223 | 0.177 | -- | -- |
+| `TIGER_AUX-GP-SID` | **157** | **5,517** | **17,719** | **0.279** | 0.00264 | 8.4e-5 |
+| `TIGER_AUX-TREE-DISTORT` | **208** | 2,578 | 6,877 | 0.720 | 0.0347 | 1.1e-4 |
+| `TIGER_AUX-FRECHET-CLUSTER` | 1 | 1 | 3 | 1.000 | 1.321 | 2.1e-4 |
+
+**GP is healthy**: it keeps 96% of the baseline's level-1 cells, 74% of the
+level-2 prefixes and 88% of the triples, with the duplicate rate close to the
+baseline's. It trains stably (the loss stays at 2.6e-3) and its reconstruction
+term is the same order as the baseline's.
+
+**TREE keeps its coarse level** (208 of 247 cells) but compresses the deep ones:
+the tree distance term is satisfied by a tree with few deep cells.
+
+**CLUSTER collapses.** Its geometric part moves only the item positions (the
+group centres are statistics), so its codebook gradient is nearly zero and the
+partition guard has to hold the whole partition alone; the item positions
+collapse instead, and the partition collapses with them.
+
+The three mechanisms therefore stand at different states, and the Stage 3 runs
+are deliberately not started yet.
