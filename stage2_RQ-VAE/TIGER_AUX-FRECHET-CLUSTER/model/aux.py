@@ -330,10 +330,13 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
     masses = None
     level_index = 0
     best_groups = 0
+    fallback = None
     for index, level_probs in enumerate(probs):
         candidate = level_probs.detach().argmax(dim=-1)
         if candidate.unique().numel() < 2:
             continue
+        if fallback is None or candidate.unique().numel() > fallback[0].unique().numel():
+            fallback = (candidate, level_probs, index)
         counts = torch.bincount(candidate)
         groups = int((counts >= 2).sum())
         if groups > best_groups:
@@ -341,6 +344,13 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
             labels = candidate
             masses = level_probs
             level_index = index
+    if labels is None and fallback is not None:
+        # No level has a group with two members: the term still has to carry a
+        # gradient, so the level with the most codes is used and its SINGLETON
+        # groups are kept (a singleton's Frechet mean is the point itself).
+        # Returning a constant here instead left the term with no gradient at all,
+        # and the run stayed collapsed for ever.
+        labels, masses, level_index = fallback
     if labels is None:
         # nothing separates the batch: the term is at its worst, and it carries no
         # gradient because there is no group to move
@@ -358,8 +368,6 @@ def frechet_cluster(probs: list, code_points: list, latents: list,
                    key=lambda code: -int((labels == code).sum()))
     for code in order[:FRECHET_GROUPS]:
         mask = labels == code
-        if int(mask.sum()) < 2:
-            continue
         weight = masses[:, code][mask].detach().clamp_min(1e-8)
         item_group = item_points[mask]
         code_group = prefix_points[mask]
