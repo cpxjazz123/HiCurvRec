@@ -229,6 +229,28 @@ def _tokenizer_config() -> SimpleNamespace:
     )
 
 
+
+def _frozen_reference(embeddings: torch.Tensor, device: torch.device) -> torch.Tensor:
+    """The FROZEN reference geometry: the baseline encoder's latents in the ball.
+
+    One point per item, computed once from the frozen baseline checkpoint. It does
+    not move while this tree trains, so a term that compares the SID against it
+    cannot be minimised by collapsing the tree.
+    """
+    from model.model import RQVAE
+    checkpoint = REPO_ROOT / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "rqvae_best.pth"
+    state = torch.load(checkpoint, map_location="cpu")["state_dict"]
+    reference_model = RQVAE(_tokenizer_config(), in_dim=embeddings.shape[1])
+    reference_model.load_state_dict(state, strict=False)
+    reference_model.eval()
+    with torch.no_grad():
+        latents = reference_model.encoder(embeddings).double()
+    norm = latents.norm(dim=-1, keepdim=True)
+    scale = norm.max().clamp_min(1e-8)
+    points = torch.tanh(norm / scale) * latents / norm.clamp_min(1e-8)
+    return points.float().to(device)
+
+
 def main() -> None:
     # === DDP 初始化 ===
     if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
@@ -255,10 +277,12 @@ def main() -> None:
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
+    if hasattr(model, "set_reference"):
+        model.set_reference(_frozen_reference(all_embeddings, device))
     if world_size > 1:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
-    train_dataset = TensorDataset(train_embeddings)
+    train_dataset = TensorDataset(train_embeddings, torch.from_numpy(train_ids.astype(np.int64)))
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True, seed=SEED, drop_last=False) if world_size > 1 else None
     loader = DataLoader(
         train_dataset,
@@ -313,10 +337,11 @@ def main() -> None:
         losses: list[float] = []
         recons: list[float] = []
         _epoch_t0 = time.time()
-        for (batch,) in loader:
+        for batch, item_ids in loader:
             batch = batch.to(device, non_blocking=True)
+            item_ids = item_ids.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _ = model(batch)
+            reconstructed, quant_loss, _, _ = model(batch, item_ids)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(batch, reconstructed, quant_loss)
             if not torch.isfinite(loss):

@@ -1,45 +1,65 @@
-"""The three auxiliary losses of the SID-alignment study, and the geometry they share.
+"""The three auxiliary losses of the SID-alignment study, with their exact definitions.
 
-One file, one switch. ``AUX_MODE`` names the single loss a tree adds to the frozen
-baseline objective; the other two stay implemented (and unit-tested) but inactive,
+One file, one switch: ``AUX_MODE`` names the single loss a tree adds to the frozen
+baseline objective. The other two stay implemented and unit-tested but inactive,
 so the comparison is exactly "baseline + one term".
 
-Everything here is constant-free by construction:
+Definitions (the objects the terms are about, not proxies for them):
 
-* the soft assignment temperature is the median distance of the batch itself,
-  detached, so it follows the geometry instead of being tuned;
-* the ball scale is ``1 / max ||latent||`` of the batch, detached;
-* every loss is standardized over its pair set before it is compared, so its
-  magnitude is O(1) and one unit of weight is the natural scale.
+* **Tree distance.** The SID is a tree over codes; the distance between two items
+  is the number of levels they do NOT share, i.e. ``L - LCP`` where LCP is the
+  longest common prefix. Under the soft assignment the expected LCP is
+  ``sum_l prod_{l' <= l} <p_l'(i), p_l'(j)>`` -- a product over levels, because a
+  level counts only if every level above it also agrees. Matching a code at
+  level 2 while differing at level 1 does NOT shorten the tree distance.
+
+* **Gromov product.** For a metric space ``X`` and a base point ``o``,
+  ``G_X(i,j) = (d_X(o,i) + d_X(o,j) - d_X(i,j)) / 2``. The alignment term asks the
+  Gromov product of the SID tree and the Gromov product of the FROZEN reference
+  geometry to agree.
+
+* **Frechet cluster.** The centre of a prefix group is the hyperbolic Frechet
+  mean -- the minimiser of the sum of squared hyperbolic distances -- computed by
+  Riemannian iterations, NOT the weighted arithmetic mean, which is a different
+  point in general.
+
+The reference geometry is FROZEN: the latents of the frozen baseline encoder,
+mapped into the unit ball once. A term that compares against a frozen structure
+cannot be minimised by collapsing the tree, because the other side of the
+comparison does not move.
 """
 from __future__ import annotations
 
 import torch
-import torch.nn.functional as F
 
 #: Which single auxiliary term this tree adds: "none", "gp", "tree", "cluster".
 AUX_MODE = "tree"
 
-#: The weight of the term. The losses are standardized, so 1.0 is the natural
-#: scale: any other value would be a tuned constant.
+#: The weight of the term. The losses are standardized over their pair set, so
+#: 1.0 is the unit scale; the term is additionally rescaled at every step by the
+#: measured reconstruction gradient (see model.compute_loss).
 AUX_WEIGHT = 1.0
 
-#: How many rows of a batch take part in a pair loss. A compute bound, not a
-#: tuned parameter: 128 x 128 pairs carry the batch's rank structure and keep the
-#: cost of the auxiliary term under a few milliseconds.
+#: How many rows of a batch take part in a pair term: a compute bound, not a
+#: tuned parameter.
 PAIR_ROWS = 128
 
 #: The unit ball of the contract, with the usual epsilon away from the boundary.
 BALL_EPS = 1e-6
 
-#: The diameter of the unit ball, used to put a distance in [0, 1].
+#: The diameter of the unit ball, so a distance divided by it lives in [0, 1].
 BALL_DIAMETER = 2.0 * torch.atanh(torch.tensor(1.0 - BALL_EPS)).item()
 
 
-def project(x: torch.Tensor) -> torch.Tensor:
+# --------------------------------------------------------------------------
+# the geometry of the contract
+# --------------------------------------------------------------------------
+
+def project(x: torch.Tensor, scale: torch.Tensor = None) -> torch.Tensor:
     """Map a latent into the unit ball with a data-derived scale."""
     norm = x.norm(dim=-1, keepdim=True)
-    scale = norm.detach().max().clamp_min(1e-8)
+    if scale is None:
+        scale = norm.detach().max().clamp_min(1e-8)
     return torch.tanh(norm / scale) * x / norm.clamp_min(1e-8)
 
 
@@ -54,150 +74,214 @@ def distance(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     return torch.acosh(argument.clamp_min(1.0 + BALL_EPS))
 
 
+def _mobius_add(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    xy = (x * y).sum(-1, keepdim=True)
+    xx = (x * x).sum(-1, keepdim=True)
+    yy = (y * y).sum(-1, keepdim=True)
+    return ((1 + 2 * xy + yy) * x + (1 - xx) * y) / (1 + 2 * xy + xx * yy)
+
+
+def _log_map(base: torch.Tensor, point: torch.Tensor) -> torch.Tensor:
+    delta = _mobius_add(-base, point)
+    norm = delta.norm(dim=-1, keepdim=True)
+    # log_p(q) = 2 (1 - |p|^2) atanh(|p (-) q|) (p (-) q)/|p (-) q|
+    factor = 2.0 * (1.0 - (base * base).sum(-1, keepdim=True)).clamp_min(BALL_EPS)
+    return factor * torch.arctanh(norm.clamp(max=1 - BALL_EPS)) * delta / norm.clamp_min(1e-12)
+
+
+def _exp_map(base: torch.Tensor, tangent: torch.Tensor) -> torch.Tensor:
+    scale = 1.0 / (1.0 - (base * base).sum(-1, keepdim=True)).clamp_min(BALL_EPS)
+    norm = tangent.norm(dim=-1, keepdim=True)
+    return _mobius_add(base, torch.tanh(norm * scale / 2.0) * tangent / norm.clamp_min(1e-12))
+
+
+def frechet_mean(points: list, weights: torch.Tensor = None, steps: int = 8) -> torch.Tensor:
+    """The hyperbolic Frechet mean: the minimiser of ``sum_i w_i d_H(x_i, m)^2``.
+
+    Riemannian gradient descent in the ball, which is a different point from the
+    weighted arithmetic mean in general; the tests assert that difference. The
+    weights enter the GRADIENT, never the points: scaling a point by a weight
+    would push it out of the ball.
+    """
+    mean = points[0]
+    if weights is None:
+        weights = torch.ones(len(points), device=points[0].device, dtype=points[0].dtype)
+    weights = weights / weights.sum().clamp_min(1e-12)
+    for _ in range(steps):
+        gradient = (torch.stack([_log_map(mean, point) for point in points])
+                    * weights.unsqueeze(-1)).sum(dim=0)
+        mean = _exp_map(mean, gradient)
+        radius = mean.norm(dim=-1, keepdim=True)
+        mean = mean * (radius.clamp(max=1 - 1e-6) / radius.clamp_min(1e-12))
+    return mean
+
+
+# --------------------------------------------------------------------------
+# the soft assignment and the tree it defines
+# --------------------------------------------------------------------------
+
 def soft_assignment(distances: torch.Tensor) -> torch.Tensor:
-    """``p = softmax(-d / median(d))``: a temperature from the batch itself."""
+    """``p = softmax(-d / median(d))``: the temperature comes from the batch."""
     scale = distances.detach().median().clamp_min(1e-8)
     return torch.softmax(-distances / scale, dim=-1)
 
 
-def _correlation(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-    """Pearson correlation of two pair sets; 0 when either side is constant.
+def lcp_depth(probs: list) -> torch.Tensor:
+    """The expected LONGEST COMMON PREFIX depth of the soft SID.
 
-    A constant side means the term carries no information, and the correlation
-    form reports that as the worst value instead of the best one, which is what
-    removes the collapse optimum.
+    A level counts only if every level above it agrees, so the levels enter as a
+    product and not as a sum.
     """
-    a_c = a - a.detach().mean()
-    b_c = b - b.detach().mean()
-    denominator = (a_c.detach().norm() * b_c.detach().norm()).clamp_min(1e-8)
-    return (a_c * b_c).sum() / denominator
+    running = None
+    depth = None
+    for level, p in enumerate(probs):
+        agreement = p @ p.t()
+        running = agreement if running is None else running * agreement
+        depth = running if depth is None else depth + running
+    return depth
+
+
+def tree_distance(probs: list) -> torch.Tensor:
+    """``T(i,j) = L - LCP(i,j)``: the SID tree distance in levels."""
+    levels = len(probs)
+    return levels - lcp_depth(probs)
+
+
+def gromov_product(matrix: torch.Tensor, base: int) -> torch.Tensor:
+    """``G(i,j) = (d(o,i) + d(o,j) - d(i,j)) / 2`` of a distance matrix."""
+    to_base = matrix[base].unsqueeze(0)
+    return (to_base + to_base.t() - matrix) / 2.0
 
 
 def _standardize(x: torch.Tensor) -> torch.Tensor:
-    """Zero mean, unit variance over the pair set, with detached statistics."""
     mean = x.detach().mean()
     std = x.detach().std().clamp_min(1e-8)
     return (x - mean) / std
 
 
+def _rows(probs: list, others: list):
+    rows = min(PAIR_ROWS, probs[0].shape[0])
+    return [p[:rows] for p in probs], [o[:rows] for o in others], rows
+
+
 def _pair_mask(rows: int, device) -> torch.Tensor:
-    mask = torch.ones(rows, rows, dtype=torch.bool, device=device)
     return ~torch.eye(rows, dtype=torch.bool, device=device)
 
 
-def _rows(probs: list[torch.Tensor], latents: list[torch.Tensor]):
-    rows = min(PAIR_ROWS, probs[0].shape[0])
-    return [p[:rows] for p in probs], [x[:rows] for x in latents], rows
+def _base_index(reference: torch.Tensor) -> int:
+    """A deterministic base point: the item whose reference norm is the median."""
+    norms = reference.detach().norm(dim=-1)
+    return int(torch.argsort(norms)[len(norms) // 2].item())
 
 
-def gp_sid_alignment(probs: list[torch.Tensor], code_points: list[torch.Tensor]) -> torch.Tensor:
-    """Align the shared-prefix depth with the shared-ancestor depth.
+# --------------------------------------------------------------------------
+# the three terms
+# --------------------------------------------------------------------------
 
-    Shared prefix depth counts the levels whose soft assignment agrees:
-    ``A_ij = sum_l prod_{l' <= l} <p_l'(i), p_l'(j)>``.
+def gp_alignment(probs: list, reference: torch.Tensor) -> torch.Tensor:
+    """The Gromov products of the SID tree and of the reference geometry must agree.
 
-    Shared ancestor depth is the same construction in the ball, on the expected
-    code point of each level ``c_l(i) = sum_k p_l(i,k) * phi(e_lk)``:
-    ``H_ij = sum_l prod_{l' <= l} (1 - d(c_l'(i), c_l'(j)) / D)``.
+    ``L_GP = mean_{i != j} ( z(G_tree(i,j)) - z(G_ref(i,j)) )^2``
 
-    The loss is the standardized squared difference of the two over the pairs of
-    the batch. Nothing here is tuned: the temperature and the scale come from the
-    batch, and D is the diameter of the unit ball.
+    The reference side is frozen, so a collapsed tree cannot make the two sides
+    equal: this term has no collapse optimum.
     """
-    probs, _, rows = _rows(probs, [torch.zeros(1)])
-    agreement = None
-    curved = None
-    running_a = torch.ones(rows, rows, device=probs[0].device)
-    running_h = torch.ones(rows, rows, device=probs[0].device)
-    for level, p in enumerate(probs):
-        running_a = running_a * (p @ p.t())
-        centres = p @ code_points[level]
-        normalised = 1.0 - distance(centres, centres) / BALL_DIAMETER
-        running_h = running_h * normalised.clamp(-1.0, 1.0)
-        agreement = running_a if agreement is None else agreement + running_a
-        curved = running_h if curved is None else curved + running_h
+    probs, references, rows = _rows(probs, [reference])
+    points = references[0]
+    tree = tree_distance(probs)
+    curved = distance(points, points)
+    base = _base_index(points)
+    g_tree = gromov_product(tree, base)
+    g_ref = gromov_product(curved, base)
     mask = _pair_mask(rows, probs[0].device)
-    # A squared difference of standardized values has a trivial minimum: make both
-    # sides constant and the loss is zero, which collapsed the SID to one prefix in
-    # the first attempt. The correlation form turns a constant side into the WORST
-    # value (zero correlation -> loss 1) and keeps the alignment the term is for.
-    return 1.0 - _correlation(agreement[mask], curved[mask])
+    return _standardize(g_tree[mask]).sub(_standardize(g_ref[mask])).pow(2).mean()
 
 
-def tree_distortion(probs: list[torch.Tensor], latents: list[torch.Tensor]) -> torch.Tensor:
-    """Make the SID tree distance reproduce the frozen hyperbolic distances.
+def tree_distortion(probs: list, reference: torch.Tensor) -> torch.Tensor:
+    """The SID tree distance must reproduce the frozen hyperbolic distances.
 
-    Tree distance from the soft assignment: ``T_ij = sum_l (1 - <p_l(i), p_l(j)>)``.
-    Reference distance: the Poincare distance between the pre-quantization
-    latents, projected into the ball with the batch scale. The loss is the
-    stress ``mean (z(T) - z(R))^2`` over the pairs.
+    ``L_tree = mean_{i != j} ( z(T(i,j)) - z(R(i,j)) )^2`` with ``T`` the LCP tree
+    distance and ``R`` the reference distance.
+    """
+    probs, references, rows = _rows(probs, [reference])
+    points = references[0]
+    tree = tree_distance(probs)
+    curved = distance(points, points)
+    mask = _pair_mask(rows, probs[0].device)
+    return _standardize(tree[mask]).sub(_standardize(curved[mask])).pow(2).mean()
+
+
+def frechet_cluster(probs: list, code_points: list, latents: list) -> torch.Tensor:
+    """Compact inside a prefix, separated across prefixes, in the ball.
+
+    Two positions are compared for every item: its PRE-QUANTIZATION ball position
+    and the expected code point of its prefix, so the term acts on the item
+    representation and on the codebook at the same time (the second part is what
+    gives the codebooks a gradient).
+
+    A group's centre is the hyperbolic Frechet mean of its members. The grouping
+    falls back down the hierarchy when a level puts the whole batch on one code.
+    The normalized ratio is 1 at collapse (intra = inter = 0) and 0 when the
+    prefixes are compact and mutually separated.
     """
     probs, latents, rows = _rows(probs, latents)
-    tree = None
-    for p in probs:
-        level = 1.0 - (p @ p.t())
-        tree = level if tree is None else tree + level
-    points = project(latents[0])
-    reference = distance(points, points) / BALL_DIAMETER
-    mask = _pair_mask(rows, probs[0].device)
-    # Same reason as the Gromov term: a stress on standardized values is minimized
-    # by collapsing both sides to constants, so the term is the (negative)
-    # correlation between the tree distances and the reference distances.
-    return 1.0 - _correlation(tree[mask], reference[mask])
-
-
-def frechet_cluster(probs: list[torch.Tensor], latents: list[torch.Tensor]) -> torch.Tensor:
-    """Tighten items of one prefix and separate the prefixes, in the ball.
-
-    The prefix is the first-level code (argmax, detached for grouping only: the
-    positions and the centres carry the gradient). A prefix centre is the
-    weighted mean of its members' ball points with the soft first-level mass as
-    the weight, which is the one-step Frechet mean the contract's ball admits
-    without an inner loop. The loss is the mean intra-prefix distance minus the
-    mean inter-prefix distance, divided by the ball diameter.
-    """
-    probs, latents, rows = _rows(probs, latents)
-    points = project(latents[0])
-    first = probs[0]
-    labels = first.detach().argmax(dim=-1)
-    centres = []
-    weights = []
+    code_points, _, _ = _rows(code_points, code_points)
+    item_points = project(latents[0])
+    prefix_points = code_points[0]
+    labels = None
+    masses = None
+    for level_probs in probs:
+        candidate = level_probs.detach().argmax(dim=-1)
+        if candidate.unique().numel() >= 2:
+            labels = candidate
+            masses = level_probs
+            break
+    if labels is None:
+        # nothing separates the batch: the term is at its worst, and it carries no
+        # gradient because there is no group to move
+        return item_points.sum() * 0.0 + 1.0
+    item_centres = []
+    code_centres = []
+    members = []
     for code in labels.unique():
         mask = labels == code
         if int(mask.sum()) < 2:
             continue
-        mass = first[:, code].detach()
-        centre = (points[mask] * mass[mask].unsqueeze(-1)).sum(0) / mass[mask].sum().clamp_min(1e-8)
-        centres.append(centre)
-        weights.append(mask)
-    if len(centres) < 2:
-        return points.sum() * 0.0
-    centres = torch.stack(centres)
+        weight = masses[:, code][mask].detach().clamp_min(1e-8)
+        item_group = item_points[mask]
+        code_group = prefix_points[mask]
+        item_centres.append(frechet_mean([item_group[i] for i in range(item_group.shape[0])],
+                                          weight))
+        code_centres.append(frechet_mean([code_group[i] for i in range(code_group.shape[0])],
+                                          weight))
+        members.append(mask)
+    if len(item_centres) < 2:
+        return item_points.sum() * 0.0 + 1.0
+    item_centres = torch.stack(item_centres)
+    code_centres = torch.stack(code_centres)
     intra = []
-    for centre, mask in zip(centres, weights):
-        intra.append((distance(points[mask], centre.unsqueeze(0)) / BALL_DIAMETER).mean())
+    for item_centre, code_centre, mask in zip(item_centres, code_centres, members):
+        intra.append((distance(item_points[mask], item_centre.unsqueeze(0)) ** 2).mean())
+        intra.append((distance(prefix_points[mask], code_centre.unsqueeze(0)) ** 2).mean())
     intra = torch.stack(intra).mean()
-    centre_distance = distance(centres, centres) / BALL_DIAMETER
-    center_pair = ~torch.eye(len(centres), dtype=torch.bool, device=centres.device)
-    inter = centre_distance[center_pair].mean()
-    # `intra - inter` is minimized by putting every item on one point (intra = inter
-    # = 0), which is a collapse. The normalized ratio is 1 at collapse and 0 when
-    # the prefixes are compact and mutually separated.
+    centre_distance = distance(code_centres, code_centres) ** 2
+    off_diagonal = ~torch.eye(len(code_centres), dtype=torch.bool,
+                               device=code_centres.device)
+    inter = centre_distance[off_diagonal].mean()
     return 1.0 - (inter - intra) / (inter + intra).clamp_min(1e-8)
 
+LOSSES = {"gp": gp_alignment, "tree": tree_distortion, "cluster": frechet_cluster}
 
-LOSSES = {"gp": gp_sid_alignment, "tree": tree_distortion, "cluster": frechet_cluster}
 
-
-def compute(mode: str, probs: list[torch.Tensor],
-            code_points: list[torch.Tensor], latents: list[torch.Tensor]) -> torch.Tensor:
+def compute(mode: str, probs: list, reference: torch.Tensor,
+            latents: list, code_points: list = None) -> torch.Tensor:
     """The single active term of this tree, or a differentiable zero."""
     if mode == "none":
         return latents[0].sum() * 0.0
     if mode == "gp":
-        return LOSSES["gp"](probs, code_points)
+        return LOSSES["gp"](probs, reference)
     if mode == "tree":
-        return LOSSES["tree"](probs, latents)
+        return LOSSES["tree"](probs, reference)
     if mode == "cluster":
-        return LOSSES["cluster"](probs, latents)
+        return LOSSES["cluster"](probs, code_points, latents)
     raise ValueError("unknown auxiliary mode: " + str(mode))

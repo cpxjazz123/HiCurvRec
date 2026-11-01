@@ -25,6 +25,15 @@ class RQVAE(nn.Module):
         self.rq = RQLayer(config)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
+    def set_reference(self, points: torch.Tensor) -> None:
+        """Bind the FROZEN reference geometry: one ball point per item.
+
+        The reference does not move while this tree trains, so a term that
+        compares the SID against it cannot be minimised by collapsing the tree.
+        """
+        self.register_buffer("reference_points", points.detach().clone(),
+                              persistent=False)
+
     def forward(self, embeddings: torch.Tensor,
                 item_ids: torch.Tensor = None) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         """``item_ids`` is part of the framework's forward contract; this
@@ -40,9 +49,15 @@ class RQVAE(nn.Module):
             self.last_aux = quant_loss * 0.0
         else:
             probs = [item[1] for item in self.rq.last_soft]
-            points = [aux_module.project(item[2]) for item in self.rq.last_soft]
             latents = [item[0] for item in self.rq.last_soft]
-            self.last_aux = aux_module.compute(aux_module.AUX_MODE, probs, points, latents)
+            if getattr(self, "reference_points", None) is not None and item_ids is not None:
+                reference = self.reference_points[item_ids]
+            else:
+                # without the frozen table the batch's own latents are the reference
+                reference = aux_module.project(latents[0])
+            code_points = [aux_module.project(item[2]) for item in self.rq.last_soft]
+            self.last_aux = aux_module.compute(aux_module.AUX_MODE, probs, reference,
+                                               latents, code_points)
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens
 
@@ -69,14 +84,23 @@ class RQVAE(nn.Module):
         recon_loss = F.mse_loss(reconstructed, embeddings)
         extra = getattr(self, "last_aux", None)
         total = recon_loss + quant_loss
-        if extra is not None:
-            # The auxiliary term is standardized to O(1), while the reconstruction
-            # term decays to ~2e-4: adding them at equal nominal weight lets the
-            # auxiliary objective own the codebooks and collapses the SID (measured:
-            # one level-2 prefix). The term is therefore scaled to the CURRENT
-            # reconstruction loss, detached, so it competes at the same magnitude at
-            # every step. The ratio is measured, not tuned; a zero term contributes
-            # nothing.
-            scale = recon_loss.detach() / extra.detach().abs().clamp_min(1e-8)
+        if extra is not None and extra.requires_grad:
+            # Matching the MAGNITUDE of the two losses is not enough: the auxiliary
+            # term is O(1) while the reconstruction term decays to ~1e-4, and the
+            # measured gradient of the auxiliary term on the codebooks was 4.6e6
+            # times the baseline's. The term is therefore scaled by the MEASURED
+            # ratio of the two codebook gradients, so the auxiliary pull is at most
+            # as strong as the baseline's own pull on the codebooks. Both gradients
+            # are read from the same forward pass; nothing here is a constant.
+            params = [layer.get_code_embs() for layer in self.rq.vq_layers]
+            base_grads = torch.autograd.grad(total, params, retain_graph=True,
+                                             allow_unused=True)
+            aux_grads = torch.autograd.grad(extra, params, retain_graph=True,
+                                            allow_unused=True)
+            base_norm = torch.sqrt(sum((g.detach() ** 2).sum() for g in base_grads
+                                       if g is not None)).clamp_min(1e-12)
+            aux_norm = torch.sqrt(sum((g.detach() ** 2).sum() for g in aux_grads
+                                      if g is not None)).clamp_min(1e-12)
+            scale = base_norm / aux_norm
             total = total + AUX_WEIGHT * scale * extra
         return total, recon_loss
