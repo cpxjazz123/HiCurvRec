@@ -350,17 +350,26 @@ def main() -> int:
                         help="check d(a,b)=1 on a sample of edges per level")
     parser.add_argument("--from-records", action="store_true",
                         help="re-summarise per_arm_convergence.json without measuring")
+    parser.add_argument("--verified-only", action="store_true",
+                        help="with --from-records: keep only pair-audit VERIFIED arms")
     args = parser.parse_args()
     ladder = tuple(size for size in EDGE_LADDER if size <= args.max_edges)
     null_counts = tuple(count for count in NULL_REPLICATES if count <= args.max_nulls)
 
     if args.from_records:
         records = json.loads((OUT / "per_arm_convergence.json").read_text())
+        suffix = ""
+        if args.verified_only:
+            audit = list(csv.DictReader((REPO / "analysis_sid_recall" / "pair_audit.csv").open()))
+            keep = {row["sid_sha256"] for row in audit if row["verdict"] == "VERIFIED"}
+            records = [record for record in records if record.get("sid_sha256") in keep]
+            suffix = "_verified"
         summary = summarise(records, args, ladder, null_counts)
-        (OUT / "convergence_summary.json").write_text(
+        (OUT / f"convergence_summary{suffix}.json").write_text(
             json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-        write_markdown(summary, OUT / "convergence.md")
-        print(f"re-summarised {len(records)} records; written:", OUT / "convergence.md")
+        write_markdown(summary, OUT / f"convergence{suffix}.md")
+        print(f"re-summarised {len(records)} records; written:",
+              OUT / f"convergence{suffix}.md")
         return 0
 
     rows = list(csv.DictReader(PAIRS.open()))
