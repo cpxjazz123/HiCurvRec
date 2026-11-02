@@ -90,6 +90,40 @@ bootstrap CI and Holm over the predeclared 81-test family):
   partial correlations given resolution, alignment, collision and code usage are
   secondary and live in `intra_inter_geometry/statistics.json`. A raw coefficient
   here is not evidence that geometry causes Recall.
+## 4b. Inter-prefix geometry variants (issue #135)
+
+* The frozen registry (70 candidates, sha256 `5625618…`, written before the scan)
+  measures A local-to-global aggregation, B parent-conditioned sibling quotients,
+  C null-relative versions against three label-shuffle designs (20 deterministic
+  replicates each) and D a secondary multi-item-only subgraph. Baselines are
+  reproduced exactly: quotient density L2 **-0.451**, quotient transitivity L2
+  **-0.465** (identical to #133).
+* **A local aggregation does not improve the association.** The strongest local
+  entries are local-transitivity p10 at L2/L3 (-0.513 / -0.541) and local-transitivity
+  mean/median at L2 (-0.458 / -0.468), all p=2e-4 but Holm **0.061**, and inside the
+  76 `curvature_RQ-VAE` arms they collapse to -0.08…-0.40.
+* **B raw sibling geometry is weak.** Sibling density is -0.145 at L2 (p 0.13) and
+  +0.332 at L3 (n 87, Holm 0.40, within-76 -0.02); sibling transitivity is likewise
+  not associated.
+* **C is where the signal is, and it is a normalisation effect.** Sibling density
+  relative to a size-preserving global shuffle reaches **+0.688** (z) and **+0.723**
+  (ratio) at L2, and +0.618/+0.722 with the degree-stratified shuffle; the paired
+  |rho| gain over global density is +0.269/+0.272 with bootstrap CIs excluding 0,
+  and within the 76 arms it stays +0.35…+0.39. **But Holm is 0.061** (304-test
+  family), and the *parent-conditioned* null of the same feature is **-0.346**:
+  the gain comes from the global size-preserving null, not from within-parent
+  structure, so it is not a hierarchy-preserving effect.
+* **D** (multi-item-only induced subgraph) gives density L2 -0.487, transitivity
+  L2 -0.583 (n 84, singleton-heavy rows excluded) and Forman mean L3 +0.521, all
+  Holm 0.061 and within-76 -0.15…-0.19.
+* **Verdict.** Under the predeclared rule (coverage >= 0.95, paired |rho| CI above
+  zero, direction stable within 76) three C candidates are a **GAIN**, but the
+  evidence is **borderline** (Holm 0.061). Under a stricter rule requiring
+  Holm < 0.05 the verdict is **NO STABLE GAIN**. Every L2/L3 association here is
+  to a large degree a cross-series effect; an independent SID family is required.
+* Cost: 12 shards, median 725 s/SID, peak RSS 0.95 GB, 78k null applications
+  (nulls are 96% of the time; the L2/L3 quotient `A^2` has ~46-50M non-zeros).
+
 ## 5. Established invariants (now enforced by tests)
 
 * SID-recall admission is **directory-name equality**; the join key is
