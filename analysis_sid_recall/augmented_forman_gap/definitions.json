@@ -1,0 +1,25 @@
+{
+ "issue": 136,
+ "graph": "TRAIN-only undirected binary item-item behaviour graph from consecutive history+target pairs (same construction and item mapping as #134); each undirected edge counted once",
+ "convention": "binary, unweighted, simple graph H; for every undirected edge e=(u,v): F_H(e)=4-deg_H(u)-deg_H(v); T_H(e)=|N_H(u) inter N_H(v)|; AF3_H(e)=F_H(e)+3*T_H(e)",
+ "af3_frozen": "triangle-only convention; no square/4-cycle terms, no weighted variant, no normalisation, and NOT the hyperbolic sectional curvature -c_l",
+ "degree_rule": {
+   "intra": "induced internal degree inside the prefix group",
+   "inter": "quotient-graph degree (one node per occupied prefix)",
+   "gap": "original item-graph degree and original item-graph triangles, computed once and never recomputed after group assignment"
+ },
+ "gap": {
+   "E_in(l)": "{(i,j) in E(G): p_l(i)==p_l(j)}",
+   "E_cross(l)": "{(i,j) in E(G): p_l(i)!=p_l(j)}",
+   "Gap_AF3(l)": "mean(AF3_G(e), e in E_in(l)) - mean(AF3_G(e), e in E_cross(l))",
+   "unlabelled": "edges touching an item without a hard prefix are counted separately and never classified as cross",
+   "undefined": "UNDEFINED_INSUFFICIENT_WITHIN_EDGES / UNDEFINED_INSUFFICIENT_CROSS_EDGES, never 0 or a surrogate",
+   "nulls": ["global label shuffle (preserves the label-size histogram)",
+             "log2-degree-stratified label shuffle",
+             "20 deterministic replicates each; z only when sd>0"]
+ },
+ "outcomes": ["test_recall@5", "test_recall@10", "test_ndcg@5", "test_ndcg@10"],
+ "not_evaluated": "R@20/NDCG@20 do not exist in the saved Stage3 artifacts (topk_list=[5,10]); they are NOT_EVALUATED and never synthesised from beam_size=20",
+ "orc": "no new ORC is computed; the #134 16-edge true-geodesic ORC is compared only on its identical sampled edges and is labelled SAMPLED_ESTIMATE",
+ "d3": "no D3/prefix-alignment implementation exists in the repository (searched 2026-11-03); reported NOT_AVAILABLE, and hard prefix edge retention E_in/(E_in+E_cross) is used as the explicitly named comparison instead"
+}

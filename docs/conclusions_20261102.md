@@ -124,6 +124,43 @@ bootstrap CI and Holm over the predeclared 81-test family):
 * Cost: 12 shards, median 725 s/SID, peak RSS 0.95 GB, 78k null applications
   (nulls are 96% of the time; the L2/L3 quotient `A^2` has ~46-50M non-zeros).
 
+## 4c. AF3 curvature and the original-graph within/cross gap (issue #136)
+
+* Frozen convention on every graph: `F_H(e)=4-deg_H(u)-deg_H(v)`,
+  `T_H(e)=|N_H(u)∩N_H(v)|`, `AF3_H(e)=F_H(e)+3T_H(e)`, with degree and triangles
+  taken in the graph the edge belongs to (induced / quotient / original). 108
+  rows, 2 digest mismatches excluded, all `RECORD_HASH_MATCH`; one global
+  original-graph curvature cache over **315,391** edges (1.2 s).
+* **The original-edge gap is the strongest geometry association measured so far
+  and it survives every control tested.** `gap_af3` vs R@10: Pearson **+0.809 /
+  +0.773 / +0.600** and Spearman **+0.760 / +0.685 / +0.524** at L1/L2/L3
+  (n 107/108/108, Holm 0.013 over the 260 defined metric×outcome entries); NDCG@5
+  at L1 reaches r +0.832 / rho +0.814. Within the 76 `curvature_RQ-VAE` arms it
+  stays r +0.526/+0.608/+0.451 and rho +0.522/+0.457/+0.253.
+* **Incremental evidence.** Controlling hard-prefix edge retention, the partial
+  Pearson of the gap vs R@10 is **+0.79 / +0.75 / +0.59** (p = 2e-4); controlling
+  L1 intra transitivity it is +0.43 (rho +0.22), and controlling L2/L3 quotient
+  density +0.53/+0.47 (rho +0.62/+0.49). The gap is therefore not just frontier
+  size or a re-encoding of transitivity/density.
+* **Triangles matter, but not for the gap mean.** The ordinary-Forman gap
+  correlates almost identically with the outcomes (r +0.826 at L1 NDCG@5), and the
+  AF3 increment *given* the Forman gap is only partial r +0.32/+0.26/+0.48
+  (rho +0.59/+0.51/+0.44). Where AF3 does change the picture: the intra AF3
+  negative-edge fraction at L1 (r +0.573 / rho +0.670, Holm 0.013) is a defined
+  statistic while the ordinary-Forman negative fraction is degenerate; and the L1
+  quotient AF3 mean flips sign against the ordinary-Forman mean (r +0.394 vs
+  -0.423). The intra AF3 *mean* itself has a Pearson/Spearman sign conflict
+  (r +0.40, rho -0.32 at L1): outlier-driven, mixed-arm, not stable.
+* **Blocked, not filled in.** D3/prefix alignment is `NOT_AVAILABLE` (no
+  implementation in the repository; edge retention is the named substitute);
+  AF3-vs-ORC on the identical sampled edges is `NOT_AVAILABLE_BY_DESIGN` (#134
+  stores aggregates only); R@20/NDCG@20 are `NOT_EVALUATED`.
+* Cost: median 4.9 s/SID, max 5.5 s, phases intra 116 s / quotient 254 s /
+  gap 6.9 s / nulls 122 s, peak RSS 1.28 GB; 324 support rows.
+* Not claimed: AF3 is not the hyperbolic sectional curvature `-c_l`, a large gap
+  does not prove hyperbolic necessity, and the gap is not deduced from
+  `mean intra - mean quotient`.
+
 ## 5. Established invariants (now enforced by tests)
 
 * SID-recall admission is **directory-name equality**; the join key is
