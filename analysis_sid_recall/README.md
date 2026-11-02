@@ -3,6 +3,18 @@
 Every SID table reachable in the git history, with the Stage 3 recall of the run that
 generated from it. Collected read-only by `collect.py` (re-runnable).
 
+## Pair verification (2026-11-02) — read before using the CSV
+
+`sid_recall.csv` is a **pairing by consumption evidence**, not a list of pairs
+published together. `pair_audit.py` applies two mechanical criteria — the SID
+table and the recall file were introduced by the same git commit, and the
+`results/stage2_RQ-VAE/<X>` / `results/stage3_T5Train/<X>` names are equal —
+and only **73 of the 182 rows pass**. `pair_audit.csv` carries the verdict per
+row (join on `sid_sha256`; **never** on `variant`, since 182 rows share 168
+variant names). `audit_correlation.py` re-computes the curvature statistics on
+the subsets; `PAIR_AUDIT_FINDINGS.md` is the write-up. Any use of the table
+should filter on `verdict == "VERIFIED"`, or state explicitly that it does not.
+
 ## A collection bug that was found and fixed (2026-11-02)
 
 Re-running `collect.py` on the previous collection produced **38** pairs instead of
