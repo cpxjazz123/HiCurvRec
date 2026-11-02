@@ -1,0 +1,58 @@
+{
+ "popularity": {
+  "mapping_sha256": "88a0a355c761c3c741837bf9c213fff8640bf3dd5ef5b654e78c325f71ea1a01",
+  "contexts": 396958,
+  "pairs": 315391,
+  "total_count_mass": 2698387.0,
+  "max_count": 382.0,
+  "strength_min": 0.0001691134347046412,
+  "strength_max": 0.9411239481143202,
+  "strength_median": 0.019576090877471072,
+  "strength_mean": 0.0483030889878283,
+  "zeros_in_edges": 0,
+  "positive_counts": 315391,
+  "activity_min": 1.0,
+  "activity_max": 12516.0,
+  "activity_median": 58.0
+ },
+ "intensity": {
+  "mapping_sha256": "88a0a355c761c3c741837bf9c213fff8640bf3dd5ef5b654e78c325f71ea1a01",
+  "contexts": 396958,
+  "pairs": 315391,
+  "total_count_mass": 2698387.0,
+  "max_count": 382.0,
+  "strength_min": 0.6931471805599453,
+  "strength_max": 5.948034989180646,
+  "strength_median": 1.6094379124341003,
+  "strength_mean": 1.7889400428774789,
+  "zeros_in_edges": 0,
+  "positive_counts": 315391,
+  "activity_min": 1.0,
+  "activity_max": 12516.0,
+  "activity_median": 58.0
+ },
+ "node_order_matches_hash": true,
+ "config": {
+  "unit": "training context (row: history + target), one count per context",
+  "deduplication": "unordered consecutive pair, counted once per context",
+  "primary_strength": "popularity: c / sqrt(f_i f_j)",
+  "alternative_strength": "intensity: log1p(c)",
+  "unit_sensitivity": "distinct-user count per pair",
+  "ground_metric": "unweighted hop distance of the behaviour graph",
+  "quotient_aggregation": "sum over item edges",
+  "primary_normalisation": "exposure (cell / sqrt(M_a M_b))",
+  "reported_alternative_normalisation": "raw sum",
+  "orc_budget": {
+   "edges": 24,
+   "null_replicates": 2
+  },
+  "orc_sensitivity": "NOT_RUN (the measured budget is the declared one)",
+  "nulls": {
+   "labelled_edges": 60,
+   "activity_stratified": 40,
+   "gap": 60
+  },
+  "seed": 20261102,
+  "stage3_use": "read-only frozen historical recall; no tuning against it"
+ }
+}
