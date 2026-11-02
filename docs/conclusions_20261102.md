@@ -44,17 +44,30 @@ and **still open**; nothing here asserts a causal geometry -> Recall benefit.
   (transitivity delta +0.124 / +0.112); the L2 parent-conditioned delta is
   +0.051 and the L3 +0.000.
 
-## 4. The single surviving predictive signal, and its limits
+## 4. The single surviving predictive signal, now re-measured on the full census
 
-* L1 local geometry improves the leave-one-series-out RMSE over the controls:
-  **0.00472 -> 0.00437 (+7.5%)**, and its L1 summary keeps a partial correlation
-  of **+0.526** given log occupied prefixes, A1, collision and L1 code usage.
-  `local_prefix_geometry/statistics.json`.
-* It is **not independent replication**: the strict A2 subset is one mechanism
-  series (leave-one-series-out `UNDEFINED_SINGLE_SERIES`), and #131 sampled only
-  groups of 2-64 items (L1 item coverage 5.7% under that rule). Issue #132 is
-  re-running the census without any cap to decide whether the number survives.
+Issue #132 re-ran the census with **no group-size or group-count cap** (108 SIDs,
+every occupied prefix group, singletons included):
 
+* **L1 local geometry still improves out-of-series prediction**: leave-one-series-out
+  RMSE **0.00354 -> 0.00319 (+9.8%)** with one extra feature (6 total, n=108), and
+  its L1 summary keeps a partial correlation of **+0.554** given log occupied
+  prefixes, A1, collision and L1 code usage (raw correlation with log occupied
+  -0.198). Transitivity at L1: rho +0.704, partial +0.614; conductance -0.662,
+  partial -0.499. `full_census_geometry/statistics.json`.
+* **L2 and L3 geometry add nothing** once the controls are in: L2's summary
+  partial is -0.021 (its size correlation is +0.772) and adding it changes the
+  RMSE by -0.8%; L3 changes it by -6.4%. Adding all three levels jointly gives
+  only +1.9%, i.e. the L1 block is the whole gain and the finer levels dilute it.
+* The full census **moved the sampled numbers materially**, which is why the
+  earlier figures were labelled preliminary: transitivity L1 +0.536 -> +0.704,
+  L2 +0.322 -> +0.814, L3 +0.381 -> +0.603; conductance L2 -0.399 -> -0.036 and
+  L3 -0.437 -> +0.184 (a sign change). `REPORT.md`, "side by side with #131".
+* Limits unchanged: the strict A2 subset is one mechanism series (leave-one-out
+  prediction `UNDEFINED_SINGLE_SERIES`), so this is an out-of-series estimate
+  within one dominant family, not independent replication. The detour metric is
+  `BLOCKED_NOT_FULL_CENSUS` and the four-point metric is exact only on components
+  up to 24 nodes; neither is estimated from a sample.
 ## 5. Established invariants (now enforced by tests)
 
 * SID-recall admission is **directory-name equality**; the join key is
@@ -68,11 +81,13 @@ and **still open**; nothing here asserts a causal geometry -> Recall benefit.
   may not render "no defined values" (a test caught a real instance of this).
 * Regression suites: #129 16 tests, #130 10, #131 12, #132 13.
 
-## 6. What is still open
+## 6. Status
 
-* Issue #132: full-census L1/L2/L3 geometry (108 SIDs, every occupied group, no
-  size or count cap). Structural metrics are exact; the four-point deviation is
-  exact only on components up to 24 nodes and the detour is
-  `BLOCKED_NOT_FULL_CENSUS`; both are recorded with counts in
-  `full_census_geometry/completeness.json`. The L1 predictive number above will
-  be re-evaluated on that census before any claim is repeated.
+* Issue #132 is complete: the full census ran on 108 SIDs (2 excluded after a
+  measured digest mismatch), every occupied group of every level is counted, and
+  the completeness ledger records the metric coverage and the two blockers
+  (`full_census_geometry/completeness.json`).
+* Open for a future issue, not for this analysis: any claim of cross-family
+  replication, and any causal statement from graph geometry to model curvature.
+  Both require a controlled Stage 2 -> Stage 3 experiment, which no issue here
+  launched.
