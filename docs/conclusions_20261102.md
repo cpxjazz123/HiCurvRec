@@ -66,16 +66,26 @@ bootstrap CI and Holm over the predeclared 81-test family):
 | inter | degree median (L3) | -0.562 | 0.015 | 108 |
 | inter | Forman mean (L3) | **+0.420** | 0.015 | 108 |
 | inter | singleton share (L2 / L3) | +0.419 / +0.485 | 0.015 / 0.015 | 108 |
-| curvature | ORC mean (L1 / L2 / L3) | +0.112 / **-0.451** / **-0.420** | 1.000 / 0.015 / 0.015 | 107 / 108 / 108 |
+| curvature | ORC mean, true geodesic (#134; L1 / L2 / L3) | +0.130 / **-0.415** / **-0.401** | 1.000 / 0.014 / 0.014 | 107 / 108 / 108 |
+| curvature | ORC mean, #133 clipped metric (superseded) | +0.112 / -0.451 / -0.420 | 1.000 / 0.015 / 0.015 | 107 / 108 / 108 |
 
 * The intra-group geometry (cyclic, non-tree, low-conductance subgraphs) tracks
   Recall most strongly at L1 and still at L3 at the **group** level; the inter-group
   quotient geometry tracks it at L2/L3 mainly through density/degree/transitivity
   (denser and more transitive quotients go with *lower* Recall).
-* Ollivier-Ricci is a **sampled estimate** (512 quotient edges, per-row coverage
-  0.02%-2%) and is therefore reported separately; Forman curvature covers every
-  quotient edge exactly. The L1 ORC is null, and its negative-edge fraction is
-  degenerate (almost all edges positive).
+* Ollivier-Ricci is a **sampled estimate** (16 quotient edges per level per SID,
+  per-row coverage 6e-4 at L1 and 5e-5 at L2/L3; all-edge ORC is
+  `BLOCKED_NOT_FULL_CENSUS`) and is therefore reported separately; Forman
+  curvature covers every quotient edge exactly.
+* **Issue #134 corrected the ground metric.** The old 0/1/2 cost clip was not the
+  quotient metric: on the same seeded edges every L2/L3 SID has support pairs
+  whose true shortest path has 3 hops, and the clip biased the sampled curvature
+  upward. Paired audit (same edges): mean Δκ = -0.0154 (L2) / -0.0280 (L3), max
+  |Δκ| = 0.31, sign flips 14 (L2) / 1 (L3); L1 has no distance-3 pairs, so its
+  ORC is unchanged. The clipped numbers above are **superseded**; the corrected
+  table and the boundary fix (`boundary_edges = cut`, the earlier `/2` removed)
+  live in `analysis_sid_recall/corrected_geodesic_geometry/`. The boundary and
+  conductance correlations are scale-invariant and identical to #133.
 * Raw correlations are unadjusted by design (the issue's primary analysis);
   partial correlations given resolution, alignment, collision and code usage are
   secondary and live in `intra_inter_geometry/statistics.json`. A raw coefficient
@@ -91,7 +101,9 @@ bootstrap CI and Holm over the predeclared 81-test family):
   use; statistics never read validation/test labels; undefined quantities are
   written `UNDEFINED_*` or `BLOCKED_*`, never zero; a figure with supported data
   may not render "no defined values" (a test caught a real instance of this).
-* Regression suites: #129 16 tests, #130 10, #131 12, #132 13.
+* Regression suites: #129 16 tests, #130 10, #131 12, #132 13, #133 (intra/inter
+  geometry) as before, #134 13 tests (P4 fixture: true ORC 0.0 vs clipped 0.25,
+  outside-support shortest paths, LP vs reference transport, cut identities).
 
 ## 6. Status
 
