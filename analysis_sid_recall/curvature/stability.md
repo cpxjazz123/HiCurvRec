@@ -36,3 +36,13 @@ Artefacts: `curvature_summary.json` (the 32-edge / 3-null run, authoritative),
 features `per_arm_features_32edge.json`, and the earlier 16-edge report in the
 commit `f5b95977` (the features themselves were replaced by the larger run; the
 summary's statistics are preserved here and in `curvature_summary_16edge.json`).
+
+## The pair table the numbers rest on
+
+These statistics were computed on all 182 rows of `sid_recall.csv`. The pair
+audit (`analysis_sid_recall/PAIR_AUDIT_FINDINGS.md`) shows only 73 of them are
+verified by the same-commit and same-directory criteria, and on those no feature
+correlates with the recall (`z_curv_L2` +0.129 p 0.28, `z_curv_L3` −0.044
+p 0.71, the profile +0.141 p 0.24; the same-commit set gives +0.074 and +0.029).
+The budget instability reported above and the pair-verification result point the
+same way: the association is not reproducible.

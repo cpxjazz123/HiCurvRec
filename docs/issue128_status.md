@@ -100,6 +100,26 @@ level 2: mean |exact - bounded| 0.0139
   disconnected support fails closed instead of returning a zero;
 * a degenerate null is reported `NOT_MEASURED`, never a silent zero.
 
+## The pair table behind the numbers (added after the correction)
+
+The 182 (SID, recall) rows of `sid_recall.csv` are not 182 published pairs. An
+audit (`analysis_sid_recall/pair_audit.py`) applied two mechanical criteria — the
+SID table and the recall file must be introduced by the same git commit, and the
+`results/stage2_RQ-VAE/<X>` and `results/stage3_T5Train/<X>` directories must
+carry the same name — and **73 pairs pass**. Restricting the statistics to them:
+
+| feature | all 182 | same commit (86) | verified (73) |
+|---|---|---|---|
+| `z_curv_L2` | +0.150 (p 0.035) | +0.074 (p 0.50) | +0.129 (p 0.28) |
+| `z_curv_L3` | +0.145 (p 0.049) | +0.029 (p 0.80) | −0.044 (p 0.71) |
+| profile (`L1−L3`) | −0.095 (p 0.23) | +0.051 (p 0.64) | +0.141 (p 0.24) |
+
+So the only p ≈ 0.05 associations belong to the unaudited table, and they
+disappear under either criterion. Combined with the sampling-budget instability
+(sign reversals, |Δρ| up to 0.19), the conclusion of this issue stands and
+sharpens: **no curvature–recall association can be claimed in either
+direction.** Details: `analysis_sid_recall/PAIR_AUDIT_FINDINGS.md`.
+
 ## What this does not change
 
 The downstream Recall of the arms is untouched: it was measured, and no

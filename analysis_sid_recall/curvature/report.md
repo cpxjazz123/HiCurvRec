@@ -1,5 +1,7 @@
 # Does the curvature of a SID's behaviour quotient graph predict its recall?
 
+> **Read this before the numbers.** The 182 rows of `sid_recall.csv` were audited (`pair_audit.py`): a pair is *verified* only when the SID table and the recall file were introduced by the same commit **and** the stage-2 and stage-3 directories carry the same name. 73 pairs pass; on those, no curvature feature correlates with the recall (z_curv_L2 +0.129 p=0.28, z_curv_L3 -0.044 p=0.71, the profile +0.141 p=0.24), and the full-table association does not survive either the same-commit restriction (z_curv_L2 +0.074 p=0.50, z_curv_L3 +0.029 p=0.80) or a change of the edge-sampling budget (sign reversals, |delta| up to 0.19). See `AUDIT_CORRELATION.md` and `curvature/stability.md`; the numbers below are the unaudited table.
+
 *182 SID tables, each with one recall, from 115 mechanism families.*
 
 The behaviour graph is the training split's transitions only (24,556 items, 157,695 edges). For every SID table and every level the prefix groups are contracted into super-nodes, the lazy random walk's Ollivier curvature of that quotient graph is measured on a sample of its edges, and the number is standardised against a null that keeps the group sizes and shuffles the members. The features are then correlated with the recall of the run that used the table.
