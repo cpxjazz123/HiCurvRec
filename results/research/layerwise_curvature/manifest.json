@@ -1,0 +1,48 @@
+{
+ "issue": 129,
+ "status": "NOT_RUN_NOT_JUSTIFIED",
+ "protocol_if_run": {
+  "stage2": "ddp4, 3000 epochs, frozen recipe",
+  "stage3": {
+   "NUM_EPOCHS": 150,
+   "NO_EVAL": true,
+   "SKIP_TEST": false,
+   "SEED": 42
+  }
+ },
+ "mapping": {
+  "c0": 1.0,
+  "alpha": 0.5,
+  "c_min": 0.05,
+  "c_max": 4.0,
+  "formula": "c_l = clip(c0*exp(-alpha*z_l), c_min, c_max)"
+ },
+ "arms": [
+  {
+   "id": "E",
+   "c": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "status": "NOT_RUN_NOT_JUSTIFIED"
+  },
+  {
+   "id": "S",
+   "c": "shared, one factor",
+   "status": "NOT_RUN_NOT_JUSTIFIED"
+  },
+  {
+   "id": "G",
+   "c": "pre-registered one-factor sweep",
+   "status": "NOT_RUN_NOT_JUSTIFIED"
+  },
+  {
+   "id": "V",
+   "c": "profile-driven",
+   "status": "NOT_RUN_NOT_JUSTIFIED"
+  }
+ ],
+ "reason": "no level-dependent signal surviving budget/out-of-series checks; see REPORT.md and CONVERGENCE_FINDINGS.md",
+ "historical_artifacts_modified": false
+}
