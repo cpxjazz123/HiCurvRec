@@ -321,6 +321,15 @@ def main() -> int:
     (HERE / "results.json").write_text(json.dumps(results, indent=1) + "\n", encoding="utf-8")
     stats.scatter_svg(usable, "g", HERE / "scatter_g.svg", "g_l")
     stats.scatter_svg(usable, "z", HERE / "scatter_z.svg", "z_l")
+    drawn = {}
+    for level in (1, 2, 3):
+        for field in ("g", "z"):
+            count = stats.scatter_level_svg(usable, level, field,
+                                            HERE / f"scatter_{field}_L{level}.svg",
+                                            f"{field}{level}")
+            drawn[f"{field}{level}"] = count
+    results["figures"] = drawn
+    (HERE / "results.json").write_text(json.dumps(results, indent=1) + "\n", encoding="utf-8")
     pipeline.write_report(results, rows, usable)
     pipeline.write_preregistration(results)
     print(json.dumps({key: results[key] for key in ("n", "provenance")}, indent=1))

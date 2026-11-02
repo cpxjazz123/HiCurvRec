@@ -159,8 +159,10 @@ def scatter_svg(points: list[dict], x_field: str, path: Path,
     pad = (y_hi - y_lo) * 0.1 or 1e-3
     for level, left in panels:
         values = [point.get(f"{x_field}{level}") for point in points]
-        usable = [(value, point["recall"], point["series"], point.get(f"{x_field}_status{level}", "MEASURED"))
-                  for value, point in zip(values, points) if value is not None]
+        usable = [(value, point["recall"], point["series"],
+                   point.get(f"{x_field}_status{level}", "MEASURED"))
+                  for value, point in zip(values, points)
+                  if value is not None and np.isfinite(value)]
         pieces.append(f'<text x="{left + 130}" y="18" font-size="13" text-anchor="middle">'
                       f'level {level}</text>')
         if not usable:
@@ -188,3 +190,43 @@ def scatter_svg(points: list[dict], x_field: str, path: Path,
                       f'{y_label}</text>')
     pieces.append("</svg>")
     path.write_text("\n".join(pieces) + "\n", encoding="utf-8")
+
+
+def scatter_level_svg(points: list[dict], level: int, x_field: str, path: Path,
+                      x_label: str, y_label: str = "Recall@10") -> int:
+    """One level's scatter on its own canvas; returns the number of points drawn."""
+    width, height = 420, 340
+    series = sorted({point["series"] for point in points})
+    colour = {name: PALETTE[index % len(PALETTE)] for index, name in enumerate(series)}
+    key = f"{x_field}{level}"
+    usable = [(point.get(key), point["recall"], point["series"]) for point in points
+              if point.get(key) is not None and np.isfinite(point.get(key))]
+    pieces = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
+              f'font-family="inherit">']
+    if usable:
+        xs = [item[0] for item in usable]
+        ys = [item[1] for item in usable]
+        x_lo, x_hi = min(xs), max(xs)
+        y_lo, y_hi = min(ys), max(ys)
+        span_x = (x_hi - x_lo) or 1e-3
+        pad = (y_hi - y_lo) * 0.1 or 1e-3
+        pieces.append('<rect x="60" y="20" width="330" height="260" fill="none" '
+                      'stroke="var(--border)"/>')
+        for value, recall, name in usable:
+            cx = 60 + (value - x_lo) / span_x * 320
+            cy = 20 + 250 - (recall - (y_lo - pad)) / ((y_hi + pad) - (y_lo - pad)) * 250
+            pieces.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="2.6" '
+                          f'fill="var({colour[name]})"/>')
+        pieces.append(f'<text x="60" y="298" font-size="10" fill="var(--muted)">{x_lo:+.3f}</text>')
+        pieces.append(f'<text x="380" y="298" font-size="10" text-anchor="end" '
+                      f'fill="var(--muted)">{x_hi:+.3f}</text>')
+    else:
+        pieces.append('<text x="210" y="160" font-size="12" text-anchor="middle" '
+                      'fill="var(--muted)">no defined values</text>')
+    pieces.append(f'<text x="225" y="326" font-size="11" text-anchor="middle" '
+                  f'fill="var(--muted)">{x_label}</text>')
+    pieces.append(f'<text x="14" y="150" font-size="11" text-anchor="middle" '
+                  f'fill="var(--muted)" transform="rotate(-90 14 150)">{y_label}</text>')
+    pieces.append("</svg>")
+    path.write_text("\n".join(pieces) + "\n", encoding="utf-8")
+    return len(usable)
