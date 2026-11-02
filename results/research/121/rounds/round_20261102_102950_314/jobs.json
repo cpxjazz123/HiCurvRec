@@ -6,7 +6,7 @@
       "failure_evidence": {
         "failure_class": "IMPLEMENTATION_NEEDS_FIX"
       },
-      "finished_at": null,
+      "finished_at": 1793582226.7897258,
       "gpu": "0,1,2,3",
       "idea_id": "EQVOTE-HYP-RQ",
       "job_id": "stage2:EQVOTE-HYP-RQ",
@@ -25,11 +25,65 @@
         }
       ],
       "queued_at": 1793581164.6119175,
-      "result": null,
+      "result": {
+        "metrics": {
+          "full_unique_items": 24587,
+          "level2_distinct_prefixes": 7312,
+          "negative_hits": 6571,
+          "pairs": 52855,
+          "positive_hits": 4472,
+          "valid_l1_hard_er": 6.805661238776442,
+          "valid_l1_negative_hit_rate": 0.012432125626714597,
+          "valid_l1_positive_hit_rate": 0.08460883549333081
+        },
+        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_EQVOTE-HYP-RQ/item_sids.json",
+        "sid_sha256": "a8a4a6122069e77166f34ca680aacedcc18c48fa3db269bf32abecbec18f0a9f",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "level2_distinct_prefixes": 7312,
+            "negative_hits": 6571,
+            "pairs": 52855,
+            "positive_hits": 4472,
+            "valid_l1_hard_er": 6.805661238776442,
+            "valid_l1_negative_hit_rate": 0.012432125626714597,
+            "valid_l1_positive_hit_rate": 0.08460883549333081
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_EQVOTE-HYP-RQ",
       "round_id": "round_20261102_102950_314",
+      "stage3_job_id": "stage3:EQVOTE-HYP-RQ",
       "started_at": 1793581666.1300666,
-      "status": "running",
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_EQVOTE-HYP-RQ"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "finished_at": 1793584566.2467995,
+      "idea_id": "EQVOTE-HYP-RQ",
+      "job_id": "stage3:EQVOTE-HYP-RQ",
+      "kind": "stage3",
+      "queued_at": 1793582227.0789428,
+      "result": {
+        "checkpoint": "Nov-02-2026_12-20-40/HG_Rec_best.pth",
+        "n_eval": 57439,
+        "protocol": "150 epochs, NO_EVAL=True, one test after training",
+        "test_ndcg@10": 0.030324358016355298,
+        "test_recall@10": 0.0551889830951096,
+        "test_recall@5": 0.03676944236494368
+      },
+      "round_id": "round_20261102_102950_314",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_EQVOTE-HYP-RQ/item_sids.json",
+      "stage2_job_id": "stage2:EQVOTE-HYP-RQ",
+      "started_at": null,
+      "status": "done",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_EQVOTE-HYP-RQ"
     }
   ],

@@ -23783,13 +23783,34 @@
       "idea_id": "EQVOTE-HYP-RQ",
       "job_id": "stage2:EQVOTE-HYP-RQ",
       "kind": "stage2",
+      "stage3_job_id": "stage3:EQVOTE-HYP-RQ",
+      "status": "done"
+    },
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "EQVOTE-HYP-RQ",
+      "job_id": "stage3:EQVOTE-HYP-RQ",
+      "kind": "stage3",
       "stage3_job_id": null,
-      "status": "running"
+      "status": "pending"
     }
   ],
-  "stage3_jobs": [],
+  "stage3_jobs": [
+    {
+      "attempts": 0,
+      "error": null,
+      "failure_kind": null,
+      "idea_id": "EQVOTE-HYP-RQ",
+      "job_id": "stage3:EQVOTE-HYP-RQ",
+      "kind": "stage3",
+      "stage3_job_id": null,
+      "status": "pending"
+    }
+  ],
   "step": "stage2",
-  "updated_at": 1793581685.2740426,
+  "updated_at": 1793582227.6562274,
   "worker_log": "/tmp/genrec-mcp/round_round_20261102_102950_314.log",
   "worker_pid": 906073,
   "worker_summary": {
