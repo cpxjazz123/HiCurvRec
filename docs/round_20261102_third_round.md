@@ -67,14 +67,20 @@ ran on the arm's SID:
 | test_recall@5 | 0.03677 |
 | test_ndcg@10 | 0.03032 |
 
-Four arms, four recalls:
+Recalls that are backed by a round record or by the arm's own Stage 3 run in
+this tree:
 
-| SID | test_R@10 |
-|---|---|
-| Baseline (Euclidean) | **0.0655** |
-| Round 1 (pooled hyperbolic argmax) | 0.0610 |
-| Round 2 (successor-overlap rank sum) | 0.0551 |
-| Round 3 (exact-quota hyperbolic allocation) | 0.0552 |
+| arm | stage-2 directory | stage-3 directory | `test_R@10` | evidence |
+|---|---|---|---|---|
+| `CURVALLOC-LORENTZ-RQ` | `TIGER_CURVALLOC-LORENTZ-RQ` | same name | 0.04189 | `round_20261102_031529_470/jobs.json` + the run's own launcher log |
+| `EQVOTE-HYP-RQ` | `TIGER_EQVOTE-HYP-RQ` | same name | 0.05519 | `round_20261102_102950_314/jobs.json` + the run's own launcher log |
+
+The project's recorded reference for the frozen Euclidean baseline is 0.0655,
+but its run directory is no longer in the tree, so it is **not** re-verified
+here; the success bar in `CLAUDE.md` is `test_R@10 > 0.065`. An earlier version
+of this paragraph also quoted 0.0610 and 0.0551 for "round 1" and "round 2";
+those numbers are not reproducible from the current tree (the round record for
+`CURVALLOC-LORENTZ-RQ` reads 0.04189) and are withdrawn from this report.
 
 ## The verdict bar
 
@@ -84,9 +90,8 @@ round only if its recall exceeds the frozen baseline's 0.0655 **and** the
 mechanism's interpretation survives (the hyperbolic pull is the reason, not the
 quotas alone — the round-2 lesson).
 
-**Verdict: rejected.** `test_R@10 = 0.05519` is below the frozen baseline's
-0.0655 and statistically indistinguishable from the round-2 arm's 0.0551 —
-despite the third arm having the best-balanced SID of the three (the exact-quota
+**Verdict: rejected.** `test_R@10 = 0.05519` is below the recorded baseline
+reference (0.0655) and below the project's 0.065 bar — despite the third arm having the best-balanced SID of the three (the exact-quota
 usage [242,256,256], the L2 prefix count halved, the L1 Hard ER nearly halved).
 The coupling's interpretation does not survive either: the level weights
 `[0, 0.5, 0]` put the entire behaviour pull on the second level, where the
