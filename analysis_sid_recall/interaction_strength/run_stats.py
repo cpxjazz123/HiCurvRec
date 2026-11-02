@@ -38,8 +38,7 @@ def load() -> list[dict]:
                                                            "prefix_groups_l2",
                                                            "prefix_groups_l3"):
                 record[key] = lw_run.as_float(value)
-        if record.get("provenance_tier") == "PATH_ONLY":
-            record["provenance_tier"] = "RECORD_HASH_MATCH"
+        # no relabelling: the tier written by the measurement is the tier reported
         rows.append(record)
     return rows
 

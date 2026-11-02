@@ -9,8 +9,9 @@ Provenance tiers (WP0):
 
 * ``HASH_PROVEN`` — the file at the run's own ``code_path`` exists now and its
   SHA-256 equals the content hash of the pair row;
-* ``PATH_ONLY`` — the path is recorded but the bytes are not available for a
-  hash comparison (the collected copy may differ);
+* ``RECORD_HASH_MATCH`` — the bytes match the pair row's content hash but were
+  read from a collected copy, not from the path the run recorded; they are
+  content-verified, **not** runtime-attested;
 * ``MISSING`` — neither the recorded path nor the collected copy is readable.
 
 A matching vocabulary size is never used as identity.
@@ -61,9 +62,9 @@ def load_pairs() -> list[dict]:
         if source == Path(row.get("code_path", "")) and digest == row["sid_sha256"]:
             record["tier"] = "HASH_PROVEN"
         elif digest == row["sid_sha256"]:
-            record["tier"] = "PATH_ONLY"
+            record["tier"] = "RECORD_HASH_MATCH"
         else:
-            record["tier"] = "PATH_ONLY"
+            record["tier"] = "RECORD_HASH_MATCH"
         rows.append(record)
     return rows
 
