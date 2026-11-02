@@ -1,0 +1,37 @@
+{
+  "jobs": [
+    {
+      "attempts": 3,
+      "error": null,
+      "failure_evidence": {
+        "failure_class": "IMPLEMENTATION_NEEDS_FIX"
+      },
+      "finished_at": null,
+      "gpu": "0,1,2,3",
+      "idea_id": "EQVOTE-HYP-RQ",
+      "job_id": "stage2:EQVOTE-HYP-RQ",
+      "kind": "stage2",
+      "launch_mode": "ddp4",
+      "previous_attempts": [
+        {
+          "error": "the first launch attempt was refused by the entry check: the dataset gained the item ids but the training loop still unpacked one value (ValueError: too many values to unpack, expected 1). The loop now unpacks (batch, item_ids) and passes them to the model.",
+          "finished_at": 1793581277.42057,
+          "status": "failed"
+        },
+        {
+          "error": "the second attempt ran 20 epochs and died at the first refresh: the mechanism buffers were created on the CPU and DDP broadcasts its buffers on every forward, so every rank failed with No backend type associated with device type cpu. The buffers are now created on the model device.",
+          "finished_at": 1793581661.4493155,
+          "status": "failed"
+        }
+      ],
+      "queued_at": 1793581164.6119175,
+      "result": null,
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_EQVOTE-HYP-RQ",
+      "round_id": "round_20261102_102950_314",
+      "started_at": 1793581666.1300666,
+      "status": "running",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_EQVOTE-HYP-RQ"
+    }
+  ],
+  "schema": 1
+}

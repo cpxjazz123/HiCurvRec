@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from . import quotient_curvature as estimator
+
 #: The three arms of the controlled comparison. Only ``BOTH_ON`` is trained.
 BEHAVIOUR_OFF = False
 GEOMETRY_OFF = False
@@ -50,6 +52,10 @@ def behaviour_graph(train_frame) -> tuple:
     A row's history plus its target is one training sequence, and consecutive
     items in it are adjacent. No validation or test interaction is read.
     """
+    return estimator.build_behaviour_graph(train_frame)
+
+
+def _legacy_behaviour_graph(train_frame):
     import scipy.sparse as sp
 
     weights: dict[tuple[int, int], float] = {}
@@ -70,11 +76,15 @@ def behaviour_graph(train_frame) -> tuple:
         cols.append(index[second])
         data.append(weight)
     graph = sp.coo_matrix((data, (rows, cols)), shape=(len(nodes), len(nodes))).tocsr()
-    return nodes, index, graph
+    return nodes, index, estimator.symmetrise(graph)
 
 
 def quotient_graph(graph, assignment: np.ndarray, n_groups: int):
-    """The behaviour graph contracted into the level's prefix groups."""
+    """The behaviour graph contracted into the level's prefix groups, UNDIRECTED."""
+    return estimator.quotient_graph(graph, assignment, n_groups)
+
+
+def _legacy_quotient_graph(graph, assignment: np.ndarray, n_groups: int):
     import scipy.sparse as sp
 
     coo = graph.tocoo()
@@ -160,69 +170,12 @@ def _exact_w1(a: np.ndarray, b: np.ndarray, cost: np.ndarray) -> float:
 
 
 def quotient_curvature(adjacency, rng: np.random.Generator) -> float:
-    """The mean Ollivier curvature of the lazy random walk on the quotient.
+    """The mean Ollivier curvature of the lazy walk on the UNDIRECTED quotient.
 
-    For an edge ``(a, b)`` the curvature is ``1 - W1(m_a, m_b) / d(a, b)`` with
-    ``m_a`` the lazy walk measure and ``d`` the hop distance.
+    The estimator is the framework's: the ground metric is the EXACT unweighted
+    shortest path in the quotient, and the transport problem is solved exactly.
     """
-    adjacency = adjacency.tocsr()
-    rows, cols = adjacency.nonzero()
-    edges = list(zip(rows.tolist(), cols.tolist()))
-    if not edges:
-        return float("nan")
-    if len(edges) > SAMPLED_EDGES:
-        # the edges are sampled by weight: the behaviour mass between two groups
-        # is what the curvature is about
-        weight = np.asarray(adjacency.tocsr()[rows, cols]).ravel()
-        probability = weight / max(weight.sum(), 1e-12)
-        chosen = rng.choice(len(edges), size=min(SAMPLED_EDGES, len(edges)),
-                            replace=False, p=probability)
-        edges = [edges[int(index)] for index in chosen]
-    degree = np.asarray(adjacency.sum(axis=1)).ravel()
-    values = []
-    for a, b in edges:
-        if degree[a] <= 0 or degree[b] <= 0:
-            continue
-        neighbours_a = adjacency.indices[adjacency.indptr[a]:adjacency.indptr[a + 1]]
-        neighbours_b = adjacency.indices[adjacency.indptr[b]:adjacency.indptr[b + 1]]
-        support = np.unique(np.concatenate(([a, b], neighbours_a, neighbours_b)))
-        if support.shape[0] > MAX_SUPPORT:
-            # keep the two ends and a deterministic subset of the neighbourhood
-            rest = np.setdiff1d(support, np.asarray([a, b], dtype=support.dtype))
-            keep = rest[rng.choice(rest.shape[0],
-                                   size=MAX_SUPPORT - 2, replace=False)]
-            support = np.unique(np.concatenate((np.asarray([a, b], dtype=support.dtype), keep)))
-        left = np.zeros(support.shape[0])
-        right = np.zeros(support.shape[0])
-        position = {int(node): index for index, node in enumerate(support.tolist())}
-        left[position[a]] = 0.5
-        right[position[b]] = 0.5
-        # the measures live on the SUPPORT: a capped support drops mass, and the
-        # dropped mass is redistributed by the normalisation below
-        for node in neighbours_a:
-            index = position.get(int(node))
-            if index is not None:
-                left[index] += 0.5 / degree[a]
-        for node in neighbours_b:
-            index = position.get(int(node))
-            if index is not None:
-                right[index] += 0.5 / degree[b]
-        left = left / max(left.sum(), 1e-12)
-        right = right / max(right.sum(), 1e-12)
-        cost = np.zeros((support.shape[0], support.shape[0]))
-        for index, node in enumerate(support.tolist()):
-            hops = _hop_costs(adjacency, node, support)
-            cost[index] = hops
-        distance = float(cost[position[a], position[b]])
-        if distance <= 0:
-            continue
-        transport = _exact_w1(left, right, cost)
-        if transport != transport:
-            continue
-        values.append(1.0 - transport / distance)
-    if not values:
-        return float("nan")
-    return float(np.mean(values))
+    return estimator.quotient_curvature(adjacency, rng, edges=SAMPLED_EDGES)
 
 
 def standardised_curvature(adjacency, assignment: np.ndarray, n_groups: int,

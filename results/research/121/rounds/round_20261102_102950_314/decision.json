@@ -1,0 +1,419 @@
+{
+  "decision_at": 1793576480.419682,
+  "decision_hash": "7993c531b995924c8f41a8bf168a2c60c6eb214593db99f882252050bdf432f2",
+  "evidence": {
+    "CURVQUOTA-SWAP-SID": {
+      "bundle_sha256": "46d7434989057e2c3339680cfaf0e15c058bd31bbf88ca2301dadee3c703debe",
+      "literature_sha256": "1d009333ab89b74a643df97493eaeafb0f8dd83227eb21f23ea41980a7b847cd",
+      "math_sha256": "a2334e820f17ef97a0ac72bba029bbcd43d85c9d5ee55d2ac0cbf767198a8cad",
+      "probe_sha256": "45d910e775249c6be4aac880a76fb0eeb2e45af8da97e26da05242e915648e35"
+    },
+    "EQVOTE-HYP-RQ": {
+      "bundle_sha256": "c71aaa7b68995bc99828899971657ded30086709f8d28cdba9466ca524a73a27",
+      "literature_sha256": "2ac64aa9c19ef6081373306116ca4007d1f30e134b6196631f02dcaca3296d57",
+      "math_sha256": "9720da3b8f94f1c726f44e16cb68487e3582fd25fa0490bed423ba6809891e54",
+      "probe_sha256": "82ad1790b8822c944f54af63a47674e8481380a89cb85fbca6496bd6fc30b77a"
+    },
+    "QPEX-CURVBIAS": {
+      "bundle_sha256": "c0d55832b87d6eaa8e6d1cc4999d3dc08656ac3b5eee1a31e6061582445b57f6",
+      "literature_sha256": "5d96de47772c0176439599383f047ee67ba5fb5c4e29ef664a5d1d8f7c594123",
+      "math_sha256": "c33da453358fc1ad6648cd84889e089e082dc27a07e8597629273fde6ad04add",
+      "probe_sha256": "e5f9ff92c3ff8d36e0562cc224d0355263d9318c467c31ae8d51114a5e0b9313"
+    },
+    "QUOTAPERM-HYP": {
+      "bundle_sha256": "4f6c451edde517b483c752de35aff6043e366f4381a782636253599af152968c",
+      "literature_sha256": "c566b6b1f56ead5dc0a87d86fbfb2abb25ba88d3714d2b2b4c7ed4d3cd168e43",
+      "math_sha256": "fbb436c3addc1866ab2f95a9a824edcf61193b793c4c836adf2ab1e68c2f99da",
+      "probe_sha256": "009c709a532864ba10b2707888357830c47b37473571b13e5b526dec77492708"
+    },
+    "geopull-exactquota": {
+      "bundle_sha256": "6ea5e65b05ea10fc86f54bd75c6a17b9e3f39b3a9b2169070ee579628e017614",
+      "literature_sha256": "22efc59816c12aa56db6a1f004c7b6404f935bfbfb4a6b5377d671c55aaa369b",
+      "math_sha256": "926f9fd2548f293b79881154ab8cc046f5b470bbec8569eeebdcc52e090932df",
+      "probe_sha256": "f9650e5fde77065335f8c287a30fe102f39d6ec2778f922abb9fe3568faca596"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "QPEX-CURVBIAS",
+        "mean_rank": 3.0,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 5,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "best-calibrated constant of the five (lambda = median top-2 margin / median d_P, so the bias can neither repeat round 2's 0-of-4 argmin no-op nor swamp reconstruction) with quota-exact swaps and no radius involvement; below the top two because the signed delta makes the level-1 term (delta_1=-0.328) reward hyperbolic distance and separate coarse groups, exactly where E11 measures the only behaviour signal in the existing SIDs (0.0907 vs permuted null 0.067)",
+          "scoring_2": "Despite the most complete derived constants and explicit switches, its behaviour signal collapses to one scalar delta_l per level, discarding E5's item-level entropy range (0.93-3.4 nats, top-1 0.44-0.05); it also mislabels level 1 as \"fine\" and applies delta_1=-0.328 to push the coarse digit away from hyperbolic proximity, contradicting E8's finding that coarse-prefix behavioural clustering is the capacity bottleneck.",
+          "scoring_3": "Only proposal whose margin-calibrated additive bias is guaranteed to reorder the top-1 (answering the measured 0-of-4-argmin round-2 no-op) while swap-exact quotas hold the Euclidean per-level histograms so the round-1 170->56 collapse cannot recur; its derived delta=[-0.328,-0.071,+0.399] disperses level 1 and concentrates level 3, matching the only arms above baseline (resample T1/T4 NLL 4.55/0.05, recall 0.06363; l1_br_euclid 0.06207) and avoiding the successor-geodesic family that measured 0.05500."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 9
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "EQVOTE-HYP-RQ",
+        "mean_rank": 2.3333,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 1,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "its [delta]_+ gate s=[0,0,1] spends the curvature only where the evidence says the quotient beats its size-null (delta_3=+0.399) while leaving levels 1-2 bit-identical, and the additive bounded vote plus transposition quotas makes the top-1 change provable and capacity loss zero; demoted because geometry enters only as a kernel bandwidth around a discrete vote (its own risk 4 admits near-inertness) and it self-declares 1.4-2x Stage-2 wall clock plus a \"few thousandths\" effect",
+          "scoring_2": "E5's concentrated successor mass (top-1 0.4375 at low entropy) and E7's residual error on the last position support a per-item additive successor vote aimed at level 3, while the absolute vote cost answers round-2's 0-of-4 argmin motion and transposition-exact quotas answer round-1's 56-triple collapse without touching the codebook; its lambda is derived from measured distortion.",
+          "scoring_3": "Clean bounded additive vote with a derived lambda and quota-exact transpositions, but the measured sign gate (delta_3=+0.399 only) confines it to level 3, leaving the level-1 lever that produced the largest measured gain (l1_br 0.04671 -> l1_br_euclid 0.06207) untouched; it is the closest analogue of tangent_successor_residual, which measured exactly the 0.05500 baseline, and its risk 4 concedes the Poincare kernel may be Euclidean-equivalent."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 7
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "CURVQUOTA-SWAP-SID",
+        "mean_rank": 3.0,
+        "per_reviewer_position": {
+          "scoring_1": 5,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "most complete equations and guards, but it moves the quantiser itself onto the Poincare ball (phi(z)=z/(1+",
+          "scoring_2": "It has the strongest criterion-3 coupling because the Poincare distance is the actual quantization distance and the codebook update is tangent-space, and E5's item-level successor heterogeneity enters at every level; but m_l is undefined (breaking the derived-constant rule), the hard-coded acceptance band [-2.32,-1.80,-0.86] is inconsistent with the stated delta profile and can abort the run, and E7's near-zero T1-T3 NLL makes coarse-level reworking low-yield.",
+          "scoring_3": "Acts at all three levels with per-item successor mass times per-edge standardised curvature plus exact 2-swap quotas, the strongest genuine per-item behaviour-by-geometry coupling that cannot move usage counts (E11 0.0907); but its own risk concedes the bias (0.1-0.4 vs distance spread ~1) may not move items, eta_2=-0.24 leaves the level-2 bottleneck (E6 depth-2 survival 0.829) inert, m_l is undefined, and its curved commitment plus tangent-space EMA reopens the round-1 codebook risk."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 9
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "geopull-exactquota",
+        "mean_rank": 4.0,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 3,
+          "scoring_3": 5
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "strongest geometric machinery (successor Frechet mean, then exp_{x_i}(t_l log_{x_i}(m_i)) at fixed kappa=1, always-attract with t_l strongest at level 3, global not batch-local quotas, explicit ABL_BEHAVIOUR/ABL_GEOMETRY switches); demoted because lambda_l in cost=d_P^2+lambda_l*[d_P(g)-d_P(x)] is never derived (a coupling weight the no-tuning policy forbids choosing) and the 30-refresh cap freezes the discrete assignment for ~2700 of 3000 epochs, leaving a stale STE target",
+          "scoring_2": "Its per-item hyperbolic Frechet/geodesic pull plus capacity-exact deferred acceptance directly targets E8's coarse-capacity ceiling (K=256 canonical pair-sharing only 0.0822) and retains E5 heterogeneity, and it names both ablation switches; but lambda_l is never defined, and deferred acceptance is stable rather than cost-optimal, so reconstruction can degrade.",
+          "scoring_3": "Most aggressive per-item geodesic construction, but its deferred-acceptance solve never states the code-side preferences and lambda_l is undefined, so the minimal-specification clause fails; the 0.05 flip trigger with a 30-refresh cap freezes an early-epoch assignment for most of the 3000 epochs, it concedes stable-not-optimal matching can degrade reconstruction, and it is the same successor-geodesic family the evidence measured at 0.05500/0.05463."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 12
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "QUOTAPERM-HYP",
+        "mean_rank": 2.6667,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 4,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "only proposal whose conservation is algebraic (whole-triple transpositions keep 247/7414/20223, the 0.177 collision and every level histogram bit-identical), making the E-bundle round-1 failure (170->56 triples, recall 0.041888) impossible, with no coupling weight to sweep (rank fusion), 1.00x training cost, and it targets the measured bottleneck in E7 (l1_br: T1/T2/T3 NLL 0.00 but T4 NLL 9.03 and recall 0.04671) by making prefixes behaviour-informative rather than merely deterministic",
+          "scoring_2": "Exact triple-multiset conservation makes the round-1 and round-2 failures structurally impossible and its popularity-adjusted successor lift captures E5/E9, but it is a post-hoc permutation on an unchanged Euclidean quantizer (the clause-3 exclusion risk), it cannot change the 247/7414/20223 histograms that E8 identifies as the coarse ceiling, and E6's prior behaviour-geodesic assignment arms stayed at 0.0550.",
+          "scoring_3": "Safest of the five: conserving the whole triple bag (247/7414/20223, 0.177 collision) makes collapse algebraically impossible and it re-pairs items to triples at all levels with a scale-free rank fusion; but an ordinal rank-sum over a 32-candidate set with an undefined B_i can easily be a near-no-op, it never touches Stage 2 so the E8 first-level ceiling (K=256 0.0822 vs 0.0907 baseline) stays binding, and no measured arm supports a post-hoc permutation."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 8
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "c0d55832b87d6eaa8e6d1cc4999d3dc08656ac3b5eee1a31e6061582445b57f6",
+      "idea_id": "QPEX-CURVBIAS",
+      "proposal_sha256": "6c3f782cefa11c3b3776bbb686e54ee3af0079edb631fcfc9611bb30ab99d548"
+    },
+    {
+      "evidence_sha256": "c71aaa7b68995bc99828899971657ded30086709f8d28cdba9466ca524a73a27",
+      "idea_id": "EQVOTE-HYP-RQ",
+      "proposal_sha256": "32d838ef4a5ebd8cfeb6023e11df9a7bff3e91709f0b88c8f8ff636663929e9f"
+    },
+    {
+      "evidence_sha256": "46d7434989057e2c3339680cfaf0e15c058bd31bbf88ca2301dadee3c703debe",
+      "idea_id": "CURVQUOTA-SWAP-SID",
+      "proposal_sha256": "bfbc7071050d7e4f4e2a455858776f2014f3d6fcafee4368f0dbd641e7a0f1da"
+    },
+    {
+      "evidence_sha256": "6ea5e65b05ea10fc86f54bd75c6a17b9e3f39b3a9b2169070ee579628e017614",
+      "idea_id": "geopull-exactquota",
+      "proposal_sha256": "840ff49c8a7d6c4b7db1234b7e31e8473629d17cb75329ffc721e94073d6fb80"
+    },
+    {
+      "evidence_sha256": "4f6c451edde517b483c752de35aff6043e366f4381a782636253599af152968c",
+      "idea_id": "QUOTAPERM-HYP",
+      "proposal_sha256": "d3e67128368a8a8f91644f2e7b26d13bb41b621131487ef08059b62ae28a0e91"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "QUOTAPERM-HYP",
+          "position": 1,
+          "reason": "only proposal whose conservation is algebraic (whole-triple transpositions keep 247/7414/20223, the 0.177 collision and every level histogram bit-identical), making the E-bundle round-1 failure (170->56 triples, recall 0.041888) impossible, with no coupling weight to sweep (rank fusion), 1.00x training cost, and it targets the measured bottleneck in E7 (l1_br: T1/T2/T3 NLL 0.00 but T4 NLL 9.03 and recall 0.04671) by making prefixes behaviour-informative rather than merely deterministic"
+        },
+        {
+          "idea_id": "EQVOTE-HYP-RQ",
+          "position": 2,
+          "reason": "its [delta]_+ gate s=[0,0,1] spends the curvature only where the evidence says the quotient beats its size-null (delta_3=+0.399) while leaving levels 1-2 bit-identical, and the additive bounded vote plus transposition quotas makes the top-1 change provable and capacity loss zero; demoted because geometry enters only as a kernel bandwidth around a discrete vote (its own risk 4 admits near-inertness) and it self-declares 1.4-2x Stage-2 wall clock plus a \"few thousandths\" effect"
+        },
+        {
+          "idea_id": "QPEX-CURVBIAS",
+          "position": 3,
+          "reason": "best-calibrated constant of the five (lambda = median top-2 margin / median d_P, so the bias can neither repeat round 2's 0-of-4 argmin no-op nor swamp reconstruction) with quota-exact swaps and no radius involvement; below the top two because the signed delta makes the level-1 term (delta_1=-0.328) reward hyperbolic distance and separate coarse groups, exactly where E11 measures the only behaviour signal in the existing SIDs (0.0907 vs permuted null 0.067)"
+        },
+        {
+          "idea_id": "geopull-exactquota",
+          "position": 4,
+          "reason": "strongest geometric machinery (successor Frechet mean, then exp_{x_i}(t_l log_{x_i}(m_i)) at fixed kappa=1, always-attract with t_l strongest at level 3, global not batch-local quotas, explicit ABL_BEHAVIOUR/ABL_GEOMETRY switches); demoted because lambda_l in cost=d_P^2+lambda_l*[d_P(g)-d_P(x)] is never derived (a coupling weight the no-tuning policy forbids choosing) and the 30-refresh cap freezes the discrete assignment for ~2700 of 3000 epochs, leaving a stale STE target"
+        },
+        {
+          "idea_id": "CURVQUOTA-SWAP-SID",
+          "position": 5,
+          "reason": "most complete equations and guards, but it moves the quantiser itself onto the Poincare ball (phi(z)=z/(1+"
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "EQVOTE-HYP-RQ",
+          "position": 1,
+          "reason": "E5's concentrated successor mass (top-1 0.4375 at low entropy) and E7's residual error on the last position support a per-item additive successor vote aimed at level 3, while the absolute vote cost answers round-2's 0-of-4 argmin motion and transposition-exact quotas answer round-1's 56-triple collapse without touching the codebook; its lambda is derived from measured distortion."
+        },
+        {
+          "idea_id": "CURVQUOTA-SWAP-SID",
+          "position": 2,
+          "reason": "It has the strongest criterion-3 coupling because the Poincare distance is the actual quantization distance and the codebook update is tangent-space, and E5's item-level successor heterogeneity enters at every level; but m_l is undefined (breaking the derived-constant rule), the hard-coded acceptance band [-2.32,-1.80,-0.86] is inconsistent with the stated delta profile and can abort the run, and E7's near-zero T1-T3 NLL makes coarse-level reworking low-yield."
+        },
+        {
+          "idea_id": "geopull-exactquota",
+          "position": 3,
+          "reason": "Its per-item hyperbolic Frechet/geodesic pull plus capacity-exact deferred acceptance directly targets E8's coarse-capacity ceiling (K=256 canonical pair-sharing only 0.0822) and retains E5 heterogeneity, and it names both ablation switches; but lambda_l is never defined, and deferred acceptance is stable rather than cost-optimal, so reconstruction can degrade."
+        },
+        {
+          "idea_id": "QUOTAPERM-HYP",
+          "position": 4,
+          "reason": "Exact triple-multiset conservation makes the round-1 and round-2 failures structurally impossible and its popularity-adjusted successor lift captures E5/E9, but it is a post-hoc permutation on an unchanged Euclidean quantizer (the clause-3 exclusion risk), it cannot change the 247/7414/20223 histograms that E8 identifies as the coarse ceiling, and E6's prior behaviour-geodesic assignment arms stayed at 0.0550."
+        },
+        {
+          "idea_id": "QPEX-CURVBIAS",
+          "position": 5,
+          "reason": "Despite the most complete derived constants and explicit switches, its behaviour signal collapses to one scalar delta_l per level, discarding E5's item-level entropy range (0.93-3.4 nats, top-1 0.44-0.05); it also mislabels level 1 as \"fine\" and applies delta_1=-0.328 to push the coarse digit away from hyperbolic proximity, contradicting E8's finding that coarse-prefix behavioural clustering is the capacity bottleneck."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "QPEX-CURVBIAS",
+          "position": 1,
+          "reason": "Only proposal whose margin-calibrated additive bias is guaranteed to reorder the top-1 (answering the measured 0-of-4-argmin round-2 no-op) while swap-exact quotas hold the Euclidean per-level histograms so the round-1 170->56 collapse cannot recur; its derived delta=[-0.328,-0.071,+0.399] disperses level 1 and concentrates level 3, matching the only arms above baseline (resample T1/T4 NLL 4.55/0.05, recall 0.06363; l1_br_euclid 0.06207) and avoiding the successor-geodesic family that measured 0.05500."
+        },
+        {
+          "idea_id": "CURVQUOTA-SWAP-SID",
+          "position": 2,
+          "reason": "Acts at all three levels with per-item successor mass times per-edge standardised curvature plus exact 2-swap quotas, the strongest genuine per-item behaviour-by-geometry coupling that cannot move usage counts (E11 0.0907); but its own risk concedes the bias (0.1-0.4 vs distance spread ~1) may not move items, eta_2=-0.24 leaves the level-2 bottleneck (E6 depth-2 survival 0.829) inert, m_l is undefined, and its curved commitment plus tangent-space EMA reopens the round-1 codebook risk."
+        },
+        {
+          "idea_id": "QUOTAPERM-HYP",
+          "position": 3,
+          "reason": "Safest of the five: conserving the whole triple bag (247/7414/20223, 0.177 collision) makes collapse algebraically impossible and it re-pairs items to triples at all levels with a scale-free rank fusion; but an ordinal rank-sum over a 32-candidate set with an undefined B_i can easily be a near-no-op, it never touches Stage 2 so the E8 first-level ceiling (K=256 0.0822 vs 0.0907 baseline) stays binding, and no measured arm supports a post-hoc permutation."
+        },
+        {
+          "idea_id": "EQVOTE-HYP-RQ",
+          "position": 4,
+          "reason": "Clean bounded additive vote with a derived lambda and quota-exact transpositions, but the measured sign gate (delta_3=+0.399 only) confines it to level 3, leaving the level-1 lever that produced the largest measured gain (l1_br 0.04671 -> l1_br_euclid 0.06207) untouched; it is the closest analogue of tangent_successor_residual, which measured exactly the 0.05500 baseline, and its risk 4 concedes the Poincare kernel may be Euclidean-equivalent."
+        },
+        {
+          "idea_id": "geopull-exactquota",
+          "position": 5,
+          "reason": "Most aggressive per-item geodesic construction, but its deferred-acceptance solve never states the code-side preferences and lambda_l is undefined, so the minimal-specification clause fails; the 0.05 flip trigger with a 30-refresh cap freezes an early-epoch assignment for most of the 3000 epochs, it concedes stable-not-optimal matching can degrade reconstruction, and it is the same successor-geodesic family the evidence measured at 0.05500/0.05463."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261102_102950_314",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "CURVQUOTA-SWAP-SID": {
+        "first_places": 0,
+        "mean_rank": 3.0,
+        "total_rank": 9
+      },
+      "EQVOTE-HYP-RQ": {
+        "first_places": 1,
+        "mean_rank": 2.3333,
+        "total_rank": 7
+      },
+      "QPEX-CURVBIAS": {
+        "first_places": 1,
+        "mean_rank": 3.0,
+        "total_rank": 9
+      },
+      "QUOTAPERM-HYP": {
+        "first_places": 1,
+        "mean_rank": 2.6667,
+        "total_rank": 8
+      },
+      "geopull-exactquota": {
+        "first_places": 0,
+        "mean_rank": 4.0,
+        "total_rank": 12
+      }
+    },
+    "backups": [
+      {
+        "first_places": 1,
+        "idea_id": "QUOTAPERM-HYP",
+        "mean_rank": 2.6667,
+        "status": "BACKUP",
+        "total_rank": 8
+      },
+      {
+        "first_places": 1,
+        "idea_id": "QPEX-CURVBIAS",
+        "mean_rank": 3.0,
+        "status": "BACKUP",
+        "total_rank": 9
+      },
+      {
+        "first_places": 0,
+        "idea_id": "CURVQUOTA-SWAP-SID",
+        "mean_rank": 3.0,
+        "status": "BACKUP",
+        "total_rank": 9
+      },
+      {
+        "first_places": 0,
+        "idea_id": "geopull-exactquota",
+        "mean_rank": 4.0,
+        "status": "BACKUP",
+        "total_rank": 12
+      }
+    ],
+    "disagreement": {
+      "CURVQUOTA-SWAP-SID": 3,
+      "EQVOTE-HYP-RQ": 3,
+      "QPEX-CURVBIAS": 4,
+      "QUOTAPERM-HYP": 3,
+      "geopull-exactquota": 2
+    },
+    "rejected": [
+      {
+        "idea_id": "QUOTAPERM-HYP",
+        "mean_rank": 2.6667,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 8
+      },
+      {
+        "idea_id": "QPEX-CURVBIAS",
+        "mean_rank": 3.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 9
+      },
+      {
+        "idea_id": "CURVQUOTA-SWAP-SID",
+        "mean_rank": 3.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 9
+      },
+      {
+        "idea_id": "geopull-exactquota",
+        "mean_rank": 4.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 12
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 1,
+        "idea_id": "EQVOTE-HYP-RQ",
+        "mean_rank": 2.3333,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 7
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}

@@ -39,6 +39,11 @@ import numpy as np
 import scipy.sparse as sp
 
 REPO = Path(__file__).resolve().parents[1]
+# the estimator is the framework's (Issue #128), so the repository root has to be
+# importable when this script runs from its own directory
+import sys as _sys
+if str(REPO) not in _sys.path:
+    _sys.path.insert(0, str(REPO))
 OUT = REPO / "analysis_sid_recall" / "curvature"
 PAIRS = REPO / "analysis_sid_recall" / "sid_recall.csv"
 TRAIN = REPO / "results" / "stage0_build_parquet" / "train.parquet"
@@ -96,7 +101,10 @@ def quotient(edges: tuple, assignment: np.ndarray, n_groups: int) -> sp.csr_matr
     left = (unique // n_groups).astype(np.int32)
     right = (unique % n_groups).astype(np.int32)
     data = np.ones(left.shape[0], dtype=np.float32)
-    return sp.coo_matrix((data, (left, right)), shape=(n_groups, n_groups)).tocsr()
+    from tools.research.science.quotient_curvature import symmetrise
+
+    return symmetrise(sp.coo_matrix((data, (left, right)),
+                                   shape=(n_groups, n_groups)))
 
 
 # ------------------------------------------------------------------ curvature
@@ -120,70 +128,20 @@ def _lazy_measures(graph: sp.csr_matrix, u: int, v: int, support: np.ndarray) ->
     return out[0], out[1]
 
 
-def ollivier_curvature(graph: sp.csr_matrix, sample: int, seed: int,
-                       exact_distance: bool = False) -> float:
-    """The mean Ollivier-Ricci curvature of the lazy random walk.
+def ollivier_curvature(graph: sp.csr_matrix, sample: int, seed: int) -> float:
+    """The mean Ollivier curvature of the lazy walk, with the EXACT ground metric.
 
-    For an edge ``(u, v)`` the curvature is ``1 - W1(m_u, m_v) / d(u, v)`` with
-    ``d = 1`` for an edge, ``m_u`` the lazy walk measure of ``u`` and ``W1`` the
-    1-Wasserstein distance on the graph's metric. The transport problem is
-    solved exactly on the support of the two measures.
-
-    ``exact_distance`` computes the support's distances with a breadth-first
-    search instead of the 1/2-hop bound; it is affordable for the small
-    quotients of the first level and serves as the cross-check of the bound.
+    The estimator is the framework's (Issue #128): the ground metric is the
+    exact unweighted shortest path in the undirected quotient, and the transport
+    problem is solved exactly. A degenerate graph raises instead of returning a
+    number.
     """
-    import ot
+    from tools.research.science.quotient_curvature import quotient_curvature as shared
 
-    graph = graph.tocsr()
-    if graph.nnz == 0:
-        return float("nan")
-    rows, cols = graph.nonzero()
-    edges = list(zip(rows.tolist(), cols.tolist()))
-    if len(edges) > sample:
-        random.Random(seed).shuffle(edges)
-        edges = edges[:sample]
-    degree = np.asarray(graph.sum(axis=1)).ravel()
-    values = []
-    for u, v in edges:
-        neighbours_u = graph.indices[graph.indptr[u]:graph.indptr[u + 1]]
-        neighbours_v = graph.indices[graph.indptr[v]:graph.indptr[v + 1]]
-        support = np.unique(np.concatenate(([u, v], neighbours_u, neighbours_v)))
-        position = {int(node): index for index, node in enumerate(support)}
-        size = support.shape[0]
-        weight_u = np.zeros(size)
-        weight_v = np.zeros(size)
-        weight_u[position[u]] = 0.5
-        weight_v[position[v]] = 0.5
-        if neighbours_u.size and degree[u] > 0:
-            weight_u[np.isin(support, neighbours_u)] += 0.5 / degree[u]
-        if neighbours_v.size and degree[v] > 0:
-            weight_v[np.isin(support, neighbours_v)] += 0.5 / degree[v]
-        if weight_u.sum() <= 0 or weight_v.sum() <= 0:
-            continue
-        weight_u /= weight_u.sum()
-        weight_v /= weight_v.sum()
-        cost = np.full((size, size), 2.0)
-        np.fill_diagonal(cost, 0.0)
-        for node in support.tolist():
-            index = position[node]
-            neighbours = graph.indices[graph.indptr[node]:graph.indptr[node + 1]]
-            for neighbour in neighbours.tolist():
-                other = position.get(int(neighbour))
-                if other is not None:
-                    cost[index, other] = 1.0
-        if exact_distance:
-            cost = _exact_support_distances(graph, support, position, cost)
-        try:
-            transport = ot.emd2(weight_u, weight_v, cost)
-        except Exception:
-            continue
-        if transport != transport:
-            continue
-        values.append(1.0 - float(transport))
-    if not values:
-        return float("nan")
-    return float(np.mean(values))
+    # the sweep uses the 1/2-hop BOUND: the exact metric costs ten seconds per
+    # edge on a dense quotient, and the bound is verified against the exact one
+    # on a sample (Issue #128)
+    return shared(graph, np.random.default_rng(seed), edges=sample, exact=False)
 
 
 def _exact_support_distances(graph: sp.csr_matrix, support: np.ndarray,
@@ -249,13 +207,13 @@ def sid_features(table: dict, adjacency: sp.csr_matrix, edges: tuple, index: dic
                  "group_size_min": int(sizes.min()) if sizes.size else 0}
         graph = quotient(edges, assignment, n_groups)
         entry["quotient_edges"] = int(graph.nnz // 2)
-        entry["curvature"] = ollivier_curvature(graph, curvature_edges, seed + level)
-        if level == 1 and graph.shape[0] <= 300:
-            # the exact shortest-path variant is affordable only for the small
-            # quotients; it is the cross-check of the 1/2-hop bound
-            entry["curvature_exact_distance"] = ollivier_curvature(
-                graph, min(curvature_edges, 30), seed + level, exact_distance=True)
-
+        try:
+            entry["curvature"] = ollivier_curvature(graph, curvature_edges, seed + level)
+            entry["curvature_status"] = "MEASURED"
+        except ValueError as error:
+            entry["curvature"] = None
+            entry["curvature_status"] = "NOT_MEASURED"
+            entry["curvature_reason"] = str(error)[:200]
         nulls_values: dict[str, list] = {"curvature": []}
         rng = np.random.default_rng(seed + 1000 * level)
         for _ in range(nulls):
@@ -267,8 +225,11 @@ def sid_features(table: dict, adjacency: sp.csr_matrix, edges: tuple, index: dic
                 shuffled[order[cursor:cursor + size]] = number
                 cursor += size
             null_graph = quotient(edges, shuffled, n_groups)
-            nulls_values["curvature"].append(
-                ollivier_curvature(null_graph, curvature_edges, seed + 31 * level))
+            try:
+                nulls_values["curvature"].append(
+                    ollivier_curvature(null_graph, curvature_edges, seed + 31 * level))
+            except ValueError:
+                continue
         for key in ("curvature",):
             values = [value for value in nulls_values[key] if value == value]
             real = entry[key]
