@@ -161,6 +161,54 @@ bootstrap CI and Holm over the predeclared 81-test family):
   does not prove hyperbolic necessity, and the gap is not deduced from
   `mean intra - mean quotient`.
 
+## 4d. Audit of #136: correct inference and negative-curvature semantics (issue #137)
+
+* **B1 (permutation null).** #136 resampled outcomes **with replacement** and did not
+  re-rank its Spearman sample: that is a bootstrap null, not the finite-sample
+  permutation null. The audit uses a uniform **bijection** of all `n` outcome
+  indices per draw and `p=(1+#{|stat|>=|obs|})/(B+1)`; bootstrap stays a
+  with-replacement **paired** CI. `stats_core.py` is validated against an
+  exhaustive n=5/6 enumeration and `scipy.stats.permutation_test` (pairings, exact).
+* **B2 (Holm).** #136 adjusted `min(p_r, p_rho)` once and wrote one `holm_p`. The
+  audit reports `p_pearson`, `p_spearman`, `holm_pearson`, `holm_spearman`, each
+  adjusted within its own column over 66 metric-levels x 4 outcomes x 2
+  coefficients = **528 potential tests** (528 defined, 0 undefined; the issue's
+  520/8 expectation described #136's field set, where four entries were degenerate
+  and the mislabelled field has been replaced by a defined one).
+* **B3 (negative-curvature semantics).** The old `intra_af3_negative_fraction` was
+  the fraction of **groups whose mean AF3 is negative**. New fields:
+  `group_mean_negative_fraction`, `edge_negative_fraction` (negative edges over
+  all eligible induced edges) and `mean_group_negative_edge_fraction`, with
+  ordinary-Forman analogues (`feature_semantics_audit.csv`). They are not
+  interchangeable: at L1 the group-mean fraction is r +0.573 / rho +0.670
+  (Holm 0.0048) while the true edge fraction is r +0.113 / rho +0.197 (Holm 1.000);
+  at L2 the edge fraction is Pearson-informative (r -0.423, Holm 0.017) but rank-null
+  (rho -0.180, Holm 1.000). **No single negative-curvature claim survives both
+  coefficient types.**
+* **H1 still holds.** `Gap_AF3` vs R@10: r +0.809 / +0.773 / +0.600 and rho
+  +0.760 / +0.685 / +0.524 at L1/L2/L3, Holm **0.0132** in both columns, within the
+  76 arms r +0.526 / +0.608 / +0.451, and the association survives removing
+  Cook-flagged arms (L1 r +0.732, L3 r +0.514). The corrected inference and the
+  per-column Holm leave the strong effect intact.
+* **H2/H3/H4 are `MIXED/NULL_SENSITIVE`.** Beyond `{Gap_Forman, edge retention,
+  L1 transitivity | quotient density}`, the three-control partial is significant
+  for both coefficient types only at **L2** (+0.341/+0.269); at L1 the Pearson
+  partial is -0.088 (p 0.35) while the rank partial is +0.232 (p 0.016), and at L3
+  the Pearson partial is +0.379 (p 2e-4) while the rank partial is -0.034 (p 0.73).
+  Leave-series-out RMSE improves at L1/L2 (0.00639->0.00411, 0.00751->0.00725) but
+  **worsens at L3** (0.00681->0.00748). Under the degree-stratified label shuffle
+  the gap z changes sign at L2/L3 (because that null's mean is strongly negative)
+  although the **null-centred gap stays positive at every level**; no null scheme
+  was chosen by its Recall correlation.
+* **Retracted from #136**: the "negative-edge fraction at L1 rho +0.670" claim
+  (it was the group-mean fraction), every old p/Holm value, the claim that the gap
+  adds beyond the controls at every level, and the implication that the gap result
+  is null-insensitive. What stands is the raw gap association.
+* Blocked: D3 `NOT_AVAILABLE`, per-SID collision/code usage `NOT_INCLUDED`
+  (resolution controls are occupied-prefix count and singleton share),
+  R@20/NDCG@20 `NOT_EVALUATED`. Cost: 108 rows, one cached curvature pass,
+  median 4.8 s/SID; 32 audit tests.
+
 ## 5. Established invariants (now enforced by tests)
 
 * SID-recall admission is **directory-name equality**; the join key is
