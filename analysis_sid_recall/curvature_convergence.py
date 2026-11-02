@@ -184,7 +184,12 @@ def table_features(table: dict, adjacency, edges, index, nodes, max_edges: int,
             null_order = null_rng.permutation(null_rows.size)
             null_values = edge_curvatures(null_graph, null_rows, null_cols,
                                           null_order, null_edges)
-            nulls.append(running_means(null_values, (null_edges,))[str(null_edges)])
+            finite = null_values[np.isfinite(null_values)]
+            # a shuffled quotient can have fewer edges than the requested null
+            # sample: the mean is then over what exists, and the count travels
+            # with it so the summary can tell the two cases apart
+            nulls.append({"mean": float(finite.mean()) if finite.size else None,
+                          "edges": int(finite.size)})
         entry["null_samples"] = nulls
         out["levels"][str(level)] = entry
     return out
@@ -222,8 +227,9 @@ def summarise(records: list, args, ladder, null_counts) -> dict:
         for replicates in null_counts:
             null_means = []
             for r in rows:
-                samples = [s for s in r["features"]["levels"][str(level)].get("null_samples", [])
-                           if s is not None]
+                samples = [item["mean"] for item in
+                           r["features"]["levels"][str(level)].get("null_samples", [])
+                           if item is not None and item.get("mean") is not None]
                 if len(samples) < replicates:
                     continue
                 null_means.append(float(np.mean(samples[:replicates])))
@@ -341,6 +347,10 @@ def write_markdown(summary: dict, path: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--pairs", default=None,
+                        help="pair table to read; default = the pruned sid_recall.csv")
+    parser.add_argument("--out", default=None,
+                        help="output directory; default = curvature/convergence")
     parser.add_argument("--max-edges", type=int, default=128)
     parser.add_argument("--max-nulls", type=int, default=8)
     parser.add_argument("--null-edges", type=int, default=32)
@@ -353,11 +363,17 @@ def main() -> int:
     parser.add_argument("--verified-only", action="store_true",
                         help="with --from-records: keep only pair-audit VERIFIED arms")
     args = parser.parse_args()
+    pairs_path = Path(args.pairs) if args.pairs else PAIRS
+    if not pairs_path.is_absolute():
+        pairs_path = REPO / pairs_path
+    out_dir = Path(args.out) if args.out else OUT
+    if not out_dir.is_absolute():
+        out_dir = REPO / out_dir
     ladder = tuple(size for size in EDGE_LADDER if size <= args.max_edges)
     null_counts = tuple(count for count in NULL_REPLICATES if count <= args.max_nulls)
 
     if args.from_records:
-        records = json.loads((OUT / "per_arm_convergence.json").read_text())
+        records = json.loads((out_dir / "per_arm_convergence.json").read_text())
         suffix = ""
         if args.verified_only:
             audit = list(csv.DictReader((REPO / "analysis_sid_recall" / "pair_audit.csv").open()))
@@ -372,7 +388,7 @@ def main() -> int:
               OUT / f"convergence{suffix}.md")
         return 0
 
-    rows = list(csv.DictReader(PAIRS.open()))
+    rows = list(csv.DictReader(pairs_path.open()))
     if args.limit:
         rows = rows[:args.limit]
     nodes, index, adjacency, edges = build_behaviour_graph()
@@ -389,7 +405,7 @@ def main() -> int:
         loaded = list(pool.map(read_bytes, rows))
     print(f"tables read: {sum(1 for item in loaded if item)}", flush=True)
 
-    OUT.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
     records = []
     started = time.time()
     for number, row in enumerate(rows):
@@ -408,12 +424,12 @@ def main() -> int:
         if (number + 1) % 5 == 0:
             elapsed = time.time() - started
             eta = elapsed / (number + 1) * (len(rows) - number - 1)
-            (OUT / "progress.txt").write_text(
+            (out_dir / "progress.txt").write_text(
                 f"{number + 1}/{len(rows)} elapsed={elapsed:.0f}s eta={eta:.0f}s\n",
                 encoding="utf-8")
             print(f"  {number + 1}/{len(rows)} elapsed={elapsed:.0f}s eta={eta:.0f}s", flush=True)
 
-    (OUT / "per_arm_convergence.json").write_text(
+    (out_dir / "per_arm_convergence.json").write_text(
         json.dumps(records, indent=2) + "\n", encoding="utf-8")
     summary = summarise(records, args, ladder, null_counts)
     (OUT / "convergence_summary.json").write_text(

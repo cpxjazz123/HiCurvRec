@@ -50,17 +50,14 @@ def main() -> int:
 
     lines = ["# Does the curvature of a SID's behaviour quotient graph predict its recall?", ""]
     lines += [
-        "> **Read this before the numbers.** The 182 rows of "
-        "`sid_recall.csv` were audited (`pair_audit.py`): a pair is *verified* "
-        "only when the SID table and the recall file were introduced by the same "
-        "commit **and** the stage-2 and stage-3 directories carry the same name. "
-        "73 pairs pass; on those, no curvature feature correlates with the recall "
-        "(z_curv_L2 +0.129 p=0.28, z_curv_L3 -0.044 p=0.71, the profile +0.141 "
-        "p=0.24), and the full-table association does not survive either the "
-        "same-commit restriction (z_curv_L2 +0.074 p=0.50, z_curv_L3 +0.029 "
-        "p=0.80) or a change of the edge-sampling budget (sign reversals, "
-        "|delta| up to 0.19). See `AUDIT_CORRELATION.md` and "
-        "`curvature/stability.md`; the numbers below are the unaudited table.",
+        "> **Read this before the numbers.** `sid_recall.csv` now holds only the "
+        "pairs that pass the audit (`pair_audit.py`): the SID table and the recall "
+        "file were introduced by the same commit **and** the stage-2 and stage-3 "
+        "directories carry the same name (73 of the original 182). The numbers "
+        "below are those 73. The full-table numbers are kept in "
+        "`curvature/full_182/` and compared side by side in "
+        "`AUDIT_CORRELATION.md`; the edge-sampling budget is checked in "
+        "`curvature/convergence/` and `CONVERGENCE_FINDINGS.md`.",
         "",
         f"*{len(features)} SID tables, each with one recall, from "
         f"{summary.get('families', '?')} mechanism families.*",
