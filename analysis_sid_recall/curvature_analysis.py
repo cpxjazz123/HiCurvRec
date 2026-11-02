@@ -366,6 +366,19 @@ def bootstrap_ci(x: list, y: list, trials: int = 2000, seed: int = 0) -> tuple:
 
 
 # ------------------------------------------------------------------------ main
+def verified_sid_hashes() -> set:
+    """The SID contents that pass the pair audit (repo rule 64b).
+
+    `sid_recall.csv` is pruned to the verified pairs, so reading its hashes is
+    the check. An empty set means the table is missing and nothing is filtered.
+    """
+    table = REPO / "analysis_sid_recall" / "sid_recall.csv"
+    if not table.is_file():
+        return set()
+    with table.open() as handle:
+        return {row["sid_sha256"] for row in csv.DictReader(handle)}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pairs", default=str(PAIRS))
@@ -388,7 +401,12 @@ def main() -> int:
     saved = OUT / "per_arm_features.json"
     if args.from_features and saved.is_file():
         records = json.loads(saved.read_text())
-        print(f"statistics only: {len(records)} arms from {saved.name}", flush=True)
+        keep = verified_sid_hashes()
+        if keep:
+            records = [record for record in records
+                       if record.get("sid_sha256") in keep]
+        print(f"statistics only: {len(records)} verified arms from {saved.name}",
+              flush=True)
         return summarise(records, args)
     nodes, index, adjacency, edges = build_behaviour_graph()
     print(f"pairs: {len(rows)} | behaviour graph: {len(nodes)} items, "
