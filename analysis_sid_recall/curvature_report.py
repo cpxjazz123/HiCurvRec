@@ -50,14 +50,16 @@ def main() -> int:
 
     lines = ["# Does the curvature of a SID's behaviour quotient graph predict its recall?", ""]
     lines += [
-        "> **Read this before the numbers.** `sid_recall.csv` now holds only the "
-        "pairs that pass the audit (`pair_audit.py`): the SID table and the recall "
-        "file were introduced by the same commit **and** the stage-2 and stage-3 "
-        "directories carry the same name (73 of the original 182). The numbers "
-        "below are those 73. The full-table numbers are kept in "
-        "`curvature/full_182/` and compared side by side in "
-        "`AUDIT_CORRELATION.md`; the edge-sampling budget is checked in "
-        "`curvature/convergence/` and `CONVERGENCE_FINDINGS.md`.",
+        "> **Read this before the numbers.** `sid_recall.csv` holds the pairs "
+        "admitted by the directory-name rule (`pair_audit.py`): "
+        "`results/stage2_RQ-VAE/<X>` and `results/stage3_T5Train/<X>` carry the "
+        "same name (exactly, or with the nested `/` written as `__`). That is "
+        "110 of the original 182 pairs, over 34 series (largest 69%); the "
+        "co-publication tier is recorded as a diagnostic "
+        "(`SAME_COMMIT` 73 / `COMMITS_DIFFER` 20 / `NOT_TRACKED` 17) but no "
+        "longer gates admission. The full-table numbers are kept in "
+        "`curvature/full_182/` and compared in `AUDIT_CORRELATION.md`; the "
+        "sampling budget and its effect are in `CONVERGENCE_FINDINGS.md`.",
         "",
         f"*{len(features)} SID tables, each with one recall, from "
         f"{summary.get('families', '?')} mechanism families.*",
