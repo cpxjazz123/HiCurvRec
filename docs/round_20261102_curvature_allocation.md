@@ -1,3 +1,15 @@
+
+> **Correction (Issue #128).** The curvature numbers this round quotes were
+> measured on a one-direction (upper-triangular) behaviour graph with a bounded
+> ground metric. With the undirected graphs and the exact metric the association
+> between the standardised curvature and the recall collapses
+> (level-1 minus level-3: -0.184 before, -0.047 after; every feature is now
+> statistically null), and the profile of the frozen baseline's prefixes changes
+> from `[-2.32, -1.80, -0.86]` to `[-7.49, +18.75, +3.33]`. The round's Stage 3
+> measurements are unaffected; the *interpretation* of the curvature is
+> withdrawn. See `docs/issue128_status.md` and
+> `analysis_sid_recall/curvature_before_issue128/before_after_summary.json`.
+
 # The behaviour-graph curvature, explored with the multi-agent round framework
 
 Round `round_20261102_031529_470` (issue 121), issue #127's open question taken
