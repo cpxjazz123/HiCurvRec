@@ -44,30 +44,42 @@ and **still open**; nothing here asserts a causal geometry -> Recall benefit.
   (transitivity delta +0.124 / +0.112); the L2 parent-conditioned delta is
   +0.051 and the L3 +0.000.
 
-## 4. The single surviving predictive signal, now re-measured on the full census
+## 4. Geometry vs Recall: the corrected raw-Spearman table (issue #133)
 
-Issue #132 re-ran the census with **no group-size or group-count cap** (108 SIDs,
-every occupied prefix group, singletons included):
+Issue #132's intra-group numbers and its +9.8% RMSE are **superseded**: those
+metrics mixed singletons into the multi-item averages, mixed weighted degrees with
+an unweighted cut, and counted triangles with a dense `int8` cube that overflows
+on large groups (on a real 1,000-item group the old path returns 481 triangles;
+the exact count is 524).
 
-* **L1 local geometry still improves out-of-series prediction**: leave-one-series-out
-  RMSE **0.00354 -> 0.00319 (+9.8%)** with one extra feature (6 total, n=108), and
-  its L1 summary keeps a partial correlation of **+0.554** given log occupied
-  prefixes, A1, collision and L1 code usage (raw correlation with log occupied
-  -0.198). Transitivity at L1: rho +0.704, partial +0.614; conductance -0.662,
-  partial -0.499. `full_census_geometry/statistics.json`.
-* **L2 and L3 geometry add nothing** once the controls are in: L2's summary
-  partial is -0.021 (its size correlation is +0.772) and adding it changes the
-  RMSE by -0.8%; L3 changes it by -6.4%. Adding all three levels jointly gives
-  only +1.9%, i.e. the L1 block is the whole gain and the finer levels dilute it.
-* The full census **moved the sampled numbers materially**, which is why the
-  earlier figures were labelled preliminary: transitivity L1 +0.536 -> +0.704,
-  L2 +0.322 -> +0.814, L3 +0.381 -> +0.603; conductance L2 -0.399 -> -0.036 and
-  L3 -0.437 -> +0.184 (a sign change). `REPORT.md`, "side by side with #131".
-* Limits unchanged: the strict A2 subset is one mechanism series (leave-one-out
-  prediction `UNDEFINED_SINGLE_SERIES`), so this is an out-of-series estimate
-  within one dominant family, not independent replication. The detour metric is
-  `BLOCKED_NOT_FULL_CENSUS` and the four-point metric is exact only on components
-  up to 24 nodes; neither is estimated from a sample.
+Corrected measurement (108 rows, every metric with raw Spearman, permutation p,
+bootstrap CI and Holm over the predeclared 81-test family):
+
+| block | feature (level) | rho | Holm p | n |
+|---|---|---|---|---|
+| intra | transitivity (L1 / L2 / L3) | **+0.828 / +0.814 / +0.583** | 0.015 / 0.015 / 0.015 | 108 / 82 / 81 |
+| intra | conductance (L1 / L2 / L3) | **-0.604 / -0.164 / -0.406** | 0.015 / 1.000 / 0.016 | 107 / 108 / 108 |
+| intra | largest component (L1) | +0.573 | 0.015 | 108 |
+| intra | cycle rank / node (L1) | +0.449 | 0.015 | 108 |
+| inter | density (L2 / L3) | **-0.451 / -0.479** | 0.015 / 0.015 | 108 |
+| inter | transitivity (L2 / L3) | **-0.465 / -0.438** | 0.015 / 0.015 | 108 |
+| inter | degree median (L3) | -0.562 | 0.015 | 108 |
+| inter | Forman mean (L3) | **+0.420** | 0.015 | 108 |
+| inter | singleton share (L2 / L3) | +0.419 / +0.485 | 0.015 / 0.015 | 108 |
+| curvature | ORC mean (L1 / L2 / L3) | +0.112 / **-0.451** / **-0.420** | 1.000 / 0.015 / 0.015 | 107 / 108 / 108 |
+
+* The intra-group geometry (cyclic, non-tree, low-conductance subgraphs) tracks
+  Recall most strongly at L1 and still at L3 at the **group** level; the inter-group
+  quotient geometry tracks it at L2/L3 mainly through density/degree/transitivity
+  (denser and more transitive quotients go with *lower* Recall).
+* Ollivier-Ricci is a **sampled estimate** (512 quotient edges, per-row coverage
+  0.02%-2%) and is therefore reported separately; Forman curvature covers every
+  quotient edge exactly. The L1 ORC is null, and its negative-edge fraction is
+  degenerate (almost all edges positive).
+* Raw correlations are unadjusted by design (the issue's primary analysis);
+  partial correlations given resolution, alignment, collision and code usage are
+  secondary and live in `intra_inter_geometry/statistics.json`. A raw coefficient
+  here is not evidence that geometry causes Recall.
 ## 5. Established invariants (now enforced by tests)
 
 * SID-recall admission is **directory-name equality**; the join key is
