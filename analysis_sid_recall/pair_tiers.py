@@ -106,6 +106,30 @@ def main() -> int:
     (OUT / "PAIR_TIERS.json").write_text(json.dumps(payload, indent=2) + "\n",
                                         encoding="utf-8")
 
+    # the sensitivity tables, so a cross-mechanism analysis is runnable without
+    # re-admitting anything into the default table
+    full = {row["sid_sha256"]: row for row in
+            csv.DictReader((OUT / "archive" / "sid_recall_full_182.csv").open())}
+    tiers_dir = OUT / "tiers"
+    tiers_dir.mkdir(exist_ok=True)
+    fields = list(next(iter(full.values())).keys())
+    for name, rows in tiers.items():
+        target = tiers_dir / f"sid_recall_{name.split('_')[0]}.csv"
+        with target.open("w", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
+            writer.writeheader()
+            for row in rows:
+                writer.writerow(full[row["sid_sha256"]])
+    (tiers_dir / "README.md").write_text(
+        "Sensitivity pair sets, not the admitted table.\n\n"
+        "`sid_recall_A.csv` is the strict set (same introduction commit and same\n"
+        "directory name) and is what `../sid_recall.csv` holds. `B` adds the\n"
+        "Stage 3 run's own `code_path` as the pairing evidence in place of the\n"
+        "name rule; `C` keeps only `code_path`. Only C has mechanism diversity\n"
+        "(40 series, largest 58%); a cross-mechanism claim must use C and must\n"
+        "say that its pairs were not co-published. See `../PAIR_TIERS.md`.\n",
+        encoding="utf-8")
+
     lines = ["# What each pair tier contains", "",
              f"{len(audit)} audited pairs. `_iterNN` is folded into its parent series.", ""]
     for name, block in payload["tiers"].items():
