@@ -1,0 +1,17 @@
+{
+ "max_group_size": null,
+ "groups_per_level": null,
+ "four_point_max_component": 24,
+ "four_point_sampling": false,
+ "detour_sampling": "BLOCKED_NOT_FULL_CENSUS",
+ "detour_reason": "exact all-pairs needs one full-graph BFS per item (~2.7 million BFS for this table); the metric is not reported",
+ "null_replicates": 3,
+ "null_kinds": [
+  "global",
+  "stratified",
+  "parent"
+ ],
+ "null_detour": "BLOCKED_NOT_FULL_CENSUS",
+ "null_four_point": "BLOCKED_NOT_FULL_CENSUS",
+ "seed": 20261102
+}

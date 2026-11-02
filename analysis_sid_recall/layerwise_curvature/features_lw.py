@@ -59,10 +59,11 @@ def load_pairs() -> list[dict]:
         digest = sha256_bytes(payload)
         record["sha_actual"] = digest
         record["payload"] = payload
-        if source == Path(row.get("code_path", "")) and digest == row["sid_sha256"]:
+        if digest != row["sid_sha256"]:
+            # a mismatching digest must never be reported as a matched pair
+            record["tier"] = "HASH_MISMATCH"
+        elif source == Path(row.get("code_path", "")):
             record["tier"] = "HASH_PROVEN"
-        elif digest == row["sid_sha256"]:
-            record["tier"] = "RECORD_HASH_MATCH"
         else:
             record["tier"] = "RECORD_HASH_MATCH"
         rows.append(record)
