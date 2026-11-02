@@ -387,6 +387,8 @@ def main() -> int:
                         help="edges sampled per quotient graph")
     parser.add_argument("--limit", type=int, default=0, help="0 = every pair")
     parser.add_argument("--seed", type=int, default=20261102)
+    parser.add_argument("--out", default=None,
+                        help="output directory; default = analysis_sid_recall/curvature")
     parser.add_argument("--from-features", action="store_true",
                         help="recompute the statistics from the saved features")
     args = parser.parse_args()
@@ -398,7 +400,10 @@ def main() -> int:
     if args.limit:
         rows = rows[:args.limit]
 
-    saved = OUT / "per_arm_features.json"
+    out_dir = Path(args.out) if args.out else OUT
+    if not out_dir.is_absolute():
+        out_dir = REPO / out_dir
+    saved = out_dir / "per_arm_features.json"
     if args.from_features and saved.is_file():
         records = json.loads(saved.read_text())
         keep = verified_sid_hashes()
@@ -445,13 +450,13 @@ def main() -> int:
                         "sid_path": str(sid_path.relative_to(REPO)),
                         "sid_sha256": row["sid_sha256"], **features})
         if (number + 1) % 5 == 0:
-            progress = OUT / "progress.txt"
+            progress = out_dir / "progress.txt"
             OUT.mkdir(parents=True, exist_ok=True)
             progress.write_text(f"{number + 1}/{len(rows)}\n", encoding="utf-8")
             print(f"  {number + 1}/{len(rows)}", flush=True)
 
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "per_arm_features.json").write_text(json.dumps(records, indent=2) + "\n",
+    (out_dir / "per_arm_features.json").write_text(json.dumps(records, indent=2) + "\n",
                                                 encoding="utf-8")
     return summarise(records, args)
 

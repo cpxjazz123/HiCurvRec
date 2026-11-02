@@ -133,6 +133,7 @@
 (i) 关联键只能是 **`sid_sha256`**，**禁止**按 variant 名关联——182 行只有 168 个 variant 名（`curvature_RQ-VAE` 一名下 11 个不同 SID），按名关联会静默配错表。
 (ii) 必须记录两条 commit 的时间戳；若 recall 的引入 commit **早于** SID，判为硬失败；若该 SID 只以收集副本存在（原始路径从未入库），判 `UNTRACKED`，不得计为已验证。
 (iii) 每个 Stage2/Stage3 机制臂必须让 Stage 3 变体目录名与 Stage 2 臂目录名完全一致，新臂不得另起名字；同名要求在派发前检查，不符即视为配对不可用。
+(v) **必须报告集合的来源构成**：任何 SID–recall 统计都要按 Stage 2 父系列统计配对数量（`_iterNN` 折叠为同一系列）；若单一系列占比 ≥90%，该集合只能支持「同系列内」结论，**不得**用于跨机制结论。分析默认使用严格层 A（同 commit + 同名），并必须同时报告 B 层（同 commit + Stage 3 运行自身 `train_start` 记录的 `code_path` 命中该 SID）与 C 层（仅 `code_path` 命中）作为敏感性；三层定义、构成与逐层统计见 `analysis_sid_recall/PAIR_TIERS.md`。2026-11-02 实测：A 73 对（**99% 来自 `curvature_RQ-VAE` 一个系列**）、B 86 对（94%）、C 178 对（40 个系列，最大 58%）——因此 A 层的空结果只能说明「该系列内部无关联」，跨机制结论必须由 C 层且需说明其未同 commit 提交的风险。
 (iv) 配对表必须由 `analysis_sid_recall/pair_audit.py` 生成（`pair_audit.csv` 的 `verdict` 列），任何 SID–recall 统计必须同时在 `verdict == "VERIFIED"` 子集与全表上重算并并列报告；单报全表数值视为不合规。截至 2026-11-02，该判据下 182 对中 **73 对**通过；通过子集上曲率–召回相关性为零（`z_curv_L2` +0.129 p=0.28、`z_curv_L3` −0.044 p=0.71、剖面 +0.141 p=0.24），全表仅有的 p≈0.05 信号全部来自未验证行。
 
 ## 12. 机器失败持续修复

@@ -112,3 +112,37 @@ verified set spans [0.0423, 0.0634] while the unverified set spans
    mechanism rounds) are unaffected: their recalls come from their own
    `results/stage3_T5Train/<variant>/` runs, and the mechanism name matches the
    Stage 2 directory exactly (`TIGER_EQVOTE-HYP-RQ` in both trees).
+
+## The composition problem (the verified set is one series)
+
+The two criteria are not neutral about *which* arms they keep. Folding the
+`_iterNN` suffix into its parent series:
+
+| tier | pairs | series | largest series share |
+|---|---|---|---|
+| A — same commit and same name (rule 64b) | 73 | 2 | **99%** (`curvature_RQ-VAE`, 72) |
+| B — same commit and the run's own `code_path` | 86 | 5 | 94% |
+| C — the run's own `code_path` only | 178 | 40 | 58% |
+
+So the strict set is essentially the `curvature_RQ-VAE` iteration sweep: a
+single mechanism family, recall range [0.0423, 0.0634]. The binding criterion is
+*co-publication* (the same commit), not the directory name — B, which drops the
+name rule, is still 94% one series. The diverse set only exists at C, where the
+SID and the Stage 3 result were often committed separately (the median gap is
+11.9 hours; four pairs have the recall committed before the SID).
+
+What this means for the numbers:
+
+* the null result on A is a **within-series** statement (the curvature sweep
+  iterations do not track their own recall); it cannot be read as evidence that
+  curvature fails *across* mechanisms;
+* the only cross-mechanism estimate is C: `z_curv_L2` +0.161 (p 0.036),
+  `z_curv_L3` +0.140 (p 0.077), level 1 and the profile negative and null — and
+  it moves by up to 0.29 when the per-arm sample or the null-replicate count
+  changes (`CONVERGENCE_FINDINGS.md`), so it is not established either;
+* rule 64b (v) now requires every statistic to carry its tier composition, and
+  forbids cross-mechanism claims from a set whose largest series is ≥90%.
+
+The design consequence: a campaign must commit each arm's SID and its Stage 3
+result together, under the same directory name, or it produces arms that no
+later analysis can admit. That is what rule 64b (iii) requires going forward.
