@@ -75,17 +75,33 @@ def undirected_edges(graph: sp.csr_matrix) -> tuple[np.ndarray, np.ndarray]:
 
 def edge_curvatures(graph: sp.csr_matrix, rows: np.ndarray, cols: np.ndarray,
                     order: np.ndarray, count: int) -> np.ndarray:
-    """The curvature of the first ``count`` edges of ``order``."""
+    """The curvature of the first ``count`` edges of ``order``.
+
+    ``rows``/``cols`` are the graph's own edges, so the hop distance of an
+    endpoint pair is exactly 1 and the curvature is ``1 - W1``. The sweep's
+    estimator computes that distance with a full shortest-path search per edge
+    and always gets 1; ``--verify-hop`` checks the claim on a sample instead of
+    trusting it.
+    """
     values = np.empty(min(count, order.size), dtype=np.float64)
     for position, index in enumerate(order[:count]):
         a = int(rows[index])
         b = int(cols[index])
-        hop = float(exact_hop_costs(graph, a, np.asarray([b]))[0])
-        if not np.isfinite(hop) or hop <= 0:
-            values[position] = np.nan
-            continue
-        values[position] = 1.0 - bounded_transport_cost(graph, a, b) / hop
+        values[position] = 1.0 - bounded_transport_cost(graph, a, b)
     return values
+
+
+def verify_hop_claim(graph: sp.csr_matrix, rows: np.ndarray, cols: np.ndarray,
+                     samples: int = 20, seed: int = 0) -> float:
+    """The largest |d(a, b) - 1| over sampled edges, with the exact search."""
+    rng = np.random.default_rng(seed)
+    picks = rng.choice(rows.size, size=min(samples, rows.size), replace=False)
+    worst = 0.0
+    for index in picks.tolist():
+        distance = exact_hop_costs(graph, int(rows[index]),
+                                   np.asarray([int(cols[index])]))[0]
+        worst = max(worst, abs(float(distance) - 1.0))
+    return worst
 
 
 def running_means(values: np.ndarray, ladder: tuple) -> dict:
@@ -101,7 +117,8 @@ def running_means(values: np.ndarray, ladder: tuple) -> dict:
 
 
 def table_features(table: dict, adjacency, edges, index, nodes, max_edges: int,
-                   max_nulls: int, null_edges: int, seed: int, ladder) -> dict:
+                   max_nulls: int, null_edges: int, seed: int, ladder,
+                   verify_hop: bool = False) -> dict:
     """The nested-sample ladder of one SID table."""
     width = len(next(iter(table.values())))
     levels = min(3, width)
@@ -137,6 +154,10 @@ def table_features(table: dict, adjacency, edges, index, nodes, max_edges: int,
         if n_edges == 0:
             out["levels"][str(level)] = {"status": "NO_EDGES"}
             continue
+        if verify_hop:
+            deviation = verify_hop_claim(graph, rows, cols, samples=5, seed=seed + level)
+            if deviation > 1e-9:
+                raise ValueError(f"an edge pair is not adjacent: |d-1| = {deviation}")
         rng = np.random.default_rng(seed + 13 * level)
         order = rng.permutation(n_edges)
         values = edge_curvatures(graph, rows, cols, order, max_edges)
@@ -224,6 +245,35 @@ def summarise(records: list, args, ladder, null_counts) -> dict:
                     "noise_ratio": (value["se_mean"] / abs(value["mean"])
                                     if value["mean"] else None),
                 }
+        # the convergence verdict, from the ladder itself
+        verdict = {}
+        if anchor and len(block["estimate_vs_edges"]) >= 3:
+            keys = sorted((int(k) for k in block["estimate_vs_edges"]))
+            half = keys[-2]
+            small = block["estimate_vs_edges"][str(half)]
+            se = small.get("se_mean") or 0.0
+            delta_mean = abs(small["mean"] - anchor["mean"])
+            verdict["estimate_delta_vs_noise"] = (
+                float(delta_mean / se) if se > 0 else None)
+            verdict["estimate_halving_converged"] = bool(
+                se > 0 and delta_mean <= 2.0 * se)
+            delta_rho = abs(small["spearman"] - anchor["spearman"])
+            verdict["rho_delta_halving"] = float(delta_rho)
+            verdict["rho_halving_converged"] = bool(
+                delta_rho <= 0.05
+                and (small["spearman"] > 0) == (anchor["spearman"] > 0))
+            nulls = {int(k): v for k, v in block["null_vs_replicates"].items()}
+            if len(nulls) >= 2:
+                top = sorted(nulls)[-1]
+                previous = sorted(nulls)[-2]
+                spread = nulls[top]["std"]
+                verdict["null_std_halving_change"] = (
+                    float(abs(nulls[top]["std"] - nulls[previous]["std"]) / spread)
+                    if spread > 0 else None)
+                verdict["null_replicates_converged"] = bool(
+                    spread > 0
+                    and abs(nulls[top]["std"] - nulls[previous]["std"]) <= 0.1 * spread)
+        block["convergence_verdict"] = verdict
         # does the estimator's own noise dominate the across-arm signal?
         stds = [r["features"]["levels"][str(level)].get("per_edge_std")
                 for r in rows if r["features"]["levels"][str(level)].get("per_edge_std")]
@@ -263,6 +313,20 @@ def write_markdown(summary: dict, path: Path) -> None:
             for key, value in converge.items():
                 lines.append(f"| {key} | {value['delta_mean_vs_max']:+.4f} | "
                              f"{value['delta_rho_vs_max']:+.3f} |")
+        verdict = block.get("convergence_verdict") or {}
+        if verdict:
+            lines += ["", "| criterion | value | converged |", "|---|---|---|",
+                      f"| |mean(k/2) - mean(k)| / SE | "
+                      f"{verdict.get('estimate_delta_vs_noise'):.2f} | "
+                      f"{verdict.get('estimate_halving_converged')} |"
+                      if verdict.get("estimate_delta_vs_noise") is not None else
+                      "| estimate | not computable | |",
+                      f"| |rho(k/2) - rho(k)| | {verdict.get('rho_delta_halving'):.3f} | "
+                      f"{verdict.get('rho_halving_converged')} |"]
+            if verdict.get("null_std_halving_change") is not None:
+                lines.append(f"| null std change at the last replicate step | "
+                             f"{verdict['null_std_halving_change']:.3f} | "
+                             f"{verdict.get('null_replicates_converged')} |")
         floor = block.get("noise_floor")
         if floor:
             lines += ["", f"estimator SE at the largest sample: {floor['estimator_se_at_max']:.4f}; "
@@ -282,9 +346,22 @@ def main() -> int:
     parser.add_argument("--null-edges", type=int, default=32)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--seed", type=int, default=20261102)
+    parser.add_argument("--verify-hop", action="store_true",
+                        help="check d(a,b)=1 on a sample of edges per level")
+    parser.add_argument("--from-records", action="store_true",
+                        help="re-summarise per_arm_convergence.json without measuring")
     args = parser.parse_args()
     ladder = tuple(size for size in EDGE_LADDER if size <= args.max_edges)
     null_counts = tuple(count for count in NULL_REPLICATES if count <= args.max_nulls)
+
+    if args.from_records:
+        records = json.loads((OUT / "per_arm_convergence.json").read_text())
+        summary = summarise(records, args, ladder, null_counts)
+        (OUT / "convergence_summary.json").write_text(
+            json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+        write_markdown(summary, OUT / "convergence.md")
+        print(f"re-summarised {len(records)} records; written:", OUT / "convergence.md")
+        return 0
 
     rows = list(csv.DictReader(PAIRS.open()))
     if args.limit:
@@ -314,7 +391,8 @@ def main() -> int:
         features = table_features(table, adjacency, edges, index, nodes,
                                   max_edges=args.max_edges, max_nulls=args.max_nulls,
                                   null_edges=args.null_edges,
-                                  seed=args.seed + 97 * number, ladder=ladder)
+                                  seed=args.seed + 97 * number, ladder=ladder,
+                                  verify_hop=args.verify_hop)
         records.append({"variant": row["variant"], "recall": float(row["test_recall@10"]),
                         "sid_path": str(sid_path.relative_to(REPO)),
                         "sid_sha256": row["sid_sha256"], "features": features})

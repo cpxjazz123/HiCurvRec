@@ -111,6 +111,77 @@ class MetricTests(unittest.TestCase):
             qc.edge_curvature(graph, 0, 2)
 
 
+def _naive_bounded_cost(graph: sp.csr_matrix, a: int, b: int) -> float:
+    """The pre-vectorisation construction, kept as the semantic reference.
+
+    It builds the support, the two lazy measures and the 1/2-hop cost matrix
+    with explicit Python loops. The production path gathers the same values with
+    numpy, and this reference is what pins it.
+    """
+    support = np.unique(np.concatenate((
+        np.asarray([a]),
+        graph.indices[graph.indptr[a]:graph.indptr[a + 1]],
+        np.asarray([b]),
+        graph.indices[graph.indptr[b]:graph.indptr[b + 1]],
+    )))
+    degree = np.asarray(graph.sum(axis=1)).ravel()
+    measures = []
+    for source in (a, b):
+        weight = np.zeros(support.shape[0])
+        membership = {int(value): index for index, value in enumerate(support.tolist())}
+        if int(source) in membership:
+            weight[membership[int(source)]] = 0.5
+        for neighbour in graph.indices[
+                graph.indptr[source]:graph.indptr[source + 1]].tolist():
+            if int(neighbour) in membership:
+                weight[membership[int(neighbour)]] += 0.5 / degree[source]
+        measures.append(weight / weight.sum())
+    size = support.shape[0]
+    cost = np.full((size, size), 2.0)
+    np.fill_diagonal(cost, 0.0)
+    membership = {int(value): index for index, value in enumerate(support.tolist())}
+    for node in support.tolist():
+        for neighbour in graph.indices[
+                graph.indptr[int(node)]:graph.indptr[int(node) + 1]].tolist():
+            other = membership.get(int(neighbour))
+            if other is not None:
+                cost[membership[int(node)], other] = 1.0
+    cost = 0.5 * (cost + cost.T)
+    np.fill_diagonal(cost, 0.0)
+    return qc.transport(measures[0], measures[1], cost)
+
+
+class TransportCostTests(unittest.TestCase):
+    def test_the_vectorised_cost_matrix_equals_the_loop_built_one(self):
+        rng = np.random.default_rng(7)
+        for trial in range(6):
+            size = 6 + trial
+            dense = (rng.random((size, size)) < 0.45).astype(float)
+            dense = np.triu(dense, 1)
+            dense = dense + dense.T
+            for node in range(size - 1):
+                dense[node, node + 1] = dense[node + 1, node] = 1.0
+            graph = sp.csr_matrix(dense)
+            edges = list(zip(*np.nonzero(np.triu(dense, 1))))
+            for a, b in edges[:5]:
+                self.assertAlmostEqual(qc.bounded_transport_cost(graph, a, b),
+                                       _naive_bounded_cost(graph, a, b), places=12)
+
+    def test_the_support_measure_does_not_depend_on_the_degree_argument(self):
+        rng = np.random.default_rng(11)
+        dense = (rng.random((9, 9)) < 0.4).astype(float)
+        dense = np.triu(dense, 1)
+        dense = dense + dense.T
+        graph = sp.csr_matrix(dense)
+        support = np.arange(9)
+        degree = np.asarray(graph.sum(axis=1)).ravel()
+        for node in (0, 3, 8):
+            if degree[node] == 0:
+                continue
+            self.assertTrue(np.allclose(qc.lazy_measure(graph, node, support, degree),
+                                        qc.lazy_measure(graph, node, support)))
+
+
 class StandardisationTests(unittest.TestCase):
     def test_a_degenerate_null_is_not_measured_as_zero(self):
         graph = _path(4)
