@@ -58,15 +58,23 @@ Three things follow from this table.
 
 ## The Stage 3 result
 
-_Pending: the frozen 150-epoch Stage 3 protocol (NO_EVAL=True, test after
-training) runs on the arm's SID; the `test_R@10` is recorded in the round's
-registry and in the report below._
+The frozen 150-epoch Stage 3 protocol (NO_EVAL=True, one test after training)
+ran on the arm's SID:
 
 | metric | value |
 |---|---|
-| test_recall@10 | TBD |
-| test_recall@5 | TBD |
-| test_ndcg@10 | TBD |
+| test_recall@10 | **0.05519** |
+| test_recall@5 | 0.03677 |
+| test_ndcg@10 | 0.03032 |
+
+Four arms, four recalls:
+
+| SID | test_R@10 |
+|---|---|
+| Baseline (Euclidean) | **0.0655** |
+| Round 1 (pooled hyperbolic argmax) | 0.0610 |
+| Round 2 (successor-overlap rank sum) | 0.0551 |
+| Round 3 (exact-quota hyperbolic allocation) | 0.0552 |
 
 ## The verdict bar
 
@@ -75,6 +83,22 @@ diagnostics above are the leading indicators. The arm is accepted for the next
 round only if its recall exceeds the frozen baseline's 0.0655 **and** the
 mechanism's interpretation survives (the hyperbolic pull is the reason, not the
 quotas alone — the round-2 lesson).
+
+**Verdict: rejected.** `test_R@10 = 0.05519` is below the frozen baseline's
+0.0655 and statistically indistinguishable from the round-2 arm's 0.0551 —
+despite the third arm having the best-balanced SID of the three (the exact-quota
+usage [242,256,256], the L2 prefix count halved, the L1 Hard ER nearly halved).
+The coupling's interpretation does not survive either: the level weights
+`[0, 0.5, 0]` put the entire behaviour pull on the second level, where the
+successor statistics improved the diagnostic — and the recall still did not
+move.
+
+The wider conclusion of rounds 1–3: on this data, **none of the three SID-side
+interventions (the pooled hyperbolic argmax, the successor-overlap rank sum, the
+exact-quota hyperbolic allocation) improved the downstream recall**, and the
+best SID remains the frozen Euclidean baseline. Together with the corrected
+curvature analysis (Issue #128: no curvature–recall association survives), the
+evidence does not support a curvature-driven SID as the next step.
 
 ## Artefacts
 

@@ -14,11 +14,11 @@ The behaviour graph is the training split's transitions only (24,556 items, 157,
 
 | feature | n | Spearman | permutation p | bootstrap CI95 |
 |---|---|---|---|---|
-| z_curv_L1 | 167 | -0.0607 | 0.4313 | [-0.2066, 0.0925] |
-| z_curv_L2 | 179 | 0.0506 | 0.5047 | [-0.0830, 0.1977] |
-| z_curv_L3 | 181 | -0.0488 | 0.5052 | [-0.2062, 0.1084] |
-| z_curv_L1_minus_L3 | 167 | -0.0375 | 0.6322 | [-0.1915, 0.1168] |
-| sign_change_L1_L3 | 182 | 0.0979 | 0.1874 | [-0.0577, 0.2421] |
+| z_curv_L1 | 167 | -0.0907 | 0.2409 | [-0.2325, 0.0658] |
+| z_curv_L2 | 179 | 0.1503 | 0.0355 | [0.0010, 0.3059] |
+| z_curv_L3 | 181 | 0.1454 | 0.0490 | [0.0058, 0.2850] |
+| z_curv_L1_minus_L3 | 167 | -0.0948 | 0.2249 | [-0.2375, 0.0596] |
+| sign_change_L1_L3 | 182 | -0.0592 | 0.4268 | [-0.2192, 0.1107] |
 
 ### The controls, for reference
 
@@ -33,12 +33,12 @@ The behaviour graph is the training split's transitions only (24,556 items, 157,
 
 | curvature | control | Spearman |
 |---|---|---|
-| z_curv_L1 | codes_used_L3 | -0.0994 |
-| z_curv_L1 | collision | 0.6069 |
-| z_curv_L2 | codes_used_L3 | 0.0476 |
-| z_curv_L2 | collision | -0.2808 |
-| z_curv_L3 | codes_used_L3 | 0.2356 |
-| z_curv_L3 | collision | -0.0283 |
+| z_curv_L1 | codes_used_L3 | -0.0711 |
+| z_curv_L1 | collision | 0.6666 |
+| z_curv_L2 | codes_used_L3 | 0.0165 |
+| z_curv_L2 | collision | -0.3944 |
+| z_curv_L3 | codes_used_L3 | 0.1381 |
+| z_curv_L3 | collision | -0.1910 |
 
 ### How much recall does the curvature add on top of the controls?
 
@@ -51,26 +51,26 @@ The curvature feature with one control taken out, in rank space.
 
 | feature | control | n | partial Spearman |
 |---|---|---|---|
-| z_curv_L1 | codes_used_L1 | 167 | -0.2741 |
-| z_curv_L1 | codes_used_L2 | 167 | -0.0221 |
-| z_curv_L1 | codes_used_L3 | 167 | -0.0062 |
-| z_curv_L1 | collision | 167 | 0.1770 |
-| z_curv_L2 | codes_used_L1 | 179 | 0.0783 |
-| z_curv_L2 | codes_used_L2 | 179 | 0.0171 |
-| z_curv_L2 | codes_used_L3 | 179 | 0.0152 |
-| z_curv_L2 | collision | 179 | -0.0360 |
-| z_curv_L3 | codes_used_L1 | 181 | -0.0380 |
-| z_curv_L3 | codes_used_L2 | 181 | -0.0893 |
-| z_curv_L3 | codes_used_L3 | 181 | -0.1442 |
-| z_curv_L3 | collision | 181 | -0.0622 |
-| z_curv_L1_minus_L3 | codes_used_L1 | 167 | -0.2246 |
-| z_curv_L1_minus_L3 | codes_used_L2 | 167 | -0.0039 |
-| z_curv_L1_minus_L3 | codes_used_L3 | 167 | 0.0248 |
-| z_curv_L1_minus_L3 | collision | 167 | 0.1974 |
-| sign_change_L1_L3 | codes_used_L1 | 182 | 0.0363 |
-| sign_change_L1_L3 | codes_used_L2 | 182 | 0.1448 |
-| sign_change_L1_L3 | codes_used_L3 | 182 | 0.0550 |
-| sign_change_L1_L3 | collision | 182 | 0.1194 |
+| z_curv_L1 | codes_used_L1 | 167 | -0.2925 |
+| z_curv_L1 | codes_used_L2 | 167 | -0.0685 |
+| z_curv_L1 | codes_used_L3 | 167 | -0.0402 |
+| z_curv_L1 | collision | 167 | 0.1400 |
+| z_curv_L2 | codes_used_L1 | 179 | 0.1969 |
+| z_curv_L2 | codes_used_L2 | 179 | 0.1039 |
+| z_curv_L2 | codes_used_L3 | 179 | 0.1054 |
+| z_curv_L2 | collision | 179 | 0.0379 |
+| z_curv_L3 | codes_used_L1 | 181 | 0.1613 |
+| z_curv_L3 | codes_used_L2 | 181 | 0.0690 |
+| z_curv_L3 | codes_used_L3 | 181 | 0.0291 |
+| z_curv_L3 | collision | 181 | 0.0726 |
+| z_curv_L1_minus_L3 | codes_used_L1 | 167 | -0.2921 |
+| z_curv_L1_minus_L3 | codes_used_L2 | 167 | -0.0746 |
+| z_curv_L1_minus_L3 | codes_used_L3 | 167 | -0.0358 |
+| z_curv_L1_minus_L3 | collision | 167 | 0.1461 |
+| sign_change_L1_L3 | codes_used_L1 | 182 | -0.0650 |
+| sign_change_L1_L3 | codes_used_L2 | 182 | 0.0432 |
+| sign_change_L1_L3 | codes_used_L3 | 182 | 0.0195 |
+| sign_change_L1_L3 | collision | 182 | 0.0394 |
 
 ## 3. One point per mechanism family
 
@@ -78,11 +78,11 @@ The 182 tables come from 115 families, so the honest sample size is much smaller
 
 | feature | n | Spearman | permutation p | bootstrap CI95 |
 |---|---|---|---|---|
-| z_curv_L1 | 105 | -0.0877 | 0.3843 | [-0.2994, 0.1089] |
-| z_curv_L2 | 114 | 0.0137 | 0.8906 | [-0.1679, 0.1850] |
-| z_curv_L3 | 115 | -0.0325 | 0.7231 | [-0.2325, 0.1596] |
-| z_curv_L1_minus_L3 | 105 | -0.0716 | 0.4728 | [-0.2854, 0.1331] |
-| sign_change_L1_L3 | 115 | 0.1534 | 0.1119 | [-0.0707, 0.3403] |
+| z_curv_L1 | 105 | -0.0769 | 0.4558 | [-0.2720, 0.1248] |
+| z_curv_L2 | 114 | 0.1532 | 0.1024 | [-0.0562, 0.3466] |
+| z_curv_L3 | 115 | 0.1064 | 0.2574 | [-0.0937, 0.2984] |
+| z_curv_L1_minus_L3 | 105 | -0.0840 | 0.4063 | [-0.2826, 0.1162] |
+| sign_change_L1_L3 | 115 | -0.0041 | 0.9695 | [-0.2433, 0.2322] |
 
 ### Leave one family out
 
@@ -90,121 +90,121 @@ Each family is removed in turn; the correlation that remains is the one that doe
 
 | family removed | n left | Spearman (z_curv_L1) |
 |---|---|---|
-| TIGER_BEHAVIOR_R48 | 166 | -0.0584 |
-| TIGER_BEHAVIOR_RQ-VAE | 166 | -0.0616 |
-| TIGER_BEHAVIOR_SAMPLE_RQ-VAE | 147 | -0.0456 |
-| TIGER_BEHDIR-L4 | 166 | -0.0500 |
-| TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL | 166 | -0.0542 |
-| TIGER_BRad-RQ | 167 | -0.0607 |
-| TIGER_CONCMID-GEO-SID | 166 | -0.0482 |
-| TIGER_COOC_RANK_FRECHET | 166 | -0.0564 |
-| TIGER_CURV-RESID-CONTRAST | 166 | -0.0551 |
-| TIGER_FORK_RQ-VAE | 157 | -0.1183 |
-| TIGER_GDELTA-SUCC-PULL-RQ | 167 | -0.0607 |
-| TIGER_HGS-TREE | 167 | -0.0607 |
-| TIGER_HORO-TRANSPLANT-L | 166 | -0.0543 |
-| TIGER_HYP-CERT-LEAFREPAIR | 166 | -0.0559 |
-| TIGER_HYPERBOLIC_RQ-VAE | 160 | -0.0360 |
-| TIGER_RQ-VAE | 166 | -0.0532 |
-| TIGER_behavior_residual_geometry_transport | 166 | -0.0564 |
-| TIGER_bootstrap_code_stability | 166 | -0.0693 |
-| TIGER_branch-geodesic-rank | 167 | -0.0607 |
-| TIGER_c106_directed_assignment_usage_balance | 166 | -0.0626 |
-| TIGER_c106_directed_codeword_margin_geometry | 166 | -0.0593 |
-| TIGER_c107_directed_capacity_balanced_assignment_partition | 166 | -0.0619 |
-| TIGER_c107_directed_capacity_constrained_assignment_partition | 166 | -0.0600 |
-| TIGER_c107_directed_codeword_tangent_repulsion | 166 | -0.0631 |
-| TIGER_c107_directed_separated_codeword_geometry | 166 | -0.0597 |
-| TIGER_c117_hyperbolic_item_semantic_id | 166 | -0.0543 |
-| TIGER_c1_behaviour_conditioned_residual_target | 166 | -0.0734 |
-| TIGER_c1_policy_behavior_directed_soft_code_transition_kl | 166 | -0.0606 |
-| TIGER_cogeo_region_argmax | 167 | -0.0607 |
-| TIGER_cooccur_coherent_sid | 166 | -0.0562 |
-| TIGER_incoming_context_barycenter | 166 | -0.0621 |
-| TIGER_interest_signature_hypball | 167 | -0.0607 |
-| TIGER_poincare-frechet-successor-codebook | 166 | -0.0520 |
-| TIGER_successor-geodesic-coarse | 166 | -0.0513 |
-| TIGER_successor_entropy_curvature | 166 | -0.0512 |
-| TIGER_successor_residual_barycenter | 166 | -0.0536 |
-| TIGER_tangent_successor_residual | 166 | -0.0526 |
-| TIGER_transition_busemann_gate | 166 | -0.0562 |
-| curvature_RQ-VAE | 147 | -0.0994 |
-| curvature_RQ-VAE_iter100 | 166 | -0.0599 |
-| curvature_RQ-VAE_iter101 | 166 | -0.0608 |
-| curvature_RQ-VAE_iter102 | 166 | -0.0589 |
-| curvature_RQ-VAE_iter107 | 166 | -0.0606 |
-| curvature_RQ-VAE_iter109 | 166 | -0.0607 |
-| curvature_RQ-VAE_iter12 | 166 | -0.0606 |
-| curvature_RQ-VAE_iter14 | 166 | -0.0626 |
-| curvature_RQ-VAE_iter15 | 166 | -0.0600 |
-| curvature_RQ-VAE_iter16 | 166 | -0.0623 |
-| curvature_RQ-VAE_iter17 | 166 | -0.0620 |
-| curvature_RQ-VAE_iter18 | 166 | -0.0629 |
-| curvature_RQ-VAE_iter19 | 166 | -0.0621 |
-| curvature_RQ-VAE_iter20 | 166 | -0.0634 |
-| curvature_RQ-VAE_iter21 | 166 | -0.0594 |
-| curvature_RQ-VAE_iter22 | 166 | -0.0620 |
-| curvature_RQ-VAE_iter23 | 166 | -0.0561 |
-| curvature_RQ-VAE_iter24 | 166 | -0.0586 |
-| curvature_RQ-VAE_iter25 | 166 | -0.0614 |
-| curvature_RQ-VAE_iter26 | 166 | -0.0604 |
-| curvature_RQ-VAE_iter28 | 166 | -0.0608 |
-| curvature_RQ-VAE_iter29 | 166 | -0.0625 |
-| curvature_RQ-VAE_iter31 | 166 | -0.0586 |
-| curvature_RQ-VAE_iter32 | 166 | -0.0615 |
-| curvature_RQ-VAE_iter33 | 166 | -0.0610 |
-| curvature_RQ-VAE_iter34 | 166 | -0.0570 |
-| curvature_RQ-VAE_iter35 | 166 | -0.0614 |
-| curvature_RQ-VAE_iter36 | 166 | -0.0589 |
-| curvature_RQ-VAE_iter37 | 166 | -0.0601 |
-| curvature_RQ-VAE_iter38 | 166 | -0.0581 |
-| curvature_RQ-VAE_iter39 | 166 | -0.0579 |
-| curvature_RQ-VAE_iter40 | 166 | -0.0611 |
-| curvature_RQ-VAE_iter41 | 166 | -0.0592 |
-| curvature_RQ-VAE_iter42 | 166 | -0.0596 |
-| curvature_RQ-VAE_iter43 | 166 | -0.0649 |
-| curvature_RQ-VAE_iter44 | 166 | -0.0601 |
-| curvature_RQ-VAE_iter45 | 167 | -0.0607 |
-| curvature_RQ-VAE_iter46 | 166 | -0.0693 |
-| curvature_RQ-VAE_iter47 | 166 | -0.0652 |
-| curvature_RQ-VAE_iter48 | 157 | -0.0802 |
-| curvature_RQ-VAE_iter49 | 166 | -0.0553 |
-| curvature_RQ-VAE_iter50 | 166 | -0.0529 |
-| curvature_RQ-VAE_iter51 | 166 | -0.0637 |
-| curvature_RQ-VAE_iter52 | 167 | -0.0607 |
-| curvature_RQ-VAE_iter53 | 166 | -0.0727 |
-| curvature_RQ-VAE_iter54 | 166 | -0.0767 |
-| curvature_RQ-VAE_iter55 | 166 | -0.0682 |
-| curvature_RQ-VAE_iter56 | 166 | -0.0764 |
-| curvature_RQ-VAE_iter57 | 166 | -0.0687 |
-| curvature_RQ-VAE_iter58 | 166 | -0.0763 |
-| curvature_RQ-VAE_iter59 | 167 | -0.0607 |
-| curvature_RQ-VAE_iter61 | 166 | -0.0749 |
-| curvature_RQ-VAE_iter62 | 166 | -0.0503 |
-| curvature_RQ-VAE_iter63 | 166 | -0.0558 |
-| curvature_RQ-VAE_iter64 | 166 | -0.0681 |
-| curvature_RQ-VAE_iter65 | 166 | -0.0560 |
-| curvature_RQ-VAE_iter66 | 166 | -0.0535 |
-| curvature_RQ-VAE_iter67 | 166 | -0.0560 |
-| curvature_RQ-VAE_iter73 | 166 | -0.0602 |
-| curvature_RQ-VAE_iter77 | 166 | -0.0602 |
-| curvature_RQ-VAE_iter78 | 166 | -0.0610 |
-| curvature_RQ-VAE_iter79 | 166 | -0.0623 |
-| curvature_RQ-VAE_iter80 | 166 | -0.0551 |
-| curvature_RQ-VAE_iter81 | 166 | -0.0600 |
-| curvature_RQ-VAE_iter83 | 166 | -0.0634 |
-| curvature_RQ-VAE_iter88 | 166 | -0.0612 |
-| curvature_RQ-VAE_iter89 | 166 | -0.0614 |
-| curvature_RQ-VAE_iter90 | 166 | -0.0606 |
-| curvature_RQ-VAE_iter91 | 166 | -0.0627 |
-| curvature_RQ-VAE_iter92 | 166 | -0.0564 |
-| curvature_RQ-VAE_iter93 | 166 | -0.0585 |
-| curvature_RQ-VAE_iter94 | 166 | -0.0610 |
-| curvature_RQ-VAE_iter97 | 166 | -0.0607 |
-| curvature_RQ-VAE_iter98 | 166 | -0.0619 |
-| curvature_RQ-VAE_iter99 | 166 | -0.0609 |
-| r4_08 | 166 | -0.0553 |
-| sids | 167 | -0.0607 |
+| TIGER_BEHAVIOR_R48 | 166 | -0.0886 |
+| TIGER_BEHAVIOR_RQ-VAE | 166 | -0.0939 |
+| TIGER_BEHAVIOR_SAMPLE_RQ-VAE | 147 | -0.0600 |
+| TIGER_BEHDIR-L4 | 166 | -0.0780 |
+| TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL | 166 | -0.0850 |
+| TIGER_BRad-RQ | 167 | -0.0907 |
+| TIGER_CONCMID-GEO-SID | 166 | -0.0786 |
+| TIGER_COOC_RANK_FRECHET | 166 | -0.0889 |
+| TIGER_CURV-RESID-CONTRAST | 166 | -0.0852 |
+| TIGER_FORK_RQ-VAE | 157 | -0.1442 |
+| TIGER_GDELTA-SUCC-PULL-RQ | 167 | -0.0907 |
+| TIGER_HGS-TREE | 167 | -0.0907 |
+| TIGER_HORO-TRANSPLANT-L | 166 | -0.0857 |
+| TIGER_HYP-CERT-LEAFREPAIR | 166 | -0.0847 |
+| TIGER_HYPERBOLIC_RQ-VAE | 160 | -0.0526 |
+| TIGER_RQ-VAE | 166 | -0.0845 |
+| TIGER_behavior_residual_geometry_transport | 166 | -0.0883 |
+| TIGER_bootstrap_code_stability | 166 | -0.0948 |
+| TIGER_branch-geodesic-rank | 167 | -0.0907 |
+| TIGER_c106_directed_assignment_usage_balance | 166 | -0.0868 |
+| TIGER_c106_directed_codeword_margin_geometry | 166 | -0.0900 |
+| TIGER_c107_directed_capacity_balanced_assignment_partition | 166 | -0.0878 |
+| TIGER_c107_directed_capacity_constrained_assignment_partition | 166 | -0.0910 |
+| TIGER_c107_directed_codeword_tangent_repulsion | 166 | -0.0902 |
+| TIGER_c107_directed_separated_codeword_geometry | 166 | -0.1015 |
+| TIGER_c117_hyperbolic_item_semantic_id | 166 | -0.0850 |
+| TIGER_c1_behaviour_conditioned_residual_target | 166 | -0.1025 |
+| TIGER_c1_policy_behavior_directed_soft_code_transition_kl | 166 | -0.0868 |
+| TIGER_cogeo_region_argmax | 167 | -0.0907 |
+| TIGER_cooccur_coherent_sid | 166 | -0.0864 |
+| TIGER_incoming_context_barycenter | 166 | -0.0925 |
+| TIGER_interest_signature_hypball | 167 | -0.0907 |
+| TIGER_poincare-frechet-successor-codebook | 166 | -0.0819 |
+| TIGER_successor-geodesic-coarse | 166 | -0.0839 |
+| TIGER_successor_entropy_curvature | 166 | -0.0806 |
+| TIGER_successor_residual_barycenter | 166 | -0.0841 |
+| TIGER_tangent_successor_residual | 166 | -0.0833 |
+| TIGER_transition_busemann_gate | 166 | -0.0842 |
+| curvature_RQ-VAE | 147 | -0.1321 |
+| curvature_RQ-VAE_iter100 | 166 | -0.0906 |
+| curvature_RQ-VAE_iter101 | 166 | -0.0913 |
+| curvature_RQ-VAE_iter102 | 166 | -0.0902 |
+| curvature_RQ-VAE_iter107 | 166 | -0.0913 |
+| curvature_RQ-VAE_iter109 | 166 | -0.0912 |
+| curvature_RQ-VAE_iter12 | 166 | -0.0905 |
+| curvature_RQ-VAE_iter14 | 166 | -0.0923 |
+| curvature_RQ-VAE_iter15 | 166 | -0.0902 |
+| curvature_RQ-VAE_iter16 | 166 | -0.0928 |
+| curvature_RQ-VAE_iter17 | 166 | -0.0914 |
+| curvature_RQ-VAE_iter18 | 166 | -0.0927 |
+| curvature_RQ-VAE_iter19 | 166 | -0.0912 |
+| curvature_RQ-VAE_iter20 | 166 | -0.0931 |
+| curvature_RQ-VAE_iter21 | 166 | -0.0913 |
+| curvature_RQ-VAE_iter22 | 166 | -0.0923 |
+| curvature_RQ-VAE_iter23 | 166 | -0.0867 |
+| curvature_RQ-VAE_iter24 | 166 | -0.0882 |
+| curvature_RQ-VAE_iter25 | 166 | -0.0920 |
+| curvature_RQ-VAE_iter26 | 166 | -0.0924 |
+| curvature_RQ-VAE_iter28 | 166 | -0.0882 |
+| curvature_RQ-VAE_iter29 | 166 | -0.0922 |
+| curvature_RQ-VAE_iter31 | 166 | -0.0886 |
+| curvature_RQ-VAE_iter32 | 166 | -0.0921 |
+| curvature_RQ-VAE_iter33 | 166 | -0.0902 |
+| curvature_RQ-VAE_iter34 | 166 | -0.0848 |
+| curvature_RQ-VAE_iter35 | 166 | -0.0896 |
+| curvature_RQ-VAE_iter36 | 166 | -0.0885 |
+| curvature_RQ-VAE_iter37 | 166 | -0.0910 |
+| curvature_RQ-VAE_iter38 | 166 | -0.0879 |
+| curvature_RQ-VAE_iter39 | 166 | -0.0866 |
+| curvature_RQ-VAE_iter40 | 166 | -0.0913 |
+| curvature_RQ-VAE_iter41 | 166 | -0.0933 |
+| curvature_RQ-VAE_iter42 | 166 | -0.0905 |
+| curvature_RQ-VAE_iter43 | 166 | -0.0984 |
+| curvature_RQ-VAE_iter44 | 166 | -0.0914 |
+| curvature_RQ-VAE_iter45 | 167 | -0.0907 |
+| curvature_RQ-VAE_iter46 | 166 | -0.1027 |
+| curvature_RQ-VAE_iter47 | 166 | -0.1012 |
+| curvature_RQ-VAE_iter48 | 157 | -0.0970 |
+| curvature_RQ-VAE_iter49 | 166 | -0.0897 |
+| curvature_RQ-VAE_iter50 | 166 | -0.0923 |
+| curvature_RQ-VAE_iter51 | 166 | -0.0885 |
+| curvature_RQ-VAE_iter52 | 167 | -0.0907 |
+| curvature_RQ-VAE_iter53 | 166 | -0.1008 |
+| curvature_RQ-VAE_iter54 | 166 | -0.1056 |
+| curvature_RQ-VAE_iter55 | 166 | -0.0981 |
+| curvature_RQ-VAE_iter56 | 166 | -0.1046 |
+| curvature_RQ-VAE_iter57 | 166 | -0.0943 |
+| curvature_RQ-VAE_iter58 | 166 | -0.1017 |
+| curvature_RQ-VAE_iter59 | 167 | -0.0907 |
+| curvature_RQ-VAE_iter61 | 166 | -0.1055 |
+| curvature_RQ-VAE_iter62 | 166 | -0.0790 |
+| curvature_RQ-VAE_iter63 | 166 | -0.0900 |
+| curvature_RQ-VAE_iter64 | 166 | -0.0957 |
+| curvature_RQ-VAE_iter65 | 166 | -0.0859 |
+| curvature_RQ-VAE_iter66 | 166 | -0.0870 |
+| curvature_RQ-VAE_iter67 | 166 | -0.0838 |
+| curvature_RQ-VAE_iter73 | 166 | -0.0914 |
+| curvature_RQ-VAE_iter77 | 166 | -0.0910 |
+| curvature_RQ-VAE_iter78 | 166 | -0.0915 |
+| curvature_RQ-VAE_iter79 | 166 | -0.0926 |
+| curvature_RQ-VAE_iter80 | 166 | -0.0852 |
+| curvature_RQ-VAE_iter81 | 166 | -0.0908 |
+| curvature_RQ-VAE_iter83 | 166 | -0.0973 |
+| curvature_RQ-VAE_iter88 | 166 | -0.0919 |
+| curvature_RQ-VAE_iter89 | 166 | -0.0922 |
+| curvature_RQ-VAE_iter90 | 166 | -0.0912 |
+| curvature_RQ-VAE_iter91 | 166 | -0.0926 |
+| curvature_RQ-VAE_iter92 | 166 | -0.0879 |
+| curvature_RQ-VAE_iter93 | 166 | -0.0888 |
+| curvature_RQ-VAE_iter94 | 166 | -0.0919 |
+| curvature_RQ-VAE_iter97 | 166 | -0.0917 |
+| curvature_RQ-VAE_iter98 | 166 | -0.0931 |
+| curvature_RQ-VAE_iter99 | 166 | -0.0917 |
+| r4_08 | 166 | -0.0880 |
+| sids | 167 | -0.0907 |
 
 ## What this says, in the plan's own terms
 
