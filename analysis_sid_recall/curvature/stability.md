@@ -46,3 +46,11 @@ correlates with the recall (`z_curv_L2` +0.129 p 0.28, `z_curv_L3` −0.044
 p 0.71, the profile +0.141 p 0.24; the same-commit set gives +0.074 and +0.029).
 The budget instability reported above and the pair-verification result point the
 same way: the association is not reproducible.
+
+## The replicate budget moves the coefficient as much as the edge budget
+
+On the same arms and the same observed sample, only the number of null
+replicates changed (nested): the level-2 coefficient runs −0.136 (2 replicates) →
+−0.206 (3) → −0.263 (4, p 0.028) → −0.250 (6) → −0.185 (8, p 0.112), and the
+level-1 coefficient drifts +0.061 → +0.154. The significance therefore belongs
+to the budget, not to the data; see `../CONVERGENCE_FINDINGS.md`.

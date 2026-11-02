@@ -2,7 +2,7 @@
 
 > **Read this before the numbers.** `sid_recall.csv` now holds only the pairs that pass the audit (`pair_audit.py`): the SID table and the recall file were introduced by the same commit **and** the stage-2 and stage-3 directories carry the same name (73 of the original 182). The numbers below are those 73. The full-table numbers are kept in `curvature/full_182/` and compared side by side in `AUDIT_CORRELATION.md`; the edge-sampling budget is checked in `curvature/convergence/` and `CONVERGENCE_FINDINGS.md`.
 
-*73 SID tables, each with one recall, from 73 mechanism families.*
+*110 SID tables, each with one recall, from 107 mechanism families.*
 
 The behaviour graph is the training split's transitions only (24,556 items, 157,695 edges). For every SID table and every level the prefix groups are contracted into super-nodes, the lazy random walk's Ollivier curvature of that quotient graph is measured on a sample of its edges, and the number is standardised against a null that keeps the group sizes and shuffles the members. The features are then correlated with the recall of the run that used the table.
 
@@ -16,31 +16,31 @@ The behaviour graph is the training split's transitions only (24,556 items, 157,
 
 | feature | n | Spearman | permutation p | bootstrap CI95 |
 |---|---|---|---|---|
-| z_curv_L1 | 68 | 0.1030 | 0.3973 | [-0.1584, 0.3428] |
-| z_curv_L2 | 73 | -0.1622 | 0.1709 | [-0.3717, 0.0672] |
-| z_curv_L3 | 73 | -0.0866 | 0.4598 | [-0.3347, 0.1593] |
-| z_curv_L1_minus_L3 | 68 | 0.0974 | 0.4263 | [-0.1654, 0.3441] |
-| sign_change_L1_L3 | 73 | 0.2429 | 0.0240 | [0.1566, 0.3914] |
+| z_curv_L1 | 100 | -0.0744 | 0.4623 | [-0.2926, 0.1232] |
+| z_curv_L2 | 108 | 0.2007 | 0.0380 | [-0.0014, 0.3972] |
+| z_curv_L3 | 110 | 0.1789 | 0.0635 | [-0.0101, 0.3580] |
+| z_curv_L1_minus_L3 | 100 | -0.0907 | 0.3643 | [-0.3076, 0.1108] |
+| sign_change_L1_L3 | 110 | 0.0371 | 0.7046 | [-0.1886, 0.2385] |
 
 ### The controls, for reference
 
 | control | n | Spearman | permutation p |
 |---|---|---|---|
-| codes_used_L1 | 73 | -0.2050 | 0.0860 |
-| codes_used_L2 | 73 | -0.0920 | 0.4363 |
-| codes_used_L3 | 73 | 0.2995 | 0.0085 |
-| collision | 73 | -0.1596 | 0.1729 |
+| codes_used_L1 | 110 | 0.1513 | 0.1174 |
+| codes_used_L2 | 110 | 0.2568 | 0.0115 |
+| codes_used_L3 | 110 | 0.4389 | 0.0005 |
+| collision | 110 | -0.4820 | 0.0005 |
 
 ### Is the curvature a restatement of the partition's purity?
 
 | curvature | control | Spearman |
 |---|---|---|
-| z_curv_L1 | codes_used_L3 | -0.1408 |
-| z_curv_L1 | collision | 0.6636 |
-| z_curv_L2 | codes_used_L3 | 0.1352 |
-| z_curv_L2 | collision | -0.1461 |
-| z_curv_L3 | codes_used_L3 | 0.0405 |
-| z_curv_L3 | collision | -0.1766 |
+| z_curv_L1 | codes_used_L3 | -0.1454 |
+| z_curv_L1 | collision | 0.7476 |
+| z_curv_L2 | codes_used_L3 | -0.0930 |
+| z_curv_L2 | collision | -0.2261 |
+| z_curv_L3 | codes_used_L3 | 0.0586 |
+| z_curv_L3 | collision | 0.0382 |
 
 ### How much recall does the curvature add on top of the controls?
 
@@ -53,38 +53,38 @@ The curvature feature with one control taken out, in rank space.
 
 | feature | control | n | partial Spearman |
 |---|---|---|---|
-| z_curv_L1 | codes_used_L1 | 68 | -0.0870 |
-| z_curv_L1 | codes_used_L2 | 68 | -0.0123 |
-| z_curv_L1 | codes_used_L3 | 68 | 0.1185 |
-| z_curv_L1 | collision | 68 | 0.2431 |
-| z_curv_L2 | codes_used_L1 | 73 | -0.0850 |
-| z_curv_L2 | codes_used_L2 | 73 | -0.1357 |
-| z_curv_L2 | codes_used_L3 | 73 | -0.1609 |
-| z_curv_L2 | collision | 73 | -0.1873 |
-| z_curv_L3 | codes_used_L1 | 73 | -0.0106 |
-| z_curv_L3 | codes_used_L2 | 73 | -0.0718 |
-| z_curv_L3 | codes_used_L3 | 73 | -0.0677 |
-| z_curv_L3 | collision | 73 | -0.0970 |
-| z_curv_L1_minus_L3 | codes_used_L1 | 68 | -0.0859 |
-| z_curv_L1_minus_L3 | codes_used_L2 | 68 | -0.0180 |
-| z_curv_L1_minus_L3 | codes_used_L3 | 68 | 0.1125 |
-| z_curv_L1_minus_L3 | collision | 68 | 0.2304 |
-| sign_change_L1_L3 | codes_used_L1 | 73 | 0.0789 |
-| sign_change_L1_L3 | codes_used_L2 | 73 | 0.1251 |
-| sign_change_L1_L3 | codes_used_L3 | 73 | 0.1180 |
-| sign_change_L1_L3 | collision | 73 | 0.1625 |
+| z_curv_L1 | codes_used_L1 | 100 | -0.1799 |
+| z_curv_L1 | codes_used_L2 | 100 | -0.0557 |
+| z_curv_L1 | codes_used_L3 | 100 | -0.0232 |
+| z_curv_L1 | collision | 100 | 0.2895 |
+| z_curv_L2 | codes_used_L1 | 108 | 0.1853 |
+| z_curv_L2 | codes_used_L2 | 108 | 0.1652 |
+| z_curv_L2 | codes_used_L3 | 108 | 0.2075 |
+| z_curv_L2 | collision | 108 | 0.1476 |
+| z_curv_L3 | codes_used_L1 | 110 | 0.1778 |
+| z_curv_L3 | codes_used_L2 | 110 | 0.1247 |
+| z_curv_L3 | codes_used_L3 | 110 | 0.1174 |
+| z_curv_L3 | collision | 110 | 0.2388 |
+| z_curv_L1_minus_L3 | codes_used_L1 | 100 | -0.2103 |
+| z_curv_L1_minus_L3 | codes_used_L2 | 100 | -0.0803 |
+| z_curv_L1_minus_L3 | codes_used_L3 | 100 | -0.0281 |
+| z_curv_L1_minus_L3 | collision | 100 | 0.2631 |
+| sign_change_L1_L3 | codes_used_L1 | 110 | 0.0985 |
+| sign_change_L1_L3 | codes_used_L2 | 110 | 0.1198 |
+| sign_change_L1_L3 | codes_used_L3 | 110 | 0.0197 |
+| sign_change_L1_L3 | collision | 110 | 0.0849 |
 
 ## 3. One point per mechanism family
 
-The 182 tables come from 73 families, so the honest sample size is much smaller than 182. Keeping the best-recalling table of each family:
+The 182 tables come from 107 families, so the honest sample size is much smaller than 182. Keeping the best-recalling table of each family:
 
 | feature | n | Spearman | permutation p | bootstrap CI95 |
 |---|---|---|---|---|
-| z_curv_L1 | 68 | 0.1030 | 0.3973 | [-0.1584, 0.3428] |
-| z_curv_L2 | 73 | -0.1622 | 0.1709 | [-0.3717, 0.0672] |
-| z_curv_L3 | 73 | -0.0866 | 0.4598 | [-0.3347, 0.1593] |
-| z_curv_L1_minus_L3 | 68 | 0.0974 | 0.4263 | [-0.1654, 0.3441] |
-| sign_change_L1_L3 | 73 | 0.2429 | 0.0240 | [0.1566, 0.3914] |
+| z_curv_L1 | 98 | -0.0710 | 0.4943 | [-0.2790, 0.1483] |
+| z_curv_L2 | 106 | 0.1880 | 0.0515 | [-0.0196, 0.3926] |
+| z_curv_L3 | 107 | 0.1695 | 0.0720 | [-0.0206, 0.3522] |
+| z_curv_L1_minus_L3 | 98 | -0.0879 | 0.3958 | [-0.2973, 0.1329] |
+| sign_change_L1_L3 | 107 | 0.0351 | 0.7351 | [-0.1986, 0.2485] |
 
 ### Leave one family out
 
@@ -92,79 +92,113 @@ Each family is removed in turn; the correlation that remains is the one that doe
 
 | family removed | n left | Spearman (z_curv_L1) |
 |---|---|---|
-| curvature_RQ-VAE_iter100 | 67 | 0.1083 |
-| curvature_RQ-VAE_iter101 | 67 | 0.1096 |
-| curvature_RQ-VAE_iter102 | 67 | 0.1122 |
-| curvature_RQ-VAE_iter107 | 67 | 0.1069 |
-| curvature_RQ-VAE_iter109 | 67 | 0.1068 |
-| curvature_RQ-VAE_iter14 | 67 | 0.0997 |
-| curvature_RQ-VAE_iter15 | 67 | 0.1024 |
-| curvature_RQ-VAE_iter16 | 67 | 0.1100 |
-| curvature_RQ-VAE_iter17 | 67 | 0.0981 |
-| curvature_RQ-VAE_iter18 | 67 | 0.1048 |
-| curvature_RQ-VAE_iter19 | 67 | 0.0993 |
-| curvature_RQ-VAE_iter20 | 67 | 0.1138 |
-| curvature_RQ-VAE_iter21 | 67 | 0.1061 |
-| curvature_RQ-VAE_iter22 | 67 | 0.0897 |
-| curvature_RQ-VAE_iter23 | 67 | 0.1265 |
-| curvature_RQ-VAE_iter24 | 67 | 0.1073 |
-| curvature_RQ-VAE_iter25 | 67 | 0.0953 |
-| curvature_RQ-VAE_iter26 | 67 | 0.0996 |
-| curvature_RQ-VAE_iter28 | 67 | 0.1160 |
-| curvature_RQ-VAE_iter29 | 67 | 0.1020 |
-| curvature_RQ-VAE_iter31 | 67 | 0.1204 |
-| curvature_RQ-VAE_iter32 | 67 | 0.0952 |
-| curvature_RQ-VAE_iter33 | 67 | 0.1116 |
-| curvature_RQ-VAE_iter34 | 67 | 0.1230 |
-| curvature_RQ-VAE_iter35 | 67 | 0.1165 |
-| curvature_RQ-VAE_iter36 | 67 | 0.1096 |
-| curvature_RQ-VAE_iter37 | 67 | 0.0960 |
-| curvature_RQ-VAE_iter38 | 67 | 0.1238 |
-| curvature_RQ-VAE_iter39 | 67 | 0.1263 |
-| curvature_RQ-VAE_iter40 | 67 | 0.0951 |
-| curvature_RQ-VAE_iter41 | 67 | 0.0889 |
-| curvature_RQ-VAE_iter42 | 67 | 0.1134 |
-| curvature_RQ-VAE_iter43 | 67 | 0.0974 |
-| curvature_RQ-VAE_iter44 | 67 | 0.1020 |
-| curvature_RQ-VAE_iter45 | 68 | 0.1030 |
-| curvature_RQ-VAE_iter46 | 67 | 0.0912 |
-| curvature_RQ-VAE_iter47 | 67 | 0.1021 |
-| curvature_RQ-VAE_iter49 | 67 | 0.0928 |
-| curvature_RQ-VAE_iter50 | 67 | 0.0878 |
-| curvature_RQ-VAE_iter51 | 67 | 0.1081 |
-| curvature_RQ-VAE_iter52 | 68 | 0.1030 |
-| curvature_RQ-VAE_iter53 | 68 | 0.1030 |
-| curvature_RQ-VAE_iter54 | 67 | 0.0648 |
-| curvature_RQ-VAE_iter55 | 67 | 0.0757 |
-| curvature_RQ-VAE_iter56 | 67 | 0.0643 |
-| curvature_RQ-VAE_iter57 | 67 | 0.0681 |
-| curvature_RQ-VAE_iter58 | 67 | 0.0648 |
-| curvature_RQ-VAE_iter59 | 68 | 0.1030 |
-| curvature_RQ-VAE_iter61 | 67 | 0.0660 |
-| curvature_RQ-VAE_iter62 | 68 | 0.1030 |
-| curvature_RQ-VAE_iter63 | 67 | 0.1128 |
-| curvature_RQ-VAE_iter64 | 67 | 0.0888 |
-| curvature_RQ-VAE_iter65 | 67 | 0.1302 |
-| curvature_RQ-VAE_iter66 | 67 | 0.1350 |
-| curvature_RQ-VAE_iter67 | 67 | 0.1336 |
-| curvature_RQ-VAE_iter73 | 67 | 0.1066 |
-| curvature_RQ-VAE_iter77 | 67 | 0.1082 |
-| curvature_RQ-VAE_iter78 | 67 | 0.1040 |
-| curvature_RQ-VAE_iter79 | 67 | 0.1009 |
-| curvature_RQ-VAE_iter80 | 67 | 0.1119 |
-| curvature_RQ-VAE_iter81 | 67 | 0.1051 |
-| curvature_RQ-VAE_iter83 | 67 | 0.0728 |
-| curvature_RQ-VAE_iter88 | 67 | 0.1029 |
-| curvature_RQ-VAE_iter89 | 67 | 0.0983 |
-| curvature_RQ-VAE_iter90 | 67 | 0.1042 |
-| curvature_RQ-VAE_iter91 | 67 | 0.1035 |
-| curvature_RQ-VAE_iter92 | 67 | 0.1228 |
-| curvature_RQ-VAE_iter93 | 67 | 0.1115 |
-| curvature_RQ-VAE_iter94 | 67 | 0.0999 |
-| curvature_RQ-VAE_iter97 | 67 | 0.1055 |
-| curvature_RQ-VAE_iter98 | 67 | 0.1034 |
-| curvature_RQ-VAE_iter99 | 67 | 0.1046 |
-| r4_08 | 67 | 0.1185 |
+| TIGER_BEHDIR-L4 | 99 | -0.0521 |
+| TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL | 99 | -0.0616 |
+| TIGER_BRad-RQ | 100 | -0.0744 |
+| TIGER_CONCMID-GEO-SID | 99 | -0.0567 |
+| TIGER_COOC_RANK_FRECHET | 99 | -0.0631 |
+| TIGER_CURV-RESID-CONTRAST | 99 | -0.0596 |
+| TIGER_GDELTA-SUCC-PULL-RQ | 100 | -0.0744 |
+| TIGER_HGS-TREE | 100 | -0.0744 |
+| TIGER_HORO-TRANSPLANT-L | 99 | -0.0594 |
+| TIGER_HYP-CERT-LEAFREPAIR | 99 | -0.0618 |
+| TIGER_behavior_residual_geometry_transport | 99 | -0.0792 |
+| TIGER_bootstrap_code_stability | 99 | -0.0816 |
+| TIGER_branch-geodesic-rank | 100 | -0.0744 |
+| TIGER_c106_directed_assignment_usage_balance | 99 | -0.0872 |
+| TIGER_c106_directed_codeword_margin_geometry | 99 | -0.0657 |
+| TIGER_c107_directed_capacity_balanced_assignment_partition | 99 | -0.0683 |
+| TIGER_c107_directed_capacity_constrained_assignment_partition | 99 | -0.0822 |
+| TIGER_c107_directed_codeword_tangent_repulsion | 99 | -0.0801 |
+| TIGER_c107_directed_separated_codeword_geometry | 99 | -0.0932 |
+| TIGER_c117_hyperbolic_item_semantic_id | 99 | -0.0625 |
+| TIGER_c1_behaviour_conditioned_residual_target | 99 | -0.1012 |
+| TIGER_c1_policy_behavior_directed_soft_code_transition_kl | 99 | -0.0835 |
+| TIGER_cogeo_region_argmax | 100 | -0.0744 |
+| TIGER_cooccur_coherent_sid | 99 | -0.0626 |
+| TIGER_incoming_context_barycenter | 99 | -0.0809 |
+| TIGER_interest_signature_hypball | 100 | -0.0744 |
+| TIGER_poincare-frechet-successor-codebook | 99 | -0.0573 |
+| TIGER_successor-geodesic-coarse | 99 | -0.0554 |
+| TIGER_successor_entropy_curvature | 99 | -0.0568 |
+| TIGER_successor_residual_barycenter | 99 | -0.0617 |
+| TIGER_tangent_successor_residual | 99 | -0.0617 |
+| TIGER_transition_busemann_gate | 99 | -0.0620 |
+| curvature_RQ-VAE | 97 | -0.0669 |
+| curvature_RQ-VAE_iter100 | 99 | -0.0732 |
+| curvature_RQ-VAE_iter101 | 99 | -0.0710 |
+| curvature_RQ-VAE_iter102 | 99 | -0.0714 |
+| curvature_RQ-VAE_iter107 | 99 | -0.0741 |
+| curvature_RQ-VAE_iter109 | 99 | -0.0737 |
+| curvature_RQ-VAE_iter12 | 99 | -0.0737 |
+| curvature_RQ-VAE_iter14 | 99 | -0.0757 |
+| curvature_RQ-VAE_iter15 | 99 | -0.0752 |
+| curvature_RQ-VAE_iter16 | 99 | -0.0702 |
+| curvature_RQ-VAE_iter17 | 99 | -0.0789 |
+| curvature_RQ-VAE_iter18 | 99 | -0.0787 |
+| curvature_RQ-VAE_iter19 | 99 | -0.0762 |
+| curvature_RQ-VAE_iter20 | 99 | -0.0693 |
+| curvature_RQ-VAE_iter21 | 99 | -0.0717 |
+| curvature_RQ-VAE_iter22 | 99 | -0.0784 |
+| curvature_RQ-VAE_iter23 | 99 | -0.0644 |
+| curvature_RQ-VAE_iter24 | 99 | -0.0668 |
+| curvature_RQ-VAE_iter25 | 99 | -0.0731 |
+| curvature_RQ-VAE_iter26 | 99 | -0.0746 |
+| curvature_RQ-VAE_iter28 | 99 | -0.0704 |
+| curvature_RQ-VAE_iter29 | 99 | -0.0761 |
+| curvature_RQ-VAE_iter31 | 99 | -0.0757 |
+| curvature_RQ-VAE_iter32 | 99 | -0.0778 |
+| curvature_RQ-VAE_iter33 | 99 | -0.0781 |
+| curvature_RQ-VAE_iter34 | 99 | -0.0647 |
+| curvature_RQ-VAE_iter35 | 99 | -0.0726 |
+| curvature_RQ-VAE_iter36 | 99 | -0.0699 |
+| curvature_RQ-VAE_iter37 | 99 | -0.0770 |
+| curvature_RQ-VAE_iter38 | 99 | -0.0646 |
+| curvature_RQ-VAE_iter39 | 99 | -0.0648 |
+| curvature_RQ-VAE_iter40 | 99 | -0.0774 |
+| curvature_RQ-VAE_iter41 | 99 | -0.0778 |
+| curvature_RQ-VAE_iter42 | 99 | -0.0713 |
+| curvature_RQ-VAE_iter43 | 99 | -0.0754 |
+| curvature_RQ-VAE_iter44 | 99 | -0.0795 |
+| curvature_RQ-VAE_iter45 | 100 | -0.0744 |
+| curvature_RQ-VAE_iter46 | 99 | -0.0926 |
+| curvature_RQ-VAE_iter47 | 99 | -0.0875 |
+| curvature_RQ-VAE_iter49 | 99 | -0.0807 |
+| curvature_RQ-VAE_iter50 | 99 | -0.0798 |
+| curvature_RQ-VAE_iter51 | 99 | -0.0712 |
+| curvature_RQ-VAE_iter52 | 100 | -0.0744 |
+| curvature_RQ-VAE_iter53 | 99 | -0.0948 |
+| curvature_RQ-VAE_iter54 | 99 | -0.1003 |
+| curvature_RQ-VAE_iter55 | 99 | -0.0928 |
+| curvature_RQ-VAE_iter56 | 99 | -0.1029 |
+| curvature_RQ-VAE_iter57 | 99 | -0.0958 |
+| curvature_RQ-VAE_iter58 | 99 | -0.1033 |
+| curvature_RQ-VAE_iter59 | 100 | -0.0744 |
+| curvature_RQ-VAE_iter61 | 99 | -0.0990 |
+| curvature_RQ-VAE_iter62 | 99 | -0.0539 |
+| curvature_RQ-VAE_iter63 | 99 | -0.0790 |
+| curvature_RQ-VAE_iter64 | 99 | -0.0839 |
+| curvature_RQ-VAE_iter65 | 99 | -0.0603 |
+| curvature_RQ-VAE_iter66 | 99 | -0.0631 |
+| curvature_RQ-VAE_iter67 | 99 | -0.0840 |
+| curvature_RQ-VAE_iter73 | 99 | -0.0742 |
+| curvature_RQ-VAE_iter77 | 99 | -0.0733 |
+| curvature_RQ-VAE_iter78 | 99 | -0.0750 |
+| curvature_RQ-VAE_iter79 | 99 | -0.0759 |
+| curvature_RQ-VAE_iter80 | 99 | -0.0670 |
+| curvature_RQ-VAE_iter81 | 99 | -0.0720 |
+| curvature_RQ-VAE_iter83 | 99 | -0.0877 |
+| curvature_RQ-VAE_iter88 | 99 | -0.0742 |
+| curvature_RQ-VAE_iter89 | 99 | -0.0760 |
+| curvature_RQ-VAE_iter90 | 99 | -0.0751 |
+| curvature_RQ-VAE_iter91 | 99 | -0.0784 |
+| curvature_RQ-VAE_iter92 | 99 | -0.0691 |
+| curvature_RQ-VAE_iter93 | 99 | -0.0721 |
+| curvature_RQ-VAE_iter94 | 99 | -0.0768 |
+| curvature_RQ-VAE_iter97 | 99 | -0.0741 |
+| curvature_RQ-VAE_iter98 | 99 | -0.0749 |
+| curvature_RQ-VAE_iter99 | 99 | -0.0762 |
+| r4_08 | 99 | -0.0669 |
 
 ## What this says, in the plan's own terms
 
