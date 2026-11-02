@@ -31,6 +31,8 @@ positively or negatively. The pre-fix "−0.20 profile correlation" is withdrawn
 (Issue #128) and the re-measurement does not resurrect it: the point estimates
 move by up to 0.19 with the sampling budget alone.
 
-Artefacts: `stability.json` (the per-feature rows) and the two summaries
-(`curvature_summary.json` is the 32-edge/3-null run; the 16-edge features are in
-`per_arm_features_16edge.json`).
+Artefacts: `curvature_summary.json` (the 32-edge / 3-null run, authoritative),
+`curvature_summary_16edge.json` (the saved 16-edge summary), the per-arm
+features `per_arm_features_32edge.json`, and the earlier 16-edge report in the
+commit `f5b95977` (the features themselves were replaced by the larger run; the
+summary's statistics are preserved here and in `curvature_summary_16edge.json`).
