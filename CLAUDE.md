@@ -126,15 +126,14 @@
 
 64. **科研审查的准入标准**：独立 REVIEW 只审查冻结提案的数学类型与可定义域、同容量对照是否只差度量、是否使用验证/测试/未来行为或预测时用户上下文、损失与目标分布能否唯一复算、以及反证是否可机械判定；提案必须同时注册 Stage3 行为检验（指标、方向与 mixed/null 分类）；按 §19g **不做多种子实验**，行为检验以单次运行的诊断记录，不做种子合并。Stage2 只构建 SID、从不排序，因此**不得**以「Stage2 侧指标无法自证 next-item 收益」为由阻断晋级；行为收益由 Stage3 `test_R@10` 判定，Stage2 指标（Hard-L1 ER、二级前缀、L3 三统计）只作为前导指标。
 
-64b. **SID–recall 配对的准入判据（Issue #128 后续审计）**：任何"某个 SID 对应某个 `test_R@10`"的结论，只在**同时**满足下列两条时才可作为证据使用；不满足即标注为未验证并排除在统计之外，禁止把它们与已验证配对混在一起上报。
-(a) **同一 commit 引入**：SID 表与被引用的 Stage 3 结果文件（其 `test_final.json` / `training_metrics.jsonl`）的**引入 commit** 相同，用 `git log --diff-filter=A -1 --format=%H -- <原始路径>` 在**仓库原始路径**上判定；`analysis_sid_recall/sids/` 下的收集副本只证明内容被收集过，**不算**路径证据。
-(b) **目录同名**：`results/stage2_RQ-VAE/<X>` 与 `results/stage3_T5Train/<X>` 必须同名；唯一允许的等价形式是嵌套路径把 `/` 写成 `__`（如 `A/r8_control` ↔ `A__r8_control`），大小写必须一致。
+64b. **SID–recall 配对的准入判据（2026-11-02 修订）**：任何"某个 SID 对应某个 `test_R@10`"的结论，只在**目录同名**时成立；不满足即标注 `REJECTED_NAME` 并从统计中排除，禁止与准入配对混报。
+(a) **准入条件（目录同名）**：`results/stage2_RQ-VAE/<X>` 与 `results/stage3_T5Train/<X>` 必须同名；唯一允许的等价形式是嵌套路径把 `/` 写成 `__`（如 `A/r8_control` ↔ `A__r8_control`），大小写必须一致。
+(b) **诊断项（不作准入）**：配对表必须记录 SID 表与 Stage 3 结果文件各自的**引入 commit 与时间戳**（`git log --diff-filter=A -1 --format=%H -- <原始路径>`，在仓库原始路径上判定；`analysis_sid_recall/sids/` 的收集副本不算路径证据），并给出 `SAME_COMMIT` / `COMMITS_DIFFER` / `NOT_TRACKED` 分层；recall 的引入早于 SID 时标注 `SID_AFTER_RECALL`。该列只作风险提示：强制"同 commit"会把可用集合压到单一系列（2026-11-02 实测：同 commit + 同名 = 73 对，其中 99% 来自 `curvature_RQ-VAE`；仅同名 = 110 对、34 个系列、最大 69%），不再作为准入条件。
 补充约束：
 (i) 关联键只能是 **`sid_sha256`**，**禁止**按 variant 名关联——182 行只有 168 个 variant 名（`curvature_RQ-VAE` 一名下 11 个不同 SID），按名关联会静默配错表。
-(ii) 必须记录两条 commit 的时间戳；若 recall 的引入 commit **早于** SID，判为硬失败；若该 SID 只以收集副本存在（原始路径从未入库），判 `UNTRACKED`，不得计为已验证。
-(iii) 每个 Stage2/Stage3 机制臂必须让 Stage 3 变体目录名与 Stage 2 臂目录名完全一致，新臂不得另起名字；同名要求在派发前检查，不符即视为配对不可用。
-(v) **必须报告集合的来源构成**：任何 SID–recall 统计都要按 Stage 2 父系列统计配对数量（`_iterNN` 折叠为同一系列）；若单一系列占比 ≥90%，该集合只能支持「同系列内」结论，**不得**用于跨机制结论。分析默认使用严格层 A（同 commit + 同名），并必须同时报告 B 层（同 commit + Stage 3 运行自身 `train_start` 记录的 `code_path` 命中该 SID）与 C 层（仅 `code_path` 命中）作为敏感性；三层定义、构成与逐层统计见 `analysis_sid_recall/PAIR_TIERS.md`。2026-11-02 实测：A 73 对（**99% 来自 `curvature_RQ-VAE` 一个系列**）、B 86 对（94%）、C 178 对（40 个系列，最大 58%）——因此 A 层的空结果只能说明「该系列内部无关联」，跨机制结论必须由 C 层且需说明其未同 commit 提交的风险。
-(iv) 配对表必须由 `analysis_sid_recall/pair_audit.py` 生成（`pair_audit.csv` 的 `verdict` 列），任何 SID–recall 统计必须同时在 `verdict == "VERIFIED"` 子集与全表上重算并并列报告；单报全表数值视为不合规。截至 2026-11-02，该判据下 182 对中 **73 对**通过；通过子集上曲率–召回相关性为零（`z_curv_L2` +0.129 p=0.28、`z_curv_L3` −0.044 p=0.71、剖面 +0.141 p=0.24），全表仅有的 p≈0.05 信号全部来自未验证行。
+(ii) 每个 Stage2/Stage3 机制臂必须让 Stage 3 变体目录名与 Stage 2 臂目录名完全一致，新臂不得另起名字；同名要求在派发前检查，不符即视为配对不可用。
+(iii) 配对表必须由 `analysis_sid_recall/pair_audit.py` 生成（`pair_audit.csv` 的 `verdict` 与 `commit_tier` 列），任何 SID–recall 统计必须同时在 `VERIFIED` 子集与全表上重算并并列报告；全表保留在 `analysis_sid_recall/archive/sid_recall_full_182.csv`。单报全表数值视为不合规。
+(iv) **必须报告集合的来源构成**：按 Stage 2 父系列统计配对数量（`_iterNN` 折叠为同一系列）；若单一系列占比 ≥90%，该集合只能支持「同系列内」结论，**不得**用于跨机制结论。逐层构成与统计见 `analysis_sid_recall/PAIR_TIERS.md`。截至 2026-11-02：182 对中 **110 对**通过同名判据（34 个系列，最大系列 69%），其中 73 对同时满足同 commit、20 对 commit 不同、17 对 recall 文件未入库；72 对因目录名不符被排除。
 
 ## 12. 机器失败持续修复
 
