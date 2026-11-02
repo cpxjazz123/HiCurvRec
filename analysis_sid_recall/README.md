@@ -3,15 +3,15 @@
 Every SID table reachable in the git history, with the Stage 3 recall of the run that
 generated from it. Collected read-only by `collect.py` (re-runnable).
 
-## The table now holds the verified pairs only (2026-11-02)
+## The admitted pairs (2026-11-02, amended to the name rule)
 
-`sid_recall.csv` and `sid_recall.json` were pruned to the **73** pairs whose
-`verdict` in `pair_audit.csv` is `VERIFIED`; `sid_inventory.csv` follows the
-same 73 SID contents. `prune_pairs.py` is the script that does it (idempotent).
+`sid_recall.csv` and `sid_recall.json` hold the **110** pairs whose `verdict` in
+`pair_audit.csv` is `VERIFIED` (the name rule); `sid_inventory.csv` follows the
+same SID contents. `prune_pairs.py` is the script that does it (idempotent).
 
 * `archive/sid_recall_full_182.csv`, `archive/sid_recall_full_182.json` — the
   full pre-prune table, kept as evidence;
-* `excluded/sid_recall_failed_pair_audit.csv` — the 109 rejected pairs, with the
+* `excluded/sid_recall_failed_pair_audit.csv` — the 72 rejected pairs, with the
   audit's verdict, name class, both introduction commits and both commit times;
 * `archive/full_182_unaudited/` — the tables and the write-up that were computed
   on the unaudited 182-row table; they are not current results;
@@ -24,11 +24,12 @@ Re-running `collect.py` rebuilds the full table from git; it must be followed by
 
 ## Pair verification (2026-11-02) — read before using the CSV
 
-`sid_recall.csv` is a **pairing by consumption evidence**, not a list of pairs
-published together. `pair_audit.py` applies two mechanical criteria — the SID
-table and the recall file were introduced by the same git commit, and the
-`results/stage2_RQ-VAE/<X>` / `results/stage3_T5Train/<X>` names are equal —
-and only **73 of the 182 rows pass**. `pair_audit.csv` carries the verdict per
+`pair_audit.py` applies the admission rule: the
+`results/stage2_RQ-VAE/<X>` / `results/stage3_T5Train/<X>` names must be equal
+(exactly, or with the nested `/` written as `__`). **110 of the 182 rows pass**
+(34 series, largest 69%); the introduction commits are recorded as a diagnostic
+tier (`SAME_COMMIT` 73, `COMMITS_DIFFER` 20, `NOT_TRACKED` 17) but no longer
+gate admission. 72 rows fail the name rule. `pair_audit.csv` carries the verdict per
 row (join on `sid_sha256`; **never** on `variant`, since 182 rows share 168
 variant names). `audit_correlation.py` re-computes the curvature statistics on
 the subsets; `PAIR_AUDIT_FINDINGS.md` is the write-up. Any use of the table

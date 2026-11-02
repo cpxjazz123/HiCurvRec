@@ -86,10 +86,13 @@ def main() -> int:
     features = {record["sid_sha256"]: record
                 for record in json.loads(FEATURES.read_text())}
     tiers = {
-        "A_verified": [row for row in audit if row["verdict"] == "VERIFIED"],
-        "B_same_commit_and_code_path": [row for row in audit
-                                        if row["same_commit"] == "True"
-                                        and row["code_path_ok"] == "True"],
+        "A_name_only": [row for row in audit if row["verdict"] == "VERIFIED"],
+        "A2_name_and_commit": [row for row in audit
+                               if row["name_ok"] == "True"
+                               and row["same_commit"] == "True"],
+        "B_name_and_code_path": [row for row in audit
+                                 if row["name_ok"] == "True"
+                                 and row["code_path_ok"] == "True"],
         "C_code_path_only": [row for row in audit if row["code_path_ok"] == "True"],
     }
     payload = {"pairs": len(audit), "tiers": {}}

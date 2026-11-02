@@ -1,5 +1,20 @@
 # Are the 182 (SID, recall) pairs real pairs?
 
+> **Amendment, 2026-11-02 (repository owner).** The admission criterion is the
+> **directory name**: `results/stage2_RQ-VAE/<X>` and `results/stage3_T5Train/<X>`
+> must match exactly, or after the nested `/` became `__`. Co-publication in one
+> commit is no longer required; it stays in the table as a diagnostic column
+> (`commit_tier`: `SAME_COMMIT` 73, `COMMITS_DIFFER` 20, `NOT_TRACKED` 17 among
+> the admitted pairs). Under this rule **110 of 182 pairs are admitted**, spread
+> over **34 series** (largest `curvature_RQ-VAE`, 69%), recalls
+> [0.0306, 0.0637]; the 72 rejected pairs fail the name rule and are listed in
+> `excluded/sid_recall_failed_pair_audit.csv`. On the 110 admitted pairs the
+> archived 32-edge measurement gives `z_curv_L2` +0.204 (p 0.039),
+> `z_curv_L3` +0.103 (p 0.288), `z_curv_L1` -0.120 (p 0.238), the profile -0.121
+> (p 0.225) — see `PAIR_TIERS.md`; the fresh measurement on this set is the one
+> that decides, because the per-arm sampling and the null-replicate count move
+> these coefficients by up to 0.29 (`CONVERGENCE_FINDINGS.md`).
+
 `analysis_sid_recall/sid_recall.csv` pairs every recoverable SID table with a
 Stage 3 recall. `collect.py` paired them by the run's own `train_start` record,
 which names the SID path the run generated from. That is consumption evidence,

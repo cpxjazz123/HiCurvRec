@@ -1,6 +1,860 @@
 {
  "pairs": [
   {
+   "sid_sha256": "26b87006c310dbf7dfe4d1287eef8eeb49cf18fa014cc59f4804825a4f1e083b",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_BEHDIR-L4/item_sids.json"
+   ],
+   "variant": "TIGER_BEHDIR-L4",
+   "run_dir": "results/stage3_T5Train/TIGER_BEHDIR-L4/logs/Amazon_2023_Instruments/Oct-31-2026_08-29-18",
+   "code_path": "results/stage2_RQ-VAE/TIGER_BEHDIR-L4/item_sids.json",
+   "sid_commit": "ee612b93e0defa31006b84cefd4b6251b61b1ddf",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_digest",
+   "test_recall@5": 0.03236476958164313,
+   "test_recall@10": 0.048225073556294504,
+   "test_ndcg@5": 0.021547717042387695,
+   "test_ndcg@10": 0.026676143921957288,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": "26b87006c310dbf7dfe4d1287eef8eeb49cf18fa014cc59f4804825a4f1e083b",
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.048225073556294504,
+    0.048225073556294504
+   ]
+  },
+  {
+   "sid_sha256": "12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL__item_sids__12bc86ecc499.json",
+    "results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/item_sids.json"
+   ],
+   "variant": "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL",
+   "run_dir": "results/stage3_T5Train/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/logs/Amazon_2023_Instruments/Oct-28-2026_06-16-35",
+   "code_path": "results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/item_sids.json",
+   "sid_commit": "456a02bdfa2bc2fd2baebd440df64e248893be73",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.03629937847107366,
+   "test_recall@10": 0.05459705078431031,
+   "test_ndcg@5": 0.023923877049264318,
+   "test_ndcg@10": 0.029830042735162276,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05459705078431031,
+    0.05459705078431031
+   ]
+  },
+  {
+   "sid_sha256": "266ce95225964002f2b8d8a0d92f18725051bcd73ce3c363ece486a8aeabb14a",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json"
+   ],
+   "variant": "TIGER_BRad-RQ",
+   "run_dir": "results/stage3_T5Train/TIGER_BRad-RQ/logs/Amazon_2023_Instruments/Oct-29-2026_15-12-21",
+   "code_path": "results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json",
+   "sid_commit": "10e902624f884a4afb0030ef2bea83a8eac21ed8",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.029753303504587474,
+   "test_recall@10": 0.04460384059611066,
+   "test_ndcg@5": 0.019758860727030533,
+   "test_ndcg@10": 0.024529501751193103,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.04460384059611066,
+    0.04460384059611066
+   ]
+  },
+  {
+   "sid_sha256": "cfc3f291b84593c6a418143bb7ed4c1c313070785236b9a8c124138db61afd24",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_BRad-RQ__item_sids__cfc3f291b845.json",
+    "results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json"
+   ],
+   "variant": "TIGER_BRad-RQ",
+   "run_dir": "results/stage3_T5Train/TIGER_BRad-RQ/logs/Amazon_2023_Instruments/Oct-29-2026_16-32-13",
+   "code_path": "results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json",
+   "sid_commit": "4db72cadbe9ba0555f30118c57c7843a39c8f0e7",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.018489179825554067,
+   "test_recall@10": 0.030606382423092323,
+   "test_ndcg@5": 0.011445285653436561,
+   "test_ndcg@10": 0.015322173870257244,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.030606382423092323,
+    0.030606382423092323
+   ]
+  },
+  {
+   "sid_sha256": "acb18897b23c0391431b8fcdb46347405ee5a66c6d3b2be1b86c73edec8c02f6",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_CONCMID-GEO-SID/item_sids.json"
+   ],
+   "variant": "TIGER_CONCMID-GEO-SID",
+   "run_dir": "results/stage3_T5Train/TIGER_CONCMID-GEO-SID/logs/Amazon_2023_Instruments/Oct-31-2026_06-23-53",
+   "code_path": "results/stage2_RQ-VAE/TIGER_CONCMID-GEO-SID/item_sids.json",
+   "sid_commit": "c1490e34d0ce16a5b2742229e8dea0614ed56671",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_digest",
+   "test_recall@5": 0.03499364543254583,
+   "test_recall@10": 0.05165479900416094,
+   "test_ndcg@5": 0.022943170603783727,
+   "test_ndcg@10": 0.028303068252641235,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": "acb18897b23c0391431b8fcdb46347405ee5a66c6d3b2be1b86c73edec8c02f6",
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05165479900416094,
+    0.05165479900416094
+   ]
+  },
+  {
+   "sid_sha256": "5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_COOC_RANK_FRECHET__item_sids__5060047a0063.json",
+    "results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/item_sids.json"
+   ],
+   "variant": "TIGER_COOC_RANK_FRECHET",
+   "run_dir": "results/stage3_T5Train/TIGER_COOC_RANK_FRECHET/logs/Amazon_2023_Instruments/Oct-27-2026_22-43-30",
+   "code_path": "results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/item_sids.json",
+   "sid_commit": "456a02bdfa2bc2fd2baebd440df64e248893be73",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.033531224429394664,
+   "test_recall@10": 0.05000087048869235,
+   "test_ndcg@5": 0.02227955975725459,
+   "test_ndcg@10": 0.027597108428946793,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05000087048869235,
+    0.05000087048869235
+   ]
+  },
+  {
+   "sid_sha256": "2884697c5cee99d9e586ef5b650a67524d3b68b4a48a15c226c505a860b7267d",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_CURV-RESID-CONTRAST/item_sids.json"
+   ],
+   "variant": "TIGER_CURV-RESID-CONTRAST",
+   "run_dir": "results/stage3_T5Train/TIGER_CURV-RESID-CONTRAST/logs/Amazon_2023_Instruments/Oct-31-2026_05-14-52",
+   "code_path": "results/stage2_RQ-VAE/TIGER_CURV-RESID-CONTRAST/item_sids.json",
+   "sid_commit": "af869966dae794abd73becc8547c96b01a86951c",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_digest",
+   "test_recall@5": 0.03600341231567402,
+   "test_recall@10": 0.054388133498145856,
+   "test_ndcg@5": 0.0236426636677645,
+   "test_ndcg@10": 0.02957012663878619,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": "2884697c5cee99d9e586ef5b650a67524d3b68b4a48a15c226c505a860b7267d",
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.054388133498145856,
+    0.054388133498145856
+   ]
+  },
+  {
+   "sid_sha256": "ead1cea428ef3906696da889c7b55a9f62acd36b7ce1d06e06d188a545ba181c",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_GDELTA-SUCC-PULL-RQ/item_sids.json"
+   ],
+   "variant": "TIGER_GDELTA-SUCC-PULL-RQ",
+   "run_dir": "results/stage3_T5Train/TIGER_GDELTA-SUCC-PULL-RQ/logs/Amazon_2023_Instruments/Nov-01-2026_00-39-56",
+   "code_path": "results/stage2_RQ-VAE/TIGER_GDELTA-SUCC-PULL-RQ/item_sids.json",
+   "sid_commit": "94f1c559d20b4a13a3b42b058004b8211f039035",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_digest",
+   "test_recall@5": 0.026584724664426608,
+   "test_recall@10": 0.04087814899284458,
+   "test_ndcg@5": 0.017636530836978137,
+   "test_ndcg@10": 0.022199845711920622,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": "ead1cea428ef3906696da889c7b55a9f62acd36b7ce1d06e06d188a545ba181c",
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.04087814899284458,
+    0.04087814899284458
+   ]
+  },
+  {
+   "sid_sha256": "f873884f7c451ce4b107924f9cb65e931d98e7257073e40a5626e9446ca11df8",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_HGS-TREE/item_sids.json"
+   ],
+   "variant": "TIGER_HGS-TREE",
+   "run_dir": "results/stage3_T5Train/TIGER_HGS-TREE/logs/Amazon_2023_Instruments/Nov-02-2026_00-18-23",
+   "code_path": "results/stage2_RQ-VAE/TIGER_HGS-TREE/item_sids.json",
+   "sid_commit": "2a234d09377d61cc010db160a5e24af0a26a9fe5",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_digest",
+   "test_recall@5": 0.033722731941712075,
+   "test_recall@10": 0.05125437420567907,
+   "test_ndcg@5": 0.022388879122750328,
+   "test_ndcg@10": 0.028026496031430172,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": "f873884f7c451ce4b107924f9cb65e931d98e7257073e40a5626e9446ca11df8",
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05125437420567907,
+    0.05125437420567907
+   ]
+  },
+  {
+   "sid_sha256": "4d1a3af651c117059826d003433f0f2a50793b3097096d29974728086e1b7eaa",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_HORO-TRANSPLANT-L/item_sids.json"
+   ],
+   "variant": "TIGER_HORO-TRANSPLANT-L",
+   "run_dir": "results/stage3_T5Train/TIGER_HORO-TRANSPLANT-L/logs/Amazon_2023_Instruments/Oct-31-2026_12-21-22",
+   "code_path": "results/stage2_RQ-VAE/TIGER_HORO-TRANSPLANT-L/item_sids.json",
+   "sid_commit": "d4ef248be394dcf72ce8cf41cf4efa602634a2e6",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_digest",
+   "test_recall@5": 0.036055641637215134,
+   "test_recall@10": 0.05484078761816884,
+   "test_ndcg@5": 0.023330189137124573,
+   "test_ndcg@10": 0.029385636257826614,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": "4d1a3af651c117059826d003433f0f2a50793b3097096d29974728086e1b7eaa",
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05484078761816884,
+    0.05484078761816884
+   ]
+  },
+  {
+   "sid_sha256": "9a9ad41ed85174f1831fc8cdcedcc6c676ac5f679112f9fb72486bbf1044455d",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_HYP-CERT-LEAFREPAIR/item_sids.json"
+   ],
+   "variant": "TIGER_HYP-CERT-LEAFREPAIR",
+   "run_dir": "results/stage3_T5Train/TIGER_HYP-CERT-LEAFREPAIR/logs/Amazon_2023_Instruments/Oct-31-2026_11-15-20",
+   "code_path": "results/stage2_RQ-VAE/TIGER_HYP-CERT-LEAFREPAIR/item_sids.json",
+   "sid_commit": "7139811ec939b882c1ed39341c003da08194f072",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_digest",
+   "test_recall@5": 0.03629937847107366,
+   "test_recall@10": 0.054945246261251066,
+   "test_ndcg@5": 0.02391053375677979,
+   "test_ndcg@10": 0.02991545110181899,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": "9a9ad41ed85174f1831fc8cdcedcc6c676ac5f679112f9fb72486bbf1044455d",
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.054945246261251066,
+    0.054945246261251066
+   ]
+  },
+  {
+   "sid_sha256": "94099bec716dbb846ffd0119bcd83f4e910b3b30e14bce94571630482f7fe9fb",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_behavior_residual_geometry_transport/r8_control/item_sids.json"
+   ],
+   "variant": "TIGER_behavior_residual_geometry_transport__r8_control",
+   "run_dir": "results/stage3_T5Train/TIGER_behavior_residual_geometry_transport__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_14-01-57",
+   "code_path": "results/stage2_RQ-VAE/TIGER_behavior_residual_geometry_transport/r8_control/item_sids.json",
+   "sid_commit": "f7b7b530c46a6f3427c25150415596beee9f0fd2",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.04171381813750239,
+   "test_recall@10": 0.06338898657706436,
+   "test_ndcg@5": 0.027576263801498285,
+   "test_ndcg@10": 0.03454331085500618,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.06338898657706436,
+    0.06338898657706436
+   ]
+  },
+  {
+   "sid_sha256": "c3d182e120c3fa6c2ea4d4058606fea0a3af19a333c629f078a0ab238c3008ac",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_bootstrap_code_stability__resample__item_sids__c3d182e120c3.json",
+    "results/stage2_RQ-VAE/TIGER_bootstrap_code_stability/resample/item_sids.json"
+   ],
+   "variant": "TIGER_bootstrap_code_stability__resample",
+   "run_dir": "results/stage3_T5Train/TIGER_bootstrap_code_stability__resample/logs/Amazon_2023_Instruments/Oct-25-2026_04-19-04",
+   "code_path": "results/stage2_RQ-VAE/TIGER_bootstrap_code_stability/resample/item_sids.json",
+   "sid_commit": "00ec3b07284b0c992ee984c02db8f4178b545bff",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.04265394592524243,
+   "test_recall@10": 0.06335416702937029,
+   "test_ndcg@5": 0.028496590523210182,
+   "test_ndcg@10": 0.03516551922018455,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.06335416702937029,
+    0.06335416702937029
+   ]
+  },
+  {
+   "sid_sha256": "de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_branch-geodesic-rank__item_sids__de8cbbe1d90e.json",
+    "results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/item_sids.json"
+   ],
+   "variant": "TIGER_branch-geodesic-rank",
+   "run_dir": "results/stage3_T5Train/TIGER_branch-geodesic-rank/logs/Amazon_2023_Instruments/Oct-28-2026_12-21-45",
+   "code_path": "results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/item_sids.json",
+   "sid_commit": "456a02bdfa2bc2fd2baebd440df64e248893be73",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.032887062797054264,
+   "test_recall@10": 0.04967008478559864,
+   "test_ndcg@5": 0.021834782784257708,
+   "test_ndcg@10": 0.027248654225454434,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.04967008478559864,
+    0.04967008478559864
+   ]
+  },
+  {
+   "sid_sha256": "ad7c9eb130e9c7510e1fe5b9469eb184297764de0c6837a157314ba57c5336eb",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/r8_control/item_sids.json"
+   ],
+   "variant": "TIGER_c106_directed_assignment_usage_balance__r8_control",
+   "run_dir": "results/stage3_T5Train/TIGER_c106_directed_assignment_usage_balance__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-56-45",
+   "code_path": "results/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/r8_control/item_sids.json",
+   "sid_commit": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.04204460384059611,
+   "test_recall@10": 0.06241403924163025,
+   "test_ndcg@5": 0.027764050430797906,
+   "test_ndcg@10": 0.034312283480564885,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.06241403924163025,
+    0.06241403924163025
+   ]
+  },
+  {
+   "sid_sha256": "19b4b3564272892b041c417557c453ea80a55d7b45080928f5fcb4ab78a8da8b",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control/item_sids.json"
+   ],
+   "variant": "TIGER_c106_directed_codeword_margin_geometry__r8_control",
+   "run_dir": "results/stage3_T5Train/TIGER_c106_directed_codeword_margin_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_00-00-42",
+   "code_path": "results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control/item_sids.json",
+   "sid_commit": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.04160935949442017,
+   "test_recall@10": 0.06373718205400512,
+   "test_ndcg@5": 0.02755781933822884,
+   "test_ndcg@10": 0.03466763666330205,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.06373718205400512,
+    0.06373718205400512
+   ]
+  },
+  {
+   "sid_sha256": "b3643d04ae2336a105b78edf58d1400926c8497cf10924bbcaae28c6f36a19d3",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_c107_directed_capacity_balanced_assignment_partition/r8_control/item_sids.json"
+   ],
+   "variant": "TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control",
+   "run_dir": "results/stage3_T5Train/TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_12-26-39",
+   "code_path": "results/stage2_RQ-VAE/TIGER_c107_directed_capacity_balanced_assignment_partition/r8_control/item_sids.json",
+   "sid_commit": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.039624645275857864,
+   "test_recall@10": 0.06088197914309093,
+   "test_ndcg@5": 0.026272688948342764,
+   "test_ndcg@10": 0.03310210683018558,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.06088197914309093,
+    0.06088197914309093
+   ]
+  },
+  {
+   "sid_sha256": "e2073a4ea3e1e418ca8696736008161a851f6df9e2b31c66d0fc6344745fc9ba",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_assignment_partition/r8_control/item_sids.json"
+   ],
+   "variant": "TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control",
+   "run_dir": "results/stage3_T5Train/TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_07-26-58",
+   "code_path": "results/stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_assignment_partition/r8_control/item_sids.json",
+   "sid_commit": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.04051254374205679,
+   "test_recall@10": 0.06072529117846759,
+   "test_ndcg@5": 0.02688864336748468,
+   "test_ndcg@10": 0.03337873989029098,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.06072529117846759,
+    0.06072529117846759
+   ]
+  },
+  {
+   "sid_sha256": "59298051ee0d7b783d37c7c4a53f01eaeecf0cf89193f320931cce56736f2cf7",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_c107_directed_codeword_tangent_repulsion/r8_control/item_sids.json"
+   ],
+   "variant": "TIGER_c107_directed_codeword_tangent_repulsion__r8_control",
+   "run_dir": "results/stage3_T5Train/TIGER_c107_directed_codeword_tangent_repulsion__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_09-56-09",
+   "code_path": "results/stage2_RQ-VAE/TIGER_c107_directed_codeword_tangent_repulsion/r8_control/item_sids.json",
+   "sid_commit": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.04089555876669162,
+   "test_recall@10": 0.06269259562318286,
+   "test_ndcg@5": 0.02692938862847363,
+   "test_ndcg@10": 0.03394123485236039,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.06269259562318286,
+    0.06269259562318286
+   ]
+  },
+  {
+   "sid_sha256": "511495573338271bb5df2b42683d2a73718afa7bf9ab3a330eca2eb6f94c6508",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_c107_directed_separated_codeword_geometry/r8_control/item_sids.json"
+   ],
+   "variant": "TIGER_c107_directed_separated_codeword_geometry__r8_control",
+   "run_dir": "results/stage3_T5Train/TIGER_c107_directed_separated_codeword_geometry__r8_control/logs/Amazon_2023_Instruments/Oct-22-2026_03-37-07",
+   "code_path": "results/stage2_RQ-VAE/TIGER_c107_directed_separated_codeword_geometry/r8_control/item_sids.json",
+   "sid_commit": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.040825919671303466,
+   "test_recall@10": 0.06103866710771427,
+   "test_ndcg@5": 0.0274390212028533,
+   "test_ndcg@10": 0.033942537933861414,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.06103866710771427,
+    0.06103866710771427
+   ]
+  },
+  {
+   "sid_sha256": "9e1a7c3fc3e709ac7834219693330525bf41d6564b505661994671ccad10b5ae",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_c117_hyperbolic_item_semantic_id__item_sids__9e1a7c3fc3e7.json",
+    "results/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/item_sids.json"
+   ],
+   "variant": "TIGER_c117_hyperbolic_item_semantic_id",
+   "run_dir": "results/stage3_T5Train/TIGER_c117_hyperbolic_item_semantic_id/logs/Amazon_2023_Instruments/Oct-24-2026_16-10-20",
+   "code_path": "results/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/item_sids.json",
+   "sid_commit": "09c170b960ef91f7080dcf0d5ab2991f43142b68",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.0372395062588137,
+   "test_recall@10": 0.05557199811974443,
+   "test_ndcg@5": 0.024465239883884344,
+   "test_ndcg@10": 0.030364774529014066,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05557199811974443,
+    0.05557199811974443
+   ]
+  },
+  {
+   "sid_sha256": "7a65c284d034f2e1aa00950fc305f3604f26f349b543eddd4b40b2e7f38f1662",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_c1_behaviour_conditioned_residual_target/r8_control/item_sids.json"
+   ],
+   "variant": "TIGER_c1_behaviour_conditioned_residual_target__r8_control",
+   "run_dir": "results/stage3_T5Train/TIGER_c1_behaviour_conditioned_residual_target__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_12-07-27",
+   "code_path": "results/stage2_RQ-VAE/TIGER_c1_behaviour_conditioned_residual_target/r8_control/item_sids.json",
+   "sid_commit": "25933ecd9601a061b333488be68593bf94f9a20e",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.04098260763592681,
+   "test_recall@10": 0.0610038475600202,
+   "test_ndcg@5": 0.02737187628538327,
+   "test_ndcg@10": 0.03381020016512428,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.0610038475600202,
+    0.0610038475600202
+   ]
+  },
+  {
+   "sid_sha256": "07c3eec59a493149023eae03284d9a4b846d0ef675f5ae4df2c9f7627171f738",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl/r8_control/item_sids.json"
+   ],
+   "variant": "TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control",
+   "run_dir": "results/stage3_T5Train/TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control/logs/Amazon_2023_Instruments/Oct-21-2026_20-54-52",
+   "code_path": "results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl/r8_control/item_sids.json",
+   "sid_commit": "25933ecd9601a061b333488be68593bf94f9a20e",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.04115670537439719,
+   "test_recall@10": 0.06225735127700691,
+   "test_ndcg@5": 0.027091007578948483,
+   "test_ndcg@10": 0.03384902483338121,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.06225735127700691,
+    0.06225735127700691
+   ]
+  },
+  {
+   "sid_sha256": "322cc48fdfb86ded9f9aa436e650da1cda773bcf8a6e7a5632a5a4bd5e6a0217",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_cogeo_region_argmax__item_sids__322cc48fdfb8.json",
+    "results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/item_sids.json"
+   ],
+   "variant": "TIGER_cogeo_region_argmax",
+   "run_dir": "results/stage3_T5Train/TIGER_cogeo_region_argmax/logs/Amazon_2023_Instruments/Oct-27-2026_18-48-24",
+   "code_path": "results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/item_sids.json",
+   "sid_commit": "456a02bdfa2bc2fd2baebd440df64e248893be73",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.026462856247497345,
+   "test_recall@10": 0.03983356256202232,
+   "test_ndcg@5": 0.01738214036814339,
+   "test_ndcg@10": 0.02169466665477982,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.03983356256202232,
+    0.03983356256202232
+   ]
+  },
+  {
+   "sid_sha256": "d49280fe54987a3325d502c11261199a5543b1db4d9a5f1f402d4313238f7851",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_cooccur_coherent_sid__item_sids__d49280fe5498.json",
+    "results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/item_sids.json"
+   ],
+   "variant": "TIGER_cooccur_coherent_sid",
+   "run_dir": "results/stage3_T5Train/TIGER_cooccur_coherent_sid/logs/Amazon_2023_Instruments/Oct-26-2026_22-00-51",
+   "code_path": "results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/item_sids.json",
+   "sid_commit": "b7f2dc8b38ba997d86a1880cc79361359be31666",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.03666498372186145,
+   "test_recall@10": 0.05593760337053222,
+   "test_ndcg@5": 0.02452734452511956,
+   "test_ndcg@10": 0.030766723265997328,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05593760337053222,
+    0.05593760337053222
+   ]
+  },
+  {
+   "sid_sha256": "4fadabd21762a83313d5d175255d9910ec5ac8a0aba3828c91b6669712a2dcb2",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/TIGER_incoming_context_barycenter/item_sids.json"
+   ],
+   "variant": "TIGER_incoming_context_barycenter",
+   "run_dir": "results/stage3_T5Train/TIGER_incoming_context_barycenter/logs/Amazon_2023_Instruments/Oct-27-2026_05-45-40",
+   "code_path": "results/stage2_RQ-VAE/TIGER_incoming_context_barycenter/item_sids.json",
+   "sid_commit": "d7f718520a83a56e19bc2cf669ba640f36578d22",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.03889343477428228,
+   "test_recall@10": 0.058496840126046765,
+   "test_ndcg@5": 0.025717393788938836,
+   "test_ndcg@10": 0.03205664072791379,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.058496840126046765,
+    0.058496840126046765
+   ]
+  },
+  {
+   "sid_sha256": "4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_interest_signature_hypball__item_sids__4772785a44f9.json",
+    "results/stage2_RQ-VAE/TIGER_interest_signature_hypball/item_sids.json"
+   ],
+   "variant": "TIGER_interest_signature_hypball",
+   "run_dir": "results/stage3_T5Train/TIGER_interest_signature_hypball/logs/Amazon_2023_Instruments/Oct-28-2026_08-50-40",
+   "code_path": "results/stage2_RQ-VAE/TIGER_interest_signature_hypball/item_sids.json",
+   "sid_commit": "456a02bdfa2bc2fd2baebd440df64e248893be73",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.035028464980239905,
+   "test_recall@10": 0.05121955465798499,
+   "test_ndcg@5": 0.023246429355366787,
+   "test_ndcg@10": 0.028456964417855054,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05121955465798499,
+    0.05121955465798499
+   ]
+  },
+  {
+   "sid_sha256": "67f77d170c7977d0462567d8553ea8c7d5f7b52b290cd585525586723c2a8063",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_poincare-frechet-successor-codebook__item_sids__67f77d170c79.json",
+    "results/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook/item_sids.json"
+   ],
+   "variant": "TIGER_poincare-frechet-successor-codebook",
+   "run_dir": "results/stage3_T5Train/TIGER_poincare-frechet-successor-codebook/logs/Amazon_2023_Instruments/Oct-29-2026_02-06-58",
+   "code_path": "results/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook/item_sids.json",
+   "sid_commit": "f7d39d4d5a99598cf2eac0f450d74aeedf70bc33",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.03565521683873327,
+   "test_recall@10": 0.053169449328853216,
+   "test_ndcg@5": 0.02343369468287704,
+   "test_ndcg@10": 0.029094302825308862,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.053169449328853216,
+    0.053169449328853216
+   ]
+  },
+  {
+   "sid_sha256": "64539cfe39561ba245d39a1d488d91e1ccb7fd361b83c80ecbb441bb45cf346d",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_successor-geodesic-coarse__item_sids__64539cfe3956.json",
+    "results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse/item_sids.json"
+   ],
+   "variant": "TIGER_successor-geodesic-coarse",
+   "run_dir": "results/stage3_T5Train/TIGER_successor-geodesic-coarse/logs/Amazon_2023_Instruments/Oct-26-2026_11-41-33",
+   "code_path": "results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse/item_sids.json",
+   "sid_commit": "00ec3b07284b0c992ee984c02db8f4178b545bff",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.036508295757238116,
+   "test_recall@10": 0.054022528247358065,
+   "test_ndcg@5": 0.02433180879190463,
+   "test_ndcg@10": 0.029981413033305662,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.054022528247358065,
+    0.054022528247358065
+   ]
+  },
+  {
+   "sid_sha256": "3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_successor_entropy_curvature__item_sids__3afb4d7ff660.json",
+    "results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/item_sids.json"
+   ],
+   "variant": "TIGER_successor_entropy_curvature",
+   "run_dir": "results/stage3_T5Train/TIGER_successor_entropy_curvature/logs/Amazon_2023_Instruments/Oct-25-2026_19-35-32",
+   "code_path": "results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/item_sids.json",
+   "sid_commit": "00ec3b07284b0c992ee984c02db8f4178b545bff",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.034279844704817285,
+   "test_recall@10": 0.05062762234718571,
+   "test_ndcg@5": 0.02275319175721467,
+   "test_ndcg@10": 0.028021926382601977,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05062762234718571,
+    0.05062762234718571
+   ]
+  },
+  {
+   "sid_sha256": "f30066606b4c31d699e50e6ba613ce40b53813bb158045fe04eceeb57bb95a66",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_successor_residual_barycenter__item_sids__f30066606b4c.json",
+    "results/stage2_RQ-VAE/TIGER_successor_residual_barycenter/item_sids.json"
+   ],
+   "variant": "TIGER_successor_residual_barycenter",
+   "run_dir": "results/stage3_T5Train/TIGER_successor_residual_barycenter/logs/Amazon_2023_Instruments/Oct-26-2026_05-47-51",
+   "code_path": "results/stage2_RQ-VAE/TIGER_successor_residual_barycenter/item_sids.json",
+   "sid_commit": "00ec3b07284b0c992ee984c02db8f4178b545bff",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.03661275440032034,
+   "test_recall@10": 0.05435331395045179,
+   "test_ndcg@5": 0.024032845988037864,
+   "test_ndcg@10": 0.029748898869614567,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05435331395045179,
+    0.05435331395045179
+   ]
+  },
+  {
+   "sid_sha256": "7d73b0b626ce651c27798716c590a6820c5ebfddd1478ba686448de50fc3ea21",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_tangent_successor_residual__item_sids__7d73b0b626ce.json",
+    "results/stage2_RQ-VAE/TIGER_tangent_successor_residual/item_sids.json"
+   ],
+   "variant": "TIGER_tangent_successor_residual",
+   "run_dir": "results/stage3_T5Train/TIGER_tangent_successor_residual/logs/Amazon_2023_Instruments/Oct-25-2026_23-49-10",
+   "code_path": "results/stage2_RQ-VAE/TIGER_tangent_successor_residual/item_sids.json",
+   "sid_commit": "00ec3b07284b0c992ee984c02db8f4178b545bff",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.035672626612580305,
+   "test_recall@10": 0.05424885530736956,
+   "test_ndcg@5": 0.023523584808497165,
+   "test_ndcg@10": 0.0295021872542991,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05424885530736956,
+    0.05424885530736956
+   ]
+  },
+  {
+   "sid_sha256": "9f7ad2511666b58e79703d66a4a299461fb4cbfc0e5aec2366bfc9f4ef6ec4f7",
+   "sid_paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_transition_busemann_gate__item_sids__9f7ad2511666.json",
+    "results/stage2_RQ-VAE/TIGER_transition_busemann_gate/item_sids.json"
+   ],
+   "variant": "TIGER_transition_busemann_gate",
+   "run_dir": "results/stage3_T5Train/TIGER_transition_busemann_gate/logs/Amazon_2023_Instruments/Oct-25-2026_16-24-07",
+   "code_path": "results/stage2_RQ-VAE/TIGER_transition_busemann_gate/item_sids.json",
+   "sid_commit": "00ec3b07284b0c992ee984c02db8f4178b545bff",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.036717213043402565,
+   "test_recall@10": 0.0548233778443218,
+   "test_ndcg@5": 0.024614596564543016,
+   "test_ndcg@10": 0.03047498281369757,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.0548233778443218,
+    0.0548233778443218
+   ]
+  },
+  {
+   "sid_sha256": "94323185a20bcf575989dacf3699c66480db443ad5b331cb4cc3e3f8e01ee9e7",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json"
+   ],
+   "variant": "curvature_RQ-VAE",
+   "run_dir": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_07-43-40",
+   "code_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json",
+   "sid_commit": "0e993da103868c84f5c227bcdb548a63300d0374",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.038788976131200054,
+   "test_recall@10": 0.05846202057835269,
+   "test_ndcg@5": 0.02561188691027564,
+   "test_ndcg@10": 0.031921708798652144,
+   "n_eval": 57439,
+   "code_path_sha256": null,
+   "sid_runs": 6,
+   "sid_recall_range": [
+    0.04230575044830168,
+    0.05846202057835269
+   ]
+  },
+  {
+   "sid_sha256": "0fe39b181871152fe453f72f61af8a45b038b3f3ea2f48b274287b9ad311766b",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json"
+   ],
+   "variant": "curvature_RQ-VAE",
+   "run_dir": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-03-2026_20-34-59",
+   "code_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json",
+   "sid_commit": "2bf1e33633eb6ff856bcce9416bb3a51d387b7df",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.03920681070352896,
+   "test_recall@10": 0.060081129546127196,
+   "test_ndcg@5": 0.025581490347618776,
+   "test_ndcg@10": 0.03227867048107636,
+   "n_eval": 57439,
+   "epoch": 150,
+   "code_path_sha256": null,
+   "sid_runs": 2,
+   "sid_recall_range": [
+    0.053064990685770995,
+    0.060081129546127196
+   ]
+  },
+  {
    "sid_sha256": "00829508cfa930ecb66ca9d58158be53e93b687d1218c50ee5cb35679fa9d35d",
    "sid_paths": [
     "results/stage2_RQ-VAE/r4_08/item_sids.json"
@@ -160,6 +1014,29 @@
    "sid_recall_range": [
     0.05781785894601229,
     0.05781785894601229
+   ]
+  },
+  {
+   "sid_sha256": "6ce03b39b4521d621950e355929da5e049bbba4ad5a21d1467549a0e81dbef03",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json"
+   ],
+   "variant": "curvature_RQ-VAE",
+   "run_dir": "results/stage3_T5Train/curvature_RQ-VAE/logs/Amazon_2023_Instruments/Oct-08-2026_02-26-19",
+   "code_path": "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json",
+   "sid_commit": "62496d2b03d189d187fdda13acce18678bc1bdc0",
+   "sid_resolution": "at_run_date",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.03974651369278713,
+   "test_recall@10": 0.05948919723532791,
+   "test_ndcg@5": 0.025830957123265996,
+   "test_ndcg@10": 0.03219108145369632,
+   "n_eval": 57439,
+   "code_path_sha256": null,
+   "sid_runs": 8,
+   "sid_recall_range": [
+    0.051950765159560576,
+    0.05948919723532791
    ]
   },
   {
@@ -574,6 +1451,29 @@
    "sid_recall_range": [
     0.05630320862132001,
     0.05630320862132001
+   ]
+  },
+  {
+   "sid_sha256": "0b900e9cce2fa371d198913a2adaffd9bc31cbe9e14d2242604757121aaaf0a2",
+   "sid_paths": [
+    "results/stage2_RQ-VAE/curvature_RQ-VAE_iter12/item_sids.json"
+   ],
+   "variant": "curvature_RQ-VAE_iter12",
+   "run_dir": "results/stage3_T5Train/curvature_RQ-VAE_iter12/logs/Amazon_2023_Instruments/Sep-25-2026_14-51-06",
+   "code_path": "results/stage2_RQ-VAE/curvature_RQ-VAE_iter12/item_sids.json",
+   "sid_commit": "3ded33170e848ae7a7455b7aec89e51eb06aae43",
+   "sid_resolution": "earliest_surviving",
+   "pair_confidence": "verified_vocabulary",
+   "test_recall@5": 0.03898048364351747,
+   "test_recall@10": 0.05795713713678859,
+   "test_ndcg@5": 0.0261413306895331,
+   "test_ndcg@10": 0.03224681865162371,
+   "n_eval": 57439,
+   "code_path_sha256": null,
+   "sid_runs": 1,
+   "sid_recall_range": [
+    0.05795713713678859,
+    0.05795713713678859
    ]
   },
   {
@@ -1683,6 +2583,1317 @@
  ],
  "inventory": [
   {
+   "sid_sha256": "12bc86ecc4996a5953b735c9bc5be743d8405d6b5118f84d800a7d694c14ed2b",
+   "file": "results__stage2_RQ-VAE__TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL__item_sids__9363fc00c08b.json",
+   "bytes": 1258521,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL__item_sids__12bc86ecc499.json",
+    "results/stage2_RQ-VAE/TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL/item_sids.json"
+   ],
+   "git_blob": "9363fc00c08bea28ac79e7310598618e3447bcc0",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 253,
+     "largest_bucket": 754,
+     "largest_bucket_share": 0.030667
+    },
+    "L2": {
+     "distinct": 9047,
+     "largest_bucket": 112,
+     "largest_bucket_share": 0.004555
+    },
+    "L3": {
+     "distinct": 22007,
+     "largest_bucket": 18,
+     "largest_bucket_share": 0.000732
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05459705078431031
+  },
+  {
+   "sid_sha256": "cfc3f291b84593c6a418143bb7ed4c1c313070785236b9a8c124138db61afd24",
+   "file": "results__stage2_RQ-VAE__TIGER_BRad-RQ__item_sids__8224a58e54d7.json",
+   "bytes": 1247154,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_BRad-RQ__item_sids__cfc3f291b845.json",
+    "results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json"
+   ],
+   "git_blob": "8224a58e54d75c0048f2bc450dd910d00b436ace",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 12,
+     "largest_bucket": 2749,
+     "largest_bucket_share": 0.111807
+    },
+    "L2": {
+     "distinct": 60,
+     "largest_bucket": 700,
+     "largest_bucket_share": 0.02847
+    },
+    "L3": {
+     "distinct": 170,
+     "largest_bucket": 246,
+     "largest_bucket_share": 0.010005
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.030606382423092323
+  },
+  {
+   "sid_sha256": "5060047a00636796457fadd14c862cd3f0da7bdbbc8b3eb8f634dce8bd90df16",
+   "file": "results__stage2_RQ-VAE__TIGER_COOC_RANK_FRECHET__item_sids__709c22b310b9.json",
+   "bytes": 1257778,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_COOC_RANK_FRECHET__item_sids__5060047a0063.json",
+    "results/stage2_RQ-VAE/TIGER_COOC_RANK_FRECHET/item_sids.json"
+   ],
+   "git_blob": "709c22b310b9c6faa1df6de56264f62a6bf17a4d",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 254,
+     "largest_bucket": 735,
+     "largest_bucket_share": 0.029894
+    },
+    "L2": {
+     "distinct": 6810,
+     "largest_bucket": 77,
+     "largest_bucket_share": 0.003132
+    },
+    "L3": {
+     "distinct": 20130,
+     "largest_bucket": 23,
+     "largest_bucket_share": 0.000935
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05000087048869235
+  },
+  {
+   "sid_sha256": "c3d182e120c3fa6c2ea4d4058606fea0a3af19a333c629f078a0ab238c3008ac",
+   "file": "results__stage2_RQ-VAE__TIGER_bootstrap_code_stability__resample__item_sids__88705d5a877e.json",
+   "bytes": 1431709,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_bootstrap_code_stability__resample__item_sids__c3d182e120c3.json",
+    "results/stage2_RQ-VAE/TIGER_bootstrap_code_stability/resample/item_sids.json"
+   ],
+   "git_blob": "88705d5a877ed1a95d53a2e76649cdcf5653e625",
+   "items": 24587,
+   "width": 5,
+   "levels": {
+    "L1": {
+     "distinct": 239,
+     "largest_bucket": 232,
+     "largest_bucket_share": 0.009436
+    },
+    "L2": {
+     "distinct": 15854,
+     "largest_bucket": 23,
+     "largest_bucket_share": 0.000935
+    },
+    "L3": {
+     "distinct": 23612,
+     "largest_bucket": 9,
+     "largest_bucket_share": 0.000366
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.06335416702937029
+  },
+  {
+   "sid_sha256": "de8cbbe1d90e630ce40e18903806e16025e3d53fadcd073e06666399a68bc35a",
+   "file": "results__stage2_RQ-VAE__TIGER_branch-geodesic-rank__item_sids__b8e09827e715.json",
+   "bytes": 1255672,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_branch-geodesic-rank__item_sids__de8cbbe1d90e.json",
+    "results/stage2_RQ-VAE/TIGER_branch-geodesic-rank/item_sids.json"
+   ],
+   "git_blob": "b8e09827e71523a9a167c6617dbc89f98eec1cc7",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 27,
+     "largest_bucket": 1470,
+     "largest_bucket_share": 0.059788
+    },
+    "L2": {
+     "distinct": 3156,
+     "largest_bucket": 65,
+     "largest_bucket_share": 0.002644
+    },
+    "L3": {
+     "distinct": 22858,
+     "largest_bucket": 7,
+     "largest_bucket_share": 0.000285
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.04967008478559864
+  },
+  {
+   "sid_sha256": "9e1a7c3fc3e709ac7834219693330525bf41d6564b505661994671ccad10b5ae",
+   "file": "results__stage2_RQ-VAE__TIGER_c117_hyperbolic_item_semantic_id__item_sids__c9db32ba7af1.json",
+   "bytes": 1257297,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_c117_hyperbolic_item_semantic_id__item_sids__9e1a7c3fc3e7.json",
+    "results/stage2_RQ-VAE/TIGER_c117_hyperbolic_item_semantic_id/item_sids.json"
+   ],
+   "git_blob": "c9db32ba7af1aa312936f480b646f978e76dc7b8",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 240,
+     "largest_bucket": 853,
+     "largest_bucket_share": 0.034693
+    },
+    "L2": {
+     "distinct": 6233,
+     "largest_bucket": 113,
+     "largest_bucket_share": 0.004596
+    },
+    "L3": {
+     "distinct": 19515,
+     "largest_bucket": 33,
+     "largest_bucket_share": 0.001342
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05557199811974443
+  },
+  {
+   "sid_sha256": "322cc48fdfb86ded9f9aa436e650da1cda773bcf8a6e7a5632a5a4bd5e6a0217",
+   "file": "results__stage2_RQ-VAE__TIGER_cogeo_region_argmax__item_sids__a7adb47212fb.json",
+   "bytes": 1250913,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_cogeo_region_argmax__item_sids__322cc48fdfb8.json",
+    "results/stage2_RQ-VAE/TIGER_cogeo_region_argmax/item_sids.json"
+   ],
+   "git_blob": "a7adb47212fbfe998cf5efdfbb6453e8ef5f6722",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 2,
+     "largest_bucket": 24583,
+     "largest_bucket_share": 0.999837
+    },
+    "L2": {
+     "distinct": 16,
+     "largest_bucket": 5135,
+     "largest_bucket_share": 0.20885
+    },
+    "L3": {
+     "distinct": 1557,
+     "largest_bucket": 247,
+     "largest_bucket_share": 0.010046
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.03983356256202232
+  },
+  {
+   "sid_sha256": "d49280fe54987a3325d502c11261199a5543b1db4d9a5f1f402d4313238f7851",
+   "file": "results__stage2_RQ-VAE__TIGER_cooccur_coherent_sid__item_sids__6631ad766d2b.json",
+   "bytes": 1258388,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_cooccur_coherent_sid__item_sids__d49280fe5498.json",
+    "results/stage2_RQ-VAE/TIGER_cooccur_coherent_sid/item_sids.json"
+   ],
+   "git_blob": "6631ad766d2bf8f01bfde8df009eb3974bcede99",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 242,
+     "largest_bucket": 850,
+     "largest_bucket_share": 0.034571
+    },
+    "L2": {
+     "distinct": 7375,
+     "largest_bucket": 103,
+     "largest_bucket_share": 0.004189
+    },
+    "L3": {
+     "distinct": 20412,
+     "largest_bucket": 36,
+     "largest_bucket_share": 0.001464
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05593760337053222
+  },
+  {
+   "sid_sha256": "4772785a44f946df16db7dc3ac14f78c331d28deb044786c1c25cbaa8a3bb0dc",
+   "file": "results__stage2_RQ-VAE__TIGER_interest_signature_hypball__item_sids__f949d8bd743c.json",
+   "bytes": 1259355,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_interest_signature_hypball__item_sids__4772785a44f9.json",
+    "results/stage2_RQ-VAE/TIGER_interest_signature_hypball/item_sids.json"
+   ],
+   "git_blob": "f949d8bd743cbb563630e31880af98dd3d3a71a8",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 16,
+     "largest_bucket": 2533,
+     "largest_bucket_share": 0.103022
+    },
+    "L2": {
+     "distinct": 1684,
+     "largest_bucket": 177,
+     "largest_bucket_share": 0.007199
+    },
+    "L3": {
+     "distinct": 16790,
+     "largest_bucket": 19,
+     "largest_bucket_share": 0.000773
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05121955465798499
+  },
+  {
+   "sid_sha256": "67f77d170c7977d0462567d8553ea8c7d5f7b52b290cd585525586723c2a8063",
+   "file": "results__stage2_RQ-VAE__TIGER_poincare-frechet-successor-codebook__item_sids__ca1b11e7e983.json",
+   "bytes": 1251975,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_poincare-frechet-successor-codebook__item_sids__67f77d170c79.json",
+    "results/stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook/item_sids.json"
+   ],
+   "git_blob": "ca1b11e7e983f2e1889fe57b17b5c41c0c07ba52",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 203,
+     "largest_bucket": 1208,
+     "largest_bucket_share": 0.049132
+    },
+    "L2": {
+     "distinct": 1867,
+     "largest_bucket": 350,
+     "largest_bucket_share": 0.014235
+    },
+    "L3": {
+     "distinct": 8007,
+     "largest_bucket": 102,
+     "largest_bucket_share": 0.004149
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.053169449328853216
+  },
+  {
+   "sid_sha256": "64539cfe39561ba245d39a1d488d91e1ccb7fd361b83c80ecbb441bb45cf346d",
+   "file": "results__stage2_RQ-VAE__TIGER_successor-geodesic-coarse__item_sids__aac4dc1ea120.json",
+   "bytes": 1221571,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_successor-geodesic-coarse__item_sids__64539cfe3956.json",
+    "results/stage2_RQ-VAE/TIGER_successor-geodesic-coarse/item_sids.json"
+   ],
+   "git_blob": "aac4dc1ea1206910b72cc1be44a501b45404173f",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 28,
+     "largest_bucket": 4291,
+     "largest_bucket_share": 0.174523
+    },
+    "L2": {
+     "distinct": 1044,
+     "largest_bucket": 425,
+     "largest_bucket_share": 0.017286
+    },
+    "L3": {
+     "distinct": 11922,
+     "largest_bucket": 82,
+     "largest_bucket_share": 0.003335
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.054022528247358065
+  },
+  {
+   "sid_sha256": "3afb4d7ff660fdc99e3c1dab2bcf3efccc7b7386aff3cc1d768ed7826bc5796a",
+   "file": "results__stage2_RQ-VAE__TIGER_successor_entropy_curvature__item_sids__5cbba258e121.json",
+   "bytes": 1260071,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_successor_entropy_curvature__item_sids__3afb4d7ff660.json",
+    "results/stage2_RQ-VAE/TIGER_successor_entropy_curvature/item_sids.json"
+   ],
+   "git_blob": "5cbba258e121acd32728953a3bc3a80cc9b8d3dd",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 256,
+     "largest_bucket": 5379,
+     "largest_bucket_share": 0.218774
+    },
+    "L2": {
+     "distinct": 3952,
+     "largest_bucket": 985,
+     "largest_bucket_share": 0.040062
+    },
+    "L3": {
+     "distinct": 13702,
+     "largest_bucket": 94,
+     "largest_bucket_share": 0.003823
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05062762234718571
+  },
+  {
+   "sid_sha256": "f30066606b4c31d699e50e6ba613ce40b53813bb158045fe04eceeb57bb95a66",
+   "file": "results__stage2_RQ-VAE__TIGER_successor_residual_barycenter__item_sids__200d78d3abbf.json",
+   "bytes": 1254235,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_successor_residual_barycenter__item_sids__f30066606b4c.json",
+    "results/stage2_RQ-VAE/TIGER_successor_residual_barycenter/item_sids.json"
+   ],
+   "git_blob": "200d78d3abbfcb385229355b597d69964af1f359",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 187,
+     "largest_bucket": 705,
+     "largest_bucket_share": 0.028674
+    },
+    "L2": {
+     "distinct": 7083,
+     "largest_bucket": 103,
+     "largest_bucket_share": 0.004189
+    },
+    "L3": {
+     "distinct": 18005,
+     "largest_bucket": 52,
+     "largest_bucket_share": 0.002115
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05435331395045179
+  },
+  {
+   "sid_sha256": "7d73b0b626ce651c27798716c590a6820c5ebfddd1478ba686448de50fc3ea21",
+   "file": "results__stage2_RQ-VAE__TIGER_tangent_successor_residual__item_sids__7fb83973e03d.json",
+   "bytes": 1255589,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_tangent_successor_residual__item_sids__7d73b0b626ce.json",
+    "results/stage2_RQ-VAE/TIGER_tangent_successor_residual/item_sids.json"
+   ],
+   "git_blob": "7fb83973e03da5974bd2fd44a370dd8281061985",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 244,
+     "largest_bucket": 586,
+     "largest_bucket_share": 0.023834
+    },
+    "L2": {
+     "distinct": 7223,
+     "largest_bucket": 96,
+     "largest_bucket_share": 0.003905
+    },
+    "L3": {
+     "distinct": 20418,
+     "largest_bucket": 27,
+     "largest_bucket_share": 0.001098
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05424885530736956
+  },
+  {
+   "sid_sha256": "9f7ad2511666b58e79703d66a4a299461fb4cbfc0e5aec2366bfc9f4ef6ec4f7",
+   "file": "results__stage2_RQ-VAE__TIGER_transition_busemann_gate__item_sids__0ec012823498.json",
+   "bytes": 1253648,
+   "paths": [
+    "analysis_sid_recall/sids/results__stage2_RQ-VAE__TIGER_transition_busemann_gate__item_sids__9f7ad2511666.json",
+    "results/stage2_RQ-VAE/TIGER_transition_busemann_gate/item_sids.json"
+   ],
+   "git_blob": "0ec0128234983e36eaace81f0f79a4d2357e4d2a",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 243,
+     "largest_bucket": 876,
+     "largest_bucket_share": 0.035629
+    },
+    "L2": {
+     "distinct": 6674,
+     "largest_bucket": 96,
+     "largest_bucket_share": 0.003905
+    },
+    "L3": {
+     "distinct": 19756,
+     "largest_bucket": 57,
+     "largest_bucket_share": 0.002318
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.0548233778443218
+  },
+  {
+   "sid_sha256": "26b87006c310dbf7dfe4d1287eef8eeb49cf18fa014cc59f4804825a4f1e083b",
+   "file": "results__stage2_RQ-VAE__TIGER_BEHDIR-L4__item_sids__51039402d6d6.json",
+   "bytes": 1460120,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_BEHDIR-L4/item_sids.json"
+   ],
+   "git_blob": "51039402d6d65847f913850f69567d76af99d6fb",
+   "items": 24587,
+   "width": 5,
+   "levels": {
+    "L1": {
+     "distinct": 208,
+     "largest_bucket": 727,
+     "largest_bucket_share": 0.029568
+    },
+    "L2": {
+     "distinct": 2766,
+     "largest_bucket": 268,
+     "largest_bucket_share": 0.0109
+    },
+    "L3": {
+     "distinct": 6235,
+     "largest_bucket": 229,
+     "largest_bucket_share": 0.009314
+    },
+    "L4": {
+     "distinct": 6302,
+     "largest_bucket": 229,
+     "largest_bucket_share": 0.009314
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.048225073556294504
+  },
+  {
+   "sid_sha256": "acb18897b23c0391431b8fcdb46347405ee5a66c6d3b2be1b86c73edec8c02f6",
+   "file": "results__stage2_RQ-VAE__TIGER_CONCMID-GEO-SID__item_sids__fdc4f226cee4.json",
+   "bytes": 1271841,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_CONCMID-GEO-SID/item_sids.json"
+   ],
+   "git_blob": "fdc4f226cee4724c622b32d70778017f3fb3d06c",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 230,
+     "largest_bucket": 684,
+     "largest_bucket_share": 0.02782
+    },
+    "L2": {
+     "distinct": 1251,
+     "largest_bucket": 628,
+     "largest_bucket_share": 0.025542
+    },
+    "L3": {
+     "distinct": 1298,
+     "largest_bucket": 628,
+     "largest_bucket_share": 0.025542
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05165479900416094
+  },
+  {
+   "sid_sha256": "2884697c5cee99d9e586ef5b650a67524d3b68b4a48a15c226c505a860b7267d",
+   "file": "results__stage2_RQ-VAE__TIGER_CURV-RESID-CONTRAST__item_sids__6828301a37f8.json",
+   "bytes": 1264623,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_CURV-RESID-CONTRAST/item_sids.json"
+   ],
+   "git_blob": "6828301a37f838637f4a5b7265e21d03121e9821",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 251,
+     "largest_bucket": 494,
+     "largest_bucket_share": 0.020092
+    },
+    "L2": {
+     "distinct": 1769,
+     "largest_bucket": 491,
+     "largest_bucket_share": 0.01997
+    },
+    "L3": {
+     "distinct": 2201,
+     "largest_bucket": 491,
+     "largest_bucket_share": 0.01997
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.054388133498145856
+  },
+  {
+   "sid_sha256": "ead1cea428ef3906696da889c7b55a9f62acd36b7ce1d06e06d188a545ba181c",
+   "file": "results__stage2_RQ-VAE__TIGER_GDELTA-SUCC-PULL-RQ__item_sids__44b3651b765d.json",
+   "bytes": 1249625,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_GDELTA-SUCC-PULL-RQ/item_sids.json"
+   ],
+   "git_blob": "44b3651b765dccda0fa8f1f721f3740260cc503e",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 13,
+     "largest_bucket": 2514,
+     "largest_bucket_share": 0.102249
+    },
+    "L2": {
+     "distinct": 162,
+     "largest_bucket": 256,
+     "largest_bucket_share": 0.010412
+    },
+    "L3": {
+     "distinct": 16174,
+     "largest_bucket": 48,
+     "largest_bucket_share": 0.001952
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.04087814899284458
+  },
+  {
+   "sid_sha256": "f873884f7c451ce4b107924f9cb65e931d98e7257073e40a5626e9446ca11df8",
+   "file": "results__stage2_RQ-VAE__TIGER_HGS-TREE__item_sids__51b278453f31.json",
+   "bytes": 1250044,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_HGS-TREE/item_sids.json"
+   ],
+   "git_blob": "51b278453f31f12c44591fb551032e96c490dc1a",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 4,
+     "largest_bucket": 12675,
+     "largest_bucket_share": 0.515516
+    },
+    "L2": {
+     "distinct": 123,
+     "largest_bucket": 1537,
+     "largest_bucket_share": 0.062513
+    },
+    "L3": {
+     "distinct": 1203,
+     "largest_bucket": 689,
+     "largest_bucket_share": 0.028023
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05125437420567907
+  },
+  {
+   "sid_sha256": "4d1a3af651c117059826d003433f0f2a50793b3097096d29974728086e1b7eaa",
+   "file": "results__stage2_RQ-VAE__TIGER_HORO-TRANSPLANT-L__item_sids__a19247855092.json",
+   "bytes": 668181,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_HORO-TRANSPLANT-L/item_sids.json"
+   ],
+   "git_blob": "a19247855092a6c48642cf4d605204287612b686",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 247,
+     "largest_bucket": 859,
+     "largest_bucket_share": 0.034937
+    },
+    "L2": {
+     "distinct": 7414,
+     "largest_bucket": 111,
+     "largest_bucket_share": 0.004515
+    },
+    "L3": {
+     "distinct": 20223,
+     "largest_bucket": 44,
+     "largest_bucket_share": 0.00179
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05484078761816884
+  },
+  {
+   "sid_sha256": "9a9ad41ed85174f1831fc8cdcedcc6c676ac5f679112f9fb72486bbf1044455d",
+   "file": "results__stage2_RQ-VAE__TIGER_HYP-CERT-LEAFREPAIR__item_sids__c8723a48613d.json",
+   "bytes": 668219,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_HYP-CERT-LEAFREPAIR/item_sids.json"
+   ],
+   "git_blob": "c8723a48613d9111dab39394880ea35f3bc9e03b",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 247,
+     "largest_bucket": 859,
+     "largest_bucket_share": 0.034937
+    },
+    "L2": {
+     "distinct": 7414,
+     "largest_bucket": 111,
+     "largest_bucket_share": 0.004515
+    },
+    "L3": {
+     "distinct": 21495,
+     "largest_bucket": 37,
+     "largest_bucket_share": 0.001505
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.054945246261251066
+  },
+  {
+   "sid_sha256": "266ce95225964002f2b8d8a0d92f18725051bcd73ce3c363ece486a8aeabb14a",
+   "file": "results__stage2_RQ-VAE__TIGER_BRad-RQ__item_sids__266ce9522596.json",
+   "bytes": 1254062,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_BRad-RQ/item_sids.json"
+   ],
+   "git_blob": "10e902624f884a4afb0030ef2bea83a8eac21ed8",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 236,
+     "largest_bucket": 2994,
+     "largest_bucket_share": 0.121772
+    },
+    "L2": {
+     "distinct": 6069,
+     "largest_bucket": 673,
+     "largest_bucket_share": 0.027372
+    },
+    "L3": {
+     "distinct": 19184,
+     "largest_bucket": 88,
+     "largest_bucket_share": 0.003579
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.04460384059611066
+  },
+  {
+   "sid_sha256": "94099bec716dbb846ffd0119bcd83f4e910b3b30e14bce94571630482f7fe9fb",
+   "file": "results__stage2_RQ-VAE__TIGER_behavior_residual_geometry_transport__r8_control__item_sids__94099bec716d.json",
+   "bytes": 1259734,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_behavior_residual_geometry_transport/r8_control/item_sids.json"
+   ],
+   "git_blob": "f7b7b530c46a6f3427c25150415596beee9f0fd2",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 247,
+     "largest_bucket": 253,
+     "largest_bucket_share": 0.01029
+    },
+    "L2": {
+     "distinct": 16095,
+     "largest_bucket": 33,
+     "largest_bucket_share": 0.001342
+    },
+    "L3": {
+     "distinct": 23654,
+     "largest_bucket": 11,
+     "largest_bucket_share": 0.000447
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.06338898657706436
+  },
+  {
+   "sid_sha256": "ad7c9eb130e9c7510e1fe5b9469eb184297764de0c6837a157314ba57c5336eb",
+   "file": "results__stage2_RQ-VAE__TIGER_c106_directed_assignment_usage_balance__r8_control__item_sids__ad7c9eb130e9.json",
+   "bytes": 1259876,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_c106_directed_assignment_usage_balance/r8_control/item_sids.json"
+   ],
+   "git_blob": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 236,
+     "largest_bucket": 285,
+     "largest_bucket_share": 0.011591
+    },
+    "L2": {
+     "distinct": 15722,
+     "largest_bucket": 31,
+     "largest_bucket_share": 0.001261
+    },
+    "L3": {
+     "distinct": 23650,
+     "largest_bucket": 21,
+     "largest_bucket_share": 0.000854
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.06241403924163025
+  },
+  {
+   "sid_sha256": "19b4b3564272892b041c417557c453ea80a55d7b45080928f5fcb4ab78a8da8b",
+   "file": "results__stage2_RQ-VAE__TIGER_c106_directed_codeword_margin_geometry__r8_control__item_sids__19b4b3564272.json",
+   "bytes": 1260036,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_c106_directed_codeword_margin_geometry/r8_control/item_sids.json"
+   ],
+   "git_blob": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 246,
+     "largest_bucket": 240,
+     "largest_bucket_share": 0.009761
+    },
+    "L2": {
+     "distinct": 16265,
+     "largest_bucket": 27,
+     "largest_bucket_share": 0.001098
+    },
+    "L3": {
+     "distinct": 23704,
+     "largest_bucket": 17,
+     "largest_bucket_share": 0.000691
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.06373718205400512
+  },
+  {
+   "sid_sha256": "b3643d04ae2336a105b78edf58d1400926c8497cf10924bbcaae28c6f36a19d3",
+   "file": "results__stage2_RQ-VAE__TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control__item_sids__b3643d04ae23.json",
+   "bytes": 1260248,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_c107_directed_capacity_balanced_assignment_partition/r8_control/item_sids.json"
+   ],
+   "git_blob": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 256,
+     "largest_bucket": 249,
+     "largest_bucket_share": 0.010127
+    },
+    "L2": {
+     "distinct": 16386,
+     "largest_bucket": 34,
+     "largest_bucket_share": 0.001383
+    },
+    "L3": {
+     "distinct": 23727,
+     "largest_bucket": 8,
+     "largest_bucket_share": 0.000325
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.06088197914309093
+  },
+  {
+   "sid_sha256": "e2073a4ea3e1e418ca8696736008161a851f6df9e2b31c66d0fc6344745fc9ba",
+   "file": "results__stage2_RQ-VAE__TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control__item_sids__e2073a4ea3e1.json",
+   "bytes": 1260506,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_c107_directed_capacity_constrained_assignment_partition/r8_control/item_sids.json"
+   ],
+   "git_blob": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 256,
+     "largest_bucket": 257,
+     "largest_bucket_share": 0.010453
+    },
+    "L2": {
+     "distinct": 16407,
+     "largest_bucket": 31,
+     "largest_bucket_share": 0.001261
+    },
+    "L3": {
+     "distinct": 23696,
+     "largest_bucket": 14,
+     "largest_bucket_share": 0.000569
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.06072529117846759
+  },
+  {
+   "sid_sha256": "59298051ee0d7b783d37c7c4a53f01eaeecf0cf89193f320931cce56736f2cf7",
+   "file": "results__stage2_RQ-VAE__TIGER_c107_directed_codeword_tangent_repulsion__r8_control__item_sids__59298051ee0d.json",
+   "bytes": 1259591,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_c107_directed_codeword_tangent_repulsion/r8_control/item_sids.json"
+   ],
+   "git_blob": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 248,
+     "largest_bucket": 245,
+     "largest_bucket_share": 0.009965
+    },
+    "L2": {
+     "distinct": 15992,
+     "largest_bucket": 28,
+     "largest_bucket_share": 0.001139
+    },
+    "L3": {
+     "distinct": 23637,
+     "largest_bucket": 12,
+     "largest_bucket_share": 0.000488
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.06269259562318286
+  },
+  {
+   "sid_sha256": "511495573338271bb5df2b42683d2a73718afa7bf9ab3a330eca2eb6f94c6508",
+   "file": "results__stage2_RQ-VAE__TIGER_c107_directed_separated_codeword_geometry__r8_control__item_sids__511495573338.json",
+   "bytes": 1259438,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_c107_directed_separated_codeword_geometry/r8_control/item_sids.json"
+   ],
+   "git_blob": "ca080bc9c0a4d79f2b4a2067e75f384bcc06df18",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 247,
+     "largest_bucket": 285,
+     "largest_bucket_share": 0.011591
+    },
+    "L2": {
+     "distinct": 15429,
+     "largest_bucket": 46,
+     "largest_bucket_share": 0.001871
+    },
+    "L3": {
+     "distinct": 23520,
+     "largest_bucket": 16,
+     "largest_bucket_share": 0.000651
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.06103866710771427
+  },
+  {
+   "sid_sha256": "7a65c284d034f2e1aa00950fc305f3604f26f349b543eddd4b40b2e7f38f1662",
+   "file": "results__stage2_RQ-VAE__TIGER_c1_behaviour_conditioned_residual_target__r8_control__item_sids__7a65c284d034.json",
+   "bytes": 1260582,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_c1_behaviour_conditioned_residual_target/r8_control/item_sids.json"
+   ],
+   "git_blob": "25933ecd9601a061b333488be68593bf94f9a20e",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 243,
+     "largest_bucket": 382,
+     "largest_bucket_share": 0.015537
+    },
+    "L2": {
+     "distinct": 14976,
+     "largest_bucket": 34,
+     "largest_bucket_share": 0.001383
+    },
+    "L3": {
+     "distinct": 23520,
+     "largest_bucket": 8,
+     "largest_bucket_share": 0.000325
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.0610038475600202
+  },
+  {
+   "sid_sha256": "07c3eec59a493149023eae03284d9a4b846d0ef675f5ae4df2c9f7627171f738",
+   "file": "results__stage2_RQ-VAE__TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control__item_sids__07c3eec59a49.json",
+   "bytes": 1260373,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_c1_policy_behavior_directed_soft_code_transition_kl/r8_control/item_sids.json"
+   ],
+   "git_blob": "25933ecd9601a061b333488be68593bf94f9a20e",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 255,
+     "largest_bucket": 224,
+     "largest_bucket_share": 0.009111
+    },
+    "L2": {
+     "distinct": 16330,
+     "largest_bucket": 29,
+     "largest_bucket_share": 0.001179
+    },
+    "L3": {
+     "distinct": 23648,
+     "largest_bucket": 14,
+     "largest_bucket_share": 0.000569
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.06225735127700691
+  },
+  {
+   "sid_sha256": "4fadabd21762a83313d5d175255d9910ec5ac8a0aba3828c91b6669712a2dcb2",
+   "file": "results__stage2_RQ-VAE__TIGER_incoming_context_barycenter__item_sids__4fadabd21762.json",
+   "bytes": 1246477,
+   "paths": [
+    "results/stage2_RQ-VAE/TIGER_incoming_context_barycenter/item_sids.json"
+   ],
+   "git_blob": "d7f718520a83a56e19bc2cf669ba640f36578d22",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 116,
+     "largest_bucket": 24229,
+     "largest_bucket_share": 0.985439
+    },
+    "L2": {
+     "distinct": 572,
+     "largest_bucket": 1763,
+     "largest_bucket_share": 0.071705
+    },
+    "L3": {
+     "distinct": 6460,
+     "largest_bucket": 136,
+     "largest_bucket_share": 0.005531
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.058496840126046765
+  },
+  {
+   "sid_sha256": "94323185a20bcf575989dacf3699c66480db443ad5b331cb4cc3e3f8e01ee9e7",
+   "file": "results__stage2_RQ-VAE__curvature_RQ-VAE__item_sids__94323185a20b.json",
+   "bytes": 1259124,
+   "paths": [
+    "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json"
+   ],
+   "git_blob": "42f575e54aeaed01656f5ba1fa6e8f38eb9c8547",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 256,
+     "largest_bucket": 146,
+     "largest_bucket_share": 0.005938
+    },
+    "L2": {
+     "distinct": 24530,
+     "largest_bucket": 3,
+     "largest_bucket_share": 0.000122
+    },
+    "L3": {
+     "distinct": 24538,
+     "largest_bucket": 3,
+     "largest_bucket_share": 0.000122
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05846202057835269
+  },
+  {
+   "sid_sha256": "0fe39b181871152fe453f72f61af8a45b038b3f3ea2f48b274287b9ad311766b",
+   "file": "results__stage2_RQ-VAE__curvature_RQ-VAE__item_sids__0fe39b181871.json",
+   "bytes": 1259600,
+   "paths": [
+    "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json"
+   ],
+   "git_blob": "2bf1e33633eb6ff856bcce9416bb3a51d387b7df",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 256,
+     "largest_bucket": 116,
+     "largest_bucket_share": 0.004718
+    },
+    "L2": {
+     "distinct": 24531,
+     "largest_bucket": 3,
+     "largest_bucket_share": 0.000122
+    },
+    "L3": {
+     "distinct": 24539,
+     "largest_bucket": 3,
+     "largest_bucket_share": 0.000122
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.060081129546127196
+  },
+  {
+   "sid_sha256": "6ce03b39b4521d621950e355929da5e049bbba4ad5a21d1467549a0e81dbef03",
+   "file": "results__stage2_RQ-VAE__curvature_RQ-VAE__item_sids__6ce03b39b452.json",
+   "bytes": 1260715,
+   "paths": [
+    "results/stage2_RQ-VAE/curvature_RQ-VAE/item_sids.json"
+   ],
+   "git_blob": "ee21a6b67b9c5584d51e20ddda1f1fbf2357fcf4",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 256,
+     "largest_bucket": 130,
+     "largest_bucket_share": 0.005287
+    },
+    "L2": {
+     "distinct": 24548,
+     "largest_bucket": 3,
+     "largest_bucket_share": 0.000122
+    },
+    "L3": {
+     "distinct": 24549,
+     "largest_bucket": 3,
+     "largest_bucket_share": 0.000122
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05948919723532791
+  },
+  {
    "sid_sha256": "00829508cfa930ecb66ca9d58158be53e93b687d1218c50ee5cb35679fa9d35d",
    "file": "results__stage2_RQ-VAE__r4_08__item_sids__00829508cfa9.json",
    "bytes": 1259610,
@@ -2581,6 +4792,42 @@
    "unique_rows": 24587,
    "stage3_runs": 1,
    "best_test_recall@10": 0.05630320862132001
+  },
+  {
+   "sid_sha256": "0b900e9cce2fa371d198913a2adaffd9bc31cbe9e14d2242604757121aaaf0a2",
+   "file": "results__stage2_RQ-VAE__curvature_RQ-VAE_iter12__item_sids__0b900e9cce2f.json",
+   "bytes": 1258837,
+   "paths": [
+    "results/stage2_RQ-VAE/curvature_RQ-VAE_iter12/item_sids.json"
+   ],
+   "git_blob": "3ded33170e848ae7a7455b7aec89e51eb06aae43",
+   "items": 24587,
+   "width": 4,
+   "levels": {
+    "L1": {
+     "distinct": 256,
+     "largest_bucket": 177,
+     "largest_bucket_share": 0.007199
+    },
+    "L2": {
+     "distinct": 14824,
+     "largest_bucket": 49,
+     "largest_bucket_share": 0.001993
+    },
+    "L3": {
+     "distinct": 22885,
+     "largest_bucket": 48,
+     "largest_bucket_share": 0.001952
+    },
+    "L4": {
+     "distinct": 24587,
+     "largest_bucket": 1,
+     "largest_bucket_share": 4.1e-05
+    }
+   },
+   "unique_rows": 24587,
+   "stage3_runs": 1,
+   "best_test_recall@10": 0.05795713713678859
   },
   {
    "sid_sha256": "06df164b671c4aba1d9f3b428c47803ac59515d1b870a581ed15d15870cc7b1d",

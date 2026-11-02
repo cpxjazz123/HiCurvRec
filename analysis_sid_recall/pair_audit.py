@@ -83,7 +83,10 @@ def first_tracked(paths: list[str]) -> tuple[str, dict, dict] | None:
 
 
 def main() -> int:
-    rows = list(csv.DictReader((OUT / "sid_recall.csv").open()))
+    # audit the FULL table, not the admitted subset: the live sid_recall.csv is
+    # already pruned, and auditing it would only confirm its own selection
+    full = OUT / "archive" / "sid_recall_full_182.csv"
+    rows = list(csv.DictReader((full if full.is_file() else OUT / "sid_recall.csv").open()))
     audit = []
     for row in rows:
         paths = [part.strip() for part in row["sid_paths"].split("|") if part.strip()]
@@ -106,16 +109,13 @@ def main() -> int:
         code_path_ok = any(row["code_path"] == part for part in paths)
 
         name_ok = name_class in ("EXACT", "FLATTENED")
-        if name_ok and same_commit:
-            verdict = "VERIFIED"
-        elif name_ok and sid_tracked and recall_tracked and not same_commit:
-            verdict = "NAME_OK_COMMITS_DIFFER"
-        elif name_ok:
-            verdict = "NAME_OK_UNTRACKED"
-        elif same_commit:
-            verdict = "COMMIT_OK_NAME_DIFFERS"
-        else:
-            verdict = "UNVERIFIED"
+        # the admission criterion is the directory name (repo rule 64b, amended
+        # 2026-11-02 at the repository owner's direction); the commits are kept
+        # as diagnostics so a co-publication column is still available
+        verdict = "VERIFIED" if name_ok else "REJECTED_NAME"
+        commit_tier = ("SAME_COMMIT" if same_commit
+                       else ("COMMITS_DIFFER" if sid_tracked and recall_tracked
+                             else "NOT_TRACKED"))
 
         audit.append({
             "sid_sha256": row["sid_sha256"],
@@ -137,6 +137,7 @@ def main() -> int:
             "code_path_ok": code_path_ok,
             "test_recall@10": row["test_recall@10"],
             "verdict": verdict,
+            "commit_tier": commit_tier,
         })
 
     with (OUT / "pair_audit.csv").open("w", newline="") as handle:

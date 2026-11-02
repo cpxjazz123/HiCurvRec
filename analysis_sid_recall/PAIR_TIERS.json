@@ -1,7 +1,87 @@
 {
   "pairs": 182,
   "tiers": {
-    "A_verified": {
+    "A_name_only": {
+      "pairs": 110,
+      "series": {
+        "curvature_RQ-VAE": 76,
+        "TIGER_BRad-RQ": 2,
+        "TIGER_c106_directed_codeword_margin_geometry": 1,
+        "TIGER_behavior_residual_geometry_transport": 1,
+        "TIGER_bootstrap_code_stability": 1,
+        "r4_08": 1,
+        "TIGER_c107_directed_codeword_tangent_repulsion": 1,
+        "TIGER_c106_directed_assignment_usage_balance": 1,
+        "TIGER_c1_policy_behavior_directed_soft_code_transition_kl": 1,
+        "TIGER_c107_directed_separated_codeword_geometry": 1,
+        "TIGER_c1_behaviour_conditioned_residual_target": 1,
+        "TIGER_c107_directed_capacity_balanced_assignment_partition": 1,
+        "TIGER_c107_directed_capacity_constrained_assignment_partition": 1,
+        "TIGER_incoming_context_barycenter": 1,
+        "TIGER_cooccur_coherent_sid": 1,
+        "TIGER_c117_hyperbolic_item_semantic_id": 1,
+        "TIGER_HYP-CERT-LEAFREPAIR": 1,
+        "TIGER_HORO-TRANSPLANT-L": 1,
+        "TIGER_transition_busemann_gate": 1,
+        "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL": 1,
+        "TIGER_CURV-RESID-CONTRAST": 1,
+        "TIGER_successor_residual_barycenter": 1,
+        "TIGER_tangent_successor_residual": 1,
+        "TIGER_successor-geodesic-coarse": 1,
+        "TIGER_poincare-frechet-successor-codebook": 1,
+        "TIGER_CONCMID-GEO-SID": 1,
+        "TIGER_HGS-TREE": 1,
+        "TIGER_interest_signature_hypball": 1,
+        "TIGER_successor_entropy_curvature": 1,
+        "TIGER_COOC_RANK_FRECHET": 1,
+        "TIGER_branch-geodesic-rank": 1,
+        "TIGER_BEHDIR-L4": 1,
+        "TIGER_GDELTA-SUCC-PULL-RQ": 1,
+        "TIGER_cogeo_region_argmax": 1
+      },
+      "largest_series_share": 0.6909090909090909,
+      "recall_min": 0.030606382423092323,
+      "recall_max": 0.06373718205400512,
+      "features": {
+        "z_curv_L1": {
+          "n": 100,
+          "spearman": -0.12048257841855826,
+          "permutation_p": 0.2383808095952024,
+          "bootstrap_ci95": [
+            -0.3254844871756603,
+            0.08683017678304542
+          ]
+        },
+        "z_curv_L2": {
+          "n": 108,
+          "spearman": 0.20395321311553397,
+          "permutation_p": 0.03948025987006497,
+          "bootstrap_ci95": [
+            -0.0011245565508174304,
+            0.3972808050516578
+          ]
+        },
+        "z_curv_L3": {
+          "n": 110,
+          "spearman": 0.10279448992878422,
+          "permutation_p": 0.28785607196401797,
+          "bootstrap_ci95": [
+            -0.10479248503225147,
+            0.29441386262384955
+          ]
+        },
+        "z_curv_L1_minus_L3": {
+          "n": 100,
+          "spearman": -0.12072860818821465,
+          "permutation_p": 0.22488755622188905,
+          "bootstrap_ci95": [
+            -0.3322718801062681,
+            0.08493663826736195
+          ]
+        }
+      }
+    },
+    "A2_name_and_commit": {
       "pairs": 73,
       "series": {
         "curvature_RQ-VAE": 72,
@@ -49,53 +129,82 @@
         }
       }
     },
-    "B_same_commit_and_code_path": {
-      "pairs": 86,
+    "B_name_and_code_path": {
+      "pairs": 110,
       "series": {
-        "curvature_RQ-VAE": 81,
-        "TIGER_FORK_RQ-VAE": 2,
+        "curvature_RQ-VAE": 76,
+        "TIGER_BRad-RQ": 2,
+        "TIGER_c106_directed_codeword_margin_geometry": 1,
+        "TIGER_behavior_residual_geometry_transport": 1,
+        "TIGER_bootstrap_code_stability": 1,
         "r4_08": 1,
-        "TIGER_RQ-VAE": 1,
-        "TIGER_BEHAVIOR_RQ-VAE": 1
+        "TIGER_c107_directed_codeword_tangent_repulsion": 1,
+        "TIGER_c106_directed_assignment_usage_balance": 1,
+        "TIGER_c1_policy_behavior_directed_soft_code_transition_kl": 1,
+        "TIGER_c107_directed_separated_codeword_geometry": 1,
+        "TIGER_c1_behaviour_conditioned_residual_target": 1,
+        "TIGER_c107_directed_capacity_balanced_assignment_partition": 1,
+        "TIGER_c107_directed_capacity_constrained_assignment_partition": 1,
+        "TIGER_incoming_context_barycenter": 1,
+        "TIGER_cooccur_coherent_sid": 1,
+        "TIGER_c117_hyperbolic_item_semantic_id": 1,
+        "TIGER_HYP-CERT-LEAFREPAIR": 1,
+        "TIGER_HORO-TRANSPLANT-L": 1,
+        "TIGER_transition_busemann_gate": 1,
+        "TIGER_BRANCH_CONDITIONED_FRECHET_RESIDUAL": 1,
+        "TIGER_CURV-RESID-CONTRAST": 1,
+        "TIGER_successor_residual_barycenter": 1,
+        "TIGER_tangent_successor_residual": 1,
+        "TIGER_successor-geodesic-coarse": 1,
+        "TIGER_poincare-frechet-successor-codebook": 1,
+        "TIGER_CONCMID-GEO-SID": 1,
+        "TIGER_HGS-TREE": 1,
+        "TIGER_interest_signature_hypball": 1,
+        "TIGER_successor_entropy_curvature": 1,
+        "TIGER_COOC_RANK_FRECHET": 1,
+        "TIGER_branch-geodesic-rank": 1,
+        "TIGER_BEHDIR-L4": 1,
+        "TIGER_GDELTA-SUCC-PULL-RQ": 1,
+        "TIGER_cogeo_region_argmax": 1
       },
-      "largest_series_share": 0.9418604651162791,
-      "recall_min": 0.04228834067445464,
-      "recall_max": 0.06335416702937029,
+      "largest_series_share": 0.6909090909090909,
+      "recall_min": 0.030606382423092323,
+      "recall_max": 0.06373718205400512,
       "features": {
         "z_curv_L1": {
-          "n": 82,
-          "spearman": 0.053222462293248354,
-          "permutation_p": 0.6286856571714143,
+          "n": 100,
+          "spearman": -0.12048257841855826,
+          "permutation_p": 0.2383808095952024,
           "bootstrap_ci95": [
-            -0.19242706394685408,
-            0.291740414076666
+            -0.3254844871756603,
+            0.08683017678304542
           ]
         },
         "z_curv_L2": {
-          "n": 86,
-          "spearman": 0.07406184401899739,
-          "permutation_p": 0.5012493753123438,
+          "n": 108,
+          "spearman": 0.20395321311553397,
+          "permutation_p": 0.03948025987006497,
           "bootstrap_ci95": [
-            -0.14367577417190622,
-            0.2981965106360653
+            -0.0011245565508174304,
+            0.3972808050516578
           ]
         },
         "z_curv_L3": {
-          "n": 86,
-          "spearman": 0.029011486669862037,
-          "permutation_p": 0.8000999500249875,
+          "n": 110,
+          "spearman": 0.10279448992878422,
+          "permutation_p": 0.28785607196401797,
           "bootstrap_ci95": [
-            -0.19713111078814324,
-            0.2433012869219264
+            -0.10479248503225147,
+            0.29441386262384955
           ]
         },
         "z_curv_L1_minus_L3": {
-          "n": 82,
-          "spearman": 0.050501477513429927,
-          "permutation_p": 0.6436781609195402,
+          "n": 100,
+          "spearman": -0.12072860818821465,
+          "permutation_p": 0.22488755622188905,
           "bootstrap_ci95": [
-            -0.1969947006984214,
-            0.2894560586352522
+            -0.3322718801062681,
+            0.08493663826736195
           ]
         }
       }

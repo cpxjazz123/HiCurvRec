@@ -63,7 +63,8 @@ def main() -> int:
             print("archived:", target.relative_to(OUT))
 
     # 2. the rejected pairs, with the audit's reasons
-    fields, pairs = read_rows(PAIRS)
+    source = ARCHIVE / "sid_recall_full_182.csv"
+    fields, pairs = read_rows(source if source.is_file() else PAIRS)
     rejected = [row for row in pairs if row["sid_sha256"] not in verified]
     extra = ["verdict", "name_class", "stage2_rel", "sid_intro_commit",
              "sid_intro_time", "recall_intro_commit", "recall_intro_time",
@@ -82,7 +83,8 @@ def main() -> int:
     # 3. the pair tables keep the verified rows only
     kept = [row for row in pairs if row["sid_sha256"] in verified]
     write_rows(PAIRS, fields, kept)
-    payload = json.loads(PAIRS_JSON.read_text())
+    json_source = ARCHIVE / "sid_recall_full_182.json"
+    payload = json.loads((json_source if json_source.is_file() else PAIRS_JSON).read_text())
     payload["pairs"] = [row for row in payload["pairs"]
                         if row.get("sid_sha256") in verified]
     payload["inventory"] = [row for row in payload["inventory"]
@@ -92,7 +94,9 @@ def main() -> int:
           f"json inventory {len(payload['inventory'])})")
 
     # 4. the inventory keeps the verified SIDs only
-    inventory_fields, inventory = read_rows(INVENTORY)
+    inventory_source = ARCHIVE / "sid_inventory_full_624.csv"
+    inventory_fields, inventory = read_rows(inventory_source if inventory_source.is_file()
+                                            else INVENTORY)
     inventory_kept = [row for row in inventory if row["sid_sha256"] in verified]
     write_rows(INVENTORY, inventory_fields, inventory_kept)
     print(f"inventory kept: {len(inventory_kept)} of {len(inventory)}")

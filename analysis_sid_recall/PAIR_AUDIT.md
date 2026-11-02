@@ -6,11 +6,8 @@
 
 | verdict | pairs |
 |---|---|
-| VERIFIED | 73 |
-| UNVERIFIED | 59 |
-| NAME_OK_COMMITS_DIFFER | 20 |
-| NAME_OK_UNTRACKED | 17 |
-| COMMIT_OK_NAME_DIFFERS | 13 |
+| VERIFIED | 110 |
+| REJECTED_NAME | 72 |
 
 ## Name classes
 
@@ -22,20 +19,32 @@
 
 ## Verified pairs
 
+* `TIGER_c106_directed_codeword_margin_geometry__r8_control`
+* `TIGER_behavior_residual_geometry_transport__r8_control`
+* `TIGER_bootstrap_code_stability__resample`
 * `curvature_RQ-VAE_iter53`
 * `r4_08`
+* `TIGER_c107_directed_codeword_tangent_repulsion__r8_control`
 * `curvature_RQ-VAE_iter54`
+* `TIGER_c106_directed_assignment_usage_balance__r8_control`
 * `curvature_RQ-VAE_iter58`
+* `TIGER_c1_policy_behavior_directed_soft_code_transition_kl__r8_control`
 * `curvature_RQ-VAE_iter56`
 * `curvature_RQ-VAE_iter57`
 * `curvature_RQ-VAE_iter51`
 * `curvature_RQ-VAE_iter61`
 * `curvature_RQ-VAE_iter50`
+* `TIGER_c107_directed_separated_codeword_geometry__r8_control`
+* `TIGER_c1_behaviour_conditioned_residual_target__r8_control`
+* `TIGER_c107_directed_capacity_balanced_assignment_partition__r8_control`
+* `TIGER_c107_directed_capacity_constrained_assignment_partition__r8_control`
 * `curvature_RQ-VAE_iter49`
 * `curvature_RQ-VAE_iter41`
+* `curvature_RQ-VAE`
 * `curvature_RQ-VAE_iter80`
 * `curvature_RQ-VAE_iter18`
 * `curvature_RQ-VAE_iter52`
+* `curvature_RQ-VAE`
 * `curvature_RQ-VAE_iter92`
 * `curvature_RQ-VAE_iter32`
 * `curvature_RQ-VAE_iter14`
@@ -50,16 +59,4 @@
 * `curvature_RQ-VAE_iter40`
 * `curvature_RQ-VAE_iter19`
 * `curvature_RQ-VAE_iter101`
-* `curvature_RQ-VAE_iter37`
-* `curvature_RQ-VAE_iter100`
-* `curvature_RQ-VAE_iter81`
-* `curvature_RQ-VAE_iter77`
-* `curvature_RQ-VAE_iter109`
-* `curvature_RQ-VAE_iter15`
-* `curvature_RQ-VAE_iter73`
-* `curvature_RQ-VAE_iter97`
-* `curvature_RQ-VAE_iter107`
-* `curvature_RQ-VAE_iter21`
-* `curvature_RQ-VAE_iter78`
-* `curvature_RQ-VAE_iter90`
-* ... and 33 more (see the CSV)
+* ... and 70 more (see the CSV)
