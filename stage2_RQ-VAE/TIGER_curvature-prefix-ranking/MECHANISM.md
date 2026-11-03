@@ -66,6 +66,11 @@ exercised by the tests, which is what the range gate inspects.
   monotonicity and non-zero encoder gradients, switch effects, the recording
   layer's equality with the baseline `RQLayer`, canonical-vs-inherited distance
   agreement, determinism.
+* Pre-training pressure of the existing SIDs (`analysis_sid_recall/
+  curvature_prefix_signal/`): the cohesive neighbour already shares the anchor's
+  hard prefix more often than the bridge, +8.8 pp at L1 (positive in 98.1% of the
+  108 arms), +1.46 pp at L2 (77.8%), +0.61 pp at L3 (74.1%). The ranking target is
+  consistent with the learned hierarchy and its headroom is at L1/L2.
 * Framework checks on this tree: `constants` PASS, `geometry_contract` PASS,
   `entry` PASS (one real epoch exports the identifier), `identifier` PASS
   (24,587 unique 4-token SIDs). One epoch logs `mech=0.6931` (the softplus(0)
