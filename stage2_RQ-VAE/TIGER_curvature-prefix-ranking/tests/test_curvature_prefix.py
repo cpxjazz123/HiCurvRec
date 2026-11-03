@@ -165,7 +165,8 @@ class RankingLossTests(unittest.TestCase):
 
     def test_the_loss_is_a_finite_scalar(self):
         loss = cp.curvature_prefix_ranking_loss(
-            self.levels, self.codebooks, self.anchor, self.high, self.low, self.weights,
+            self.levels[0], self.levels[1], self.levels[2], self.codebooks,
+            self.anchor, self.high, self.low, self.weights,
             temperature=self.temperature)
         self.assertTrue(torch.isfinite(loss))
         self.assertEqual(loss.dim(), 0)
@@ -193,25 +194,30 @@ class RankingLossTests(unittest.TestCase):
         levels_close = [build(close_high) for _ in range(3)]
         levels_far = [build(far_high) for _ in range(3)]
         loss_close = cp.curvature_prefix_ranking_loss(
-            levels_close, codebooks, anchors, close_high, low, weights, temperature=0.1)
+            levels_close[0], levels_close[1], levels_close[2], codebooks,
+            anchors, close_high, low, weights, temperature=0.1)
         loss_far = cp.curvature_prefix_ranking_loss(
-            levels_far, codebooks, anchors, far_high, low, weights, temperature=0.1)
+            levels_far[0], levels_far[1], levels_far[2], codebooks,
+            anchors, far_high, low, weights, temperature=0.1)
         self.assertLess(float(loss_close), float(loss_far))
 
     def test_the_behaviour_weights_change_the_value(self):
         uniform = torch.ones_like(self.weights)
         weighted = cp.curvature_prefix_ranking_loss(
-            self.levels, self.codebooks, self.anchor, self.high, self.low, self.weights,
+            self.levels[0], self.levels[1], self.levels[2], self.codebooks,
+            self.anchor, self.high, self.low, self.weights,
             temperature=self.temperature)
         plain = cp.curvature_prefix_ranking_loss(
-            self.levels, self.codebooks, self.anchor, self.high, self.low, uniform,
+            self.levels[0], self.levels[1], self.levels[2], self.codebooks,
+            self.anchor, self.high, self.low, uniform,
             temperature=self.temperature)
         self.assertNotAlmostEqual(float(weighted), float(plain), places=6)
 
     def test_gradients_reach_the_encoder_side_points(self):
         levels = [level.clone().requires_grad_(True) for level in self.levels]
         loss = cp.curvature_prefix_ranking_loss(
-            levels, self.codebooks, self.anchor, self.high, self.low, self.weights,
+            levels[0], levels[1], levels[2], self.codebooks,
+            self.anchor, self.high, self.low, self.weights,
             temperature=self.temperature)
         loss.backward()
         for level in levels:
@@ -223,7 +229,8 @@ class RankingLossTests(unittest.TestCase):
         empty = torch.zeros(0, dtype=torch.long)
         levels = [level.clone().requires_grad_(True) for level in self.levels]
         loss = cp.curvature_prefix_ranking_loss(
-            levels, self.codebooks, empty, empty, empty, torch.zeros(0),
+            levels[0], levels[1], levels[2], self.codebooks,
+            empty, empty, empty, torch.zeros(0),
             temperature=self.temperature)
         self.assertEqual(float(loss), 0.0)
         loss.backward()
@@ -259,8 +266,8 @@ class ModelWiringTests(unittest.TestCase):
         triples_anchor = torch.tensor([0, 1])
         triples_high = torch.tensor([2, 3])
         triples_low = torch.tensor([4, 0])
-        loss = cp.curvature_prefix_ranking_loss(points, codebooks, triples_anchor,
-                                                triples_high, triples_low,
+        loss = cp.curvature_prefix_ranking_loss(points[0], points[1], points[2], codebooks,
+                                                triples_anchor, triples_high, triples_low,
                                                 torch.ones(2))
         rebuilt, _ = model.compute_loss(embeddings, reconstructed, quant_loss)
         (rebuilt + loss).backward()
@@ -303,10 +310,12 @@ class DeterminismTests(unittest.TestCase):
         anchor = torch.tensor([0, 1])
         high = torch.tensor([2, 3])
         low = torch.tensor([3, 2])
-        first = cp.curvature_prefix_ranking_loss(levels, codebooks, anchor, high, low,
-                                                 torch.ones(2), temperature=0.1)
-        second = cp.curvature_prefix_ranking_loss(levels, codebooks, anchor, high, low,
-                                                  torch.ones(2), temperature=0.1)
+        first = cp.curvature_prefix_ranking_loss(levels[0], levels[1], levels[2], codebooks,
+                                                 anchor, high, low, torch.ones(2),
+                                                 temperature=0.1)
+        second = cp.curvature_prefix_ranking_loss(levels[0], levels[1], levels[2], codebooks,
+                                                  anchor, high, low, torch.ones(2),
+                                                  temperature=0.1)
         self.assertEqual(float(first), float(second))
 
 

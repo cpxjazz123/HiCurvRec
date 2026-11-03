@@ -519,8 +519,9 @@ def main() -> None:
                 rows_low = _batch_positions(item_ids, low)
                 valid = (rows_anchor >= 0) & (rows_high >= 0) & (rows_low >= 0)
                 if bool(valid.any()):
+                    points = raw_module.level_points()
                     mechanism = curvature_prefix.curvature_prefix_ranking_loss(
-                        raw_module.level_points(), raw_module.level_codebooks(),
+                        points[0], points[1], points[2], raw_module.level_codebooks(),
                         rows_anchor[valid], rows_high[valid], rows_low[valid],
                         triple_weights[valid], use_curvature=USE_GEOMETRY)
                     if MECHANISM_SCALE is None:

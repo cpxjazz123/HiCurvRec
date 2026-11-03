@@ -178,3 +178,42 @@ class AgentTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GeometryPromptThresholdTests(unittest.TestCase):
+    """A machine-repairable prompt defect: the threshold keys were removed."""
+
+    def test_geometry_prompt_does_not_raise_with_empty_thresholds(self):
+        import json
+        from unittest import mock
+        from tools.research.agents import prompts
+        from tools.research.science import contract
+
+        manifest = {"task_id": "run_test__geometry", "task": "GEOMETRY",
+                    "inputs_sha256": "c" * 64,
+                    "behavior_evidence_sha256": "a" * 64,
+                    "literature_evidence_sha256": "b" * 64,
+                    "behavior_evidence": {}, "literature_evidence": {}}
+        with mock.patch.object(contract, "THRESHOLDS", {}):
+            text = prompts.build_prompt("GEOMETRY", dict(manifest), "candidate.json")
+        self.assertIn("NOT admission thresholds", text)
+        self.assertIn("technical validity only", text)
+        self.assertNotIn("strictly above", text)
+
+    def test_geometry_prompt_uses_configured_thresholds_when_present(self):
+        from unittest import mock
+        from tools.research.agents import prompts
+        from tools.research.science import contract
+
+        manifest = {"task_id": "run_test__geometry", "task": "GEOMETRY",
+                    "inputs_sha256": "c" * 64,
+                    "behavior_evidence_sha256": "a" * 64,
+                    "literature_evidence_sha256": "b" * 64,
+                    "behavior_evidence": {}, "literature_evidence": {}}
+        configured = {"valid_l1_hard_er_strict_gt": 16.38953942232631,
+                      "level2_prefixes_strict_gt": 16145}
+        with mock.patch.object(contract, "THRESHOLDS", configured):
+            text = prompts.build_prompt("GEOMETRY", dict(manifest), "candidate.json")
+        self.assertIn("FROZEN_THRESHOLDS", text)
+        self.assertIn("16.38953942232631", text)
+        self.assertIn("16145", text)

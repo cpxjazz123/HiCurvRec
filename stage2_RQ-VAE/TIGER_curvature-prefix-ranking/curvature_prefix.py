@@ -235,21 +235,28 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
     return (weight_a * weight_b).sum(dim=-1)
 
 
-def curvature_prefix_ranking_loss(level_points, codebooks, anchor, high, low,
-                                  weights, *, use_curvature: bool = True,
-                                  temperature=None) -> torch.Tensor:
-    """The AF3-guided relative preference over the three prefix levels."""
+def curvature_prefix_ranking_loss(points_first, points_second, points_third,
+                                  codebooks, anchor, high, low, weights, *,
+                                  use_curvature: bool = True, temperature=None) -> torch.Tensor:
+    """The AF3-guided relative preference over the three prefix levels.
+
+    The three level tangents are separate positional tensor arguments on purpose:
+    the framework's one-epoch smoke probes the gradient of every public loss
+    through its tensor arguments, and a list argument would hide the path the
+    mechanism must prove.
+    """
     if anchor.numel() == 0:
-        return sum(point.sum() * 0.0 for point in level_points)
-    anchor = anchor.to(level_points[0].device)
-    high = high.to(level_points[0].device)
-    low = low.to(level_points[0].device)
-    weights = weights.to(level_points[0].device).float().clamp(0.0, 1.0)
-    total = level_points[0].new_zeros(())
-    for points, codebook in zip(level_points, codebooks):
+        return sum(point.sum() * 0.0
+                   for point in (points_first, points_second, points_third))
+    anchor = anchor.to(points_first.device)
+    high = high.to(points_first.device)
+    low = low.to(points_first.device)
+    weights = weights.to(points_first.device).float().clamp(0.0, 1.0)
+    total = points_first.new_zeros(())
+    for points, codebook in zip((points_first, points_second, points_third), codebooks):
         preferred = prefix_agreement(points[anchor], points[high], codebook,
                                      temperature, use_curvature)
         bridged = prefix_agreement(points[anchor], points[low], codebook,
                                    temperature, use_curvature)
         total = total + F.softplus(-(preferred - bridged) * weights).mean()
-    return total / len(level_points)
+    return total / 3.0
