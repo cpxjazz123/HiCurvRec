@@ -41,7 +41,8 @@ def sid_is_technically_valid(sid_path: Path, *, repo: Path = None) -> dict:
         Path(sid_path),
         repo / "results/stage2_RQ-VAE/TIGER_BEHAVIOR_SAMPLE_RQ-VAE/resample/item_sids.json",
         repo / "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.npz",
-        repo / "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.meta.json")
+        repo / "results/stage3_T5Train/monotonicity/behavior_pairs_valid_s42.meta.json",
+        enforce_collision=False)
     return {"valid": bool(result["passed"]), "refused": result.get("refused"),
             "diagnostics": result.get("candidate", {}),
             "reference_status": result.get("reference_status", {})}

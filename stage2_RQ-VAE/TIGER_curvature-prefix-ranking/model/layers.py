@@ -16,9 +16,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.cluster import KMeans
 
-from .frechet_poincare import (FrechetCodebook, clamp_ball, exp_0, log_0,
-                               poincare_distance)
-
 
 class MLP(nn.Module):
     """RecBole3.0's dropout/linear/ReLU MLP helper."""
@@ -54,10 +51,6 @@ class VQLayer(nn.Module):
         beta: float = 0.25,
         sk_epsilon: float = -1.0,
         sk_iters: int = -1,
-        frechet: bool = False,
-        use_behaviour: bool = True,
-        use_curvature: bool = True,
-        frechet_eta: float = 1.0,
     ):
         super().__init__()
         self.dim = int(codebook_dim)
@@ -67,30 +60,11 @@ class VQLayer(nn.Module):
         self.sk_epsilon = float(sk_epsilon)
         self.sk_iters = int(sk_iters)
         self.embed = nn.Embedding(self.n_embed, self.dim)
-        # The candidate's mechanism: the codebook of this level moves by the
-        # successor-weighted Frechet step, and the assignment and the commitment
-        # use the same curve and the same weights.
-        self.frechet = (FrechetCodebook(self.n_embed, self.dim,
-                                        use_behaviour=use_behaviour,
-                                        use_curvature=use_curvature,
-                                        eta=frechet_eta)
-                        if frechet else None)
-        if self.frechet is not None:
-            # The Frechet step is the codebook's only estimator, so the parameter
-            # takes no gradient. Leaving requires_grad on would put a parameter in
-            # the DDP graph whose reduction never fires: with
-            # find_unused_parameters=False the second step of the first epoch dies
-            # on "Expected to have finished reduction in the prior iteration".
-            self.embed.weight.requires_grad_(False)
 
     def get_code_embs(self) -> nn.Parameter:
         return self.embed.weight
 
     def _copy_init_embed(self, init_embed: torch.Tensor) -> None:
-        if self.frechet is not None:
-            # The codebook of the curved path lives in the ball: the KMeans
-            # centres of the tangent space are mapped into it.
-            init_embed = exp_0(init_embed)
         self.embed.weight.data.copy_(init_embed)
 
     @staticmethod
@@ -142,21 +116,9 @@ class VQLayer(nn.Module):
         self,
         x: torch.Tensor,
         infer_use_sk: bool = False,
-        item_ids: torch.Tensor = None,
     ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
         latent = x.view(-1, self.dim)
-        curved = self.frechet is not None and item_ids is not None
-        if curved:
-            # The item's point in the ball, the slot it belongs to, and the
-            # weight of the successor attraction that moves the slot.
-            codebook = self.get_code_embs()
-            point = clamp_ball(exp_0(latent))
-            weights = self.frechet.weight_of(item_ids)
-            cost = self.frechet.distances(point, codebook)
-            embed_ind = torch.argmin(cost, dim=-1)
-            self.frechet.remember(point, embed_ind, weights)
-        else:
-            embed_ind = self._indices(self._distances(latent), infer_use_sk)
+        embed_ind = self._indices(self._distances(latent), infer_use_sk)
         onehot = F.one_hot(embed_ind, self.n_embed)
         used = onehot.sum(0)
         # Skip the DDP all_reduce when running inference on rank 0 only:
@@ -166,19 +128,8 @@ class VQLayer(nn.Module):
             distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
         unused_codes = int((used == 0).sum().item())
 
-        if curved:
-            # The decoder receives the Euclidean tangent image of the chosen
-            # code; the commitment is the weighted curved distance. The codebook
-            # is detached: its only estimator is the Frechet step, not a
-            # gradient, and the encoder keeps its own side of the objective.
-            tangent = log_0(self.get_code_embs()[embed_ind])
-            x_q = tangent.view(x.shape)
-            commitment = self.frechet.commitment(point, self.get_code_embs()[embed_ind].detach())
-            quant_loss = (self.beta * (weights * commitment).mean()
-                          + F.mse_loss(x, x_q.detach()))
-        else:
-            x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
-            quant_loss = F.mse_loss(x_q, x.detach()) + self.beta * F.mse_loss(x, x_q.detach())
+        x_q = F.embedding(embed_ind, self.get_code_embs()).view(x.shape)
+        quant_loss = F.mse_loss(x_q, x.detach()) + self.beta * F.mse_loss(x, x_q.detach())
         x_q = x + (x_q - x).detach()
         return x_q, quant_loss, unused_codes, embed_ind.view(*x.shape[:-1])
 
@@ -191,19 +142,6 @@ class VQLayer(nn.Module):
         if distributed.is_initialized():
             distributed.broadcast(centers, 0)
         self._copy_init_embed(centers.clone())
-        if self.frechet is not None:
-            # Same cost and same residual as the training step: a Euclidean
-            # assignment here would start levels 2 and 3 in another geometry than
-            # the one the mechanism moves in. ``x`` is a TANGENT (the encoder
-            # output at level 1, the residual of the previous level above it), so
-            # it has to be mapped into the ball before the curved distance is
-            # taken: feeding a tangent of norm above one to the distance saturates
-            # the atanh and assigns by a clamped value that means nothing.
-            with torch.no_grad():
-                point = clamp_ball(exp_0(x))
-                embed_ind = torch.argmin(
-                    self.frechet.distances(point, self.get_code_embs()), dim=-1)
-                return x - log_0(self.embed_code(embed_ind))
         embed_ind = torch.argmin(self._distances(x), dim=-1).view(*x.shape[:-1])
         return x - self.embed_code(embed_ind)
 
@@ -322,11 +260,7 @@ class RQLayer(nn.Module):
             epsilon = self.sk_epsilon if level == self.codebook_num - 1 else -1.0
             iterations = self.sk_iters if level == self.codebook_num - 1 else -1
             if self.vq_type == "vq":
-                layer = VQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations,
-                                frechet=bool(config.frechet_codebook),
-                                use_behaviour=bool(config.use_behaviour),
-                                use_curvature=bool(config.use_curvature),
-                                frechet_eta=float(config.frechet_eta))
+                layer = VQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations)
             elif self.vq_type == "ema":
                 layer = EMAVQLayer(size, self.codebook_dim, self.vq_beta, epsilon, iterations, config.ema_decay)
             elif self.vq_type == "simvq":
@@ -340,7 +274,6 @@ class RQLayer(nn.Module):
         self,
         x: torch.Tensor,
         infer_use_sk: bool = False,
-        item_ids: torch.Tensor = None,
     ) -> tuple[torch.Tensor, torch.Tensor, float, torch.Tensor]:
         quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)
         sum_quant_loss: torch.Tensor | float = 0.0
@@ -348,7 +281,7 @@ class RQLayer(nn.Module):
         output = torch.empty(x.shape[0], self.codebook_num, dtype=torch.long, device=x.device)
         residual = x
         for level, vq_layer in enumerate(self.vq_layers):
-            quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk, item_ids)
+            quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
             residual = residual - quant
             quantized_x = quantized_x + quant
             sum_quant_loss = sum_quant_loss + quant_loss

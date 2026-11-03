@@ -62,7 +62,7 @@ def _repository_root() -> Path:
 
 REPO_ROOT = _repository_root()
 # The arm name is this tree's promoted name; a candidate copy changes only this line.
-# Provenance: copied from stage2_RQ-VAE/TIGER_poincare-frechet-successor-codebook
+# Provenance: copied from stage2_RQ-VAE/TIGER_RQ-VAE (the frozen baseline)
 # (the last complete mechanism, issue #121 baseline chain). This tree runs the
 # curvature_prefix_ranking mechanism: AF3 cohesion on the TRAIN behaviour graph
 # decides which neighbours should share coarse SID prefixes, and the ranking loss
@@ -117,7 +117,6 @@ EVAL_INTERVAL       = 50
 USE_BEHAVIOUR = True
 USE_GEOMETRY = True
 # The step size of the Frechet step, a documented default that is never tuned.
-FRECHET_ETA = 1.0
 # The new mechanism's coupling weight is not a tuned constant: the first training
 # step measures the reconstruction loss and the mechanism loss on the same batch
 # and fixes their ratio, so the two enter the objective at the same scale. The
@@ -275,66 +274,12 @@ def _tokenizer_config() -> SimpleNamespace:
         # The candidate's mechanism: the codebook of every level moves by the
         # successor-weighted Frechet step, and the same weights are inside the
         # commitment term. The two switches are the ablations of the round; only
-        # the both-on arm is trained.
-        # The path is always constructed: the two switches choose the curved or
-        # the Euclidean branch INSIDE it, so the geometry-off arm is the same
-        # mechanism with the Euclidean distance, not the untouched baseline.
-        # Iteration for the owner's 20% collision gate: the curved Frechet
-        # assignment collapsed L1/L2 (1,985 level-two prefixes, 0.83 collision),
-        # so the SID assignment returns to the frozen baseline's Euclidean rule
-        # while the AF3 ranking loss keeps the hyperbolic pathway.
-        frechet_codebook=False,
+        # The two switches of the round: they choose the curved or the Euclidean
+        # cost inside the ranking loss. The SID assignment itself is the frozen
+        # baseline's Euclidean rule either way.
         use_behaviour=USE_BEHAVIOUR,
         use_curvature=USE_GEOMETRY,
-        frechet_eta=FRECHET_ETA,
     )
-
-
-def _build_successor_attraction(train_frame, n_items: int) -> torch.Tensor:
-    """The training-only successor attraction of every item.
-
-    For every training session and every consecutive pair ``(u -> v)`` with
-    ``u != v`` the count ``n_uv`` grows by one. The attraction of an item is
-    ``(indeg_v + 1) / (n_v + 2)``: how often the items point at it, over how
-    often it appears, smoothed so that an item without successors still has a
-    positive weight. The weights are clipped to ``[0.25, 4]`` and normalised to
-    a mean of one over the items that have successors. Only the training split is
-    read, and the table is built once.
-    """
-    import numpy as np
-
-    frame = train_frame.sort_values("user", kind="stable")
-    last = frame.groupby("user", sort=False).tail(1)
-    sources, targets = [], []
-    for history, target in zip(last["history"].to_numpy(), last["target"].to_numpy()):
-        sequence = list(history) + [int(target)]
-        if len(sequence) < 2:
-            continue
-        sources.append(np.asarray(sequence[:-1], dtype=np.int64))
-        targets.append(np.asarray(sequence[1:], dtype=np.int64))
-    interactions = np.zeros(n_items, dtype=np.float64)
-    indegree = np.zeros(n_items, dtype=np.float64)
-    # The number of train interactions of an item: one per distinct (user, item)
-    # pair. The parquet rows are sliding prefixes of the same session, so counting
-    # every row would count one interaction once per window and turn the ratio
-    # into an inverse-popularity proxy the proposal does not ask for.
-    for history, target in zip(last["history"].to_numpy(), last["target"].to_numpy()):
-        for item in set(list(history) + [int(target)]):
-            if 0 <= int(item) < n_items:
-                interactions[int(item)] += 1.0
-    if sources:
-        sources = np.concatenate(sources)
-        targets = np.concatenate(targets)
-        keep = ((sources >= 0) & (targets >= 0) & (sources < n_items) & (targets < n_items)
-                & (sources != targets))
-        sources, targets = sources[keep], targets[keep]
-        np.add.at(indegree, targets, 1.0)
-    weights = (indegree + 1.0) / (interactions + 2.0)
-    weights = np.clip(weights, 0.25, 4.0)
-    active = weights[interactions > 0]
-    if active.size:
-        weights = weights / float(active.mean())
-    return torch.from_numpy(weights.astype(np.float32))
 
 
 def _training_edges(frame, n_items: int) -> np.ndarray:
@@ -408,28 +353,14 @@ def main() -> None:
                 median=float(edge_table["median"]), scale=float(edge_table["scale"]),
                 mechanism="curvature_prefix_ranking")
     model = RQVAE(config, in_dim=embeddings.shape[1]).to(device)
-    # The successor attraction of every item, built once from the training
-    # split and bound to every level of the quantizer.
-    item_weights = _build_successor_attraction(train_frame, len(embeddings)).to(device)
-    for layer in model.rq.vq_layers:
-        frechet = getattr(layer, "frechet", None)
-        if frechet is not None:
-            frechet.set_weights(item_weights)
-    if rank == 0:
-        print(f"[RecBole RQ-VAE] successor attraction: "
-              f"{int((item_weights > 0).sum())} items, "
-              f"mean={float(item_weights.mean()):.4f}", flush=True)
     if XAVIER_INIT:
         initialize_tiger_weights(model)
     if world_size > 1:
-        # The buffers carry the successor attraction: it is the same table on
-        # every rank, and broadcasting it every step would cost more than the
-        # mechanism itself.
         model = DDP(model, device_ids=[local_rank], output_device=local_rank,
                     find_unused_parameters=False, broadcast_buffers=False)
 
-    # The weighted Frechet step needs to know which item every embedding
-    # belongs to, so the batch carries the global item id next to it.
+    # The ranking needs to know which item every embedding belongs to, so the
+    # batch carries the global item id next to it.
     train_item_ids = torch.from_numpy(train_ids.astype(np.int64))
 
     class _ItemDataset(torch.utils.data.Dataset):
@@ -571,18 +502,6 @@ def main() -> None:
             if GRADIENT_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()
-            # The codebook step of the curved path: the per-slot sums are
-            # reduced across the ranks first, so every rank ends the step with
-            # the same codebook and the SID does not depend on the rank.
-            sums = raw_module.frechet_step_sums()
-            if sums:
-                reduced = []
-                for frechet, (tangent_sum, weight_sum) in sums:
-                    if world_size > 1:
-                        dist.all_reduce(tangent_sum, op=dist.ReduceOp.SUM)
-                        dist.all_reduce(weight_sum, op=dist.ReduceOp.SUM)
-                    reduced.append((frechet, (tangent_sum, weight_sum)))
-                raw_module.apply_frechet_codebook_step(reduced)
             scheduler.step()
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
@@ -625,7 +544,6 @@ def main() -> None:
                 with torch.no_grad():
                     raw_tokens = raw_module.get_indices(
                         all_embeddings.to(device), infer_use_sk=False,
-                        item_ids=torch.arange(len(embeddings), device=device),
                     ).cpu().numpy().astype(np.int64)
                 counts = np.unique(raw_tokens, axis=0, return_counts=True)[1]
                 raw_unique = int(counts.size)

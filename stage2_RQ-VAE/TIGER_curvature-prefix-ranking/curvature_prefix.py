@@ -26,7 +26,10 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from model.frechet_poincare import CURVATURE
+#: The curvature of the unit Poincare ball the framework's geometry contract
+#: uses (K = 1, radius 1). It is a declared constant of the geometry, not a
+#: tuned one: the contract's maps are parameterised by it.
+CURVATURE = 1.0
 
 
 def _repository_root() -> Path:

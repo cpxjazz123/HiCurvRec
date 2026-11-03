@@ -110,16 +110,15 @@ class TripleTests(unittest.TestCase):
 
 
 class GeometryCompatibilityTests(unittest.TestCase):
-    def test_the_canonical_distance_matches_the_baseline_operator(self):
-        from model import frechet_poincare as inherited
+    def test_the_tree_uses_the_framework_geometry_contract(self):
+        """The mechanism has no distance of its own: it calls the contract."""
         from tools.research.geometry import poincare_contract as canonical
-        torch.manual_seed(5)
-        left = torch.randn(6, 4) * 0.1
-        right = torch.randn(6, 4) * 0.1
-        self.assertTrue(torch.allclose(
-            canonical.distance(left, right, inherited.CURVATURE),
-            inherited.poincare_distance(left, right, inherited.CURVATURE),
-            atol=1e-6))
+        self.assertIs(cp.geometry, canonical)
+        self.assertEqual(cp.CURVATURE, 1.0)
+        copied = TREE / "model" / "poincare_contract.py"
+        self.assertTrue(copied.is_file(), "the framework module travels with the tree")
+        self.assertEqual(copied.read_bytes(),
+                         Path(canonical.__file__).read_bytes())
 
 
 class PrefixAgreementTests(unittest.TestCase):
@@ -267,7 +266,6 @@ class ModelWiringTests(unittest.TestCase):
         item_ids = torch.arange(5)
         reconstructed, quant_loss, _, tokens, reference = model(embeddings, item_ids)
         self.assertTrue(torch.equal(reference, embeddings))
-        reconstructed_radius, _, _, _, _ = model(embeddings, item_ids, radius=None)
         points = model.level_points()
         codebooks = model.level_codebooks()
         self.assertEqual(len(points), 3)

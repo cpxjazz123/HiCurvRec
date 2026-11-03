@@ -17,8 +17,7 @@ from .layers import RQLayer
 class RecordingRQLayer(RQLayer):
     """``RQLayer`` plus ``level_points()`` and per-level balanced assignment."""
 
-    def forward(self, x: torch.Tensor, infer_use_sk: bool = False,
-                item_ids: torch.Tensor = None):
+    def forward(self, x: torch.Tensor, infer_use_sk: bool = False):
         quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)
         sum_quant_loss: torch.Tensor | float = 0.0
         num_unused_codes = 0.0
@@ -28,7 +27,7 @@ class RecordingRQLayer(RQLayer):
         level_points = []
         for level, vq_layer in enumerate(self.vq_layers):
             level_points.append(residual)
-            quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk, item_ids)
+            quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk)
             residual = residual - quant
             quantized_x = quantized_x + quant
             sum_quant_loss = sum_quant_loss + quant_loss

@@ -231,13 +231,16 @@ def collision_gate(candidate: dict, learned: float | None = None) -> str | None:
     return None
 
 
-def evaluate(sid_path, baseline_path, pairs_path, meta_path):
+def evaluate(sid_path, baseline_path, pairs_path, meta_path,
+             *, enforce_collision: bool = True):
     """Check that the exported SID is usable, and measure the diagnostics.
 
     Only the candidate's own technical validity can refuse an admission. The
     reference artifacts and the derived quality numbers are reported; a missing
     or altered reference changes the diagnostics, not the usability of the
-    candidate's SID.
+    candidate's SID. The owner's learned collision gate is an EXPORT gate, so the
+    round pipeline (CLAUDE.md 19: admission is technical validity only) passes
+    ``enforce_collision=False`` and still records the measured collision.
     """
     evidence = {"sid": str(sid_path), "baseline": str(baseline_path),
                 "pairs": str(pairs_path), "meta": str(meta_path),
@@ -282,7 +285,7 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
             reference_status["diagnostics"] = str(exc)
         collision_refusal = collision_gate(
             candidate, learned_collision(Path(sid_path).parent))
-        if collision_refusal is not None:
+        if collision_refusal is not None and enforce_collision:
             failures.append(collision_refusal)
         evidence.update({
             "candidate": {**candidate, "level2_distinct_prefixes": candidate_prefixes,

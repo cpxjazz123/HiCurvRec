@@ -501,15 +501,13 @@ class NoAbsolutePathTests(unittest.TestCase):
         self.assertEqual(resolved["OUTPUT_JSON"].split("GeneRec/")[-1],
                          "results/stage2_RQ-VAE/TIGER_RQ-VAE/item_sids.json")
 
-    def test_the_round_baseline_is_the_previous_complete_mechanism(self):
-        """A new mechanism starts on the last one that finished the chain."""
-        previous = baseline_module.previous_implementation()
-        if previous is None:
-            self.assertEqual(baseline_module.baseline_path(),
-                             baseline_module.CANONICAL_BASELINE.resolve())
-        else:
-            self.assertEqual(baseline_module.baseline_path(), previous)
-            self.assertTrue((previous / "train_rqvae.py").is_file())
+    def test_the_round_baseline_is_always_the_frozen_tree(self):
+        """No round inherits a previous mechanism: every copy starts at TIGER."""
+        frozen = baseline_module.CANONICAL_BASELINE.resolve()
+        self.assertEqual(baseline_module.baseline_path(), frozen)
+        self.assertTrue((frozen / "train_rqvae.py").is_file())
+        with tempfile.TemporaryDirectory() as work:
+            self.assertEqual(baseline_module.baseline_path(Path(work)), frozen)
 
     def test_a_trainer_with_an_absolute_path_is_refused(self):
         with tempfile.TemporaryDirectory() as work:

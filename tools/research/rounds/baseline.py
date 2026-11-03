@@ -10,10 +10,9 @@ would write into the baseline or into another candidate.
 from __future__ import annotations
 
 import hashlib
-import re
-import shutil
 import json
 import re
+import shutil
 from pathlib import Path
 
 #: The only tree a new mechanism may be built from.
@@ -31,178 +30,17 @@ class BaselineError(RuntimeError):
     """The baseline is missing, unreadable, or a candidate would overwrite it."""
 
 
-def _frozen_recall(repo: Path) -> float | None:
-    """The frozen baseline's own Stage 3 recall.
-
-    The registry is the authority: it pairs the baseline's SID table with the
-    recall of the run that read it. The Stage 3 run's own files are the
-    fallback.
-    """
-    import csv
-    import json
-
-    registry = repo / "analysis_sid_recall" / "sid_recall.csv"
-    if registry.is_file():
-        with registry.open() as handle:
-            for row in csv.DictReader(handle):
-                if row.get("variant") == "TIGER_RQ-VAE":
-                    try:
-                        return float(row["test_recall@10"])
-                    except (KeyError, TypeError, ValueError):
-                        break
-    for path in sorted((repo / "results" / "stage3_T5Train" / "TIGER_RQ-VAE" / "logs")
-                       .glob("*/*/test_final.json")):
-        try:
-            return float(json.loads(path.read_text())["test_recall@10"])
-        except (OSError, ValueError, KeyError):
-            continue
-    return None
-
-
-def _arm_recall(repo: Path, arm: str) -> float | None:
-    """The Stage 3 recall of one arm, read from its own result file."""
-    import json
-
-    best = None
-    for path in sorted((repo / "results" / "stage3_T5Train" / arm / "logs")
-                       .glob("*/*/test_final.json")):
-        try:
-            value = float(json.loads(path.read_text())["test_recall@10"])
-        except (OSError, ValueError, KeyError):
-            continue
-        best = value if best is None else max(best, value)
-    return best
-
-
-def _triples(repo: Path, tree: Path) -> int | None:
-    """The number of distinct three-token SIDs an arm exported."""
-    import json
-
-    for candidate in (repo / "results" / "stage2_RQ-VAE" / tree.name / "item_sids.json",
-                      tree / "item_sids.json"):
-        if not candidate.is_file():
-            continue
-        try:
-            table = json.loads(candidate.read_text())
-        except (OSError, ValueError):
-            return None
-        return len({tuple(value[:3]) for value in table.values()})
-    return None
-
-
-def _frozen_triples(repo: Path) -> int | None:
-    """The frozen baseline's number of distinct three-token SIDs."""
-    import json
-
-    path = repo / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "item_sids.json"
-    if not path.is_file():
-        return None
-    try:
-        table = json.loads(path.read_text())
-    except (OSError, ValueError):
-        return None
-    return len({tuple(value[:3]) for value in table.values()})
-
-
-def _round_recall(round_dir: Path, idea_id: str) -> float | None:
-    """The Stage 3 recall a round recorded for one of its candidates."""
-    import json
-
-    jobs_file = round_dir / "jobs.json"
-    if not jobs_file.is_file():
-        return None
-    try:
-        payload = json.loads(jobs_file.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
-    for job in payload.get("jobs", []):
-        if job.get("kind") != "stage3" or job.get("idea_id") != idea_id:
-            continue
-        result = job.get("result") or {}
-        value = result.get("test_recall@10")
-        if value is None:
-            value = (result.get("metrics") or {}).get("test_recall@10")
-        if value is not None:
-            try:
-                return float(value)
-            except (TypeError, ValueError):
-                return None
-    return None
-
-
-def previous_implementation(root: Path = None) -> Path | None:
-    """The tree of the last mechanism that went through the whole chain.
-
-    From the second round on, a new mechanism is built on the last COMPLETE
-    mechanism implementation, not on the frozen baseline: implemented, reviewed,
-    trained and evaluated in Stage 3. The chain is the evidence, so a round whose
-    Stage 3 never finished is not a baseline. The frozen tree stays the seed for
-    the first round and the fallback while no complete implementation exists.
-
-    A mechanism whose Stage 3 is WORSE than the frozen baseline's is skipped:
-    building on it would make every successor lose by construction, and a chain
-    of regressions is not evidence of progress. The chain then falls back to the
-    frozen baseline, and the reason is recorded in the provenance.
-    """
-    repo = Path(root) if root is not None else _repo_root()
-    rounds = repo / "results" / "research" / "issue121" / "rounds"
-    if not rounds.is_dir():
-        return None
-    for directory in sorted(rounds.iterdir(), reverse=True):
-        jobs_file = directory / "jobs.json"
-        if not jobs_file.is_file():
-            continue
-        try:
-            payload = json.loads(jobs_file.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            continue
-        completed = [
-            str(job.get("idea_id")) for job in payload.get("jobs", [])
-            if job.get("kind") == "stage3" and job.get("status") == "done"
-            and job.get("idea_id")
-        ]
-        frozen = _frozen_recall(repo)
-        for idea_id in sorted(completed):
-            tree = repo / "stage2_RQ-VAE" / arm_name(Path(idea_id))
-            if not (tree / "train_rqvae.py").is_file():
-                continue
-            recall = _round_recall(directory, idea_id)
-            if recall is None:
-                recall = _arm_recall(repo, arm_name(Path(idea_id)))
-            if frozen is not None and recall is not None and recall < frozen:
-                # a mechanism that lost to the frozen baseline cannot be the
-                # reference the next one has to beat
-                SKIPPED_BASELINES.append((idea_id, recall, frozen))
-                continue
-            frozen_triples = _frozen_triples(repo)
-            triples = _triples(repo, tree)
-            if (frozen_triples and triples and triples < 0.1 * frozen_triples):
-                # a materially coarser SID cannot be the reference either
-                SKIPPED_BASELINES.append((idea_id, triples, frozen_triples))
-                continue
-            if triples is None and frozen_triples:
-                # a baseline whose SID table is gone cannot be compared, and the
-                # copy would start from a mechanism nobody can measure against
-                SKIPPED_BASELINES.append((idea_id, "no exported SID", frozen_triples))
-                continue
-            return tree.resolve()
-    return None
-
-
-#: The candidates the chain skipped, with the numbers that made it skip them.
-SKIPPED_BASELINES: list = []
-
-
 def baseline_path(root: Path = None) -> Path:
-    """The tree a new candidate is copied from.
+    """The tree a new candidate is copied from: always the frozen baseline.
 
-    The last complete mechanism implementation when there is one, otherwise the
-    frozen baseline. The issue names an absolute path for that first one, so the
-    check is on that path and not on whatever happens to sit in the working tree.
+    The chain does not carry over between rounds. Whatever an earlier round
+    trained, the next mechanism starts from the same frozen ``TIGER_RQ-VAE``
+    tree, so every round is compared against one reference and a losing arm can
+    never become the ground the following one is built on. ``root`` is accepted
+    for call compatibility and ignored: the issue names an absolute path, so the
+    check is on that path and not on whatever happens to sit in a working tree.
     """
-    previous = previous_implementation(root)
-    if previous is not None:
-        return previous
+    del root
     if not CANONICAL_BASELINE.is_dir():
         raise BaselineError("the canonical baseline does not exist: " + str(CANONICAL_BASELINE))
     if not (CANONICAL_BASELINE / "train_rqvae.py").is_file():
