@@ -395,6 +395,37 @@ class BucketSpreadTests(unittest.TestCase):
         self.assertAlmostEqual(float(cohesion[3]), float(lookup.weights.mean()))
 
 
+class CoClusterTests(unittest.TestCase):
+    """Cohesive pairs must land in the same coarse code, not merely rank above."""
+
+    def setUp(self):
+        torch.manual_seed(17)
+        self.codebook = torch.randn(16, 8) * 0.2
+
+    def test_an_aligned_pair_scores_better_than_a_split_pair(self):
+        same = self.codebook[4].repeat(4, 1)
+        split = self.codebook[4:8].clone()
+        aligned = cp.cocluster_loss(same, same, self.codebook)
+        separated = cp.cocluster_loss(split, split.roll(1, 0), self.codebook)
+        self.assertLess(float(aligned), float(separated))
+
+    def test_the_gradient_reaches_the_points_and_the_codebook(self):
+        codebook = self.codebook.clone().requires_grad_(True)
+        points = (torch.randn(4, 8) * 0.2).requires_grad_(True)
+        loss = cp.cocluster_loss(points, points.roll(1, 0), codebook)
+        loss.backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
+        self.assertGreater(float(codebook.grad.abs().sum()), 0.0)
+
+    def test_the_curve_changes_the_loss(self):
+        points = torch.randn(4, 8) * 0.1
+        curved = cp.cocluster_loss(points, points.roll(1, 0), self.codebook,
+                                   use_curvature=True, curvature=100.0)
+        flat = cp.cocluster_loss(points, points.roll(1, 0), self.codebook,
+                                 use_curvature=False)
+        self.assertNotAlmostEqual(float(curved), float(flat), places=6)
+
+
 class CodebookUpdateTests(unittest.TestCase):
     """The coarse codebook may follow the behaviour cohesion, but bounded."""
 

@@ -402,6 +402,27 @@ def data_curvature(norms: torch.Tensor) -> float:
     return 1.0 / max(scale, 1e-6) ** 2
 
 
+def cocluster_loss(points_a: torch.Tensor, points_b: torch.Tensor,
+                   codebook: torch.Tensor, use_curvature: bool = True,
+                   curvature: float = CURVATURE) -> torch.Tensor:
+    """The negative log probability that a cohesive pair lands in one code.
+
+    The ranking only says a cohesive pair must score above a bridge pair, and the
+    measured result was an L1 hit rate of 0.128 against 0.026 for negatives. This
+    term optimises the hit directly: both items' soft assignments are read from
+    the same level and the shared mass is maximised, so the coarse prefix the
+    Stage 3 model generates first is the one the training edges support.
+    """
+    cost_a = _assignment_cost(points_a, codebook, use_curvature, curvature)
+    cost_b = _assignment_cost(points_b, codebook, use_curvature, curvature)
+    temperature_a = _gap_temperature(cost_a).unsqueeze(-1)
+    temperature_b = _gap_temperature(cost_b).unsqueeze(-1)
+    left = F.softmax(-cost_a / temperature_a, dim=-1)
+    right = F.softmax(-cost_b / temperature_b, dim=-1)
+    match = (left * right).sum(dim=-1).clamp_min(1e-6)
+    return -match.log().mean()
+
+
 def cohesion_codebook_sums(points: torch.Tensor, assignment: torch.Tensor,
                            weights: torch.Tensor, n_codes: int
                            ) -> tuple[torch.Tensor, torch.Tensor]:

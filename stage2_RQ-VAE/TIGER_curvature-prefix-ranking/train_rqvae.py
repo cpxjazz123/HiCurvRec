@@ -147,6 +147,9 @@ MECHANISM_CURVATURE: float | None = None
 #: of the distance to the weighted mean per step: a full step (the parent arm's
 #: rule) collapsed the partition to 1,985 L2 prefixes.
 CODEBOOK_STEP = 0.10
+#: The co-cluster term enters at the unit scale; the measured gradient budget
+#: sizes the mechanism as a whole.
+CLUSTER_WEIGHT = 1.0
 #: Trust region on the SID partition: a training epoch whose measured collision
 #: exceeds this budget is rolled back to the last accepted state. The mechanism
 #: weight is NOT shrunk on a rollback: halving it drove the weight to 1e-19 in one
@@ -505,6 +508,12 @@ def main() -> None:
                             triple_weights[valid], levels=RANKING_LEVELS,
                             use_curvature=USE_GEOMETRY,
                             curvature=MECHANISM_CURVATURE or 1.0)
+                        # The measured lever: the cohesive pair must land in ONE
+                        # coarse code, not merely outrank the bridge pair.
+                        mechanism = mechanism + CLUSTER_WEIGHT * curvature_prefix.cocluster_loss(
+                            points[0][rows_anchor[valid]], points[0][rows_high[valid]],
+                            codebooks[0], USE_GEOMETRY,
+                            MECHANISM_CURVATURE or 1.0)
                 # Every item of the batch, not the sampled pairs: the coarse
                 # bucket's fine codes are pushed to spread, weighted by the item's
                 # mean AF3 cohesion.
