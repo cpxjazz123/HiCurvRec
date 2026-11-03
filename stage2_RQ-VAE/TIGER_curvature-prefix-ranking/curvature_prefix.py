@@ -349,6 +349,45 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
     return total / float(len(selected))
 
 
+def _bucket_entropy_parts(points: torch.Tensor, codebook: torch.Tensor, buckets: torch.Tensor,
+                          weights: torch.Tensor | None = None,
+                          use_curvature: bool = True) -> tuple[torch.Tensor, torch.Tensor]:
+    """The behaviour-weighted fine entropy per coarse bucket, and its temperature."""
+    cost = _assignment_cost(points, codebook, use_curvature)
+    temperature = _gap_temperature(cost).unsqueeze(-1)
+    prob = F.softmax(-cost / temperature, dim=-1)
+    device = points.device
+    unique, inverse = torch.unique(buckets.to(device), return_inverse=True)
+    counts = torch.bincount(inverse, minlength=unique.numel()).to(prob.dtype)
+    sums = torch.zeros(unique.numel(), prob.shape[-1], dtype=prob.dtype, device=device)
+    sums.index_add_(0, inverse, prob)
+    mean = sums / counts.clamp_min(1.0).unsqueeze(-1)
+    entropy = -(mean * mean.clamp_min(1e-12).log()).sum(-1)
+    usable = counts > 1
+    if not bool(usable.any()):
+        return points.sum() * 0.0, temperature
+    per_bucket = entropy[usable]
+    if weights is not None and weights.numel() == points.shape[0]:
+        bucket_weight = torch.zeros(unique.numel(), dtype=prob.dtype, device=device)
+        bucket_weight.index_add_(0, inverse, weights.to(device).float())
+        bucket_weight = bucket_weight / counts.clamp_min(1.0)
+        per_bucket = per_bucket * bucket_weight[usable]
+    return per_bucket.mean(), temperature
+
+
+def _bucket_entropy_value(per_bucket: torch.Tensor, temperature: torch.Tensor) -> torch.Tensor:
+    """The negative entropy carried by the measured assignment-gap scale.
+
+    The softmax is built on the gap, which is ~1e-4, so the entropy's gradient
+    w.r.t. the points is ~1e4 larger than the ranking's. Under one shared gradient
+    budget that gave the whole mechanism a scale of 1.4e-7 and neither term moved.
+    Multiplying by the gap makes the gradient O(1), so the budget can size both
+    terms together.
+    """
+    normalizer = temperature.mean().detach()
+    return -per_bucket.mean() * normalizer
+
+
 def bucket_spread_loss(points: torch.Tensor, codebook: torch.Tensor,
                        buckets: torch.Tensor, weights: torch.Tensor | None = None,
                        use_curvature: bool = True) -> torch.Tensor:
@@ -363,26 +402,16 @@ def bucket_spread_loss(points: torch.Tensor, codebook: torch.Tensor,
     of leaves less); removing the curve changes the cost the probabilities come
     from.
     """
-    cost = _assignment_cost(points, codebook, use_curvature)
-    temperature = _gap_temperature(cost).unsqueeze(-1)
-    prob = F.softmax(-cost / temperature, dim=-1)
-    device = points.device
-    unique, inverse = torch.unique(buckets.to(device), return_inverse=True)
-    counts = torch.bincount(inverse, minlength=unique.numel()).to(prob.dtype)
-    sums = torch.zeros(unique.numel(), prob.shape[-1], dtype=prob.dtype, device=device)
-    sums.index_add_(0, inverse, prob)
-    mean = sums / counts.clamp_min(1.0).unsqueeze(-1)
-    entropy = -(mean * mean.clamp_min(1e-12).log()).sum(-1)
-    usable = counts > 1
-    if not bool(usable.any()):
-        return points.sum() * 0.0
-    per_bucket = entropy[usable]
-    if weights is not None and weights.numel() == points.shape[0]:
-        bucket_weight = torch.zeros(unique.numel(), dtype=prob.dtype, device=device)
-        bucket_weight.index_add_(0, inverse, weights.to(device).float())
-        bucket_weight = bucket_weight / counts.clamp_min(1.0)
-        per_bucket = per_bucket * bucket_weight[usable]
-    return -per_bucket.mean()
+    entropy, temperature = _bucket_entropy_parts(points, codebook, buckets, weights,
+                                                 use_curvature)
+    return _bucket_entropy_value(entropy, temperature)
+
+
+def bucket_entropy(points: torch.Tensor, codebook: torch.Tensor, buckets: torch.Tensor,
+                   weights: torch.Tensor | None = None,
+                   use_curvature: bool = True) -> torch.Tensor:
+    """The (behaviour-weighted) entropy of the fine assignment per coarse bucket."""
+    return _bucket_entropy_parts(points, codebook, buckets, weights, use_curvature)[0]
 
 
 def _assignment_cost(points, codebook, use_curvature: bool) -> torch.Tensor:

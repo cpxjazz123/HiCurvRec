@@ -338,20 +338,20 @@ class BucketSpreadTests(unittest.TestCase):
         self.codebook = torch.randn(16, 8) * 0.2
         self.buckets = torch.zeros(8, dtype=torch.long)
 
-    def test_a_concentrated_bucket_scores_worse_than_a_spread_one(self):
+    def test_a_spread_bucket_has_higher_entropy(self):
         one_code = self.codebook[3].repeat(8, 1)
         spread = self.codebook[:8].clone()
-        concentrated = cp.bucket_spread_loss(one_code, self.codebook, self.buckets)
-        even = cp.bucket_spread_loss(spread, self.codebook, self.buckets)
-        self.assertGreater(float(concentrated), float(even))
+        concentrated = cp.bucket_entropy(one_code, self.codebook, self.buckets)
+        even = cp.bucket_entropy(spread, self.codebook, self.buckets)
+        self.assertGreater(float(even), float(concentrated))
 
     def test_the_cohesion_weights_scale_the_bucket(self):
         spread = self.codebook[:8].clone()
-        heavy = cp.bucket_spread_loss(spread, self.codebook, self.buckets,
-                                      weights=torch.ones(8))
-        light = cp.bucket_spread_loss(spread, self.codebook, self.buckets,
-                                      weights=torch.zeros(8))
-        self.assertLess(float(heavy), float(light))
+        heavy = cp.bucket_entropy(spread, self.codebook, self.buckets,
+                                  weights=torch.ones(8))
+        light = cp.bucket_entropy(spread, self.codebook, self.buckets,
+                                  weights=torch.zeros(8))
+        self.assertLess(float(light), float(heavy))
 
     def test_the_curve_changes_the_bucket_loss(self):
         spread = self.codebook[:8].clone()
@@ -365,6 +365,27 @@ class BucketSpreadTests(unittest.TestCase):
         points = (self.codebook[:8].clone() * 1.1).requires_grad_(True)
         cp.bucket_spread_loss(points, self.codebook, self.buckets).backward()
         self.assertGreater(float(points.grad.abs().sum()), 0.0)
+
+    def test_the_gradient_is_comparable_to_the_ranking(self):
+        """One shared budget must be able to size both terms."""
+        torch.manual_seed(13)
+        codebook = torch.randn(16, 8) * 0.2
+        points = (codebook[:8].clone() * 1.05).requires_grad_(True)
+        buckets = torch.zeros(8, dtype=torch.long)
+        weights = torch.ones(8)
+        anchor, high, low = torch.arange(3), torch.tensor([3, 4, 5]), torch.tensor([6, 7, 3])
+        spread = cp.bucket_spread_loss(points, codebook, buckets, weights)
+        spread.backward()
+        spread_grad = float(points.grad.norm())
+        points.grad = None
+        ranking = cp.curvature_prefix_ranking_loss(
+            points, points, points, [codebook] * 3, anchor, high, low, torch.ones(3),
+            levels=(1,), use_curvature=False)
+        ranking.backward()
+        ranking_grad = float(points.grad.norm())
+        ratio = spread_grad / max(ranking_grad, 1e-9)
+        self.assertGreater(ratio, 1e-3)
+        self.assertLess(ratio, 1e3)
 
     def test_an_isolated_item_gets_the_table_mean_cohesion(self):
         table = cp.build_edge_tables(np.array([[0, 1], [0, 2]]), 4)
