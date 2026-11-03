@@ -124,6 +124,11 @@ FRECHET_ETA = 1.0
 # clamp is a numerical guard, not a search range.
 MECHANISM_SCALE: float | None = None
 MECHANISM_SCALE_BOUNDS = (1e-8, 1e8)
+#: The mechanism may take at most this share of the reconstruction gradient at
+#: the first step. It is the collision budget in optimisation terms: the SID
+#: partition must stay driven by the reconstruction objective, otherwise the
+#: coarse sharing pressure collapses the fine levels (measured: full scale 0.763).
+MECHANISM_GRADIENT_SHARE = 0.10
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
@@ -536,13 +541,19 @@ def main() -> None:
                         triple_weights[valid], levels=(0,), use_curvature=USE_GEOMETRY)
             if mechanism is not None:
                 if MECHANISM_SCALE is None:
-                    scale = float(recon_loss.detach()) / max(
-                        float(mechanism.detach()), 1e-12)
+                    parameters = [p for p in raw_module.parameters() if p.requires_grad]
+                    mechanism_grads = torch.autograd.grad(
+                        mechanism, parameters, retain_graph=True, allow_unused=True)
+                    recon_grads = torch.autograd.grad(
+                        recon_loss, parameters, retain_graph=True, allow_unused=True)
+                    scale = curvature_prefix.gradient_budget_scale(
+                        mechanism_grads, recon_grads, MECHANISM_GRADIENT_SHARE)
                     low_bound, high_bound = MECHANISM_SCALE_BOUNDS
                     MECHANISM_SCALE = min(max(scale, low_bound), high_bound)
                     _record(rank, "mechanism_scale", value=MECHANISM_SCALE,
                             recon=float(recon_loss.detach()),
-                            mechanism=float(mechanism.detach()), epoch=epoch)
+                            mechanism=float(mechanism.detach()),
+                            share=MECHANISM_GRADIENT_SHARE, epoch=epoch)
                 loss = loss + MECHANISM_SCALE * mechanism
                 mechanism_value = float(mechanism.detach())
             if not torch.isfinite(loss):

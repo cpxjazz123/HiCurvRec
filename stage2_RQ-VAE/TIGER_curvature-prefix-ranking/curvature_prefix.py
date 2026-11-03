@@ -289,3 +289,20 @@ def _assignment_cost(points, codebook, use_curvature: bool) -> torch.Tensor:
     return (points.pow(2).sum(1, keepdim=True)
             - 2 * points @ codebook.t()
             + codebook.pow(2).sum(1, keepdim=True).t())
+
+
+def gradient_budget_scale(mechanism_grads, reconstruction_grads, share: float) -> float:
+    """The scale that keeps the mechanism's initial gradient at ``share`` of recon.
+
+    A value-ratio scale let the AF3 term dominate the coarse assignment and
+    collapsed the partition; the gradient norm is the actual influence on the
+    trained weights, so the budget is measured there once at the first step and
+    fixed thereafter. ``share`` is a declared bound, not a tuned constant.
+    """
+    def norm(grads) -> float:
+        total = 0.0
+        for grad in grads:
+            if grad is not None:
+                total += float(grad.pow(2).sum())
+        return total ** 0.5
+    return float(share) * norm(reconstruction_grads) / max(norm(mechanism_grads), 1e-12)

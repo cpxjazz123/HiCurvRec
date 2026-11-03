@@ -314,6 +314,21 @@ class LevelSelectionTests(unittest.TestCase):
         self.assertNotAlmostEqual(float(base), float(different), places=6)
 
 
+class GradientBudgetTests(unittest.TestCase):
+    def test_the_scale_sets_the_share_of_the_reconstruction_gradient(self):
+        mech = [torch.ones(4) * 2.0]
+        recon = [torch.ones(4) * 10.0]
+        scale = cp.gradient_budget_scale(mech, recon, 0.10)
+        self.assertAlmostEqual(scale, 0.10 * 10.0 / 2.0)
+        self.assertAlmostEqual(scale * 2.0, 0.10 * 10.0)
+
+    def test_missing_gradients_are_treated_as_zero(self):
+        mech = [None, torch.ones(2)]
+        recon = [torch.ones(2) * 3.0, None]
+        scale = cp.gradient_budget_scale(mech, recon, 0.5)
+        self.assertAlmostEqual(scale, 0.5 * 3.0 / 1.0)
+
+
 class DeterminismTests(unittest.TestCase):
     def test_the_same_inputs_give_the_same_loss(self):
         torch.manual_seed(7)
