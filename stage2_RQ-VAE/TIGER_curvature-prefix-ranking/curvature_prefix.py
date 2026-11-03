@@ -327,3 +327,35 @@ def hierarchical_diversity_loss(points_second, points_third, codebooks,
     if terms == 0:
         return sum(point.sum() * 0.0 for point in (points_second, points_third))
     return total / terms
+
+
+def bucket_usage_penalty(points_third, codebook_third, bucket_ids, usage, *,
+                         use_curvature: bool = True,
+                         temperature=None) -> torch.Tensor:
+    """Penalise assigning a fine code that its own coarse bucket already uses.
+
+    ``usage[b, k]`` is the running (detached) count of code ``k`` inside bucket
+    ``b``. The penalty is the soft assignment's mass on the already-used share of
+    that bucket, so the gradient moves an item towards the codes its bucket has
+    not spent. This is the global, cross-batch signal the per-batch diversity
+    term cannot see; the collision is a property of the whole item set.
+    """
+    if bucket_ids.numel() == 0:
+        return points_third.sum() * 0.0
+    cost = _assignment_cost(points_third, codebook_third, use_curvature)
+    if temperature is None:
+        temperature = cost.detach().min(dim=-1, keepdim=True).values.clamp_min(1e-6)
+    weight = F.softmax(-cost / temperature, dim=-1)
+    rows = usage[bucket_ids].to(weight.dtype)
+    share = rows / rows.sum(dim=-1, keepdim=True).clamp_min(1.0)
+    return (weight * share).sum(dim=-1).mean()
+
+
+def _assignment_cost(points, codebook, use_curvature: bool) -> torch.Tensor:
+    if use_curvature:
+        left = geometry.expmap0(points, CURVATURE)
+        codes = geometry.expmap0(codebook, CURVATURE)
+        return geometry.distance(left.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
+    return (points.pow(2).sum(1, keepdim=True)
+            - 2 * points @ codebook.t()
+            + codebook.pow(2).sum(1, keepdim=True).t())

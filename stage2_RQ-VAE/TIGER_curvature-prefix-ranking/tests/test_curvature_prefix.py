@@ -431,6 +431,44 @@ class DiversityTests(unittest.TestCase):
         self.assertIsNotNone(second.grad)
 
 
+class BucketUsageTests(unittest.TestCase):
+    def test_a_used_code_is_penalised_more(self):
+        generator = torch.Generator().manual_seed(41)
+        codebook = torch.nn.functional.normalize(
+            torch.randn(8, 4, generator=generator), dim=1) * 0.05
+        usage = torch.zeros(4, 8)
+        usage[0, 0] = 10.0
+        usage[0, 1] = 1.0
+        at_used = torch.stack([codebook[0]])
+        at_free = torch.stack([codebook[1]])
+        bucket = torch.tensor([0])
+        used_penalty = cp.bucket_usage_penalty(at_used, codebook, bucket, usage,
+                                               temperature=0.1)
+        free_penalty = cp.bucket_usage_penalty(at_free, codebook, bucket, usage,
+                                               temperature=0.1)
+        self.assertGreater(float(used_penalty), float(free_penalty))
+
+    def test_the_penalty_reaches_the_level_tangent(self):
+        generator = torch.Generator().manual_seed(42)
+        codebook = torch.nn.functional.normalize(
+            torch.randn(8, 4, generator=generator), dim=1) * 0.05
+        usage = torch.ones(4, 8)
+        points = torch.randn(3, 4, requires_grad=True, generator=generator)
+        penalty = cp.bucket_usage_penalty(points, codebook, torch.tensor([0, 1, 2]),
+                                          usage, temperature=0.1)
+        penalty.backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
+
+    def test_no_buckets_returns_zero_with_grad(self):
+        codebook = torch.randn(4, 3)
+        points = torch.randn(2, 3, requires_grad=True)
+        empty = torch.zeros(0, dtype=torch.long)
+        penalty = cp.bucket_usage_penalty(points, codebook, empty, torch.zeros(4, 4))
+        self.assertEqual(float(penalty), 0.0)
+        penalty.backward()
+        self.assertIsNotNone(points.grad)
+
+
 class DeterminismTests(unittest.TestCase):
     def test_the_same_inputs_give_the_same_loss(self):
         torch.manual_seed(7)
