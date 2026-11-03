@@ -1,0 +1,80 @@
+# curvature_prefix_ranking
+
+AF3-cohesion-guided hierarchical prefix ranking for the hyperbolic residual
+quantizer. Candidate tree copied from `TIGER_poincare-frechet-successor-codebook`
+(the last complete mechanism of the #121 baseline chain); only the arm identity,
+the new mechanism and its tests differ from that baseline.
+
+## The coupled pathway
+
+```
+TRAIN behaviour edges                       residual quantizer
+        |                                          |
+  AF3(e)=4-deg(u)-deg(v)+3|N(u)&N(v)|      z_l = residual entering level l
+        |                                          |
+  s_e = sigmoid((AF3-median)/(IQR/1.349))    p_l(k|u) = softmax(-d_H(exp_0(z_l^u), c_lk)/T)
+        |                                          |
+  triple (anchor, high, bridge)  ---------->  a_l(u,v) = sum_k p_l(k|u) p_l(k|v)
+                          L = mean_l softplus(-(a_l(anchor,high)-a_l(anchor,bridge)) * w)
+                                     |
+                              gradient -> encoder -> SID
+```
+
+* **Behaviour side (train-only).** Consecutive `history+target` pairs of the
+  TRAIN split build one undirected item graph; `AF3` and the median/IQR split are
+  computed once (315,391 edges, median -128.0, scale 177.17 on this split). No
+  validation or test interaction is read.
+* **Curve side.** Level residuals are mapped with the framework's canonical
+  `poincare_contract.expmap0`, and the assignment cost is
+  `poincare_contract.distance` to that level's codebook (which the baseline keeps
+  in the ball). The curve-off switch uses squared Euclidean costs instead.
+* **Coupling.** The loss is a *relative* preference on the soft prefix overlap:
+  it never forces two items to share or not share a prefix, it only asks the
+  cohesive neighbour's overlap to exceed the bridge neighbour's. Gradients flow
+  through the hyperbolic distance into the encoder, so the curve is inside the
+  trained pathway, not decoration.
+
+## Constants and how they are derived (no tuning)
+
+| constant | derivation |
+|---|---|
+| AF3 split | median over the TRAIN edges |
+| cohesion scale | `IQR/1.349` (a normal-consistent IQR); `1.0` only when `IQR == 0` is measured |
+| triple weight `w` | `s_high * (1 - s_low)`, a product of independent bounded coalition values |
+| softmax temperature | the mean assignment cost of the batch (measured per step), so logits are scale-free |
+| loss scale | measured once on the first training step: `recon_loss / mechanism_loss`, then fixed (clamped to `[1e-8, 1e8]` only for numerical safety) |
+| level weight | `1/3`: the three prefix levels are the SID levels and carry equal weight |
+
+No margin, temperature, weight or split is selected by a grid or a Recall probe.
+
+## The three switch definitions (Issue #121)
+
+| arm | `USE_BEHAVIOUR` | `USE_GEOMETRY` | effect |
+|---|---|---|---|
+| both-on (trained) | true | true | AF3 triples and weights, hyperbolic costs |
+| behaviour-off | false | true | random in-batch triples and unit weights; the AF3 side is gone |
+| geometry-off | true | false | the same triples, squared Euclidean costs; the curve is gone |
+
+Only the both-on arm is trained (19g); the other two exist in the code and are
+exercised by the tests, which is what the range gate inspects.
+
+## Evidence
+
+* 70 tree tests, 2 skipped: AF3 exactness (K3 => +3, K4 => +4, P4 => plain
+  Forman, `AF3-F=3T`), cohesion bounds/monotonicity/median, triple selection and
+  batch confinement, prefix-agreement symmetry and curve sensitivity, loss
+  monotonicity and non-zero encoder gradients, switch effects, the recording
+  layer's equality with the baseline `RQLayer`, canonical-vs-inherited distance
+  agreement, determinism.
+* Framework checks on this tree: `constants` PASS, `geometry_contract` PASS,
+  `entry` PASS (one real epoch exports the identifier), `identifier` PASS
+  (24,587 unique 4-token SIDs). One epoch logs `mech=0.6931` (the softplus(0)
+  start) with the measured scale `7.26e-4`.
+
+## What is not claimed
+
+The arm is implemented and technically conformant; it has **not** been trained
+for 3000 epochs and no Stage3 `test_R@10` exists for it. The formal run goes
+through `stage2_start(source_dir, verification_id)` after the independent
+verification suites are authored and passed, and the frozen 3000-epoch budget and
+Stage3 protocol are untouched.
