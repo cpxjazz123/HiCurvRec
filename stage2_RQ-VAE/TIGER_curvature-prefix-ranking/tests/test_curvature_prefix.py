@@ -144,6 +144,18 @@ class PrefixAgreementTests(unittest.TestCase):
         self.assertTrue(torch.allclose(left, right, atol=1e-6))
         self.assertTrue(bool((left >= 0).all() and (left <= 1).all()))
 
+    def test_the_default_temperature_is_local(self):
+        generator = torch.Generator().manual_seed(31)
+        codebook = torch.nn.functional.normalize(
+            torch.randn(16, 4, generator=generator), dim=1) * 0.05
+        left = torch.stack([codebook[0], codebook[3], codebook[7]])
+        right = torch.stack([codebook[0], codebook[3], codebook[7]])
+        other = torch.stack([codebook[1], codebook[9], codebook[12]])
+        same = cp.prefix_agreement(left, right, codebook)
+        apart = cp.prefix_agreement(left, other, codebook)
+        self.assertGreater(float(same.min()), 0.9)
+        self.assertLess(float(apart.max()), 0.1)
+
     def test_the_curve_changes_the_agreement(self):
         curved = cp.prefix_agreement(self.points, self.points * 3.0, self.codebook,
                                      self.temperature, use_curvature=True)

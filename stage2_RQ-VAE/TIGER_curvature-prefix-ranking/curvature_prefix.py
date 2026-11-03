@@ -233,9 +233,18 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
         cost_b = (points_b.pow(2).sum(1, keepdim=True)
                   - 2 * points_b @ code.t() + code.pow(2).sum(1, keepdim=True).t())
     if temperature is None:
-        temperature = cost_a.detach().mean().clamp_min(1e-6)
-    weight_a = F.softmax(-cost_a / temperature, dim=-1)
-    weight_b = F.softmax(-cost_b / temperature, dim=-1)
+        # Per-item scale, measured: the distance to that item's nearest code. A
+        # global mean cost leaves the 256-code softmax near-uniform, which made
+        # both the ranking and the diversity terms carry no signal (their value
+        # sat at 1/256). With the nearest-code distance the kernel is local and
+        # the overlap actually says "same code or not".
+        temperature_a = cost_a.detach().min(dim=-1, keepdim=True).values.clamp_min(1e-6)
+        temperature_b = cost_b.detach().min(dim=-1, keepdim=True).values.clamp_min(1e-6)
+        weight_a = F.softmax(-cost_a / temperature_a, dim=-1)
+        weight_b = F.softmax(-cost_b / temperature_b, dim=-1)
+    else:
+        weight_a = F.softmax(-cost_a / temperature, dim=-1)
+        weight_b = F.softmax(-cost_b / temperature, dim=-1)
     return (weight_a * weight_b).sum(dim=-1)
 
 
