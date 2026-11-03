@@ -141,7 +141,7 @@ class InitTests(unittest.TestCase):
         the assignment degenerates to one code for the whole batch. A real start
         spreads the batch over the codebook.
         """
-        from model.frechet_poincare import clamp_ball, exp_0, poincare_distance
+        from model import frechet_poincare as geometry
         model, embeddings, ids, _ = build()
         layer = model.rq.vq_layers[1]
         with torch.no_grad():
@@ -149,11 +149,12 @@ class InitTests(unittest.TestCase):
             tangent = torch.randn(64, layer.dim) * 3.0
             # What the old code did: the tangent used directly as a ball point.
             saturated = torch.argmin(
-                poincare_distance(tangent.unsqueeze(1),
+                geometry.poincare_distance(tangent.unsqueeze(1),
                                   layer.get_code_embs().unsqueeze(0)), dim=-1)
             residual = layer.init_codebook(tangent, torch.device("cpu"))
             mapped = torch.argmin(
-                poincare_distance(clamp_ball(exp_0(tangent)).unsqueeze(1),
+                geometry.poincare_distance(
+                    geometry.clamp_ball(geometry.exp_0(tangent)).unsqueeze(1),
                                   layer.get_code_embs().unsqueeze(0)), dim=-1)
         self.assertTrue(bool(torch.isfinite(residual).all()))
         self.assertEqual(int(torch.unique(saturated).numel()), 1,
