@@ -520,7 +520,7 @@ def main() -> None:
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(reference, reconstructed, quant_loss)
             # === 候选机制: AF3 凝聚度引导的分层前缀排序 ===
-            global MECHANISM_SCALE
+            global MECHANISM_SCALE, _ACCEPTED_STATE
             triples = triple_lookup.triples(item_ids.detach().cpu().numpy(),
                                             use_behaviour=USE_BEHAVIOUR,
                                             seed=curvature_prefix.RANDOM_TRIPLE_SEED + epoch)
@@ -639,7 +639,6 @@ def main() -> None:
                 if world_size > 1:
                     dist.broadcast(accepted, 0)
                 decision = "accept" if int(accepted.item()) == 1 else "rollback"
-                global _ACCEPTED_STATE
                 if decision == "accept":
                     _ACCEPTED_STATE = {name: value.detach().cpu().clone()
                                        for name, value in raw_module.state_dict().items()}
