@@ -426,6 +426,32 @@ class CoClusterTests(unittest.TestCase):
         self.assertNotAlmostEqual(float(curved), float(flat), places=6)
 
 
+class UsageEntropyTests(unittest.TestCase):
+    """The coarse level must not collapse into a few codes."""
+
+    def setUp(self):
+        torch.manual_seed(19)
+        self.codebook = torch.randn(32, 8) * 0.2
+
+    def test_a_concentrated_batch_has_lower_entropy(self):
+        one = self.codebook[7].repeat(12, 1)
+        spread = self.codebook[:12].clone()
+        concentrated = cp.usage_entropy(one, self.codebook)
+        even = cp.usage_entropy(spread, self.codebook)
+        self.assertGreater(float(even), float(concentrated))
+
+    def test_the_term_has_a_gradient(self):
+        points = (torch.randn(8, 8) * 0.2).requires_grad_(True)
+        cp.usage_entropy(points, self.codebook).sum().backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
+
+    def test_the_curve_changes_the_entropy(self):
+        points = torch.randn(8, 8) * 0.1
+        curved = cp.usage_entropy(points, self.codebook, use_curvature=True, curvature=100.0)
+        flat = cp.usage_entropy(points, self.codebook, use_curvature=False)
+        self.assertNotAlmostEqual(float(curved), float(flat), places=6)
+
+
 class CodebookUpdateTests(unittest.TestCase):
     """The coarse codebook may follow the behaviour cohesion, but bounded."""
 

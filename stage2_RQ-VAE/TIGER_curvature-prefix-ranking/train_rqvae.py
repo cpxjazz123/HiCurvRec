@@ -150,6 +150,9 @@ CODEBOOK_STEP = 0.10
 #: The co-cluster term enters at the unit scale; the measured gradient budget
 #: sizes the mechanism as a whole.
 CLUSTER_WEIGHT = 1.0
+#: The coarse usage entropy, at the same unit scale: the co-cluster term alone
+#: collapsed the exported L1 level from 254 codes to 105.
+USAGE_WEIGHT = 1.0
 #: Trust region on the SID partition: a training epoch whose measured collision
 #: exceeds this budget is rolled back to the last accepted state. The mechanism
 #: weight is NOT shrunk on a rollback: halving it drove the weight to 1e-19 in one
@@ -514,6 +517,10 @@ def main() -> None:
                             points[0][rows_anchor[valid]], points[0][rows_high[valid]],
                             codebooks[0], USE_GEOMETRY,
                             MECHANISM_CURVATURE or 1.0)
+                        mechanism = mechanism + CLUSTER_WEIGHT * curvature_prefix.cocluster_loss(
+                            points[1][rows_anchor[valid]], points[1][rows_high[valid]],
+                            codebooks[1], USE_GEOMETRY,
+                            MECHANISM_CURVATURE or 1.0)
                 # Every item of the batch, not the sampled pairs: the coarse
                 # bucket's fine codes are pushed to spread, weighted by the item's
                 # mean AF3 cohesion.
@@ -529,6 +536,8 @@ def main() -> None:
                               points[2], codebooks[2], buckets2, cohesion, USE_GEOMETRY,
                               MECHANISM_CURVATURE or 1.0))
                 mechanism = mechanism + SPREAD_WEIGHT * spread
+                mechanism = mechanism - USAGE_WEIGHT * curvature_prefix.usage_entropy(
+                    points[0], codebooks[0], USE_GEOMETRY, MECHANISM_CURVATURE or 1.0)
             if mechanism is not None:
                 if MECHANISM_SCALE is None:
                     parameters = [p for p in raw_module.parameters() if p.requires_grad]

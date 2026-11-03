@@ -402,6 +402,24 @@ def data_curvature(norms: torch.Tensor) -> float:
     return 1.0 / max(scale, 1e-6) ** 2
 
 
+def usage_entropy(points: torch.Tensor, codebook: torch.Tensor,
+                  use_curvature: bool = True,
+                  curvature: float = CURVATURE) -> torch.Tensor:
+    """The entropy of a batch's mean soft assignment over the codebook.
+
+    The co-cluster term alone pulled every cohesive pair into the same coarse
+    code and the exported L1 level collapsed from 254 codes to 105. This term
+    reads the batch as a whole and keeps the usage spread; the measured gap
+    normalises its gradient for the shared budget.
+    """
+    cost = _assignment_cost(points, codebook, use_curvature, curvature)
+    temperature = _gap_temperature(cost).unsqueeze(-1)
+    prob = F.softmax(-cost / temperature, dim=-1)
+    mean = prob.mean(dim=0)
+    entropy = -(mean * mean.clamp_min(1e-12).log()).sum()
+    return entropy * temperature.mean().detach()
+
+
 def cocluster_loss(points_a: torch.Tensor, points_b: torch.Tensor,
                    codebook: torch.Tensor, use_curvature: bool = True,
                    curvature: float = CURVATURE) -> torch.Tensor:
