@@ -525,26 +525,15 @@ def main() -> None:
                 rows_low = _batch_positions(item_ids, low)
                 valid = (rows_anchor >= 0) & (rows_high >= 0) & (rows_low >= 0)
                 if bool(valid.any()):
+                    # The ranking acts on the COARSE level only: that is the level
+                    # the idea is about ("cohesive groups share the coarse
+                    # prefix"), and it cannot make two items share a three-token
+                    # SID, so the collision budget is untouched. The fine levels
+                    # keep the baseline's assignment.
                     mechanism = curvature_prefix.curvature_prefix_ranking_loss(
                         points[0], points[1], points[2], raw_module.level_codebooks(),
                         rows_anchor[valid], rows_high[valid], rows_low[valid],
-                        triple_weights[valid], use_curvature=USE_GEOMETRY)
-            # The learned diversity of the hierarchy: items under the same L1 must
-            # spread over L2, and items under the same L2 over L3. This is the
-            # trained property that satisfies the collision gate; no export step
-            # is allowed to change the SID.
-            token_rows = tokens.detach().cpu().numpy()
-            l1_left, l1_right = curvature_prefix.same_prefix_pairs(token_rows[:, 0])
-            l2_left, l2_right = curvature_prefix.same_prefix_pairs(token_rows[:, 1])
-            if l1_left.size or l2_left.size:
-                diversity = curvature_prefix.hierarchical_diversity_loss(
-                    points[1], points[2], raw_module.level_codebooks(),
-                    torch.from_numpy(l2_left).to(device),
-                    torch.from_numpy(l2_right).to(device),
-                    torch.from_numpy(l1_left).to(device),
-                    torch.from_numpy(l1_right).to(device),
-                    use_curvature=USE_GEOMETRY)
-                mechanism = (mechanism + diversity) if mechanism is not None else diversity
+                        triple_weights[valid], levels=(0,), use_curvature=USE_GEOMETRY)
             if mechanism is not None:
                 if MECHANISM_SCALE is None:
                     scale = float(recon_loss.detach()) / max(

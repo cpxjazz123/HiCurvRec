@@ -250,7 +250,8 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
 
 def curvature_prefix_ranking_loss(points_first, points_second, points_third,
                                   codebooks, anchor, high, low, weights, *,
-                                  use_curvature: bool = True, temperature=None) -> torch.Tensor:
+                                  levels=(0, 1, 2), use_curvature: bool = True,
+                                  temperature=None) -> torch.Tensor:
     """The AF3-guided relative preference over the three prefix levels.
 
     The three level tangents are separate positional tensor arguments on purpose:
@@ -265,89 +266,19 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
     high = high.to(points_first.device)
     low = low.to(points_first.device)
     weights = weights.to(points_first.device).float().clamp(0.0, 1.0)
+    point_levels = (points_first, points_second, points_third)
+    selected = [level for level in levels if level in (0, 1, 2)]
+    if not selected:
+        raise ValueError("at least one level must be selected")
     total = points_first.new_zeros(())
-    for points, codebook in zip((points_first, points_second, points_third), codebooks):
+    for level in selected:
+        points, codebook = point_levels[level], codebooks[level]
         preferred = prefix_agreement(points[anchor], points[high], codebook,
                                      temperature, use_curvature)
         bridged = prefix_agreement(points[anchor], points[low], codebook,
                                    temperature, use_curvature)
         total = total + F.softplus(-(preferred - bridged) * weights).mean()
-    return total / 3.0
-
-
-def same_prefix_pairs(codes: np.ndarray, limit: int = 512):
-    """Pairs of rows that share a hard prefix.
-
-    Each group contributes its first row paired with every later row; the result
-    is deterministically subsampled to ``limit`` pairs.  The mechanism uses this
-    at the coarse level (pairs sharing L1 must spread over L2) and at the middle
-    level (pairs sharing L2 must spread over L3).
-    """
-    codes = np.asarray(codes, dtype=np.int64).reshape(-1)
-    if codes.size < 2:
-        return np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64)
-    order = np.argsort(codes, kind="stable")
-    ordered = codes[order]
-    later = np.zeros(ordered.size, dtype=bool)
-    later[1:] = ordered[1:] == ordered[:-1]
-    positions = np.arange(ordered.size)
-    group_start = np.maximum.accumulate(np.where(later, 0, positions))
-    second = positions[later]
-    first = group_start[later]
-    left, right = order[first], order[second]
-    if left.size > int(limit):
-        picks = np.linspace(0, left.size - 1, int(limit)).astype(np.int64)
-        left, right = left[picks], right[picks]
-    return left, right
-
-
-def hierarchical_diversity_loss(points_second, points_third, codebooks,
-                                pair_a_l2, pair_b_l2, pair_a_l3, pair_b_l3, *,
-                                use_curvature: bool = True,
-                                temperature=None) -> torch.Tensor:
-    """Different items under the same coarse prefix must not share the next code.
-
-    The term is the mean soft-assignment overlap of the sampled pairs at L2
-    (pairs sharing L1) and at L3 (pairs sharing L2), averaged over the levels that
-    have pairs.  It makes the collision reduction a trained property, not an
-    export step.
-    """
-    total = points_second.new_zeros(())
-    terms = 0
-    if pair_a_l2.numel():
-        overlap = prefix_agreement(points_second[pair_a_l2], points_second[pair_b_l2],
-                                   codebooks[1], temperature, use_curvature)
-        total = total + overlap.mean()
-        terms += 1
-    if pair_a_l3.numel():
-        overlap = prefix_agreement(points_third[pair_a_l3], points_third[pair_b_l3],
-                                   codebooks[2], temperature, use_curvature)
-        total = total + overlap.mean()
-        terms += 1
-    if terms == 0:
-        return sum(point.sum() * 0.0 for point in (points_second, points_third))
-    return total / terms
-
-
-def pair_usage_penalty(points_second, codebook_second, first_codes, usage, *,
-                       use_curvature: bool = True,
-                       temperature=None) -> torch.Tensor:
-    """Penalise assigning an L2 code that its own L1 group already spent.
-
-    ``usage[k1, k2]`` is the running (detached) count of the second-level code
-    ``k2`` used under the first-level code ``k1``.  Spreading these pairs shrinks
-    the coarse buckets, which is the lever a within-bucket fine-code penalty does
-    not have: with fewer items per bucket there are fewer chances to collide.
-    """
-    if first_codes.numel() == 0:
-        return points_second.sum() * 0.0
-    cost = _assignment_cost(points_second, codebook_second, use_curvature)
-    if temperature is None:
-        temperature = cost.detach().min(dim=-1, keepdim=True).values.clamp_min(1e-6)
-    weight = F.softmax(-cost / temperature, dim=-1)
-    rows = usage[first_codes].to(weight.dtype)
-    share = rows / rows.sum(dim=-1, keepdim=True).clamp_min(1.0)
-    return (weight * share).sum(dim=-1).mean()
+    return total / float(len(selected))
 
 
 def _assignment_cost(points, codebook, use_curvature: bool) -> torch.Tensor:

@@ -3,9 +3,9 @@
 The baseline's ``RQLayer`` is left byte-identical to its source tree. This
 subclass repeats its loop and additionally keeps the residual that enters every
 level, so the mechanism can read the same tangents the SID was assigned from.
-It also enables the balanced Sinkhorn assignment on every level during training
-(the collision gate needs a spread code usage); inference keeps the
-deterministic argmin, so an item's SID does not depend on its batch.
+The assignment itself is the frozen baseline's: Euclidean nearest code, with the
+baseline's Sinkhorn only where it already was (the last level), so the collision
+stays at the baseline's measured level while the curved/behaviour terms train.
 """
 from __future__ import annotations
 
@@ -16,13 +16,6 @@ from .layers import RQLayer
 
 class RecordingRQLayer(RQLayer):
     """``RQLayer`` plus ``level_points()`` and per-level balanced assignment."""
-
-    def __init__(self, config):
-        super().__init__(config)
-        for layer in self.vq_layers:
-            layer.use_sk = bool(self.sk_epsilon > 0 and self.sk_iters > 0)
-            layer.sk_epsilon = float(self.sk_epsilon)
-            layer.sk_iters = int(self.sk_iters)
 
     def forward(self, x: torch.Tensor, infer_use_sk: bool = False,
                 item_ids: torch.Tensor = None):
