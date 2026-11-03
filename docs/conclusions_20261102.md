@@ -209,6 +209,45 @@ bootstrap CI and Holm over the predeclared 81-test family):
   R@20/NDCG@20 `NOT_EVALUATED`. Cost: 108 rows, one cached curvature pass,
   median 4.8 s/SID; 32 audit tests.
 
+## 4e. Curvature-guided prefix ranking, the first full run (2026-11-03)
+
+* **Arm.** `stage2_RQ-VAE/TIGER_curvature-prefix-ranking/`, copied from the last
+  complete mechanism `TIGER_poincare-frechet-successor-codebook`. AF3 cohesion on
+  the TRAIN behaviour graph (`315,391` edges, median `-128.0`, scale `177.17`)
+  selects a cohesive and a bridge neighbour per anchor inside the batch; a ranking
+  loss asks the cohesive neighbour's soft prefix overlap to exceed the bridge
+  one's at all three levels. The overlap is the inner product of the softmax of
+  the negative Poincare distance from each level's residual tangent to that
+  level's codebook; behaviour-off (random triples, unit weights) and geometry-off
+  (squared Euclidean cost) exist in code and are exercised only by tests.
+* **Admission and run.** Machine admission PASS (constants, geometry contract,
+  one-epoch entry, 24,587 unique four-token SIDs, four-rank probe); one-epoch
+  gradient smoke PASS (24 steps, no dead/non-finite terms, every step norm
+  positive); training on four cards, 3000 epochs, 0.238 s/epoch, 12 minutes.
+  Final loss `5.66e-4`, recon `8.93e-5`.
+* **Pre-training signal.** The existing SID partitions already rank cohesive
+  neighbours above bridges: +8.8 pp at L1 (positive in 98.1% of the 108 arms),
+  +1.46 pp at L2, +0.61 pp at L3 (`analysis_sid_recall/curvature_prefix_signal/`).
+* **Stage2 diagnostics** (technical validity only, no threshold):
+  Hard-L1 ER **5.02** (reference 16.39), L2 distinct prefixes **1,985**
+  (reference 16,145 -- a much coarser L1, hence fewer L2 prefixes), L3 collision
+  **0.831**, L3 refinement gain **2.56 bits**, conditional G3 gain **-0.027**.
+  Recorded before the Stage3 score was read only in the sense that the SID exists
+  first; the record itself was written after the run and is dated as such.
+* **Stage3 result**: `test_recall@10` **0.054057**, R@5 0.036508, NDCG@5 0.024011,
+  NDCG@10 0.029662, n_eval 57,439. The frozen target is `> 0.065` and the Resample
+  baseline is 0.0637372, so this arm **does not beat the baseline** and is recorded
+  as a negative result, not hidden.
+* **Why the mechanism did not fire (diagnosis, not a tuning pass).** The ranking
+  term stayed at `ln 2 = 0.69315` for all 3000 epochs: with 256 codes per level
+  and the batch-mean-cost temperature, the soft assignment is near-uniform, so
+  the cohesive-vs-bridge overlap difference is of order `1/K^2` and the gradient
+  is negligible. The temperature rule is frozen in the mechanism definition;
+  changing it now would be a different mechanism and a different run (19g).
+  The next candidate should make the *relative* comparison at a scale where the
+  softmax is discriminative (e.g. a top-k or margin formulation with a derived
+  scale), and must still be admitted by the same machine checks.
+
 ## 5. Established invariants (now enforced by tests)
 
 * SID-recall admission is **directory-name equality**; the join key is
