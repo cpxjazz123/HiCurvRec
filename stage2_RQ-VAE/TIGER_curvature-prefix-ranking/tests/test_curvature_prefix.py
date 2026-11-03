@@ -325,6 +325,22 @@ class CheckpointCompatibilityTests(unittest.TestCase):
         self.assertTrue(torch.allclose(
             model.rq.vq_layers[0].frechet.item_weights, torch.ones(1000)))
 
+    def test_a_table_from_a_disabled_mechanism_is_ignored(self):
+        from types import SimpleNamespace
+        from model import RQVAE
+
+        config = SimpleNamespace(hidden_sizes=(16, 8), codebook_num=3,
+                                 codebook_size=(8, 8, 8), codebook_dim=4,
+                                 dropout=0.0, beta=0.25, vq_type="vq",
+                                 ema_decay=0.99, fix_code_embs=False,
+                                 sk_epsilon=-1.0, sk_iters=-1,
+                                 frechet_codebook=False, use_behaviour=True,
+                                 use_curvature=True, frechet_eta=1.0)
+        model = RQVAE(config, in_dim=6)
+        state = {key: value.clone() for key, value in model.state_dict().items()}
+        state["rq.vq_layers.0.frechet.item_weights"] = torch.ones(1000)
+        model.load_state_dict(state)          # no module, no failure
+
     def test_a_genuinely_missing_weight_still_raises(self):
         from types import SimpleNamespace
         from model import RQVAE

@@ -111,7 +111,15 @@ class RQVAE(nn.Module):
         cleaned = {key: value for key, value in state_dict.items()
                    if key not in tables}
         for key, value in tables.items():
-            module = self.get_submodule(key.rsplit(".", 1)[0])
+            try:
+                module = self.get_submodule(key.rsplit(".", 1)[0])
+            except AttributeError:
+                # The checkpoint carries a mechanism this candidate no longer
+                # constructs (its quantizer keeps the Euclidean assignment), so
+                # the table has no home here and is ignored.
+                continue
+            if not hasattr(module, "item_weights"):
+                continue
             module.register_buffer("item_weights",
                                    value.detach().clone().to(
                                        dtype=module.item_weights.dtype,
