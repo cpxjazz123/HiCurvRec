@@ -89,21 +89,21 @@ level residual and the (tangent) codebook are both mapped into the ball before
 the prefix agreement. No hyperparameter was tuned; the change is an assignment
 rule, which a candidate owns.
 
-## Third-level refinement at export (owner's 20% gate)
+## The owner's LEARNED 20% gate (2026-11-03)
 
-The gate counts the first three tokens. The learned third-level assignment is not
-injective inside a (k1,k2) bucket: the first iteration of this arm reached a gate
-collision of 0.306 even after the assignment change. The export therefore applies
-one deterministic rule: the first occurrence of every third token in a bucket is
-kept, every duplicate is reassigned to the smallest unused code of that level in
-ascending item order, and the first two tokens never change. A bucket larger than
-the level size cannot be resolved; its surplus is counted, logged and recorded
-rather than silently claimed unique. The trainer's own collision metric now uses
-the gate's definition (the share of items in shared triples), not `1 - unique/n`.
+The gate requires the three-level collision to be <= 20% **as learned by Stage2**;
+export-time dedup is forbidden and detected: the gate reads the trainer's own
+final collision from the run's metrics and refuses a SID whose collision disagrees
+with it (`LEARNED_COLLISION_TOLERANCE`) or whose learned collision exceeds 20%.
 
-This is an assignment rule, declared as such: the third token remains the learned
-code whenever it is unique, and the disambiguation token is still appended. It is
-not a trained property and must not be reported as one.
+The first two runs learned 0.831 and 0.334. The mechanism therefore adds a
+*learned hierarchical diversity* term: for pairs that share the hard L1 token the
+soft L2 assignment overlap is minimised, and for pairs that share the hard L2
+token the soft L3 overlap is minimised (`same_prefix_pairs` +
+`hierarchical_diversity_loss`). It is averaged with the AF3 ranking term and
+scaled by the same first-step recon/mechanism ratio; the assignment uses the
+frozen baseline's Euclidean rule with balanced Sinkhorn usage on every level.
+The exported SID is the model's own assignment, unchanged.
 
 ## What is not claimed
 

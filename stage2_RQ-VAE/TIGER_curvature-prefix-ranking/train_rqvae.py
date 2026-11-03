@@ -504,7 +504,7 @@ def main() -> None:
             batch = batch.to(device, non_blocking=True)
             item_ids = item_ids.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            reconstructed, quant_loss, _, _, reference = model(batch, item_ids)
+            reconstructed, quant_loss, _, tokens, reference = model(batch, item_ids)
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(reference, reconstructed, quant_loss)
             # === 候选机制: AF3 凝聚度引导的分层前缀排序 ===
@@ -513,6 +513,8 @@ def main() -> None:
                                             use_behaviour=USE_BEHAVIOUR,
                                             seed=curvature_prefix.RANDOM_TRIPLE_SEED + epoch)
             mechanism_value = 0.0
+            points = raw_module.level_points()
+            mechanism = None
             if triples["anchor"].size:
                 anchor = torch.from_numpy(triples["anchor"]).to(device)
                 high = torch.from_numpy(triples["high"]).to(device)
@@ -523,21 +525,37 @@ def main() -> None:
                 rows_low = _batch_positions(item_ids, low)
                 valid = (rows_anchor >= 0) & (rows_high >= 0) & (rows_low >= 0)
                 if bool(valid.any()):
-                    points = raw_module.level_points()
                     mechanism = curvature_prefix.curvature_prefix_ranking_loss(
                         points[0], points[1], points[2], raw_module.level_codebooks(),
                         rows_anchor[valid], rows_high[valid], rows_low[valid],
                         triple_weights[valid], use_curvature=USE_GEOMETRY)
-                    if MECHANISM_SCALE is None:
-                        scale = float(recon_loss.detach()) / max(
-                            float(mechanism.detach()), 1e-12)
-                        low_bound, high_bound = MECHANISM_SCALE_BOUNDS
-                        MECHANISM_SCALE = min(max(scale, low_bound), high_bound)
-                        _record(rank, "mechanism_scale", value=MECHANISM_SCALE,
-                                recon=float(recon_loss.detach()),
-                                mechanism=float(mechanism.detach()), epoch=epoch)
-                    loss = loss + MECHANISM_SCALE * mechanism
-                    mechanism_value = float(mechanism.detach())
+            # The learned diversity of the hierarchy: items under the same L1 must
+            # spread over L2, and items under the same L2 over L3. This is the
+            # trained property that satisfies the collision gate; no export step
+            # is allowed to change the SID.
+            token_rows = tokens.detach().cpu().numpy()
+            l1_left, l1_right = curvature_prefix.same_prefix_pairs(token_rows[:, 0])
+            l2_left, l2_right = curvature_prefix.same_prefix_pairs(token_rows[:, 1])
+            if l1_left.size or l2_left.size:
+                diversity = curvature_prefix.hierarchical_diversity_loss(
+                    points[1], points[2], raw_module.level_codebooks(),
+                    torch.from_numpy(l2_left).to(device),
+                    torch.from_numpy(l2_right).to(device),
+                    torch.from_numpy(l1_left).to(device),
+                    torch.from_numpy(l1_right).to(device),
+                    use_curvature=USE_GEOMETRY)
+                mechanism = (mechanism + diversity) if mechanism is not None else diversity
+            if mechanism is not None:
+                if MECHANISM_SCALE is None:
+                    scale = float(recon_loss.detach()) / max(
+                        float(mechanism.detach()), 1e-12)
+                    low_bound, high_bound = MECHANISM_SCALE_BOUNDS
+                    MECHANISM_SCALE = min(max(scale, low_bound), high_bound)
+                    _record(rank, "mechanism_scale", value=MECHANISM_SCALE,
+                            recon=float(recon_loss.detach()),
+                            mechanism=float(mechanism.detach()), epoch=epoch)
+                loss = loss + MECHANISM_SCALE * mechanism
+                mechanism_value = float(mechanism.detach())
             if not torch.isfinite(loss):
                 raise RuntimeError(f"RQ-VAE loss became non-finite at epoch {epoch}")
             loss.backward()
@@ -665,17 +683,9 @@ def main() -> None:
         finally:
             for layer in raw_module.rq.vq_layers:
                 layer._skip_ddp_reduce = False
-        # The owner's gate counts the first three tokens: make the third token
-        # collision-free inside every (k1, k2) bucket before the disambiguation
-        # token is added. The learned third code is kept whenever it is unique.
-        refined_tokens, surplus = curvature_prefix.refine_third_level(
-            raw_tokens, codebook_sizes[2])
-        if surplus:
-            if rank == 0:
-                print(f"[RQ-VAE] WARNING: {surplus} items could not be refined "
-                      f"inside an over-full level-two bucket", flush=True)
-            _record(rank, "refinement_surplus", surplus=int(surplus))
-        sid = _extend_collisions(refined_tokens, codebook_sizes)
+        # The exported SID is the model's own assignment, unchanged: the owner's
+        # collision gate must be satisfied by training, never by post-processing.
+        sid = _extend_collisions(raw_tokens, codebook_sizes)
         if len(np.unique(sid, axis=0)) != len(sid):
             raise RuntimeError("RecBole SID extension failed to make item codes unique")
         OUTPUT_SID.parent.mkdir(parents=True, exist_ok=True)

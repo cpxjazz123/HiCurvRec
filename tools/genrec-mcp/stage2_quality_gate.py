@@ -30,6 +30,11 @@ FROZEN_BASELINE_L2_PREFIXES = 16145  # Verified reference for the diagnostic rep
 #: only policy (issue #120), which removed every quality floor; the gate is a
 #: single named quality rule, and the equality boundary is admitted ("> 20%").
 L3_COLLISION_MAX = 0.20
+#: The learned collision is read from the run's own metrics stream; an exported
+#: SID whose collision disagrees with it was post-processed after training, which
+#: the owner forbids. The tolerance absorbs the fact that the exported SID is
+#: computed on all items while the log's last row is the final epoch's batch.
+LEARNED_COLLISION_TOLERANCE = 0.02
 FROZEN_RESAMPLE_VALID_L1_ER = 16.38953942232631
 # Git blob identities pin these exact frozen source files, not merely their paths.
 FROZEN_BASELINE_BLOB_SHA1 = "d97d24a7a63891682d2b68c09a89164de2031ee9"
@@ -183,7 +188,26 @@ def three_level_collision(sid: dict) -> float | None:
     return shared / len(sid)
 
 
-def collision_gate(candidate: dict) -> str | None:
+def learned_collision(result_dir) -> float | None:
+    """The final collision the trainer itself measured, from its metrics stream."""
+    path = Path(result_dir) / "logs" / "training_metrics.jsonl"
+    if not path.is_file():
+        return None
+    value = None
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                record = json.loads(line)
+            except ValueError:
+                continue
+            if record.get("event") == "train" and record.get("collision") is not None:
+                value = float(record["collision"])
+    except OSError:
+        return None
+    return value
+
+
+def collision_gate(candidate: dict, learned: float | None = None) -> str | None:
     """The single quality rule: refuse a SID whose L3 collision exceeds 20%."""
     collision = candidate.get("l3_collision")
     if collision is None:
@@ -192,6 +216,17 @@ def collision_gate(candidate: dict) -> str | None:
     if float(collision) > L3_COLLISION_MAX:
         return ("three-level collision %.6f exceeds the %.2f gate"
                 % (float(collision), L3_COLLISION_MAX))
+    if learned is None:
+        return ("the learned collision of this SID could not be read from the run's "
+                "metrics, so the 20% gate fails closed")
+    if float(learned) > L3_COLLISION_MAX:
+        return ("the learned three-level collision %.6f exceeds the %.2f gate; the "
+                "collision must come from Stage2 training, not from an export step"
+                % (float(learned), L3_COLLISION_MAX))
+    if abs(float(learned) - float(collision)) > LEARNED_COLLISION_TOLERANCE:
+        return ("the exported SID reports collision %.6f while the training log "
+                "measured %.6f; export-time post-processing is not allowed"
+                % (float(collision), float(learned)))
     return None
 
 
@@ -206,7 +241,8 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
     evidence = {"sid": str(sid_path), "baseline": str(baseline_path),
                 "pairs": str(pairs_path), "meta": str(meta_path),
                 "admission_policy": "technical validity AND the owner's "
-                                    "three-level-collision gate (<= 20%)"}
+                                    "LEARNED three-level-collision gate (<= 20%, "
+                                    "no export-time dedup)"}
     try:
         sid = _sid(sid_path)
         if not sid:
@@ -243,7 +279,8 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
                 baseline_metrics = _measures(baseline, anchors, positives, negatives)
         except (QualityGateError, OSError, TypeError, ValueError, KeyError) as exc:
             reference_status["diagnostics"] = str(exc)
-        collision_refusal = collision_gate(candidate)
+        collision_refusal = collision_gate(
+            candidate, learned_collision(Path(sid_path).parent))
         if collision_refusal is not None:
             failures.append(collision_refusal)
         evidence.update({
@@ -258,6 +295,9 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
                                 "valid_l1_negative_hit_rate", "level2_distinct_prefixes",
                                 "full_unique_items"],
             "quality_gate": {"l3_collision_max": L3_COLLISION_MAX,
+                             "learned_collision": learned_collision(
+                                 Path(sid_path).parent),
+                             "learned_tolerance": LEARNED_COLLISION_TOLERANCE,
                              "l3_collision_refusal": collision_refusal},
             "sha256": {key: _digest(path) for key, path in (
                 ("sid", sid_path), ("baseline", baseline_path),

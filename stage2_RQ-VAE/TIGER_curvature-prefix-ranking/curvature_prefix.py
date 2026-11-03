@@ -266,42 +266,55 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
     return total / 3.0
 
 
-def refine_third_level(tokens: np.ndarray, level_size: int) -> tuple[np.ndarray, int]:
-    """Canonical collision-free third token inside every (k1, k2) bucket.
+def same_prefix_pairs(codes: np.ndarray, limit: int = 512):
+    """Pairs of rows that share a hard prefix.
 
-    The owner's admission gate counts the first three tokens.  The model's
-    third-level assignment is not injective inside a bucket, so the export keeps
-    the first occurrence of every third token and reassigns each duplicate to the
-    smallest unused code of that level, in ascending item order.  The first two
-    tokens are never changed.  A bucket larger than the level size cannot be
-    resolved here: the surplus is left as is and returned, so the caller can
-    report it instead of silently claiming uniqueness.
+    Each group contributes its first row paired with every later row; the result
+    is deterministically subsampled to ``limit`` pairs.  The mechanism uses this
+    at the coarse level (pairs sharing L1 must spread over L2) and at the middle
+    level (pairs sharing L2 must spread over L3).
     """
-    tokens = np.asarray(tokens, dtype=np.int64).copy()
-    if tokens.ndim != 2 or tokens.shape[1] < 3:
-        raise ValueError("the refinement needs an (N, >=3) token matrix")
-    if int(level_size) <= 0:
-        raise ValueError("level_size must be positive")
-    buckets: dict[tuple[int, int], list[int]] = {}
-    for index, row in enumerate(tokens):
-        key = (int(row[0]), int(row[1]))
-        buckets.setdefault(key, []).append(index)
-    surplus = 0
-    for rows in buckets.values():
-        used: set[int] = set()
-        duplicates: list[int] = []
-        for index in rows:
-            code = int(tokens[index, 2])
-            if code in used:
-                duplicates.append(index)
-            else:
-                used.add(code)
-        if not duplicates:
-            continue
-        candidates = [code for code in range(int(level_size)) if code not in used]
-        if len(candidates) < len(duplicates):
-            surplus += len(duplicates) - len(candidates)
-            duplicates = duplicates[:len(candidates)]
-        for index, code in zip(duplicates, candidates):
-            tokens[index, 2] = code
-    return tokens, surplus
+    codes = np.asarray(codes, dtype=np.int64).reshape(-1)
+    if codes.size < 2:
+        return np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64)
+    order = np.argsort(codes, kind="stable")
+    ordered = codes[order]
+    later = np.zeros(ordered.size, dtype=bool)
+    later[1:] = ordered[1:] == ordered[:-1]
+    positions = np.arange(ordered.size)
+    group_start = np.maximum.accumulate(np.where(later, 0, positions))
+    second = positions[later]
+    first = group_start[later]
+    left, right = order[first], order[second]
+    if left.size > int(limit):
+        picks = np.linspace(0, left.size - 1, int(limit)).astype(np.int64)
+        left, right = left[picks], right[picks]
+    return left, right
+
+
+def hierarchical_diversity_loss(points_second, points_third, codebooks,
+                                pair_a_l2, pair_b_l2, pair_a_l3, pair_b_l3, *,
+                                use_curvature: bool = True,
+                                temperature=None) -> torch.Tensor:
+    """Different items under the same coarse prefix must not share the next code.
+
+    The term is the mean soft-assignment overlap of the sampled pairs at L2
+    (pairs sharing L1) and at L3 (pairs sharing L2), averaged over the levels that
+    have pairs.  It makes the collision reduction a trained property, not an
+    export step.
+    """
+    total = points_second.new_zeros(())
+    terms = 0
+    if pair_a_l2.numel():
+        overlap = prefix_agreement(points_second[pair_a_l2], points_second[pair_b_l2],
+                                   codebooks[1], temperature, use_curvature)
+        total = total + overlap.mean()
+        terms += 1
+    if pair_a_l3.numel():
+        overlap = prefix_agreement(points_third[pair_a_l3], points_third[pair_b_l3],
+                                   codebooks[2], temperature, use_curvature)
+        total = total + overlap.mean()
+        terms += 1
+    if terms == 0:
+        return sum(point.sum() * 0.0 for point in (points_second, points_third))
+    return total / terms

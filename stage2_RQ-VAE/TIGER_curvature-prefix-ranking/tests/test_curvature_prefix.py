@@ -359,35 +359,64 @@ class CheckpointCompatibilityTests(unittest.TestCase):
             model.load_state_dict(state)
 
 
-class ThirdLevelRefinementTests(unittest.TestCase):
-    def test_duplicates_are_reassigned_inside_their_bucket(self):
-        tokens = np.array([[0, 0, 5], [0, 1, 7], [0, 0, 5], [0, 0, 6], [1, 2, 5]])
-        refined, surplus = cp.refine_third_level(tokens, 8)
-        self.assertEqual(surplus, 0)
-        self.assertEqual(refined[:, :2].tolist(), tokens[:, :2].tolist())
-        triples = {tuple(row) for row in refined.tolist()}
-        self.assertEqual(len(triples), len(refined))
-        self.assertEqual(refined[0, 2], 5)       # first occurrence kept
-        self.assertEqual(refined[3, 2], 6)       # unique code kept
-        self.assertEqual(refined[2, 2], 0)       # smallest unused code
-        self.assertEqual(refined[4, 2], 5)       # a different bucket is untouched
+class DiversityTests(unittest.TestCase):
+    def test_same_prefix_pairs_pair_each_group_with_its_first_row(self):
+        left, right = cp.same_prefix_pairs(np.array([0, 0, 1, 1, 1, 2]))
+        self.assertEqual(list(zip(left.tolist(), right.tolist())),
+                         [(0, 1), (2, 3), (2, 4)])
 
-    def test_the_refinement_is_deterministic(self):
-        tokens = np.array([[0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 2]])
-        first, _ = cp.refine_third_level(tokens, 4)
-        second, _ = cp.refine_third_level(tokens, 4)
-        self.assertTrue(np.array_equal(first, second))
+    def test_all_distinct_prefixes_have_no_pairs(self):
+        left, right = cp.same_prefix_pairs(np.arange(5))
+        self.assertEqual(left.size, 0)
+        self.assertEqual(right.size, 0)
 
-    def test_an_overfull_bucket_reports_its_surplus(self):
-        tokens = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-        refined, surplus = cp.refine_third_level(tokens, 2)
-        self.assertEqual(surplus, 1)
-        self.assertEqual(len({tuple(row) for row in refined.tolist()}), 2)
+    def test_the_limit_is_respected_and_deterministic(self):
+        codes = np.zeros(100, dtype=np.int64)
+        first = cp.same_prefix_pairs(codes, limit=10)
+        second = cp.same_prefix_pairs(codes, limit=10)
+        self.assertEqual(first[0].size, 10)
+        self.assertTrue(np.array_equal(first[0], second[0]))
+        self.assertTrue(np.array_equal(first[1], second[1]))
 
-    def test_the_gate_metric_counts_shared_buckets(self):
-        tokens = np.array([[0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 1, 2]])
-        counts = np.unique(tokens, axis=0, return_counts=True)[1]
-        self.assertAlmostEqual(float(counts[counts > 1].sum()) / len(tokens), 0.75)
+    def test_diversity_prefers_different_assignments(self):
+        generator = torch.Generator().manual_seed(21)
+        codebook = torch.nn.functional.normalize(
+            torch.randn(8, 4, generator=generator), dim=1) * 0.05
+        codebooks = [codebook for _ in range(3)]
+        a = torch.tensor([0])
+        b = torch.tensor([1])
+        same = [torch.stack([codebook[0], codebook[0]]),
+                torch.stack([codebook[0], codebook[0]])]
+        spread = [torch.stack([codebook[0], codebook[3]]),
+                  torch.stack([codebook[0], codebook[5]])]
+        loss_same = cp.hierarchical_diversity_loss(
+            same[0], same[1], codebooks, a, b, a, b, temperature=0.1)
+        loss_spread = cp.hierarchical_diversity_loss(
+            spread[0], spread[1], codebooks, a, b, a, b, temperature=0.1)
+        self.assertGreater(float(loss_same), float(loss_spread))
+
+    def test_diversity_reaches_the_level_tangents(self):
+        torch.manual_seed(5)
+        codebooks = [torch.randn(8, 4) * 0.05 for _ in range(3)]
+        second = torch.randn(6, 4, requires_grad=True)
+        third = torch.randn(6, 4, requires_grad=True)
+        a = torch.tensor([0, 2]); b = torch.tensor([1, 3])
+        loss = cp.hierarchical_diversity_loss(second, third, codebooks, a, b, a, b,
+                                              temperature=0.1)
+        loss.backward()
+        self.assertGreater(float(second.grad.abs().sum()), 0.0)
+        self.assertGreater(float(third.grad.abs().sum()), 0.0)
+
+    def test_no_pairs_returns_zero_with_grad(self):
+        codebooks = [torch.randn(4, 3) for _ in range(3)]
+        second = torch.randn(3, 3, requires_grad=True)
+        third = torch.randn(3, 3, requires_grad=True)
+        empty = torch.zeros(0, dtype=torch.long)
+        loss = cp.hierarchical_diversity_loss(second, third, codebooks,
+                                              empty, empty, empty, empty)
+        self.assertEqual(float(loss), 0.0)
+        loss.backward()
+        self.assertIsNotNone(second.grad)
 
 
 class DeterminismTests(unittest.TestCase):

@@ -58,6 +58,9 @@ class Stage3AdmissionTests(unittest.TestCase):
                 "no_negative_is_a_train_or_valid_successor_of_its_anchor")},
         }))
         self.candidate_path.write_text(json.dumps(self.candidate))
+        self.metrics_dir = root / "logs"
+        self.metrics_dir.mkdir()
+        self.write_learned(0.0)
         self.baseline_path.write_text(json.dumps(self.baseline))
         self.patch = patch.multiple(
             gate, EXPECTED_PAIRS=4,
@@ -66,6 +69,11 @@ class Stage3AdmissionTests(unittest.TestCase):
             FROZEN_VALID_META_BLOB_SHA1=gate._git_blob_sha1(self.meta_path))
         self.patch.start()
         self.addCleanup(self.patch.stop)
+
+    def write_learned(self, collision, rows=1):
+        lines = [json.dumps({"event": "train", "epoch": 1, "collision": collision})
+                 for _ in range(rows)]
+        (self.metrics_dir / "training_metrics.jsonl").write_text("\n".join(lines) + "\n")
 
     def evaluate(self):
         return gate.evaluate(self.candidate_path, self.baseline_path,
@@ -85,7 +93,7 @@ class Stage3AdmissionTests(unittest.TestCase):
         self.assertIn("valid_l1_positive_hit_rate", result["candidate"])
         self.assertIn("level2_distinct_prefixes", result["candidate"])
         self.assertIn("valid_l1_hard_er", result["diagnostic_only"])
-        self.assertIn("collision gate (<= 20%)", result["admission_policy"])
+        self.assertIn("LEARNED three-level-collision gate", result["admission_policy"])
         self.assertIn("l3_collision_max", result["quality_gate"])
         self.assertIsNone(result["quality_gate"]["l3_collision_refusal"])
         self.assertIn("l3_collision", result["candidate"])
@@ -94,6 +102,7 @@ class Stage3AdmissionTests(unittest.TestCase):
         # 4 of 13 items share one triple: 4/13 = 0.31 > 0.20.
         self.candidate = {str(i): [0, 0, min(i, 9), i] for i in range(13)}
         self.candidate_path.write_text(json.dumps(self.candidate))
+        self.write_learned(gate.three_level_collision(self.candidate))
         result = self.evaluate()
         self.assertFalse(result["passed"])
         self.assertIn("three-level collision", result["refused"])
@@ -103,15 +112,42 @@ class Stage3AdmissionTests(unittest.TestCase):
         # 2 of 13 items share a triple: 2/13 = 0.154 <= 0.20.
         self.candidate = {str(i): [0, 0, min(i, 11), i] for i in range(13)}
         self.candidate_path.write_text(json.dumps(self.candidate))
+        self.write_learned(gate.three_level_collision(self.candidate))
         result = self.evaluate()
         self.assertTrue(result["passed"], result)
         self.assertLessEqual(result["candidate"]["l3_collision"], 0.20)
 
     def test_the_collision_gate_boundary(self):
-        self.assertIsNone(gate.collision_gate({"l3_collision": 0.20}))
-        self.assertIsNone(gate.collision_gate({"l3_collision": 0.0}))
-        self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.200001}))
-        self.assertIsNotNone(gate.collision_gate({}))
+        self.assertIsNone(gate.collision_gate({"l3_collision": 0.20}, learned=0.20))
+        self.assertIsNone(gate.collision_gate({"l3_collision": 0.0}, learned=0.0))
+        self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.200001}, learned=0.2))
+        self.assertIsNotNone(gate.collision_gate({}, learned=0.0))
+        self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.0}, learned=None))
+        self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.0}, learned=0.30))
+        self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.05}, learned=0.30))
+
+    def test_an_export_deduped_sid_is_refused(self):
+        # The exported triples are unique (3 levels, collision 0.0) while the
+        # model's own log says it learned 0.15: that is an export post-process.
+        self.candidate = {str(i): [0, 0, i] for i in range(13)}
+        self.candidate_path.write_text(json.dumps(self.candidate))
+        self.write_learned(0.15)
+        result = self.evaluate()
+        self.assertFalse(result["passed"])
+        self.assertIn("post-processing", result["refused"])
+        self.assertAlmostEqual(result["quality_gate"]["learned_collision"], 0.15)
+
+    def test_a_learned_collision_above_the_gate_is_refused(self):
+        self.write_learned(0.35)
+        result = self.evaluate()
+        self.assertFalse(result["passed"])
+        self.assertIn("must come from Stage2 training", result["refused"])
+
+    def test_a_missing_metrics_file_fails_closed(self):
+        (self.metrics_dir / "training_metrics.jsonl").unlink()
+        result = self.evaluate()
+        self.assertFalse(result["passed"])
+        self.assertIn("could not be read", result["refused"])
 
     def test_duplicate_full_sid_is_refused(self):
         self.candidate["5"] = self.candidate["4"]
@@ -154,7 +190,7 @@ class Stage3AdmissionTests(unittest.TestCase):
             "import importlib.util; "
             "spec = importlib.util.spec_from_file_location('g', " + repr(str(SOURCE)) + "); "
             "module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module); "
-            "assert module.collision_gate({'l3_collision': 0.20}) is None",
+            "assert module.collision_gate({'l3_collision': 0.20}, learned=0.20) is None",
         ]
         done = subprocess.run(command, capture_output=True, text=True, timeout=120)
         self.assertEqual(done.returncode, 0, done.stderr[-500:])
