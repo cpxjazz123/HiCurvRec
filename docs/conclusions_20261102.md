@@ -234,10 +234,27 @@ bootstrap CI and Holm over the predeclared 81-test family):
   **0.831**, L3 refinement gain **2.56 bits**, conditional G3 gain **-0.027**.
   Recorded before the Stage3 score was read only in the sense that the SID exists
   first; the record itself was written after the run and is dated as such.
-* **Stage3 result**: `test_recall@10` **0.054057**, R@5 0.036508, NDCG@5 0.024011,
-  NDCG@10 0.029662, n_eval 57,439. The frozen target is `> 0.065` and the Resample
-  baseline is 0.0637372, so this arm **does not beat the baseline** and is recorded
-  as a negative result, not hidden.
+* **Stage3 result (first SID)**: `test_recall@10` **0.054057**, R@5 0.036508,
+  NDCG@5 0.024011, NDCG@10 0.029662, n_eval 57,439. The frozen target is `> 0.065`
+  and the Resample baseline is 0.0637372, so this arm **does not beat the baseline**
+  and is recorded as a negative result, not hidden.
+* **Owner's collision gate and the three iterations.** The owner replaced the
+  technical-validity-only policy with a single quality gate: a three-level SID
+  collision above **20%** refuses admission (`stage2_quality_gate.collision_gate`,
+  computed from the SID itself, fail-closed, boundary admitted; 12 gate tests).
+  The first SID (0.831), the second after the Euclidean assignment plus per-level
+  Sinkhorn balancing (learned collision 0.334), were both refused. The third adds
+  a deterministic export rule: inside every `(k1,k2)` bucket the first occurrence
+  of the third token is kept and duplicates are reassigned to the smallest unused
+  code in ascending item order (`refine_third_level`), with an over-full bucket
+  reporting its surplus. The exported SID has collision **0.000**, passes the
+  gate, and its layered metrics are `f6fe5379…`/`c8ead940…`; the learned collision
+  (0.334) stays in the training log rather than being hidden.
+* **Stage3 result (gate-passing SID)**: `test_recall@10` **0.052334**, R@5
+  0.034437, NDCG@5 0.022857, NDCG@10 0.028646, n_eval 57,439. The structural
+  refinement that satisfies the gate does **not** improve recall (it is slightly
+  lower than the first SID's 0.054057, still far below 0.065): the third token is
+  collision-free by construction, not because the model learned finer codes.
 * **Why the mechanism did not fire (diagnosis, not a tuning pass).** The ranking
   term stayed at `ln 2 = 0.69315` for all 3000 epochs: with 256 codes per level
   and the batch-mean-cost temperature, the soft assignment is near-uniform, so
