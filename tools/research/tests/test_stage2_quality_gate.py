@@ -1,8 +1,9 @@
-"""Stage 2 -> Stage 3 admission regressions under the Issue #120 semantics.
+"""Stage 2 -> Stage 3 admission regressions.
 
-The admission decision is technical validity only. ER, level-two prefix counts,
-collisions and usage are measured and reported, and they never refuse a Stage 3
-launch; only a malformed, ambiguous or unreadable SID does.
+Technical validity still refuses malformed, ambiguous or unreadable SIDs. On top
+of it, the owner's instruction of 2026-11-03 makes one quality rule a gate: a SID
+whose three-level collision exceeds 20% is refused (the previous
+technical-validity-only policy is deliberately overridden).
 """
 import importlib.util
 import json
@@ -70,13 +71,13 @@ class Stage3AdmissionTests(unittest.TestCase):
         return gate.evaluate(self.candidate_path, self.baseline_path,
                              self.pairs_path, self.meta_path)
 
-    def test_a_technically_valid_sid_passes_however_poor_its_quality_is(self):
+    def test_a_technically_valid_sid_under_the_collision_gate_passes(self):
         result = self.evaluate()
         self.assertTrue(result["passed"], result)
         self.assertIsNone(result["refused"])
         self.assertEqual(result["candidate"]["level2_distinct_prefixes"], 1)
         self.assertLess(result["candidate"]["valid_l1_hard_er"], 10.0)
-        self.assertEqual(result["thresholds"], {}, "no promotion floor may be reported")
+        self.assertEqual(result["thresholds"], {"l3_collision_max": 0.20})
 
     def test_quality_numbers_are_still_measured(self):
         result = self.evaluate()
@@ -84,7 +85,33 @@ class Stage3AdmissionTests(unittest.TestCase):
         self.assertIn("valid_l1_positive_hit_rate", result["candidate"])
         self.assertIn("level2_distinct_prefixes", result["candidate"])
         self.assertIn("valid_l1_hard_er", result["diagnostic_only"])
-        self.assertEqual(result["admission_policy"], "technical validity only; no quality floor")
+        self.assertIn("collision gate (<= 20%)", result["admission_policy"])
+        self.assertIn("l3_collision_max", result["quality_gate"])
+        self.assertIsNone(result["quality_gate"]["l3_collision_refusal"])
+        self.assertIn("l3_collision", result["candidate"])
+
+    def test_a_sid_above_the_collision_gate_is_refused(self):
+        # 4 of 13 items share one triple: 4/13 = 0.31 > 0.20.
+        self.candidate = {str(i): [0, 0, min(i, 9), i] for i in range(13)}
+        self.candidate_path.write_text(json.dumps(self.candidate))
+        result = self.evaluate()
+        self.assertFalse(result["passed"])
+        self.assertIn("three-level collision", result["refused"])
+        self.assertGreater(result["candidate"]["l3_collision"], 0.20)
+
+    def test_a_sid_at_or_below_the_collision_gate_passes(self):
+        # 2 of 13 items share a triple: 2/13 = 0.154 <= 0.20.
+        self.candidate = {str(i): [0, 0, min(i, 11), i] for i in range(13)}
+        self.candidate_path.write_text(json.dumps(self.candidate))
+        result = self.evaluate()
+        self.assertTrue(result["passed"], result)
+        self.assertLessEqual(result["candidate"]["l3_collision"], 0.20)
+
+    def test_the_collision_gate_boundary(self):
+        self.assertIsNone(gate.collision_gate({"l3_collision": 0.20}))
+        self.assertIsNone(gate.collision_gate({"l3_collision": 0.0}))
+        self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.200001}))
+        self.assertIsNotNone(gate.collision_gate({}))
 
     def test_duplicate_full_sid_is_refused(self):
         self.candidate["5"] = self.candidate["4"]

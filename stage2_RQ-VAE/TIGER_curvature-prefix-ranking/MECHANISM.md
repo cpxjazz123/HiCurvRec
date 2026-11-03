@@ -76,6 +76,19 @@ exercised by the tests, which is what the range gate inspects.
   (24,587 unique 4-token SIDs). One epoch logs `mech=0.6931` (the softplus(0)
   start) with the measured scale `7.26e-4`.
 
+## Iteration for the owner's 20% collision gate (2026-11-03)
+
+The first run collapsed the code usage (L2 prefixes 1,985, three-level collision
+0.831; the inherited curved Frechet assignment alone gives 0.828 on the parent,
+while the frozen baseline gives 0.2745). To honour the owner's single new gate
+(three-level collision <= 20%) the assignment returns to the frozen baseline's
+Euclidean rule and the balanced Sinkhorn assignment is enabled on every level
+during training; inference stays the deterministic argmin, so an item's SID does
+not depend on its batch. The AF3 ranking loss keeps the hyperbolic pathway: the
+level residual and the (tangent) codebook are both mapped into the ball before
+the prefix agreement. No hyperparameter was tuned; the change is an assignment
+rule, which a candidate owns.
+
 ## What is not claimed
 
 The arm is implemented and technically conformant; it has **not** been trained

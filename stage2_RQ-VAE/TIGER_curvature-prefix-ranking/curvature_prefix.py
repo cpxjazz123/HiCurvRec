@@ -218,10 +218,14 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
     measured mean cost of the batch unless the caller passes one.
     """
     if use_curvature:
+        # Both sides are tangents of the model: the level residual and the
+        # codebook of that level (the Euclidean assignment keeps the codebook in
+        # tangent space).  The prefix comparison is taken in the ball.
         left = geometry.expmap0(points_a, CURVATURE)
         right = geometry.expmap0(points_b, CURVATURE)
-        cost_a = geometry.distance(left.unsqueeze(1), codebook.unsqueeze(0), CURVATURE)
-        cost_b = geometry.distance(right.unsqueeze(1), codebook.unsqueeze(0), CURVATURE)
+        codes = geometry.expmap0(codebook, CURVATURE)
+        cost_a = geometry.distance(left.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
+        cost_b = geometry.distance(right.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
     else:
         code = codebook
         cost_a = (points_a.pow(2).sum(1, keepdim=True)

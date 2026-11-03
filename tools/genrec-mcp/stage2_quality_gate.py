@@ -23,6 +23,11 @@ import zipfile
 #: No promotion floor exists any more. The frozen Resample numbers stay only as
 #: the reference values the diagnostics are compared against.
 FROZEN_BASELINE_L2_PREFIXES = 16145  # Verified reference for the diagnostic report
+#: Owner instruction (2026-11-03): a SID whose three-level collision exceeds this
+#: share is refused. This deliberately overrides the previous technical-validity-
+#: only policy (issue #120), which removed every quality floor; the gate is a
+#: single named quality rule, and the equality boundary is admitted ("> 20%").
+L3_COLLISION_MAX = 0.20
 FROZEN_RESAMPLE_VALID_L1_ER = 16.38953942232631
 # Git blob identities pin these exact frozen source files, not merely their paths.
 FROZEN_BASELINE_BLOB_SHA1 = "d97d24a7a63891682d2b68c09a89164de2031ee9"
@@ -164,6 +169,30 @@ def _measures(sids, anchors, positives, negatives):
     }
 
 
+def three_level_collision(sid: dict) -> float | None:
+    """The share of items whose (k1,k2,k3) triple is shared with another item."""
+    if not sid:
+        return None
+    counts: dict = {}
+    for value in sid.values():
+        key = tuple(value[:3])
+        counts[key] = counts.get(key, 0) + 1
+    shared = sum(count for count in counts.values() if count > 1)
+    return shared / len(sid)
+
+
+def collision_gate(candidate: dict) -> str | None:
+    """The single quality rule: refuse a SID whose L3 collision exceeds 20%."""
+    collision = candidate.get("l3_collision")
+    if collision is None:
+        return ("the three-level collision could not be measured, so the 20% "
+                "quality gate fails closed")
+    if float(collision) > L3_COLLISION_MAX:
+        return ("three-level collision %.6f exceeds the %.2f gate"
+                % (float(collision), L3_COLLISION_MAX))
+    return None
+
+
 def evaluate(sid_path, baseline_path, pairs_path, meta_path):
     """Check that the exported SID is usable, and measure the diagnostics.
 
@@ -174,7 +203,8 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
     """
     evidence = {"sid": str(sid_path), "baseline": str(baseline_path),
                 "pairs": str(pairs_path), "meta": str(meta_path),
-                "admission_policy": "technical validity only; no quality floor"}
+                "admission_policy": "technical validity AND the owner's "
+                                    "three-level-collision gate (<= 20%)"}
     try:
         sid = _sid(sid_path)
         if not sid:
@@ -200,16 +230,20 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
         except (QualityGateError, OSError, TypeError, ValueError, KeyError) as exc:
             reference_status["reference"] = str(exc)
 
-        candidate = {}
+        collision = three_level_collision(sid)
+        candidate = {"l3_collision": collision}
         baseline_metrics = {}
         candidate_prefixes = len({v[:2] for v in sid.values()})
         try:
             anchors, positives, negatives = _pairs(pairs_path, meta_path)
-            candidate = _measures(sid, anchors, positives, negatives)
+            candidate.update(_measures(sid, anchors, positives, negatives))
             if baseline is not None:
                 baseline_metrics = _measures(baseline, anchors, positives, negatives)
         except (QualityGateError, OSError, TypeError, ValueError, KeyError) as exc:
             reference_status["diagnostics"] = str(exc)
+        collision_refusal = collision_gate(candidate)
+        if collision_refusal is not None:
+            failures.append(collision_refusal)
         evidence.update({
             "candidate": {**candidate, "level2_distinct_prefixes": candidate_prefixes,
                           "full_unique_items": len(sid)},
@@ -217,10 +251,12 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
                          "level2_distinct_prefixes": len({v[:2] for v in baseline.values()})
                          if baseline else None},
             "reference_status": reference_status or {"status": "verified"},
-            "thresholds": {},
+            "thresholds": {"l3_collision_max": L3_COLLISION_MAX},
             "diagnostic_only": ["valid_l1_hard_er", "valid_l1_positive_hit_rate",
                                 "valid_l1_negative_hit_rate", "level2_distinct_prefixes",
                                 "full_unique_items"],
+            "quality_gate": {"l3_collision_max": L3_COLLISION_MAX,
+                             "l3_collision_refusal": collision_refusal},
             "sha256": {key: _digest(path) for key, path in (
                 ("sid", sid_path), ("baseline", baseline_path),
                 ("validation_pairs", pairs_path), ("validation_meta", meta_path))

@@ -268,7 +268,11 @@ def _tokenizer_config() -> SimpleNamespace:
         # The path is always constructed: the two switches choose the curved or
         # the Euclidean branch INSIDE it, so the geometry-off arm is the same
         # mechanism with the Euclidean distance, not the untouched baseline.
-        frechet_codebook=True,
+        # Iteration for the owner's 20% collision gate: the curved Frechet
+        # assignment collapsed L1/L2 (1,985 level-two prefixes, 0.83 collision),
+        # so the SID assignment returns to the frozen baseline's Euclidean rule
+        # while the AF3 ranking loss keeps the hyperbolic pathway.
+        frechet_codebook=False,
         use_behaviour=USE_BEHAVIOUR,
         use_curvature=USE_GEOMETRY,
         frechet_eta=FRECHET_ETA,

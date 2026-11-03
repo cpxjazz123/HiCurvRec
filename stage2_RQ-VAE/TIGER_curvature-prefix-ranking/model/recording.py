@@ -14,7 +14,20 @@ from .layers import RQLayer
 
 
 class RecordingRQLayer(RQLayer):
-    """``RQLayer`` plus ``level_points()`` for the mechanism's curve side."""
+    """``RQLayer`` plus ``level_points()`` for the mechanism's curve side.
+
+    The collision gate (three levels <= 20%) needs a spread code usage, so the
+    balanced Sinkhorn assignment is enabled on EVERY level during training; at
+    inference the assignment stays the deterministic argmin, so the exported SID
+    of an item does not depend on its batch.
+    """
+
+    def __init__(self, config):
+        super().__init__(config)
+        for layer in self.vq_layers:
+            layer.use_sk = bool(self.sk_epsilon > 0 and self.sk_iters > 0)
+            layer.sk_epsilon = float(self.sk_epsilon)
+            layer.sk_iters = int(self.sk_iters)
 
     def forward(self, x: torch.Tensor, infer_use_sk: bool = False,
                 item_ids: torch.Tensor = None):
