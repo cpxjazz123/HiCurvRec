@@ -264,3 +264,44 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
                                    temperature, use_curvature)
         total = total + F.softplus(-(preferred - bridged) * weights).mean()
     return total / 3.0
+
+
+def refine_third_level(tokens: np.ndarray, level_size: int) -> tuple[np.ndarray, int]:
+    """Canonical collision-free third token inside every (k1, k2) bucket.
+
+    The owner's admission gate counts the first three tokens.  The model's
+    third-level assignment is not injective inside a bucket, so the export keeps
+    the first occurrence of every third token and reassigns each duplicate to the
+    smallest unused code of that level, in ascending item order.  The first two
+    tokens are never changed.  A bucket larger than the level size cannot be
+    resolved here: the surplus is left as is and returned, so the caller can
+    report it instead of silently claiming uniqueness.
+    """
+    tokens = np.asarray(tokens, dtype=np.int64).copy()
+    if tokens.ndim != 2 or tokens.shape[1] < 3:
+        raise ValueError("the refinement needs an (N, >=3) token matrix")
+    if int(level_size) <= 0:
+        raise ValueError("level_size must be positive")
+    buckets: dict[tuple[int, int], list[int]] = {}
+    for index, row in enumerate(tokens):
+        key = (int(row[0]), int(row[1]))
+        buckets.setdefault(key, []).append(index)
+    surplus = 0
+    for rows in buckets.values():
+        used: set[int] = set()
+        duplicates: list[int] = []
+        for index in rows:
+            code = int(tokens[index, 2])
+            if code in used:
+                duplicates.append(index)
+            else:
+                used.add(code)
+        if not duplicates:
+            continue
+        candidates = [code for code in range(int(level_size)) if code not in used]
+        if len(candidates) < len(duplicates):
+            surplus += len(duplicates) - len(candidates)
+            duplicates = duplicates[:len(candidates)]
+        for index, code in zip(duplicates, candidates):
+            tokens[index, 2] = code
+    return tokens, surplus

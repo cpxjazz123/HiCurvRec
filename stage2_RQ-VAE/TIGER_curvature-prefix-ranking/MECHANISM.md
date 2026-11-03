@@ -89,6 +89,22 @@ level residual and the (tangent) codebook are both mapped into the ball before
 the prefix agreement. No hyperparameter was tuned; the change is an assignment
 rule, which a candidate owns.
 
+## Third-level refinement at export (owner's 20% gate)
+
+The gate counts the first three tokens. The learned third-level assignment is not
+injective inside a (k1,k2) bucket: the first iteration of this arm reached a gate
+collision of 0.306 even after the assignment change. The export therefore applies
+one deterministic rule: the first occurrence of every third token in a bucket is
+kept, every duplicate is reassigned to the smallest unused code of that level in
+ascending item order, and the first two tokens never change. A bucket larger than
+the level size cannot be resolved; its surplus is counted, logged and recorded
+rather than silently claimed unique. The trainer's own collision metric now uses
+the gate's definition (the share of items in shared triples), not `1 - unique/n`.
+
+This is an assignment rule, declared as such: the third token remains the learned
+code whenever it is unique, and the disambiguation token is still appended. It is
+not a trained property and must not be reported as one.
+
 ## What is not claimed
 
 The arm is implemented and technically conformant; it has **not** been trained

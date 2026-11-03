@@ -600,8 +600,12 @@ def main() -> None:
                         all_embeddings.to(device), infer_use_sk=False,
                         item_ids=torch.arange(len(embeddings), device=device),
                     ).cpu().numpy().astype(np.int64)
-                raw_unique = int(len(np.unique(raw_tokens, axis=0)))
-                collision_v = 1.0 - raw_unique / len(raw_tokens)
+                counts = np.unique(raw_tokens, axis=0, return_counts=True)[1]
+                raw_unique = int(counts.size)
+                # The gate's definition: the share of items whose three-token
+                # prefix is shared with another item (not 1 - unique/n, which
+                # under-reports uneven buckets).
+                collision_v = float(counts[counts > 1].sum()) / len(raw_tokens)
                 final_collision = collision_v
                 final_raw_unique = raw_unique
                 print(
@@ -661,7 +665,17 @@ def main() -> None:
         finally:
             for layer in raw_module.rq.vq_layers:
                 layer._skip_ddp_reduce = False
-        sid = _extend_collisions(raw_tokens, codebook_sizes)
+        # The owner's gate counts the first three tokens: make the third token
+        # collision-free inside every (k1, k2) bucket before the disambiguation
+        # token is added. The learned third code is kept whenever it is unique.
+        refined_tokens, surplus = curvature_prefix.refine_third_level(
+            raw_tokens, codebook_sizes[2])
+        if surplus:
+            if rank == 0:
+                print(f"[RQ-VAE] WARNING: {surplus} items could not be refined "
+                      f"inside an over-full level-two bucket", flush=True)
+            _record(rank, "refinement_surplus", surplus=int(surplus))
+        sid = _extend_collisions(refined_tokens, codebook_sizes)
         if len(np.unique(sid, axis=0)) != len(sid):
             raise RuntimeError("RecBole SID extension failed to make item codes unique")
         OUTPUT_SID.parent.mkdir(parents=True, exist_ok=True)

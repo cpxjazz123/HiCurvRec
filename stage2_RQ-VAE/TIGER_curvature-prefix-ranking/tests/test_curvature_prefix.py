@@ -359,6 +359,37 @@ class CheckpointCompatibilityTests(unittest.TestCase):
             model.load_state_dict(state)
 
 
+class ThirdLevelRefinementTests(unittest.TestCase):
+    def test_duplicates_are_reassigned_inside_their_bucket(self):
+        tokens = np.array([[0, 0, 5], [0, 1, 7], [0, 0, 5], [0, 0, 6], [1, 2, 5]])
+        refined, surplus = cp.refine_third_level(tokens, 8)
+        self.assertEqual(surplus, 0)
+        self.assertEqual(refined[:, :2].tolist(), tokens[:, :2].tolist())
+        triples = {tuple(row) for row in refined.tolist()}
+        self.assertEqual(len(triples), len(refined))
+        self.assertEqual(refined[0, 2], 5)       # first occurrence kept
+        self.assertEqual(refined[3, 2], 6)       # unique code kept
+        self.assertEqual(refined[2, 2], 0)       # smallest unused code
+        self.assertEqual(refined[4, 2], 5)       # a different bucket is untouched
+
+    def test_the_refinement_is_deterministic(self):
+        tokens = np.array([[0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 2]])
+        first, _ = cp.refine_third_level(tokens, 4)
+        second, _ = cp.refine_third_level(tokens, 4)
+        self.assertTrue(np.array_equal(first, second))
+
+    def test_an_overfull_bucket_reports_its_surplus(self):
+        tokens = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+        refined, surplus = cp.refine_third_level(tokens, 2)
+        self.assertEqual(surplus, 1)
+        self.assertEqual(len({tuple(row) for row in refined.tolist()}), 2)
+
+    def test_the_gate_metric_counts_shared_buckets(self):
+        tokens = np.array([[0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 1, 2]])
+        counts = np.unique(tokens, axis=0, return_counts=True)[1]
+        self.assertAlmostEqual(float(counts[counts > 1].sum()) / len(tokens), 0.75)
+
+
 class DeterminismTests(unittest.TestCase):
     def test_the_same_inputs_give_the_same_loss(self):
         torch.manual_seed(7)
