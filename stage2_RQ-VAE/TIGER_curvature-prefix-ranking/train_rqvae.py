@@ -130,8 +130,10 @@ MECHANISM_SCALE_BOUNDS = (1e-8, 1e8)
 MECHANISM_GRADIENT_SHARE = 0.10
 #: Trust region on the SID partition: a training epoch whose measured collision
 #: exceeds this budget is rolled back to the last accepted state and the
-#: mechanism weight is halved. The budget is the 0.35 gate minus a 0.05 margin.
-COLLISION_BUDGET = 0.30
+#: mechanism weight is halved. The gate is 0.35; the measured eval-to-eval spread
+#: of a fixed recipe is about 0.01, so the budget keeps two spreads of margin
+#: (0.35 - 2 * 0.01) instead of sitting on the recipe's own plateau.
+COLLISION_BUDGET = 0.33
 MECHANISM_SCALE_FACTOR = 0.5
 _ACCEPTED_STATE: dict | None = None
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
@@ -609,7 +611,7 @@ def main() -> None:
         if _ACCEPTED_STATE is not None:
             raw_module.load_state_dict(_ACCEPTED_STATE)
             _record(rank, "accepted_state_restored",
-                    collision=final_collision, epoch=EVAL_INTERVAL * (NUM_EPOCHS // EVAL_INTERVAL))
+                    collision=final_collision, epoch=EPOCHS)
         final_state = {
             name: value.detach().cpu().clone()
             for name, value in raw_module.state_dict().items()
