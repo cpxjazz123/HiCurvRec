@@ -138,6 +138,11 @@ MECHANISM_GRADIENT_SHARE = 0.25
 #: measured gradient budget fixes the coupling of the whole mechanism, so this is
 #: a per-level unit weight, not a tuned knob.
 SPREAD_WEIGHT = 1.0
+#: The ball's radius must match the data. With curvature 1 the residuals sit at
+#: 0.06-0.15 of the radius and the Poincare distance is exactly 2x the Euclidean
+#: (measured at every level), so the curve only rescales the cost. The curvature
+#: is measured once from the first batch's level-1 residual norms.
+MECHANISM_CURVATURE: float | None = None
 #: Trust region on the SID partition: a training epoch whose measured collision
 #: exceeds this budget is rolled back to the last accepted state. The mechanism
 #: weight is NOT shrunk on a rollback: halving it drove the weight to 1e-19 in one
@@ -463,7 +468,7 @@ def main() -> None:
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(reference, reconstructed, quant_loss)
             # === 候选机制: AF3 凝聚度引导的分层前缀排序 ===
-            global MECHANISM_SCALE, _ACCEPTED_STATE
+            global MECHANISM_SCALE, MECHANISM_CURVATURE, _ACCEPTED_STATE
             triples = triple_lookup.triples(item_ids.detach().cpu().numpy(),
                                             use_behaviour=USE_BEHAVIOUR,
                                             seed=curvature_prefix.RANDOM_TRIPLE_SEED + epoch)
@@ -475,6 +480,11 @@ def main() -> None:
             if _ACCEPTED_STATE is not None:
                 codebooks = raw_module.level_codebooks()
                 mechanism = points[0].new_zeros(())
+                if MECHANISM_CURVATURE is None:
+                    MECHANISM_CURVATURE = curvature_prefix.data_curvature(
+                        points[0].norm(dim=-1))
+                    _record(rank, "mechanism_curvature", value=MECHANISM_CURVATURE,
+                            epoch=epoch)
                 if triples["anchor"].size:
                     anchor = torch.from_numpy(triples["anchor"]).to(device)
                     high = torch.from_numpy(triples["high"]).to(device)
@@ -489,7 +499,8 @@ def main() -> None:
                             points[0], points[1], points[2], codebooks,
                             rows_anchor[valid], rows_high[valid], rows_low[valid],
                             triple_weights[valid], levels=RANKING_LEVELS,
-                            use_curvature=USE_GEOMETRY)
+                            use_curvature=USE_GEOMETRY,
+                            curvature=MECHANISM_CURVATURE or 1.0)
                 # Every item of the batch, not the sampled pairs: the coarse
                 # bucket's fine codes are pushed to spread, weighted by the item's
                 # mean AF3 cohesion.
@@ -499,9 +510,11 @@ def main() -> None:
                 buckets1 = tokens[:, 0]
                 buckets2 = tokens[:, 0] * codebooks[1].shape[0] + tokens[:, 1]
                 spread = (curvature_prefix.bucket_spread_loss(
-                              points[1], codebooks[1], buckets1, cohesion, USE_GEOMETRY)
+                              points[1], codebooks[1], buckets1, cohesion, USE_GEOMETRY,
+                              MECHANISM_CURVATURE or 1.0)
                           + curvature_prefix.bucket_spread_loss(
-                              points[2], codebooks[2], buckets2, cohesion, USE_GEOMETRY))
+                              points[2], codebooks[2], buckets2, cohesion, USE_GEOMETRY,
+                              MECHANISM_CURVATURE or 1.0))
                 mechanism = mechanism + SPREAD_WEIGHT * spread
             if mechanism is not None:
                 if MECHANISM_SCALE is None:

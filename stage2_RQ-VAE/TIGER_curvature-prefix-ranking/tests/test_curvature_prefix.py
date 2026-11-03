@@ -395,6 +395,28 @@ class BucketSpreadTests(unittest.TestCase):
         self.assertAlmostEqual(float(cohesion[3]), float(lookup.weights.mean()))
 
 
+class CurvatureScaleTests(unittest.TestCase):
+    """Curvature 1 is locally Euclidean at this data's radial scale."""
+
+    def test_the_measured_curvature_puts_the_data_at_the_ball_scale(self):
+        norms = torch.full((16,), 0.1)
+        curvature = cp.data_curvature(norms)
+        self.assertAlmostEqual(curvature, 100.0, places=3)
+
+    def test_the_curve_is_a_rescale_at_curvature_one_and_not_at_the_data_scale(self):
+        torch.manual_seed(3)
+        points = torch.randn(16, 8) * 0.1
+        codebook = torch.randn(16, 8) * 0.1
+        euclid = torch.cdist(points, codebook)
+        flat = cp._assignment_cost(points, codebook, True, curvature=1.0)
+        ratio_flat = float((flat / euclid).mean())
+        self.assertAlmostEqual(ratio_flat, 2.0, places=1)
+        measured = cp.data_curvature(points.norm(dim=-1))
+        curved = cp._assignment_cost(points, codebook, True, curvature=measured)
+        ratio = float((curved / euclid).mean())
+        self.assertGreater(abs(ratio - 2.0), 0.2)
+
+
 class AssignmentRuleTests(unittest.TestCase):
     """The candidate owns its assignment rule (CLAUDE.md 66)."""
 

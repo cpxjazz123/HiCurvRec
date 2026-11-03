@@ -229,47 +229,6 @@ class TripleLookup:
                 "low": np.zeros(0, dtype=np.int64), "weight": np.zeros(0, dtype=np.float64)}
 
 
-def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
-                     codebook: torch.Tensor, temperature: float | torch.Tensor | None = None,
-                     use_curvature: bool = True) -> torch.Tensor:
-    """Overlap of the soft prefix assignments of two sets of level residuals.
-
-    The residuals are tangents of the encoder: with the curve on they are mapped
-    into the ball and the cost is the Poincare distance to the codebook; with the
-    curve off the cost is the squared Euclidean distance.  The temperature is the
-    measured mean cost of the batch unless the caller passes one.
-    """
-    if use_curvature:
-        # Both sides are tangents of the model: the level residual and the
-        # codebook of that level (the Euclidean assignment keeps the codebook in
-        # tangent space).  The prefix comparison is taken in the ball.
-        left = geometry.expmap0(points_a, CURVATURE)
-        right = geometry.expmap0(points_b, CURVATURE)
-        codes = geometry.expmap0(codebook, CURVATURE)
-        cost_a = geometry.distance(left.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
-        cost_b = geometry.distance(right.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
-    else:
-        code = codebook
-        cost_a = (points_a.pow(2).sum(1, keepdim=True)
-                  - 2 * points_a @ code.t() + code.pow(2).sum(1, keepdim=True).t())
-        cost_b = (points_b.pow(2).sum(1, keepdim=True)
-                  - 2 * points_b @ code.t() + code.pow(2).sum(1, keepdim=True).t())
-    if temperature is None:
-        # Per-item scale, measured: the distance to that item's nearest code. A
-        # global mean cost leaves the 256-code softmax near-uniform, which made
-        # both the ranking and the diversity terms carry no signal (their value
-        # sat at 1/256). With the nearest-code distance the kernel is local and
-        # the overlap actually says "same code or not".
-        temperature_a = cost_a.detach().min(dim=-1, keepdim=True).values.clamp_min(1e-6)
-        temperature_b = cost_b.detach().min(dim=-1, keepdim=True).values.clamp_min(1e-6)
-        weight_a = F.softmax(-cost_a / temperature_a, dim=-1)
-        weight_b = F.softmax(-cost_b / temperature_b, dim=-1)
-    else:
-        weight_a = F.softmax(-cost_a / temperature, dim=-1)
-        weight_b = F.softmax(-cost_b / temperature, dim=-1)
-    return (weight_a * weight_b).sum(dim=-1)
-
-
 def _gap_temperature(cost: torch.Tensor) -> torch.Tensor:
     """The per-item assignment gap: second-nearest minus nearest cost.
 
@@ -286,7 +245,8 @@ def _gap_temperature(cost: torch.Tensor) -> torch.Tensor:
 
 def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
                     codebook: torch.Tensor, temperature: float | torch.Tensor | None = None,
-                    use_curvature: bool = True) -> torch.Tensor:
+                    use_curvature: bool = True,
+                    curvature: float = CURVATURE) -> torch.Tensor:
     """Overlap of the soft prefix assignments of two sets of level residuals.
 
     The residuals are tangents of the encoder: with the curve on they are mapped
@@ -295,11 +255,11 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
     measured assignment gap of the batch unless the caller passes one.
     """
     if use_curvature:
-        left = geometry.expmap0(points_a, CURVATURE)
-        right = geometry.expmap0(points_b, CURVATURE)
-        codes = geometry.expmap0(codebook, CURVATURE)
-        cost_a = geometry.distance(left.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
-        cost_b = geometry.distance(right.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
+        left = geometry.expmap0(points_a, curvature)
+        right = geometry.expmap0(points_b, curvature)
+        codes = geometry.expmap0(codebook, curvature)
+        cost_a = geometry.distance(left.unsqueeze(1), codes.unsqueeze(0), curvature)
+        cost_b = geometry.distance(right.unsqueeze(1), codes.unsqueeze(0), curvature)
     else:
         cost_a = (points_a.pow(2).sum(1, keepdim=True)
                   - 2 * points_a @ codebook.t() + codebook.pow(2).sum(1, keepdim=True).t())
@@ -319,7 +279,7 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
 def curvature_prefix_ranking_loss(points_first, points_second, points_third,
                                   codebooks, anchor, high, low, weights, *,
                                   levels=(0, 1, 2), use_curvature: bool = True,
-                                  temperature=None) -> torch.Tensor:
+                                  temperature=None, curvature: float = CURVATURE) -> torch.Tensor:
     """The AF3-guided relative preference over the three prefix levels.
 
     The three level tangents are separate positional tensor arguments on purpose:
@@ -342,18 +302,19 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
     for level in selected:
         points, codebook = point_levels[level], codebooks[level]
         preferred = prefix_agreement(points[anchor], points[high], codebook,
-                                     temperature, use_curvature)
+                                     temperature, use_curvature, curvature)
         bridged = prefix_agreement(points[anchor], points[low], codebook,
-                                   temperature, use_curvature)
+                                   temperature, use_curvature, curvature)
         total = total + F.softplus(-(preferred - bridged) * weights).mean()
     return total / float(len(selected))
 
 
 def _bucket_entropy_parts(points: torch.Tensor, codebook: torch.Tensor, buckets: torch.Tensor,
                           weights: torch.Tensor | None = None,
-                          use_curvature: bool = True) -> tuple[torch.Tensor, torch.Tensor]:
+                          use_curvature: bool = True,
+                          curvature: float = CURVATURE) -> tuple[torch.Tensor, torch.Tensor]:
     """The behaviour-weighted fine entropy per coarse bucket, and its temperature."""
-    cost = _assignment_cost(points, codebook, use_curvature)
+    cost = _assignment_cost(points, codebook, use_curvature, curvature)
     temperature = _gap_temperature(cost).unsqueeze(-1)
     prob = F.softmax(-cost / temperature, dim=-1)
     device = points.device
@@ -390,7 +351,8 @@ def _bucket_entropy_value(per_bucket: torch.Tensor, temperature: torch.Tensor) -
 
 def bucket_spread_loss(points: torch.Tensor, codebook: torch.Tensor,
                        buckets: torch.Tensor, weights: torch.Tensor | None = None,
-                       use_curvature: bool = True) -> torch.Tensor:
+                       use_curvature: bool = True,
+                       curvature: float = CURVATURE) -> torch.Tensor:
     """Negative entropy of the fine assignment INSIDE each coarse bucket.
 
     The historical SID record says recall follows the L2/L3 spread (L2 prefixes
@@ -403,25 +365,41 @@ def bucket_spread_loss(points: torch.Tensor, codebook: torch.Tensor,
     from.
     """
     entropy, temperature = _bucket_entropy_parts(points, codebook, buckets, weights,
-                                                 use_curvature)
+                                                 use_curvature, curvature)
     return _bucket_entropy_value(entropy, temperature)
 
 
 def bucket_entropy(points: torch.Tensor, codebook: torch.Tensor, buckets: torch.Tensor,
                    weights: torch.Tensor | None = None,
-                   use_curvature: bool = True) -> torch.Tensor:
+                   use_curvature: bool = True,
+                   curvature: float = CURVATURE) -> torch.Tensor:
     """The (behaviour-weighted) entropy of the fine assignment per coarse bucket."""
-    return _bucket_entropy_parts(points, codebook, buckets, weights, use_curvature)[0]
+    return _bucket_entropy_parts(points, codebook, buckets, weights, use_curvature,
+                                 curvature)[0]
 
 
-def _assignment_cost(points, codebook, use_curvature: bool) -> torch.Tensor:
+def _assignment_cost(points, codebook, use_curvature: bool,
+                     curvature: float = CURVATURE) -> torch.Tensor:
     if use_curvature:
-        left = geometry.expmap0(points, CURVATURE)
-        codes = geometry.expmap0(codebook, CURVATURE)
-        return geometry.distance(left.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
+        left = geometry.expmap0(points, curvature)
+        codes = geometry.expmap0(codebook, curvature)
+        return geometry.distance(left.unsqueeze(1), codes.unsqueeze(0), curvature)
     return (points.pow(2).sum(1, keepdim=True)
             - 2 * points @ codebook.t()
             + codebook.pow(2).sum(1, keepdim=True).t())
+
+
+def data_curvature(norms: torch.Tensor) -> float:
+    """The curvature whose ball radius matches the data's radial scale.
+
+    With curvature 1 the level residuals sit at 0.06-0.15 of the radius, and the
+    Poincare distance there is exactly 2x the Euclidean one (measured at every
+    level): the curve only rescales the cost, so it never changes an ordering.
+    ``K = 1 / median(norm)^2`` puts the typical residual at ``tanh(1)`` of the
+    boundary, where the metric is genuinely non-Euclidean.
+    """
+    scale = float(torch.as_tensor(norms).detach().median())
+    return 1.0 / max(scale, 1e-6) ** 2
 
 
 def gradient_budget_scale(mechanism_grads, reconstruction_grads, share: float) -> float:
