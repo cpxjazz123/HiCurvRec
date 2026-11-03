@@ -290,6 +290,30 @@ class ModelWiringTests(unittest.TestCase):
                             for parameter in model.encoder.parameters()))
 
 
+class LevelSelectionTests(unittest.TestCase):
+    def test_the_ranking_can_use_the_coarse_level_only(self):
+        torch.manual_seed(23)
+        levels = [torch.randn(6, 4) * 0.2 for _ in range(3)]
+        codebooks = [torch.randn(8, 4) * 0.2 for _ in range(3)]
+        anchor = torch.tensor([0, 1, 2])
+        high = torch.tensor([3, 4, 5])
+        low = torch.tensor([5, 3, 4])
+        weights = torch.tensor([0.9, 0.8, 0.7])
+        base = cp.curvature_prefix_ranking_loss(
+            levels[0], levels[1], levels[2], codebooks, anchor, high, low, weights,
+            levels=(0,), temperature=0.1)
+        moved = [levels[0].clone(), levels[1] + 0.4, levels[2] - 0.3]
+        again = cp.curvature_prefix_ranking_loss(
+            moved[0], moved[1], moved[2], codebooks, anchor, high, low, weights,
+            levels=(0,), temperature=0.1)
+        self.assertEqual(float(base), float(again))
+        shifted = [levels[0] + 0.4, levels[1], levels[2]]
+        different = cp.curvature_prefix_ranking_loss(
+            shifted[0], shifted[1], shifted[2], codebooks, anchor, high, low, weights,
+            levels=(0,), temperature=0.1)
+        self.assertNotAlmostEqual(float(base), float(different), places=6)
+
+
 class DeterminismTests(unittest.TestCase):
     def test_the_same_inputs_give_the_same_loss(self):
         torch.manual_seed(7)

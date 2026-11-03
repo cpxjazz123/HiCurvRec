@@ -89,19 +89,24 @@ level residual and the (tangent) codebook are both mapped into the ball before
 the prefix agreement. No hyperparameter was tuned; the change is an assignment
 rule, which a candidate owns.
 
-## The owner's LEARNED collision gate (2026-11-03)
+## Keeping the mechanisms on under the collision budget (2026-11-04)
 
-The gate requires the three-level collision to be below the owner's threshold
-**as learned by Stage2**; export-time dedup is forbidden and detected (the gate
-reads the trainer's final collision from the run's metrics and refuses a SID
-whose collision disagrees with it). The threshold started at 20% and the owner
-relaxed it to **35%** after the measured floor: the frozen baseline itself is
-0.2745 and the best learned value of this arm is 0.332; penalties that tried to
-go lower (an L3 usage penalty 0.442, an L2 pair penalty 0.449) and product
-assignment (0.999, collapsed) were all reverted. The trained configuration is the
-one that measured 0.332: the frozen baseline's Euclidean assignment with balanced
-Sinkhorn usage on every level, the AF3 ranking term, and the learned hierarchical
-diversity term, with the per-item nearest-code temperature.
+The assignment is the frozen baseline's Euclidean nearest code (its own last-level
+Sinkhorn only), which measures 0.2745 — inside the owner's 0.35 gate with margin.
+That leaves the mechanisms free to train without spending the budget:
+
+* the AF3 ranking acts **on the coarse level only**: cohesive neighbours must
+  share the L1 prefix more than bridge neighbours. It cannot make two items share
+  a three-token SID, so it does not push the collision;
+* the prefix comparison is hyperbolic (both level tangents and the codebook are
+  mapped into the ball with the canonical geometry);
+* the per-item nearest-code temperature keeps that comparison discriminative;
+* no Sinkhorn rebalancing on the fine levels, no diversity penalty, no export
+  step — every earlier "spread" attempt (L3 penalty 0.442, L2 pair penalty 0.449,
+  product assignment 0.999) made the collision worse and was removed.
+
+The gate still reads the trainer's own final collision and refuses an exported SID
+that disagrees with it, so the number cannot be produced after training.
 
 ## What is not claimed
 
