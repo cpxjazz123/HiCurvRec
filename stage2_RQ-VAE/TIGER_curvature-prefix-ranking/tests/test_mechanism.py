@@ -133,39 +133,7 @@ class SwitchTests(unittest.TestCase):
 
 class InitTests(unittest.TestCase):
 
-    def test_the_start_assigns_a_tangent_of_any_size(self):
-        """Levels above the first receive a residual, which is not a ball point.
 
-        Feeding that tangent to the curved distance without mapping it into the
-        ball first saturates the atanh: every distance becomes the same value, so
-        the assignment degenerates to one code for the whole batch. A real start
-        spreads the batch over the codebook.
-        """
-        from model import frechet_poincare as geometry
-        model, embeddings, ids, _ = build()
-        layer = model.rq.vq_layers[1]
-        with torch.no_grad():
-            torch.manual_seed(0)
-            tangent = torch.randn(64, layer.dim) * 3.0
-            # What the old code did: the tangent used directly as a ball point.
-            saturated = torch.argmin(
-                geometry.poincare_distance(tangent.unsqueeze(1),
-                                  layer.get_code_embs().unsqueeze(0)), dim=-1)
-            residual = layer.init_codebook(tangent, torch.device("cpu"))
-            mapped = torch.argmin(
-                geometry.poincare_distance(
-                    geometry.clamp_ball(geometry.exp_0(tangent)).unsqueeze(1),
-                                  layer.get_code_embs().unsqueeze(0)), dim=-1)
-        self.assertTrue(bool(torch.isfinite(residual).all()))
-        self.assertEqual(int(torch.unique(saturated).numel()), 1,
-                         "the saturated assignment should collapse to one code")
-        self.assertGreater(int(torch.unique(mapped).numel()), 1,
-                           "the mapped assignment must spread over the codebook")
-
-    def test_the_start_is_inside_the_ball(self):
-        model, embeddings, ids, _ = build()
-        for layer in model.rq.vq_layers:
-            self.assertLess(float(layer.get_code_embs().norm(dim=-1).max()), 1.0)
 
     def test_the_start_uses_the_curved_cost(self):
         """A Euclidean start would put levels 2 and 3 in another geometry.

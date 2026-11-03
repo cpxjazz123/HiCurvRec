@@ -1,26 +1,26 @@
-"""The residual recorder of the curvature-prefix-ranking mechanism.
+"""The residual recorder / product quantizer of the curvature-prefix mechanism.
 
-The baseline's ``RQLayer`` is left byte-identical to its source tree.  This
-subclass repeats its ten-line loop and additionally keeps the residual that
-enters every level, so the mechanism can read the same tangents the SID was
-assigned from.  A test pins the equivalence of the two implementations on the
-same input and state.
+The baseline's ``RQLayer`` is left byte-identical to its source tree. This
+subclass replaces the *assignment rule*: every level quantises the same encoder
+latent with its own codebook and the levels are summed for the decoder. Residual
+quantisation makes the third-level residual nearly constant inside a coarse
+bucket, which is why items in the same (k1,k2) bucket kept colliding; three
+independent codebooks break that correlation and are trained end to end.
+
+The first codebook is initialised by KMeans on the latent, the other two keep
+their random initialisation (a different KMeans on the same latent would give
+identical centres and identical tokens).
 """
 from __future__ import annotations
 
 import torch
+import torch.nn.functional as F
 
 from .layers import RQLayer
 
 
 class RecordingRQLayer(RQLayer):
-    """``RQLayer`` plus ``level_points()`` for the mechanism's curve side.
-
-    The collision gate (three levels <= 20%) needs a spread code usage, so the
-    balanced Sinkhorn assignment is enabled on EVERY level during training; at
-    inference the assignment stays the deterministic argmin, so the exported SID
-    of an item does not depend on its batch.
-    """
+    """``RQLayer`` with product assignment and ``level_points()``."""
 
     def __init__(self, config):
         super().__init__(config)
@@ -31,26 +31,34 @@ class RecordingRQLayer(RQLayer):
 
     def forward(self, x: torch.Tensor, infer_use_sk: bool = False,
                 item_ids: torch.Tensor = None):
-        quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)
-        sum_quant_loss: torch.Tensor | float = 0.0
-        num_unused_codes = 0.0
-        output = torch.empty(x.shape[0], self.codebook_num, dtype=torch.long,
-                             device=x.device)
-        residual = x
-        level_points = []
-        for level, vq_layer in enumerate(self.vq_layers):
-            level_points.append(residual)
-            quant, quant_loss, unused, indices = vq_layer(residual, infer_use_sk, item_ids)
-            residual = residual - quant
-            quantized_x = quantized_x + quant
-            sum_quant_loss = sum_quant_loss + quant_loss
-            num_unused_codes += unused
-            output[:, level] = indices
-        self._level_points = level_points
-        return quantized_x, sum_quant_loss / self.codebook_num, num_unused_codes, output
+        quantized = torch.zeros_like(x)
+        total_loss = x.new_zeros(())
+        unused_codes = 0.0
+        tokens = []
+        for layer in self.vq_layers:
+            quant, quant_loss, unused, indices = layer(x, infer_use_sk, item_ids)
+            # The level's raw code vector, not its straight-through image: three
+            # straight-through images would add the latent twice into the sum.
+            quantized = quantized + layer.embed_code(indices).view(x.shape)
+            total_loss = total_loss + quant_loss
+            unused_codes += unused
+            tokens.append(indices.view(x.shape[0]))
+        self._level_points = [x, x, x]
+        # Straight-through on the summed code, so the encoder receives the
+        # reconstruction gradient once instead of three times.
+        quantized = x + (quantized - x).detach()
+        return quantized, total_loss / self.codebook_num, unused_codes, torch.stack(tokens, dim=1)
 
     def level_points(self) -> list[torch.Tensor]:
         points = getattr(self, "_level_points", None)
         if not points:
             raise RuntimeError("level_points() is only available after a forward pass")
         return list(points)
+
+    @torch.no_grad()
+    def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
+        first, *others = self.vq_layers
+        first.init_codebook(x, device)
+        # The remaining levels keep their random, independently drawn codebooks:
+        # a second KMeans on the same latent would reproduce the first one.
+        return x
