@@ -160,6 +160,25 @@ class TripleLookup:
             weights[valid] = self.sorted_weights[positions[valid]]
         return weights
 
+    def item_cohesion(self, ids: np.ndarray) -> np.ndarray:
+        """The mean AF3 cohesion of every item's incident TRAIN edges.
+
+        The bucket-spread term needs one weight per item, and the edge table is
+        the only measured behaviour it may read: an item's coalescence with its
+        training neighbours is the mean cohesion over the edges it appears in. An
+        item without edges gets the table mean, so it neither gains nor loses.
+        """
+        ids = np.asarray(ids, dtype=np.int64)
+        total = np.zeros(self.n_items, dtype=np.float64)
+        count = np.zeros(self.n_items, dtype=np.float64)
+        np.add.at(total, self.u, self.weights)
+        np.add.at(total, self.v, self.weights)
+        np.add.at(count, self.u, 1.0)
+        np.add.at(count, self.v, 1.0)
+        mean = float(self.weights.mean()) if self.weights.size else 0.5
+        per_item = np.where(count > 0, total / np.maximum(count, 1.0), mean)
+        return per_item[ids]
+
     def triples(self, batch_ids: np.ndarray, *, use_behaviour: bool = True,
                 seed: int = RANDOM_TRIPLE_SEED, size: int = 256) -> dict:
         """Anchor, cohesive neighbour and bridge neighbour inside one batch."""
@@ -300,8 +319,7 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
 def curvature_prefix_ranking_loss(points_first, points_second, points_third,
                                   codebooks, anchor, high, low, weights, *,
                                   levels=(0, 1, 2), use_curvature: bool = True,
-                                  temperature=None, separation=(1, 2),
-                                  separation_weight: float = 1.0) -> torch.Tensor:
+                                  temperature=None) -> torch.Tensor:
     """The AF3-guided relative preference over the three prefix levels.
 
     The three level tangents are separate positional tensor arguments on purpose:
@@ -320,7 +338,6 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
     selected = [level for level in levels if level in (0, 1, 2)]
     if not selected:
         raise ValueError("at least one level must be selected")
-    fine = [level for level in separation if level in (1, 2)]
     total = points_first.new_zeros(())
     for level in selected:
         points, codebook = point_levels[level], codebooks[level]
@@ -329,13 +346,43 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
         bridged = prefix_agreement(points[anchor], points[low], codebook,
                                    temperature, use_curvature)
         total = total + F.softplus(-(preferred - bridged) * weights).mean()
-        if level in fine:
-            # The fine levels carry the separation the historical SID record
-            # associates with recall (L2 prefixes +0.45, L3 triples +0.48 against
-            # R@10). A bridge pair that lands in the same fine code spends the
-            # level's capacity on two items whose behaviour says they are apart.
-            total = total + float(separation_weight) * (weights * bridged).mean()
     return total / float(len(selected))
+
+
+def bucket_spread_loss(points: torch.Tensor, codebook: torch.Tensor,
+                       buckets: torch.Tensor, weights: torch.Tensor | None = None,
+                       use_curvature: bool = True) -> torch.Tensor:
+    """Negative entropy of the fine assignment INSIDE each coarse bucket.
+
+    The historical SID record says recall follows the L2/L3 spread (L2 prefixes
+    +0.45, L3 triples +0.48 against R@10), and the pairwise separation term only
+    touched the few bridge pairs one batch sampled. This term reads every item of
+    a coarse bucket and pushes its fine assignment towards an even spread over the
+    codes, so the level's capacity is used instead of collapsed. Behaviour enters
+    through the per-item cohesion (a bucket of central items counts more, a bucket
+    of leaves less); removing the curve changes the cost the probabilities come
+    from.
+    """
+    cost = _assignment_cost(points, codebook, use_curvature)
+    temperature = _gap_temperature(cost).unsqueeze(-1)
+    prob = F.softmax(-cost / temperature, dim=-1)
+    device = points.device
+    unique, inverse = torch.unique(buckets.to(device), return_inverse=True)
+    counts = torch.bincount(inverse, minlength=unique.numel()).to(prob.dtype)
+    sums = torch.zeros(unique.numel(), prob.shape[-1], dtype=prob.dtype, device=device)
+    sums.index_add_(0, inverse, prob)
+    mean = sums / counts.clamp_min(1.0).unsqueeze(-1)
+    entropy = -(mean * mean.clamp_min(1e-12).log()).sum(-1)
+    usable = counts > 1
+    if not bool(usable.any()):
+        return points.sum() * 0.0
+    per_bucket = entropy[usable]
+    if weights is not None and weights.numel() == points.shape[0]:
+        bucket_weight = torch.zeros(unique.numel(), dtype=prob.dtype, device=device)
+        bucket_weight.index_add_(0, inverse, weights.to(device).float())
+        bucket_weight = bucket_weight / counts.clamp_min(1.0)
+        per_bucket = per_bucket * bucket_weight[usable]
+    return -per_bucket.mean()
 
 
 def _assignment_cost(points, codebook, use_curvature: bool) -> torch.Tensor:

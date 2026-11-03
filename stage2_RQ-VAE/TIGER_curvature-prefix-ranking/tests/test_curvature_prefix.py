@@ -330,41 +330,48 @@ class CollisionBudgetTests(unittest.TestCase):
         self.assertEqual(cp.collision_budget_decision(None, 0.30), "rollback")
 
 
-class SeparationTests(unittest.TestCase):
-    """Bridge pairs are pushed off the fine codes, not only ranked below."""
+class BucketSpreadTests(unittest.TestCase):
+    """The coarse bucket must use the fine level's codes."""
 
     def setUp(self):
-        torch.manual_seed(11)
-        self.points = [torch.randn(8, 8) * 0.2 for _ in range(3)]
-        self.codebooks = [torch.randn(16, 8) * 0.2 for _ in range(3)]
-        self.anchor = torch.arange(4)
-        self.high = torch.tensor([4, 5, 6, 7])
-        self.low = torch.tensor([5, 6, 7, 4])
-        self.weights = torch.ones(4)
+        torch.manual_seed(5)
+        self.codebook = torch.randn(16, 8) * 0.2
+        self.buckets = torch.zeros(8, dtype=torch.long)
 
-    def _loss(self, points, **kwargs):
-        return cp.curvature_prefix_ranking_loss(
-            points[0], points[1], points[2], self.codebooks,
-            self.anchor, self.high, self.low, self.weights,
-            levels=(1, 2), **kwargs)
+    def test_a_concentrated_bucket_scores_worse_than_a_spread_one(self):
+        one_code = self.codebook[3].repeat(8, 1)
+        spread = self.codebook[:8].clone()
+        concentrated = cp.bucket_spread_loss(one_code, self.codebook, self.buckets)
+        even = cp.bucket_spread_loss(spread, self.codebook, self.buckets)
+        self.assertGreater(float(concentrated), float(even))
 
-    def test_the_separation_term_changes_the_loss(self):
-        with_term = self._loss(self.points, separation=(1, 2))
-        without = self._loss(self.points, separation=())
-        self.assertNotAlmostEqual(float(with_term), float(without), places=6)
+    def test_the_cohesion_weights_scale_the_bucket(self):
+        spread = self.codebook[:8].clone()
+        heavy = cp.bucket_spread_loss(spread, self.codebook, self.buckets,
+                                      weights=torch.ones(8))
+        light = cp.bucket_spread_loss(spread, self.codebook, self.buckets,
+                                      weights=torch.zeros(8))
+        self.assertLess(float(heavy), float(light))
 
-    def test_the_separation_has_a_gradient_on_the_points(self):
-        points = [t.clone().requires_grad_(True) for t in self.points]
-        self._loss(points).backward()
-        self.assertGreater(float(points[1].grad.abs().sum()), 0.0)
+    def test_the_curve_changes_the_bucket_loss(self):
+        spread = self.codebook[:8].clone()
+        curved = cp.bucket_spread_loss(spread, self.codebook, self.buckets,
+                                       use_curvature=True)
+        flat = cp.bucket_spread_loss(spread, self.codebook, self.buckets,
+                                     use_curvature=False)
+        self.assertNotAlmostEqual(float(curved), float(flat), places=6)
 
-    def test_the_behaviour_weights_scale_the_separation(self):
-        heavy = self._loss(self.points, separation=(1, 2))
-        light = cp.curvature_prefix_ranking_loss(
-            self.points[0], self.points[1], self.points[2], self.codebooks,
-            self.anchor, self.high, self.low, torch.zeros(4),
-            levels=(1, 2), separation=(1, 2))
-        self.assertLess(float(light), float(heavy))
+    def test_the_loss_has_a_gradient_on_the_points(self):
+        points = (self.codebook[:8].clone() * 1.1).requires_grad_(True)
+        cp.bucket_spread_loss(points, self.codebook, self.buckets).backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
+
+    def test_an_isolated_item_gets_the_table_mean_cohesion(self):
+        table = cp.build_edge_tables(np.array([[0, 1], [0, 2]]), 4)
+        lookup = cp.TripleLookup(table)
+        cohesion = lookup.item_cohesion(np.arange(4))
+        self.assertEqual(cohesion.shape, (4,))
+        self.assertAlmostEqual(float(cohesion[3]), float(lookup.weights.mean()))
 
 
 class DeterminismTests(unittest.TestCase):

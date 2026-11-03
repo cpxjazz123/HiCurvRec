@@ -134,6 +134,10 @@ MECHANISM_SCALE_BOUNDS = (1e-8, 1e8)
 #: quarter still leaves reconstruction dominant, and the collision trust region
 #: rolls the partition back if the pressure crosses the budget.
 MECHANISM_GRADIENT_SHARE = 0.25
+#: The bucket-spread term enters at the same unit scale as the ranking; the
+#: measured gradient budget fixes the coupling of the whole mechanism, so this is
+#: a per-level unit weight, not a tuned knob.
+SPREAD_WEIGHT = 1.0
 #: Trust region on the SID partition: a training epoch whose measured collision
 #: exceeds this budget is rolled back to the last accepted state. The mechanism
 #: weight is NOT shrunk on a rollback: halving it drove the weight to 1e-19 in one
@@ -468,26 +472,37 @@ def main() -> None:
             mechanism = None
             # The mechanism waits for an accepted partition: behaviour pressure on
             # an unstable quantizer collapses it (measured: L2 236, collision 0.877).
-            if _ACCEPTED_STATE is not None and triples["anchor"].size:
-                anchor = torch.from_numpy(triples["anchor"]).to(device)
-                high = torch.from_numpy(triples["high"]).to(device)
-                low = torch.from_numpy(triples["low"]).to(device)
-                triple_weights = torch.from_numpy(triples["weight"]).to(device)
-                rows_anchor = _batch_positions(item_ids, anchor)
-                rows_high = _batch_positions(item_ids, high)
-                rows_low = _batch_positions(item_ids, low)
-                valid = (rows_anchor >= 0) & (rows_high >= 0) & (rows_low >= 0)
-                if bool(valid.any()):
-                    # The ranking acts on the COARSE level only: that is the level
-                    # the idea is about ("cohesive groups share the coarse
-                    # prefix"), and it cannot make two items share a three-token
-                    # SID, so the collision budget is untouched. The fine levels
-                    # keep the baseline's assignment.
-                    mechanism = curvature_prefix.curvature_prefix_ranking_loss(
-                        points[0], points[1], points[2], raw_module.level_codebooks(),
-                        rows_anchor[valid], rows_high[valid], rows_low[valid],
-                        triple_weights[valid], levels=RANKING_LEVELS,
-                        use_curvature=USE_GEOMETRY)
+            if _ACCEPTED_STATE is not None:
+                codebooks = raw_module.level_codebooks()
+                mechanism = points[0].new_zeros(())
+                if triples["anchor"].size:
+                    anchor = torch.from_numpy(triples["anchor"]).to(device)
+                    high = torch.from_numpy(triples["high"]).to(device)
+                    low = torch.from_numpy(triples["low"]).to(device)
+                    triple_weights = torch.from_numpy(triples["weight"]).to(device)
+                    rows_anchor = _batch_positions(item_ids, anchor)
+                    rows_high = _batch_positions(item_ids, high)
+                    rows_low = _batch_positions(item_ids, low)
+                    valid = (rows_anchor >= 0) & (rows_high >= 0) & (rows_low >= 0)
+                    if bool(valid.any()):
+                        mechanism = mechanism + curvature_prefix.curvature_prefix_ranking_loss(
+                            points[0], points[1], points[2], codebooks,
+                            rows_anchor[valid], rows_high[valid], rows_low[valid],
+                            triple_weights[valid], levels=RANKING_LEVELS,
+                            use_curvature=USE_GEOMETRY)
+                # Every item of the batch, not the sampled pairs: the coarse
+                # bucket's fine codes are pushed to spread, weighted by the item's
+                # mean AF3 cohesion.
+                cohesion = torch.from_numpy(
+                    triple_lookup.item_cohesion(item_ids.detach().cpu().numpy())
+                ).float().to(device)
+                buckets1 = tokens[:, 0]
+                buckets2 = tokens[:, 0] * codebooks[1].shape[0] + tokens[:, 1]
+                spread = (curvature_prefix.bucket_spread_loss(
+                              points[1], codebooks[1], buckets1, cohesion, USE_GEOMETRY)
+                          + curvature_prefix.bucket_spread_loss(
+                              points[2], codebooks[2], buckets2, cohesion, USE_GEOMETRY))
+                mechanism = mechanism + SPREAD_WEIGHT * spread
             if mechanism is not None:
                 if MECHANISM_SCALE is None:
                     parameters = [p for p in raw_module.parameters() if p.requires_grad]
