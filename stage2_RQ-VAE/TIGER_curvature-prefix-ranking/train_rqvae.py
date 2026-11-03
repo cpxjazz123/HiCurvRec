@@ -116,6 +116,10 @@ EVAL_INTERVAL       = 50
 # two exist in the code and are not trained (Issue #121, one run per candidate).
 USE_BEHAVIOUR = True
 USE_GEOMETRY = True
+#: The ranking acts on every level: the coarse prefix carries the cohesion and the
+#: fine levels carry the separation that the historical record associates with
+#: recall (L2 prefixes and L3 triples both correlate positively with R@10).
+RANKING_LEVELS = (0, 1, 2)
 # The step size of the Frechet step, a documented default that is never tuned.
 # The new mechanism's coupling weight is not a tuned constant: the first training
 # step measures the reconstruction loss and the mechanism loss on the same batch
@@ -129,12 +133,12 @@ MECHANISM_SCALE_BOUNDS = (1e-8, 1e8)
 #: coarse sharing pressure collapses the fine levels (measured: full scale 0.763).
 MECHANISM_GRADIENT_SHARE = 0.10
 #: Trust region on the SID partition: a training epoch whose measured collision
-#: exceeds this budget is rolled back to the last accepted state and the
-#: mechanism weight is halved. The gate is 0.35; the measured eval-to-eval spread
-#: of a fixed recipe is about 0.01, so the budget keeps two spreads of margin
-#: (0.35 - 2 * 0.01) instead of sitting on the recipe's own plateau.
-COLLISION_BUDGET = 0.33
-MECHANISM_SCALE_FACTOR = 0.5
+#: exceeds this budget is rolled back to the last accepted state. The mechanism
+#: weight is NOT shrunk on a rollback: halving it drove the weight to 1e-19 in one
+#: run, so the mechanism never trained while the rollbacks kept happening anyway.
+#: The gate is 0.35; the measured eval-to-eval spread of a fixed recipe is about
+#: 0.01, so the budget keeps one spread of margin (0.35 - 0.01).
+COLLISION_BUDGET = 0.34
 _ACCEPTED_STATE: dict | None = None
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
@@ -480,7 +484,8 @@ def main() -> None:
                     mechanism = curvature_prefix.curvature_prefix_ranking_loss(
                         points[0], points[1], points[2], raw_module.level_codebooks(),
                         rows_anchor[valid], rows_high[valid], rows_low[valid],
-                        triple_weights[valid], levels=(0,), use_curvature=USE_GEOMETRY)
+                        triple_weights[valid], levels=RANKING_LEVELS,
+                        use_curvature=USE_GEOMETRY)
             if mechanism is not None:
                 if MECHANISM_SCALE is None:
                     parameters = [p for p in raw_module.parameters() if p.requires_grad]
@@ -576,8 +581,6 @@ def main() -> None:
             else:
                 if _ACCEPTED_STATE is not None:
                     raw_module.load_state_dict(_ACCEPTED_STATE)
-                MECHANISM_SCALE = (None if MECHANISM_SCALE is None
-                                   else MECHANISM_SCALE * MECHANISM_SCALE_FACTOR)
                 if rank == 0:
                     _record(rank, "collision_budget", decision="rollback",
                             collision=float(collision_v), budget=COLLISION_BUDGET,
