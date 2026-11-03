@@ -238,32 +238,32 @@ bootstrap CI and Holm over the predeclared 81-test family):
   NDCG@5 0.024011, NDCG@10 0.029662, n_eval 57,439. The frozen target is `> 0.065`
   and the Resample baseline is 0.0637372, so this arm **does not beat the baseline**
   and is recorded as a negative result, not hidden.
-* **Owner's collision gate and the three iterations.** The owner replaced the
-  technical-validity-only policy with a single quality gate: a three-level SID
-  collision above **20%** refuses admission (`stage2_quality_gate.collision_gate`,
-  computed from the SID itself, fail-closed, boundary admitted; 12 gate tests).
-  The first SID (0.831), the second after the Euclidean assignment plus per-level
-  Sinkhorn balancing (learned collision 0.334), were both refused. The third adds
-  a deterministic export rule: inside every `(k1,k2)` bucket the first occurrence
-  of the third token is kept and duplicates are reassigned to the smallest unused
-  code in ascending item order (`refine_third_level`), with an over-full bucket
-  reporting its surplus. The exported SID has collision **0.000**, passes the
-  gate, and its layered metrics are `f6fe5379…`/`c8ead940…`; the learned collision
-  (0.334) stays in the training log rather than being hidden.
-* **Stage3 result (gate-passing SID)**: `test_recall@10` **0.052334**, R@5
-  0.034437, NDCG@5 0.022857, NDCG@10 0.028646, n_eval 57,439. The structural
-  refinement that satisfies the gate does **not** improve recall (it is slightly
-  lower than the first SID's 0.054057, still far below 0.065): the third token is
-  collision-free by construction, not because the model learned finer codes.
-* **Why the mechanism did not fire (diagnosis, not a tuning pass).** The ranking
-  term stayed at `ln 2 = 0.69315` for all 3000 epochs: with 256 codes per level
-  and the batch-mean-cost temperature, the soft assignment is near-uniform, so
-  the cohesive-vs-bridge overlap difference is of order `1/K^2` and the gradient
-  is negligible. The temperature rule is frozen in the mechanism definition;
-  changing it now would be a different mechanism and a different run (19g).
-  The next candidate should make the *relative* comparison at a scale where the
-  softmax is discriminative (e.g. a top-k or margin formulation with a derived
-  scale), and must still be admitted by the same machine checks.
+* **The owner's LEARNED collision gate (final rule, 2026-11-03).** Stage2
+  admission now requires the three-level collision to be below the owner's
+  threshold **as learned by training**; export-time dedup is forbidden and is
+  detected mechanically (the gate reads the trainer's final collision from the
+  run's metrics and refuses an exported SID that disagrees with it, or a learned
+  value above the threshold, or a missing metrics file). The threshold was set at
+  20% and relaxed by the owner to **35%** after the measured floor.
+* **Measured iteration record** (learned collision, gate definition): curved
+  Frechet assignment 0.831; Euclidean assignment with per-level Sinkhorn 0.334;
+  plus the hierarchical diversity term with a per-item nearest-code temperature
+  0.332; an L3 usage penalty 0.442 and an L2 pair-usage penalty 0.449 (both worse,
+  reverted); product assignment over the shared latent 0.999 (collapsed,
+  reverted). The frozen baseline itself is 0.2745, i.e. the original 20% gate was
+  stricter than every existing arm.
+* **Final gate-passing run**: the restored configuration (Euclidean assignment,
+  per-level Sinkhorn, AF3 ranking term, hierarchical diversity, per-item
+  temperature) learned **0.3421**, the exported SID equals the log (no
+  post-processing), and the gate admits it. Layered metrics `399aa8d9…json`:
+  collision 0.3421, L2 prefixes 8,305, Hard-L1 ER 8.85, L3 refinement 1.85 bits,
+  conditional G3 -0.037.
+* **Stage3 result of the gate-passing SID**: `test_recall@10` **0.053605**, R@5
+  0.035359, NDCG@5 0.023199, NDCG@10 0.029067, n_eval 57,439. Together with the
+  earlier runs (0.054057 and 0.052334) the arm is a consistent **negative result**
+  against the 0.065 target and the 0.0637372 baseline; the collision gate is
+  satisfied by the learned assignment, not by an export step, and the broader
+  claim of the mechanism is not supported.
 
 ## 5. Established invariants (now enforced by tests)
 
