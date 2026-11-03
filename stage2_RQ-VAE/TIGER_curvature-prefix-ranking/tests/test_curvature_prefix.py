@@ -395,6 +395,33 @@ class BucketSpreadTests(unittest.TestCase):
         self.assertAlmostEqual(float(cohesion[3]), float(lookup.weights.mean()))
 
 
+class CodebookUpdateTests(unittest.TestCase):
+    """The coarse codebook may follow the behaviour cohesion, but bounded."""
+
+    def test_a_code_moves_towards_its_assigned_items_by_the_step(self):
+        codebook = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
+        points = torch.tensor([[0.2, 0.0], [0.4, 0.0]])
+        assignment = torch.tensor([0, 0])
+        weights = torch.ones(2)
+        updated = cp.cohesion_codebook_update(points, codebook, assignment, weights, 0.1)
+        self.assertTrue(torch.allclose(updated[0], torch.tensor([0.03, 0.0]), atol=1e-6))
+        self.assertTrue(torch.allclose(updated[1], codebook[1]))
+
+    def test_a_code_without_assignments_does_not_move(self):
+        codebook = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
+        points = torch.tensor([[0.2, 0.0]])
+        updated = cp.cohesion_codebook_update(points, codebook, torch.tensor([1]),
+                                              torch.ones(1), 0.5)
+        self.assertTrue(torch.allclose(updated[0], codebook[0]))
+
+    def test_the_step_is_a_hard_bound(self):
+        codebook = torch.tensor([[0.0, 0.0]])
+        points = torch.tensor([[10.0, 0.0]])
+        updated = cp.cohesion_codebook_update(points, codebook, torch.tensor([0]),
+                                              torch.ones(1), 0.1)
+        self.assertAlmostEqual(float(updated[0, 0]), 1.0, places=5)
+
+
 class CurvatureScaleTests(unittest.TestCase):
     """Curvature 1 is locally Euclidean at this data's radial scale."""
 

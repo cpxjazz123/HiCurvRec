@@ -402,6 +402,41 @@ def data_curvature(norms: torch.Tensor) -> float:
     return 1.0 / max(scale, 1e-6) ** 2
 
 
+def cohesion_codebook_sums(points: torch.Tensor, assignment: torch.Tensor,
+                           weights: torch.Tensor, n_codes: int
+                           ) -> tuple[torch.Tensor, torch.Tensor]:
+    """The cohesion-weighted sums and the weight sum of every code slot.
+
+    The trainer reduces the two tensors across the ranks before applying them, so
+    every rank ends the step with the same codebook and the SID does not depend on
+    the rank.
+    """
+    assignment = assignment.to(points.device)
+    weights = weights.to(points.device).float()
+    sums = torch.zeros(n_codes, points.shape[1], dtype=points.dtype, device=points.device)
+    weight_sum = torch.zeros(n_codes, dtype=points.dtype, device=points.device)
+    sums.index_add_(0, assignment, points * weights.unsqueeze(-1))
+    weight_sum.index_add_(0, assignment, weights)
+    return sums, weight_sum
+
+
+def apply_codebook_update(codebook: torch.Tensor, sums: torch.Tensor,
+                          weight_sum: torch.Tensor, step: float) -> torch.Tensor:
+    """Blend every code towards its cohesion-weighted mean by the bounded step."""
+    target = sums / weight_sum.clamp_min(1e-12).unsqueeze(-1)
+    moved = codebook + float(step) * (target - codebook)
+    return torch.where((weight_sum > 0).unsqueeze(-1), moved, codebook).detach()
+
+
+def cohesion_codebook_update(points: torch.Tensor, codebook: torch.Tensor,
+                             assignment: torch.Tensor, weights: torch.Tensor,
+                             step: float) -> torch.Tensor:
+    """One step of the behaviour-driven codebook update, without DDP reduction."""
+    sums, weight_sum = cohesion_codebook_sums(points, assignment, weights,
+                                              codebook.shape[0])
+    return apply_codebook_update(codebook, sums, weight_sum, step)
+
+
 def gradient_budget_scale(mechanism_grads, reconstruction_grads, share: float) -> float:
     """The scale that keeps the mechanism's initial gradient at ``share`` of recon.
 

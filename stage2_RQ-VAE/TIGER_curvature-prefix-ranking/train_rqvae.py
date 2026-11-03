@@ -143,6 +143,10 @@ SPREAD_WEIGHT = 1.0
 #: (measured at every level), so the curve only rescales the cost. The curvature
 #: is measured once from the first batch's level-1 residual norms.
 MECHANISM_CURVATURE: float | None = None
+#: The coarse codebook follows the behaviour cohesion, but at most this fraction
+#: of the distance to the weighted mean per step: a full step (the parent arm's
+#: rule) collapsed the partition to 1,985 L2 prefixes.
+CODEBOOK_STEP = 0.10
 #: Trust region on the SID partition: a training epoch whose measured collision
 #: exceeds this budget is rolled back to the last accepted state. The mechanism
 #: weight is NOT shrunk on a rollback: halving it drove the weight to 1e-19 in one
@@ -539,6 +543,24 @@ def main() -> None:
             if GRADIENT_CLIP_NORM > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), GRADIENT_CLIP_NORM)
             optimizer.step()
+            if _ACCEPTED_STATE is not None:
+                # The coarse codebook is the mechanism's own object: it moves
+                # towards the cohesion-weighted mean of the residuals assigned to
+                # it, reduced across the ranks so the SID stays rank-independent.
+                layer0 = raw_module.rq.vq_layers[0]
+                cohesion_cpu = torch.from_numpy(
+                    triple_lookup.item_cohesion(item_ids.detach().cpu().numpy())
+                ).float().to(device)
+                sums, wsum = curvature_prefix.cohesion_codebook_sums(
+                    points[0].detach(), tokens[:, 0], cohesion_cpu,
+                    layer0.get_code_embs().shape[0])
+                if world_size > 1:
+                    dist.all_reduce(sums, op=dist.ReduceOp.SUM)
+                    dist.all_reduce(wsum, op=dist.ReduceOp.SUM)
+                with torch.no_grad():
+                    moved = curvature_prefix.apply_codebook_update(
+                        layer0.get_code_embs().detach(), sums, wsum, CODEBOOK_STEP)
+                    layer0.get_code_embs().data.copy_(moved)
             scheduler.step()
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
