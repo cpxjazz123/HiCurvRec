@@ -124,9 +124,10 @@ FRECHET_ETA = 1.0
 # clamp is a numerical guard, not a search range.
 MECHANISM_SCALE: float | None = None
 MECHANISM_SCALE_BOUNDS = (1e-8, 1e8)
-# The global fine-code usage of every coarse bucket. Its decay horizon is one
-# epoch of the frozen budget (derived from len(loader), never tuned).
-_USAGE_TABLE: torch.Tensor | None = None
+# The global (k1,k2) pair usage: spreading it shrinks the coarse buckets, which
+# is the lever the within-bucket fine-code penalty lacked. Decay horizon = one
+# epoch of the frozen budget (len(loader)), never tuned.
+_PAIR_TABLE: torch.Tensor | None = None
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
@@ -549,18 +550,16 @@ def main() -> None:
                     torch.from_numpy(l1_right).to(device),
                     use_curvature=USE_GEOMETRY)
                 mechanism = (mechanism + diversity) if mechanism is not None else diversity
-            # Global, cross-batch signal: the fine code must not repeat inside its
-            # own coarse bucket. The table is decayed over one epoch of steps.
-            global _USAGE_TABLE
-            bucket_ids = (tokens[:, 0] * CODEBOOK_SIZE[0] + tokens[:, 1]).long()
-            if _USAGE_TABLE is None:
-                _USAGE_TABLE = torch.zeros(
-                    CODEBOOK_SIZE[0] * CODEBOOK_SIZE[1], CODEBOOK_SIZE[2],
-                    device=device)
-            usage_penalty = curvature_prefix.bucket_usage_penalty(
-                points[2], raw_module.level_codebooks()[2], bucket_ids,
-                _USAGE_TABLE, use_curvature=USE_GEOMETRY)
-            mechanism = (mechanism + usage_penalty) if mechanism is not None else usage_penalty
+            # Global, cross-batch signal: the (k1,k2) pairs must spread, so the
+            # coarse buckets are small and fewer items can collide at L3.
+            global _PAIR_TABLE
+            if _PAIR_TABLE is None:
+                _PAIR_TABLE = torch.zeros(CODEBOOK_SIZE[0], CODEBOOK_SIZE[1],
+                                          device=device)
+            pair_penalty = curvature_prefix.pair_usage_penalty(
+                points[1], raw_module.level_codebooks()[1], tokens[:, 0].long(),
+                _PAIR_TABLE, use_curvature=USE_GEOMETRY)
+            mechanism = (mechanism + pair_penalty) if mechanism is not None else pair_penalty
             if mechanism is not None:
                 if MECHANISM_SCALE is None:
                     scale = float(recon_loss.detach()) / max(
@@ -590,12 +589,12 @@ def main() -> None:
                         dist.all_reduce(weight_sum, op=dist.ReduceOp.SUM)
                     reduced.append((frechet, (tangent_sum, weight_sum)))
                 raw_module.apply_frechet_codebook_step(reduced)
-            if _USAGE_TABLE is not None:
+            if _PAIR_TABLE is not None:
                 with torch.no_grad():
-                    _USAGE_TABLE.mul_(usage_decay)
-                    one_hot = torch.nn.functional.one_hot(
-                        tokens[:, 2].detach(), CODEBOOK_SIZE[2]).float()
-                    _USAGE_TABLE.index_add_(0, bucket_ids.detach(), one_hot)
+                    _PAIR_TABLE.mul_(usage_decay)
+                    pair_one_hot = torch.nn.functional.one_hot(
+                        tokens[:, 1].detach(), CODEBOOK_SIZE[1]).float()
+                    _PAIR_TABLE.index_add_(0, tokens[:, 0].detach(), pair_one_hot)
             scheduler.step()
             losses.append(float(loss.detach()))
             recons.append(float(recon_loss.detach()))
