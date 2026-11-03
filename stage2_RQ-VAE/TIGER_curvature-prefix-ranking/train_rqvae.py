@@ -129,6 +129,12 @@ MECHANISM_SCALE_BOUNDS = (1e-8, 1e8)
 #: partition must stay driven by the reconstruction objective, otherwise the
 #: coarse sharing pressure collapses the fine levels (measured: full scale 0.763).
 MECHANISM_GRADIENT_SHARE = 0.10
+#: Trust region on the SID partition: a training epoch whose measured collision
+#: exceeds this budget is rolled back to the last accepted state and the
+#: mechanism weight is halved. The budget is the 0.35 gate minus a 0.05 margin.
+COLLISION_BUDGET = 0.30
+MECHANISM_SCALE_FACTOR = 0.5
+_ACCEPTED_STATE: dict | None = None
 # CLAUDE.md §2: Stage2 不设任何 early-stop — 固定跑满 EPOCHS,
 # 候选是否采用完全交由下游 stage3 test_R@10 裁决.
 # 保留 best-collision checkpoint 仅作为导出用的最后一次快照.
@@ -494,6 +500,7 @@ def main() -> None:
     # Stage3 only consumes the final-epoch weights, so tracking the best
     # collision across epochs would be misleading; keep the last evaluation.
     final_collision = float("inf")
+    final_raw_unique = None
     final_raw_unique = 0
     codebook_sizes = list(config.codebook_size)
 
@@ -520,7 +527,9 @@ def main() -> None:
             mechanism_value = 0.0
             points = raw_module.level_points()
             mechanism = None
-            if triples["anchor"].size:
+            # The mechanism waits for an accepted partition: behaviour pressure on
+            # an unstable quantizer collapses it (measured: L2 236, collision 0.877).
+            if _ACCEPTED_STATE is not None and triples["anchor"].size:
                 anchor = torch.from_numpy(triples["anchor"]).to(device)
                 high = torch.from_numpy(triples["high"]).to(device)
                 low = torch.from_numpy(triples["low"]).to(device)
@@ -624,8 +633,30 @@ def main() -> None:
                 # prefix is shared with another item (not 1 - unique/n, which
                 # under-reports uneven buckets).
                 collision_v = float(counts[counts > 1].sum()) / len(raw_tokens)
-                final_collision = collision_v
-                final_raw_unique = raw_unique
+                decision = curvature_prefix.collision_budget_decision(
+                    collision_v, COLLISION_BUDGET)
+                accepted = torch.tensor(1 if decision == "accept" else 0, device=device)
+                if world_size > 1:
+                    dist.broadcast(accepted, 0)
+                decision = "accept" if int(accepted.item()) == 1 else "rollback"
+                global _ACCEPTED_STATE
+                if decision == "accept":
+                    _ACCEPTED_STATE = {name: value.detach().cpu().clone()
+                                       for name, value in raw_module.state_dict().items()}
+                    final_collision = collision_v
+                    final_raw_unique = raw_unique
+                    _record(rank, "collision_budget", decision="accept",
+                            collision=float(collision_v), budget=COLLISION_BUDGET,
+                            epoch=epoch, scale=MECHANISM_SCALE)
+                else:
+                    if _ACCEPTED_STATE is not None:
+                        raw_module.load_state_dict(_ACCEPTED_STATE)
+                    MECHANISM_SCALE = curvature_prefix.shrunk_scale(
+                        MECHANISM_SCALE, collision_v, COLLISION_BUDGET,
+                        MECHANISM_SCALE_FACTOR)
+                    _record(rank, "collision_budget", decision="rollback",
+                            collision=float(collision_v), budget=COLLISION_BUDGET,
+                            epoch=epoch, scale=MECHANISM_SCALE)
                 print(
                     f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} "
                     f"mech={float(np.mean(mechanism_terms)) if mechanism_terms else 0.0:.8f} "
@@ -650,6 +681,10 @@ def main() -> None:
     # === 训练结束: only rank 0 保存终点 checkpoint 并导出 SID ===
     # Stage3 只接受训练终点权重；不保留任何中间或"最优 collision"快照。
     if rank == 0:
+        if _ACCEPTED_STATE is not None:
+            raw_module.load_state_dict(_ACCEPTED_STATE)
+            _record(rank, "accepted_state_restored",
+                    collision=final_collision, epoch=EVAL_INTERVAL * (NUM_EPOCHS // EVAL_INTERVAL))
         final_state = {
             name: value.detach().cpu().clone()
             for name, value in raw_module.state_dict().items()

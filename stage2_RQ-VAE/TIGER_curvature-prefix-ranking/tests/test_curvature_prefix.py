@@ -329,6 +329,21 @@ class GradientBudgetTests(unittest.TestCase):
         self.assertAlmostEqual(scale, 0.5 * 3.0 / 1.0)
 
 
+class CollisionBudgetTests(unittest.TestCase):
+    def test_the_decision_accepts_inside_the_budget(self):
+        self.assertEqual(cp.collision_budget_decision(0.30, 0.30), "accept")
+        self.assertEqual(cp.collision_budget_decision(0.10, 0.30), "accept")
+        self.assertEqual(cp.collision_budget_decision(0.300001, 0.30), "rollback")
+
+    def test_a_missing_measurement_rolls_back(self):
+        self.assertEqual(cp.collision_budget_decision(None, 0.30), "rollback")
+
+    def test_the_scale_is_halved_only_on_a_rollback(self):
+        self.assertEqual(cp.shrunk_scale(0.01, 0.20, 0.30), 0.01)
+        self.assertAlmostEqual(cp.shrunk_scale(0.01, 0.40, 0.30), 0.005)
+        self.assertIsNone(cp.shrunk_scale(None, 0.40, 0.30))
+
+
 class DeterminismTests(unittest.TestCase):
     def test_the_same_inputs_give_the_same_loss(self):
         torch.manual_seed(7)

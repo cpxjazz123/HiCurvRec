@@ -306,3 +306,20 @@ def gradient_budget_scale(mechanism_grads, reconstruction_grads, share: float) -
                 total += float(grad.pow(2).sum())
         return total ** 0.5
     return float(share) * norm(reconstruction_grads) / max(norm(mechanism_grads), 1e-12)
+
+
+def collision_budget_decision(collision: float | None, budget: float) -> str:
+    """Accept the state when the measured collision is inside the budget."""
+    if collision is None:
+        return "rollback"
+    return "accept" if float(collision) <= float(budget) else "rollback"
+
+
+def shrunk_scale(scale: float | None, collision: float | None, budget: float,
+                 factor: float = 0.5) -> float | None:
+    """Halve the mechanism weight when a rejected state exceeded the budget."""
+    if scale is None:
+        return None
+    if collision_budget_decision(collision, budget) == "accept":
+        return float(scale)
+    return float(scale) * float(factor)
