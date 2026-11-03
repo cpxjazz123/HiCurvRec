@@ -25,12 +25,14 @@ class RQVAE(nn.Module):
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
     def forward(self, embeddings: torch.Tensor,
-                item_ids: torch.Tensor = None
+                item_ids: torch.Tensor = None,
+                radius: torch.Tensor = None
                 ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor, torch.Tensor]:
         """The framework's model contract: a fifth ``reference`` output.
 
-        ``item_ids`` belongs to the arms whose objective is per item; this
-        mechanism ranks whole items, so the argument is accepted and unused.
+        ``item_ids`` and ``radius`` belong to the framework's probe contract;
+        this mechanism ranks whole items with the global curvature, so both are
+        accepted and unused.
         ``reference`` is the reconstruction target the loss is measured against,
         which is the input for this arm.
         """
