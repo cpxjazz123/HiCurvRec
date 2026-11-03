@@ -88,6 +88,30 @@ class RQVAE(nn.Module):
                 moved = frechet.apply(layer.get_code_embs(), tangent_sum, weight_sum)
                 layer.get_code_embs().data.copy_(moved)
 
+    def load_state_dict(self, state_dict, strict: bool = True, assign: bool = False):
+        """Load a checkpoint whose behaviour table has another item count.
+
+        ``FrechetCodebook.item_weights`` is a per-run TRAIN table (its length is
+        the item count), not a trained parameter: the trainer binds it from the
+        data right after construction.  A probe checkpoint carries the parent
+        run's table, so those keys are dropped here; every other key is still
+        checked, and a genuinely missing weight raises as usual.
+        """
+        dropped = [key for key in state_dict
+                   if key.endswith("frechet.item_weights")]
+        cleaned = {key: value for key, value in state_dict.items()
+                   if key not in dropped}
+        result = super().load_state_dict(cleaned, strict=False, assign=assign)
+        if strict:
+            missing = set(result.missing_keys) - set(dropped)
+            unexpected = set(result.unexpected_keys) - set(dropped)
+            if missing or unexpected:
+                raise RuntimeError(
+                    "error(s) in loading state_dict for "
+                    f"{type(self).__name__}: missing {sorted(missing)}; "
+                    f"unexpected {sorted(unexpected)}")
+        return result
+
     @torch.no_grad()
     def init_codebook(self, embeddings: torch.Tensor) -> None:
         encoded = self.encoder(embeddings)
