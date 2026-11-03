@@ -85,7 +85,7 @@ class Stage3AdmissionTests(unittest.TestCase):
         self.assertIsNone(result["refused"])
         self.assertEqual(result["candidate"]["level2_distinct_prefixes"], 1)
         self.assertLess(result["candidate"]["valid_l1_hard_er"], 10.0)
-        self.assertEqual(result["thresholds"], {"l3_collision_max": 0.20})
+        self.assertEqual(result["thresholds"], {"l3_collision_max": 0.35})
 
     def test_quality_numbers_are_still_measured(self):
         result = self.evaluate()
@@ -100,7 +100,7 @@ class Stage3AdmissionTests(unittest.TestCase):
 
     def test_a_sid_above_the_collision_gate_is_refused(self):
         # 4 of 13 items share one triple: 4/13 = 0.31 > 0.20.
-        self.candidate = {str(i): [0, 0, min(i, 9), i] for i in range(13)}
+        self.candidate = {str(i): [0, 0, min(i, 7), i] for i in range(13)}
         self.candidate_path.write_text(json.dumps(self.candidate))
         self.write_learned(gate.three_level_collision(self.candidate))
         result = self.evaluate()
@@ -118,9 +118,9 @@ class Stage3AdmissionTests(unittest.TestCase):
         self.assertLessEqual(result["candidate"]["l3_collision"], 0.20)
 
     def test_the_collision_gate_boundary(self):
-        self.assertIsNone(gate.collision_gate({"l3_collision": 0.20}, learned=0.20))
+        self.assertIsNone(gate.collision_gate({"l3_collision": 0.35}, learned=0.35))
         self.assertIsNone(gate.collision_gate({"l3_collision": 0.0}, learned=0.0))
-        self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.200001}, learned=0.2))
+        self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.350001}, learned=0.35))
         self.assertIsNotNone(gate.collision_gate({}, learned=0.0))
         self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.0}, learned=None))
         self.assertIsNotNone(gate.collision_gate({"l3_collision": 0.0}, learned=0.30))
@@ -138,7 +138,7 @@ class Stage3AdmissionTests(unittest.TestCase):
         self.assertAlmostEqual(result["quality_gate"]["learned_collision"], 0.15)
 
     def test_a_learned_collision_above_the_gate_is_refused(self):
-        self.write_learned(0.35)
+        self.write_learned(0.40)
         result = self.evaluate()
         self.assertFalse(result["passed"])
         self.assertIn("must come from Stage2 training", result["refused"])

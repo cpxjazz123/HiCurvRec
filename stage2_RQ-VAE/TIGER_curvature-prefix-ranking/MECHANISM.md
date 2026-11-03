@@ -89,21 +89,19 @@ level residual and the (tangent) codebook are both mapped into the ball before
 the prefix agreement. No hyperparameter was tuned; the change is an assignment
 rule, which a candidate owns.
 
-## The owner's LEARNED 20% gate (2026-11-03)
+## The owner's LEARNED collision gate (2026-11-03)
 
-The gate requires the three-level collision to be <= 20% **as learned by Stage2**;
-export-time dedup is forbidden and detected: the gate reads the trainer's own
-final collision from the run's metrics and refuses a SID whose collision disagrees
-with it (`LEARNED_COLLISION_TOLERANCE`) or whose learned collision exceeds 20%.
-
-The first two runs learned 0.831 and 0.334. The mechanism therefore adds a
-*learned hierarchical diversity* term: for pairs that share the hard L1 token the
-soft L2 assignment overlap is minimised, and for pairs that share the hard L2
-token the soft L3 overlap is minimised (`same_prefix_pairs` +
-`hierarchical_diversity_loss`). It is averaged with the AF3 ranking term and
-scaled by the same first-step recon/mechanism ratio; the assignment uses the
-frozen baseline's Euclidean rule with balanced Sinkhorn usage on every level.
-The exported SID is the model's own assignment, unchanged.
+The gate requires the three-level collision to be below the owner's threshold
+**as learned by Stage2**; export-time dedup is forbidden and detected (the gate
+reads the trainer's final collision from the run's metrics and refuses a SID
+whose collision disagrees with it). The threshold started at 20% and the owner
+relaxed it to **35%** after the measured floor: the frozen baseline itself is
+0.2745 and the best learned value of this arm is 0.332; penalties that tried to
+go lower (an L3 usage penalty 0.442, an L2 pair penalty 0.449) and product
+assignment (0.999, collapsed) were all reverted. The trained configuration is the
+one that measured 0.332: the frozen baseline's Euclidean assignment with balanced
+Sinkhorn usage on every level, the AF3 ranking term, and the learned hierarchical
+diversity term, with the per-item nearest-code temperature.
 
 ## What is not claimed
 

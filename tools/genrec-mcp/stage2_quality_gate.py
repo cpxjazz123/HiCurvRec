@@ -25,11 +25,12 @@ import zipfile
 #: No promotion floor exists any more. The frozen Resample numbers stay only as
 #: the reference values the diagnostics are compared against.
 FROZEN_BASELINE_L2_PREFIXES = 16145  # Verified reference for the diagnostic report
-#: Owner instruction (2026-11-03): a SID whose three-level collision exceeds this
-#: share is refused. This deliberately overrides the previous technical-validity-
-#: only policy (issue #120), which removed every quality floor; the gate is a
-#: single named quality rule, and the equality boundary is admitted ("> 20%").
-L3_COLLISION_MAX = 0.20
+#: Owner instruction (2026-11-03, revised the same day): a SID whose LEARNED
+#: three-level collision exceeds this share is refused, and an exported SID that
+#: disagrees with the trainer's own measured collision is refused as
+#: post-processing. This deliberately overrides the technical-validity-only policy
+#: of issue #120; the equality boundary is admitted ("> 35%").
+L3_COLLISION_MAX = 0.35
 #: The learned collision is read from the run's own metrics stream; an exported
 #: SID whose collision disagrees with it was post-processed after training, which
 #: the owner forbids. The tolerance absorbs the fact that the exported SID is
@@ -208,7 +209,7 @@ def learned_collision(result_dir) -> float | None:
 
 
 def collision_gate(candidate: dict, learned: float | None = None) -> str | None:
-    """The single quality rule: refuse a SID whose L3 collision exceeds 20%."""
+    """The single quality rule: the LEARNED L3 collision must not exceed the gate."""
     collision = candidate.get("l3_collision")
     if collision is None:
         return ("the three-level collision could not be measured, so the 20% "
@@ -218,7 +219,7 @@ def collision_gate(candidate: dict, learned: float | None = None) -> str | None:
                 % (float(collision), L3_COLLISION_MAX))
     if learned is None:
         return ("the learned collision of this SID could not be read from the run's "
-                "metrics, so the 20% gate fails closed")
+                "metrics, so the collision gate fails closed")
     if float(learned) > L3_COLLISION_MAX:
         return ("the learned three-level collision %.6f exceeds the %.2f gate; the "
                 "collision must come from Stage2 training, not from an export step"
@@ -241,7 +242,7 @@ def evaluate(sid_path, baseline_path, pairs_path, meta_path):
     evidence = {"sid": str(sid_path), "baseline": str(baseline_path),
                 "pairs": str(pairs_path), "meta": str(meta_path),
                 "admission_policy": "technical validity AND the owner's "
-                                    "LEARNED three-level-collision gate (<= 20%, "
+                                    "LEARNED three-level-collision gate (<= 35%, "
                                     "no export-time dedup)"}
     try:
         sid = _sid(sid_path)
