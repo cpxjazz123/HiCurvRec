@@ -300,7 +300,8 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
 def curvature_prefix_ranking_loss(points_first, points_second, points_third,
                                   codebooks, anchor, high, low, weights, *,
                                   levels=(0, 1, 2), use_curvature: bool = True,
-                                  temperature=None) -> torch.Tensor:
+                                  temperature=None, separation=(1, 2),
+                                  separation_weight: float = 1.0) -> torch.Tensor:
     """The AF3-guided relative preference over the three prefix levels.
 
     The three level tangents are separate positional tensor arguments on purpose:
@@ -319,6 +320,7 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
     selected = [level for level in levels if level in (0, 1, 2)]
     if not selected:
         raise ValueError("at least one level must be selected")
+    fine = [level for level in separation if level in (1, 2)]
     total = points_first.new_zeros(())
     for level in selected:
         points, codebook = point_levels[level], codebooks[level]
@@ -327,6 +329,12 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
         bridged = prefix_agreement(points[anchor], points[low], codebook,
                                    temperature, use_curvature)
         total = total + F.softplus(-(preferred - bridged) * weights).mean()
+        if level in fine:
+            # The fine levels carry the separation the historical SID record
+            # associates with recall (L2 prefixes +0.45, L3 triples +0.48 against
+            # R@10). A bridge pair that lands in the same fine code spends the
+            # level's capacity on two items whose behaviour says they are apart.
+            total = total + float(separation_weight) * (weights * bridged).mean()
     return total / float(len(selected))
 
 

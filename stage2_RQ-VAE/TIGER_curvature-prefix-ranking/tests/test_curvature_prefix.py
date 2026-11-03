@@ -330,6 +330,43 @@ class CollisionBudgetTests(unittest.TestCase):
         self.assertEqual(cp.collision_budget_decision(None, 0.30), "rollback")
 
 
+class SeparationTests(unittest.TestCase):
+    """Bridge pairs are pushed off the fine codes, not only ranked below."""
+
+    def setUp(self):
+        torch.manual_seed(11)
+        self.points = [torch.randn(8, 8) * 0.2 for _ in range(3)]
+        self.codebooks = [torch.randn(16, 8) * 0.2 for _ in range(3)]
+        self.anchor = torch.arange(4)
+        self.high = torch.tensor([4, 5, 6, 7])
+        self.low = torch.tensor([5, 6, 7, 4])
+        self.weights = torch.ones(4)
+
+    def _loss(self, points, **kwargs):
+        return cp.curvature_prefix_ranking_loss(
+            points[0], points[1], points[2], self.codebooks,
+            self.anchor, self.high, self.low, self.weights,
+            levels=(1, 2), **kwargs)
+
+    def test_the_separation_term_changes_the_loss(self):
+        with_term = self._loss(self.points, separation=(1, 2))
+        without = self._loss(self.points, separation=())
+        self.assertNotAlmostEqual(float(with_term), float(without), places=6)
+
+    def test_the_separation_has_a_gradient_on_the_points(self):
+        points = [t.clone().requires_grad_(True) for t in self.points]
+        self._loss(points).backward()
+        self.assertGreater(float(points[1].grad.abs().sum()), 0.0)
+
+    def test_the_behaviour_weights_scale_the_separation(self):
+        heavy = self._loss(self.points, separation=(1, 2))
+        light = cp.curvature_prefix_ranking_loss(
+            self.points[0], self.points[1], self.points[2], self.codebooks,
+            self.anchor, self.high, self.low, torch.zeros(4),
+            levels=(1, 2), separation=(1, 2))
+        self.assertLess(float(light), float(heavy))
+
+
 class DeterminismTests(unittest.TestCase):
     def test_the_same_inputs_give_the_same_loss(self):
         torch.manual_seed(7)
