@@ -144,6 +144,21 @@ class Stage3AdmissionTests(unittest.TestCase):
         self.assertTrue(result["passed"], result)
         self.assertTrue(result["reference_status"])
 
+    def test_the_gate_imports_under_the_stage2_interpreter(self):
+        # stage3_start evaluates the gate with the Stage 2 interpreter (3.9), so a
+        # PEP 604 annotation there would make the verifier unavailable.
+        import subprocess
+        from tools.research.stage2 import contract
+        command = [
+            contract.STAGE2_PYTHON, "-c",
+            "import importlib.util; "
+            "spec = importlib.util.spec_from_file_location('g', " + repr(str(SOURCE)) + "); "
+            "module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module); "
+            "assert module.collision_gate({'l3_collision': 0.20}) is None",
+        ]
+        done = subprocess.run(command, capture_output=True, text=True, timeout=120)
+        self.assertEqual(done.returncode, 0, done.stderr[-500:])
+
     def test_stage3_checks_validity_before_gpu_or_launch(self):
         server = (HERE / "tools/genrec-mcp/server.py").read_text()
         launch = server[server.index("def tool_stage3_start("):]

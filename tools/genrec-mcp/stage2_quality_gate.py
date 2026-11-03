@@ -10,6 +10,8 @@ unreadable or malformed SID file, an item mapping that is not the canonical
 decimal id space, a SID whose token width or token values are malformed, or
 full SIDs that are not unique after the deterministic disambiguation token.
 """
+from __future__ import annotations
+
 import array
 import ast
 import hashlib
