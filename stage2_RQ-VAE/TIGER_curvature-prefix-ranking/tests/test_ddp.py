@@ -68,7 +68,7 @@ class DistributedStepTests(unittest.TestCase):
         ids = torch.arange(48, device=self.device)
         for _ in range(3):
             optimizer.zero_grad(set_to_none=True)
-            recon, quant_loss, _, _ = model(embeddings, ids)
+            recon, quant_loss, _, _, _reference = model(embeddings, ids)
             loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
             loss.backward()
             optimizer.step()
@@ -88,7 +88,7 @@ class DistributedStepTests(unittest.TestCase):
         optimizer = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],
                                       lr=1e-3)
         optimizer.zero_grad(set_to_none=True)
-        recon, quant_loss, _, _ = model(embeddings, ids)
+        recon, quant_loss, _, _, _reference = model(embeddings, ids)
         (torch.nn.functional.mse_loss(recon, embeddings) + quant_loss).backward()
         optimizer.step()
         sums = raw.frechet_step_sums()

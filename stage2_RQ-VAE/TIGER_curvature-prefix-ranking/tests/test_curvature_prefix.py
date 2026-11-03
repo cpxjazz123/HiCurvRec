@@ -253,7 +253,9 @@ class ModelWiringTests(unittest.TestCase):
             model.init_codebook(embeddings)
         embeddings = embeddings[:5]
         item_ids = torch.arange(5)
-        reconstructed, quant_loss, _, tokens = model(embeddings, item_ids)
+        reconstructed, quant_loss, _, tokens, reference = model(embeddings, item_ids)
+        self.assertTrue(torch.equal(reference, embeddings))
+        reconstructed_radius, _, _, _, _ = model(embeddings, item_ids, radius=None)
         points = model.level_points()
         codebooks = model.level_codebooks()
         self.assertEqual(len(points), 3)
@@ -269,7 +271,7 @@ class ModelWiringTests(unittest.TestCase):
         loss = cp.curvature_prefix_ranking_loss(points[0], points[1], points[2], codebooks,
                                                 triples_anchor, triples_high, triples_low,
                                                 torch.ones(2))
-        rebuilt, _ = model.compute_loss(embeddings, reconstructed, quant_loss)
+        rebuilt, _ = model.compute_loss(reference, reconstructed, quant_loss)
         (rebuilt + loss).backward()
         self.assertTrue(any(parameter.grad is not None
                             and float(parameter.grad.abs().sum()) > 0

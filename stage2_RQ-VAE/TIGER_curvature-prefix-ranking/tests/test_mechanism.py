@@ -36,8 +36,8 @@ def build(use_behaviour=True, use_curvature=True, items=48, dim=16, seed=0):
 
 
 def forward_backward(model, embeddings, ids):
-    recon, quant_loss, _, tokens = model(embeddings, ids)
-    loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
+    recon, quant_loss, _, tokens, reference = model(embeddings, ids)
+    loss = torch.nn.functional.mse_loss(recon, reference) + quant_loss
     loss.backward()
     return float(loss.detach()), tokens.detach(), loss
 
@@ -72,7 +72,7 @@ class WiringTests(unittest.TestCase):
         model, embeddings, ids, _ = build()
         layer = model.rq.vq_layers[0]
         with torch.no_grad():
-            recon, quant_loss, _, _ = model(embeddings, ids)
+            recon, quant_loss, _, _, _reference = model(embeddings, ids)
             points = layer.frechet._last["point"]
         self.assertLess(float(points.norm(dim=-1).max()), 1.0 - BALL_EPS / 2)
         self.assertLess(float(layer.get_code_embs().norm(dim=-1).max()), 1.0)

@@ -25,11 +25,20 @@ class RQVAE(nn.Module):
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
     def forward(self, embeddings: torch.Tensor,
-                item_ids: torch.Tensor = None) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+                item_ids: torch.Tensor = None,
+                radius: torch.Tensor = None
+                ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor, torch.Tensor]:
+        """The framework's model contract: a fifth ``reference`` output.
+
+        ``radius`` belongs to the per-item-radius arms; this mechanism keeps the
+        global curvature, so the argument is accepted and unused. ``reference``
+        is the reconstruction target the loss is measured against, which is the
+        input for this arm.
+        """
         encoded = self.encoder(embeddings)
         quantized, quant_loss, unused_codes, tokens = self.rq(encoded, item_ids=item_ids)
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens
+        return reconstructed, quant_loss, int(unused_codes), tokens, embeddings
 
     def level_points(self) -> list[torch.Tensor]:
         """The residual tangent that enters every level of the last forward."""
