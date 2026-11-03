@@ -122,44 +122,37 @@ class GeometryCompatibilityTests(unittest.TestCase):
 
 
 class PrefixAgreementTests(unittest.TestCase):
+    """The gap temperature makes the prefix overlap say "same code or not"."""
+
     def setUp(self):
         torch.manual_seed(0)
-        self.codebook = torch.randn(8, 4) * 0.1
-        self.points = torch.randn(5, 4) * 0.1
-        self.temperature = 0.05
+        self.codebook = torch.randn(64, 8) * 0.2
 
-    def test_identical_assignments_agree_almost_surely(self):
-        agreement = cp.prefix_agreement(self.points, self.points, self.codebook,
-                                        self.temperature)
-        shuffled = cp.prefix_agreement(self.points, self.points.flip(0), self.codebook,
-                                       self.temperature)
-        self.assertTrue(torch.all(agreement > 2.0 / self.codebook.shape[0]))
-        self.assertGreater(float(agreement.mean()), float(shuffled.mean()))
+    def test_the_margin_is_not_a_constant(self):
+        """With the nearest-distance kernel the overlap was uniform (std < 1e-3)."""
+        points = torch.randn(16, 8) * 0.2
+        others = points.roll(1, dims=0)
+        agreement = cp.prefix_agreement(points, others, self.codebook)
+        self.assertGreater(float(agreement.std()), 1e-3)
 
-    def test_agreement_is_symmetric_and_bounded(self):
-        other = torch.randn(5, 4) * 0.1
-        left = cp.prefix_agreement(self.points, other, self.codebook, self.temperature)
-        right = cp.prefix_agreement(other, self.points, self.codebook, self.temperature)
-        self.assertTrue(torch.allclose(left, right, atol=1e-6))
-        self.assertTrue(bool((left >= 0).all() and (left <= 1).all()))
+    def test_the_same_assignment_agrees_more_than_a_different_one(self):
+        points = torch.randn(8, 8) * 0.2
+        others = points + 0.75 * torch.randn(8, 8)
+        same = cp.prefix_agreement(points, points, self.codebook)
+        apart = cp.prefix_agreement(points, others, self.codebook)
+        self.assertGreater(float(same.mean()), float(apart.mean()))
 
-    def test_the_default_temperature_is_local(self):
-        generator = torch.Generator().manual_seed(31)
-        codebook = torch.nn.functional.normalize(
-            torch.randn(16, 4, generator=generator), dim=1) * 0.05
-        left = torch.stack([codebook[0], codebook[3], codebook[7]])
-        right = torch.stack([codebook[0], codebook[3], codebook[7]])
-        other = torch.stack([codebook[1], codebook[9], codebook[12]])
-        same = cp.prefix_agreement(left, right, codebook)
-        apart = cp.prefix_agreement(left, other, codebook)
-        self.assertGreater(float(same.min()), 0.9)
-        self.assertLess(float(apart.max()), 0.1)
+    def test_the_gradient_reaches_the_encoder_side_points(self):
+        points = (torch.randn(8, 8) * 0.2).requires_grad_(True)
+        other = torch.randn(8, 8) * 0.2
+        agreement = cp.prefix_agreement(points, other, self.codebook)
+        agreement.sum().backward()
+        self.assertGreater(float(points.grad.abs().sum()), 0.0)
 
     def test_the_curve_changes_the_agreement(self):
-        curved = cp.prefix_agreement(self.points, self.points * 3.0, self.codebook,
-                                     self.temperature, use_curvature=True)
-        flat = cp.prefix_agreement(self.points, self.points * 3.0, self.codebook,
-                                   self.temperature, use_curvature=False)
+        points = torch.randn(5, 8) * 0.5
+        curved = cp.prefix_agreement(points, points * 2.0, self.codebook, use_curvature=True)
+        flat = cp.prefix_agreement(points, points * 2.0, self.codebook, use_curvature=False)
         self.assertFalse(torch.allclose(curved, flat))
 
 

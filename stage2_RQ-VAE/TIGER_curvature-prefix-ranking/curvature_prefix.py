@@ -251,6 +251,52 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
     return (weight_a * weight_b).sum(dim=-1)
 
 
+def _gap_temperature(cost: torch.Tensor) -> torch.Tensor:
+    """The per-item assignment gap: second-nearest minus nearest cost.
+
+    The nearest-code distance was the first scale tried and it is much LARGER
+    than the cost differences inside one item's code vector: the 256-way softmax
+    then has entropy ~5.4 (uniform is 5.545), the cohesive and bridge overlaps
+    differ by <1e-3, and the ranking loss sat at ln 2 for a whole 3000-epoch run.
+    The gap is the scale at which the assignment actually decides between the top
+    two codes, so the kernel is sharp and its gradient reaches the encoder.
+    """
+    top = cost.detach().topk(2, dim=-1, largest=False).values
+    return (top[..., 1] - top[..., 0]).clamp_min(1e-6)
+
+
+def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
+                    codebook: torch.Tensor, temperature: float | torch.Tensor | None = None,
+                    use_curvature: bool = True) -> torch.Tensor:
+    """Overlap of the soft prefix assignments of two sets of level residuals.
+
+    The residuals are tangents of the encoder: with the curve on they are mapped
+    into the ball and the cost is the Poincare distance to the codebook; with the
+    curve off the cost is the squared Euclidean distance. The temperature is the
+    measured assignment gap of the batch unless the caller passes one.
+    """
+    if use_curvature:
+        left = geometry.expmap0(points_a, CURVATURE)
+        right = geometry.expmap0(points_b, CURVATURE)
+        codes = geometry.expmap0(codebook, CURVATURE)
+        cost_a = geometry.distance(left.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
+        cost_b = geometry.distance(right.unsqueeze(1), codes.unsqueeze(0), CURVATURE)
+    else:
+        cost_a = (points_a.pow(2).sum(1, keepdim=True)
+                  - 2 * points_a @ codebook.t() + codebook.pow(2).sum(1, keepdim=True).t())
+        cost_b = (points_b.pow(2).sum(1, keepdim=True)
+                  - 2 * points_b @ codebook.t() + codebook.pow(2).sum(1, keepdim=True).t())
+    if temperature is None:
+        temperature_a = _gap_temperature(cost_a).unsqueeze(-1)
+        temperature_b = _gap_temperature(cost_b).unsqueeze(-1)
+        weight_a = F.softmax(-cost_a / temperature_a, dim=-1)
+        weight_b = F.softmax(-cost_b / temperature_b, dim=-1)
+    else:
+        weight_a = F.softmax(-cost_a / temperature, dim=-1)
+        weight_b = F.softmax(-cost_b / temperature, dim=-1)
+    return (weight_a * weight_b).sum(dim=-1)
+
+
 def curvature_prefix_ranking_loss(points_first, points_second, points_third,
                                   codebooks, anchor, high, low, weights, *,
                                   levels=(0, 1, 2), use_curvature: bool = True,

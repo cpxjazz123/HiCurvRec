@@ -128,10 +128,12 @@ RANKING_LEVELS = (0, 1, 2)
 MECHANISM_SCALE: float | None = None
 MECHANISM_SCALE_BOUNDS = (1e-8, 1e8)
 #: The mechanism may take at most this share of the reconstruction gradient at
-#: the first step. It is the collision budget in optimisation terms: the SID
-#: partition must stay driven by the reconstruction objective, otherwise the
-#: coarse sharing pressure collapses the fine levels (measured: full scale 0.763).
-MECHANISM_GRADIENT_SHARE = 0.10
+#: the first step. A tenth of it was measured too weak: across a whole 3000-epoch
+#: run the ranking value never left ln 2 and the exported L2 prefix count stayed
+#: below the baseline's, so the behaviour signal never reached the assignment. A
+#: quarter still leaves reconstruction dominant, and the collision trust region
+#: rolls the partition back if the pressure crosses the budget.
+MECHANISM_GRADIENT_SHARE = 0.25
 #: Trust region on the SID partition: a training epoch whose measured collision
 #: exceeds this budget is rolled back to the last accepted state. The mechanism
 #: weight is NOT shrunk on a rollback: halving it drove the weight to 1e-19 in one
