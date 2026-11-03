@@ -651,6 +651,56 @@
       "role": "REVIEW",
       "status": "blocked"
     },
+    "run_4fa322e5822c41d1__behavior": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_4fa322e5822c41d1/behavior.json",
+        "sha256": "793d52dce39a5a8aa3963ff566ae50612114b9d20d31227dfed3d1e9fc653b9b"
+      },
+      "finished_at": 1793683195.7810416,
+      "lease_until": 0,
+      "owner": null,
+      "role": "DATA",
+      "status": "done"
+    },
+    "run_4fa322e5822c41d1__geometry": {
+      "attempts": 1,
+      "dependencies": [
+        "run_4fa322e5822c41d1__behavior",
+        "run_4fa322e5822c41d1__literature"
+      ],
+      "evidence": null,
+      "failure": "KeyError: 'valid_l1_hard_er_strict_gt'",
+      "lease_until": 0,
+      "owner": null,
+      "role": "GEOMETRY",
+      "status": "blocked"
+    },
+    "run_4fa322e5822c41d1__literature": {
+      "attempts": 1,
+      "dependencies": [],
+      "evidence": {
+        "path": "/fs04/ar57/wenyu/GeneRec/results/research/issue117/runs/run_4fa322e5822c41d1/agents/literature/execution.json",
+        "sha256": "ef21a12ef73d77eda4ce08f1038a945f6ae10f21a7444ca6b5a74cca8f2e7f43"
+      },
+      "finished_at": 1793683607.3450856,
+      "lease_until": 0,
+      "owner": null,
+      "role": "LITERATURE",
+      "status": "done"
+    },
+    "run_4fa322e5822c41d1__review": {
+      "attempts": 0,
+      "dependencies": [
+        "run_4fa322e5822c41d1__geometry"
+      ],
+      "evidence": null,
+      "lease_until": 0,
+      "owner": null,
+      "role": "REVIEW",
+      "status": "pending"
+    },
     "run_53b3f13468974407__behavior": {
       "attempts": 1,
       "dependencies": [],
