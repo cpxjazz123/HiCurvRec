@@ -316,13 +316,3 @@ def collision_budget_decision(collision: float | None, budget: float) -> str:
     if collision is None:
         return "rollback"
     return "accept" if float(collision) <= float(budget) else "rollback"
-
-
-def shrunk_scale(scale: float | None, collision: float | None, budget: float,
-                 factor: float = 0.5) -> float | None:
-    """Halve the mechanism weight when a rejected state exceeded the budget."""
-    if scale is None:
-        return None
-    if collision_budget_decision(collision, budget) == "accept":
-        return float(scale)
-    return float(scale) * float(factor)

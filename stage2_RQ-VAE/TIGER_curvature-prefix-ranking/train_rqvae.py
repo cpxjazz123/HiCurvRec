@@ -540,6 +540,7 @@ def main() -> None:
         raw_unique = None
         collision_v = None
         try:
+            accepted = torch.tensor(0, device=device)
             if rank == 0:
                 with torch.no_grad():
                     raw_tokens = raw_module.get_indices(
@@ -553,27 +554,33 @@ def main() -> None:
                 collision_v = float(counts[counts > 1].sum()) / len(raw_tokens)
                 decision = curvature_prefix.collision_budget_decision(
                     collision_v, COLLISION_BUDGET)
-                accepted = torch.tensor(1 if decision == "accept" else 0, device=device)
-                if world_size > 1:
-                    dist.broadcast(accepted, 0)
-                decision = "accept" if int(accepted.item()) == 1 else "rollback"
-                if decision == "accept":
-                    _ACCEPTED_STATE = {name: value.detach().cpu().clone()
-                                       for name, value in raw_module.state_dict().items()}
+                accepted.fill_(1 if decision == "accept" else 0)
+            # EVERY rank joins the collective. A broadcast issued by rank 0 alone
+            # leaves the NCCL communicator out of step and corrupts the following
+            # gradient all-reduces: the measured symptom was a partition that was
+            # healthy at epoch 50 and collapsed right after the first eval.
+            if world_size > 1:
+                dist.broadcast(accepted, 0)
+            decision = "accept" if int(accepted.item()) == 1 else "rollback"
+            if decision == "accept":
+                _ACCEPTED_STATE = {name: value.detach().cpu().clone()
+                                   for name, value in raw_module.state_dict().items()}
+                if rank == 0:
                     final_collision = collision_v
                     final_raw_unique = raw_unique
                     _record(rank, "collision_budget", decision="accept",
                             collision=float(collision_v), budget=COLLISION_BUDGET,
                             epoch=epoch, scale=MECHANISM_SCALE)
-                else:
-                    if _ACCEPTED_STATE is not None:
-                        raw_module.load_state_dict(_ACCEPTED_STATE)
-                    MECHANISM_SCALE = curvature_prefix.shrunk_scale(
-                        MECHANISM_SCALE, collision_v, COLLISION_BUDGET,
-                        MECHANISM_SCALE_FACTOR)
+            else:
+                if _ACCEPTED_STATE is not None:
+                    raw_module.load_state_dict(_ACCEPTED_STATE)
+                MECHANISM_SCALE = (None if MECHANISM_SCALE is None
+                                   else MECHANISM_SCALE * MECHANISM_SCALE_FACTOR)
+                if rank == 0:
                     _record(rank, "collision_budget", decision="rollback",
                             collision=float(collision_v), budget=COLLISION_BUDGET,
                             epoch=epoch, scale=MECHANISM_SCALE)
+            if rank == 0:
                 print(
                     f"[RQ-VAE] epoch={epoch} loss={avg_loss:.8f} recon={avg_recon:.8f} "
                     f"mech={float(np.mean(mechanism_terms)) if mechanism_terms else 0.0:.8f} "
@@ -592,6 +599,7 @@ def main() -> None:
         finally:
             for layer in raw_module.rq.vq_layers:
                 layer._skip_ddp_reduce = False
+            model.train()
         if world_size > 1:
             dist.barrier()
 
