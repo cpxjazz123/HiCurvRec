@@ -15,7 +15,23 @@ from .layers import RQLayer
 
 
 class RecordingRQLayer(RQLayer):
-    """``RQLayer`` plus ``level_points()`` and per-level balanced assignment."""
+    """``RQLayer`` plus ``level_points()`` and a balanced second level."""
+
+    def __init__(self, config):
+        super().__init__(config)
+        # The assignment rule is the candidate's (CLAUDE.md 66). The exported L2
+        # prefix count is the quantity the historical SID record ties to recall
+        # (rho=+0.45 against R@10; the 0.0636 arm exported 16,145 prefixes where
+        # this recipe exports ~7,200), and an unbalanced second level spends its
+        # 256 codes on a few items. The baseline balances the LAST level only; the
+        # candidate balances the second level with the same frozen Sinkhorn
+        # constants. The coarse level keeps the plain nearest-code rule, because
+        # it carries the behaviour cohesion the mechanism ranks.
+        if len(self.vq_layers) > 1 and self.sk_epsilon > 0 and self.sk_iters > 0:
+            second = self.vq_layers[1]
+            second.sk_epsilon = self.sk_epsilon
+            second.sk_iters = self.sk_iters
+            second.use_sk = second.sk_epsilon > 0 and second.sk_iters > 0
 
     def forward(self, x: torch.Tensor, infer_use_sk: bool = False):
         quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)

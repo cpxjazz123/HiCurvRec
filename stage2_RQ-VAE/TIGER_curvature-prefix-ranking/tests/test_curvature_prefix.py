@@ -395,6 +395,28 @@ class BucketSpreadTests(unittest.TestCase):
         self.assertAlmostEqual(float(cohesion[3]), float(lookup.weights.mean()))
 
 
+class AssignmentRuleTests(unittest.TestCase):
+    """The candidate owns its assignment rule (CLAUDE.md 66)."""
+
+    def _layer(self):
+        from types import SimpleNamespace
+        from model.recording import RecordingRQLayer
+        config = SimpleNamespace(hidden_sizes=(16, 8), codebook_num=3,
+                                 codebook_size=(16, 16, 16), codebook_dim=4,
+                                 dropout=0.0, beta=0.25, vq_type="vq",
+                                 ema_decay=0.99, fix_code_embs=False,
+                                 sk_epsilon=0.003, sk_iters=50)
+        return RecordingRQLayer(config)
+
+    def test_the_second_level_is_balanced_like_the_last_one(self):
+        layer = self._layer()
+        self.assertTrue(layer.vq_layers[2].use_sk)
+        self.assertTrue(layer.vq_layers[1].use_sk,
+                        "level 2 must be balanced: the L2 spread is the recall lever")
+        self.assertFalse(layer.vq_layers[0].use_sk,
+                         "the coarse level carries the cohesion, not the balance")
+
+
 class DeterminismTests(unittest.TestCase):
     def test_the_same_inputs_give_the_same_loss(self):
         torch.manual_seed(7)
