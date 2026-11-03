@@ -98,22 +98,28 @@ class RQVAE(nn.Module):
                 layer.get_code_embs().data.copy_(moved)
 
     def load_state_dict(self, state_dict, strict: bool = True, assign: bool = False):
-        """Load a checkpoint whose behaviour table has another item count.
+        """Restore a checkpoint whose behaviour table has another item count.
 
         ``FrechetCodebook.item_weights`` is a per-run TRAIN table (its length is
-        the item count), not a trained parameter: the trainer binds it from the
-        data right after construction.  A probe checkpoint carries the parent
-        run's table, so those keys are dropped here; every other key is still
-        checked, and a genuinely missing weight raises as usual.
+        the item count), not a trained parameter.  A probe checkpoint carries the
+        parent run's table; its shape is therefore restored as a buffer rather
+        than copied into the fresh codebook-sized default, and the remaining
+        weights are still checked strictly.
         """
-        dropped = [key for key in state_dict
-                   if key.endswith("frechet.item_weights")]
+        tables = {key: value for key, value in state_dict.items()
+                  if key.endswith("frechet.item_weights")}
         cleaned = {key: value for key, value in state_dict.items()
-                   if key not in dropped}
+                   if key not in tables}
+        for key, value in tables.items():
+            module = self.get_submodule(key.rsplit(".", 1)[0])
+            module.register_buffer("item_weights",
+                                   value.detach().clone().to(
+                                       dtype=module.item_weights.dtype,
+                                       device=module.item_weights.device))
         result = super().load_state_dict(cleaned, strict=False, assign=assign)
         if strict:
-            missing = set(result.missing_keys) - set(dropped)
-            unexpected = set(result.unexpected_keys) - set(dropped)
+            missing = set(result.missing_keys) - set(tables)
+            unexpected = set(result.unexpected_keys)
             if missing or unexpected:
                 raise RuntimeError(
                     "error(s) in loading state_dict for "

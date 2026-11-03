@@ -321,7 +321,9 @@ class CheckpointCompatibilityTests(unittest.TestCase):
         table_key = "rq.vq_layers.0.frechet.item_weights"
         state[table_key] = torch.ones(1000)
         model.load_state_dict(state)          # the foreign length is accepted
-        self.assertEqual(model.rq.vq_layers[0].frechet.item_weights.numel(), 8)
+        self.assertEqual(model.rq.vq_layers[0].frechet.item_weights.numel(), 1000)
+        self.assertTrue(torch.allclose(
+            model.rq.vq_layers[0].frechet.item_weights, torch.ones(1000)))
 
     def test_a_genuinely_missing_weight_still_raises(self):
         from types import SimpleNamespace
