@@ -574,13 +574,15 @@ def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None,
     from concurrent.futures import ThreadPoolExecutor
 
     # Every proposal's math checks in one process: the import is the cost, not
-    # the check. A batch that overruns its budget leaves the reports missing,
-    # which the per-idea path records as a gap rather than a pass.
-    math_reports: dict = {}
+    # the check. The batch runs CONCURRENTLY with the per-idea measurements:
+    # awaited first it spent the whole phase budget before the data probes even
+    # started, and the phase then reported every measurement as spent.
+    budget_pool = ThreadPoolExecutor(max_workers=min(len(ideas), 6) + 1)
     remaining = None if deadline is None else deadline - time.monotonic()
+    math_future = None
     if remaining is None or remaining > 0:
-        math_reports = _run_math_batch(
-            ideas, seed=math_checks_module.SEED,
+        math_future = budget_pool.submit(
+            _run_math_batch, ideas, seed=math_checks_module.SEED,
             budget=(min(MATH_BUDGET_SECONDS, remaining)
                     if remaining is not None else MATH_BUDGET_SECONDS))
 
@@ -619,7 +621,13 @@ def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None,
             remaining = _remaining()
             if remaining is not None and remaining <= 0:
                 return _spent()
-            report = (math_reports or {}).get(identifier)
+            reports = {}
+            if math_future is not None:
+                try:
+                    reports = math_future.result() or {}
+                except Exception:  # noqa: BLE001
+                    reports = {}
+            report = reports.get(identifier)
             if not report:
                 report = {"status": "NOT_RUN", "idea_id": identifier, "checks": [],
                           "reason": "the batched math checks produced no report for it"}
@@ -642,11 +650,14 @@ def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None,
             probe, math_report, lit = [future.result() for future in futures]
         return identifier, {"probe": probe, "literature": lit, "math": math_report}
 
-    # The proposals are independent, so they are measured at the same time.
+    # The proposals are independent, so they are measured at the same time, and
+    # the math batch is one more worker in the same pool.
     outcomes = {}
-    with ThreadPoolExecutor(max_workers=min(len(ideas), 6) or 1) as pool:
-        for identifier, outcome in pool.map(measure, ideas):
+    try:
+        for identifier, outcome in budget_pool.map(measure, ideas):
             outcomes[identifier] = outcome
+    finally:
+        budget_pool.shutdown(wait=False)
     return outcomes
 
 
@@ -1207,11 +1218,22 @@ def _derivation_prompt(idea: dict) -> str:
         "SPECIFICATION: " + str(idea.get("specification")) + "\n"
         "SPEC EQUATIONS: " + str(idea.get("spec_equations")) + "\n"
         "INPUTS AND OUTPUTS: " + str(idea.get("spec_inputs_outputs")) + "\n\n"
-        "The signature is fixed: use exactly the argument names, widths and the "
-        "symbol order that the specification gives in INPUTS AND OUTPUTS, and "
-        "repeat them verbatim in `symbols` and `args`. Two derivations that "
-        "choose different signatures are different functions and cannot be "
-        "compared.\n\n"
+        "FIXED INSTANTIATION - every derivation must use exactly this, or the "
+        "two cannot be compared:\n"
+        "  * latent width D = 2;\n"
+        "  * the smallest complete instance: L = 2 levels, K = 2 codes per level;\n"
+        "  * arguments, in this exact order and with these exact names:\n"
+        "      z (width 2) - the encoder vector,\n"
+        "      theta_1_1, theta_1_2 (width 2), theta_2_1, theta_2_2 (width 2) - "
+        "the codebook vectors in (level, code) order,\n"
+        "      s (scalar) - the frozen scale.\n"
+        "  * output: a single per-item vector named `loss` (one value per row of z), "
+        "the quantity the mechanism adds or changes in the training objective.\n"
+        "  * a switch or a table that the specification needs may be carried as "
+        "an extra argument (a scalar 0/1 or a width-2 vector) placed AFTER s, and "
+        "must be named in `args` and `symbols` in the same order.\n"
+        "  Symbols follow the arguments: a width-w argument consumes w symbols in "
+        "column order (z -> z0, z1; theta_1_1 -> t110, t111 ...).\n\n"
         "Turn the equations into SymPy statements and into a complete torch "
         "module defining compute(**kwargs), as the answer format requires.")
 
@@ -1222,6 +1244,16 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
 
     answers = []
     for idea in ideas:
+        # A derivation answers in a workspace that a previous pass already used.
+        # Its old answer must not be read as this pass's delivery when the new
+        # agent times out: it is moved aside before the agents start.
+        for index in range(1, 4):
+            stale = directory / "agents" / ("derivation_%d" % index) / "derivation.json"
+            if stale.is_file():
+                archive = stale.parent / "previous" / str(int(time.time()))
+                archive.mkdir(parents=True, exist_ok=True)
+                stale.replace(archive / "derivation.json")
+
         def derive(task_id, _idea=idea):
             return _run_agent(
                 directory, task_id, _derivation_prompt(_idea), "derivation.json",
@@ -1244,10 +1276,12 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
                 missing.append(int(task_id.split("_")[-1]))
             log("%s %s: %s" % (idea["idea_id"], task_id,
                                "ok" if payload.get("statements") else "no readable answer"))
-        if missing:
-            # A derivation that delivered nothing is asked once more: the round
-            # needs two comparable derivations, and an agent that ran out of its
-            # five minutes is not a result about the formula.
+        if missing and len(delivered) < 2:
+            # A derivation that delivered nothing is asked once more - but only
+            # when the round would otherwise have fewer than two. Waiting for a
+            # fifth minute of a third derivation while two are on disk holds the
+            # comparison for evidence it does not need; the missing one is
+            # recorded as a gap in the verdict instead.
             retry = ["derivation_%d" % index for index in missing]
             log("%s: asking %s again" % (idea["idea_id"], ", ".join(retry)))
             outcomes = _run_agents_concurrently([(task_id,) for task_id in retry],
