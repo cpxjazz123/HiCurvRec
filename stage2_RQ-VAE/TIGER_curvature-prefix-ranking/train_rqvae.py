@@ -524,14 +524,18 @@ def main() -> None:
                             curvature=MECHANISM_CURVATURE or 1.0)
                         # The measured lever: the cohesive pair must land in ONE
                         # coarse code, not merely outrank the bridge pair.
-                        mechanism = mechanism + CLUSTER_WEIGHT * curvature_prefix.cocluster_loss(
-                            points[0][rows_anchor[valid]], points[0][rows_high[valid]],
-                            codebooks[0], USE_GEOMETRY,
-                            MECHANISM_CURVATURE or 1.0)
-                        mechanism = mechanism + CLUSTER_WEIGHT * curvature_prefix.cocluster_loss(
-                            points[1][rows_anchor[valid]], points[1][rows_high[valid]],
-                            codebooks[1], USE_GEOMETRY,
-                            MECHANISM_CURVATURE or 1.0)
+                        anchor_levels = [points[0][rows_anchor[valid]]]
+                        high_levels = [points[0][rows_high[valid]]]
+                        mechanism = mechanism + CLUSTER_WEIGHT * curvature_prefix.prefix_cocluster_loss(
+                            anchor_levels, high_levels, codebooks[:1], 0,
+                            USE_GEOMETRY, MECHANISM_CURVATURE or 1.0)
+                        anchor_levels = [points[0][rows_anchor[valid]],
+                                         points[1][rows_anchor[valid]]]
+                        high_levels = [points[0][rows_high[valid]],
+                                       points[1][rows_high[valid]]]
+                        mechanism = mechanism + CLUSTER_WEIGHT * curvature_prefix.prefix_cocluster_loss(
+                            anchor_levels, high_levels, codebooks[:2], 1,
+                            USE_GEOMETRY, MECHANISM_CURVATURE or 1.0)
                 # Every item of the batch, not the sampled pairs: the coarse
                 # bucket's fine codes are pushed to spread, weighted by the item's
                 # mean AF3 cohesion.

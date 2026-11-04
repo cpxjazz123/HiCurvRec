@@ -229,18 +229,21 @@ class TripleLookup:
                 "low": np.zeros(0, dtype=np.int64), "weight": np.zeros(0, dtype=np.float64)}
 
 
-def _gap_temperature(cost: torch.Tensor) -> torch.Tensor:
-    """The per-item assignment gap: second-nearest minus nearest cost.
+def _assignment_temperature(cost: torch.Tensor) -> torch.Tensor:
+    """The sharper of the nearest-code distance and the top-two gap.
 
-    The nearest-code distance was the first scale tried and it is much LARGER
-    than the cost differences inside one item's code vector: the 256-way softmax
-    then has entropy ~5.4 (uniform is 5.545), the cohesive and bridge overlaps
-    differ by <1e-3, and the ranking loss sat at ln 2 for a whole 3000-epoch run.
-    The gap is the scale at which the assignment actually decides between the top
-    two codes, so the kernel is sharp and its gradient reaches the encoder.
+    Neither scale alone is right. The nearest distance is much LARGER than the
+    cost differences inside one item's code vector when the codes are close, and
+    the 256-way softmax then sits near uniform. The gap alone is much SMALLER
+    than the nearest distance when the codes are far apart, and the softmax then
+    keeps a visible probability on a code the item is nowhere near (0.27 in the
+    [5,12,8] / [7,12,9] test). The minimum of the two is the scale at which the
+    assignment actually decides, and it is measured per item from the costs.
     """
     top = cost.detach().topk(2, dim=-1, largest=False).values
-    return (top[..., 1] - top[..., 0]).clamp_min(1e-6)
+    nearest = top[..., 0]
+    gap = top[..., 1] - top[..., 0]
+    return torch.minimum(nearest, gap).clamp_min(1e-6)
 
 
 def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
@@ -266,14 +269,44 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
         cost_b = (points_b.pow(2).sum(1, keepdim=True)
                   - 2 * points_b @ codebook.t() + codebook.pow(2).sum(1, keepdim=True).t())
     if temperature is None:
-        temperature_a = _gap_temperature(cost_a).unsqueeze(-1)
-        temperature_b = _gap_temperature(cost_b).unsqueeze(-1)
+        temperature_a = _assignment_temperature(cost_a).unsqueeze(-1)
+        temperature_b = _assignment_temperature(cost_b).unsqueeze(-1)
         weight_a = F.softmax(-cost_a / temperature_a, dim=-1)
         weight_b = F.softmax(-cost_b / temperature_b, dim=-1)
     else:
         weight_a = F.softmax(-cost_a / temperature, dim=-1)
         weight_b = F.softmax(-cost_b / temperature, dim=-1)
     return (weight_a * weight_b).sum(dim=-1)
+
+
+def prefix_share(points_a, points_b, codebooks, level: int,
+                 temperature=None, use_curvature: bool = True,
+                 curvature: float = CURVATURE) -> torch.Tensor:
+    """The soft probability that two items share the COMPLETE prefix to ``level``.
+
+    ``points_a`` and ``points_b`` are the per-level residual lists. The value is
+    the product of the per-level agreements, which is an *independence surrogate*
+    for the joint the residual quantizer actually defines (a level's code is
+    conditioned on the parent's residual, not independent of it). It is labelled
+    as a surrogate here and the tests pin its semantics: sharing q2 while q1
+    differs is not sharing the L2 prefix (Issue #138 A).
+    """
+    device = points_a[0].device
+    share = torch.ones(points_a[0].shape[0], device=device)
+    for index in range(level + 1):
+        share = share * prefix_agreement(points_a[index], points_b[index],
+                                         codebooks[index], temperature,
+                                         use_curvature, curvature)
+    return share
+
+
+def prefix_cocluster_loss(points_a, points_b, codebooks, level: int,
+                          use_curvature: bool = True,
+                          curvature: float = CURVATURE) -> torch.Tensor:
+    """The negative log probability that a cohesive pair shares the full prefix."""
+    share = prefix_share(points_a, points_b, codebooks, level, None,
+                         use_curvature, curvature)
+    return -share.clamp_min(1e-6).log().mean()
 
 
 def curvature_prefix_ranking_loss(points_first, points_second, points_third,
@@ -300,11 +333,15 @@ def curvature_prefix_ranking_loss(points_first, points_second, points_third,
         raise ValueError("at least one level must be selected")
     total = points_first.new_zeros(())
     for level in selected:
-        points, codebook = point_levels[level], codebooks[level]
-        preferred = prefix_agreement(points[anchor], points[high], codebook,
-                                     temperature, use_curvature, curvature)
-        bridged = prefix_agreement(points[anchor], points[low], codebook,
-                                   temperature, use_curvature, curvature)
+        # The whole prefix up to this level, not this level's code alone.
+        subset = level + 1
+        anchor_levels = [point[anchor] for point in point_levels[:subset]]
+        high_levels = [point[high] for point in point_levels[:subset]]
+        low_levels = [point[low] for point in point_levels[:subset]]
+        preferred = prefix_share(anchor_levels, high_levels, codebooks[:subset],
+                                 level, temperature, use_curvature, curvature)
+        bridged = prefix_share(anchor_levels, low_levels, codebooks[:subset],
+                               level, temperature, use_curvature, curvature)
         total = total + F.softplus(-(preferred - bridged) * weights).mean()
     return total / float(len(selected))
 
@@ -315,7 +352,7 @@ def _bucket_entropy_parts(points: torch.Tensor, codebook: torch.Tensor, buckets:
                           curvature: float = CURVATURE) -> tuple[torch.Tensor, torch.Tensor]:
     """The behaviour-weighted fine entropy per coarse bucket, and its temperature."""
     cost = _assignment_cost(points, codebook, use_curvature, curvature)
-    temperature = _gap_temperature(cost).unsqueeze(-1)
+    temperature = _assignment_temperature(cost).unsqueeze(-1)
     prob = F.softmax(-cost / temperature, dim=-1)
     device = points.device
     unique, inverse = torch.unique(buckets.to(device), return_inverse=True)
@@ -413,32 +450,11 @@ def usage_entropy(points: torch.Tensor, codebook: torch.Tensor,
     normalises its gradient for the shared budget.
     """
     cost = _assignment_cost(points, codebook, use_curvature, curvature)
-    temperature = _gap_temperature(cost).unsqueeze(-1)
+    temperature = _assignment_temperature(cost).unsqueeze(-1)
     prob = F.softmax(-cost / temperature, dim=-1)
     mean = prob.mean(dim=0)
     entropy = -(mean * mean.clamp_min(1e-12).log()).sum()
     return entropy * temperature.mean().detach()
-
-
-def cocluster_loss(points_a: torch.Tensor, points_b: torch.Tensor,
-                   codebook: torch.Tensor, use_curvature: bool = True,
-                   curvature: float = CURVATURE) -> torch.Tensor:
-    """The negative log probability that a cohesive pair lands in one code.
-
-    The ranking only says a cohesive pair must score above a bridge pair, and the
-    measured result was an L1 hit rate of 0.128 against 0.026 for negatives. This
-    term optimises the hit directly: both items' soft assignments are read from
-    the same level and the shared mass is maximised, so the coarse prefix the
-    Stage 3 model generates first is the one the training edges support.
-    """
-    cost_a = _assignment_cost(points_a, codebook, use_curvature, curvature)
-    cost_b = _assignment_cost(points_b, codebook, use_curvature, curvature)
-    temperature_a = _gap_temperature(cost_a).unsqueeze(-1)
-    temperature_b = _gap_temperature(cost_b).unsqueeze(-1)
-    left = F.softmax(-cost_a / temperature_a, dim=-1)
-    right = F.softmax(-cost_b / temperature_b, dim=-1)
-    match = (left * right).sum(dim=-1).clamp_min(1e-6)
-    return -match.log().mean()
 
 
 def cohesion_codebook_sums(points: torch.Tensor, assignment: torch.Tensor,

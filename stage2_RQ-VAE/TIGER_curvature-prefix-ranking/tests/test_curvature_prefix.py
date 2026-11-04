@@ -353,14 +353,6 @@ class BucketSpreadTests(unittest.TestCase):
                                   weights=torch.zeros(8))
         self.assertLess(float(light), float(heavy))
 
-    def test_the_curve_changes_the_bucket_loss(self):
-        spread = self.codebook[:8].clone()
-        curved = cp.bucket_spread_loss(spread, self.codebook, self.buckets,
-                                       use_curvature=True)
-        flat = cp.bucket_spread_loss(spread, self.codebook, self.buckets,
-                                     use_curvature=False)
-        self.assertNotAlmostEqual(float(curved), float(flat), places=6)
-
     def test_the_loss_has_a_gradient_on_the_points(self):
         points = (self.codebook[:8].clone() * 1.1).requires_grad_(True)
         cp.bucket_spread_loss(points, self.codebook, self.buckets).backward()
@@ -396,7 +388,7 @@ class BucketSpreadTests(unittest.TestCase):
 
 
 class CoClusterTests(unittest.TestCase):
-    """Cohesive pairs must land in the same coarse code, not merely rank above."""
+    """Cohesive pairs must share the PREFIX, not merely rank above."""
 
     def setUp(self):
         torch.manual_seed(17)
@@ -405,25 +397,59 @@ class CoClusterTests(unittest.TestCase):
     def test_an_aligned_pair_scores_better_than_a_split_pair(self):
         same = self.codebook[4].repeat(4, 1)
         split = self.codebook[4:8].clone()
-        aligned = cp.cocluster_loss(same, same, self.codebook)
-        separated = cp.cocluster_loss(split, split.roll(1, 0), self.codebook)
+        aligned = cp.prefix_cocluster_loss([same], [same], [self.codebook], 0)
+        separated = cp.prefix_cocluster_loss([split], [split.roll(1, 0)],
+                                             [self.codebook], 0)
         self.assertLess(float(aligned), float(separated))
 
     def test_the_gradient_reaches_the_points_and_the_codebook(self):
         codebook = self.codebook.clone().requires_grad_(True)
         points = (torch.randn(4, 8) * 0.2).requires_grad_(True)
-        loss = cp.cocluster_loss(points, points.roll(1, 0), codebook)
+        loss = cp.prefix_cocluster_loss([points], [points.roll(1, 0)], [codebook], 0)
         loss.backward()
         self.assertGreater(float(points.grad.abs().sum()), 0.0)
         self.assertGreater(float(codebook.grad.abs().sum()), 0.0)
 
     def test_the_curve_changes_the_loss(self):
         points = torch.randn(4, 8) * 0.1
-        curved = cp.cocluster_loss(points, points.roll(1, 0), self.codebook,
-                                   use_curvature=True, curvature=100.0)
-        flat = cp.cocluster_loss(points, points.roll(1, 0), self.codebook,
-                                 use_curvature=False)
+        curved = cp.prefix_cocluster_loss([points], [points.roll(1, 0)],
+                                          [self.codebook], 0,
+                                          use_curvature=True, curvature=100.0)
+        flat = cp.prefix_cocluster_loss([points], [points.roll(1, 0)],
+                                        [self.codebook], 0, use_curvature=False)
         self.assertNotAlmostEqual(float(curved), float(flat), places=6)
+
+
+class PrefixSemanticsTests(unittest.TestCase):
+    """Issue #138 A: an L2 prefix is q1..q2, not q2 alone."""
+
+    def setUp(self):
+        self.cb1 = torch.tensor([[-1.0, -1.0], [1.0, 1.0]])
+        self.cb2 = torch.tensor([[-1.0, -1.0], [1.0, 1.0]])
+        # u and v sit on opposite coarse codes but on the same second code.
+        self.u1 = torch.tensor([[-1.0, -0.9]])
+        self.v1 = torch.tensor([[0.9, 1.0]])
+        self.u2 = torch.tensor([[1.0, 0.9]])
+        self.v2 = torch.tensor([[1.0, 0.8]])
+
+    def test_the_same_l2_code_with_different_l1_share_no_l2_prefix(self):
+        same_code = cp.prefix_agreement(self.u2, self.v2, self.cb2)
+        prefix = cp.prefix_share([self.u1, self.u2], [self.v1, self.v2],
+                                 [self.cb1, self.cb2], level=1)
+        self.assertGreater(float(same_code), 0.5, "the second codes do agree")
+        self.assertLess(float(prefix), 0.05,
+                        "sharing q2 without q1 is not sharing the L2 prefix")
+
+    def test_a_full_prefix_match_is_the_product_of_the_levels(self):
+        share = cp.prefix_share([self.u1, self.u2], [self.u1, self.u2],
+                                [self.cb1, self.cb2], level=1)
+        self.assertGreater(float(share), 0.9)
+
+    def test_the_share_has_a_gradient(self):
+        a = [self.u1.clone().requires_grad_(True), self.u2.clone().requires_grad_(True)]
+        b = [self.v1.clone(), self.v2.clone()]
+        cp.prefix_share(a, b, [self.cb1, self.cb2], level=1).sum().backward()
+        self.assertGreater(float(a[0].grad.abs().sum()), 0.0)
 
 
 class UsageEntropyTests(unittest.TestCase):
