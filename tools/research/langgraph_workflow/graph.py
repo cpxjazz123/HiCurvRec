@@ -20,8 +20,19 @@ def _prepare(state: dict) -> dict:
     return {}
 
 
-def build_graph(checkpointer=None):
-    """Compile the research graph."""
+PHASES = ("ideation", "probe", "scoring")
+
+
+def build_graph(checkpointer=None, phases=PHASES):
+    """Compile the research graph.
+
+    ``phases`` stops the graph early: with only ``ideation`` the graph runs the
+    five agents and merges their answers, which is how a trial of the new
+    orchestration is run without spending the probe and the review.
+    """
+    wanted = [phase for phase in PHASES if phase in phases]
+    if not wanted:
+        raise ValueError("no phase selected")
     builder = StateGraph(ResearchState)
     builder.add_node("idea_agent", ideate.idea_agent)
     builder.add_node("merge_ideas", ideate.merge_ideas)
@@ -32,7 +43,13 @@ def build_graph(checkpointer=None):
     builder.add_edge(START, "prepare")
     builder.add_conditional_edges("prepare", ideate.dispatch_ideation, ["idea_agent"])
     builder.add_edge("idea_agent", "merge_ideas")
+    if "probe" not in wanted:
+        builder.add_edge("merge_ideas", END)
+        return builder.compile(checkpointer=checkpointer)
     builder.add_edge("merge_ideas", "probe")
+    if "scoring" not in wanted:
+        builder.add_edge("probe", END)
+        return builder.compile(checkpointer=checkpointer)
     builder.add_conditional_edges("probe", score.dispatch_scoring, ["scorer"])
     builder.add_edge("scorer", "finalize")
     builder.add_edge("finalize", END)
@@ -54,13 +71,13 @@ def default_checkpointer():
 
 
 def run_phase1(root: Path, round_id: str, *, objective: str = "", extra: bool = False,
-               checkpointer=None, config: dict | None = None) -> dict:
+               checkpointer=None, config: dict | None = None, phases=PHASES) -> dict:
     """Run the first three phases of a round through the graph.
 
     ``thread_id`` is the round id, so the state of an interrupted run is
     recovered by running the same call again.
     """
-    graph = build_graph(checkpointer=checkpointer)
+    graph = build_graph(checkpointer=checkpointer, phases=phases)
     state = {"round_id": round_id, "objective": objective, "root": str(root),
              "extra": extra}
     configuration = config or {"configurable": {"thread_id": round_id}}

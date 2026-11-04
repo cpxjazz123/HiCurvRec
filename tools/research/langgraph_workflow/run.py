@@ -25,12 +25,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[3]))
     parser.add_argument("--extra", action="store_true",
                         help="ask the ideation agents for one more idea each")
+    parser.add_argument("--phases", default="ideation,probe,scoring",
+                        help="the phases to run, comma separated")
+    parser.add_argument("--backend", default=None, choices=["opencode", "langchain"],
+                        help="the agent backend for this run")
     args = parser.parse_args(argv)
     repo = Path(args.repo).resolve()
+    if args.backend:
+        from tools.research import settings
+        settings.AGENT_BACKEND = args.backend
+    phases = tuple(part.strip() for part in args.phases.split(",") if part.strip())
     checkpointer = default_checkpointer()
     try:
         state = run_phase1(repo, args.round, objective=args.objective,
-                            extra=args.extra, checkpointer=checkpointer)
+                            extra=args.extra, checkpointer=checkpointer,
+                            phases=phases)
     finally:
         closer = getattr(checkpointer, "close", None)
         if closer is not None:

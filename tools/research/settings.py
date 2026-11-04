@@ -37,7 +37,7 @@ AGENT_BINARY = "opencode"
 AGENT_BACKEND = "opencode"
 #: The chat model the LangChain backend builds its agents with. Empty means the
 #: backend refuses to run: an agent without a model is not an agent.
-AGENT_CHAT_MODEL = ""
+AGENT_CHAT_MODEL = "opencode:commandcode/deepseek/deepseek-v4.1-flash"
 AGENT_MODEL = "commandcode/deepseek/deepseek-v4.1-flash"
 AGENT_TIMEOUT_SECONDS = 1800
 #: The deadline of one sub-agent of a round, counted from the moment the task is

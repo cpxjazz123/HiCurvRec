@@ -1,0 +1,49 @@
+IDEA: BEHMET-RQ
+TITLE: Behaviour-warped Poincare metric inside residual-quantizer assignment and reconstruction
+MOTIVATION: Two items with the same content but different futures currently get SIDs from content geometry alone, so the next-item generator cannot use the one thing that predicts the next token: where the user's behaviour goes from this item. A plain RQ-VAE allocates codebook resolution isotropically; behaviour says which residual directions actually matter.
+NOVELTY: The earlier mechanisms relocate or reweight codebook points (successor-Frechet centroids, radial placement from context entropy, per-level curvature, successor geodesic shift, cone constraints, Lorentz profile smoothing). BEHMET-RQ leaves the codebook points and their update rule unchanged and makes the DISTANCE ITSELF behaviour-anisotropic: a per-item, trace-normalised covariance of the item's successor directions is inserted multiplicatively into the Poincare distance used for assignment and reconstruction, so the curved metric spends finer effective resolution along the directions in which that item's behaviour varies. The warp is bounded in [1,2] by construction, so no coupling weight exists to tune.
+CHANGE: Each training item receives a frozen, training-only successor-covariance basis V_i (rank r, trace-normalised so the anisotropy budget is exactly one Euclidean dimension); the RQ assignment and its reconstruction term use D_i^2 = d_Poincare^2 * (1 + rho_i), where rho_i in [0,1] is the normalised alignment of the tangent residual with V_i.
+SPECIFICATION: See SPEC EQUATIONS. Encoder output x_i lies in the Poincare ball of fixed curvature c=1; at level l the query point is the running prefix point p_{l-1}; the code is argmin_k D_i(p_{l-1}, mu_{l,k})^2; the residual is carried by log/exp maps at p_{l-1}; loss = sum_l lambda_l * D_i(p_l, x_i)^2 + beta * commitment, with lambda_l and beta unchanged from the baseline RQ-VAE (they are not part of this mechanism).
+COST: Marginal per-step cost is one d x r projection per (item, code) pair inside the assignment loop. At the frozen scale, ~1023 items per step (24556/24), 3 levels, K=256 codes, d=64, r=8 gives 1023*3*256*(64 + 8*64) ~ 0.5 GFLOP per step, on the order of 5-8 percent of one step's encoder+decoder work, hence ~5-8 percent wall-clock over 72,000 steps (3000 epochs x 24). One-off precompute: sparse PPMI over the training transition graph (24556 items), truncated SVD rank 16, then a 16x16 rank-8 eigendecomposition per item; minutes on CPU, frozen before Stage 2. No extra backward pass (V_i detached).
+HYPOTHESIS: If behaviour anisotropy aligns with the latent directions along which next-item identity varies, the quantizer spends finite codebook on those directions, items sharing a successor profile share more prefix tokens, H(sid_2|sid_1) and H(sid_3|sid_1,sid_2) drop, and Stage 3 test recall@10 moves above 0.065 in the single frozen run. Kept if the measured successor-prefix agreement and Stage 3 test_recall@10 both improve over the recorded baseline.
+RISKS: The PPMI successor basis may be only weakly related to the latent space, so the learned alignment W degenerates into an arbitrary rotation and the warp becomes near-isotropic noise, leaving recall flat. The +rho sign (extra distance, hence extra resolution, along behaviour-varying directions) is argued from rate allocation and could be backwards for this data. Items with concentrated successors (rho near 1 on one direction) may over-fragment prefixes for popular items. The bounded 2x loss dynamic range could mildly interact with the learning rate.
+BEHAVIOR SIGNAL: Directed item transitions from training sequences only, summarised per item as its successor distribution and the successor covariance directions.
+BEHAVIOR COMPUTATION: Training split only. Build directed counts N[i,j] over consecutive pairs in training sequences (25,456 training items). Row-normalise with add-alpha smoothing, alpha = 1/V (documented default), giving P(j|i). Build PPMI = max(0, log(P(j|i) / P_col(j))), truncate to rank 16 via SVD, giving y_i in R^16, each normalised to unit L2. For item i take its top-8 successors by P(j|i), compute the weighted centroid c_i = sum_j p_j y_j and deviations e_j = y_j - c_i, and set Vhat_i = [sqrt(p_1) e_1, ..., sqrt(p_8) e_8] in R^{16x8}. Frozen once.
+LEAKAGE BOUNDARY: Transition counts, the PPMI SVD and the per-item covariance read only training-split sequences; validation and test sequences are never touched, so no validation/test interaction can enter the frozen Vhat_i. The codebook sees V_i only through the training quantizer loss, and the Stage 3 evaluator never feeds behaviour back into SID construction. Items whose only evidence is a validation or test occurrence keep the smoothed table entry, which was computed without them.
+HYPERBOLIC OPERATOR: Fixed negative curvature c = 1 (ball radius 1), Poincare distance d_P(x,y) = arcosh(1 + 2c||x-y||^2 / ((1-c||x||^2)(1-c||y||^2))), and the Mobius log/exp maps log_p, exp_p used for the residual chain; the metric is warped by the behaviour term, D_i^2 = d_P^2 * (1 + rho_i).
+HYPERBOLIC LOCATION: Inside quantization: in the assignment distance that selects mu_{l,k} at every residual level l = 1..L, and in the reconstruction/commitment term that scores the final prefix point against the item. It therefore acts on the whole prefix hierarchy, not on one level.
+COUPLING PATH: item -> frozen PPMI successor covariance Vhat_i (behaviour) -> learned alignment W -> per-item basis V_i -> trace-normalised anisotropy rho_i(p,mu) computed on the tangent residual log_p(mu) -> warped distance D_i -> argmin over the level codebook AND the reconstruction term -> chosen code sequence (k_1..k_L) -> Stage 2 parameter updates and downstream the SID vocabulary consumed by Stage 3. Setting V_i = 0 collapses rho_i to 0 and both the argmin and the loss become exactly plain Poincare RQ; setting curvature to flat keeps the same rho_i but on Euclidean distances, so both the chosen codes and the gradients change. Neither switch can be removed without changing the core computation.
+COUPLING EQUATION: D_i(p, mu)^2 = d_Poincare(p, mu; c=1)^2 * ( 1 + ||V_i^T log_p(mu)||^2 / ((tr(V_i V_i^T) + eps) * ||log_p(mu)||^2 + eps) ), with V_i = W Vhat_i, W in R^{64x16} trainable and Vhat_i frozen training-only successor covariance.
+OBSERVABLES: (a) assignment: for behaviourally diverse items the per-level code histogram shifts toward codes whose tangent offsets align with V_i, and successor-prefix agreement (fraction of consecutive training pairs whose SIDs share >=1 and >=2 leading tokens) rises; (b) gradient/parameter: codebook points move along behaviour-varying directions, visible as increased projection of codebook displacement onto span(W); (c) predictability: H(sid_2|sid_1) and H(sid_3|sid_1,sid_2) drop on held-out training sequences; (d) Stage 3 test recall@10 in the single frozen run.
+ABLATION BEHAVIOR OFF: V_i := 0 for every item, so rho_i := 0 and D_i^2 = d_P^2 exactly; the code then runs the unmodified hyperbolic RQ assignment and reconstruction with identical codebook size, schedule and loss weights.
+ABLATION GEOMETRY OFF: base term replaced by the Euclidean one, d_P^2 -> ||p - mu||^2 and log_p(mu) -> (mu - p), while V_i and rho_i are unchanged, giving a flat Mahalanobis-warped RQ.
+ABLATION BOTH ON: the full run, c = 1 Poincare base and V_i from the frozen training-only successor covariance both active in the same argmin and the same reconstruction term. One training run only; the two switched-off configurations exist as flags and are checked on a forward pass, but are not trained.
+SPEC EQUATIONS:
+  # one-off, training split only, frozen
+  P[j|i] = (N[i,j] + 1/V) / (sum_j' N[i,j'] + 1)
+  PPMI[i,j] = max(0, log( P[j|i] / (sum_i' N[i',j] / sum_{i',j'} N[i',j']) ))
+  Y = svd_trunc(PPMI, rank=16);  y_i = Y[i] / (||Y[i]|| + 1e-12)
+  top8(i) = first min(8, nnz_i) successors by P[j|i] desc
+  c_i = sum_{j in top8(i)} P[j|i] y_j / sum_{j in top8(i)} P[j|i]
+  Vhat_i = concat_j [ sqrt(P[j|i]) * (y_j - c_i) ]      # 16 x min(8,nnz_i), zero if nnz_i = 0
+  # per step
+  x = encoder(item)                      # in ball, ||x|| <= (1 - 1e-3)/sqrt(c)
+  p = x; loss = 0; commit = 0
+  for l in 1..L:
+      for k in 1..K:
+          u   = log_p(mu[l,k])
+          dP2 = poincare_dist2(p, mu[l,k], c)
+          rho = ||V_i^T u||^2 / ((trace(V_i V_i^T) + 1e-8) * ||u||^2 + 1e-8)
+          rho = clamp(rho, 0.0, 1.0)
+          D2[l,k] = dP2 * (1.0 + rho)
+      k* = argmin_k D2[l,k]
+      u  = log_p(mu[l,k*])
+      r  = log_p(x)
+      loss   += lambda_l * D2[l,k*]      # warped reconstruction of this level
+      commit += ||r - u||^2
+      p = exp_p(r - u)                   # hyperbolic RQ residual update
+  loss += beta * commit
+  # switches: phi_behavior=0 -> V_i := 0 ; phi_geometry=0 -> dP2 := ||p-mu||^2 and log/exp := flat affine
+SPEC INPUTS OUTPUTS: Inputs: the item's encoder point x in the curvature-1 Poincare ball, the level codebooks mu[l,1..K] in the ball, and the frozen per-item successor covariance Vhat_i plus trainable W. Outputs: the discrete SID (k_1..k_L), the warped per-level reconstruction loss and commitment term, and gradients with respect to encoder parameters, codebooks and W.
+SAFEGUARDS: clamp every point to radius (1 - 1e-3)/sqrt(c) before log/exp; add 1e-8 inside every squared-norm denominator; clamp rho into [0,1] (analytically bounded by Cauchy-Schwarz, the clamp only absorbs float error); set V_i := 0 whenever the item has fewer than 2 distinct successors or its covariance trace is < 1e-8, making that item's assignment exactly plain Poincare; declare D2 infinite for codes producing a non-finite log map; keep c fixed at 1 so the conformal factor 1/(1-c||x||^2) never blows up; detach Vhat_i and unit-normalise every y_i so the warp is invariant to the arbitrary PPMI-SVD scale.
+END IDEA
