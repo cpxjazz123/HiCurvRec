@@ -1215,7 +1215,35 @@ def _parse_derivation(text: str) -> dict:
 #: checked, not chosen by the agents.
 DERIVATION_INSTANCE = {"latent_width": 2, "levels": 2, "codes": 2,
                        "latent_name": "z", "codebook_name": "theta",
-                       "scale_name": "s", "output": "loss"}
+                       "scale_name": "s", "anchor_name": "v_pi",
+                       "output": "loss"}
+
+
+def derivation_signature() -> tuple:
+    """The arguments and the symbols of the fixed instance.
+
+    The framework owns them: the agents fill the statements, the output name
+    and the code. An agent that invents its own arguments produces a different
+    function, and the comparison of two such answers says nothing.
+    """
+    instance = DERIVATION_INSTANCE
+    width = int(instance["latent_width"])
+    args = [{"name": instance["latent_name"], "width": width, "radius": 0.4}]
+    symbols = ["%s%d" % (instance["latent_name"], index) for index in range(width)]
+    for level in range(int(instance["levels"])):
+        for code in range(int(instance["codes"])):
+            name = "%s_%d_%d" % (instance["codebook_name"], level + 1, code + 1)
+            args.append({"name": name, "width": width, "radius": 0.3})
+            symbols.extend("%s%d_%d_%d" % (instance["codebook_name"], level + 1,
+                                           code + 1, index) for index in range(width))
+    args.append({"name": instance["scale_name"], "scalar": 1.0})
+    symbols.append(instance["scale_name"])
+    for code in range(int(instance["codes"])):
+        name = "%s_%d" % (instance["anchor_name"], code + 1)
+        args.append({"name": name, "width": width, "radius": 0.3})
+        symbols.extend("%s%d_%d" % (instance["anchor_name"], code + 1, index)
+                       for index in range(width))
+    return args, symbols
 
 
 def _instance_codebook_width() -> int:
@@ -1243,13 +1271,22 @@ def _instance_problems(payload: dict) -> list:
     if not codebook:
         problems.append("no codebook argument named " + instance["codebook_name"])
     else:
-        width = int(codebook[0].get("width") or 1)
+        # The codebook may be one argument or one argument per (level, code)
+        # pair: what the round fixes is the TOTAL number of codeword
+        # components, not how they are packed.
+        total = sum(int(spec.get("width") or 1) for spec in codebook)
         expected = _instance_codebook_width()
-        if width != expected:
-            problems.append("the codebook width is %d, the round fixes %d "
+        if total != expected:
+            problems.append("the codebook carries %d components, the round fixes %d "
                             "(%d levels x %d codes x %d dimensions)"
-                            % (width, expected, int(instance["levels"]),
+                            % (total, expected, int(instance["levels"]),
                                int(instance["codes"]), int(instance["latent_width"])))
+        for spec in codebook:
+            width = int(spec.get("width") or 1)
+            if width != int(instance["latent_width"]):
+                problems.append("the codeword %r has width %d, the round fixes %d"
+                                % (spec.get("name"), width,
+                                   int(instance["latent_width"])))
     if not any(str(spec.get("name")).lower().startswith(instance["scale_name"])
                and spec.get("scalar") is not None for spec in arguments):
         problems.append("no scalar scale named " + instance["scale_name"])
@@ -1263,26 +1300,29 @@ def _instance_problems(payload: dict) -> list:
 def _derivation_prompt(idea: dict) -> str:
     """One specification, no other derivation, and no way to ask for one."""
     instance = DERIVATION_INSTANCE
-    codebook_width = _instance_codebook_width()
+    args, symbols = derivation_signature()
+    argument_lines = "\n".join(
+        "      %s: %s" % (spec["name"],
+                         ("a scalar" if spec.get("scalar") is not None
+                          else "a vector of %d components" % int(spec["width"])))
+        for spec in args)
+    symbol_lines = ", ".join(symbols)
     return (
-        "FIXED INSTANCE - use exactly these values; a derivation that chooses "
-        "others is a different function and cannot be compared with the others. "
-        "Do not simplify, do not shrink and do not reinterpret them:\n"
-        "  * the latent has %d dimensions (NOT %d), argument %r with width %d;\n"
-        "  * %d levels, %d codes per level; the codebook is ONE argument %r with "
-        "width %d (the %d codeword vectors flattened in (level, code) order);\n"
-        "  * a scalar %r for the frozen scale;\n"
-        "  * the output is a single per-item vector named %r - the quantity the "
-        "mechanism changes in the training objective;\n"
-        "  * any switch or table the specification needs comes AFTER the scale, "
-        "and is named in both `args` and `symbols`.\n"
-        "  * `symbols` lists the free symbols in the order the arguments consume "
-        "them: a width-w argument consumes w symbols, one per column.\n\n"
+        "FIXED INSTANCE - the round fixes it and you must use exactly these "
+        "arguments and these symbols. A derivation with its own signature is a "
+        "different function and cannot be compared with the others.\n"
+        "  * the arguments, in this exact order:\n" + argument_lines + "\n"
+        "  * the free symbols, in this exact order (a vector argument of width w "
+        "consumes w symbols, one per component): " + symbol_lines + "\n"
+        "  * the output is a single per-item vector named '" + instance["output"] +
+        "' - the quantity the mechanism changes in the training objective.\n"
+        "  * the code is a complete Python module defining compute(**kwargs) with "
+        "exactly these argument names, and it must compute the SAME formula as "
+        "the statements.\n"
+        "  * `symbols` and `args` are NOT part of your answer: the round owns "
+        "them. You answer with the statements, the output name, the code and the "
+        "excluded surfaces.\n\n"
         "Derive the formula of this mechanism from the specification alone.\n\n"
-        % (int(instance["latent_width"]), 1, instance["latent_name"],
-           int(instance["latent_width"]), int(instance["levels"]),
-           int(instance["codes"]), instance["codebook_name"], codebook_width,
-           codebook_width, instance["scale_name"], instance["output"]) +
         "TITLE: " + str(idea.get("title")) + "\n"
         "MECHANISM: " + str(idea.get("mechanism")) + "\n"
         "SPECIFICATION: " + str(idea.get("specification")) + "\n"
@@ -1336,8 +1376,12 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
         delivered, missing = [], []
         for task_id, outcome in zip(task_ids, outcomes):
             payload = {key: outcome.get(key) for key
-                       in ("symbols", "args", "statements", "output", "code", "excluded")
+                       in ("statements", "output", "code", "excluded")
                        if outcome.get(key)}
+            if payload.get("statements"):
+                args, symbols = derivation_signature()
+                payload["args"] = args
+                payload["symbols"] = symbols
             if payload.get("statements") and payload.get("code"):
                 delivered.append({"idea_id": idea["idea_id"],
                                   "index": int(task_id.split("_")[-1]),
@@ -1346,6 +1390,32 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
                 missing.append(int(task_id.split("_")[-1]))
             log("%s %s: %s" % (idea["idea_id"], task_id,
                                "ok" if payload.get("statements") else "no readable answer"))
+        for answer in list(delivered):
+            payload = answer.get("payload") or {}
+            problems = _instance_problems(payload) if payload else ["no payload"]
+            if not problems:
+                continue
+            index = int(answer["index"])
+            log("%s derivation %d: the instance does not match (%s); asking again"
+                % (idea["idea_id"], index, "; ".join(problems)))
+            retry_id = "derivation_%d" % index
+            correction = (_derivation_prompt(idea) +
+                          "\n\nYOUR PREVIOUS DERIVATION DID NOT FIT THE INSTANCE: " +
+                          "; ".join(problems) +
+                          ". Use exactly the arguments listed in the FIXED INSTANCE "
+                          "block above and nothing else.")
+            outcome = _run_agent(directory, retry_id, correction, "derivation.json",
+                                 _parse_derivation, role="derive", read_paths=[],
+                                 allowed_roots=_round_roots(directory))
+            payload = {key: outcome.get(key) for key
+                       in ("statements", "output", "code", "excluded")
+                       if outcome.get(key)}
+            if payload.get("statements"):
+                args, symbols = derivation_signature()
+                payload["args"] = args
+                payload["symbols"] = symbols
+            answer["payload"] = payload
+            answer["revision"] = True
         if missing and len(delivered) < 2:
             # A derivation that delivered nothing is asked once more - but only
             # when the round would otherwise have fewer than two. Waiting for a
@@ -1407,6 +1477,7 @@ def phase_derivation(root: Path, round_id: str, *, log=print) -> dict:
                         **(answer.get("payload") or {})}
                        for answer in answers if answer.get("payload")]
     mismatched = []
+    comparable = []
     for implementation in implementations:
         problems = _instance_problems(implementation)
         if problems:
@@ -1414,6 +1485,9 @@ def phase_derivation(root: Path, round_id: str, *, log=print) -> dict:
             mismatched.append({"name": implementation["name"],
                                 "status": "INSTANCE_MISMATCH",
                                 "reason": "; ".join(problems)})
+        else:
+            comparable.append(implementation)
+    implementations = comparable
     verdict = (_run_differential(implementations, repo=Path(root))
                if len(implementations) >= 2
                else {"status": "NOT_APPLICABLE",

@@ -220,7 +220,7 @@ def symbolic_difference(left: dict, right: dict, *, timeout: float = SYMBOLIC_TI
     # a different width) is a different function and is refused as such.
     mapping = _positional_mapping(left, right)
     if mapping is None:
-        return {"equivalent": False,
+        return {"equivalent": False, "layout_mismatch": True,
                 "reason": "the two derivations declare different argument layouts: " +
                            str(_layout(left)) + " against " + str(_layout(right))}
     substitutions = {}
@@ -413,6 +413,11 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
                 entry["reason"] = ("the two derivations are not the same function: " +
                                    str(symbolic.get("reason") or
                                        ("the difference is " + str(symbolic.get("residual")))))
+                failures.append(entry)
+                pairs.append(entry)
+                continue
+            if symbolic.get("layout_mismatch"):
+                entry["status"] = "FAIL"
                 failures.append(entry)
                 pairs.append(entry)
                 continue

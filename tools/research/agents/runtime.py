@@ -197,9 +197,13 @@ class DerivationPayload(BaseModel):
     The statements ARE the formula, in SymPy syntax; the code is the derivation's
     own torch implementation of the same statements. The deterministic verifier
     compares the two, and compares the derivations with each other.
+
+    The SIGNATURE is not in the answer: the round fixes it, and a derivation
+    that invents its own arguments is a different function (an agent once wrote
+    the sampling radius into the field meant for a scalar value, and the whole
+    comparison broke). The agent fills the statements, the output name and the
+    code; the framework owns the arguments and the symbols.
     """
-    symbols: list[str] = Field(default_factory=list)
-    args: list[DerivationArgument] = Field(default_factory=list)
     statements: list[str] = Field(default_factory=list)
     output: str = ""
     code: str = ""
