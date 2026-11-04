@@ -1041,16 +1041,14 @@ def phase_ideation(root: Path, round_id: str, *, log=print) -> dict:
                 "reason": "the round is no longer in the ideation phase"}
     answers = run_ideation(agent_root, state.get("objective", ""))
     state = pipeline_module.apply_ideation(state, answers, require_minimum=False)
-    if len(state.get("ideas") or []) < ideas_module.MIN_ROUND_IDEAS:
-        # The agents agreed with each other. That is a result about the round's
-        # objective, not a reason to end it: ask the same agents for one more
-        # idea each, so the round has three distinct proposals to compare.
+    if not state.get("ideas"):
+        # Nothing was proposed. That is a result about the round's objective, not
+        # a reason to end it: ask the same agents for one more idea each.
         extra = run_ideation(agent_root, state.get("objective", ""), extra=True)
         state = pipeline_module.apply_ideation(state, extra, require_minimum=False)
-        if len(state.get("ideas") or []) < ideas_module.MIN_ROUND_IDEAS:
+        if not state.get("ideas"):
             raise pipeline_module.RoundError(
-                "a round needs at least " + str(ideas_module.MIN_ROUND_IDEAS) +
-                " distinct ideas, got " + str(len(state.get("ideas") or [])))
+                "a round needs at least one distinct idea, got none")
     pipeline_module.save_state(directory, state)
     log("ideation: %d ideas" % len(state["ideas"]))
     return {"phase": "ideation", "ran": True, "step": state["step"],

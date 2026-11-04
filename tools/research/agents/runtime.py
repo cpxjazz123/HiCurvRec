@@ -12,6 +12,7 @@ the boundary fingerprint that says whether the answer may be reused.
 from __future__ import annotations
 
 import json
+import threading
 import time
 from pathlib import Path
 
@@ -500,8 +501,28 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     failure = ""
     failure_trace = ""
     structured_fallback = False
+    timed_out = False
+    # The budget is a wall clock: the CLI backend killed its subprocess when the
+    # budget was spent, and the SDK backend must do the same, or an agent that
+    # loops holds the whole round.
+    budget = float(deadline_seconds or timeout or settings.AGENT_TIMEOUT_SECONDS)
+    box: dict = {}
+
+    def _turn() -> None:
+        try:
+            box["text"] = run_turn(agent, prompt)
+        except Exception as exc:                               # noqa: BLE001
+            box["error"] = exc
+
+    worker_thread = threading.Thread(target=_turn, daemon=True)
+    worker_thread.start()
+    worker_thread.join(budget)
+    if worker_thread.is_alive():
+        timed_out = True
+        failure = ("TIMEOUT: the agent did not finish within " + str(int(budget)) +
+                   " seconds; what it saved is what it delivered")
     try:
-        answer_text = run_turn(agent, prompt)
+        answer_text = box.get("text", "")
     except Exception as exc:                                   # noqa: BLE001
         if schema is not None:
             # The provider refused the schema (response_format=json_schema is not
@@ -520,6 +541,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
             import traceback
             failure = type(exc).__name__ + ": " + str(exc)[:300]
             failure_trace = traceback.format_exc()[-1500:]
+    if timed_out:
+        answer_text = ""
     if not output.is_file():
         # A read-only role has no write tool, and an agent that answered in the
         # chat instead of the file still delivered its answer: the records are
@@ -557,6 +580,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         "boundary_sha256": boundary, "read_allowlist": [str(entry) for entry in allowed],
         "geometry_contract": contract, "failure": failure, "refusals": refusals,
         "structured_output": bool(schema), "structured_output_fallback": structured_fallback,
+        "timed_out": timed_out, "budget_seconds": budget,
         "failure_trace": failure_trace,
         "progress_file": str(workspace / runner.PROGRESS_FILE_NAME),
         "answer": str(output),
@@ -564,5 +588,6 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     receipt_path = workspace / "execution.json"
     receipt_path.write_text(json.dumps(receipt, indent=1), encoding="utf-8")
     if failure and not output.is_file():
-        raise runner.AgentFailure("AGENT_CRASHED", str(receipt_path), failure)
+        raise runner.AgentFailure("timeout" if timed_out else "AGENT_CRASHED",
+                                  str(receipt_path), failure)
     return receipt_path

@@ -86,6 +86,24 @@ class BackendContractTests(unittest.TestCase):
                                       cost_estimate="ce", falsifiable_hypothesis="h")
         self.assertEqual(json.loads(payload.model_dump_json())["idea_id"], "a")
 
+    def test_a_slow_agent_is_stopped_at_the_budget(self):
+        """The budget is a wall clock: a looping agent must not hold the round."""
+        import time as _time
+        with mock.patch.object(settings, "AGENT_CHAT_MODEL", "fake:model"), \
+                mock.patch.object(runtime, "build_model", return_value="fake"), \
+                mock.patch.object(runtime, "run_turn",
+                                  side_effect=lambda *a, **k: (_time.sleep(5), "late")[1]):
+            with tempfile.TemporaryDirectory() as work:
+                with self.assertRaises(runner.AgentFailure) as caught:
+                    runtime.run_agent("task", "answer", "ideas.txt", Path(work),
+                                      model="fake:model", role="ideate", read_paths=[],
+                                      allowed_roots=[str(work)], allow_write=True,
+                                      timeout=1)
+                self.assertEqual(caught.exception.failure_class, "timeout")
+                receipt = json.loads(Path(caught.exception.receipt).read_text())
+                self.assertTrue(receipt["timed_out"])
+                self.assertEqual(receipt["budget_seconds"], 1)
+
     def test_the_structured_output_schema_matches_the_framework_fields(self):
         schema = runtime.output_schema("ideate")
         fields = set(schema.model_fields)

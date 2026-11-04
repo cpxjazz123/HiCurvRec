@@ -33,7 +33,7 @@ AGENT_CHAT_MODEL = "deepseek/deepseek-v4.1-flash"
 #: structured output the SDK supports natively). A provider that refuses
 #: response_format=json_schema falls back to the prompted JSON, once per agent.
 AGENT_STRUCTURED_OUTPUT = "on"
-AGENT_TIMEOUT_SECONDS = 1800
+AGENT_TIMEOUT_SECONDS = 300
 #: The deadline of one sub-agent of a round, counted from the moment the task is
 #: dispatched: the initialisation, the model calls, the retries and the
 #: wrap-up all fit in it. The agent's progress file is frozen when it passes,
