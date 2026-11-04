@@ -1,7 +1,7 @@
 {
   "jobs": [
     {
-      "attempts": 8,
+      "attempts": 9,
       "error": null,
       "failure_evidence": {},
       "finished_at": null,
@@ -45,13 +45,18 @@
           "error": "the smoke refused: the forward did not accept the radius the probe passes",
           "finished_at": 1793823689.4591267,
           "status": "failed"
+        },
+        {
+          "error": "the smoke refused: the forward did not return the reference the probe reads",
+          "finished_at": 1793823964.7989957,
+          "status": "failed"
         }
       ],
       "queued_at": 1793814388.5206075,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_holonomy-path-behaviour-rq",
       "round_id": "round_20261105_024519_485",
-      "started_at": 1793823695.2550633,
+      "started_at": 1793823970.1744194,
       "status": "running",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_holonomy-path-behaviour-rq"
     }
