@@ -31,6 +31,13 @@ ACTION = "inspect"  # inspect | behavior | worker
 LIVE_AGENTS_ALLOWED = True
 RESEARCH_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
 AGENT_BINARY = "opencode"
+#: The backend that creates the agents: "opencode" starts the CLI in a
+#: bubblewrap mount namespace, "langchain" creates the agent with
+#: langchain.agents.create_agent and enforces the boundary with its tools.
+AGENT_BACKEND = "opencode"
+#: The chat model the LangChain backend builds its agents with. Empty means the
+#: backend refuses to run: an agent without a model is not an agent.
+AGENT_CHAT_MODEL = ""
 AGENT_MODEL = "commandcode/deepseek/deepseek-v4.1-flash"
 AGENT_TIMEOUT_SECONDS = 1800
 #: The deadline of one sub-agent of a round, counted from the moment the task is

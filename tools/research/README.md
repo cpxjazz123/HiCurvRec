@@ -451,3 +451,34 @@ replaces: the same agents, the same merged ideas and the same decision, a failed
 agent does not cost the others their ideas, and the round's state file ends in
 the same shape. The implementation, training and evaluation phases are not
 touched by this phase.
+
+## The agent backend: LangChain (2026-11-04)
+
+The research agents are created with LangChain. `tools/research/agents/langchain_runner.py`
+builds the agent with `langchain.agents.create_agent` over a chat model and gives
+it tools that carry the project's boundary:
+
+* `read_file` / `list_directory` - inside the task workspace or a policy-approved
+  read root, nowhere else;
+* `write_file` - inside the task workspace only, and only for a task that may
+  write;
+* `append_progress` - the same progress channel the other backend uses, so the
+  framework reads the answer the same way.
+
+The task contract does not change: the agent runs in `root/agents/<task_id>`,
+its answer is the file the caller parses, and the run leaves the same
+`execution.json` receipt (with `verified` and the boundary fingerprint). The
+boundary here is enforced by the tools, not by a bubblewrap mount namespace, so
+the backend is opt-in:
+
+```
+AGENT_BACKEND = "opencode"   # the CLI in a mount namespace (the default)
+AGENT_BACKEND = "langchain"  # the LangChain agent with tool-enforced boundaries
+AGENT_CHAT_MODEL = "anthropic:claude-sonnet-4-5"   # or "openai:gpt-4o-mini"
+```
+
+The key and the base URL come from the environment (`ANTHROPIC_API_KEY` /
+`OPENAI_API_KEY` and their base URLs). With no chat model the backend refuses to
+run: an agent without a model is not an agent. The model of the active backend
+is part of the boundary fingerprint, so an answer is only reused when it was
+produced by the same model.

@@ -593,6 +593,18 @@ def _geometry_contract() -> dict:
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
+def effective_model() -> str:
+    """The model of the active backend.
+
+    The boundary fingerprint names the model, so a cached answer is only reused
+    when it was produced by the same model. The two backends have their own.
+    """
+    backend = str(settings.AGENT_BACKEND or "opencode").lower()
+    if backend == "langchain":
+        return settings.AGENT_CHAT_MODEL
+    return settings.AGENT_MODEL
+
+
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
               binary=None, model=None, timeout=None,
               role: str = "verify", read_paths=None, allowed_roots=None,
@@ -613,7 +625,18 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path,
     """
     # The binary and the model come from the one source of configuration.
     binary = binary or settings.AGENT_BINARY
-    model = model or settings.AGENT_MODEL
+    model = model or effective_model()
+    if str(settings.AGENT_BACKEND or "opencode").lower() == "langchain":
+        # The LangChain backend creates the agent in-process; it has no CLI, no
+        # mount namespace and no session file, and it enforces the same boundary
+        # with its tools.
+        from tools.research.agents import langchain_runner
+        return langchain_runner.run_agent(
+            task_id, prompt, output_name, Path(root), model=model, timeout=timeout,
+            role=role, read_paths=read_paths, allowed_roots=allowed_roots,
+            candidate_tree=candidate_tree, allow_shell=allow_shell,
+            allow_write=allow_write, deadline_seconds=deadline_seconds,
+            source_digest=source_digest)
     # The clock starts HERE, at the dispatch: the initialisation, the model
     # calls, the retries and the teardown all fit in the budget, and the timer
     # is never reset. A run that spends its budget in the setup has no budget

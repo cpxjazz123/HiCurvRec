@@ -159,7 +159,7 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     # older tree is never reused for a newer one.
     expected_boundary = boundary_fingerprint(
         workspace, role, runner.effective_read_paths(read_paths),
-        allow_shell, allow_write, prompt, settings.AGENT_MODEL,
+        allow_shell, allow_write, prompt, runner.effective_model(),
         source_digest=source_digest)
     # Resumability: an answer that is already on disk is reused, so a round that
     # was interrupted does not pay for the same agents twice. The reuse requires
