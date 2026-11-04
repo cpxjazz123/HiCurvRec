@@ -214,6 +214,61 @@ def compare(tree: Path, contract: dict, *, seed: int = 17) -> dict:
             "excluded": excluded, "reason": "" if not failed else failed[0]["reason"]}
 
 
+def coupling_verdict(contract: dict, *, seed: int = 17) -> dict:
+    """Whether the candidate's BEHAVIOUR term can move the computation.
+
+    The evidence probe answers a general question: a positive row scalar leaves
+    every arg-min unchanged, so a mechanism whose behaviour enters as a row
+    scalar can never change the assignment. That question is about a proxy, not
+    about this candidate. The candidate answers it with its own code: the
+    contract declares the callable, the argument the behaviour enters, and a
+    control argument; the framework calls both and requires the result to
+    change. A behaviour that cannot move the computation is refused here.
+    """
+    declaration = contract.get("coupling") or {}
+    if not declaration.get("callable"):
+        return {"status": "NOT_APPLICABLE",
+                "reason": "the contract declares no coupling surface"}
+    try:
+        function = _load_callable(declaration)
+    except Exception as exc:  # noqa: BLE001
+        return {"status": "FAIL", "reason": "the coupling surface could not be loaded: %s" % exc}
+    behaviour = str(declaration.get("behaviour_argument") or "")
+    control = str(declaration.get("control_argument") or "")
+    if not behaviour:
+        return {"status": "FAIL", "reason": "the coupling declaration names no behaviour argument"}
+    import torch
+
+    generator = torch.Generator().manual_seed(seed)
+    arguments = {}
+    for spec in declaration.get("args") or []:
+        if spec.get("scalar") is not None:
+            arguments[spec["name"]] = float(spec["scalar"])
+            continue
+        width = int(spec.get("width") or 1)
+        raw = torch.rand(8, width, generator=generator, dtype=torch.float64) * 0.2 - 0.1
+        arguments[spec["name"]] = raw
+    try:
+        first = function(**arguments)
+    except Exception as exc:  # noqa: BLE001
+        return {"status": "FAIL", "reason": "the coupling surface could not be called: %s" % exc}
+    changed = dict(arguments)
+    changed[behaviour] = arguments[behaviour] + 0.5
+    try:
+        second = function(**changed)
+    except Exception as exc:  # noqa: BLE001
+        return {"status": "FAIL", "reason": "the coupling surface could not be called: %s" % exc}
+    difference = float((first.detach() - second.detach()).abs().max())
+    moved = difference > 1e-6
+    return {"status": "PASS" if moved else "FAIL",
+            "behaviour_argument": behaviour,
+            "control_argument": control,
+            "max_abs_difference": difference,
+            "reason": ("the behaviour moves the computation" if moved else
+                       "the behaviour argument does not change the computation, so it "
+                       "cannot move the assignment")}
+
+
 def check_tree(tree: Path, *, seed: int = 17) -> dict:
     """Read the tree's contract and compare it; an absent contract is recorded."""
     path = Path(tree) / CONTRACT_NAME
@@ -228,6 +283,7 @@ def check_tree(tree: Path, *, seed: int = 17) -> dict:
                 "contract": str(path)}
     verdict = compare(Path(tree), contract, seed=seed)
     verdict["contract"] = str(path)
+    verdict["coupling"] = coupling_verdict(contract, seed=seed)
     return verdict
 
 

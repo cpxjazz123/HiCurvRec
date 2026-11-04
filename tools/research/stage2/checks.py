@@ -383,13 +383,24 @@ def check_reference_agreement(tree: Path | str) -> dict:
                           (done.stdout + done.stderr).strip()[-300:]}
     report = json.loads(lines[-1])
     status = report.get("status")
+    coupling = report.get("coupling") or {}
     if status == "OK":
         detail = "; ".join(
             f"{call['name']}: values {call.get('value_max_abs_diff', 0):.1e}, "
             f"gradients {call.get('gradient_max_abs_diff', 0):.1e}, gradcheck "
             f"{call.get('gradcheck_candidate')}/{call.get('gradcheck_reference')}"
             for call in report.get("calls") or [])
-        return {"status": "PASS", "name": "reference_agreement", "detail": detail}
+        if coupling.get("status") == "PASS":
+            detail += ("; the behaviour moves the computation ("
+                       + str(coupling.get("max_abs_difference")) + ")")
+        else:
+            # The behaviour term cannot move the computation: the mechanism
+            # cannot change the assignment through it, and the candidate is
+            # refused here rather than after a training run.
+            return {"status": "FAIL", "name": "reference_agreement",
+                    "detail": "the coupling surface: " + str(coupling.get("reason"))[:300]}
+        return {"status": "PASS", "name": "reference_agreement", "detail": detail,
+                "coupling": coupling}
     return {"status": status or "FAIL", "name": "reference_agreement",
             "detail": str(report.get("reason"))[:400]}
 

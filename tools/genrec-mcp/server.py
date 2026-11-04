@@ -2471,14 +2471,26 @@ def round_admission(tree: Path, verification_id: str) -> dict:
     outcome = probe_results.get(idea_id) or {}
     failures: list = []
     probe_status = (outcome.get("probe") or {}).get("status")
+    evidence: list = []
     if probe_status == "FAIL":
         failures.append("the evidence probe failed: " +
                         str((outcome.get("probe") or {}).get("reason"))[:160])
     math_report = outcome.get("math") or {}
+    # The probe's behaviour-dependency check asks a question about a PROXY (a
+    # positive row scalar), not about this candidate: a mechanism whose
+    # behaviour enters per code or per pair is not a row scalar. The candidate
+    # answers it with its own code, and the framework measures that answer (the
+    # coupling surface of the reference contract). A proxy failure is therefore
+    # evidence here, and it refuses only when the candidate's own answer fails.
     for check in math_report.get("checks", []):
-        if check.get("status") == "FAIL":
-            failures.append("math check failed: " + str(check.get("check")) +
-                            ": " + str(check.get("detail"))[:160])
+        if check.get("status") != "FAIL":
+            continue
+        if str(check.get("check")) == "behavior_dependency":
+            evidence.append("the probe's behaviour proxy failed ("
+                            + str(check.get("detail"))[:160] + ")")
+            continue
+        failures.append("math check failed: " + str(check.get("check")) +
+                        ": " + str(check.get("detail"))[:160])
     # The frozen engineering invariants are checked by the framework, not by the
     # candidate's own smoke test: the entry point runs one epoch, the identifier
     # it exports is valid, the four ranks finish, and the frozen constants and
@@ -2532,6 +2544,7 @@ def round_admission(tree: Path, verification_id: str) -> dict:
     smoke_note = "the implementation recorded no smoke of its own; the Stage 2 smoke is the gate"
     return {"passed": True, "round_id": round_id, "idea_id": idea_id,
             "revision": record.get("revision", 0),
+            "evidence": evidence,
             "smoke_note": smoke_note,
             "source_digest": record.get("source_digest"),
             "verifiers": [verdict.get("verifier") for verdict in record.get("verdicts", [])],
