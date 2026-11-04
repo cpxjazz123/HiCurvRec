@@ -363,8 +363,15 @@ def check_reference_agreement(tree: Path | str) -> dict:
                 "detail": "the tree declares no reference_contract.json"}
     command = [_python_for(), "-m", "tools.research.stage2.reference",
                "--tree", str(tree)]
+    # The comparison imports the candidate's own module, so the tree is the
+    # working directory and the first entry of the import path.
+    import os
+    environment = dict(os.environ)
+    root = str(contract.resolve_root())
+    environment["PYTHONPATH"] = os.pathsep.join(
+        [str(tree), root] + ([environment["PYTHONPATH"]] if environment.get("PYTHONPATH") else []))
     try:
-        done = subprocess.run(command, cwd=str(contract.resolve_root()),
+        done = subprocess.run(command, cwd=str(tree), env=environment,
                               capture_output=True, text=True, timeout=900)
     except subprocess.TimeoutExpired:
         return {"status": "FAIL", "name": "reference_agreement",

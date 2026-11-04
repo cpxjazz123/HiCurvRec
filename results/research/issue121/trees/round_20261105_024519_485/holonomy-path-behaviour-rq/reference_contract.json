@@ -1,0 +1,70 @@
+{
+ "calls": [
+  {
+   "name": "transported_distance",
+   "callable": "model.holonomy:transported_distance",
+   "symbols": [
+    "t0",
+    "t1",
+    "v0",
+    "v1",
+    "f0",
+    "f1"
+   ],
+   "args": [
+    {
+     "name": "codeword",
+     "width": 2,
+     "radius": 0.3
+    },
+    {
+     "name": "anchor",
+     "width": 2,
+     "radius": 0.3
+    },
+    {
+     "name": "frame",
+     "width": 2,
+     "radius": 0.3
+    }
+   ],
+   "statements": [
+    "nf = sqrt(f0**2 + f1**2)",
+    "shf = sinh(nf)/nf",
+    "a0 = cosh(nf)",
+    "a1 = shf*f0",
+    "a2 = shf*f1",
+    "nv = sqrt(v0**2 + v1**2)",
+    "shv = sinh(nv)/nv",
+    "m0 = cosh(nv)",
+    "m1 = shv*v0",
+    "m2 = shv*v1",
+    "q = m1*t0 + m2*t1",
+    "p0 = q",
+    "p1 = t0 + q/(1 + m0)*m1",
+    "p2 = t1 + q/(1 + m0)*m2",
+    "h = -m0*a0 + m1*a1 + m2*a2",
+    "g = -a0*p0 + a1*p1 + a2*p2",
+    "W0 = p0 + g/(1 - h)*(m0 + a0)",
+    "W1 = p1 + g/(1 - h)*(m1 + a1)",
+    "W2 = p2 + g/(1 - h)*(m2 + a2)",
+    "d2 = -(W0 - a0)**2 + (W1 - a1)**2 + (W2 - a2)**2"
+   ],
+   "output": "d2"
+  }
+ ],
+ "excluded": [
+  {
+   "surface": "the argmin assignment of the level tokens",
+   "reason": "an argmin is not differentiable, so it has no gradient to compare"
+  },
+  {
+   "surface": "the behaviour anchor table",
+   "reason": "it is a train-only statistic, frozen and detached: it has no gradient, and it is not a function of the batch"
+  },
+  {
+   "surface": "the levels beyond the second",
+   "reason": "the agreed instance is two levels; the third repeats the second"
+  }
+ ]
+}
