@@ -1,0 +1,27 @@
+{
+ "task_id": "scoring_3",
+ "backend": "openai-agents-sdk",
+ "verified": true,
+ "finished_utc_epoch": 1793825531.5974991,
+ "elapsed_s": 91.363,
+ "model": "deepseek/deepseek-v4.1-flash",
+ "role": "score",
+ "boundary_sha256": "023b23bb1bec5b86bf08c758faf199fb612f08e37603fa9e8e9219868525e949",
+ "read_allowlist": [
+  "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md"
+ ],
+ "geometry_contract": {
+  "path": "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md",
+  "version": "poincare-contract/v1",
+  "sha256": "bdc89757b8e88bb115cb2d871a8da0591fdaa8574bebe50e26baaef9440cdad4"
+ },
+ "failure": "",
+ "refusals": [],
+ "structured_output": true,
+ "structured_output_fallback": false,
+ "timed_out": false,
+ "budget_seconds": 299.0,
+ "failure_trace": "",
+ "progress_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261105_073800_444/agents/scoring_3/progress.jsonl",
+ "answer": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261105_073800_444/agents/scoring_3/scores.txt"
+}

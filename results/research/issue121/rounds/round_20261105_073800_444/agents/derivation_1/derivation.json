@@ -1,0 +1,97 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "theta1_1_0",
+  "theta1_1_1",
+  "theta1_2_0",
+  "theta1_2_1",
+  "theta2_1_0",
+  "theta2_1_1",
+  "theta2_2_0",
+  "theta2_2_1",
+  "s"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_1_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_1_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_2_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_2_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "s",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  }
+ ],
+ "statements": [
+  "nz = sqrt(z0**2 + z1**2 + 1e-12)",
+  "u0 = 0.95*tanh(nz/s)*z0/nz",
+  "u1 = 0.95*tanh(nz/s)*z1/nz",
+  "n11 = sqrt(theta1_1_0**2 + theta1_1_1**2 + 1e-12)",
+  "q110 = 0.95*tanh(n11/s)*theta1_1_0/n11",
+  "q111 = 0.95*tanh(n11/s)*theta1_1_1/n11",
+  "n12 = sqrt(theta1_2_0**2 + theta1_2_1**2 + 1e-12)",
+  "q120 = 0.95*tanh(n12/s)*theta1_2_0/n12",
+  "q121 = 0.95*tanh(n12/s)*theta1_2_1/n12",
+  "n21 = sqrt(theta2_1_0**2 + theta2_1_1**2 + 1e-12)",
+  "q210 = 0.95*tanh(n21/s)*theta2_1_0/n21",
+  "q211 = 0.95*tanh(n21/s)*theta2_1_1/n21",
+  "n22 = sqrt(theta2_2_0**2 + theta2_2_1**2 + 1e-12)",
+  "q220 = 0.95*tanh(n22/s)*theta2_2_0/n22",
+  "q221 = 0.95*tanh(n22/s)*theta2_2_1/n22",
+  "D11 = acosh(1 + 2*((u0-q110)**2 + (u1-q111)**2)/((1-(u0**2+u1**2))*(1-(q110**2+q111**2))))",
+  "D12 = acosh(1 + 2*((u0-q120)**2 + (u1-q121)**2)/((1-(u0**2+u1**2))*(1-(q120**2+q121**2))))",
+  "D21 = acosh(1 + 2*((u0-q210)**2 + (u1-q211)**2)/((1-(u0**2+u1**2))*(1-(q210**2+q211**2))))",
+  "D22 = acosh(1 + 2*((u0-q220)**2 + (u1-q221)**2)/((1-(u0**2+u1**2))*(1-(q220**2+q221**2))))",
+  "tau1 = (D11 + D12)/2",
+  "tau2 = (D21 + D22)/2",
+  "e11 = exp(-D11/tau1)",
+  "e12 = exp(-D12/tau1)",
+  "e21 = exp(-D21/tau2)",
+  "e22 = exp(-D22/tau2)",
+  "S11 = e11/(e11 + e12)",
+  "S12 = e12/(e11 + e12)",
+  "S21 = e21/(e21 + e22)",
+  "S22 = e22/(e21 + e22)",
+  "h = (acosh(1 + 2*((q110-q120)**2 + (q111-q121)**2)/((1-(q110**2+q111**2))*(1-(q120**2+q121**2)))) + acosh(1 + 2*((q210-q220)**2 + (q211-q221)**2)/((1-(q210**2+q211**2))*(1-(q220**2+q221**2)))))/2",
+  "A0 = 2*pi*(cosh(h) - 1)",
+  "rho = Max(0, Min(acosh(1 + A0/(2*pi)), 0.95))",
+  "delta = rho - h",
+  "loss = S11*(D11 - delta) + S12*(D12 - delta) + S21*(D21 - delta) + S22*(D22 - delta)"
+ ],
+ "output": "loss",
+ "code": "import math\n\nimport torch\n\nEPS = 1e-12\nSCALE = 0.95\n\n\ndef _chart(v, s):\n    n = torch.sqrt((v * v).sum(dim=-1, keepdim=True) + EPS)\n    return SCALE * torch.tanh(n / s) * v / n\n\n\ndef _dist(a, b):\n    na = (a * a).sum(dim=-1, keepdim=True)\n    nb = (b * b).sum(dim=-1, keepdim=True)\n    d2 = ((a - b) ** 2).sum(dim=-1, keepdim=True)\n    return torch.arccosh(1.0 + 2.0 * d2 / ((1.0 - na) * (1.0 - nb)))\n\n\ndef compute(z, theta_1_1, theta_1_2, theta_2_1, theta_2_2, s):\n    z = torch.as_tensor(z)\n    if not z.is_floating_point():\n        z = z.to(torch.get_default_dtype())\n    dtype = z.dtype\n    z = z.reshape(-1, 2)\n    s = torch.as_tensor(s).to(dtype)\n\n    def vec(v):\n        return torch.as_tensor(v).to(dtype).reshape(1, -1)\n\n    u = _chart(z, s)\n\n    q_11 = _chart(vec(theta_1_1), s)\n    q_12 = _chart(vec(theta_1_2), s)\n    q_21 = _chart(vec(theta_2_1), s)\n    q_22 = _chart(vec(theta_2_2), s)\n\n    D11 = _dist(u, q_11)\n    D12 = _dist(u, q_12)\n    D21 = _dist(u, q_21)\n    D22 = _dist(u, q_22)\n\n    tau1 = (D11 + D12) / 2.0\n    tau2 = (D21 + D22) / 2.0\n\n    e11 = torch.exp(-D11 / tau1)\n    e12 = torch.exp(-D12 / tau1)\n    e21 = torch.exp(-D21 / tau2)\n    e22 = torch.exp(-D22 / tau2)\n\n    S11 = e11 / (e11 + e12)\n    S12 = e12 / (e11 + e12)\n    S21 = e21 / (e21 + e22)\n    S22 = e22 / (e21 + e22)\n\n    h = (_dist(q_11, q_12) + _dist(q_21, q_22)) / 2.0\n    A0 = 2.0 * math.pi * (torch.cosh(h) - 1.0)\n    rho = torch.clamp(torch.arccosh(1.0 + A0 / (2.0 * math.pi)), 0.0, SCALE)\n    delta = rho - h\n\n    loss = (S11 * (D11 - delta) + S12 * (D12 - delta)\n            + S21 * (D21 - delta) + S22 * (D22 - delta))\n    return loss.reshape(-1)\n",
+ "excluded": [
+  "the argmin assignment k_l = argmin_k (D_{l,i,k} - delta_{l,k}): a piecewise-constant index selection, gradient-free, so the loss surface uses the spec's own softmax weights S_{l,i,k} = softmax_k(-D_{l,i,k}/tau_i) instead of the hard code index",
+  "the per-step demand table bhat (L x K) and its EMA (beta = 1 - 1/96): a frozen catalogue statistic fed from the behaviour vector b, not a per-item differentiable surface; at the stated initialisation EMA_{l,k} = 1 so bhat = 1 and the radius reduces to rho = clip(h, 0, 0.95/sqrt(c))",
+  "rho and delta are detached in training (they only steer the argmin), so no gradient path through rho and no extra loss term: the reconstruction, commitment and codebook terms are untouched by this module",
+  "the integer SIDs, the collision-extension token and the decoder input sum_l a_{l,k_l}: discrete / non-differentiable outputs, carried outside the loss"
+ ]
+}

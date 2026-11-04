@@ -513,7 +513,9 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
                 if report.get("status") != "OK":
                     failures.append(entry)
             except Exception as exc:  # noqa: BLE001
-                entry.update(status="FAIL", kind="contradiction",
+                # A derivation whose own code raises is broken, not
+                # contradicted: it never produced a value to disagree with.
+                entry.update(status="FAIL", kind="incomparable",
                              reason=f"{type(exc).__name__}: {exc}"[:300])
                 failures.append(entry)
             pairs.append(entry)

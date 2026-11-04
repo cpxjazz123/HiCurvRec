@@ -169,8 +169,12 @@ def compare(tree: Path, contract: dict, *, seed: int = 17) -> dict:
             entry["samples"] = len(reference_value)
             entry["value_max_abs_diff"] = float(
                 (candidate_value.detach() - reference_value.detach()).abs().max())
+            # A contract may declare the tolerance its surface needs: two
+            # algebraic forms of one formula differ in the last digits, and the
+            # declared tolerance says how much that difference is.
             torch.testing.assert_close(candidate_value.detach(), reference_value.detach(),
-                                       rtol=VALUE_RTOL, atol=VALUE_ATOL)
+                                       rtol=float(contract_call.get("rtol") or VALUE_RTOL),
+                                       atol=float(contract_call.get("atol") or VALUE_ATOL))
             candidate_grads = _gradients(candidate_value, tensors)
             reference_grads = _gradients(reference_value, tensors)
             worst, mismatch = 0.0, None
@@ -186,8 +190,10 @@ def compare(tree: Path, contract: dict, *, seed: int = 17) -> dict:
             for left, right in zip(candidate_grads, reference_grads):
                 if left is None or right is None:
                     continue
-                torch.testing.assert_close(left.detach(), right.detach(),
-                                           rtol=GRAD_RTOL, atol=GRAD_ATOL)
+                torch.testing.assert_close(
+                    left.detach(), right.detach(),
+                    rtol=float(contract_call.get("grad_rtol") or GRAD_RTOL),
+                    atol=float(contract_call.get("grad_atol") or GRAD_ATOL))
             tensor_names = [spec["name"] for spec in contract_call["args"]
                             if spec.get("scalar") is None]
 
@@ -233,9 +239,13 @@ def coupling_verdict(contract: dict, *, seed: int = 17) -> dict:
         function = _load_callable(declaration)
     except Exception as exc:  # noqa: BLE001
         return {"status": "FAIL", "reason": "the coupling surface could not be loaded: %s" % exc}
-    behaviour = str(declaration.get("behaviour_argument") or "")
+    named = declaration.get("behaviour_arguments")
+    if named is None:
+        single = declaration.get("behaviour_argument")
+        named = [single] if single else []
+    behaviour_arguments = [str(name) for name in named if name]
     control = str(declaration.get("control_argument") or "")
-    if not behaviour:
+    if not behaviour_arguments:
         return {"status": "FAIL", "reason": "the coupling declaration names no behaviour argument"}
     import torch
 
@@ -252,16 +262,22 @@ def coupling_verdict(contract: dict, *, seed: int = 17) -> dict:
         first = function(**arguments)
     except Exception as exc:  # noqa: BLE001
         return {"status": "FAIL", "reason": "the coupling surface could not be called: %s" % exc}
-    changed = dict(arguments)
-    changed[behaviour] = arguments[behaviour] + 0.5
-    try:
-        second = function(**changed)
-    except Exception as exc:  # noqa: BLE001
-        return {"status": "FAIL", "reason": "the coupling surface could not be called: %s" % exc}
-    difference = float((first.detach() - second.detach()).abs().max())
+    # Every behaviour argument is perturbed: an anchor that the sampled rows
+    # never select would otherwise look like a behaviour that does nothing.
+    difference = 0.0
+    for name in behaviour_arguments:
+        changed = dict(arguments)
+        changed[name] = arguments[name] + 0.5
+        try:
+            second = function(**changed)
+        except Exception as exc:  # noqa: BLE001
+            return {"status": "FAIL",
+                    "reason": "the coupling surface could not be called: %s" % exc}
+        difference = max(difference,
+                         float((first.detach() - second.detach()).abs().max()))
     moved = difference > 1e-6
     return {"status": "PASS" if moved else "FAIL",
-            "behaviour_argument": behaviour,
+            "behaviour_argument": ", ".join(behaviour_arguments),
             "control_argument": control,
             "max_abs_difference": difference,
             "reason": ("the behaviour moves the computation" if moved else

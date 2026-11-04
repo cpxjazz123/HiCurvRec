@@ -1,0 +1,79 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "theta1_1_0",
+  "theta1_1_1",
+  "theta1_2_0",
+  "theta1_2_1",
+  "theta2_1_0",
+  "theta2_1_1",
+  "theta2_2_0",
+  "theta2_2_1",
+  "s",
+  "v_pi1_0",
+  "v_pi1_1",
+  "v_pi2_0",
+  "v_pi2_1"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 0.0,
+   "scalar": 0.0
+  },
+  {
+   "name": "theta_1_1",
+   "width": 2,
+   "radius": 0.0,
+   "scalar": 0.0
+  },
+  {
+   "name": "theta_1_2",
+   "width": 2,
+   "radius": 0.0,
+   "scalar": 0.0
+  },
+  {
+   "name": "theta_2_1",
+   "width": 2,
+   "radius": 0.0,
+   "scalar": 0.0
+  },
+  {
+   "name": "theta_2_2",
+   "width": 2,
+   "radius": 0.0,
+   "scalar": 0.0
+  },
+  {
+   "name": "s",
+   "width": 1,
+   "radius": 0.0,
+   "scalar": 0.0
+  },
+  {
+   "name": "v_pi_1",
+   "width": 2,
+   "radius": 0.0,
+   "scalar": 0.0
+  },
+  {
+   "name": "v_pi_2",
+   "width": 2,
+   "radius": 0.0,
+   "scalar": 0.0
+  }
+ ],
+ "statements": [
+  "loss = 0*z0"
+ ],
+ "output": "loss",
+ "code": "import torch\n\n\ndef compute(z, theta_1_1, theta_1_2, theta_2_1, theta_2_2, s, v_pi_1, v_pi_2):\n    \"\"\"Per-item change in the training objective contributed by the mechanism.\n\n    The specification explicitly says the loss is unchanged and that no new\n    loss term is introduced. The geodesic radii and offsets only alter the\n    discrete argmin assignment, which is not a differentiable objective term.\n    Therefore the added/changed objective is identically zero per item.\n    \"\"\"\n    return torch.zeros_like(z[:, 0])\n",
+ "excluded": [
+  "the argmin codeword assignment k_l and the resulting SID: discrete/non-differentiable and not a loss term",
+  "the detached capacity radii rho, offsets delta, soft-assignment/EMA demand machinery, and decoder input: these steer assignment only and add no objective term",
+  "reconstruction, commitment and codebook losses: explicitly unchanged and not computable from the fixed arguments"
+ ]
+}

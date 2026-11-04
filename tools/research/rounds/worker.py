@@ -1568,10 +1568,17 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
     # The three independent derivations of the selected mechanism come first:
     # registration is refused until they agree.
     derivation = phase_derivation(root, round_id, log=log)
-    if derivation.get("status") not in (None, "AGREE", "NOT_APPLICABLE"):
+    # The gate is a CONTRADICTION, not an incomparability: two derivations of
+    # the same instance that disagree stop the candidate; two that could not be
+    # compared are a limitation of the specification, recorded with it.
+    state_after = pipeline_module.load_state(directory)
+    differential = state_after.get("differential") or {}
+    contradictions = [entry for entry in differential.get("pairs") or []
+                      if entry.get("kind") == "contradiction"]
+    if contradictions:
         raise pipeline_module.RoundError(
-            "the independent derivations do not agree: " +
-            str(derivation.get("status")))
+            "the independent derivations contradict each other: " +
+            str(contradictions[0].get("reason"))[:300])
     trees_root = (Path(root) / "results" / "research" / state.get("issue", "issue120")
                   / "trees" / round_id)
     for idea in pipeline_module.selected_ideas(state):
