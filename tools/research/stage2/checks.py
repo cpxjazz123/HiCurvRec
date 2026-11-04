@@ -232,6 +232,53 @@ def _baseline_tree() -> Path | None:
         return None
 
 
+def check_names(tree: Path | str) -> dict:
+    """The trainer must bind every module-level name it reads.
+
+    The fault this refuses: the accepted-state restore record named
+    ``NUM_EPOCHS``, the trainer defines ``EPOCHS``, and a complete 3000-epoch run
+    died in the export with ``NameError`` -- no SID, reported as incomplete.
+    """
+    tree = Path(tree).resolve()
+    entry = tree / "train_rqvae.py"
+    if not entry.is_file():
+        return {"status": "FAIL", "name": "names", "detail": "the entry point is missing"}
+    from tools.research.stage2.tests.test_trainer_names import find_undefined_globals
+    names = find_undefined_globals(entry.read_text(encoding="utf-8"))
+    if names:
+        return {"status": "FAIL", "name": "names",
+                "detail": "the trainer references unbound module-level names: "
+                          + ", ".join(names)}
+    return {"status": "PASS", "name": "names",
+            "detail": "every module-level name the trainer reads is bound"}
+
+
+def check_collectives(tree: Path | str) -> dict:
+    """Every collective in the trainer must be entered by every rank.
+
+    The fault this refuses: a broadcast inside ``if rank == 0`` left the NCCL
+    communicator out of step, and the following gradient all-reduces mixed
+    buffers from different steps. The partition was healthy at epoch 50 and
+    collapsed to 0.999 within three hundred epochs.
+    """
+    tree = Path(tree).resolve()
+    entry = tree / "train_rqvae.py"
+    if not entry.is_file():
+        return {"status": "FAIL", "name": "collectives",
+                "detail": "the entry point is missing"}
+    from tools.research.stage2.tests.test_collectives import (
+        find_rank_branch_collectives,
+    )
+    hits = find_rank_branch_collectives(entry.read_text(encoding="utf-8"))
+    if hits:
+        return {"status": "FAIL", "name": "collectives",
+                "detail": "a collective is entered by one rank only: " + "; ".join(
+                    f"line {line} dist.{name} under {condition!r}"
+                    for line, name, condition in hits)}
+    return {"status": "PASS", "name": "collectives",
+            "detail": "every collective call is reached by every rank"}
+
+
 def check_geometry_contract(tree: Path | str) -> dict:
     """The candidate uses the canonical geometry module and defines no other.
 
@@ -299,7 +346,8 @@ def run_all(tree: Path | str) -> dict:
     tree = Path(tree).resolve()
     # The static contract comes FIRST: a candidate that redefines the geometry
     # must not run an epoch before it is refused.
-    checks = [check_constants(tree), check_geometry_contract(tree), check_entry(tree),
+    checks = [check_names(tree), check_collectives(tree), check_constants(tree),
+              check_geometry_contract(tree), check_entry(tree),
               check_identifier(tree), check_four_rank(tree)]
     passed = all(check["status"] == "PASS" for check in checks)
     return {"tree": str(tree), "passed": passed, "checks": checks}

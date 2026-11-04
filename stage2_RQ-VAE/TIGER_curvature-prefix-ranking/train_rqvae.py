@@ -264,8 +264,15 @@ def initialize_tiger_weights(model: RQVAE) -> None:
                 nn.init.zeros_(module.bias)
 
 
-def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndarray:
-    """Match RecBole3.0's extend path with one fixed extra SID level."""
+def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int],
+                       priority: np.ndarray | None = None) -> np.ndarray:
+    """Match RecBole3.0's extend path with one fixed extra SID level.
+
+    The fourth token is the item's slot inside its coarse group. With
+    ``priority`` the slot is the item's behaviour rank (highest cohesion first),
+    so the same slot means the same behaviour position in every group; without it
+    the slot is the item id order, which the Stage 3 model cannot learn.
+    """
     if tokens.ndim != 2 or tokens.shape[1] != len(codebook_sizes):
         raise ValueError(f"Token shape {tokens.shape} disagrees with codebook sizes {codebook_sizes}")
     groups: dict[tuple[int, ...], list[int]] = {}
@@ -274,7 +281,11 @@ def _extend_collisions(tokens: np.ndarray, codebook_sizes: list[int]) -> np.ndar
     offsets = np.cumsum([0, *codebook_sizes], dtype=np.int64)
     result = np.empty((len(tokens), tokens.shape[1] + 1), dtype=np.int64)
     for row, item_ids in groups.items():
-        for occurrence, item_id in enumerate(item_ids):
+        ordered = list(item_ids)
+        if priority is not None:
+            key = np.asarray(priority, dtype=np.float64)
+            ordered.sort(key=lambda item: (-float(key[item]), item))
+        for occurrence, item_id in enumerate(ordered):
             result[item_id, :-1] = np.asarray(row, dtype=np.int64)
             result[item_id, -1] = int(offsets[-1] + occurrence)
     return result
@@ -720,7 +731,8 @@ def main() -> None:
                 layer._skip_ddp_reduce = False
         # The exported SID is the model's own assignment, unchanged: the owner's
         # collision gate must be satisfied by training, never by post-processing.
-        sid = _extend_collisions(raw_tokens, codebook_sizes)
+        cohesion = triple_lookup.item_cohesion(np.arange(len(embeddings)))
+        sid = _extend_collisions(raw_tokens, codebook_sizes, priority=cohesion)
         if len(np.unique(sid, axis=0)) != len(sid):
             raise RuntimeError("RecBole SID extension failed to make item codes unique")
         OUTPUT_SID.parent.mkdir(parents=True, exist_ok=True)

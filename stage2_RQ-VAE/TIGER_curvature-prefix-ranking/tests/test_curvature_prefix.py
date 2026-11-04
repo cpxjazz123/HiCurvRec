@@ -523,6 +523,25 @@ class AssignmentRuleTests(unittest.TestCase):
                          "the coarse level carries the cohesion, not the balance")
 
 
+class CollisionSlotTests(unittest.TestCase):
+    """The 4th token is the item's rank inside its coarse group, by behaviour."""
+
+    def test_a_priority_orders_the_slot_inside_each_group(self):
+        import train_rqvae as trainer
+        tokens = torch.tensor([[1, 2, 3], [1, 2, 3], [1, 2, 3], [4, 5, 6]])
+        priority = torch.tensor([0.1, 0.9, 0.5, 0.3])
+        sid = trainer._extend_collisions(tokens.numpy(), [256, 256, 256], priority=priority)
+        group = {int(row[3]) - 768: i for i, row in enumerate(sid[:3])}
+        self.assertEqual(group, {0: 1, 1: 2, 2: 0})
+        self.assertEqual(int(sid[3, 3]), 768)
+
+    def test_without_a_priority_the_order_is_the_item_order(self):
+        import train_rqvae as trainer
+        tokens = torch.tensor([[1, 2, 3], [1, 2, 3]])
+        sid = trainer._extend_collisions(tokens.numpy(), [256, 256, 256])
+        self.assertEqual([int(sid[0, 3]), int(sid[1, 3])], [768, 769])
+
+
 class DeterminismTests(unittest.TestCase):
     def test_the_same_inputs_give_the_same_loss(self):
         torch.manual_seed(7)
