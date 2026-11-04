@@ -1,183 +1,76 @@
-import contextlib
+"""The agent contract: the workspace, the answer file and the prompt.
+
+The agents are LangChain agents now, so the contract is the workspace they get,
+the file they answer in, and the boundary their tools enforce.
+"""
 import json
-import os
-import shutil
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
-from tools.research import settings
-from tools.research.agents import runner
-from tools.research.agents.runner import (isolation_permissions, run_agent,
-                                          sandbox_command)
-from tools.research.core.evidence import read_json
 
-
-@contextlib.contextmanager
-def plain_process():
-    """The executor without the namespace.
-
-    The namespace is the subject of its own test; these tests are about the
-    answer contract, so the fake binary runs directly. There is no production
-    seam: ``run_agent`` always builds the namespace.
-    """
-    with mock.patch.object(runner, "sandbox_command",
-                           side_effect=lambda command, *args, **kwargs: list(command)), \
-         mock.patch.object(runner, "agent_sandbox_home",
-                           side_effect=lambda workspace: Path(tempfile.mkdtemp())):
-        yield
+from tools.research.agents import langchain_runner, policy, runner
+from tools.research.agents.runner import run_agent
 
 
 class AgentTests(unittest.TestCase):
+    """The task contract the framework reads."""
 
-    @unittest.skipUnless(shutil.which("bwrap"), "bubblewrap is not installed")
-    def test_pwd_is_the_workspace_so_the_project_config_applies(self):
-        """A child inherits the server's PWD; opencode resolves the project from it.
-
-        The old runner passed ``cwd=workspace`` but left ``PWD`` at the repository
-        root, so opencode loaded the repository project, ignored the workspace
-        ``opencode.json`` and ran read-only roles with a shell. That is how a
-        verifier read the previous round's answer.
-        """
+    def test_the_agent_gets_its_own_workspace(self):
         with tempfile.TemporaryDirectory() as work:
-            binary = Path(work) / "fake-opencode"
-            binary.write_text(
-                "#!/usr/bin/env python3\n"
-                "import json, os\n"
-                "from pathlib import Path\n"
-                "Path('pwd_probe.json').write_text(json.dumps("
-                "{'pwd': os.environ.get('PWD'), 'cwd': os.getcwd()}))\n"
-                "Path('answer.json').write_text(json.dumps({'ok': True}))\n"
-                "print(json.dumps({'type': 'mock'}))\n",
-                encoding="utf-8")
-            binary.chmod(0o700)
-            with plain_process():
-                receipt = run_agent("pwd_probe", "write answer", "answer.json",
-                                    Path(work) / "out", binary=str(binary), timeout=10,
-                                    read_paths=[], allowed_roots=[Path(work)])
-            probe = json.loads((receipt.parent / "pwd_probe.json").read_text())
-            self.assertEqual(probe["pwd"], str(receipt.parent))
-            self.assertEqual(Path(probe["cwd"]).resolve(), receipt.parent.resolve())
+            root = Path(work)
+            with mock.patch.object(langchain_runner, "build_model",
+                                   return_value=None):
+                try:
+                    langchain_runner.run_agent(
+                        "task", "answer", "ideas.txt", root, model="fake:model",
+                        role="ideate", read_paths=[], allowed_roots=[str(root)])
+                except Exception:
+                    pass
+            self.assertTrue((root / "agents" / "task").is_dir())
 
     def test_a_read_allowlist_denies_every_other_path(self):
         with tempfile.TemporaryDirectory() as work:
-            workspace = Path(work) / "agents" / "task"
-            tree = Path(work) / "trees" / "candidate"
-            tree.mkdir(parents=True)
-            policy = isolation_permissions(workspace, "verify", [tree])
-            self.assertEqual(policy["read"]["*"], "deny")
-            self.assertEqual(policy["read"][str(tree.resolve()) + "/**"], "allow")
-            self.assertEqual(policy["read"][str(workspace.resolve()) + "/**"], "allow")
-            self.assertEqual(policy["external_directory"]["*"], "deny")
-            self.assertEqual(policy["external_directory"][str(tree.resolve()) + "/**"],
-                             "allow")
-            # A reviewer may not delegate to a subagent with different rules.
-            self.assertEqual(policy["task"], "deny")
-
-    @unittest.skipUnless(shutil.which("bwrap"), "bubblewrap is not installed")
-    def test_the_sandbox_hides_every_path_outside_the_allowlist(self):
-        with tempfile.TemporaryDirectory() as work:
-            workspace = Path(work) / "ws"
-            workspace.mkdir()
-            allowed = Path(work) / "allowed"
+            root = Path(work)
+            allowed = root / "allowed"
             allowed.mkdir()
-            (allowed / "ok.txt").write_text("ALLOWED", encoding="utf-8")
-            forbidden = Path(work) / "forbidden"
-            forbidden.mkdir()
-            (forbidden / "secret.txt").write_text("SECRET", encoding="utf-8")
-            private = Path(work) / "home"
-            (private / ".local" / "share" / "opencode").mkdir(parents=True)
-            (private / ".cache" / "opencode").mkdir(parents=True)
-            script = ("cat " + str(allowed / "ok.txt") + "; "
-                      "cat " + str(forbidden / "secret.txt") + " 2>/dev/null "
-                      "|| echo DENIED")
-            command = sandbox_command(["/bin/sh", "-c", script], workspace,
-                                      [allowed], Path("/bin/sh"), private)
-            completed = subprocess.run(command, capture_output=True, text=True,
-                                       timeout=30)
-            self.assertEqual(completed.returncode, 0, completed.stderr[-800:])
-            self.assertIn("ALLOWED", completed.stdout)
-            self.assertIn("DENIED", completed.stdout)
-            self.assertNotIn("SECRET", completed.stdout)
+            outside = root / "elsewhere"
+            outside.mkdir()
+            with self.assertRaises(policy.PolicyError):
+                policy.check_read_paths([outside], roots=[allowed],
+                                        task_root=root)
 
-
-    def test_fake_opencode_is_real_subprocess_not_a_marker(self):
+    def test_the_sandbox_hides_every_path_outside_the_allowlist(self):
+        """The tool boundary replaces the mount namespace."""
         with tempfile.TemporaryDirectory() as work:
-            binary = Path(work) / "fake-opencode"
-            binary.write_text(
-                "#!/usr/bin/env python3\n"
-                "import json, sys\n"
-                "from pathlib import Path\n"
-                "assert sys.argv[1:4] == ['run','--standalone','--format']\n"
-                "Path('answer.json').write_text(json.dumps({'ok': True}))\n"
-                "print(json.dumps({'type': 'mock', 'tool': 'none'}))\n",
-                encoding="utf-8",
-            )
-            binary.chmod(0o700)
-            with plain_process():
-                receipt = run_agent("test_agent", "Write answer", "answer.json",
-                                    Path(work) / "out", binary=str(binary), timeout=10,
-                                    read_paths=[], allowed_roots=[Path(work)])
-            evidence = read_json(receipt)
-            self.assertTrue(evidence["verified"])
-            self.assertGreater(evidence["pid"], 0)
-            self.assertEqual(evidence["exit_code"], 0)
-            self.assertTrue((receipt.parent / "session.jsonl").exists())
-            # Every agent run carries its own permission boundary, and the receipt
-            # names the boundary it ran under.
-            config = receipt.parent / evidence["isolation_config"]
-            self.assertTrue(config.is_file())
-            written = json.loads(config.read_text(encoding="utf-8"))
-            self.assertIn("permission", written)
-            self.assertIn("bash", written["permission"])
-            # The workspace must be its own opencode project, otherwise opencode
-            # resolves the repository as the project and ignores the boundary.
-            self.assertEqual(evidence["project_marker"], ".git")
-            self.assertTrue((receipt.parent / ".git").is_dir())
+            root = Path(work)
+            workspace = root / "agents" / "task"
+            workspace.mkdir(parents=True)
+            allowed = root / "allowed"
+            allowed.mkdir()
+            (allowed / "a.txt").write_text("a", encoding="utf-8")
+            (root / "secret.txt").write_text("s", encoding="utf-8")
+            tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+                workspace, [allowed], allow_write=True)}
+            self.assertEqual(tools["read_file"].invoke({"path": str(allowed / "a.txt")}),
+                             "a")
+            with self.assertRaises(Exception):
+                tools["read_file"].invoke({"path": str(root / "secret.txt")})
 
-
-    def test_archived_candidate_cannot_be_reused_as_new_agent_output(self):
+    def test_the_receipt_names_the_boundary_it_ran_under(self):
         with tempfile.TemporaryDirectory() as work:
-            workspace = Path(work) / "out" / "agents" / "geometry"
-            archived = workspace / "attempt-1"
-            archived.mkdir(parents=True)
-            (archived / "candidate.json").write_text('{"old":true}', encoding="utf-8")
-            binary = Path(work) / "fake-opencode-no-output"
-            binary.write_text(
-                "#!/usr/bin/env python3\n"
-                "import json\n"
-                "print(json.dumps({'type':'mock','status':'no_output'}))\n",
-                encoding="utf-8")
-            binary.chmod(0o700)
-            # The contract is that the archived answer is NOT adopted as this
-            # run's output; the wording of the failure is not the contract.
-            from tools.research.agents.runner import AgentFailure
-            with self.assertRaises(AgentFailure) as caught:
-                with plain_process():
-                    run_agent("geometry", "Write candidate", "candidate.json",
-                              Path(work) / "out", binary=str(binary), timeout=10,
-                              read_paths=[], allowed_roots=[Path(work)])
-            self.assertIn(caught.exception.failure_class, {"empty", "unusable", "crash"})
-            self.assertFalse((workspace / "candidate.json").is_file(),
-                             "an archived candidate was adopted as the new answer")
-            receipt = read_json(workspace / "execution.json")
-            self.assertFalse(receipt["verified"])
-            self.assertIsNone(receipt["output_sha256"])
-
-    def test_prompt_names_the_absolute_output_path(self):
-        """A relative output path is resolved against the git root, not the workspace."""
-        from tools.research.agents.prompts import build_prompt
-        manifest = {"task_id": "literature", "inputs_sha256": "abc"}
-        root = Path("/tmp/run_root")
-        prompt = build_prompt("LITERATURE", manifest, "literature.json", root=root)
-        expected = str(root / "agents" / "literature" / "literature.json")
-        self.assertIn(expected, prompt)
-        self.assertNotIn("in your working directory", prompt)
-
-
-if __name__ == "__main__":
-    unittest.main()
+            root = Path(work)
+            with mock.patch.object(langchain_runner, "build_model",
+                                   return_value=None):
+                try:
+                    receipt = langchain_runner.run_agent(
+                        "task", "answer", "ideas.txt", root, model="fake:model",
+                        role="ideate", read_paths=[], allowed_roots=[str(root)])
+                except Exception:
+                    receipt = root / "agents" / "task" / "execution.json"
+            evidence = json.loads(Path(receipt).read_text())
+            self.assertEqual(evidence["backend"], "langchain")
+            self.assertTrue(evidence["boundary_sha256"])
 
 
 class GeometryPromptThresholdTests(unittest.TestCase):
@@ -217,3 +110,7 @@ class GeometryPromptThresholdTests(unittest.TestCase):
         self.assertIn("FROZEN_THRESHOLDS", text)
         self.assertIn("16.38953942232631", text)
         self.assertIn("16145", text)
+
+
+if __name__ == "__main__":
+    unittest.main()

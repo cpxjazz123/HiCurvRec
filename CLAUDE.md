@@ -65,7 +65,7 @@
 ## 6. 原生科研工具
 
 33. `tools/research/core/` 只管理唯一持久 DAG、原子租约和不可变证据。
-34. `tools/research/agents/` 通过 LangChain 创建 Agent（`langchain.agents.create_agent` + 有边界约束的工具：读只限工作区与策略允许的根，写只限工作区，进度仍走 `append_progress` 通道）；后端由 `settings.AGENT_BACKEND` 选择（`langchain` / `opencode`），未配置 `AGENT_CHAT_MODEL` 时 `langchain` 后端拒绝运行；禁止恢复旧代理调度框架。
+34. `tools/research/agents/` 通过 LangChain 创建 Agent（`langchain.agents.create_agent`）：边界由工具保证（读只限工作区与策略允许的根，写只限工作区，无 shell），进度仍走 `append_progress` 通道，答案文件与 `execution.json` 收据（含边界指纹）不变；模型由 `settings.AGENT_CHAT_MODEL` 给出，未配置时拒绝运行；**已删除 OpenCode CLI 路径**（bwrap 沙箱、opencode.json 权限、私有 provider DB、session 流、MCP 进度服务器），禁止恢复旧代理调度框架。
 35. `tools/research/science/` 必须以训练用户行为数据验证业务问题、数学候选和审查身份。
 36. `tools/research/workflows/` 必须先冻结 DATA 与 LITERATURE 证据，再允许 GEOMETRY 正式提案。
 37. Reviewer 的 Prompt、当前候选 ID、公式与文件哈希不一致时，审查必须被判为无效。

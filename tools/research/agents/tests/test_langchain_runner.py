@@ -77,7 +77,7 @@ class BoundaryTests(unittest.TestCase):
         from tools.research.agents import progress_server
         progress = progress_server.ProgressFile(
             self.workspace / runner.PROGRESS_FILE_NAME, "task")
-        langchain_runner.append_progress(progress, "x" * 9000)
+        langchain_runner.save_progress(progress, "x" * 9000)
         records = progress_server.read_records(self.workspace / runner.PROGRESS_FILE_NAME)
         self.assertGreaterEqual(len(records), 3)
         self.assertTrue(all(len(str(record.get("content", ""))) <= 4000
@@ -99,6 +99,14 @@ class BackendContractTests(unittest.TestCase):
 
     def tearDown(self):
         self.work.cleanup()
+
+    def test_an_answer_that_echoes_the_prompt_is_not_an_answer(self):
+        prompt = "Propose exactly 1 DISTINCT, implementable idea for the item ids."
+        self.assertTrue(langchain_runner.echoes_the_prompt(prompt, prompt))
+        self.assertTrue(langchain_runner.echoes_the_prompt(
+            "Propose exactly 1 DISTINCT idea\n...", prompt))
+        self.assertFalse(langchain_runner.echoes_the_prompt(
+            "IDEA: X\nTITLE: A real proposal", prompt))
 
     def test_the_backend_refuses_to_run_without_a_chat_model(self):
         with mock.patch.object(settings, "AGENT_CHAT_MODEL", ""):
@@ -135,12 +143,18 @@ class BackendContractTests(unittest.TestCase):
         self.assertTrue(records)
         self.assertIn("the answer", str(records[-1].get("content", "")))
 
-    def test_the_model_of_the_backend_names_the_boundary(self):
-        with mock.patch.object(settings, "AGENT_BACKEND", "langchain"), \
-                mock.patch.object(settings, "AGENT_CHAT_MODEL", "fake:model"):
+    def test_the_model_names_the_boundary(self):
+        """There is one backend now; its model is the chat model."""
+        with mock.patch.object(settings, "AGENT_CHAT_MODEL", "fake:model"):
             self.assertEqual(runner.effective_model(), "fake:model")
-        with mock.patch.object(settings, "AGENT_BACKEND", "opencode"):
-            self.assertEqual(runner.effective_model(), settings.AGENT_MODEL)
+
+    def test_the_runner_has_no_opencode_path_left(self):
+        """The CLI backend is gone: the runner delegates to the agent runtime."""
+        source = Path(runner.__file__).read_text()
+        for gone in ("opencode run", "bwrap", "sandbox_command", "AGENT_BINARY"):
+            self.assertNotIn(gone, source)
+        self.assertTrue(hasattr(runner, "run_agent"))
+        self.assertTrue(hasattr(runner, "tool_permissions"))
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ Three rules make the boundary a fact rather than a request:
 * an allowlist entry must live inside the roots the task family declares
   (the round's own directory and its trees, or the legacy run's own paths);
 * an allowlist entry may never contain the repository root, another arm's
-  results, the Stage 3 outputs, the shared opencode data, the global opencode
+  results, the Stage 3 outputs, the shared agent data, the global agent
   configuration, or the directory that holds the other agents' answers;
 * the one permitted baseline is readable, and so is the task's own candidate
   tree, because both are research inputs the framework itself points at.

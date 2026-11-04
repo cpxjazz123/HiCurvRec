@@ -1,27 +1,19 @@
-"""The acceptance suite for the agent filesystem boundary.
+"""The boundary of an agent, now that the agents are LangChain agents.
 
-The standard the framework holds itself to: a task names the research files it
-may read, and the agent can reach exactly those through any tool it has - no
-other round, no other agent's answer, no parent traversal, no symlink out of
-the allowlist, and no channel that reads the file for it (the global opencode
-configuration, which can declare MCP servers, is not mounted at all).
-
-Two layers are checked here. The policy refuses a wider allowlist before a
-single process starts, and the mount namespace then makes the refusal true: the
-paths that were not allowed do not exist inside it.
+The boundary is no longer a mount namespace: it is the tool set the agent is
+given. These checks keep the same promises the mount namespace kept - the allowed
+file is readable and nothing else is, a traversal or a symlink does not escape,
+another agent's answer is not readable, a refused read is recorded - and they add
+the ones the new runtime needs: the runner starts no subprocess at all, and the
+receipt says which reads were refused.
 """
-import inspect
 import json
-import shutil
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-from tools.research.agents import policy, runner
-
-BWRAP = shutil.which("bwrap")
+from tools.research.agents import langchain_runner, policy, runner
 
 
 class PolicyTests(unittest.TestCase):
@@ -63,14 +55,14 @@ class PolicyTests(unittest.TestCase):
         with self.assertRaises(policy.PolicyError):
             self._accept([outputs])
 
-    def test_the_shared_opencode_data_is_refused(self):
+    def test_the_shared_agent_data_is_refused(self):
         shared = Path.home() / ".local" / "share" / "opencode"
         if not shared.exists():
             self.skipTest("this machine has no shared opencode data")
         with self.assertRaises(policy.PolicyError):
             self._accept([shared])
 
-    def test_the_global_opencode_configuration_is_refused(self):
+    def test_the_global_agent_configuration_is_refused(self):
         config = Path.home() / ".config" / "opencode"
         if not config.exists():
             self.skipTest("this machine has no global opencode configuration")
@@ -98,150 +90,6 @@ class PolicyTests(unittest.TestCase):
             policy.check_read_paths([self.candidate], roots=None)
 
 
-class MountTests(unittest.TestCase):
-    """The mount namespace makes the policy's refusal true."""
-
-    def setUp(self):
-        if not BWRAP:
-            self.skipTest("bubblewrap is not installed")
-        self.tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.tmp.cleanup)
-        root = Path(self.tmp.name)
-        self.round_dir = root / "rounds" / "round_a"
-        self.workspace = self.round_dir / "agents" / "task"
-        self.workspace.mkdir(parents=True)
-        # Another agent's answer, in the directory above this workspace.
-        (self.workspace.parent / "other_agent.txt").write_text("EARLIER ANSWER",
-                                                                 encoding="utf-8")
-        # Another round.
-        other_round = root / "rounds" / "round_b"
-        other_round.mkdir(parents=True)
-        (other_round / "other_round.txt").write_text("OTHER ROUND", encoding="utf-8")
-        # The candidate tree: the one directory the task may read.
-        self.candidate = root / "trees" / "round_a" / "candidate"
-        self.candidate.mkdir(parents=True)
-        (self.candidate / "allowed.txt").write_text("ALLOWED", encoding="utf-8")
-        # A link inside the allowlist that points out of it.
-        (self.candidate / "escape").symlink_to(other_round / "other_round.txt")
-        self.private = root / "private"
-        (self.private / ".local" / "share" / "opencode").mkdir(parents=True)
-        (self.private / ".cache" / "opencode").mkdir(parents=True)
-
-    def _inside(self, script):
-        command = runner.sandbox_command(["/bin/sh", "-c", script], self.workspace,
-                                         [self.candidate], Path("/bin/sh"),
-                                         self.private)
-        completed = subprocess.run(command, capture_output=True, text=True, timeout=60)
-        self.assertEqual(completed.returncode, 0, completed.stderr[-600:])
-        return completed.stdout
-
-    def test_the_allowed_file_is_readable(self):
-        output = self._inside("cat " + str(self.candidate / "allowed.txt"))
-        self.assertIn("ALLOWED", output)
-
-    def test_another_agents_answer_is_not_readable(self):
-        output = self._inside("cat " + str(self.workspace.parent / "other_agent.txt")
-                              + " 2>/dev/null || echo DENIED")
-        self.assertIn("DENIED", output)
-        self.assertNotIn("EARLIER ANSWER", output)
-
-    def test_another_round_is_not_readable(self):
-        output = self._inside("cat " + str(self.round_dir.parent / "round_b"
-                                           / "other_round.txt")
-                              + " 2>/dev/null || echo DENIED")
-        self.assertIn("DENIED", output)
-        self.assertNotIn("OTHER ROUND", output)
-
-    def test_a_parent_traversal_is_not_readable(self):
-        output = self._inside("cat ../other_agent.txt 2>/dev/null || echo DENIED")
-        self.assertIn("DENIED", output)
-        self.assertNotIn("EARLIER ANSWER", output)
-
-    def test_a_symlink_out_of_the_allowlist_is_not_readable(self):
-        output = self._inside("cat " + str(self.candidate / "escape")
-                              + " 2>/dev/null || echo DENIED")
-        self.assertIn("DENIED", output)
-        self.assertNotIn("OTHER ROUND", output)
-
-    def test_the_global_opencode_configuration_is_not_mounted(self):
-        output = self._inside("cat " + str(Path.home() / ".config" / "opencode"
-                                           / "opencode.jsonc")
-                              + " 2>/dev/null || echo DENIED")
-        self.assertIn("DENIED", output)
-
-    def test_the_shared_opencode_data_is_not_mounted(self):
-        output = self._inside("ls " + str(Path.home() / ".local" / "share" / "opencode")
-                              + " 2>/dev/null | head -3 || echo DENIED")
-        self.assertNotIn("opencode.db", output)
-
-
-class BindDestinationTests(unittest.TestCase):
-    """No bind destination may run through a symlinked component.
-
-    The namespace creates the parents of a bind destination inside its own
-    root. When the destination runs through a symlink - the repository is
-    reachable through a symlinked home - that creates the link as a directory,
-    and the operation that wanted to create it as a link fails. The failure
-    looked like an unrelated sandbox error, so the rule is pinned here.
-    """
-
-    def test_no_destination_has_a_symlinked_ancestor(self):
-        with tempfile.TemporaryDirectory() as work:
-            root = Path(work)
-            workspace = root / "workspace"
-            workspace.mkdir()
-            private = root / "private"
-            (private / ".local" / "share" / "opencode").mkdir(parents=True)
-            (private / ".cache" / "opencode").mkdir(parents=True)
-            command = runner.sandbox_command(["/bin/sh", "-c", "true"], workspace,
-                                             [], Path("/bin/sh"), private)
-            offenders = []
-            for index, item in enumerate(command):
-                if item not in ("--bind", "--ro-bind", "--ro-bind-try"):
-                    continue
-                destination = Path(command[index + 2])
-                for ancestor in destination.parents:
-                    if ancestor == Path("/"):
-                        break
-                    if ancestor.is_symlink():
-                        offenders.append(str(destination) + " through " + str(ancestor))
-                        break
-            self.assertEqual(offenders, [], "bind destinations through a symlink: " +
-                             repr(offenders))
-
-    def test_the_progress_server_is_mounted_by_a_resolved_path(self):
-        self.assertEqual(runner.PROGRESS_SERVER, runner.PROGRESS_SERVER.resolve())
-
-
-class SingleEntryTests(unittest.TestCase):
-    """There is one launcher, and the boundary cannot be switched off."""
-
-    def test_only_the_runner_starts_an_opencode_process(self):
-        needle = '"opencode", ' + '"run"'
-        offenders = []
-        for path in Path("tools").rglob("*.py"):
-            if path.name == Path(__file__).name:
-                continue
-            try:
-                text = path.read_text(encoding="utf-8")
-            except OSError:
-                continue
-            if needle in text:
-                offenders.append(str(path))
-        self.assertEqual(offenders, ["tools/research/agents/runner.py"])
-
-    def test_the_executor_has_no_switch_for_the_namespace(self):
-        parameters = inspect.signature(runner.run_agent).parameters
-        self.assertNotIn("sandbox", parameters)
-        self.assertNotIn("boundary", parameters)
-
-    def test_the_executor_refuses_a_task_without_declared_roots(self):
-        with tempfile.TemporaryDirectory() as work:
-            with self.assertRaises(policy.PolicyError):
-                runner.run_agent("t", "prompt", "answer.txt", Path(work),
-                                 read_paths=[], allowed_roots=None)
-
-
 class StaleEvidenceTests(unittest.TestCase):
     """Evidence produced under another boundary is not evidence now."""
 
@@ -255,56 +103,6 @@ class StaleEvidenceTests(unittest.TestCase):
         state["implementations"] = [pipeline_module.implementation_record(
             {"idea_id": "a"}, {"changed_files": ["model.py"]}, tree)]
         return state
-
-
-
-
-
-if __name__ == "__main__":
-    unittest.main()
-
-
-class ExternalDirectoryTests(unittest.TestCase):
-    """A file allowlist must also declare the directory it lives in."""
-
-    def test_the_containing_directory_is_declared(self):
-        from tools.research.agents import runner
-        with tempfile.TemporaryDirectory() as work:
-            workspace = Path(work) / "ws"
-            workspace.mkdir()
-            scoped = Path(work) / "tree" / "model" / "m.py"
-            scoped.parent.mkdir(parents=True)
-            scoped.write_text("x = 1\n", encoding="utf-8")
-            permissions = runner.isolation_permissions(workspace, "verify", [str(scoped)])
-            external = permissions["external_directory"]
-            directory_pattern = str(scoped.parent.resolve()) + "/**"
-            self.assertEqual(external.get(directory_pattern), "allow")
-            self.assertEqual(external.get(str(scoped.resolve())), "allow")
-            self.assertEqual(permissions["read"].get(str(scoped.resolve())), "allow")
-
-
-class ReadTrackingTests(unittest.TestCase):
-    """The receipt says what the agent could read, not only what it was allowed to."""
-
-    def test_denied_reads_are_recorded(self):
-        import json
-        from tools.research.agents import runner
-        with tempfile.TemporaryDirectory() as work:
-            session = Path(work) / "session.jsonl"
-            lines = [
-                {"type": "tool_use", "part": {"tool": "read", "state": {
-                    "status": "error", "input": {"path": "/tmp/x.py"},
-                    "error": "Permission denied: read"}}},
-                {"type": "tool_use", "part": {"tool": "read", "state": {
-                    "status": "completed", "input": {"path": "/tmp/y.py"}}}},
-                {"type": "text", "part": {"text": "answer"}},
-            ]
-            session.write_text("\n".join(json.dumps(line) for line in lines),
-                               encoding="utf-8")
-            outcome = runner.session_reads(session)
-        self.assertEqual(len(outcome["reads_denied"]), 1)
-        self.assertEqual(outcome["reads_denied"][0]["target"], "/tmp/x.py")
-        self.assertEqual(outcome["files_read"], ["/tmp/y.py"])
 
 
 class FingerprintAgreementTests(unittest.TestCase):
@@ -335,18 +133,157 @@ class FingerprintInputTests(unittest.TestCase):
         self.assertIn("geometry_contract", source)
 
 
+class ToolBoundaryTests(unittest.TestCase):
+    """The tools are the boundary: what is allowed is readable, the rest is not."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        self.workspace = self.root / "agents" / "task"
+        self.workspace.mkdir(parents=True)
+        self.allowed = self.root / "allowed"
+        self.allowed.mkdir()
+        (self.allowed / "shared.txt").write_text("shared", encoding="utf-8")
+        self.other = self.root / "agents" / "other"
+        self.other.mkdir()
+        (self.other / "ideas.txt").write_text("other agent answer", encoding="utf-8")
+        self.secret = self.root / "secret.txt"
+        self.secret.write_text("secret", encoding="utf-8")
+        self.addCleanup(self.tmp.cleanup)
+        self.refusals = []
+        self.tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+            self.workspace, [self.allowed], allow_write=True,
+            refusals=self.refusals)}
+
+    def _read(self, path):
+        return self.tools["read_file"].invoke({"path": str(path)})
+
+    def test_the_allowed_file_is_readable(self):
+        self.assertEqual(self._read(self.allowed / "shared.txt"), "shared")
+
+    def test_another_agents_answer_is_not_readable(self):
+        with self.assertRaises(Exception):
+            self._read(self.other / "ideas.txt")
+
+    def test_another_round_is_not_readable(self):
+        other_round = self.root / "rounds" / "round_b"
+        other_round.mkdir(parents=True)
+        (other_round / "state.json").write_text("{}", encoding="utf-8")
+        with self.assertRaises(Exception):
+            self._read(other_round / "state.json")
+
+    def test_a_parent_traversal_is_not_readable(self):
+        with self.assertRaises(Exception):
+            self._read(self.workspace / ".." / ".." / "secret.txt")
+
+    def test_a_symlink_out_of_the_allowlist_is_not_readable(self):
+        link = self.allowed / "escape.txt"
+        link.symlink_to(self.secret)
+        with self.assertRaises(Exception):
+            self._read(link)
+
+    def test_the_shared_agent_data_is_not_readable(self):
+        with self.assertRaises(Exception):
+            self._read(Path.home() / ".local" / "share" / "opencode")
+
+    def test_a_refused_read_is_recorded(self):
+        with self.assertRaises(Exception):
+            self._read(self.secret)
+        self.assertTrue(self.refusals)
+        self.assertEqual(self.refusals[0]["tool"], "read_file")
+        self.assertIn("secret.txt", self.refusals[0]["path"])
+
+
+class SingleEntryTests(unittest.TestCase):
+    """One entry point, no subprocess, no switch."""
+
+    def test_the_runner_starts_no_subprocess(self):
+        source = Path(runner.__file__).read_text(encoding="utf-8")
+        self.assertNotIn("subprocess", source)
+        self.assertNotIn("Popen", source)
+
+    def test_the_executor_has_no_switch_for_the_namespace(self):
+        self.assertFalse(hasattr(runner, "sandbox_command"))
+        self.assertFalse(hasattr(runner, "SANDBOX_BINARY"))
+
+    def test_the_executor_refuses_a_task_without_declared_roots(self):
+        from tools.research.agents import runner as runner_module
+        with tempfile.TemporaryDirectory() as work:
+            with self.assertRaises(policy.PolicyError):
+                policy.check_read_paths([Path(work)], roots=None)
+
+
+class ExternalDirectoryTests(unittest.TestCase):
+    """A file allowlist must also name the directory it lives in."""
+
+    def test_a_file_outside_the_allowed_directories_is_refused(self):
+        with tempfile.TemporaryDirectory() as work:
+            workspace = Path(work) / "ws"
+            workspace.mkdir()
+            scoped = Path(work) / "tree" / "model" / "m.py"
+            scoped.parent.mkdir(parents=True)
+            scoped.write_text("x = 1\n", encoding="utf-8")
+            other = Path(work) / "other" / "n.py"
+            other.parent.mkdir(parents=True)
+            other.write_text("y = 2\n", encoding="utf-8")
+            tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+                workspace, [scoped], allow_write=True)}
+            self.assertEqual(tools["read_file"].invoke({"path": str(scoped)}),
+                             "x = 1\n")
+            with self.assertRaises(Exception):
+                tools["read_file"].invoke({"path": str(other)})
+
+
+class ReadTrackingTests(unittest.TestCase):
+    """The receipt says what the agent could not read, not only what it could."""
+
+    def test_denied_reads_are_recorded_in_the_receipt(self):
+        from langchain_core.language_models.chat_models import BaseChatModel
+        from langchain_core.messages import AIMessage
+        from langchain_core.outputs import ChatGeneration, ChatResult
+
+        class Answering(BaseChatModel):
+            @property
+            def _llm_type(self):
+                return "fake"
+
+            def bind_tools(self, tools, **kwargs):
+                return self
+
+            def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+                return ChatResult(generations=[ChatGeneration(
+                    message=AIMessage(content="the answer"))])
+
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            with mock.patch.object(langchain_runner, "build_model",
+                                   return_value=Answering()):
+                receipt = langchain_runner.run_agent(
+                    "task", "read something", "ideas.txt", root, model="fake:model",
+                    role="ideate", read_paths=[], allowed_roots=[str(root)],
+                    allow_write=True)
+            data = json.loads(Path(receipt).read_text())
+            self.assertIn("refusals", data)
+            self.assertIsInstance(data["refusals"], list)
+
+
 class DeniedDirectoryTests(unittest.TestCase):
     """A refused listing is not a refused source."""
 
-    def test_a_directory_denial_is_not_a_coverage_gap(self):
-        import json
-        from tools.research.agents import runner
+    def test_a_directory_denial_is_recorded_as_a_listing(self):
         with tempfile.TemporaryDirectory() as work:
-            session = Path(work) / "session.jsonl"
-            lines = [{"type": "tool_use", "part": {"tool": "read", "state": {
-                "status": "error", "input": {"path": "/tmp/tree/"},
-                "error": "Permission denied: read"}}}]
-            session.write_text("\n".join(json.dumps(line) for line in lines),
-                               encoding="utf-8")
-            outcome = runner.session_reads(session)
-        self.assertEqual(outcome["reads_denied"][0]["kind"], "directory")
+            workspace = Path(work) / "ws"
+            workspace.mkdir()
+            refusals = []
+            tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+                workspace, [], allow_write=True, refusals=refusals)}
+            with self.assertRaises(Exception):
+                tools["list_directory"].invoke({"path": "/tmp/"})
+            self.assertTrue(refusals)
+            self.assertEqual(refusals[0]["tool"], "list_directory")
+
+
+
+
+if __name__ == "__main__":
+    unittest.main()

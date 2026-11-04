@@ -150,112 +150,31 @@ def read_records(path: Path) -> list:
     return records
 
 
-def _tool_definition() -> dict:
+def tool_definition() -> dict:
+    """The description of the progress tool, for a model that is told about it.
+
+    The agent calls the tool through LangChain, so the description is what the
+    model reads; the append itself happens in-process.
+    """
     return {
         "name": TOOL_NAME,
         "description": (
-            "Append one stage record to this task's own progress file. The file is "
-            "yours alone and is only ever appended to. Send the content of the "
-            "record only: no path, no task id. Record what you have checked so "
-            "far (the goal of the check, what you read, what you observed, where "
-            "the evidence is, your short reasoning, what is still open). Append "
-            "again after every meaningful step, and append a correction when you "
-            "overturn an earlier conclusion."),
+            "Append one stage record to this task's own progress file. The file "
+            "is append-only and belongs to this task: it records the goal of the "
+            "check, what was read, what was observed, the reasoning and what is "
+            "still open. A correction is appended as its own record. Each result "
+            "is appended as soon as it exists, and the complete answer is the "
+            "last record."
+        ),
         "inputSchema": {
             "type": "object",
-            "properties": {
-                "content": {"type": "string",
-                            "description": "The stage record. No file path, no task id."},
-            },
+            "properties": {"content": {"type": "string"}},
             "required": ["content"],
             "additionalProperties": False,
         },
     }
 
 
-def _reply(message_id, result) -> None:
-    sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": message_id, "result": result}) + "\n")
-    sys.stdout.flush()
-
-
-def _error(message_id, message: str) -> None:
-    sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": message_id,
-                                  "error": {"code": -32000, "message": message}}) + "\n")
-    sys.stdout.flush()
-
-
-def serve(progress: ProgressFile) -> int:
-    """The stdio loop: one JSON-RPC message per line."""
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            message = json.loads(line)
-        except ValueError:
-            continue
-        method = message.get("method")
-        message_id = message.get("id")
-        if method == "initialize":
-            version = message.get("params", {}).get("protocolVersion")
-            _reply(message_id, {
-                "protocolVersion": version if isinstance(version, str) else "2024-11-05",
-                "capabilities": {"tools": {"listChanged": False}},
-                "serverInfo": {"name": "progress", "version": "1"},
-            })
-            continue
-        if method in ("notifications/initialized", "notifications/cancelled"):
-            continue
-        if method == "tools/list":
-            _reply(message_id, {"tools": [_tool_definition()]})
-            continue
-        if method == "tools/call":
-            params = message.get("params") or {}
-            name = params.get("name")
-            arguments = params.get("arguments") or {}
-            if name != TOOL_NAME:
-                _reply(message_id, {"content": [{"type": "text",
-                                                 "text": "unknown tool: " + str(name)}],
-                                    "isError": True})
-                continue
-            try:
-                saved = progress.append(arguments.get("content"))
-            except (ValueError, TimeoutError, RuntimeError) as exc:
-                _reply(message_id, {"content": [{"type": "text", "text": str(exc)}],
-                                    "isError": True})
-                continue
-            text = ("saved as record " + str(saved["seq"]) + " of this task's progress file")
-            remaining = saved.get("remaining_seconds")
-            if remaining is not None:
-                text += ("; " + str(int(remaining)) +
-                         " seconds left before the deadline")
-                if remaining <= progress.wrapup_margin:
-                    text += (" - the deadline is near: record your final stage now, "
-                             "a task that ends without a final record leaves its "
-                             "last questions open")
-            _reply(message_id, {"content": [{"type": "text", "text": text}],
-                                "isError": False})
-            continue
-        if message_id is not None:
-            _error(message_id, "unknown method: " + str(method))
-    return 0
-
-
-def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--file", required=True,
-                        help="the progress file of this task; the only file written")
-    parser.add_argument("--task-id", default="")
-    parser.add_argument("--deadline-epoch", type=float, default=0.0,
-                        help="the unix time after which records are refused")
-    parser.add_argument("--wrapup-margin", type=float, default=60.0,
-                        help="seconds before the deadline in which the tool asks "
-                             "the agent to record its final stage")
-    args = parser.parse_args(argv)
-    deadline = args.deadline_epoch or None
-    return serve(ProgressFile(Path(args.file), args.task_id, deadline,
-                              args.wrapup_margin))
-
-
 if __name__ == "__main__":
-    sys.exit(main())
+    import json as _json
+    print(_json.dumps(tool_definition(), indent=1))

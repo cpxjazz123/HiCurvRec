@@ -77,40 +77,29 @@ The research package never starts GPU training directly, never uses validation/t
 
 ## Agent filesystem boundary
 
-A round agent does not inherit the repository. `agents/runner.py` is the only
-place an opencode process is started, and it always starts one inside a
-bubblewrap mount namespace. Four rules hold that line:
+A round agent does not inherit the repository. The agents are LangChain agents,
+and the boundary is the tool set they are given. Four rules hold that line:
 
-1. **One entry, no switch.** `run_agent` has no parameter that turns the
-   namespace off; a missing bubblewrap fails the run closed. The Issue #117
-   surface runs under the same executor as a round.
-2. **The task names its research files.** The caller passes the read
-   allowlist and the roots it may live in; `agents/policy.py` refuses the
-   repository root, another arm's results, the Stage 3 outputs, the shared
-   opencode data, the global opencode configuration and the directory that
-   holds the other agents' answers. The agent cannot widen this: it has no
-   write tool and no way to add a mount.
-3. **Every channel obeys the same list.** The namespace holds the workspace,
-   the accepted allowlist, the opencode runtime and the system libraries, and
-   nothing else. The global opencode configuration is *not* mounted, so no MCP
-   server or plugin can read a file for the agent from the host, where the
-   namespace could not stop it. The agent runs with a private opencode database
-   (credentials and the model catalog, none of the other sessions) and an
-   environment that carries no other service's keys. The opencode `permission`
-   object is the second layer: `read` and `external_directory` are
-   deny-by-default with the same allowlist, `task` is denied, and `PWD` is the
-   workspace because opencode resolves its project from `PWD`.
+1. **One entry, no switch.** `run_agent` starts the agent in process and
+   offers no parameter that widens the boundary; there is no subprocess to
+   configure and no namespace to turn off.
+2. **The task names its research files.** The caller passes the read allowlist
+   and the roots it may live in; `agents/policy.py` refuses the repository
+   root, another arm's results, the Stage 3 outputs, the shared agent data, the
+   global agent configuration and the directory that holds the other agents'
+   answers. The agent cannot widen this: it has no way to add a tool.
+3. **Every channel obeys the same list.** `read_file` and `list_directory` read
+   only inside the workspace and the accepted allowlist, and they refuse a
+   traversal or a symlink that leaves them; `write_file` writes only inside the
+   workspace, and only for a role that may write; there is no shell. A refused
+   read is recorded in the receipt, so the evidence says what the agent could
+   not see.
 4. **A changed boundary invalidates old evidence.** Every receipt carries the
    boundary version and its fingerprint. A cached answer is reused only when
    its fingerprint matches the boundary the task would run under now, so an
    answer is never carried across a boundary change. Candidate verification is
    not an agent role: it is the framework's machine admission in
    `stage2/checks.py`, executed at launch.
-
-`tools/research/tests/test_agent_boundary.py` is the acceptance suite: the
-allowed file is readable, and another round, another agent's answer, a parent
-traversal, a symlink out of the allowlist, the global configuration and the
-shared session data are not.
 
 ## The progress channel of a sub-agent
 
@@ -452,33 +441,34 @@ agent does not cost the others their ideas, and the round's state file ends in
 the same shape. The implementation, training and evaluation phases are not
 touched by this phase.
 
-## The agent backend: LangChain (2026-11-04)
+## The agent runtime: LangChain (2026-11-04)
 
-The research agents are created with LangChain. `tools/research/agents/langchain_runner.py`
-builds the agent with `langchain.agents.create_agent` over a chat model and gives
-it tools that carry the project's boundary:
+The research agents are created with LangChain, and the OpenCode CLI path is
+gone. `tools/research/agents/langchain_runner.py` builds the agent with
+`langchain.agents.create_agent` over a chat model and gives it tools that
+carry the project's boundary:
 
 * `read_file` / `list_directory` - inside the task workspace or a policy-approved
   read root, nowhere else;
 * `write_file` - inside the task workspace only, and only for a task that may
   write;
-* `append_progress` - the same progress channel the other backend uses, so the
-  framework reads the answer the same way.
+* `append_progress` - the progress channel, which is what the framework reads
+  the answer from.
 
 The task contract does not change: the agent runs in `root/agents/<task_id>`,
 its answer is the file the caller parses, and the run leaves the same
-`execution.json` receipt (with `verified` and the boundary fingerprint). The
-boundary here is enforced by the tools, not by a bubblewrap mount namespace, so
-the backend is opt-in:
+`execution.json` receipt with `verified`, the boundary fingerprint and the reads
+that were refused. The model is `settings.AGENT_CHAT_MODEL`; a model the
+configured provider serves is used with that provider's URL and key, otherwise
+the key and the base URL come from the environment (`ANTHROPIC_API_KEY` /
+`OPENAI_API_KEY` and their base URLs). With no chat model the runtime refuses to
+run: an agent without a model is not an agent. The model is part of the boundary
+fingerprint, so an answer is only reused when it was produced by the same model.
 
-```
-AGENT_BACKEND = "opencode"   # the CLI in a mount namespace (the default)
-AGENT_BACKEND = "langchain"  # the LangChain agent with tool-enforced boundaries
-AGENT_CHAT_MODEL = "anthropic:claude-sonnet-4-5"   # or "openai:gpt-4o-mini"
-```
-
-The key and the base URL come from the environment (`ANTHROPIC_API_KEY` /
-`OPENAI_API_KEY` and their base URLs). With no chat model the backend refuses to
-run: an agent without a model is not an agent. The model of the active backend
-is part of the boundary fingerprint, so an answer is only reused when it was
-produced by the same model.
+The removed OpenCode machinery took its boundary with it: there is no mount
+namespace any more, so the tools are the boundary. `tools/research/tests/
+test_agent_boundary.py` keeps the promises the namespace kept - the allowed file
+is readable and nothing else is, a traversal or a symlink does not escape,
+another agent's answer is not readable, a refused read is recorded - and adds the
+new ones: the runner starts no subprocess at all, and the receipt names which
+reads were refused.

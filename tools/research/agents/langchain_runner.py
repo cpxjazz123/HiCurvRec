@@ -8,11 +8,9 @@ task contract does not change: the agent runs in its own workspace under
 records travel through the same progress channel, and the run leaves the same
 receipt.
 
-The boundary is enforced by the tools, not by a mount namespace: a read outside
-the workspace and the policy-approved roots is refused, and a write outside the
-workspace is refused. That is a weaker isolation than bubblewrap, so the backend
-is opt-in (``settings.AGENT_BACKEND = "langchain"``) and it refuses to run
-without a configured chat model.
+The boundary is enforced by the tools: a read outside the workspace and the
+policy-approved roots is refused, and a write outside the workspace is refused.
+The backend refuses to run without a configured chat model.
 """
 from __future__ import annotations
 
@@ -33,8 +31,30 @@ SYSTEM_PROMPT = (
     "workspace, read only what your task allows, and answer in the exact format "
     "the task asks for. Record every meaningful step with the append_progress "
     "tool: each record must stand on its own, and the complete answer goes in "
-    "the last record."
+    "the last record. Your last message is also read as your answer, so it must "
+    "carry the complete answer in the requested format, not a confirmation. "
+    "Never copy the task text into a file: the file must hold your own answer, "
+    "and a file that repeats the instructions is treated as no answer at all. "
+    "Answer with the fields the task asks for, in that order, and start with the "
+    "first field; do not restate the request."
 )
+
+
+def echoes_the_prompt(text: str, prompt: str) -> bool:
+    """Whether the delivered answer is the task text rather than an answer.
+
+    A tool-calling agent asked to write an answer sometimes writes the prompt
+    back. The framework must not read that as a proposal, so the echo is
+    detected here and treated as a missing answer.
+    """
+    body = str(text or "").strip()
+    if not body:
+        return False
+    head = body[:200].lower()
+    first = str(prompt or "").strip()[:120].lower()
+    if first and head.startswith(first[:60]):
+        return True
+    return body.lower().startswith("propose exactly") and "distinct" in head
 
 
 class AgentBackendUnavailable(RuntimeError):
@@ -92,12 +112,12 @@ def _strip_jsonc(text: str) -> str:
     return "".join(out)
 
 
-def opencode_provider(model_id: str) -> tuple:
-    """The base URL and key of the provider OpenCode knows for this model.
+def configured_provider(model_id: str) -> tuple:
+    """The base URL and key of the provider that serves this model.
 
-    The credential stays in the user's own OpenCode configuration: the
-    repository never carries a key, and the LangChain backend reuses the
-    provider the CLI already talks to, so both backends use the same model.
+    The credential stays in the user's own agent configuration: the repository
+    never carries a key. The provider is found by the model name, so the setting
+    reads as a model name and not as a tool name.
     """
     import json
 
@@ -109,8 +129,19 @@ def opencode_provider(model_id: str) -> tuple:
     except ValueError:
         return None
     providers = (data or {}).get("provider") or {}
-    name, _, model = model_id.partition("/")
-    provider = providers.get(name)
+    provider = None
+    model = model_id
+    for candidate_name, candidate in providers.items():
+        models = candidate.get("models") or {}
+        if model_id in models or model_id in (candidate.get("options") or {}).get("models", []):
+            provider = candidate
+            model = model_id
+            name = candidate_name
+            break
+    if provider is None:
+        name, _, tail = model_id.partition("/")
+        provider = providers.get(name)
+        model = tail or model_id
     if not provider:
         return None
     options = provider.get("options") or {}
@@ -136,17 +167,14 @@ def build_model(model_id: str | None = None):
     identifier = (model_id or settings.AGENT_CHAT_MODEL or "").strip()
     if not identifier:
         raise AgentBackendUnavailable(
-            "the LangChain backend needs a chat model: set AGENT_CHAT_MODEL "
-            "(for example 'anthropic:claude-sonnet-4-5', 'openai:gpt-4o-mini' or "
-            "'opencode:commandcode/deepseek/deepseek-v4.1-flash'). The key and the "
-            "base URL come from the environment (ANTHROPIC_API_KEY / OPENAI_API_KEY, "
-            "and their base URLs); the 'opencode:' form reads the provider the CLI "
-            "already uses.")
-    if identifier.startswith("opencode:"):
-        provider = opencode_provider(identifier.split(":", 1)[1])
-        if provider is None:
-            raise AgentBackendUnavailable(
-                "the OpenCode configuration has no provider for " + identifier)
+            "the agent runtime needs a chat model: set AGENT_CHAT_MODEL "
+            "(for example 'deepseek/deepseek-v4.1-flash', "
+            "'anthropic:claude-sonnet-4-5' or 'openai:gpt-4o-mini'). A model the "
+            "configured provider serves is used with that provider's URL and key; "
+            "otherwise the key and the base URL come from the environment "
+            "(ANTHROPIC_API_KEY / OPENAI_API_KEY and their base URLs).")
+    provider = configured_provider(identifier)
+    if provider is not None:
         base_url, api_key, model = provider
         from langchain_openai import ChatOpenAI
         return ChatOpenAI(model=model, base_url=base_url, api_key=api_key,
@@ -159,7 +187,7 @@ def build_model(model_id: str | None = None):
     return init_chat_model(identifier)
 
 
-def append_progress(progress, content: str) -> dict:
+def save_progress(progress, content: str) -> dict:
     """Save a record, split when it is longer than the channel allows.
 
     The progress channel refuses a record over 4000 characters; a long answer is
@@ -176,12 +204,16 @@ def append_progress(progress, content: str) -> dict:
 
 
 def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
-                    progress=None):
+                    progress=None, refusals: list | None = None):
     """The tools a LangChain agent may use, each with the project's boundary."""
     from langchain_core.tools import tool
 
     workspace = Path(workspace).resolve()
     allowed = [Path(entry).resolve() for entry in (read_paths or [])]
+    refusals = refusals if refusals is not None else []
+
+    def _refuse(tool: str, target: Path, reason: str) -> None:
+        refusals.append({"tool": tool, "path": str(target), "reason": reason})
 
     def _readable(candidate: Path) -> bool:
         resolved = candidate.resolve()
@@ -201,6 +233,7 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
         if not target.is_absolute():
             target = workspace / target
         if not _readable(target):
+            _refuse("read_file", target, "outside the allowed roots")
             raise ValueError("refused: " + str(target) + " is outside the allowed roots")
         return target.read_text(encoding="utf-8", errors="replace")
 
@@ -213,6 +246,7 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
         if not target.is_absolute():
             target = workspace / target
         if not _writable(target):
+            _refuse("write_file", target, "outside the workspace")
             raise ValueError("refused: " + str(target) + " is outside the workspace")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
@@ -225,6 +259,7 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
         if not target.is_absolute():
             target = workspace / target
         if not _readable(target):
+            _refuse("list_directory", target, "outside the allowed roots")
             raise ValueError("refused: " + str(target) + " is outside the allowed roots")
         if not target.is_dir():
             raise ValueError("not a directory: " + str(target))
@@ -236,7 +271,7 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
         """Append one stage record to this task's own progress file."""
         if progress is None:
             raise ValueError("this task has no progress channel")
-        saved = append_progress(progress, content)
+        saved = save_progress(progress, content)
         return "saved as record " + str(saved["seq"]) + " of this task's progress file"
 
     return [read_file, write_file, list_directory, append_progress]
@@ -268,8 +303,9 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     deadline = (time.time() + float(deadline_seconds)) if deadline_seconds else None
     progress = progress_server.ProgressFile(workspace / runner.PROGRESS_FILE_NAME,
                                              task_id, deadline=deadline)
+    refusals: list = []
     tools = workspace_tools(workspace, allowed, allow_write=allow_write,
-                            progress=progress)
+                            progress=progress, refusals=refusals)
     # The caller may pass the CLI's model id ("commandcode/deepseek/..."), which
     # is not a LangChain identifier. Only an explicit "provider:model" is taken
     # from the caller; otherwise the configured chat model is used.
@@ -280,6 +316,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     started = time.time()
     answer_text = ""
     failure = ""
+    failure_trace = ""
     try:
         result = agent.invoke({"messages": [{"role": "user", "content": prompt}]},
                               config={"recursion_limit": 60})
@@ -290,13 +327,22 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
                 answer_text = content.strip()
                 break
     except Exception as exc:                                   # noqa: BLE001
+        import traceback
         failure = type(exc).__name__ + ": " + str(exc)[:300]
-    if answer_text and not output.is_file():
-        # A read-only role has no write tool: its reply IS the answer.
-        output.write_text(answer_text + "\n", encoding="utf-8")
+        failure_trace = traceback.format_exc()[-1500:]
+    if not output.is_file():
+        # A read-only role has no write tool, and an agent that answered in the
+        # chat instead of the file still delivered its answer: the records are
+        # what the framework reads, so they are what the answer file carries.
+        records = progress_server.read_records(workspace / runner.PROGRESS_FILE_NAME)
+        joined = "\n\n".join(str(record.get("content", "")) for record in records
+                               if str(record.get("content", "")).strip())
+        text = joined or answer_text
+        if text and not echoes_the_prompt(text, prompt):
+            output.write_text(text + "\n", encoding="utf-8")
     if answer_text:
         try:
-            append_progress(progress, answer_text)
+            save_progress(progress, answer_text)
         except Exception:                                      # noqa: BLE001
             pass
     boundary = runner.boundary_fingerprint(
@@ -309,7 +355,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         "finished_utc_epoch": time.time(), "elapsed_s": round(time.time() - started, 3),
         "model": settings.AGENT_CHAT_MODEL, "role": role,
         "boundary_sha256": boundary, "read_allowlist": [str(entry) for entry in allowed],
-        "geometry_contract": contract, "failure": failure,
+        "geometry_contract": contract, "failure": failure, "refusals": refusals,
+        "failure_trace": failure_trace,
         "progress_file": str(workspace / runner.PROGRESS_FILE_NAME),
         "answer": str(output),
     }

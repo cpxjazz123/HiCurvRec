@@ -205,7 +205,7 @@ def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
     failure_class = ""
     try:
         receipt = run_agent(task_id, prompt, output_name, Path(root),
-                            binary=settings.AGENT_BINARY, model=settings.AGENT_MODEL,
+                            model=runner.effective_model(),
                             role=role, read_paths=read_paths,
                             allowed_roots=allowed_roots, candidate_tree=candidate_tree,
                             allow_shell=allow_shell, allow_write=allow_write,
