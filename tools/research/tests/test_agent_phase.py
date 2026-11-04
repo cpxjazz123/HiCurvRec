@@ -49,5 +49,44 @@ class IdeationPhaseTests(unittest.TestCase):
             self._phase([])
 
 
+class ProbeBudgetTests(unittest.TestCase):
+    """The probe phase spends at most the phase budget and still advances."""
+
+    def test_a_spent_budget_skips_the_measurements_and_the_phase_advances(self):
+        called = []
+        with mock.patch.object(worker, "_run_probe_subprocess",
+                               side_effect=lambda *a, **k: called.append("data")), \
+                mock.patch.object(worker, "_run_math_subprocess",
+                                  side_effect=lambda *a, **k: called.append("math")), \
+                mock.patch.object(worker.literature_module, "run_literature",
+                                  side_effect=lambda *a, **k: called.append("literature")):
+            outcomes = worker.run_probes(Path("/tmp"), [{"idea_id": "a"}],
+                                         repo=Path("/tmp"), deadline=0.0)
+        self.assertEqual(called, [], "nothing may run once the budget is spent")
+        self.assertEqual(outcomes["a"]["probe"]["status"], "NOT_RUN")
+        self.assertIn("budget", outcomes["a"]["probe"]["reason"])
+
+
+class ReviewerMinimumTests(unittest.TestCase):
+    """One reviewer that answered is enough to decide."""
+
+    def test_one_answering_reviewer_is_enough(self):
+        answers = []
+
+        def fake_rank(root, task_id, prompt):
+            if task_id != "scoring_1":
+                raise RuntimeError("the reviewer ran out of time")
+            answers.append(task_id)
+            return {"ranking": [{"idea_id": "a", "position": 1, "reason": "because"}]}
+
+        with mock.patch.object(worker, "_rank_with_retry", side_effect=fake_rank), \
+                mock.patch.object(worker, "_run_agents_concurrently",
+                                  side_effect=worker._run_agents_concurrently):
+            outcome = worker.run_scoring(Path("/tmp"), [{"idea_id": "a"}],
+                                         repo=Path("/tmp"), state={})
+        self.assertTrue(answers)
+        self.assertEqual(len(outcome["reports"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

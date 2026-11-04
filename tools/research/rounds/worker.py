@@ -520,7 +520,8 @@ def _run_math_subprocess(idea: dict, *, seed: int) -> dict:
                 "reason": "the checks produced no readable report"}
 
 
-def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None) -> dict:
+def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None,
+               deadline: float | None = None) -> dict:
     """The pre-score evidence probe of every proposal.
 
     Three bounded measurements per idea: the train-only behaviour statistics of
@@ -543,21 +544,43 @@ def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None) -
         """
         identifier = idea["idea_id"]
 
+        def _remaining() -> float | None:
+            if deadline is None:
+                return None
+            return deadline - time.monotonic()
+
+        def _spent() -> dict:
+            return {"status": "NOT_RUN", "idea_id": identifier, "checks": [],
+                    "reason": "the phase budget was spent before this measurement ran"}
+
         def data():
+            remaining = _remaining()
+            if remaining is not None and remaining <= 0:
+                return _spent()
             report = _run_probe_subprocess(
-                idea, repo=repo, budget=probes_module.DEFAULT_BUDGET_SECONDS,
+                idea, repo=repo,
+                budget=(min(probes_module.DEFAULT_BUDGET_SECONDS, remaining)
+                        if remaining is not None else probes_module.DEFAULT_BUDGET_SECONDS),
                 max_users=probes_module.DEFAULT_MAX_USERS,
                 seed=probes_module.DEFAULT_SEED)
             report["sha256"] = _probe_digest(report)
             return report
 
         def math():
+            remaining = _remaining()
+            if remaining is not None and remaining <= 0:
+                return _spent()
             report = _run_math_subprocess(idea, seed=math_checks_module.SEED)
             report["sha256"] = _probe_digest(report)
             return report
 
         def literature():
-            report = literature_module.run_literature(idea, cache_dir=cache_dir)
+            remaining = _remaining()
+            if remaining is not None and remaining <= 0:
+                return _spent()
+            report = literature_module.run_literature(
+                idea, cache_dir=cache_dir,
+                budget_seconds=(min(60.0, remaining) if remaining is not None else 60.0))
             report["sha256"] = _probe_digest(report)
             return report
 
@@ -636,7 +659,8 @@ def phase_probe(root: Path, round_id: str, *, log=print) -> dict:
     ideas = state["ideas"]
     state["step"] = "probe"
     pipeline_module.save_state(directory, state)
-    outcomes = run_probes(directory, ideas, repo=Path(root))
+    outcomes = run_probes(directory, ideas, repo=Path(root),
+                          deadline=time.monotonic() + settings.AGENT_TIMEOUT_SECONDS)
     bundles = {}
     for idea in ideas:
         identifier = idea["idea_id"]
@@ -769,10 +793,10 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None,
 HARD_OBJECTION_TERMS = ("cancel", "identity", "leak", "dimension", "degenerat",
                         "counterexample", "equivalence", "invariant")
 
-#: How many reviewers a matrix needs. The selection rule asks for two
-#: reviewers above the threshold, so two reviews are enough to decide; one is
-#: not, because a single reviewer cannot show a disagreement.
-MIN_SCORERS_FOR_A_MATRIX = 2
+#: How many reviewers a matrix needs. One review that answers is enough to
+#: decide; the others may be out of time, and a round is not held hostage by the
+#: reviewer that did not finish.
+MIN_SCORERS_FOR_A_MATRIX = 1
 
 
 def _hard_objection(report: dict) -> tuple:
