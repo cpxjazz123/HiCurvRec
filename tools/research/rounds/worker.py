@@ -1163,7 +1163,10 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
             record["implemented_by"] = "main_agent"
             state.setdefault("implementations", []).append(record)
             pipeline_module.save_state(directory, state)
-            log("%s: candidate tree prepared for the main agent" % idea["idea_id"])
+            log("%s: candidate tree prepared for the main agent; it must declare "
+                "its equations in reference_contract.json - registration is "
+                "refused until the framework rebuilds them and they agree"
+                % idea["idea_id"])
         except baseline_module.BaselineError as exc:
             # The baseline is the one permitted source: if it is missing or
             # unreadable the candidate is not built from anything else.

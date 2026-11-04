@@ -391,7 +391,12 @@ def run_all(tree: Path | str) -> dict:
               check_geometry_contract(tree), check_entry(tree),
               check_identifier(tree), check_four_rank(tree),
               check_reference_agreement(tree)]
-    # A tree that declares no reference contract is recorded, not passed: the
-    # reason stays in the report, and a declared contract that disagrees fails.
-    passed = all(check["status"] in ("PASS", "NOT_APPLICABLE") for check in checks)
-    return {"tree": str(tree), "passed": passed, "checks": checks}
+    # The reference contract is reported separately: a tree without one keeps
+    # its reason in the report and is NOT admissible, while the four frozen
+    # engineering categories stay what "passed" means (the baseline short flow
+    # predates the contract and must remain runnable).
+    reference = checks[-1]
+    passed = all(check["status"] == "PASS" for check in checks[:-1])
+    admissible = bool(passed and reference.get("status") == "PASS")
+    return {"tree": str(tree), "passed": passed, "admissible": admissible,
+            "checks": checks}

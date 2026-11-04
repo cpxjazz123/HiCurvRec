@@ -7,7 +7,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, patch as mock_patch
 
 from tools.research.agents import policy
 from tools.research.rounds import ideas as ideas_module
@@ -342,6 +342,48 @@ class VerdictSeverityTests(unittest.TestCase):
 
 
 
+class ReferenceContractGateTests(unittest.TestCase):
+    """Registration is refused until the declared formula agrees with the code."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.directory = pipeline_module.new_round(self.root, "round_ref", objective="o")
+        self.tree = self.root / "tree"
+        self.tree.mkdir()
+        (self.tree / "model.py").write_text("x = 1\n")
+        self.state = pipeline_module.load_state(self.directory)
+        self.state["implementations"] = [pipeline_module.implementation_record(
+            {"idea_id": "a"}, {"changed_files": ["model.py"]}, self.tree)]
+
+    def _register(self, verdict):
+        with patch.object(pipeline_module, "reference_verdict",
+                          return_value=verdict), \
+                patch("tools.research.rounds.baseline.guard_output_paths",
+                      return_value={"arm": "a"}):
+            return pipeline_module.register_implementation(
+                self.state, "a", {"changed_files": ["model.py"]})
+
+    def test_a_tree_without_a_contract_is_refused(self):
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "NOT_APPLICABLE",
+                            "detail": "the tree declares no reference_contract.json"})
+        self.assertIn("reference_contract.json", str(raised.exception))
+
+    def test_a_disagreeing_formula_is_refused(self):
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "FAIL", "detail": "Tensor-likes are not close!"})
+        self.assertIn("not close", str(raised.exception))
+
+    def test_an_agreeing_formula_is_recorded_with_the_implementation(self):
+        state = self._register({"status": "PASS",
+                                "detail": "values 1.1e-16, gradients 1.8e-15"})
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "implemented")
+        self.assertEqual(record["reference_agreement"]["status"], "PASS")
+
+
 class PlainTextContractTests(unittest.TestCase):
     """The agents answer in plain text; the framework reads it back."""
 
@@ -475,6 +517,48 @@ class VerdictSeverityTests(unittest.TestCase):
 
 
 
+
+
+class ReferenceContractGateTests(unittest.TestCase):
+    """Registration is refused until the declared formula agrees with the code."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.directory = pipeline_module.new_round(self.root, "round_ref", objective="o")
+        self.tree = self.root / "tree"
+        self.tree.mkdir()
+        (self.tree / "model.py").write_text("x = 1\n")
+        self.state = pipeline_module.load_state(self.directory)
+        self.state["implementations"] = [pipeline_module.implementation_record(
+            {"idea_id": "a"}, {"changed_files": ["model.py"]}, self.tree)]
+
+    def _register(self, verdict):
+        with patch.object(pipeline_module, "reference_verdict",
+                          return_value=verdict), \
+                patch("tools.research.rounds.baseline.guard_output_paths",
+                      return_value={"arm": "a"}):
+            return pipeline_module.register_implementation(
+                self.state, "a", {"changed_files": ["model.py"]})
+
+    def test_a_tree_without_a_contract_is_refused(self):
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "NOT_APPLICABLE",
+                            "detail": "the tree declares no reference_contract.json"})
+        self.assertIn("reference_contract.json", str(raised.exception))
+
+    def test_a_disagreeing_formula_is_refused(self):
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "FAIL", "detail": "Tensor-likes are not close!"})
+        self.assertIn("not close", str(raised.exception))
+
+    def test_an_agreeing_formula_is_recorded_with_the_implementation(self):
+        state = self._register({"status": "PASS",
+                                "detail": "values 1.1e-16, gradients 1.8e-15"})
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "implemented")
+        self.assertEqual(record["reference_agreement"]["status"], "PASS")
 
 
 class PlainTextContractTests(unittest.TestCase):

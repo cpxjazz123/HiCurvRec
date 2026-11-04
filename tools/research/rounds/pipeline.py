@@ -304,6 +304,16 @@ def _implementation(state: dict, implementation_id: str) -> dict:
     raise RoundError("unknown implementation: " + implementation_id)
 
 
+def reference_verdict(tree: Path) -> dict:
+    """The formula reference of one tree, as the conformance check reports it.
+
+    Kept behind a function so the round's tests can state the verdict they want
+    without a torch interpreter; the real check lives in the framework.
+    """
+    from ..stage2 import checks as stage2_checks
+    return stage2_checks.check_reference_agreement(tree)
+
+
 def register_implementation(state: dict, implementation_id: str, report: dict) -> dict:
     """Record the implementation the MAIN AGENT wrote.
 
@@ -333,6 +343,18 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
     except baseline_module.BaselineError as exc:
         raise RoundError("the candidate writes outside its own result directory: " +
                          str(exc)) from exc
+    # The mechanism declares its continuous surface in reference_contract.json
+    # and the framework rebuilds it. The registration is refused until the
+    # declared formula and the code agree: the agent that wrote the mechanism
+    # does not also get to write the only statement of what it computes.
+    verdict = reference_verdict(tree)
+    record["reference_agreement"] = verdict
+    if verdict.get("status") != "PASS":
+        raise RoundError(
+            "the formula reference is not satisfied (" + str(verdict.get("status")) +
+            "): " + str(verdict.get("detail"))[:300] +
+            " - declare the mechanism's equations in reference_contract.json and make "
+            "the code agree with them")
     if record.get("source_digest"):
         record["revision"] = int(record.get("revision", 0)) + 1
     record["changed_files"] = list(report.get("changed_files", []))
