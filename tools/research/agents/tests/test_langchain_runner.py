@@ -72,6 +72,17 @@ class BoundaryTests(unittest.TestCase):
         self.assertTrue((self.workspace / "answer.txt").is_file())
         self.assertIn("answer.txt", result)
 
+    def test_a_long_record_is_split_into_several(self):
+        """The channel refuses a record over 4000 characters."""
+        from tools.research.agents import progress_server
+        progress = progress_server.ProgressFile(
+            self.workspace / runner.PROGRESS_FILE_NAME, "task")
+        langchain_runner.append_progress(progress, "x" * 9000)
+        records = progress_server.read_records(self.workspace / runner.PROGRESS_FILE_NAME)
+        self.assertGreaterEqual(len(records), 3)
+        self.assertTrue(all(len(str(record.get("content", ""))) <= 4000
+                        for record in records))
+
     def test_a_read_only_task_has_no_write(self):
         tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
             self.workspace, [self.allowed], allow_write=False)}

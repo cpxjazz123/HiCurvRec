@@ -24,6 +24,10 @@ from pathlib import Path
 from tools.research import settings
 from tools.research.agents import policy, progress_server, runner
 
+#: The progress channel refuses a record longer than this; a long answer is
+#: saved as several records, which the reader joins when it assembles an answer.
+PROGRESS_CHUNK = 3500
+
 SYSTEM_PROMPT = (
     "You are a research agent of a scientific programme. Work inside your own "
     "workspace, read only what your task allows, and answer in the exact format "
@@ -112,10 +116,16 @@ def opencode_provider(model_id: str) -> tuple:
     options = provider.get("options") or {}
     base_url = options.get("baseURL")
     api_key = options.get("apiKey")
+    import os
     if isinstance(api_key, str) and api_key.startswith("{env:") and api_key.endswith("}"):
         # The configuration names the environment variable that holds the key.
-        import os
         api_key = os.environ.get(api_key[5:-1], "")
+    if not api_key:
+        # The CLI's own credential file sits next to its configuration; it is the
+        # same key the CLI sends, and it is never copied into the repository.
+        candidate = config.parent / (name + ".key")
+        if candidate.is_file():
+            api_key = candidate.read_text(encoding="utf-8").strip()
     if not base_url or not api_key:
         return None
     return base_url, api_key, model
@@ -140,9 +150,29 @@ def build_model(model_id: str | None = None):
         base_url, api_key, model = provider
         from langchain_openai import ChatOpenAI
         return ChatOpenAI(model=model, base_url=base_url, api_key=api_key,
-                          temperature=0.2, max_tokens=4096)
+                          temperature=0.3, max_tokens=8192,
+                          # The provider answers with brotli, and the installed
+                          # brotli/httpx pair cannot decode it; asking for gzip
+                          # keeps the response readable.
+                          default_headers={"Accept-Encoding": "gzip, deflate"})
     from langchain.chat_models import init_chat_model
     return init_chat_model(identifier)
+
+
+def append_progress(progress, content: str) -> dict:
+    """Save a record, split when it is longer than the channel allows.
+
+    The progress channel refuses a record over 4000 characters; a long answer is
+    saved as several records instead of being lost, and the reader joins them
+    when it assembles an answer.
+    """
+    text = str(content)
+    if len(text) <= PROGRESS_CHUNK:
+        return progress.append(text)
+    saved = progress.append(text[:PROGRESS_CHUNK])
+    for start in range(PROGRESS_CHUNK, len(text), PROGRESS_CHUNK):
+        saved = progress.append(text[start:start + PROGRESS_CHUNK])
+    return saved
 
 
 def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
@@ -206,7 +236,7 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
         """Append one stage record to this task's own progress file."""
         if progress is None:
             raise ValueError("this task has no progress channel")
-        saved = progress.append(content)
+        saved = append_progress(progress, content)
         return "saved as record " + str(saved["seq"]) + " of this task's progress file"
 
     return [read_file, write_file, list_directory, append_progress]
@@ -266,7 +296,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         output.write_text(answer_text + "\n", encoding="utf-8")
     if answer_text:
         try:
-            progress.append(answer_text)
+            append_progress(progress, answer_text)
         except Exception:                                      # noqa: BLE001
             pass
     boundary = runner.boundary_fingerprint(
