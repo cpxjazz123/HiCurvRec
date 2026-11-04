@@ -1,0 +1,140 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "theta1_1_0",
+  "theta1_1_1",
+  "theta1_2_0",
+  "theta1_2_1",
+  "theta2_1_0",
+  "theta2_1_1",
+  "theta2_2_0",
+  "theta2_2_1",
+  "s",
+  "v_pi1_0",
+  "v_pi1_1",
+  "v_pi2_0",
+  "v_pi2_1"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_1_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_1_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_2_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_2_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "s",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 1.0
+  },
+  {
+   "name": "v_pi_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "v_pi_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  }
+ ],
+ "statements": [
+  "n1 = sqrt(v_pi1_0**2 + v_pi1_1**2)",
+  "m10 = cosh(n1)",
+  "m11 = sinh(n1)*v_pi1_0/n1",
+  "m12 = sinh(n1)*v_pi1_1/n1",
+  "r10 = 0",
+  "r11 = z0/s",
+  "r12 = z1/s",
+  "u1_1 = (v_pi1_0*theta1_1_0 + v_pi1_1*theta1_1_1)*sinh(n1)/(n1*(1 + m10))",
+  "p1_1_0 = u1_1*(1 + m10)",
+  "p1_1_1 = theta1_1_0 + u1_1*m11",
+  "p1_1_2 = theta1_1_1 + u1_1*m12",
+  "c1_1 = p1_1_0/(1 + m10)",
+  "W1_1_0 = p1_1_0 - c1_1*(1 + m10)",
+  "W1_1_1 = p1_1_1 - c1_1*m11",
+  "W1_1_2 = p1_1_2 - c1_1*m12",
+  "d2_1_1 = (r10 - W1_1_0)**2 - (r11 - W1_1_1)**2 - (r12 - W1_1_2)**2",
+  "u1_2 = (v_pi1_0*theta1_2_0 + v_pi1_1*theta1_2_1)*sinh(n1)/(n1*(1 + m10))",
+  "p1_2_0 = u1_2*(1 + m10)",
+  "p1_2_1 = theta1_2_0 + u1_2*m11",
+  "p1_2_2 = theta1_2_1 + u1_2*m12",
+  "c1_2 = p1_2_0/(1 + m10)",
+  "W1_2_0 = p1_2_0 - c1_2*(1 + m10)",
+  "W1_2_1 = p1_2_1 - c1_2*m11",
+  "W1_2_2 = p1_2_2 - c1_2*m12",
+  "d2_1_2 = (r10 - W1_2_0)**2 - (r11 - W1_2_1)**2 - (r12 - W1_2_2)**2",
+  "W1c_0 = Piecewise((W1_1_0, d2_1_1 <= d2_1_2), (W1_2_0, True))",
+  "W1c_1 = Piecewise((W1_1_1, d2_1_1 <= d2_1_2), (W1_2_1, True))",
+  "W1c_2 = Piecewise((W1_1_2, d2_1_1 <= d2_1_2), (W1_2_2, True))",
+  "loss1 = Min(d2_1_1, d2_1_2)",
+  "e0 = r10 - W1c_0",
+  "e1 = r11 - W1c_1",
+  "e2 = r12 - W1c_2",
+  "cf1 = (-W1c_0*e0 + W1c_1*e1 + W1c_2*e2)/(1 + W1c_0)",
+  "r20 = e0 + cf1*(1 + W1c_0)",
+  "r21 = e1 + cf1*W1c_1",
+  "r22 = e2 + cf1*W1c_2",
+  "n2 = sqrt(v_pi2_0**2 + v_pi2_1**2)",
+  "m20 = cosh(n2)",
+  "m21 = sinh(n2)*v_pi2_0/n2",
+  "m22 = sinh(n2)*v_pi2_1/n2",
+  "u2_1 = (v_pi2_0*theta2_1_0 + v_pi2_1*theta2_1_1)*sinh(n2)/(n2*(1 + m20))",
+  "p2_1_0 = u2_1*(1 + m20)",
+  "p2_1_1 = theta2_1_0 + u2_1*m21",
+  "p2_1_2 = theta2_1_1 + u2_1*m22",
+  "c2_1 = (-W1c_0*p2_1_0 + W1c_1*p2_1_1 + W1c_2*p2_1_2)/(1 - (-m20*W1c_0 + m21*W1c_1 + m22*W1c_2))",
+  "W2_1_0 = p2_1_0 + c2_1*(m20 + W1c_0)",
+  "W2_1_1 = p2_1_1 + c2_1*(m21 + W1c_1)",
+  "W2_1_2 = p2_1_2 + c2_1*(m22 + W1c_2)",
+  "d2_2_1 = (r20 - W2_1_0)**2 - (r21 - W2_1_1)**2 - (r22 - W2_1_2)**2",
+  "u2_2 = (v_pi2_0*theta2_2_0 + v_pi2_1*theta2_2_1)*sinh(n2)/(n2*(1 + m20))",
+  "p2_2_0 = u2_2*(1 + m20)",
+  "p2_2_1 = theta2_2_0 + u2_2*m21",
+  "p2_2_2 = theta2_2_1 + u2_2*m22",
+  "c2_2 = (-W1c_0*p2_2_0 + W1c_1*p2_2_1 + W1c_2*p2_2_2)/(1 - (-m20*W1c_0 + m21*W1c_1 + m22*W1c_2))",
+  "W2_2_0 = p2_2_0 + c2_2*(m20 + W1c_0)",
+  "W2_2_1 = p2_2_1 + c2_2*(m21 + W1c_1)",
+  "W2_2_2 = p2_2_2 + c2_2*(m22 + W1c_2)",
+  "d2_2_2 = (r20 - W2_2_0)**2 - (r21 - W2_2_1)**2 - (r22 - W2_2_2)**2",
+  "loss2 = Min(d2_2_1, d2_2_2)",
+  "loss = loss1 + loss2"
+ ],
+ "output": "loss",
+ "code": "import torch\n\n\ndef _as2(t):\n    t = torch.as_tensor(t, dtype=torch.float64)\n    if t.dim() == 0:\n        t = t.reshape(1, 1)\n    elif t.dim() == 1:\n        t = t.reshape(1, -1)\n    return t\n\n\ndef _dotL(x, y):\n    return -x[..., 0] * y[..., 0] + (x[..., 1:] * y[..., 1:]).sum(dim=-1)\n\n\ndef _pt(u, w, v):\n    num = _dotL(w, v).unsqueeze(-1)\n    den = (1.0 - _dotL(u, w)).unsqueeze(-1)\n    return v + (num / den) * (u + w)\n\n\ndef _exp_o(v):\n    n2 = (v * v).sum(dim=-1, keepdim=True)\n    n = torch.sqrt(n2).clamp_min(1e-15)\n    return torch.cat([torch.cosh(n), torch.sinh(n) * v / n], dim=-1)\n\n\ndef compute(z, theta_1_1, theta_1_2, theta_2_1, theta_2_2, s, v_pi_1, v_pi_2):\n    Z = _as2(z)\n    B = Z.shape[0]\n    s_t = torch.as_tensor(s, dtype=torch.float64).reshape(())\n    r = torch.cat([torch.zeros(B, 1, dtype=torch.float64), Z / s_t], dim=-1)\n    o = torch.zeros(B, 3, dtype=torch.float64)\n    o[:, 0] = 1.0\n    a = o.clone()\n    total = torch.zeros(B, dtype=torch.float64)\n    sign = torch.tensor([1.0, -1.0, -1.0], dtype=torch.float64)\n    thetas = [[_as2(theta_1_1).expand(B, 2), _as2(theta_1_2).expand(B, 2)],\n              [_as2(theta_2_1).expand(B, 2), _as2(theta_2_2).expand(B, 2)]]\n    vpis = [_as2(v_pi_1).expand(B, 2), _as2(v_pi_2).expand(B, 2)]\n    for level in range(2):\n        m = _exp_o(vpis[level])\n        Ws = []\n        for k in range(2):\n            th = torch.cat([torch.zeros(B, 1, dtype=torch.float64), thetas[level][k]], dim=-1)\n            p = _pt(o, m, th)\n            Ws.append(_pt(m, a, p))\n        d0 = ((r - Ws[0]) ** 2 * sign).sum(dim=-1)\n        d1 = ((r - Ws[1]) ** 2 * sign).sum(dim=-1)\n        take0 = d0 <= d1\n        W = torch.where(take0.unsqueeze(-1), Ws[0], Ws[1])\n        total = total + torch.where(take0, d0, d1)\n        e = r - W\n        r = _pt(a, W, e)\n        a = W\n    return total\n",
+ "excluded": [
+  "the assignment k_l = argmin_k d2[b,k]: a discrete argmin, non-differentiable, carried only through the Piecewise selection of the chosen codeword",
+  "the anchor table v_pi = sum_j t_pi(j) z~_j with row-normalised transition mass, its 99th-percentile norm clip, and the <5-items / no-outgoing-mass fallback to v_pi = 0: the table is an input here (v_pi_1, v_pi_2), not differentiated",
+  "s = RMS of the encoder outputs measured once on the first training minibatch: a frozen scalar input, no gradient",
+  "the codebook/commitment VQ terms and the reconstruction decoder: only the per-level squared-separation (transport) loss is returned",
+  "general L and K (number of levels, codewords) and general latent width D: specialised here to L=2, K=2, D=2"
+ ]
+}

@@ -1,0 +1,128 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "t110",
+  "t111",
+  "t120",
+  "t121",
+  "t210",
+  "t211",
+  "t220",
+  "t221",
+  "s",
+  "M10",
+  "M11",
+  "M20",
+  "M21"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": null
+  },
+  {
+   "name": "theta_1_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": null
+  },
+  {
+   "name": "theta_1_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": null
+  },
+  {
+   "name": "theta_2_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": null
+  },
+  {
+   "name": "theta_2_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": null
+  },
+  {
+   "name": "s",
+   "width": 0,
+   "radius": 0.0,
+   "scalar": 1.0
+  },
+  {
+   "name": "M_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": null
+  },
+  {
+   "name": "M_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": null
+  }
+ ],
+ "statements": [
+  "r0 = z0/s",
+  "r1 = z1/s",
+  "d11 = (r0 - t110)**2 + (r1 - t111)**2",
+  "d12 = (r0 - t120)**2 + (r1 - t121)**2",
+  "sel1 = Piecewise((1, d11 <= d12), (0, True))",
+  "c0 = sel1*t110 + (1 - sel1)*t120",
+  "c1 = sel1*t111 + (1 - sel1)*t121",
+  "nc = sqrt(c0**2 + c1**2)",
+  "shc = sinh(nc)/nc",
+  "a0 = cosh(nc)",
+  "a1 = shc*c0",
+  "a2 = shc*c1",
+  "e1 = r0 - c0",
+  "e2 = r1 - c1",
+  "kk = (a1*e1 + a2*e2)/(1 + a0)",
+  "ra0 = a1*e1 + a2*e2",
+  "ra1 = e1 + kk*a1",
+  "ra2 = e2 + kk*a2",
+  "v0 = sel1*M10 + (1 - sel1)*M20",
+  "v1 = sel1*M11 + (1 - sel1)*M21",
+  "nv = sqrt(v0**2 + v1**2)",
+  "shv = sinh(nv)/nv",
+  "m0 = cosh(nv)",
+  "m1 = shv*v0",
+  "m2 = shv*v1",
+  "q1 = m1*t210 + m2*t211",
+  "p10 = q1",
+  "p11 = t210 + q1/(1 + m0)*m1",
+  "p12 = t211 + q1/(1 + m0)*m2",
+  "h = -m0*a0 + m1*a1 + m2*a2",
+  "gh1 = -a0*p10 + a1*p11 + a2*p12",
+  "omh = 1 - h",
+  "W10 = p10 + gh1/omh*(m0 + a0)",
+  "W11 = p11 + gh1/omh*(m1 + a1)",
+  "W12 = p12 + gh1/omh*(m2 + a2)",
+  "q2 = m1*t220 + m2*t221",
+  "p20 = q2",
+  "p21 = t220 + q2/(1 + m0)*m1",
+  "p22 = t221 + q2/(1 + m0)*m2",
+  "gh2 = -a0*p20 + a1*p21 + a2*p22",
+  "W20 = p20 + gh2/omh*(m0 + a0)",
+  "W21 = p21 + gh2/omh*(m1 + a1)",
+  "W22 = p22 + gh2/omh*(m2 + a2)",
+  "d21 = -(ra0 - W10)**2 + (ra1 - W11)**2 + (ra2 - W12)**2",
+  "d22 = -(ra0 - W20)**2 + (ra1 - W21)**2 + (ra2 - W22)**2",
+  "sel2 = Piecewise((1, d21 <= d22), (0, True))",
+  "d1s = sel1*d11 + (1 - sel1)*d12",
+  "loss = d1s + sel2*d21 + (1 - sel2)*d22"
+ ],
+ "output": "loss",
+ "code": "import torch\n\n\ndef compute(z, theta_1_1, theta_1_2, theta_2_1, theta_2_2, s, M_1, M_2):\n    z = torch.as_tensor(z)\n    dtype = z.dtype if z.is_floating_point() else torch.get_default_dtype()\n\n    def T(x):\n        return torch.as_tensor(x, dtype=dtype)\n\n    z = T(z)\n    s = T(s)\n    t11 = T(theta_1_1)\n    t12 = T(theta_1_2)\n    t21 = T(theta_2_1)\n    t22 = T(theta_2_2)\n    M1 = T(M_1)\n    M2 = T(M_2)\n\n    z0 = z[..., 0]\n    z1 = z[..., 1]\n    r0 = z0 / s\n    r1 = z1 / s\n\n    t110 = t11[..., 0]\n    t111 = t11[..., 1]\n    t120 = t12[..., 0]\n    t121 = t12[..., 1]\n    t210 = t21[..., 0]\n    t211 = t21[..., 1]\n    t220 = t22[..., 0]\n    t221 = t22[..., 1]\n\n    # level 1: v_pi = 0 so m = o and a = o, both parallel-transport legs are the identity\n    d11 = (r0 - t110) ** 2 + (r1 - t111) ** 2\n    d12 = (r0 - t120) ** 2 + (r1 - t121) ** 2\n    one = torch.ones_like(r0)\n    sel1 = (d11 <= d12).to(dtype)\n    c0 = sel1 * t110 + (one - sel1) * t120\n    c1 = sel1 * t111 + (one - sel1) * t121\n\n    # a = exp_o(theta_chosen) = (cosh|theta|, sinh|theta| theta/|theta|)\n    nc = torch.sqrt(c0 ** 2 + c1 ** 2)\n    shc = torch.where(nc > 0, torch.sinh(nc) / torch.where(nc > 0, nc, one), one)\n    a0 = torch.cosh(nc)\n    a1 = shc * c0\n    a2 = shc * c1\n\n    # e = r - theta_chosen (tangent at o, projection identity); r <- PT_{o->a}(e)\n    e1 = r0 - c0\n    e2 = r1 - c1\n    kk = (a1 * e1 + a2 * e2) / (1 + a0)\n    ra0 = a1 * e1 + a2 * e2\n    ra1 = e1 + kk * a1\n    ra2 = e2 + kk * a2\n\n    # level 2 anchor of the already-known prefix (k_1,) and m = exp_o(v_pi)\n    v0 = sel1 * M1[..., 0] + (one - sel1) * M2[..., 0]\n    v1 = sel1 * M1[..., 1] + (one - sel1) * M2[..., 1]\n    nv = torch.sqrt(v0 ** 2 + v1 ** 2)\n    shv = torch.where(nv > 0, torch.sinh(nv) / torch.where(nv > 0, nv, one), one)\n    m0 = torch.cosh(nv)\n    m1 = shv * v0\n    m2 = shv * v1\n\n    h = -m0 * a0 + m1 * a1 + m2 * a2\n    omh = 1 - h\n\n    # level 2, code 1: W = PT_{m->a}(PT_{o->m}(theta_hat))\n    q1 = m1 * t210 + m2 * t211\n    p10 = q1\n    p11 = t210 + q1 / (1 + m0) * m1\n    p12 = t211 + q1 / (1 + m0) * m2\n    gh1 = -a0 * p10 + a1 * p11 + a2 * p12\n    W10 = p10 + gh1 / omh * (m0 + a0)\n    W11 = p11 + gh1 / omh * (m1 + a1)\n    W12 = p12 + gh1 / omh * (m2 + a2)\n\n    # level 2, code 2\n    q2 = m1 * t220 + m2 * t221\n    p20 = q2\n    p21 = t220 + q2 / (1 + m0) * m1\n    p22 = t221 + q2 / (1 + m0) * m2\n    gh2 = -a0 * p20 + a1 * p21 + a2 * p22\n    W20 = p20 + gh2 / omh * (m0 + a0)\n    W21 = p21 + gh2 / omh * (m1 + a1)\n    W22 = p22 + gh2 / omh * (m2 + a2)\n\n    # squared Minkowski distances <r - W, r - W>_L, chosen code per level (lowest index wins)\n    d21 = -(ra0 - W10) ** 2 + (ra1 - W11) ** 2 + (ra2 - W12) ** 2\n    d22 = -(ra0 - W20) ** 2 + (ra1 - W21) ** 2 + (ra2 - W22) ** 2\n    sel2 = (d21 <= d22).to(dtype)\n    d1s = sel1 * d11 + (one - sel1) * d12\n\n    loss = d1s + sel2 * d21 + (one - sel2) * d22\n    return loss.reshape(-1)\n",
+ "excluded": [
+  "the reconstruction term s*log_o(a) through the unchanged decoder: unchanged by the mechanism, so not part of loss",
+  "the beta * commitment term: beta and the commitment formula are unchanged",
+  "the argmin assignments k_l (and the token matrix): non-differentiable indices, folded into the Piecewise selection of the chosen squared distance",
+  "the anchor-table build and refresh (no-grad pass every 25 epochs, row-normalised training transition mass, 99th-percentile norm clip, prefixes with fewer than 5 items or no outgoing mass -> v_pi = 0): a frozen table, carried here as the width-2 args M_1 (prefix (1,)) and M_2 (prefix (2,))",
+  "the frozen RMS scale s is an input, not recomputed"
+ ]
+}

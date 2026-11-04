@@ -1,0 +1,141 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "t110",
+  "t111",
+  "t120",
+  "t121",
+  "t210",
+  "t211",
+  "t220",
+  "t221",
+  "s",
+  "anch10",
+  "anch11",
+  "anch20",
+  "anch21"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 1.0,
+   "scalar": null
+  },
+  {
+   "name": "theta_1_1",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "theta_1_2",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "theta_2_1",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "theta_2_2",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "s",
+   "width": 0,
+   "radius": 1.0,
+   "scalar": 1.0
+  },
+  {
+   "name": "anch1",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "anch2",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  }
+ ],
+ "statements": [
+  "r0 = z0/s",
+  "r1 = z1/s",
+  "d11 = (r0 - t110)**2 + (r1 - t111)**2",
+  "d12 = (r0 - t120)**2 + (r1 - t121)**2",
+  "u1 = Piecewise((0, d11 <= d12), (1, True))",
+  "w1y = t110 + u1*(t120 - t110)",
+  "w1z = t111 + u1*(t121 - t111)",
+  "e1y = r0 - w1y",
+  "e1z = r1 - w1z",
+  "loss1 = e1y**2 + e1z**2",
+  "c1 = sqrt(w1y**2 + w1z**2)",
+  "ch1 = (exp(c1) + exp(-c1))/2",
+  "c1s = Piecewise((c1, c1 > 1e-12), (1, True))",
+  "rh1 = (exp(c1) - exp(-c1))/(2*c1s)",
+  "ay = rh1*w1y",
+  "az = rh1*w1z",
+  "sae = ay*e1y + az*e1z",
+  "f1 = sae/(1 + ch1)",
+  "r2x = sae",
+  "r2y = e1y + f1*ay",
+  "r2z = e1z + f1*az",
+  "vy = anch10 + u1*(anch20 - anch10)",
+  "vz = anch11 + u1*(anch21 - anch11)",
+  "dv = sqrt(vy**2 + vz**2)",
+  "ch2 = (exp(dv) + exp(-dv))/2",
+  "dvs = Piecewise((dv, dv > 1e-12), (1, True))",
+  "rh2 = (exp(dv) - exp(-dv))/(2*dvs)",
+  "m0 = ch2",
+  "my = rh2*vy",
+  "mz = rh2*vz",
+  "gm = 1/(1 + m0)",
+  "den = 1 + ch2*ch1 - my*ay - mz*az",
+  "q1 = my*t210 + mz*t211",
+  "x10 = q1",
+  "x1y = t210 + q1*gm*my",
+  "x1z = t211 + q1*gm*mz",
+  "h1 = (-ch1*x10 + ay*x1y + az*x1z)/den",
+  "W10 = x10 + h1*(ch2 + ch1)",
+  "W1y = x1y + h1*(my + ay)",
+  "W1z = x1z + h1*(mz + az)",
+  "q2 = my*t220 + mz*t221",
+  "x20 = q2",
+  "x2y = t220 + q2*gm*my",
+  "x2z = t221 + q2*gm*mz",
+  "h2 = (-ch1*x20 + ay*x2y + az*x2z)/den",
+  "W20 = x20 + h2*(ch2 + ch1)",
+  "W2y = x2y + h2*(my + ay)",
+  "W2z = x2z + h2*(mz + az)",
+  "d21 = -(r2x - W10)**2 + (r2y - W1y)**2 + (r2z - W1z)**2",
+  "d22 = -(r2x - W20)**2 + (r2y - W2y)**2 + (r2z - W2z)**2",
+  "u2 = Piecewise((0, d21 <= d22), (1, True))",
+  "Wx = W10 + u2*(W20 - W10)",
+  "Wy = W1y + u2*(W2y - W1y)",
+  "Wz = W1z + u2*(W2z - W1z)",
+  "ex = r2x - Wx",
+  "ey = r2y - Wy",
+  "ez = r2z - Wz",
+  "loss2 = -ex**2 + ey**2 + ez**2",
+  "loss = loss1 + loss2"
+ ],
+ "output": "loss",
+ "code": "import torch\n\n\ndef _cols(v, w, dt):\n    v = torch.as_tensor(v, dtype=dt)\n    if v.ndim == 0:\n        return [v] * w\n    if v.shape[-1] != w:\n        v = v.reshape(-1, w)\n    return [v[..., i] for i in range(w)]\n\n\ndef compute(**kwargs):\n    z = torch.as_tensor(kwargs['z'])\n    dt = z.dtype if z.is_floating_point() else torch.float32\n\n    z0, z1 = _cols(kwargs['z'], 2, dt)\n    t110, t111 = _cols(kwargs['theta_1_1'], 2, dt)\n    t120, t121 = _cols(kwargs['theta_1_2'], 2, dt)\n    t210, t211 = _cols(kwargs['theta_2_1'], 2, dt)\n    t220, t221 = _cols(kwargs['theta_2_2'], 2, dt)\n    s = torch.as_tensor(kwargs['s'], dtype=dt)\n    a10, a11 = _cols(kwargs['anch1'], 2, dt)\n    a20, a21 = _cols(kwargs['anch2'], 2, dt)\n\n    r0 = z0 / s\n    r1 = z1 / s\n\n    d11 = (r0 - t110) ** 2 + (r1 - t111) ** 2\n    d12 = (r0 - t120) ** 2 + (r1 - t121) ** 2\n    zero = torch.zeros_like(d11)\n    one = torch.ones_like(d11)\n    u1 = torch.where(d11 <= d12, zero, one)\n    w1y = t110 + u1 * (t120 - t110)\n    w1z = t111 + u1 * (t121 - t111)\n    e1y = r0 - w1y\n    e1z = r1 - w1z\n    loss1 = e1y ** 2 + e1z ** 2\n\n    c1 = torch.sqrt(w1y ** 2 + w1z ** 2)\n    ec1 = torch.exp(c1)\n    emc1 = torch.exp(-c1)\n    ch1 = (ec1 + emc1) / 2.0\n    c1s = torch.where(c1 > 1e-12, c1, torch.ones_like(c1))\n    rh1 = (ec1 - emc1) / (2.0 * c1s)\n    ay = rh1 * w1y\n    az = rh1 * w1z\n\n    sae = ay * e1y + az * e1z\n    f1 = sae / (1.0 + ch1)\n    r2x = sae\n    r2y = e1y + f1 * ay\n    r2z = e1z + f1 * az\n\n    vy = a10 + u1 * (a20 - a10)\n    vz = a11 + u1 * (a21 - a11)\n    dv = torch.sqrt(vy ** 2 + vz ** 2)\n    edv = torch.exp(dv)\n    emdv = torch.exp(-dv)\n    ch2 = (edv + emdv) / 2.0\n    dvs = torch.where(dv > 1e-12, dv, torch.ones_like(dv))\n    rh2 = (edv - emdv) / (2.0 * dvs)\n    m0 = ch2\n    my = rh2 * vy\n    mz = rh2 * vz\n    gm = 1.0 / (1.0 + m0)\n    den = 1.0 + ch2 * ch1 - my * ay - mz * az\n\n    q1 = my * t210 + mz * t211\n    x10 = q1\n    x1y = t210 + q1 * gm * my\n    x1z = t211 + q1 * gm * mz\n    h1 = (-ch1 * x10 + ay * x1y + az * x1z) / den\n    W10 = x10 + h1 * (ch2 + ch1)\n    W1y = x1y + h1 * (my + ay)\n    W1z = x1z + h1 * (mz + az)\n\n    q2 = my * t220 + mz * t221\n    x20 = q2\n    x2y = t220 + q2 * gm * my\n    x2z = t221 + q2 * gm * mz\n    h2 = (-ch1 * x20 + ay * x2y + az * x2z) / den\n    W20 = x20 + h2 * (ch2 + ch1)\n    W2y = x2y + h2 * (my + ay)\n    W2z = x2z + h2 * (mz + az)\n\n    d21 = -(r2x - W10) ** 2 + (r2y - W1y) ** 2 + (r2z - W1z) ** 2\n    d22 = -(r2x - W20) ** 2 + (r2y - W2y) ** 2 + (r2z - W2z) ** 2\n    zero2 = torch.zeros_like(d21)\n    one2 = torch.ones_like(d21)\n    u2 = torch.where(d21 <= d22, zero2, one2)\n    Wx = W10 + u2 * (W20 - W10)\n    Wy = W1y + u2 * (W2y - W1y)\n    Wz = W1z + u2 * (W2z - W1z)\n\n    ex = r2x - Wx\n    ey = r2y - Wy\n    ez = r2z - Wz\n    loss2 = -ex ** 2 + ey ** 2 + ez ** 2\n\n    loss = loss1 + loss2\n    return loss.reshape(-1)\n",
+ "excluded": [
+  "the argmin token selection k_l (u1, u2): discrete integers carried as Piecewise/torch.where, no gradient through the selection",
+  "stop_gradient on r_{l-1}: numerically irrelevant for the loss value, so the terms use the plain residual r_{l-1} - W_{l,k_l}",
+  "the anchor table M: frozen (refreshed every 25 epochs from ranking-normalised transition mass, 99th-percentile norm clip, fewer than 5 items -> 0), carried as the two width-2 rows anch1, anch2 selected by the level-1 prefix",
+  "the tangent projection e <- e + <e,a>_L a and the update r <- PT_{a_old->a}(e): the identity on the loss because r_{l-1} and W_{l,k_l} are already tangent at a, and with L=2 no later level consumes the transported r",
+  "x_hat = s*log_o(a), the token matrix, and the baseline reconstruction / commitment terms: not part of the mechanism's per-item loss",
+  "the minibatch estimate of s: s is frozen and passed in as an argument",
+  "the lift theta_hat = (0, theta) and o = (1,0,0): fixed constants, not free symbols"
+ ]
+}

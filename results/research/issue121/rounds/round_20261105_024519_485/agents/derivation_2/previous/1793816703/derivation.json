@@ -1,0 +1,117 @@
+IDEA: derivation_2_two_leg_behaviour_transport_D2_L2_K2_codebook_loss
+SYMBOLS (argument consumption order): z0 z1 | t110 t111 | t120 t121 | t210 t211 | t220 t221 | s | M10 M11 | M20 M21
+ARGS: z(width 2), theta_1_1(2), theta_1_2(2), theta_2_1(2), theta_2_2(2), s(scalar), M_1(2)=anchor v_pi of prefix (1,), M_2(2)=anchor v_pi of prefix (2,)
+STATEMENTS (SymPy, in order):
+r0 = z0/s
+r1 = z1/s
+d11 = (r0 - t110)**2 + (r1 - t111)**2
+d12 = (r0 - t120)**2 + (r1 - t121)**2
+sel1 = Piecewise((1, d11 <= d12), (0, True))
+c0 = sel1*t110 + (1 - sel1)*t120
+c1 = sel1*t111 + (1 - sel1)*t121
+nc = sqrt(c0**2 + c1**2)
+shc = sinh(nc)/nc
+a0 = cosh(nc)
+a1 = shc*c0
+a2 = shc*c1
+e1 = r0 - c0
+e2 = r1 - c1
+kk = (a1*e1 + a2*e2)/(1 + a0)
+ra0 = a1*e1 + a2*e2
+ra1 = e1 + kk*a1
+ra2 = e2 + kk*a2
+v0 = sel1*M10 + (1 - sel1)*M20
+v1 = sel1*M11 + (1 - sel1)*M21
+nv = sqrt(v0**2 + v1**2)
+shv = sinh(nv)/nv
+m0 = cosh(nv)
+m1 = shv*v0
+m2 = shv*v1
+q1 = m1*t210 + m2*t211
+p10 = q1
+p11 = t210 + q1/(1 + m0)*m1
+p12 = t211 + q1/(1 + m0)*m2
+h = -m0*a0 + m1*a1 + m2*a2
+gh1 = -a0*p10 + a1*p11 + a2*p12
+omh = 1 - h
+W10 = p10 + gh1/omh*(m0 + a0)
+W11 = p11 + gh1/omh*(m1 + a1)
+W12 = p12 + gh1/omh*(m2 + a2)
+q2 = m1*t220 + m2*t221
+p20 = q2
+p21 = t220 + q2/(1 + m0)*m1
+p22 = t221 + q2/(1 + m0)*m2
+gh2 = -a0*p20 + a1*p21 + a2*p22
+W20 = p20 + gh2/omh*(m0 + a0)
+W21 = p21 + gh2/omh*(
+
+m1 + a1)
+W22 = p22 + gh2/omh*(m2 + a2)
+d21 = -(ra0 - W10)**2 + (ra1 - W11)**2 + (ra2 - W12)**2
+d22 = -(ra0 - W20)**2 + (ra1 - W21)**2 + (ra2 - W22)**2
+sel2 = Piecewise((1, d21 <= d22), (0, True))
+d1s = sel1*d11 + (1 - sel1)*d12
+loss = d1s + sel2*d21 + (1 - sel2)*d22
+OUTPUT: loss
+CODE (complete torch module):
+import torch
+
+def compute(z, theta_1_1, theta_1_2, theta_2_1, theta_2_2, s, M_1, M_2):
+    z = torch.as_tensor(z)
+    dtype = z.dtype if z.is_floating_point() else torch.get_default_dtype()
+    def T(x):
+        return torch.as_tensor(x, dtype=dtype)
+    z = T(z); s = T(s)
+    t11 = T(theta_1_1); t12 = T(theta_1_2); t21 = T(theta_2_1); t22 = T(theta_2_2)
+    M1 = T(M_1); M2 = T(M_2)
+    z0 = z[..., 0]; z1 = z[..., 1]
+    r0 = z0 / s; r1 = z1 / s
+    t110 = t11[..., 0]; t111 = t11[..., 1]
+    t120 = t12[..., 0]; t121 = t12[..., 1]
+    t210 = t21[..., 0]; t211 = t21[..., 1]
+    t220 = t22[..., 0]; t221 = t22[..., 1]
+    d11 = (r0 - t110) ** 2 + (r1 - t111) ** 2
+    d12 = (r0 - t120) ** 2 + (r1 - t121) ** 2
+    one = torch.ones_like(r0)
+    sel1 = (d11 <= d12).to(dtype)
+    c0 = sel1 * t110 + (one - sel1) * t120
+    c1 = sel1 * t111 + (one - sel1) * t121
+    nc = torch.sqrt(c0 ** 2 + c1 ** 2)
+    shc = torch.where(nc > 0, torch.sinh(nc) / torch.where(nc > 0, nc, one), one)
+    a0 = torch.cosh(nc); a1 = shc * c0; a2 = shc * c1
+    e1 = r0 - c0; e2 = r1 - c1
+    kk = (a1 * e1 + a2 * e2) / (1 + a0)
+    ra0 = a1 * e1 + a2 * e2
+    ra1 = e1 + kk * a1
+    ra2 = e2 + kk * a2
+    v0 = sel1 * M1[..., 0] + (one - sel1) * M2[..., 0]
+    v1 = sel1 * M1[..., 1] + (one - sel1) * M2[..., 1]
+    nv = torch.sqrt(v0 ** 2 + v1 ** 2)
+    shv = torch.where(nv > 0, torch.sinh(nv) / torch.where(nv > 0, nv, one), one)
+    m0 = torch.cosh(nv); m1 = shv * v0; m2 = shv * v1
+    h = -m0 * a0 + m1 * a1 + m2 * a2
+    omh = 1 - h
+    q1 = m1 * t210 + m2 * t211
+    p10 = q1
+    p11 = t210 + q1 / (1 + m0) * m1
+    p12 = t211 + q1 / (1 + m0) * m2
+    gh1 = -a0 * p10 + a1 * p11 + a2 * p12
+    W10 = p10 + gh1 / omh * (m0 + a0)
+    W11 = p11 + gh1 / omh * (m1 + a1)
+    W12 = p12 + gh1 / omh * (m2 + a2)
+    q2 = m1 * t220 + m2 * t221
+    p20 = q2
+    p21 = t220 + q2 / (1 + m0) * m1
+    p22 = t221 + q2 / (1 + m0) * m2
+    gh2 = -a0 * p20 + a1 * p21 + a2 * p22
+    W20 = p20 + gh2 / omh * (m0 + a0)
+    W21 = p21 + gh2 / omh * (m1 + a1)
+    W22 = p22 + gh2 / omh * (m2 + a2)
+    d21 = -(ra0 - W10) ** 2 + (ra1 - W11) ** 2 + (ra2 - W12) ** 2
+    d22 = -(ra0 - W20) ** 2 + (ra1 - W21) ** 2 + (ra2 - W22) ** 2
+    sel2 = (d21 <= d22).to(dtype)
+    d1s = sel1 * d11 + (one - sel1) * d12
+    loss = d1s + sel2 * d21 + (one - sel2) * d22
+    return loss.reshape(-1)
+EXCLUDED: reconstruction term s*log_o(a) through the unchanged decoder (unchanged by the mechanism); beta * commitment term (beta and formula unchanged); the argmin indices k_l themselves (non-differentiable, folded into the Piecewise selections); the anchor-table build/refresh (no-grad pass every 25 epochs, row-normalised transition mass, 99th-percentile norm clip, <5 items or no outgoing mass -> v_pi=0), carried here as the frozen width-2 table args M_1, M_2; the frozen RMS scale s is an input, not recomputed.
+END IDEA

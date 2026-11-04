@@ -1,0 +1,126 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "t110",
+  "t111",
+  "t120",
+  "t121",
+  "t210",
+  "t211",
+  "t220",
+  "t221",
+  "s",
+  "vpi20",
+  "vpi21"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "theta_1_1",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "theta_1_2",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "theta_2_1",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "theta_2_2",
+   "width": 2,
+   "radius": 0.5,
+   "scalar": null
+  },
+  {
+   "name": "s",
+   "width": 1,
+   "radius": 1.0,
+   "scalar": 1.0
+  },
+  {
+   "name": "vpi2",
+   "width": 2,
+   "radius": 0.3,
+   "scalar": null
+  }
+ ],
+ "statements": [
+  "r1 = z0/s",
+  "r2 = z1/s",
+  "l1a = -(r1 - t110)**2 - (r2 - t111)**2",
+  "l1b = -(r1 - t120)**2 - (r2 - t121)**2",
+  "ea1 = r1 - t110",
+  "ea2 = r2 - t111",
+  "ga = t110*ea1 + t111*ea2",
+  "ra0 = ga",
+  "ra1 = ea1 + ga*t110",
+  "ra2 = ea2 + ga*t111",
+  "eb1 = r1 - t120",
+  "eb2 = r2 - t121",
+  "gb = t120*eb1 + t121*eb2",
+  "rb0 = gb",
+  "rb1 = eb1 + gb*t120",
+  "rb2 = eb2 + gb*t121",
+  "nv = sqrt(vpi20**2 + vpi21**2)",
+  "tc = Piecewise((tanh(nv)/nv, nv > 0), (1, True))",
+  "m0 = cosh(nv)",
+  "m1 = tc*vpi20",
+  "m2 = tc*vpi21",
+  "den = 1 + m0",
+  "p1 = m1*t210 + m2*t211",
+  "x11 = t210 + p1*m1/den",
+  "x21 = t211 + p1*m2/den",
+  "p2 = m1*t220 + m2*t221",
+  "x12 = t220 + p2*m1/den",
+  "x22 = t221 + p2*m2/den",
+  "qa = m1*t110 + m2*t111",
+  "da = 1 - qa",
+  "ca1 = t110*x11 + t111*x21",
+  "wa01 = p1 + ca1*m0/da",
+  "wa11 = x11 + ca1*(m1 + t110)/da",
+  "wa21 = x21 + ca1*(m2 + t111)/da",
+  "da1 = (ra0 - wa01)**2 - (ra1 - wa11)**2 - (ra2 - wa21)**2",
+  "ca2 = t110*x12 + t111*x22",
+  "wa02 = p2 + ca2*m0/da",
+  "wa12 = x12 + ca2*(m1 + t110)/da",
+  "wa22 = x22 + ca2*(m2 + t111)/da",
+  "da2 = (ra0 - wa02)**2 - (ra1 - wa12)**2 - (ra2 - wa22)**2",
+  "qb = m1*t120 + m2*t121",
+  "db = 1 - qb",
+  "cb1 = t120*x11 + t121*x21",
+  "wb01 = p1 + cb1*m0/db",
+  "wb11 = x11 + cb1*(m1 + t120)/db",
+  "wb21 = x21 + cb1*(m2 + t121)/db",
+  "db1 = (rb0 - wb01)**2 - (rb1 - wb11)**2 - (rb2 - wb21)**2",
+  "cb2 = t120*x12 + t121*x22",
+  "wb02 = p2 + cb2*m0/db",
+  "wb12 = x12 + cb2*(m1 + t120)/db",
+  "wb22 = x22 + cb2*(m2 + t121)/db",
+  "db2 = (rb0 - wb02)**2 - (rb1 - wb12)**2 - (rb2 - wb22)**2",
+  "loss1 = Min(l1a, l1b)",
+  "loss2 = Piecewise((Min(da1, da2), l1a <= l1b), (Min(db1, db2), True))",
+  "loss = loss1 + loss2"
+ ],
+ "output": "loss",
+ "code": "import torch\n\n\ndef compute(z, theta_1_1, theta_1_2, theta_2_1, theta_2_2, s, vpi2):\n    dt = torch.float64\n    z = torch.as_tensor(z, dtype=dt)\n    t11 = torch.as_tensor(theta_1_1, dtype=dt)\n    t12 = torch.as_tensor(theta_1_2, dtype=dt)\n    t21 = torch.as_tensor(theta_2_1, dtype=dt)\n    t22 = torch.as_tensor(theta_2_2, dtype=dt)\n    vp = torch.as_tensor(vpi2, dtype=dt)\n    s = torch.as_tensor(s, dtype=dt)\n    if s.numel() == 1:\n        s = s.reshape(())\n\n    z0 = z[:, 0]\n    z1 = z[:, 1]\n    t110 = t11[:, 0]\n    t111 = t11[:, 1]\n    t120 = t12[:, 0]\n    t121 = t12[:, 1]\n    t210 = t21[:, 0]\n    t211 = t21[:, 1]\n    t220 = t22[:, 0]\n    t221 = t22[:, 1]\n    vpi20 = vp[:, 0]\n    vpi21 = vp[:, 1]\n\n    r1 = z0 / s\n    r2 = z1 / s\n    l1a = -(r1 - t110) ** 2 - (r2 - t111) ** 2\n    l1b = -(r1 - t120) ** 2 - (r2 - t121) ** 2\n\n    ea1 = r1 - t110\n    ea2 = r2 - t111\n    ga = t110 * ea1 + t111 * ea2\n    ra0 = ga\n    ra1 = ea1 + ga * t110\n    ra2 = ea2 + ga * t111\n\n    eb1 = r1 - t120\n    eb2 = r2 - t121\n    gb = t120 * eb1 + t121 * eb2\n    rb0 = gb\n    rb1 = eb1 + gb * t120\n    rb2 = eb2 + gb * t121\n\n    nv = torch.sqrt(vpi20 ** 2 + vpi21 ** 2)\n    pos = nv > 0\n    nsafe = torch.where(pos, nv, torch.ones_like(nv))\n    tc = torch.where(pos, torch.tanh(nsafe) / nsafe, torch.ones_like(nv))\n    m0 = torch.cosh(nv)\n    m1 = tc * vpi20\n    m2 = tc * vpi21\n    den = 1.0 + m0\n\n    p1 = m1 * t210 + m2 * t211\n    x11 = t210 + p1 * m1 / den\n    x21 = t211 + p1 * m2 / den\n    p2 = m1 * t220 + m2 * t221\n    x12 = t220 + p2 * m1 / den\n    x22 = t221 + p2 * m2 / den\n\n    qa = m1 * t110 + m2 * t111\n    da = 1.0 - qa\n    ca1 = t110 * x11 + t111 * x21\n    wa01 = p1 + ca1 * m0 / da\n    wa11 = x11 + ca1 * (m1 + t110) / da\n    wa21 = x21 + ca1 * (m2 + t111) / da\n    da1 = (ra0 - wa01) ** 2 - (ra1 - wa11) ** 2 - (ra2 - wa21) ** 2\n    ca2 = t110 * x12 + t111 * x22\n    wa02 = p2 + ca2 * m0 / da\n    wa12 = x12 + ca2 * (m1 + t110) / da\n    wa22 = x22 + ca2 * (m2 + t111) / da\n    da2 = (ra0 - wa02) ** 2 - (ra1 - wa12) ** 2 - (ra2 - wa22) ** 2\n\n    qb = m1 * t120 + m2 * t121\n    db = 1.0 - qb\n    cb1 = t120 * x11 + t121 * x21\n    wb01 = p1 + cb1 * m0 / db\n    wb11 = x11 + cb1 * (m1 + t120) / db\n    wb21 = x21 + cb1 * (m2 + t121) / db\n    db1 = (rb0 - wb01) ** 2 - (rb1 - wb11) ** 2 - (rb2 - wb21) ** 2\n    cb2 = t120 * x12 + t121 * x22\n    wb02 = p2 + cb2 * m0 / db\n    wb12 = x12 + cb2 * (m1 + t120) / db\n    wb22 = x22 + cb2 * (m2 + t121) / db\n    db2 = (rb0 - wb02) ** 2 - (rb1 - wb12) ** 2 - (rb2 - wb22) ** 2\n\n    loss1 = torch.minimum(l1a, l1b)\n    loss2 = torch.where(l1a <= l1b, torch.minimum(da1, da2), torch.minimum(db1, db2))\n    return (loss1 + loss2).reshape(-1)\n",
+ "excluded": [
+  "the argmin assignments k_l at both levels: discrete selection, no gradient through the index, only through the selected codeword",
+  "the anchor-table lookup M[prefix]: the level-1 prefix is behaviour dependent and the table is frozen, so its tangent is carried as the fixed width-2 argument vpi2 placed after s; level 1 always has v_pi = 0 hence m = o",
+  "the frozen scale s is a measurement (RMS of the first minibatch), not a trained parameter",
+  "the frame/walk updates after the last level (a_b <- W_{k_2}, r_b <- PT(e)) do not enter the loss and are dropped"
+ ]
+}

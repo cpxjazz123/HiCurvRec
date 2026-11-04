@@ -112,7 +112,7 @@ def transported_distance(codeword: torch.Tensor, anchor: torch.Tensor,
     origin = origin_like(middle).unsqueeze(1)
     first = _transport(origin, middle.unsqueeze(1), lifted.unsqueeze(1))
     moved = _transport(middle.unsqueeze(1), point.unsqueeze(1), first).squeeze(1)
-    return minkowski_square(point, moved)
+    return squared_separation(point, moved)
 
 
 def minkowski_square(residual: torch.Tensor, codeword: torch.Tensor) -> torch.Tensor:
@@ -121,13 +121,26 @@ def minkowski_square(residual: torch.Tensor, codeword: torch.Tensor) -> torch.Te
     return minkowski_dot(difference, difference)
 
 
+def squared_separation(residual: torch.Tensor, codeword: torch.Tensor) -> torch.Tensor:
+    """``-<r, w>_L``: the negative Minkowski product of the residual with the
+    transported codeword.
+
+    For two points of the hyperboloid this is ``cosh`` of their hyperbolic
+    distance, so its arg-min is the NEAREST codeword. The squared difference
+    ``<r - w, r - w>_L`` does NOT work here: the residual is not a point of the
+    hyperboloid, so its sign is not fixed, and the first run of this candidate
+    took the same codeword for every item (the SID collapsed).
+    """
+    return -minkowski_dot(residual, codeword)
+
+
 def assign(residual: torch.Tensor, codewords: torch.Tensor) -> tuple:
     """The nearest transported codeword: the index and its Minkowski distance.
 
     ``residual`` is ``(B, D + 1)`` and ``codewords`` is ``(B, K, D + 1)`` (or
     ``(K, D + 1)``, the same frame for every row).
     """
-    scores = minkowski_square(residual.unsqueeze(1), codewords)
+    scores = squared_separation(residual.unsqueeze(1), codewords)
     choice = scores.argmin(dim=-1)
     return choice, scores.gather(1, choice.unsqueeze(1)).squeeze(1)
 

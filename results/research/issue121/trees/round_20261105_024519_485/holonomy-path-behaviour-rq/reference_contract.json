@@ -1,7 +1,7 @@
 {
  "calls": [
   {
-   "name": "transported_distance",
+   "name": "transported_separation",
    "callable": "model.holonomy:transported_distance",
    "symbols": [
     "t0",
@@ -48,7 +48,7 @@
     "W0 = p0 + g/(1 - h)*(m0 + a0)",
     "W1 = p1 + g/(1 - h)*(m1 + a1)",
     "W2 = p2 + g/(1 - h)*(m2 + a2)",
-    "d2 = -(W0 - a0)**2 + (W1 - a1)**2 + (W2 - a2)**2"
+    "d2 = a0*W0 - a1*W1 - a2*W2"
    ],
    "output": "d2"
   }
