@@ -82,6 +82,28 @@ class HolonomyTests(unittest.TestCase):
         self.assertFalse(torch.equal(choice_a, choice_b),
                          "a different anchor must be able to move the assignment")
 
+    def test_the_assignment_picks_the_NEAREST_codeword(self):
+        """The first two runs collapsed onto one codeword.
+
+        The residual is a lifted spatial vector, so its Minkowski product with a
+        codeword collapses to a Euclidean dot product and the arg-min selects the
+        FARTHEST codeword. Lifting the residual onto the hyperboloid first makes
+        the quantity cosh of the hyperbolic distance, and the arg-min is then the
+        nearest codeword. This test pins that property.
+        """
+        from model.poincare_contract import lorentz_exp_origin, minkowski_dot
+        codes = torch.randn(5, self.dimension, dtype=torch.float64) * 0.25
+        points = lorentz_exp_origin(codes)
+        residual = torch.randn(7, self.dimension, dtype=torch.float64) * 0.2
+        lifted = holonomy.lift(residual)
+        scores = holonomy.squared_separation(lifted.unsqueeze(1), points.unsqueeze(0))
+        chosen = scores.argmin(dim=-1)
+        image = lorentz_exp_origin(residual)
+        distance = torch.acosh((-minkowski_dot(image.unsqueeze(1),
+                                                points.unsqueeze(0))).clamp_min(1.0))
+        self.assertTrue(torch.equal(chosen, distance.argmin(dim=-1)))
+        self.assertGreater(float(scores.min()), 0.0)
+
     def test_the_losses_are_finite_and_differentiable(self):
         z = self.z.clone().requires_grad_(True)
         codebook = self.codebook.clone().requires_grad_(True)

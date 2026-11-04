@@ -1,12 +1,9 @@
 {
   "jobs": [
     {
-      "attempts": 4,
+      "attempts": 5,
       "error": null,
-      "failure_evidence": {
-        "corrected": true,
-        "smoke": "passed"
-      },
+      "failure_evidence": {},
       "finished_at": null,
       "gpu": "0,1,2,3",
       "idea_id": "holonomy-path-behaviour-rq",
@@ -28,13 +25,18 @@
           "error": "the worker of the previous attempt exited before the run started; the smoke of the corrected tree passed (SMOKE_PASS, 24 steps, all gradient norms positive, loss positive)",
           "finished_at": 1793820948.4060597,
           "status": "failed"
+        },
+        {
+          "error": "the previous attempt was stopped after the smoke showed the degenerate assignment",
+          "finished_at": 1793821324.4124658,
+          "status": "failed"
         }
       ],
       "queued_at": 1793814388.5206075,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_holonomy-path-behaviour-rq",
       "round_id": "round_20261105_024519_485",
-      "started_at": 1793820953.1922352,
+      "started_at": 1793821329.6596026,
       "status": "running",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_holonomy-path-behaviour-rq"
     }

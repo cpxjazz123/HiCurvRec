@@ -122,16 +122,18 @@ def minkowski_square(residual: torch.Tensor, codeword: torch.Tensor) -> torch.Te
 
 
 def squared_separation(residual: torch.Tensor, codeword: torch.Tensor) -> torch.Tensor:
-    """``-<r, w>_L``: the negative Minkowski product of the residual with the
-    transported codeword.
+    """``-<r, w>_L`` with BOTH arguments on the hyperboloid.
 
-    For two points of the hyperboloid this is ``cosh`` of their hyperbolic
-    distance, so its arg-min is the NEAREST codeword. The squared difference
-    ``<r - w, r - w>_L`` does NOT work here: the residual is not a point of the
-    hyperboloid, so its sign is not fixed, and the first run of this candidate
-    took the same codeword for every item (the SID collapsed).
+    The residual of the recursion is a lifted spatial vector, not a point of the
+    hyperboloid, and its time component is zero: the Minkowski product with a
+    codeword then collapses to a Euclidean dot product, whose arg-min is the
+    FARTHEST codeword. Lifting the residual onto the hyperboloid first makes
+    the quantity ``cosh`` of the hyperbolic distance again, and its arg-min is
+    the nearest codeword. The two earlier forms (the signed squared difference
+    and its negation) both collapsed the assignment onto one codeword.
     """
-    return -minkowski_dot(residual, codeword)
+    point = lorentz_exp_origin(residual[..., 1:])
+    return -minkowski_dot(point, codeword)
 
 
 def assign(residual: torch.Tensor, codewords: torch.Tensor) -> tuple:
