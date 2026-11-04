@@ -368,6 +368,42 @@ def round_history(repo: Path, limit: int = 3) -> str:
     return "\n".join(blocks[-limit:])
 
 
+def ideate_one(root: Path, objective: str, extra: bool, index: int) -> tuple:
+    """One ideation agent: its own task id, prompt, workspace and answer file.
+
+    The function is the unit the round runs concurrently and the unit the
+    LangGraph workflow dispatches with ``Send``; both paths call it, so the two
+    workflows cannot drift apart.
+    """
+    prompt_base = agent_contracts.IDEA_PROMPT.format(
+        minimum=IDEA_MIN, maximum=IDEA_MAX,
+        agents=pipeline_module.IDEA_AGENTS,
+        objective=agent_contracts.RESEARCH_OBJECTIVE,
+        scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
+        agent_contracts.EXPERIMENT_POLICY)
+    task_id = "ideation_" + str(index)
+    prompt = (prompt_base + "\n\nThe round objective: " + (objective or "improve the "
+                 "item semantic IDs for a generative recommender") +
+                 "\nYour answer must be a different set of ideas from the other " +
+                 str(pipeline_module.IDEA_AGENTS - 1) +
+                 " agents, which you cannot see.")
+    history = round_history(Path(root))
+    if history:
+        prompt += ("\n\nWHAT THE EARLIER ROUNDS MEASURED, AND WHAT THEY FAILED ON:\n"
+                   + history +
+                   "\nUse it to aim at something the earlier rounds did not measure. "
+                   "Do not restate a proposal that was already made and rejected.")
+    if extra:
+        prompt += ("\n\nThe first set of ideas you gave has been collected. Give one "
+                   "MORE idea, and it must be different from the one you gave before "
+                   "and from what the other agents propose.")
+    return (task_id, _run_agent(root, task_id, prompt,
+                                "ideas_extra.txt" if extra else "ideas.txt",
+                                plaintext.parse_ideas,
+                                role="ideate", read_paths=[],
+                                allowed_roots=_round_roots(root)))
+
+
 def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
     """Five independent ideation agents; each returns one to three ideas.
 
@@ -383,27 +419,7 @@ def run_ideation(root: Path, objective: str, extra: bool = False) -> list:
         scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
         agent_contracts.EXPERIMENT_POLICY)
     def ideate(index):
-        task_id = "ideation_" + str(index)
-        prompt = (prompt_base + "\n\nThe round objective: " + (objective or "improve the "
-                     "item semantic IDs for a generative recommender") +
-                     "\nYour answer must be a different set of ideas from the other " +
-                     str(pipeline_module.IDEA_AGENTS - 1) +
-                     " agents, which you cannot see.")
-        history = round_history(Path(root))
-        if history:
-            prompt += ("\n\nWHAT THE EARLIER ROUNDS MEASURED, AND WHAT THEY FAILED ON:\n"
-                       + history +
-                       "\nUse it to aim at something the earlier rounds did not measure. "
-                       "Do not restate a proposal that was already made and rejected.")
-        if extra:
-            prompt += ("\n\nThe first set of ideas you gave has been collected. Give one "
-                       "MORE idea, and it must be different from the one you gave before "
-                       "and from what the other agents propose.")
-        return (task_id, _run_agent(root, task_id, prompt,
-                                    "ideas_extra.txt" if extra else "ideas.txt",
-                                    plaintext.parse_ideas,
-                                    role="ideate", read_paths=[],
-                                    allowed_roots=_round_roots(root)))
+        return ideate_one(root, objective, extra, index)
 
     try:
         return _run_agents_concurrently(
@@ -664,6 +680,58 @@ def phase_probe(root: Path, round_id: str, *, log=print) -> dict:
                      for identifier, outcome in outcomes.items()}}
 
 
+def rank_one(root: Path, payload: str, evidence_text: str, index: int) -> dict:
+    """One reviewer over the frozen evidence bundle.
+
+    Same unit as the concurrent runner: the LangGraph workflow dispatches it with
+    ``Send`` so both paths ask the reviewers exactly the same question.
+    """
+    task_id = "scoring_" + str(index)
+    prompt = (agent_contracts.RANK_PROMPT.format(
+        objective=agent_contracts.RESEARCH_OBJECTIVE,
+        scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
+        agent_contracts.EXPERIMENT_POLICY,
+        rubric_version=scoring_module.RUBRIC["version"],
+        proposals=payload,
+        evidence=evidence_text))
+    report = _rank_with_retry(root, task_id, prompt)
+    report.setdefault("reviewer", task_id)
+    report["rubric_version"] = scoring_module.RUBRIC["version"]
+    report["rubric_sha256"] = scoring_module.RUBRIC["sha256"]
+    return report
+
+
+def scoring_inputs(root: Path, ideas: list, *, repo: Path = None,
+                   state: dict = None) -> tuple:
+    """The frozen bundle, the proposal text and the evidence text of a review.
+
+    One source of truth: the concurrent runner and the LangGraph workflow both
+    build the reviewers' input here, so a reviewer sees the same question in
+    either path.
+    """
+    repo = Path(repo) if repo is not None else Path(root)
+    frozen = (state or {}).get("evidence_bundles") or {}
+    bundle = {idea["idea_id"]: frozen.get(idea["idea_id"])
+              or evidence_module.build_bundle(idea, root=repo)
+              for idea in ideas}
+    payload = plaintext.render_ideas(ideas)
+    evidence_text = "\n\n".join(
+        "### " + identifier + "\n" + evidence_module.render_bundle(item)
+        for identifier, item in bundle.items())
+    return bundle, payload, evidence_text
+
+
+def rank_order(ideas: list, reports: list) -> dict:
+    """The reviewers' aggregate order, the selection input."""
+    return _rank_order(ideas, reports)
+
+
+def apply_bounded_revision(directory: Path, agent_root: Path, repo: Path,
+                            state: dict, reports: list, outcome: dict):
+    """The one bounded revision the reviewers may buy (public entry)."""
+    return _one_bounded_revision(directory, agent_root, repo, state, reports, outcome)
+
+
 def run_scoring(root: Path, ideas: list, *, repo: Path = None,
                 state: dict = None) -> dict:
     """Three independent reviewers over the frozen evidence bundle.
@@ -675,28 +743,9 @@ def run_scoring(root: Path, ideas: list, *, repo: Path = None,
     reviewed afresh under a new proposal hash.
     """
     repo = Path(repo) if repo is not None else Path(root)
-    frozen = state.get("evidence_bundles") or {}
-    bundle = {idea["idea_id"]: frozen.get(idea["idea_id"])
-              or evidence_module.build_bundle(idea, root=repo)
-              for idea in ideas}
-    payload = plaintext.render_ideas(ideas)
-    evidence_text = "\n\n".join(
-        "### " + identifier + "\n" + evidence_module.render_bundle(item)
-        for identifier, item in bundle.items())
+    bundle, payload, evidence_text = scoring_inputs(root, ideas, repo=repo, state=state)
     def rank(index):
-        task_id = "scoring_" + str(index)
-        prompt = (agent_contracts.RANK_PROMPT.format(
-            objective=agent_contracts.RESEARCH_OBJECTIVE,
-            scope=agent_contracts.SCOPE_CONTRACT + "\n\n" +
-            agent_contracts.EXPERIMENT_POLICY,
-            rubric_version=scoring_module.RUBRIC["version"],
-            proposals=payload,
-            evidence=evidence_text))
-        report = _rank_with_retry(root, task_id, prompt)
-        report.setdefault("reviewer", task_id)
-        report["rubric_version"] = scoring_module.RUBRIC["version"]
-        report["rubric_sha256"] = scoring_module.RUBRIC["sha256"]
-        return report
+        return rank_one(root, payload, evidence_text, index)
 
     try:
         reports = _run_agents_concurrently(
