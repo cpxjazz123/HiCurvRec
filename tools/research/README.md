@@ -412,34 +412,18 @@ Stage 2 run with poor numbers still proceeds to Stage 3, and every Stage 3 resul
 - including the low ones - stays in the registry. There is no quality floor and
 no best-only selection.
 
-## LangGraph phase 1: the first three phases of a round (2026-11-04)
+## The research flow of a round (2026-11-05)
 
-`tools/research/langgraph_workflow/` runs the research phase of a round as a
-LangGraph graph: `ideate -> probe -> score`. The graph owns the orchestration -
-who runs, in parallel, over which state - and the work itself stays where it was:
-the agents run through the existing OpenCode executor, the probe is the existing
-phase, and the round's state machine is the existing one (`apply_ideation`,
-`phase_probe`, `apply_scoring`). The concurrent runner and the graph call the same
-per-agent units (`worker.ideate_one`, `worker.rank_one`,
-`worker.scoring_inputs`), so the two paths cannot drift apart.
+The flow is the round's own phases: `ideation -> probe -> scoring`. The agents
+inside a phase run concurrently through the OpenAI Agents SDK, the answers are
+merged by the round's state machine (`apply_ideation`, `phase_probe`,
+`apply_scoring`), and the result is persisted in the round's own state file.
+There is no graph engine between the phases: `tools/research/agent_flow/` runs
+the phases and reports what each of them did.
 
-* `state.py` - the graph state; the list fields use a reducer, so a branch adds
-  its answer instead of replacing the state.
-* `nodes/ideate.py` - one `Send` branch per ideation agent; the answers are
-  merged by `pipeline.apply_ideation`.
-* `nodes/probe.py` - the existing probe phase; the bundles are frozen there.
-* `nodes/score.py` - one `Send` branch per reviewer over the frozen bundle; the
-  decision is made by `pipeline.apply_scoring`.
-* `graph.py` - the compiled graph and `run_phase1`; the checkpoint's `thread_id`
-  is the round id, so an interrupted run resumes where it stopped.
-* `run.py` - the command line: `python3 -m tools.research.langgraph_workflow.run
-  --round <round_id>`.
-
-The checks in `tests/test_phase1.py` compare the graph with the runner it
-replaces: the same agents, the same merged ideas and the same decision, a failed
-agent does not cost the others their ideas, and the round's state file ends in
-the same shape. The implementation, training and evaluation phases are not
-touched by this phase.
+```
+python3 -m tools.research.agent_flow.run --round <round_id> --phases ideation,probe,scoring
+```
 
 ## The agent runtime: the OpenAI Agents SDK (2026-11-05)
 
