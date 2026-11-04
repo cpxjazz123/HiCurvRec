@@ -160,6 +160,9 @@ CLUSTER_WEIGHT = 1.0
 #: The coarse usage entropy, at the same unit scale: the co-cluster term alone
 #: collapsed the exported L1 level from 254 codes to 105.
 USAGE_WEIGHT = 1.0
+#: The boundary-alignment term enters at the unit scale; the measured gradient
+#: budget sizes the mechanism as a whole.
+BOUNDARY_WEIGHT = 1.0
 #: Trust region on the SID partition: a training epoch whose measured collision
 #: exceeds this budget is rolled back to the last accepted state. The mechanism
 #: weight is NOT shrunk on a rollback: halving it drove the weight to 1e-19 in one
@@ -564,6 +567,26 @@ def main() -> None:
                         mechanism = mechanism + CLUSTER_WEIGHT * curvature_prefix.prefix_cocluster_loss(
                             anchor_levels, high_levels, codebooks[:2], 1,
                             USE_GEOMETRY, MECHANISM_CURVATURE or 1.0)
+                        # The boundary the partition draws is trained against the
+                        # AF3 probability of each edge, not only measured.
+                        anchor_cpu = anchor.detach().cpu().numpy()
+                        high_weight = torch.from_numpy(
+                            triple_lookup.pair_weight(anchor_cpu,
+                                                      high.detach().cpu().numpy())
+                        ).float().to(device)[valid]
+                        low_weight = torch.from_numpy(
+                            triple_lookup.pair_weight(anchor_cpu,
+                                                      low.detach().cpu().numpy())
+                        ).float().to(device)[valid]
+                        mechanism = mechanism + BOUNDARY_WEIGHT * (
+                            curvature_prefix.boundary_alignment_loss(
+                                anchor_levels, high_levels, codebooks[:2], 1, high_weight,
+                                USE_GEOMETRY, MECHANISM_CURVATURE or 1.0)
+                            + curvature_prefix.boundary_alignment_loss(
+                                [points[0][rows_anchor[valid]], points[1][rows_anchor[valid]]],
+                                [points[0][rows_low[valid]], points[1][rows_low[valid]]],
+                                codebooks[:2], 1, low_weight,
+                                USE_GEOMETRY, MECHANISM_CURVATURE or 1.0))
                 # Every item of the batch, not the sampled pairs: the coarse
                 # bucket's fine codes are pushed to spread, weighted by the item's
                 # mean AF3 cohesion.

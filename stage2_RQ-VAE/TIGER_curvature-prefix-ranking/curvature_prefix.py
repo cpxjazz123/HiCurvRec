@@ -287,6 +287,25 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
     return (weight_a * weight_b).sum(dim=-1)
 
 
+def boundary_alignment_loss(points_a, points_b, codebooks, level: int,
+                            target: torch.Tensor, use_curvature: bool = True,
+                            curvature: float = CURVATURE) -> torch.Tensor:
+    """The cross-entropy of the edge-sharing probability against the AF3 target.
+
+    Issue #138 B: the AF3 cohesion, normalised as a probability by the measured
+    sigmoid, is the target for whether two items at the ends of a TRAIN edge share
+    the complete prefix. The term is differentiable through the soft prefix share,
+    so the boundary the partition draws is trained rather than only measured; the
+    occupancy guards (usage entropy, bucket spread, trust region) keep it from
+    collapsing into one group.
+    """
+    share = prefix_share(points_a, points_b, codebooks, level, None,
+                         use_curvature, curvature)
+    share = share.clamp(1e-6, 1.0 - 1e-6)
+    target = target.to(share.device).float().clamp(0.0, 1.0)
+    return -(target * share.log() + (1.0 - target) * (1.0 - share).log()).mean()
+
+
 def graph_prefix_report(tokens: np.ndarray, edges: np.ndarray, af3: np.ndarray,
                         level: int) -> dict:
     """Within/cross AF3 statistics of a SID partition on the TRAIN graph.
