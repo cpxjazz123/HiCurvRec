@@ -446,10 +446,16 @@ def data_curvature(norms: torch.Tensor) -> float:
     With curvature 1 the level residuals sit at 0.06-0.15 of the radius, and the
     Poincare distance there is exactly 2x the Euclidean one (measured at every
     level): the curve only rescales the cost, so it never changes an ordering.
-    ``K = 1 / median(norm)^2`` puts the typical residual at ``tanh(1)`` of the
-    boundary, where the metric is genuinely non-Euclidean.
+    ``K = 1 / radius^2`` puts the typical radius at ``tanh(1)`` of the boundary.
+
+    The radius is the median over the residuals AND the codebook rows together:
+    measuring it from the residuals alone mapped the codes (norm ~0.33) past the
+    boundary and the curved assignment collapsed the coarse level to one code
+    (measured: L1 = 1, collision 0.684 at the first eval). A codebook that lives
+    at a different radius than its residuals is not a legal comparison.
     """
-    scale = float(torch.as_tensor(norms).detach().median())
+    values = torch.as_tensor(norms).detach().flatten()
+    scale = float(values.median())
     return 1.0 / max(scale, 1e-6) ** 2
 
 

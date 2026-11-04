@@ -41,6 +41,10 @@ class RQVAE(nn.Module):
         reconstructed = self.decoder(quantized)
         return reconstructed, quant_loss, int(unused_codes), tokens, embeddings
 
+    def revert_to_euclidean_assignment(self) -> None:
+        """Fall back to the Euclidean assignment rule (see RecordingRQLayer)."""
+        self.rq.revert_to_euclidean()
+
     def level_points(self) -> list[torch.Tensor]:
         """The residual tangent that enters every level of the last forward."""
         return self.rq.level_points()

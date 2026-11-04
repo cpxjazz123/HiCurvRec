@@ -420,6 +420,32 @@ class CoClusterTests(unittest.TestCase):
         self.assertNotAlmostEqual(float(curved), float(flat), places=6)
 
 
+class GeometryRevertTests(unittest.TestCase):
+    """A curved assignment that cannot hold the budget is abandoned, not exported."""
+
+    def _layer(self):
+        from types import SimpleNamespace
+        from model.recording import RecordingRQLayer
+        config = SimpleNamespace(hidden_sizes=(16, 8), codebook_num=3,
+                                 codebook_size=(8, 8, 8), codebook_dim=4,
+                                 dropout=0.0, beta=0.25, vq_type="vq",
+                                 ema_decay=0.99, fix_code_embs=False,
+                                 sk_epsilon=-1.0, sk_iters=-1, use_curvature=True)
+        return RecordingRQLayer(config)
+
+    def test_reverting_restores_the_euclidean_assignment(self):
+        layer = self._layer()
+        layer.vq_layers[0].curvature = 1e5
+        latent = torch.tensor([[0.01, 0.02, 0.0, 0.0]])
+        curved = layer.vq_layers[0]._distances(latent)
+        layer.revert_to_euclidean()
+        euclid = layer.vq_layers[0]._distances(latent)
+        expected = cp._assignment_cost(latent, layer.vq_layers[0].get_code_embs(),
+                                       use_curvature=False)
+        self.assertFalse(torch.allclose(curved, euclid))
+        self.assertTrue(torch.allclose(euclid, expected, atol=1e-6))
+
+
 class CurvatureStatisticTests(unittest.TestCase):
     """Issue #138 B: ordinary Forman is the triangle-augmentation ablation."""
 

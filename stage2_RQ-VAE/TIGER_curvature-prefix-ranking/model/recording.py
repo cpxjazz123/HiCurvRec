@@ -34,13 +34,6 @@ class RecordingRQLayer(RQLayer):
 
     def __init__(self, config):
         super().__init__(config)
-        # The assignment rule is the candidate's (CLAUDE.md 66): with the curve on,
-        # every level selects its code by the Poincare cost, in training and in
-        # the export pass alike (get_indices goes through the same layers).
-        if bool(getattr(config, "use_curvature", True)):
-            for layer in self.vq_layers:
-                layer.curvature = None
-                layer._distances = types.MethodType(_curved_distances, layer)
         # The assignment rule is the candidate's (CLAUDE.md 66). The exported L2
         # prefix count is the quantity the historical SID record ties to recall
         # (rho=+0.45 against R@10; the 0.0636 arm exported 16,145 prefixes where
@@ -54,6 +47,28 @@ class RecordingRQLayer(RQLayer):
             second.sk_epsilon = self.sk_epsilon
             second.sk_iters = self.sk_iters
             second.use_sk = second.sk_epsilon > 0 and second.sk_iters > 0
+        # With the curve on, every level selects its code by the Poincare cost, in
+        # training and in the export pass alike (get_indices uses these layers).
+        self._curved = bool(getattr(config, "use_curvature", True))
+        if self._curved:
+            for layer in self.vq_layers:
+                layer.curvature = None
+                layer._euclidean_distances = layer._distances
+                layer._distances = types.MethodType(_curved_distances, layer)
+
+    def revert_to_euclidean(self) -> None:
+        """Abandon the curved rule when it cannot keep the collision budget.
+
+        The trainer calls this when the first evaluation is already outside the
+        budget and no state was ever accepted: a run that cannot produce an
+        in-budget partition under the curved assignment must fall back rather
+        than export a collapsed SID.
+        """
+        for layer in self.vq_layers:
+            original = getattr(layer, "_euclidean_distances", None)
+            if original is not None:
+                layer._distances = original
+        self._curved = False
 
     def forward(self, x: torch.Tensor, infer_use_sk: bool = False):
         quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)

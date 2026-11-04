@@ -146,6 +146,10 @@ SPREAD_WEIGHT = 1.0
 #: (measured at every level), so the curve only rescales the cost. The curvature
 #: is measured once from the first batch's level-1 residual norms.
 MECHANISM_CURVATURE: float | None = None
+#: Set once when the curved assignment cannot hold the budget before any state is
+#: accepted: the run continues with the Euclidean rule instead of exporting a
+#: collapsed SID.
+GEOMETRY_REVERTED = False
 #: The coarse codebook follows the behaviour cohesion, but at most this fraction
 #: of the distance to the weighted mean per step: a full step (the parent arm's
 #: rule) collapsed the partition to 1,985 L2 prefixes.
@@ -360,7 +364,7 @@ def _batch_positions(item_ids: torch.Tensor, wanted: torch.Tensor) -> torch.Tens
 
 
 def main() -> None:
-    global MECHANISM_SCALE, MECHANISM_CURVATURE, _ACCEPTED_STATE
+    global MECHANISM_SCALE, MECHANISM_CURVATURE, _ACCEPTED_STATE, GEOMETRY_REVERTED
     # === DDP 初始化 ===
     if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
         dist.init_process_group(backend="nccl")
@@ -483,8 +487,10 @@ def main() -> None:
             finally:
                 for layer in raw_module.rq.vq_layers:
                     layer._skip_ddp_reduce = False
+        residuals = raw_module.level_points()[0].norm(dim=-1)
+        code_norms = raw_module.level_codebooks()[0].norm(dim=-1)
         MECHANISM_CURVATURE = curvature_prefix.data_curvature(
-            raw_module.level_points()[0].norm(dim=-1))
+            torch.cat([residuals, code_norms]))
         for layer in raw_module.rq.vq_layers:
             layer.curvature = MECHANISM_CURVATURE
         if rank == 0:
@@ -686,6 +692,11 @@ def main() -> None:
             else:
                 if _ACCEPTED_STATE is not None:
                     raw_module.load_state_dict(_ACCEPTED_STATE)
+                elif USE_GEOMETRY and not GEOMETRY_REVERTED:
+                    raw_module.revert_to_euclidean_assignment()
+                    GEOMETRY_REVERTED = True
+                    _record(rank, "geometry_reverted", epoch=epoch,
+                            collision=float(collision_v))
                 if rank == 0:
                     _record(rank, "collision_budget", decision="rollback",
                             collision=float(collision_v), budget=COLLISION_BUDGET,
