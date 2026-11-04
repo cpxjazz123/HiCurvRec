@@ -23,8 +23,14 @@ class RQVAE(nn.Module):
         self.rq = RQLayer(config)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
-    def forward(self, embeddings: torch.Tensor,
-                ids: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+    def forward(self, embeddings: torch.Tensor, ids: torch.Tensor | None = None,
+                radius: torch.Tensor | None = None
+                ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+        """The framework's probe calls the model with the ids and the radius.
+
+        This mechanism has no per-item radius table - the behaviour enters as
+        the anchor of the prefix - so the radius is accepted and not used.
+        """
         encoded = self.encoder(embeddings)
         quantized, quant_loss, unused_codes, tokens = self.rq(encoded, ids=ids)
         reconstructed = self.decoder(quantized)

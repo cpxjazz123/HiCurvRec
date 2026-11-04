@@ -2457,6 +2457,19 @@
       "event": "implementation_accepted",
       "idea_id": "holonomy-path-behaviour-rq",
       "note": "Re-registered with the transported codeword read back as a point of the hyperboloid; the reference contract, the coupling surface and the candidate's own tests pass."
+    },
+    {
+      "at": 1793823081.1971798,
+      "changed_files": 159,
+      "event": "implementation_registered",
+      "idea_id": "holonomy-path-behaviour-rq",
+      "revision": 6
+    },
+    {
+      "at": 1793823086.1169975,
+      "event": "implementation_accepted",
+      "idea_id": "holonomy-path-behaviour-rq",
+      "note": "Re-registered with every codeword a point of the hyperboloid and the objective carrying the hyperbolic distance; the reference contract, the coupling surface and the candidate's tests pass."
     }
   ],
   "evidence_bundles": {
@@ -15689,7 +15702,7 @@
   ],
   "implementations": [
     {
-      "acceptance_note": "Re-registered with the transported codeword read back as a point of the hyperboloid; the reference contract, the coupling surface and the candidate's own tests pass.",
+      "acceptance_note": "Re-registered with every codeword a point of the hyperboloid and the objective carrying the hyperbolic distance; the reference contract, the coupling surface and the candidate's tests pass.",
       "accepted": true,
       "arm_renamed": {
         "from": "TIGER_RQ-VAE",
@@ -15908,21 +15921,21 @@
       "proposal_sha256": null,
       "reference_agreement": {
         "coupling": {
-          "behaviour_argument": "M_1",
+          "behaviour_argument": "M_1, M_2",
           "control_argument": "M_2",
-          "max_abs_difference": 0.00029063385972306725,
+          "max_abs_difference": 0.001212640170061341,
           "reason": "the behaviour moves the computation",
           "status": "PASS"
         },
-        "detail": "transported_cosine: values 2.2e-16, gradients 3.3e-16, gradcheck True/True; the behaviour moves the computation (0.00029063385972306725)",
+        "detail": "transported_cosine: values 2.2e-16, gradients 3.3e-16, gradcheck True/True; the behaviour moves the computation (0.001212640170061341)",
         "name": "reference_agreement",
         "status": "PASS"
       },
-      "revision": 5,
+      "revision": 6,
       "smoke": {
-        "result": "the candidate's own six tests pass, including the regression tests for the three collapses"
+        "result": "the candidate's own six tests pass, including the regression test that the assignment picks the nearest codeword in the hyperbolic metric"
       },
-      "source_digest": "7117bf5976d1288468bdd4d0f5bb0b658a6efdecae681cd514ff12d67e5e75f8",
+      "source_digest": "70cf7ead4d60f4d9c7336a3474cff181cd37a8f2134dd2668bdf0f045de5835a",
       "status": "accepted",
       "tree": "results/research/issue121/trees/round_20261105_024519_485/holonomy-path-behaviour-rq",
       "tree_exists": true
@@ -17793,7 +17806,7 @@
   },
   "stage2_jobs": [
     {
-      "attempts": 6,
+      "attempts": 7,
       "error": null,
       "failure_kind": null,
       "idea_id": "holonomy-path-behaviour-rq",
@@ -17805,5 +17818,5 @@
   ],
   "stage3_jobs": [],
   "step": "stage2",
-  "updated_at": 1793822304.3368168
+  "updated_at": 1793823146.412656
 }
