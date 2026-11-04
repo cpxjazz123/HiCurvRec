@@ -190,7 +190,104 @@ def frechet_mean(points: torch.Tensor, c, *, weights: torch.Tensor = None,
     return centre
 
 
+
+
+# ---------------------------------------------------------------------------
+# The Lorentz model: the other closed form of the same curvature
+# ---------------------------------------------------------------------------
+# The ball above and the hyperboloid below are two charts of one geometry.
+# A mechanism that moves a point along a path (a transport, a holonomy) needs
+# the hyperboloid, where the tangent spaces and the parallel transport are
+# explicit. The signature is (-, +, ..., +): <x, x> = -1 on the hyperboloid.
+# These operators are part of the framework's geometry for the same reason the
+# ball operators are: a candidate composes them, it does not re-derive them.
+
+#: The clip on the ``arcosh`` argument.
+ACOSH_EPS = 1e-7
+
+
+def minkowski_dot(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    """``<x, y>_L = -x_0 y_0 + x_{1:} . y_{1:}`` (signature -, +, ..., +)."""
+    if x.shape[-1] != y.shape[-1]:
+        raise ValueError("the Minkowski product needs the same dimension")
+    head = -x[..., :1] * y[..., :1]
+    tail = (x[..., 1:] * y[..., 1:]).sum(dim=-1, keepdim=True)
+    return (head + tail).squeeze(-1)
+
+
+def lorentz_origin(dim: int, *, like: torch.Tensor) -> torch.Tensor:
+    """The origin of the hyperboloid: ``(1, 0, ..., 0)``."""
+    origin = torch.zeros_like(like)
+    origin[..., 0] = 1.0
+    return origin
+
+
+def lorentz_exp_origin(v: torch.Tensor) -> torch.Tensor:
+    """``exp_o(v) = (cosh |v|, sinh |v| v / |v|)`` for a spatial vector ``v``."""
+    norm = v.norm(dim=-1, keepdim=True)
+    safe = norm.clamp_min(1e-12)
+    head = torch.cosh(norm)
+    tail = torch.sinh(norm) * v / safe
+    return torch.cat([head, tail], dim=-1)
+
+
+def lorentz_log_origin(u: torch.Tensor) -> torch.Tensor:
+    """``log_o(u) = arcosh(u_0) u_{1:} / |u_{1:}|``."""
+    head = u[..., :1].clamp_min(1.0 + ACOSH_EPS)
+    distance = torch.acosh(head)
+    tail = u[..., 1:]
+    norm = tail.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+    return distance * tail / norm
+
+
+def lorentz_lift(v: torch.Tensor) -> torch.Tensor:
+    """The spatial vector ``v`` as a tangent vector at the origin: ``(0, v)``."""
+    return torch.cat([torch.zeros_like(v[..., :1]), v], dim=-1)
+
+
+def lorentz_exp(u: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
+    """``exp_u(v) = cosh|v|_L u + sinh|v|_L v / |v|_L`` for a TANGENT vector ``v``.
+
+    ``v`` is a Lorentz vector of the same dimension as ``u`` with
+    ``<u, v>_L = 0``; use :func:`lorentz_lift` for a spatial vector.
+    """
+    if u.shape[-1] != v.shape[-1]:
+        raise ValueError("the exponential map needs the tangent vector at u")
+    norm = minkowski_dot(v, v).clamp_min(0.0).sqrt()[..., None]
+    safe = norm.clamp_min(1e-12)
+    return torch.cosh(norm) * u + torch.sinh(norm) * v / safe
+
+
+def lorentz_log(u: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
+    """``log_u(w) = d (w + <u, w>_L u) / |w + <u, w>_L u|``, ``d = arcosh(-<u,w>_L)``."""
+    inner = minkowski_dot(u, w)[..., None]
+    denominator = (-inner).clamp_min(1.0 + ACOSH_EPS)
+    distance = torch.acosh(denominator)
+    projected = w + inner * u
+    norm = minkowski_dot(projected, projected).clamp_min(1e-24).sqrt()[..., None]
+    return distance * projected / norm.clamp_min(1e-12)
+
+
+def lorentz_parallel_transport(u: torch.Tensor, w: torch.Tensor,
+                                v: torch.Tensor) -> torch.Tensor:
+    """``PT_{u->w}(v) = v + <w, v>_L / (1 - <u, w>_L) (u + w)``.
+
+    The transport carries a tangent vector at ``u`` to the tangent space at
+    ``w``: ``<w, PT(v)> = 0`` holds by construction, and the Lorentz norm of
+    the vector is preserved.
+    """
+    if u.shape[-1] != v.shape[-1]:
+        raise ValueError("the parallel transport needs a tangent vector of the "
+                         "same dimension as the points")
+    inner = minkowski_dot(u, w)
+    factor = (minkowski_dot(w, v) / (1.0 - inner).clamp_min(1e-12))[..., None]
+    return v + factor * (u + w)
+
+
 #: The API a mechanism is allowed to compose.
-__all__ = ["BALL_EPS", "ARTANH_EPS", "ball_radius", "c_of_radius", "tanhc", "atanhc",
-           "project", "mobius_add", "expmap0", "logmap0", "expmap", "logmap",
-           "lambda_x", "distance", "squared_distance", "frechet_mean"]
+__all__ = ["BALL_EPS", "ARTANH_EPS", "ACOSH_EPS", "ball_radius", "c_of_radius",
+           "tanhc", "atanhc", "project", "mobius_add", "expmap0", "logmap0",
+           "expmap", "logmap", "lambda_x", "distance", "squared_distance",
+           "frechet_mean", "minkowski_dot", "lorentz_origin", "lorentz_lift",
+           "lorentz_exp_origin", "lorentz_log_origin", "lorentz_exp", "lorentz_log",
+           "lorentz_parallel_transport"]

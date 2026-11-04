@@ -87,6 +87,28 @@ def _raise_timeout(signum, frame):
     raise TimeoutError("the symbolic comparison ran out of time")
 
 
+def _layout(implementation: dict) -> list:
+    """The argument layout of a derivation: the widths and the scalars."""
+    layout = []
+    for spec in implementation.get("args") or []:
+        if spec.get("scalar") is not None:
+            layout.append(("scalar", 1))
+        else:
+            layout.append(("tensor", int(spec.get("width") or 1)))
+    return layout
+
+
+def _positional_mapping(left: dict, right: dict):
+    """The symbols of the right derivation, mapped onto the left's by position."""
+    if _layout(left) != _layout(right):
+        return None
+    left_symbols = list(left.get("symbols") or [])
+    right_symbols = list(right.get("symbols") or [])
+    if len(left_symbols) != len(right_symbols):
+        return None
+    return right_symbols
+
+
 def symbolic_difference(left: dict, right: dict, *, timeout: float = SYMBOLIC_TIMEOUT_SECONDS) -> dict:
     """Whether two derivations state the same function of the same inputs."""
     import sympy
@@ -96,12 +118,26 @@ def symbolic_difference(left: dict, right: dict, *, timeout: float = SYMBOLIC_TI
         right_scope = _expressions(right)
     except Exception as exc:  # noqa: BLE001
         return {"equivalent": False, "reason": f"a derivation does not parse: {exc}"}
-    if list(left.get("symbols") or []) != list(right.get("symbols") or []):
+    # Two derivations that name the same argument differently are the SAME
+    # function: the comparison is by position, and the names are mapped through
+    # the argument layout. A different layout (a different number of arguments,
+    # a different width) is a different function and is refused as such.
+    mapping = _positional_mapping(left, right)
+    if mapping is None:
         return {"equivalent": False,
-                "reason": "the two derivations use different symbol lists"}
+                "reason": "the two derivations declare different argument layouts: " +
+                           str(_layout(left)) + " against " + str(_layout(right))}
+    substitutions = {}
+    if mapping:
+        import sympy
+        for right_symbol, left_symbol in zip(mapping, left.get("symbols") or []):
+            substitutions[right_symbol] = sympy.Symbol(left_symbol)
+    right_output = right_scope[right["output"]]
+    if substitutions:
+        right_output = right_output.subs(substitutions)
     try:
-        difference = _bounded_simplify(left_scope[left["output"]] -
-                                       right_scope[right["output"]], timeout)
+        difference = _bounded_simplify(left_scope[left["output"]] - right_output,
+                                       timeout)
     except TimeoutError:
         return {"equivalent": None,
                 "reason": "the symbolic comparison did not finish in %d seconds"

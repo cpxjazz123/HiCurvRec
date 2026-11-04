@@ -219,7 +219,12 @@ def check_four_rank(tree: Path | str) -> dict:
 #: framework's contract module.
 _FORBIDDEN_OPERATORS = ("expmap0", "logmap0", "expmap", "logmap", "mobius_add",
                         "poincare_distance", "clamp_ball", "exp0_c", "log0_c",
-                        "squared_distance_c", "distance_c")
+                        "squared_distance_c", "distance_c",
+                        # the Lorentz model of the same curvature: the framework
+                        # owns it for the same reason it owns the ball
+                        "minkowski_dot", "lorentz_exp", "lorentz_log",
+                        "lorentz_exp_origin", "lorentz_log_origin",
+                        "lorentz_parallel_transport", "lorentz_lift")
 
 
 def _baseline_tree() -> Path | None:
