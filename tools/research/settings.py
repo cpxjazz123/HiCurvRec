@@ -29,6 +29,10 @@ RESEARCH_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
 #: The chat model the agents are created with. Empty means the runtime
 #: refuses to run: an agent without a model is not an agent.
 AGENT_CHAT_MODEL = "deepseek/deepseek-v4.1-flash"
+#: "on" makes the SDK enforce a JSON schema on the agent's answer. It needs a
+#: provider that honours response_format=json_schema; the default asks for the
+#: JSON in the prompt and renders it, which works with every provider.
+AGENT_STRUCTURED_OUTPUT = "off"
 AGENT_TIMEOUT_SECONDS = 1800
 #: The deadline of one sub-agent of a round, counted from the moment the task is
 #: dispatched: the initialisation, the model calls, the retries and the

@@ -15,6 +15,8 @@ import json
 import time
 from pathlib import Path
 
+from pydantic import BaseModel, Field
+
 from tools.research import settings
 from tools.research.agents import policy, progress_server, runner
 
@@ -138,6 +140,53 @@ def configured_provider(model_id: str) -> tuple:
     if not base_url or not api_key:
         return None
     return base_url, api_key, model
+
+
+class IdeaPayload(BaseModel):
+    """The JSON an ideation agent answers with."""
+    idea_id: str
+    title: str
+    motivation: str
+    novelty: str
+    key_change: str
+    specification: str
+    cost_estimate: str
+    falsifiable_hypothesis: str
+    risks: list[str] = Field(default_factory=list)
+    behavior_signal: str = ""
+    behavior_computation: str = ""
+    leakage_boundary: str = ""
+    hyperbolic_operator: str = ""
+    hyperbolic_location: str = ""
+    coupling_path: str = ""
+    coupling_equation: str = ""
+    observables: str = ""
+    ablation_behavior_off: str = ""
+    ablation_geometry_off: str = ""
+    ablation_both_on: str = ""
+    spec_equations: str = ""
+    spec_inputs_outputs: str = ""
+    safeguards: str = ""
+
+
+class RankEntry(BaseModel):
+    """One ranked proposal."""
+    idea_id: str
+    position: int
+    reason: str
+
+
+class RankPayload(BaseModel):
+    """The JSON a reviewer answers with."""
+    ranking: list[RankEntry] = Field(default_factory=list)
+    objection: str = ""
+
+
+def output_schema(role: str):
+    """The structured-output schema of a role, when the provider supports it."""
+    if role == "score":
+        return RankPayload
+    return IdeaPayload
 
 
 def build_model(model_id: str | None = None):
@@ -420,9 +469,20 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         instructions = SYSTEM_PROMPT + "\n" + RANK_JSON_INSTRUCTIONS
     else:
         instructions = SYSTEM_PROMPT + "\n" + IDEA_JSON_INSTRUCTIONS
-    agent = Agent(name=task_id, instructions=instructions,
-                  tools=[function_tool(function) for function in functions],
-                  model=build_model(model))
+    schema = None
+    if str(settings.AGENT_STRUCTURED_OUTPUT or "off").lower() == "on":
+        schema = output_schema(role)
+    try:
+        agent = Agent(name=task_id, instructions=instructions,
+                      tools=[function_tool(function) for function in functions],
+                      model=build_model(model), output_type=schema)
+    except Exception:                                        # noqa: BLE001
+        # A provider that does not honour response_format=json_schema must not
+        # cost the round: the agent is built without the schema and answers in
+        # the text the runtime can still render.
+        agent = Agent(name=task_id, instructions=instructions,
+                      tools=[function_tool(function) for function in functions],
+                      model=build_model(model))
     started = time.time()
     answer_text = ""
     failure = ""

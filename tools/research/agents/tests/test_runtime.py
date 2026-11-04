@@ -79,6 +79,14 @@ class BackendContractTests(unittest.TestCase):
     def tearDown(self):
         self.work.cleanup()
 
+    def test_the_structured_output_schema_matches_the_framework_fields(self):
+        schema = runtime.output_schema("ideate")
+        fields = set(schema.model_fields)
+        self.assertTrue({"idea_id", "title", "motivation", "behavior_signal",
+                         "hyperbolic_operator", "coupling_path"} <= fields)
+        ranking = runtime.output_schema("score")
+        self.assertIn("ranking", ranking.model_fields)
+
     def test_a_json_answer_is_rendered_into_the_block_the_parser_reads(self):
         payload = {"idea_id": "alpha-1", "title": "A proposal",
                    "motivation": "m", "novelty": "n", "key_change": "c",
