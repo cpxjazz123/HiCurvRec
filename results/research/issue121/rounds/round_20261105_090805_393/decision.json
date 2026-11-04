@@ -1,0 +1,350 @@
+{
+  "decision_at": 1793830820.5015123,
+  "decision_hash": "eb14fc3a2b0d7c3684900356ee4869a13ac5372b87d7bfc18de87852a0ee9627",
+  "evidence": {
+    "OCCURV-FIELD-RQ": {
+      "bundle_sha256": "f40daafe155f3be3a3fac454736b8911c3eeec2eb09d0131c0894ff9339a5e86",
+      "literature_sha256": "09a82ce4eb74f206249c3cff2274777dff9b3c259632cdcfc43e3a94f0aac40f",
+      "math_sha256": "382200b78df1332af83a019854d6bb479982001b02384a50ffcb70e7978585f2",
+      "probe_sha256": "f049a57128dae433d06997cf6b417a04cc3e62c0e1317b2d4ad0650ee771c176"
+    },
+    "OCCURVE-RQ": {
+      "bundle_sha256": "8a7a312e13d89a7e0e53dd7a637d021eb2052645494da61b3211546b94199786",
+      "literature_sha256": "2fd2d9f46ce2363baf8135910907ed10ec459e0582b8e6724b767ce396fbdf90",
+      "math_sha256": "42b7a84fb105659547c6d21c5980ff855283cfa4e558dbfcc2dce123f566a9af",
+      "probe_sha256": "63307eb1bdd915b0ab9b26c2135b43d5e1b22ac0fe9ed85819d1a1686ad0b915"
+    },
+    "RSPC-RQ": {
+      "bundle_sha256": "1e3482d1228219f62e8c0a805ea78677f17de061fb0eb001f738f7a7118842b2",
+      "literature_sha256": "dc774c0e9509cd370d0272e440a7f1573c1f10136c0c2e11603e37ed1ac4ac98",
+      "math_sha256": "e5b281d9fcbf396cf9fe5133ababa382f6168e41f11baa5ea55a99865bcf5dae",
+      "probe_sha256": "72800a992e771f013fae46c3bb35eaf8f9e6f75c88ede4b1a4304ad87f182198"
+    },
+    "parentcurv-rq-2026": {
+      "bundle_sha256": "ba8fb09c35ebc8690fea83b005c0e7cd0f7aea0febdec450dffd37b7de25e6b5",
+      "literature_sha256": "1eff6924a972bdf7f137257796e694d945369ccb052e2166f85ab28fb1becbc3",
+      "math_sha256": "ca32955680f21058bfc819590551803cf610c2409a2570ec0c30df43f2038654",
+      "probe_sha256": "5364706072a6664073e51fb46e8ecb97eade88c8ed191dd82ae6cdb0736f6803"
+    }
+  },
+  "lineage": {},
+  "matrix": {
+    "reviewers": [
+      "scoring_1",
+      "scoring_2",
+      "scoring_3"
+    ],
+    "rows": [
+      {
+        "evidence_gaps": [],
+        "first_places": 1,
+        "idea_id": "OCCURV-FIELD-RQ",
+        "mean_rank": 1.6667,
+        "per_reviewer_position": {
+          "scoring_1": 1,
+          "scoring_2": 2,
+          "scoring_3": 2
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Its per-(level,codeword) curvature is occupancy-normalised behaviour reach (phi=mean b_i/pop_i divided by the level mean), i.e. the exact inverse of the popularity-sized GEOCAP cell that broke the 35% gate at l3_collision 0.549 while keeping GEOCAP's level-1 gain that E6 shows is the main recall lever; all bounds are derived (kappa_max=0.9/tanh^2(0.9)=1.754, kappa in [0.645,1.754], log-clipped rho, residual shell c*=0.9) so nothing is tuned, decode is log_0 of the same curved codeword so one chart is consistent, E10 (115,582 edges, out-degree 5.45) and E9 make per-occupant reach measurable, and cost is +3-5% with no extra forward pass.",
+          "scoring_2": "It turns the measured transition reach of the E10 graph into a detached per-(level,codeword) curvature field whose whole range is derived from the measured clamp c*=0.9 (kappa_max=0.9/tanh^2(0.9)=1.754, kappa in [0.6453,1.754], kappa0=1.0638), so it adds no trainable free constant, and its per-level residual renormalisation answers the level-3 collapse that broke the 0.35 gate; it sits behind RSPC because b_i/pop_i is not the directly measured E5 statistic and its same-chart cross-curvature comparison is scale-biased by its own admission.",
+          "scoring_3": "E5 (top-1 successor mass 0.4375 vs 0.0543, Spearman -0.973) and E10 (115582 edges, out-degree 5.45) give enough per-item variation for detached behaviour reach per occupant to differ across codewords; it is the only design where behaviour becomes the metric (assignment, commitment gradient, codebook pull) with a derived curvature range [0.645,1.754] from the c*=0.9 shell, and I verified the sign (higher kappa inflates distance, 1.169->1.514 at"
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 5
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 2,
+        "idea_id": "RSPC-RQ",
+        "mean_rank": 2.0,
+        "per_reviewer_position": {
+          "scoring_1": 4,
+          "scoring_2": 1,
+          "scoring_3": 1
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Row-normalised per-pair successor prior is demand-neutral in principle, but its own risk list concedes the derived 1/lnK may be too weak and the run reduces to a pure curved quantiser; its l=1 dummy-row prior is a global successor tilt that can restore GEOCAP's demand bias at the level E6 shows matters most, there is no per-code capacity shaping, and E6/E7 show curved/geodesic recursive arms stalled at 0.055 (successor_geodesic_coarse, tangent_successor_residual) while Euclidean l1_br_euclid reached 0.062, with softmax temperature EMA and an extra no-grad epoch forward adding single-run variance.\nOBJECTION: E6 caps the upside of any of these: gold prefix alive at depth 4 is only 0.068-0.088 across all arms while l1_only already reaches 0.0623 and resample 0.0636, so >0.065 requires the deep-level spread to push depth-4 survival above ~0.088, which no measured arm has done; and because the curvature field is detached and only re-tilts assignment, a run that keeps the GEOCAP level-1 numbers and merely spreads level 3 cannot, in one arm with no ablation and no seed repetition, separate the coupling gain from seed noise - the verdict then rests on the recorded diagnostics, which E7 shows (l1_br T1 NLL 0.00 with the worst recall 0.0467) do not track test_recall@10.",
+          "scoring_2": "E9 grounds the predecessor-profile signal (positive shares successor cohort with anchor 0.9291 vs 0.8871 for fixed negatives; profile overlap beats all ten negatives for 0.5898 of pairs) and E10 supplies the sparse directed graph (118315 edges, density 5.33, mean out-degree 5.45), while E6/E7 put the scored bottleneck at deep-prefix survival (l1_only depth-3 alive 0.156; l1_br depth-4 alive 0.068 with T4 NLL 9.03), which its row-normalised prefix-conditioned prior targets directly; the mean-1 row normalisation bounds the global demand inflation behind GEOCAP's l3_collision 0.549, and every constant (1/lnK, EMA beta, median-margin tau) is derived, no sweep.",
+          "scoring_3": "E6 puts the recall loss at depth 4 (gold prefix alive 0.068-0.088, best arm resample 0.06363 < 0.065 target) and E8 shows K=256 leaves only 0.0822 of canonical pairs in one cluster, so a per-pair successor-code prior inside the geodesic score attacks the measured bottleneck; its row-mean-1 prior, measured beta_l/tau_l and zero extra parameters avoid the demand-sized cells that broke GEOCAP (l3_collision 0.549), with Mobius residual subtraction keeping curved geometry in the same pathway."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 6
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "parentcurv-rq-2026",
+        "mean_rank": 3.0,
+        "per_reviewer_position": {
+          "scoring_1": 2,
+          "scoring_2": 4,
+          "scoring_3": 3
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Most targeted deep-level fix: curvature per (level,parent cell) from that parent's own residual energy, successor branching entropy and occupancy, with level-1 curvature fixed at exactly 1 (no free constant) and the STE line preserved; E5 backs branchiness as a strong, non-degenerate signal (top-1 mass 0.4375 vs 0.0543, Spearman -0.973). Placed second because it keeps no level-1 capacity mechanism (E6: level-1-only 0.0623 and l1_br_euclid 0.062 already reach the target band) and its curved assignment positions differ from its Euclidean reconstruction r_q=E_l[k], so geometry and decode disagree.",
+          "scoring_2": "It fixes level-1 curvature at kappa=1 by construction, declining to reproduce the only measured separation gain, and its curved operation never enters the reconstruction or residual path (r^(l+1)=r^(l)+(r_q-r).detach(), 'reconstruction untouched'), so the residual chain stays Euclidean and the coupling is the thinnest of the four; its branching entropy reaches the E5 stratification only through a per-parent aggregation.\nOBJECTION: All four rest on clearing a level-3 collision gate that no measured arm has yet passed and on test_recall@10 > 0.065, a target above every measured beam recall in E6 (best 0.06363, resample), so one unaudited run cannot attribute any recall movement to the behaviour-geometry coupling; E8 also shows the frozen K=256 level-1 partition co-locates only 0.0822 of canonical pairs, so the binding capacity ceiling may lie outside all four mechanisms.",
+          "scoring_3": "Level-1 curvature is exactly 1 by construction (no tuned constant) and occupancy-scaled kappa gives the correct negative feedback, but it runs level 1 in a curved metric and drops the radial machinery that produced valid_l1_hard_er 3.885, the spec omits the clamp that keeps 1-c"
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 9
+      },
+      {
+        "evidence_gaps": [],
+        "first_places": 0,
+        "idea_id": "OCCURVE-RQ",
+        "mean_rank": 3.3333,
+        "per_reviewer_position": {
+          "scoring_1": 3,
+          "scoring_2": 3,
+          "scoring_3": 4
+        },
+        "per_reviewer_reason": {
+          "scoring_1": "Homeostatic inverse-occupancy radii invert GEOCAP's wrong sign and are rate-distortion-correct, with the behaviour weight (successor-entropy btilde) grounded in E5; but at level 1 it shrinks the busy cells whose coarseness E8 shows keeps behavioural neighbours together (K=16 0.3106 vs K=256 0.0822), endangering the main recall driver, and the trainable c_l has no geometric-off arm and can drift to its 1e-3 clamp so the curvature can be Euclidean in the only run that decides.",
+          "scoring_2": "Its behaviour weight is the best-supported signal in the bundle (E5: top-1 successor mass 0.4375 vs 0.0543, Spearman(entropy, top-1 mass) -0.973) and it correctly inverts GEOCAP's popularity sign, but its geometric intensity is a trainable per-level c_l in [1e-3,8] init 1, a free constant whose own risk list concedes it can drift to Euclidean and leave the geometry decorative, and inverse-occupancy radii can over-sharpen level 1, the only level with a measured gain (E8: K=256 level-1 co-location 0.0822 vs 0.3106 at K=16).",
+          "scoring_3": "Its behaviour weight is the one best supported by E5's entropy quintiles, but the central equation rho_{l,k}=R_ref(c_l)*g_{c_l}(m_l/(m_l+N_{l,k})) is never written (R_ref and g undefined), and the trainable curvature clamped at 1e-3 is admitted to permit a Euclidean-in-disguise run, so neither the coupling nor the claimed area-law derivation can be checked from the evidence; grounded behaviour, ungrounded specification, hence last.\nOBJECTION: RSPC-RQ's behaviour term is an additive, fixed-curvature log-prior on the geodesic score, so the geometry never responds to behaviour; if the derived 1/ln K tilt is far too weak the single run degenerates into a plain curved residual quantiser with the GEOCAP-era level-3 risk, and with no geometry-off or behaviour-off arm trained there is no way to tell after the fact which regime the one run was in."
+        },
+        "reviewers": 3,
+        "scope_decision_basis": "proposal content: behaviour signal, curved operation, coupling pathway, ablations",
+        "scope_reasons": [],
+        "scope_verdict": "IN_SCOPE",
+        "total_rank": 10
+      }
+    ],
+    "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+    "rubric_version": "rank-2026-10-v1"
+  },
+  "proposals": [
+    {
+      "evidence_sha256": "f40daafe155f3be3a3fac454736b8911c3eeec2eb09d0131c0894ff9339a5e86",
+      "idea_id": "OCCURV-FIELD-RQ",
+      "proposal_sha256": "e32c83042b7f4bb032c8eaedeff1080965317d61c83507e8738b5392031de821"
+    },
+    {
+      "evidence_sha256": "1e3482d1228219f62e8c0a805ea78677f17de061fb0eb001f738f7a7118842b2",
+      "idea_id": "RSPC-RQ",
+      "proposal_sha256": "61a0afcd5be9cc072432973e6ab415e9fce44b1761fc466d361a3c34204f5e5b"
+    },
+    {
+      "evidence_sha256": "ba8fb09c35ebc8690fea83b005c0e7cd0f7aea0febdec450dffd37b7de25e6b5",
+      "idea_id": "parentcurv-rq-2026",
+      "proposal_sha256": "2bbb00ed062c0671c845420d476e3a27c59e0ea40b1db54d78e42f3243868be1"
+    },
+    {
+      "evidence_sha256": "8a7a312e13d89a7e0e53dd7a637d021eb2052645494da61b3211546b94199786",
+      "idea_id": "OCCURVE-RQ",
+      "proposal_sha256": "88912e4f18bbcd382f2ff049456a8d10b31c80a06403aea022d60cf5fd9aa13e"
+    }
+  ],
+  "reviews": [
+    {
+      "ranking": [
+        {
+          "idea_id": "OCCURV-FIELD-RQ",
+          "position": 1,
+          "reason": "Its per-(level,codeword) curvature is occupancy-normalised behaviour reach (phi=mean b_i/pop_i divided by the level mean), i.e. the exact inverse of the popularity-sized GEOCAP cell that broke the 35% gate at l3_collision 0.549 while keeping GEOCAP's level-1 gain that E6 shows is the main recall lever; all bounds are derived (kappa_max=0.9/tanh^2(0.9)=1.754, kappa in [0.645,1.754], log-clipped rho, residual shell c*=0.9) so nothing is tuned, decode is log_0 of the same curved codeword so one chart is consistent, E10 (115,582 edges, out-degree 5.45) and E9 make per-occupant reach measurable, and cost is +3-5% with no extra forward pass."
+        },
+        {
+          "idea_id": "parentcurv-rq-2026",
+          "position": 2,
+          "reason": "Most targeted deep-level fix: curvature per (level,parent cell) from that parent's own residual energy, successor branching entropy and occupancy, with level-1 curvature fixed at exactly 1 (no free constant) and the STE line preserved; E5 backs branchiness as a strong, non-degenerate signal (top-1 mass 0.4375 vs 0.0543, Spearman -0.973). Placed second because it keeps no level-1 capacity mechanism (E6: level-1-only 0.0623 and l1_br_euclid 0.062 already reach the target band) and its curved assignment positions differ from its Euclidean reconstruction r_q=E_l[k], so geometry and decode disagree."
+        },
+        {
+          "idea_id": "OCCURVE-RQ",
+          "position": 3,
+          "reason": "Homeostatic inverse-occupancy radii invert GEOCAP's wrong sign and are rate-distortion-correct, with the behaviour weight (successor-entropy btilde) grounded in E5; but at level 1 it shrinks the busy cells whose coarseness E8 shows keeps behavioural neighbours together (K=16 0.3106 vs K=256 0.0822), endangering the main recall driver, and the trainable c_l has no geometric-off arm and can drift to its 1e-3 clamp so the curvature can be Euclidean in the only run that decides."
+        },
+        {
+          "idea_id": "RSPC-RQ",
+          "position": 4,
+          "reason": "Row-normalised per-pair successor prior is demand-neutral in principle, but its own risk list concedes the derived 1/lnK may be too weak and the run reduces to a pure curved quantiser; its l=1 dummy-row prior is a global successor tilt that can restore GEOCAP's demand bias at the level E6 shows matters most, there is no per-code capacity shaping, and E6/E7 show curved/geodesic recursive arms stalled at 0.055 (successor_geodesic_coarse, tangent_successor_residual) while Euclidean l1_br_euclid reached 0.062, with softmax temperature EMA and an extra no-grad epoch forward adding single-run variance.\nOBJECTION: E6 caps the upside of any of these: gold prefix alive at depth 4 is only 0.068-0.088 across all arms while l1_only already reaches 0.0623 and resample 0.0636, so >0.065 requires the deep-level spread to push depth-4 survival above ~0.088, which no measured arm has done; and because the curvature field is detached and only re-tilts assignment, a run that keeps the GEOCAP level-1 numbers and merely spreads level 3 cannot, in one arm with no ablation and no seed repetition, separate the coupling gain from seed noise - the verdict then rests on the recorded diagnostics, which E7 shows (l1_br T1 NLL 0.00 with the worst recall 0.0467) do not track test_recall@10."
+        }
+      ],
+      "reviewer": "scoring_1",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "RSPC-RQ",
+          "position": 1,
+          "reason": "E9 grounds the predecessor-profile signal (positive shares successor cohort with anchor 0.9291 vs 0.8871 for fixed negatives; profile overlap beats all ten negatives for 0.5898 of pairs) and E10 supplies the sparse directed graph (118315 edges, density 5.33, mean out-degree 5.45), while E6/E7 put the scored bottleneck at deep-prefix survival (l1_only depth-3 alive 0.156; l1_br depth-4 alive 0.068 with T4 NLL 9.03), which its row-normalised prefix-conditioned prior targets directly; the mean-1 row normalisation bounds the global demand inflation behind GEOCAP's l3_collision 0.549, and every constant (1/lnK, EMA beta, median-margin tau) is derived, no sweep."
+        },
+        {
+          "idea_id": "OCCURV-FIELD-RQ",
+          "position": 2,
+          "reason": "It turns the measured transition reach of the E10 graph into a detached per-(level,codeword) curvature field whose whole range is derived from the measured clamp c*=0.9 (kappa_max=0.9/tanh^2(0.9)=1.754, kappa in [0.6453,1.754], kappa0=1.0638), so it adds no trainable free constant, and its per-level residual renormalisation answers the level-3 collapse that broke the 0.35 gate; it sits behind RSPC because b_i/pop_i is not the directly measured E5 statistic and its same-chart cross-curvature comparison is scale-biased by its own admission."
+        },
+        {
+          "idea_id": "OCCURVE-RQ",
+          "position": 3,
+          "reason": "Its behaviour weight is the best-supported signal in the bundle (E5: top-1 successor mass 0.4375 vs 0.0543, Spearman(entropy, top-1 mass) -0.973) and it correctly inverts GEOCAP's popularity sign, but its geometric intensity is a trainable per-level c_l in [1e-3,8] init 1, a free constant whose own risk list concedes it can drift to Euclidean and leave the geometry decorative, and inverse-occupancy radii can over-sharpen level 1, the only level with a measured gain (E8: K=256 level-1 co-location 0.0822 vs 0.3106 at K=16)."
+        },
+        {
+          "idea_id": "parentcurv-rq-2026",
+          "position": 4,
+          "reason": "It fixes level-1 curvature at kappa=1 by construction, declining to reproduce the only measured separation gain, and its curved operation never enters the reconstruction or residual path (r^(l+1)=r^(l)+(r_q-r).detach(), 'reconstruction untouched'), so the residual chain stays Euclidean and the coupling is the thinnest of the four; its branching entropy reaches the E5 stratification only through a per-parent aggregation.\nOBJECTION: All four rest on clearing a level-3 collision gate that no measured arm has yet passed and on test_recall@10 > 0.065, a target above every measured beam recall in E6 (best 0.06363, resample), so one unaudited run cannot attribute any recall movement to the behaviour-geometry coupling; E8 also shows the frozen K=256 level-1 partition co-locates only 0.0822 of canonical pairs, so the binding capacity ceiling may lie outside all four mechanisms."
+        }
+      ],
+      "reviewer": "scoring_2",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    },
+    {
+      "ranking": [
+        {
+          "idea_id": "RSPC-RQ",
+          "position": 1,
+          "reason": "E6 puts the recall loss at depth 4 (gold prefix alive 0.068-0.088, best arm resample 0.06363 < 0.065 target) and E8 shows K=256 leaves only 0.0822 of canonical pairs in one cluster, so a per-pair successor-code prior inside the geodesic score attacks the measured bottleneck; its row-mean-1 prior, measured beta_l/tau_l and zero extra parameters avoid the demand-sized cells that broke GEOCAP (l3_collision 0.549), with Mobius residual subtraction keeping curved geometry in the same pathway."
+        },
+        {
+          "idea_id": "OCCURV-FIELD-RQ",
+          "position": 2,
+          "reason": "E5 (top-1 successor mass 0.4375 vs 0.0543, Spearman -0.973) and E10 (115582 edges, out-degree 5.45) give enough per-item variation for detached behaviour reach per occupant to differ across codewords; it is the only design where behaviour becomes the metric (assignment, commitment gradient, codebook pull) with a derived curvature range [0.645,1.754] from the c*=0.9 shell, and I verified the sign (higher kappa inflates distance, 1.169->1.514 at"
+        },
+        {
+          "idea_id": "parentcurv-rq-2026",
+          "position": 3,
+          "reason": "Level-1 curvature is exactly 1 by construction (no tuned constant) and occupancy-scaled kappa gives the correct negative feedback, but it runs level 1 in a curved metric and drops the radial machinery that produced valid_l1_hard_er 3.885, the spec omits the clamp that keeps 1-c"
+        },
+        {
+          "idea_id": "OCCURVE-RQ",
+          "position": 4,
+          "reason": "Its behaviour weight is the one best supported by E5's entropy quintiles, but the central equation rho_{l,k}=R_ref(c_l)*g_{c_l}(m_l/(m_l+N_{l,k})) is never written (R_ref and g undefined), and the trainable curvature clamped at 1e-3 is admitted to permit a Euclidean-in-disguise run, so neither the coupling nor the claimed area-law derivation can be checked from the evidence; grounded behaviour, ungrounded specification, hence last.\nOBJECTION: RSPC-RQ's behaviour term is an additive, fixed-curvature log-prior on the geodesic score, so the geometry never responds to behaviour; if the derived 1/ln K tilt is far too weak the single run degenerates into a plain curved residual quantiser with the GEOCAP-era level-3 risk, and with no geometry-off or behaviour-off arm trained there is no way to tell after the fact which regime the one run was in."
+        }
+      ],
+      "reviewer": "scoring_3",
+      "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+      "rubric_version": "rank-2026-10-v1",
+      "scorer": null
+    }
+  ],
+  "round_id": "round_20261105_090805_393",
+  "rubric_sha256": "f50a1334d619338f796d9b672f7151819f91a0cc389b7cebba5bb287ac680b0a",
+  "rubric_version": "rank-2026-10-v1",
+  "schema": 2,
+  "scoring_source_commit": null,
+  "selection": {
+    "aggregate": {
+      "OCCURV-FIELD-RQ": {
+        "first_places": 1,
+        "mean_rank": 1.6667,
+        "total_rank": 5
+      },
+      "OCCURVE-RQ": {
+        "first_places": 0,
+        "mean_rank": 3.3333,
+        "total_rank": 10
+      },
+      "RSPC-RQ": {
+        "first_places": 2,
+        "mean_rank": 2.0,
+        "total_rank": 6
+      },
+      "parentcurv-rq-2026": {
+        "first_places": 0,
+        "mean_rank": 3.0,
+        "total_rank": 9
+      }
+    },
+    "backups": [
+      {
+        "first_places": 2,
+        "idea_id": "RSPC-RQ",
+        "mean_rank": 2.0,
+        "status": "BACKUP",
+        "total_rank": 6
+      },
+      {
+        "first_places": 0,
+        "idea_id": "parentcurv-rq-2026",
+        "mean_rank": 3.0,
+        "status": "BACKUP",
+        "total_rank": 9
+      },
+      {
+        "first_places": 0,
+        "idea_id": "OCCURVE-RQ",
+        "mean_rank": 3.3333,
+        "status": "BACKUP",
+        "total_rank": 10
+      }
+    ],
+    "disagreement": {
+      "OCCURV-FIELD-RQ": 1,
+      "OCCURVE-RQ": 1,
+      "RSPC-RQ": 3,
+      "parentcurv-rq-2026": 2
+    },
+    "rejected": [
+      {
+        "idea_id": "RSPC-RQ",
+        "mean_rank": 2.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 6
+      },
+      {
+        "idea_id": "parentcurv-rq-2026",
+        "mean_rank": 3.0,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 9
+      },
+      {
+        "idea_id": "OCCURVE-RQ",
+        "mean_rank": 3.3333,
+        "reasons": [
+          "NOT_SELECTED_CAP: outside the one-mechanism cap"
+        ],
+        "status": "NOT_SELECTED_CAP",
+        "total_rank": 10
+      }
+    ],
+    "rule": {
+      "declared_hours_budget": 72.0,
+      "max_selected": 1,
+      "min_reviewers": 2,
+      "tie_break_order": [
+        "scope",
+        "total_rank",
+        "first_places",
+        "idea_id"
+      ]
+    },
+    "selected": [
+      {
+        "first_places": 1,
+        "idea_id": "OCCURV-FIELD-RQ",
+        "mean_rank": 1.6667,
+        "scope_verdict": "IN_SCOPE",
+        "status": "SELECTED",
+        "total_rank": 5
+      }
+    ],
+    "selection_is_multiple": false,
+    "status": "SELECTED",
+    "tie_break_order": [
+      "scope",
+      "total_rank",
+      "first_places",
+      "idea_id"
+    ]
+  }
+}
