@@ -9,9 +9,24 @@ stays at the baseline's measured level while the curved/behaviour terms train.
 """
 from __future__ import annotations
 
+import types
+
 import torch
 
+import curvature_prefix
+
 from .layers import RQLayer
+
+
+def _curved_distances(layer, latent: torch.Tensor) -> torch.Tensor:
+    """The Poincare cost, so the curve selects the code instead of scoring it.
+
+    ``layer.curvature`` is measured by the trainer from the level-1 residual
+    norms before training (Issue #138 C); until it is set the unit curvature is
+    used, which is the framework geometry contract's default.
+    """
+    curvature = float(getattr(layer, "curvature", None) or 1.0)
+    return curvature_prefix.curved_codes_cost(latent, layer.get_code_embs(), curvature)
 
 
 class RecordingRQLayer(RQLayer):
@@ -19,6 +34,13 @@ class RecordingRQLayer(RQLayer):
 
     def __init__(self, config):
         super().__init__(config)
+        # The assignment rule is the candidate's (CLAUDE.md 66): with the curve on,
+        # every level selects its code by the Poincare cost, in training and in
+        # the export pass alike (get_indices goes through the same layers).
+        if bool(getattr(config, "use_curvature", True)):
+            for layer in self.vq_layers:
+                layer.curvature = None
+                layer._distances = types.MethodType(_curved_distances, layer)
         # The assignment rule is the candidate's (CLAUDE.md 66). The exported L2
         # prefix count is the quantity the historical SID record ties to recall
         # (rho=+0.45 against R@10; the 0.0636 arm exported 16,145 prefixes where

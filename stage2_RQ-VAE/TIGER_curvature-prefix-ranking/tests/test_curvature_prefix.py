@@ -420,6 +420,48 @@ class CoClusterTests(unittest.TestCase):
         self.assertNotAlmostEqual(float(curved), float(flat), places=6)
 
 
+class CurvedAssignmentTests(unittest.TestCase):
+    """Issue #138 C: the curve must enter the hard code selection itself."""
+
+    def _layer(self, use_curvature: bool):
+        from types import SimpleNamespace
+        from model.recording import RecordingRQLayer
+        config = SimpleNamespace(hidden_sizes=(16, 8), codebook_num=3,
+                                 codebook_size=(8, 8, 8), codebook_dim=4,
+                                 dropout=0.0, beta=0.25, vq_type="vq",
+                                 ema_decay=0.99, fix_code_embs=False,
+                                 sk_epsilon=-1.0, sk_iters=-1,
+                                 use_curvature=use_curvature)
+        return RecordingRQLayer(config)
+
+    def test_the_assignment_cost_is_the_curved_one_when_enabled(self):
+        layer = self._layer(True)
+        layer.vq_layers[0].curvature = 1e5
+        latent = torch.tensor([[0.01, 0.02, 0.0, 0.0], [0.03, -0.01, 0.0, 0.0]])
+        curved = layer.vq_layers[0]._distances(latent)
+        expected = cp.curved_codes_cost(latent, layer.vq_layers[0].get_code_embs(), 1e5)
+        self.assertTrue(torch.allclose(curved, expected, atol=1e-6))
+
+    def test_the_euclidean_cost_stays_when_the_geometry_is_off(self):
+        layer = self._layer(False)
+        latent = torch.tensor([[0.01, 0.02, 0.0, 0.0]])
+        code = layer.vq_layers[0].get_code_embs()
+        euclid = cp._assignment_cost(latent, code, use_curvature=False)
+        self.assertTrue(torch.allclose(layer.vq_layers[0]._distances(latent), euclid,
+                                       atol=1e-6))
+
+    def test_the_curved_argmin_can_differ_from_the_euclidean_one(self):
+        layer = self._layer(True)
+        layer.vq_layers[0].curvature = 1e6
+        latent = torch.tensor([[0.999, 0.0, 0.0, 0.0], [0.0, 0.02, 0.0, 0.0]])
+        curved_index = int(layer.vq_layers[0]._distances(latent).argmin(dim=-1)[0])
+        euclid_index = int(cp._assignment_cost(
+            latent, layer.vq_layers[0].get_code_embs(), use_curvature=False
+        ).argmin(dim=-1)[0])
+        self.assertNotEqual(curved_index, euclid_index,
+                            "at high curvature the assignment must be able to move")
+
+
 class PrefixSemanticsTests(unittest.TestCase):
     """Issue #138 A: an L2 prefix is q1..q2, not q2 alone."""
 

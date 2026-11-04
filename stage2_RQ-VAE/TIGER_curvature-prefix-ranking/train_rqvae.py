@@ -357,6 +357,7 @@ def _batch_positions(item_ids: torch.Tensor, wanted: torch.Tensor) -> torch.Tens
 
 
 def main() -> None:
+    global MECHANISM_SCALE, MECHANISM_CURVATURE, _ACCEPTED_STATE
     # === DDP 初始化 ===
     if "RANK" in os.environ and int(os.environ.get("RANK", -1)) >= 0:
         dist.init_process_group(backend="nccl")
@@ -466,6 +467,27 @@ def main() -> None:
             dist.broadcast(layer.get_code_embs().data, 0)
         dist.barrier()
 
+    if USE_GEOMETRY:
+        # The curvature matches the data (Issue #138 C): the ball radius is set by
+        # the measured level-1 residual norms, and every level selects its code by
+        # that Poincare cost in training and in the export pass alike.
+        with torch.no_grad():
+            for layer in raw_module.rq.vq_layers:
+                layer._skip_ddp_reduce = True
+            try:
+                raw_module(torch.from_numpy(embeddings[:2048]).to(device))
+            finally:
+                for layer in raw_module.rq.vq_layers:
+                    layer._skip_ddp_reduce = False
+        MECHANISM_CURVATURE = curvature_prefix.data_curvature(
+            raw_module.level_points()[0].norm(dim=-1))
+        for layer in raw_module.rq.vq_layers:
+            layer.curvature = MECHANISM_CURVATURE
+        if rank == 0:
+            print(f"[RQ-VAE] measured curvature K={MECHANISM_CURVATURE:.3f}", flush=True)
+            _record(rank, "mechanism_curvature", value=MECHANISM_CURVATURE,
+                    source="pre-training level-1 residuals")
+
     # Stage3 only consumes the final-epoch weights, so tracking the best
     # collision across epochs would be misleading; keep the last evaluation.
     final_collision = float("inf")
@@ -489,7 +511,6 @@ def main() -> None:
             # === DDP 包装下, 通过 .module 调 compute_loss (避免 DDP all_reduce 干扰) ===
             loss, recon_loss = raw_module.compute_loss(reference, reconstructed, quant_loss)
             # === 候选机制: AF3 凝聚度引导的分层前缀排序 ===
-            global MECHANISM_SCALE, MECHANISM_CURVATURE, _ACCEPTED_STATE
             triples = triple_lookup.triples(item_ids.detach().cpu().numpy(),
                                             use_behaviour=USE_BEHAVIOUR,
                                             seed=curvature_prefix.RANDOM_TRIPLE_SEED + epoch)
@@ -501,11 +522,6 @@ def main() -> None:
             if _ACCEPTED_STATE is not None:
                 codebooks = raw_module.level_codebooks()
                 mechanism = points[0].new_zeros(())
-                if MECHANISM_CURVATURE is None:
-                    MECHANISM_CURVATURE = curvature_prefix.data_curvature(
-                        points[0].norm(dim=-1))
-                    _record(rank, "mechanism_curvature", value=MECHANISM_CURVATURE,
-                            epoch=epoch)
                 if triples["anchor"].size:
                     anchor = torch.from_numpy(triples["anchor"]).to(device)
                     high = torch.from_numpy(triples["high"]).to(device)

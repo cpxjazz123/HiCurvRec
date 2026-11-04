@@ -279,6 +279,12 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
     return (weight_a * weight_b).sum(dim=-1)
 
 
+def curved_codes_cost(points: torch.Tensor, codebook: torch.Tensor,
+                      curvature: float = CURVATURE) -> torch.Tensor:
+    """The Poincare cost of every code for every point, for the real assignment."""
+    return _assignment_cost(points, codebook, True, curvature)
+
+
 def prefix_share(points_a, points_b, codebooks, level: int,
                  temperature=None, use_curvature: bool = True,
                  curvature: float = CURVATURE) -> torch.Tensor:
