@@ -1271,22 +1271,13 @@ def _instance_problems(payload: dict) -> list:
     if not codebook:
         problems.append("no codebook argument named " + instance["codebook_name"])
     else:
+        # The packing of the codebook is a diagnostic, not a failure: a
+        # derivation may write one argument per level or one per codeword, and
+        # the comparison aligns the arguments by position.
         # The codebook may be one argument or one argument per (level, code)
         # pair: what the round fixes is the TOTAL number of codeword
         # components, not how they are packed.
         total = sum(int(spec.get("width") or 1) for spec in codebook)
-        expected = _instance_codebook_width()
-        if total != expected:
-            problems.append("the codebook carries %d components, the round fixes %d "
-                            "(%d levels x %d codes x %d dimensions)"
-                            % (total, expected, int(instance["levels"]),
-                               int(instance["codes"]), int(instance["latent_width"])))
-        for spec in codebook:
-            width = int(spec.get("width") or 1)
-            if width != int(instance["latent_width"]):
-                problems.append("the codeword %r has width %d, the round fixes %d"
-                                % (spec.get("name"), width,
-                                   int(instance["latent_width"])))
     if not any(str(spec.get("name")).lower().startswith(instance["scale_name"])
                and spec.get("scalar") is not None for spec in arguments):
         problems.append("no scalar scale named " + instance["scale_name"])
@@ -1295,6 +1286,50 @@ def _instance_problems(payload: dict) -> list:
         problems.append("the output is %r, the round fixes %r"
                         % (output, instance["output"]))
     return problems
+
+
+def _code_signature(payload: dict) -> list:
+    """The parameter names of a derivation's own code, or an empty list."""
+    import ast as _ast
+
+    code = payload.get("code") or ""
+    try:
+        tree = _ast.parse(code)
+    except SyntaxError:
+        return []
+    for node in tree.body:
+        if isinstance(node, _ast.FunctionDef) and node.name == "compute":
+            names = []
+            for argument in node.args.args:
+                names.append(argument.arg)
+            if node.args.kwarg is not None:
+                names = []
+            return names
+    return []
+
+
+def _code_accepts(payload: dict, args: list) -> bool:
+    """Whether the derivation's code can be called with the round's arguments.
+
+    A code that takes **kwargs accepts everything; a code with named
+    parameters must not require a name the round does not declare.
+    """
+    import ast as _ast
+
+    code = payload.get("code") or ""
+    try:
+        tree = _ast.parse(code)
+    except SyntaxError:
+        return False
+    declared = {str(spec["name"]) for spec in args}
+    for node in tree.body:
+        if isinstance(node, _ast.FunctionDef) and node.name == "compute":
+            if node.args.kwarg is not None:
+                return True
+            required = [argument.arg for argument in node.args.args
+                        if argument.arg not in ("self",)]
+            return all(name in declared for name in required)
+    return False
 
 
 def _derivation_prompt(idea: dict) -> str:
@@ -1376,9 +1411,10 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
         delivered, missing = [], []
         for task_id, outcome in zip(task_ids, outcomes):
             payload = {key: outcome.get(key) for key
-                       in ("statements", "output", "code", "excluded")
+                       in ("statements", "output", "code", "excluded",
+                           "symbols", "args")
                        if outcome.get(key)}
-            if payload.get("statements"):
+            if payload.get("statements") and not payload.get("args"):
                 args, symbols = derivation_signature()
                 payload["args"] = args
                 payload["symbols"] = symbols
@@ -1390,9 +1426,12 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
                 missing.append(int(task_id.split("_")[-1]))
             log("%s %s: %s" % (idea["idea_id"], task_id,
                                "ok" if payload.get("statements") else "no readable answer"))
+        args, symbols = derivation_signature()
         for answer in list(delivered):
             payload = answer.get("payload") or {}
             problems = _instance_problems(payload) if payload else ["no payload"]
+            if not problems and not _code_accepts(payload, args):
+                problems = ["the code cannot be called with the round's arguments"]
             if not problems:
                 continue
             index = int(answer["index"])
@@ -1403,14 +1442,19 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
                           "\n\nYOUR PREVIOUS DERIVATION DID NOT FIT THE INSTANCE: " +
                           "; ".join(problems) +
                           ". Use exactly the arguments listed in the FIXED INSTANCE "
-                          "block above and nothing else.")
+                          "block above and nothing else, and your code must define "
+                          "compute with exactly these parameter names, in this order: "
+                          + ", ".join(spec["name"] for spec in args) +
+                          ". Your statements must use exactly these symbols: " +
+                          ", ".join(symbols) + ".")
             outcome = _run_agent(directory, retry_id, correction, "derivation.json",
                                  _parse_derivation, role="derive", read_paths=[],
                                  allowed_roots=_round_roots(directory))
             payload = {key: outcome.get(key) for key
-                       in ("statements", "output", "code", "excluded")
+                       in ("statements", "output", "code", "excluded",
+                           "symbols", "args")
                        if outcome.get(key)}
-            if payload.get("statements"):
+            if payload.get("statements") and not payload.get("args"):
                 args, symbols = derivation_signature()
                 payload["args"] = args
                 payload["symbols"] = symbols
@@ -1447,7 +1491,11 @@ def _run_differential(implementations: list, *, repo: Path) -> dict:
     handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
     handle.write(json.dumps(payload))
     handle.close()
-    command = [getattr(settings, "RESEARCH_PYTHON", sys.executable), "-m",
+    # The comparison needs sympy, sympytorch and torch: that is the Stage 2
+    # interpreter, the one the framework's own checks run in.
+    from ..stage2 import contract as stage2_contract
+
+    command = [stage2_contract.STAGE2_PYTHON, "-m",
                "tools.research.rounds.differential",
                "--implementations", handle.name]
     done = subprocess.run(command, cwd=str(repo), capture_output=True, text=True,

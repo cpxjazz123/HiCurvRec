@@ -208,6 +208,8 @@ class DerivationPayload(BaseModel):
     output: str = ""
     code: str = ""
     excluded: list[str] = Field(default_factory=list)
+    symbols: list[str] = Field(default_factory=list)
+    args: list[DerivationArgument] = Field(default_factory=list)
 
 
 def output_schema(role: str):

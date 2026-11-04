@@ -377,12 +377,25 @@ class ReferenceContractGateTests(unittest.TestCase):
             self._register({"status": "FAIL", "detail": "Tensor-likes are not close!"})
         self.assertIn("not close", str(raised.exception))
 
-    def test_derivations_that_disagree_are_refused_before_the_formula(self):
-        self.state["differential"] = {"status": "FAIL",
-                                      "reason": "the difference is 2*(x - y)"}
+    def test_derivations_that_contradict_each_other_are_refused(self):
+        self.state["differential"] = {
+            "status": "FAIL",
+            "pairs": [{"left": "a", "right": "b", "kind": "contradiction",
+                       "reason": "the difference is 2*(x - y)"}]}
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "PASS", "detail": "ok"})
         self.assertIn("difference", str(raised.exception))
+
+    def test_derivations_that_cannot_be_compared_are_recorded_not_refused(self):
+        self.state["differential"] = {
+            "status": "FAIL",
+            "pairs": [{"left": "a", "right": "b", "kind": "incomparable",
+                       "reason": "the two derivations declare different arguments"}]}
+        state = self._register({"status": "PASS", "detail": "ok"})
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "implemented")
+        self.assertTrue(record["differential_limitations"])
+        self.assertIn("could not be compared", record["differential_note"])
 
     def test_an_agreeing_formula_is_recorded_with_the_implementation(self):
         state = self._register({"status": "PASS",
@@ -562,12 +575,25 @@ class ReferenceContractGateTests(unittest.TestCase):
             self._register({"status": "FAIL", "detail": "Tensor-likes are not close!"})
         self.assertIn("not close", str(raised.exception))
 
-    def test_derivations_that_disagree_are_refused_before_the_formula(self):
-        self.state["differential"] = {"status": "FAIL",
-                                      "reason": "the difference is 2*(x - y)"}
+    def test_derivations_that_contradict_each_other_are_refused(self):
+        self.state["differential"] = {
+            "status": "FAIL",
+            "pairs": [{"left": "a", "right": "b", "kind": "contradiction",
+                       "reason": "the difference is 2*(x - y)"}]}
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "PASS", "detail": "ok"})
         self.assertIn("difference", str(raised.exception))
+
+    def test_derivations_that_cannot_be_compared_are_recorded_not_refused(self):
+        self.state["differential"] = {
+            "status": "FAIL",
+            "pairs": [{"left": "a", "right": "b", "kind": "incomparable",
+                       "reason": "the two derivations declare different arguments"}]}
+        state = self._register({"status": "PASS", "detail": "ok"})
+        record = state["implementations"][0]
+        self.assertEqual(record["status"], "implemented")
+        self.assertTrue(record["differential_limitations"])
+        self.assertIn("could not be compared", record["differential_note"])
 
     def test_an_agreeing_formula_is_recorded_with_the_implementation(self):
         state = self._register({"status": "PASS",

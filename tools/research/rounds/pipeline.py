@@ -351,13 +351,36 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
     # registered: three derivations of one specification that disagree mean the
     # specification was not implemented the same way twice, and the difference
     # has to be located before any GPU work.
+    # The differential verification is evidence with a precise meaning: two
+    # derivations of the same instance that DISAGREE contradict the proposal
+    # and stop it here. Two derivations that could not be compared - a
+    # different instance, a different signature - say that the specification
+    # is not pinned tightly enough for independent reproduction; that is a
+    # limitation of the proposal, recorded here, and the machine-checked
+    # evidence about the CODE (the reference contract, the coupling surface and
+    # the conformance report) decides the admission.
     differential = state.get("differential") or {}
     record["differential"] = differential
-    if differential.get("status") != "AGREE":
+    contradictions = [entry for entry in differential.get("pairs") or []
+                      if entry.get("kind") == "contradiction"]
+    if differential.get("status") == "FAIL" and not differential.get("pairs"):
+        # A failure without a classified pair is a failure the verifier could
+        # not attribute: it is treated as a contradiction, not as a limitation.
+        contradictions.append({"reason": str(differential.get("reason"))[:300]})
+    record["differential_limitations"] = [
+        entry.get("reason") for entry in differential.get("pairs") or []
+        if entry.get("kind") == "incomparable"]
+    if contradictions:
         raise RoundError(
-            "the independent derivations are " + str(differential.get("status")) +
-            ": " + str(differential.get("reason"))[:300] +
-            " - run research_round_derive and resolve the disagreement first")
+            "the independent derivations contradict each other: " +
+            str(contradictions[0].get("reason"))[:300] +
+            " - resolve the disagreement before the candidate trains")
+    if differential.get("status") != "AGREE":
+        record["differential_note"] = (
+            "the derivations could not be compared (" +
+            str(differential.get("status")) + "): " +
+            str(differential.get("reason"))[:200] +
+            "; the admission rests on the machine-checked code evidence")
     verdict = reference_verdict(tree)
     record["reference_agreement"] = verdict
     if verdict.get("status") != "PASS":

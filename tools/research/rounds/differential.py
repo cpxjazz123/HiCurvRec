@@ -274,7 +274,12 @@ def _inputs(implementation: dict, *, seed: int):
 
 
 def _module_from_source(implementation: dict):
-    """Import the derivation's own torch code from a temporary module."""
+    """Import the derivation's own torch code from a temporary module.
+
+    Returns the callable and the names of its parameters: the comparison calls
+    it positionally, and a code whose parameters are not the declared arguments
+    cannot be compared.
+    """
     code = implementation.get("code")
     if not code:
         raise ValueError("the derivation carries no code")
@@ -284,20 +289,28 @@ def _module_from_source(implementation: dict):
     spec = importlib.util.spec_from_file_location("derivation_" + path.stem, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.compute
+    import inspect
+    parameters = inspect.signature(module.compute).parameters
+    required = [name for name, parameter in parameters.items()
+                if parameter.kind in (parameter.POSITIONAL_OR_KEYWORD,
+                                      parameter.KEYWORD_ONLY)]
+    accepts_kwargs = any(parameter.kind == parameter.VAR_KEYWORD
+                          for parameter in parameters.values())
+    return module.compute, required, accepts_kwargs
 
 
 def _reference_from_statements(implementation: dict):
+    """The reference rebuilt from the derivation's own statements."""
     import sympytorch
 
     scope = _expressions(implementation)
     module = sympytorch.SymPyModule(expressions=[scope[implementation["output"]]])
     symbols = list(implementation["symbols"])
+    arguments = implementation.get("args") or []
 
-    def reference(**arguments):
+    def reference(*values):
         columns, offset = {}, 0
-        for spec in implementation.get("args") or []:
-            value = arguments[spec["name"]]
+        for spec, value in zip(arguments, values):
             if spec.get("scalar") is not None:
                 columns[symbols[offset]] = value
                 offset += 1
@@ -312,28 +325,53 @@ def _reference_from_statements(implementation: dict):
     return reference
 
 
-def _arguments_for(implementation: dict, tensors: list, scalars: list) -> dict:
-    """The arguments of one derivation, by its OWN names.
+def _values_for(implementation: dict, values: list) -> list:
+    """The same numbers, packed the way this derivation declares them.
 
     Two derivations of the same function may name the same argument
-    differently; the comparison feeds both the same numbers under their own
-    names, so the functions are compared and not their signatures.
+    differently, and one may pack a scalar where the other packs a one-
+    component vector: the FUNCTIONS are compared, not their signatures. A
+    scalar becomes a one-component vector and a one-component vector becomes a
+    scalar when the other side says so.
     """
-    arguments, tensor_index, scalar_index = {}, 0, 0
-    for spec in implementation.get("args") or []:
-        if spec.get("scalar") is not None:
-            arguments[spec["name"]] = scalars[scalar_index]
-            scalar_index += 1
-        else:
-            arguments[spec["name"]] = tensors[tensor_index]
-            tensor_index += 1
-    return arguments
+    packed = []
+    for spec, value in zip(implementation.get("args") or [], values):
+        wants_scalar = spec.get("scalar") is not None
+        if wants_scalar and not isinstance(value, float):
+            value = float(value.reshape(-1)[0])
+        elif not wants_scalar and isinstance(value, float):
+            import torch
+            value = torch.tensor([value], dtype=torch.float64)
+        packed.append(value)
+    return packed
 
 
-def _compare_pair(left_fn, right_fn, left_arguments, right_arguments, tensors):
+def _compare_pair(left_fn, right_fn, left_values, right_values, tensors,
+                  left_names=None, right_names=None, declared_names=None):
+    """Compare two implementations on the same numbers.
+
+    The implementations are called BY NAME: a derivation writes its own
+    parameter names, and the framework hands over the numbers under the names
+    the code declares. The names are the derivation's; the numbers are the
+    framework's.
+    """
     import torch
 
-    left_value, right_value = left_fn(**left_arguments), right_fn(**right_arguments)
+    declared_names = list(declared_names or [])
+
+    def call(function, values, names):
+        """Call by name; a code that takes **kwargs receives everything."""
+        if names is None:
+            return function(*values)
+        required, accepts_kwargs = names
+        if accepts_kwargs:
+            return function(**dict(zip(declared_names, values)))
+        allowed = set(required)
+        return function(**{name: value for name, value in zip(declared_names, values)
+                           if name in allowed})
+
+    left_value = call(left_fn, left_values, left_names)
+    right_value = call(right_fn, right_values, right_names)
     report = {"status": "OK",
               "value_max_abs_diff": float(
                   (left_value.detach() - right_value.detach()).abs().max())}
@@ -344,14 +382,23 @@ def _compare_pair(left_fn, right_fn, left_arguments, right_arguments, tensors):
         if left is not None and right is not None:
             worst = max(worst, float((left.detach() - right.detach()).abs().max()))
     report["gradient_max_abs_diff"] = worst
-    def bound(function, arguments):
-        names = [name for name, value in arguments.items()
-                 if not isinstance(value, float)]
+    def bound(function, values, names):
+        positions = [index for index, value in enumerate(values)
+                     if not isinstance(value, float)]
 
-        def wrapped(*values):
-            bound_arguments = dict(arguments)
-            bound_arguments.update(dict(zip(names, values)))
-            return function(**bound_arguments)
+        def wrapped(*tensors):
+            arguments = list(values)
+            for position, tensor in zip(positions, tensors):
+                arguments[position] = tensor
+            if names is None:
+                return function(*arguments)
+            required, accepts_kwargs = names
+            if accepts_kwargs:
+                return function(**dict(zip(declared_names, arguments)))
+            allowed = set(required)
+            return function(**{name: value
+                               for name, value in zip(declared_names, arguments)
+                               if name in allowed})
         return wrapped
 
     try:
@@ -374,9 +421,11 @@ def _compare_pair(left_fn, right_fn, left_arguments, right_arguments, tensors):
             report.update(status="FAIL", reason="gradients: " + str(exc).splitlines()[0][:200])
             return report
     report["gradcheck_left"] = bool(torch.autograd.gradcheck(
-        bound(left_fn, left_arguments), tuple(tensors), eps=1e-6, atol=1e-5, rtol=1e-4))
+        bound(left_fn, left_values, left_names), tuple(tensors),
+        eps=1e-6, atol=1e-5, rtol=1e-4))
     report["gradcheck_right"] = bool(torch.autograd.gradcheck(
-        bound(right_fn, right_arguments), tuple(tensors), eps=1e-6, atol=1e-5, rtol=1e-4))
+        bound(right_fn, right_values, right_names), tuple(tensors),
+        eps=1e-6, atol=1e-5, rtol=1e-4))
     return report
 
 
@@ -410,6 +459,7 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
                                      "reason": str(symbolic.get("reason"))}
             elif not symbolic["equivalent"]:
                 entry["status"] = "FAIL"
+                entry["kind"] = "contradiction"
                 entry["reason"] = ("the two derivations are not the same function: " +
                                    str(symbolic.get("reason") or
                                        ("the difference is " + str(symbolic.get("residual")))))
@@ -418,23 +468,52 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
                 continue
             if symbolic.get("layout_mismatch"):
                 entry["status"] = "FAIL"
+                entry["kind"] = "incomparable"
                 failures.append(entry)
                 pairs.append(entry)
                 continue
             try:
+                left_module, left_names, left_kwargs = _module_from_source(left)
+                right_module, right_names, right_kwargs = _module_from_source(right)
+                declared_left = [str(spec.get("name"))
+                                 for spec in left.get("args") or []]
+                declared_right = [str(spec.get("name"))
+                                  for spec in right.get("args") or []]
+                missing_left = [name for name in left_names
+                                if name not in declared_left]
+                missing_right = [name for name in right_names
+                                 if name not in declared_right]
+                if missing_left or missing_right:
+                    # The code may name its parameters as it likes, but every
+                    # parameter it REQUIRES must be one of the declared
+                    # arguments: a code that needs an argument the round does not
+                    # declare cannot be compared with the others.
+                    entry.update(status="FAIL", kind="incomparable",
+                                 reason="the code requires arguments the round "
+                                        "does not declare (%s)"
+                                        % (missing_left or missing_right))
+                    failures.append(entry)
+                    pairs.append(entry)
+                    continue
                 arguments, tensors = _inputs(left, seed=seed)
-                scalars = [value for value in arguments.values()
-                           if isinstance(value, float)]
-                left_arguments = dict(arguments)
-                right_arguments = _arguments_for(right, tensors, scalars)
-                report = _compare_pair(_module_from_source(left),
-                                       _module_from_source(right),
-                                       left_arguments, right_arguments, tensors)
+                # The values in the ORDER the arguments are declared, so the
+                # right side can be fed the same numbers under its own names.
+                values = [arguments[spec["name"]]
+                          for spec in left.get("args") or []]
+                left_values = list(values)
+                right_values = _values_for(right, values)
+                declared_names = [str(spec.get("name"))
+                                  for spec in left.get("args") or []]
+                report = _compare_pair(left_module, right_module,
+                                       left_values, right_values, tensors,
+                                       (left_names, left_kwargs),
+                                       (right_names, right_kwargs),
+                                       declared_names)
                 entry.update(report)
                 if report.get("status") != "OK":
                     failures.append(entry)
             except Exception as exc:  # noqa: BLE001
-                entry.update(status="FAIL",
+                entry.update(status="FAIL", kind="contradiction",
                              reason=f"{type(exc).__name__}: {exc}"[:300])
                 failures.append(entry)
             pairs.append(entry)
@@ -454,10 +533,25 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
             self_checks.append(entry)
             continue
         try:
+            module, names, accepts_kwargs = _module_from_source(implementation)
+            declared = [str(spec.get("name"))
+                        for spec in implementation.get("args") or []]
+            missing = [name for name in names if name not in declared]
+            if missing:
+                entry.update(status="FAIL", kind="incomparable",
+                             reason="the code requires arguments the round does "
+                                    "not declare (%s)" % missing)
+                failures.append(entry)
+                self_checks.append(entry)
+                continue
             arguments, tensors = _inputs(implementation, seed=seed)
-            report = _compare_pair(_module_from_source(implementation),
+            values = [arguments[spec["name"]]
+                      for spec in implementation.get("args") or []]
+            report = _compare_pair(module,
                                    _reference_from_statements(implementation),
-                                   dict(arguments), dict(arguments), tensors)
+                                   values, values, tensors, (names, accepts_kwargs),
+                                   None, [str(spec.get("name"))
+                                          for spec in implementation.get("args") or []])
             entry.update(report)
             if report.get("status") != "OK":
                 failures.append(entry)
