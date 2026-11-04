@@ -66,5 +66,44 @@
    "surface": "the levels beyond the second",
    "reason": "the agreed instance is two levels; the third repeats the second"
   }
- ]
+ ],
+ "coupling": {
+  "callable": "model.holonomy:two_level_loss",
+  "behaviour_argument": "M_1",
+  "control_argument": "M_2",
+  "args": [
+   {
+    "name": "z",
+    "width": 2
+   },
+   {
+    "name": "theta_1_1",
+    "width": 2
+   },
+   {
+    "name": "theta_1_2",
+    "width": 2
+   },
+   {
+    "name": "theta_2_1",
+    "width": 2
+   },
+   {
+    "name": "theta_2_2",
+    "width": 2
+   },
+   {
+    "name": "s",
+    "scalar": 1.0
+   },
+   {
+    "name": "M_1",
+    "width": 2
+   },
+   {
+    "name": "M_2",
+    "width": 2
+   }
+  ]
+ }
 }
