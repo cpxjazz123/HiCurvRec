@@ -292,11 +292,25 @@ def _cli() -> int:                                    # pragma: no cover - entry
     """Run the checks of one proposal and print the report as JSON."""
     import argparse
     import json
+    from pathlib import Path
 
     parser = argparse.ArgumentParser(description="hyperbolic sanity checks")
-    parser.add_argument("--idea", required=True)
+    parser.add_argument("--idea")
+    parser.add_argument("--ideas", help="a JSON file with a list of proposals: one "
+                                        "torch import serves all of them")
     parser.add_argument("--seed", type=int, default=SEED)
     arguments = parser.parse_args()
+    if arguments.ideas:
+        # Twelve proposals used to mean twelve torch imports, each paying the
+        # cold-import cost on this filesystem: the batch keeps ONE import and
+        # runs every check behind it.
+        payload = json.loads(Path(arguments.ideas).read_text(encoding="utf-8"))
+        reports = {str(idea.get("idea_id")): run_math_checks(idea, seed=arguments.seed)
+                   for idea in payload}
+        print(json.dumps(reports, default=str))
+        return 0
+    if not arguments.idea:
+        parser.error("--idea or --ideas is required")
     print(json.dumps(run_math_checks(json.loads(arguments.idea), seed=arguments.seed),
                      ensure_ascii=False, default=str))
     return 0

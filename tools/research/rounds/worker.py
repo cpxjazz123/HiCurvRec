@@ -490,6 +490,37 @@ def _run_probe_subprocess(idea: dict, *, repo: Path, budget: float,
 MATH_BUDGET_SECONDS = 240.0
 
 
+def _run_math_batch(ideas: list, *, seed: int, budget: float = MATH_BUDGET_SECONDS) -> dict:
+    """The math checks of every proposal behind ONE torch import.
+
+    A cold torch import costs around seventy seconds on this filesystem, so one
+    process per proposal spent the whole budget before the checks started. The
+    batch pays that cost once and keeps the per-proposal reports comparable.
+    """
+    import subprocess
+    import tempfile
+
+    from .. import settings
+
+    python = getattr(settings, "RESEARCH_PYTHON", sys.executable)
+    handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+    handle.write(json.dumps(list(ideas)))
+    handle.close()
+    argv = [python, "-m", "tools.research.rounds.math_checks",
+            "--ideas", handle.name, "--seed", str(seed)]
+    try:
+        done = subprocess.run(argv, capture_output=True, text=True, timeout=float(budget))
+    except subprocess.TimeoutExpired:
+        return {}
+    lines = [line for line in done.stdout.strip().splitlines() if line.startswith("{")]
+    if not lines:
+        return {}
+    try:
+        return json.loads(lines[-1])
+    except ValueError:
+        return {}
+
+
 def _run_math_subprocess(idea: dict, *, seed: int,
                          budget: float = MATH_BUDGET_SECONDS) -> dict:
     """The math checks, in the project's interpreter (the only one with torch)."""
@@ -542,6 +573,17 @@ def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None,
                                                             "literature_cache")
     from concurrent.futures import ThreadPoolExecutor
 
+    # Every proposal's math checks in one process: the import is the cost, not
+    # the check. A batch that overruns its budget leaves the reports missing,
+    # which the per-idea path records as a gap rather than a pass.
+    math_reports: dict = {}
+    remaining = None if deadline is None else deadline - time.monotonic()
+    if remaining is None or remaining > 0:
+        math_reports = _run_math_batch(
+            ideas, seed=math_checks_module.SEED,
+            budget=(min(MATH_BUDGET_SECONDS, remaining)
+                    if remaining is not None else MATH_BUDGET_SECONDS))
+
     def measure(idea: dict) -> tuple:
         """The three measurements of one proposal, at the same time.
 
@@ -577,10 +619,11 @@ def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None,
             remaining = _remaining()
             if remaining is not None and remaining <= 0:
                 return _spent()
-            report = _run_math_subprocess(
-                idea, seed=math_checks_module.SEED,
-                budget=(min(MATH_BUDGET_SECONDS, remaining)
-                        if remaining is not None else MATH_BUDGET_SECONDS))
+            report = (math_reports or {}).get(identifier)
+            if not report:
+                report = {"status": "NOT_RUN", "idea_id": identifier, "checks": [],
+                          "reason": "the batched math checks produced no report for it"}
+            report = dict(report)
             report["sha256"] = _probe_digest(report)
             return report
 
