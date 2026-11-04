@@ -2470,6 +2470,19 @@
       "event": "implementation_accepted",
       "idea_id": "holonomy-path-behaviour-rq",
       "note": "Re-registered with every codeword a point of the hyperboloid and the objective carrying the hyperbolic distance; the reference contract, the coupling surface and the candidate's tests pass."
+    },
+    {
+      "at": 1793823677.9011374,
+      "changed_files": 159,
+      "event": "implementation_registered",
+      "idea_id": "holonomy-path-behaviour-rq",
+      "revision": 7
+    },
+    {
+      "at": 1793823683.2952325,
+      "event": "implementation_accepted",
+      "idea_id": "holonomy-path-behaviour-rq",
+      "note": "Re-registered with the framework's (embeddings, ids, radius) signature; the reference contract, the coupling surface and the candidate's tests pass."
     }
   ],
   "evidence_bundles": {
@@ -15702,7 +15715,7 @@
   ],
   "implementations": [
     {
-      "acceptance_note": "Re-registered with every codeword a point of the hyperboloid and the objective carrying the hyperbolic distance; the reference contract, the coupling surface and the candidate's tests pass.",
+      "acceptance_note": "Re-registered with the framework's (embeddings, ids, radius) signature; the reference contract, the coupling surface and the candidate's tests pass.",
       "accepted": true,
       "arm_renamed": {
         "from": "TIGER_RQ-VAE",
@@ -15931,11 +15944,11 @@
         "name": "reference_agreement",
         "status": "PASS"
       },
-      "revision": 6,
+      "revision": 7,
       "smoke": {
-        "result": "the candidate's own six tests pass, including the regression test that the assignment picks the nearest codeword in the hyperbolic metric"
+        "result": "the candidate's own six tests pass; the framework's smoke probe requires the (embeddings, ids, radius) signature"
       },
-      "source_digest": "70cf7ead4d60f4d9c7336a3474cff181cd37a8f2134dd2668bdf0f045de5835a",
+      "source_digest": "4b347c39719b53aae8e2f171010006a93b99dd67dad571e187120f01a18f88e3",
       "status": "accepted",
       "tree": "results/research/issue121/trees/round_20261105_024519_485/holonomy-path-behaviour-rq",
       "tree_exists": true
@@ -17806,7 +17819,7 @@
   },
   "stage2_jobs": [
     {
-      "attempts": 7,
+      "attempts": 8,
       "error": null,
       "failure_kind": null,
       "idea_id": "holonomy-path-behaviour-rq",
@@ -17818,5 +17831,5 @@
   ],
   "stage3_jobs": [],
   "step": "stage2",
-  "updated_at": 1793823146.412656
+  "updated_at": 1793823719.4642
 }

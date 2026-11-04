@@ -34,7 +34,9 @@ class RQVAE(nn.Module):
         encoded = self.encoder(embeddings)
         quantized, quant_loss, unused_codes, tokens = self.rq(encoded, ids=ids)
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens
+        # The framework's probe reads five values: the reference is the TARGET
+        # of the reconstruction loss, which is the input the model was given.
+        return reconstructed, quant_loss, int(unused_codes), tokens, embeddings
 
     @torch.no_grad()
     def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False,

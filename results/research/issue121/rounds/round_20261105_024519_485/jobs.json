@@ -1,7 +1,7 @@
 {
   "jobs": [
     {
-      "attempts": 7,
+      "attempts": 8,
       "error": null,
       "failure_evidence": {},
       "finished_at": null,
@@ -40,13 +40,18 @@
           "error": "the previous attempt was stopped: the objective carried the cosine, which exploded to 3.7e13 in one epoch",
           "finished_at": 1793823091.5341628,
           "status": "failed"
+        },
+        {
+          "error": "the smoke refused: the forward did not accept the radius the probe passes",
+          "finished_at": 1793823689.4591267,
+          "status": "failed"
         }
       ],
       "queued_at": 1793814388.5206075,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_holonomy-path-behaviour-rq",
       "round_id": "round_20261105_024519_485",
-      "started_at": 1793823097.1990845,
+      "started_at": 1793823695.2550633,
       "status": "running",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_holonomy-path-behaviour-rq"
     }
