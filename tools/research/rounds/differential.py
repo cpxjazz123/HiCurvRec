@@ -61,7 +61,33 @@ def _expressions(implementation: dict) -> dict:
     return namespace
 
 
-def symbolic_difference(left: dict, right: dict) -> dict:
+#: A symbolic equivalence check over a whole quantisation chain is expensive:
+#: simplify() on a few hundred tanh/exp nodes can run for minutes. The check is
+#: bounded, and a comparison that does not finish is reported as TIMEOUT - not
+#: as agreement and not as disagreement.
+SYMBOLIC_TIMEOUT_SECONDS = 90.0
+
+
+def _bounded_simplify(expression, timeout: float):
+    """simplify() under a wall-clock bound, in the main thread."""
+    import signal
+    import sympy
+
+    handler = signal.getsignal(signal.SIGALRM)
+    signal.signal(signal.SIGALRM, _raise_timeout)
+    signal.setitimer(signal.ITIMER_REAL, float(timeout))
+    try:
+        return sympy.simplify(expression)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0.0)
+        signal.signal(signal.SIGALRM, handler)
+
+
+def _raise_timeout(signum, frame):
+    raise TimeoutError("the symbolic comparison ran out of time")
+
+
+def symbolic_difference(left: dict, right: dict, *, timeout: float = SYMBOLIC_TIMEOUT_SECONDS) -> dict:
     """Whether two derivations state the same function of the same inputs."""
     import sympy
 
@@ -73,8 +99,13 @@ def symbolic_difference(left: dict, right: dict) -> dict:
     if list(left.get("symbols") or []) != list(right.get("symbols") or []):
         return {"equivalent": False,
                 "reason": "the two derivations use different symbol lists"}
-    difference = sympy.simplify(left_scope[left["output"]] -
-                                right_scope[right["output"]])
+    try:
+        difference = _bounded_simplify(left_scope[left["output"]] -
+                                       right_scope[right["output"]], timeout)
+    except TimeoutError:
+        return {"equivalent": None,
+                "reason": "the symbolic comparison did not finish in %d seconds"
+                          % int(timeout)}
     try:
         equivalent = bool(difference.equals(0))
     except Exception:  # noqa: BLE001
@@ -216,6 +247,11 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
             entry = {"left": left.get("name"), "right": right.get("name")}
             symbolic = symbolic_difference(left, right)
             entry["symbolic"] = symbolic
+            if symbolic["equivalent"] is None:
+                entry.update(status="TIMEOUT", reason=str(symbolic.get("reason")))
+                failures.append(entry)
+                pairs.append(entry)
+                continue
             if not symbolic["equivalent"]:
                 entry["status"] = "FAIL"
                 entry["reason"] = ("the two derivations are not the same function: " +

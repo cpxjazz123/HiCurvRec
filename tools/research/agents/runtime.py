@@ -607,6 +607,15 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
                 block = render_idea_json(payload)
             elif payload.get("ranking"):
                 block = render_rank_json(payload)
+            elif payload.get("statements"):
+                # A derivation is a formula and the code that computes it: the
+                # canonical JSON on disk is the one form that cannot be mangled
+                # by joining progress records (which inserts separators inside
+                # a string and used to turn a reshape(-1, 2) into a syntax error).
+                block = json.dumps({key: payload.get(key) for key in
+                                    ("symbols", "args", "statements", "output",
+                                     "code", "excluded") if payload.get(key)},
+                                   indent=1, ensure_ascii=False)
         block = block or extract_answer_block(text) or extract_answer_block(answer_text)
         if block and not echoes_the_prompt(block, prompt):
             output.write_text(block + "\n", encoding="utf-8")
