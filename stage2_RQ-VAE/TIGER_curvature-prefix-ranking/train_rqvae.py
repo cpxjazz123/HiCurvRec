@@ -487,10 +487,12 @@ def main() -> None:
             finally:
                 for layer in raw_module.rq.vq_layers:
                     layer._skip_ddp_reduce = False
-        residuals = raw_module.level_points()[0].norm(dim=-1)
-        code_norms = raw_module.level_codebooks()[0].norm(dim=-1)
-        MECHANISM_CURVATURE = curvature_prefix.data_curvature(
-            torch.cat([residuals, code_norms]))
+        # The curved cost normalises both sides to the unit sphere, so the ball's
+        # radius IS that sphere: curvature 1 puts the mapped points at tanh(1) of
+        # the boundary. A curvature measured from unnormalised norms (10+) maps
+        # them onto the boundary itself, where every distance saturates and the
+        # assignment collapses (measured: collision 0.90 at the first eval).
+        MECHANISM_CURVATURE = 1.0
         for layer in raw_module.rq.vq_layers:
             layer.curvature = MECHANISM_CURVATURE
         if rank == 0:

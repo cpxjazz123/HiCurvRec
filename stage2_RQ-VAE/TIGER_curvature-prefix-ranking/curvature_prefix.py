@@ -432,8 +432,14 @@ def bucket_entropy(points: torch.Tensor, codebook: torch.Tensor, buckets: torch.
 def _assignment_cost(points, codebook, use_curvature: bool,
                      curvature: float = CURVATURE) -> torch.Tensor:
     if use_curvature:
-        left = geometry.expmap0(points, curvature)
-        codes = geometry.expmap0(codebook, curvature)
+        # Scale-free: the residuals have norm ~0.08 and the codebook rows ~0.33.
+        # In the ball the radial gap dominates the distance, so unnormalised inputs
+        # put the codes at a different radius than their own points and the
+        # assignment collapses (measured: L1 = 1, collision 0.684). Both sides are
+        # mapped onto the unit sphere before the ball map, so the comparison is
+        # the angle the data actually separates on.
+        left = geometry.expmap0(F.normalize(points, dim=-1).clamp(-1 + 1e-6, 1 - 1e-6), curvature)
+        codes = geometry.expmap0(F.normalize(codebook, dim=-1).clamp(-1 + 1e-6, 1 - 1e-6), curvature)
         return geometry.distance(left.unsqueeze(1), codes.unsqueeze(0), curvature)
     return (points.pow(2).sum(1, keepdim=True)
             - 2 * points @ codebook.t()
