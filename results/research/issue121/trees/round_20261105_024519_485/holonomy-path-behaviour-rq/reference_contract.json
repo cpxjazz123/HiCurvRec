@@ -75,7 +75,6 @@
  ],
  "coupling": {
   "callable": "model.holonomy:two_level_loss",
-  "behaviour_argument": "M_1",
   "control_argument": "M_2",
   "args": [
    {
@@ -110,6 +109,10 @@
     "name": "M_2",
     "width": 2
    }
+  ],
+  "behaviour_arguments": [
+   "M_1",
+   "M_2"
   ]
  }
 }

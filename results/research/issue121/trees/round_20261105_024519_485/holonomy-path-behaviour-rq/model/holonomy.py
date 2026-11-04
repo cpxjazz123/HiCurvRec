@@ -136,6 +136,19 @@ def minkowski_square(residual: torch.Tensor, codeword: torch.Tensor) -> torch.Te
     return minkowski_dot(difference, difference)
 
 
+def hyperbolic_distance(residual: torch.Tensor, codeword: torch.Tensor) -> torch.Tensor:
+    """The hyperbolic distance between the residual's image and a codeword.
+
+    ``arcosh(-<rhat, w>_L)`` with ``rhat = exp_o(r)``: it grows like the
+    logarithm of the separation, so the term the objective carries stays of a
+    sane size. The cosine itself is the right quantity to RANK by (its arg-min
+    is the nearest codeword) but it explodes as a loss: the first training of
+    the cosine form reached 3.7e13 in one epoch.
+    """
+    point = lorentz_exp_origin(residual[..., 1:])
+    return torch.acosh((-minkowski_dot(point, codeword)).clamp_min(1.0))
+
+
 def squared_separation(residual: torch.Tensor, codeword: torch.Tensor) -> torch.Tensor:
     """``-<r, w>_L`` with BOTH arguments on the hyperboloid.
 
@@ -191,21 +204,24 @@ def two_level_loss(z: torch.Tensor,
     coupling surface is measured on.
     """
     residual = lift(z / s)
-    first = lift(torch.stack([theta_1_1, theta_1_2], dim=1))
-    first_choice, first_distance = assign(residual, first)
+    # Every codeword is a POINT of the hyperboloid: the first level uses the
+    # codebook's own points, the second the points transported through the
+    # anchor of the prefix the first level chose.
+    first = lorentz_exp_origin(torch.stack([theta_1_1, theta_1_2], dim=1))
+    first_choice, _ = assign(residual, first)
     code = first.gather(1, first_choice.unsqueeze(1).unsqueeze(-1).expand(
         -1, -1, first.shape[-1])).squeeze(1)
-    point = lorentz_exp_origin(code[..., 1:])
+    point = code
     residual = transport_residual(residual - code, origin_like(residual), point)
 
     anchor = torch.where(first_choice.unsqueeze(-1) == 0, M_1, M_2)
-    second = lift(torch.stack([theta_2_1, theta_2_2], dim=1))
-    middle = lorentz_exp_origin(anchor)
-    first_leg = _transport(origin_like(middle).unsqueeze(1),
-                           middle.unsqueeze(1), second)
-    moved = _transport(middle.unsqueeze(1), point.unsqueeze(1), first_leg)
-    second_choice, second_distance = assign(residual, moved)
-    return first_distance + second_distance
+    second = torch.stack([theta_2_1, theta_2_2], dim=1)
+    moved = transport_codewords(second, anchor, point)
+    second_choice, _ = assign(residual, moved)
+    second_code = moved.gather(1, second_choice.unsqueeze(1).unsqueeze(-1).expand(
+        -1, -1, moved.shape[-1])).squeeze(1)
+    return (hyperbolic_distance(residual, code)
+            + hyperbolic_distance(residual, second_code))
 
 
 def holonomy_forward(z: torch.Tensor,
@@ -218,6 +234,12 @@ def holonomy_forward(z: torch.Tensor,
     ``(K, D)`` tensor per level holding the anchor of every possible prefix
     code of that level (an empty tensor when the behaviour is switched off).
     Returns the tokens, the per-level distances and the final walk point.
+
+    Every codeword is a POINT of the hyperboloid: the first level uses the
+    codebook's own points, the later levels the points transported through the
+    behaviour anchor and the current frame. The assignment ranks them by the
+    cosine ``-<exp_o(r), W>_L`` (its arg-min is the nearest codeword) and the
+    objective carries the hyperbolic distance, which stays of a sane size.
     """
     residual = lift(z / scale)
     point = origin_like(residual)
@@ -231,19 +253,19 @@ def holonomy_forward(z: torch.Tensor,
             # The anchor of the prefix the walk stands in: the code chosen at
             # the previous level.
             anchor = anchor_table[tokens[-1]]
-        moved = transport_codewords(codebook, anchor, point)
-        choice, distance = assign(residual, moved)
+        if level == 0:
+            # No prefix yet, so no anchor: the codebook's own points.
+            moved = lorentz_exp_origin(codebook).unsqueeze(0).expand(
+                residual.shape[0], -1, -1)
+        else:
+            moved = transport_codewords(codebook, anchor, point)
+        choice, _ = assign(residual, moved)
         code = moved.gather(1, choice.unsqueeze(1).unsqueeze(-1).expand(
             -1, -1, moved.shape[-1])).squeeze(1)
-        if level == 0:
-            # The first level's codewords are spatial: the walk moves to the
-            # codeword lifted onto the hyperboloid.
-            new_point = lorentz_exp_origin(code[..., 1:])
-        else:
-            new_point = code
+        new_point = code
         residual = transport_residual(residual - code, point, new_point)
         point = new_point
         tokens.append(choice)
-        distances.append(distance)
+        distances.append(hyperbolic_distance(residual, code))
         walk.append(point)
     return torch.stack(tokens, dim=-1), torch.stack(distances, dim=-1), point

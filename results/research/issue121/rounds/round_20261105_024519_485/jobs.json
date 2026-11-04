@@ -1,7 +1,7 @@
 {
   "jobs": [
     {
-      "attempts": 5,
+      "attempts": 6,
       "error": null,
       "failure_evidence": {},
       "finished_at": null,
@@ -30,13 +30,18 @@
           "error": "the previous attempt was stopped after the smoke showed the degenerate assignment",
           "finished_at": 1793821324.4124658,
           "status": "failed"
+        },
+        {
+          "error": "the previous attempt was stopped after the smoke showed the collapsed assignment",
+          "finished_at": 1793822237.093801,
+          "status": "failed"
         }
       ],
       "queued_at": 1793814388.5206075,
       "result": null,
       "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_holonomy-path-behaviour-rq",
       "round_id": "round_20261105_024519_485",
-      "started_at": 1793821329.6596026,
+      "started_at": 1793822242.0315015,
       "status": "running",
       "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_holonomy-path-behaviour-rq"
     }
