@@ -147,31 +147,32 @@ def two_level_loss(z: torch.Tensor,
                    M_1: torch.Tensor, M_2: torch.Tensor) -> torch.Tensor:
     """The verified two-level instance of the mechanism.
 
-    Level one is the plain assignment (there is no prefix yet, so there is no
-    anchor). The walk moves to the chosen codeword, the residual is carried
-    into that frame, and level two assigns against the codewords transported
-    through the anchor of the prefix that level one chose. The returned value
-    is the sum of the two selected Minkowski distances: the quantity this
-    mechanism adds to the objective.
+    Every row is independent and carries its own codeword per level: ``z`` is
+    ``(B, D)``, the four codewords are ``(B, D)`` and the two anchors are
+    ``(B, D)``. Level one is the plain assignment (there is no prefix yet, so
+    there is no anchor). The walk moves to the chosen codeword, the residual is
+    carried into that frame, and level two assigns against the codewords
+    transported through the anchor of the prefix that level one chose. The
+    returned value is the sum of the two selected Minkowski distances: the
+    quantity this mechanism adds to the objective.
 
     This function is the one the reference contract compares against the
-    framework's own rebuild of the same SymPy statements.
+    framework's own rebuild of the same SymPy statements, and the one the
+    coupling surface is measured on.
     """
     residual = lift(z / s)
-    first = lift(torch.stack([theta_1_1, theta_1_2], dim=0))
+    first = lift(torch.stack([theta_1_1, theta_1_2], dim=1))
     first_choice, first_distance = assign(residual, first)
-    code = first[first_choice]
+    code = first.gather(1, first_choice.unsqueeze(1).unsqueeze(-1).expand(
+        -1, -1, first.shape[-1])).squeeze(1)
     point = lorentz_exp_origin(code[..., 1:])
     residual = transport_residual(residual - code, origin_like(residual), point)
 
-    anchor = torch.where(first_choice.unsqueeze(-1) == 0,
-                         M_1.expand_as(M_2),
-                         M_2.expand_as(M_1))
-    second = lift(torch.stack([theta_2_1, theta_2_2], dim=0))
+    anchor = torch.where(first_choice.unsqueeze(-1) == 0, M_1, M_2)
+    second = lift(torch.stack([theta_2_1, theta_2_2], dim=1))
     middle = lorentz_exp_origin(anchor)
     first_leg = _transport(origin_like(middle).unsqueeze(1),
-                           middle.unsqueeze(1),
-                           second.unsqueeze(0).expand(middle.shape[0], -1, -1))
+                           middle.unsqueeze(1), second)
     moved = _transport(middle.unsqueeze(1), point.unsqueeze(1), first_leg)
     second_choice, second_distance = assign(residual, moved)
     return first_distance + second_distance
