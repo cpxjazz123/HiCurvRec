@@ -183,10 +183,35 @@ class RankPayload(BaseModel):
     objection: str = ""
 
 
+class DerivationArgument(BaseModel):
+    """One argument of the derived function, as the verifier feeds it."""
+    name: str
+    width: int = 1
+    radius: float = 0.1
+    scalar: float | None = None
+
+
+class DerivationPayload(BaseModel):
+    """The JSON an independent derivation answers with.
+
+    The statements ARE the formula, in SymPy syntax; the code is the derivation's
+    own torch implementation of the same statements. The deterministic verifier
+    compares the two, and compares the derivations with each other.
+    """
+    symbols: list[str] = Field(default_factory=list)
+    args: list[DerivationArgument] = Field(default_factory=list)
+    statements: list[str] = Field(default_factory=list)
+    output: str = ""
+    code: str = ""
+    excluded: list[str] = Field(default_factory=list)
+
+
 def output_schema(role: str):
     """The structured-output schema of a role, when the provider supports it."""
     if role == "score":
         return RankPayload
+    if role == "derive":
+        return DerivationPayload
     return IdeaPayload
 
 
@@ -277,6 +302,28 @@ IDEA_JSON_INSTRUCTIONS = (
     "Its keys are: " + ", ".join(key for key, _ in JSON_FIELDS) + ". "
     "Every key is a string except 'risks', which is a list of strings."
 )
+
+DERIVATION_JSON_INSTRUCTIONS = (
+    "You DERIVE one formula, independently. You are given a specification and "
+    "nothing else: you do not see any other derivation, its codes or its test "
+    "results, and you must not ask for them.\n"
+    "Answer with ONE JSON object and nothing else:\n"
+    '{"symbols": ["x0", "x1", "p0", "p1", "n0", "n1", "m"],\n'
+    ' "args": [{"name": "x", "width": 2, "radius": 0.4},\n'
+    '          {"name": "m", "scalar": 0.2}],\n'
+    ' "statements": ["dp = sqrt((x0-p0)**2 + (x1-p1)**2)",\n'
+    '                "L = log(1 + exp(-(dp - dn + m)))"],\n'
+    ' "output": "L",\n'
+    ' "code": "import torch\\n\\ndef compute(x, m):\\n    ...",\n'
+    ' "excluded": ["the argmin assignment: not differentiable"]}\n'
+    "Rules: the statements are SymPy expressions, one `name = expression` per "
+    "line, evaluated in order, and `output` names the last one. `symbols` lists "
+    "every free symbol in the order the arguments consume them (a tensor "
+    "argument with width w consumes w symbols, one per column). `code` is a "
+    "complete Python module defining `compute(**kwargs)` with exactly the "
+    "argument names in `args`, returning a one-dimensional tensor, and it must "
+    "compute the SAME formula as the statements - the verifier compares them. "
+    "Use torch only. Do not train, do not touch a dataset, do not write files.")
 
 RANK_JSON_INSTRUCTIONS = (
     "Answer with ONE JSON object and nothing else: no prose, no markdown fence. "
@@ -476,7 +523,9 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
                                 progress=progress, refusals=refusals)
     from agents import Agent, function_tool
     instructions = SYSTEM_PROMPT
-    if role == "score":
+    if role == "derive":
+        instructions = SYSTEM_PROMPT + "\n" + DERIVATION_JSON_INSTRUCTIONS
+    elif role == "score":
         instructions = SYSTEM_PROMPT + "\n" + RANK_JSON_INSTRUCTIONS
     else:
         instructions = SYSTEM_PROMPT + "\n" + IDEA_JSON_INSTRUCTIONS

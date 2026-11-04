@@ -347,6 +347,17 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
     # and the framework rebuilds it. The registration is refused until the
     # declared formula and the code agree: the agent that wrote the mechanism
     # does not also get to write the only statement of what it computes.
+    # The independent derivations must have agreed before the mechanism is
+    # registered: three derivations of one specification that disagree mean the
+    # specification was not implemented the same way twice, and the difference
+    # has to be located before any GPU work.
+    differential = state.get("differential") or {}
+    record["differential"] = differential
+    if differential.get("status") != "AGREE":
+        raise RoundError(
+            "the independent derivations are " + str(differential.get("status")) +
+            ": " + str(differential.get("reason"))[:300] +
+            " - run research_round_derive and resolve the disagreement first")
     verdict = reference_verdict(tree)
     record["reference_agreement"] = verdict
     if verdict.get("status") != "PASS":

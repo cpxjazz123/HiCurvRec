@@ -1128,6 +1128,129 @@ def phase_scoring(root: Path, round_id: str, *, log=print) -> dict:
                          for entry in selection.get("rejected", [])]}
 
 
+def _parse_derivation(text: str) -> dict:
+    """The first JSON object in an answer, or an empty derivation."""
+    import json as _json
+
+    start = text.find("{")
+    while start != -1:
+        depth, end = 0, None
+        for position in range(start, len(text)):
+            if text[position] == "{":
+                depth += 1
+            elif text[position] == "}":
+                depth -= 1
+                if depth == 0:
+                    end = position + 1
+                    break
+        if end:
+            try:
+                payload = _json.loads(text[start:end])
+            except ValueError:
+                start = text.find("{", start + 1)
+                continue
+            if isinstance(payload, dict) and payload.get("statements"):
+                return payload
+        start = text.find("{", start + 1)
+    return {}
+
+
+def _derivation_prompt(idea: dict) -> str:
+    """One specification, no other derivation, and no way to ask for one."""
+    return (
+        "Derive the formula of this mechanism from the specification alone.\n\n"
+        "TITLE: " + str(idea.get("title")) + "\n"
+        "MECHANISM: " + str(idea.get("mechanism")) + "\n"
+        "SPECIFICATION: " + str(idea.get("specification")) + "\n"
+        "SPEC EQUATIONS: " + str(idea.get("spec_equations")) + "\n"
+        "INPUTS AND OUTPUTS: " + str(idea.get("spec_inputs_outputs")) + "\n\n"
+        "Turn the equations into SymPy statements and into a complete torch "
+        "module defining compute(**kwargs), as the answer format requires.")
+
+
+def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
+    """Three independent derivations of the one selected mechanism."""
+    from ..agents import runtime as agent_runtime
+
+    answers = []
+    for idea in ideas:
+        def derive(task_id, _idea=idea):
+            return _run_agent(
+                directory, task_id, _derivation_prompt(_idea), "derivation.json",
+                _parse_derivation, role="derive", read_paths=[],
+                allowed_roots=_round_roots(directory))
+
+        task_ids = ["derivation_1", "derivation_2", "derivation_3"]
+        outcomes = _run_agents_concurrently([(task_id,) for task_id in task_ids],
+                                            lambda task_id: derive(task_id))
+        for task_id, outcome in zip(task_ids, outcomes):
+            payload = {key: outcome.get(key) for key
+                       in ("symbols", "args", "statements", "output", "code", "excluded")
+                       if outcome.get(key)}
+            answers.append({"idea_id": idea["idea_id"],
+                            "index": int(task_id.split("_")[-1]),
+                            "payload": payload,
+                            "receipt": outcome.get("receipt")})
+            log("%s %s: %s" % (idea["idea_id"], task_id,
+                               "ok" if payload.get("statements") else "no readable answer"))
+    return answers
+
+
+def _run_differential(implementations: list, *, repo: Path) -> dict:
+    """The deterministic N-version comparison, in the Stage 2 interpreter."""
+    import subprocess
+    import tempfile
+    from .. import settings
+
+    payload = {"implementations": implementations}
+    handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+    handle.write(json.dumps(payload))
+    handle.close()
+    command = [getattr(settings, "RESEARCH_PYTHON", sys.executable), "-m",
+               "tools.research.rounds.differential",
+               "--implementations", handle.name]
+    done = subprocess.run(command, cwd=str(repo), capture_output=True, text=True,
+                          timeout=1800)
+    lines = [line for line in done.stdout.strip().splitlines() if line.startswith("{")]
+    if not lines:
+        return {"status": "NOT_RUN",
+                "reason": "the comparison produced no report: " +
+                          (done.stdout + done.stderr).strip()[-300:]}
+    return json.loads(lines[-1])
+
+
+def phase_derivation(root: Path, round_id: str, *, log=print) -> dict:
+    """Three independent derivations of the selected mechanism, then compare them."""
+    directory = pipeline_module.find_round_directory(root, round_id)
+    state = pipeline_module.load_state(directory)
+    selected = pipeline_module.selected_ideas(state)
+    if not selected:
+        return {"phase": "derivation", "ran": False,
+                "reason": "the round has no selected idea"}
+    if state.get("derivations"):
+        return {"phase": "derivation", "ran": False,
+                "reason": "the derivations are on disk",
+                "status": (state.get("differential") or {}).get("status")}
+    answers = run_derivations(directory, selected, log=log)
+    implementations = [{"name": "%s_%d" % (answer["idea_id"], answer["index"]),
+                        **(answer.get("payload") or {})}
+                       for answer in answers if answer.get("payload")]
+    verdict = (_run_differential(implementations, repo=Path(root))
+               if len(implementations) >= 2
+               else {"status": "NOT_APPLICABLE",
+                     "reason": "fewer than two derivations answered"})
+    state["derivations"] = [{"idea_id": answer["idea_id"],
+                             "index": answer["index"],
+                             "payload": answer.get("payload") or {},
+                             "receipt": answer.get("receipt")}
+                            for answer in answers]
+    state["differential"] = verdict
+    pipeline_module.save_state(directory, state)
+    log("derivation: %s" % verdict.get("status"))
+    return {"phase": "derivation", "ran": True, "status": verdict.get("status"),
+            "derivations": len(implementations)}
+
+
 def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
     """Build one isolated candidate per selected idea, each from the baseline."""
     directory = pipeline_module.find_round_directory(root, round_id)
@@ -1137,6 +1260,13 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
         return {"phase": "implementation", "ran": False, "step": state["step"],
                 "implementations": len(state.get("implementations", [])),
                 "reason": "the round is no longer in the implementation phase"}
+    # The three independent derivations of the selected mechanism come first:
+    # registration is refused until they agree.
+    derivation = phase_derivation(root, round_id, log=log)
+    if derivation.get("status") not in (None, "AGREE", "NOT_APPLICABLE"):
+        raise pipeline_module.RoundError(
+            "the independent derivations do not agree: " +
+            str(derivation.get("status")))
     trees_root = (Path(root) / "results" / "research" / state.get("issue", "issue120")
                   / "trees" / round_id)
     for idea in pipeline_module.selected_ideas(state):

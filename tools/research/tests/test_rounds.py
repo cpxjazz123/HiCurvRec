@@ -356,6 +356,7 @@ class ReferenceContractGateTests(unittest.TestCase):
         self.state = pipeline_module.load_state(self.directory)
         self.state["implementations"] = [pipeline_module.implementation_record(
             {"idea_id": "a"}, {"changed_files": ["model.py"]}, self.tree)]
+        self.state["differential"] = {"status": "AGREE", "reason": ""}
 
     def _register(self, verdict):
         with patch.object(pipeline_module, "reference_verdict",
@@ -375,6 +376,13 @@ class ReferenceContractGateTests(unittest.TestCase):
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "FAIL", "detail": "Tensor-likes are not close!"})
         self.assertIn("not close", str(raised.exception))
+
+    def test_derivations_that_disagree_are_refused_before_the_formula(self):
+        self.state["differential"] = {"status": "FAIL",
+                                      "reason": "the difference is 2*(x - y)"}
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "PASS", "detail": "ok"})
+        self.assertIn("difference", str(raised.exception))
 
     def test_an_agreeing_formula_is_recorded_with_the_implementation(self):
         state = self._register({"status": "PASS",
@@ -533,6 +541,7 @@ class ReferenceContractGateTests(unittest.TestCase):
         self.state = pipeline_module.load_state(self.directory)
         self.state["implementations"] = [pipeline_module.implementation_record(
             {"idea_id": "a"}, {"changed_files": ["model.py"]}, self.tree)]
+        self.state["differential"] = {"status": "AGREE", "reason": ""}
 
     def _register(self, verdict):
         with patch.object(pipeline_module, "reference_verdict",
@@ -552,6 +561,13 @@ class ReferenceContractGateTests(unittest.TestCase):
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "FAIL", "detail": "Tensor-likes are not close!"})
         self.assertIn("not close", str(raised.exception))
+
+    def test_derivations_that_disagree_are_refused_before_the_formula(self):
+        self.state["differential"] = {"status": "FAIL",
+                                      "reason": "the difference is 2*(x - y)"}
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "PASS", "detail": "ok"})
+        self.assertIn("difference", str(raised.exception))
 
     def test_an_agreeing_formula_is_recorded_with_the_implementation(self):
         state = self._register({"status": "PASS",

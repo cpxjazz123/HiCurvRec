@@ -158,4 +158,5 @@
 77. **符号对照的诚实边界**：argmin 分配、straight-through 代理梯度等离散/不可微部分**不可能**被符号比较覆盖，必须在契约的 `excluded` 中逐条列出「表面」与「理由」，并继续由四套独立测试与一 epoch 冒烟承担。禁止把离散部分塞进符号对照来制造「全绿」。
 78. **工具角色**：`sympytorch` 是参考实现的唯一裁决者；`wrenfold` 只作为可选的**第二代码生成器**（生成可读 torch 代码供人工对照），不进入准入裁决；`torch.autograd.gradcheck` 证明**两侧**的前向-反向自洽，但公式本身写错时它也可能通过，因此三者必须同时使用、不能互相替代。
 79. **依赖归属**：`sympy`、`sympytorch`、`wrenfold` 只装在 Stage2/Stage3 的项目解释器中（`genrec_env_v2` / `genrec_env`），不装进系统 `python3`；安装后必须复查 4 卡可用与 GPU 运算正常，发现 CUDA 依赖被改动即回退。
-80. **回归测试归属**：参考检查的自测在 `tools/research/stage2/tests/test_reference.py`（含两个反例：符号写错必须靠取值抓出，取值对而梯度错必须靠梯度对照与 gradcheck 抓出），反例实现在同目录 `fake_mechanisms.py`；任何绕过参考检查的「全部通过」结论都不成立。
+80. **N 版本独立推导与差分验证**：入选机制的公式必须由 **3 个互相不可见的推导 Agent** 各自独立给出（SymPy 语句 + 自身 torch 实现），由确定性验证器 `tools/research/rounds/differential.py` 检查：①两两**符号等价**（SymPy，`x**2` 与 `x**2+10` 梯度相同但必须被判为不同函数）；②前向取值一致；③梯度一致；④每个实现与**自身语句**重建的参考一致并双侧 `gradcheck`。三者不 `AGREE` 时，`register_implementation` 直接拒绝并提示先定位分歧；`AGREE` 之后仍要求候选契约与推导等价。**共同模式失效**必须写明：三者读错同一规格会互相一致却仍然是错的，冻结的提案文本才是权威，本验证器是证据不是证明；STE/argmin 仍在 `excluded` 中列理由。
+81. **回归测试归属**：参考检查的自测在 `tools/research/stage2/tests/test_reference.py`（含两个反例：符号写错必须靠取值抓出，取值对而梯度错必须靠梯度对照与 gradcheck 抓出），反例实现在同目录 `fake_mechanisms.py`；任何绕过参考检查的「全部通过」结论都不成立。
