@@ -1,10 +1,10 @@
-"""The agent runtime: LangChain agents with a tool-enforced boundary.
+"""The agent runtime: OpenAI Agents SDK agents with a tool-enforced boundary.
 
-The agents are created with ``langchain.agents.create_agent`` over a chat model
-and they run in their own workspace with the project's boundary as their TOOLS: a
-read outside the workspace and the policy-approved roots is refused, a write
-outside the workspace is refused, and the progress channel is the only place an
-agent records what it did. The task contract is the one the framework has always
+The agents are created and run by the OpenAI Agents SDK (``agents.Agent`` and
+``agents.Runner``) and they work in their own workspace with the project's
+boundary as their TOOLS: a read outside the workspace and the policy-approved
+roots is refused, a write outside the workspace is refused, and the progress
+channel is the only place an agent records what it did. The task contract is the one the framework has always
 read: the workspace is ``root/agents/<task_id>``, the answer is the file the
 caller parses, and the run leaves ``execution.json`` with the boundary
 fingerprint that says whether the answer may be reused.
@@ -225,8 +225,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     run is verified, and carries the boundary fingerprint that decides whether
     the answer may be reused.
     """
-    from . import langchain_runner
-    return langchain_runner.run_agent(
+    from . import runtime
+    return runtime.run_agent(
         task_id, prompt, output_name, Path(root), model=model, timeout=timeout,
         role=role, read_paths=read_paths, allowed_roots=allowed_roots,
         candidate_tree=candidate_tree, allow_shell=allow_shell,

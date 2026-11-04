@@ -13,7 +13,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from tools.research.agents import langchain_runner, policy, runner
+from tools.research.agents import policy, runner, runtime
 
 
 class PolicyTests(unittest.TestCase):
@@ -151,12 +151,12 @@ class ToolBoundaryTests(unittest.TestCase):
         self.secret.write_text("secret", encoding="utf-8")
         self.addCleanup(self.tmp.cleanup)
         self.refusals = []
-        self.tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+        self.tools = {tool.__name__: tool for tool in runtime.workspace_tools(
             self.workspace, [self.allowed], allow_write=True,
             refusals=self.refusals)}
 
     def _read(self, path):
-        return self.tools["read_file"].invoke({"path": str(path)})
+        return self.tools["read_file"](str(path))
 
     def test_the_allowed_file_is_readable(self):
         self.assertEqual(self._read(self.allowed / "shared.txt"), "shared")
@@ -226,39 +226,22 @@ class ExternalDirectoryTests(unittest.TestCase):
             other = Path(work) / "other" / "n.py"
             other.parent.mkdir(parents=True)
             other.write_text("y = 2\n", encoding="utf-8")
-            tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+            tools = {tool.__name__: tool for tool in runtime.workspace_tools(
                 workspace, [scoped], allow_write=True)}
-            self.assertEqual(tools["read_file"].invoke({"path": str(scoped)}),
-                             "x = 1\n")
+            self.assertEqual(tools["read_file"](str(scoped)), "x = 1\n")
             with self.assertRaises(Exception):
-                tools["read_file"].invoke({"path": str(other)})
+                tools["read_file"](str(other))
 
 
 class ReadTrackingTests(unittest.TestCase):
     """The receipt says what the agent could not read, not only what it could."""
 
     def test_denied_reads_are_recorded_in_the_receipt(self):
-        from langchain_core.language_models.chat_models import BaseChatModel
-        from langchain_core.messages import AIMessage
-        from langchain_core.outputs import ChatGeneration, ChatResult
-
-        class Answering(BaseChatModel):
-            @property
-            def _llm_type(self):
-                return "fake"
-
-            def bind_tools(self, tools, **kwargs):
-                return self
-
-            def _generate(self, messages, stop=None, run_manager=None, **kwargs):
-                return ChatResult(generations=[ChatGeneration(
-                    message=AIMessage(content="the answer"))])
-
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
-            with mock.patch.object(langchain_runner, "build_model",
-                                   return_value=Answering()):
-                receipt = langchain_runner.run_agent(
+            with mock.patch.object(runtime, "build_model", return_value="fake"), \
+                    mock.patch.object(runtime, "run_turn", return_value="the answer"):
+                receipt = runtime.run_agent(
                     "task", "read something", "ideas.txt", root, model="fake:model",
                     role="ideate", read_paths=[], allowed_roots=[str(root)],
                     allow_write=True)
@@ -275,10 +258,10 @@ class DeniedDirectoryTests(unittest.TestCase):
             workspace = Path(work) / "ws"
             workspace.mkdir()
             refusals = []
-            tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+            tools = {tool.__name__: tool for tool in runtime.workspace_tools(
                 workspace, [], allow_write=True, refusals=refusals)}
             with self.assertRaises(Exception):
-                tools["list_directory"].invoke({"path": "/tmp/"})
+                tools["list_directory"]("/tmp/")
             self.assertTrue(refusals)
             self.assertEqual(refusals[0]["tool"], "list_directory")
 

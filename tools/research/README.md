@@ -441,12 +441,13 @@ agent does not cost the others their ideas, and the round's state file ends in
 the same shape. The implementation, training and evaluation phases are not
 touched by this phase.
 
-## The agent runtime: LangChain (2026-11-04)
+## The agent runtime: the OpenAI Agents SDK (2026-11-05)
 
-The research agents are created with LangChain, and the OpenCode CLI path is
-gone. `tools/research/agents/langchain_runner.py` builds the agent with
-`langchain.agents.create_agent` over a chat model and gives it tools that
-carry the project's boundary:
+The research agents are created and run by the OpenAI Agents SDK, and the
+OpenCode CLI path is gone. `tools/research/agents/runtime.py` builds the agent
+with `agents.Agent` (the tools are `agents.function_tool` wrappers) and runs it
+with `agents.Runner.run_sync`, over a chat model the configured provider serves.
+The tools carry the project's boundary:
 
 * `read_file` / `list_directory` - inside the task workspace or a policy-approved
   read root, nowhere else;
@@ -454,6 +455,11 @@ carry the project's boundary:
   write;
 * `append_progress` - the progress channel, which is what the framework reads
   the answer from.
+
+The model is an `agents.models.openai_chatcompletions.OpenAIChatCompletionsModel`
+over an `AsyncOpenAI` client pointed at the provider's URL and key, so the
+credential stays in the user's own configuration and never enters the
+repository.
 
 The task contract does not change: the agent runs in `root/agents/<task_id>`,
 its answer is the file the caller parses, and the run leaves the same

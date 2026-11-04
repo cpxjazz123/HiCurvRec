@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from tools.research.agents import langchain_runner, policy, runner
+from tools.research.agents import policy, runner, runtime
 from tools.research.agents.runner import run_agent
 
 
@@ -19,10 +19,10 @@ class AgentTests(unittest.TestCase):
     def test_the_agent_gets_its_own_workspace(self):
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
-            with mock.patch.object(langchain_runner, "build_model",
-                                   return_value=None):
+            with mock.patch.object(runtime, "build_model", return_value="fake"), \
+                    mock.patch.object(runtime, "run_turn", return_value="the answer"):
                 try:
-                    langchain_runner.run_agent(
+                    runtime.run_agent(
                         "task", "answer", "ideas.txt", root, model="fake:model",
                         role="ideate", read_paths=[], allowed_roots=[str(root)])
                 except Exception:
@@ -50,26 +50,25 @@ class AgentTests(unittest.TestCase):
             allowed.mkdir()
             (allowed / "a.txt").write_text("a", encoding="utf-8")
             (root / "secret.txt").write_text("s", encoding="utf-8")
-            tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+            tools = {tool.__name__: tool for tool in runtime.workspace_tools(
                 workspace, [allowed], allow_write=True)}
-            self.assertEqual(tools["read_file"].invoke({"path": str(allowed / "a.txt")}),
-                             "a")
+            self.assertEqual(tools["read_file"](str(allowed / "a.txt")), "a")
             with self.assertRaises(Exception):
-                tools["read_file"].invoke({"path": str(root / "secret.txt")})
+                tools["read_file"](str(root / "secret.txt"))
 
     def test_the_receipt_names_the_boundary_it_ran_under(self):
         with tempfile.TemporaryDirectory() as work:
             root = Path(work)
-            with mock.patch.object(langchain_runner, "build_model",
-                                   return_value=None):
+            with mock.patch.object(runtime, "build_model", return_value="fake"), \
+                    mock.patch.object(runtime, "run_turn", return_value="the answer"):
                 try:
-                    receipt = langchain_runner.run_agent(
+                    receipt = runtime.run_agent(
                         "task", "answer", "ideas.txt", root, model="fake:model",
                         role="ideate", read_paths=[], allowed_roots=[str(root)])
                 except Exception:
                     receipt = root / "agents" / "task" / "execution.json"
             evidence = json.loads(Path(receipt).read_text())
-            self.assertEqual(evidence["backend"], "langchain")
+            self.assertEqual(evidence["backend"], "openai-agents-sdk")
             self.assertTrue(evidence["boundary_sha256"])
 
 

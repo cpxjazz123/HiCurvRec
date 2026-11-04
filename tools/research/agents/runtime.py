@@ -1,21 +1,17 @@
-"""The LangChain backend for the research agents.
+"""The agent runtime: agents created and run by the OpenAI Agents SDK.
 
-The OpenCode backend starts a CLI in a bubblewrap mount namespace. This backend
-creates the agent with LangChain instead: ``langchain.agents.create_agent`` over a
-chat model, with the project's own boundary expressed as the agent's TOOLS. The
-task contract does not change: the agent runs in its own workspace under
-``root/agents/<task_id>``, its answer is a file the caller parses, its progress
-records travel through the same progress channel, and the run leaves the same
-receipt.
-
-The boundary is enforced by the tools: a read outside the workspace and the
-policy-approved roots is refused, and a write outside the workspace is refused.
-The backend refuses to run without a configured chat model.
+The SDK owns the agent: ``agents.Agent`` with the tools the task may use, and
+``agents.Runner`` for the run itself. The project's boundary is expressed as
+those tools - a read outside the workspace and the policy-approved roots is
+refused, a write outside the workspace is refused, there is no shell - and the
+task contract is the one the framework has always read: the workspace is
+``root/agents/<task_id>``, the answer is the file the caller parses, the
+progress channel holds the records, and the run leaves ``execution.json`` with
+the boundary fingerprint that says whether the answer may be reused.
 """
 from __future__ import annotations
 
 import json
-import os
 import time
 from pathlib import Path
 
@@ -40,30 +36,8 @@ SYSTEM_PROMPT = (
 )
 
 
-def echoes_the_prompt(text: str, prompt: str) -> bool:
-    """Whether the delivered answer is the task text rather than an answer.
-
-    A tool-calling agent asked to write an answer sometimes writes the prompt
-    back. The framework must not read that as a proposal, so the echo is
-    detected here and treated as a missing answer.
-    """
-    body = str(text or "").strip()
-    if not body:
-        return False
-    head = body[:200].lower()
-    first = str(prompt or "").strip()[:120].lower()
-    if first and head.startswith(first[:60]):
-        return True
-    return body.lower().startswith("propose exactly") and "distinct" in head
-
-
 class AgentBackendUnavailable(RuntimeError):
-    """The LangChain backend has no chat model to create an agent with."""
-
-
-def available() -> bool:
-    """Whether a chat model is configured for this backend."""
-    return bool((settings.AGENT_CHAT_MODEL or "").strip())
+    """There is no model the runtime could create an agent with."""
 
 
 def _strip_jsonc(text: str) -> str:
@@ -119,7 +93,7 @@ def configured_provider(model_id: str) -> tuple:
     never carries a key. The provider is found by the model name, so the setting
     reads as a model name and not as a tool name.
     """
-    import json
+    import os
 
     config = Path.home() / ".config" / "opencode" / "opencode.jsonc"
     if not config.is_file():
@@ -131,9 +105,10 @@ def configured_provider(model_id: str) -> tuple:
     providers = (data or {}).get("provider") or {}
     provider = None
     model = model_id
+    name = ""
     for candidate_name, candidate in providers.items():
         models = candidate.get("models") or {}
-        if model_id in models or model_id in (candidate.get("options") or {}).get("models", []):
+        if model_id in models:
             provider = candidate
             model = model_id
             name = candidate_name
@@ -147,13 +122,11 @@ def configured_provider(model_id: str) -> tuple:
     options = provider.get("options") or {}
     base_url = options.get("baseURL")
     api_key = options.get("apiKey")
-    import os
     if isinstance(api_key, str) and api_key.startswith("{env:") and api_key.endswith("}"):
-        # The configuration names the environment variable that holds the key.
         api_key = os.environ.get(api_key[5:-1], "")
     if not api_key:
         # The CLI's own credential file sits next to its configuration; it is the
-        # same key the CLI sends, and it is never copied into the repository.
+        # same key, and it is never copied into the repository.
         candidate = config.parent / (name + ".key")
         if candidate.is_file():
             api_key = candidate.read_text(encoding="utf-8").strip()
@@ -163,28 +136,33 @@ def configured_provider(model_id: str) -> tuple:
 
 
 def build_model(model_id: str | None = None):
-    """The chat model the agents are created with."""
+    """The model the SDK agent runs on.
+
+    A model the configured provider serves is used with that provider's URL and
+    key; otherwise the SDK's own resolution applies (the OpenAI key and base URL
+    from the environment).
+    """
     identifier = (model_id or settings.AGENT_CHAT_MODEL or "").strip()
     if not identifier:
         raise AgentBackendUnavailable(
-            "the agent runtime needs a chat model: set AGENT_CHAT_MODEL "
-            "(for example 'deepseek/deepseek-v4.1-flash', "
-            "'anthropic:claude-sonnet-4-5' or 'openai:gpt-4o-mini'). A model the "
-            "configured provider serves is used with that provider's URL and key; "
-            "otherwise the key and the base URL come from the environment "
-            "(ANTHROPIC_API_KEY / OPENAI_API_KEY and their base URLs).")
+            "the agent runtime needs a model: set AGENT_CHAT_MODEL "
+            "(for example 'deepseek/deepseek-v4.1-flash' or "
+            "'openai:gpt-4o-mini'). A model the configured provider serves is used "
+            "with that provider's URL and key; otherwise the key and the base URL "
+            "come from the environment (OPENAI_API_KEY and OPENAI_BASE_URL).")
     provider = configured_provider(identifier)
     if provider is not None:
+        from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
+        from openai import AsyncOpenAI
         base_url, api_key, model = provider
-        from langchain_openai import ChatOpenAI
-        return ChatOpenAI(model=model, base_url=base_url, api_key=api_key,
-                          temperature=0.3, max_tokens=8192,
-                          # The provider answers with brotli, and the installed
-                          # brotli/httpx pair cannot decode it; asking for gzip
-                          # keeps the response readable.
-                          default_headers={"Accept-Encoding": "gzip, deflate"})
-    from langchain.chat_models import init_chat_model
-    return init_chat_model(identifier)
+        client = AsyncOpenAI(base_url=base_url, api_key=api_key,
+                             default_headers={"Accept-Encoding": "gzip, deflate"})
+        return OpenAIChatCompletionsModel(model=model, openai_client=client)
+    if identifier.startswith("openai:"):
+        return identifier.split(":", 1)[1]
+    raise AgentBackendUnavailable(
+        "no provider serves " + identifier + ": the configured provider has no "
+        "such model and the SDK cannot resolve it without an OpenAI key.")
 
 
 def save_progress(progress, content: str) -> dict:
@@ -203,11 +181,30 @@ def save_progress(progress, content: str) -> dict:
     return saved
 
 
-def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
-                    progress=None, refusals: list | None = None):
-    """The tools a LangChain agent may use, each with the project's boundary."""
-    from langchain_core.tools import tool
+def echoes_the_prompt(text: str, prompt: str) -> bool:
+    """Whether the delivered answer is the task text rather than an answer.
 
+    An agent asked to write an answer sometimes writes the prompt back. The
+    framework must not read that as a proposal, so the echo is detected here and
+    treated as a missing answer.
+    """
+    body = str(text or "").strip()
+    if not body:
+        return False
+    head = body[:200].lower()
+    first = str(prompt or "").strip()[:120].lower()
+    if first and head.startswith(first[:60]):
+        return True
+    return body.lower().startswith("propose exactly") and "distinct" in head
+
+
+def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
+                    progress=None, refusals: list | None = None) -> list:
+    """The tools an agent may use, each with the project's boundary.
+
+    They are plain functions: the SDK wraps them into its own tool objects, and
+    the tests call them directly.
+    """
     workspace = Path(workspace).resolve()
     allowed = [Path(entry).resolve() for entry in (read_paths or [])]
     refusals = refusals if refusals is not None else []
@@ -226,7 +223,6 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
         resolved = candidate.resolve()
         return resolved == workspace or workspace in resolved.parents
 
-    @tool
     def read_file(path: str) -> str:
         """Read a file inside the task workspace or an allowed read root."""
         target = Path(path)
@@ -237,7 +233,6 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
             raise ValueError("refused: " + str(target) + " is outside the allowed roots")
         return target.read_text(encoding="utf-8", errors="replace")
 
-    @tool
     def write_file(path: str, content: str) -> str:
         """Write a file inside the task workspace."""
         if not allow_write:
@@ -252,7 +247,6 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
         target.write_text(content, encoding="utf-8")
         return "wrote " + str(target)
 
-    @tool
     def list_directory(path: str = ".") -> str:
         """List a directory inside the task workspace or an allowed read root."""
         target = Path(path)
@@ -266,7 +260,6 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
         return "\n".join(sorted(entry.name + ("/" if entry.is_dir() else "")
                                 for entry in target.iterdir()))
 
-    @tool
     def append_progress(content: str) -> str:
         """Append one stage record to this task's own progress file."""
         if progress is None:
@@ -277,12 +270,19 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
     return [read_file, write_file, list_directory, append_progress]
 
 
+def run_turn(agent, prompt: str, max_turns: int = 40) -> str:
+    """Run the agent and return what it answered."""
+    from agents import Runner
+    result = Runner.run_sync(agent, prompt, max_turns=max_turns)
+    return str(getattr(result, "final_output", "") or "")
+
+
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
               model=None, timeout=None, role: str = "verify", read_paths=None,
               allowed_roots=None, candidate_tree=None, allow_shell: bool = False,
               allow_write: bool = False, deadline_seconds: int | None = None,
               source_digest: str = "") -> Path:
-    """Run one agent with a LangChain agent and return its receipt path."""
+    """Run one agent with the OpenAI Agents SDK and return its receipt path."""
     if (not output_name.endswith((".json", ".txt")) or "/" in output_name
             or "\\" in output_name
             or not task_id.replace("-", "").replace("_", "").isalnum()):
@@ -304,28 +304,18 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     progress = progress_server.ProgressFile(workspace / runner.PROGRESS_FILE_NAME,
                                              task_id, deadline=deadline)
     refusals: list = []
-    tools = workspace_tools(workspace, allowed, allow_write=allow_write,
-                            progress=progress, refusals=refusals)
-    # The caller may pass the CLI's model id ("commandcode/deepseek/..."), which
-    # is not a LangChain identifier. Only an explicit "provider:model" is taken
-    # from the caller; otherwise the configured chat model is used.
-    chat_model_id = model if (model and ":" in str(model)) else None
-    chat_model = build_model(chat_model_id)
-    from langchain.agents import create_agent
-    agent = create_agent(model=chat_model, tools=tools, system_prompt=SYSTEM_PROMPT)
+    functions = workspace_tools(workspace, allowed, allow_write=allow_write,
+                                progress=progress, refusals=refusals)
+    from agents import Agent, function_tool
+    agent = Agent(name=task_id, instructions=SYSTEM_PROMPT,
+                  tools=[function_tool(function) for function in functions],
+                  model=build_model(model))
     started = time.time()
     answer_text = ""
     failure = ""
     failure_trace = ""
     try:
-        result = agent.invoke({"messages": [{"role": "user", "content": prompt}]},
-                              config={"recursion_limit": 60})
-        messages = result.get("messages") or []
-        for message in reversed(messages):
-            content = getattr(message, "content", "")
-            if isinstance(content, str) and content.strip():
-                answer_text = content.strip()
-                break
+        answer_text = run_turn(agent, prompt)
     except Exception as exc:                                   # noqa: BLE001
         import traceback
         failure = type(exc).__name__ + ": " + str(exc)[:300]
@@ -336,7 +326,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         # what the framework reads, so they are what the answer file carries.
         records = progress_server.read_records(workspace / runner.PROGRESS_FILE_NAME)
         joined = "\n\n".join(str(record.get("content", "")) for record in records
-                               if str(record.get("content", "")).strip())
+                             if str(record.get("content", "")).strip())
         text = joined or answer_text
         if text and not echoes_the_prompt(text, prompt):
             output.write_text(text + "\n", encoding="utf-8")
@@ -350,8 +340,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         allow_write, prompt, settings.AGENT_CHAT_MODEL,
         source_digest=source_digest)
     receipt = {
-        "task_id": task_id, "backend": "langchain", "verified": bool(output.is_file()
-                                                                     and not failure),
+        "task_id": task_id, "backend": "openai-agents-sdk", "verified": bool(output.is_file()
+                                                                           and not failure),
         "finished_utc_epoch": time.time(), "elapsed_s": round(time.time() - started, 3),
         "model": settings.AGENT_CHAT_MODEL, "role": role,
         "boundary_sha256": boundary, "read_allowlist": [str(entry) for entry in allowed],

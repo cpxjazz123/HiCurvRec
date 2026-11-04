@@ -11,28 +11,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage
-from langchain_core.outputs import ChatGeneration, ChatResult
-
 from tools.research import settings
-from tools.research.agents import langchain_runner, runner
-
-
-class FakeToolCallingModel(BaseChatModel):
-    """A model that answers with one fixed text and accepts tools."""
-
-    reply: str = "the answer"
-
-    @property
-    def _llm_type(self) -> str:
-        return "fake"
-
-    def bind_tools(self, tools, **kwargs):        # noqa: D102
-        return self
-
-    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
-        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=self.reply))])
+from tools.research.agents import runner, runtime
 
 
 class BoundaryTests(unittest.TestCase):
@@ -48,7 +28,7 @@ class BoundaryTests(unittest.TestCase):
         (self.allowed / "shared.txt").write_text("shared", encoding="utf-8")
         self.secret = self.root / "secret.txt"
         self.secret.write_text("secret", encoding="utf-8")
-        self.tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+        self.tools = {tool.__name__: tool for tool in runtime.workspace_tools(
             self.workspace, [self.allowed], allow_write=True)}
 
     def tearDown(self):
@@ -56,19 +36,18 @@ class BoundaryTests(unittest.TestCase):
 
     def test_a_read_outside_the_boundary_is_refused(self):
         with self.assertRaises(Exception):
-            self.tools["read_file"].invoke({"path": str(self.secret)})
+            self.tools["read_file"](str(self.secret))
 
     def test_a_read_inside_an_allowed_root_is_allowed(self):
-        text = self.tools["read_file"].invoke({"path": str(self.allowed / "shared.txt")})
+        text = self.tools["read_file"](str(self.allowed / "shared.txt"))
         self.assertEqual(text, "shared")
 
     def test_a_write_outside_the_workspace_is_refused(self):
         with self.assertRaises(Exception):
-            self.tools["write_file"].invoke({"path": str(self.root / "escape.txt"),
-                                             "content": "x"})
+            self.tools["write_file"](str(self.root / "escape.txt"), "x")
 
     def test_a_write_inside_the_workspace_is_allowed(self):
-        result = self.tools["write_file"].invoke({"path": "answer.txt", "content": "ok"})
+        result = self.tools["write_file"]("answer.txt", "ok")
         self.assertTrue((self.workspace / "answer.txt").is_file())
         self.assertIn("answer.txt", result)
 
@@ -77,17 +56,17 @@ class BoundaryTests(unittest.TestCase):
         from tools.research.agents import progress_server
         progress = progress_server.ProgressFile(
             self.workspace / runner.PROGRESS_FILE_NAME, "task")
-        langchain_runner.save_progress(progress, "x" * 9000)
+        runtime.save_progress(progress, "x" * 9000)
         records = progress_server.read_records(self.workspace / runner.PROGRESS_FILE_NAME)
         self.assertGreaterEqual(len(records), 3)
         self.assertTrue(all(len(str(record.get("content", ""))) <= 4000
                         for record in records))
 
     def test_a_read_only_task_has_no_write(self):
-        tools = {tool.name: tool for tool in langchain_runner.workspace_tools(
+        tools = {tool.__name__: tool for tool in runtime.workspace_tools(
             self.workspace, [self.allowed], allow_write=False)}
         with self.assertRaises(Exception):
-            tools["write_file"].invoke({"path": "answer.txt", "content": "x"})
+            tools["write_file"]("answer.txt", "x")
 
 
 class BackendContractTests(unittest.TestCase):
@@ -102,29 +81,29 @@ class BackendContractTests(unittest.TestCase):
 
     def test_an_answer_that_echoes_the_prompt_is_not_an_answer(self):
         prompt = "Propose exactly 1 DISTINCT, implementable idea for the item ids."
-        self.assertTrue(langchain_runner.echoes_the_prompt(prompt, prompt))
-        self.assertTrue(langchain_runner.echoes_the_prompt(
+        self.assertTrue(runtime.echoes_the_prompt(prompt, prompt))
+        self.assertTrue(runtime.echoes_the_prompt(
             "Propose exactly 1 DISTINCT idea\n...", prompt))
-        self.assertFalse(langchain_runner.echoes_the_prompt(
+        self.assertFalse(runtime.echoes_the_prompt(
             "IDEA: X\nTITLE: A real proposal", prompt))
 
     def test_the_backend_refuses_to_run_without_a_chat_model(self):
         with mock.patch.object(settings, "AGENT_CHAT_MODEL", ""):
-            with self.assertRaises(langchain_runner.AgentBackendUnavailable) as caught:
-                langchain_runner.build_model()
+            with self.assertRaises(runtime.AgentBackendUnavailable) as caught:
+                runtime.build_model()
         self.assertIn("AGENT_CHAT_MODEL", str(caught.exception))
 
     def test_the_agent_writes_its_answer_and_a_receipt(self):
         with mock.patch.object(settings, "AGENT_CHAT_MODEL", "fake:model"), \
-                mock.patch.object(langchain_runner, "build_model",
-                                  return_value=FakeToolCallingModel(reply="the answer")):
-            receipt_path = langchain_runner.run_agent(
+                mock.patch.object(runtime, "build_model", return_value="fake"), \
+                mock.patch.object(runtime, "run_turn", return_value="the answer"):
+            receipt_path = runtime.run_agent(
                 "task", "say the answer", "ideas.txt", self.root,
                 model="fake:model", role="ideate", read_paths=[],
                 allowed_roots=[str(self.root)], allow_write=True)
         receipt = json.loads(Path(receipt_path).read_text())
         self.assertTrue(receipt["verified"])
-        self.assertEqual(receipt["backend"], "langchain")
+        self.assertEqual(receipt["backend"], "openai-agents-sdk")
         self.assertTrue(receipt["boundary_sha256"])
         answer = self.root / "agents" / "task" / "ideas.txt"
         self.assertTrue(answer.is_file())
@@ -132,9 +111,9 @@ class BackendContractTests(unittest.TestCase):
 
     def test_the_answer_travels_through_the_progress_channel(self):
         with mock.patch.object(settings, "AGENT_CHAT_MODEL", "fake:model"), \
-                mock.patch.object(langchain_runner, "build_model",
-                                  return_value=FakeToolCallingModel(reply="the answer")):
-            langchain_runner.run_agent("task", "say the answer", "ideas.txt",
+                mock.patch.object(runtime, "build_model", return_value="fake"), \
+                mock.patch.object(runtime, "run_turn", return_value="the answer"):
+            runtime.run_agent("task", "say the answer", "ideas.txt",
                                         self.root, model="fake:model", role="ideate",
                                         read_paths=[], allowed_roots=[str(self.root)],
                                         allow_write=True)
