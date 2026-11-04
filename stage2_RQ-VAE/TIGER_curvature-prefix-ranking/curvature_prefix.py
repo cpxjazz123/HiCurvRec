@@ -64,12 +64,18 @@ SCALE_FLOOR = 1.0
 RANDOM_TRIPLE_SEED = 20261103
 
 
-def build_edge_tables(edges: np.ndarray, n_items: int) -> dict:
+def build_edge_tables(edges: np.ndarray, n_items: int, *,
+                      statistic: str = "af3") -> dict:
     """AF3, ordinary Forman and triangles for every undirected graph edge.
 
     ``edges`` is an (E, 2) integer array of item pairs from the training split;
-    duplicates and reversed pairs collapse to one undirected edge.
+    duplicates and reversed pairs collapse to one undirected edge. ``statistic``
+    selects the curvature the cohesion weights are built from: ``af3`` counts the
+    triangles, ``forman`` is the triangle-free ablation Issue #138 B requires.
+    Both arrays are always returned; ``curvature`` is the selected one.
     """
+    if statistic not in ("af3", "forman"):
+        raise ValueError(f"unknown curvature statistic: {statistic!r}")
     edges = np.asarray(edges, dtype=np.int64).reshape(-1, 2)
     if edges.size:
         low = np.minimum(edges[:, 0], edges[:, 1])
@@ -84,7 +90,7 @@ def build_edge_tables(edges: np.ndarray, n_items: int) -> dict:
     degree = np.bincount(np.concatenate([u, v]), minlength=n_items).astype(np.float64)
     if u.size == 0:
         empty = np.zeros(0, dtype=np.float64)
-        return {"u": u, "v": v, "af3": empty, "forman": empty,
+        return {"u": u, "v": v, "af3": empty, "forman": empty, "curvature": empty,
                 "triangles": np.zeros(0, dtype=np.int64), "degree": degree,
                 "median": 0.0, "scale": SCALE_FLOOR, "weights": empty}
     rows = np.concatenate([u, v])
@@ -110,9 +116,11 @@ def build_edge_tables(edges: np.ndarray, n_items: int) -> dict:
         triangles[positions] = np.rint(product.data[keep]).astype(np.int64)
     forman = 4.0 - degree[u] - degree[v]
     af3 = forman + 3.0 * triangles.astype(np.float64)
-    weights, median, scale = cohesion_weights(af3)
-    return {"u": u, "v": v, "af3": af3, "forman": forman, "triangles": triangles,
-            "degree": degree, "median": median, "scale": scale, "weights": weights}
+    chosen = af3 if statistic == "af3" else forman
+    weights, median, scale = cohesion_weights(chosen)
+    return {"u": u, "v": v, "af3": af3, "forman": forman, "curvature": chosen,
+            "triangles": triangles, "degree": degree, "median": median,
+            "scale": scale, "weights": weights}
 
 
 def cohesion_weights(af3: np.ndarray) -> tuple[np.ndarray, float, float]:

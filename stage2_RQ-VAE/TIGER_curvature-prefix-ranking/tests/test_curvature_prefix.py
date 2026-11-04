@@ -420,6 +420,27 @@ class CoClusterTests(unittest.TestCase):
         self.assertNotAlmostEqual(float(curved), float(flat), places=6)
 
 
+class CurvatureStatisticTests(unittest.TestCase):
+    """Issue #138 B: ordinary Forman is the triangle-augmentation ablation."""
+
+    EDGES = np.array([[0, 1], [1, 2], [0, 2], [2, 3]])
+
+    def test_the_af3_statistic_counts_the_triangle(self):
+        table = cp.build_edge_tables(self.EDGES, 4, statistic="af3")
+        forman = cp.build_edge_tables(self.EDGES, 4, statistic="forman")
+        self.assertTrue(np.allclose(table["curvature"], table["af3"]))
+        self.assertTrue(np.allclose(forman["curvature"], forman["forman"]))
+        self.assertFalse(np.allclose(table["curvature"], forman["curvature"]))
+
+    def test_the_default_statistic_is_af3(self):
+        table = cp.build_edge_tables(self.EDGES, 4)
+        self.assertTrue(np.allclose(table["curvature"], table["af3"]))
+
+    def test_an_unknown_statistic_is_refused(self):
+        with self.assertRaises(ValueError):
+            cp.build_edge_tables(self.EDGES, 4, statistic="cheeger")
+
+
 class CurvedAssignmentTests(unittest.TestCase):
     """Issue #138 C: the curve must enter the hard code selection itself."""
 

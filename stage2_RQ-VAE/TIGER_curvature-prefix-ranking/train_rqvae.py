@@ -120,6 +120,9 @@ USE_GEOMETRY = True
 #: fine levels carry the separation that the historical record associates with
 #: recall (L2 prefixes and L3 triples both correlate positively with R@10).
 RANKING_LEVELS = (0, 1, 2)
+#: Which graph curvature the cohesion weights are built from. ``af3`` counts the
+#: triangles; ``forman`` is the triangle-free arm Issue #138 B requires.
+CURVATURE_STAT = "af3"
 # The step size of the Frechet step, a documented default that is never tuned.
 # The new mechanism's coupling weight is not a tuned constant: the first training
 # step measures the reconstruction loss and the mechanism loss on the same batch
@@ -382,7 +385,8 @@ def main() -> None:
     config = _tokenizer_config()
     # The mechanism's behaviour side: one exact AF3 pass over the TRAIN edges.
     edge_table = curvature_prefix.build_edge_tables(
-        _training_edges(train_frame, len(embeddings)), len(embeddings))
+        _training_edges(train_frame, len(embeddings)), len(embeddings),
+        statistic=CURVATURE_STAT)
     triple_lookup = curvature_prefix.TripleLookup(edge_table)
     if rank == 0:
         print(f"[RQ-VAE] AF3 table: {edge_table['af3'].size} edges, "
