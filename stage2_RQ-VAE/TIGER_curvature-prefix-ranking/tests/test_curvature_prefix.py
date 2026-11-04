@@ -354,19 +354,22 @@ class BucketSpreadTests(unittest.TestCase):
         self.assertLess(float(light), float(heavy))
 
     def test_the_loss_has_a_gradient_on_the_points(self):
-        points = (self.codebook[:8].clone() * 1.1).requires_grad_(True)
-        cp.bucket_spread_loss(points, self.codebook, self.buckets).backward()
+        torch.manual_seed(29)
+        points = (self.codebook[:8].clone() + 0.05 * torch.randn(8, 8)).requires_grad_(True)
+        cp.bucket_spread_loss(points, self.codebook, self.buckets,
+                              use_curvature=False).backward()
         self.assertGreater(float(points.grad.abs().sum()), 0.0)
 
     def test_the_gradient_is_comparable_to_the_ranking(self):
         """One shared budget must be able to size both terms."""
         torch.manual_seed(13)
         codebook = torch.randn(16, 8) * 0.2
-        points = (codebook[:8].clone() * 1.05).requires_grad_(True)
+        points = (codebook[:8].clone() + 0.05 * torch.randn(8, 8)).requires_grad_(True)
         buckets = torch.zeros(8, dtype=torch.long)
         weights = torch.ones(8)
         anchor, high, low = torch.arange(3), torch.tensor([3, 4, 5]), torch.tensor([6, 7, 3])
-        spread = cp.bucket_spread_loss(points, codebook, buckets, weights)
+        spread = cp.bucket_spread_loss(points, codebook, buckets, weights,
+                                       use_curvature=False)
         spread.backward()
         spread_grad = float(points.grad.norm())
         points.grad = None
@@ -602,18 +605,17 @@ class CurvatureScaleTests(unittest.TestCase):
         curvature = cp.data_curvature(norms)
         self.assertAlmostEqual(curvature, 100.0, places=3)
 
-    def test_the_curve_is_a_rescale_at_curvature_one_and_not_at_the_data_scale(self):
+    def test_the_curved_cost_is_scale_free(self):
+        """Both sides are normalised: a rescaling cannot change the assignment."""
         torch.manual_seed(3)
         points = torch.randn(16, 8) * 0.1
         codebook = torch.randn(16, 8) * 0.1
-        euclid = torch.cdist(points, codebook)
-        flat = cp._assignment_cost(points, codebook, True, curvature=1.0)
-        ratio_flat = float((flat / euclid).mean())
-        self.assertAlmostEqual(ratio_flat, 2.0, places=1)
-        measured = cp.data_curvature(points.norm(dim=-1))
-        curved = cp._assignment_cost(points, codebook, True, curvature=measured)
-        ratio = float((curved / euclid).mean())
-        self.assertGreater(abs(ratio - 2.0), 0.2)
+        base = cp._assignment_cost(points, codebook, True, curvature=1.0)
+        scaled = cp._assignment_cost(points * 20.0, codebook * 0.2, True, curvature=1.0)
+        self.assertTrue(torch.allclose(base, scaled, atol=1e-5),
+                        "the curved cost must not depend on the radial scale")
+        euclid = cp._assignment_cost(points, codebook, use_curvature=False)
+        self.assertFalse(torch.allclose(base, euclid, atol=1e-5))
 
 
 class AssignmentRuleTests(unittest.TestCase):
