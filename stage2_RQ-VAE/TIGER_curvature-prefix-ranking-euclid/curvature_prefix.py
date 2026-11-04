@@ -287,6 +287,59 @@ def prefix_agreement(points_a: torch.Tensor, points_b: torch.Tensor,
     return (weight_a * weight_b).sum(dim=-1)
 
 
+def boundary_alignment_loss(points_a, points_b, codebooks, level: int,
+                            target: torch.Tensor, use_curvature: bool = True,
+                            curvature: float = CURVATURE) -> torch.Tensor:
+    """The cross-entropy of the edge-sharing probability against the AF3 target.
+
+    Issue #138 B: the AF3 cohesion, normalised as a probability by the measured
+    sigmoid, is the target for whether two items at the ends of a TRAIN edge share
+    the complete prefix. The term is differentiable through the soft prefix share,
+    so the boundary the partition draws is trained rather than only measured; the
+    occupancy guards (usage entropy, bucket spread, trust region) keep it from
+    collapsing into one group.
+    """
+    share = prefix_share(points_a, points_b, codebooks, level, None,
+                         use_curvature, curvature)
+    share = share.clamp(1e-6, 1.0 - 1e-6)
+    target = target.to(share.device).float().clamp(0.0, 1.0)
+    return -(target * share.log() + (1.0 - target) * (1.0 - share).log()).mean()
+
+
+def graph_prefix_report(tokens: np.ndarray, edges: np.ndarray, af3: np.ndarray,
+                        level: int) -> dict:
+    """Within/cross AF3 statistics of a SID partition on the TRAIN graph.
+
+    Issue #138 B: the evaluation must say how the partition divides the original
+    graph edges, not only how many prefixes it occupies. ``within`` are the edges
+    whose endpoints share the complete prefix up to ``level``; the gap is the
+    difference of the mean AF3 on the two sets. An empty set reports
+    ``available=False`` instead of inventing a mean.
+    """
+    tokens = np.asarray(tokens)
+    edges = np.asarray(edges, dtype=np.int64).reshape(-1, 2)
+    af3 = np.asarray(af3, dtype=np.float64).reshape(-1)
+    if edges.size == 0 or af3.size != edges.shape[0]:
+        return {"available": False, "level": int(level), "within_edges": 0,
+                "cross_edges": int(edges.shape[0]), "within_mean": None,
+                "cross_mean": None, "gap": None, "occupied_prefixes": 0,
+                "singleton_rate": None}
+    width = int(level) + 1
+    inside = np.all(tokens[edges[:, 0], :width] == tokens[edges[:, 1], :width], axis=1)
+    within = af3[inside]
+    cross = af3[~inside]
+    within_mean = float(within.mean()) if within.size else None
+    cross_mean = float(cross.mean()) if cross.size else None
+    gap = (within_mean - cross_mean
+           if within_mean is not None and cross_mean is not None else None)
+    prefixes, counts = np.unique(tokens[:, :width], axis=0, return_counts=True)
+    return {"available": True, "level": int(level),
+            "within_edges": int(inside.sum()), "cross_edges": int((~inside).sum()),
+            "within_mean": within_mean, "cross_mean": cross_mean, "gap": gap,
+            "occupied_prefixes": int(prefixes.shape[0]),
+            "singleton_rate": float((counts == 1).mean())}
+
+
 def curved_codes_cost(points: torch.Tensor, codebook: torch.Tensor,
                       curvature: float = CURVATURE) -> torch.Tensor:
     """The Poincare cost of every code for every point, for the real assignment."""
