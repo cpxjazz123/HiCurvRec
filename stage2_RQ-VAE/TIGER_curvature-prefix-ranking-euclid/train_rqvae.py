@@ -568,31 +568,39 @@ def main() -> None:
                             anchor_levels, high_levels, codebooks[:2], 1,
                             USE_GEOMETRY, MECHANISM_CURVATURE or 1.0)
                         # The boundary the partition draws is trained against the
-                        # AF3 probability of each edge, not only measured.
-                        anchor_cpu = anchor.detach().cpu().numpy()
-                        high_weight = torch.from_numpy(
-                            triple_lookup.pair_weight(anchor_cpu,
-                                                      high.detach().cpu().numpy())
-                        ).float().to(device)[valid]
-                        low_weight = torch.from_numpy(
-                            triple_lookup.pair_weight(anchor_cpu,
-                                                      low.detach().cpu().numpy())
-                        ).float().to(device)[valid]
-                        mechanism = mechanism + BOUNDARY_WEIGHT * (
-                            curvature_prefix.boundary_alignment_loss(
-                                anchor_levels, high_levels, codebooks[:2], 1, high_weight,
-                                USE_GEOMETRY, MECHANISM_CURVATURE or 1.0)
-                            + curvature_prefix.boundary_alignment_loss(
-                                [points[0][rows_anchor[valid]], points[1][rows_anchor[valid]]],
-                                [points[0][rows_low[valid]], points[1][rows_low[valid]]],
-                                codebooks[:2], 1, low_weight,
-                                USE_GEOMETRY, MECHANISM_CURVATURE or 1.0))
+                        # AF3 probability of each edge, not only measured. Behaviour
+                        # OFF has no AF3 probability to train against, and a random
+                        # triple is not a graph edge, so the term is not applied.
+                        anchor_cpu = anchor.detach().cpu().numpy() if USE_BEHAVIOUR else None
+                        if USE_BEHAVIOUR:
+                            high_weight = torch.from_numpy(
+                                triple_lookup.pair_weight(anchor_cpu,
+                                                          high.detach().cpu().numpy())
+                            ).float().to(device)[valid]
+                            low_weight = torch.from_numpy(
+                                triple_lookup.pair_weight(anchor_cpu,
+                                                          low.detach().cpu().numpy())
+                            ).float().to(device)[valid]
+                            mechanism = mechanism + BOUNDARY_WEIGHT * (
+                                curvature_prefix.boundary_alignment_loss(
+                                    anchor_levels, high_levels, codebooks[:2], 1,
+                                    high_weight, USE_GEOMETRY, MECHANISM_CURVATURE or 1.0)
+                                + curvature_prefix.boundary_alignment_loss(
+                                    [points[0][rows_anchor[valid]], points[1][rows_anchor[valid]]],
+                                    [points[0][rows_low[valid]], points[1][rows_low[valid]]],
+                                    codebooks[:2], 1, low_weight,
+                                    USE_GEOMETRY, MECHANISM_CURVATURE or 1.0))
                 # Every item of the batch, not the sampled pairs: the coarse
                 # bucket's fine codes are pushed to spread, weighted by the item's
                 # mean AF3 cohesion.
-                cohesion = torch.from_numpy(
-                    triple_lookup.item_cohesion(item_ids.detach().cpu().numpy())
-                ).float().to(device)
+                if USE_BEHAVIOUR:
+                    cohesion = torch.from_numpy(
+                        triple_lookup.item_cohesion(item_ids.detach().cpu().numpy())
+                    ).float().to(device)
+                else:
+                    # Behaviour OFF: the AF3 table is the thing switched off, so the
+                    # per-item weight is uniform rather than a stale measured value.
+                    cohesion = torch.ones(item_ids.numel(), device=device)
                 buckets1 = tokens[:, 0]
                 buckets2 = tokens[:, 0] * codebooks[1].shape[0] + tokens[:, 1]
                 spread = (curvature_prefix.bucket_spread_loss(
