@@ -39,6 +39,7 @@ from __future__ import annotations
 import torch
 
 from .poincare_contract import (
+    lorentz_exp,
     lorentz_exp_origin,
     lorentz_lift,
     lorentz_parallel_transport,
@@ -65,23 +66,37 @@ def origin_like(reference: torch.Tensor) -> torch.Tensor:
 
 def transport_codewords(codebook: torch.Tensor, anchor: torch.Tensor,
                         point: torch.Tensor) -> torch.Tensor:
-    """``W_k = PT_{m -> a} (PT_{o -> m} (theta_hat_k))`` for every codeword.
+    """The codewords in the frame the walk stands on: two legs, one point each.
 
-    ``codebook`` is ``(K, D)`` (spatial), ``anchor`` is ``(B, D)`` (spatial, one
-    per row) and ``point`` is ``(B, D + 1)`` (a Lorentz point per row): the
-    frame each walk stands on. The result is ``(B, K, D + 1)``: every row gets
-    the codebook in its own frame. The two legs are the behaviour leg (origin
-    to the anchor) and the geometric leg (the anchor to the current frame).
+    A parallel transport moves a TANGENT vector; the transported object here
+    is a POINT of the hyperboloid. So the codeword is written as a tangent
+    vector at the origin (its spatial coordinates), carried through the
+    behaviour leg (origin to the anchor) and the geometric leg (anchor to the
+    current frame), and read back as a point: ``W_k = exp_a(PT_{m->a}(PT_{o->m}
+    (theta_k)))``. Without the exponential the transported codeword leaves the
+    hyperboloid, and the assignment degenerates - the third run of this
+    candidate showed it (every item took the same codeword).
+
+    ``codebook`` is ``(K, D)`` (spatial), ``anchor`` is ``(B, D)`` (one per row)
+    and ``point`` is ``(B, D + 1)`` (a Lorentz point per row). The result is
+    ``(B, K, D + 1)``: every row gets the codebook in its own frame.
     """
+    rows = point.shape[0]
     lifted = lift(codebook)
+    if lifted.dim() == 2:
+        # One codebook for every row (the training path).
+        tangent = lifted.unsqueeze(0).expand(rows, -1, -1)
+        image = lorentz_exp_origin(codebook).unsqueeze(0).expand(rows, -1, -1)
+    else:
+        # A codebook per row (the reference surface).
+        tangent = lifted
+        image = lorentz_exp_origin(codebook)
     if not USE_CURVATURE:
-        return lifted.unsqueeze(0).expand(point.shape[0], -1, -1)
+        return image
     middle = lorentz_exp_origin(anchor)
-    rows = middle.shape[0]
-    first = _transport(origin_like(middle).unsqueeze(1),
-                       middle.unsqueeze(1),
-                       lifted.unsqueeze(0).expand(rows, -1, -1))
-    return _transport(middle.unsqueeze(1), point.unsqueeze(1), first)
+    first = _transport(origin_like(middle).unsqueeze(1), middle.unsqueeze(1), tangent)
+    moved = _transport(middle.unsqueeze(1), point.unsqueeze(1), first)
+    return lorentz_exp(point.unsqueeze(1), moved)
 
 
 def _transport(source: torch.Tensor, target: torch.Tensor,
@@ -98,21 +113,21 @@ def _transport(source: torch.Tensor, target: torch.Tensor,
 
 def transported_distance(codeword: torch.Tensor, anchor: torch.Tensor,
                          frame: torch.Tensor) -> torch.Tensor:
-    """The Minkowski squared distance between the TRANSPORTED codeword and the frame.
+    """The cosine of the transported codeword against the frame.
 
     The rows are independent: every row carries its own codeword, its own
     anchor and its own frame, and the result is one number per row. This is
     the continuous surface of the mechanism: the two legs of the transport, the
     anchor and the frame, in one number. The discrete choice (which codeword)
     is not part of it and is excluded from the contract.
+
+    The transport itself is the one the recursion uses - there is no second
+    copy of it here, because two copies of the same formula drifted apart
+    exactly once already.
     """
     point = lorentz_exp_origin(frame)
-    lifted = lift(codeword)
-    middle = lorentz_exp_origin(anchor)
-    origin = origin_like(middle).unsqueeze(1)
-    first = _transport(origin, middle.unsqueeze(1), lifted.unsqueeze(1))
-    moved = _transport(middle.unsqueeze(1), point.unsqueeze(1), first).squeeze(1)
-    return squared_separation(point, moved)
+    moved = transport_codewords(codeword.unsqueeze(1), anchor, point).squeeze(1)
+    return -minkowski_dot(point, moved)
 
 
 def minkowski_square(residual: torch.Tensor, codeword: torch.Tensor) -> torch.Tensor:

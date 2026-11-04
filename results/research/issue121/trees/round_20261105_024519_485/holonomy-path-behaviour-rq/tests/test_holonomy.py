@@ -49,11 +49,14 @@ class HolonomyTests(unittest.TestCase):
             without_curve = holonomy.transport_codewords(self.codebook, self.anchor, point)
         finally:
             holonomy.USE_CURVATURE = original
-        lifted = holonomy.lift(self.codebook)
-        self.assertLess(float((without_curve - lifted.unsqueeze(0)).abs().max()), 1e-12)
+        # With the curve off the codeword stays where it is: its own point of
+        # the hyperboloid, with no transport through the anchor.
+        image = holonomy.lorentz_exp_origin(self.codebook).unsqueeze(0)
+        self.assertLess(float((without_curve - image).abs().max()), 1e-12)
         self.assertGreater(float((with_curve - without_curve).abs().max()), 1e-6)
         # A lifted spatial vector is spacelike: its Minkowski product is its
         # squared norm, not zero.
+        lifted = holonomy.lift(self.codebook)
         self.assertGreater(float(minkowski_dot(lifted.unsqueeze(0),
                                                 lifted.unsqueeze(0)).abs().max()), 0.0)
 

@@ -1,7 +1,7 @@
 {
  "calls": [
   {
-   "name": "transported_separation",
+   "name": "transported_cosine",
    "callable": "model.holonomy:transported_distance",
    "symbols": [
     "t0",
@@ -44,10 +44,16 @@
     "p1 = t0 + q/(1 + m0)*m1",
     "p2 = t1 + q/(1 + m0)*m2",
     "h = -m0*a0 + m1*a1 + m2*a2",
-    "g = -a0*p0 + a1*p1 + a2*p2",
-    "W0 = p0 + g/(1 - h)*(m0 + a0)",
-    "W1 = p1 + g/(1 - h)*(m1 + a1)",
-    "W2 = p2 + g/(1 - h)*(m2 + a2)",
+    "g1 = -a0*p0 + a1*p1 + a2*p2",
+    "w0 = p0 + g1/(1 - h)*(m0 + a0)",
+    "w1 = p1 + g1/(1 - h)*(m1 + a1)",
+    "w2 = p2 + g1/(1 - h)*(m2 + a2)",
+    "nw2 = w1**2 + w2**2 - w0**2",
+    "nw = sqrt(nw2)",
+    "shw = sinh(nw)/nw",
+    "W0 = cosh(nw)*a0 + shw*w0",
+    "W1 = cosh(nw)*a1 + shw*w1",
+    "W2 = cosh(nw)*a2 + shw*w2",
     "d2 = a0*W0 - a1*W1 - a2*W2"
    ],
    "output": "d2"
