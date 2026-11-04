@@ -428,10 +428,20 @@ def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
 
 
 def run_turn(agent, prompt: str, max_turns: int = 40) -> str:
-    """Run the agent and return what it answered."""
+    """Run the agent and return what it answered, as text.
+
+    With a structured output the answer is a model instance; it is rendered as
+    JSON, which is the format the runtime renders into the block the framework
+    reads.
+    """
     from agents import Runner
     result = Runner.run_sync(agent, prompt, max_turns=max_turns)
-    return str(getattr(result, "final_output", "") or "")
+    output = getattr(result, "final_output", "")
+    if isinstance(output, BaseModel):
+        return output.model_dump_json()
+    if isinstance(output, dict):
+        return json.dumps(output)
+    return str(output or "")
 
 
 def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
@@ -487,12 +497,29 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     answer_text = ""
     failure = ""
     failure_trace = ""
+    failure = ""
+    failure_trace = ""
+    structured_fallback = False
     try:
         answer_text = run_turn(agent, prompt)
     except Exception as exc:                                   # noqa: BLE001
-        import traceback
-        failure = type(exc).__name__ + ": " + str(exc)[:300]
-        failure_trace = traceback.format_exc()[-1500:]
+        if schema is not None:
+            # The provider refused the schema (response_format=json_schema is not
+            # universal): ask the same question without it, once.
+            structured_fallback = True
+            agent = Agent(name=task_id, instructions=instructions,
+                          tools=[function_tool(function) for function in functions],
+                          model=build_model(model))
+            try:
+                answer_text = run_turn(agent, prompt)
+            except Exception as retry_exc:                       # noqa: BLE001
+                import traceback
+                failure = type(retry_exc).__name__ + ": " + str(retry_exc)[:300]
+                failure_trace = traceback.format_exc()[-1500:]
+        else:
+            import traceback
+            failure = type(exc).__name__ + ": " + str(exc)[:300]
+            failure_trace = traceback.format_exc()[-1500:]
     if not output.is_file():
         # A read-only role has no write tool, and an agent that answered in the
         # chat instead of the file still delivered its answer: the records are
@@ -529,6 +556,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         "model": settings.AGENT_CHAT_MODEL, "role": role,
         "boundary_sha256": boundary, "read_allowlist": [str(entry) for entry in allowed],
         "geometry_contract": contract, "failure": failure, "refusals": refusals,
+        "structured_output": bool(schema), "structured_output_fallback": structured_fallback,
         "failure_trace": failure_trace,
         "progress_file": str(workspace / runner.PROGRESS_FILE_NAME),
         "answer": str(output),

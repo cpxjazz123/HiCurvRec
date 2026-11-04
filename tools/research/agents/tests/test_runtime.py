@@ -79,6 +79,13 @@ class BackendContractTests(unittest.TestCase):
     def tearDown(self):
         self.work.cleanup()
 
+    def test_a_structured_answer_is_rendered_as_json(self):
+        from agents.run import RunResult  # noqa: F401
+        payload = runtime.IdeaPayload(idea_id="a", title="t", motivation="m",
+                                      novelty="n", key_change="c", specification="s",
+                                      cost_estimate="ce", falsifiable_hypothesis="h")
+        self.assertEqual(json.loads(payload.model_dump_json())["idea_id"], "a")
+
     def test_the_structured_output_schema_matches_the_framework_fields(self):
         schema = runtime.output_schema("ideate")
         fields = set(schema.model_fields)
