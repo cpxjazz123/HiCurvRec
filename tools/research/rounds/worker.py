@@ -1209,10 +1209,80 @@ def _parse_derivation(text: str) -> dict:
     return {}
 
 
+#: The instance every derivation of a round must use. Two derivations that
+#: choose different dimensions are different functions, and the comparison of
+#: them says nothing; the instance is therefore fixed by the framework and
+#: checked, not chosen by the agents.
+DERIVATION_INSTANCE = {"latent_width": 2, "levels": 2, "codes": 2,
+                       "latent_name": "z", "codebook_name": "theta",
+                       "scale_name": "s", "output": "loss"}
+
+
+def _instance_codebook_width() -> int:
+    instance = DERIVATION_INSTANCE
+    return int(instance["levels"]) * int(instance["codes"]) * int(instance["latent_width"])
+
+
+def _instance_problems(payload: dict) -> list:
+    """Where a derivation departs from the fixed instance."""
+    instance = DERIVATION_INSTANCE
+    problems = []
+    arguments = payload.get("args") or []
+    widths = {str(spec.get("name")): spec for spec in arguments}
+    latent = [spec for spec in arguments
+              if str(spec.get("name")).lower().startswith(instance["latent_name"])]
+    if not latent:
+        problems.append("no latent argument named " + instance["latent_name"])
+    else:
+        width = int(latent[0].get("width") or 1)
+        if width != int(instance["latent_width"]):
+            problems.append("the latent width is %d, the round fixes %d"
+                            % (width, int(instance["latent_width"])))
+    codebook = [spec for spec in arguments
+                if str(spec.get("name")).lower().startswith(instance["codebook_name"])]
+    if not codebook:
+        problems.append("no codebook argument named " + instance["codebook_name"])
+    else:
+        width = int(codebook[0].get("width") or 1)
+        expected = _instance_codebook_width()
+        if width != expected:
+            problems.append("the codebook width is %d, the round fixes %d "
+                            "(%d levels x %d codes x %d dimensions)"
+                            % (width, expected, int(instance["levels"]),
+                               int(instance["codes"]), int(instance["latent_width"])))
+    if not any(str(spec.get("name")).lower().startswith(instance["scale_name"])
+               and spec.get("scalar") is not None for spec in arguments):
+        problems.append("no scalar scale named " + instance["scale_name"])
+    output = str(payload.get("output") or "")
+    if output != instance["output"]:
+        problems.append("the output is %r, the round fixes %r"
+                        % (output, instance["output"]))
+    return problems
+
+
 def _derivation_prompt(idea: dict) -> str:
     """One specification, no other derivation, and no way to ask for one."""
+    instance = DERIVATION_INSTANCE
+    codebook_width = _instance_codebook_width()
     return (
+        "FIXED INSTANCE - use exactly these values; a derivation that chooses "
+        "others is a different function and cannot be compared with the others. "
+        "Do not simplify, do not shrink and do not reinterpret them:\n"
+        "  * the latent has %d dimensions (NOT %d), argument %r with width %d;\n"
+        "  * %d levels, %d codes per level; the codebook is ONE argument %r with "
+        "width %d (the %d codeword vectors flattened in (level, code) order);\n"
+        "  * a scalar %r for the frozen scale;\n"
+        "  * the output is a single per-item vector named %r - the quantity the "
+        "mechanism changes in the training objective;\n"
+        "  * any switch or table the specification needs comes AFTER the scale, "
+        "and is named in both `args` and `symbols`.\n"
+        "  * `symbols` lists the free symbols in the order the arguments consume "
+        "them: a width-w argument consumes w symbols, one per column.\n\n"
         "Derive the formula of this mechanism from the specification alone.\n\n"
+        % (int(instance["latent_width"]), 1, instance["latent_name"],
+           int(instance["latent_width"]), int(instance["levels"]),
+           int(instance["codes"]), instance["codebook_name"], codebook_width,
+           codebook_width, instance["scale_name"], instance["output"]) +
         "TITLE: " + str(idea.get("title")) + "\n"
         "MECHANISM: " + str(idea.get("mechanism")) + "\n"
         "SPECIFICATION: " + str(idea.get("specification")) + "\n"
@@ -1336,16 +1406,28 @@ def phase_derivation(root: Path, round_id: str, *, log=print) -> dict:
     implementations = [{"name": "%s_%d" % (answer["idea_id"], answer["index"]),
                         **(answer.get("payload") or {})}
                        for answer in answers if answer.get("payload")]
+    mismatched = []
+    for implementation in implementations:
+        problems = _instance_problems(implementation)
+        if problems:
+            implementation["instance_problems"] = problems
+            mismatched.append({"name": implementation["name"],
+                                "status": "INSTANCE_MISMATCH",
+                                "reason": "; ".join(problems)})
     verdict = (_run_differential(implementations, repo=Path(root))
                if len(implementations) >= 2
                else {"status": "NOT_APPLICABLE",
                      "reason": "fewer than two derivations answered"})
+    state["derivation_instance"] = dict(DERIVATION_INSTANCE)
     state["derivations"] = [{"idea_id": answer["idea_id"],
                              "index": answer["index"],
                              "payload": answer.get("payload") or {},
                              "receipt": answer.get("receipt")}
                             for answer in answers]
     state["differential"] = verdict
+    if mismatched:
+        state["differential"] = dict(verdict)
+        state["differential"]["instance_mismatches"] = mismatched
     pipeline_module.save_state(directory, state)
     log("derivation: %s" % verdict.get("status"))
     return {"phase": "derivation", "ran": True, "status": verdict.get("status"),

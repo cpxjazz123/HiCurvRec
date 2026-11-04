@@ -304,7 +304,8 @@ IDEA_JSON_INSTRUCTIONS = (
 )
 
 DERIVATION_JSON_INSTRUCTIONS = (
-    "You DERIVE one formula, independently. You are given a specification and "
+    "You DERIVE one formula, independently. Your reply is ONE JSON object and "
+    "nothing else: no prose before it, no prose after it, no markdown fence. You are given a specification and "
     "nothing else: you do not see any other derivation, its codes or its test "
     "results, and you must not ask for them.\n"
     "Answer with ONE JSON object and nothing else:\n"
