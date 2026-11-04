@@ -356,6 +356,11 @@ class RQLayer(nn.Module):
         unused_codes = int((used == 0).sum().item())
         loss = torch.nn.functional.mse_loss(quantized_x, x.detach()) + \
             self.vq_beta * torch.nn.functional.mse_loss(x, quantized_x.detach())
+        # The straight-through estimator is what gives the ENCODER a gradient
+        # from the reconstruction; without it the encoder collapses onto a
+        # constant (every latent 0.073, one codeword for every item), which is
+        # exactly what the first run of this mechanism showed.
+        quantized_x = x + (quantized_x - x).detach()
         return quantized_x, loss, unused_codes, output
 
     def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
