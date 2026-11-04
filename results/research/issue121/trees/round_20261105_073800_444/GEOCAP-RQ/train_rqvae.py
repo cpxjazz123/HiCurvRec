@@ -49,7 +49,9 @@ def _repository_root() -> Path:
     """
     here = Path(__file__).resolve()
     for parent in here.parents:
-        if (parent / "stage2_RQ-VAE").is_dir():
+        # Two markers: results/stage2_RQ-VAE carries the same name, and a tree
+        # that lives under results/ would otherwise take results/ for the root.
+        if (parent / "stage2_RQ-VAE").is_dir() and (parent / "tools" / "research").is_dir():
             return parent
     raise RuntimeError("cannot locate the repository root above " + str(here))
 
@@ -388,15 +390,16 @@ def main() -> None:
             optimizer.zero_grad(set_to_none=True)
             if GEO_ENABLED:
                 with torch.no_grad():
-                    spacings = raw_module.rq.geocap_spacings(batch)
-                    behaviour = torch.from_numpy(salience).float().to(device)
+                    # the spacings are measured on the ENCODED batch: the RQ
+                    # layer works in the codebook's dimension, not the input's
+                    spacings = raw_module.rq.geocap_spacings(
+                        raw_module.encoder(batch))
+                    rows = batch_ids.detach().cpu().numpy().astype(np.int64)
+                    behaviour = torch.from_numpy(salience[rows]).float().to(device)
                     for level, spacing in enumerate(spacings):
-                        raw = geocap_module.demand_from(
-                            spacing, behaviour[batch_ids.long()])
-                        if distributed.is_initialized():
-                            distributed.all_reduce(raw, op=distributed.ReduceOp.SUM)
-                            distributed.all_reduce(
-                                torch.ones(1, device=device), op=distributed.ReduceOp.SUM)
+                        raw = geocap_module.demand_from(spacing, behaviour)
+                        if dist.is_initialized():
+                            dist.all_reduce(raw, op=dist.ReduceOp.SUM)
                         momentum = GEO_DEMAND_MOMENTUM
                         demand[level] = momentum * demand[level] + (1.0 - momentum) * raw
                         normalised = demand[level] / demand[level].mean().clamp_min(1e-9)

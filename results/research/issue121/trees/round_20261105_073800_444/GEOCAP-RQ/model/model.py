@@ -23,16 +23,26 @@ class RQVAE(nn.Module):
         self.rq = RQLayer(config)
         self.decoder = MLP(list(self.encoder_sizes[::-1]), dropout=float(config.dropout))
 
-    def forward(self, embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor]:
+    def forward(self, embeddings: torch.Tensor, ids: torch.Tensor | None = None,
+                radius: torch.Tensor | None = None
+                ) -> tuple[torch.Tensor, torch.Tensor, int, torch.Tensor, torch.Tensor]:
+        """The framework's probe calls the model as (embeddings, ids, radius).
+
+        The fifth value is the REFERENCE the probe passes to compute_loss: the
+        target of the reconstruction loss, which is the input itself. This
+        mechanism has no per-item radius table, so the radius is accepted and
+        not used.
+        """
         encoded = self.encoder(embeddings)
-        quantized, quant_loss, unused_codes, tokens = self.rq(encoded)
+        quantized, quant_loss, unused_codes, tokens = self.rq(encoded, ids=ids)
         reconstructed = self.decoder(quantized)
-        return reconstructed, quant_loss, int(unused_codes), tokens
+        return reconstructed, quant_loss, int(unused_codes), tokens, embeddings
 
     @torch.no_grad()
-    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False) -> torch.Tensor:
+    def get_indices(self, embeddings: torch.Tensor, *, infer_use_sk: bool = False,
+                    item_ids: torch.Tensor | None = None) -> torch.Tensor:
         encoded = self.encoder(embeddings)
-        _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk)
+        _, _, _, tokens = self.rq(encoded, infer_use_sk=infer_use_sk, ids=item_ids)
         return tokens
 
     @torch.no_grad()

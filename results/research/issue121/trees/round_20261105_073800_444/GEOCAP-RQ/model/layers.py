@@ -137,65 +137,6 @@ class VQLayer(nn.Module):
         return F.embedding(embed_id, self.get_code_embs())
 
 
-    def geocap_spacings(self, x: torch.Tensor) -> list:
-        """The Poincare distances of every codeword to every residual, per level.
-
-        The demand the offsets are built from is computed from exactly these
-        distances, so the behaviour and the assignment see the same geometry.
-        """
-        from . import geocap
-
-        latent = x.view(-1, self.codebook_dim)
-        residual = latent
-        spacings = []
-        for level, layer in enumerate(self.vq_layers):
-            codebook = layer.get_code_embs()
-            lifted = geocap.project(latent, geocap.CURVATURE)
-            targets = geocap.project(codebook, geocap.CURVATURE)
-            spacings.append(geocap.poincare_distance(
-                lifted.unsqueeze(1), targets.unsqueeze(0), geocap.CURVATURE))
-            offsets = (self.geocap_offsets[level]
-                       if level < len(self.geocap_offsets)
-                       else torch.zeros(codebook.shape[0], device=codebook.device))
-            choice, _ = geocap.assign(residual, codebook, offsets, geocap.CURVATURE)
-            residual = residual - codebook[choice]
-        return spacings
-
-    def _forward_geocap(self, x: torch.Tensor):
-        """The assignment of the geodesic capacity cells.
-
-        The codebook is the baseline's; only the per-codeword offset changes,
-        and the codeword the assignment chooses is the codeword the decoder
-        receives - one chart, one codebook, one position.
-        """
-        from . import geocap
-
-        latent = x.view(-1, self.codebook_dim)
-        residual = latent
-        quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)
-        output = torch.empty(x.shape[0], self.codebook_num, dtype=torch.long,
-                             device=x.device)
-        for level, layer in enumerate(self.vq_layers):
-            codebook = layer.get_code_embs()
-            offsets = (self.geocap_offsets[level]
-                       if level < len(self.geocap_offsets)
-                       else torch.zeros(codebook.shape[0], device=x.device))
-            choice, _ = geocap.assign(residual, codebook, offsets, geocap.CURVATURE)
-            quant = codebook[choice]
-            residual = residual - quant
-            quantized_x = quantized_x + quant
-            output[:, level] = choice
-        onehot = torch.nn.functional.one_hot(output, self.vq_layers[0].n_embed)
-        used = onehot.sum(dim=(0, 1))
-        skip = bool(getattr(self, "_skip_ddp_reduce", False)) or any(
-            getattr(layer, "_skip_ddp_reduce", False) for layer in self.vq_layers)
-        if distributed.is_initialized() and not skip:
-            distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
-        unused_codes = int((used == 0).sum().item())
-        loss = torch.nn.functional.mse_loss(quantized_x, x.detach()) + \
-            self.vq_beta * torch.nn.functional.mse_loss(x, quantized_x.detach())
-        return quantized_x, loss, unused_codes, output
-
     def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
         kmeans = KMeans(n_clusters=self.n_embed, n_init="auto").fit(x.detach().cpu().numpy())
         centers = torch.tensor(kmeans.cluster_centers_, dtype=torch.float32, device=device)
@@ -357,6 +298,65 @@ class RQLayer(nn.Module):
             num_unused_codes += unused
             output[:, level] = indices
         return quantized_x, sum_quant_loss / self.codebook_num, num_unused_codes, output
+
+    def geocap_spacings(self, x: torch.Tensor) -> list:
+        """The Poincare distances of every codeword to every residual, per level.
+
+        The demand the offsets are built from is computed from exactly these
+        distances, so the behaviour and the assignment see the same geometry.
+        """
+        from . import geocap
+
+        latent = x.view(-1, self.codebook_dim)
+        residual = latent
+        spacings = []
+        for level, layer in enumerate(self.vq_layers):
+            codebook = layer.get_code_embs()
+            lifted = geocap.project(latent, geocap.CURVATURE)
+            targets = geocap.project(codebook, geocap.CURVATURE)
+            spacings.append(geocap.poincare_distance(
+                lifted.unsqueeze(1), targets.unsqueeze(0), geocap.CURVATURE))
+            offsets = (self.geocap_offsets[level]
+                       if level < len(self.geocap_offsets)
+                       else torch.zeros(codebook.shape[0], device=codebook.device))
+            choice, _ = geocap.assign(residual, codebook, offsets, geocap.CURVATURE)
+            residual = residual - codebook[choice]
+        return spacings
+
+    def _forward_geocap(self, x: torch.Tensor):
+        """The assignment of the geodesic capacity cells.
+
+        The codebook is the baseline's; only the per-codeword offset changes,
+        and the codeword the assignment chooses is the codeword the decoder
+        receives - one chart, one codebook, one position.
+        """
+        from . import geocap
+
+        latent = x.view(-1, self.codebook_dim)
+        residual = latent
+        quantized_x = torch.zeros(x.shape[0], self.codebook_dim, device=x.device)
+        output = torch.empty(x.shape[0], self.codebook_num, dtype=torch.long,
+                             device=x.device)
+        for level, layer in enumerate(self.vq_layers):
+            codebook = layer.get_code_embs()
+            offsets = (self.geocap_offsets[level]
+                       if level < len(self.geocap_offsets)
+                       else torch.zeros(codebook.shape[0], device=x.device))
+            choice, _ = geocap.assign(residual, codebook, offsets, geocap.CURVATURE)
+            quant = codebook[choice]
+            residual = residual - quant
+            quantized_x = quantized_x + quant
+            output[:, level] = choice
+        onehot = torch.nn.functional.one_hot(output, self.vq_layers[0].n_embed)
+        used = onehot.sum(dim=(0, 1))
+        skip = bool(getattr(self, "_skip_ddp_reduce", False)) or any(
+            getattr(layer, "_skip_ddp_reduce", False) for layer in self.vq_layers)
+        if distributed.is_initialized() and not skip:
+            distributed.all_reduce(used, op=distributed.ReduceOp.SUM)
+        unused_codes = int((used == 0).sum().item())
+        loss = torch.nn.functional.mse_loss(quantized_x, x.detach()) + \
+            self.vq_beta * torch.nn.functional.mse_loss(x, quantized_x.detach())
+        return quantized_x, loss, unused_codes, output
 
     def init_codebook(self, x: torch.Tensor, device: torch.device) -> torch.Tensor:
         residual = x
