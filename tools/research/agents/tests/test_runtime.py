@@ -79,6 +79,43 @@ class BackendContractTests(unittest.TestCase):
     def tearDown(self):
         self.work.cleanup()
 
+    def test_a_json_answer_is_rendered_into_the_block_the_parser_reads(self):
+        payload = {"idea_id": "alpha-1", "title": "A proposal",
+                   "motivation": "m", "novelty": "n", "key_change": "c",
+                   "specification": "s", "cost_estimate": "ce",
+                   "falsifiable_hypothesis": "h", "risks": ["r"],
+                   "behavior_signal": "b", "behavior_computation": "bc",
+                   "coupling_path": "cp", "hyperbolic_operator": "ho"}
+        block = runtime.render_idea_json(payload)
+        self.assertIn("IDEA: alpha-1", block)
+        self.assertIn("TITLE: A proposal", block)
+        self.assertIn("BEHAVIOR SIGNAL: b", block)
+        self.assertTrue(block.rstrip().endswith("END IDEA"))
+
+    def test_a_json_object_is_found_in_a_noisy_answer(self):
+        payload = {"idea_id": "alpha-1", "title": "t"}
+        self.assertEqual(runtime.extract_json("noise " + json.dumps(payload) + " noise"),
+                         payload)
+
+    def test_a_ranking_json_is_rendered_into_the_rank_lines(self):
+        payload = {"ranking": [{"idea_id": "a", "position": 1, "reason": "because"}],
+                   "objection": "none"}
+        lines = runtime.render_rank_json(payload)
+        self.assertIn("RANK: a | position=1 | reason=because", lines)
+        self.assertIn("OBJECTION: none", lines)
+
+    def test_the_proposal_block_is_extracted_from_the_records(self):
+        block = ("IDEA: alpha-1\nTITLE: A proposal\nEND IDEA")
+        self.assertEqual(runtime.extract_answer_block("noise\n" + block + "\nmore"),
+                         block)
+
+    def test_a_block_that_was_cut_short_is_still_taken(self):
+        block = "IDEA: alpha-1\nTITLE: A proposal"
+        self.assertEqual(runtime.extract_answer_block(block), block)
+
+    def test_text_without_a_block_yields_nothing(self):
+        self.assertIsNone(runtime.extract_answer_block("just a summary"))
+
     def test_an_answer_that_echoes_the_prompt_is_not_an_answer(self):
         prompt = "Propose exactly 1 DISTINCT, implementable idea for the item ids."
         self.assertTrue(runtime.echoes_the_prompt(prompt, prompt))

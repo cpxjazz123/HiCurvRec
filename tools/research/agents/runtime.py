@@ -31,6 +31,9 @@ SYSTEM_PROMPT = (
     "carry the complete answer in the requested format, not a confirmation. "
     "Never copy the task text into a file: the file must hold your own answer, "
     "and a file that repeats the instructions is treated as no answer at all. "
+    "Every proposal is one block that starts with 'IDEA: <identifier>' and ends "
+    "with 'END IDEA', with the fields the task asks for in between; the last "
+    "record you append carries that block in full. "
     "Answer with the fields the task asks for, in that order, and start with the "
     "first field; do not restate the request."
 )
@@ -200,6 +203,109 @@ def echoes_the_prompt(text: str, prompt: str) -> bool:
     return body.lower().startswith("propose exactly") and "distinct" in head
 
 
+#: The JSON keys an agent answers with, and the field labels the framework's
+#: parser reads. The model speaks JSON; the runtime renders the canonical text
+#: the framework parses, so the contract on disk does not change.
+JSON_FIELDS = (
+    ("idea_id", "IDEA"), ("title", "TITLE"), ("motivation", "MOTIVATION"),
+    ("novelty", "NOVELTY"), ("key_change", "CHANGE"), ("specification", "SPECIFICATION"),
+    ("cost_estimate", "COST"), ("falsifiable_hypothesis", "HYPOTHESIS"),
+    ("risks", "RISKS"), ("behavior_signal", "BEHAVIOR SIGNAL"),
+    ("behavior_computation", "BEHAVIOR COMPUTATION"),
+    ("leakage_boundary", "LEAKAGE BOUNDARY"),
+    ("hyperbolic_operator", "HYPERBOLIC OPERATOR"),
+    ("hyperbolic_location", "HYPERBOLIC LOCATION"), ("coupling_path", "COUPLING PATH"),
+    ("coupling_equation", "COUPLING EQUATION"), ("observables", "OBSERVABLES"),
+    ("ablation_behavior_off", "ABLATION BEHAVIOR OFF"),
+    ("ablation_geometry_off", "ABLATION GEOMETRY OFF"),
+    ("ablation_both_on", "ABLATION BOTH ON"), ("spec_equations", "SPEC EQUATIONS"),
+    ("spec_inputs_outputs", "SPEC INPUTS OUTPUTS"), ("safeguards", "SAFEGUARDS"),
+)
+
+IDEA_JSON_INSTRUCTIONS = (
+    "Answer with ONE JSON object and nothing else: no prose, no markdown fence. "
+    "Its keys are: " + ", ".join(key for key, _ in JSON_FIELDS) + ". "
+    "Every key is a string except 'risks', which is a list of strings."
+)
+
+RANK_JSON_INSTRUCTIONS = (
+    "Answer with ONE JSON object and nothing else: no prose, no markdown fence. "
+    "Its keys are 'ranking' (a list of objects with 'idea_id', 'position' and "
+    "'reason') and 'objection' (a string)."
+)
+
+
+def extract_json(text: str) -> dict | None:
+    """The JSON object an agent answered with, if it answered with one."""
+    body = str(text or "")
+    start = body.find("{")
+    while start >= 0:
+        depth = 0
+        for index in range(start, len(body)):
+            if body[index] == "{":
+                depth += 1
+            elif body[index] == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        payload = json.loads(body[start:index + 1])
+                    except ValueError:
+                        break
+                    if isinstance(payload, dict):
+                        return payload
+                    break
+        start = body.find("{", start + 1)
+    return None
+
+
+def render_idea_json(payload: dict) -> str:
+    """The canonical proposal block the framework's parser reads."""
+    lines = []
+    for key, label in JSON_FIELDS:
+        if key not in payload:
+            continue
+        value = payload[key]
+        if isinstance(value, (list, tuple)):
+            value = "; ".join(str(item) for item in value)
+        lines.append(label + ": " + str(value).replace("\n", " ").strip())
+    return "\n".join(lines) + "\nEND IDEA"
+
+
+def render_rank_json(payload: dict) -> str:
+    """The canonical ranking lines the scorer's parser reads."""
+    lines = []
+    for entry in payload.get("ranking") or []:
+        if not isinstance(entry, dict):
+            continue
+        identifier = str(entry.get("idea_id", "")).strip()
+        position = entry.get("position")
+        reason = str(entry.get("reason", "")).strip()
+        if identifier and position is not None:
+            lines.append("RANK: " + identifier + " | position=" + str(position) +
+                         " | reason=" + reason)
+    if payload.get("objection"):
+        lines.append("OBJECTION: " + str(payload["objection"]).replace("\n", " ").strip())
+    return "\n".join(lines)
+
+
+def extract_answer_block(text: str) -> str | None:
+    """The proposal block an agent delivered, if it delivered one.
+
+    The agents are asked for one block per proposal, ``IDEA: <id>`` ... ``END
+    IDEA``. A block that was split over two progress records is still
+    contiguous in the joined text, but a block that was cut short is not: the
+    remainder is taken, because a truncated proposal with a readable identifier
+    is worth more to the framework than a refusal to parse anything.
+    """
+    body = str(text or "")
+    start = body.rfind("IDEA:")
+    if start < 0:
+        return None
+    end = body.find("END IDEA", start)
+    block = body[start:end + len("END IDEA")] if end >= 0 else body[start:].strip()
+    return block.strip() or None
+
+
 def workspace_tools(workspace: Path, read_paths, *, allow_write: bool = False,
                     progress=None, refusals: list | None = None) -> list:
     """The tools an agent may use, each with the project's boundary.
@@ -309,7 +415,12 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     functions = workspace_tools(workspace, allowed, allow_write=allow_write,
                                 progress=progress, refusals=refusals)
     from agents import Agent, function_tool
-    agent = Agent(name=task_id, instructions=SYSTEM_PROMPT,
+    instructions = SYSTEM_PROMPT
+    if role == "score":
+        instructions = SYSTEM_PROMPT + "\n" + RANK_JSON_INSTRUCTIONS
+    else:
+        instructions = SYSTEM_PROMPT + "\n" + IDEA_JSON_INSTRUCTIONS
+    agent = Agent(name=task_id, instructions=instructions,
                   tools=[function_tool(function) for function in functions],
                   model=build_model(model))
     started = time.time()
@@ -330,7 +441,17 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         joined = "\n\n".join(str(record.get("content", "")) for record in records
                              if str(record.get("content", "")).strip())
         text = joined or answer_text
-        if text and not echoes_the_prompt(text, prompt):
+        payload = extract_json(answer_text) or extract_json(text)
+        block = None
+        if isinstance(payload, dict):
+            if payload.get("idea_id"):
+                block = render_idea_json(payload)
+            elif payload.get("ranking"):
+                block = render_rank_json(payload)
+        block = block or extract_answer_block(text) or extract_answer_block(answer_text)
+        if block and not echoes_the_prompt(block, prompt):
+            output.write_text(block + "\n", encoding="utf-8")
+        elif text and not echoes_the_prompt(text, prompt):
             output.write_text(text + "\n", encoding="utf-8")
     if answer_text:
         try:
