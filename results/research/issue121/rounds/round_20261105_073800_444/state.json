@@ -313,12 +313,52 @@
   {
    "event": "mechanism_result",
    "idea_id": "GEOCAP-RQ",
+   "implication": "both mechanisms run today lost the straight-through estimator in their reconstruction path; with it restored the arms measure the mechanism and not a collapsed encoder.",
+   "layer_metrics": {
+    "l3_collision": 1.0,
+    "l3_refinement_gain_bits": 0.0,
+    "level2_distinct_prefixes": 1,
+    "level3_distinct_triples": 1,
+    "valid_l1_hard_er": 1.0
+   },
+   "reason": "the assignment collapsed, and the diagnostic identified the encoder: in the trained checkpoint the latents are 0.073 in norm with no spread, and the EUCLIDEAN assignment on the same codebook also picks one codeword for every item. The reconstruction path summed the chosen codewords without the straight-through estimator the baseline uses, so the reconstruction sent no gradient to the encoder and the encoder collapsed onto a constant. The curvature and the codebook were not the cause.",
+   "recorded_at": "after the Stage2 run of GEOCAP-RQ",
    "result": "NEGATIVE",
    "stage2": {
-    "epochs": 3000,
-    "wall_time_s": 447.8,
     "epoch_time_s": 0.128,
+    "epochs": 3000,
     "final_collision": 0.9999593281002156,
+    "sid_shape": [
+     24587,
+     4
+    ],
+    "unique_sids": 24587,
+    "wall_time_s": 447.8
+   },
+   "stage3": "not started: the SID is technically valid but structurally degenerate, and the frozen policy spends one Stage3 run per candidate"
+  },
+  {
+   "at": 1793829257.694704,
+   "changed_files": 139,
+   "event": "implementation_registered",
+   "idea_id": "GEOCAP-RQ",
+   "revision": 2
+  },
+  {
+   "at": 1793829263.7097118,
+   "event": "implementation_accepted",
+   "idea_id": "GEOCAP-RQ",
+   "note": "straight-through restored"
+  },
+  {
+   "event": "mechanism_result",
+   "idea_id": "GEOCAP-RQ",
+   "result": "REFUSED_AT_THE_STAGE3_GATE",
+   "stage2": {
+    "epochs": 3000,
+    "wall_time_s": 446.8,
+    "epoch_time_s": 0.127,
+    "final_collision": 0.3947207874079798,
     "unique_sids": 24587,
     "sid_shape": [
      24587,
@@ -326,16 +366,23 @@
     ]
    },
    "layer_metrics": {
-    "valid_l1_hard_er": 1.0,
-    "level2_distinct_prefixes": 1,
-    "level3_distinct_triples": 1,
-    "l3_collision": 1.0,
-    "l3_refinement_gain_bits": 0.0
+    "valid_l1_hard_er": 3.885013230695213,
+    "valid_l1_positive_hit_rate": 0.12222117112855926,
+    "valid_l1_negative_hit_rate": 0.03145965376974742,
+    "level2_distinct_prefixes": 4236,
+    "l3_collision": 0.5485419123927279,
+    "l3_refinement_gain_bits": 2.82089455728489
    },
-   "reason": "the assignment collapsed onto one codeword at level one: every item shares the same prefix, exactly as the previous mechanism did. The codebook is the baseline's own (KMeans on the latents, which gives 16145 distinct level-two prefixes under the Euclidean distance), so the collapse is not the codebook but the METRIC: the encoder's latents have norms beyond the unit ball, the projection clamps them onto the boundary, and the Poincare distance between two boundary points saturates, so every codeword scores the same and the arg-min is decided by noise. The Euclidean distance of the same codebook does not degenerate.",
-   "implication": "a curvature mechanism in the RQ assignment needs the latents INSIDE the ball - that is an encoder-side constraint (an exponential map with a derived scale, or a bounded parametrisation), not a metric bolted onto unconstrained latents. Both curvature mechanisms tried today failed on this and the failure is now diagnosed.",
-   "stage3": "not started: the SID is technically valid but structurally degenerate, and the frozen policy spends one Stage3 run per candidate",
-   "recorded_at": "after the Stage2 run of GEOCAP-RQ"
+   "baseline_reference": {
+    "valid_l1_hard_er": 16.38953942232631,
+    "valid_l1_positive_hit_rate": 0.07944376123356352,
+    "valid_l1_negative_hit_rate": 0.004847223536089301,
+    "level2_distinct_prefixes": 16145
+   },
+   "reason": "with the straight-through estimator restored the assignment no longer collapses (level2_distinct_prefixes 4236, refinement gain 2.82 bits, final collision 0.395) and the FIRST level is much better separated than the baseline (hard ER 3.885 against 16.390, positive hit rate 0.1222 against 0.0794), but the third level is coarser: l3_collision 0.549 exceeds the learned gate of 0.35, so the Stage 3 run was refused and no recall was measured.",
+   "note_on_the_gate": "the Stage 3 admission is NOT technical validity only: the launcher refuses an SID whose three-level collision exceeds 35% (the owner's learned gate). The earlier note that the admission was technical validity only was wrong; it describes the layer-analysis RECORD, not the Stage 3 gate.",
+   "implication": "the capacity cells buy a much better first level and a coarser third level. The next candidate must keep the first level's gain and spread the third: the demand that sizes a cell has to depend on the residual at that level, not only on the item's own salience.",
+   "recorded_at": "after the corrected Stage 2 run and the Stage 3 refusal"
   }
  ],
  "evidence_bundles": {
@@ -13567,7 +13614,7 @@
  ],
  "implementations": [
   {
-   "acceptance_note": "The capacity cells are implemented and all eight conformance checks pass.",
+   "acceptance_note": "straight-through restored",
    "accepted": true,
    "arm_renamed": {
     "from": "TIGER_RQ-VAE",
@@ -13579,8 +13626,6 @@
    "blocking_findings": [],
    "candidate_digest_before_agent": null,
    "changed_files": [
-    "[",
-    "\"",
     "m",
     "o",
     "d",
@@ -13596,10 +13641,8 @@
     ".",
     "p",
     "y",
-    "\"",
     ",",
     " ",
-    "\"",
     "m",
     "o",
     "d",
@@ -13615,10 +13658,8 @@
     ".",
     "p",
     "y",
-    "\"",
     ",",
     " ",
-    "\"",
     "m",
     "o",
     "d",
@@ -13633,10 +13674,8 @@
     ".",
     "p",
     "y",
-    "\"",
     ",",
     " ",
-    "\"",
     "m",
     "o",
     "d",
@@ -13663,10 +13702,8 @@
     ".",
     "p",
     "y",
-    "\"",
     ",",
     " ",
-    "\"",
     "t",
     "r",
     "a",
@@ -13681,10 +13718,8 @@
     ".",
     "p",
     "y",
-    "\"",
     ",",
     " ",
-    "\"",
     "r",
     "e",
     "f",
@@ -13708,10 +13743,8 @@
     "s",
     "o",
     "n",
-    "\"",
     ",",
     " ",
-    "\"",
     "t",
     "e",
     "s",
@@ -13731,9 +13764,7 @@
     "p",
     ".",
     "p",
-    "y",
-    "\"",
-    "]"
+    "y"
    ],
    "deviations": [],
    "differential": {
@@ -13795,11 +13826,11 @@
     "name": "reference_agreement",
     "status": "PASS"
    },
-   "revision": 1,
+   "revision": 2,
    "smoke": {
-    "result": "the conformance run trained one epoch with the demand update and exported 24587 unique identifiers of 4 tokens"
+    "result": "one epoch in the conformance run; 24587 unique identifiers; six candidate tests pass"
    },
-   "source_digest": "92160a5e3758f5d9d8fb65d35001fa4d370103cdb27385db3f30b8ead2938b13",
+   "source_digest": "c0352ecbaedfea61d52af283b65df8de1051022f2622be02a3a780564f0c32c7",
    "status": "accepted",
    "tree": "results/research/issue121/trees/round_20261105_073800_444/GEOCAP-RQ",
    "tree_exists": true
@@ -15698,17 +15729,38 @@
  },
  "stage2_jobs": [
   {
-   "attempts": 1,
+   "attempts": 2,
    "error": null,
    "failure_kind": null,
    "idea_id": "GEOCAP-RQ",
    "job_id": "stage2:GEOCAP-RQ",
    "kind": "stage2",
+   "stage3_job_id": "stage3:GEOCAP-RQ",
+   "status": "done"
+  },
+  {
+   "attempts": 0,
+   "error": null,
+   "failure_kind": null,
+   "idea_id": "GEOCAP-RQ",
+   "job_id": "stage3:GEOCAP-RQ",
+   "kind": "stage3",
    "stage3_job_id": null,
-   "status": "running"
+   "status": "pending"
   }
  ],
- "stage3_jobs": [],
+ "stage3_jobs": [
+  {
+   "attempts": 0,
+   "error": null,
+   "failure_kind": null,
+   "idea_id": "GEOCAP-RQ",
+   "job_id": "stage3:GEOCAP-RQ",
+   "kind": "stage3",
+   "stage3_job_id": null,
+   "status": "pending"
+  }
+ ],
  "step": "stage2",
- "updated_at": 1793828637.2494643
+ "updated_at": 1793830021.8857737
 }
