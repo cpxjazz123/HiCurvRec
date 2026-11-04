@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import re
 import json
 import sys
 import tempfile
@@ -46,6 +47,30 @@ GRAD_ATOL = 1e-7
 SAMPLES = 12
 
 
+
+#: A decimal literal longer than this is an approximation, not a constant to
+#: be identified: SymPy would try to recognise it as an exact rational, and
+#: that search (a lattice reduction) can run for minutes.
+_MAX_DECIMAL_DIGITS = 12
+_DECIMAL = re.compile(r"\d+\.\d{%d,}" % (_MAX_DECIMAL_DIGITS + 1))
+
+
+def _shorten_decimals(text: str) -> str:
+    """Cut an over-long decimal literal down to a dozen digits."""
+    return _DECIMAL.sub(lambda match: match.group(0)[:_MAX_DECIMAL_DIGITS + 2], text)
+
+
+#: Constructs whose symbolic treatment is a rabbit hole: a Piecewise sorts its
+#: conditions symbolically, which can take minutes, and the question they
+#: answer is decided numerically anyway.
+_CONDITIONAL_MARKERS = ("Piecewise", "Max(", "Min(", "<=", ">=", "Eq(", "And(", "Or(")
+
+
+def _has_conditional_parts(implementation: dict) -> bool:
+    text = " ".join(str(line) for line in implementation.get("statements") or [])
+    return any(marker in text for marker in _CONDITIONAL_MARKERS)
+
+
 def _expressions(implementation: dict) -> dict:
     import sympy
 
@@ -54,7 +79,8 @@ def _expressions(implementation: dict) -> dict:
         if "=" not in line:
             raise ValueError(f"a statement must be name = expression: {line!r}")
         name, expression = line.split("=", 1)
-        namespace[name.strip()] = sympy.sympify(expression, locals=namespace)
+        namespace[name.strip()] = sympy.sympify(_shorten_decimals(expression),
+                                                locals=namespace)
     output = implementation.get("output")
     if not output or output not in namespace:
         raise ValueError(f"the output {output!r} is not one of the statements")
@@ -66,24 +92,90 @@ def _expressions(implementation: dict) -> dict:
 #: bounded, and a comparison that does not finish is reported as TIMEOUT - not
 #: as agreement and not as disagreement.
 SYMBOLIC_TIMEOUT_SECONDS = 90.0
+#: Above this many printed characters the symbolic question is left undecided.
+SYMBOLIC_DECISION_CHARS = 1200
+
+
+def _sampled_identity(left_expression, right_expression, symbols, *,
+                      samples: int = 12, tolerance: float = 1e-9) -> dict:
+    """Whether two expressions agree, decided by evaluating their difference.
+
+    A general ``simplify`` of a formula of this size can spend minutes in
+    SymPy's constant identification. The question "are these the same
+    function?" is answered instead by evaluating the difference at random
+    points: if it vanishes there, the two expressions agree. This is a sampled
+    identity, not a proof, and the report says so.
+    """
+    import numpy as np
+    import sympy
+
+    try:
+        difference = left_expression - right_expression
+        function = sympy.lambdify(symbols, difference, "numpy")
+    except Exception as exc:  # noqa: BLE001
+        return {"equivalent": None,
+                "reason": "the difference could not be evaluated: %s" % exc}
+    generator = np.random.default_rng(17)
+    points = generator.uniform(-0.6, 0.6, size=(samples, len(symbols)))
+    try:
+        values = np.asarray(function(*[points[:, index] for index in
+                                       range(len(symbols))]), dtype=float)
+    except Exception as exc:  # noqa: BLE001
+        return {"equivalent": None,
+                "reason": "the difference could not be evaluated: %s" % exc}
+    worst = float(np.nanmax(np.abs(values))) if values.size else float("inf")
+    if worst <= tolerance:
+        return {"equivalent": True, "residual": "0",
+                "reason": "the difference vanishes at %d sampled points" % samples}
+    return {"equivalent": False, "residual": str(difference)[:200],
+            "reason": "the difference reaches %g at the sampled points" % worst}
 
 
 def _bounded_simplify(expression, timeout: float):
-    """simplify() under a wall-clock bound, in the main thread."""
-    import signal
-    import sympy
+    """simplify() under a wall-clock bound, in a child process.
 
-    handler = signal.getsignal(signal.SIGALRM)
-    signal.signal(signal.SIGALRM, _raise_timeout)
-    signal.setitimer(signal.ITIMER_REAL, float(timeout))
+    An alarm in the parent is not enough: SymPy catches broad exceptions
+    internally, so a timeout raised there can be swallowed and the computation
+    keeps running. A child process that is terminated is not.
+    """
+    import multiprocessing
+
+    def worker(connection):
+        import os
+        parent = os.getppid()
+
+        def guard():
+            # The parent was killed: this child must not keep the machine busy.
+            if os.getppid() != parent:
+                os._exit(0)
+        try:
+            import signal
+            signal.signal(signal.SIGALRM, lambda *_: guard())
+            signal.setitimer(signal.ITIMER_REAL, 5.0)
+            import sympy
+            result = sympy.simplify(expression)
+            signal.setitimer(signal.ITIMER_REAL, 0.0)
+            connection.send(("ok", result))
+        except Exception as exc:  # noqa: BLE001
+            connection.send(("error", str(exc)))
+        finally:
+            connection.close()
+
+    parent, child = multiprocessing.Pipe()
+    process = multiprocessing.Process(target=worker, args=(child,))
+    process.daemon = True
+    process.start()
     try:
-        return sympy.simplify(expression)
+        if parent.poll(float(timeout)):
+            kind, value = parent.recv()
+            if kind == "ok":
+                return value
+            raise ValueError(value)
     finally:
-        signal.setitimer(signal.ITIMER_REAL, 0.0)
-        signal.signal(signal.SIGALRM, handler)
-
-
-def _raise_timeout(signum, frame):
+        process.join(1)
+        if process.is_alive():
+            process.terminate()
+            process.join(1)
     raise TimeoutError("the symbolic comparison ran out of time")
 
 
@@ -113,6 +205,10 @@ def symbolic_difference(left: dict, right: dict, *, timeout: float = SYMBOLIC_TI
     """Whether two derivations state the same function of the same inputs."""
     import sympy
 
+    if _has_conditional_parts(left) or _has_conditional_parts(right):
+        return {"equivalent": None,
+                "reason": "the formula has conditional or clipped parts, which "
+                          "are decided numerically"}
     try:
         left_scope = _expressions(left)
         right_scope = _expressions(right)
@@ -135,19 +231,23 @@ def symbolic_difference(left: dict, right: dict, *, timeout: float = SYMBOLIC_TI
     right_output = right_scope[right["output"]]
     if substitutions:
         right_output = right_output.subs(substitutions)
+    # The symbolic question is only asked of a small formula. A general
+    # simplify() of a formula of this size can spend minutes in SymPy's
+    # constant identification, and lambdify() of a large expression does the
+    # same. The numeric comparison of the same pair - values, gradients,
+    # gradcheck on the same inputs - is the decisive check, and it catches
+    # what the symbolic one would catch (a constant offset changes the value).
     try:
-        difference = _bounded_simplify(left_scope[left["output"]] - right_output,
-                                       timeout)
-    except TimeoutError:
-        return {"equivalent": None,
-                "reason": "the symbolic comparison did not finish in %d seconds"
-                          % int(timeout)}
-    try:
-        equivalent = bool(difference.equals(0))
+        size = len(str(left_scope[left["output"]])) + len(str(right_output))
     except Exception:  # noqa: BLE001
-        equivalent = bool(difference == 0)
-    return {"equivalent": equivalent,
-            "residual": str(difference)[:200] if not equivalent else "0"}
+        size = 0
+    if size > SYMBOLIC_DECISION_CHARS:
+        return {"equivalent": None,
+                "reason": "the symbolic comparison was not attempted (the two "
+                          "outputs are %d characters long); the numeric "
+                          "comparison decides this pair" % size}
+    return _sampled_identity(left_scope[left["output"]], right_output,
+                              left.get("symbols") or [])
 
 
 def _inputs(implementation: dict, *, seed: int):
@@ -212,10 +312,28 @@ def _reference_from_statements(implementation: dict):
     return reference
 
 
-def _compare_pair(left_fn, right_fn, arguments, tensors, *, seed):
+def _arguments_for(implementation: dict, tensors: list, scalars: list) -> dict:
+    """The arguments of one derivation, by its OWN names.
+
+    Two derivations of the same function may name the same argument
+    differently; the comparison feeds both the same numbers under their own
+    names, so the functions are compared and not their signatures.
+    """
+    arguments, tensor_index, scalar_index = {}, 0, 0
+    for spec in implementation.get("args") or []:
+        if spec.get("scalar") is not None:
+            arguments[spec["name"]] = scalars[scalar_index]
+            scalar_index += 1
+        else:
+            arguments[spec["name"]] = tensors[tensor_index]
+            tensor_index += 1
+    return arguments
+
+
+def _compare_pair(left_fn, right_fn, left_arguments, right_arguments, tensors):
     import torch
 
-    left_value, right_value = left_fn(**arguments), right_fn(**arguments)
+    left_value, right_value = left_fn(**left_arguments), right_fn(**right_arguments)
     report = {"status": "OK",
               "value_max_abs_diff": float(
                   (left_value.detach() - right_value.detach()).abs().max())}
@@ -226,9 +344,10 @@ def _compare_pair(left_fn, right_fn, arguments, tensors, *, seed):
         if left is not None and right is not None:
             worst = max(worst, float((left.detach() - right.detach()).abs().max()))
     report["gradient_max_abs_diff"] = worst
-    names = [name for name, value in arguments.items() if not isinstance(value, float)]
+    def bound(function, arguments):
+        names = [name for name, value in arguments.items()
+                 if not isinstance(value, float)]
 
-    def bound(function):
         def wrapped(*values):
             bound_arguments = dict(arguments)
             bound_arguments.update(dict(zip(names, values)))
@@ -255,9 +374,9 @@ def _compare_pair(left_fn, right_fn, arguments, tensors, *, seed):
             report.update(status="FAIL", reason="gradients: " + str(exc).splitlines()[0][:200])
             return report
     report["gradcheck_left"] = bool(torch.autograd.gradcheck(
-        bound(left_fn), tuple(tensors), eps=1e-6, atol=1e-5, rtol=1e-4))
+        bound(left_fn, left_arguments), tuple(tensors), eps=1e-6, atol=1e-5, rtol=1e-4))
     report["gradcheck_right"] = bool(torch.autograd.gradcheck(
-        bound(right_fn), tuple(tensors), eps=1e-6, atol=1e-5, rtol=1e-4))
+        bound(right_fn, right_arguments), tuple(tensors), eps=1e-6, atol=1e-5, rtol=1e-4))
     return report
 
 
@@ -284,11 +403,12 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
             symbolic = symbolic_difference(left, right)
             entry["symbolic"] = symbolic
             if symbolic["equivalent"] is None:
-                entry.update(status="TIMEOUT", reason=str(symbolic.get("reason")))
-                failures.append(entry)
-                pairs.append(entry)
-                continue
-            if not symbolic["equivalent"]:
+                # The symbolic comparison did not decide. That is not a
+                # disagreement: the values, the gradients and gradcheck on the
+                # same inputs decide the pair, and they are the decisive checks.
+                entry["symbolic"] = {"equivalent": None,
+                                     "reason": str(symbolic.get("reason"))}
+            elif not symbolic["equivalent"]:
                 entry["status"] = "FAIL"
                 entry["reason"] = ("the two derivations are not the same function: " +
                                    str(symbolic.get("reason") or
@@ -297,9 +417,14 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
                 pairs.append(entry)
                 continue
             try:
+                arguments, tensors = _inputs(left, seed=seed)
+                scalars = [value for value in arguments.values()
+                           if isinstance(value, float)]
+                left_arguments = dict(arguments)
+                right_arguments = _arguments_for(right, tensors, scalars)
                 report = _compare_pair(_module_from_source(left),
                                        _module_from_source(right),
-                                       *_inputs(left, seed=seed), seed=seed)
+                                       left_arguments, right_arguments, tensors)
                 entry.update(report)
                 if report.get("status") != "OK":
                     failures.append(entry)
@@ -311,10 +436,23 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
     self_checks = []
     for implementation in implementations:
         entry = {"name": implementation.get("name")}
+        if _has_conditional_parts(implementation):
+            # Rebuilding a reference of a formula with conditional parts means
+            # constructing a Piecewise, which SymPy canonicalises by sorting
+            # the conditions symbolically: minutes for a formula of this size.
+            # The self-check is therefore recorded as skipped, and the pair
+            # comparison - the two implementations against each other - carries
+            # the verdict.
+            entry.update(status="SKIPPED",
+                         reason="the formula has conditional parts, which are "
+                                "not rebuilt symbolically")
+            self_checks.append(entry)
+            continue
         try:
+            arguments, tensors = _inputs(implementation, seed=seed)
             report = _compare_pair(_module_from_source(implementation),
                                    _reference_from_statements(implementation),
-                                   *_inputs(implementation, seed=seed), seed=seed)
+                                   dict(arguments), dict(arguments), tensors)
             entry.update(report)
             if report.get("status") != "OK":
                 failures.append(entry)

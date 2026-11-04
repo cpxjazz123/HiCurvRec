@@ -36,9 +36,14 @@ import argparse
 import importlib
 import json
 import math
+import re
 from pathlib import Path
 
 CONTRACT_NAME = "reference_contract.json"
+
+#: A decimal literal longer than this is an approximation: SymPy would try to
+#: recognise it as an exact rational, and that search can run for minutes.
+_DECIMAL = re.compile(r"\d+\.\d{15,}")
 
 #: The tolerance of a value comparison between two double-precision paths.
 VALUE_RTOL = 1e-6
@@ -57,7 +62,9 @@ def _statements(contract_call: dict) -> tuple[dict, object]:
         if "=" not in line:
             raise ValueError(f"a statement must be name = expression: {line!r}")
         name, expression = line.split("=", 1)
-        namespace[name.strip()] = sympy.sympify(expression, locals=namespace)
+        namespace[name.strip()] = sympy.sympify(
+            _DECIMAL.sub(lambda match: match.group(0)[:14], expression),
+            locals=namespace)
     output = contract_call.get("output")
     if not output or output not in namespace:
         raise ValueError(f"the output {output!r} is not one of the statements")
