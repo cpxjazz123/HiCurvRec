@@ -196,12 +196,20 @@ def _compare_pair(left_fn, right_fn, arguments, tensors, *, seed):
 
 def compare(payload: dict, *, seed: int = 17) -> dict:
     """The full verdict over N derivations."""
-    implementations = list(payload.get("implementations") or [])
+    implementations, invalid = [], []
+    for implementation in payload.get("implementations") or []:
+        try:
+            _expressions(implementation)
+            implementations.append(implementation)
+        except Exception as exc:  # noqa: BLE001
+            invalid.append({"name": implementation.get("name"),
+                            "status": "INVALID",
+                            "reason": f"the derivation does not parse: {exc}"[:300]})
     excluded = list(payload.get("excluded") or [])
     if len(implementations) < 2:
         return {"status": "NOT_APPLICABLE",
-                "reason": "fewer than two derivations take part", "pairs": [],
-                "excluded": excluded}
+                "reason": "fewer than two derivations parse", "pairs": [],
+                "invalid": invalid, "excluded": excluded}
     pairs, failures = [], []
     for index, left in enumerate(implementations):
         for right in implementations[index + 1:]:
@@ -210,9 +218,9 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
             entry["symbolic"] = symbolic
             if not symbolic["equivalent"]:
                 entry["status"] = "FAIL"
-                entry["reason"] = ("the two derivations are not the same function: "
-                                   + ("different symbols" if "symbols" in symbolic.get("reason", "")
-                                      else "the difference is " + symbolic.get("residual", "")))
+                entry["reason"] = ("the two derivations are not the same function: " +
+                                   str(symbolic.get("reason") or
+                                       ("the difference is " + str(symbolic.get("residual")))))
                 failures.append(entry)
                 pairs.append(entry)
                 continue
@@ -243,7 +251,7 @@ def compare(payload: dict, *, seed: int = 17) -> dict:
             failures.append(entry)
         self_checks.append(entry)
     return {"status": "FAIL" if failures else "AGREE", "pairs": pairs,
-            "self_checks": self_checks, "excluded": excluded,
+            "self_checks": self_checks, "invalid": invalid, "excluded": excluded,
             "reason": "" if not failures else failures[0].get("reason", "")}
 
 

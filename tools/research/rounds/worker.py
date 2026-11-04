@@ -1172,29 +1172,29 @@ def phase_scoring(root: Path, round_id: str, *, log=print) -> dict:
 
 
 def _parse_derivation(text: str) -> dict:
-    """The first JSON object in an answer, or an empty derivation."""
+    """The first JSON object in an answer, or an empty derivation.
+
+    The derivation's ``code`` field contains dict literals and f-strings, so a
+    brace counter sees braces inside strings and closes in the wrong place. The
+    decoder knows which braces are quoting: it is the only parser that survives
+    a torch implementation embedded as a JSON string.
+    """
     import json as _json
 
-    start = text.find("{")
-    while start != -1:
-        depth, end = 0, None
-        for position in range(start, len(text)):
-            if text[position] == "{":
-                depth += 1
-            elif text[position] == "}":
-                depth -= 1
-                if depth == 0:
-                    end = position + 1
-                    break
-        if end:
-            try:
-                payload = _json.loads(text[start:end])
-            except ValueError:
-                start = text.find("{", start + 1)
-                continue
-            if isinstance(payload, dict) and payload.get("statements"):
-                return payload
-        start = text.find("{", start + 1)
+    # strict=False: a model writes a raw newline inside a long string (a wrapped
+    # torch body, a wrapped expression). The decoder's strict mode refuses the
+    # whole answer over one control character; the derivation is then validated
+    # for real by sympify and by running it, which is the check that matters.
+    decoder = _json.JSONDecoder(strict=False)
+    for position, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            payload, _ = decoder.raw_decode(text[position:])
+        except ValueError:
+            continue
+        if isinstance(payload, dict) and payload.get("statements"):
+            return payload
     return {}
 
 
@@ -1207,6 +1207,11 @@ def _derivation_prompt(idea: dict) -> str:
         "SPECIFICATION: " + str(idea.get("specification")) + "\n"
         "SPEC EQUATIONS: " + str(idea.get("spec_equations")) + "\n"
         "INPUTS AND OUTPUTS: " + str(idea.get("spec_inputs_outputs")) + "\n\n"
+        "The signature is fixed: use exactly the argument names, widths and the "
+        "symbol order that the specification gives in INPUTS AND OUTPUTS, and "
+        "repeat them verbatim in `symbols` and `args`. Two derivations that "
+        "choose different signatures are different functions and cannot be "
+        "compared.\n\n"
         "Turn the equations into SymPy statements and into a complete torch "
         "module defining compute(**kwargs), as the answer format requires.")
 
@@ -1226,16 +1231,35 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
         task_ids = ["derivation_1", "derivation_2", "derivation_3"]
         outcomes = _run_agents_concurrently([(task_id,) for task_id in task_ids],
                                             lambda task_id: derive(task_id))
+        delivered, missing = [], []
         for task_id, outcome in zip(task_ids, outcomes):
             payload = {key: outcome.get(key) for key
                        in ("symbols", "args", "statements", "output", "code", "excluded")
                        if outcome.get(key)}
-            answers.append({"idea_id": idea["idea_id"],
-                            "index": int(task_id.split("_")[-1]),
-                            "payload": payload,
-                            "receipt": outcome.get("receipt")})
+            if payload.get("statements") and payload.get("code"):
+                delivered.append({"idea_id": idea["idea_id"],
+                                  "index": int(task_id.split("_")[-1]),
+                                  "payload": payload, "receipt": outcome.get("receipt")})
+            else:
+                missing.append(int(task_id.split("_")[-1]))
             log("%s %s: %s" % (idea["idea_id"], task_id,
                                "ok" if payload.get("statements") else "no readable answer"))
+        if missing:
+            # A derivation that delivered nothing is asked once more: the round
+            # needs two comparable derivations, and an agent that ran out of its
+            # five minutes is not a result about the formula.
+            retry = ["derivation_%d" % index for index in missing]
+            log("%s: asking %s again" % (idea["idea_id"], ", ".join(retry)))
+            outcomes = _run_agents_concurrently([(task_id,) for task_id in retry],
+                                                lambda task_id: derive(task_id))
+            for task_id, outcome in zip(retry, outcomes):
+                payload = {key: outcome.get(key) for key
+                           in ("symbols", "args", "statements", "output", "code", "excluded")
+                           if outcome.get(key)}
+                delivered.append({"idea_id": idea["idea_id"],
+                                  "index": int(task_id.split("_")[-1]),
+                                  "payload": payload, "receipt": outcome.get("receipt")})
+        answers.extend(delivered)
     return answers
 
 
