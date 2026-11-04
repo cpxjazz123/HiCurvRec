@@ -767,6 +767,12 @@ def main() -> None:
         finally:
             for layer in raw_module.rq.vq_layers:
                 layer._skip_ddp_reduce = False
+        # Issue #138 B: how the partition divides the TRAIN graph edges.
+        train_edges = np.stack([edge_table["u"], edge_table["v"]], axis=1)
+        for level in (0, 1, 2):
+            report = curvature_prefix.graph_prefix_report(
+                raw_tokens, train_edges, edge_table["curvature"], level)
+            _record(rank, "sid_structure", epoch=EPOCHS, **report)
         # The exported SID is the model's own assignment, unchanged: the owner's
         # collision gate must be satisfied by training, never by post-processing.
         cohesion = triple_lookup.item_cohesion(np.arange(len(embeddings)))

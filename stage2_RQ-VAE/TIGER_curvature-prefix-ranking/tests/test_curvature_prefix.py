@@ -449,6 +449,44 @@ class GeometryRevertTests(unittest.TestCase):
         self.assertTrue(torch.allclose(euclid, expected, atol=1e-6))
 
 
+class GraphPrefixReportTests(unittest.TestCase):
+    """Issue 138 B: the within/cross edge curvature gap of a SID partition."""
+
+    def _tokens(self):
+        # 0..5 inside one prefix, 6 outside.
+        return np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1],
+                         [1, 1, 1], [1, 1, 1], [2, 9, 9]])
+
+    def test_the_two_triangle_gap_is_the_issue_value(self):
+        tokens = self._tokens()
+        intra = [(0, 1), (2, 3), (4, 5), (0, 2), (1, 4), (3, 5)]
+        edges = np.array(intra + [(5, 6)])
+        af3 = np.array([3, 2, 2, 2, 2, 3, -2], dtype=float)
+        report = cp.graph_prefix_report(tokens, edges, af3, level=2)
+        self.assertEqual(report["within_edges"], 6)
+        self.assertEqual(report["cross_edges"], 1)
+        self.assertAlmostEqual(report["within_mean"], 14 / 6, places=5)
+        self.assertAlmostEqual(report["cross_mean"], -2.0, places=5)
+        self.assertAlmostEqual(report["gap"], 14 / 6 + 2.0, places=5)
+
+    def test_the_gap_changes_with_the_partition(self):
+        # L1 is shared by 0..5, L2 splits them into two groups.
+        tokens = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1],
+                           [1, 2, 1], [1, 2, 1], [1, 2, 1], [2, 9, 9]])
+        edges = np.array([(0, 1), (2, 3), (4, 5), (0, 2), (1, 4), (3, 5), (5, 6)])
+        af3 = np.array([3, 2, 2, 2, 2, 3, -2], dtype=float)
+        coarse = cp.graph_prefix_report(tokens, edges, af3, level=0)
+        fine = cp.graph_prefix_report(tokens, edges, af3, level=1)
+        self.assertGreater(coarse["within_edges"], fine["within_edges"])
+
+    def test_an_empty_graph_is_reported_not_invented(self):
+        report = cp.graph_prefix_report(np.zeros((0, 3), dtype=int),
+                                        np.zeros((0, 2), dtype=int),
+                                        np.zeros(0), level=1)
+        self.assertFalse(report["available"])
+        self.assertIsNone(report["gap"])
+
+
 class CurvatureStatisticTests(unittest.TestCase):
     """Issue #138 B: ordinary Forman is the triangle-augmentation ablation."""
 
