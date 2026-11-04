@@ -16,7 +16,30 @@ import sys
 from pathlib import Path
 
 COLUMNS = ("variant", "sid_sha256", "collision", "l1", "l2", "l3",
-           "gap_l1", "gap_l2", "recall@10", "ndcg@10")
+           "gap_l1", "gap_l2", "align_l1", "align_l2", "recall@10", "ndcg@10")
+
+
+def alignment(sid_path: Path, pairs_path: Path) -> dict:
+    """The independent-validation prefix hit rates of one SID (diagnostic)."""
+    import numpy as np
+    table = json.loads(Path(sid_path).read_text())
+    data = np.load(pairs_path)
+    anchors = data["anchors"].ravel()
+    positives = data["positives"].ravel()
+    negatives = data["negatives"].ravel()
+    out = {}
+    for width in (1, 2):
+        def prefix(item):
+            value = table.get(str(int(item)))
+            return tuple(value[:width]) if value else None
+        pairs = [(prefix(a), prefix(b)) for a, b in zip(anchors, positives)]
+        pairs = [(a, b) for a, b in pairs if a is not None and b is not None]
+        pos = sum(a == b for a, b in pairs) / max(len(pairs), 1)
+        cross = [(prefix(a), prefix(b)) for a, b in zip(anchors, negatives)]
+        cross = [(a, b) for a, b in cross if a is not None and b is not None]
+        neg = sum(a == b for a, b in cross) / max(len(cross), 1)
+        out[f"align_l{width}"] = pos - neg
+    return out
 
 
 def sid_structure(sid_path: Path) -> dict:
@@ -93,9 +116,11 @@ def stage3_result(stage3_dir: Path, sid_sha256: str | None = None) -> dict:
 
 
 def arm_row(variant: str, sid_path: Path, metrics_path: Path,
-            stage3_dir: Path) -> dict:
+            stage3_dir: Path, pairs_path: Path | None = None) -> dict:
     row = {"variant": variant, **sid_structure(sid_path)}
     row.update(export_gap(metrics_path))
+    if pairs_path is not None and Path(pairs_path).is_file():
+        row.update(alignment(sid_path, pairs_path))
     row.update(stage3_result(stage3_dir, row["sid_sha256"]))
     return row
 
