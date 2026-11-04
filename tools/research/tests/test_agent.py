@@ -1,7 +1,8 @@
 """The agent contract: the workspace, the answer file and the prompt.
 
-The agents are LangChain agents now, so the contract is the workspace they get,
-the file they answer in, and the boundary their tools enforce.
+The agents are created and run by the OpenAI Agents SDK, so the contract is
+the workspace they get, the file they answer in, and the boundary their tools
+enforce.
 """
 import json
 import tempfile

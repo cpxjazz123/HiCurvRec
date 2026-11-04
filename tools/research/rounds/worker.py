@@ -372,8 +372,8 @@ def ideate_one(root: Path, objective: str, extra: bool, index: int) -> tuple:
     """One ideation agent: its own task id, prompt, workspace and answer file.
 
     The function is the unit the round runs concurrently and the unit the
-    LangGraph workflow dispatches with ``Send``; both paths call it, so the two
-    workflows cannot drift apart.
+    flow dispatches it concurrently; every caller uses it, so the workflows
+    cannot drift apart.
     """
     prompt_base = agent_contracts.IDEA_PROMPT.format(
         minimum=IDEA_MIN, maximum=IDEA_MAX,
@@ -683,8 +683,8 @@ def phase_probe(root: Path, round_id: str, *, log=print) -> dict:
 def rank_one(root: Path, payload: str, evidence_text: str, index: int) -> dict:
     """One reviewer over the frozen evidence bundle.
 
-    Same unit as the concurrent runner: the LangGraph workflow dispatches it with
-    ``Send`` so both paths ask the reviewers exactly the same question.
+    Same unit as the concurrent runner: the flow dispatches it concurrently so
+    every path asks the reviewers exactly the same question.
     """
     task_id = "scoring_" + str(index)
     prompt = (agent_contracts.RANK_PROMPT.format(
@@ -705,9 +705,8 @@ def scoring_inputs(root: Path, ideas: list, *, repo: Path = None,
                    state: dict = None) -> tuple:
     """The frozen bundle, the proposal text and the evidence text of a review.
 
-    One source of truth: the concurrent runner and the LangGraph workflow both
-    build the reviewers' input here, so a reviewer sees the same question in
-    either path.
+    One source of truth: the concurrent runner and the flow both build the
+    reviewers' input here, so a reviewer sees the same question in either path.
     """
     repo = Path(repo) if repo is not None else Path(root)
     frozen = (state or {}).get("evidence_bundles") or {}

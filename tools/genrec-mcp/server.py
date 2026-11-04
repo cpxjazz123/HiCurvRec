@@ -2628,13 +2628,13 @@ TOOLS: dict[str, dict] = {
     },
     "research_cancel": {
         "fn": tool_research_cancel, "args": {"run_id": "string"},
-        "description": "Cooperatively stop new tasks and running OpenCode subprocesses "
+        "description": "Cooperatively stop new tasks and running agent runs "
         "in a research run, without deleting evidence or stopping GPU jobs.",
     },
     "research_verify_start": {
         "fn": tool_research_verify_start,
         "args": {"run_id": "string", "source_dir": "string"},
-        "description": "Start three independent OpenCode verification authors in a "
+        "description": "Start three independent verification authors in a "
         "detached worker for an approved new mechanism; produce drafts only.",
     },
     "research_verify_review": {

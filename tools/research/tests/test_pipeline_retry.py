@@ -97,7 +97,7 @@ class RetryTests(unittest.TestCase):
             (ws / output_name).write_text("bad" if calls["n"] == 1 else "{}", encoding="utf-8")
             (ws / "execution.json").write_text("{}", encoding="utf-8")
             if calls["n"] == 1:
-                raise RuntimeError("OpenCode returned invalid JSON")
+                raise RuntimeError("the agent returned invalid JSON")
             return ws / "execution.json"
         original = pipeline.run_agent, pipeline.verify_science_output
         pipeline.run_agent, pipeline.verify_science_output = agent, lambda *args: None

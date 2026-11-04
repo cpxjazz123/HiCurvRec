@@ -272,7 +272,7 @@ def run_agent_until_valid(task: str, root: Path, manifest: dict, prompt: str,
             # the run's other agents' answers are not among the files it sees,
             # and the agent's only write is its progress file.
             evidence = run_agent(task, prompt, OUTPUTS[task], root,
-                                                                  model=settings.AGENT_MODEL,
+                                                                  model=settings.AGENT_CHAT_MODEL,
                                  read_paths=[baseline_module.CANONICAL_BASELINE],
                                  allowed_roots=[settings.ROOT,
                                                 Path(contract.STAGE2_PYTHON).parent.parent],

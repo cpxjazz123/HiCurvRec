@@ -153,8 +153,8 @@ def read_records(path: Path) -> list:
 def tool_definition() -> dict:
     """The description of the progress tool, for a model that is told about it.
 
-    The agent calls the tool through LangChain, so the description is what the
-    model reads; the append itself happens in-process.
+    The agent calls the tool through the OpenAI Agents SDK, so the description is
+    what the model reads; the append itself happens in-process.
     """
     return {
         "name": TOOL_NAME,

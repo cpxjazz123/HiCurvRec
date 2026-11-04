@@ -1,1 +1,1 @@
-"""Direct OpenCode subprocesses only; no imported agent framework."""
+"""The agent runtime: agents created and run by the OpenAI Agents SDK."""

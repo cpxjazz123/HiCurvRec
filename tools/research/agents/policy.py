@@ -59,6 +59,7 @@ def forbidden_trees() -> list:
         repo / "results" / "stage2_RQ-VAE",
         repo / "results" / "stage3_T5Train",
         repo / "stage2_RQ-VAE",
+        # The CLI's own configuration and data are never readable by an agent.
         home / ".config" / "opencode",
         home / ".cache" / "opencode",
         home / ".local" / "share" / "opencode",

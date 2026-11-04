@@ -1,4 +1,4 @@
-"""Independent OpenCode test authors and evidence freeze for Issue117.
+"""Independent test authors and evidence freeze for Issue117.
 
 Three verifier agents may author test sources in parallel; they do NOT install
 their own code as passing tests or auto-approve it. Reviewed tests are promoted
@@ -31,7 +31,7 @@ AUTHOR_SPEC = {
 
 def _require_live():
     if not settings.LIVE_AGENTS_ALLOWED:
-        raise PermissionError("real OpenCode Agents disabled; check sandbox and settings.py first")
+        raise PermissionError("live agents are disabled; check settings.py first")
 
 
 def _inputs(candidate_id: str, tree: Path, run_id: str) -> dict:
@@ -152,7 +152,7 @@ def draft_test_suites(candidate_id: str, tree: Path, run_id: str,
         # research files it may read, the run's other agents' answers are not
         # among them, and the agent's only write is its progress file.
         execution = run_agent(task_id, prompt, output, run_root,
-                                                            model=settings.AGENT_MODEL,
+                                                            model=settings.AGENT_CHAT_MODEL,
                               read_paths=[tree, Path(contract.STAGE2_PYTHON).parent.parent],
                               allowed_roots=[settings.ROOT, Path(contract.STAGE2_PYTHON).parent.parent],
                               candidate_tree=tree,
@@ -218,7 +218,7 @@ def review_committed_suites(candidate_id: str, tree: Path, run_id: str,
                      root=run_root)
     _archive_workspace(run_root / "agents" / (candidate_id + "_review"), request_id)
     return run_agent(candidate_id + "_review", prompt, "review.json",
-                     run_root,                      model=settings.AGENT_MODEL,
+                     run_root,                      model=settings.AGENT_CHAT_MODEL,
                      read_paths=[tree, Path(contract.STAGE2_PYTHON).parent.parent],
                      allowed_roots=[settings.ROOT, Path(contract.STAGE2_PYTHON).parent.parent],
                      candidate_tree=tree,

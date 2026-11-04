@@ -220,8 +220,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
               source_digest: str = "") -> Path:
     """Run one agent and return the path of its execution receipt.
 
-    The agent is created by LangChain over the configured chat model; the
-    boundary is enforced by the tools it is given. The receipt says whether the
+    The agent is created and run by the OpenAI Agents SDK over the configured
+    chat model; the boundary is enforced by the tools it is given. The receipt says whether the
     run is verified, and carries the boundary fingerprint that decides whether
     the answer may be reused.
     """

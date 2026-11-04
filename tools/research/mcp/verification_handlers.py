@@ -93,7 +93,7 @@ def _candidate(run_id):
 
 def _start(run_id, source_dir, action):
     if not settings.LIVE_AGENTS_ALLOWED:
-        return {"started": False, "reason": "live_opencode_disabled_in_settings"}
+        return {"started": False, "reason": "live_agents_disabled_in_settings"}
     cid = _candidate(run_id)
     tree = _source(source_dir)
     root = handlers._root(run_id)

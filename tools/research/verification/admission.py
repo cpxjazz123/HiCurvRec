@@ -1,4 +1,4 @@
-"""Deterministic Stage2 preflight for independent OpenCode verification evidence.
+"""Deterministic Stage2 preflight for independent verification evidence.
 
 This is not an LLM judge and does not import retired CGV code. It accepts a
 candidate identifier, resolves all evidence under the Issue117 root, verifies

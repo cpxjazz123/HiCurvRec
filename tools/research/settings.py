@@ -14,26 +14,21 @@ MCP = ROOT / "tools" / "genrec-mcp" / "server.py"
 
 # Change the source constant, not an argv flag. Inspect never spawns an agent.
 ACTION = "inspect"  # inspect | behavior | worker
-# Live OpenCode Agents run inside the filesystem boundary that
-# tools/research/agents/runner.py enforces: a bubblewrap mount namespace that
-# holds the agent's workspace, the policy-accepted read allowlist and the
-# opencode runtime, and nothing else. The global opencode configuration (its
-# MCP servers and plugins) is not mounted, so no channel can read a file for the
-# agent from the host. PWD is set to the workspace because opencode resolves
-# its project from PWD; leaving it at the server's directory silently disabled
-# every per-workspace rule. Every receipt carries the boundary version, and
-# evidence produced under another boundary is not reused.
+# Live agents run inside the filesystem boundary that
+# tools/research/agents/runtime.py enforces: the agent's tools read only the
+# workspace and the policy-accepted read allowlist, write only the workspace,
+# and have no shell. The agent's own write is its progress file: the
+# append_progress tool appends one JSONL record to a file that was bound before
+# the agent started. The deadline below is counted from the dispatch and closes
+# that file; a task that runs out of time has delivered what it delivered, and
+# no more. Every receipt carries the boundary version, and evidence produced
+# under another boundary is not reused.
 #
-# The agent's only write is its own progress file: the append_progress tool
-# appends one JSONL record to a file that was bound before the agent started.
-# The deadline below is counted from the dispatch and closes that file; a task
-# that runs out of time has delivered what it delivered, and no more.
 LIVE_AGENTS_ALLOWED = True
 RESEARCH_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
-#: The chat model the LangChain backend builds its agents with. Empty means the
-#: backend refuses to run: an agent without a model is not an agent.
+#: The chat model the agents are created with. Empty means the runtime
+#: refuses to run: an agent without a model is not an agent.
 AGENT_CHAT_MODEL = "deepseek/deepseek-v4.1-flash"
-AGENT_MODEL = "commandcode/deepseek/deepseek-v4.1-flash"
 AGENT_TIMEOUT_SECONDS = 1800
 #: The deadline of one sub-agent of a round, counted from the moment the task is
 #: dispatched: the initialisation, the model calls, the retries and the

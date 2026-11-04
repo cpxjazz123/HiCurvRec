@@ -8,7 +8,7 @@ Every **new** mechanism gets its own reviewed directory:
       test_ddp.py
       test_entrypoint.py
 
-MATH, GRADIENT and RUNTIME OpenCode Agents independently author the relevant
+MATH, GRADIENT and RUNTIME agents independently author the relevant
 tests in source control, and an independent REVIEW Agent examines source, math
 oracle independence, runtime and DDP coverage, and frozen proposal evidence.
 
@@ -23,7 +23,7 @@ The manifest binds:
 - proposal_sha256 (current frozen runs/<run_id>/agents/geometry/candidate.json);
 - tests: math, gradient, ddp, entrypoint = exact sha256 of reviewed test files.
 
-The run evidence directory must contain four independent real OpenCode sessions:
+The run evidence directory must contain four independent real agent sessions:
   runs/<run_id>/agents/<candidate_id>_math/
   runs/<run_id>/agents/<candidate_id>_gradient/
   runs/<run_id>/agents/<candidate_id>_runtime/

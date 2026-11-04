@@ -1,7 +1,7 @@
 """A metric round: propose hyperbolic SID quality metrics, measure their correlation.
 
 This is a different job from a mechanism round, and it reuses the same agent
-machinery on purpose -- the real OpenCode subprocess, the isolation, the receipts,
+machinery on purpose -- the real agent run, the isolation, the receipts,
 the concurrent phase runner -- while changing the OBJECTIVE and removing every
 training phase.
 

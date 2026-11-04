@@ -1,4 +1,4 @@
-"""MCP control-plane regression; no OpenCode, GPU or dataset needed."""
+"""MCP control-plane regression; no agent, GPU or dataset needed."""
 import importlib.util
 import json
 import tempfile
@@ -124,7 +124,7 @@ class ResearchMCPTests(unittest.TestCase):
         response = verification_handlers.research_verify_start(
             "run_0123456789abcdef", "some-source")
         self.assertFalse(response["started"])
-        self.assertEqual(response["reason"], "live_opencode_disabled_in_settings")
+        self.assertEqual(response["reason"], "live_agents_disabled_in_settings")
 
     def test_mcp_registry_and_dispatch_are_real(self):
         src = settings.ROOT / "tools" / "genrec-mcp" / "server.py"

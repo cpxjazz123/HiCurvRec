@@ -87,7 +87,7 @@ class ClassifierTests(unittest.TestCase):
             "ValueError: MATH_COUNTEREXAMPLE (math): math/FLAT_LIMIT_MISMATCH": "MATH",
             "ValueError: falsifier/UNREGISTERED_METRIC at name": "FALSIFIER",
             "ValueError: contract/CAPACITY_MISMATCH": "SCHEMA",
-            "RuntimeError: OpenCode failed, cancelled, timed out": "INFRA_TRANSIENT",
+            "RuntimeError: the agent failed, was cancelled or timed out": "INFRA_TRANSIENT",
             "TypeError: unsupported operand type(s) for |": "PYTHON_RUNTIME",
             "AdmissionError: Agent evaluated different source: math": "HASH_BINDING",
             "ValueError: something else entirely": "SCHEMA",

@@ -1,7 +1,7 @@
 """MCP-facing control API for a persistent, real, behavior-first research DAG.
 
 No long work is performed in the MCP request. A worker is a real independent
-Python process and OpenCode agents are genuine child processes of that worker.
+Python process and the agents are genuine child processes of that worker.
 """
 import fcntl
 import json
@@ -229,4 +229,4 @@ def research_cancel(run_id):
         changed = pipeline.store().cancel_prefix(run_id + "__")
     return {"run_id": run_id, "cancel_requested": True,
             "tasks_changed": changed,
-            "note": "Running OpenCode processes are terminated cooperatively; status may briefly be cancelling."}
+            "note": "Running agent processes are terminated cooperatively; status may briefly be cancelling."}

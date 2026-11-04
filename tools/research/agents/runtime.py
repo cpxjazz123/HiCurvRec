@@ -95,6 +95,8 @@ def configured_provider(model_id: str) -> tuple:
     """
     import os
 
+    # The provider configuration lives in the user's own agent configuration;
+    # the repository never carries a key.
     config = Path.home() / ".config" / "opencode" / "opencode.jsonc"
     if not config.is_file():
         return None
