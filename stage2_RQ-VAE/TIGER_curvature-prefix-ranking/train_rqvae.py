@@ -697,8 +697,9 @@ def main() -> None:
                 elif USE_GEOMETRY and not GEOMETRY_REVERTED:
                     raw_module.revert_to_euclidean_assignment()
                     GEOMETRY_REVERTED = True
-                    _record(rank, "geometry_reverted", epoch=epoch,
-                            collision=float(collision_v))
+                    if rank == 0:
+                        _record(rank, "geometry_reverted", epoch=epoch,
+                                collision=float(collision_v))
                 if rank == 0:
                     _record(rank, "collision_budget", decision="rollback",
                             collision=float(collision_v), budget=COLLISION_BUDGET,
