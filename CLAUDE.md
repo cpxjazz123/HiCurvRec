@@ -149,3 +149,13 @@
 71. **准入前执行四类一致性检查**（`tools/research/stage2/checks.py`，按源码摘要缓存）：冻结常量与启动器归属、真实入口跑通一 epoch、导出的 SID 技术有效、四卡不挂死。`NOT_RUN` 不是通过。**每修好一种工程故障，必须留下一个能重现它的回归测试**（`tools/research/stage2/tests/`）；底座变更须用未修改的基线跑通短流程后再发布。
 72. **状态轮询的间隔上限。** 监督任何长任务(Stage2/Stage3 训练、评估、构建)的进度时,单次等待**不得超过 60 秒**,禁止一次性 sleep 很久才去看状态。确实需要更长的等待时,把它拆成多次、每次不超过 60 秒的检查,每次都报告当前进度(已完成的 epoch、产物是否已生成、进程是否存活)。把 `sleep N; 检查` 放到后台作业里再事后取回输出,不算轮询,同样禁止;轮询用工具自带的 status 接口(如 `stage2_status`、`stage3_status`)或直接读日志/产物文件。
 73. **每个工程问题都必须留下对应的测试文件**：凡出现过的工程故障（集合通信、路径与导出、常量引用、DDP 启动、缓存与状态、MCP 重载等），必须在 `tools/research/stage2/tests/` 或候选树 `tests/` 中新增一个能**重现该故障形态**的独立测试文件（含对检测器本身的自测），并与修复在同一次提交里入库；没有对应测试文件的工程修复不得声明完成。已有测试若覆盖同一形态，可扩展该文件，不必重复建文件。
+
+## 14. 公式参考实现：实现阶段的强制两写对照
+
+74. **每个 Stage2 机制必须在候选树根部提交 `reference_contract.json`**，把自身**连续可微面**（距离、核、罚项、损失项、残差更新）写成 SymPy 语句：`symbols`（符号顺序）、`args`（参数名/宽度/采样域或标量）、`statements`（有序赋值）、`output`（输出表达式），并声明被比较的函数 `module:callable`。提案里的 `spec_equations` 与契约里的语句必须指向同一个公式。
+75. **参考实现由框架独立重建**：`tools/research/stage2/reference.py` 用 `sympytorch` 从这些语句生成参考模块，在双精度下比较候选实现与参考实现的**取值**（`torch.testing.assert_close`，rtol 1e-6 / atol 1e-8）、**梯度**（rtol 1e-5 / atol 1e-7），并在**候选实现与参考实现两侧**分别执行 `torch.autograd.gradcheck`。任一项不通过即 `FAIL`，禁止启动 Stage2。
+76. **准入接入**：`tools/research/stage2/checks.py::check_reference_agreement` 已并入 `run_all`；无契约文件的树记为 `NOT_APPLICABLE` 并保留理由，**不得**视为通过；契约存在但不一致即为 `FAIL`。检查在 Stage2 解释器下以子进程运行，超时 15 分钟。
+77. **符号对照的诚实边界**：argmin 分配、straight-through 代理梯度等离散/不可微部分**不可能**被符号比较覆盖，必须在契约的 `excluded` 中逐条列出「表面」与「理由」，并继续由四套独立测试与一 epoch 冒烟承担。禁止把离散部分塞进符号对照来制造「全绿」。
+78. **工具角色**：`sympytorch` 是参考实现的唯一裁决者；`wrenfold` 只作为可选的**第二代码生成器**（生成可读 torch 代码供人工对照），不进入准入裁决；`torch.autograd.gradcheck` 证明**两侧**的前向-反向自洽，但公式本身写错时它也可能通过，因此三者必须同时使用、不能互相替代。
+79. **依赖归属**：`sympy`、`sympytorch`、`wrenfold` 只装在 Stage2/Stage3 的项目解释器中（`genrec_env_v2` / `genrec_env`），不装进系统 `python3`；安装后必须复查 4 卡可用与 GPU 运算正常，发现 CUDA 依赖被改动即回退。
+80. **回归测试归属**：参考检查的自测在 `tools/research/stage2/tests/test_reference.py`（含两个反例：符号写错必须靠取值抓出，取值对而梯度错必须靠梯度对照与 gradcheck 抓出），反例实现在同目录 `fake_mechanisms.py`；任何绕过参考检查的「全部通过」结论都不成立。

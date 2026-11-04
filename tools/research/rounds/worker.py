@@ -484,7 +484,14 @@ def _run_probe_subprocess(idea: dict, *, repo: Path, budget: float,
                 "reason": "the probe produced no readable report", "metrics": {}}
 
 
-def _run_math_subprocess(idea: dict, *, seed: int) -> dict:
+#: The math check imports torch in the project's interpreter, and a cold import
+#: on this filesystem costs about seventy seconds on its own: a two-minute
+#: budget spends more than half of it before the check starts.
+MATH_BUDGET_SECONDS = 240.0
+
+
+def _run_math_subprocess(idea: dict, *, seed: int,
+                         budget: float = MATH_BUDGET_SECONDS) -> dict:
     """The math checks, in the project's interpreter (the only one with torch)."""
     import subprocess
     import tempfile
@@ -502,7 +509,7 @@ def _run_math_subprocess(idea: dict, *, seed: int) -> dict:
             process = subprocess.Popen(argv, cwd=str(Path.cwd()), stdout=out, stderr=err,
                                        text=True, start_new_session=True)
             try:
-                process.wait(timeout=120.0)
+                process.wait(timeout=float(budget))
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid, signal.SIGKILL)
                 process.wait()
@@ -570,7 +577,10 @@ def run_probes(root: Path, ideas: list, *, repo: Path, cache_dir: Path = None,
             remaining = _remaining()
             if remaining is not None and remaining <= 0:
                 return _spent()
-            report = _run_math_subprocess(idea, seed=math_checks_module.SEED)
+            report = _run_math_subprocess(
+                idea, seed=math_checks_module.SEED,
+                budget=(min(MATH_BUDGET_SECONDS, remaining)
+                        if remaining is not None else MATH_BUDGET_SECONDS))
             report["sha256"] = _probe_digest(report)
             return report
 

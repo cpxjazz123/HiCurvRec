@@ -1,0 +1,238 @@
+"""The formula reference: every declared equation, built twice and compared.
+
+A mechanism's continuous surface is declared, in the candidate tree, as SymPy
+statements (`reference_contract.json`).  The framework builds an independent
+reference from those statements (sympytorch), then compares the candidate's own
+function against it in double precision: the values, the gradients and
+`torch.autograd.gradcheck` on both sides.  The agent that writes the mechanism
+therefore does not also get to write the only statement of what it computes.
+
+What the contract covers, and what it does not: the differentiable surface
+(distances, kernels, penalties, loss terms, residual updates).  The discrete
+parts - a quantizer's argmin, a straight-through estimator's surrogate - are
+not differentiable functions of the inputs and cannot be compared this way;
+they must be listed under "excluded" with a reason, and stay with the four
+independent suites and the one-epoch smoke.
+
+Contract shape (one entry per declared equation)::
+
+    {"calls": [{"name": "distance",
+                "callable": "tools.research.geometry.poincare_contract:distance",
+                "symbols": ["x0", "x1", "y0", "y1", "c"],
+                "args": [{"name": "x", "width": 2, "radius": 0.4},
+                         {"name": "y", "width": 2, "radius": 0.4},
+                         {"name": "c", "scalar": 1.0}],
+                "statements": ["x2 = x0**2 + x1**2", ...],
+                "output": "d"}],
+     "excluded": [{"surface": "quantizer argmin",
+                   "reason": "an argmin is not differentiable"}]}
+
+Usage: ``python -m tools.research.stage2.reference --tree <candidate tree>``
+prints one JSON line with the verdict.
+"""
+from __future__ import annotations
+
+import argparse
+import importlib
+import json
+import math
+from pathlib import Path
+
+CONTRACT_NAME = "reference_contract.json"
+
+#: The tolerance of a value comparison between two double-precision paths.
+VALUE_RTOL = 1e-6
+VALUE_ATOL = 1e-8
+#: Gradients are compared a little more loosely: the two paths reach the same
+#: formula by different algebra, and float64 loses a few digits in the tail.
+GRAD_RTOL = 1e-5
+GRAD_ATOL = 1e-7
+
+
+def _statements(contract_call: dict) -> tuple[dict, object]:
+    import sympy
+
+    namespace: dict = {}
+    for line in contract_call.get("statements") or []:
+        if "=" not in line:
+            raise ValueError(f"a statement must be name = expression: {line!r}")
+        name, expression = line.split("=", 1)
+        namespace[name.strip()] = sympy.sympify(expression, locals=namespace)
+    output = contract_call.get("output")
+    if not output or output not in namespace:
+        raise ValueError(f"the output {output!r} is not one of the statements")
+    return namespace, namespace[output]
+
+
+def build_reference(contract_call: dict):
+    """The independent implementation, from the SymPy statements alone."""
+    import sympytorch
+
+    namespace, expression = _statements(contract_call)
+    symbols = [sympy_symbol for sympy_symbol in contract_call["symbols"]]
+    module = sympytorch.SymPyModule(expressions=[expression])
+
+    def reference(**arguments):
+        columns = {}
+        for spec in contract_call["args"]:
+            value = arguments[spec["name"]]
+            width = int(spec.get("width") or 1)
+            if spec.get("scalar") is not None:
+                columns[symbols[_consumed(contract_call, spec)]] = value
+                continue
+            for index in range(width):
+                columns[symbols[_consumed(contract_call, spec) + index]] = value[:, index]
+        result = module(**columns)
+        return result.squeeze(-1) if result.dim() > 1 else result
+
+    return reference, namespace
+
+
+def _consumed(contract_call: dict, spec: dict) -> int:
+    """The offset of this argument's first symbol in the declared symbol list."""
+    offset = 0
+    for other in contract_call["args"]:
+        if other is spec:
+            return offset
+        offset += 1 if other.get("scalar") is not None else int(other.get("width") or 1)
+    return offset
+
+
+def _load_callable(contract_call: dict):
+    module_name, _, attribute = contract_call["callable"].partition(":")
+    return getattr(importlib.import_module(module_name), attribute)
+
+
+def _inputs(contract_call: dict, *, seed: int):
+    """Double-precision inputs inside the declared domain, one sample row each."""
+    import torch
+
+    generator = torch.Generator().manual_seed(seed)
+    arguments, tensors = {}, []
+    for spec in contract_call["args"]:
+        if spec.get("scalar") is not None:
+            arguments[spec["name"]] = float(spec["scalar"])
+            continue
+        width = int(spec["width"] or 1)
+        radius = float(spec.get("radius") or 0.1)
+        count = int(spec.get("samples") or 16)
+        raw = (torch.rand(count, width, generator=generator, dtype=torch.float64) * 2 - 1)
+        if spec.get("sampler", "ball") == "ball":
+            # Inside the ball of the declared radius: scale each row's norm.
+            norms = raw.norm(dim=1, keepdim=True).clamp_min(1e-12)
+            raw = raw / norms * (radius * torch.rand(count, 1, generator=generator,
+                                                     dtype=torch.float64))
+        else:
+            raw = raw * radius
+        raw = raw.requires_grad_(True)
+        arguments[spec["name"]] = raw
+        tensors.append(raw)
+    return arguments, tensors
+
+
+def _gradients(result, tensors):
+    import torch
+
+    return torch.autograd.grad(result.sum(), tensors, allow_unused=True)
+
+
+def compare(tree: Path, contract: dict, *, seed: int = 17) -> dict:
+    """Compare the candidate's function against the reference, call by call."""
+    import torch
+
+    calls = contract.get("calls") or []
+    excluded = contract.get("excluded") or []
+    if not calls:
+        return {"status": "NOT_APPLICABLE", "reason": "the contract declares no equation",
+                "excluded": excluded, "calls": []}
+    verdicts = []
+    for contract_call in calls:
+        entry = {"name": contract_call.get("name"), "status": "OK"}
+        try:
+            reference, _ = build_reference(contract_call)
+            candidate = _load_callable(contract_call)
+            arguments, tensors = _inputs(contract_call, seed=seed)
+        except Exception as exc:  # noqa: BLE001
+            entry.update(status="FAIL", reason=f"the call could not be prepared: {exc}")
+            verdicts.append(entry)
+            continue
+        try:
+            candidate_value = candidate(**arguments)
+            reference_value = reference(**arguments)
+            entry["samples"] = len(reference_value)
+            entry["value_max_abs_diff"] = float(
+                (candidate_value.detach() - reference_value.detach()).abs().max())
+            torch.testing.assert_close(candidate_value.detach(), reference_value.detach(),
+                                       rtol=VALUE_RTOL, atol=VALUE_ATOL)
+            candidate_grads = _gradients(candidate_value, tensors)
+            reference_grads = _gradients(reference_value, tensors)
+            worst, mismatch = 0.0, None
+            for left, right in zip(candidate_grads, reference_grads):
+                if left is None or right is None:
+                    if left is not right:
+                        mismatch = "one path has a gradient the other lacks"
+                    continue
+                worst = max(worst, float((left.detach() - right.detach()).abs().max()))
+            entry["gradient_max_abs_diff"] = worst
+            if mismatch:
+                raise AssertionError(mismatch)
+            for left, right in zip(candidate_grads, reference_grads):
+                if left is None or right is None:
+                    continue
+                torch.testing.assert_close(left.detach(), right.detach(),
+                                           rtol=GRAD_RTOL, atol=GRAD_ATOL)
+            tensor_names = [spec["name"] for spec in contract_call["args"]
+                            if spec.get("scalar") is None]
+
+            def bound(function, names):
+                def wrapped(*values):
+                    bound_arguments = dict(arguments)
+                    bound_arguments.update(dict(zip(names, values)))
+                    return function(**bound_arguments)
+                return wrapped
+
+            entry["gradcheck_candidate"] = bool(torch.autograd.gradcheck(
+                bound(candidate, tensor_names), tuple(tensors),
+                eps=1e-6, atol=1e-5, rtol=1e-4))
+            entry["gradcheck_reference"] = bool(torch.autograd.gradcheck(
+                bound(reference, tensor_names), tuple(tensors),
+                eps=1e-6, atol=1e-5, rtol=1e-4))
+        except AssertionError as exc:
+            entry.update(status="FAIL", reason=str(exc).splitlines()[0][:300])
+        except Exception as exc:  # noqa: BLE001
+            entry.update(status="FAIL", reason=f"{type(exc).__name__}: {exc}"[:300])
+        verdicts.append(entry)
+    failed = [entry for entry in verdicts if entry["status"] != "OK"]
+    return {"status": "FAIL" if failed else "OK", "calls": verdicts,
+            "excluded": excluded, "reason": "" if not failed else failed[0]["reason"]}
+
+
+def check_tree(tree: Path, *, seed: int = 17) -> dict:
+    """Read the tree's contract and compare it; an absent contract is recorded."""
+    path = Path(tree) / CONTRACT_NAME
+    if not path.exists():
+        return {"status": "NOT_APPLICABLE",
+                "reason": "the candidate tree declares no reference_contract.json",
+                "contract": str(path)}
+    try:
+        contract = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        return {"status": "FAIL", "reason": f"the contract is not readable JSON: {exc}",
+                "contract": str(path)}
+    verdict = compare(Path(tree), contract, seed=seed)
+    verdict["contract"] = str(path)
+    return verdict
+
+
+def main(argv: list = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--tree", required=True)
+    parser.add_argument("--seed", type=int, default=17)
+    arguments = parser.parse_args(argv)
+    verdict = check_tree(Path(arguments.tree), seed=arguments.seed)
+    print(json.dumps(verdict, default=str))
+    return 0 if verdict.get("status") in ("OK", "NOT_APPLICABLE") else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

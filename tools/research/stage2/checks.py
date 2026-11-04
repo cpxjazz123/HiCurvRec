@@ -341,6 +341,47 @@ def check_geometry_contract(tree: Path | str) -> dict:
             "detail": "the candidate uses the canonical geometry module and defines no other"}
 
 
+def check_reference_agreement(tree: Path | str) -> dict:
+    """The declared equations, rebuilt from their SymPy statements and compared.
+
+    A mechanism declares its continuous surface in reference_contract.json; the
+    check rebuilds that surface independently (sympytorch) and compares values,
+    gradients and torch.autograd.gradcheck on both sides, in double precision.
+    The agent that wrote the mechanism does not also write the only statement
+    of what it computes. A tree without a contract is recorded as NOT_APPLICABLE
+    with its reason, never as a pass.
+    """
+    tree = Path(tree).resolve()
+    contract_file = tree / "reference_contract.json"
+    if not contract_file.is_file():
+        return {"status": "NOT_APPLICABLE", "name": "reference_agreement",
+                "detail": "the tree declares no reference_contract.json"}
+    command = [_python_for(), "-m", "tools.research.stage2.reference",
+               "--tree", str(tree)]
+    try:
+        done = subprocess.run(command, cwd=str(contract.resolve_root()),
+                              capture_output=True, text=True, timeout=900)
+    except subprocess.TimeoutExpired:
+        return {"status": "FAIL", "name": "reference_agreement",
+                "detail": "the reference comparison did not finish in fifteen minutes"}
+    lines = [line for line in done.stdout.strip().splitlines() if line.startswith("{")]
+    if not lines:
+        return {"status": "FAIL", "name": "reference_agreement",
+                "detail": "the comparison produced no report: " +
+                          (done.stdout + done.stderr).strip()[-300:]}
+    report = json.loads(lines[-1])
+    status = report.get("status")
+    if status == "OK":
+        detail = "; ".join(
+            f"{call['name']}: values {call.get('value_max_abs_diff', 0):.1e}, "
+            f"gradients {call.get('gradient_max_abs_diff', 0):.1e}, gradcheck "
+            f"{call.get('gradcheck_candidate')}/{call.get('gradcheck_reference')}"
+            for call in report.get("calls") or [])
+        return {"status": "PASS", "name": "reference_agreement", "detail": detail}
+    return {"status": status or "FAIL", "name": "reference_agreement",
+            "detail": str(report.get("reason"))[:400]}
+
+
 def run_all(tree: Path | str) -> dict:
     """The conformance report of one candidate tree."""
     tree = Path(tree).resolve()
@@ -348,6 +389,9 @@ def run_all(tree: Path | str) -> dict:
     # must not run an epoch before it is refused.
     checks = [check_names(tree), check_collectives(tree), check_constants(tree),
               check_geometry_contract(tree), check_entry(tree),
-              check_identifier(tree), check_four_rank(tree)]
-    passed = all(check["status"] == "PASS" for check in checks)
+              check_identifier(tree), check_four_rank(tree),
+              check_reference_agreement(tree)]
+    # A tree that declares no reference contract is recorded, not passed: the
+    # reason stays in the report, and a declared contract that disagrees fails.
+    passed = all(check["status"] in ("PASS", "NOT_APPLICABLE") for check in checks)
     return {"tree": str(tree), "passed": passed, "checks": checks}
