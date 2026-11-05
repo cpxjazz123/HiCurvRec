@@ -7,6 +7,7 @@ from unittest import mock
 
 from tools.research.rounds import pipeline as pipeline_module
 from tools.research.rounds import worker as worker_module
+from tools.research.rounds import step4_scoring as scoring_module
 
 
 class RevisionPathTests(unittest.TestCase):
@@ -30,12 +31,12 @@ class RevisionPathTests(unittest.TestCase):
             return {"reports": ["revised"], "bundles": {}, "comparisons": []}
 
         state_passed = state
-        with mock.patch.object(worker_module, "run_rebuttal",
+        with mock.patch.object(scoring_module, "run_rebuttal",
                                return_value={"revision": "text", "remaining": ""}), \
-             mock.patch.object(worker_module, "run_scoring", side_effect=fake_scoring), \
+             mock.patch.object(scoring_module, "run_scoring", side_effect=fake_scoring), \
              mock.patch.object(pipeline_module, "save_state", return_value=None), \
              mock.patch.object(pipeline_module, "record_event", return_value=None):
-            updated, reports, outcome = worker_module._one_bounded_revision(
+            updated, reports, outcome = scoring_module._one_bounded_revision(
                 Path("/tmp"), Path("/tmp"), Path("/tmp"), state, [report],
                 {"reports": [], "bundles": {}, "comparisons": []})
         self.assertIs(captured["state"], state,

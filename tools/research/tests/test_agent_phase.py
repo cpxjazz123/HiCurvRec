@@ -11,6 +11,7 @@ from pathlib import Path
 from unittest import mock
 
 from tools.research.rounds import worker
+from tools.research.rounds import step2_ideation, step4_scoring
 
 
 class IdeationPhaseTests(unittest.TestCase):
@@ -26,7 +27,7 @@ class IdeationPhaseTests(unittest.TestCase):
             state["step"] = "probe"
             return state
 
-        with mock.patch.object(worker, "run_ideation", side_effect=fake_run_ideation), \
+        with mock.patch.object(step2_ideation, "run_ideation", side_effect=fake_run_ideation), \
                 mock.patch.object(worker.pipeline_module, "apply_ideation",
                                   side_effect=fake_apply_ideation), \
                 mock.patch.object(worker.pipeline_module, "find_round_directory",
@@ -79,11 +80,11 @@ class ReviewerMinimumTests(unittest.TestCase):
             answers.append(task_id)
             return {"ranking": [{"idea_id": "a", "position": 1, "reason": "because"}]}
 
-        with mock.patch.object(worker, "_rank_with_retry", side_effect=fake_rank), \
-                mock.patch.object(worker, "_run_agents_concurrently",
-                                  side_effect=worker._run_agents_concurrently):
-            outcome = worker.run_scoring(Path("/tmp"), [{"idea_id": "a"}],
-                                         repo=Path("/tmp"), state={})
+        with mock.patch.object(step4_scoring, "_rank_with_retry", side_effect=fake_rank), \
+                mock.patch.object(step4_scoring, "_run_agents_concurrently",
+                                  side_effect=step4_scoring._run_agents_concurrently):
+            outcome = step4_scoring.run_scoring(Path("/tmp"), [{"idea_id": "a"}],
+                                                repo=Path("/tmp"), state={})
         self.assertTrue(answers)
         self.assertEqual(len(outcome["reports"]), 1)
 

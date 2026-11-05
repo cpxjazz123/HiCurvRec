@@ -28,6 +28,9 @@ only in the Stage 2 interpreter and skips elsewhere; a skipped check is not a pa
 
 ## Source structure
 
+The map of the flow - which step, which agent, which function, which file - is
+in [MAP.md](MAP.md); the exported per-agent configurations are in `Agents/`.
+
 ```text
 tools/
 ├── genrec-mcp/
@@ -41,6 +44,20 @@ tools/
     ├── agents/
     │   ├── runner.py          Real OpenCode CLI subprocess receipts
     │   └── prompts.py         Candidate-specific role prompts
+    ├── rounds/
+    │   ├── step2_ideation.py      the five ideation agents
+    │   ├── step3_probe.py         the train-only evidence probe (no agent)
+    │   ├── step4_scoring.py       the three scoring agents and the ranking
+    │   ├── step5_formulation.py   the formula agent, the two math reviewers,
+    │   │                          the eval gate and the freeze
+    │   ├── step5_coding.py        the three coding agents
+    │   ├── step5_derivation.py    the three derivation agents
+    │   ├── step6_implementation.py the candidate tree and the registration
+    │   ├── agent_calls.py        the shared call into an agent
+    │   ├── worker.py              the facade over the steps above
+    │   ├── scope.py evals.py      the scope gate and the eval gate
+    │   ├── compiler.py differential.py module_differential.py
+    │   └── pipeline.py jobs.py    the state machine and the job queue
     ├── science/
     │   ├── behavior.py        Train-only user-sequence measurements
     │   └── contracts.py       Behavioral and candidate identity rules

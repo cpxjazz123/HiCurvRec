@@ -473,7 +473,7 @@ class CandidateCopyTests(unittest.TestCase):
     def test_the_round_implementation_uses_the_provenance_copy(self):
         """The phase must not leave the candidate on the baseline's result path."""
         source = (Path(__file__).resolve().parents[1] / "rounds" /
-                  "worker.py").read_text(encoding="utf-8")
+                  "step6_implementation.py").read_text(encoding="utf-8")
         phase = source[source.index("def phase_implementation"):]
         phase = phase[:phase.index("\ndef ")]
         self.assertIn("copy_baseline(tree)", phase)

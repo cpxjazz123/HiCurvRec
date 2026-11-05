@@ -113,7 +113,7 @@ class FingerprintAgreementTests(unittest.TestCase):
         effective = runner.effective_read_paths(["/tmp/tree/train_rqvae.py"])
         self.assertTrue(any("HYPERBOLIC_GEOMETRY_CONTRACT.md" in path for path in effective))
         source = (Path(__file__).resolve().parents[1] / "rounds" /
-                  "worker.py").read_text(encoding="utf-8")
+                  "agent_calls.py").read_text(encoding="utf-8")
         self.assertIn("runner.effective_read_paths(read_paths)", source)
 
 

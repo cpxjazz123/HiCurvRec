@@ -137,14 +137,14 @@ STEPS = {
 #: the enclosing function rather than a dedicated builder.
 PROMPTS = {
     "start": ("tools/research/rounds/pipeline.py", "new_round"),
-    "ideate": ("tools/research/rounds/worker.py", "ideate_one"),
+    "ideate": ("tools/research/rounds/step2_ideation.py", "ideate_one"),
     "probe": ("tools/research/rounds/probes.py", "run_probe"),
-    "score": ("tools/research/rounds/worker.py", "_rank_with_retry"),
-    "formulate": ("tools/research/rounds/worker.py", "_formula_prompt"),
-    "review_math": ("tools/research/rounds/worker.py", "_review_math_prompt"),
-    "code": ("tools/research/rounds/worker.py", "_coding_prompt"),
-    "derive": ("tools/research/rounds/worker.py", "_derivation_prompt"),
-    "implementation": ("tools/research/rounds/worker.py", "run_implementation"),
+    "score": ("tools/research/rounds/step4_scoring.py", "_rank_with_retry"),
+    "formulate": ("tools/research/rounds/step5_formulation.py", "_formula_prompt"),
+    "review_math": ("tools/research/rounds/step5_formulation.py", "_review_math_prompt"),
+    "code": ("tools/research/rounds/step5_coding.py", "_coding_prompt"),
+    "derive": ("tools/research/rounds/step5_derivation.py", "_derivation_prompt"),
+    "implementation": ("tools/research/rounds/step6_implementation.py", "run_implementation"),
     "verify": ("tools/research/agents/prompts.py", "build_prompt"),
 }
 
