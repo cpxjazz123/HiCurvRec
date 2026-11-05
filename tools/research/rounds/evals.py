@@ -754,6 +754,94 @@ def _the_degree_is_described_as_it_is_used(spec: dict) -> list:
     return problems
 
 
+def _the_specification_does_not_change_the_idea(spec: dict, idea: dict = None) -> list:
+    """Every quantity the idea fixes must be fixed the SAME way here.
+
+    The reviewers kept finding the same class of defect: the specification
+    quietly changed the idea's formula - a different denominator, a different
+    population, a different constant. This check compares the two texts
+    quantity by quantity: the numbers each states for the same symbol have to
+    agree, or the specification has to name the change as an amendment.
+    """
+    problems = []
+    if not idea:
+        return problems
+    equations = str(idea.get("spec_equations") or "")
+    body = "\n".join(str(entry.get("definition") or "") + " " +
+                      str(entry.get("note") or "") + " " +
+                      str(entry.get("output") or "")
+                      for entry in spec.get("computations") or [])
+    body += "\n" + _section(spec, "switches") + "\n" + _section(spec, "parameters")
+    for line in equations.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        name = line.split("=", 1)[0].strip()
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name):
+            continue
+        numbers = set(re.findall(r"\d+\.?\d*", line.split("=", 1)[1]))
+        numbers -= {"0", "1"}
+        if not numbers:
+            continue
+        candidates = [segment for segment in body.splitlines()
+                      if segment.strip().startswith(name)]
+        if not candidates:
+            continue
+        stated = set()
+        for segment in candidates:
+            stated |= set(re.findall(r"\d+\.?\d*", segment))
+        stated -= {"0", "1"}
+        if numbers and not (numbers & stated):
+            problems.append(
+                "the specification states %s with different numbers than the idea "
+                "does: the idea has %s, the specification has %s" % (name,
+                                                                   sorted(numbers),
+                                                                   sorted(stated)))
+    return problems
+
+
+def _the_specification_is_internally_consistent(spec: dict, idea: dict = None) -> list:
+    """The specification must agree with itself: the symbols, the cost's sign,
+    the order of the listing and the claims it makes about itself."""
+    problems = []
+    code = "\n".join(_code(spec))
+    body = "\n".join(str(entry.get("definition") or "") + " " +
+                      str(entry.get("note") or "") + " " +
+                      str(entry.get("output") or "")
+                      for entry in spec.get("computations") or [])
+    switches = _section(spec, "switches")
+    integration = _section(spec, "training_integration")
+    # the cost subtracts the offset, and every switch says so with the same sign
+    if re.search(r"C_ik\s*=\s*D_k\s*-\s*O_ik", body) and re.search(
+            r"C_ik\s*=\s*2\|\|u[^\n]*\+\s*beta", switches):
+        problems.append("the cost subtracts the offset while a switch writes it "
+                        "with a plus sign")
+    # the listing must define the plan before it is used
+    order = [line.strip() for line in _code(spec)]
+    plan_at = next((index for index, line in enumerate(order)
+                    if "sinkhorn(" in line), None)
+    use_at = next((index for index, line in enumerate(order)
+                   if "argmax(P_ik" in line), None)
+    if plan_at is not None and use_at is not None and use_at < plan_at:
+        problems.append("the listing uses the plan before it computes it")
+    # the loss must not claim an additive term the mechanism does not have
+    if re.search(r"plus the mechanism's contribution|objective plus", integration) \
+            and not re.search(r"NO (new |auxiliary )?term|no new term|no auxiliary",
+                              body, re.IGNORECASE):
+        problems.append("the training integration claims an additive contribution "
+                        "that the objective does not have")
+    # a symbol may not carry two meanings
+    dimensions = spec.get("dimensions") or {}
+    if "D" in dimensions and re.search(r"\bD\s*=\s*ceil\(mean", body):
+        problems.append("the symbol D is both the latent width and the "
+                        "neighbourhood cap")
+    if "q" in dimensions and re.search(r"q\s*=\s*lift\(", code) and re.search(
+            r"q_k is the RAW codeword", body):
+        problems.append("the symbol q is both the lifted codebook and the raw "
+                        "codeword")
+    return problems
+
+
 EVALS = (
     Eval("distance-clamp", "the distance keeps the artanh clamp",
          "round 20261105_144909: a draft dropped min(., 1 - 1e-6)",
@@ -810,6 +898,14 @@ EVALS = (
     Eval("surface-uses-its-arguments", "the listing uses the arguments it declares",
          "round 20261105_144909: the listing computed the curvature from s and ignored the declared argument",
          _surface_uses_its_arguments),
+    Eval("the-specification-does-not-change-the-idea", "the specification states the idea's numbers",
+         "round 20261106_020541: the reviewers kept finding the specification changing "
+         "the idea's formula - a denominator, a population, a constant",
+         _the_specification_does_not_change_the_idea),
+    Eval("the-specification-is-internally-consistent", "the specification agrees with itself",
+         "round 20261106_020541: the sign of the offset, the order of the listing, the "
+         "overloaded symbols and the additive-loss claim",
+         _the_specification_is_internally_consistent),
     Eval("the-graph-drops-self-pairs", "an item is not its own neighbour",
          "round 20261105_144909: the adjacency counts allowed a self-pair",
          _the_graph_drops_self_pairs),
@@ -949,11 +1045,16 @@ def run_numeric(spec: dict, *, python: str = TORCH_PYTHON) -> dict:
             "source": "every round", "problems": problems}
 
 
-def run(spec: dict, *, numeric=None) -> dict:
+def run(spec: dict, *, numeric=None, idea: dict = None) -> dict:
     """Every eval, in order; the gate is closed when any of them reports."""
     failures = []
     for item in EVALS:
-        problems = list(item.check(spec) or [])
+        if item.id == "the-specification-does-not-change-the-idea":
+            problems = list(item.check(spec, idea) or [])
+        elif item.id == "the-specification-is-internally-consistent":
+            problems = list(item.check(spec, idea) or [])
+        else:
+            problems = list(item.check(spec) or [])
         if problems:
             failures.append({"id": item.id, "title": item.title,
                              "source": item.source, "problems": problems})
@@ -986,11 +1087,19 @@ def ledger(path: Path = None) -> list:
 
 
 def resolve(finding: str, entries: list = None) -> dict | None:
-    """The ledger entry a finding falls under, or None."""
+    """The ledger entry a finding falls under, or None.
+
+    An entry matches by KEYWORDS as well as by a pattern: a class of defect is
+    decided once, and the wording of the reviewer's sentence is not the class.
+    """
     text = str(finding or "")
+    lowered = text.lower()
     for entry in entries if entries is not None else ledger():
         pattern = str(entry.get("pattern") or "")
         if pattern and re.search(pattern, text, re.IGNORECASE):
+            return entry
+        keywords = [str(word).lower() for word in entry.get("keywords") or []]
+        if len(keywords) >= 2 and sum(1 for word in keywords if word in lowered) >= 2:
             return entry
     return None
 

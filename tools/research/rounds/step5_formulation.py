@@ -221,7 +221,7 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
                     "freeze: add an eval to tools/research/rounds/evals.py or an "
                     "entry to tools/research/rounds/eval_ledger.json for: " +
                     "; ".join(str(finding)[:120] for finding in undecided[:3]))
-            gate = evals_module.run(spec)
+            gate = evals_module.run(spec, idea=idea)
             state["spec_eval_gate"] = {"passed": gate["passed"],
                                        "checked": gate["checked"],
                                        "failures": gate["failures"]}
