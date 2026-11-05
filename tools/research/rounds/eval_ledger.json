@@ -133,6 +133,12 @@
    "decision": "eval",
    "eval_id": "assignment-keeps-the-balancing",
    "source": "round 20261105_144909_130: the specification replaced the Sinkhorn-balanced assignment with a plain argmin and the level-1 codebook collapsed"
+  },
+  {
+   "pattern": "re-measured|re-measure|per arm|differs ONLY in the distance|offset amplitude",
+   "decision": "eval",
+   "eval_id": "geometry-arm-keeps-the-measured-scale",
+   "source": "round 20261106_020541: the Euclidean arm must be distance-only"
   }
  ]
 }

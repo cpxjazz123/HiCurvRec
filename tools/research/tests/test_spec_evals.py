@@ -320,3 +320,34 @@ def test_a_surface_that_ignores_a_declared_argument_is_refused():
                                           {"name": "demand", "width": 1}]
     problems = evals._surface_uses_its_arguments(spec)
     assert problems and "demand" in problems[0]
+
+
+def _scale_spec(switch_text: str, cost_text: str) -> dict:
+    """A small specification with the two texts the scale check reads."""
+    return {
+        "switches": ["BEHAVIOUR_OFF: the offset is zero.",
+                     switch_text],
+        "computations": [{"name": "cost matrix", "definition": cost_text,
+                          "inputs": ["C_ik"], "output": "C_ik"}],
+    }
+
+
+def test_a_euclidean_arm_that_re_measures_its_own_scale_is_refused():
+    """The control must be distance-only: the same frozen amplitude on both arms."""
+    spec = _scale_spec(
+        "GEOMETRY_OFF: c = 0, so DIST(x,y) = 2||x - y||; the offset amplitude beta "
+        "is re-measured from the arm's own median distance.",
+        "C_ik = D_k - O_ik, with O_ik = beta * R_c * (1 - |rho_i - s_k|).")
+    problems = evals._geometry_arm_keeps_the_measured_scale(spec)
+    assert problems
+    assert any("amplitude" in problem for problem in problems)
+
+
+def test_the_frozen_scale_is_carried_into_the_euclidean_arm():
+    spec = _scale_spec(
+        "GEOMETRY_OFF: c = 0, so DIST(x,y) = 2||x - y||; the frozen beta of the "
+        "curved configuration is carried into this arm, so the arms differ in the "
+        "distance and in nothing else.",
+        "C_ik = D_k - O_ik, with O_ik = beta * R_c * (1 - |rho_i - s_k|); beta is "
+        "measured once and frozen.")
+    assert evals._geometry_arm_keeps_the_measured_scale(spec) == []

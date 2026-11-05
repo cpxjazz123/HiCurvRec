@@ -536,6 +536,35 @@ def _assignment_keeps_the_balancing(spec: dict) -> list:
     return problems
 
 
+def _geometry_arm_keeps_the_measured_scale(spec: dict) -> list:
+    """The Euclidean arm must differ from the curved one ONLY in the distance.
+
+    The offset's amplitude beta is measured once, in the curved configuration. If
+    the c = 0 arm re-measured beta from its own (Euclidean) distances, the two
+    arms would differ in the offset's amplitude as well, and the control would
+    not be a matched one.
+    """
+    problems = []
+    text = _section(spec, "switches")
+    if not text:
+        return problems
+    for match in re.finditer(r"GEOMETRY_OFF[^\n]*", text, re.IGNORECASE):
+        arm = match.group(0)
+        if re.search(r"re-measured|remeasured|measured again|its own median", arm,
+                     re.IGNORECASE):
+            problems.append(
+                "the Euclidean arm re-measures the offset's amplitude, so it "
+                "differs from the curved arm in the amplitude as well as in the "
+                "distance: the frozen beta of the curved configuration has to be "
+                "carried into it")
+    cost = _computation(spec, "cost matrix")
+    if re.search(r"beta", cost) and not re.search(r"frozen|measured once", cost,
+                                                 re.IGNORECASE):
+        problems.append("the offset's amplitude is not stated as measured once and "
+                        "frozen")
+    return problems
+
+
 EVALS = (
     Eval("distance-clamp", "the distance keeps the artanh clamp",
          "round 20261105_144909: a draft dropped min(., 1 - 1e-6)",
@@ -592,6 +621,10 @@ EVALS = (
     Eval("surface-uses-its-arguments", "the listing uses the arguments it declares",
          "round 20261105_144909: the listing computed the curvature from s and ignored the declared argument",
          _surface_uses_its_arguments),
+    Eval("geometry-arm-keeps-the-measured-scale", "the Euclidean arm is distance-only",
+         "round 20261106_020541: the reviewers found that re-measuring beta in the "
+         "c = 0 arm would make the control differ in the amplitude too",
+         _geometry_arm_keeps_the_measured_scale),
     Eval("assignment-keeps-the-balancing", "the baseline's balanced assignment stays",
          "round 20261105_144909: the specification replaced the Sinkhorn-balanced "
          "assignment with a plain argmin and the level-1 codebook collapsed "
