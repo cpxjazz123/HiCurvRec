@@ -8,14 +8,14 @@ and the test tells you the framework no longer does what they say.
 
 | step | role | agents | what it decides |
 |---|---|---|---|
-| 2 - research_round_ideate | `ideate` | 5 | Proposes mechanisms. |
-| 3 - research_round_probe | `probe` | 0 | Measures the behaviour behind each proposal before anyone scores it. |
-| 4 - research_round_score | `score` | 3 | Ranks the proposals. |
-| 5 - research_round_implement (formulation) | `formulate` | 1 | Writes the mechanism as mathematics. |
-| 5 - research_round_implement (formulation) | `review_math` | 2 | Judges the specification against the idea it came from. |
-| 5 - research_round_implement (coding) | `code` | 3 | Implements the frozen specification. |
-| 5 - research_round_implement (derivation) | `derive` | 3 | Derives the mechanism independently. |
-| 5 - research_round_implement (implementation) | `implementation` | 1 | The candidate's own implementation path, used by the earlier framework generation. |
+| 2 - research_round_ideate | `step2_ideate` | 5 | Proposes mechanisms. |
+| 3 - research_round_probe | `step3_probe` | 0 | Measures the behaviour behind each proposal before anyone scores it. |
+| 4 - research_round_score | `step4_score` | 3 | Ranks the proposals. |
+| 5 - research_round_implement (formulation) | `step5_formulate` | 1 | Writes the mechanism as mathematics. |
+| 5 - research_round_implement (formulation) | `step5_review_math` | 2 | Judges the specification against the idea it came from. |
+| 5 - research_round_implement (coding) | `step5_code` | 3 | Implements the frozen specification. |
+| 5 - research_round_implement (derivation) | `step5_derive` | 3 | Derives the mechanism independently. |
+| 5 - research_round_implement (implementation) | `step5_implementation` | 1 | The candidate's own implementation path, used by the earlier framework generation. |
 | the earlier verification path | `verify` | 1 | Runs an independent check suite against a candidate tree. |
 
 The flow those steps belong to:

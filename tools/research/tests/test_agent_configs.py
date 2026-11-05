@@ -22,7 +22,7 @@ AGENTS = REPO / "Agents"
 def test_every_role_has_a_directory():
     assert AGENTS.is_dir(), "the exported agent configurations are missing"
     for role in export_configs.ROLES:
-        directory = AGENTS / role
+        directory = AGENTS / export_configs.DIRECTORIES[role]
         assert directory.is_dir(), role
         for name in ("AGENT.md", "config.json", "output.schema.json", "prompt.md"):
             assert (directory / name).is_file(), "%s/%s" % (role, name)
@@ -31,7 +31,7 @@ def test_every_role_has_a_directory():
 def test_the_export_is_current():
     """The files in Agents/ are what the code says today."""
     for role in export_configs.ROLES:
-        directory = AGENTS / role
+        directory = AGENTS / export_configs.DIRECTORIES[role]
         expected = export_configs._config(role)
         actual = json.loads((directory / "config.json").read_text(encoding="utf-8"))
         assert actual == expected, (
@@ -42,10 +42,12 @@ def test_the_export_is_current():
 def test_the_prompt_files_carry_the_code_they_name():
     """The prompt excerpt is the source the config names, not a copy of it."""
     for role in export_configs.ROLES:
-        config = json.loads((AGENTS / role / "config.json").read_text(encoding="utf-8"))
+        config = json.loads((AGENTS / export_configs.DIRECTORIES[role] / "config.json")
+                            .read_text(encoding="utf-8"))
         source = config["prompt"]["source"]
         function = config["prompt"]["function"]
-        text = (AGENTS / role / "prompt.md").read_text(encoding="utf-8")
+        text = (AGENTS / export_configs.DIRECTORIES[role] / "prompt.md").read_text(
+            encoding="utf-8")
         assert source in text, role
         assert function in text, role
         # the excerpt is the code's own text
@@ -59,8 +61,8 @@ def test_the_schema_is_the_runtime_schema():
     from tools.research.agents import runtime
 
     for role in export_configs.ROLES:
-        exported = json.loads((AGENTS / role / "output.schema.json")
-                              .read_text(encoding="utf-8"))
+        exported = json.loads((AGENTS / export_configs.DIRECTORIES[role] /
+                               "output.schema.json").read_text(encoding="utf-8"))
         model = runtime.output_schema(role)
         if model is None:
             continue
@@ -71,13 +73,23 @@ def test_the_schema_is_the_runtime_schema():
 def test_the_readme_lists_every_role():
     text = (AGENTS / "README.md").read_text(encoding="utf-8")
     for role in export_configs.ROLES:
-        assert "`%s`" % role in text, role
+        assert "`%s`" % export_configs.DIRECTORIES[role] in text, role
+
+
+def test_the_directories_are_named_after_their_step():
+    """The order of the flow is legible from the directory name."""
+    for role, name in export_configs.DIRECTORIES.items():
+        if role == "verify":
+            continue
+        assert name.startswith("step"), name
+        assert name.split("_", 1)[1] == role, name
 
 
 def test_no_agent_may_write_outside_its_workspace():
     """The exported boundary says what the runtime enforces."""
     for role in export_configs.ROLES:
-        config = json.loads((AGENTS / role / "config.json").read_text(encoding="utf-8"))
+        config = json.loads((AGENTS / export_configs.DIRECTORIES[role] / "config.json")
+                            .read_text(encoding="utf-8"))
         permissions = config["tools"]
         assert permissions["write_root"].startswith("the agent's own workspace"), role
         assert permissions["shell"] is False, role

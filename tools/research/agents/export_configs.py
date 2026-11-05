@@ -23,12 +23,28 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 from pathlib import Path
 
 from .. import settings
 
 #: Where the exported configurations live.
 ROOT = Path(__file__).resolve().parents[3] / "Agents"
+
+#: The directory of each role: stepN_agent, so the ORDER of the flow is legible
+#: from the name alone. The legacy verification role belongs to the earlier
+#: framework generation and is not a step of this flow, so it keeps its name.
+DIRECTORIES = {
+    "ideate": "step2_ideate",
+    "probe": "step3_probe",
+    "score": "step4_score",
+    "formulate": "step5_formulate",
+    "review_math": "step5_review_math",
+    "code": "step5_code",
+    "derive": "step5_derive",
+    "implementation": "step5_implementation",
+    "verify": "verify",
+}
 
 #: The roles of the round flow, in the order the flow runs them.
 ROLES = (
@@ -243,7 +259,7 @@ def _readme() -> str:
     for role in ROLES:
         step, agents = STEPS[role]
         lines.append("| %s | `%s` | %d | %s |"
-                     % (step, role, agents, BRIEFS[role].split(".")[0] + "."))
+                     % (step, DIRECTORIES[role], agents, BRIEFS[role].split(".")[0] + "."))
     lines += ["",
               "The flow those steps belong to:",
               "",
@@ -274,8 +290,12 @@ def export(root: Path = None) -> list:
     target.mkdir(parents=True, exist_ok=True)
     (target / "README.md").write_text(_readme(), encoding="utf-8")
     written.append(target / "README.md")
+    # a directory of an older naming is removed: the export owns this tree
+    for stale in target.iterdir():
+        if stale.is_dir() and stale.name not in DIRECTORIES.values():
+            shutil.rmtree(stale, ignore_errors=True)
     for role in ROLES:
-        directory = target / role
+        directory = target / DIRECTORIES[role]
         directory.mkdir(parents=True, exist_ok=True)
         config = _config(role)
         (directory / "config.json").write_text(
