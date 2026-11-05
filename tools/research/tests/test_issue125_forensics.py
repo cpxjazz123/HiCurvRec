@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 import tempfile
 import unittest
 import importlib.util as _importlib_util
@@ -32,7 +33,9 @@ from pathlib import Path
 
 import numpy as np
 
-from tools.research.science import sid_generation_forensics as forensics
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "analysis_sid_recall"))
+
+import sid_generation_forensics as forensics
 
 
 @unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this interpreter")

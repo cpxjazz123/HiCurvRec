@@ -129,7 +129,12 @@ def validate_evidence(tree: Path, candidate_id: str) -> tuple[Path, dict, dict]:
         raise AdmissionError("all four independent test suites are mandatory")
     case_dir = CASES_ROOT / candidate_id
     if not case_dir.is_dir() or case_dir.is_symlink():
-        raise AdmissionError("missing reviewed test case directory")
+        raise AdmissionError(
+            "missing reviewed test case directory: the independent suites of the "
+            "candidates that were verified under issue #117 are gone with the "
+            "reviewers that wrote them. The live admission for a round is the "
+            "two-stage machine check (tools/research/stage2/checks.py) with the "
+            "eval gate, not this one.")
     for suite in SUITES:
         target = case_dir / ("test_" + suite + ".py")
         if target.is_symlink() or not target.is_file():

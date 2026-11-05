@@ -13,7 +13,7 @@ The 1/2-hop ground metric is used for the sweep and is verified against the
 exact metric on a sample of edges; the verification numbers travel with the
 profile.
 
-    python3 tools/research/science/curvature_profile.py --out <path>
+    python3 analysis_sid_recall/curvature_profile.py --out <path>
 """
 from __future__ import annotations
 
@@ -24,11 +24,13 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 if str(REPO) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(REPO))
 
-from tools.research.science import quotient_curvature as qc   # noqa: E402
+import quotient_curvature as qc   # noqa: E402
 
 TRAIN = REPO / "results" / "stage0_build_parquet" / "train.parquet"
 SID = REPO / "results" / "stage2_RQ-VAE" / "TIGER_RQ-VAE" / "item_sids.json"

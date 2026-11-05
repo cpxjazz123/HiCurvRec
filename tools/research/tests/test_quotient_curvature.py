@@ -1,6 +1,6 @@
 """The invariants of the undirected behaviour quotient graph (Issue #128).
 
-The estimators are the authority in ``tools/research/science/quotient_curvature.py``:
+The estimators are the authority in ``analysis_sid_recall/quotient_curvature.py``:
 the behaviour graph and the prefix quotient are UNDIRECTED, and the transport
 ground metric is the EXACT unweighted shortest path in the quotient.
 """
@@ -13,11 +13,12 @@ from pathlib import Path
 import numpy as np
 import scipy.sparse as sp
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[3]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(REPO / "analysis_sid_recall"))
 
-from tools.research.science import quotient_curvature as qc    # noqa: E402
+import quotient_curvature as qc    # noqa: E402
 
 
 def _path(size: int) -> sp.csr_matrix:

@@ -1,4 +1,5 @@
 """Issue #126: the hard prefix score must have the properties it claims.
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "analysis_sid_recall"))
 
 A metric that silently depends on the token numbering, on the levels below the
 first, or on how many example pairs the file happens to hold is not a metric of
@@ -28,7 +29,7 @@ def _numeric_stack() -> bool:
 HAVE_NUMERIC = _numeric_stack()
 
 if HAVE_NUMERIC:
-    from tools.research.science import hyperbolic_sid_quality as quality
+    import hyperbolic_sid_quality as quality
 
 
 def _sid(rows) -> dict:
@@ -158,7 +159,7 @@ class ScoreInvariantTests(unittest.TestCase):
 class ReferenceContractTests(unittest.TestCase):
 
     def test_the_reference_spec_is_frozen_and_hashed(self):
-        from tools.research.science import hyperbolic_behavior_reference as ref
+        import hyperbolic_behavior_reference as ref
         spec = ref.frozen_spec()
         for key in ("curvature", "dim", "epochs", "batch_size", "learning_rate",
                     "seed", "temperature_rule"):
@@ -167,7 +168,7 @@ class ReferenceContractTests(unittest.TestCase):
         self.assertEqual(spec["digest"], ref.frozen_spec()["digest"])
 
     def test_the_reference_inputs_are_the_train_split_only(self):
-        from tools.research.science import hyperbolic_behavior_reference as ref
+        import hyperbolic_behavior_reference as ref
         spec = ref.frozen_spec()
         for name in ("embeddings", "train_pairs", "valid_pairs"):
             self.assertIn(name, spec["inputs"])

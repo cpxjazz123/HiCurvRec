@@ -5,7 +5,7 @@ consumed that exact table), the structural diagnostics, the within/cross curvatu
 gap recorded at export, and the Stage 3 test scores. Nothing is recomputed from a
 filename or a vocabulary size.
 
-Run:  python3 -m tools.research.science.arm_table arms.json
+Run:  python3 analysis_sid_recall/arm_table arms.json
       (``[{"variant": ..., "sid": ..., "metrics": ..., "stage3": ...}, ...]``)
 """
 from __future__ import annotations

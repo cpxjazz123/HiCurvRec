@@ -18,8 +18,9 @@ import json
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[4]
-ARM = (REPO / "results" / "research" / "issue121" / "trees"
-       / "round_20261105_144909_130" / "pmi-geomargin-l1-rq")
+#: The promoted tree of the arm that collapsed: it is in the repository, while
+#: the round workspace it was written in is research state and is not.
+ARM = REPO / "stage2_RQ-VAE" / "TIGER_pmi-geomargin-l1-rq"
 
 
 def _idea(**overrides) -> dict:
@@ -68,7 +69,7 @@ def test_the_scope_gate_accepts_a_mechanism_that_keeps_the_balancing():
 def test_the_specification_eval_refuses_the_arm_that_collapsed():
     from tools.research.rounds import evals
 
-    spec = json.loads((REPO / "results" / "research" / "issue121" / "rounds"
+    spec = json.loads((REPO / "tools" / "research" / "tests" / "fixtures"
                         / "round_20261105_144909_130" / "math_spec.json")
                        .read_text(encoding="utf-8"))
     problems = evals._assignment_keeps_the_balancing(spec)

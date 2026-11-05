@@ -21,7 +21,9 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 
 #: The frozen inputs. Stage 1 features are shared with Stage 2 and never rebuilt.
 EMBEDDING_FILE = REPO / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"

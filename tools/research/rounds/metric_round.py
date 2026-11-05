@@ -95,12 +95,18 @@ def refuted_ledger() -> str:
     refuted construction is measured again for nothing, so the prompt says what
     has been tried and what it scored.
     """
+    # The ledger travels with the CODE: the memory of what was already refuted
+    # must not depend on a research state that a cleanup can remove. A ledger
+    # in the research state overrides the shipped one, because a round that
+    # measured more may add to it.
+    shipped = Path(__file__).resolve().parent / "refuted_ledger.json"
     ledger_path = (Path(__file__).resolve().parents[3] / "results" / "research" /
                    "issue126" / "metric_round" / "ledger.json")
-    if not ledger_path.is_file():
+    path = ledger_path if ledger_path.is_file() else shipped
+    if not path.is_file():
         return ""
     try:
-        ledger = json.loads(ledger_path.read_text())
+        ledger = json.loads(path.read_text())
     except ValueError:
         return ""
     lines = []

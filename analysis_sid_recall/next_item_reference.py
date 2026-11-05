@@ -10,7 +10,7 @@ TARGET representation of the item the user is about to buy. The prediction is th
 query point a metric can use, and it is trained on the TRAINING interactions only
 -- no validation, no test, no Stage 2, no Stage 3.
 
-    python3 tools/research/science/next_item_reference.py --epochs 30
+    python3 analysis_sid_recall/next_item_reference.py --epochs 30
 
 writes `results/research/issue126/reference_next_item/` with the frozen per
 interaction predictions and a record that carries the digest and the spec.
@@ -25,7 +25,9 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 EMBEDDING_FILE = REPO / "stage1_GeneEmbedding" / "output" / "sentence_t5.npy"
 TRAIN_PAIRS = REPO / "results" / "stage3_T5Train" / "monotonicity" / "behavior_pairs_s42.npz"
 REFERENCE_NPZ = REPO / "results" / "research" / "issue126" / "reference" / "reference.npz"

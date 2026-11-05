@@ -34,7 +34,9 @@ for _name in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
 
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 COLLECTION = REPO / "analysis_sid_recall"
 OUTPUT = REPO / "results" / "research" / "issue126" / "metric_bench.json"
 
@@ -84,7 +86,7 @@ def _leave_one_out(x: np.ndarray, y: np.ndarray, draws: int = 2000, seed: int = 
 def load_context():
     """The frozen reference, the training pairs and the confirmed pairs."""
     sys.path.insert(0, str(REPO))
-    from tools.research.science import hyperbolic_behavior_reference as reference_module
+    import hyperbolic_behavior_reference as reference_module
 
     reference = reference_module.load()
     rows = list(__import__("csv").DictReader((COLLECTION / "sid_recall.csv").open()))

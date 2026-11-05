@@ -18,7 +18,9 @@ import glob
 import json
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 OUT = REPO / "results" / "research" / "issue126" / "metric_round" / "metric_comparison_107.csv"
 
 #: the families, so the table reads as a finding rather than a list

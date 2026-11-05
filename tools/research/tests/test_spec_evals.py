@@ -22,7 +22,10 @@ import pytest
 from tools.research.rounds import evals
 
 REPO = Path(__file__).resolve().parents[3]
-FROZEN = (REPO / "results" / "research" / "issue121" / "rounds"
+#: The frozen specification of the round that produced the balancing eval is a
+#: FIXTURE: the research state it came from is not part of the repository, and a
+#: test that depends on a scratch directory stops running when it is cleaned.
+FROZEN = (REPO / "tools" / "research" / "tests" / "fixtures"
           / "round_20261105_144909_130" / "math_spec.json")
 
 
@@ -238,7 +241,7 @@ def _draft() -> dict:
     import json
     from pathlib import Path
     repo = Path(__file__).resolve().parents[3]
-    return json.loads((repo / "results" / "research" / "issue121" / "rounds"
+    return json.loads((repo / "tools" / "research" / "tests" / "fixtures"
                        / "round_20261105_144909_130" / "math_spec_draft.json")
                       .read_text(encoding="utf-8"))
 

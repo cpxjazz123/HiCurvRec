@@ -40,7 +40,9 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 REFERENCE_NPZ = REPO / "results" / "research" / "issue126" / "reference" / "reference.npz"
 REFERENCE_JSON = REPO / "results" / "research" / "issue126" / "reference" / "reference.json"
 TRAIN_PARQUET = REPO / "results" / "stage0_build_parquet" / "train.parquet"
@@ -246,7 +248,7 @@ def main() -> int:
                         help="score the 97 confirmed pairs and report the correlation")
     args = parser.parse_args()
     if args.benchmark:
-        from tools.research.science import sid_metric_bench as bench
+        import sid_metric_bench as bench
         context = bench.load_context()
         print("the metric lives in results/research/issue126/metric_round/metrics_hbaa.py; "
               "the benchmark is run through sid_metric_bench.py")

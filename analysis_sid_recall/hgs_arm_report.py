@@ -13,7 +13,7 @@ report with the numbers the issue lists:
 * the SID structure (L1 codes, L2 prefixes, L3 triples, collision, fourth-token
   vocabulary, cell sizes) against the frozen baseline.
 
-    python3 tools/research/science/hgs_arm_report.py --arm TIGER_HGS-TREE
+    python3 analysis_sid_recall/hgs_arm_report.py --arm TIGER_HGS-TREE
 """
 from __future__ import annotations
 
@@ -26,7 +26,9 @@ import re
 import numpy as np
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 
 #: The frozen baseline the issue compares every arm against.
 BASELINE = {"l1_codes": 247, "l2_prefixes": 7414, "l3_triples": 20223,

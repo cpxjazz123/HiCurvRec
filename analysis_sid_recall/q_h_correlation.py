@@ -28,7 +28,9 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 COLLECTION = REPO / "analysis_sid_recall"
 REPORT = REPO / "results" / "research" / "issue126" / "correlation_report_confirmed.json"
 
@@ -79,7 +81,7 @@ def _score_one(row: dict) -> dict:
     sys.path.insert(0, str(REPO))
     import torch
     torch.set_num_threads(1)
-    from tools.research.science import hyperbolic_sid_quality as quality
+    import hyperbolic_sid_quality as quality
 
     sid_path = COLLECTION / "sids" / row["sid_file"]
     record = {
@@ -112,8 +114,8 @@ def _score_one(row: dict) -> dict:
 def main() -> int:
     import sys
     sys.path.insert(0, str(REPO))
-    from tools.research.science import hyperbolic_sid_quality as quality
-    from tools.research.science import hyperbolic_behavior_reference as reference_module
+    import hyperbolic_sid_quality as quality
+    import hyperbolic_behavior_reference as reference_module
 
     levels = [int(value) for value in
               (os.environ.get("Q_H_LEVELS") or "1").split(",") if value.strip()]

@@ -15,7 +15,10 @@ from pathlib import Path
 from tools.research.rounds import spec_tests, worker
 
 REPO = Path(__file__).resolve().parents[3]
-FROZEN = (REPO / "results" / "research" / "issue121" / "rounds"
+#: The frozen specification of the round that produced the balancing eval is a
+#: FIXTURE: the research state it came from is not part of the repository, and a
+#: test that depends on a scratch directory stops running when it is cleaned.
+FROZEN = (REPO / "tools" / "research" / "tests" / "fixtures"
           / "round_20261105_144909_130" / "math_spec.json")
 
 

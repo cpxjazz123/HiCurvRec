@@ -2989,7 +2989,7 @@ def tool_research_metric_bench(module: str, workers: int = 16) -> dict:
     if not path.is_file():
         return {"ran": False, "refused": "no such module: " + str(path)}
     out = REPO / "results" / "research" / "issue126" / "metric_bench.json"
-    done = _sub.run([PY3, str(REPO / "tools/research/science/sid_metric_bench.py"),
+    done = _sub.run([PY3, str(REPO / "analysis_sid_recall/sid_metric_bench.py"),
                      "--module", str(path), "--out", str(out),
                      "--workers", str(int(workers or 16))],
                     cwd=str(REPO), capture_output=True, text=True, timeout=1800)

@@ -37,7 +37,9 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 TRAIN = REPO / "results" / "stage0_build_parquet" / "train.parquet"
 VALID_PAIRS = REPO / "results" / "stage3_T5Train" / "monotonicity" / "behavior_pairs_valid_s42.npz"
 OUT = REPO / "results" / "research" / "hierarchy_audit"
@@ -187,9 +189,9 @@ def main() -> int:
         "artifact": "results/research/hierarchy_audit/hierarchy.npz",
         "sha256": hashlib.sha256((OUT / "hierarchy.npz").read_bytes()).hexdigest(),
         "report_sha256": hashlib.sha256((OUT / "report.json").read_bytes()).hexdigest(),
-        "builder": "tools/research/science/hierarchy_audit.py",
+        "builder": "analysis_sid_recall/hierarchy_audit.py",
         "builder_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        "regenerate": "python3 tools/research/science/hierarchy_audit.py",
+        "regenerate": "python3 analysis_sid_recall/hierarchy_audit.py",
         "inputs": {
             "train_parquet": str(TRAIN.relative_to(REPO)),
             "train_parquet_sha256": (hashlib.sha256(TRAIN.read_bytes()).hexdigest()

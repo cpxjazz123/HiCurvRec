@@ -11,7 +11,7 @@ and the measurement of every implemented metric -- so that:
 * the prompt of the next round carries the list of what has already been
   refuted, and the agents are asked for something whose construction differs.
 
-    python3 tools/research/science/metric_ledger.py
+    python3 analysis_sid_recall/metric_ledger.py
 """
 from __future__ import annotations
 
@@ -19,8 +19,13 @@ import csv
 import json
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 ROUND_ROOT = REPO / "results" / "research" / "issue126" / "metric_round"
+#: The ledger that ships with the framework is the fallback: the research state
+#: is scratch, and the memory of what was refuted must survive its cleanup.
+SHIPPED_LEDGER = REPO / "tools" / "research" / "rounds" / "refuted_ledger.json"
 LEDGER = ROUND_ROOT / "ledger.json"
 
 #: The families the refuted constructions fall into. A proposal that lands in one
@@ -136,6 +141,14 @@ def build() -> dict:
         "rows": sorted(rows, key=lambda row: -((row.get("measurement") or {}).get("spearman")
                                                 or -1.0)),
     }
+    if not rows:
+        # Nothing was measured in this working tree: the ledger would be an
+        # empty file that overwrites the real one. Say so instead.
+        raise SystemExit(
+            "no measured metrics found under " + str(ROUND_ROOT) +
+            ": the ledger is built from the metric rounds' reports, and they are "
+            "not in this working tree. The shipped copy at " +
+            str(SHIPPED_LEDGER) + " is the ledger of record.")
     LEDGER.parent.mkdir(parents=True, exist_ok=True)
     LEDGER.write_text(json.dumps(ledger, indent=2), encoding="utf-8")
     return ledger

@@ -33,7 +33,9 @@ from pathlib import Path
 
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 OUT = REPO / "results" / "research" / "sid_generation_forensics"
 STAGE3_DIR = REPO / "stage3_T5Train"
 PAIRS = REPO / "results" / "stage3_T5Train" / "monotonicity" / "behavior_pairs_valid_s42.npz"
@@ -1102,13 +1104,13 @@ def write_report() -> Path:
     lines.append("")
     lines.append("```")
     lines.append("python -c \"import sys; sys.path.insert(0,'.'); "
-                 "from tools.research.science import sid_generation_forensics as F; "
+                 "import sid_generation_forensics as F; "
                  "F.run_sid_layer()\"")
     lines.append("python -c \"import sys; sys.path.insert(0,'.'); "
-                 "from tools.research.science import sid_generation_forensics as F; "
+                 "import sid_generation_forensics as F; "
                  "F.run_arm('<arm>', device='cuda:0')\"   # one process per card")
     lines.append("python -c \"import sys; sys.path.insert(0,'.'); "
-                 "from tools.research.science import sid_generation_forensics as F; "
+                 "import sid_generation_forensics as F; "
                  "F.paired_comparison(); F.strata_table(); F.write_report()\"")
     lines.append("```")
     path = OUT / "report.md"

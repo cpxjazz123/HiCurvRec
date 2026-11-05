@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """One command that reproduces the metric-round result end to end.
 
-    python3 tools/research/science/metric_round_pipeline.py --all
+    python3 analysis_sid_recall/metric_round_pipeline.py --all
 
 does, in order:
 
@@ -24,7 +24,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(Path(__file__).resolve().parent))
 COLLECTOR = REPO / "analysis_sid_recall" / "collect.py"
 BENCH = REPO / "tools" / "research" / "science" / "sid_metric_bench.py"
 DEFAULT_MODULE = REPO / "results" / "research" / "issue126" / "metric_round" / "metrics_all_fast.py"

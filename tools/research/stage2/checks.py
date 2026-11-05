@@ -104,7 +104,11 @@ def _admission_tree(tree: Path) -> Path:
     import shutil
 
     root = contract.resolve_root()
-    target = root / "stage2_RQ-VAE" / ("_admission_" + tree.name)
+    # The name carries a digest of the path, so two runs over trees of the same
+    # name cannot copy into the same directory and delete each other's copy.
+    import hashlib
+    digest = hashlib.sha256(str(tree).encode("utf-8")).hexdigest()[:10]
+    target = root / "stage2_RQ-VAE" / ("_admission_" + tree.name + "_" + digest)
     if target.exists():
         shutil.rmtree(target)
     shutil.copytree(tree, target)
@@ -116,9 +120,9 @@ def _discard_admission_tree(tree: Path) -> None:
     import shutil
 
     root = contract.resolve_root()
-    target = root / "stage2_RQ-VAE" / ("_admission_" + tree.name)
-    if target.is_dir():
-        shutil.rmtree(target, ignore_errors=True)
+    for target in (root / "stage2_RQ-VAE").glob("_admission_" + tree.name + "*"):
+        if target.is_dir():
+            shutil.rmtree(target, ignore_errors=True)
 
 def check_entry(tree: Path | str) -> dict:
     """The real entry point runs one epoch in this process and exports a SID."""
