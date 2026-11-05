@@ -315,11 +315,18 @@ def run_derivations(directory: Path, ideas: list, *, log=print, spec: dict = Non
         # Its old answer must not be read as this pass's delivery when the new
         # agent times out: it is moved aside before the agents start.
         for index in range(1, 4):
-            stale = directory / "agents" / ("derivation_%d" % index) / "derivation.json"
-            if stale.is_file():
-                archive = stale.parent / "previous" / str(int(time.time()))
-                archive.mkdir(parents=True, exist_ok=True)
-                stale.replace(archive / "derivation.json")
+            # The workspace of a derivation holds its own earlier answer: in
+            # `previous/`, in `unverified/`, and in the answer file itself. An
+            # agent reads its own workspace, so a derivation that copies what
+            # is there is no longer independent. The whole workspace moves
+            # OUTSIDE the round, where no agent may read it.
+            workspace = directory / "agents" / ("derivation_%d" % index)
+            if workspace.is_dir():
+                archive = (directory.parent.parent / "superseded" / directory.name /
+                           ("derivation_%d" % index) / str(int(time.time())))
+                if archive.exists():
+                    shutil.rmtree(archive, ignore_errors=True)
+                shutil.move(str(workspace), str(archive))
 
         def derive(task_id, _idea=idea, _spec=spec):
             return _run_agent(
@@ -358,7 +365,7 @@ def run_derivations(directory: Path, ideas: list, *, log=print, spec: dict = Non
                 missing.append(int(task_id.split("_")[-1]))
             log("%s %s: %s" % (idea["idea_id"], task_id,
                                "ok" if payload.get("statements") else "no readable answer"))
-        args, symbols = derivation_signature()
+        args, symbols = derivation_signature(spec)
         for answer in list(delivered):
             payload = answer.get("payload") or {}
             problems = _instance_problems(payload, spec) if payload else ["no payload"]
@@ -370,7 +377,7 @@ def run_derivations(directory: Path, ideas: list, *, log=print, spec: dict = Non
             log("%s derivation %d: the instance does not match (%s); asking again"
                 % (idea["idea_id"], index, "; ".join(problems)))
             retry_id = "derivation_%d" % index
-            correction = (_derivation_prompt(idea) +
+            correction = (_derivation_prompt(idea, spec) +
                           "\n\nYOUR PREVIOUS DERIVATION DID NOT FIT THE INSTANCE: " +
                           "; ".join(problems) +
                           ". Use exactly the arguments listed in the FIXED INSTANCE "
