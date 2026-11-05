@@ -61,15 +61,38 @@ class Eval:
 
 
 def _statements(spec: dict) -> list:
+    """The SymPy statements of the frozen surface."""
     surface = spec.get("continuous_surface") or {}
     return [str(item) for item in surface.get("statements") or []]
 
 
+def _executable(spec: dict) -> list:
+    """The statements a program can run, when the surface carries them.
+
+    The frozen surface states its mathematics as SymPy, because the reference
+    contract must equal it statement by statement. The executable form is kept
+    beside it, and the numeric eval runs THAT: the identities are properties of
+    the arithmetic, not of a symbolic spelling.
+    """
+    surface = spec.get("continuous_surface") or {}
+    executable = surface.get("executable_statements") or []
+    return [str(item) for item in executable]
+
+
 def _surface_text(spec: dict) -> str:
     surface = spec.get("continuous_surface") or {}
-    parts = list(_statements(spec))
-    parts.extend(str(value) for value in (surface.get("symbols") or {}).values())
+    parts = list(_executable(spec)) or list(_statements(spec))
+    symbols = surface.get("symbols") or {}
+    if isinstance(symbols, dict):
+        parts.extend(str(value) for value in symbols.values())
+    else:
+        parts.extend(str(value) for value in symbols)
     return "\n".join(parts)
+
+
+def _code(spec: dict) -> list:
+    """The statements a program can run, falling back to the SymPy ones."""
+    return _executable(spec) or _statements(spec)
 
 
 def _section(spec: dict, name: str) -> str:
@@ -99,7 +122,7 @@ def _distance_clamp(spec: dict) -> list:
     """The idea's artanh clamp, kept verbatim. A dropped clamp is a NaN at the
     ball boundary, which is reachable as tanh -> 1 rounds onto it."""
     problems = []
-    line = next((item for item in _statements(spec) if "atanh" in item), "")
+    line = next((item for item in _code(spec) if "atanh" in item), "")
     if line and not re.search(r"clamp|min\(", line):
         problems.append(
             "the distance computes atanh without a clamp on its argument: the "
@@ -113,7 +136,7 @@ def _distance_clamp(spec: dict) -> list:
 def _lift_zero(spec: dict) -> list:
     """LIFT(0) = 0 must hold by arithmetic, not by an unreachable branch."""
     problems = []
-    line = next((item for item in _statements(spec) if "def lift" in item), "")
+    line = next((item for item in _code(spec) if "def lift" in item), "")
     if not line:
         return ["no lift statement is given"]
     if "where" in line and "_norm(v)" in line.split("where", 1)[1][:60]:
@@ -343,7 +366,8 @@ def run_numeric(spec: dict, *, python: str = TORCH_PYTHON) -> dict:
     something else. The eval drives the specification's own functions with
     inputs of its own choosing; it never trusts the statement order.
     """
-    statements = [item for item in _statements(spec)
+    source = _executable(spec) or _statements(spec)
+    statements = [item for item in source
                   if item.lstrip().startswith("def ") or item.lstrip().startswith("eps =")]
     if not any("def lift" in item for item in statements):
         return {"id": "numeric-identities", "title": "the geometry runs",
