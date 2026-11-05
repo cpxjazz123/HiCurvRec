@@ -3094,12 +3094,54 @@ def _round_phase(round_id: str, phase: str) -> dict:
         return {"round_id": round_id, "phase": phase, "ran": False,
                 "step": state.get("step"), "reason": str(exc)}
     try:
-        result = getattr(round_worker, "phase_" + phase)(REPO, round_id)
+        result = _phase_in_the_runner(round_id, phase, round_worker)
     finally:
         lock.release()
     result["round_id"] = round_id
     result["summary"] = round_pipeline_summary(directory)
     return result
+
+
+def _phase_in_the_runner(round_id: str, phase: str, round_worker) -> dict:
+    """Run a phase where its dependencies exist.
+
+    A phase that creates agents needs the Agents SDK and pydantic, and this
+    server is a stdlib-only python3. Those phases therefore run in the
+    interpreter that carries them, through the round runner, and the phase's
+    own code stays the single implementation of the phase. A phase that only
+    reads or writes files runs here.
+    """
+    import subprocess
+    import sys as _sys
+
+    from tools.research import settings as research_settings
+
+    runner = getattr(research_settings, "AGENT_RUNNER_PYTHON", "")
+    agent_phases = {"ideation", "probe", "scoring", "formulation", "coding",
+                    "derivation", "implementation"}
+    if phase not in agent_phases or not runner or not Path(runner).exists():
+        return getattr(round_worker, "phase_" + phase)(REPO, round_id)
+    if str(REPO) not in _sys.path:
+        _sys.path.insert(0, str(REPO))
+    command = [runner, "-m", "tools.research.agent_flow.run",
+               "--round", round_id, "--repo", str(REPO), "--phases", phase]
+    done = subprocess.run(command, cwd=str(REPO), capture_output=True, text=True)
+    payload = None
+    for line in reversed((done.stdout or "").splitlines()):
+        line = line.strip()
+        if line.startswith("{"):
+            import json as _json
+            try:
+                payload = _json.loads(done.stdout[done.stdout.index(line):])
+            except ValueError:
+                payload = None
+            break
+    if isinstance(payload, dict) and isinstance(payload.get("phases"), dict):
+        return payload["phases"].get(phase) or {"phase": phase, "ran": False,
+                                                "reason": "the runner reported nothing"}
+    return {"phase": phase, "ran": False,
+            "reason": "the round runner failed: " +
+                      ((done.stderr or done.stdout or "").strip()[-500:])}
 
 
 def round_pipeline_state(directory: Path) -> dict:

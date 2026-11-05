@@ -28,7 +28,12 @@ def _scratch_dir(tree: Path) -> Path:
     resolves the repository root.
     """
     root = contract.resolve_root()
-    scratch = root.joinpath("results", "stage2_RQ-VAE", "_conformance", Path(tree).name)
+    # The name of the tree decides the directory, not its path: the entry check
+    # runs the promoted copy, and the identifier check reads what it wrote.
+    name = Path(tree).name
+    if name.startswith("_admission_"):
+        name = name[len("_admission_"):]
+    scratch = root.joinpath("results", "stage2_RQ-VAE", "_conformance", name)
     scratch.mkdir(parents=True, exist_ok=True)
     return scratch
 
@@ -86,9 +91,38 @@ def check_constants(tree: Path | str) -> dict:
             "detail": "the frozen constants match and the launcher is the framework's"}
 
 
+def _admission_tree(tree: Path) -> Path:
+    """A copy of the tree at the place the trainer will really run.
+
+    A trainer derives the repository root from the stage2_RQ-VAE marker, so a
+    tree that sits under results/ (the round workspace) resolves a different
+    root than the tree that is promoted to stage2_RQ-VAE/ for the training. The
+    admission must judge the tree where it will train, or it judges a tree that
+    cannot start: the copy is a direct child of stage2_RQ-VAE/, so the marker
+    resolves to the repository root in both places.
+    """
+    import shutil
+
+    root = contract.resolve_root()
+    target = root / "stage2_RQ-VAE" / ("_admission_" + tree.name)
+    if target.exists():
+        shutil.rmtree(target)
+    shutil.copytree(tree, target)
+    return target
+
+
+def _discard_admission_tree(tree: Path) -> None:
+    """Remove the admission copy, so a later run starts from the tree itself."""
+    import shutil
+
+    root = contract.resolve_root()
+    target = root / "stage2_RQ-VAE" / ("_admission_" + tree.name)
+    if target.is_dir():
+        shutil.rmtree(target, ignore_errors=True)
+
 def check_entry(tree: Path | str) -> dict:
     """The real entry point runs one epoch in this process and exports a SID."""
-    tree = Path(tree).resolve()
+    tree = _admission_tree(Path(tree).resolve())
     entry = tree / "train_rqvae.py"
     if not entry.is_file():
         return {"status": "FAIL", "name": "entry", "detail": "the entry point is missing"}
@@ -169,7 +203,7 @@ def _visible_device_list() -> str:
 
 def check_four_rank(tree: Path | str) -> dict:
     """The four-rank step finishes and a rank-0 evaluation does not wait."""
-    tree = Path(tree).resolve()
+    tree = _admission_tree(Path(tree).resolve())
     # The four-rank property is a framework invariant, not the mechanism's own
     # artifact: the probe lives in the framework and runs with the candidate tree
     # as its working directory, so a candidate that ships no script of its own is
@@ -416,7 +450,7 @@ def check_encoder_gradient(tree: Path | str) -> dict:
     encoder through the commitment term even when the straight-through is
     missing) and reports whether the encoder's parameters received a gradient.
     """
-    tree = Path(tree).resolve()
+    tree = _admission_tree(Path(tree).resolve())
     command = [_python_for(), "-m", "tools.research.stage2.gradient_probe",
                "--tree", str(tree)]
     import os
@@ -462,5 +496,6 @@ def run_all(tree: Path | str) -> dict:
                      if check.get("name") == "reference_agreement")
     passed = all(check["status"] == "PASS" for check in checks[:-1])
     admissible = bool(passed and reference.get("status") == "PASS")
+    _discard_admission_tree(tree)
     return {"tree": str(tree), "passed": passed, "admissible": admissible,
             "checks": checks}

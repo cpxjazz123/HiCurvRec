@@ -18,6 +18,37 @@ import sys
 from pathlib import Path
 
 
+def _call_model(model, embeddings, ids):
+    """Call the candidate's model, whatever its forward takes.
+
+    A candidate's model may take the item ids beside the embeddings and may
+    return the reconstruction's reference beside the other four values; the
+    frozen baseline's model takes the embeddings alone and returns four. The
+    probe asks one question - does the reconstruction reach the encoder - so it
+    adapts to the interface instead of demanding one.
+    """
+    import inspect
+
+    try:
+        signature = inspect.signature(model.forward)
+    except (TypeError, ValueError):
+        signature = None
+    # A DDP wrapper's forward takes *inputs, so the POSITIONAL parameters are
+    # counted, not the names: only a model that declares a second positional
+    # argument receives the ids.
+    positional = []
+    if signature is not None:
+        positional = [parameter for parameter in signature.parameters.values()
+                      if parameter.kind in (parameter.POSITIONAL_ONLY,
+                                            parameter.POSITIONAL_OR_KEYWORD)]
+    result = model(embeddings, ids) if len(positional) > 1 else model(embeddings)
+    if isinstance(result, (tuple, list)):
+        values = list(result)
+    else:
+        values = [result]
+    reference = values[4] if len(values) >= 5 else embeddings
+    return values, reference
+
 def probe(tree: Path, *, batch: int = 64, seed: int = 7) -> dict:
     import torch
 
@@ -61,7 +92,8 @@ def probe(tree: Path, *, batch: int = 64, seed: int = 7) -> dict:
     model = RQVAE(config, in_dim=dimension).to(device)
     embeddings = torch.randn(batch, dimension, device=device) * 0.05
     ids = torch.arange(batch, device=device)
-    reconstructed, _quant_loss, _unused, _tokens, reference = model(embeddings, ids)
+    values, reference = _call_model(model, embeddings, ids)
+    reconstructed = values[0]
     # ONLY the reconstruction: the quantisation loss would reach the encoder
     # through the commitment term even when the straight-through estimator is
     # missing, and that is exactly the failure this probe must see.

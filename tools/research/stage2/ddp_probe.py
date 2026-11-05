@@ -46,6 +46,34 @@ def _config(dim: int, codes: int) -> SimpleNamespace:
         frechet_eta=1.0)
 
 
+def _call_model(model, embeddings, ids):
+    """Call the candidate's model, whatever its forward takes.
+
+    A candidate's model may take the item ids beside the embeddings and may
+    return the reconstruction's reference beside the other four values; the
+    frozen baseline's model takes the embeddings alone and returns four. The
+    probe asks one question - does the step work under DDP - so it adapts to
+    the interface instead of demanding one.
+    """
+    import inspect
+
+    try:
+        signature = inspect.signature(model.forward)
+    except (TypeError, ValueError):
+        signature = None
+    # A DDP wrapper's forward takes *inputs, so the POSITIONAL parameters are
+    # counted, not the names: only a model that declares a second positional
+    # argument receives the ids.
+    positional = []
+    if signature is not None:
+        positional = [parameter for parameter in signature.parameters.values()
+                      if parameter.kind in (parameter.POSITIONAL_ONLY,
+                                            parameter.POSITIONAL_OR_KEYWORD)]
+    result = model(embeddings, ids) if len(positional) > 1 else model(embeddings)
+    values = list(result) if isinstance(result, (tuple, list)) else [result]
+    reference = values[4] if len(values) >= 5 else embeddings
+    return values, reference
+
 def main() -> int:
     tree = Path.cwd()
     if str(tree) not in sys.path:
@@ -94,7 +122,8 @@ def main() -> int:
     optimizer = torch.optim.AdamW([p for p in wrapped.parameters() if p.requires_grad], lr=1e-3)
     for _ in range(3):
         optimizer.zero_grad(set_to_none=True)
-        recon, quant_loss, *_ = wrapped(embeddings, ids)
+        values, _reference = _call_model(wrapped, embeddings, ids)
+        recon, quant_loss = values[0], values[1]
         loss = torch.nn.functional.mse_loss(recon, embeddings) + quant_loss
         if not torch.isfinite(loss):
             raise SystemExit("the four-rank loss is not finite")
@@ -125,7 +154,20 @@ def main() -> int:
             with torch.no_grad():
                 raw.eval()
                 if hasattr(raw, "get_indices"):
-                    raw.get_indices(embeddings, infer_use_sk=False, item_ids=ids)
+                    # the item ids are optional: a candidate whose model takes
+                    # them gets them, the frozen baseline's does not
+                    import inspect as _inspect
+                    try:
+                        _spec = _inspect.signature(raw.get_indices)
+                        _wants = any(parameter.kind == parameter.KEYWORD_ONLY
+                                     and parameter.name == "item_ids"
+                                     for parameter in _spec.parameters.values())
+                    except (TypeError, ValueError):
+                        _wants = False
+                    if _wants:
+                        raw.get_indices(embeddings, infer_use_sk=False, item_ids=ids)
+                    else:
+                        raw.get_indices(embeddings, infer_use_sk=False)
                 else:
                     raw(embeddings, ids)
                 raw.train()
