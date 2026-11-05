@@ -1,0 +1,90 @@
+{
+ "version": 1,
+ "note": "Every defect a Math Review caught must end here: either as an eval in tools/research/rounds/evals.py that now refuses it, or as a documented 'not-decidable' with the reason it cannot be decided mechanically. A round cannot freeze while one of its findings matches no entry.",
+ "entries": [
+  {
+   "pattern": "artanh clamp|drops the idea's clamp|no clamp",
+   "decision": "eval",
+   "eval_id": "distance-clamp",
+   "source": "round 20261105_144909: two drafts dropped min(., 1 - 1e-6)"
+  },
+  {
+   "pattern": "zero-norm branch|dead guard|can never be true|_norm\\(v\\) <= eps",
+   "decision": "eval",
+   "eval_id": "lift-zero",
+   "source": "round 20261105_144909: a where-branch a norm carrying eps made unreachable"
+  },
+  {
+   "pattern": "no branch for c = 0|undefined at curvature 0|sqrt\\(c\\) in the denominators",
+   "decision": "eval",
+   "eval_id": "curvature-zero-branch",
+   "source": "round 20261105_144909: the surface had sqrt(c) with no Euclidean arm"
+  },
+  {
+   "pattern": "b_k = 0|0/0|max_k log\\(1 \\+ b_k\\) is 0|BEHAVIOUR_OFF justification",
+   "decision": "eval",
+   "eval_id": "behaviour-off-arithmetic",
+   "source": "round 20261105_144909: 'b_k = 0' is false (it is log 2) and hid a false 0/0"
+  },
+  {
+   "pattern": "single minibatch|per-batch|mean of per-batch means|m_i\\[None",
+   "decision": "eval",
+   "eval_id": "epoch-aggregation",
+   "source": "round 20261105_144909: b_raw formed from one batch and described as an epoch mean"
+  },
+  {
+   "pattern": "undefined on epoch-1|during epoch 1|epoch-1 batches|w for epoch 1",
+   "decision": "eval",
+   "eval_id": "epoch-one-weight",
+   "source": "round 20261105_144909: w needed a mean_scale that only exists after epoch 1"
+  },
+  {
+   "pattern": "which surface|pure geodesic distance|offset-adjusted score",
+   "decision": "eval",
+   "eval_id": "demand-surface",
+   "source": "round 20261105_144909: distance against score for p_ik was unstated"
+  },
+  {
+   "pattern": "RMS of the TRAINING-SPLIT latents|per-coordinate|ambiguous",
+   "decision": "eval",
+   "eval_id": "scale-definition",
+   "source": "round 20261105_144909: 'the RMS of the latents' had two readings"
+  },
+  {
+   "pattern": "UNLIFTED|unlifted|baseline position",
+   "decision": "eval",
+   "eval_id": "reconstruction-unlifted",
+   "source": "round 20261105_144909: the recursion could be read as using LIFT(a_k)"
+  },
+  {
+   "pattern": "levels 2 and 3 see exactly the baseline|byte-identical to baseline",
+   "decision": "eval",
+   "eval_id": "code-identity-not-input-identity",
+   "source": "round 20261105_144909: identical code was written as identical inputs"
+  },
+  {
+   "pattern": "frozen demand b_raw|b_raw is not frozen|not frozen, it is a detached",
+   "decision": "eval",
+   "eval_id": "demand-buffer-not-frozen",
+   "source": "round 20261105_144909: b_raw is a per-epoch buffer, not a frozen parameter"
+  },
+  {
+   "pattern": "radius-to-scale|dimensionless",
+   "decision": "eval",
+   "eval_id": "rho-label",
+   "source": "round 20261105_144909: rho = s/R_c, so 'radius-to-scale' inverts it"
+  },
+  {
+   "pattern": "the note is misleading|wording could mislead|be reworded",
+   "decision": "not-decidable",
+   "note": "Prose clarity is not mechanically decidable. It stays with the reviewers, and an eval that guessed at it would refuse correct specifications.",
+   "source": "round 20261105_144909: prose-level findings"
+  },
+  {
+   "pattern": "does this curvature supervision collapse|mechanism may be unsound",
+   "decision": "not-decidable",
+   "note": "Whether a mechanism improves recall is an experiment, not a check. It stays research evidence for the Idea Agents and is judged by Stage 3 test_recall@10.",
+   "source": "the research programme itself"
+  }
+ ]
+}

@@ -24,6 +24,7 @@ from ..agents import policy, progress_server, runner
 from ..core.evidence import atomic_json, digest_file, read_json
 from . import agents as agent_contracts
 from . import baseline as baseline_module
+from . import module_differential
 from . import evals as evals_module
 from . import evidence as evidence_module
 from . import ideas as ideas_module
@@ -1715,6 +1716,24 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
         rejected = [review for review in reviews
                     if str(review.get("verdict", "")).upper() != "PASS"]
         if not rejected:
+            # Every defect an earlier attempt caught must have a decision before
+            # the specification is frozen: an eval that now refuses it, or a
+            # recorded reason it is not mechanically decidable.
+            history_findings = [finding
+                                for attempt_record in state.get("math_review_history") or []
+                                for finding in attempt_record.get("findings") or []]
+            undecided = evals_module.undecided(history_findings)
+            if undecided:
+                state["math_review_findings"] = undecided
+                state["eval_ledger_undecided"] = undecided
+                pipeline_module.save_state(directory, state)
+                log("formulation: %d findings have no eval and no recorded reason"
+                    % len(undecided))
+                raise pipeline_module.RoundError(
+                    "every finding a review caught must be decided before the "
+                    "freeze: add an eval to tools/research/rounds/evals.py or an "
+                    "entry to tools/research/rounds/eval_ledger.json for: " +
+                    "; ".join(str(finding)[:120] for finding in undecided[:3]))
             gate = evals_module.run(spec)
             state["spec_eval_gate"] = {"passed": gate["passed"],
                                        "checked": gate["checked"],
@@ -1739,6 +1758,12 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
         findings = [finding for review in rejected
                     for finding in review.get("findings") or []]
         state["math_review_findings"] = findings
+        history = state.setdefault("math_review_history", [])
+        history.append({"attempt": attempt + 1,
+                        "verdicts": [str(review.get("verdict", "")) for review in reviews],
+                        "findings": findings,
+                        "recorded_at": __import__("datetime").datetime.now(
+                            __import__("datetime").timezone.utc).isoformat()})
         pipeline_module.save_state(directory, state)
         log("formulation: the reviewers asked for %d changes" % len(findings))
     raise pipeline_module.RoundError(
@@ -1806,7 +1831,17 @@ def _parse_coding(text: str) -> dict:
         if isinstance(payload, dict) and payload.get("module"):
             return {"module": str(payload.get("module")),
                     "notes": str(payload.get("notes") or "")}
-    return {"module": "", "notes": ""}
+    # A coding agent may answer with the module itself instead of a JSON object
+    # carrying it: both are evidence, and a fence around the code is stripped.
+    module = text.strip()
+    if "```" in module:
+        blocks = []
+        for part in module.split("```")[1::2]:
+            body = part.split("\n", 1)[1] if "\n" in part else part
+            blocks.append(body)
+        if blocks:
+            module = max(blocks, key=len).strip()
+    return {"module": module, "notes": ""}
 
 
 def phase_coding(root: Path, round_id: str, *, log=print) -> dict:
@@ -1839,7 +1874,11 @@ def phase_coding(root: Path, round_id: str, *, log=print) -> dict:
                             _parse_coding, role="code", read_paths=[],
                             allowed_roots=_round_roots(directory))
         module = answer.get("module") or ""
-        target = directory / "agents" / task_id / "module.py"
+        if not module.strip():
+            raise pipeline_module.RoundError(
+                "%s answered with no module: its answer file is kept as evidence "
+                "at agents/%s/module.py and is not overwritten" % (task_id, task_id))
+        target = directory / "agents" / task_id / "implementation.py"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(module, encoding="utf-8")
         implementations.append({
@@ -1852,7 +1891,9 @@ def phase_coding(root: Path, round_id: str, *, log=print) -> dict:
             "notes": answer.get("notes") or "",
         })
         log("%s: %d bytes of module" % (task_id, len(module)))
-    verdict = differential_module.compare({"implementations": implementations})
+    # A coding agent answers with a module, so the three of them are compared as
+    # programs: same inputs, same switch arms, elementwise agreement.
+    verdict = module_differential.compare_modules(implementations, spec)
     state["coding"] = {"implementations": [{"name": entry["name"],
                                              "bytes": len(entry["code"])}
                                             for entry in implementations],

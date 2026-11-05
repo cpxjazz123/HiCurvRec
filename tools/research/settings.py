@@ -29,6 +29,11 @@ RESEARCH_PYTHON = "/home/wlia0047/ar57_scratch/wenyu/genrec_env/bin/python3.10"
 #: The chat model the agents are created with. Empty means the runtime
 #: refuses to run: an agent without a model is not an agent.
 AGENT_CHAT_MODEL = "deepseek/deepseek-v4.1-flash"
+#: The interpreter that carries the Agents SDK and pydantic. The MCP server is a
+#: stdlib-only python3 (it is started as ``/usr/bin/python3``), so an agent phase
+#: cannot run inside it: it starts this interpreter instead, which runs the same
+#: phase through ``tools.research.agent_flow.run``.
+AGENT_RUNNER_PYTHON = "/apps/anaconda/2024.02-1/bin/python3"
 #: "on" makes the SDK enforce the JSON schema on the agent's answer (the
 #: structured output the SDK supports natively). A provider that refuses
 #: response_format=json_schema falls back to the prompted JSON, once per agent.

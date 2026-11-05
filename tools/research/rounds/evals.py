@@ -224,6 +224,45 @@ def _reconstruction_unlifted(spec: dict) -> list:
     return problems
 
 
+def _code_identity_not_input_identity(spec: dict) -> list:
+    """Levels 2 and 3 share the baseline's CODE, not its inputs: the level-1
+    choice changed, so their inputs changed with it."""
+    problems = []
+    text = _section(spec, "mechanism") + "\n" + _computation(spec, "residual recursion")
+    if re.search(r"levels?\s*2\s*(and|&)\s*3\s+see\s+exactly\s+the\s+baseline",
+                 text, re.IGNORECASE):
+        problems.append(
+            "the specification says levels 2 and 3 SEE the baseline's inputs: "
+            "their code is identical, but their inputs follow the level-1 "
+            "choice, which the mechanism changes")
+    return problems
+
+
+def _demand_buffer_not_frozen(spec: dict) -> list:
+    """b_raw is a buffer updated per epoch, not a frozen parameter."""
+    problems = []
+    text = _section(spec, "parameters") + "\n" + _computation(spec, "behaviour demand")
+    if re.search(r"frozen demand|frozen b_raw", text, re.IGNORECASE) and not re.search(
+            r"not frozen|NOT frozen", text):
+        problems.append(
+            "the parameters call b_raw a frozen demand: it is a detached buffer "
+            "updated once per epoch, and an implementation that freezes it would "
+            "never see the measurement")
+    return problems
+
+
+def _rho_label(spec: dict) -> list:
+    """rho is a ratio of lengths, so its label must not invert the scale."""
+    problems = []
+    text = _computation(spec, "scale") + "\n" + _section(spec, "parameters")
+    if re.search(r"radius-to-scale", text, re.IGNORECASE) and not re.search(
+            r"s/R_c|R_c = s/rho", text):
+        problems.append(
+            "rho is called a radius-to-scale ratio while R_c = s/rho: the label "
+            "inverts the ratio, and R_c is the radius, s the scale")
+    return problems
+
+
 EVALS = (
     Eval("distance-clamp", "the distance keeps the artanh clamp",
          "round 20261105_144909: a draft dropped min(., 1 - 1e-6)",
@@ -252,6 +291,15 @@ EVALS = (
     Eval("reconstruction-unlifted", "reconstruction uses the unlifted codeword",
          "round 20261105_144909: the recursion could be read as using LIFT(a_k)",
          _reconstruction_unlifted),
+    Eval("code-identity-not-input-identity", "levels 2/3 share the code, not the inputs",
+         "round 20261105_144909: 'levels 2 and 3 see exactly the baseline's inputs'",
+         _code_identity_not_input_identity),
+    Eval("demand-buffer-not-frozen", "the demand buffer is updated, not frozen",
+         "round 20261105_144909: the parameters called b_raw a frozen demand",
+         _demand_buffer_not_frozen),
+    Eval("rho-label", "rho's label does not invert the ratio",
+         "round 20261105_144909: 'radius-to-scale ratio' against R_c = s/rho",
+         _rho_label),
 )
 
 
@@ -358,3 +406,41 @@ def run(spec: dict, *, numeric=None) -> dict:
         "findings": [problem for failure in failures
                      for problem in failure.get("problems") or []],
     }
+
+
+# ---- the ledger: a caught defect must be decided, not forgotten -------------
+
+#: Where the decisions live: one entry per defect class, either an eval that now
+#: refuses it or a documented reason it cannot be decided mechanically.
+LEDGER_PATH = Path(__file__).with_name("eval_ledger.json")
+
+
+def ledger(path: Path = None) -> list:
+    """The recorded decisions, oldest first."""
+    target = Path(path) if path else LEDGER_PATH
+    if not target.exists():
+        return []
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    return list(payload.get("entries") or [])
+
+
+def resolve(finding: str, entries: list = None) -> dict | None:
+    """The ledger entry a finding falls under, or None."""
+    text = str(finding or "")
+    for entry in entries if entries is not None else ledger():
+        pattern = str(entry.get("pattern") or "")
+        if pattern and re.search(pattern, text, re.IGNORECASE):
+            return entry
+    return None
+
+
+def undecided(findings: list, entries: list = None) -> list:
+    """The findings no ledger entry covers.
+
+    A round may not freeze while one of its findings has no decision: the
+    decision is either an eval that now refuses the defect or a recorded reason
+    it is not mechanically decidable. That is the whole point of the ledger -
+    the next round inherits the refusal, not a memory of it.
+    """
+    decided = entries if entries is not None else ledger()
+    return [finding for finding in findings if resolve(finding, decided) is None]

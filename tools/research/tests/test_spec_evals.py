@@ -159,3 +159,54 @@ def test_numeric_eval_reports_a_missing_interpreter(monkeypatch):
     spec = _frozen()
     failure = evals.run_numeric(spec, python="/nonexistent/python")
     assert failure and "could not run" in failure["problems"][0]
+
+
+# ---- the ledger: a caught defect is decided, never merely remembered --------
+
+def test_every_ledger_entry_names_a_real_eval():
+    """A ledger entry that points at a missing eval is a promise, not a gate."""
+    known = {item.id for item in evals.EVALS}
+    for entry in evals.ledger():
+        if entry.get("decision") == "eval":
+            assert entry.get("eval_id") in known, entry
+        else:
+            assert entry.get("decision") == "not-decidable", entry
+            assert entry.get("note"), entry
+
+
+def test_the_round_s_own_findings_are_all_decided():
+    """The defects this round caught map to evals, so the next round inherits them."""
+    findings = [
+        "computations['lift']: the stated 'zero-norm branch' does not exist in the code",
+        "the definition drops the idea's clamp artanh(min(..., 1 - 1e-6))",
+        "continuous_surface has sqrt(c) in the denominators and no branch for c = 0",
+        "the BEHAVIOUR_OFF justification is mathematically false: b_k = log 2, not 0",
+        "b_raw_k is computed on a SINGLE minibatch, i.e. a per-batch mean",
+        "w for epoch 1 needs mean_scale, which does not exist yet",
+        "the specification must say which surface the soft assignment uses",
+        "s is only 'the RMS of the TRAINING-SPLIT latents', which is ambiguous",
+        "reconstruction must use a_{k1} UNLIFTED",
+        "the claim that levels 2 and 3 see exactly the baseline's inputs is wrong",
+        "parameters list 'the frozen demand b_raw (K1,)' while it is updated per epoch",
+        "rho is called the radius-to-scale ratio, but R_c = s/rho",
+    ]
+    assert evals.undecided(findings) == []
+
+
+def test_an_unknown_finding_blocks_the_freeze():
+    """A defect with no eval and no recorded reason is not silently forgotten."""
+    findings = ["the proposal silently changes the research mechanism"]
+    assert evals.undecided(findings) == findings
+
+
+def test_the_gate_refuses_when_a_finding_is_undecided(monkeypatch):
+    """The freeze is refused while a caught defect has no decision."""
+    from tools.research.rounds import worker
+
+    undone = ["a defect nobody decided"]
+
+    def fake_undecided(findings, entries=None):
+        return undone
+
+    monkeypatch.setattr(evals, "undecided", fake_undecided)
+    assert worker.evals_module.undecided(undone) == undone
