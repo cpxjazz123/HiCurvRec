@@ -29,7 +29,7 @@
   "write_root": "the agent's own workspace (the answer file)"
  },
  "prompt": {
-  "source": "tools/research/rounds/worker.py",
+  "source": "tools/research/rounds/step4_scoring.py",
   "function": "_rank_with_retry"
  },
  "answer_instructions": "Answer with ONE JSON object and nothing else: no prose, no markdown fence. Its keys are 'ranking' (a list of objects with 'idea_id', 'position' and 'reason') and 'objection' (a string).",

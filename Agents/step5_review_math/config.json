@@ -29,7 +29,7 @@
   "write_root": "the agent's own workspace (the answer file)"
  },
  "prompt": {
-  "source": "tools/research/rounds/worker.py",
+  "source": "tools/research/rounds/step5_formulation.py",
   "function": "_review_math_prompt"
  },
  "answer_instructions": "You REVIEW a mathematical specification against the idea it came from. You are not checking whether it can run: you are checking whether it FAITHFULLY expresses the idea, and whether the mathematics is correct, complete and unambiguous.\nAnswer with ONE JSON object and nothing else:\n{\"verdict\": \"PASS\" or \"REVISE\", \"findings\": [\"...\"], \"reason\": \"...\"}\nRules: REVISE if the specification changes the idea, if a computation is missing, if a formula is ambiguous or dimensionally inconsistent, if a sign, a scale or a limit is wrong, if the gradient path is not stated, or if the switches do not do what they claim. Say in every finding WHICH part is wrong and what it must be instead. PASS only if the specification is a faithful, complete and correct formulation of the idea.",

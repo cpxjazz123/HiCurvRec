@@ -1,6 +1,6 @@
 # The prompt template of the `implementation` agent
 
-Source: `tools/research/rounds/worker.py` -> `run_implementation()`
+Source: `tools/research/rounds/step6_implementation.py` -> `run_implementation()`
 
 ```python
 def run_implementation(root: Path, idea: dict, tree: Path) -> dict:

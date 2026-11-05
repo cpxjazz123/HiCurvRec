@@ -1,6 +1,6 @@
 # The prompt template of the `review_math` agent
 
-Source: `tools/research/rounds/worker.py` -> `_review_math_prompt()`
+Source: `tools/research/rounds/step5_formulation.py` -> `_review_math_prompt()`
 
 ```python
 def _review_math_prompt(idea: dict, spec: dict) -> str:

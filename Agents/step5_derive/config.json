@@ -29,7 +29,7 @@
   "write_root": "the agent's own workspace (the answer file)"
  },
  "prompt": {
-  "source": "tools/research/rounds/worker.py",
+  "source": "tools/research/rounds/step5_derivation.py",
   "function": "_derivation_prompt"
  },
  "answer_instructions": "You DERIVE one formula, independently. Your reply is ONE JSON object and nothing else: no prose before it, no prose after it, no markdown fence. You are given a specification and nothing else: you do not see any other derivation, its codes or its test results, and you must not ask for them.\nAnswer with ONE JSON object and nothing else:\n{\"symbols\": [\"x0\", \"x1\", \"p0\", \"p1\", \"n0\", \"n1\", \"m\"],\n \"args\": [{\"name\": \"x\", \"width\": 2, \"radius\": 0.4},\n          {\"name\": \"m\", \"scalar\": 0.2}],\n \"statements\": [\"dp = sqrt((x0-p0)**2 + (x1-p1)**2)\",\n                \"L = log(1 + exp(-(dp - dn + m)))\"],\n \"output\": \"L\",\n \"code\": \"import torch\\n\\ndef compute(x, m):\\n    ...\",\n \"excluded\": [\"the argmin assignment: not differentiable\"]}\nRules: the statements are SymPy expressions, one `name = expression` per line, evaluated in order, and `output` names the last one. `symbols` lists every free symbol in the order the arguments consume them (a tensor argument with width w consumes w symbols, one per column). `code` is a complete Python module defining `compute(**kwargs)` with exactly the argument names in `args`, returning a one-dimensional tensor, and it must compute the SAME formula as the statements - the verifier compares them. Use torch only. Do not train, do not touch a dataset, do not write files.",

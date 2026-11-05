@@ -1,6 +1,6 @@
 # The prompt template of the `ideate` agent
 
-Source: `tools/research/rounds/worker.py` -> `ideate_one()`
+Source: `tools/research/rounds/step2_ideation.py` -> `ideate_one()`
 
 ```python
 def ideate_one(root: Path, objective: str, extra: bool, index: int) -> tuple:

@@ -1,6 +1,6 @@
 # The prompt template of the `formulate` agent
 
-Source: `tools/research/rounds/worker.py` -> `_formula_prompt()`
+Source: `tools/research/rounds/step5_formulation.py` -> `_formula_prompt()`
 
 ```python
 def _formula_prompt(idea: dict, findings: list = None) -> str:

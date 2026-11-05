@@ -1,6 +1,6 @@
 # The prompt template of the `score` agent
 
-Source: `tools/research/rounds/worker.py` -> `_rank_with_retry()`
+Source: `tools/research/rounds/step4_scoring.py` -> `_rank_with_retry()`
 
 ```python
 def _rank_with_retry(root: Path, task_id: str, prompt: str) -> dict:

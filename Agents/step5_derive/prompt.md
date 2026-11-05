@@ -1,6 +1,6 @@
 # The prompt template of the `derive` agent
 
-Source: `tools/research/rounds/worker.py` -> `_derivation_prompt()`
+Source: `tools/research/rounds/step5_derivation.py` -> `_derivation_prompt()`
 
 ```python
 def _derivation_prompt(idea: dict) -> str:

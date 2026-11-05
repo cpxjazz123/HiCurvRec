@@ -1,6 +1,6 @@
 # The prompt template of the `code` agent
 
-Source: `tools/research/rounds/worker.py` -> `_coding_prompt()`
+Source: `tools/research/rounds/step5_coding.py` -> `_coding_prompt()`
 
 ```python
 def _coding_prompt(spec: dict) -> str:

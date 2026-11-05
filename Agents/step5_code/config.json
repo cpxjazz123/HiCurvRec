@@ -29,7 +29,7 @@
   "write_root": "the agent's own workspace (the answer file)"
  },
  "prompt": {
-  "source": "tools/research/rounds/worker.py",
+  "source": "tools/research/rounds/step5_coding.py",
   "function": "_coding_prompt"
  },
  "answer_instructions": "You IMPLEMENT a frozen mathematical specification. The specification is the only authority: you may not reinterpret it, simplify it, or change a sign, a scale or a limit. If you believe the specification is wrong, say so in `notes` and implement it as written.\nAnswer with ONE JSON object and nothing else:\n{\"module\": \"import torch\\n\\ndef compute(...): ...\",\n \"notes\": \"anything the verifier must know\"}\nRules: `module` is a complete Python module that defines the callable the specification's continuous_surface names, with exactly its arguments in its order, and it computes the specification's statements. Use torch only. Do not train, do not read a dataset, do not write files.",

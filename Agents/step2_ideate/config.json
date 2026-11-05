@@ -29,7 +29,7 @@
   "write_root": "the agent's own workspace (the answer file)"
  },
  "prompt": {
-  "source": "tools/research/rounds/worker.py",
+  "source": "tools/research/rounds/step2_ideation.py",
   "function": "ideate_one"
  },
  "answer_instructions": "Answer with ONE JSON object and nothing else: no prose, no markdown fence. Its keys are: idea_id, title, motivation, novelty, key_change, specification, cost_estimate, falsifiable_hypothesis, risks, behavior_signal, behavior_computation, leakage_boundary, hyperbolic_operator, hyperbolic_location, coupling_path, coupling_equation, observables, ablation_behavior_off, ablation_geometry_off, ablation_both_on, spec_equations, spec_inputs_outputs, safeguards. Every key is a string except 'risks', which is a list of strings.",
