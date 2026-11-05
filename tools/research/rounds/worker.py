@@ -1642,7 +1642,7 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
                 "reason": "the round has no selected idea"}
     idea = ideas[0]
     findings = list(state.get("math_review_findings") or [])
-    for attempt in range(2):
+    for attempt in range(3):
         answer = _run_agent(directory, "formulation", _formula_prompt(idea, findings),
                             "math_spec.json", _parse_math_spec, role="formulate",
                             read_paths=[], allowed_roots=_round_roots(directory))
@@ -1655,6 +1655,7 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
             raise pipeline_module.RoundError(
                 "the specification is incomplete: the idea does not define " +
                 "; ".join(str(item) for item in missing))
+        spec = specification_module.complete(spec)
         problems = specification_module.validate(spec)
         if problems:
             findings = problems

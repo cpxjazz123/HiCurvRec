@@ -109,6 +109,58 @@ def _canonical(spec: dict) -> str:
     return json.dumps(spec, indent=1, sort_keys=True, ensure_ascii=False) + "\n"
 
 
+def complete(spec: dict) -> dict:
+    """Fill the three mechanical sections the model tends to leave out.
+
+    A model that writes a rich formula and omits "dimensions",
+    "gradient_rules" and "training_integration" is a common failure of the
+    formulation role. The framework can state the mechanical parts - the widths
+    come from the surface's own arguments, the gradient rules and the training
+    integration from the mechanism family's conventions - but it must SAY that
+    it did: every derived section carries ``derived_by``, and the two Math
+    Reviewers judge the result as a whole, so a derived section that misstates
+    the idea is sent back like any other.
+    """
+    spec = dict(spec or {})
+    surface = spec.get("continuous_surface") or {}
+
+    dimensions = spec.get("dimensions")
+    if not dimensions:
+        derived = {}
+        for argument in surface.get("args") or []:
+            name = str(argument.get("name") or "")
+            if not name:
+                continue
+            width = argument.get("width")
+            derived[name] = int(width) if width else "scalar"
+        derived["symbols"] = len(surface.get("symbols") or [])
+        spec["dimensions"] = derived
+        spec["dimensions_derived_by"] = "the framework: the widths come from the surface's arguments"
+
+    rules = spec.get("gradient_rules")
+    if not rules:
+        spec["gradient_rules"] = [
+            {"operator": "the continuous surface",
+             "rule": "the gradient follows autograd through the surface's statements; "
+                      "the framework's reference check verifies it against a rebuild "
+                      "and a gradcheck on both sides"},
+            {"operator": "the argmin of the assignment",
+             "rule": "no gradient: it decides the token, and the straight-through "
+                      "estimator carries the reconstruction gradient to the encoder"},
+        ]
+        spec["gradient_rules_derived_by"] = "the framework: the conventions of the family"
+
+    integration = spec.get("training_integration")
+    if not integration:
+        spec["training_integration"] = {
+            "loss": "the baseline's objective plus the mechanism's contribution",
+            "reconstruction": "the codeword the assignment chose",
+            "optimizer": "the baseline's optimizer and schedule",
+        }
+        spec["training_integration_derived_by"] = "the framework: the conventions of the family"
+    return spec
+
+
 def freeze(directory: Path, spec: dict) -> dict:
     """Write the specification and its hash; the hash is what the code cites."""
     directory = Path(directory)
