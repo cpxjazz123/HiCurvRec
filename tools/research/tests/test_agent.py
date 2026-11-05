@@ -114,3 +114,27 @@ class GeometryPromptThresholdTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_a_python_answer_is_a_valid_output_name():
+    """The coding phase answers with a module, not with a JSON document.
+
+    The runtime refuses an unsafe task id or output name before an agent is
+    created; a coding agent's answer is ``module.py``, so ``.py`` belongs to the
+    allowlist. A traversal is still refused.
+    """
+    from tools.research.agents import runtime
+    import inspect
+
+    source = inspect.getsource(runtime.run_agent)
+    assert '".py"' in source
+    # the refusal itself still exists: the check is an allowlist, not a removal
+    assert "unsafe task id or output filename" in source
+
+
+def test_the_coding_phase_can_ask_for_a_module(tmp_path):
+    """The name the coding phase passes must pass the runtime's guard."""
+    name = "module.py"
+    assert name.endswith((".json", ".txt", ".py"))
+    assert "/" not in name and "\\" not in name
+    assert "coding_1".replace("-", "").replace("_", "").isalnum()

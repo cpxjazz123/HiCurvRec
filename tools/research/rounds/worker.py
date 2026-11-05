@@ -24,6 +24,7 @@ from ..agents import policy, progress_server, runner
 from ..core.evidence import atomic_json, digest_file, read_json
 from . import agents as agent_contracts
 from . import baseline as baseline_module
+from . import evals as evals_module
 from . import evidence as evidence_module
 from . import ideas as ideas_module
 from . import literature as literature_module
@@ -1714,6 +1715,17 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
         rejected = [review for review in reviews
                     if str(review.get("verdict", "")).upper() != "PASS"]
         if not rejected:
+            gate = evals_module.run(spec)
+            state["spec_eval_gate"] = {"passed": gate["passed"],
+                                       "checked": gate["checked"],
+                                       "failures": gate["failures"]}
+            if not gate["passed"]:
+                findings = gate["findings"]
+                state["math_review_findings"] = findings
+                pipeline_module.save_state(directory, state)
+                log("formulation: the eval gate refused the specification (%s)"
+                    % ", ".join(failure["id"] for failure in gate["failures"]))
+                continue
             frozen = specification_module.freeze(directory, spec)
             state["math_spec"] = {"sha256": frozen["sha256"], "path": frozen["path"],
                                   "reviewed_by": len(reviews),

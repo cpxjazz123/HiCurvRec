@@ -33,12 +33,20 @@ AGENT_CHAT_MODEL = "deepseek/deepseek-v4.1-flash"
 #: structured output the SDK supports natively). A provider that refuses
 #: response_format=json_schema falls back to the prompted JSON, once per agent.
 AGENT_STRUCTURED_OUTPUT = "on"
-AGENT_TIMEOUT_SECONDS = 300
+AGENT_TIMEOUT_SECONDS = 900
 #: The deadline of one sub-agent of a round, counted from the moment the task is
 #: dispatched: the initialisation, the model calls, the retries and the
 #: wrap-up all fit in it. The agent's progress file is frozen when it passes,
 #: and a timeout is never a passing verdict.
-AGENT_DEADLINE_SECONDS = 300
+#:
+#: Fifteen minutes, not five: the cap exists so a looping agent cannot hold a
+#: round, not to truncate a legitimate read. A Math Reviewer reads the whole
+#: frozen specification (a few thousand words) before it can write a verdict,
+#: and a live review of a 17 KB specification hit 300 s twice with an empty
+#: progress file - it was still reading, not looping. A trivial one-line answer
+#: already costs ~80 s on this model, which leaves five minutes for the whole
+#: review under the old cap.
+AGENT_DEADLINE_SECONDS = 900
 #: How long before the deadline the agent is asked to wrap up. The progress
 #: tool says so in its answer, so the last record lands while there is time.
 AGENT_WRAPUP_MARGIN_SECONDS = 60

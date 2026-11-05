@@ -628,7 +628,7 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
               allow_write: bool = False, deadline_seconds: int | None = None,
               source_digest: str = "") -> Path:
     """Run one agent with the OpenAI Agents SDK and return its receipt path."""
-    if (not output_name.endswith((".json", ".txt")) or "/" in output_name
+    if (not output_name.endswith((".json", ".txt", ".py")) or "/" in output_name
             or "\\" in output_name
             or not task_id.replace("-", "").replace("_", "").isalnum()):
         raise ValueError("unsafe task id or output filename")
