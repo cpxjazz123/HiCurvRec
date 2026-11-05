@@ -1,0 +1,127 @@
+{
+ "description": "The JSON an ideation agent answers with.",
+ "properties": {
+  "idea_id": {
+   "title": "Idea Id",
+   "type": "string"
+  },
+  "title": {
+   "title": "Title",
+   "type": "string"
+  },
+  "motivation": {
+   "title": "Motivation",
+   "type": "string"
+  },
+  "novelty": {
+   "title": "Novelty",
+   "type": "string"
+  },
+  "key_change": {
+   "title": "Key Change",
+   "type": "string"
+  },
+  "specification": {
+   "title": "Specification",
+   "type": "string"
+  },
+  "cost_estimate": {
+   "title": "Cost Estimate",
+   "type": "string"
+  },
+  "falsifiable_hypothesis": {
+   "title": "Falsifiable Hypothesis",
+   "type": "string"
+  },
+  "risks": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Risks",
+   "type": "array"
+  },
+  "behavior_signal": {
+   "default": "",
+   "title": "Behavior Signal",
+   "type": "string"
+  },
+  "behavior_computation": {
+   "default": "",
+   "title": "Behavior Computation",
+   "type": "string"
+  },
+  "leakage_boundary": {
+   "default": "",
+   "title": "Leakage Boundary",
+   "type": "string"
+  },
+  "hyperbolic_operator": {
+   "default": "",
+   "title": "Hyperbolic Operator",
+   "type": "string"
+  },
+  "hyperbolic_location": {
+   "default": "",
+   "title": "Hyperbolic Location",
+   "type": "string"
+  },
+  "coupling_path": {
+   "default": "",
+   "title": "Coupling Path",
+   "type": "string"
+  },
+  "coupling_equation": {
+   "default": "",
+   "title": "Coupling Equation",
+   "type": "string"
+  },
+  "observables": {
+   "default": "",
+   "title": "Observables",
+   "type": "string"
+  },
+  "ablation_behavior_off": {
+   "default": "",
+   "title": "Ablation Behavior Off",
+   "type": "string"
+  },
+  "ablation_geometry_off": {
+   "default": "",
+   "title": "Ablation Geometry Off",
+   "type": "string"
+  },
+  "ablation_both_on": {
+   "default": "",
+   "title": "Ablation Both On",
+   "type": "string"
+  },
+  "spec_equations": {
+   "default": "",
+   "title": "Spec Equations",
+   "type": "string"
+  },
+  "spec_inputs_outputs": {
+   "default": "",
+   "title": "Spec Inputs Outputs",
+   "type": "string"
+  },
+  "safeguards": {
+   "default": "",
+   "title": "Safeguards",
+   "type": "string"
+  }
+ },
+ "required": [
+  "idea_id",
+  "title",
+  "motivation",
+  "novelty",
+  "key_change",
+  "specification",
+  "cost_estimate",
+  "falsifiable_hypothesis"
+ ],
+ "title": "IdeaPayload",
+ "type": "object",
+ "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

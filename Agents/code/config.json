@@ -1,0 +1,36 @@
+{
+ "role": "code",
+ "step": "5 - research_round_implement (coding)",
+ "agents_in_the_step": 3,
+ "brief": "Implements the frozen specification. Three coding agents work from the same frozen specification, in isolation; their agreement is the differential evidence, and a disagreement stops the candidate.",
+ "model": "deepseek/deepseek-v4.1-flash",
+ "structured_output": "on",
+ "output_schema": "CodingPayload",
+ "deadline_seconds": 900,
+ "timeout_seconds": 900,
+ "wrapup_margin_seconds": 60,
+ "tools": {
+  "tools": [
+   "read_file",
+   "list_directory",
+   "append_progress"
+  ],
+  "write_allowed": false,
+  "read_only_role": false,
+  "read_roots": [
+   "the agent's own workspace",
+   "the geometry contract (tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md)"
+  ],
+  "read_allowlist_patterns": [
+   "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md"
+  ],
+  "shell": false,
+  "write_root": "the agent's own workspace (the answer file)"
+ },
+ "prompt": {
+  "source": "tools/research/rounds/worker.py",
+  "function": "_coding_prompt"
+ },
+ "answer_instructions": "You IMPLEMENT a frozen mathematical specification. The specification is the only authority: you may not reinterpret it, simplify it, or change a sign, a scale or a limit. If you believe the specification is wrong, say so in `notes` and implement it as written.\nAnswer with ONE JSON object and nothing else:\n{\"module\": \"import torch\\n\\ndef compute(...): ...\",\n \"notes\": \"anything the verifier must know\"}\nRules: `module` is a complete Python module that defines the callable the specification's continuous_surface names, with exactly its arguments in its order, and it computes the specification's statements. Use torch only. Do not train, do not read a dataset, do not write files.",
+ "answer_file": "module.py"
+}

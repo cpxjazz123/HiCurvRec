@@ -1,0 +1,36 @@
+{
+ "role": "score",
+ "step": "4 - research_round_score",
+ "agents_in_the_step": 3,
+ "brief": "Ranks the proposals. Three reviewers order every proposal by the versioned rubric, each with a reason and an evidence id; the aggregation adds the ranks, breaks the ties by the declared order and keeps exactly one mechanism (the one-mechanism cap).",
+ "model": "deepseek/deepseek-v4.1-flash",
+ "structured_output": "on",
+ "output_schema": "RankPayload",
+ "deadline_seconds": 900,
+ "timeout_seconds": 900,
+ "wrapup_margin_seconds": 60,
+ "tools": {
+  "tools": [
+   "read_file",
+   "list_directory",
+   "append_progress"
+  ],
+  "write_allowed": false,
+  "read_only_role": true,
+  "read_roots": [
+   "the agent's own workspace",
+   "the geometry contract (tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md)"
+  ],
+  "read_allowlist_patterns": [
+   "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md"
+  ],
+  "shell": false,
+  "write_root": "the agent's own workspace (the answer file)"
+ },
+ "prompt": {
+  "source": "tools/research/rounds/worker.py",
+  "function": "_rank_with_retry"
+ },
+ "answer_instructions": "Answer with ONE JSON object and nothing else: no prose, no markdown fence. Its keys are 'ranking' (a list of objects with 'idea_id', 'position' and 'reason') and 'objection' (a string).",
+ "answer_file": "ranks.txt (rebuttal.txt for the bounded rebuttal)"
+}

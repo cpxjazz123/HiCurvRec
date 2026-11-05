@@ -1,0 +1,197 @@
+{
+ "$defs": {
+  "ComputationEntry": {
+   "description": "One computation of the mechanism, stated in full.",
+   "properties": {
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "definition": {
+     "title": "Definition",
+     "type": "string"
+    },
+    "inputs": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Inputs",
+     "type": "array"
+    },
+    "output": {
+     "default": "",
+     "title": "Output",
+     "type": "string"
+    },
+    "differentiable": {
+     "default": false,
+     "title": "Differentiable",
+     "type": "boolean"
+    },
+    "note": {
+     "default": "",
+     "title": "Note",
+     "type": "string"
+    }
+   },
+   "required": [
+    "name",
+    "definition"
+   ],
+   "title": "ComputationEntry",
+   "type": "object"
+  },
+  "ContinuousSurface": {
+   "description": "The differentiable surface the reference contract is built from.",
+   "properties": {
+    "name": {
+     "default": "",
+     "title": "Name",
+     "type": "string"
+    },
+    "callable": {
+     "default": "",
+     "title": "Callable",
+     "type": "string"
+    },
+    "symbols": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Symbols",
+     "type": "array"
+    },
+    "args": {
+     "items": {
+      "$ref": "#/$defs/DerivationArgument"
+     },
+     "title": "Args",
+     "type": "array"
+    },
+    "statements": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Statements",
+     "type": "array"
+    },
+    "output": {
+     "default": "",
+     "title": "Output",
+     "type": "string"
+    },
+    "note": {
+     "default": "",
+     "title": "Note",
+     "type": "string"
+    }
+   },
+   "title": "ContinuousSurface",
+   "type": "object"
+  },
+  "DerivationArgument": {
+   "description": "One argument of the derived function, as the verifier feeds it.",
+   "properties": {
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "width": {
+     "default": 1,
+     "title": "Width",
+     "type": "integer"
+    },
+    "radius": {
+     "default": 0.1,
+     "title": "Radius",
+     "type": "number"
+    },
+    "scalar": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Scalar"
+    }
+   },
+   "required": [
+    "name"
+   ],
+   "title": "DerivationArgument",
+   "type": "object"
+  }
+ },
+ "description": "The JSON a Formula Agent answers with: the mechanism as mathematics.\n\nThe specification covers EVERY computation the mechanism touches - the\nmetric, the behaviour's entry point, the assignment, the gradient path, the\nreconstruction, the switches - not only a loss.",
+ "properties": {
+  "mechanism": {
+   "default": "",
+   "title": "Mechanism",
+   "type": "string"
+  },
+  "computations": {
+   "items": {
+    "$ref": "#/$defs/ComputationEntry"
+   },
+   "title": "Computations",
+   "type": "array"
+  },
+  "inputs": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Inputs",
+   "type": "array"
+  },
+  "outputs": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Outputs",
+   "type": "array"
+  },
+  "parameters": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Parameters",
+   "type": "array"
+  },
+  "switches": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Switches",
+   "type": "array"
+  },
+  "excluded": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Excluded",
+   "type": "array"
+  },
+  "continuous_surface": {
+   "$ref": "#/$defs/ContinuousSurface"
+  },
+  "incomplete": {
+   "default": "",
+   "title": "Incomplete",
+   "type": "string"
+  },
+  "missing": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Missing",
+   "type": "array"
+  }
+ },
+ "title": "MathSpecPayload",
+ "type": "object",
+ "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

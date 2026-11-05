@@ -1,0 +1,84 @@
+{
+ "$defs": {
+  "DerivationArgument": {
+   "description": "One argument of the derived function, as the verifier feeds it.",
+   "properties": {
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "width": {
+     "default": 1,
+     "title": "Width",
+     "type": "integer"
+    },
+    "radius": {
+     "default": 0.1,
+     "title": "Radius",
+     "type": "number"
+    },
+    "scalar": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Scalar"
+    }
+   },
+   "required": [
+    "name"
+   ],
+   "title": "DerivationArgument",
+   "type": "object"
+  }
+ },
+ "description": "The JSON an independent derivation answers with.\n\nThe statements ARE the formula, in SymPy syntax; the code is the derivation's\nown torch implementation of the same statements. The deterministic verifier\ncompares the two, and compares the derivations with each other.\n\nThe SIGNATURE is not in the answer: the round fixes it, and a derivation\nthat invents its own arguments is a different function (an agent once wrote\nthe sampling radius into the field meant for a scalar value, and the whole\ncomparison broke). The agent fills the statements, the output name and the\ncode; the framework owns the arguments and the symbols.",
+ "properties": {
+  "statements": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Statements",
+   "type": "array"
+  },
+  "output": {
+   "default": "",
+   "title": "Output",
+   "type": "string"
+  },
+  "code": {
+   "default": "",
+   "title": "Code",
+   "type": "string"
+  },
+  "excluded": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Excluded",
+   "type": "array"
+  },
+  "symbols": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Symbols",
+   "type": "array"
+  },
+  "args": {
+   "items": {
+    "$ref": "#/$defs/DerivationArgument"
+   },
+   "title": "Args",
+   "type": "array"
+  }
+ },
+ "title": "DerivationPayload",
+ "type": "object",
+ "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

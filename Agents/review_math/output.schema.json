@@ -1,0 +1,25 @@
+{
+ "description": "The JSON a Math Reviewer answers with.",
+ "properties": {
+  "verdict": {
+   "default": "",
+   "title": "Verdict",
+   "type": "string"
+  },
+  "findings": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Findings",
+   "type": "array"
+  },
+  "reason": {
+   "default": "",
+   "title": "Reason",
+   "type": "string"
+  }
+ },
+ "title": "MathReviewPayload",
+ "type": "object",
+ "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

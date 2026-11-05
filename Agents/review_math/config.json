@@ -1,0 +1,36 @@
+{
+ "role": "review_math",
+ "step": "5 - research_round_implement (formulation)",
+ "agents_in_the_step": 2,
+ "brief": "Judges the specification against the idea it came from. Two reviewers check that the mathematics is faithful, complete and unambiguous, and every finding must arrive with a test that refuses the defect.",
+ "model": "deepseek/deepseek-v4.1-flash",
+ "structured_output": "on",
+ "output_schema": "MathReviewPayload",
+ "deadline_seconds": 900,
+ "timeout_seconds": 900,
+ "wrapup_margin_seconds": 60,
+ "tools": {
+  "tools": [
+   "read_file",
+   "list_directory",
+   "append_progress"
+  ],
+  "write_allowed": false,
+  "read_only_role": true,
+  "read_roots": [
+   "the agent's own workspace",
+   "the geometry contract (tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md)"
+  ],
+  "read_allowlist_patterns": [
+   "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md"
+  ],
+  "shell": false,
+  "write_root": "the agent's own workspace (the answer file)"
+ },
+ "prompt": {
+  "source": "tools/research/rounds/worker.py",
+  "function": "_review_math_prompt"
+ },
+ "answer_instructions": "You REVIEW a mathematical specification against the idea it came from. You are not checking whether it can run: you are checking whether it FAITHFULLY expresses the idea, and whether the mathematics is correct, complete and unambiguous.\nAnswer with ONE JSON object and nothing else:\n{\"verdict\": \"PASS\" or \"REVISE\", \"findings\": [\"...\"], \"reason\": \"...\"}\nRules: REVISE if the specification changes the idea, if a computation is missing, if a formula is ambiguous or dimensionally inconsistent, if a sign, a scale or a limit is wrong, if the gradient path is not stated, or if the switches do not do what they claim. Say in every finding WHICH part is wrong and what it must be instead. PASS only if the specification is a faithful, complete and correct formulation of the idea.",
+ "answer_file": "math_review.json"
+}

@@ -1,0 +1,18 @@
+{
+ "description": "The JSON a Coding Agent answers with: one module, implementing the spec.",
+ "properties": {
+  "module": {
+   "default": "",
+   "title": "Module",
+   "type": "string"
+  },
+  "notes": {
+   "default": "",
+   "title": "Notes",
+   "type": "string"
+  }
+ },
+ "title": "CodingPayload",
+ "type": "object",
+ "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

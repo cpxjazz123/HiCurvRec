@@ -1,0 +1,46 @@
+{
+ "$defs": {
+  "RankEntry": {
+   "description": "One ranked proposal.",
+   "properties": {
+    "idea_id": {
+     "title": "Idea Id",
+     "type": "string"
+    },
+    "position": {
+     "title": "Position",
+     "type": "integer"
+    },
+    "reason": {
+     "title": "Reason",
+     "type": "string"
+    }
+   },
+   "required": [
+    "idea_id",
+    "position",
+    "reason"
+   ],
+   "title": "RankEntry",
+   "type": "object"
+  }
+ },
+ "description": "The JSON a reviewer answers with.",
+ "properties": {
+  "ranking": {
+   "items": {
+    "$ref": "#/$defs/RankEntry"
+   },
+   "title": "Ranking",
+   "type": "array"
+  },
+  "objection": {
+   "default": "",
+   "title": "Objection",
+   "type": "string"
+  }
+ },
+ "title": "RankPayload",
+ "type": "object",
+ "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

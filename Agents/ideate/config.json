@@ -1,0 +1,36 @@
+{
+ "role": "ideate",
+ "step": "2 - research_round_ideate",
+ "agents_in_the_step": 5,
+ "brief": "Proposes mechanisms. Five agents answer independently, each with the round's objective, the scope contract and the evidence already gathered; the framework merges the answers, drops the duplicates and scores every surviving proposal. The agent may read nothing outside its own workspace: everything it needs is in the prompt.",
+ "model": "deepseek/deepseek-v4.1-flash",
+ "structured_output": "on",
+ "output_schema": "IdeaPayload",
+ "deadline_seconds": 900,
+ "timeout_seconds": 900,
+ "wrapup_margin_seconds": 60,
+ "tools": {
+  "tools": [
+   "read_file",
+   "list_directory",
+   "append_progress"
+  ],
+  "write_allowed": false,
+  "read_only_role": true,
+  "read_roots": [
+   "the agent's own workspace",
+   "the geometry contract (tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md)"
+  ],
+  "read_allowlist_patterns": [
+   "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md"
+  ],
+  "shell": false,
+  "write_root": "the agent's own workspace (the answer file)"
+ },
+ "prompt": {
+  "source": "tools/research/rounds/worker.py",
+  "function": "ideate_one"
+ },
+ "answer_instructions": "Answer with ONE JSON object and nothing else: no prose, no markdown fence. Its keys are: idea_id, title, motivation, novelty, key_change, specification, cost_estimate, falsifiable_hypothesis, risks, behavior_signal, behavior_computation, leakage_boundary, hyperbolic_operator, hyperbolic_location, coupling_path, coupling_equation, observables, ablation_behavior_off, ablation_geometry_off, ablation_both_on, spec_equations, spec_inputs_outputs, safeguards. Every key is a string except 'risks', which is a list of strings.",
+ "answer_file": "ideas.txt (ideas_extra.txt for the second pass)"
+}
