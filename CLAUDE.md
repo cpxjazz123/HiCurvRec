@@ -152,6 +152,9 @@
 
 ## 14. 公式参考实现：实现阶段的强制两写对照
 
+81. **数学规格先于实现：Idea / Formula / Coding 三责分离**。一轮在评分选出机制之后、进入实现之前，必须先走**公式阶段**：**Formula Agent** 只负责把**已选中的** Idea 写成完整数学定义，必须覆盖该机制涉及的**全部**关键计算（度量、行为如何进入代价、分配、梯度如何回到编码器、重构、每个开关的作用、以及明确排除的表面），并给出**可微表面**的 SymPy 语句；它**不得**改变 Idea 的机制，若 Idea 缺少机制必需的��义，必须返回 `SPECIFICATION_INCOMPLETE` 并列出缺什么，**不得**自行补假设。**两个 Math Review Agent** 独立检查该规格**是否忠实表达了 Idea**（不是“能不能跑”），并检查数学是否正确、完整、无歧义（符号、量纲、极限、梯度通路、开关语义）；任一评审不通过即退回 Formula Agent 修改一次。**冻结**由确定性程序完成：写出 `math_spec.json` 及其 sha256。**冻结之后 Coding Agent 只能按该规格实现**，不得重新解释或修改数学定义。
+82. **实现的数学必须就是冻结的数学**：`register_implementation` 在没有冻结规格时直接拒绝；候选树里的 `reference_contract.json` 的语句**必须逐条等于**冻结规格 `continuous_surface.statements`，否则拒绝并说明“实现的是重述而不是规格”。框架的参考契约检查因而校验的是「代码 vs 冻结规格」，不再依赖实现者手写的契约。
+
 74. **每个 Stage2 机制必须在候选树根部提交 `reference_contract.json`**，把自身**连续可微面**（距离、核、罚项、损失项、残差更新）写成 SymPy 语句：`symbols`（符号顺序）、`args`（参数名/宽度/采样域或标量）、`statements`（有序赋值）、`output`（输出表达式），并声明被比较的函数 `module:callable`。提案里的 `spec_equations` 与契约里的语句必须指向同一个公式。
 75. **参考实现由框架独立重建**：`tools/research/stage2/reference.py` 用 `sympytorch` 从这些语句生成参考模块，在双精度下比较候选实现与参考实现的**取值**（`torch.testing.assert_close`，rtol 1e-6 / atol 1e-8）、**梯度**（rtol 1e-5 / atol 1e-7），并在**候选实现与参考实现两侧**分别执行 `torch.autograd.gradcheck`。任一项不通过即 `FAIL`，禁止启动 Stage2。
 76. **准入接入**：`tools/research/stage2/checks.py::check_reference_agreement` 已并入 `run_all`；无契约文件的树记为 `NOT_APPLICABLE` 并保留理由，**不得**视为通过；契约存在但不一致即为 `FAIL`。检查在 Stage2 解释器下以子进程运行，超时 15 分钟。
