@@ -650,6 +650,67 @@ def _the_geometry_note_states_properties(spec: dict) -> list:
     return problems
 
 
+def _the_surface_does_not_bind_its_own_temperature(spec: dict) -> list:
+    """The plan's temperature is the baseline's; the listing must not add one."""
+    problems = []
+    code = "\n".join(_code(spec))
+    if re.search(r"^\s*tau\s*=\s*[0-9]", code, re.MULTILINE) and \
+            "sinkhorn" in code.lower():
+        problems.append("the listing binds its own temperature while the plan is the "
+                        "baseline's sinkhorn, which exponentiates the cost with the "
+                        "baseline's epsilon: a second temperature changes the plan")
+    return problems
+
+
+def _the_mechanisms_list_agrees_with_its_computations(spec: dict) -> list:
+    """The mechanism may not claim a change the computations deny."""
+    problems = []
+    mechanism = _section(spec, "mechanism")
+    computations = "\n".join(str(entry.get("definition") or "")
+                              for entry in spec.get("computations") or [])
+    if re.search(r"NO deviation from the framework's canonical straight-through",
+                 computations) and re.search(r"the ESTIMATOR -", mechanism):
+        problems.append("the mechanism lists the estimator as one of its changes "
+                        "while its computation states that the estimator IS the "
+                        "framework's canonical one: the two must agree")
+    return problems
+
+
+def _no_claim_that_the_ranking_ignores_the_scale(spec: dict) -> list:
+    """A degree-dependent statistic does not become scale-free by being ranked."""
+    problems = []
+    for entry in spec.get("computations") or []:
+        text = str(entry.get("definition") or "") + " " + str(entry.get("note") or "")
+        if re.search(r"never its magnitude|cannot dominate|the scaling cannot", text,
+                     re.IGNORECASE):
+            problems.append(
+                "the specification claims the ranking is free of the statistic's "
+                "scale, but the statistic carries an item-dependent degree factor: "
+                "a monotone transform does not remove it")
+    return problems
+
+
+def _the_surface_exercises_the_curvature_it_declares(spec: dict) -> list:
+    """The declared argument and the pinned constant must be the same curvature."""
+    problems = []
+    surface = spec.get("continuous_surface") or {}
+    declared = None
+    for entry in surface.get("args") or []:
+        if isinstance(entry, dict) and entry.get("name") == "curvature":
+            declared = entry.get("scalar")
+    pinned = None
+    for line in _code(spec):
+        match = re.match(r"^\s*c\s*=\s*([0-9.]+)", line)
+        if match:
+            pinned = float(match.group(1))
+    if declared is not None and pinned is not None and float(declared) != pinned:
+        problems.append(
+            "the surface declares the curvature %s while the listing pins c = %s: "
+            "the surface must exercise the curvature it declares"
+            % (declared, pinned))
+    return problems
+
+
 EVALS = (
     Eval("distance-clamp", "the distance keeps the artanh clamp",
          "round 20261105_144909: a draft dropped min(., 1 - 1e-6)",
@@ -706,6 +767,19 @@ EVALS = (
     Eval("surface-uses-its-arguments", "the listing uses the arguments it declares",
          "round 20261105_144909: the listing computed the curvature from s and ignored the declared argument",
          _surface_uses_its_arguments),
+    Eval("the-surface-does-not-bind-its-own-temperature", "the plan's temperature is the baseline's",
+         "round 20261106_020541: a stray tau in the listing would change the plan",
+         _the_surface_does_not_bind_its_own_temperature),
+    Eval("the-mechanisms-list-agrees-with-its-computations", "the mechanism and its computations agree",
+         "round 20261106_020541: the mechanism listed the estimator as a change while "
+         "the computation said there was none",
+         _the_mechanisms_list_agrees_with_its_computations),
+    Eval("no-claim-that-the-ranking-ignores-the-scale", "a ranking does not remove a degree factor",
+         "round 20261106_020541: the claim that the ranking is scale-free was false",
+         _no_claim_that_the_ranking_ignores_the_scale),
+    Eval("the-surface-exercises-the-curvature-it-declares", "the declared curvature is the pinned one",
+         "round 20261106_020541: the surface declared 0.25 while the listing pinned c = 1",
+         _the_surface_exercises_the_curvature_it_declares),
     Eval("offset-scale-is-one-global-quantile", "the amplitude is one quantile of the pooled batch",
          "round 20261106_020541: the reviewers found that a mean of the ranks' medians "
          "is not a quantile of anything",
