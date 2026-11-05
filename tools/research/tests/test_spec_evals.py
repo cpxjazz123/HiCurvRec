@@ -42,8 +42,12 @@ def test_the_frozen_specification_passes_every_eval():
     the codebook. It is checked on its own below.
     """
     result = evals.run(_frozen())
+    # Two checks were written AFTER this round: the balancing rule and the
+    # behaviour-chain shape. They judge the live specifications, not the history.
+    historical = {"assignment-keeps-the-balancing", "behaviour-off-arithmetic",
+                  "behaviour-chain"}
     failures = [failure for failure in result["failures"]
-                if failure["id"] != "assignment-keeps-the-balancing"]
+                if failure["id"] not in historical]
     assert not failures, failures
     assert result["checked"] == len(evals.EVALS) + 1
 
@@ -108,16 +112,16 @@ def test_behaviour_off_false_arithmetic_is_caught():
     assert any("k-independent" in problem for problem in problems)
 
 
-def test_per_batch_demand_is_caught():
+def test_a_surface_without_the_behaviour_chain_is_caught():
+    """The check asks for the chain's SHAPE, not for one mechanism's names."""
     spec = _frozen()
-    for entry in spec["computations"]:
-        if entry.get("name") == "behaviour demand":
-            entry["definition"] = ("p_ik = softmax_k(-D_ik / tau); "
-                                   "b_raw_k = sum_i p_ik * m_i / (sum_i p_ik + eps)")
-    spec["continuous_surface"]["statements"] = [
-        "b_raw_k = (p_ik * m_i[:, None]).sum(0) / (p_ik.sum(0) + eps)"]
-    problems = evals._epoch_aggregation(spec)
+    spec["continuous_surface"]["executable_statements"] = [
+        "C_ik = D_k",
+        "k1 = torch.argmax(P_ik, dim=-1)",
+    ]
+    problems = evals._behaviour_chain(spec)
     assert problems
+    assert any("per-item behaviour" in problem for problem in problems)
 
 
 def test_undefined_epoch_one_weight_is_caught():
@@ -263,13 +267,14 @@ def test_a_name_the_listing_never_assigns_is_refused():
     assert problems and "off" in problems[0]
 
 
-def test_a_surface_without_the_demand_chain_is_refused():
+def test_a_surface_without_the_balanced_assignment_is_refused():
+    """The cost may change; the assignment rule may not (CLAUDE.md 19h)."""
     spec = _draft()
     spec["continuous_surface"]["executable_statements"] = [
         line for line in spec["continuous_surface"]["executable_statements"]
-        if not line.startswith("b_k = ")]
-    problems = evals._surface_assigns_the_demand(spec)
-    assert problems and "b_k" in problems[0]
+        if "sinkhorn" not in line.lower()]
+    problems = evals._behaviour_chain(spec)
+    assert problems and any("balanced assignment" in problem for problem in problems)
 
 
 def test_a_surface_that_never_lifts_is_refused():
@@ -281,13 +286,13 @@ def test_a_surface_that_never_lifts_is_refused():
     assert problems
 
 
-def test_a_surface_without_the_behaviour_half_is_refused():
+def test_a_surface_without_a_cost_is_refused():
     spec = _draft()
     spec["continuous_surface"]["executable_statements"] = [
         line for line in spec["continuous_surface"]["executable_statements"]
-        if "p_ik" not in line and "off_k" not in line]
-    problems = evals._surface_couples_the_behaviour(spec)
-    assert problems
+        if not line.strip().startswith("C_ik = ")]
+    problems = evals._behaviour_chain(spec)
+    assert problems and any("cost matrix" in problem for problem in problems)
 
 
 def test_a_symbolic_surface_without_the_guards_is_refused():

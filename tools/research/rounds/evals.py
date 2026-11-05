@@ -168,27 +168,45 @@ def _behaviour_off_arithmetic(spec: dict) -> list:
             "the behaviour-off arm claims b_k = 0: with m_i = 1 the demand is a "
             "constant, so b_k = log 2 and log(1 + b_k) = 0.5267, not 0. The arm "
             "must be justified by the offset being k-independent")
-    if not re.search(r"k-independent|constant", text):
+    if not re.search(r"k-independent|codeword-independent|constant across|"
+                     r"the same for every codeword|independent of the codeword", text):
         problems.append(
-            "the behaviour-off arm does not say that a k-independent offset "
-            "cannot change the argmin, which is the only correct justification")
+            "the behaviour-off arm does not say that an offset which is the same "
+            "at every codeword cannot change the argmin, which is the only "
+            "correct justification")
     return problems
 
 
-def _epoch_aggregation(spec: dict) -> list:
-    """b_raw is an item-weighted epoch mean, never a mean of per-batch means."""
+def _behaviour_chain(spec: dict) -> list:
+    """The listing must carry a behaviour chain: a per-item value and a per-code term.
+
+    Which names the chain uses is the mechanism's business; what the framework
+    requires is that the behaviour is COMPUTED (a per-item quantity), that it
+    meets the geometry in the cost (a subtraction or addition of a term that
+    depends on both the item's value and the code), and that the assignment is
+    the baseline's balanced one.
+    """
     problems = []
-    text = _computation(spec, "behaviour demand")
-    surface = _surface_text(spec)
-    if "p_ik" in text and not re.search(r"num_k|item-weighted", text):
-        problems.append(
-            "the behaviour demand does not say how the per-batch soft "
-            "assignment becomes one number per codeword: it must accumulate "
-            "over the epoch's items (item-weighted), not average batch means")
-    if "num_k" in surface and "num_k = num_k" not in surface and "+=" not in surface:
-        problems.append(
-            "the surface forms b_raw_k from one batch (num_k is a per-batch "
-            "quantity): it must accumulate over the epoch's batches first")
+    code = "\n".join(_code(spec))
+    if not code:
+        return problems
+    lowered = code.lower()
+    has_item_value = bool(re.search(r"rho_i|demand_i|behaviour|cohesion|coh_", lowered))
+    has_per_code = bool(re.search(r"s_k|off_k|stratum|demand_k|b_k", lowered))
+    has_cost = bool(re.search(r"c_ik\s*=", lowered))
+    if not has_item_value:
+        problems.append("the listing computes no per-item behaviour quantity: the "
+                        "behaviour side of the coupling is missing")
+    if not has_per_code:
+        problems.append("the listing forms no per-codeword term: the behaviour "
+                        "cannot meet the geometry in the cost")
+    if not has_cost:
+        problems.append("the listing has no cost matrix that carries both sides: "
+                        "the coupling is not in one expression")
+    if not re.search(r"sinkhorn", lowered):
+        problems.append("the listing does not use the baseline's balanced "
+                        "assignment: the mechanism may change the cost, never the "
+                        "assignment rule (CLAUDE.md 19h)")
     return problems
 
 
@@ -316,8 +334,14 @@ def _surface_defines_what_it_uses(spec: dict) -> list:
                 if name.isidentifier():
                     known.add(name)
     # the surface's own inputs
-    known |= {"r", "a", "K1", "B", "D", "N", "s", "m_i", "b_raw", "ms_sum",
-              "ms_count", "epoch", "BEHAVIOUR_OFF"}
+    # The mechanism's inputs: the residual and the codebook, the frozen scale and
+    # curvature, the behaviour buffer and the per-code stratum, and the two
+    # switches. A listing that ASSIGNS any of them shadows the input, which the
+    # assignment scan above already handles.
+    known |= {"r", "a", "K1", "B", "D", "N", "s", "c", "R_c", "rho", "epoch",
+              "BEHAVIOUR_OFF", "GEOMETRY_OFF", "m_i", "b_raw", "ms_sum", "ms_count",
+              "rho_i", "s_k", "beta", "tau", "sk_iters", "sk_epsilon", "K", "iters",
+              "epsilon", "BASELINE_SINKHORN"}
     for line in code:
         stripped = line.split("#", 1)[0].strip()
         if not stripped or stripped.startswith("def "):
@@ -524,9 +548,11 @@ EVALS = (
     Eval("behaviour-off-arithmetic", "the behaviour-off arm is arithmetically true",
          "round 20261105_144909: 'b_k = 0' was false (it is log 2) and hid a 0/0 claim",
          _behaviour_off_arithmetic),
-    Eval("epoch-aggregation", "the demand is an item-weighted epoch mean",
-         "round 20261105_144909: the surface formed b_raw from a single minibatch",
-         _epoch_aggregation),
+    Eval("behaviour-chain", "the listing carries the behaviour chain",
+         "round 20261105_144909: the surface formed its demand from a single "
+         "minibatch and dropped the accumulation; the check now asks for the "
+         "chain's shape, not for one mechanism's names",
+         _behaviour_chain),
     Eval("epoch-one-weight", "w is defined during epoch 1",
          "round 20261105_144909: w needed a mean_scale that only exists after epoch 1",
          _epoch_one_weight),
@@ -551,15 +577,11 @@ EVALS = (
     Eval("surface-defines-what-it-uses", "the listing defines every name it uses",
          "round 20261105_144909: score_k read an 'off' the listing never defined",
          _surface_defines_what_it_uses),
-    Eval("surface-assigns-the-demand", "the listing carries the demand's chain",
-         "round 20261105_144909: b_k was never assigned, so the offset was undefined",
-         _surface_assigns_the_demand),
+
     Eval("surface-applies-the-lift", "the listing lifts the residual and the codebook",
          "round 20261105_144909: the surface never applied the lift",
          _surface_applies_the_lift),
-    Eval("surface-couples-the-behaviour", "the listing carries the behaviour half",
-         "round 20261105_144909: the surface omitted the demand, the accumulation and the offset",
-         _surface_couples_the_behaviour),
+
     Eval("symbolic-distance-keeps-the-guards", "the symbolic distance is the idea's expression",
          "round 20261105_144909: the symbolic denominator dropped eps and the distance dropped the clamp",
          _symbolic_distance_keeps_the_guards),

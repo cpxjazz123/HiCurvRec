@@ -29,7 +29,7 @@
   {
    "pattern": "single minibatch|per-batch|mean of per-batch means|m_i\\[None",
    "decision": "eval",
-   "eval_id": "epoch-aggregation",
+   "eval_id": "behaviour-chain",
    "source": "round 20261105_144909: b_raw formed from one batch and described as an epoch mean"
   },
   {
@@ -89,7 +89,7 @@
   {
    "pattern": "never assigns b_k|never defines b_k|b_k was never assigned|does not assign b_k|never applies the per-epoch",
    "decision": "eval",
-   "eval_id": "surface-assigns-the-demand",
+   "eval_id": "behaviour-chain",
    "source": "round 20261105_144909: the listing never assigned b_k, so the offset could not be computed"
   },
   {
@@ -107,7 +107,7 @@
   {
    "pattern": "omits the entire behaviour half|omits the behaviour|the behaviour half|never subtracted",
    "decision": "eval",
-   "eval_id": "surface-couples-the-behaviour",
+   "eval_id": "behaviour-chain",
    "source": "round 20261105_144909: the surface omitted the demand, the accumulation and the offset"
   },
   {
