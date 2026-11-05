@@ -21,6 +21,27 @@ def run_flow(root: Path, round_id: str, *, objective: str = "",
     wanted = [phase for phase in PHASES if phase in phases]
     if not wanted:
         raise ValueError("no phase selected")
+    # One runner per round. The MCP takes this lock for the phases it drives;
+    # the runner has to take it too, or two runs of the same round overlap and
+    # both write the state. A run that finds the round busy is refused, not
+    # silently queued: the caller knows what it asked for.
+    from tools.research.rounds import lock as round_lock
+    from tools.research.rounds import pipeline as round_pipeline
+
+    directory = round_pipeline.find_round_directory(Path(root), round_id)
+    guard = round_lock.RoundLock(directory)
+    try:
+        guard.acquire(owner="runner:" + ",".join(wanted))
+    except round_lock.RoundBusy as exc:
+        raise SystemExit("the round is already running: " + str(exc))
+    try:
+        return _run_phases(Path(root), round_id, wanted, objective=objective, log=log)
+    finally:
+        guard.release()
+
+
+def _run_phases(root: Path, round_id: str, wanted: list, *, objective: str = "",
+                log=print) -> dict:
     results = {}
     for phase in wanted:
         if phase == "ideation":

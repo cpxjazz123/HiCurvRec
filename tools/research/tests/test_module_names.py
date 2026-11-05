@@ -86,3 +86,15 @@ def test_the_split_modules_carry_their_step():
     assert hasattr(step5_derivation, "phase_derivation")
     assert hasattr(step6_implementation, "phase_implementation")
     assert hasattr(agent_calls, "_run_agent")
+
+
+def test_the_runner_takes_the_round_lock():
+    """Two runs of one round must not write the state at the same time."""
+    import inspect
+
+    from tools.research.agent_flow import flow
+
+    source = inspect.getsource(flow.run_flow)
+    assert "RoundLock" in source or "round_lock" in source, source[:400]
+    assert "acquire" in source
+    assert "release" in source

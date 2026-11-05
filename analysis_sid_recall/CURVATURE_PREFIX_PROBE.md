@@ -80,3 +80,29 @@ already spends its budget on behaviour supervision is the closest to the target.
 
     python3 analysis_sid_recall/curvature_prefix_probe.py --anchors 4000 \
         --arms TIGER_RQ-VAE TIGER_BEHAVIOR_SAMPLE_RQ-VAE TIGER_pmi-geomargin-l1-rq
+
+## 4. The level-1 partition is largely blind to the cohesion rank
+
+The mechanism of round_20261106_020541_888 puts a bounded cohesion rank
+`rho_i` (the mid-rank of the item's local triangle cohesion) into the level-1
+cost with a learned per-code stratum `s_k = sigmoid(a_k)`, so it assumes the
+codes can be ORDERED by that rank. `cohesion_rank_probe.py` measures how much of
+the rank's variance the level-1 partition already explains (`eta^2`):
+
+| arm | level-1 codes | eta^2 | lowest code's median rank | highest code's median rank |
+|---|---|---|---|---|
+| `TIGER_RQ-VAE` (baseline) | 247 | **0.039** | 0.170 | 0.882 |
+| `TIGER_BEHAVIOR_SAMPLE_RQ-VAE` (0.0637) | 241 | **0.132** | 0.170 | 0.880 |
+| `TIGER_pmi-geomargin-l1-rq` (collapsed) | 42 | 0.012 | 0.170 | 0.958 |
+
+The codes DO span the rank range (the lowest code sits at rank 0.17, the highest
+near 0.88-0.96 in every arm), but the partition explains only 1-13 % of the
+rank's variance: it is largely blind to the cohesion rank. And the arm that
+explains the most - the behaviour-supervised `resample`, the best recall in the
+repository at 0.0637 - is the one that also groups the cohesive pairs best (11
+vs 6 triangles). The stratification the mechanism adds is therefore both absent
+today and aligned with the one arm that works.
+
+Reproduce:
+
+    python3 analysis_sid_recall/cohesion_rank_probe.py
