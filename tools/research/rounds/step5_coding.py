@@ -79,6 +79,26 @@ def _parse_coding(text: str) -> dict:
     return {"module": module, "notes": ""}
 
 
+def _repair_prompt(entry: dict, verdict: dict, spec: dict) -> str:
+    """The correction a deviant implementation is asked for."""
+    lines = []
+    for pair in verdict.get("pairs") or []:
+        if entry["name"] not in (pair.get("left"), pair.get("right")):
+            continue
+        lines.append("  %s vs %s in %s: %s (max |difference| %s)"
+                     % (pair.get("left"), pair.get("right"), pair.get("arm"),
+                        pair.get("status"), pair.get("worst_gap")))
+    return (
+        "Your module disagrees with the other implementations of the SAME frozen "
+        "specification. The specification did not change; your module did.\n\n"
+        "What the comparison found:\n" + "\n".join(lines) + "\n\n"
+        "Read the frozen specification again and fix the module so that it "
+        "computes exactly what the specification says, statement by statement. "
+        "Do not change the specification, do not change the interface, and do not "
+        "add anything the specification does not state. Answer with the complete "
+        "corrected module.\n\nTHE SPECIFICATION:\n"
+        + json.dumps(spec, indent=1, ensure_ascii=False))
+
 def phase_coding(root: Path, round_id: str, *, log=print) -> dict:
     """Three independent implementations of the frozen specification.
 
@@ -129,6 +149,34 @@ def phase_coding(root: Path, round_id: str, *, log=print) -> dict:
     # A coding agent answers with a module, so the three of them are compared as
     # programs: same inputs, same switch arms, elementwise agreement.
     verdict = module_differential.compare_modules(implementations, spec)
+    # A deviant implementation is repaired, not accepted and not thrown away:
+    # the agent is asked again, with the disagreement named, and its answer is
+    # compared with the others again. The first answer stays on disk as the
+    # evidence of what was wrong.
+    for attempt in range(1, 3):
+        if verdict.get("status") == "AGREE":
+            break
+        deviant = module_differential.deviant_implementations(implementations, spec)
+        if not deviant:
+            break
+        for entry in deviant:
+            correction = _repair_prompt(entry, verdict, spec)
+            answer = _run_agent(directory, entry["name"] + "_repair%d" % attempt,
+                                correction, "module.py", _parse_coding, role="code",
+                                read_paths=[], allowed_roots=_round_roots(directory))
+            module = answer.get("module") or ""
+            if not module.strip():
+                continue
+            kept = directory / "agents" / entry["name"] / ("implementation_attempt%d.py"
+                                                            % attempt)
+            kept.write_text(entry["code"], encoding="utf-8")
+            entry["code"] = module
+            entry["notes"] = answer.get("notes") or ""
+            (directory / "agents" / entry["name"] / "implementation.py").write_text(
+                module, encoding="utf-8")
+            log("%s: repaired after the differential disagreed (attempt %d)"
+                % (entry["name"], attempt))
+        verdict = module_differential.compare_modules(implementations, spec)
     state["coding"] = {"implementations": [{"name": entry["name"],
                                              "bytes": len(entry["code"])}
                                             for entry in implementations],

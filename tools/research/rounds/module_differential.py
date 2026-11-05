@@ -251,6 +251,28 @@ def _arms(spec: dict, *, seed: int = 17) -> dict:
             "BOTH_ON": (left, right, curvature),
             "GEOMETRY_OFF": (left, right, 0.0)}
 
+def deviant_implementations(implementations: list, spec: dict, *, seed: int = 17) -> list:
+    """The implementations that disagree with the majority.
+
+    The comparison is run pairwise: an implementation that disagrees with EVERY
+    other one is the deviant, and one that disagrees with only one of them is
+    not - two implementations that agree with each other outvote the third.
+    """
+    if len(implementations) < 3:
+        return []
+    counts = {entry["name"]: 0 for entry in implementations}
+    for index, left in enumerate(implementations):
+        for right in implementations[index + 1:]:
+            pair = compare_modules([left, right], spec, seed=seed)
+            if pair.get("status") == "AGREE":
+                continue
+            counts[left["name"]] += 1
+            counts[right["name"]] += 1
+    worst = max(counts.values()) if counts else 0
+    if worst < 2:
+        return []
+    return [entry for entry in implementations if counts[entry["name"]] == worst]
+
 def compare_modules(implementations: list, spec: dict, *, seed: int = 17) -> dict:
     """Whether the modules behave the same in every switch arm.
 
