@@ -155,8 +155,17 @@ def apply_corrections(state: dict) -> None:
         if not idea_id or not field or "value" not in event:
             continue
         for idea in state.get("ideas") or []:
-            if idea.get("idea_id") == idea_id:
-                idea[field] = event["value"]
+            if idea.get("idea_id") != idea_id:
+                continue
+            target = idea
+            parts = field.split(".")
+            for part in parts[:-1]:
+                if not isinstance(target, dict) or part not in target:
+                    target = None
+                    break
+                target = target[part]
+            if isinstance(target, dict):
+                target[parts[-1]] = event["value"]
 
 def apply_ideation(state: dict, per_agent: list, require_minimum: bool = True) -> dict:
     """Merge the answers of the ideation agents into the round's ideas."""
