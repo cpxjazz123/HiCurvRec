@@ -21,7 +21,7 @@ from . import policy, progress_server
 
 #: The roles that may not write anything. Their answer arrives through the
 #: progress channel instead of a file they wrote.
-READ_ONLY_ROLES = ("ideate", "score", "probe")
+READ_ONLY_ROLES = ("ideate", "score", "probe", "derive", "formulate", "review_math")
 
 #: The append-only progress channel: the framework reads the answer from it, and
 #: an agent records every stage there.
