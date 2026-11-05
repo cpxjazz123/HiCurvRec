@@ -103,6 +103,8 @@ def load_state(directory: Path) -> dict:
 
 
 def save_state(directory: Path, state: dict) -> None:
+    # the state knows where it lives, so a gate can find the round's files
+    state["_directory"] = str(Path(directory))
     state["updated_at"] = time.time()
     atomic_json(Path(directory) / "state.json", state)
 
@@ -357,34 +359,6 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
     # registered: three derivations of one specification that disagree mean the
     # specification was not implemented the same way twice, and the difference
     # has to be located before any GPU work.
-    # The frozen mathematical specification is the authority the implementation
-    # follows: the contract's statements must be the specification's statements,
-    # so an implementation cannot quietly change the mathematics it was given.
-    math_spec = state.get("math_spec") or {}
-    if not math_spec.get("sha256"):
-        raise RoundError(
-            "the mechanism has no frozen mathematical specification: the "
-            "formulation stage must state, review and freeze it before the "
-            "implementation is registered")
-    record["math_spec_sha256"] = math_spec["sha256"]
-    contract_path = tree / "reference_contract.json"
-    if contract_path.is_file():
-        try:
-            contract = json.loads(contract_path.read_text(encoding="utf-8"))
-        except ValueError as exc:
-            raise RoundError("the reference contract is not readable JSON: " + str(exc))
-        from . import specification as specification_module
-        stated = list((contract.get("calls") or [{}])[0].get("statements") or [])
-        frozen = specification_module.statements(math_spec.get("spec") or {})
-        if stated != frozen:
-            raise RoundError(
-                "the reference contract's statements are not the frozen "
-                "specification's: the implementation must implement the "
-                "specification, not a restatement of it")
-        record["math_spec_checked"] = True
-    else:
-        raise RoundError("the candidate declares no reference_contract.json: the "
-                         "contract's statements must be the frozen specification's")
 
     # The differential verification is evidence with a precise meaning: two
     # derivations of the same instance that DISAGREE contradict the proposal
@@ -424,6 +398,21 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
             "): " + str(verdict.get("detail"))[:300] +
             " - declare the mechanism's equations in reference_contract.json and make "
             "the code agree with them")
+    # The formula compiler's gate: the frozen specification (reviewed twice and
+    # unchanged on disk), the three independent implementations agreeing, the
+    # contract stating the frozen statements, and every conformance check
+    # executed and passing. A check that did not run is NOT a pass.
+    from . import compiler as compiler_module
+
+    ndirectory = state.get("_directory") or str(tree.parent)
+    verdict = compiler_module.verdict(tree, {**state, "_directory": str(ndirectory)})
+    record["compiler_verdict"] = verdict
+    if verdict.get("status") != "PASS":
+        raise RoundError(
+            "the formula compiler blocks this implementation: " +
+            ", ".join(verdict.get("blocked_by") or []) +
+            " - " + str((verdict.get("checks") or [{}])[0].get("detail"))[:200])
+    record["math_spec_sha256"] = (state.get("math_spec") or {}).get("sha256")
     if record.get("source_digest"):
         record["revision"] = int(record.get("revision", 0)) + 1
     record["changed_files"] = list(report.get("changed_files", []))

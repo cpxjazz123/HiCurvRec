@@ -358,11 +358,21 @@ class ReferenceContractGateTests(unittest.TestCase):
         self.state["implementations"] = [pipeline_module.implementation_record(
             {"idea_id": "a"}, {"changed_files": ["model.py"]}, self.tree)]
         self.state["differential"] = {"status": "AGREE", "reason": ""}
-        # the frozen mathematical specification the implementation must follow
-        self.state["math_spec"] = {
-            "sha256": "frozen",
-            "spec": {"continuous_surface": {"statements": ["d = sqrt(x0**2)"],
-                                            "output": "d"}}}
+        # the frozen mathematical specification the implementation must follow:
+        # a real file, so the compiler's hash check is the real one
+        from tools.research.rounds import specification as spec_module
+        self.spec = {"mechanism": "m",
+                     "continuous_surface": {"statements": ["d = sqrt(x0**2)"],
+                                            "output": "d"}}
+        frozen = spec_module.freeze(self.directory, self.spec)
+        self.state["math_spec"] = {"sha256": frozen["sha256"], "spec": self.spec}
+        self.state["math_reviews"] = [{"verdict": "PASS"}, {"verdict": "PASS"}]
+        self.state["coding"] = {
+            "implementations": [{"name": "coding_1", "bytes": 1},
+                                {"name": "coding_2", "bytes": 1},
+                                {"name": "coding_3", "bytes": 1}],
+            "verdict": {"status": "AGREE", "reason": ""}}
+        pipeline_module.save_state(self.directory, self.state)
         (self.tree / "reference_contract.json").write_text(json.dumps(
             {"calls": [{"name": "surface", "statements": ["d = sqrt(x0**2)"],
                         "output": "d"}]}))
@@ -380,7 +390,7 @@ class ReferenceContractGateTests(unittest.TestCase):
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "NOT_APPLICABLE",
                             "detail": "the tree declares no reference_contract.json"})
-        self.assertIn("reference_contract.json", str(raised.exception))
+        self.assertIn("contract", str(raised.exception))
 
     def test_an_implementation_without_a_frozen_specification_is_refused(self):
         self.state["math_spec"] = {}
@@ -394,7 +404,7 @@ class ReferenceContractGateTests(unittest.TestCase):
                         "output": "d"}]}))
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "PASS", "detail": "ok"})
-        self.assertIn("frozen specification", str(raised.exception))
+        self.assertIn("contract", str(raised.exception))
 
     def test_a_disagreeing_formula_is_refused(self):
         with self.assertRaises(pipeline_module.RoundError) as raised:
@@ -579,11 +589,21 @@ class ReferenceContractGateTests(unittest.TestCase):
         self.state["implementations"] = [pipeline_module.implementation_record(
             {"idea_id": "a"}, {"changed_files": ["model.py"]}, self.tree)]
         self.state["differential"] = {"status": "AGREE", "reason": ""}
-        # the frozen mathematical specification the implementation must follow
-        self.state["math_spec"] = {
-            "sha256": "frozen",
-            "spec": {"continuous_surface": {"statements": ["d = sqrt(x0**2)"],
-                                            "output": "d"}}}
+        # the frozen mathematical specification the implementation must follow:
+        # a real file, so the compiler's hash check is the real one
+        from tools.research.rounds import specification as spec_module
+        self.spec = {"mechanism": "m",
+                     "continuous_surface": {"statements": ["d = sqrt(x0**2)"],
+                                            "output": "d"}}
+        frozen = spec_module.freeze(self.directory, self.spec)
+        self.state["math_spec"] = {"sha256": frozen["sha256"], "spec": self.spec}
+        self.state["math_reviews"] = [{"verdict": "PASS"}, {"verdict": "PASS"}]
+        self.state["coding"] = {
+            "implementations": [{"name": "coding_1", "bytes": 1},
+                                {"name": "coding_2", "bytes": 1},
+                                {"name": "coding_3", "bytes": 1}],
+            "verdict": {"status": "AGREE", "reason": ""}}
+        pipeline_module.save_state(self.directory, self.state)
         (self.tree / "reference_contract.json").write_text(json.dumps(
             {"calls": [{"name": "surface", "statements": ["d = sqrt(x0**2)"],
                         "output": "d"}]}))
@@ -601,7 +621,7 @@ class ReferenceContractGateTests(unittest.TestCase):
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "NOT_APPLICABLE",
                             "detail": "the tree declares no reference_contract.json"})
-        self.assertIn("reference_contract.json", str(raised.exception))
+        self.assertIn("contract", str(raised.exception))
 
     def test_an_implementation_without_a_frozen_specification_is_refused(self):
         self.state["math_spec"] = {}
@@ -615,7 +635,7 @@ class ReferenceContractGateTests(unittest.TestCase):
                         "output": "d"}]}))
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "PASS", "detail": "ok"})
-        self.assertIn("frozen specification", str(raised.exception))
+        self.assertIn("contract", str(raised.exception))
 
     def test_a_disagreeing_formula_is_refused(self):
         with self.assertRaises(pipeline_module.RoundError) as raised:
