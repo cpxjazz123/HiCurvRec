@@ -743,6 +743,12 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
                 block = render_idea_json(payload)
             elif payload.get("ranking"):
                 block = render_rank_json(payload)
+            elif payload.get("verdict"):
+                # a review verdict: the canonical JSON on disk
+                block = json.dumps({key: payload.get(key) for key in
+                                    ("verdict", "findings", "reason")
+                                    if payload.get(key) is not None},
+                                   indent=1, ensure_ascii=False)
             elif payload.get("computations"):
                 # a formulated specification: the canonical JSON on disk is the
                 # one form that cannot be mangled by the progress records

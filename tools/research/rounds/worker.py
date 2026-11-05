@@ -1585,6 +1585,16 @@ def _formula_prompt(idea: dict, findings: list = None) -> str:
         "COUPLING: " + str(idea.get("coupling_path")) + "\n"
         "ABLATION BEHAVIOUR OFF: " + str(idea.get("ablation_behavior_off")) + "\n"
         "ABLATION GEOMETRY OFF: " + str(idea.get("ablation_geometry_off")) + "\n")
+    prompt += ("\n\nANSWER THESE THREE QUESTIONS EXPLICITLY, each as its own JSON "
+               "key (the review refuses a specification that leaves them out):\n"
+               "  dimensions: which tensor has which width - the batch, the latent, "
+               "the codebook, every intermediate;\n"
+               "  gradient_rules: for EVERY operator of the mechanism, what the "
+               "backward pass does - the straight-through estimator, the detach "
+               "points, the operators with no gradient at all;\n"
+               "  training_integration: what the total loss is, what the decoder "
+               "receives (the chosen codeword or the transported one), and which "
+               "optimizer and schedule train it.\n")
     prompt += ("\n\nThe specification MUST state, as JSON keys: mechanism, "
                "computations, inputs, outputs, parameters, dimensions, "
                "gradient_rules, training_integration, switches, excluded, and the "
