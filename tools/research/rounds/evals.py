@@ -341,7 +341,7 @@ def _surface_defines_what_it_uses(spec: dict) -> list:
     known |= {"r", "a", "K1", "B", "D", "N", "s", "c", "R_c", "rho", "epoch",
               "BEHAVIOUR_OFF", "GEOMETRY_OFF", "m_i", "b_raw", "ms_sum", "ms_count",
               "rho_i", "s_k", "beta", "tau", "sk_iters", "sk_epsilon", "K", "iters",
-              "epsilon", "BASELINE_SINKHORN"}
+              "epsilon", "BASELINE_SINKHORN", "a_k", "alpha_k", "K1", "B"}
     for line in code:
         stripped = line.split("#", 1)[0].strip()
         if not stripped or stripped.startswith("def "):
