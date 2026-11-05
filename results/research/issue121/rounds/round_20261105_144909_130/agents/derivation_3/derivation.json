@@ -1,0 +1,132 @@
+{
+ "symbols": [
+  "z0",
+  "z1",
+  "theta1_1_0",
+  "theta1_1_1",
+  "theta1_2_0",
+  "theta1_2_1",
+  "theta2_1_0",
+  "theta2_1_1",
+  "theta2_2_0",
+  "theta2_2_1",
+  "s",
+  "v_pi1_0",
+  "v_pi1_1",
+  "v_pi2_0",
+  "v_pi2_1"
+ ],
+ "args": [
+  {
+   "name": "z",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_1_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_1_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_2_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "theta_2_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "s",
+   "width": 1,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "v_pi_1",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  },
+  {
+   "name": "v_pi_2",
+   "width": 2,
+   "radius": 0.4,
+   "scalar": 0.2
+  }
+ ],
+ "statements": [
+  "c = (0.5/s)**2",
+  "alpha = sqrt(c)",
+  "nz = sqrt(z0**2 + z1**2)",
+  "u0 = tanh(alpha*nz)*z0/(alpha*nz + 1e-12)",
+  "u1 = tanh(alpha*nz)*z1/(alpha*nz + 1e-12)",
+  "n11 = sqrt(theta1_1_0**2 + theta1_1_1**2)",
+  "q10 = tanh(alpha*n11)*theta1_1_0/(alpha*n11 + 1e-12)",
+  "q11 = tanh(alpha*n11)*theta1_1_1/(alpha*n11 + 1e-12)",
+  "n12 = sqrt(theta1_2_0**2 + theta1_2_1**2)",
+  "q20 = tanh(alpha*n12)*theta1_2_0/(alpha*n12 + 1e-12)",
+  "q21 = tanh(alpha*n12)*theta1_2_1/(alpha*n12 + 1e-12)",
+  "x0 = -u0",
+  "x1 = -u1",
+  "nx2 = x0**2 + x1**2",
+  "ny1 = q10**2 + q11**2",
+  "xy1 = x0*q10 + x1*q11",
+  "den1 = 1 + 2*c*xy1 + c**2*nx2*ny1 + 1e-12",
+  "m10 = ((1 + 2*c*xy1 + c*ny1)*x0 + (1 - c*nx2)*q10)/den1",
+  "m11 = ((1 + 2*c*xy1 + c*ny1)*x1 + (1 - c*nx2)*q11)/den1",
+  "mn1 = sqrt(m10**2 + m11**2)",
+  "D1 = (2/alpha)*atanh(Min(alpha*mn1, 1 - 1e-6))",
+  "ny2 = q20**2 + q21**2",
+  "xy2 = x0*q20 + x1*q21",
+  "den2 = 1 + 2*c*xy2 + c**2*nx2*ny2 + 1e-12",
+  "m20 = ((1 + 2*c*xy2 + c*ny2)*x0 + (1 - c*nx2)*q20)/den2",
+  "m21 = ((1 + 2*c*xy2 + c*ny2)*x1 + (1 - c*nx2)*q21)/den2",
+  "mn2 = sqrt(m20**2 + m21**2)",
+  "D2 = (2/alpha)*atanh(Min(alpha*mn2, 1 - 1e-6))",
+  "mean_v = (v_pi1_0 + v_pi1_1)/2 + 1e-12",
+  "b1 = log(1 + v_pi1_0/mean_v)",
+  "b2 = log(1 + v_pi1_1/mean_v)",
+  "lb1 = log(1 + b1)",
+  "lb2 = log(1 + b2)",
+  "w = 0.10*s/Max(lb1, lb2, 1e-12)",
+  "off1 = w*lb1",
+  "off2 = w*lb2",
+  "score1 = D1 - off1",
+  "score2 = D2 - off2",
+  "a10 = Piecewise((theta1_1_0, score1 <= score2), (theta1_2_0, True))",
+  "a11 = Piecewise((theta1_1_1, score1 <= score2), (theta1_2_1, True))",
+  "r20 = z0 - a10",
+  "r21 = z1 - a11",
+  "d21 = (r20 - theta2_1_0)**2 + (r21 - theta2_1_1)**2",
+  "d22 = (r20 - theta2_2_0)**2 + (r21 - theta2_2_1)**2",
+  "a20 = Piecewise((theta2_1_0, d21 <= d22), (theta2_2_0, True))",
+  "a21 = Piecewise((theta2_1_1, d21 <= d22), (theta2_2_1, True))",
+  "recon = (z0 - a10 - a20)**2 + (z1 - a11 - a21)**2",
+  "commit1 = (z0 - a10)**2 + (z1 - a11)**2",
+  "commit2 = (r20 - a20)**2 + (r21 - a21)**2",
+  "loss = recon + commit1 + commit2"
+ ],
+ "output": "loss",
+ "code": "import torch\n\n\ndef _lift(v, alpha):\n    n2 = (v * v).sum(dim=-1, keepdim=True)\n    n = torch.sqrt(n2)\n    return torch.tanh(alpha * n) * v / (alpha * n + 1e-12)\n\n\ndef _mobius(x, y, c):\n    nx2 = (x * x).sum(dim=-1, keepdim=True)\n    ny2 = (y * y).sum(dim=-1, keepdim=True)\n    xy = (x * y).sum(dim=-1, keepdim=True)\n    den = 1.0 + 2.0 * c * xy + c * c * nx2 * ny2 + 1e-12\n    return ((1.0 + 2.0 * c * xy + c * ny2) * x + (1.0 - c * nx2) * y) / den\n\n\ndef _dist(x, y, alpha):\n    c = alpha * alpha\n    m = _mobius(x, y, c)\n    mn = torch.sqrt((m * m).sum(dim=-1, keepdim=True))\n    arg = torch.clamp(alpha * mn, max=1.0 - 1e-6)\n    return (2.0 / alpha) * torch.atanh(arg)\n\n\ndef compute(**kwargs):\n    z = torch.as_tensor(kwargs['z'], dtype=torch.float32)\n    theta_1_1 = torch.as_tensor(kwargs['theta_1_1'], dtype=torch.float32).reshape(-1)\n    theta_1_2 = torch.as_tensor(kwargs['theta_1_2'], dtype=torch.float32).reshape(-1)\n    theta_2_1 = torch.as_tensor(kwargs['theta_2_1'], dtype=torch.float32).reshape(-1)\n    theta_2_2 = torch.as_tensor(kwargs['theta_2_2'], dtype=torch.float32).reshape(-1)\n    s = torch.as_tensor(kwargs['s'], dtype=torch.float32).reshape(())\n    v_pi_1 = torch.as_tensor(kwargs['v_pi_1'], dtype=torch.float32).reshape(-1)\n    _ = torch.as_tensor(kwargs['v_pi_2'], dtype=torch.float32).reshape(-1)\n\n    if z.ndim == 1:\n        z = z.unsqueeze(0)\n\n    alpha = torch.sqrt((0.5 / s) ** 2)\n\n    u = _lift(z, alpha)\n    q11 = _lift(theta_1_1, alpha)\n    q12 = _lift(theta_1_2, alpha)\n\n    D1 = _dist(-u, q11, alpha).squeeze(-1)\n    D2 = _dist(-u, q12, alpha).squeeze(-1)\n\n    mean_v = 0.5 * (v_pi_1[0] + v_pi_1[1]) + 1e-12\n    b1 = torch.log1p(v_pi_1[0] / mean_v)\n    b2 = torch.log1p(v_pi_1[1] / mean_v)\n    lb1 = torch.log1p(b1)\n    lb2 = torch.log1p(b2)\n    w = 0.10 * s / torch.clamp(torch.maximum(lb1, lb2), min=1e-12)\n    off1 = w * lb1\n    off2 = w * lb2\n\n    score1 = D1 - off1\n    score2 = D2 - off2\n    a10 = torch.where(score1 <= score2, theta_1_1[0], theta_1_2[0])\n    a11 = torch.where(score1 <= score2, theta_1_1[1], theta_1_2[1])\n\n    r20 = z[:, 0] - a10\n    r21 = z[:, 1] - a11\n    d21 = (r20 - theta_2_1[0]) ** 2 + (r21 - theta_2_1[1]) ** 2\n    d22 = (r20 - theta_2_2[0]) ** 2 + (r21 - theta_2_2[1]) ** 2\n    a20 = torch.where(d21 <= d22, theta_2_1[0], theta_2_2[0])\n    a21 = torch.where(d21 <= d22, theta_2_1[1], theta_2_2[1])\n\n    recon = (z[:, 0] - a10 - a20) ** 2 + (z[:, 1] - a11 - a21) ** 2\n    commit1 = (z[:, 0] - a10) ** 2 + (z[:, 1] - a11) ** 2\n    commit2 = (r20 - a20) ** 2 + (r21 - a21) ** 2\n    return recon + commit1 + commit2",
+ "excluded": [
+  "the level-1 and level-2 argmins are discrete and not differentiable; they are represented by tie-to-smallest Piecewise/torch.where selections, not differentiable relaxations",
+  "straight-through and stop-gradient are value-preserving implementation details; the forward formula uses the selected baseline codebook vectors",
+  "level 2 keeps the baseline Euclidean nearest-code assignment and receives no geodesic distance or surplus offset",
+  "v_pi_2 is part of the fixed signature but the level-1 mechanism uses only v_pi_1 as the frozen raw level-1 surplus table",
+  "the switches are fixed to the both-on arm, so the c=0 Euclidean geometry branch is not instantiated",
+  "mean_scale is represented by the provided frozen scale s because the fixed signature has no separate epoch-1 running-mean scalar",
+  "codebook/decoder training terms, usage histograms, margin statistics and prefix hit rate are side outputs, not part of the per-item loss"
+ ]
+}

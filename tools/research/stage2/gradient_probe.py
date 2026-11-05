@@ -41,7 +41,8 @@ def _call_model(model, embeddings, ids):
         positional = [parameter for parameter in signature.parameters.values()
                       if parameter.kind in (parameter.POSITIONAL_ONLY,
                                             parameter.POSITIONAL_OR_KEYWORD)]
-    result = model(embeddings, ids) if len(positional) > 1 else model(embeddings)
+    call = model if callable(model) else model.forward
+    result = call(embeddings, ids) if len(positional) > 1 else call(embeddings)
     if isinstance(result, (tuple, list)):
         values = list(result)
     else:

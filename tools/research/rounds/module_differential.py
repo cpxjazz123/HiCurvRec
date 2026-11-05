@@ -23,7 +23,7 @@ import tempfile
 from pathlib import Path
 
 #: The names an implementation may give its entry point, most specific first.
-ENTRY_POINTS = ("level_score", "compute", "score", "level_1_score")
+ENTRY_POINTS = ("level_score", "compute", "score", "level_1_score", "distance")
 
 #: The tolerances of the behavioural comparison. Float32 arithmetic in three
 #: independent spellings of the same formula lands well inside these.
@@ -31,7 +31,7 @@ ATOL = 1e-6
 RTOL = 1e-5
 
 
-def _load(implementation: dict):
+def _load(implementation: dict, preferred: tuple = ()):
     """Import one implementation and return its entry point."""
     code = implementation.get("code") or ""
     if not code.strip():
@@ -42,7 +42,7 @@ def _load(implementation: dict):
     spec = importlib.util.spec_from_file_location("impl_" + path.stem, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    for name in ENTRY_POINTS:
+    for name in tuple(preferred) + ENTRY_POINTS:
         candidate = getattr(module, name, None)
         if callable(candidate):
             return name, candidate
@@ -88,12 +88,18 @@ def _tensors(result):
 
 def _compare_inprocess(implementations: list, spec: dict, *, seed: int = 17) -> dict:
     """The comparison itself; it needs torch, so it runs in its own process."""
+    import math
     import torch
 
+    surface = spec.get("continuous_surface") or {}
+    declared = str(surface.get("callable") or "")
+    preferred = ()
+    if "(" in declared:
+        preferred = (declared.split("(", 1)[0].strip(),)
     loaded, invalid = [], []
     for implementation in implementations:
         try:
-            name, function = _load(implementation)
+            name, function = _load(implementation, preferred)
             loaded.append({"name": implementation.get("name"),
                            "entry": name, "function": function})
         except Exception as exc:  # noqa: BLE001 - the report carries the reason
@@ -113,17 +119,30 @@ def _compare_inprocess(implementations: list, spec: dict, *, seed: int = 17) -> 
         text = str(entry)
         if text.startswith("rho = 0.5") and "s = 1" not in text:
             continue
-    generator = torch.Generator().manual_seed(seed)
-    B, D, K1 = 8, 6, 5
-    residual = torch.randn(B, D, generator=generator)
-    codebook = torch.randn(K1, D, generator=generator) * 0.5
-    demand = torch.rand(K1, generator=generator) + 0.5
+    inputs = _arms(spec, seed=seed)
+    residual = inputs["__residual__"]
+    codebook = inputs["__codebook__"]
+    demand = inputs["__demand__"]
     weight = 0.35
-    arms = {
-        "BOTH_ON": (residual, codebook, curvature, demand, weight, False),
-        "GEOMETRY_OFF": (residual, codebook, 0.0, demand, weight, False),
-        "BEHAVIOUR_OFF": (residual, codebook, curvature, demand, weight, True),
-    }
+    curvature = 0.25
+    # The surface decides the arms: a score takes the residual, the codebook,
+    # the curvature, the demand and the weight; a distance takes two points and
+    # the curvature. The geometry switch is the same in both.
+    takes_score = len(inspect.signature(loaded[0]["function"]).parameters) >= 5
+    if takes_score:
+        arms = {
+            "BOTH_ON": (residual, codebook, curvature, demand, weight, False),
+            "GEOMETRY_OFF": (residual, codebook, 0.0, demand, weight, False),
+            "BEHAVIOUR_OFF": (residual, codebook, curvature, demand, weight, True),
+        }
+    else:
+        # A distance takes two point sets of the SAME shape: the surface it is
+        # compared on is elementwise, not a matrix of every pair, and the points
+        # are inside the ball, where the surface is defined.
+        arms = {
+            "BOTH_ON": (inputs["BOTH_ON"][0], inputs["BOTH_ON"][1], curvature),
+            "GEOMETRY_OFF": (inputs["BOTH_ON"][0], inputs["BOTH_ON"][1], 0.0),
+        }
     pairs, failures = [], []
     for arm, values in arms.items():
         results = {}
@@ -131,7 +150,7 @@ def _compare_inprocess(implementations: list, spec: dict, *, seed: int = 17) -> 
             try:
                 results[entry["name"]] = _tensors(_call(entry["function"], list(values)))
             except TypeError:
-                # an implementation that takes only the first three arguments
+                # an implementation that takes fewer arguments than the arm
                 results[entry["name"]] = _tensors(
                     _call(entry["function"], list(values[:3])))
             except Exception as exc:  # noqa: BLE001
@@ -205,6 +224,32 @@ print("@@VERDICT@@" + json.dumps(_compare_inprocess(payload["implementations"],
                                  default=str))
 """
 
+
+def _arms(spec: dict, *, seed: int = 17) -> dict:
+    """The inputs every arm is called with.
+
+    The points of a distance surface are sampled INSIDE the ball: outside it the
+    artanh argument saturates, and correct implementations differ there on the
+    spelling of the numerical guard, not on the mathematics.
+    """
+    import math
+    import torch
+
+    generator = torch.Generator().manual_seed(seed)
+    B, D, K1 = 8, 6, 5
+    curvature = 0.25
+    residual = torch.randn(B, D, generator=generator)
+    codebook = torch.randn(K1, D, generator=generator) * 0.5
+    demand = torch.rand(K1, generator=generator) + 0.5
+    left = torch.randn(B, D, generator=generator)
+    right = torch.randn(B, D, generator=generator)
+    bound = 0.5 / math.sqrt(curvature)
+    left = left / left.norm(dim=-1, keepdim=True).clamp_min(1e-12) * bound * 0.9
+    right = right / right.norm(dim=-1, keepdim=True).clamp_min(1e-12) * bound * 0.9
+    return {"__residual__": residual, "__codebook__": codebook,
+            "__demand__": demand,
+            "BOTH_ON": (left, right, curvature),
+            "GEOMETRY_OFF": (left, right, 0.0)}
 
 def compare_modules(implementations: list, spec: dict, *, seed: int = 17) -> dict:
     """Whether the modules behave the same in every switch arm.

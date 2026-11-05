@@ -79,7 +79,9 @@ class SpecificationTests(unittest.TestCase):
                 "continuous_surface": {"callable": "m:compute", "symbols": SYMBOLS,
                                        "args": ARGS, "statements": STATEMENTS,
                                        "output": "d"}}
-        self.assertEqual(spec_module.validate(spec), [])
+        # the framework fills the three mechanical sections (the conventions
+        # among them) before a specification is judged
+        self.assertEqual(spec_module.validate(spec_module.complete(spec)), [])
 
     def test_an_incomplete_specification_names_what_is_missing(self):
         problems = spec_module.validate({"mechanism": "m"})

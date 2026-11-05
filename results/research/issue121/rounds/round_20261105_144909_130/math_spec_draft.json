@@ -1,0 +1,267 @@
+{
+ "mechanism": "The level-1 codeword choice of the baseline RQ-VAE is re-scored by a fixed derived Poincare distance minus a frozen train-only behaviour offset: the offset turns each level-1 codeword into a popularity-adjusted directed-transition surplus (a PMI-style m_i aggregated by the soft level-1 assignment), normalised to its own mean, and weighted by a geodesic scale measured once in epoch 1. The curvature is not swept: c = (rho/s)^2 with rho = 0.5 the proposal's fixed dimensionless radius-to-scale ratio and s the training-split RMS of the per-item latent NORM measured at step 0. The CODE of levels 2 and 3, of the residual recursion, of the reconstruction codebook and of the straight-through estimator is byte-identical to the baseline (their INPUTS differ, because the level-1 choice differs); reconstruction uses the UNLIFTED codeword a_{k1}. The behaviour channel and the curvature act on one expression, score_k = DIST(LIFT(r), LIFT(a_k)) - off_k.",
+ "computations": [
+  {
+   "name": "scale",
+   "inputs": [
+    "the baseline encoder's latents z_i (train items, D-dim) at step 0"
+   ],
+   "output": "s (a scalar) and the curvature c = (rho/s)^2",
+   "definition": "s = sqrt( mean over the training items i of ||z_i||_2^2 ), the RMS of the per-item latent VECTOR NORM (not a per-coordinate RMS, which would be ||z||_2/sqrt(D) and would multiply the tanh argument by sqrt(D)). It is measured once at step 0 and frozen. rho = 0.5 is the fixed ratio of the latent scale to the ball radius: rho = s/R_c, so R_c = s/rho = 2s; the curvature is c = (rho/s)^2 = 0.25/s^2 (units 1/||.||^2). c is never an input and never tuned. FAIL-CLOSED: if s is not finite or s <= 0 the run stops with an error; s is never replaced by a default, because a silent default would change the curvature the mechanism claims.",
+   "note": "measured on the training split at step 0 only; frozen"
+  },
+  {
+   "name": "lift",
+   "inputs": [
+    "a residual r (B, D) or a codebook vector a (K1, D)",
+    "the frozen curvature c"
+   ],
+   "output": "the lifted point u = LIFT(r) or q = LIFT(a)",
+   "definition": "LIFT(v) = tanh(sqrt(c)*||v||) * v / (sqrt(c)*||v|| + eps) with eps = 1e-12, and LIFT(0) = 0 because the numerator v vanishes (the eps guard only keeps the division finite; there is NO separate zero-norm branch). At c = 0 LIFT is the identity map (the GEOMETRY_OFF arm). The lift is applied to the residual and to the codebook vector SEPARATELY, never to their difference.",
+   "note": "bounded map into the ball: ||LIFT(v)|| < 1/sqrt(c)"
+  },
+  {
+   "name": "distance",
+   "inputs": [
+    "two lifted points (inside the ball)",
+    "the frozen curvature c"
+   ],
+   "output": "D_k (B, K1), the geodesic distance",
+   "domain": "c > 0 for the curved arm; both arguments lifted, so c||x||^2 < 1 and c||y||^2 < 1",
+   "definition": "MOBIUS(x,y) = ((1 + 2c<x,y> + c||y||^2)x + (1 - c||x||^2)y) / (1 + 2c<x,y> + c^2||x||^2||y||^2 + eps); DIST(x,y) = (2/sqrt(c)) * artanh( min( sqrt(c)*||MOBIUS(-x,y)||, 1 - 1e-6 ) ), the idea's exact expression, with the clamp as the ONLY numerical guard on the artanh argument (the lift approaches the ball boundary as tanh -> 1, so a float latent can round onto it). eps = 1e-12 appears in the Mobius denominator only; the norm carries no eps. At c = 0, DIST(x,y) = 2||x - y||.",
+   "note": "the idea's expression, with the eps in the Mobius denominator and the min(., 1 - 1e-6) clamp on the artanh argument, exactly as the SymPy surface states"
+  },
+  {
+   "name": "level-1 score",
+   "inputs": [
+    "the lifted residual u",
+    "the lifted codebook q_k",
+    "the offset off_k (K1,)"
+   ],
+   "output": "score_k (B, K1)",
+   "definition": "D_k = DIST(u, q_k); score_k = D_k - off_k. The curvature supplies D_k, the behaviour side supplies off_k, and score_k cannot be formed without both.",
+   "note": "the single coupling surface: the executable statements carry it end to end (lift, distance, demand, weight, offset, score, assignment, residual)"
+  },
+  {
+   "name": "level-1 assignment",
+   "inputs": [
+    "score_k (B, K1)"
+   ],
+   "output": "k1 (B,)",
+   "definition": "k1 = argmin_k score_k, ties resolved to the smallest k. The assignment is discrete; the encoder gradient reaches the model through the baseline's straight-through estimator on the chosen code, exactly as in the baseline.",
+   "note": "argmin, not sampling"
+  },
+  {
+   "name": "residual recursion",
+   "inputs": [
+    "the residual r",
+    "the chosen UNLIFTED codebook vector a_{k1}"
+   ],
+   "output": "r_next (B, D), the input of level 2",
+   "definition": "r_next = r - a_{k1}: the unmodified baseline codeword vector, not LIFT(a_{k1}) and not the offset-adjusted position. The recursion's CODE is the baseline's; its input r_next differs from the baseline's only because the level-1 choice differs. LIFT(a_{k1}) enters only inside score_k.",
+   "note": "byte-identical to the baseline recursion"
+  },
+  {
+   "name": "behaviour demand",
+   "inputs": [
+    "the training-split consecutive-pair count matrix t_ij (N, N)",
+    "the current level-1 soft assignment p_ik (N, K1) of the training items",
+    "the carried b_raw (K1,)"
+   ],
+   "output": "b_k (K1,), the mean-normalised log-surplus",
+   "definition": "From TRAINING-SPLIT sessions only: directed counts t_ij for consecutive pairs (i consumed before j, self-pairs dropped); out_i = sum_j t_ij and in_j = sum_i t_ij are that graph's degrees; eps = 1e-12. m_i = sum_j [ t_ij / sqrt(out_i * in_j + eps) ] over j = 1..N (the summation is INSIDE, so the value is well defined). Per epoch, with the CURRENT level-1 codes of the training items, a minibatch of B items gives p_ik = softmax_k(-D_ik / tau) with tau = 1, shape (B, K1). The epoch aggregate sums over ALL N training items: num_k = sum over the batches of (p_ik * m_i[:, None]).sum(0) and den_k = sum over the batches of p_ik.sum(0), then b_raw_epoch_k = num_k / (den_k + eps), shape (K1,) - an item-weighted mean, never a mean of per-batch means. Then, ONCE PER EPOCH at the end of the epoch, b_raw <- (1 - eta) * b_raw + eta * b_raw_epoch, eta = 0.1, initialised to 1 for every codeword, detached and no_grad; b_k = log(1 + b_raw_k / mean_k(b_raw_k)). The soft assignment p_ik uses D_ik, the PURE geodesic distance, not score_k: that is the idea's definition of the behaviour channel. Because b_raw holds its initial value 1 until the first end-of-epoch update, EVERY epoch-1 batch has b_raw = 1 for all k, hence b_k = log 2 for all k and a k-independent offset; the offsets separate only from epoch 2. The EMA applies to b_raw, never to b_k.",
+   "note": "training split only; no validation, test or future behaviour"
+  },
+  {
+   "name": "offset weight",
+   "inputs": [
+    "min_k D_k of every training item of epoch 1 (the source of mean_scale)",
+    "num_k and den_k accumulated over the training items of epoch 1",
+    "that epoch's b_k"
+   ],
+   "output": "w, recomputed at the END of every epoch from the frozen mean_scale and that epoch's b_k, then held constant during the next epoch",
+   "definition": "The specification COMPLETES the idea here: the idea fixes mean_scale as the epoch-1 running mean of min_k D_k and says nothing about w during epoch 1, when that mean does not exist yet. The completion is w = 0 during epoch 1 (hence off_k = 0 and a pure geodesic assignment), which is immaterial to the score because the epoch-1 offsets are k-independent anyway. mean_scale = the ITEM-WEIGHTED mean of min_k D_k over the training items of epoch 1 (not a mean of per-batch means), in the CURRENT branch's distance (the Euclidean 2||u-q|| when GEOMETRY_OFF, so the switch stays scale-consistent), FROZEN from epoch 2 on. From epoch 2 on, w = rho_off * mean_scale / max_k log(1 + b_k) with rho_off = 0.10 (documented default), recomputed at the END of every epoch from the frozen mean_scale and that epoch's b_k and held constant during the next epoch, in step with the b_raw update.",
+   "note": "no constant is swept: mean_scale is measured once, rho_off is the proposal's documented default"
+  },
+  {
+   "name": "offset",
+   "inputs": [
+    "b_k (K1,)",
+    "w",
+    "the BEHAVIOUR_OFF flag"
+   ],
+   "output": "off_k (K1,)",
+   "definition": "off_k = w * log(1 + b_k) with b_k from 'behaviour demand' (NOT b_raw_k: using b_raw would change both the offset scale and w's normaliser). During epoch 1 this is 0 because w = 0. With BEHAVIOUR_OFF the implementation sets off_k = 0 for every k on the FLAG itself, never on a computed maximum.",
+   "note": "the b consumed by score_k, off_k and max_k log(1+b_k) is b_k"
+  },
+  {
+   "name": "objective",
+   "inputs": [
+    "the baseline reconstruction and commitment terms",
+    "the straight-through estimator on a_{k1}"
+   ],
+   "output": "the scalar loss the baseline optimiser minimises",
+   "definition": "loss = baseline_recon + baseline_commit, byte-identical to the baseline, with the straight-through estimator on the chosen code. The mechanism adds NO new loss term: it changes which codeword is chosen, so the baseline objective trains a different quantisation and the encoder gradient flows through the baseline's reconstruct-path STE on a_{k1} exactly once.",
+   "note": "no auxiliary loss, no extra optimiser"
+  }
+ ],
+ "inputs": [
+  "r, the residual entering level 1 (B, D) - the baseline's r",
+  "the level-1 codebook a (K1, D) - the baseline's, learned, never detached",
+  "the training-split counts t_ij (N, N) and the per-item mass m_i (N,), train only",
+  "the demand b_raw (K1,) carried across epochs, detached, no_grad",
+  "the frozen scale s, curvature c and mean_scale"
+ ],
+ "outputs": [
+  "k1, the level-1 codeword index for every residual (B,)",
+  "the demand b_k (K1,) and the offset off_k (K1,) as diagnostics"
+ ],
+ "parameters": [
+  "rho = 0.5, the fixed ratio of the latent scale to the ball radius (R_c = s/rho = 2s)",
+  "s = the training-split RMS of the per-item latent norm at step 0; c = (rho/s)^2",
+  "rho_off = 0.10, the proposal's documented offset strength",
+  "eta = 0.1, the demand EMA momentum; tau = 1, the soft assignment temperature",
+  "the demand buffer b_raw (K1,): detached, no_grad, initialised to one and updated once per epoch (NOT frozen)",
+  "the frozen mean_scale: the item-weighted mean of min_k D_k over epoch 1, constant from epoch 2"
+ ],
+ "dimensions": {
+  "r": "B x D",
+  "a": "K1 x D",
+  "u": "B x D",
+  "q": "K1 x D",
+  "D_k": "B x K1",
+  "score_k": "B x K1",
+  "k1": "B",
+  "t_ij": "N x N over all N training items",
+  "m_i": "N, the per training item mass",
+  "out_i": "N",
+  "in_j": "N",
+  "p_ik": "B x K1 for one minibatch; num_k and den_k aggregate it over the N epoch items",
+  "num_k": "K1",
+  "den_k": "K1",
+  "b_raw_epoch": "K1",
+  "b_raw": "K1",
+  "b_k": "K1",
+  "off_k": "K1",
+  "w": "scalar",
+  "c": "scalar"
+ },
+ "gradient_rules": [
+  {
+   "operator": "the mechanism's constants (rho, s, c, rho_off, eta, tau)",
+   "rule": "no gradient: they are constants, and b_raw and mean_scale are detached buffers, so no mechanism quantity is learned"
+  },
+  {
+   "operator": "the level-1 assignment argmin_k score_k",
+   "rule": "the argmin has no gradient; the reconstruction gradient reaches the encoder through the baseline's straight-through estimator on the chosen code a_{k1}"
+  },
+  {
+   "operator": "the level-1 codebook a",
+   "rule": "trained exactly as the baseline trains it; the distance and the offset never appear in a differentiable loss, they only select k1"
+  },
+  {
+   "operator": "the encoder, reconstruction path",
+   "rule": "encoder_gradient: perturbing a training item's feature must change the encoder's gradient through the reconstruction path's straight-through estimator on a_{k1}, and must not change it when only that STE link is removed; the baseline commitment term keeps its own gradient and is not part of this test"
+  }
+ ],
+ "training_integration": {
+  "loss": "baseline_recon + baseline_commit, unchanged, straight-through on a_{k1}",
+  "reconstruction": "the chosen codeword at its baseline position: reconstruction and the residual use a_{k1} UNLIFTED, consistent with r_next = r - a_{k1}; LIFT(a_{k1}) enters only inside score_k",
+  "optimizer": "the baseline's, unchanged; no new parameter group"
+ },
+ "switches": [
+  "BEHAVIOUR_OFF (present in code, never trained): m_i = 1 for every item, so b_raw_k = sum_i p_ik / (sum_i p_ik + eps) = 1 to within eps for every k (not exactly 1), b_k = log 2 to within eps for every k, and the offset would be a k-INDEPENDENT constant to within eps - a constant shift cannot change argmin_k score_k. The implementation therefore sets off_k = 0 exactly, on the FLAG, so the assignment is pure geodesic nearest neighbour in the derived ball.",
+  "GEOMETRY_OFF (present in code, never trained): c = 0, so LIFT is the identity and DIST(x,y) = 2||x - y||; the score is 2||r - a_k|| - w*log(1 + b_k). The demand stays ENABLED but is recomputed from the Euclidean distances (p_ik = softmax_k(-2||u-q_k||/tau), hence b_raw and b_k change), and mean_scale is the EUCLIDEAN item-weighted mean of min_k 2||u-q_k|| over epoch 1, so w stays scale-consistent.",
+  "BOTH_ON: the single formal run - c = (rho/s)^2 with the lift and the geodesic distance, plus the frozen train-only offset with its derived weight. Trained once: no sweep, no seed repetition, no early stopping."
+ ],
+ "excluded": [
+  "any use of validation, test or future behaviour in the demand",
+  "any learned profile, attention, or per-codeword curvature parameter",
+  "any denoising or autoencoding pretraining; the RQ-VAE trains as baseline",
+  "any extra loss term, auxiliary head or second geometry",
+  "any sweep, ablation training run or seed repetition"
+ ],
+ "continuous_surface": {
+  "callable": "distance(x, y, curvature)",
+  "args": [
+   {
+    "name": "x",
+    "width": 2,
+    "radius": 0.4
+   },
+   {
+    "name": "y",
+    "width": 2,
+    "radius": 0.4
+   },
+   {
+    "name": "curvature",
+    "scalar": 0.25
+   }
+  ],
+  "symbols": [
+   "x0",
+   "x1",
+   "y0",
+   "y1",
+   "c"
+  ],
+  "statements": [
+   "xy = -(x0*y0 + x1*y1)",
+   "xn = x0**2 + x1**2",
+   "yn = y0**2 + y1**2",
+   "num0 = (1 + 2*c*xy + c*yn)*(-x0) + (1 - c*xn)*y0",
+   "num1 = (1 + 2*c*xy + c*yn)*(-x1) + (1 - c*xn)*y1",
+   "den = 1 + 2*c*xy + c**2*xn*yn + 1e-12",
+   "mx0 = num0/den",
+   "mx1 = num1/den",
+   "mn = mx0**2 + mx1**2",
+   "d = 2/sqrt(c)*atanh(Min(sqrt(c)*sqrt(mn), 1 - 1e-6))"
+  ],
+  "output": "d",
+  "executable_statements": [
+   "eps = 1e-12",
+   "tau = 1.0",
+   "rho = 0.5",
+   "rho_off = 0.10",
+   "eta = 0.1",
+   "c = (rho / s) ** 2",
+   "def _norm(v): return torch.sqrt(torch.clamp((v * v).sum(-1), min=0.0))",
+   "def lift(v, c): return v if c == 0.0 else v * (torch.tanh(math.sqrt(c) * _norm(v)) / (math.sqrt(c) * _norm(v) + eps)).unsqueeze(-1)",
+   "def mobius(x, y, c): return ((1 + 2 * c * (x * y).sum(-1, keepdim=True) + c * (y * y).sum(-1, keepdim=True)) * x + (1 - c * (x * x).sum(-1, keepdim=True)) * y) / (1 + 2 * c * (x * y).sum(-1, keepdim=True) + c * c * (x * x).sum(-1, keepdim=True) * (y * y).sum(-1, keepdim=True) + eps)",
+   "def dist(x, y, c): return 2.0 * _norm(x - y) if c == 0.0 else (2.0 / math.sqrt(c)) * torch.atanh(torch.clamp(math.sqrt(c) * _norm(mobius(-x, y, c)), max=1.0 - 1e-6))",
+   "u = lift(r, c)",
+   "q = lift(a, c)",
+   "D_k = dist(u[:, None, :], q[None, :, :], c)",
+   "p_ik = torch.softmax(-D_k / tau, dim=-1)",
+   "num_k = torch.zeros(K1); den_k = torch.zeros(K1)   # the epoch's accumulators",
+   "num_k = num_k + (p_ik * m_i[:, None]).sum(0)        # one batch",
+   "den_k = den_k + p_ik.sum(0)                        # one batch",
+   "b_raw_epoch_k = num_k / (den_k + eps)              # once, at the epoch's end",
+   "b_raw = (1 - eta) * b_raw + eta * b_raw_epoch_k    # the carried buffer",
+   "b_k = torch.log1p(b_raw / b_raw.mean())",
+   "ms_sum = ms_sum + D_k.min(dim=1).values.sum()      # epoch 1 only",
+   "ms_count = ms_count + D_k.shape[0]                 # epoch 1 only",
+   "mean_scale = ms_sum / ms_count                     # frozen from epoch 2",
+   "w = 0.0 if (BEHAVIOUR_OFF or epoch == 1) else rho_off * mean_scale / torch.log1p(b_k).max()",
+   "off_k = 0.0 if BEHAVIOUR_OFF else w * torch.log1p(b_k)",
+   "score_k = D_k - off_k[None, :]",
+   "k1 = torch.argmin(score_k, dim=-1)",
+   "r_next = r - a[k1]"
+  ],
+  "note": "The statements are the DISTANCE in SymPy: they are the equations the reference contract must equal, statement by statement. The executable_statements are the same surface as a program: the lift, the distance, the demand's accumulation, the weight and the score, in the order the trainer runs them. The carried buffers (b_raw, ms_sum, ms_count) live across the epoch and are stated here with the values they carry."
+ },
+ "incomplete": [],
+ "missing": [],
+ "conventions": {
+  "curvature": "the ball is of curvature kappa = -c with c > 0; the ball radius is R_c = 1/sqrt(c) - a radius R with kappa = -1/R^2 is the same family under c = 1/R^2, and every distance, exponential map and radius must use ONE of them",
+  "distance": "d_c(x, y) = (2/sqrt(c)) artanh(sqrt(c) ||(-x) (+) y||), with (+) the canonical Mobius sum; at c = 0 the limit is 2||x - y||, and the factor 2 is the metric's normalisation",
+  "exponential_map": "exp_0^c(v) = tanh(sqrt(c)||v||) v / (sqrt(c)||v||), and exp_x^c(v) = x (+) [tanh(sqrt(c) lambda_x^c ||v|| / 2) v / (sqrt(c)||v||)] with lambda_x^c = 2/(1 - c||x||^2)",
+  "logarithm": "log_0^c(y) = artanh(sqrt(c)||y||) y / (sqrt(c)||y||)",
+  "tangent_norm": "a tangent vector's Euclidean coordinate norm is not its Riemannian norm: ||v||_{0,c} = lambda_0^c ||v|| = 2||v||, so d_c(0, exp_0^c(v)) = 2||v|| and log_0^c(exp_0^c(v)) = v",
+  "fréchet_mean": "the Frechet mean of a weighted set is the point minimising the weighted sum of squared distances; a coordinate average may not be called a Frechet mean",
+  "straight_through": "the assignment is an argmin and has no gradient; the reconstruction gradient reaches the encoder through the straight-through estimator x_q = x + (x_q - x).detach()",
+  "source": "tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md, which the implementation must cite and the reviewers must check"
+ },
+ "conventions_derived_by": "the framework: the canonical geometry contract"
+}

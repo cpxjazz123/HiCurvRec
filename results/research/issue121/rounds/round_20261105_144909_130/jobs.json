@@ -1,0 +1,83 @@
+{
+  "jobs": [
+    {
+      "attempts": 1,
+      "error": null,
+      "finished_at": 1793868357.259924,
+      "gpu": "0,1,2,3",
+      "idea_id": "pmi-geomargin-l1-rq",
+      "job_id": "stage2:pmi-geomargin-l1-rq",
+      "kind": "stage2",
+      "launch_mode": "ddp4",
+      "queued_at": 1793867789.350241,
+      "result": {
+        "metrics": {
+          "full_unique_items": 24587,
+          "l3_collision": 0.7034611786716558,
+          "level2_distinct_prefixes": 1027,
+          "negative_hits": 97807,
+          "pairs": 52855,
+          "positive_hits": 21349,
+          "valid_l1_hard_er": 2.1827681045323954,
+          "valid_l1_negative_hit_rate": 0.18504777220698138,
+          "valid_l1_positive_hit_rate": 0.4039163749881752
+        },
+        "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/item_sids.json",
+        "sid_sha256": "af0b11500894981f54ee96aaafc8b148d22542582087a391fbddaec7b01075d9",
+        "validity": {
+          "diagnostics": {
+            "full_unique_items": 24587,
+            "l3_collision": 0.7034611786716558,
+            "level2_distinct_prefixes": 1027,
+            "negative_hits": 97807,
+            "pairs": 52855,
+            "positive_hits": 21349,
+            "valid_l1_hard_er": 2.1827681045323954,
+            "valid_l1_negative_hit_rate": 0.18504777220698138,
+            "valid_l1_positive_hit_rate": 0.4039163749881752
+          },
+          "reference_status": {
+            "status": "verified"
+          },
+          "refused": null,
+          "valid": true
+        }
+      },
+      "result_dir": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq",
+      "round_id": "round_20261105_144909_130",
+      "stage3_job_id": "stage3:pmi-geomargin-l1-rq",
+      "started_at": 1793867789.3544135,
+      "status": "done",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq"
+    },
+    {
+      "attempts": 0,
+      "error": "Stage 3 was not started: the exported SID's three-level collision 0.703461 exceeds the owner's learned gate of 0.35 (the frozen reference arm measures 0.064831)",
+      "failure_evidence": {
+        "l3_collision": 0.7034611786716558,
+        "level1_codes_available": 256,
+        "level1_codes_used": 42,
+        "level1_top_code_item_share": 0.31,
+        "level2_distinct_prefixes": 1027,
+        "note": "The owner decided to respect the gate: this round ends with a negative result and no recall measurement.",
+        "reference_l3_collision": 0.06483100825639565,
+        "reference_level2_distinct_prefixes": 16145,
+        "refused_by": "the owner's learned three-level-collision gate (<= 0.35)",
+        "stage3_started": false
+      },
+      "finished_at": 1793884479.992436,
+      "idea_id": "pmi-geomargin-l1-rq",
+      "job_id": "stage3:pmi-geomargin-l1-rq",
+      "kind": "stage3",
+      "queued_at": 1793868357.5836148,
+      "result": null,
+      "round_id": "round_20261105_144909_130",
+      "sid_path": "/home/wlia0047/ar57/wenyu/GeneRec/results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/item_sids.json",
+      "stage2_job_id": "stage2:pmi-geomargin-l1-rq",
+      "started_at": null,
+      "status": "failed",
+      "tree": "/home/wlia0047/ar57/wenyu/GeneRec/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq"
+    }
+  ],
+  "schema": 1
+}

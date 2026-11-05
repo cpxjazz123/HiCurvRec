@@ -654,6 +654,14 @@ results/stage2_RQ-VAE/r8_ten_mechanisms/*/production_stdout.log
 # Stage2/Stage3 的 checkpoint 与数组产物不再入库: 它们可由 item_sids.json
 # (仍入库) 与一次 22 分钟的 Stage2 重跑重建, 而 LFS 对象不可变, 每次重跑
 # 都会永久新增一份配额。段末规则优先级最高, 覆盖上面的 ! 重新包含。
+# The behaviour-adjusted level-1 arm (round_20261105_144909_130, issue 121).
+# Its exported identifiers, its metrics stream and its layer record are the
+# evidence of a negative result: the owner's learned three-level-collision gate
+# refused the Stage 3 launch. The checkpoints and arrays stay out (the rules
+# below win), so the SID and the measurements travel without the weights.
+!results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/
+!results/stage2_RQ-VAE/TIGER_pmi-geomargin-l1-rq/logs/**
+
 results/**/*.pth
 results/**/*.pt
 results/**/*.npy

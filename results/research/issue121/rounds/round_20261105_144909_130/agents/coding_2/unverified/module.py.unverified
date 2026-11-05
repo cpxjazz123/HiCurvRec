@@ -1,0 +1,134 @@
+'''Level-1 re-scoring surface: derived Poincare distance minus a frozen train-only behaviour offset.
+
+Canonical geometry contract: tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md
+(ball of curvature kappa = -c, c > 0, radius R_c = 1/sqrt(c)).
+
+Fixed constants: eps = 1e-12, tau = 1.0, rho = 0.5, rho_off = 0.10, eta = 0.1.
+Continuous surface: level_score(residual, codebook, curvature, demand, weight)
+with curvature = c, demand = b_k, weight = w. Returns a dict keyed by the
+specification's symbols: u, q, D_k, off_k, score_k, k1, p_ik.
+'''
+
+import math
+
+import torch
+
+eps = 1e-12
+tau = 1.0
+rho = 0.5
+rho_off = 0.10
+eta = 0.1
+
+BEHAVIOUR_OFF = False
+GEOMETRY_OFF = False
+
+
+def _norm(v):
+    return torch.sqrt(torch.clamp((v * v).sum(-1), min=0.0))
+
+
+def compute_scale(z, rho_=rho):
+    '''s = sqrt(mean_i ||z_i||_2^2), the RMS of the per-item latent VECTOR norm; c = (rho/s)**2.
+
+    FAIL-CLOSED: a non-finite or non-positive s raises; s is never defaulted.
+    '''
+    if not torch.is_tensor(z):
+        z = torch.as_tensor(z)
+    n2 = (z * z).sum(-1).mean()
+    s = torch.sqrt(torch.clamp(n2, min=0.0))
+    s_value = float(s.detach())
+    if (not math.isfinite(s_value)) or s_value <= 0.0:
+        raise ValueError('scale: s is not finite and positive; refusing to continue')
+    c = (rho_ / s) ** 2
+    return s, c
+
+
+def lift(v, c):
+    '''LIFT(v) = tanh(sqrt(c)||v||) * v / (sqrt(c)||v|| + eps); identity at c = 0.'''
+    if float(c) == 0.0:
+        return v
+    sc = math.sqrt(float(c))
+    n = _norm(v)
+    ratio = torch.tanh(sc * n) / (sc * n + eps)
+    if v.dim() == 1:
+        return v * ratio
+    return v * ratio.unsqueeze(-1)
+
+
+def mobius(x, y, c):
+    '''((1 + 2c<x,y> + c||y||^2)x + (1 - c||x||^2)y) / (1 + 2c<x,y> + c^2||x||^2||y||^2 + eps).'''
+    xy = (x * y).sum(-1, keepdim=True)
+    xx = (x * x).sum(-1, keepdim=True)
+    yy = (y * y).sum(-1, keepdim=True)
+    num = (1 + 2 * c * xy + c * yy) * x + (1 - c * xx) * y
+    den = 1 + 2 * c * xy + c * c * xx * yy + eps
+    return num / den
+
+
+def dist(x, y, c):
+    '''(2/sqrt(c)) * artanh(min(sqrt(c)||(-x)(+)y||, 1 - 1e-6)); 2||x-y|| at c = 0.'''
+    if float(c) == 0.0:
+        return 2.0 * _norm(x - y)
+    sc = math.sqrt(float(c))
+    arg = sc * _norm(mobius(-x, y, c))
+    return (2.0 / sc) * torch.atanh(torch.clamp(arg, max=1.0 - 1e-6))
+
+
+def level_score(residual, codebook, curvature, demand, weight):
+    '''score_k = DIST(LIFT(r), LIFT(a_k)) - off_k, with off_k = w * log(1 + b_k).'''
+    c = float(curvature)
+    u = lift(residual, c)
+    q = lift(codebook, c)
+    D_k = dist(u[:, None, :], q[None, :, :], c)
+    if not torch.is_tensor(demand):
+        demand = torch.as_tensor(demand, dtype=D_k.dtype, device=D_k.device)
+    demand = demand.to(dtype=D_k.dtype, device=D_k.device)
+    if BEHAVIOUR_OFF:
+        off_k = torch.zeros_like(demand)
+    else:
+        off_k = float(weight) * torch.log1p(demand)
+    score_k = D_k - off_k[None, :]
+    k1 = torch.argmin(score_k, dim=-1)
+    p_ik = torch.softmax(-D_k / tau, dim=-1)
+    return {'u': u, 'q': q, 'D_k': D_k, 'off_k': off_k, 'score_k': score_k, 'k1': k1, 'p_ik': p_ik}
+
+
+def level_score_tensor(residual, codebook, curvature, demand, weight):
+    return level_score(residual, codebook, curvature, demand, weight)['score_k']
+
+
+def residual_next(residual, codebook, k1):
+    '''r_next = r - a[k1], the UNLIFTED baseline codeword.'''
+    return residual - codebook[k1]
+
+
+def item_mass(t_ij):
+    '''m_i = sum_j [ t_ij / sqrt(out_i * in_j + eps) ], self-pairs dropped.'''
+    t = torch.as_tensor(t_ij).clone()
+    n = t.shape[0]
+    idx = torch.arange(n, device=t.device)
+    t[idx, idx] = 0.0
+    out_i = t.sum(dim=1)
+    in_j = t.sum(dim=0)
+    denom = torch.sqrt(out_i[:, None] * in_j[None, :] + eps)
+    return (t / denom).sum(dim=1)
+
+
+def demand_from_raw(b_raw):
+    '''b_k = log(1 + b_raw_k / mean_k(b_raw_k)).'''
+    b_raw = torch.as_tensor(b_raw)
+    return torch.log1p(b_raw / b_raw.mean())
+
+
+def update_b_raw(b_raw, num_k, den_k):
+    '''End-of-epoch EMA on b_raw only: (1 - eta) * b_raw + eta * num_k / (den_k + eps).'''
+    b_raw_epoch = num_k / (den_k + eps)
+    return (1.0 - eta) * b_raw + eta * b_raw_epoch
+
+
+def offset_weight(mean_scale, b_k, epoch):
+    '''w = 0 during epoch 1 (and on BEHAVIOUR_OFF); else rho_off * mean_scale / max_k log(1 + b_k).'''
+    if BEHAVIOUR_OFF or epoch == 1:
+        return 0.0
+    return float(rho_off) * float(mean_scale) / float(torch.log1p(b_k).max())
+
