@@ -49,11 +49,19 @@ SCORERS = 3
 PHASES = ("ideation", "probe", "scoring", "implementation")
 
 
+def _repository_root(start: Path) -> Path:
+    """The repository root above a round directory, found by the marker."""
+    here = Path(start).resolve()
+    for parent in here.parents:
+        if (parent / ".git").exists() and (parent / "stage2_RQ-VAE").is_dir():
+            return parent
+    return here
+
 def _workspace(root: Path, task_id: str) -> Path:
     return Path(root) / "agents" / task_id
 
 
-class RoundIncomplete(RoundError if "RoundError" in globals() else RuntimeError):
+class RoundIncomplete(RuntimeError):
     """A round phase is missing agents; the work that exists is kept.
 
     The main agent decides what to do next: retry the missing agents when the

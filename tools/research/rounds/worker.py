@@ -112,6 +112,7 @@ from .step5_derivation import (  # noqa: F401  (the facade)
     phase_derivation,
 )
 from .step6_implementation import (  # noqa: F401  (the facade)
+    _repository_root,
     run_implementation,
     _source_files,
     scope_file,

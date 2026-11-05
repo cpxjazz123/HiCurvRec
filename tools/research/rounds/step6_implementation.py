@@ -37,6 +37,7 @@ from . import specification as specification_module
 
 
 from .agent_calls import (  # noqa: F401  (the shared call)
+    _repository_root,
     _run_agent, _run_agents_concurrently, _round_roots,
     _workspace, geometry_contract, role_of_task,
 )
