@@ -378,6 +378,13 @@ FORMULATION_JSON_INSTRUCTIONS = (
     '                   "inputs": ["..."], "output": "...",\n'
     '                   "differentiable": true, "note": "..."}],\n'
     ' "inputs": ["..."], "outputs": ["..."], "parameters": ["..."],\n'
+    ' "dimensions": {"batch": "B", "latent": 32, "codes": 256},\n'
+    ' "gradient_rules": [{"operator": "the straight-through estimator",\n'
+    '                     "rule": "identity in the backward: x + (x_q - x).detach()"},\n'
+    '                    {"operator": "the argmin", "rule": "no gradient; it decides the token"}],\n'
+    ' "training_integration": {"loss": "the total objective",\n'
+    '                          "reconstruction": "the codeword the assignment chose",\n'
+    '                          "optimizer": "adamw, the baseline schedule"},\n'
     ' "switches": ["the behaviour switch and what it does",\n'
     '              "the geometry switch and what it does"],\n'
     ' "excluded": ["the surfaces that are deliberately out of scope, and why"],\n'
@@ -736,6 +743,19 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
                 block = render_idea_json(payload)
             elif payload.get("ranking"):
                 block = render_rank_json(payload)
+            elif payload.get("computations"):
+                # a formulated specification: the canonical JSON on disk is the
+                # one form that cannot be mangled by the progress records
+                block = json.dumps({key: payload.get(key) for key in
+                                    ("mechanism", "computations", "inputs", "outputs",
+                                     "parameters", "dimensions", "gradient_rules",
+                                     "training_integration", "switches", "excluded",
+                                     "continuous_surface", "incomplete", "missing")
+                                    if payload.get(key) is not None},
+                                   indent=1, ensure_ascii=False)
+            elif payload.get("module"):
+                # an implementation: the module is the answer
+                block = str(payload.get("module"))
             elif payload.get("statements"):
                 # A derivation is a formula and the code that computes it: the
                 # canonical JSON on disk is the one form that cannot be mangled

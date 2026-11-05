@@ -1585,6 +1585,15 @@ def _formula_prompt(idea: dict, findings: list = None) -> str:
         "COUPLING: " + str(idea.get("coupling_path")) + "\n"
         "ABLATION BEHAVIOUR OFF: " + str(idea.get("ablation_behavior_off")) + "\n"
         "ABLATION GEOMETRY OFF: " + str(idea.get("ablation_geometry_off")) + "\n")
+    prompt += ("\n\nThe specification MUST state, as JSON keys: mechanism, "
+               "computations, inputs, outputs, parameters, dimensions, "
+               "gradient_rules, training_integration, switches, excluded, and the "
+               "continuous_surface. Every computation the mechanism touches "
+               "belongs in computations; dimensions states every tensor width; "
+               "gradient_rules states how the gradient flows for every operator "
+               "(including the straight-through estimator and the argmin); "
+               "training_integration states the loss, what the decoder receives "
+               "and the optimizer.")
     if findings:
         prompt += ("\n\nTHE REVIEWERS FOUND THESE PROBLEMS. Fix them, and nothing "
                    "else:\n- " + "\n- ".join(str(finding) for finding in findings))
