@@ -1,0 +1,27 @@
+{
+ "task_id": "math_review_1",
+ "backend": "openai-agents-sdk",
+ "verified": true,
+ "finished_utc_epoch": 1793846475.7299242,
+ "elapsed_s": 282.79,
+ "model": "deepseek/deepseek-v4.1-flash",
+ "role": "review_math",
+ "boundary_sha256": "ac4d14910a4ae1e910c7950b533354c2c795275bae8c47d7527ceadcf77cc777",
+ "read_allowlist": [
+  "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md"
+ ],
+ "geometry_contract": {
+  "path": "/fs04/ar57/wenyu/GeneRec/tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md",
+  "version": "poincare-contract/v1",
+  "sha256": "bdc89757b8e88bb115cb2d871a8da0591fdaa8574bebe50e26baaef9440cdad4"
+ },
+ "failure": "",
+ "refusals": [],
+ "structured_output": true,
+ "structured_output_fallback": false,
+ "timed_out": false,
+ "budget_seconds": 300.0,
+ "failure_trace": "",
+ "progress_file": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261105_113459_610/agents/math_review_1/progress.jsonl",
+ "answer": "/fs04/ar57/wenyu/GeneRec/results/research/issue121/rounds/round_20261105_113459_610/agents/math_review_1/math_review.json"
+}

@@ -1,0 +1,353 @@
+{
+ "mechanism": "Level-1 radial-coordinate branch: a behaviour signal computed once from the TRAINING sequences (popularity-adjusted directed out-degree s_i) places every item i at a per-item radius r_i = R tanh(min(log(1+s_i),T_max)/(2R)) inside a Poincare ball of curvature kappa = -1/R^2, R = max(1, log(N_items)/log(1+max(b_bar,1.1))), b_bar = mean_i s_i. Per training step the encoder output z is L2-normalised, pushed to u_i = r_i * zhat, and compared against every level-1 codeword e_k transported to the same ball (rho_k = R tanh(||e_k||/(2R)), c_k = rho_k * e_k/max(||e_k||,eps)) with the Poincare distance d_k = arcosh(1 + 2 R^2 ||u_i - c_k||^2 / max((R^2-||u_i||^2)(R^2-||c_k||^2), 1e-6 R^4)); the level-1 token is k1 = argmin_k d_k, the codebook itself stays Euclidean so z_q1 = e_{k1}, the residual res_1 = z - z_q1 and all deeper levels (2..L) run the unchanged baseline Euclidean residual-VQ argmin with no curvature and no Sinkhorn. Loss, decoder, interface and straight-through are the baseline RQ-VAE ones; the metric only decides which integer k1 is emitted, carrying no gradient, so gradients reach z exactly as in the baseline straight-through path.",
+ "computations": [
+  {
+   "name": "pair_counts",
+   "definition": "n_ij = #{(a,b) : a = i and b = j at consecutive positions of one TRAINING-split sequence}",
+   "inputs": [
+    "training_sequences"
+   ],
+   "output": "N x N integer count matrix (sparse, directed, self-pairs not counted)",
+   "differentiable": false,
+   "note": "precomputed once, frozen before the first step"
+  },
+  {
+   "name": "item_marginals",
+   "definition": "n_i = sum_j n_ij ; n_j = sum_i n_ij",
+   "inputs": [
+    "n_ij"
+   ],
+   "output": "two length-N integer vectors",
+   "differentiable": false,
+   "note": "directed counts"
+  },
+  {
+   "name": "total_transitions",
+   "definition": "M = sum_i sum_j n_ij",
+   "inputs": [
+    "n_ij"
+   ],
+   "output": "scalar integer",
+   "differentiable": false,
+   "note": ""
+  },
+  {
+   "name": "adjusted_successors",
+   "definition": "S_i = { j : n_ij > n_i * n_j / M }",
+   "inputs": [
+    "n_ij",
+    "n_i",
+    "n_j",
+    "M"
+   ],
+   "output": "N sets, s_i = |S_i|",
+   "differentiable": false,
+   "note": "strict >; co-consumption above the popularity-only expectation"
+  },
+  {
+   "name": "out_degree",
+   "definition": "s_i = |S_i|",
+   "inputs": [
+    "S_i"
+   ],
+   "output": "length-N integer vector",
+   "differentiable": false,
+   "note": ""
+  },
+  {
+   "name": "branching_mean",
+   "definition": "b_bar = (1/N) * sum_i s_i",
+   "inputs": [
+    "s_i"
+   ],
+   "output": "scalar",
+   "differentiable": false,
+   "note": "N = N_items"
+  },
+  {
+   "name": "behaviour_signal",
+   "definition": "T_i = log(1 + s_i)",
+   "inputs": [
+    "s_i"
+   ],
+   "output": "length-N float32 vector (cached)",
+   "differentiable": false,
+   "note": "the behaviour signal; frozen buffer"
+  },
+  {
+   "name": "catalogue_mean_T",
+   "definition": "T_bar = (1/N) * sum_i T_i",
+   "inputs": [
+    "T_i"
+   ],
+   "output": "scalar",
+   "differentiable": false,
+   "note": "used when USE_BEHAV=False"
+  },
+  {
+   "name": "curvature_radius",
+   "definition": "R = max(1, log(N_items) / log(1 + max(b_bar, 1.1)))",
+   "inputs": [
+    "b_bar",
+    "N_items"
+   ],
+   "output": "scalar float32",
+   "differentiable": false,
+   "note": "N_items = 24556"
+  },
+  {
+   "name": "curvature",
+   "definition": "kappa = -1 / R^2",
+   "inputs": [
+    "R"
+   ],
+   "output": "scalar float32",
+   "differentiable": false,
+   "note": "constant, never trained"
+  },
+  {
+   "name": "clamp_bound",
+   "definition": "T_max = 2 * R * atanh(0.95)",
+   "inputs": [
+    "R"
+   ],
+   "output": "scalar float32",
+   "differentiable": false,
+   "note": "keeps r_i strictly inside the ball"
+  },
+  {
+   "name": "radius_table",
+   "definition": "T_i_eff = T_i if USE_BEHAV else T_bar ; r_i = R * tanh(min(T_i_eff, T_max) / (2*R))",
+   "inputs": [
+    "T_i",
+    "T_bar",
+    "T_max",
+    "R",
+    "USE_BEHAV"
+   ],
+   "output": "length-N float32 vector r (cached, 24556 entries)",
+   "differentiable": false,
+   "note": "switch 1 enters here; r_i < R always"
+  },
+  {
+   "name": "normalise_query",
+   "definition": "zhat = z / max(||z||_2, eps), eps = 1e-8",
+   "inputs": [
+    "z"
+   ],
+   "output": "B x d",
+   "differentiable": true,
+   "note": "differentiable but upstream of the argmin only"
+  },
+  {
+   "name": "transport_query",
+   "definition": "u_i = r_i * zhat_i  (USE_CURV=True) ; u_i = T_i_eff * zhat_i  (USE_CURV=False)",
+   "inputs": [
+    "zhat",
+    "r_i",
+    "T_i_eff",
+    "USE_CURV"
+   ],
+   "output": "B x d",
+   "differentiable": true,
+   "note": "switch 2 enters here; for USE_CURV=True ||u_i|| < R"
+  },
+  {
+   "name": "code_radius",
+   "definition": "rho_k = R * tanh(||e_k|| / (2*R))",
+   "inputs": [
+    "E1",
+    "R"
+   ],
+   "output": "256",
+   "differentiable": true,
+   "note": "rho_k < R"
+  },
+  {
+   "name": "code_transport",
+   "definition": "c_k = rho_k * e_k / max(||e_k||, eps)  (USE_CURV=True) ; c_k = ||e_k|| * e_k / max(||e_k||, eps)  (USE_CURV=False)",
+   "inputs": [
+    "E1",
+    "rho_k",
+    "USE_CURV"
+   ],
+   "output": "256 x d",
+   "differentiable": true,
+   "note": "E1 itself is unchanged and stays Euclidean"
+  },
+  {
+   "name": "level1_distance",
+   "definition": "diff2_k = ||u_i - c_k||_2^2 ; den_k = max((R^2 - ||u_i||^2) * (R^2 - ||c_k||^2), 1e-6 * R^4) ; d_k = arcosh(1 + 2*R^2*diff2_k/den_k)  (USE_CURV=True) ; d_k = ||u_i - c_k||_2  (USE_CURV=False)",
+   "inputs": [
+    "u_i",
+    "c_k",
+    "R",
+    "USE_CURV"
+   ],
+   "output": "B x 256",
+   "differentiable": true,
+   "note": "guard 1e-6 R^4 keeps arcosh real; no clip, no temperature"
+  },
+  {
+   "name": "level1_assignment",
+   "definition": "k1 = argmin_k d_k (ties -> smallest k)",
+   "inputs": [
+    "d"
+   ],
+   "output": "B int64",
+   "differentiable": false,
+   "note": "carries no gradient; decides the token"
+  },
+  {
+   "name": "level1_quantized",
+   "definition": "z_q1 = e_{k1} = E1[k1]",
+   "inputs": [
+    "E1",
+    "k1"
+   ],
+   "output": "B x d",
+   "differentiable": false,
+   "note": "Euclidean codeword, not c_{k1} and not u_i"
+  },
+  {
+   "name": "residual_level1",
+   "definition": "res_1 = z - z_q1",
+   "inputs": [
+    "z",
+    "z_q1"
+   ],
+   "output": "B x d",
+   "differentiable": true,
+   "note": "baseline formula, unchanged"
+  },
+  {
+   "name": "deep_levels",
+   "definition": "for l = 2..L: k_l = argmin_k ||res_{l-1} - e^{(l)}_k||_2 ; res_l = res_{l-1} - e^{(l)}_{k_l}",
+   "inputs": [
+    "res_1",
+    "E_l for l>=2"
+   ],
+   "output": "k_l (B,) and res_l (B x d)",
+   "differentiable": false,
+   "note": "exactly baseline: no curvature, no Sinkhorn, no radii"
+  },
+  {
+   "name": "straight_through",
+   "definition": "z_q = z + (sum_{l=1..L} e^{(l)}_{k_l} - z).detach()",
+   "inputs": [
+    "z",
+    "e_{k_l}"
+   ],
+   "output": "B x d fed to the decoder",
+   "differentiable": true,
+   "note": "identity in the backward"
+  },
+  {
+   "name": "total_loss",
+   "definition": "L = ||x - D(sum_l e^{(l)}_{k_l})||_2^2 + sum_l ( ||sg[res_{l-1}] - e^{(l)}_{k_l}||_2^2 + beta * ||res_{l-1} - sg[e^{(l)}_{k_l}]||_2^2 ), beta = 0.25",
+   "inputs": [
+    "x",
+    "D",
+    "e^{(l)}_{k_l}",
+    "res_{l-1}"
+   ],
+   "output": "scalar",
+   "differentiable": true,
+   "note": "baseline RQ-VAE loss, unmodified; no extra term"
+  },
+  {
+   "name": "switch_behaviour",
+   "definition": "USE_BEHAV in {True, False} ; T_i_eff = T_i if USE_BEHAV else (T_bar for all i)",
+   "inputs": [
+    "USE_BEHAV",
+    "T_i",
+    "T_bar"
+   ],
+   "output": "T_i_eff (length N)",
+   "differentiable": false,
+   "note": "one flag; not trained in this round"
+  },
+  {
+   "name": "switch_geometry",
+   "definition": "USE_CURV in {True, False} : True -> Poincare branch of radius_table/transport/code_transport/level1_distance ; False -> kappa->0 branch (u_i = T_i_eff*zhat_i, rho_k = ||e_k||, c_k = ||e_k||*ehat_k, d_k = ||u_i - c_k||_2)",
+   "inputs": [
+    "USE_CURV"
+   ],
+   "output": "the distance block used by the argmin",
+   "differentiable": false,
+   "note": "one flag; not trained in this round"
+  }
+ ],
+ "inputs": [
+  "encoder output z (B x d)",
+  "level-1 codebook E1 (256 x d, Euclidean, unchanged)",
+  "frozen per-item radii r (24556 float32) and T_i_eff (24556 float32)",
+  "fixed scalars R, kappa, T_max",
+  "item_id (B,) for the radius lookup",
+  "training-split sequences (once, for the tables)",
+  "target x and decoder D for the baseline loss"
+ ],
+ "outputs": [
+  "level-1 code index k1 (B,)",
+  "the Euclidean codeword e_{k1} (B x d) used for the straight-through reconstruction and subtracted from the residual handed to the baseline deep levels",
+  "deep levels' k_l and the summed codeword to the decoder (baseline format)",
+  "no change to any deeper level's interface, to the decoder, or to the Stage-3 input format"
+ ],
+ "parameters": [
+  "n_ij, n_i, n_j, M (frozen count tables)",
+  "S_i, s_i, T_i (float32, 24556), T_bar, b_bar (frozen)",
+  "R, kappa = -1/R^2, T_max = 2R atanh(0.95) (frozen scalars)",
+  "r_i (float32, 24556, frozen)",
+  "USE_BEHAV (bool)",
+  "USE_CURV (bool)",
+  "E1 (256 x d) trainable, baseline init",
+  "E_l (l >= 2) and decoder D trainable, baseline",
+  "beta = 0.25 (baseline)"
+ ],
+ "switches": [],
+ "excluded": [],
+ "continuous_surface": {
+  "name": "poincare_level1_distance",
+  "callable": "level1_metric:poincare_level1_distance",
+  "symbols": [
+   "R",
+   "T_max",
+   "eps"
+  ],
+  "args": [
+   {
+    "name": "x",
+    "width": 2,
+    "radius": 0.0,
+    "scalar": 0.0
+   },
+   {
+    "name": "e",
+    "width": 2,
+    "radius": 0.0,
+    "scalar": 0.0
+   }
+  ],
+  "statements": [
+   "n = sqrt(x0**2 + x1**2)",
+   "xh0 = x0/Max(n, eps)",
+   "xh1 = x1/Max(n, eps)",
+   "r = R*tanh(Min(T, T_max)/(2*R))",
+   "u0 = r*xh0",
+   "u1 = r*xh1",
+   "ne = sqrt(e0**2 + e1**2)",
+   "rho = R*tanh(ne/(2*R))",
+   "c0 = rho*e0/Max(ne, eps)",
+   "c1 = rho*e1/Max(ne, eps)",
+   "diff2 = (u0 - c0)**2 + (u1 - c1)**2",
+   "u2 = u0**2 + u1**2",
+   "c2 = c0**2 + c1**2",
+   "den = Max((R**2 - u2)*(R**2 - c2), 1e-6*R**4)",
+   "d = acosh(1 + 2*R**2*diff2/den)"
+  ],
+  "output": "d",
+  "note": ""
+ },
+ "incomplete": "",
+ "missing": []
+}

@@ -1,0 +1,310 @@
+{
+ "mechanism": "A baseline RQ-VAE whose level-1 assignment is made in the Poincare ball of curvature kappa = -1/R^2, with per-item radial coordinates supplied by a frozen behaviour statistic. From the Stage-2 TRAINING split alone one precomputes directed pair counts n_ij, the out-degree marginal n_i = Sum_j n_ij, the in-degree marginal n_j = Sum_i n_ij, and M = Sum_{i,j} n_ij; the popularity null model is E[n_ij] = n_i * n_j / M, and j is an adjusted successor of i iff n_ij > n_i n_j / M. With s_i = |S_i|, T_i = log(1+s_i) (both frozen), b_bar = mean_i s_i and T_bar = mean_i T_i, the ball radius is R = max(1, log(N_items)/log(1+max(b_bar,1.1))), kappa = -1/R^2 and T_max = 2 R atanh(0.95). At each step, for level 1 only: zhat = z/max(||z||,eps); with T_i_used = T_i (USE_BEHAV) or T_bar (ablation) the item is placed at r_i = R tanh(min(T_i_used,T_max)/(2R)) and u_i = r_i zhat; each level-1 codeword is placed at rho_k = R tanh(min(||e_k||,T_max)/(2R)) and c_k = rho_k e_k/max(||e_k||,eps); the geodesic distance d_ik = R arcosh(1 + 2 R^2 ||u_i-c_k||^2 / ((R^2-||u_i||^2)(R^2-||c_k||^2))) decides k1 = argmin_k d_ik. The chosen codeword is the unmodified Euclidean E1[k1], never u_i or c_k: z_q1 = E1[k1], res_1 = z - detach(E1[k1]) with identity Jacobian in z (standard straight-through), and levels 2..L run the baseline Euclidean argmin with no curvature and no Sinkhorn. The geometry switch (USE_CURV=False) is the literal kappa->0 limit: r_i -> T_i_used/2, rho_k -> ||e_k||_2/2, and d_ik -> 2||u_i-c_k||_2 = ||T_i_used zhat_i - ||e_k||_2 ehat_k||_2, i.e. d_ik = ||u_i-c_k||_2 exactly (common factor 2 absorbed, argmin identical); the factor 1/2 hits item and codeword radius alike, which is why the argmin is unaffected, and it means one unit of T_i equals one unit of ||e_k||_2 only after this factor is accounted for. No extra loss, hyperparameter, temperature, clip bound or Sinkhorn is introduced; the objective is identically the baseline RQ-VAE reconstruction + codebook + commitment loss and all behaviour statistics are frozen before the first training step.",
+ "computations": [
+  {
+   "name": "directed_pair_counts",
+   "definition": "From the Stage-2 TRAINING split sequences only: n_ij = #(directed transitions i -> j inside training sequences of training users), n_i = Sum_j n_ij (out-degree marginal), n_j = Sum_i n_ij (in-degree marginal; index reuse of j is intentional and is a separate vector from n_i), M = Sum_{i,j} n_ij. All three are frozen float32/int64 before the first training step.",
+   "inputs": [
+    "stage-2 training split item sequences"
+   ],
+   "output": "sparse n_ij (N_items x N_items), n_i (N_items,), n_j (N_items,), M (scalar)",
+   "differentiable": false,
+   "note": "Directed counts, so row sums and column sums differ; the null model is out-degree_i * in-degree_j / M = E[n_ij] under independence of source and target popularity."
+  },
+  {
+   "name": "adjusted_successor_set",
+   "definition": "S_i = { j : n_ij > n_i * n_j / M }; s_i = |S_i|",
+   "inputs": [
+    "n_ij",
+    "n_i",
+    "n_j",
+    "M"
+   ],
+   "output": "S_i (sparse item sets), s_i (N_items,)",
+   "differentiable": false,
+   "note": "Strict inequality; the threshold n_i n_j / M is the popularity-only expectation of n_ij, so S_i is co-consumption above the popularity-only expectation. n_j is the in-degree marginal Sum_i n_ij, never the out-degree n_i."
+  },
+  {
+   "name": "behaviour_score",
+   "definition": "T_i = log(1 + s_i); b_bar = (1/N_items) Sum_i s_i; T_bar = (1/N_items) Sum_i T_i",
+   "inputs": [
+    "s_i"
+   ],
+   "output": "T_i (N_items,), b_bar (scalar), T_bar (scalar)",
+   "differentiable": false,
+   "note": "s_i = 0 gives T_i = 0 hence r_i = 0 and a z-independent level-1 token for that item. T_i, T_bar and the USE_BEHAV flag are cached as float32."
+  },
+  {
+   "name": "radius_of_curvature",
+   "definition": "R = max(1, log(N_items) / log(1 + max(b_bar, 1.1))); kappa = -1 / R^2; T_max = 2 * R * atanh(0.95)",
+   "inputs": [
+    "N_items",
+    "b_bar"
+   ],
+   "output": "R (scalar, R >= 1), kappa (scalar, kappa < 0), T_max (scalar)",
+   "differentiable": false,
+   "note": "R >= 1 by construction, so R^2 >= 1 and the divisions below are well defined. T_max is the clamp that keeps every ball radius <= 0.95 R."
+  },
+  {
+   "name": "behaviour_radial_coordinate",
+   "definition": "T_i_used = T_i if USE_BEHAV else T_bar; r_i = R * tanh(min(T_i_used, T_max) / (2*R))",
+   "inputs": [
+    "T_i",
+    "T_bar",
+    "USE_BEHAV",
+    "R",
+    "T_max"
+   ],
+   "output": "r_i (N_items,), T_i_used (N_items,)",
+   "differentiable": false,
+   "note": "The behaviour's entry point. min(T_i_used,T_max) <= T_max = 2R atanh(0.95) implies 0 <= r_i <= 0.95 R, so r_i < R always. USE_BEHAV=False makes every item share T_bar (ablation)."
+  },
+  {
+   "name": "latent_normalisation",
+   "definition": "zhat = z / max(||z||_2, eps), eps = 1e-8",
+   "inputs": [
+    "z (B x 32)"
+   ],
+   "output": "zhat (B x 32)",
+   "differentiable": true,
+   "note": "Direction only; the radius enters through r_i."
+  },
+  {
+   "name": "ball_embedding",
+   "definition": "u_i = r_i * zhat_i",
+   "inputs": [
+    "r_i",
+    "zhat"
+   ],
+   "output": "u (B x 32)",
+   "differentiable": true,
+   "note": "||u_i|| = r_i <= 0.95 R < R, so u_i never leaves the ball."
+  },
+  {
+   "name": "codebook_ball_embedding",
+   "definition": "rho_k = R * tanh(min(||e_k||_2, T_max) / (2*R)); c_k = rho_k * e_k / max(||e_k||_2, eps)",
+   "inputs": [
+    "E1 (256 x 32)",
+    "R",
+    "T_max"
+   ],
+   "output": "rho (256,), c (256 x 32)",
+   "differentiable": true,
+   "note": "The codebook radius is clamped by the same T_max as the item radius, giving 0 <= rho_k <= 0.95 R hence R^2 - ||c_k||^2 >= 0.0975 R^2; this is the repair that makes the denominator floor inert on BOTH factors."
+  },
+  {
+   "name": "level1_poincare_distance",
+   "definition": "d_ik = R * arcosh(1 + 2*R^2*||u_i - c_k||^2 / den_ik), den_ik = max((R^2 - ||u_i||^2)*(R^2 - ||c_k||^2), 1e-6*R^4)",
+   "inputs": [
+    "u (B x 32)",
+    "c (256 x 32)",
+    "R"
+   ],
+   "output": "d (B x 256)",
+   "differentiable": true,
+   "note": "This is the geodesic distance of curvature kappa = -1/R^2. It differs from the bare arcosh(1 + 2||u-c||^2/den) by the positive, item-independent factor R, so the argmin k1 is unchanged; that factor R is correct, not a deviation."
+  },
+  {
+   "name": "denominator_bound",
+   "definition": "R^2 - ||u_i||^2 >= R^2 - (0.95R)^2 = 0.0975 R^2 and R^2 - ||c_k||^2 >= 0.0975 R^2, hence den_ik >= (0.0975 R^2)^2 = 0.0095 R^4 > 1e-6 R^4",
+   "inputs": [
+    "r_i",
+    "rho_k",
+    "R"
+   ],
+   "output": "lower bound on den_ik",
+   "differentiable": false,
+   "note": "Proof that the 1e-6 R^4 floor is inert on both factors, i.e. d_ik is the exact Poincare distance and stays smooth in E1 and z."
+  },
+  {
+   "name": "level1_assignment",
+   "definition": "k1 = argmin_{k in 1..256} d_ik",
+   "inputs": [
+    "d (B x 256)"
+   ],
+   "output": "k1 (B,) integer",
+   "differentiable": false,
+   "note": "Hard argmin; no temperature, no clip bound, no Sinkhorn, no extra hyperparameter. Ties broken by smallest index k."
+  },
+  {
+   "name": "level1_reconstruction",
+   "definition": "z_q1 = E1[k1]; res_1 = z - detach(E1[k1])",
+   "inputs": [
+    "z (B x 32)",
+    "k1 (B,)",
+    "E1 (256 x 32)"
+   ],
+   "output": "z_q1 (B x 32), res_1 (B x 32)",
+   "differentiable": true,
+   "note": "The Euclidean codeword E1[k1], never u_i or c_k, is what is reconstructed and subtracted. detach(E1[k1]) gives the identity Jacobian in z."
+  },
+  {
+   "name": "level1_straight_through",
+   "definition": "z_st = z + (z_q1 - z).detach()",
+   "inputs": [
+    "z",
+    "z_q1"
+   ],
+   "output": "z_st (B x 32)",
+   "differentiable": true,
+   "note": "Identity in the backward pass; z_q1 contributes to the forward value only."
+  },
+  {
+   "name": "deeper_levels",
+   "definition": "for l = 2..L: k_l = argmin_k ||res_{l-1} - e^{(l)}_k||_2; res_l = res_{l-1} - detach(e^{(l)}_{k_l})",
+   "inputs": [
+    "res_1",
+    "codebooks E2..EL (each 256 x 32)"
+   ],
+   "output": "k_2..k_L (B,), res_2..res_L (B x 32)",
+   "differentiable": true,
+   "note": "Exactly the baseline Euclidean quantisation; no curvature and no Sinkhorn at any level >= 2, and the interface of every deeper level is unchanged."
+  },
+  {
+   "name": "encoder_gradient_path",
+   "definition": "dL/dz = dL/dres_1 + 2*beta*(z - sg(E1[k1])) + Sum_{l>=2} 2*beta*(res_{l-1} - sg(e^{(l)}_{k_l})) * (dres_{l-1}/dz), with dres_{l-1}/dz = I through the straight-through path",
+   "inputs": [
+    "dL/dres_1",
+    "z",
+    "E1[k1]",
+    "deeper residuals",
+    "beta"
+   ],
+   "output": "dL/dz (B x 32)",
+   "differentiable": true,
+   "note": "Two contributions at level 1: the reconstruction path through res_1 (identity Jacobian, because res_1 = z - detach(E1[k1])) and the level-1 commitment term beta*||res_0 - sg(E1[k1])||^2 with res_0 = z, whose gradient is 2*beta*(z - sg(E1[k1])). The level-1 codebook term uses sg(res_0) and so adds nothing to z. Exactly zero gradient flows into R, kappa, T_max, r_i, rho_k, s_i, T_i, T_bar, n_ij, n_i, n_j and M: all are frozen constants."
+  },
+  {
+   "name": "switch_use_behav",
+   "definition": "T_i_used = T_i if USE_BEHAV else T_bar",
+   "inputs": [
+    "T_i",
+    "T_bar",
+    "USE_BEHAV"
+   ],
+   "output": "T_i_used (N_items,)",
+   "differentiable": false,
+   "note": "ABLATION BEHAVIOUR OFF (USE_BEHAV=False): every item gets T_bar, so all items sit at one radius R tanh(min(T_bar,T_max)/(2R)) and level 1 reduces to a curvature-only angular metric with no per-item branching resolution. One flag, same code, not trained in this round."
+  },
+  {
+   "name": "switch_use_curv",
+   "definition": "USE_CURV=True: d_ik = R arcosh(1 + 2R^2||u_i-c_k||^2/den_ik) with r_i = R tanh(min(T_i_used,T_max)/(2R)), rho_k = R tanh(min(||e_k||,T_max)/(2R)). USE_CURV=False: the literal kappa->0 limit, u_i = (T_i_used/2) zhat_i, c_k = (||e_k||_2/2) ehat_k, d_ik = 2||u_i-c_k||_2 = ||T_i_used zhat_i - ||e_k||_2 ehat_k||_2 (argmin identical to d_ik = ||u'_i - c'_k||_2 with u'_i = T_i_used zhat_i, c'_k = ||e_k||_2 ehat_k). Equivalent literal statement: r_i -> T_i_used/2, rho_k -> ||e_k||_2/2 and T_max -> infinity.",
+   "inputs": [
+    "u",
+    "c",
+    "R",
+    "USE_CURV"
+   ],
+   "output": "d (B x 256) in both branches",
+   "differentiable": true,
+   "note": "ABLATION GEOMETRY OFF (USE_CURV=False): behaviour still sets a radial offset but the metric is flat. The kappa->0 limit is exact: r_i -> T_i_used/2 because R tanh(T/(2R)) -> T/2, rho_k -> ||e_k||_2/2, and R arcosh(1 + 2R^2||delta||^2/den) with den ~ R^4 gives R*sqrt(4||delta||^2/R^2) = 2||delta||. So d = ||u-c||_2 is the limit with a constant factor 1, not (2/R)||u-c||. The factor 1/2 applies equally to item and codeword radius, which is why the argmin is identical; the raw radii in the Euclidean branch are half the curved-branch limits, and the earlier claim r_i -> T_i_used is wrong by that factor 2 and is deleted."
+  },
+  {
+   "name": "baseline_rqvae_loss",
+   "definition": "L = L_rec + L_codebook + beta * L_commit, with L_rec the baseline's reconstruction term, L_codebook = Sum_l ||sg(res_{l-1}) - e^{(l)}_{k_l}||^2, L_commit = Sum_l beta ||res_{l-1} - sg(e^{(l)}_{k_l})||^2, res_0 = z. Every term, coefficient and schedule is the baseline's, unmodified.",
+   "inputs": [
+    "x",
+    "reconstruction",
+    "residuals",
+    "codebooks",
+    "beta"
+   ],
+   "output": "L (scalar)",
+   "differentiable": true,
+   "note": "The mechanism contributes exactly zero extra terms: no curvature regulariser, no radius loss, no alignment loss, no temperature, no Sinkhorn, no clip bound, no new hyperparameter."
+  }
+ ],
+ "inputs": [
+  "encoder output z (B x 32)",
+  "level-1 codebook E1 (256 x 32, Euclidean, unchanged)",
+  "codebooks E2..EL (each 256 x 32, unchanged)",
+  "frozen per-item radii r_i (24556 float32) and cached T_i (24556 float32)",
+  "frozen scalars R, kappa, T_max, T_bar, b_bar, M",
+  "frozen counts n_ij, n_i, n_j",
+  "USE_BEHAV flag",
+  "USE_CURV flag",
+  "item ids (B,) for the radius lookup",
+  "batch of observations x"
+ ],
+ "outputs": [
+  "level-1 code index k1 (B,)",
+  "level-1 Euclidean code vector z_q1 = E1[k1] (B x 32) used for the straight-through reconstruction",
+  "residual res_1 = z - detach(E1[k1]) (B x 32) handed to the baseline deeper levels",
+  "deeper indices k_2..k_L (B,) and residuals res_2..res_L (B x 32), exactly as the baseline",
+  "decoder input (the sum of the straight-through codewords, baseline format)",
+  "loss L (scalar)"
+ ],
+ "parameters": [
+  "E1, the level-1 Euclidean codebook (256 x 32) - trained, unchanged geometry in the codebook itself",
+  "E2..EL, deeper Euclidean codebooks (each 256 x 32) - trained, unchanged",
+  "encoder weights - trained",
+  "decoder weights - trained",
+  "beta, the commitment coefficient - the baseline's value, unchanged",
+  "FROZEN (not parameters, no gradient): R, kappa, T_max, T_bar, b_bar, M, n_ij, n_i, n_j, s_i, T_i, r_i, USE_BEHAV, USE_CURV"
+ ],
+ "switches": [],
+ "excluded": [
+  "Sinkhorn / optimal-transport assignment and all entropic regularisation - the assignment is a hard per-item argmin",
+  "any temperature, clip bound, curvature regulariser, radius loss, alignment loss or any other extra loss term and extra hyperparameter - the objective is identically the baseline's",
+  "curvature or behaviour statistics at levels 2..L - those levels are exactly baseline Euclidean quantisation",
+  "transporting u_i or c_k into the reconstruction - only the unmodified Euclidean E1[k1] is reconstructed and subtracted",
+  "any change to the decoder, to deeper-level interfaces, or to the Stage-3 input format",
+  "training or tuning the two switches in this round",
+  "gradients into the frozen behaviour quantities (R, kappa, T_max, T_bar, b_bar, s_i, T_i, r_i, rho_k, n_ij, n_i, n_j, M)"
+ ],
+ "continuous_surface": {
+  "name": "level1_poincare_distance",
+  "callable": "curvature:level1_poincare_distance",
+  "symbols": [
+   "z0",
+   "z1",
+   "e0",
+   "e1",
+   "T",
+   "R"
+  ],
+  "args": [
+   {
+    "name": "z",
+    "width": 2,
+    "radius": 0.0,
+    "scalar": 0.0
+   },
+   {
+    "name": "e",
+    "width": 2,
+    "radius": 0.0,
+    "scalar": 0.0
+   },
+   {
+    "name": "T",
+    "width": 1,
+    "radius": 0.0,
+    "scalar": 0.0
+   },
+   {
+    "name": "R",
+    "width": 1,
+    "radius": 0.0,
+    "scalar": 0.0
+   }
+  ],
+  "statements": [
+   "T_max = 2*R*atanh(0.95)",
+   "r = R*tanh(Min(T, T_max)/(2*R))",
+   "rho = R*tanh(Min(sqrt(e0**2 + e1**2), T_max)/(2*R))",
+   "nz = Max(sqrt(z0**2 + z1**2), 1e-8)",
+   "ne = Max(sqrt(e0**2 + e1**2), 1e-8)",
+   "u0 = r*z0/nz",
+   "u1 = r*z1/nz",
+   "c0 = rho*e0/ne",
+   "c1 = rho*e1/ne",
+   "den = (R**2 - (u0**2 + u1**2))*(R**2 - (c0**2 + c1**2))",
+   "d = R*acosh(1 + 2*R**2*((u0 - c0)**2 + (u1 - c1)**2)/den)"
+  ],
+  "output": "d",
+  "note": "Domain: R >= 1 (guaranteed by R = max(1, log(N_items)/log(1+max(b_bar,1.1)))), T >= 0, so 0 <= r <= 0.95R < R and 0 <= rho <= 0.95R < R, hence den >= (0.0975 R**2)**2 = 0.0095 R**4 > 0 and the implementation's 1e-6 R**4 floor is inert; the gradcheck samples strictly inside this domain (R >= 1, 0 <= r, rho < R). The Max(.,1e-8) normalisation guard is inactive for non-zero z and e and is the only non-smooth point (measure zero). This is the DIFFERENTIABLE part of the mechanism: the radius maps, the normalisation, the ball embeddings and the geodesic distance."
+ },
+ "incomplete": "",
+ "missing": []
+}
