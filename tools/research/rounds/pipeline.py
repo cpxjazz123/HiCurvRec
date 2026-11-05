@@ -304,6 +304,12 @@ def _implementation(state: dict, implementation_id: str) -> dict:
     raise RoundError("unknown implementation: " + implementation_id)
 
 
+def check_frozen(directory: Path, recorded_sha256: str) -> dict:
+    """Whether the frozen specification on disk is the one the record cites."""
+    from . import specification as specification_module
+    return specification_module.matches_frozen(Path(directory), recorded_sha256)
+
+
 def reference_verdict(tree: Path) -> dict:
     """The formula reference of one tree, as the conformance check reports it.
 

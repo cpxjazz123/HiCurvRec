@@ -31,7 +31,8 @@ SPEC_NAME = "math_spec.json"
 #: The sections a specification must have. A missing one is a specification
 #: that would leave an implementation free to interpret.
 REQUIRED_SECTIONS = ("mechanism", "computations", "inputs", "outputs",
-                     "parameters", "switches", "excluded")
+                     "parameters", "dimensions", "gradient_rules",
+                     "training_integration", "switches", "excluded")
 
 #: The answer of a Formula Agent that finds the idea incomplete.
 INCOMPLETE = "SPECIFICATION_INCOMPLETE"
@@ -59,6 +60,31 @@ def validate(spec: dict) -> list:
                 if not entry.get(key):
                     problems.append("the computation %r has no %r"
                                     % (entry.get("name", "?"), key))
+    dimensions = spec.get("dimensions")
+    if isinstance(dimensions, dict):
+        for name, size in dimensions.items():
+            if not str(name):
+                problems.append("a dimension has no name")
+            if size in (None, "", 0):
+                problems.append("the dimension %r has no size" % name)
+    else:
+        problems.append("the dimensions are not stated as a mapping")
+    rules = spec.get("gradient_rules")
+    if isinstance(rules, list):
+        if not rules:
+            problems.append("no gradient rule is stated")
+        for rule in rules:
+            if not isinstance(rule, dict) or not rule.get("operator")                     or not rule.get("rule"):
+                problems.append("a gradient rule does not name its operator and its rule")
+    else:
+        problems.append("the gradient rules are not stated as a list")
+    integration = spec.get("training_integration")
+    if isinstance(integration, dict):
+        for key in ("loss", "reconstruction", "optimizer"):
+            if not integration.get(key):
+                problems.append("the training integration does not state %r" % key)
+    else:
+        problems.append("the training integration is not stated")
     surface = spec.get("continuous_surface")
     if isinstance(surface, dict):
         statements = surface.get("statements")
@@ -67,21 +93,34 @@ def validate(spec: dict) -> list:
         for statement in statements or []:
             if "=" not in str(statement):
                 problems.append("the statement %r is not an assignment" % statement)
+        if not surface.get("symbols"):
+            problems.append("the continuous surface states no symbols")
+        if not surface.get("args"):
+            problems.append("the continuous surface states no arguments")
+        if not surface.get("callable"):
+            problems.append("the continuous surface names no callable")
+    else:
+        problems.append("the continuous surface is not stated")
     return problems
+
+
+def _canonical(spec: dict) -> str:
+    """The one serialisation the hash is taken over: written and read alike."""
+    return json.dumps(spec, indent=1, sort_keys=True, ensure_ascii=False) + "\n"
 
 
 def freeze(directory: Path, spec: dict) -> dict:
     """Write the specification and its hash; the hash is what the code cites."""
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(spec, indent=1, sort_keys=True, ensure_ascii=False)
+    payload = _canonical(spec)
     path = directory / SPEC_NAME
-    path.write_text(payload + "\n", encoding="utf-8")
+    path.write_text(payload, encoding="utf-8")
     return {"path": str(path), "sha256": hashlib.sha256(payload.encode("utf-8")).hexdigest()}
 
 
 def load(directory: Path) -> dict:
-    """The frozen specification of a round, with its hash."""
+    """The frozen specification of a round, with the hash of the bytes on disk."""
     path = Path(directory) / SPEC_NAME
     if not path.is_file():
         return {}
@@ -89,6 +128,18 @@ def load(directory: Path) -> dict:
     return {"spec": json.loads(payload),
             "sha256": hashlib.sha256(payload.encode("utf-8")).hexdigest(),
             "path": str(path)}
+
+
+def matches_frozen(directory: Path, recorded_sha256: str) -> dict:
+    """Whether the frozen file on disk is the one the record cites."""
+    frozen = load(directory)
+    if not frozen:
+        return {"matches": False, "reason": "no frozen specification on disk"}
+    if frozen["sha256"] != recorded_sha256:
+        return {"matches": False,
+                "reason": "the frozen file changed after the freeze (%s -> %s)"
+                          % (str(recorded_sha256)[:12], frozen["sha256"][:12])}
+    return {"matches": True, "sha256": frozen["sha256"], "spec": frozen["spec"]}
 
 
 def statements(spec: dict) -> list:

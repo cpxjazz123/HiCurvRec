@@ -1656,7 +1656,7 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
             state["math_spec"] = {"sha256": frozen["sha256"], "path": frozen["path"],
                                   "reviewed_by": len(reviews),
                                   "spec": spec}
-            state["step"] = "implementation"
+            state["step"] = "coding"
             state["math_review_findings"] = []
             pipeline_module.save_state(directory, state)
             log("formulation: the specification is frozen (%s)" % frozen["sha256"][:12])
@@ -1709,6 +1709,93 @@ def _parse_math_review(text: str) -> dict:
     return {"verdict": "", "findings": [], "reason": ""}
 
 
+def _coding_prompt(spec: dict) -> str:
+    """The prompt of a Coding Agent: the frozen specification, and nothing else."""
+    return (
+        "Implement this frozen mathematical specification. Do not reinterpret "
+        "it: every sign, scale, limit and switch is as written.\n\n"
+        + json.dumps(spec, indent=1, ensure_ascii=False))
+
+
+def _parse_coding(text: str) -> dict:
+    """The module an agent answered with."""
+    import json as _json
+
+    decoder = _json.JSONDecoder(strict=False)
+    for position, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            payload, _ = decoder.raw_decode(text[position:])
+        except ValueError:
+            continue
+        if isinstance(payload, dict) and payload.get("module"):
+            return {"module": str(payload.get("module")),
+                    "notes": str(payload.get("notes") or "")}
+    return {"module": "", "notes": ""}
+
+
+def phase_coding(root: Path, round_id: str, *, log=print) -> dict:
+    """Three independent implementations of the frozen specification.
+
+    Each Coding Agent receives the same frozen specification and works in
+    isolation; none of them may read another's code. Their agreement is the
+    differential evidence, and the verdict blocks when it is not AGREE.
+    """
+    from . import differential as differential_module
+
+    directory = pipeline_module.find_round_directory(root, round_id)
+    state = pipeline_module.load_state(directory)
+    if state["step"] != "coding":
+        return {"phase": "coding", "ran": False, "step": state["step"],
+                "reason": "the round is no longer in the coding phase"}
+    frozen = state.get("math_spec") or {}
+    spec = frozen.get("spec") or {}
+    if not spec:
+        raise pipeline_module.RoundError("no frozen specification to implement")
+    written = pipeline_module.check_frozen(directory, frozen.get("sha256"))
+    if not written.get("matches"):
+        raise pipeline_module.RoundError(
+            "the frozen specification changed after the freeze: " + str(written.get("reason")))
+    surface = spec.get("continuous_surface") or {}
+    implementations = []
+    for index in (1, 2, 3):
+        task_id = "coding_%d" % index
+        answer = _run_agent(directory, task_id, _coding_prompt(spec), "module.py",
+                            _parse_coding, role="code", read_paths=[],
+                            allowed_roots=_round_roots(directory))
+        module = answer.get("module") or ""
+        target = directory / "agents" / task_id / "module.py"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(module, encoding="utf-8")
+        implementations.append({
+            "name": task_id,
+            "symbols": list(surface.get("symbols") or []),
+            "args": list(surface.get("args") or []),
+            "statements": list(surface.get("statements") or []),
+            "output": str(surface.get("output") or ""),
+            "code": module,
+            "notes": answer.get("notes") or "",
+        })
+        log("%s: %d bytes of module" % (task_id, len(module)))
+    verdict = differential_module.compare({"implementations": implementations})
+    state["coding"] = {"implementations": [{"name": entry["name"],
+                                             "bytes": len(entry["code"])}
+                                            for entry in implementations],
+                       "verdict": verdict}
+    if verdict.get("status") != "AGREE":
+        pipeline_module.save_state(directory, state)
+        raise pipeline_module.RoundError(
+            "the three implementations do not agree (" + str(verdict.get("status")) +
+            "): " + str(verdict.get("reason"))[:300])
+    state["step"] = "implementation"
+    pipeline_module.save_state(directory, state)
+    log("coding: three implementations agree")
+    return {"phase": "coding", "ran": True, "step": state["step"],
+            "status": verdict.get("status"),
+            "implementations": len(implementations)}
+
+
 def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
     """Build one isolated candidate per selected idea, each from the baseline."""
     directory = pipeline_module.find_round_directory(root, round_id)
@@ -1718,12 +1805,18 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
         return {"phase": "implementation", "ran": False, "step": state["step"],
                 "implementations": len(state.get("implementations", [])),
                 "reason": "the round is no longer in the implementation phase"}
-    # The mathematics is stated, reviewed and frozen first: the implementation
-    # may only follow the frozen specification.
+    # The mathematics is stated, reviewed and frozen first, and three
+    # independent implementations of it must agree before the candidate tree is
+    # touched: the implementation may only follow the frozen specification.
     if state.get("step") == "formulation":
         formulation = phase_formulation(root, round_id, log=log)
         if formulation.get("ran") is False:
             return formulation
+        state = pipeline_module.load_state(directory)
+    if state.get("step") == "coding":
+        coding = phase_coding(root, round_id, log=log)
+        if coding.get("ran") is False:
+            return coding
         state = pipeline_module.load_state(directory)
 
     # The three independent derivations of the selected mechanism come first:

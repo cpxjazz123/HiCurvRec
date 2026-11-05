@@ -231,6 +231,12 @@ class MathSpecPayload(BaseModel):
     missing: list[str] = Field(default_factory=list)
 
 
+class CodingPayload(BaseModel):
+    """The JSON a Coding Agent answers with: one module, implementing the spec."""
+    module: str = ""
+    notes: str = ""
+
+
 class MathReviewPayload(BaseModel):
     """The JSON a Math Reviewer answers with."""
     verdict: str = ""
@@ -269,6 +275,8 @@ def output_schema(role: str):
         return MathSpecPayload
     if role == "review_math":
         return MathReviewPayload
+    if role == "code":
+        return CodingPayload
     return IdeaPayload
 
 
@@ -389,6 +397,19 @@ FORMULATION_JSON_INSTRUCTIONS = (
     "If the idea does not define something the mechanism needs, do NOT invent "
     "it: answer with \"incomplete\": \"SPECIFICATION_INCOMPLETE\" and list "
     "the missing definitions in `missing`.")
+
+CODING_JSON_INSTRUCTIONS = (
+    "You IMPLEMENT a frozen mathematical specification. The specification is "
+    "the only authority: you may not reinterpret it, simplify it, or change a "
+    "sign, a scale or a limit. If you believe the specification is wrong, say so "
+    "in `notes` and implement it as written.\n"
+    "Answer with ONE JSON object and nothing else:\n"
+    '{"module": "import torch\\n\\ndef compute(...): ...",\n'
+    ' "notes": "anything the verifier must know"}\n'
+    "Rules: `module` is a complete Python module that defines the callable the "
+    "specification's continuous_surface names, with exactly its arguments in "
+    "its order, and it computes the specification's statements. Use torch only. "
+    "Do not train, do not read a dataset, do not write files.")
 
 MATH_REVIEW_JSON_INSTRUCTIONS = (
     "You REVIEW a mathematical specification against the idea it came from. "
@@ -631,6 +652,8 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
         instructions = SYSTEM_PROMPT + "\n" + FORMULATION_JSON_INSTRUCTIONS
     elif role == "review_math":
         instructions = SYSTEM_PROMPT + "\n" + MATH_REVIEW_JSON_INSTRUCTIONS
+    elif role == "code":
+        instructions = SYSTEM_PROMPT + "\n" + CODING_JSON_INSTRUCTIONS
     elif role == "score":
         instructions = SYSTEM_PROMPT + "\n" + RANK_JSON_INSTRUCTIONS
     else:

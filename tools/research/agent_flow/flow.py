@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tools.research.rounds import worker
 
-PHASES = ("ideation", "probe", "scoring", "formulation", "derivation")
+PHASES = ("ideation", "probe", "scoring", "formulation", "coding", "derivation")
 
 
 def run_flow(root: Path, round_id: str, *, objective: str = "",
@@ -28,6 +28,8 @@ def run_flow(root: Path, round_id: str, *, objective: str = "",
             results["probe"] = worker.phase_probe(Path(root), round_id, log=log)
         elif phase == "formulation":
             results["formulation"] = worker.phase_formulation(Path(root), round_id, log=log)
+        elif phase == "coding":
+            results["coding"] = worker.phase_coding(Path(root), round_id, log=log)
         elif phase == "derivation":
             results["derivation"] = worker.phase_derivation(Path(root), round_id, log=log)
         else:

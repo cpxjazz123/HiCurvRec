@@ -405,7 +405,8 @@ def _compare_pair(left_fn, right_fn, left_values, right_values, tensors,
         torch.testing.assert_close(left_value.detach(), right_value.detach(),
                                    rtol=VALUE_RTOL, atol=VALUE_ATOL)
     except AssertionError as exc:
-        report.update(status="FAIL", reason="values: " + str(exc).splitlines()[0][:200])
+        report.update(status="FAIL", kind="contradiction",
+                      reason="values: " + str(exc).splitlines()[0][:200])
         return report
     for left, right in zip(left_grads, right_grads):
         if left is None or right is None:
