@@ -1661,11 +1661,20 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
                 "reason": "the round has no selected idea"}
     idea = ideas[0]
     findings = list(state.get("math_review_findings") or [])
+    # A specification the main agent wrote is a legitimate draft: the formula
+    # often comes from the round's objective, and the two Math Reviewers judge
+    # the draft as they judge the agent's. The draft is never the authority -
+    # the freeze is.
+    drafted = Path(directory) / "math_spec_draft.json"
     for attempt in range(3):
-        answer = _run_agent(directory, "formulation", _formula_prompt(idea, findings),
-                            "math_spec.json", _parse_math_spec, role="formulate",
-                            read_paths=[], allowed_roots=_round_roots(directory))
-        spec = answer.get("spec") or {}
+        if drafted.is_file():
+            spec = json.loads(drafted.read_text(encoding="utf-8"))
+        else:
+            answer = _run_agent(directory, "formulation",
+                                _formula_prompt(idea, findings),
+                                "math_spec.json", _parse_math_spec, role="formulate",
+                                read_paths=[], allowed_roots=_round_roots(directory))
+            spec = answer.get("spec") or {}
         if spec.get("incomplete"):
             missing = spec.get("missing") or []
             state["math_specification_incomplete"] = {"missing": missing,
