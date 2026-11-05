@@ -711,6 +711,49 @@ def _the_surface_exercises_the_curvature_it_declares(spec: dict) -> list:
     return problems
 
 
+def _the_graph_drops_self_pairs(spec: dict) -> list:
+    """The behaviour graph must not count an item as its own neighbour."""
+    problems = []
+    for entry in spec.get("computations") or []:
+        text = str(entry.get("definition") or "")
+        if re.search(r"A_ii\s*>\s*0|unless \(i,i\) occurs|self-adjacenc", text):
+            if not re.search(r"self-pairs dropped|self-adjacencies are dropped|i\s*!=\s*j",
+                             text):
+                problems.append(
+                    "the adjacency counts may contain a self-pair, so an item can be "
+                    "its own neighbour: the self-pairs must be dropped")
+    return problems
+
+
+def _the_edge_less_items_are_stated(spec: dict) -> list:
+    """An item with no neighbour has no cohesion: the rank must say what it gets."""
+    problems = []
+    text = "\n".join(str(entry.get("definition") or "")
+                      for entry in spec.get("computations") or [])
+    if re.search(r"1/deg_i", text) and not re.search(
+            r"no (train(ing)? )?edge|without one|deg_i > 0 only|outside P", text):
+        problems.append("the cohesion divides by deg_i but nothing says what an item "
+                        "with no training edge gets: the rank must state it and "
+                        "exclude it from the counts")
+    return problems
+
+
+def _the_degree_is_described_as_it_is_used(spec: dict) -> list:
+    """The note about a quantity must describe the role the definition gives it."""
+    problems = []
+    for entry in spec.get("computations") or []:
+        note = str(entry.get("note") or "")
+        definition = str(entry.get("definition") or "")
+        if re.search(r"deg", note) and re.search(r"top-D|top_D|D highest-count",
+                                                 definition):
+            if re.search(r"tie-break|top-D key", note) and "sqrt(deg_i * deg_j)" not in note:
+                problems.append(
+                    "the note describes the degree only as the top-D tie-breaker, "
+                    "while the definition also divides by it: the note must "
+                    "describe every role the quantity has")
+    return problems
+
+
 EVALS = (
     Eval("distance-clamp", "the distance keeps the artanh clamp",
          "round 20261105_144909: a draft dropped min(., 1 - 1e-6)",
@@ -767,6 +810,17 @@ EVALS = (
     Eval("surface-uses-its-arguments", "the listing uses the arguments it declares",
          "round 20261105_144909: the listing computed the curvature from s and ignored the declared argument",
          _surface_uses_its_arguments),
+    Eval("the-graph-drops-self-pairs", "an item is not its own neighbour",
+         "round 20261105_144909: the adjacency counts allowed a self-pair",
+         _the_graph_drops_self_pairs),
+    Eval("the-edge-less-items-are-stated", "the items without an edge are stated",
+         "round 20261105_144909: coh was undefined for deg = 0 and the rank "
+         "overwrote the value afterwards",
+         _the_edge_less_items_are_stated),
+    Eval("the-degree-is-described-as-it-is-used", "a note describes every role",
+         "round 20261105_144909: the note described the degree only as the "
+         "tie-breaker",
+         _the_degree_is_described_as_it_is_used),
     Eval("the-surface-does-not-bind-its-own-temperature", "the plan's temperature is the baseline's",
          "round 20261106_020541: a stray tau in the listing would change the plan",
          _the_surface_does_not_bind_its_own_temperature),
