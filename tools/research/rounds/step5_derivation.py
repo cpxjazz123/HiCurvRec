@@ -274,10 +274,12 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
         except AgentPhaseIncomplete as exc:
             # A derivation that ran out of its five minutes is not a reason to
             # throw the ones that answered away: the comparison needs two, and
-            # the phase records what is missing.
+            # the phase records what is missing. The answers keep the task they
+            # belong to, so a missing first agent cannot shift the others.
             if not exc.results:
                 raise
-            outcomes = exc.results
+            outcomes = [entry["result"] for entry in exc.delivered] or exc.results
+            task_ids = [entry["task"] for entry in exc.delivered] or task_ids
         delivered, missing = [], []
         for task_id, outcome in zip(task_ids, outcomes):
             payload = {key: outcome.get(key) for key

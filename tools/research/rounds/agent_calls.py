@@ -87,10 +87,13 @@ class AgentPhaseIncomplete(RuntimeError):
     the service, not the candidate, is the problem.
     """
 
-    def __init__(self, summary: str, *, results: list, failures: list, classes: set):
+    def __init__(self, summary: str, *, results: list, failures: list, classes: set,
+                 delivered: list = None):
         super().__init__("the phase is incomplete: " + summary)
         self.results = results
         self.failures = failures
+        #: the answers that exist, each with the task it belongs to
+        self.delivered = list(delivered or [])
         self.classes = classes
 
 
@@ -335,6 +338,12 @@ def _run_agents_concurrently(tasks: list, worker, *, max_workers: int = 0) -> li
         classes = {entry["failure_class"] for entry in failures}
         summary = "; ".join(str(entry["task"]) + " (" + entry["failure_class"] + ")"
                             for entry in failures)
+        # The results keep the task they belong to: a caller that compares two
+        # answers must not attribute the second answer to the first task when
+        # the first one failed.
+        delivered = [{"task": str(task[0]) if task else "",
+                      "result": result}
+                     for (task, _future), result in zip(futures, results)]
         raise AgentPhaseIncomplete(summary, results=results, failures=failures,
-                                   classes=classes)
+                                   classes=classes, delivered=delivered)
     return results
