@@ -145,6 +145,44 @@ def _mentions(text: str, terms, symbols) -> bool:
     return any(symbol.lower() in lowered for symbol in symbols)
 
 
+#: The words that mean the baseline's Sinkhorn-balanced assignment is KEPT.
+BALANCING_TERMS = ("sinkhorn-balanced", "sinkhorn balanced", "sinkhorn assignment",
+                   "sinkhorn's cost", "sinkhorn cost", "balanced assignment",
+                   "the baseline's balanced", "baseline balanced assignment",
+                   "entropy regularised", "entropy regularized")
+
+#: The patterns that mean the level index is taken by a plain argmin, which
+#: replaces the baseline's balanced assignment.
+ARGMIN_ASSIGNMENT_PATTERNS = (
+    r"k\s*_?\s*1?\s*\(?i?\)?\s*=\s*arg\s*min",
+    r"arg\s*min\s*_?\s*k\s*\(?\s*(?:d|dist|score|off)",
+    r"arg\s*min\s*\(\s*(?:d|score|dist)[_a-z0-9]*\s*[-+]",
+    r"=\s*arg\s*min\s*\(\s*score",
+    r"plain\s+arg\s*min",
+    r"arg\s*min\s+instead\s+of\s+(?:the\s+)?sinkhorn",
+)
+
+
+def _replaces_the_balanced_assignment(idea: dict) -> bool:
+    """Whether the proposal takes the level index by a plain argmin.
+
+    The baseline's level assignment is Sinkhorn-balanced, and the balancing is
+    what keeps the codebook's usage even. A proposal that writes the index as
+    argmin_k(score_k) has replaced that rule, which the scope contract forbids:
+    the mechanism's score belongs INSIDE the balanced assignment.
+    """
+    fields = ("spec_equations", "coupling_equation", "specification",
+              "coupling_path", "key_change", "novelty")
+    text = "\n".join(_text(idea, field) for field in fields)
+    if not text:
+        return False
+    lowered = text.lower()
+    if _has_any(lowered, BALANCING_TERMS):
+        # the proposal keeps the balancing; a mention of argmin elsewhere (a
+        # tie-break, a diagnostic) is not a replacement
+        return False
+    return any(re.search(pattern, lowered) for pattern in ARGMIN_ASSIGNMENT_PATTERNS)
+
 def check_scope(idea: dict) -> dict:
     """Check one proposal against the joint scope contract.
 
@@ -228,6 +266,14 @@ def check_scope(idea: dict) -> dict:
                                                      "curvature 0", "zero curvature",
                                                      "euclid")):
         reasons.append("ablation_geometry_off does not say what replaces the curve")
+    # --- the baseline's assignment stays ---------------------------------
+    if _replaces_the_balanced_assignment(idea):
+        reasons.append(
+            "the proposal replaces the baseline's Sinkhorn-balanced level "
+            "assignment with a plain argmin over the mechanism's score: the "
+            "balancing is what keeps the codebook's usage even, so the score has "
+            "to enter INSIDE the balanced assignment, not replace it")
+
     if off_behaviour and not _has_any(off_behaviour, ("0", "off", "one", "none", "without",
                                                       "disable", "remove", "zero", "not used",
                                                       "no ", "ignore", "drop", "uniform",

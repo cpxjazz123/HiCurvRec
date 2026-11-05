@@ -31,10 +31,34 @@ def _frozen() -> dict:
 
 
 def test_the_frozen_specification_passes_every_eval():
-    """The round's own authority passes: no eval may fire retroactively."""
+    """The round's own authority passes: no eval may fire retroactively.
+
+    The exception is the balancing eval: it was written after this round, and it
+    FIRES on this round's specification on purpose - that specification is the
+    measured evidence that replacing the Sinkhorn-balanced assignment collapses
+    the codebook. It is checked on its own below.
+    """
     result = evals.run(_frozen())
-    assert result["passed"], result["failures"]
+    failures = [failure for failure in result["failures"]
+                if failure["id"] != "assignment-keeps-the-balancing"]
+    assert not failures, failures
     assert result["checked"] == len(evals.EVALS) + 1
+
+
+def test_the_balancing_eval_fires_on_the_specification_that_collapsed():
+    """The round that replaced the balanced assignment is the eval's evidence."""
+    problems = evals._assignment_keeps_the_balancing(_frozen())
+    assert problems and "Sinkhorn" in problems[0]
+
+
+def test_the_balancing_eval_accepts_a_specification_that_keeps_it():
+    spec = _frozen()
+    spec["continuous_surface"]["executable_statements"] = [
+        line for line in spec["continuous_surface"]["executable_statements"]
+        if not line.startswith("k1 = torch.argmin(score_k")]
+    spec["continuous_surface"]["executable_statements"].append(
+        "k1 = sinkhorn_assignment(score_k, sk_epsilon, sk_iters)")
+    assert evals._assignment_keeps_the_balancing(spec) == []
 
 
 def _without(eval_id: str, spec: dict) -> dict:

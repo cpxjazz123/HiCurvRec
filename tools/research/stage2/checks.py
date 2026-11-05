@@ -380,6 +380,56 @@ def check_geometry_contract(tree: Path | str) -> dict:
             "detail": "the candidate uses the canonical geometry module and defines no other"}
 
 
+def check_assignment_rule(tree: Path | str) -> dict:
+    """The baseline's Sinkhorn-balanced assignment stays; the mechanism's score
+    is its cost matrix.
+
+    The baseline's level assignment is Sinkhorn-balanced, and the balancing is
+    what keeps the quantiser's codebook usage even. A mechanism that takes the
+    level index by a plain argmin over its own score replaces that rule, and
+    the codebook collapses: the arm of round_20261105_144909_130 used 42 of 256
+    level-1 codes against the reference arm's 241, the largest code took 31% of
+    the items, and the three-level collision reached 0.703 against the
+    reference's 0.065. The mechanism's score belongs INSIDE the balanced
+    assignment.
+    """
+    tree = Path(tree).resolve()
+    sources = {}
+    for path in sorted(tree.rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        sources[str(path.relative_to(tree))] = path.read_text(encoding="utf-8",
+                                                              errors="replace")
+    if not sources:
+        return {"status": "FAIL", "name": "assignment_rule",
+                "detail": "the tree carries no source to inspect"}
+    text = "\n".join(sources.values())
+    balanced = "sinkhorn" in text.lower()
+    if not balanced:
+        return {"status": "FAIL", "name": "assignment_rule",
+                "detail": "the tree no longer contains the baseline's Sinkhorn "
+                          "balanced assignment: the mechanism may change the "
+                          "assignment's COST, never the assignment rule"}
+    offenders = []
+    for name, source in sources.items():
+        for number, line in enumerate(source.splitlines(), start=1):
+            stripped = line.strip()
+            if "argmin" not in stripped:
+                continue
+            if not any(token in stripped for token in
+                       ("score", "off", "mechanism", "D_k", "distance -", "distances -")):
+                continue
+            offenders.append("%s:%d: %s" % (name, number, stripped[:120]))
+    if offenders:
+        return {"status": "FAIL", "name": "assignment_rule",
+                "detail": "the level index is taken by a plain argmin over the "
+                          "mechanism's score, which replaces the balanced "
+                          "assignment: " + "; ".join(offenders[:3])[:300]}
+    return {"status": "PASS", "name": "assignment_rule",
+            "detail": "the balanced assignment is the rule and the mechanism's "
+                      "score enters it as the cost"}
+
+
 def check_reference_agreement(tree: Path | str) -> dict:
     """The declared equations, rebuilt from their SymPy statements and compared.
 
@@ -487,6 +537,7 @@ def run_all(tree: Path | str) -> dict:
     checks = [check_names(tree), check_collectives(tree), check_constants(tree),
               check_geometry_contract(tree), check_entry(tree),
               check_identifier(tree), check_four_rank(tree),
+              check_assignment_rule(tree),
               check_reference_agreement(tree), check_encoder_gradient(tree)]
     # The reference contract is reported separately: a tree without one keeps
     # its reason in the report and is NOT admissible, while the four frozen

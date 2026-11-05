@@ -477,6 +477,40 @@ def _surface_uses_its_arguments(spec: dict) -> list:
     return problems
 
 
+def _assignment_keeps_the_balancing(spec: dict) -> list:
+    """The level index may not be taken by a plain argmin over the score.
+
+    The baseline's level assignment is Sinkhorn-balanced, and the balancing is
+    what keeps the codebook's usage even. A specification that replaces it with
+    argmin_k(score_k) collapses the level-1 codebook: the round that measured it
+    used 42 of 256 level-1 codes against the reference arm's 241, the largest
+    code took 31% of the items, and the three-level collision reached 0.703
+    against the reference's 0.065.
+    """
+    problems = []
+    code = "\n".join(_code(spec))
+    if not code:
+        return problems
+    balanced = bool(re.search(r"sinkhorn|balanced", code, re.IGNORECASE))
+    # an argmin over the mechanism's score, taken as the level index
+    if re.search(r"=\s*torch\.argmin\s*\(\s*score", code):
+        if not balanced:
+            problems.append(
+                "the level index is taken by a plain argmin over the score: the "
+                "baseline's Sinkhorn-balanced assignment has been replaced, and "
+                "the balancing is what keeps the codebook's usage even. The "
+                "mechanism's score must be the cost matrix of the balanced "
+                "assignment, not a replacement for it")
+    if not balanced:
+        text = _section(spec, "computations")
+        if re.search(r"k\s*_?\s*1?\s*=\s*arg\s*min", text, re.IGNORECASE):
+            problems.append(
+                "the specification assigns the level index by argmin and never "
+                "mentions the baseline's balanced assignment: the balancing must "
+                "stay")
+    return problems
+
+
 EVALS = (
     Eval("distance-clamp", "the distance keeps the artanh clamp",
          "round 20261105_144909: a draft dropped min(., 1 - 1e-6)",
@@ -535,6 +569,11 @@ EVALS = (
     Eval("surface-uses-its-arguments", "the listing uses the arguments it declares",
          "round 20261105_144909: the listing computed the curvature from s and ignored the declared argument",
          _surface_uses_its_arguments),
+    Eval("assignment-keeps-the-balancing", "the baseline's balanced assignment stays",
+         "round 20261105_144909: the specification replaced the Sinkhorn-balanced "
+         "assignment with a plain argmin and the level-1 codebook collapsed "
+         "(42 of 256 codes, L3 collision 0.703 against the reference's 0.065)",
+         _assignment_keeps_the_balancing),
 )
 
 

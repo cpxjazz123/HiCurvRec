@@ -127,6 +127,12 @@
    "decision": "eval",
    "eval_id": "surface-uses-its-arguments",
    "source": "round 20261105_144909: the listing ignored a declared argument"
+  },
+  {
+   "pattern": "replaces the baseline's Sinkhorn|balanced assignment|plain argmin",
+   "decision": "eval",
+   "eval_id": "assignment-keeps-the-balancing",
+   "source": "round 20261105_144909_130: the specification replaced the Sinkhorn-balanced assignment with a plain argmin and the level-1 codebook collapsed"
   }
  ]
 }
