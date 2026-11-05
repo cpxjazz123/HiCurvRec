@@ -1406,8 +1406,16 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
                 allowed_roots=_round_roots(directory))
 
         task_ids = ["derivation_1", "derivation_2", "derivation_3"]
-        outcomes = _run_agents_concurrently([(task_id,) for task_id in task_ids],
-                                            lambda task_id: derive(task_id))
+        try:
+            outcomes = _run_agents_concurrently([(task_id,) for task_id in task_ids],
+                                                lambda task_id: derive(task_id))
+        except AgentPhaseIncomplete as exc:
+            # A derivation that ran out of its five minutes is not a reason to
+            # throw the ones that answered away: the comparison needs two, and
+            # the phase records what is missing.
+            if not exc.results:
+                raise
+            outcomes = exc.results
         delivered, missing = [], []
         for task_id, outcome in zip(task_ids, outcomes):
             payload = {key: outcome.get(key) for key
@@ -1468,8 +1476,13 @@ def run_derivations(directory: Path, ideas: list, *, log=print) -> list:
             # recorded as a gap in the verdict instead.
             retry = ["derivation_%d" % index for index in missing]
             log("%s: asking %s again" % (idea["idea_id"], ", ".join(retry)))
-            outcomes = _run_agents_concurrently([(task_id,) for task_id in retry],
-                                                lambda task_id: derive(task_id))
+            try:
+                outcomes = _run_agents_concurrently([(task_id,) for task_id in retry],
+                                                    lambda task_id: derive(task_id))
+            except AgentPhaseIncomplete as exc:
+                if not exc.results:
+                    continue
+                outcomes = exc.results
             for task_id, outcome in zip(retry, outcomes):
                 payload = {key: outcome.get(key) for key
                            in ("symbols", "args", "statements", "output", "code", "excluded")
