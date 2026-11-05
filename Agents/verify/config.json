@@ -2,6 +2,7 @@
  "role": "verify",
  "step": "the earlier verification path",
  "agents_in_the_step": 1,
+ "runs_an_agent": true,
  "brief": "Runs an independent check suite against a candidate tree. The live admission of a round is the two-stage machine check in tools/research/stage2/checks.py with the eval gate; this role remains for the earlier verification path.",
  "model": "deepseek/deepseek-v4.1-flash",
  "structured_output": "on",

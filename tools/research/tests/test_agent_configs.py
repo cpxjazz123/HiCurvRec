@@ -85,9 +85,36 @@ def test_the_directories_are_named_after_their_step():
         assert name.split("_", 1)[1] == role, name
 
 
+def test_every_step_of_the_flow_has_a_directory():
+    """Step 1 runs no agent, and says so instead of leaving a gap."""
+    for role in export_configs.ROLES:
+        if role == "verify":
+            continue
+        step, agents = export_configs.STEPS[role]
+        number = int(step.split()[0])
+        assert export_configs.DIRECTORIES[role].startswith("step%d_" % number), role
+    config = json.loads((AGENTS / "step1_start" / "config.json").read_text(
+        encoding="utf-8"))
+    assert config["runs_an_agent"] is False
+    assert config["agents_in_the_step"] == 0
+    # what it fixes for the later steps is there
+    assert config["fixes"]["rubric"]["version"]
+    assert config["fixes"]["rubric"]["selection"]["max_selected"] == 1
+    assert config["fixes"]["ideation_agents"] == 5
+
+
+def test_a_step_without_an_agent_claims_no_tools():
+    config = json.loads((AGENTS / "step1_start" / "config.json").read_text(
+        encoding="utf-8"))
+    assert "tools" not in config
+    assert "model" not in config
+
+
 def test_no_agent_may_write_outside_its_workspace():
     """The exported boundary says what the runtime enforces."""
     for role in export_configs.ROLES:
+        if export_configs.STEPS[role][1] == 0:
+            continue          # a step without an agent has no boundary to check
         config = json.loads((AGENTS / export_configs.DIRECTORIES[role] / "config.json")
                             .read_text(encoding="utf-8"))
         permissions = config["tools"]

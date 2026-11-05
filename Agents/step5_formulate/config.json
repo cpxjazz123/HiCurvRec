@@ -2,6 +2,7 @@
  "role": "formulate",
  "step": "5 - research_round_implement (formulation)",
  "agents_in_the_step": 1,
+ "runs_an_agent": true,
  "brief": "Writes the mechanism as mathematics. The formula agent states every computation the mechanism touches - the metric, the behaviour's entry point, the assignment, the gradient path, the reconstruction, the switches and what is deliberately out of scope - as a specification with SymPy statements. It may not change the idea: an idea that lacks a definition the mechanism needs comes back as SPECIFICATION_INCOMPLETE.",
  "model": "deepseek/deepseek-v4.1-flash",
  "structured_output": "on",

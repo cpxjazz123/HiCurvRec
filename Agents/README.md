@@ -8,6 +8,7 @@ and the test tells you the framework no longer does what they say.
 
 | step | role | agents | what it decides |
 |---|---|---|---|
+| 1 - research_round_start | `step1_start` | 0 | Creates the round. |
 | 2 - research_round_ideate | `step2_ideate` | 5 | Proposes mechanisms. |
 | 3 - research_round_probe | `step3_probe` | 0 | Measures the behaviour behind each proposal before anyone scores it. |
 | 4 - research_round_score | `step4_score` | 3 | Ranks the proposals. |

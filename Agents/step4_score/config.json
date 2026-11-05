@@ -2,6 +2,7 @@
  "role": "score",
  "step": "4 - research_round_score",
  "agents_in_the_step": 3,
+ "runs_an_agent": true,
  "brief": "Ranks the proposals. Three reviewers order every proposal by the versioned rubric, each with a reason and an evidence id; the aggregation adds the ranks, breaks the ties by the declared order and keeps exactly one mechanism (the one-mechanism cap).",
  "model": "deepseek/deepseek-v4.1-flash",
  "structured_output": "on",

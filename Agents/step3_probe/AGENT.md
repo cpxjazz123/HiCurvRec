@@ -1,31 +1,22 @@
-# The `probe` agent
+# The `probe` step
 
 Measures the behaviour behind each proposal before anyone scores it. The probe is DETERMINISTIC - no language model runs in this step - it is train-only, runs on CPU and has a hard budget; it reports UNKNOWN or NOT_CHECKED for what it could not establish, and it never rewrites a score.
 
 ## Where it sits
 
 - **step**: 3 - research_round_probe
-- **agents in this step**: 0
-- **model**: `deepseek/deepseek-v4.1-flash`
-- **deadline**: 900 s (wrap-up from 60 s before it)
-- **structured output**: on (`IdeaPayload`)
-- **answer file**: `the probe's own artefacts (probe.json, evidence bundles)`
+- **agents in this step**: 0 - this step runs no model
 
-## What it may do
+## What it fixes for the later steps
 
-- tools: `read_file`, `list_directory`, `append_progress`
-- read roots: the agent's own workspace; the geometry contract (tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md)
-- write root: the agent's own workspace (the answer file)
-- shell: no
-
-## Its contract
-
-```
-Answer with ONE JSON object and nothing else: no prose, no markdown fence. Its keys are: idea_id, title, motivation, novelty, key_change, specification, cost_estimate, falsifiable_hypothesis, risks, behavior_signal, behavior_computation, leakage_boundary, hyperbolic_operator, hyperbolic_location, coupling_path, coupling_equation, observables, ablation_behavior_off, ablation_geometry_off, ablation_both_on, spec_equations, spec_inputs_outputs, safeguards. Every key is a string except 'risks', which is a list of strings.
-```
+- **ideation agents**: 5
+- **rubric**: `rank-2026-10-v1` (sha256 `f50a1334d619338f`)
+- **selection rule**: {"max_selected": 1, "min_reviewers": 2, "tie_break_order": ["scope", "total_rank", "first_places", "idea_id"], "declared_hours_budget": 72.0}
+- **objective**: Discover new mechanisms in which TRAINING-ONLY user behaviour and HYPERBOLIC geometry are computationally coupled to improve the RQ-VAE Semantic IDs used by a generative next-item recommender, with the real target of Stage3 test Recall@10 above 0.
+- **scope contract**: 2359 characters, 6 clauses
+- **experiment policy**: 1139 characters
 
 ## Files
 
 - `config.json` - the machine-readable configuration
-- `output.schema.json` - the shape of the answer
-- `prompt.md` - the prompt template, verbatim from the code
+- `prompt.md` - the code that creates the round, verbatim

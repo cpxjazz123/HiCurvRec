@@ -35,6 +35,7 @@ ROOT = Path(__file__).resolve().parents[3] / "Agents"
 #: from the name alone. The legacy verification role belongs to the earlier
 #: framework generation and is not a step of this flow, so it keeps its name.
 DIRECTORIES = {
+    "start": "step1_start",
     "ideate": "step2_ideate",
     "probe": "step3_probe",
     "score": "step4_score",
@@ -48,6 +49,7 @@ DIRECTORIES = {
 
 #: The roles of the round flow, in the order the flow runs them.
 ROLES = (
+    "start",
     "ideate",
     "probe",
     "score",
@@ -61,6 +63,13 @@ ROLES = (
 
 #: What each role is for, in prose. The brief is the role's job in one paragraph.
 BRIEFS = {
+    "start": (
+        "Creates the round. This step runs NO agent: it writes the round's "
+        "state (the objective, the issue, the step it is in, the empty ideas, "
+        "the empty job queues) and takes the round's lock. Everything the later "
+        "steps need to know is fixed here: the objective the agents are given, "
+        "the scope contract they must meet, the rubric the reviewers use and the "
+        "one-mechanism rule that decides the selection."),
     "ideate": (
         "Proposes mechanisms. Five agents answer independently, each with the "
         "round's objective, the scope contract and the evidence already gathered; "
@@ -110,6 +119,7 @@ BRIEFS = {
 
 #: The step of the flow each role belongs to, and how many agents run in it.
 STEPS = {
+    "start": ("1 - research_round_start", 0),
     "ideate": ("2 - research_round_ideate", 5),
     "probe": ("3 - research_round_probe", 0),
     "score": ("4 - research_round_score", 3),
@@ -126,6 +136,7 @@ STEPS = {
 #: it. Two roles build their prompt where they call the agent, so the anchor is
 #: the enclosing function rather than a dedicated builder.
 PROMPTS = {
+    "start": ("tools/research/rounds/pipeline.py", "new_round"),
     "ideate": ("tools/research/rounds/worker.py", "ideate_one"),
     "probe": ("tools/research/rounds/probes.py", "run_probe"),
     "score": ("tools/research/rounds/worker.py", "_rank_with_retry"),
@@ -203,16 +214,48 @@ def _permissions(role: str) -> dict:
     }
 
 
+def _round_configuration() -> dict:
+    """What the first step fixes for every step after it."""
+    from ..rounds import agents as round_agents
+    from ..rounds import pipeline as round_pipeline
+    from ..rounds import rubric as rubric_module
+
+    rubric = rubric_module.load_rubric()
+    return {
+        "objective": round_agents.RESEARCH_OBJECTIVE,
+        "scope_contract": round_agents.SCOPE_CONTRACT,
+        "experiment_policy": round_agents.EXPERIMENT_POLICY,
+        "ideation_agents": round_pipeline.IDEA_AGENTS,
+        "rubric": {"version": rubric.get("version"),
+                   "sha256": rubric.get("sha256"),
+                   "selection": rubric.get("selection")},
+    }
+
+
 def _config(role: str) -> dict:
     from . import runtime
 
     step, agents = STEPS[role]
     source, function = PROMPTS[role]
     schema = _schema(role)
+    if agents == 0:
+        # A step that runs no agent has no model, no boundary and no answer
+        # shape; what it has is the configuration it fixes for the later steps.
+        return {
+            "role": role,
+            "step": step,
+            "agents_in_the_step": 0,
+            "runs_an_agent": False,
+            "brief": BRIEFS[role],
+            "answer_file": ANSWER_FILES.get(role, ""),
+            "fixes": _round_configuration(),
+            "prompt": {"source": source, "function": function},
+        }
     return {
         "role": role,
         "step": step,
         "agents_in_the_step": agents,
+        "runs_an_agent": True,
         "brief": BRIEFS[role],
         "model": settings.AGENT_CHAT_MODEL,
         "structured_output": str(settings.AGENT_STRUCTURED_OUTPUT or "off").lower(),
@@ -233,6 +276,7 @@ def model_name(schema: dict) -> str:
 
 #: The file each role's answer is written to.
 ANSWER_FILES = {
+    "start": "state.json (the round's state; no agent answers)",
     "ideate": "ideas.txt (ideas_extra.txt for the second pass)",
     "probe": "the probe's own artefacts (probe.json, evidence bundles)",
     "score": "ranks.txt (rebuttal.txt for the bounded rebuttal)",
@@ -322,6 +366,29 @@ def export(root: Path = None) -> list:
 def _agent_md(role: str) -> str:
     step, agents = STEPS[role]
     config = _config(role)
+    if agents == 0:
+        fixes = config["fixes"]
+        lines = ["# The `%s` step" % role, "",
+                 config["brief"], "",
+                 "## Where it sits", "",
+                 "- **step**: %s" % step,
+                 "- **agents in this step**: 0 - this step runs no model", "",
+                 "## What it fixes for the later steps", "",
+                 "- **ideation agents**: %d" % fixes["ideation_agents"],
+                 "- **rubric**: `%s` (sha256 `%s`)"
+                 % (fixes["rubric"]["version"], (fixes["rubric"]["sha256"] or "")[:16]),
+                 "- **selection rule**: %s"
+                 % json.dumps(fixes["rubric"]["selection"], ensure_ascii=False),
+                 "- **objective**: %s" % fixes["objective"].strip().split(".")[0] + ".",
+                 "- **scope contract**: %d characters, %d clauses"
+                 % (len(fixes["scope_contract"]),
+                    fixes["scope_contract"].count("\n  ")),
+                 "- **experiment policy**: %d characters"
+                 % len(fixes["experiment_policy"]), "",
+                 "## Files", "",
+                 "- `config.json` - the machine-readable configuration",
+                 "- `prompt.md` - the code that creates the round, verbatim", ""]
+        return "\n".join(lines)
     permissions = config["tools"]
     lines = ["# The `%s` agent" % role, "",
              BRIEFS[role], "",

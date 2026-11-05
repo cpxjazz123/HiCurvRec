@@ -2,6 +2,7 @@
  "role": "ideate",
  "step": "2 - research_round_ideate",
  "agents_in_the_step": 5,
+ "runs_an_agent": true,
  "brief": "Proposes mechanisms. Five agents answer independently, each with the round's objective, the scope contract and the evidence already gathered; the framework merges the answers, drops the duplicates and scores every surviving proposal. The agent may read nothing outside its own workspace: everything it needs is in the prompt.",
  "model": "deepseek/deepseek-v4.1-flash",
  "structured_output": "on",
