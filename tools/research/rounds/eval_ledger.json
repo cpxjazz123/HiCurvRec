@@ -139,6 +139,36 @@
    "decision": "eval",
    "eval_id": "geometry-arm-keeps-the-measured-scale",
    "source": "round 20261106_020541: the Euclidean arm must be distance-only"
+  },
+  {
+   "pattern": "mean of medians|mean of the ranks|global quantile|pooled step-0",
+   "decision": "eval",
+   "eval_id": "offset-scale-is-one-global-quantile",
+   "source": "round 20261106_020541: the amplitude must be one quantile of the pooled batch"
+  },
+  {
+   "pattern": "ORDERED by|ordering is asserted|not maintained",
+   "decision": "eval",
+   "eval_id": "the-ordering-is-not-claimed-as-maintained",
+   "source": "round 20261106_020541: the strata's order is an initialisation, not an invariant"
+  },
+  {
+   "pattern": "interval inconsistent|in \\(0,1\\)|\\[0,1\\]",
+   "decision": "eval",
+   "eval_id": "declared-intervals-match-the-definitions",
+   "source": "round 20261106_020541: a declared range must match the definition"
+  },
+  {
+   "pattern": "fallback is attributed|documented fallback|fallback.*idea",
+   "decision": "eval",
+   "eval_id": "no-unattested-fallback-is-attributed-to-the-idea",
+   "source": "round 20261106_020541: no rule the idea lacks may be attributed to it"
+  },
+  {
+   "pattern": "wrong limit|wrong zero|counterfactual",
+   "decision": "eval",
+   "eval_id": "the-geometry-note-states-properties",
+   "source": "round 20261106_020541: the sign is argued with the properties"
   }
  ]
 }

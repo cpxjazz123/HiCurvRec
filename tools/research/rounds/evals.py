@@ -565,6 +565,91 @@ def _geometry_arm_keeps_the_measured_scale(spec: dict) -> list:
     return problems
 
 
+def _offset_scale_is_one_global_quantile(spec: dict) -> list:
+    """The offset's amplitude must be ONE quantile of the pooled batch.
+
+    A mean of the ranks' medians is not a median of anything: with a skewed
+    distance distribution the two differ, and the amplitude is what sets the
+    offset's range.
+    """
+    problems = []
+    cost = _computation(spec, "cost matrix")
+    if not cost:
+        return problems
+    if re.search(r"mean of (the )?(per-)?rank", cost, re.IGNORECASE) or \
+            re.search(r"medians are averaged", cost, re.IGNORECASE):
+        problems.append("the offset's amplitude is the mean of the ranks' medians, "
+                        "which is not a quantile of anything: it must be the median "
+                        "of the POOLED step-0 distances")
+    if not re.search(r"pooled|pool ", cost, re.IGNORECASE):
+        problems.append("the offset's amplitude does not say it is measured over the "
+                        "pooled step-0 batch")
+    return problems
+
+
+def _the_ordering_is_not_claimed_as_maintained(spec: dict) -> list:
+    """The strata are free parameters: their order is an initialisation."""
+    problems = []
+    text = _section(spec, "mechanism") + "\n" + _computation(spec, "code stratum")
+    if re.search(r"codewords are ORDERED", text) and not re.search(
+            r"initialis|start ordered|INITIALIS", text):
+        problems.append("the mechanism claims the codewords are ORDERED by the rank, "
+                        "but the strata are free parameters whose order nothing "
+                        "maintains: the claim must be an initialisation")
+    return problems
+
+
+def _declared_intervals_match_the_definitions(spec: dict) -> list:
+    """A declared range must be the range the definition gives for THAT symbol.
+
+    The check is about one symbol: a quantity the definition computes with a
+    sigmoid lies in the open interval, so an output that declares it closed
+    contradicts its own definition. Intervals that belong to other quantities are
+    none of this check's business.
+    """
+    problems = []
+    for entry in spec.get("computations") or []:
+        output = str(entry.get("output") or "")
+        definition = str(entry.get("definition") or "")
+        for symbol in re.findall(r"([A-Za-z_][A-Za-z0-9_]*)\s+in\s+\[", output):
+            if re.search(r"%s\s*=\s*sigmoid\(" % re.escape(symbol), definition):
+                problems.append(
+                    "the computation %r declares %s in a closed interval while its "
+                    "definition computes it with a sigmoid, whose range is open"
+                    % (entry.get("name"), symbol))
+    return problems
+
+
+def _no_unattested_fallback_is_attributed_to_the_idea(spec: dict) -> list:
+    """A fallback the idea does not contain must not be attributed to it."""
+    problems = []
+    text = "\n".join(str(entry.get("definition") or "") + "\n" +
+                      str(entry.get("note") or "")
+                      for entry in spec.get("computations") or [])
+    text += "\n" + _section(spec, "gradient_rules")
+    if re.search(r"idea(?:'s)? (?:documented|recorded|own) fallback", text,
+                 re.IGNORECASE):
+        problems.append("the specification attributes a fallback to the idea that the "
+                        "idea does not contain: a rule the idea does not state must "
+                        "not be presented as the idea's")
+    return problems
+
+
+def _the_geometry_note_states_properties(spec: dict) -> list:
+    """The note about the sign must state the properties, not a counterfactual."""
+    problems = []
+    for entry in spec.get("computations") or []:
+        if entry.get("name") != "geometry":
+            continue
+        note = str(entry.get("note") or "")
+        if re.search(r"with the \+ sign|with \+2c|would return|returns 0 at", note,
+                     re.IGNORECASE):
+            problems.append("the geometry note argues the sign with a counterfactual "
+                            "instead of stating the properties the correct form has "
+                            "(d_c(x, x) = 0 and the c -> 0 limit 2||x - y||)")
+    return problems
+
+
 EVALS = (
     Eval("distance-clamp", "the distance keeps the artanh clamp",
          "round 20261105_144909: a draft dropped min(., 1 - 1e-6)",
@@ -621,6 +706,23 @@ EVALS = (
     Eval("surface-uses-its-arguments", "the listing uses the arguments it declares",
          "round 20261105_144909: the listing computed the curvature from s and ignored the declared argument",
          _surface_uses_its_arguments),
+    Eval("offset-scale-is-one-global-quantile", "the amplitude is one quantile of the pooled batch",
+         "round 20261106_020541: the reviewers found that a mean of the ranks' medians "
+         "is not a quantile of anything",
+         _offset_scale_is_one_global_quantile),
+    Eval("the-ordering-is-not-claimed-as-maintained", "the strata's order is an initialisation",
+         "round 20261106_020541: the strata are free parameters, so the ordering "
+         "cannot be claimed as an invariant",
+         _the_ordering_is_not_claimed_as_maintained),
+    Eval("declared-intervals-match-the-definitions", "a declared range is the range the definition gives",
+         "round 20261106_020541: the stratum's output said [0,1] while sigmoid gives (0,1)",
+         _declared_intervals_match_the_definitions),
+    Eval("no-unattested-fallback-is-attributed-to-the-idea", "the idea is not credited with rules it lacks",
+         "round 20261106_020541: a fallback the idea never stated was attributed to it",
+         _no_unattested_fallback_is_attributed_to_the_idea),
+    Eval("the-geometry-note-states-properties", "the sign is argued with the properties",
+         "round 20261106_020541: the note's counterfactual about the sign was wrong",
+         _the_geometry_note_states_properties),
     Eval("geometry-arm-keeps-the-measured-scale", "the Euclidean arm is distance-only",
          "round 20261106_020541: the reviewers found that re-measuring beta in the "
          "c = 0 arm would make the control differ in the amplitude too",
