@@ -32,6 +32,7 @@ from . import probes as probes_module
 from . import plaintext
 from . import scoring as scoring_module
 from . import pipeline as pipeline_module
+from . import specification as specification_module
 
 #: One idea per agent. A round takes five agents, so it collects five
 #: proposals (the contract wants three to nine), and one idea block fits in the
@@ -1569,6 +1570,145 @@ def phase_derivation(root: Path, round_id: str, *, log=print) -> dict:
             "derivations": len(implementations)}
 
 
+def _formula_prompt(idea: dict, findings: list = None) -> str:
+    """The prompt of the Formula Agent: the idea, and what the reviewers said."""
+    prompt = (
+        "Write the mathematics of this mechanism. The mechanism has already been "
+        "chosen; you are not choosing it and you may not change it.\n\n"
+        "TITLE: " + str(idea.get("title")) + "\n"
+        "MECHANISM: " + str(idea.get("mechanism")) + "\n"
+        "SPECIFICATION: " + str(idea.get("specification")) + "\n"
+        "SPEC EQUATIONS: " + str(idea.get("spec_equations")) + "\n"
+        "INPUTS AND OUTPUTS: " + str(idea.get("spec_inputs_outputs")) + "\n"
+        "BEHAVIOUR SIGNAL: " + str(idea.get("behavior_signal")) + "\n"
+        "BEHAVIOUR COMPUTATION: " + str(idea.get("behavior_computation")) + "\n"
+        "COUPLING: " + str(idea.get("coupling_path")) + "\n"
+        "ABLATION BEHAVIOUR OFF: " + str(idea.get("ablation_behavior_off")) + "\n"
+        "ABLATION GEOMETRY OFF: " + str(idea.get("ablation_geometry_off")) + "\n")
+    if findings:
+        prompt += ("\n\nTHE REVIEWERS FOUND THESE PROBLEMS. Fix them, and nothing "
+                   "else:\n- " + "\n- ".join(str(finding) for finding in findings))
+    return prompt
+
+
+def _review_math_prompt(idea: dict, spec: dict) -> str:
+    """The prompt of a Math Reviewer: the idea and the specification."""
+    return (
+        "Check this mathematical specification against the idea it came from.\n\n"
+        "IDEA TITLE: " + str(idea.get("title")) + "\n"
+        "IDEA SPECIFICATION: " + str(idea.get("specification")) + "\n"
+        "IDEA SPEC EQUATIONS: " + str(idea.get("spec_equations")) + "\n"
+        "IDEA COUPLING: " + str(idea.get("coupling_path")) + "\n"
+        "IDEA ABLATIONS: " + str(idea.get("ablation_behavior_off")) + " | "
+        + str(idea.get("ablation_geometry_off")) + "\n\n"
+        "THE SPECIFICATION:\n" + json.dumps(spec, indent=1, ensure_ascii=False))
+
+
+def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
+    """The formulation stage: the mathematics, reviewed, frozen.
+
+    The Formula Agent writes the mechanism as mathematics, two Math Reviewers
+    check it against the idea, and the freeze writes ``math_spec.json`` and its
+    hash. After the freeze the specification is the only authority the
+    implementation may follow.
+    """
+    directory = pipeline_module.find_round_directory(root, round_id)
+    state = pipeline_module.load_state(directory)
+    if state["step"] not in ("formulation", "implementation"):
+        return {"phase": "formulation", "ran": False, "step": state["step"],
+                "reason": "the round is no longer in the formulation phase"}
+    ideas = pipeline_module.selected_ideas(state)
+    if not ideas:
+        return {"phase": "formulation", "ran": False, "step": state["step"],
+                "reason": "the round has no selected idea"}
+    idea = ideas[0]
+    findings = list(state.get("math_review_findings") or [])
+    for attempt in range(2):
+        answer = _run_agent(directory, "formulation", _formula_prompt(idea, findings),
+                            "math_spec.json", _parse_math_spec, role="formulate",
+                            read_paths=[], allowed_roots=_round_roots(directory))
+        spec = answer.get("spec") or {}
+        if spec.get("incomplete"):
+            missing = spec.get("missing") or []
+            state["math_specification_incomplete"] = {"missing": missing,
+                                                       "note": spec.get("incomplete")}
+            pipeline_module.save_state(directory, state)
+            raise pipeline_module.RoundError(
+                "the specification is incomplete: the idea does not define " +
+                "; ".join(str(item) for item in missing))
+        problems = specification_module.validate(spec)
+        if problems:
+            findings = problems
+            continue
+        reviews = []
+        for index in (1, 2):
+            verdict = _run_agent(directory, "math_review_%d" % index,
+                                 _review_math_prompt(idea, spec),
+                                 "math_review.json", _parse_math_review,
+                                 role="review_math", read_paths=[],
+                                 allowed_roots=_round_roots(directory))
+            reviews.append(verdict)
+        state["math_reviews"] = reviews
+        rejected = [review for review in reviews
+                    if str(review.get("verdict", "")).upper() != "PASS"]
+        if not rejected:
+            frozen = specification_module.freeze(directory, spec)
+            state["math_spec"] = {"sha256": frozen["sha256"], "path": frozen["path"],
+                                  "reviewed_by": len(reviews),
+                                  "spec": spec}
+            state["step"] = "implementation"
+            state["math_review_findings"] = []
+            pipeline_module.save_state(directory, state)
+            log("formulation: the specification is frozen (%s)" % frozen["sha256"][:12])
+            return {"phase": "formulation", "ran": True, "step": state["step"],
+                    "sha256": frozen["sha256"], "reviews": len(reviews)}
+        findings = [finding for review in rejected
+                    for finding in review.get("findings") or []]
+        state["math_review_findings"] = findings
+        pipeline_module.save_state(directory, state)
+        log("formulation: the reviewers asked for %d changes" % len(findings))
+    raise pipeline_module.RoundError(
+        "the mathematical specification did not pass the review: " +
+        "; ".join(str(finding) for finding in findings[:3]))
+
+
+def _parse_math_spec(text: str) -> dict:
+    """The specification an agent answered with, or an empty specification."""
+    import json as _json
+
+    decoder = _json.JSONDecoder()
+    for position, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            payload, _ = decoder.raw_decode(text[position:])
+        except ValueError:
+            continue
+        if isinstance(payload, dict) and (payload.get("computations")
+                                          or payload.get("incomplete")):
+            return {"spec": payload}
+    return {"spec": {}}
+
+
+def _parse_math_review(text: str) -> dict:
+    """The verdict an agent answered with."""
+    import json as _json
+
+    decoder = _json.JSONDecoder()
+    for position, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            payload, _ = decoder.raw_decode(text[position:])
+        except ValueError:
+            continue
+        if isinstance(payload, dict) and payload.get("verdict"):
+            return {"verdict": str(payload.get("verdict")),
+                    "findings": [str(finding) for finding in payload.get("findings") or []],
+                    "reason": str(payload.get("reason") or "")}
+    return {"verdict": "", "findings": [], "reason": ""}
+
+
 def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
     """Build one isolated candidate per selected idea, each from the baseline."""
     directory = pipeline_module.find_round_directory(root, round_id)
@@ -1578,6 +1718,14 @@ def phase_implementation(root: Path, round_id: str, *, log=print) -> dict:
         return {"phase": "implementation", "ran": False, "step": state["step"],
                 "implementations": len(state.get("implementations", [])),
                 "reason": "the round is no longer in the implementation phase"}
+    # The mathematics is stated, reviewed and frozen first: the implementation
+    # may only follow the frozen specification.
+    if state.get("step") == "formulation":
+        formulation = phase_formulation(root, round_id, log=log)
+        if formulation.get("ran") is False:
+            return formulation
+        state = pipeline_module.load_state(directory)
+
     # The three independent derivations of the selected mechanism come first:
     # registration is refused until they agree.
     derivation = phase_derivation(root, round_id, log=log)

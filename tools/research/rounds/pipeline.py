@@ -219,7 +219,7 @@ def apply_scoring(state: dict, reports: list, *, comparisons: list = None,
         record_event(state, "no_qualified_idea",
                      rejected=len(selection["rejected"]))
         return state
-    state["step"] = "implementation"
+    state["step"] = "formulation"
     record_event(state, "scoring_complete", selected=len(selection["selected"]),
                  rejected=len(selection["rejected"]),
                  decision_hash=state.get("decision_hash"))
@@ -351,6 +351,35 @@ def register_implementation(state: dict, implementation_id: str, report: dict) -
     # registered: three derivations of one specification that disagree mean the
     # specification was not implemented the same way twice, and the difference
     # has to be located before any GPU work.
+    # The frozen mathematical specification is the authority the implementation
+    # follows: the contract's statements must be the specification's statements,
+    # so an implementation cannot quietly change the mathematics it was given.
+    math_spec = state.get("math_spec") or {}
+    if not math_spec.get("sha256"):
+        raise RoundError(
+            "the mechanism has no frozen mathematical specification: the "
+            "formulation stage must state, review and freeze it before the "
+            "implementation is registered")
+    record["math_spec_sha256"] = math_spec["sha256"]
+    contract_path = tree / "reference_contract.json"
+    if contract_path.is_file():
+        try:
+            contract = json.loads(contract_path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            raise RoundError("the reference contract is not readable JSON: " + str(exc))
+        from . import specification as specification_module
+        stated = list((contract.get("calls") or [{}])[0].get("statements") or [])
+        frozen = specification_module.statements(math_spec.get("spec") or {})
+        if stated != frozen:
+            raise RoundError(
+                "the reference contract's statements are not the frozen "
+                "specification's: the implementation must implement the "
+                "specification, not a restatement of it")
+        record["math_spec_checked"] = True
+    else:
+        raise RoundError("the candidate declares no reference_contract.json: the "
+                         "contract's statements must be the frozen specification's")
+
     # The differential verification is evidence with a precise meaning: two
     # derivations of the same instance that DISAGREE contradict the proposal
     # and stop it here. Two derivations that could not be compared - a

@@ -191,6 +191,53 @@ class DerivationArgument(BaseModel):
     scalar: float | None = None
 
 
+class ComputationEntry(BaseModel):
+    """One computation of the mechanism, stated in full."""
+    name: str
+    definition: str
+    inputs: list[str] = Field(default_factory=list)
+    output: str = ""
+    differentiable: bool = False
+    note: str = ""
+
+
+class ContinuousSurface(BaseModel):
+    """The differentiable surface the reference contract is built from."""
+    name: str = ""
+    callable: str = ""
+    symbols: list[str] = Field(default_factory=list)
+    args: list[DerivationArgument] = Field(default_factory=list)
+    statements: list[str] = Field(default_factory=list)
+    output: str = ""
+    note: str = ""
+
+
+class MathSpecPayload(BaseModel):
+    """The JSON a Formula Agent answers with: the mechanism as mathematics.
+
+    The specification covers EVERY computation the mechanism touches - the
+    metric, the behaviour's entry point, the assignment, the gradient path, the
+    reconstruction, the switches - not only a loss.
+    """
+    mechanism: str = ""
+    computations: list[ComputationEntry] = Field(default_factory=list)
+    inputs: list[str] = Field(default_factory=list)
+    outputs: list[str] = Field(default_factory=list)
+    parameters: list[str] = Field(default_factory=list)
+    switches: list[str] = Field(default_factory=list)
+    excluded: list[str] = Field(default_factory=list)
+    continuous_surface: ContinuousSurface = Field(default_factory=ContinuousSurface)
+    incomplete: str = ""
+    missing: list[str] = Field(default_factory=list)
+
+
+class MathReviewPayload(BaseModel):
+    """The JSON a Math Reviewer answers with."""
+    verdict: str = ""
+    findings: list[str] = Field(default_factory=list)
+    reason: str = ""
+
+
 class DerivationPayload(BaseModel):
     """The JSON an independent derivation answers with.
 
@@ -218,6 +265,10 @@ def output_schema(role: str):
         return RankPayload
     if role == "derive":
         return DerivationPayload
+    if role == "formulate":
+        return MathSpecPayload
+    if role == "review_math":
+        return MathReviewPayload
     return IdeaPayload
 
 
@@ -308,6 +359,50 @@ IDEA_JSON_INSTRUCTIONS = (
     "Its keys are: " + ", ".join(key for key, _ in JSON_FIELDS) + ". "
     "Every key is a string except 'risks', which is a list of strings."
 )
+
+FORMULATION_JSON_INSTRUCTIONS = (
+    "You WRITE the mathematics of a mechanism that has already been chosen. You "
+    "do not choose the mechanism and you do not change it: your job is to state "
+    "it so that an implementer has no freedom left.\n"
+    "Answer with ONE JSON object and nothing else, with these keys:\n"
+    '{"mechanism": "the mechanism in one paragraph",\n'
+    ' "computations": [{"name": "...", "definition": "the formula, in symbols",\n'
+    '                   "inputs": ["..."], "output": "...",\n'
+    '                   "differentiable": true, "note": "..."}],\n'
+    ' "inputs": ["..."], "outputs": ["..."], "parameters": ["..."],\n'
+    ' "switches": ["the behaviour switch and what it does",\n'
+    '              "the geometry switch and what it does"],\n'
+    ' "excluded": ["the surfaces that are deliberately out of scope, and why"],\n'
+    ' "continuous_surface": {"name": "...", "callable": "module:function",\n'
+    '   "symbols": ["x0", "x1"],\n'
+    '   "args": [{"name": "x", "width": 2}],\n'
+    '   "statements": ["d = sqrt(x0**2 + x1**2)"],\n'
+    '   "output": "d"},\n'
+    ' "incomplete": "", "missing": []}\n'
+    "Rules: EVERY computation the mechanism touches must appear in "
+    "`computations` - the metric, the behaviour's entry point, the assignment, "
+    "the gradient path (say exactly how the gradient reaches the encoder), the "
+    "reconstruction, and each switch. The `continuous_surface` states the "
+    "DIFFERENTIABLE part of the mechanism in SymPy statements, so that an "
+    "independent rebuild is possible; its callable names the function an "
+    "implementer must write, and its args the arguments it must take, in order. "
+    "If the idea does not define something the mechanism needs, do NOT invent "
+    "it: answer with \"incomplete\": \"SPECIFICATION_INCOMPLETE\" and list "
+    "the missing definitions in `missing`.")
+
+MATH_REVIEW_JSON_INSTRUCTIONS = (
+    "You REVIEW a mathematical specification against the idea it came from. "
+    "You are not checking whether it can run: you are checking whether it "
+    "FAITHFULLY expresses the idea, and whether the mathematics is correct, "
+    "complete and unambiguous.\n"
+    "Answer with ONE JSON object and nothing else:\n"
+    '{"verdict": "PASS" or "REVISE", "findings": ["..."], "reason": "..."}\n'
+    "Rules: REVISE if the specification changes the idea, if a computation is "
+    "missing, if a formula is ambiguous or dimensionally inconsistent, if a "
+    "sign, a scale or a limit is wrong, if the gradient path is not stated, or "
+    "if the switches do not do what they claim. Say in every finding WHICH part "
+    "is wrong and what it must be instead. PASS only if the specification is a "
+    "faithful, complete and correct formulation of the idea.")
 
 DERIVATION_JSON_INSTRUCTIONS = (
     "You DERIVE one formula, independently. Your reply is ONE JSON object and "
@@ -532,6 +627,10 @@ def run_agent(task_id: str, prompt: str, output_name: str, root: Path, *,
     instructions = SYSTEM_PROMPT
     if role == "derive":
         instructions = SYSTEM_PROMPT + "\n" + DERIVATION_JSON_INSTRUCTIONS
+    elif role == "formulate":
+        instructions = SYSTEM_PROMPT + "\n" + FORMULATION_JSON_INSTRUCTIONS
+    elif role == "review_math":
+        instructions = SYSTEM_PROMPT + "\n" + MATH_REVIEW_JSON_INSTRUCTIONS
     elif role == "score":
         instructions = SYSTEM_PROMPT + "\n" + RANK_JSON_INSTRUCTIONS
     else:

@@ -203,7 +203,8 @@ class RoundStateTests(unittest.TestCase):
                    for name in ("s1", "s2", "s3")]
         state = pipeline_module.apply_scoring(state, reports)
         pipeline_module.save_state(self.directory, state)
-        self.assertEqual(state["step"], "implementation")
+        # the mathematics is stated and reviewed before the implementation
+        self.assertEqual(state["step"], "formulation")
         # A round produces exactly one mechanism, even when several qualify.
         self.assertEqual(len(pipeline_module.selected_ideas(state)), 1)
         summary = pipeline_module.summary(pipeline_module.load_state(self.directory))
@@ -357,6 +358,14 @@ class ReferenceContractGateTests(unittest.TestCase):
         self.state["implementations"] = [pipeline_module.implementation_record(
             {"idea_id": "a"}, {"changed_files": ["model.py"]}, self.tree)]
         self.state["differential"] = {"status": "AGREE", "reason": ""}
+        # the frozen mathematical specification the implementation must follow
+        self.state["math_spec"] = {
+            "sha256": "frozen",
+            "spec": {"continuous_surface": {"statements": ["d = sqrt(x0**2)"],
+                                            "output": "d"}}}
+        (self.tree / "reference_contract.json").write_text(json.dumps(
+            {"calls": [{"name": "surface", "statements": ["d = sqrt(x0**2)"],
+                        "output": "d"}]}))
 
     def _register(self, verdict):
         with patch.object(pipeline_module, "reference_verdict",
@@ -367,10 +376,25 @@ class ReferenceContractGateTests(unittest.TestCase):
                 self.state, "a", {"changed_files": ["model.py"]})
 
     def test_a_tree_without_a_contract_is_refused(self):
+        (self.tree / "reference_contract.json").unlink()
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "NOT_APPLICABLE",
                             "detail": "the tree declares no reference_contract.json"})
         self.assertIn("reference_contract.json", str(raised.exception))
+
+    def test_an_implementation_without_a_frozen_specification_is_refused(self):
+        self.state["math_spec"] = {}
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "PASS", "detail": "ok"})
+        self.assertIn("specification", str(raised.exception))
+
+    def test_a_contract_that_is_not_the_frozen_specification_is_refused(self):
+        (self.tree / "reference_contract.json").write_text(json.dumps(
+            {"calls": [{"name": "surface", "statements": ["d = x0 + x1"],
+                        "output": "d"}]}))
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "PASS", "detail": "ok"})
+        self.assertIn("frozen specification", str(raised.exception))
 
     def test_a_disagreeing_formula_is_refused(self):
         with self.assertRaises(pipeline_module.RoundError) as raised:
@@ -555,6 +579,14 @@ class ReferenceContractGateTests(unittest.TestCase):
         self.state["implementations"] = [pipeline_module.implementation_record(
             {"idea_id": "a"}, {"changed_files": ["model.py"]}, self.tree)]
         self.state["differential"] = {"status": "AGREE", "reason": ""}
+        # the frozen mathematical specification the implementation must follow
+        self.state["math_spec"] = {
+            "sha256": "frozen",
+            "spec": {"continuous_surface": {"statements": ["d = sqrt(x0**2)"],
+                                            "output": "d"}}}
+        (self.tree / "reference_contract.json").write_text(json.dumps(
+            {"calls": [{"name": "surface", "statements": ["d = sqrt(x0**2)"],
+                        "output": "d"}]}))
 
     def _register(self, verdict):
         with patch.object(pipeline_module, "reference_verdict",
@@ -565,10 +597,25 @@ class ReferenceContractGateTests(unittest.TestCase):
                 self.state, "a", {"changed_files": ["model.py"]})
 
     def test_a_tree_without_a_contract_is_refused(self):
+        (self.tree / "reference_contract.json").unlink()
         with self.assertRaises(pipeline_module.RoundError) as raised:
             self._register({"status": "NOT_APPLICABLE",
                             "detail": "the tree declares no reference_contract.json"})
         self.assertIn("reference_contract.json", str(raised.exception))
+
+    def test_an_implementation_without_a_frozen_specification_is_refused(self):
+        self.state["math_spec"] = {}
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "PASS", "detail": "ok"})
+        self.assertIn("specification", str(raised.exception))
+
+    def test_a_contract_that_is_not_the_frozen_specification_is_refused(self):
+        (self.tree / "reference_contract.json").write_text(json.dumps(
+            {"calls": [{"name": "surface", "statements": ["d = x0 + x1"],
+                        "output": "d"}]}))
+        with self.assertRaises(pipeline_module.RoundError) as raised:
+            self._register({"status": "PASS", "detail": "ok"})
+        self.assertIn("frozen specification", str(raised.exception))
 
     def test_a_disagreeing_formula_is_refused(self):
         with self.assertRaises(pipeline_module.RoundError) as raised:
