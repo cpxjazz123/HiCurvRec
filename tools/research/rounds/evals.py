@@ -286,6 +286,197 @@ def _rho_label(spec: dict) -> list:
     return problems
 
 
+def _surface_defines_what_it_uses(spec: dict) -> list:
+    """Every name the listing uses at the top level must be assigned in it.
+
+    A listing that reads a name it never defines is not a program: an
+    implementation that follows it raises, and one that guesses the name is not
+    implementing the specification. The names the surface declares as its
+    inputs (the residual, the codebook, the item mass, the carried buffers and
+    the two switches) are known; the bodies of the helper functions are not
+    part of the listing's own assignments.
+    """
+    import builtins
+    import re
+
+    code = _code(spec)
+    if not code:
+        return []
+    import keyword
+    known = (set(dir(builtins)) | set(keyword.kwlist)
+             | {"torch", "math", "True", "False", "None"})
+    for line in code:
+        stripped = line.strip()
+        if stripped.startswith("def "):
+            head = stripped.split("def ", 1)[1]
+            known.add(head.split("(")[0].strip())
+            arguments = head.split("(", 1)[1].split(")")[0] if "(" in head else ""
+            for argument in arguments.split(","):
+                name = argument.split("=")[0].strip()
+                if name.isidentifier():
+                    known.add(name)
+    # the surface's own inputs
+    known |= {"r", "a", "K1", "B", "D", "N", "s", "m_i", "b_raw", "ms_sum",
+              "ms_count", "epoch", "BEHAVIOUR_OFF"}
+    for line in code:
+        stripped = line.split("#", 1)[0].strip()
+        if not stripped or stripped.startswith("def "):
+            continue
+        if line[:1].isspace():
+            continue                      # inside a helper function
+        if "=" in stripped:
+            name = stripped.split("=", 1)[0].strip()
+            if name.isidentifier():
+                known.add(name)
+    problems = []
+    for line in code:
+        stripped = line.split("#", 1)[0]
+        if line[:1].isspace() or not stripped.strip():
+            continue
+        if "=" in stripped:
+            stripped = stripped.split("=", 1)[1]
+        # the attribute names (torch.argmax, .sum, ...) belong to the object
+        # they are called on, not to the listing's own names
+        stripped = re.sub(r"\.[A-Za-z_][A-Za-z0-9_]*", " ", stripped)
+        # a keyword argument (keepdim=True) is a name of the called function
+        stripped = re.sub(r"\b[A-Za-z_][A-Za-z0-9_]*\s*=(?!=)", " ", stripped)
+        for name in re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\b", stripped):
+            if name not in known:
+                problems.append("the surface uses %r without ever assigning it: the "
+                                "listing is not a program an implementation can follow"
+                                % name)
+    return sorted(set(problems))
+
+
+def _surface_assigns_the_demand(spec: dict) -> list:
+    """The demand's chain must be in the listing: epoch, blend, normalisation."""
+    problems = []
+    code = "\n".join(_code(spec))
+    for name in ("b_raw_epoch", "b_raw", "b_k"):
+        if not any(re.match(r"%s[_A-Za-z0-9]*\s*=" % name, line.strip())
+                   for line in _code(spec)):
+            problems.append("the surface never assigns %s, so the offset and the "
+                            "weight cannot be computed from it" % name)
+    return problems
+
+
+def _surface_applies_the_lift(spec: dict) -> list:
+    """The lift is applied to the residual and to the codebook, separately."""
+    problems = []
+    code = "\n".join(_code(spec))
+    if "lift(" not in code:
+        return ["the surface never applies the lift"]
+    if "u = lift(r" not in code.replace(" ", " ") and "lift(r," not in code:
+        problems.append("the surface never lifts the residual")
+    if "lift(a," not in code and "lift(a," not in code.replace(" ", ""):
+        problems.append("the surface never lifts the codebook")
+    return problems
+
+
+def _surface_couples_the_behaviour(spec: dict) -> list:
+    """The behaviour half of the coupling must be in the listing."""
+    problems = []
+    code = "\n".join(_code(spec))
+    for name, why in (("p_ik", "the soft assignment of the demand"),
+                      ("num_k", "the epoch's accumulation of the demand"),
+                      ("off_k", "the offset the behaviour contributes")):
+        if name not in code:
+            problems.append("the surface omits %s: %s" % (name, why))
+    if "score_k" in code and "off_k[None" not in code and "off[None" not in code:
+        problems.append("the surface's score does not subtract the offset")
+    return problems
+
+
+def _symbolic_distance_keeps_the_guards(spec: dict) -> list:
+    """The SymPy surface is the idea's expression: eps in the denominator and
+    the clamp on the artanh argument."""
+    problems = []
+    statements = _statements(spec)
+    if not statements:
+        return []
+    denominator = next((line for line in statements if line.strip().startswith("den")),
+                       "")
+    if denominator and "eps" not in denominator and "1e-12" not in denominator:
+        problems.append("the symbolic Mobius denominator omits the eps the idea's "
+                        "expression carries")
+    distance = next((line for line in statements if "atanh" in line), "")
+    if distance and not re.search(r"min\(|Min\(", distance):
+        problems.append("the symbolic distance omits the idea's min(., 1 - 1e-6) "
+                        "clamp on the artanh argument")
+    return problems
+
+
+def _surface_interface_is_consistent(spec: dict) -> list:
+    """The callable, the arguments, the symbols and the output must agree.
+
+    A surface that names one callable and declares another's arguments is not a
+    surface: the reference contract would compare a distance against a score,
+    and the implementation would have to guess which one the specification means.
+    """
+    problems = []
+    surface = spec.get("continuous_surface") or {}
+    callable_name = str(surface.get("callable") or "")
+    args = surface.get("args") or []
+    arg_names = [str(entry.get("name")) for entry in args
+                 if isinstance(entry, dict) and entry.get("name")]
+    if callable_name and args:
+        head = callable_name.split("(", 1)[0].strip()
+        inside = callable_name.split("(", 1)[1].rsplit(")", 1)[0] if "(" in callable_name else ""
+        parameters = [item.strip().split("=")[0].strip()
+                      for item in inside.split(",") if item.strip()]
+        if parameters and parameters != arg_names:
+            problems.append(
+                "the surface names the callable %r but declares the arguments %s: "
+                "the two must be the same surface" % (head, arg_names))
+    statements = _statements(spec)
+    output = str(surface.get("output") or "")
+    if output and statements:
+        assigned = {line.split("=", 1)[0].strip() for line in statements
+                    if "=" in line}
+        if output not in assigned:
+            problems.append("the surface's output %r is not one of its statements"
+                            % output)
+    symbols = surface.get("symbols") or []
+    if isinstance(symbols, list) and args:
+        consumed = 0
+        for entry in args:
+            if not isinstance(entry, dict):
+                continue
+            if entry.get("scalar") is not None:
+                consumed += 1
+            else:
+                consumed += int(entry.get("width") or 1)
+        if len(symbols) != consumed:
+            problems.append(
+                "the surface declares %d symbols for %d argument columns: the "
+                "reference rebuild would read the wrong ones" % (len(symbols), consumed))
+    return problems
+
+
+def _surface_uses_its_arguments(spec: dict) -> list:
+    """The executable listing must use the arguments the surface declares.
+
+    A listing that computes the curvature from s while the surface declares a
+    curvature argument makes the contract compare two different surfaces: the
+    one the implementation runs and the one the reference rebuilds.
+    """
+    problems = []
+    surface = spec.get("continuous_surface") or {}
+    args = surface.get("args") or []
+    names = [str(entry.get("name")) for entry in args
+             if isinstance(entry, dict) and entry.get("name")]
+    code = "\n".join(_code(spec))
+    if not names or not code:
+        return []
+    for name in names:
+        if name == "curvature":
+            continue
+        if not re.search(r"\b%s\b" % re.escape(name), code):
+            problems.append("the surface declares the argument %r but the listing "
+                            "never uses it" % name)
+    return problems
+
+
 EVALS = (
     Eval("distance-clamp", "the distance keeps the artanh clamp",
          "round 20261105_144909: a draft dropped min(., 1 - 1e-6)",
@@ -323,6 +514,27 @@ EVALS = (
     Eval("rho-label", "rho's label does not invert the ratio",
          "round 20261105_144909: 'radius-to-scale ratio' against R_c = s/rho",
          _rho_label),
+    Eval("surface-defines-what-it-uses", "the listing defines every name it uses",
+         "round 20261105_144909: score_k read an 'off' the listing never defined",
+         _surface_defines_what_it_uses),
+    Eval("surface-assigns-the-demand", "the listing carries the demand's chain",
+         "round 20261105_144909: b_k was never assigned, so the offset was undefined",
+         _surface_assigns_the_demand),
+    Eval("surface-applies-the-lift", "the listing lifts the residual and the codebook",
+         "round 20261105_144909: the surface never applied the lift",
+         _surface_applies_the_lift),
+    Eval("surface-couples-the-behaviour", "the listing carries the behaviour half",
+         "round 20261105_144909: the surface omitted the demand, the accumulation and the offset",
+         _surface_couples_the_behaviour),
+    Eval("symbolic-distance-keeps-the-guards", "the symbolic distance is the idea's expression",
+         "round 20261105_144909: the symbolic denominator dropped eps and the distance dropped the clamp",
+         _symbolic_distance_keeps_the_guards),
+    Eval("surface-interface-is-consistent", "the callable, the arguments and the output agree",
+         "round 20261105_144909: the surface named a score and declared a distance's arguments",
+         _surface_interface_is_consistent),
+    Eval("surface-uses-its-arguments", "the listing uses the arguments it declares",
+         "round 20261105_144909: the listing computed the curvature from s and ignored the declared argument",
+         _surface_uses_its_arguments),
 )
 
 

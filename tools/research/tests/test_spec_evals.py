@@ -45,13 +45,9 @@ def _without(eval_id: str, spec: dict) -> dict:
 # ---- each eval is proven on the defect it came from -------------------------
 
 def test_distance_clamp_is_caught():
-    spec = _without("distance-clamp", _frozen())
-    spec["continuous_surface"]["statements"] = [
-        line.replace(", max=1.0 - 1e-6", "").replace(
-            "torch.clamp(", "").replace(")", "") if "atanh" in line else line
-        for line in spec["continuous_surface"]["statements"]]
-    # a dropped clamp on the atanh argument
-    spec["continuous_surface"]["statements"] = [
+    """The clamp on the artanh argument is what keeps a boundary latent finite."""
+    spec = _frozen()
+    spec["continuous_surface"]["executable_statements"] = [
         "def dist(x, y, c): return 2.0 * _norm(x - y) if c == 0.0 else "
         "(2.0 / math.sqrt(c)) * torch.atanh(math.sqrt(c) * _norm(mobius(-x, y, c)))"]
     problems = evals._distance_clamp(spec)
@@ -60,7 +56,7 @@ def test_distance_clamp_is_caught():
 
 def test_lift_zero_dead_branch_is_caught():
     spec = _frozen()
-    spec["continuous_surface"]["statements"] = [
+    spec["continuous_surface"]["executable_statements"] = [
         "def _norm(v): return torch.sqrt(torch.clamp((v * v).sum(-1), min=0.0) + eps)",
         "def lift(v, c): return v if c == 0.0 else v * torch.where("
         "_norm(v) <= eps, torch.zeros_like(_norm(v)), "
@@ -138,19 +134,19 @@ def test_lifted_reconstruction_is_caught():
 def test_numeric_eval_catches_a_wrong_limit():
     """A distance that forgets the factor 2 is not the mechanism's metric."""
     spec = _frozen()
-    spec["continuous_surface"]["statements"] = [
+    spec["continuous_surface"]["executable_statements"] = [
         line.replace("return 2.0 * _norm(x - y)", "return _norm(x - y)")
-        for line in spec["continuous_surface"]["statements"]]
+        for line in spec["continuous_surface"]["executable_statements"]]
     failure = evals.run_numeric(spec)
     assert failure and any("Euclidean" in problem for problem in failure["problems"])
 
 
 def test_numeric_eval_catches_a_lift_that_leaves_the_ball():
     spec = _frozen()
-    spec["continuous_surface"]["statements"] = [
+    spec["continuous_surface"]["executable_statements"] = [
         line.replace("def lift(v, c): return v if c == 0.0 else v * (",
                      "def lift(v, c): return v if c == 0.0 else 9.0 * (")
-        for line in spec["continuous_surface"]["statements"]]
+        for line in spec["continuous_surface"]["executable_statements"]]
     failure = evals.run_numeric(spec)
     assert failure and any("ball" in problem for problem in failure["problems"])
 
@@ -210,3 +206,85 @@ def test_the_gate_refuses_when_a_finding_is_undecided(monkeypatch):
 
     monkeypatch.setattr(evals, "undecided", fake_undecided)
     assert worker.evals_module.undecided(undone) == undone
+
+
+# ---- the surface evals: the listing must be a program ------------------------
+
+def _draft() -> dict:
+    import json
+    from pathlib import Path
+    repo = Path(__file__).resolve().parents[3]
+    return json.loads((repo / "results" / "research" / "issue121" / "rounds"
+                       / "round_20261105_144909_130" / "math_spec_draft.json")
+                      .read_text(encoding="utf-8"))
+
+
+def test_the_surface_evals_accept_the_frozen_surface():
+    for item in evals.EVALS:
+        if item.id.startswith("surface") or item.id.startswith("symbolic"):
+            assert not item.check(_draft()), (item.id, item.check(_draft()))
+
+
+def test_a_name_the_listing_never_assigns_is_refused():
+    spec = _draft()
+    spec["continuous_surface"]["executable_statements"] = [
+        line for line in spec["continuous_surface"]["executable_statements"]
+        if not line.startswith("off_k = ")]
+    spec["continuous_surface"]["executable_statements"].append(
+        "score_k = D_k - off[None, :]")
+    problems = evals._surface_defines_what_it_uses(spec)
+    assert problems and "off" in problems[0]
+
+
+def test_a_surface_without_the_demand_chain_is_refused():
+    spec = _draft()
+    spec["continuous_surface"]["executable_statements"] = [
+        line for line in spec["continuous_surface"]["executable_statements"]
+        if not line.startswith("b_k = ")]
+    problems = evals._surface_assigns_the_demand(spec)
+    assert problems and "b_k" in problems[0]
+
+
+def test_a_surface_that_never_lifts_is_refused():
+    spec = _draft()
+    spec["continuous_surface"]["executable_statements"] = [
+        line for line in spec["continuous_surface"]["executable_statements"]
+        if "lift(" not in line]
+    problems = evals._surface_applies_the_lift(spec)
+    assert problems
+
+
+def test_a_surface_without_the_behaviour_half_is_refused():
+    spec = _draft()
+    spec["continuous_surface"]["executable_statements"] = [
+        line for line in spec["continuous_surface"]["executable_statements"]
+        if "p_ik" not in line and "off_k" not in line]
+    problems = evals._surface_couples_the_behaviour(spec)
+    assert problems
+
+
+def test_a_symbolic_surface_without_the_guards_is_refused():
+    spec = _draft()
+    spec["continuous_surface"]["statements"] = [
+        line.replace(" + 1e-12", "") if line.strip().startswith("den") else
+        line.replace("atanh(Min(sqrt(c)*sqrt(mn), 1 - 1e-6))", "atanh(sqrt(c)*sqrt(mn))")
+        for line in spec["continuous_surface"]["statements"]]
+    problems = evals._symbolic_distance_keeps_the_guards(spec)
+    assert len(problems) == 2
+
+
+def test_a_surface_that_names_another_callable_is_refused():
+    spec = _draft()
+    spec["continuous_surface"]["callable"] = "level_score(residual, codebook, curvature, demand, weight)"
+    problems = evals._surface_interface_is_consistent(spec)
+    assert problems
+
+
+def test_a_surface_that_ignores_a_declared_argument_is_refused():
+    spec = _draft()
+    spec["continuous_surface"]["args"] = [{"name": "x", "width": 2},
+                                          {"name": "y", "width": 2},
+                                          {"name": "curvature", "scalar": 0.25},
+                                          {"name": "demand", "width": 1}]
+    problems = evals._surface_uses_its_arguments(spec)
+    assert problems and "demand" in problems[0]

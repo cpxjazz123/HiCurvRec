@@ -85,6 +85,48 @@
    "decision": "not-decidable",
    "note": "Whether a mechanism improves recall is an experiment, not a check. It stays research evidence for the Idea Agents and is judged by Stage 3 test_recall@10.",
    "source": "the research programme itself"
+  },
+  {
+   "pattern": "never assigns b_k|never defines b_k|b_k was never assigned|does not assign b_k|never applies the per-epoch",
+   "decision": "eval",
+   "eval_id": "surface-assigns-the-demand",
+   "source": "round 20261105_144909: the listing never assigned b_k, so the offset could not be computed"
+  },
+  {
+   "pattern": "never defines|never defined|which is never defined|without ever defining it|is not defined|never assigns",
+   "decision": "eval",
+   "eval_id": "surface-defines-what-it-uses",
+   "source": "round 20261105_144909: score_k read an 'off' the listing never defined"
+  },
+  {
+   "pattern": "never applies the lift|never lifted|does not apply the lift|lift is never applied",
+   "decision": "eval",
+   "eval_id": "surface-applies-the-lift",
+   "source": "round 20261105_144909: the surface never applied the lift"
+  },
+  {
+   "pattern": "omits the entire behaviour half|omits the behaviour|the behaviour half|never subtracted",
+   "decision": "eval",
+   "eval_id": "surface-couples-the-behaviour",
+   "source": "round 20261105_144909: the surface omitted the demand, the accumulation and the offset"
+  },
+  {
+   "pattern": "omits the .?\\+? ?eps|omits the idea's|omits the clamp|one eps|contradicts the distance",
+   "decision": "eval",
+   "eval_id": "symbolic-distance-keeps-the-guards",
+   "source": "round 20261105_144909: the symbolic surface dropped the eps and the clamp"
+  },
+  {
+   "pattern": "interface is inconsistent|does not match the args|args are only|is not among the surface arguments",
+   "decision": "eval",
+   "eval_id": "surface-interface-is-consistent",
+   "source": "round 20261105_144909: the surface named one callable and declared another's arguments"
+  },
+  {
+   "pattern": "is not among the surface arguments|ignores the declared|the declared .* argument is ignored",
+   "decision": "eval",
+   "eval_id": "surface-uses-its-arguments",
+   "source": "round 20261105_144909: the listing ignored a declared argument"
   }
  ]
 }
