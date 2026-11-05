@@ -1,23 +1,31 @@
-"""The formula compiler's gate: every check, one verdict.
+"""The two verification stages, and the one verdict they produce.
 
-A candidate may train only when the whole chain has been executed and every
-link of it passed:
+There is no separate CGV any more: its checks live in the two stages below, and
+neither duplicates the other.
 
-1. the frozen specification exists, the file on disk is the one the record
-   cites, and two Math Reviewers passed it;
-2. three independent implementations of that specification agree - the
-   differential verdict is AGREE, not "comparable" and not "not run";
-3. the candidate's contract states the frozen specification's statements
-   verbatim, so the code and the mathematics cannot drift apart;
-4. the framework's conformance checks all pass - the frozen constants and the
-   launcher, the real entry point running one epoch and exporting the
-   identifier, the identifier itself, and the four ranks finishing;
-5. the reference agreement passes on the implemented tree, with the coupling
-   surface showing that the mechanism's own behaviour term moves the
-   computation.
+**Stage 1 - mathematical verification** (cheap, run at registration):
 
-A check that did not run is NOT a pass: ``NOT_RUN``, ``NOT_APPLICABLE`` (where
-the check applies), ``INCOMPARABLE`` and a skipped check all block.
+* the frozen specification exists, the file on disk is the one the record
+  cites, and two Math Reviewers passed it;
+* three independent implementations of that specification agree: the same
+  forward values, the same gradients, the same gradient DIRECTION, and each
+  against a reference rebuilt from its own statements with gradcheck on both
+  sides;
+* the candidate's contract states the frozen specification's statements
+  verbatim.
+
+**Stage 2 - training integration verification** (expensive, run at dispatch):
+
+* the framework's conformance checks - the frozen constants and the launcher,
+  the entry point running one epoch and exporting the identifier, the
+  identifier itself, the four ranks finishing, the reference agreement;
+* the ENCODER receives the reconstruction gradient in the candidate's own
+  model: three correct implementations of a distance function prove nothing
+  about the wiring, and an accidental ``detach`` leaves the real encoder with
+  no gradient while every mathematical check still passes.
+
+A check that did not run is NOT a pass: ``FAIL``, ``INCOMPARABLE``, ``NOT_RUN``,
+``TIMEOUT`` and ``SKIPPED`` all block.
 """
 from __future__ import annotations
 
@@ -31,28 +39,18 @@ BLOCKING = ("FAIL", "INCOMPARABLE", "NOT_RUN", "TIMEOUT", "SKIPPED")
 
 
 def _check(name: str, status: str, detail: str = "") -> dict:
-    passed = status == "PASS"
-    return {"name": name, "status": "PASS" if passed else "BLOCKED",
+    return {"name": name, "status": "PASS" if status == "PASS" else "BLOCKED",
             "detail": detail, "raw_status": status}
 
 
-def verdict(tree: Path, state: dict, *, deep: bool = False) -> dict:
-    """The one verdict the registration and the dispatch both read.
-
-    ``deep`` adds the framework's conformance checks - the one-epoch run, the
-    identifier, the four ranks - which are the expensive part and belong to the
-    dispatch, where they are already cached by the source digest. The cheap
-    verdict (the specification, the three implementations, the contract) is
-    what the registration pays for.
-    """
+def mathematical_verdict(tree: Path, state: dict) -> dict:
+    """Stage 1: the frozen formula and the three independent implementations."""
     from . import specification as specification_module
-    from ..stage2 import checks as stage2_checks
 
     tree = Path(tree)
     directory = Path(state.get("_directory") or tree.parent)
     checks = []
 
-    # 1. the frozen specification
     frozen = state.get("math_spec") or {}
     if not frozen.get("sha256"):
         checks.append(_check("specification", "NOT_RUN",
@@ -60,11 +58,11 @@ def verdict(tree: Path, state: dict, *, deep: bool = False) -> dict:
     else:
         written = specification_module.matches_frozen(directory, frozen["sha256"])
         reviews = state.get("math_reviews") or []
-        reviewed = [review for review in reviews
-                    if str(review.get("verdict", "")).upper() == "PASS"]
+        passed = [review for review in reviews
+                  if str(review.get("verdict", "")).upper() == "PASS"]
         if not written.get("matches"):
             checks.append(_check("specification", "FAIL", str(written.get("reason"))))
-        elif len(reviewed) < 2:
+        elif len(passed) < 2:
             checks.append(_check("specification", "FAIL",
                                  "the specification was not passed by two reviewers"))
         else:
@@ -72,10 +70,10 @@ def verdict(tree: Path, state: dict, *, deep: bool = False) -> dict:
                                  "frozen %s, %d reviews" % (frozen["sha256"][:12],
                                                             len(reviews))))
 
-    # 2. the three independent implementations
     coding = state.get("coding") or {}
     coding_verdict = coding.get("verdict") or {}
     implementations = coding.get("implementations") or []
+    pairs = coding_verdict.get("pairs") or []
     if len(implementations) < 3:
         checks.append(_check("implementations", "NOT_RUN",
                              "%d of three implementations" % len(implementations)))
@@ -86,11 +84,16 @@ def verdict(tree: Path, state: dict, *, deep: bool = False) -> dict:
     else:
         checks.append(_check("implementations", "PASS",
                              "three implementations agree"))
+        worst = min([float(pair.get("gradient_sign_agreement", 1.0))
+                     for pair in pairs] or [1.0])
+        checks.append(_check("gradient_direction",
+                             "PASS" if worst >= 0.99 else "FAIL",
+                             "the worst pair agrees on the sign of %.3f of the "
+                             "gradient entries" % worst))
 
-    # 3. the contract states the frozen specification
     contract_path = tree / "reference_contract.json"
     if not contract_path.is_file():
-        checks.append(_check("contract", "NOT_RUN", "no reference_contract.json"))
+        checks.append(_check("contract", "FAIL", "no reference_contract.json"))
     else:
         try:
             contract = json.loads(contract_path.read_text(encoding="utf-8"))
@@ -110,14 +113,17 @@ def verdict(tree: Path, state: dict, *, deep: bool = False) -> dict:
             else:
                 checks.append(_check("contract", "PASS",
                                      "the contract states the frozen statements"))
+    blocked = [entry for entry in checks if entry["status"] != "PASS"]
+    return {"stage": "mathematical", "status": "BLOCKED" if blocked else "PASS",
+            "checks": checks, "blocked_by": [entry["name"] for entry in blocked]}
 
-    if not deep:
-        blocked = [entry for entry in checks if entry["status"] != "PASS"]
-        return {"tree": str(tree), "status": "BLOCKED" if blocked else "PASS",
-                "deep": False, "checks": checks,
-                "blocked_by": [entry["name"] for entry in blocked]}
 
-    # 4. the framework's conformance checks
+def training_verdict(tree: Path, state: dict) -> dict:
+    """Stage 2: the candidate's real model, wired, trained, and four-ranked."""
+    from ..stage2 import checks as stage2_checks
+
+    tree = Path(tree)
+    checks = []
     try:
         report = stage2_checks.run_all(tree)
     except Exception as exc:  # noqa: BLE001
@@ -125,15 +131,26 @@ def verdict(tree: Path, state: dict, *, deep: bool = False) -> dict:
                               "detail": "the checks could not run: " + str(exc)[:200]}]}
     for entry in report.get("checks") or []:
         raw = str(entry.get("status") or "NOT_RUN")
-        if entry.get("name") == "reference_agreement":
-            checks.append(_check("reference_agreement",
-                                 "PASS" if raw == "PASS" else raw,
-                                 str(entry.get("detail"))[:200]))
-            continue
         checks.append(_check(str(entry.get("name")), raw,
-                             str(entry.get("detail"))[:160]))
-
+                             str(entry.get("detail"))[:200]))
     blocked = [entry for entry in checks if entry["status"] != "PASS"]
-    return {"tree": str(tree), "status": "BLOCKED" if blocked else "PASS",
-            "deep": True, "checks": checks,
-            "blocked_by": [entry["name"] for entry in blocked]}
+    return {"stage": "training", "status": "BLOCKED" if blocked else "PASS",
+            "checks": checks, "blocked_by": [entry["name"] for entry in blocked]}
+
+
+def verdict(tree: Path, state: dict, *, deep: bool = False) -> dict:
+    """The one verdict: stage one always, stage two when ``deep``.
+
+    The registration reads the mathematical stage (it is cheap); the dispatch
+    reads both, and the training stage is cached by the source digest there
+    because it trains an epoch.
+    """
+    tree = Path(tree)
+    stages = [mathematical_verdict(tree, state)]
+    if deep:
+        stages.append(training_verdict(tree, state))
+    blocked = [stage for stage in stages if stage["status"] != "PASS"]
+    return {"tree": str(tree), "deep": bool(deep),
+            "status": "BLOCKED" if blocked else "PASS",
+            "stages": stages,
+            "blocked_by": [name for stage in blocked for name in stage["blocked_by"]]}

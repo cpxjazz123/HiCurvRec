@@ -382,6 +382,16 @@ def _compare_pair(left_fn, right_fn, left_values, right_values, tensors,
         if left is not None and right is not None:
             worst = max(worst, float((left.detach() - right.detach()).abs().max()))
     report["gradient_max_abs_diff"] = worst
+    # the DIRECTION, named: a gradient with the wrong sign has the right norm
+    # and the wrong direction, and the review asked for it to be a check of its
+    # own rather than an inference from the absolute difference
+    agreements = []
+    for left, right in zip(left_grads, right_grads):
+        if left is None or right is None:
+            continue
+        same = torch.sign(left.detach()) == torch.sign(right.detach())
+        agreements.append(float(same.to(torch.float64).mean()))
+    report["gradient_sign_agreement"] = (min(agreements) if agreements else 1.0)
     def bound(function, values, names):
         positions = [index for index, value in enumerate(values)
                      if not isinstance(value, float)]

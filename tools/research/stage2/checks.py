@@ -405,6 +405,46 @@ def check_reference_agreement(tree: Path | str) -> dict:
             "detail": str(report.get("reason"))[:400]}
 
 
+def check_encoder_gradient(tree: Path | str) -> dict:
+    """The reconstruction reaches the ENCODER of the candidate's own model.
+
+    The three implementations of the frozen specification can agree perfectly
+    and the real encoder can still receive nothing - an accidental ``detach`` in
+    the wiring, a quantization path without the straight-through estimator.
+    The probe loads the candidate's model, runs one forward and one backward
+    with the RECONSTRUCTION loss alone (the quantisation loss would reach the
+    encoder through the commitment term even when the straight-through is
+    missing) and reports whether the encoder's parameters received a gradient.
+    """
+    tree = Path(tree).resolve()
+    command = [_python_for(), "-m", "tools.research.stage2.gradient_probe",
+               "--tree", str(tree)]
+    import os
+    environment = dict(os.environ)
+    root = str(contract.resolve_root())
+    environment["PYTHONPATH"] = os.pathsep.join(
+        [str(tree), root] + ([environment["PYTHONPATH"]]
+                             if environment.get("PYTHONPATH") else []))
+    try:
+        done = subprocess.run(command, cwd=str(tree), env=environment,
+                              capture_output=True, text=True, timeout=1200)
+    except subprocess.TimeoutExpired:
+        return {"status": "FAIL", "name": "encoder_gradient",
+                "detail": "the probe did not finish in twenty minutes"}
+    lines = [line for line in done.stdout.strip().splitlines() if line.startswith("{")]
+    if not lines:
+        return {"status": "FAIL", "name": "encoder_gradient",
+                "detail": "the probe produced no report: " +
+                          (done.stdout + done.stderr).strip()[-300:]}
+    report = json.loads(lines[-1])
+    status = str(report.get("status") or "FAIL")
+    if status == "PASS":
+        return {"status": "PASS", "name": "encoder_gradient",
+                "detail": str(report.get("detail"))}
+    return {"status": "FAIL", "name": "encoder_gradient",
+            "detail": str(report.get("reason") or report.get("detail"))[:300]}
+
+
 def run_all(tree: Path | str) -> dict:
     """The conformance report of one candidate tree."""
     tree = Path(tree).resolve()
@@ -413,12 +453,13 @@ def run_all(tree: Path | str) -> dict:
     checks = [check_names(tree), check_collectives(tree), check_constants(tree),
               check_geometry_contract(tree), check_entry(tree),
               check_identifier(tree), check_four_rank(tree),
-              check_reference_agreement(tree)]
+              check_reference_agreement(tree), check_encoder_gradient(tree)]
     # The reference contract is reported separately: a tree without one keeps
     # its reason in the report and is NOT admissible, while the four frozen
     # engineering categories stay what "passed" means (the baseline short flow
     # predates the contract and must remain runnable).
-    reference = checks[-1]
+    reference = next(check for check in checks
+                     if check.get("name") == "reference_agreement")
     passed = all(check["status"] == "PASS" for check in checks[:-1])
     admissible = bool(passed and reference.get("status") == "PASS")
     return {"tree": str(tree), "passed": passed, "admissible": admissible,

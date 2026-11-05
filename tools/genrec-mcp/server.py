@@ -2496,6 +2496,24 @@ def round_admission(tree: Path, verification_id: str) -> dict:
     # it exports is valid, the four ranks finish, and the frozen constants and
     # the launcher are the framework's. The report is cached by the source
     # digest, so a revision pays for it once.
+    # The two-stage verification: the mathematics (the frozen specification,
+    # the three independent implementations, the gradient direction, the
+    # contract) AND the training integration (the conformance checks and the
+    # encoder receiving the reconstruction gradient). A check that did not run
+    # is not a pass.
+    import importlib
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    compiler_module = importlib.import_module("tools.research.rounds.compiler")
+    round_state = dict(state)
+    round_state["_directory"] = str(directory)
+    verdict = compiler_module.verdict(Path(tree), round_state, deep=True)
+    if verdict.get("status") != "PASS":
+        return {"passed": False,
+                "refused": "the two-stage verification blocks this candidate: " +
+                           ", ".join(verdict.get("blocked_by") or []),
+                "compiler_verdict": verdict}
+
     conformance = _conformance_report(Path(tree), record.get("source_digest") or "")
     if not conformance.get("passed"):
         failing = [check["name"] + ": " + check["detail"]
