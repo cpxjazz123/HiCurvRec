@@ -140,6 +140,24 @@ def _merge_ideas(previous: list, fresh: list) -> list:
     return merged
 
 
+def apply_corrections(state: dict) -> None:
+    """Apply the round's recorded idea corrections to its ideas.
+
+    A correction is part of the round's record: the reviewers must judge the
+    corrected idea, and the merge rebuilds the ideas from the agents' answers,
+    so the correction is re-applied wherever the ideas are read.
+    """
+    for event in state.get("events") or []:
+        if not isinstance(event, dict) or event.get("event") != "idea_correction":
+            continue
+        idea_id = str(event.get("idea_id") or "")
+        field = str(event.get("field") or "")
+        if not idea_id or not field or "value" not in event:
+            continue
+        for idea in state.get("ideas") or []:
+            if idea.get("idea_id") == idea_id:
+                idea[field] = event["value"]
+
 def apply_ideation(state: dict, per_agent: list, require_minimum: bool = True) -> dict:
     """Merge the answers of the ideation agents into the round's ideas."""
     try:
@@ -148,6 +166,11 @@ def apply_ideation(state: dict, per_agent: list, require_minimum: bool = True) -
         record_event(state, "ideation_rejected", reason=str(exc))
         raise RoundError(str(exc)) from exc
     state["ideas"] = _merge_ideas(state.get("ideas") or [], merged)
+    # A recorded correction is part of the round's record: the merge rebuilds the
+    # ideas from the agents' answers, so without this a correction would be lost
+    # the next time the ideation phase runs - and the reviewers would judge the
+    # uncorrected idea.
+    apply_corrections(state)
     state["ideas_rejected"] = [
         {"agent": agent, "reason": "duplicate or unusable"} for agent, _ in per_agent
         if not any(idea["origin_agent"] == str(agent) for idea in state["ideas"])]

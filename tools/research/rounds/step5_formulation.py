@@ -148,6 +148,8 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
         return {"phase": "formulation", "ran": False, "step": state["step"],
                 "reason": "the round has no selected idea"}
     idea = ideas[0]
+    # the round's recorded corrections are part of the idea the reviewers judge
+    pipeline_module.apply_corrections(state)
     findings = list(state.get("math_review_findings") or [])
     # A specification the main agent wrote is a legitimate draft: the formula
     # often comes from the round's objective, and the two Math Reviewers judge
