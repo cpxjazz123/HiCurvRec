@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import tempfile
 import os
 import signal
 import shutil
@@ -25,6 +26,7 @@ from ..core.evidence import atomic_json, digest_file, read_json
 from . import agents as agent_contracts
 from . import baseline as baseline_module
 from . import module_differential
+from . import spec_tests as spec_tests_module
 from . import evals as evals_module
 from . import evidence as evidence_module
 from . import ideas as ideas_module
@@ -1655,7 +1657,21 @@ def _review_math_prompt(idea: dict, spec: dict) -> str:
         "IDEA COUPLING: " + str(idea.get("coupling_path")) + "\n"
         "IDEA ABLATIONS: " + str(idea.get("ablation_behavior_off")) + " | "
         + str(idea.get("ablation_geometry_off")) + "\n\n"
-        "THE SPECIFICATION:\n" + json.dumps(spec, indent=1, ensure_ascii=False))
+        "THE SPECIFICATION:\n" + json.dumps(spec, indent=1, ensure_ascii=False)
+        + "\n\nANSWER CONTRACT. Answer with one JSON object:\n"
+        '{"verdict": "PASS" | "REVISE", "findings": ["..."], '
+        '"tests": [{"finding": "...", "eval_id": "...", "code": "..."}], '
+        '"reason": "..."}\n'
+        "Every finding MUST carry a test. A test is a Python module that defines "
+        "check(spec) -> list[str]: it returns a non-empty list of problems exactly "
+        "when the specification shows the defect you describe, and an empty list "
+        "otherwise. It may only read the specification dictionary; it must not "
+        "import torch or the agents SDK, run training, or read data. The framework "
+        "runs your test against the specification you are reviewing: a test that "
+        "does not fail on it is refused as not being a test of that defect. Your "
+        "tests are written to tools/research/rounds/spec_tests/ and are run on "
+        "every later round before it may freeze, so write them to refuse the "
+        "defect, not to pass.")
 
 
 def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
@@ -1716,6 +1732,19 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
         rejected = [review for review in reviews
                     if str(review.get("verdict", "")).upper() != "PASS"]
         if not rejected:
+            # Every retained test, from every round, runs before the freeze: a
+            # defect caught once is refused from then on, whatever this round's
+            # reviewers say.
+            retained = spec_tests_module.run(spec)
+            state["spec_test_suite"] = {"passed": retained["passed"],
+                                        "checked": retained["checked"],
+                                        "failures": retained["failures"]}
+            if not retained["passed"]:
+                state["math_review_findings"] = retained["findings"]
+                pipeline_module.save_state(directory, state)
+                log("formulation: %d retained tests refused the specification"
+                    % len(retained["failures"]))
+                continue
             # Every defect an earlier attempt caught must have a decision before
             # the specification is frozen: an eval that now refuses it, or a
             # recorded reason it is not mechanically decidable.
@@ -1757,6 +1786,14 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
                     "sha256": frozen["sha256"], "reviews": len(reviews)}
         findings = [finding for review in rejected
                     for finding in review.get("findings") or []]
+        # A finding without a test is not accepted: the reviewer writes the test
+        # that refuses the defect, the framework proves it fails on the
+        # specification it was written against, and keeps it forever.
+        written_tests, refused_tests = _retain_spec_tests(
+            directory, round_id, rejected, spec, log=log)
+        state["spec_tests_written"] = written_tests
+        if refused_tests:
+            findings = findings + refused_tests
         state["math_review_findings"] = findings
         history = state.setdefault("math_review_history", [])
         history.append({"attempt": attempt + 1,
@@ -1769,6 +1806,46 @@ def phase_formulation(root: Path, round_id: str, *, log=print) -> dict:
     raise pipeline_module.RoundError(
         "the mathematical specification did not pass the review: " +
         "; ".join(str(finding) for finding in findings[:3]))
+
+
+
+def _retain_spec_tests(directory: Path, round_id: str, rejected: list, spec: dict,
+                       *, log=print) -> tuple:
+    """Keep the reviewers' tests, and refuse the ones that are not tests.
+
+    A test must fail on the specification it was written against; one that
+    passes proves nothing about the defect it claims to describe, and a finding
+    that comes with no test is reported as such rather than silently accepted.
+    """
+    written, refused = [], []
+    for review in rejected:
+        tests = list(review.get("tests") or [])
+        findings = [str(finding) for finding in review.get("findings") or []]
+        covered = {str(test.get("finding") or "").strip() for test in tests}
+        for finding in findings:
+            if str(finding).strip() not in covered:
+                refused.append("the finding '%s' came with no test: a finding "
+                               "must be answered with a test that refuses it"
+                               % str(finding)[:160])
+        for test in tests:
+            code = str(test.get("code") or "")
+            finding = str(test.get("finding") or "") or str(findings[0] if findings else "")
+            # prove the test fails on the specification under review
+            probe = Path(tempfile.mkdtemp(prefix="spec-test-")) / "candidate.py"
+            probe.write_text(code, encoding="utf-8")
+            failed = spec_tests_module.run(spec, paths=[str(probe)])
+            if not failed["failures"]:
+                refused.append("the test for '%s' passes on the specification it "
+                               "was written against: it does not refuse the defect"
+                               % str(finding)[:140])
+                continue
+            kept = spec_tests_module.record(spec_tests_module.DIRECTORY, round_id,
+                                            finding, code,
+                                            eval_id=str(test.get("eval_id") or ""))
+            written.append({"finding": str(finding)[:200], "path": kept["path"],
+                            "written": kept.get("written")})
+            log("formulation: retained a test for '%s'" % str(finding)[:80])
+    return written, refused
 
 
 def _parse_math_spec(text: str) -> dict:
@@ -1802,8 +1879,15 @@ def _parse_math_review(text: str) -> dict:
         except ValueError:
             continue
         if isinstance(payload, dict) and payload.get("verdict"):
+            tests = []
+            for entry in payload.get("tests") or []:
+                if isinstance(entry, dict) and str(entry.get("code") or "").strip():
+                    tests.append({"finding": str(entry.get("finding") or ""),
+                                  "eval_id": str(entry.get("eval_id") or ""),
+                                  "code": str(entry.get("code"))})
             return {"verdict": str(payload.get("verdict")),
                     "findings": [str(finding) for finding in payload.get("findings") or []],
+                    "tests": tests,
                     "reason": str(payload.get("reason") or "")}
     return {"verdict": "", "findings": [], "reason": ""}
 
