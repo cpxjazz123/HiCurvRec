@@ -32,7 +32,39 @@ SPEC_NAME = "math_spec.json"
 #: that would leave an implementation free to interpret.
 REQUIRED_SECTIONS = ("mechanism", "computations", "inputs", "outputs",
                      "parameters", "dimensions", "gradient_rules",
-                     "training_integration", "switches", "excluded")
+                     "training_integration", "conventions", "switches", "excluded")
+
+#: The conventions of the framework's own geometry. A specification that does
+#: not state them states a formula in an unknown parameterisation, and the
+#: parameterisation is where the factors live: the ball radius 1/sqrt(c) against
+#: a ball of radius R, the origin factor 2 of the exponential map, the
+#: normalisation of the distance. The framework owns the geometry, so it states
+#: the conventions itself and the reviewers check the specification against
+#: them.
+CANONICAL_CONVENTIONS = {
+    "curvature": "the ball is of curvature kappa = -c with c > 0; the ball "
+                 "radius is R_c = 1/sqrt(c) - a radius R with kappa = -1/R^2 "
+                 "is the same family under c = 1/R^2, and every distance, "
+                 "exponential map and radius must use ONE of them",
+    "distance": "d_c(x, y) = (2/sqrt(c)) artanh(sqrt(c) ||(-x) (+) y||), with "
+                "(+) the canonical Mobius sum; at c = 0 the limit is "
+                "2||x - y||, and the factor 2 is the metric's normalisation",
+    "exponential_map": "exp_0^c(v) = tanh(sqrt(c)||v||) v / (sqrt(c)||v||), and "
+                        "exp_x^c(v) = x (+) [tanh(sqrt(c) lambda_x^c ||v|| / 2) "
+                        "v / (sqrt(c)||v||)] with lambda_x^c = 2/(1 - c||x||^2)",
+    "logarithm": "log_0^c(y) = artanh(sqrt(c)||y||) y / (sqrt(c)||y||)",
+    "tangent_norm": "a tangent vector's Euclidean coordinate norm is not its "
+                    "Riemannian norm: ||v||_{0,c} = lambda_0^c ||v|| = 2||v||, so "
+                    "d_c(0, exp_0^c(v)) = 2||v|| and log_0^c(exp_0^c(v)) = v",
+    "fréchet_mean": "the Frechet mean of a weighted set is the point minimising "
+                     "the weighted sum of squared distances; a coordinate "
+                     "average may not be called a Frechet mean",
+    "straight_through": "the assignment is an argmin and has no gradient; the "
+                        "reconstruction gradient reaches the encoder through the "
+                        "straight-through estimator x_q = x + (x_q - x).detach()",
+    "source": "tools/research/contracts/HYPERBOLIC_GEOMETRY_CONTRACT.md, which "
+              "the implementation must cite and the reviewers must check",
+}
 
 #: The answer of a Formula Agent that finds the idea incomplete.
 INCOMPLETE = "SPECIFICATION_INCOMPLETE"
@@ -78,6 +110,10 @@ def validate(spec: dict) -> list:
                 problems.append("a gradient rule does not name its operator and its rule")
     else:
         problems.append("the gradient rules are not stated as a list")
+    conventions = spec.get("conventions")
+    if not conventions:
+        spec["conventions"] = dict(CANONICAL_CONVENTIONS)
+        spec["conventions_derived_by"] = "the framework: the canonical geometry contract"
     integration = spec.get("training_integration")
     if isinstance(integration, dict):
         for key in ("loss", "reconstruction", "optimizer"):
@@ -150,6 +186,10 @@ def complete(spec: dict) -> dict:
         ]
         spec["gradient_rules_derived_by"] = "the framework: the conventions of the family"
 
+    conventions = spec.get("conventions")
+    if not conventions:
+        spec["conventions"] = dict(CANONICAL_CONVENTIONS)
+        spec["conventions_derived_by"] = "the framework: the canonical geometry contract"
     integration = spec.get("training_integration")
     if not integration:
         spec["training_integration"] = {

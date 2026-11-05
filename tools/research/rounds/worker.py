@@ -1570,6 +1570,21 @@ def phase_derivation(root: Path, round_id: str, *, log=print) -> dict:
             "derivations": len(implementations)}
 
 
+def _contract_text() -> str:
+    """The geometry contract's notation and operators, verbatim.
+
+    The framework owns the geometry; a specification that invents its own
+    parameterisation loses a factor, and the factor is what the reviewers then
+    have to find.
+    """
+    path = Path(__file__).resolve().parents[1] / "contracts" / \
+        "HYPERBOLIC_GEOMETRY_CONTRACT.md"
+    if not path.is_file():
+        return "(the geometry contract is missing)"
+    text = path.read_text(encoding="utf-8")
+    return text[:6000]
+
+
 def _formula_prompt(idea: dict, findings: list = None) -> str:
     """The prompt of the Formula Agent: the idea, and what the reviewers said."""
     prompt = (
@@ -1585,7 +1600,11 @@ def _formula_prompt(idea: dict, findings: list = None) -> str:
         "COUPLING: " + str(idea.get("coupling_path")) + "\n"
         "ABLATION BEHAVIOUR OFF: " + str(idea.get("ablation_behavior_off")) + "\n"
         "ABLATION GEOMETRY OFF: " + str(idea.get("ablation_geometry_off")) + "\n")
-    prompt += ("\n\nANSWER THESE THREE QUESTIONS EXPLICITLY, each as its own JSON "
+    prompt += ("\n\nTHE GEOMETRY CONTRACT IS THE AUTHORITY on every convention. "
+               "Read it and quote its operators exactly; a formula written in an "
+               "unstated parameterisation is wrong:\n\n"
+               + _contract_text() +
+               "\n\nANSWER THESE THREE QUESTIONS EXPLICITLY, each as its own JSON "
                "key (the review refuses a specification that leaves them out):\n"
                "  dimensions: which tensor has which width - the batch, the latent, "
                "the codebook, every intermediate;\n"
