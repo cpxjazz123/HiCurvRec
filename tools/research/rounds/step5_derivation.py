@@ -220,7 +220,7 @@ def _code_accepts(payload: dict, args: list) -> bool:
     return False
 
 
-def argument_lines(args: list) -> str:
+def _argument_lines(args: list) -> str:
     """The argument list as the prompt shows it."""
     lines = []
     for spec in args:
@@ -247,7 +247,7 @@ def _derivation_prompt(idea: dict, spec: dict = None) -> str:
             + json.dumps(surface, indent=1, ensure_ascii=False) + "\n\n"
             "FIXED INSTANTIATION - every derivation must use exactly this, or the "
             "two cannot be compared:\n"
-            "  * the arguments, in this exact order:\n" + argument_lines(args) + "\n"
+            "  * the arguments, in this exact order:\n" + _argument_lines(args) + "\n"
             "  * the free symbols, in this exact order: " + ", ".join(symbols) + "\n"
             "  * the output is the surface's output: '" + str(surface.get("output")) + "'.\n"
             "  * a switch or a table the surface needs is carried as an extra "
