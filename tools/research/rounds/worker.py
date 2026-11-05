@@ -115,6 +115,20 @@ def _round_roots(root: Path) -> list:
     return [root, issue_dir / "trees" / root.name]
 
 
+def role_of_task(task_id: str) -> str:
+    """The role a task id names.
+
+    The cached-answer path records the role of the task that produced the
+    answer, so a reused answer says which role wrote it. The helper was missing
+    and the path raised a NameError the moment an answer was reused - which is
+    exactly when a round is interrupted and restarted.
+    """
+    prefix = str(task_id).rsplit("_", 1)[0]
+    return {"ideation": "ideate", "scoring": "score", "derivation": "derive",
+            "formulation": "formulate", "math_review": "review_math",
+            "coding": "code", "probe": "probe"}.get(prefix, "verify")
+
+
 def _run_agent(root: Path, task_id: str, prompt: str, output_name: str, parser,
                role: str = "verify", read_paths=None, sandbox: bool = True,
                allowed_roots=None, candidate_tree=None,
